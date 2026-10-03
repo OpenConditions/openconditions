@@ -18,7 +18,7 @@
       [10.024075658, 53.468697762]
     ]
   },
-  "type": "road_closure",
+  "type": "closure",
   "refs": ["A1"],
   "direction": "Hamburg -> Bremen",
   "roadState": "closed"

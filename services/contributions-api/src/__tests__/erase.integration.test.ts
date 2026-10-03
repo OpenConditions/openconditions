@@ -69,6 +69,12 @@ async function journal(recordId: string): Promise<JournalRow[]> {
     ORDER BY seq`;
 }
 
+async function history(id: string): Promise<number[]> {
+  const rows = await sql<{ revision: number }[]>`
+    SELECT revision FROM conditions.situation_revision WHERE situation_id = ${id} ORDER BY revision`;
+  return rows.map((r) => r.revision);
+}
+
 async function stored(id: string) {
   const [row] = await sql<
     {
@@ -113,13 +119,24 @@ describe("eraseRecord", () => {
       { operation: "update", revision: 2, tombstone_reason: null },
     ]);
 
+    expect(await history(id)).toEqual([1, 2]);
     expect(await eraseRecord(sql, registry, { class: "situation", id }, ERASED_AT)).toBe("erased");
 
     const row = await stored(id);
     expect(row.revision).toBe(3);
+    // No revision of the record keeps its content; another record's history stays.
+    expect(await history(id)).toEqual([]);
+    expect(await history(bystander)).toEqual([1]);
     expect(row.tombstone_reason).toBe(ERASURE_REASON);
     expect(row.tombstoned_at?.toISOString()).toBe(ERASED_AT);
     expect(row.record["tombstone"]).toEqual({ reason: "rights_revoked", at: ERASED_AT });
+    // The row keeps who and what it was, nothing of what it said or where.
+    for (const key of ["headline", "description", "location", "effects", "validity", "details"]) {
+      expect(row.record, key).not.toHaveProperty(key);
+    }
+    expect(row.record["id"]).toBe(id);
+    const [{ geom }] = await sql`SELECT geom FROM conditions.situation WHERE id = ${id}`;
+    expect(geom).toBeNull();
 
     // The earlier snapshots are gone from the outbox; the delete stays to
     // carry the erasure to every peer.

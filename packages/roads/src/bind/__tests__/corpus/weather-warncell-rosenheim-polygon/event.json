@@ -170,6 +170,6 @@
       ]
     ]
   },
-  "type": "weather",
+  "type": "weather_condition",
   "refs": []
 }

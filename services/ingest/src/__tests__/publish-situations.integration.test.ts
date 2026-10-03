@@ -63,7 +63,8 @@ async function publish(situations: Rec[], unlocatable: string[], unlocatableReco
     poll: { at: NOW, id },
     durationMs: 1,
     now: NOW,
-    model: writeModel({ registry }),
+    // The instance the seeded rows were written as: another's would be taken over.
+    model: writeModel({ registry, instanceId: "test.local" }),
   });
 }
 

@@ -35,7 +35,10 @@ export async function seedFlowSource(sql: postgres.Sql, id: string): Promise<voi
 export interface SiteReading {
   site: string;
   geometry: Geometry;
+  /** The reading's instant, or its period's start when `until` is given. */
   at: string;
+  /** The end of a reading over a period (a 15-minute mean, say). */
+  until?: string;
   speed?: number;
   /** A level of service the source states. */
   los?: string;
@@ -57,7 +60,7 @@ function draft(source: string, r: SiteReading, property: string, result: Rec): R
       ...(r.componentKey !== undefined ? { componentKey: r.componentKey } : {}),
     },
     result,
-    phenomenonTime: { instant: r.at },
+    phenomenonTime: r.until !== undefined ? { start: r.at, end: r.until } : { instant: r.at },
     aggregation: property === "traffic.speed" ? "mean" : "instantaneous",
     location: {
       geometry: r.geometry,
@@ -121,6 +124,52 @@ export async function writeSiteReadings(
   );
   if (summary.rejected.length > 0) {
     throw new Error(`readings rejected: ${JSON.stringify(summary.rejected[0])}`);
+  }
+}
+
+/** Writes a site's `measurement_site` feature, naming the roads its location is on. */
+export async function writeSiteFeature(
+  sql: postgres.Sql,
+  source: string,
+  site: string,
+  geometry: Geometry,
+  roads: readonly { ref: string }[],
+  now: string,
+): Promise<void> {
+  const feature: Rec = {
+    id: `oc:feature:${source}:${site}`,
+    class: "feature",
+    kind: "measurement_site",
+    type: "traffic",
+    temporality: "static",
+    lifecycle: "operational",
+    location: {
+      geometry,
+      extent: geometry.type === "Point" ? "point" : "linear",
+      geometryOrigin: "site_table",
+      fuzziness: "exact",
+      roads,
+    },
+    provenance: {
+      origin: "feed",
+      sourceId: source,
+      sourceFormat: "datex2",
+      accessMode: "bulk",
+      recordId: site,
+      attribution: { provider: "Test", license: "CC0-1.0" },
+      privacy: { class: "authoritative" },
+    },
+    freshness: { fetchedAt: now },
+    details: { kind: "measurement_site", v: 1, measuredProperties: ["traffic.speed"] },
+  };
+  const summary = await writeSnapshot(
+    sql,
+    source,
+    { features: [feature] },
+    { registry, instanceId: "test.local", now, complete: false },
+  );
+  if (summary.rejected.length > 0) {
+    throw new Error(`feature rejected: ${JSON.stringify(summary.rejected[0])}`);
   }
 }
 

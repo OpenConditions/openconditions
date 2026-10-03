@@ -196,16 +196,27 @@ export function congestionDrafts(
     } as RoadEvent;
   });
   const drafts = situationDrafts(events, { source }) as Draft[];
-  // The situation assembler reads a direction from text only; a site whose
-  // direction the parser knows as a reference passes it on unchanged.
   for (const draft of drafts) {
+    // The situation assembler reads a direction from text only; a site whose
+    // direction the parser knows as a reference passes it on unchanged.
     const direction = directions.get(String(draft["id"]));
     if (direction !== undefined) {
       draft["location"] = { ...(draft["location"] as Draft), direction };
     }
+    // Congestion holds only while polls keep deriving it: a poll that cannot
+    // (its baselines failed to load) leaves it in place, and its expiry ends
+    // it after the readings' freshness window rather than never.
+    const freshness = draft["freshness"] as { fetchedAt: string };
+    draft["freshness"] = {
+      ...freshness,
+      expiresAt: new Date(Date.parse(freshness.fetchedAt) + CONGESTION_LIFETIME_MS).toISOString(),
+    };
   }
   return drafts;
 }
+
+/** How long derived congestion holds without a poll deriving it again: a flow reading's freshness window. */
+const CONGESTION_LIFETIME_MS = 15 * 60 * 1000;
 
 /**
  * Turns one poll's flow readings into `measurement_site` features, their

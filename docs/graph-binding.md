@@ -451,7 +451,10 @@ at most 90 s.
 ## Bindings on the record API
 
 `GET /situations/{id}` returns the situation's own binding beside the record:
-`{ status, confidence, directionMode, boundAt }`, or `null` when it has none.
+`{ status, confidence, directionMode, boundAt }`, or `null` when it has none,
+and in `effectBindings` the binding of each effect with a place of its own,
+keyed by effect id (empty when no effect has one). Routing reads an effect's
+own binding where it has one, so a consumer judging an effect reads it there.
 The collections and the TraFF, DATEX II and SSE outputs carry no bindings.
 
 `integrations/road-conditions-openconditions` reads situations from

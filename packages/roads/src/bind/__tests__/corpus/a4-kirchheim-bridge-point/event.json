@@ -4,7 +4,7 @@
     "type": "Point",
     "coordinates": [9.59382582208993, 50.84089863368359]
   },
-  "type": "hazard",
+  "type": "road_hazard",
   "refs": ["A4"],
   "direction": "Kirchheimer Dreieck -> Erfurt"
 }

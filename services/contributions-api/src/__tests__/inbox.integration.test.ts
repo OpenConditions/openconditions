@@ -1,5 +1,6 @@
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { schemaVersions } from "@openconditions/model";
+import { tombstoneRecords } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { FederatedPageError, type InboxContext, ingestFederatedPage } from "../federation/inbox.js";
@@ -384,6 +385,10 @@ describe("a peer's retractions", () => {
     ).toMatchObject({ tombstoned: 1, skipped: [] });
     expect(await rowOf(own["id"] as string)).toMatchObject({ tombstone_reason: "rights_revoked" });
     expect(await erasureFacts(canonicalId)).toEqual([{ reason: "rights_revoked" }]);
+    const [{ revisions }] = await sql<{ revisions: number }[]>`
+      SELECT count(*)::int AS revisions FROM conditions.situation_revision
+       WHERE situation_id = ${own["id"] as string}`;
+    expect(revisions).toBe(0);
 
     const resurrected = await ingestFederatedPage(
       sql,
@@ -498,4 +503,121 @@ describe("a peer's retractions", () => {
       await sql`DROP FUNCTION conditions.pause_inbox_test_insert()`;
     }
   }, 30_000);
+});
+
+describe("a peer's copy this instance ended", () => {
+  const majorSeverity = { severity: { label: "major", source: "derived" } };
+  const minorSeverity = { severity: { label: "minor", source: "derived" } };
+
+  async function endHere(id: string, reason: string) {
+    await sql.begin((tx) =>
+      tombstoneRecords(tx, "situation", [id], reason, { registry, now: NOW }),
+    );
+  }
+
+  it("keeps the peer's revision, so an expired copy comes back at the peer's next change", async () => {
+    const id = peerSituation("t-1")["id"] as string;
+    await ingestFederatedPage(sql, page(change(peerSituation("t-1", 3), 1)), ctx());
+    await endHere(id, "expired");
+    expect(await rowOf(id)).toMatchObject({ revision: 3, tombstone_reason: "expired" });
+
+    const next = await ingestFederatedPage(
+      sql,
+      page(change(peerSituation("t-1", 4, majorSeverity), 2)),
+      ctx(LATER),
+    );
+    expect(next).toMatchObject({ accepted: 1, stale: 0 });
+    expect(await rowOf(id)).toMatchObject({ revision: 4, tombstone_reason: null });
+  });
+
+  it("lets a copy a poll here withdrew come back at the peer's next change", async () => {
+    const id = peerSituation("t-2")["id"] as string;
+    await ingestFederatedPage(sql, page(change(peerSituation("t-2", 2), 1)), ctx());
+    await endHere(id, "withdrawn");
+    const next = await ingestFederatedPage(
+      sql,
+      page(change(peerSituation("t-2", 3, majorSeverity), 2)),
+      ctx(LATER),
+    );
+    expect(next).toMatchObject({ accepted: 1 });
+    expect(await rowOf(id)).toMatchObject({ revision: 3, tombstone_reason: null });
+  });
+
+  it.each(["rejected", "superseded"])(
+    "keeps a %s copy ended through every later change of the peer's",
+    async (reason) => {
+      const id = peerSituation("t-3")["id"] as string;
+      await ingestFederatedPage(sql, page(change(peerSituation("t-3", 2), 1)), ctx());
+      await endHere(id, reason);
+      expect(await rowOf(id)).toMatchObject({ revision: 2, tombstone_reason: reason });
+      const later = await ingestFederatedPage(
+        sql,
+        page(
+          change(peerSituation("t-3", 3, majorSeverity), 2),
+          change(peerSituation("t-3", 4, minorSeverity), 3),
+        ),
+        ctx(LATER),
+      );
+      expect(later).toMatchObject({ accepted: 0, stale: 2 });
+      expect(await rowOf(id)).toMatchObject({ revision: 2, tombstone_reason: reason });
+    },
+  );
+
+  it("removes the content of a copy ended here when the peer erases it", async () => {
+    const own = peerSituation("t-5", 1, {
+      headline: [{ lang: "de", text: "Gegenstand auf der Fahrbahn" }],
+    });
+    const id = own["id"] as string;
+    await ingestFederatedPage(sql, page(change(own, 1)), ctx());
+    await endHere(id, "expired");
+    await ingestFederatedPage(sql, page(retraction(own, "rights_revoked", 2)), ctx(LATER));
+    const row = await rowOf(id);
+    expect(row!.tombstone_reason).toBe("rights_revoked");
+    expect(row!.record).not.toHaveProperty("headline");
+    expect(row!.record).not.toHaveProperty("location");
+    const [{ n }] = await sql`
+      SELECT count(*)::int AS n FROM conditions.situation_revision WHERE situation_id = ${id}`;
+    expect(n).toBe(0);
+  });
+
+  it("journals nothing of a peer's copy it erases, and keeps where the copy came from", async () => {
+    await sql`
+      INSERT INTO conditions.federation_subscription (id, peer_id, delivery_mode, created_at, updated_at)
+      VALUES ('sub-peer-copy', 'peer-sub', 'pull', now(), now())`;
+    try {
+      const own = peerSituation("t-6");
+      const id = own["id"] as string;
+      await ingestFederatedPage(sql, page(change(own, 1)), ctx());
+      await ingestFederatedPage(sql, page(retraction(own, "rights_revoked", 2)), ctx(LATER));
+      const [{ n }] = await sql`
+        SELECT count(*)::int AS n FROM conditions.federation_outbox WHERE record_id = ${id}`;
+      expect(n).toBe(0);
+      const provenance = (await rowOf(id))!.record["provenance"] as Record<string, unknown>;
+      expect(provenance["originChain"]).toEqual([
+        { instanceId: PEER, viaPeer: PEER, receivedAt: NOW },
+      ]);
+    } finally {
+      await sql`DELETE FROM conditions.federation_subscription WHERE id = 'sub-peer-copy'`;
+    }
+  });
+
+  it("still takes the peer's own retraction as a revision of its own", async () => {
+    const own = peerSituation("t-4", 2);
+    await ingestFederatedPage(sql, page(change(own, 1)), ctx());
+    await ingestFederatedPage(sql, page(retraction(own, "cancelled", 2)), ctx(LATER));
+    expect(await rowOf(own["id"] as string)).toMatchObject({
+      revision: 3,
+      tombstone_reason: "cancelled",
+    });
+    const restored = await ingestFederatedPage(
+      sql,
+      page(change(peerSituation("t-4", 4, majorSeverity), 3)),
+      ctx(LATER),
+    );
+    expect(restored).toMatchObject({ accepted: 1 });
+    expect(await rowOf(own["id"] as string)).toMatchObject({
+      revision: 4,
+      tombstone_reason: null,
+    });
+  });
 });

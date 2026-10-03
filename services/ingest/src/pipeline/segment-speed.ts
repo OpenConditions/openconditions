@@ -28,12 +28,13 @@ const READING_LIFETIME_MIN = 15;
  * into `sample_count`.
  *
  * A site contributes its `traffic.speed` and `traffic.los` readings younger
- * than 15 minutes (`observation_latest`, site level). The LOS ladder mirrors
- * the flow parsers' `losFromSpeedRatio` exactly, computed on the aggregated
- * means so a segment's classification reflects its overall condition rather
- * than any single site. `free_flow_kph` prefers the free-flow speed of the
- * reading's own baseline and falls back to the segment's
- * `road_segment.free_flow_kph`; when neither is known (e.g. a
+ * than 15 minutes (`observation_latest`, site level), aged from the end of a
+ * reading's period, so a 15-minute mean still counts when it is published.
+ * The LOS ladder mirrors the flow parsers' `losFromSpeedRatio` exactly,
+ * computed on the aggregated means so a segment's classification reflects
+ * its overall condition rather than any single site. `free_flow_kph` prefers
+ * the free-flow speed of the reading's own baseline and falls back to the
+ * segment's `road_segment.free_flow_kph`; when neither is known (e.g. a
  * Trafikverket-style feed with no baseline, on a segment OSM never gave a
  * maxspeed) the ratio and LOS are left `NULL`/`'unknown'`. `expires_at` is
  * the freshest reading's time plus 15 minutes, so the fusion step can drop a
@@ -61,7 +62,8 @@ export async function writeSensorObservations(
       JOIN conditions.observation_latest l ON l.subject_key = ss.subject_key
       JOIN conditions.source s ON s.id = l.source_id AND s.produces = 'flow'
       WHERE l.property IN ('traffic.speed', 'traffic.los')
-        AND l.effective_from >= ${now()}::timestamptz - make_interval(mins => ${READING_LIFETIME_MIN})
+        AND COALESCE(l.effective_until, l.effective_from)
+            >= ${now()}::timestamptz - make_interval(mins => ${READING_LIFETIME_MIN})
     ), site AS (
       SELECT subject_key, source_id AS source,
         max(value_num) FILTER (WHERE property = 'traffic.speed') AS speed,

@@ -38,6 +38,10 @@ async function boot() {
   await runMigrations(DATABASE_URL);
   console.info("[ingest] migrations applied");
   const model = productionRegistry();
+  const registry = await buildDomainRegistry();
+  // The catalogue is synced first: a source this release dropped, with its
+  // format, is marked inactive before the check reads the loaded formats.
+  await syncSources(sql, catalogueSources(registry));
   await assertStoredCodesRegistered(sql, model);
 
   const app = Fastify({ logger: true, trustProxy: createTrustProxy(TRUST_PROXY_CIDRS) });
@@ -57,8 +61,6 @@ async function boot() {
   });
 
   const statusStore = new FeedStatusStore();
-  const registry = await buildDomainRegistry();
-  await syncSources(sql, catalogueSources(registry));
   await maintainPartitions(sql, model, new Date());
   const abandoned = await closeAbandonedPollAttempts(sql);
   if (abandoned > 0) console.warn(`[ingest] closed ${abandoned} poll attempt(s) left running`);

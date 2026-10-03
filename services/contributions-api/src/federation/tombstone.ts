@@ -7,7 +7,8 @@
  * the erasing peer when a peer did — an erased record must not come back
  * through a late page, a backfill or another path. Every other tombstone
  * needs no fact: a peer's record is fenced by its revision, and a later
- * revision from its own instance legitimately restores it. The ROW is the
+ * revision from its own instance legitimately restores it — unless it was
+ * rejected or superseded, which no later revision undoes. The ROW is the
  * deletion fact — never the erased content.
  *
  * {@link eraseRecord} is the operator's erasure (a GDPR request, a takedown):
@@ -55,8 +56,8 @@ export async function lockRecord(
 
 /**
  * Erases a record held here: tombstones it `rights_revoked` under its source's
- * lock (a new revision; the content stays in its history until the history
- * window purges it) and records the erasure fact. Erasing an erased record
+ * lock (a new revision, and its revision history removed) and records the
+ * erasure fact. Erasing an erased record
  * changes nothing.
  */
 export async function eraseRecord(

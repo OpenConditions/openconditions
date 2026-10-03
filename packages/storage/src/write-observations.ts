@@ -77,7 +77,8 @@ export const SERIES_KEY = ["subject_key", "property", "qualifier_key", "source_i
  * What a latest row's update sets when its series template did not change:
  * what a reading can change. The template stays as stored, out of line, and
  * the update carries only its pointer; what the template determines (the
- * subject, its geometry, the access mode, the result type) stays as it is.
+ * subject, its geometry, the access mode) stays as it is. The result type is
+ * the registry's, not the template's, so it is set with the reading.
  */
 const TEMPLATE_DETERMINED = new Set([
   ...SERIES_KEY,
@@ -89,7 +90,6 @@ const TEMPLATE_DETERMINED = new Set([
   "situation_id",
   "geom",
   "access_mode",
-  "result_type",
 ]);
 const READING_COLUMNS_OF_LATEST = SERIES_COLUMNS.filter((c) => !TEMPLATE_DETERMINED.has(c.name));
 
@@ -128,6 +128,12 @@ const startOf = (o: Rec) => {
 };
 
 const sameResult = (a: unknown, b: unknown) => jcs(a) === jcs(b);
+
+/** An instant as the database compares it; `-infinity` (no issue time) as it is. */
+const instantKey = (t: unknown) => {
+  const ms = Date.parse(t as string);
+  return Number.isNaN(ms) ? t : ms;
+};
 
 interface Latest {
   series_id: number;
@@ -242,6 +248,8 @@ export async function writeObservationsIn(
   const frontiers = await rollupFrontiers(tx);
   const seriesRows: Rec[] = [];
   const readingRows: Rec[] = [];
+  // The whole row of a series written by its reading alone, should its row have gone.
+  const wholeRowOf = new Map<number, () => Rec>();
   const history: { key: string; row: Rec }[] = [];
   for (const [k, { records }] of bySeries) {
     records.sort((a, b) => startOf(a) - startOf(b));
@@ -293,31 +301,46 @@ export async function writeObservationsIn(
     }
     if (newest !== undefined) {
       const row = seriesRowOf(newest, property, retentionDays, ctx.now, prev?.template_hash);
-      if (row["template"] === null) readingRows.push({ ...row, series_id: prev!.series_id });
-      else seriesRows.push(row);
+      if (row["template"] === null) {
+        readingRows.push({ ...row, series_id: prev!.series_id });
+        const record = newest;
+        wholeRowOf.set(Number(prev!.series_id), () =>
+          seriesRowOf(record, property, retentionDays, ctx.now),
+        );
+      } else {
+        seriesRows.push(row);
+      }
     }
   }
 
   const returning = "series_id, subject_key, property, qualifier_key, source_id";
-  const written = [
-    ...(await insertRows<{ series_id: number } & Record<string, string>>(
+  type Written = { series_id: number } & Record<string, string>;
+  const upsert = (rows: readonly Rec[]) =>
+    insertRows<Written>(
       tx,
       "observation_latest",
       SERIES_COLUMNS,
-      seriesRows,
+      rows,
       upsertClause(SERIES_KEY, SERIES_COLUMNS),
       returning,
-    )),
-    // A series whose template did not change: only its reading moves.
-    ...(await updateRows<{ series_id: number } & Record<string, string>>(
-      tx,
-      "observation_latest",
-      { name: "series_id", type: "bigint" },
-      READING_COLUMNS_OF_LATEST,
-      readingRows,
-      returning,
-    )),
-  ];
+    );
+  // A series whose template did not change: only its reading moves.
+  const moved = await updateRows<Written>(
+    tx,
+    "observation_latest",
+    { name: "series_id", type: "bigint" },
+    READING_COLUMNS_OF_LATEST,
+    readingRows,
+    returning,
+  );
+  // A row removed since it was read (an operator, a purge) has nothing to
+  // move: its series is written whole again, under a new series id.
+  const movedIds = new Set(moved.map((w) => Number(w.series_id)));
+  const gone = readingRows
+    .map((r) => Number(r["series_id"]))
+    .filter((id) => !movedIds.has(id))
+    .map((id) => wholeRowOf.get(id)!());
+  const written = [...(await upsert([...seriesRows, ...gone])), ...moved];
   counts.latest = written.length;
   const ids = new Map([...latest].map(([k, l]) => [k, l.series_id]));
   for (const w of written) {
@@ -331,10 +354,11 @@ export async function writeObservationsIn(
       Number(w.series_id),
     );
   }
-  // One statement may not touch a row twice: a reading repeated in one poll keeps its last copy.
+  // One statement may not touch a row twice: a reading repeated in one poll
+  // keeps its last copy, however its source spelled the instants.
   const rows = new Map(
     history.map(({ key, row }) => [
-      jcs([key, row["phenomenon_start"], row["issued_at"]]),
+      jcs([key, instantKey(row["phenomenon_start"]), instantKey(row["issued_at"])]),
       { ...row, series_id: ids.get(key) },
     ]),
   );

@@ -43,6 +43,19 @@ beforeAll(async () => {
       ),
     ]);
   }
+  // A forecast of the 08:00 hour says what was expected, not what was measured: no rollup counts it.
+  await write("nl-ndw-flow", [
+    observationDraft(
+      "traffic.speed",
+      { type: "quantity", value: 30, unit: "km/h" },
+      {
+        at: "2026-10-01T08:30:00Z",
+        aggregation: "mean",
+        temporality: "forecast",
+        forecast: { issuedAt: "2026-10-01T07:00:00.000Z", leadTime: { value: 5400, unit: "s" } },
+      },
+    ),
+  ]);
   for (const [at, amount] of [
     ["2026-09-29T07:00:00Z", "1.4590"],
     ["2026-09-29T15:00:00Z", "1.4790"],

@@ -105,6 +105,36 @@ describe("planEviction over the cap", () => {
     expect(all.length - evict.length).toBeGreaterThanOrEqual(6);
   });
 
+  it("drops what is left of the thinned windows before it cuts into any hot window", () => {
+    const situationFeed = [0, 1, 2, 60].map((h) => payload("nl-ndw", "situation", h));
+    const observationFeed = [0, 1, 2, 10, 20].map((h) => payload("nl-ndw-flow", "observation", h));
+    const rows = [...situationFeed, ...observationFeed];
+    const { evict, rung, hotEvicted } = planEviction(rows, policy({ maxBytes: 800 }));
+    expect(evict).toEqual([situationFeed[3]]);
+    expect(rung).toBe(2);
+    expect(hotEvicted).toEqual([]);
+  });
+
+  it("names only the sources that lost a hot-window payload", () => {
+    const situationFeed = [0, 1, 2, 60].map((h) => payload("nl-ndw", "situation", h));
+    const observationFeed = [0, 1, 2, 10, 20].map((h) => payload("nl-ndw-flow", "observation", h));
+    const { evict, rung, hotEvicted } = planEviction(
+      [...situationFeed, ...observationFeed],
+      policy({ maxBytes: 700 }),
+    );
+    expect(evict).toEqual([situationFeed[3], observationFeed[4]]);
+    expect(rung).toBe(3);
+    expect(hotEvicted).toEqual(["nl-ndw-flow"]);
+  });
+
+  it("plans a large archive in linear time per source", () => {
+    const rows = series("nl-ndw-flow", "observation", 48, 0.1);
+    expect(rows.length).toBeGreaterThan(28_000);
+    const started = performance.now();
+    planEviction(rows, policy({ maxBytes: 100 * 100 }));
+    expect(performance.now() - started).toBeLessThan(1000);
+  });
+
   it("keeps a pinned payload even when nothing else fits under the cap", () => {
     const pinned = payload("nl-ndw", "situation", 10, { protected: true });
     const { evict, rung } = planEviction([...all, pinned], policy({ maxBytes: 1 }));

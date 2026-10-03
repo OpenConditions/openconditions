@@ -192,6 +192,31 @@ describe("the subscriber filter on records", () => {
     expect(ids({ minEvidenceTier: "self_reported" })).toEqual([1, 2, 3]);
   });
 
+  it("passes a crowd update that turns negated or expired, whatever the tier asked for", () => {
+    const turned = ["negated", "expired"].map((state, i) => ({
+      ...entry(crowdAccident(state), 10 + i),
+      operation: "update" as const,
+    }));
+    expect(applyRecordFilter(turned, undefined, NOW).map((e) => e.seq)).toEqual([10, 11]);
+    expect(
+      applyRecordFilter(turned, { minEvidenceTier: "externally_resolved" }, NOW).map((e) => e.seq),
+    ).toEqual([10, 11]);
+    expect(applyRecordFilter(turned, { kinds: ["closure"] }, NOW)).toEqual([]);
+  });
+
+  it("sends a withdrawn crowd report as a retraction, never with what it said", () => {
+    const turned = ["negated", "expired"].map((state, i) => ({
+      ...entry(crowdAccident(state), 10 + i),
+      operation: "update" as const,
+    }));
+    const out = applyRecordFilter(turned, undefined, NOW);
+    expect(out.map((e) => [e.operation, e.reason, e.record])).toEqual([
+      ["delete", "withdrawn", undefined],
+      ["delete", "expired", undefined],
+    ]);
+    expect(out.every((e) => e.tombstone === true)).toBe(true);
+  });
+
   it("filters by class, kind, domain and property, from the journal's columns", () => {
     expect(ids({ kinds: ["closure"] })).toEqual([1]);
     expect(ids({ classes: ["observation"] })).toEqual([]);

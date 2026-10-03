@@ -8,6 +8,7 @@ import {
 } from "@openconditions/model-roads";
 import type { LaneStatus, Restriction, RoadEvent } from "../model.js";
 import { vehicleClassesOf } from "../routing.js";
+import { localAccessExceptionOf } from "./local-access.js";
 import { text } from "./location.js";
 
 type Applicability = Effect["applicability"];
@@ -20,6 +21,27 @@ export function applicabilityOf(event: RoadEvent): Applicability {
   return classes === null
     ? { kind: "unknown", raw }
     : { kind: "classes", include: classes.map((c) => ({ class: c })), raw };
+}
+
+/**
+ * Which vehicles a closure of the event applies to: as its vehicle terms say,
+ * but open to local access or residents when a closure of every vehicle is
+ * excepted for them, in the source's words or by WZDx `local-access-only`.
+ */
+function closureApplicability(event: RoadEvent): Applicability {
+  const applicability = applicabilityOf(event);
+  if (applicability.kind !== "all") return applicability;
+  const stated = localAccessExceptionOf([
+    event.headline,
+    event.description,
+    ...(event.situation?.headline ?? []).map((t) => t.text),
+    ...(event.situation?.description ?? []).map((t) => t.text),
+    ...(event.situation?.comments ?? []).flatMap((c) => c.text.map((t) => t.text)),
+  ]);
+  if (stated) return { kind: "all", except: [{ usage: stated.usage }], raw: [stated.phrase] };
+  if (event.restrictions?.some((r) => r.type === "local-access-only"))
+    return { kind: "all", except: [{ usage: "local_access" }], raw: ["local-access-only"] };
+  return applicability;
 }
 
 const DIMENSIONS: Record<string, Extract<Effect, { kind: "dimension_limit" }>["dimension"]> = {
@@ -208,13 +230,13 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
   };
   const drafts: Draft[] = [];
   const mandatory = { applicability, compliance: "mandatory", normalization: "complete" };
+  const closure = { scope: "road", ...mandatory, applicability: closureApplicability(event) };
 
   const closed = event.roadState === "closed";
   // With the restriction contract present, its facts decide which vehicles the
   // closure applies to; an all-vehicle closure next to them would contradict it.
   const contract = event.restrictionDetails !== undefined;
-  if (closed && !contract)
-    drafts.push({ kind: "closure", fields: { scope: "road", ...mandatory } });
+  if (closed && !contract) drafts.push({ kind: "closure", fields: closure });
   if (
     !closed &&
     (event.lanesAffected || event.roadState === "some_lanes_closed" || ctx.laneClosureNature)
@@ -304,7 +326,7 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     event.type !== "detour" &&
     !drafts.some((d) => d.kind === "closure" || d.kind === "lane_restriction")
   ) {
-    drafts.unshift({ kind: "closure", fields: { scope: "road", ...mandatory } });
+    drafts.unshift({ kind: "closure", fields: closure });
   }
 
   const perKind = new Map<string, number>();

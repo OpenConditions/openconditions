@@ -441,6 +441,17 @@ export const federationTombstone = conditionsSchema.table(
 );
 
 /**
+ * The erasures the kept nightly archive files are already free of, each
+ * `id:<record id>` or `canonical:<canonical id>`, so a night rescans the files
+ * only for an erasure it has not applied. Kept in the database, not beside the
+ * files, because the archive directory is served as it is.
+ */
+export const archiveErasure = conditionsSchema.table("archive_erasure", {
+  key: text("key").primaryKey(),
+  appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
  * This instance's rotating token-issuer keypairs, each valid across a
  * [not_before, not_after) window.
  */

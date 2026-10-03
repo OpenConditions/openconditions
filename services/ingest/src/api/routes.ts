@@ -330,24 +330,37 @@ export function registerApiRoutes(
       return reply.status(404).send({ error: "no such situation" });
     }
     const [egress] = permissiveRecords([record as unknown as EgressRecord]) as unknown as Rec[];
-    const [binding] = await sql<
-      { status: string; confidence: number | null; direction_mode: string; bound_at: Date }[]
+    // The situation's place binds as effect '', and each effect with a place
+    // of its own binds on its own: that binding is the one routing reads.
+    const bindings = await sql<
+      {
+        effect_id: string;
+        status: string;
+        confidence: number | null;
+        direction_mode: string;
+        bound_at: Date;
+      }[]
     >`
-      SELECT status, confidence, direction_mode, bound_at FROM conditions.record_binding
-       WHERE record_class = 'situation' AND record_id = ${id} AND effect_id = ''`;
+      SELECT effect_id, status, confidence, direction_mode, bound_at
+        FROM conditions.record_binding
+       WHERE record_class = 'situation' AND record_id = ${id}
+       ORDER BY effect_id`;
+    const shown = (b: (typeof bindings)[number]) => ({
+      status: b.status,
+      confidence: b.confidence,
+      directionMode: b.direction_mode,
+      boundAt: b.bound_at.toISOString(),
+    });
+    const situationBinding = bindings.find((b) => b.effect_id === "");
     const at = q.at ? new Date(q.at) : new Date();
     cacheFor(reply, [egress!], at);
     reply.header("X-Data-License", licensesOf([egress!]));
     return reply.send({
       record: egress,
-      binding: binding
-        ? {
-            status: binding.status,
-            confidence: binding.confidence,
-            directionMode: binding.direction_mode,
-            boundAt: binding.bound_at.toISOString(),
-          }
-        : null,
+      binding: situationBinding ? shown(situationBinding) : null,
+      effectBindings: Object.fromEntries(
+        bindings.filter((b) => b.effect_id !== "").map((b) => [b.effect_id, shown(b)]),
+      ),
     });
   });
 
@@ -355,20 +368,18 @@ export function registerApiRoutes(
     const { class: raw, id } = req.params as { class: string; id: string };
     const cls = parse(RecordClassParam, raw, reply);
     if (!cls) return reply;
-    const revisions = await readRevisions(sql, cls, id);
-    const permissive = revisions.filter((r) =>
+    const stored = await readRevisions(sql, cls, id);
+    const permissive = stored.filter((r) =>
       isPermissiveRecord(r.record as unknown as EgressRecord),
     );
     if (permissive.length === 0) return reply.status(404).send({ error: "no such record" });
+    const revisions = permissive.map((r) => ({
+      ...r,
+      record: permissiveRecords([r.record as unknown as EgressRecord])[0] as unknown as Rec,
+    }));
     reply.header("Cache-Control", `public, max-age=${MAX_CACHE_SECONDS}`);
-    return reply.send({
-      class: cls,
-      id,
-      revisions: permissive.map((r) => ({
-        ...r,
-        record: permissiveRecords([r.record as unknown as EgressRecord])[0],
-      })),
-    });
+    reply.header("X-Data-License", licensesOf(revisions.map((r) => r.record)));
+    return reply.send({ class: cls, id, revisions });
   });
 
   /**
@@ -544,6 +555,11 @@ export function registerApiRoutes(
       return reply.status(400).send({
         error: "several sources report this series; name one with `source`",
         sources: read.sources,
+      });
+    }
+    if (read.status === "no_history") {
+      return reply.status(400).send({
+        error: `this ${read.property} series keeps no history; its reading in effect is at /observations/latest`,
       });
     }
     if (read.status === "no_rollup") {

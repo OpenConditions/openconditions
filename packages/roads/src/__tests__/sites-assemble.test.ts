@@ -33,6 +33,15 @@ const assemble = (readings: FlowReading[], format = "digitraffic") =>
   flowOutput(readings, { source, format, ctx });
 
 describe("flowOutput", () => {
+  it("lets derived congestion lapse unless a later poll derives it again", () => {
+    const { situations } = assemble([reading({ speedKph: 5, los: "stationary" })]);
+    expect(situations).toHaveLength(1);
+    expect(situations[0]!["freshness"]).toMatchObject({
+      fetchedAt: "2026-09-18T10:00:30.000Z",
+      expiresAt: "2026-09-18T10:15:30.000Z",
+    });
+  });
+
   it("makes one site per source site and one reading per property", () => {
     const { features, observations } = assemble([reading({ speedKph: 87, los: "free_flow" })]);
     expect(features).toHaveLength(1);

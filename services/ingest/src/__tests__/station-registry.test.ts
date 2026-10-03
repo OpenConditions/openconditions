@@ -55,6 +55,22 @@ describe("loadStationRegistry", () => {
     expect(out?.get("1")?.geometry).toEqual({ type: "Point", coordinates: [24.9, 60.2] });
   });
 
+  it("archives the registry byte for byte as it was fetched", async () => {
+    // A byte-order mark and a byte that is not UTF-8: decoding to text and back changes both.
+    const sent = Buffer.concat([
+      Buffer.from([0xef, 0xbb, 0xbf]),
+      Buffer.from(geojson),
+      Buffer.from([0x0a, 0xff]),
+    ]);
+    const fetchFn = (async () =>
+      new Response(new Uint8Array(sent), { status: 200 })) as unknown as typeof fetch;
+    let archived: Buffer | undefined;
+    await loadStationRegistry(feed(REG), fetchFn, Date.now, async (body) => {
+      archived = body;
+    });
+    expect(archived?.equals(sent)).toBe(true);
+  });
+
   it("forwards the feed's requestHeaders on the registry fetch when declared", async () => {
     let seenHeaders: Record<string, string> | undefined;
     const capturingFetch = (async (_url: string, init?: RequestInit) => {

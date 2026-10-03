@@ -1,3 +1,5 @@
+import { listCanonicalFeatures } from "@openconditions/core";
+import { observationId } from "@openconditions/model";
 import { writeSnapshot } from "@openconditions/storage";
 import Fastify from "fastify";
 import type postgres from "postgres";
@@ -8,6 +10,7 @@ import {
   goldenFacilities,
   INSTANCE,
   landEvseReport,
+  landPlacePriceReport,
   NOW,
   type SourceDrafts,
   STATION,
@@ -138,6 +141,27 @@ describe("GET /features", () => {
     expect(await list("origin=crowd")).toEqual([]);
     expect(await list("domain=roads")).toEqual([]);
     expect(await list("kind=fuel_station&type=nothing")).toEqual([]);
+  });
+
+  it("finds the canonical clusters of a box through the spatial index, not a scan of every cluster", async () => {
+    const plans: string[] = [];
+    const explaining = {
+      execute: async <T>(query: string, params?: unknown[]): Promise<T> => {
+        await sql.begin(async (tx) => {
+          // Rule out the scan the planner prefers on a table this small, so
+          // the plan shows whether an index path exists at all.
+          await tx`SET LOCAL enable_seqscan = off`;
+          const rows = await tx.unsafe(`EXPLAIN ${query}`, params as never);
+          plans.push(rows.map((r) => r["QUERY PLAN"]).join("\n"));
+        });
+        return [] as T;
+      },
+    };
+    await listCanonicalFeatures(explaining, { bbox: [-4, 40, -3, 41], limit: 10 });
+    // The box picks the features, and each one's cluster is looked up by
+    // member: no walk over every cluster in id order.
+    expect(plans[0]).toMatch(/idx_feature_geom/);
+    expect(plans[0]).toMatch(/idx_feature_canonical_members/);
   });
 
   it("serves the canonical view: one record per cluster, carrying its members", async () => {
@@ -349,6 +373,65 @@ describe("GET /observations/latest", () => {
     expect(records.filter((r) => r["property"] === "traffic.speed")).toHaveLength(2);
   });
 
+  it("serves a place's readings, crowd and feed, in the canonical view: nothing fuses a place", async () => {
+    const location = {
+      geometry: { type: "Point", coordinates: [-3.7, 40.4] },
+      extent: "point",
+      geometryOrigin: "source",
+      fuzziness: "exact",
+      admin: { country: "ES" },
+    };
+    const average: Rec = {
+      class: "observation",
+      kind: "observation",
+      property: "fuel.price",
+      temporality: "live",
+      subject: { kind: "location" },
+      qualifiers: { product: "e5" },
+      location,
+      provenance: {
+        origin: "feed",
+        sourceId: "es-minetur",
+        sourceFormat: "minetur",
+        accessMode: "bulk",
+        recordId: "avg-e5",
+        attribution: { provider: "MINETUR", license: "CC-BY-4.0" },
+        privacy: { class: "authoritative" },
+      },
+      freshness: { fetchedAt: "2026-09-22T11:10:00.000Z" },
+      result: { type: "money", amount: "1.700", currency: "EUR", per: "L" },
+      phenomenonTime: { instant: "2026-09-22T11:00:00.000Z" },
+      aggregation: "mean",
+    };
+    average["id"] = observationId("es-minetur", average as never);
+    const summary = await writeSnapshot(
+      sql,
+      "es-minetur",
+      { observations: [average] },
+      {
+        registry: facilitiesRegistry,
+        instanceId: INSTANCE,
+        now: "2026-09-22T11:10:00.000Z",
+        complete: false,
+      },
+    );
+    expect(summary.rejected).toEqual([]);
+    const crowd = await landPlacePriceReport(sql, { location, nonce: "nonce-place-00001" });
+    try {
+      const perSource = ids(
+        (await get("/observations/latest?property=fuel.price&limit=5000")).body,
+      );
+      expect(perSource).toEqual(expect.arrayContaining([average["id"], crowd]));
+      const canonical = ids(
+        (await get("/observations/latest?canonical=1&property=fuel.price&limit=5000")).body,
+      );
+      expect(canonical).toEqual(expect.arrayContaining([average["id"], crowd]));
+    } finally {
+      await sql`DELETE FROM conditions.observation_latest
+                 WHERE subject_kind = 'location' AND property = 'fuel.price'`;
+    }
+  });
+
   it("strips a crowd reporter, and withholds a share-alike crowd reading", async () => {
     const site = golden.get("de-bw-ocpdb")!.features[0]!;
     const component = (site["components"] as Rec[]).find((c) => c["kind"] === "evse")!;
@@ -524,6 +607,28 @@ describe("GET /observations (one series)", () => {
     expect(
       (await get(url("from=2026-09-22T12:00:00Z&to=2026-09-22T00:00:00Z"))).res.statusCode,
     ).toBe(400);
+  });
+
+  it("says a lane keeps no history instead of answering an empty page", async () => {
+    await writeSiteReadings(
+      sql,
+      "nl-ndw-flow",
+      [
+        {
+          site: "h1",
+          geometry: { type: "Point", coordinates: [4.5, 52.0] },
+          at: T1,
+          speed: 88,
+          componentKey: "lane1",
+        },
+      ],
+      T1,
+    );
+    const { res, body } = await get(
+      `/observations?subject=${enc(site)}&component=lane1&property=traffic.speed`,
+    );
+    expect(res.statusCode).toBe(400);
+    expect(body["error"]).toMatch(/keeps no history.*\/observations\/latest/);
   });
 
   it("names a series by a record id and a component too", async () => {

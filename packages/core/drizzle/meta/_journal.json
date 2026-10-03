@@ -414,6 +414,13 @@
       "when": 1791017752997,
       "tag": "0058_latest_source_index",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1791033128183,
+      "tag": "0059_archive_erasure",
+      "breakpoints": true
     }
   ]
 }

@@ -38,7 +38,7 @@ async function boot() {
 
   const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
   const registry = productionRegistry();
-  await assertStoredCodesRegistered(sql, registry);
+  await assertStoredCodesRegistered(sql, registry, { sourceFormats: false });
   const app = await build({ sql, registry });
 
   // Feed-arrives-later cross-match cron: re-runs the cross-validation over

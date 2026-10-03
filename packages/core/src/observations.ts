@@ -79,9 +79,10 @@ export interface LatestObservationQuery {
   sources?: readonly string[];
   origins?: readonly string[];
   /**
-   * The canonical view: the fused row of every fusable property and the
-   * per-source rows of the others. Otherwise per-source and crowd rows, and
-   * no fused row.
+   * The canonical view: the fused row of every fusable property of a
+   * feature and the per-source rows of the others, and every reading of a
+   * subject that is not a feature (a place: fusion does not cover it).
+   * Otherwise per-source and crowd rows, and no fused row.
    */
   canonical?: boolean;
   /** The instant readings are current at: not past their expiry. Default now. */
@@ -122,10 +123,12 @@ export async function listLatestObservations(
     "(l.evidence_state IS NULL OR l.evidence_state NOT IN ('expired', 'negated'))",
   ];
   if (q.canonical) {
+    // Fusion covers features only: a place's readings, crowd ones among
+    // them, have no fused row to stand for them and are served as they are.
     const fusable = [...fusableProperties(registry)];
     clauses.push(
-      `(l.source_id = ${p(FUSED_SOURCE_ID)} OR (l.property <> ALL(${p(fusable)}::text[])
-         AND l.source_id <> ${p(CROWD_SOURCE_ID)}))`,
+      `(l.source_id = ${p(FUSED_SOURCE_ID)} OR l.subject_kind <> 'feature'
+         OR (l.property <> ALL(${p(fusable)}::text[]) AND l.source_id <> ${p(CROWD_SOURCE_ID)}))`,
     );
   } else {
     clauses.push(`l.source_id <> ${p(FUSED_SOURCE_ID)}`);
@@ -245,7 +248,9 @@ export type SeriesRead =
   | SeriesFound
   | { status: "none" }
   | { status: "ambiguous"; sources: string[] }
-  | { status: "no_rollup"; property: string };
+  | { status: "no_rollup"; property: string }
+  /** A series kept as its reading in effect only (a lane's, say): it has no range to read. */
+  | { status: "no_history"; property: string };
 
 const iso = (v: unknown) => (v instanceof Date ? v : new Date(String(v))).toISOString();
 
@@ -265,8 +270,11 @@ export async function readSeries(
   const entry = registry.property(selector.property);
   if (entry === undefined) return { status: "none" };
   const qualifiers = qualifierKey(selector.qualifiers);
-  const candidates = await db.execute<{ series_id: string; source_id: string; template: Rec }[]>(
-    `SELECT series_id::text AS series_id, source_id, template FROM conditions.observation_latest
+  const candidates = await db.execute<
+    { series_id: string; source_id: string; template: Rec; retention_days: number | null }[]
+  >(
+    `SELECT series_id::text AS series_id, source_id, template, retention_days
+       FROM conditions.observation_latest
       WHERE subject_key = $1 AND property = $2 AND qualifier_key = $3 AND source_id <> $4
         AND ($5::text IS NULL OR source_id = $5)
       ORDER BY source_id`,
@@ -283,6 +291,8 @@ export async function readSeries(
     return { status: "ambiguous", sources: candidates.map((c) => c.source_id) };
   }
   const [series] = candidates as [(typeof candidates)[number]];
+  // A series without a retention keeps no readings beyond the one in effect.
+  if (series.retention_days === null) return { status: "no_history", property: entry.code };
   const resolution = seriesResolution(entry, {
     from: q.from,
     now: q.now ?? new Date(),

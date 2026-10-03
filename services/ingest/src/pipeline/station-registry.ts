@@ -68,9 +68,11 @@ export async function loadStationRegistry(
     if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${redact(reg.url)}`);
     const parse = PARSERS[reg.format];
     if (!parse) throw new Error(`no station-registry parser for ${reg.format}`);
-    const body = await res.text();
-    await capture?.(Buffer.from(body), redact(reg.url));
-    const map = parse(body);
+    // The archive keeps the bytes as fetched; the parser reads them as
+    // `Response.text()` would (UTF-8, a byte-order mark dropped).
+    const bytes = Buffer.from(await res.arrayBuffer());
+    await capture?.(bytes, redact(reg.url));
+    const map = parse(new TextDecoder().decode(bytes));
     cache.set(reg.url, { map, fetchedAt: now() });
     return map;
   } catch (err) {

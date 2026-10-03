@@ -10,6 +10,8 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
 
 const HOUR = 3_600_000;
 const NOW = Date.parse("2026-10-20T12:00:00Z");
+/** When a record or reading that is still moving last changed. */
+const RECENT = new Date(NOW - 60 * 60 * 1000).toISOString();
 
 let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
 let sql: postgres.Sql;
@@ -26,14 +28,15 @@ afterAll(async () => {
 
 beforeEach(async () => {
   dir = mkdtempSync(path.join(tmpdir(), "oc-raw-"));
-  await sql`TRUNCATE conditions.raw_payload, conditions.situation, conditions.source_status CASCADE`;
+  await sql`TRUNCATE conditions.raw_payload, conditions.situation, conditions.feature,
+    conditions.offer, conditions.observation_latest, conditions.source_status CASCADE`;
   return () => rmSync(dir, { recursive: true, force: true });
 });
 
 /** Archives `count` distinct payloads of a source, one an hour, the newest `newestHoursAgo` ago. */
 async function archive(
   sourceId: string,
-  tier: "situation" | "hot",
+  tier: "situation" | "hot" | "observation" | "reference",
   count: number,
   newestHoursAgo = 0,
 ) {
@@ -41,7 +44,8 @@ async function archive(
   const hashes: string[] = [];
   for (let i = 0; i < count; i++) {
     const at = new Date(NOW - (newestHoursAgo + i) * HOUR);
-    const body = Buffer.from(`${sourceId} payload ${i} ${"x".repeat(200)}`);
+    // Named by its age, so payloads archived by separate calls stay distinct.
+    const body = Buffer.from(`${sourceId} payload ${newestHoursAgo + i} ${"x".repeat(200)}`);
     const digest = digestPayload(`https://${sourceId}.example/feed`, body);
     await raw.capture(
       { sourceId, fetchId: i + 1, fetchedAt: at, tier, url: digest.url },
@@ -84,9 +88,55 @@ describe("evictRawPayloads", () => {
         recorded_at, content_hash, fetched_at, severity, certainty, planned, validity_status)
       VALUES ('oc:situation:nl-ndw:a', ${sql.json({ provenance: { rawRef: { hash: hashes[0] } } })},
         'c', 'incident', 'roads', 'live', 'nl-ndw', 'a', 'feed', 'bulk', 'authoritative',
-        'local', 1, now(), 'h', now(), 'unknown', 'unknown', false, 'active')`;
+        'local', 1, ${RECENT}, 'h', ${RECENT}, 'unknown', 'unknown', false, 'active')`;
     const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
     expect(result.evict.map((r) => r.hash)).not.toContain(hashes[0]);
+  });
+
+  it("keeps a payload a live feature or a series' reading in effect was read from", async () => {
+    const [site] = await archive("nl-ndw-flow", "reference", 1, 20 * 24);
+    const [reading] = await archive("nl-ndw-flow", "observation", 1, 19 * 24);
+    await archive("nl-ndw-flow", "observation", 3);
+    await sql`
+      INSERT INTO conditions.feature (id, record, canonical_id, kind, domain, temporality,
+        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
+        recorded_at, content_hash, fetched_at, lifecycle)
+      VALUES ('oc:feature:nl-ndw-flow:s1', ${sql.json({ provenance: { rawRef: { hash: site } } })},
+        'c', 'measurement_site', 'roads', 'static', 'nl-ndw-flow', 's1', 'feed', 'bulk',
+        'authoritative', 'local', 1, ${RECENT}, 'h', ${RECENT}, 'operational')`;
+    await sql`
+      INSERT INTO conditions.observation_latest (subject_key, property, source_id, subject_kind,
+        reading, template, template_hash, access_mode, result_type, effective_from, since_at,
+        updated_at)
+      VALUES ('feature:oc:feature:nl-ndw-flow:s1', 'traffic.speed', 'nl-ndw-flow', 'feature',
+        ${sql.json({ provenance: { rawRef: { hash: reading } } })}, '{}'::jsonb, '', 'bulk',
+        'quantity', ${RECENT}, ${RECENT}, ${RECENT})`;
+    const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
+    expect(result.evict.map((r) => r.hash)).not.toContain(site);
+    expect(result.evict.map((r) => r.hash)).not.toContain(reading);
+  });
+
+  it("stops keeping a payload for a site or a reading that has not moved for weeks", async () => {
+    const [site] = await archive("de-bw-ocpdb", "observation", 1, 30 * 24);
+    const [reading] = await archive("de-bw-ocpdb", "observation", 1, 29 * 24);
+    await archive("de-bw-ocpdb", "observation", 3);
+    const weeksAgo = new Date(NOW - 28 * 24 * HOUR).toISOString();
+    await sql`
+      INSERT INTO conditions.feature (id, record, canonical_id, kind, domain, temporality,
+        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
+        recorded_at, content_hash, fetched_at, lifecycle)
+      VALUES ('oc:feature:de-bw-ocpdb:old', ${sql.json({ provenance: { rawRef: { hash: site } } })},
+        'c2', 'charging_site', 'charging', 'static', 'de-bw-ocpdb', 'old', 'feed', 'bulk',
+        'authoritative', 'local', 1, ${weeksAgo}, 'h', ${weeksAgo}, 'operational')`;
+    await sql`
+      INSERT INTO conditions.observation_latest (subject_key, property, source_id, subject_kind,
+        reading, template, template_hash, access_mode, result_type, effective_from, since_at,
+        updated_at)
+      VALUES ('feature:oc:feature:de-bw-ocpdb:old', 'charging.evse_status', 'de-bw-ocpdb',
+        'feature', ${sql.json({ provenance: { rawRef: { hash: reading } } })}, '{}'::jsonb, '',
+        'bulk', 'category', ${weeksAgo}, ${weeksAgo}, ${weeksAgo})`;
+    const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
+    expect(result.evict.map((r) => r.hash)).toEqual(expect.arrayContaining([site, reading]));
   });
 
   it("over the cap, warns on the sources that lost hot-window payloads", async () => {

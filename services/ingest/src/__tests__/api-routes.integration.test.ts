@@ -310,6 +310,19 @@ describe("GET /situations/{id}", () => {
     expect(body).toMatchObject({
       record: { id: "oc:situation:de-autobahn:one" },
       binding: { status: "exact", confidence: 0.9, directionMode: "single" },
+      effectBindings: {},
+    });
+    // An effect with a place of its own is bound on its own: shown per effect.
+    await bindSituation(sql, "oc:situation:de-autobahn:one", {
+      effectId: "one/closure",
+      status: "likely",
+      confidence: 0.6,
+      generation: "g",
+      resolverVersion: "2.0.0",
+    });
+    expect((await get(url)).body).toMatchObject({
+      binding: { status: "exact" },
+      effectBindings: { "one/closure": { status: "likely", confidence: 0.6 } },
     });
     await writeSituations(sql, "de-autobahn", [], "2026-09-06T11:00:00.000Z");
     expect((await get(url)).body).toMatchObject({
@@ -323,13 +336,14 @@ describe("GET /history/{class}/{id}", () => {
   it("lists a situation's revisions oldest first with what changed", async () => {
     await writeSituations(sql, "de-autobahn", [at("h", 6.81, 51.2)]);
     await writeSituations(sql, "de-autobahn", [], "2026-09-06T11:00:00.000Z");
-    const { body } = await get(
+    const { res, body } = await get(
       `/history/situation/${encodeURIComponent("oc:situation:de-autobahn:h")}`,
     );
     expect((body["revisions"] as Rec[]).map((r) => [r["revision"], r["changeKinds"]])).toEqual([
       [1, ["created"]],
       [2, ["tombstoned"]],
     ]);
+    expect(res.headers["x-data-license"]).toBe("DL-DE-BY-2.0");
     expect((await get("/history/situation/unknown")).res.statusCode).toBe(404);
     expect((await get("/history/event/x")).res.statusCode).toBe(400);
   });

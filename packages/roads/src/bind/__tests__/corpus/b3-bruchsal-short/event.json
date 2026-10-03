@@ -4,6 +4,6 @@
     "type": "LineString",
     "coordinates": [[8.526425, 49.045098], [8.52647, 49.045183]]
   },
-  "type": "lane_closure",
+  "type": "roadworks",
   "refs": ["B3"]
 }

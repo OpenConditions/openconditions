@@ -146,6 +146,11 @@ describe("raw payload capture", () => {
       f.startsWith(".tmp-"),
     );
     expect(leftovers).toEqual([]);
+    const attempts = await sql<{ outcome: string; finished_at: Date | null }[]>`
+      SELECT outcome, finished_at FROM conditions.source_poll_attempt`;
+    expect(attempts).toHaveLength(1);
+    expect(attempts[0]!.outcome).toBe("failed");
+    expect(attempts[0]!.finished_at).not.toBeNull();
   });
 
   it("closes the attempt as failed when a poll throws", async () => {

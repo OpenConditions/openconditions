@@ -7557,6 +7557,7 @@
             "public_transport",
             "taxi",
             "delivery",
+            "local_access",
             "residents",
             "permit_holders",
             "military",

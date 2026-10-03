@@ -70,11 +70,23 @@ export interface RecordFilter {
   privacyClasses?: string[];
   /** Drop share-alike records (default true). */
   permissiveOnly?: boolean;
-  /** Weakest crowd evidence to pass (default "corroborated"); feed records are never gated by it. */
+  /**
+   * Weakest crowd evidence to pass (default "corroborated"); feed records are
+   * never gated by it, and neither is a negated or expired crowd record.
+   */
   minEvidenceTier?: string;
   /** Drop records last stated more than this many seconds ago. */
   maxAgeSec?: number;
 }
+
+/**
+ * Crowd states that withdraw a report. They have no tier rank, yet must pass
+ * the tier gate: the filter cannot know whether the subscriber holds the
+ * corroborated copy, and a subscriber that does would otherwise keep showing
+ * it until the origin's delete arrives. A withdrawn report claims nothing a
+ * subscriber could act on, so passing it to one that never held it is harmless.
+ */
+const WITHDRAWN_STATES = new Set(["negated", "expired"]);
 
 const TIER_RANK = new Map<string, number>(EVIDENCE_TIERS.map((tier, rank) => [tier, rank]));
 
@@ -135,6 +147,19 @@ export function applyRecordFilter<R extends FederatedRecord>(
           ? filter?.properties?.includes(entry.property ?? "")
           : filter?.kinds?.includes(entry.kind);
       if (!listed) continue;
+    }
+    if (isCrowd(record) && WITHDRAWN_STATES.has(record.evidence?.state ?? "")) {
+      // A report the crowd withdrew goes out as a retraction: a subscriber
+      // holding it ends its copy, and one the tier kept it from learns
+      // nothing of what it said.
+      const { record: _content, ...ref } = entry;
+      out.push({
+        ...ref,
+        operation: "delete",
+        tombstone: true,
+        reason: record.evidence?.state === "expired" ? "expired" : "withdrawn",
+      });
+      continue;
     }
     if (isCrowd(record)) {
       const rank = TIER_RANK.get(record.evidence?.state ?? "");

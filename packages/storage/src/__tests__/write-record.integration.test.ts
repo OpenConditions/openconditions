@@ -191,6 +191,59 @@ describe("writeRecord with a stored record", () => {
     const [row] = await sql`SELECT instance_id, revision FROM conditions.situation`;
     expect(row).toEqual({ instance_id: "test.local", revision: 1 });
   });
+
+  it("lets this instance's own poll take over a peer's copy of the same content", async () => {
+    const own = situationDraft("p1", {
+      id: "oc:situation:be-flanders:p1",
+      provenance: {
+        ...(situationDraft("p1")["provenance"] as object),
+        sourceId: "be-flanders",
+        recordId: "p1",
+      },
+    });
+    await writeRecord(sql, { stored: peerRecord(3) }, ctx(T1));
+    const summary = await writeSnapshot(
+      sql,
+      "be-flanders",
+      { situations: [own] },
+      { ...ctx(T2), complete: true },
+    );
+    expect(summary.counts.situation).toMatchObject({ updated: 1, unchanged: 0 });
+    expect(summary.changed).toEqual([
+      { class: "situation", id: "oc:situation:be-flanders:p1", revision: 4 },
+    ]);
+    const [row] = await sql`
+      SELECT instance_id, revision, record #>> '{provenance,instanceId}' AS sealed_by,
+             recorded_at
+        FROM conditions.situation`;
+    expect(row).toEqual({
+      instance_id: "test.local",
+      revision: 4,
+      sealed_by: "test.local",
+      recorded_at: new Date(T2),
+    });
+    expect(await writeRecord(sql, { stored: peerRecord(5) }, ctx(T2))).toMatchObject({
+      status: "foreign",
+    });
+  });
+
+  it("lets a draft written here take over a peer's copy of the same content", async () => {
+    const own = situationDraft("p1", {
+      id: "oc:situation:be-flanders:p1",
+      provenance: {
+        ...(situationDraft("p1")["provenance"] as object),
+        sourceId: "be-flanders",
+        recordId: "p1",
+      },
+    });
+    await writeRecord(sql, { stored: peerRecord(3) }, ctx(T1));
+    expect(await writeRecord(sql, { draft: own }, ctx(T2))).toMatchObject({
+      status: "updated",
+      revision: 4,
+    });
+    const [row] = await sql`SELECT instance_id FROM conditions.situation`;
+    expect(row).toEqual({ instance_id: "test.local" });
+  });
 });
 
 describe("on-demand records", () => {

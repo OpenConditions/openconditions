@@ -37,6 +37,8 @@ export const VEHICLE_USAGES = [
   "public_transport",
   "taxi",
   "delivery",
+  /** Destination traffic: anyone with business on the road (German "Anlieger"). */
+  "local_access",
   "residents",
   "permit_holders",
   "military",

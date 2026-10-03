@@ -14,7 +14,7 @@
       [7.805181923, 49.458777839]
     ]
   },
-  "type": "road_closure",
+  "type": "closure",
   "refs": ["A6"],
   "direction": "Mannheim -> Kaiserslautern",
   "roadState": "closed"

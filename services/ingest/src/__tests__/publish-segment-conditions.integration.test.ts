@@ -399,6 +399,71 @@ describe("GET /segments/conditions.json", () => {
     });
   }, 30_000);
 
+  it("holds a roadworks phase effect without a window of its own to its phase", async () => {
+    const local = "phased";
+    const phaseFrom = "2026-09-06T12:00:00.000Z";
+    const phaseTo = "2026-09-06T14:00:00.000Z";
+    const base = closure(local);
+    try {
+      await writeSituations(
+        sql,
+        SOURCE,
+        [
+          {
+            ...base,
+            kind: "roadworks",
+            type: "works",
+            subtype: "maintenance",
+            effects: [],
+            details: {
+              kind: "roadworks",
+              v: 1,
+              phases: [
+                {
+                  id: "p1",
+                  validity: { status: "active", start: phaseFrom, end: phaseTo },
+                  effects: [
+                    {
+                      id: `${local}/closure`,
+                      kind: "closure",
+                      v: 1,
+                      scope: "road",
+                      applicability: { kind: "all" },
+                      compliance: "mandatory",
+                      normalization: "complete",
+                    },
+                  ],
+                },
+              ],
+            },
+          },
+        ],
+        NOW,
+        false,
+      );
+      await bind(local, "exact", [{ segmentId: SEGMENT_ID, wayId: 10, start: 0, end: 1 }]);
+      await withApp(async (app) => {
+        // 10:00 is inside the situation's window but before the phase.
+        expect(await conditionIds(app)).not.toContain(conditionId(local));
+        const res = await app.inject({
+          method: "GET",
+          url: "/segments/conditions.json?at=2026-09-06T13:00:00Z",
+        });
+        const phased = (res.json() as ConditionsBody).conditions.find(
+          (c) => c.id === conditionId(local),
+        );
+        expect(phased?.routing_evidence).toMatchObject({
+          valid_from: phaseFrom,
+          valid_to: phaseTo,
+        });
+      });
+    } finally {
+      await sql`DELETE FROM conditions.record_segment WHERE record_id = ${id(local)}`;
+      await sql`DELETE FROM conditions.record_binding WHERE record_id = ${id(local)}`;
+      await sql`DELETE FROM conditions.situation WHERE id = ${id(local)}`;
+    }
+  }, 30_000);
+
   it("returns nothing once every effect's validity has passed", async () => {
     await withApp(async (app) => {
       expect(await conditionIds(app, "/segments/conditions.json?at=2026-09-06T20:00:00Z")).toEqual(

@@ -4,7 +4,7 @@
     "type": "Point",
     "coordinates": [8.732881262862971, 50.485835073637304]
   },
-  "type": "hazard",
+  "type": "incident",
   "refs": ["A5"],
   "direction": "Frankfurt -> Kassel"
 }

@@ -97,13 +97,28 @@ ${OPENCONDITIONS_ARCHIVE_DIR:-./data/archive}/archive-<class>.parquet   (latest)
 ```
 
 - `OPENCONDITIONS_ARCHIVE_DIR` — output directory (default `./data/archive`).
+- `OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS` — nights of dated files to keep (default
+  `30`, a Tier 1 peer's backfill window; `0` keeps every night).
 - `ARCHIVE_CRON` — schedule override; `off` disables the job.
 
 The stable names move only once every dated file is written, each atomically, so
 a peer never reads a half-written file or a mix of two nights. The build is
 **best-effort**: an unwritable or misconfigured output directory is logged and
-swallowed, never crashing the scheduler. Dated files accumulate; pruning old
-nights is the operator's choice.
+swallowed, never crashing the scheduler. After writing, the build deletes the
+dated files of every night older than the newest
+`OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS`.
+
+An erasure reaches the kept nights too. After writing, each build rewrites
+every dated file that holds an erased record — one tombstoned `rights_revoked`,
+or one whose canonical id has an erasure fact in force (30 days) — without it,
+in place, and moves the class's stable name along when it points at that file.
+So an erased record leaves every dated file by the next nightly build. Each
+erasure is applied once: `conditions.archive_erasure` records the erasures the
+kept files are free of (in the database, because the archive directory is
+served), so a night reads the files only for a new erasure, and an erasure
+stays pending while any file failed to be rewritten. With the
+job off (`ARCHIVE_CRON=off`) nothing rewrites the files: an operator who keeps
+dated files and turns the job off removes erased records from them by hand.
 
 ## Deferred: z8 PMTiles snapshots
 

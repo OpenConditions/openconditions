@@ -116,6 +116,31 @@ describe("situations agree", () => {
     expect(situationsAgree(crowdRegistry, across, nearby)).toBe(true);
   });
 
+  it("anchors a report drawn as an area on the mean of its corners, each counted once", () => {
+    const area = {
+      ...crowdAccident,
+      location: {
+        geometry: {
+          type: "Polygon",
+          coordinates: [
+            [
+              [8.4, 49.0],
+              [8.43, 49.0],
+              [8.4, 49.03],
+              [8.4, 49.0],
+            ],
+          ],
+        },
+      },
+    };
+    // About 200 m from the corners' mean (8.41, 49.01), over 500 m from the
+    // mean with the closing corner counted twice.
+    const nearMean = feed({
+      location: { geometry: { type: "Point", coordinates: [8.4115, 49.0115] } },
+    });
+    expect(situationsAgree(crowdRegistry, area, nearMean)).toBe(true);
+  });
+
   it("uses the kind's match distance", () => {
     const queue = { ...crowdAccident, kind: "congestion", type: "congestion" };
     const away = { location: { geometry: { type: "Point", coordinates: [8.4, 49.004] } } };

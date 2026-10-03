@@ -27,7 +27,7 @@
       [7.133513032, 51.086668248]
     ]
   },
-  "type": "road_closure",
+  "type": "closure",
   "refs": ["A1"],
   "direction": "AS Burscheid (aus Richtung Leverkusen) nach A1",
   "roadState": "closed"

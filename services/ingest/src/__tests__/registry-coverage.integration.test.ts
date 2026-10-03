@@ -82,6 +82,29 @@ describe("boot coverage check", () => {
     await sql`DELETE FROM conditions.source`;
   }, 30_000);
 
+  it("ignores the format of a source no longer loaded", async () => {
+    await insertSource("nl-ndw", "datex2");
+    await insertSource("xx-retired", "retired-format");
+    await sql`UPDATE conditions.source SET active = false WHERE id = 'xx-retired'`;
+    expect((await storedRegistryCodes(sql)).sourceFormats).toEqual(["datex2"]);
+    await expect(assertStoredCodesRegistered(sql, productionRegistry())).resolves.toBeUndefined();
+    await sql`DELETE FROM conditions.source`;
+  }, 30_000);
+
+  it("lets a service that reads no feed boot before ingest has synced a retired format", async () => {
+    await insertSource("xx-old", "retired-format");
+    await expect(
+      assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false }),
+    ).resolves.toBeUndefined();
+    await insertRecord("situation", "oc:situation:nl-ndw:s3", "volcano");
+    const error = await assertStoredCodesRegistered(sql, productionRegistry(), {
+      sourceFormats: false,
+    }).catch((e) => e);
+    expect((error as RegistryCoverageError).gaps).toEqual(['situation kind "volcano"']);
+    await sql`DELETE FROM conditions.situation`;
+    await sql`DELETE FROM conditions.source`;
+  }, 30_000);
+
   it("reads the kinds of the class tables and the formats of the loaded sources", async () => {
     await insertRecord("situation", "oc:situation:nl-ndw:s1", "incident");
     await insertRecord("feature", "oc:feature:nl-ndw-flow:f1", "measurement_site");

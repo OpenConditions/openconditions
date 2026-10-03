@@ -132,9 +132,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 folds one phenomenon reported by several sources into one situation"
+              "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
-            "description": "1 folds one phenomenon reported by several sources into one situation"
+            "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
         "responses": {
@@ -276,9 +276,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 folds one phenomenon reported by several sources into one situation"
+              "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
-            "description": "1 folds one phenomenon reported by several sources into one situation"
+            "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
         "responses": {
@@ -420,9 +420,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 folds one phenomenon reported by several sources into one situation"
+              "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
-            "description": "1 folds one phenomenon reported by several sources into one situation"
+            "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
         "responses": {
@@ -564,9 +564,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 folds one phenomenon reported by several sources into one situation"
+              "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
-            "description": "1 folds one phenomenon reported by several sources into one situation"
+            "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
         "responses": {
@@ -708,9 +708,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 folds one phenomenon reported by several sources into one situation"
+              "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
-            "description": "1 folds one phenomenon reported by several sources into one situation"
+            "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
         "responses": {
@@ -827,7 +827,7 @@
     "/situations/{id}": {
       "get": {
         "operationId": "getSituation",
-        "summary": "One situation, tombstoned or not, with its evidence and graph binding.",
+        "summary": "One situation, tombstoned or not, with its evidence, the graph binding of its place (`binding`) and of each effect with a place of its own (`effectBindings`, by effect id).",
         "parameters": [
           {
             "name": "id",
@@ -1534,9 +1534,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 serves the canonical view: the fused reading of each property several sources or the crowd may report, and the per-source readings of the rest"
+              "description": "1 serves the canonical view: a feature's fused reading of each property several sources or the crowd may report, and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)"
             },
-            "description": "1 serves the canonical view: the fused reading of each property several sources or the crowd may report, and the per-source readings of the rest"
+            "description": "1 serves the canonical view: a feature's fused reading of each property several sources or the crowd may report, and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)"
           },
           {
             "name": "cursor",
@@ -1577,7 +1577,7 @@
     "/observations": {
       "get": {
         "operationId": "getSeries",
-        "summary": "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page.",
+        "summary": "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page. A series that keeps no history (a lane's or a vehicle class's) answers 400: its reading in effect is at `/observations/latest`.",
         "parameters": [
           {
             "name": "subject",

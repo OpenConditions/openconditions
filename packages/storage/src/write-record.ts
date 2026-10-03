@@ -12,11 +12,13 @@ import { updateCanonicalView } from "./canonical-view.js";
 import { expiryOf } from "./record-rows.js";
 import { writeObservationsIn } from "./write-observations.js";
 import {
+  DECIDED_TOMBSTONE_REASONS,
   REVISION_COLUMNS,
   type Rejection,
   refreshExpiries,
   revisionRow,
   storeRecords,
+  unchangedOwn,
   type WriteContext,
 } from "./write-records.js";
 
@@ -76,7 +78,8 @@ export async function writeRecord(
  * the next revision. A stored record is validated as it is and written only
  * when its revision is newer than the stored one, so a peer's late or
  * repeated delivery changes nothing but the expiry, and never over a record
- * another instance wrote. An observation goes to its series.
+ * another instance wrote, nor over a copy rejected or superseded here. An
+ * observation goes to its series.
  */
 export async function writeRecordIn(
   tx: Sql,
@@ -104,10 +107,11 @@ export async function writeRecordIn(
       record: Rec;
       expires_at: Date | null;
       instance_id: string;
+      tombstone_reason: string | null;
     }[]
   >(
     `SELECT content_hash, revision, tombstoned_at IS NOT NULL AS tombstoned, record, expires_at,
-            instance_id
+            instance_id, tombstone_reason
        FROM conditions.${cls} WHERE id = $1`,
     [id ?? ""],
   );
@@ -120,7 +124,7 @@ export async function writeRecordIn(
     } catch (err) {
       return reject(cls, id, (err as Error).message);
     }
-    if (existing && !existing.tombstoned && existing.content_hash === hash) {
+    if (existing && unchangedOwn(existing, hash, ctx.instanceId)) {
       if (expiryOf(input.draft) !== (existing.expires_at?.getTime() ?? null)) {
         await refreshExpiries(tx, cls, [input.draft]);
       }
@@ -140,6 +144,9 @@ export async function writeRecordIn(
     const instanceId = (sealed["provenance"] as Rec)["instanceId"];
     if (existing && existing.instance_id !== instanceId) {
       return { status: "foreign", class: cls, id: id!, revision: existing.revision };
+    }
+    if (existing?.tombstone_reason && DECIDED_TOMBSTONE_REASONS.has(existing.tombstone_reason)) {
+      return { status: "stale", class: cls, id: id!, revision: existing.revision };
     }
     if (existing && existing.revision >= (sealed["revision"] as number)) {
       if (

@@ -84,9 +84,18 @@ export async function listCanonicalFeatures(
   const at = (q.at ?? new Date()).toISOString();
   const matching = liveClauses("f", at, q, p);
   const live = liveClauses("m", at, {}, p);
+  // Without a box, walking the clusters in id order and stopping at the page
+  // limit is cheapest. A box may hold few features of many clusters: there
+  // the box picks the features (spatial index) and each one's cluster is
+  // looked up by member, rather than testing every cluster until a page fills.
   const clauses = [
-    `EXISTS (SELECT 1 FROM conditions.feature f
-              WHERE f.id = ANY(c.member_ids) AND ${matching.join(" AND ")})`,
+    q.bbox
+      ? `c.canonical_feature_id IN (
+           SELECT h.canonical_feature_id FROM conditions.feature f
+             JOIN conditions.feature_canonical h ON h.member_ids @> ARRAY[f.id]
+            WHERE ${matching.join(" AND ")})`
+      : `EXISTS (SELECT 1 FROM conditions.feature f
+                  WHERE f.id = ANY(c.member_ids) AND ${matching.join(" AND ")})`,
   ];
   if (q.cursor !== undefined) clauses.push(`c.canonical_feature_id > ${p(q.cursor)}`);
   const rows = await db.execute<

@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { ROADS_SITUATION_KINDS } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
 import { type CorpusMetrics, evaluateCorpus, loadCorpus } from "../corpus.js";
 
@@ -14,6 +15,11 @@ const knownResolverBug = new Map(cases.map((c) => [c.id, c.expected.knownResolve
 describe("binding corpus", () => {
   it("has the minimum number of cases", () => {
     expect(cases.length).toBeGreaterThanOrEqual(25);
+  });
+
+  it("names each case's situation kind as the binder is given it", () => {
+    const kinds = new Set<string>(ROADS_SITUATION_KINDS.map((k) => k.code));
+    expect(cases.filter((c) => !kinds.has(c.input.type)).map((c) => c.id)).toEqual([]);
   });
 
   for (const c of perCase.filter((p) => !knownResolverBug.get(p.id))) {

@@ -40,7 +40,7 @@
       [7.678278447, 51.383111927]
     ]
   },
-  "type": "road_closure",
+  "type": "closure",
   "refs": ["A46"],
   "direction": "Hemer -> Hagen",
   "roadState": "closed"

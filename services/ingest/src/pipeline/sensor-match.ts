@@ -36,7 +36,11 @@ export interface MatchSensorsResult {
  *
  * The KNN lateral (`c`) shortlists 6 nearby segments via the `<->` index
  * operator on a small bbox around the snap point; the WHERE clause then
- * applies the real geography-based offset gate.
+ * applies the real geography-based offset gate, and a road check: a site
+ * whose feature location names road refs snaps only to a segment carrying one
+ * of them (refs compared without spaces or case, an OSM `a;b` ref split), so
+ * it never takes a parallel road within the gate. A site naming no ref, or a
+ * segment without one, is not disqualified: only a stated mismatch is.
  */
 export async function matchSensors(
   sql: Sql,
@@ -64,13 +68,24 @@ export async function matchSensors(
                ELSE ST_LineInterpolatePoint(l.geom, 0.5) END AS pt
     ) sp
     CROSS JOIN LATERAL (
-      SELECT rs.segment_id, rs.geom FROM conditions.road_segment rs
+      SELECT array_agg(DISTINCT upper(regexp_replace(r ->> 'ref', '\\s', '', 'g'))) AS refs
+        FROM conditions.feature f,
+             jsonb_array_elements(CASE WHEN jsonb_typeof(f.record #> '{location,roads}') = 'array'
+                                       THEN f.record #> '{location,roads}'
+                                       ELSE '[]'::jsonb END) r
+       WHERE f.id = l.feature_id AND f.tombstoned_at IS NULL AND r ->> 'ref' IS NOT NULL
+    ) site
+    CROSS JOIN LATERAL (
+      SELECT rs.segment_id, rs.geom, rs.ref FROM conditions.road_segment rs
       WHERE rs.geom && ST_Expand(sp.pt, 0.003)
       ORDER BY rs.geom <-> sp.pt LIMIT 6
     ) c
     WHERE l.property IN ('traffic.speed', 'traffic.los') AND l.subject_kind = 'feature'
       AND l.component_key IS NULL AND l.geom IS NOT NULL
       AND ST_Distance(c.geom::geography, sp.pt::geography) <= ${maxOffsetM}
+      AND (site.refs IS NULL OR c.ref IS NULL OR EXISTS (
+            SELECT 1 FROM unnest(string_to_array(c.ref, ';')) AS seg(ref)
+             WHERE upper(regexp_replace(seg.ref, '\\s', '', 'g')) = ANY(site.refs)))
     ORDER BY l.subject_key, ST_Distance(c.geom::geography, sp.pt::geography), c.segment_id
     ON CONFLICT (subject_key) DO UPDATE SET
       segment_id = EXCLUDED.segment_id, fraction = EXCLUDED.fraction,

@@ -15,7 +15,7 @@
       [6.892621, 51.296860267]
     ]
   },
-  "type": "road_closure",
+  "type": "closure",
   "refs": ["A44"],
   "direction": "Düsseldorf -> Essen",
   "roadState": "closed"

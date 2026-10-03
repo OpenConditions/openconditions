@@ -150,16 +150,31 @@ function addGeometry(
 const CAR_CLASSES: ReadonlySet<string> = new Set(["car", "motor_vehicle"]);
 
 /**
- * Whether an effect applies to every car: all vehicles (unless cars are
- * excepted), or a class list naming cars without any further condition. A
- * selector that narrows cars (by weight, fuel, usage) does not count.
+ * Whether an exception could spare an ordinary car: it names cars, or names
+ * no class and selects by what a vehicle is (weight, fuel, occupancy), which
+ * a car may meet. An exception by usage alone (emergency services, residents,
+ * deliveries) excepts a purpose, not cars, so through traffic stays closed.
+ * That includes local access: an exclusion cannot know where a request starts
+ * or ends, so a consumer that routes to an address on such a road must relax
+ * it itself near its endpoints.
+ */
+function sparesCars(s: Record<string, unknown>): boolean {
+  if (typeof s["class"] === "string") return CAR_CLASSES.has(s["class"]);
+  return Object.keys(s).some((key) => key !== "usage" && key !== "raw");
+}
+
+/**
+ * Whether an effect applies to every car: all vehicles, or a class list
+ * naming cars without any further condition, and no exception that could
+ * spare a car. A selector that narrows cars (by weight, fuel, usage) does not
+ * count. The OpenMapX live-traffic writer decides the same.
  */
 function appliesToCars(a: SegmentConditionJson["effect"]["applicability"]): boolean {
   const plainCar = (s: Record<string, unknown>) =>
     typeof s["class"] === "string" &&
     CAR_CLASSES.has(s["class"]) &&
     Object.keys(s).every((key) => key === "class" || key === "raw");
-  if (a.except?.some((s) => s.class !== undefined && CAR_CLASSES.has(s.class))) return false;
+  if (a.except?.some((s) => sparesCars(s))) return false;
   if (a.kind === "all") return true;
   return a.kind === "classes" && (a.include ?? []).some(plainCar);
 }

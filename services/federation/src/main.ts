@@ -41,7 +41,7 @@ async function boot() {
   console.info("[federation-api] migrations applied");
 
   const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
-  await assertStoredCodesRegistered(sql, productionRegistry());
+  await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
   const app = await build({ sql });
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded

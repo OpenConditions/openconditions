@@ -105,7 +105,18 @@ function anchorOf(geometry: unknown): Position | undefined {
   const g = geometry as { type?: string; coordinates?: unknown };
   if (g?.type === "Point") return g.coordinates as Position;
   const { lines, polygons } = partsOf(geometry);
-  const positions = [...lines.flat(), ...polygons.flat(2)];
+  // A ring closes on its first vertex: counted twice, it would pull the mean.
+  const open = (ring: readonly Position[]) => {
+    const [first, last] = [ring[0], ring.at(-1)];
+    const closed =
+      ring.length > 1 &&
+      first !== undefined &&
+      last !== undefined &&
+      first[0] === last[0] &&
+      first[1] === last[1];
+    return closed ? ring.slice(0, -1) : ring;
+  };
+  const positions = [...lines.flat(), ...polygons.flatMap((p) => p.flatMap(open))];
   const first = positions[0];
   if (first === undefined) return undefined;
   let lon = 0;

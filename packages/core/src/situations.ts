@@ -134,6 +134,11 @@ function roadRefs(record: Rec): Set<string> {
  * kind and type, different sources, within 75 m, or within 250 m on a road
  * both name. The first in order survives and lists the others in
  * `provenance.mergedSources`, so no source's attribution is dropped.
+ *
+ * It folds the records it is given, one keyset page: a fold across pages is
+ * not offered, because whether a record survives depends on every earlier
+ * record chained to it by distance, which can lie on any earlier page, and
+ * reading those would turn each page into a scan of the walk so far.
  */
 export function dedupeSituations(records: readonly Rec[]): Rec[] {
   const out: { record: Rec; point?: [number, number]; roads: Set<string> }[] = [];

@@ -291,11 +291,16 @@ async function applyRetraction(
     );
     if (row === undefined) return "no copy of the record is held here";
     if (row.instance_id !== ctx.peerInstanceId) return "the record is not the peer's";
-    if (row.tombstoned) return "the record has already ended here";
+    // An erasure still applies to a copy that ended here: ending it kept its
+    // content, and the rights to that content are gone.
+    if (row.tombstoned && entry.reason !== ERASURE_REASON) {
+      return "the record has already ended here";
+    }
     await tx`SELECT pg_advisory_xact_lock(hashtext(${row.source_id}))`;
     await tombstoneRecords(tx, cls, [entry.recordId], entry.reason, {
       registry: ctx.registry,
       now: ctx.now,
+      byOwner: true,
     });
     await leaveCanonicalView(tx, ctx.registry, { class: cls, id: entry.recordId }, row.source_id, {
       instanceId: ctx.localInstanceId,

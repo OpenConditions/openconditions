@@ -14,9 +14,10 @@ export const ROUTING_EFFECT_KINDS = [
 
 /**
  * One effect of a live road situation, bound to the segment spine, as the
- * routing read returns it: the situation's classification and validity, the
- * effect, the binding of the location the effect applies to (its own, or the
- * situation's) with its ordered spans, and the source's freshness. The ingest
+ * routing read returns it: the situation's classification, the validity the
+ * effect falls back to, the effect, the binding of the location the effect
+ * applies to (its own, or the situation's) with its ordered spans, and the
+ * source's freshness. The ingest
  * service fills the catalogue fields (rights, licence URL, parent source)
  * before projecting it.
  *
@@ -31,6 +32,10 @@ export interface SegmentConditionRow {
   type: string;
   subtype: string | null;
   severity: string;
+  /**
+   * The validity the effect defaults to when it has no window of its own: its
+   * roadworks phase's for a phase effect, else the situation's.
+   */
   validity: Validity;
   effect: Effect;
   origin: string;
@@ -100,7 +105,15 @@ export async function readSegmentConditionRows(
   if (q.bbox) params.push(...q.bbox);
   return db.execute<SegmentConditionRow[]>(
     `SELECT e.situation_id AS record_id, e.effect_id, s.source_id, s.kind, s.type, s.subtype,
-            s.severity, s.record -> 'validity' AS validity, e.value AS effect, s.origin,
+            s.severity,
+            COALESCE((SELECT p -> 'validity'
+                        FROM jsonb_array_elements(
+                               CASE WHEN jsonb_typeof(s.record #> '{details,phases}') = 'array'
+                                    THEN s.record #> '{details,phases}' ELSE '[]'::jsonb END) p
+                       WHERE e.phase_id <> '' AND p ->> 'id' = e.phase_id
+                       LIMIT 1),
+                     s.record -> 'validity') AS validity,
+            e.value AS effect, s.origin,
             s.evidence_state, s.routing_eligible, s.revision AS record_revision, s.expires_at,
             s.record #> '{provenance,attribution}' AS provenance_attribution,
             s.record #>> '{provenance,sourceUri}' AS source_uri,

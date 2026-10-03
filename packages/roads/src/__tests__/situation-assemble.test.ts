@@ -55,6 +55,52 @@ function assemble(events: RoadEvent[]): SituationDraft[] {
 
 const effects = (d: SituationDraft) => d["effects"] as Record<string, unknown>[];
 
+describe("situationDrafts — closures except for local access", () => {
+  it("closes the road to all but local access when the text says so", () => {
+    const [d] = assemble([
+      event("L1", {
+        type: "road_closure",
+        roadState: "closed",
+        headline: "Vollsperrung",
+        description: "Leitungsbau, Anlieger frei",
+        speedLimitKph: 30,
+      }),
+    ]);
+    const [closure, limit] = effects(d!);
+    expect(closure).toMatchObject({
+      kind: "closure",
+      applicability: { kind: "all", except: [{ usage: "local_access" }], raw: ["Anlieger frei"] },
+    });
+    expect(limit).toMatchObject({ kind: "speed_limit", applicability: { kind: "all" } });
+  });
+
+  it("reads WZDx local-access-only as a closure open to local access", () => {
+    const [d] = assemble([
+      event("L2", {
+        sourceFormat: "wzdx",
+        type: "road_closure",
+        roadState: "closed",
+        restrictions: [{ type: "local-access-only" }],
+      }),
+    ]);
+    expect(effects(d!).find((e) => e["kind"] === "closure")).toMatchObject({
+      applicability: { kind: "all", except: [{ usage: "local_access" }] },
+    });
+  });
+
+  it("leaves a closure that names its vehicles as it is", () => {
+    const [d] = assemble([
+      event("L3", {
+        type: "road_closure",
+        roadState: "closed",
+        vehiclesAffected: ["trucks"],
+        description: "Anlieger frei",
+      }),
+    ]);
+    expect(effects(d!)[0]!["applicability"]).not.toHaveProperty("except");
+  });
+});
+
 describe("situationDrafts — DATEX situations", () => {
   it("folds a situation's records into one situation with record-scoped effects", () => {
     const [d] = assemble([

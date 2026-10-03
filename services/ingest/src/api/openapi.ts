@@ -76,7 +76,8 @@ export const API_ROUTES: readonly ApiRoute[] = [
   {
     path: "/situations/{id}",
     operationId: "getSituation",
-    summary: "One situation, tombstoned or not, with its evidence and graph binding.",
+    summary:
+      "One situation, tombstoned or not, with its evidence, the graph binding of its place (`binding`) and of each effect with a place of its own (`effectBindings`, by effect id).",
     query: AtQuery,
     params: { id: RecordId },
     produces: ["application/json"],
@@ -140,7 +141,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/observations",
     operationId: "getSeries",
     summary:
-      "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page.",
+      "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page. A series that keeps no history (a lane's or a vehicle class's) answers 400: its reading in effect is at `/observations/latest`.",
     query: SeriesQuery,
     produces: ["application/json"],
     notFound: true,

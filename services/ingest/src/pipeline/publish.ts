@@ -158,9 +158,11 @@ export async function publishSituations(
  * Writes one poll of a flow feed and closes its attempt, in one transaction
  * under the source's lock: its measurement sites, their readings and the
  * congestion situations derived from them. The poll holds every derived
- * situation, so a cleared one is withdrawn; it holds only the sites that
- * reported, so a site is never withdrawn for missing one poll (the sweep
- * retires the sites of a source that stopped polling).
+ * situation, so a cleared one is withdrawn, unless `situationsComplete` is
+ * false (the poll could not derive any), which keeps the stored ones. It
+ * holds only the sites that reported, so a site is never withdrawn for
+ * missing one poll (the sweep retires the sites of a source that stopped
+ * polling).
  *
  * The publication counts keep their meaning, records written: a new or
  * restored site or situation is inserted, a changed one or a new reading is
@@ -172,6 +174,8 @@ export async function publishFlows(
   src: FeedSource,
   input: {
     output: FlowOutput;
+    /** Whether the poll could derive congestion at all; default true. */
+    situationsComplete?: boolean;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -190,7 +194,7 @@ export async function publishFlows(
         features: output.features,
         observations: output.observations,
       },
-      { ...writeContext(input), complete: { situation: true } },
+      { ...writeContext(input), complete: { situation: input.situationsComplete ?? true } },
     );
     const [live] = await tx<{ features: number; situations: number }[]>`
       SELECT (SELECT count(*)::int FROM conditions.feature

@@ -7,6 +7,7 @@ import {
   type SiteReading,
   seedFlowSource,
   siteKey,
+  writeSiteFeature,
   writeSiteReadings,
 } from "./helpers/flow-series.js";
 
@@ -116,6 +117,35 @@ describe("matchSensors", () => {
        ORDER BY subject_key`;
     expect(lineRows.map((r) => r.segment_id)).toEqual(["111:f", "111:f"]);
     expect(lineRows.every((r) => Number(r.offset_m) < 35)).toBe(true);
+  }, 30_000);
+
+  it("snaps a site naming its road to that road, not a nearer parallel one", async () => {
+    // The A12 along lat 52.0, and a parallel N 11 ~28 m north of it.
+    await seedSegment("444:f", 444, "LINESTRING(8.0 52.0, 8.1 52.0)");
+    await sql`
+      INSERT INTO conditions.road_segment
+        (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, free_flow_kph, computed_at)
+      VALUES ('445:f', 445, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(8.0 52.00025, 8.1 52.00025)'), 4326),
+        'primary', 'N 11', 8000, 5, 80, ${NOW})`;
+    // Each site lies ~22 m from the A12 and ~6 m from the N 11.
+    const spot = point(8.05, 52.0002);
+    for (const [site, roads] of [
+      ["on-a12", [{ ref: "A 12" }]],
+      ["on-other", [{ ref: "A 3" }]],
+      ["unnamed", []],
+    ] as const) {
+      await seedSite(site, spot);
+      if (roads.length > 0) await writeSiteFeature(sql, SRC, site, spot, roads, NOW);
+    }
+    await matchSensors(sql, () => NOW);
+    const rows = await sql<{ subject_key: string; segment_id: string }[]>`
+      SELECT subject_key, segment_id FROM conditions.sensor_segment
+       WHERE segment_id IN ('444:f', '445:f') ORDER BY subject_key`;
+    // A site naming a road neither segment carries snaps to neither.
+    expect(rows).toEqual([
+      { subject_key: siteKey(SRC, "on-a12"), segment_id: "444:f" },
+      { subject_key: siteKey(SRC, "unnamed"), segment_id: "445:f" },
+    ]);
   }, 30_000);
 
   it("snaps a site that states only a level of service", async () => {

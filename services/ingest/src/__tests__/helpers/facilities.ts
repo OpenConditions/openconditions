@@ -231,6 +231,49 @@ export async function landEvseReport(
       }),
     },
   );
+  return writeLanded(sql, landed);
+}
+
+/**
+ * A driver's E5 price for a place (a location subject, not a feature), landed
+ * at `location` the way a contribution does; its id.
+ */
+export async function landPlacePriceReport(
+  sql: postgres.Sql,
+  opts: { location: Rec; nonce: string },
+): Promise<string> {
+  const landed = landClaim(
+    facilitiesRegistry,
+    {
+      claim: {
+        claimClass: "observation",
+        subject: { location: opts.location },
+        property: "fuel.price",
+        qualifiers: { product: "e5" },
+        result: { type: "money", amount: "1.705", currency: "EUR", per: "L" },
+        geometry: opts.location["geometry"],
+        reportedAt: "2026-09-22T11:58:00.000Z",
+        nonce: opts.nonce,
+      },
+      keyId: "GlQczzclqGJy6D0X9dNq8pSYKRfkCqszpEp5g3ZGlwY",
+    },
+    {
+      instanceId: INSTANCE,
+      now: NOW,
+      attribution: {
+        provider: `OpenConditions contributors at ${INSTANCE}`,
+        license: "CC0-1.0",
+      },
+      resolveFeature: () => undefined,
+    },
+  );
+  return writeLanded(sql, landed);
+}
+
+async function writeLanded(
+  sql: postgres.Sql,
+  landed: ReturnType<typeof landClaim>,
+): Promise<string> {
   if (!landed.ok) throw new Error(JSON.stringify(landed.issues));
   const written = await writeRecord(
     sql,

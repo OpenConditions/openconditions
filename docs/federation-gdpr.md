@@ -66,8 +66,21 @@ The erasure reason is `rights_revoked`. Two concrete mechanisms back the
   exception to the append-only rule — justified precisely because an erasure
   request is the one case the rule must yield to.
 
-The record's own revisions keep its content until the history window purges
-the tombstoned record; an operator who must remove it sooner purges it by hand.
+- **History and archive removal.** An erasure removes the record's revision
+  history at once, here and on a recipient. The nightly archive build rewrites
+  every dated archive file (`archive-<class>-YYYY-MM-DD.parquet`) that holds an
+  erased record without it, so the erased content leaves the kept nights by the
+  next build ([static archive](archive.md)).
+
+- **Content removal.** The erased record's row keeps only what it was — its
+  ids, class, kind, source and terms — and its tombstone; its text, location,
+  geometry, effects, components and details go at once. That stub is what says
+  the record is erased: a read by id (`/situations/:id`, `/features/:id`,
+  `/offers/:id`) serves it, marked tombstoned, until the history window
+  (`OPENCONDITIONS_HISTORY_DAYS`) purges the row.
+
+Copies outside the instance (backups, mirrors of the archive, a peer's store)
+are beyond its reach.
 
 ## Where the legal roles actually live
 

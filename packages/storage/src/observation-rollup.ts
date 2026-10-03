@@ -63,7 +63,8 @@ export function histogramPercentileKph(sql: postgres.Sql, frac: number) {
  * do. A period is finished once it ended `ROLLUP_LATENESS_HOURS` ago; the
  * run walks from where the last one stopped (`observation_rollup_progress`),
  * or from the oldest reading still held, and records how far it got. Money
- * readings roll up by amount.
+ * readings roll up by amount. Forecasts (the rows with an issue time) say
+ * what was expected, not what was measured, and are left out.
  */
 export async function rollupObservations(
   sql: postgres.Sql,
@@ -123,6 +124,7 @@ export async function rollupObservations(
            CROSS JOIN LATERAL (
              SELECT COALESCE(o.value_num, o.value_money::double precision) AS v) x
            WHERE o.phenomenon_start >= $2 AND o.phenomenon_start < $3 AND x.v IS NOT NULL
+             AND o.issued_at = '-infinity'
            GROUP BY 1, 2, 3
          ) b
          GROUP BY b.series_id, b.bucket

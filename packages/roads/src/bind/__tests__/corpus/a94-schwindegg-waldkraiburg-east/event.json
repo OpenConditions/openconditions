@@ -68,7 +68,7 @@
       [12.412231915, 48.246395707]
     ]
   },
-  "type": "road_closure",
+  "type": "closure",
   "refs": ["A94"],
   "direction": "München -> Passau",
   "roadState": "closed"

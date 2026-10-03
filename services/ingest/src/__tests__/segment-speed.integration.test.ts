@@ -231,6 +231,35 @@ describe("writeSensorObservations — readings", () => {
     expect(row!.observed_at).toEqual(new Date("2025-12-31T23:50:00.000Z"));
   }, 30_000);
 
+  it("ages a reading over a period from the period's end", async () => {
+    await seedSegment("214:f", 214, 100);
+    sourceOf.set("period-1", "de-period-flow");
+    // A 15-minute mean that ended 5 minutes ago began 20 minutes ago.
+    await writeSiteReadings(
+      sql,
+      "de-period-flow",
+      [
+        {
+          site: "period-1",
+          geometry: SITE,
+          at: "2025-12-31T23:40:00.000Z",
+          until: "2025-12-31T23:55:00.000Z",
+          speed: 70,
+          freeFlowKph: 100,
+        },
+      ],
+      NOW,
+    );
+    await seedSensorSegment("period-1", "214:f");
+
+    await writeSensorObservations(sql, () => NOW);
+    const [row] = await sql<{ current_kph: number; observed_at: Date }[]>`
+      SELECT current_kph, observed_at FROM conditions.segment_observation
+       WHERE segment_id = '214:f'`;
+    expect(Number(row?.current_kph)).toBeCloseTo(70, 5);
+    expect(row!.observed_at).toEqual(new Date("2025-12-31T23:55:00.000Z"));
+  }, 30_000);
+
   it("falls back to the segment's free-flow speed when the reading carries no baseline", async () => {
     await seedSegment("205:f", 205, 80);
     await seedFlow("nobase-1", "de-nw-verkehr", 40, null);

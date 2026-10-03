@@ -263,6 +263,22 @@ interface Stored {
   revision: number;
   tombstoned: boolean;
   expires_at: Date | null;
+  instance_id: string;
+}
+
+/**
+ * Whether a draft written here leaves its stored record as it is: same
+ * content, live, and this instance's own. A peer's copy of the same content
+ * (it reached us before our own first poll of the feed) is taken over and
+ * sealed anew as ours: left peer-owned, it would never be journalled to this
+ * instance's subscribers, and the peer's retraction could tombstone it.
+ */
+export function unchangedOwn(
+  stored: Pick<Stored, "content_hash" | "tombstoned" | "instance_id">,
+  hash: string,
+  instanceId: string,
+): boolean {
+  return !stored.tombstoned && stored.content_hash === hash && stored.instance_id === instanceId;
 }
 
 /**
@@ -303,7 +319,8 @@ async function writeClass(
   const existing = new Map(
     (
       await tx.unsafe<(Stored & { id: string })[]>(
-        `SELECT id, content_hash, revision, tombstoned_at IS NOT NULL AS tombstoned, expires_at
+        `SELECT id, content_hash, revision, tombstoned_at IS NOT NULL AS tombstoned, expires_at,
+                instance_id
            FROM conditions.${cls} WHERE source_id = $1`,
         [sourceId],
       )
@@ -343,7 +360,7 @@ async function writeClass(
       continue;
     }
     const prev = existing.get(id!);
-    if (prev !== undefined && !prev.tombstoned && prev.content_hash === hash) {
+    if (prev !== undefined && unchangedOwn(prev, hash, ctx.instanceId)) {
       counts.unchanged++;
       if (expiryOf(draft) !== (prev.expires_at?.getTime() ?? null)) expiryMoved.push(draft);
       continue;
@@ -389,8 +406,10 @@ async function writeClass(
   await insertRows(tx, `${cls}_revision`, REVISION_COLUMNS(cls), revisions);
 
   if (completeFor(ctx, cls)) {
+    // Only this instance's own records: a peer's copy of the same source ends
+    // when the peer says so, or two instances polling it would flap.
     const gone = [...existing.entries()]
-      .filter(([id, r]) => !r.tombstoned && !seen.has(id))
+      .filter(([id, r]) => !r.tombstoned && !seen.has(id) && r.instance_id === ctx.instanceId)
       .map(([id]) => id);
     await tombstoneRecords(tx, cls, gone, "withdrawn", ctx, summary);
     counts.withdrawn += gone.length;
@@ -503,53 +522,126 @@ async function deleteChildren(tx: Sql, cls: RevisionedClass, ids: readonly strin
 }
 
 /**
+ * Tombstone reasons that are this instance's decision about a record
+ * (a reviewer's rejection, a merge into another report): a peer's copy ended
+ * for one stays ended through the peer's later revisions.
+ */
+export const DECIDED_TOMBSTONE_REASONS: ReadonlySet<string> = new Set(["rejected", "superseded"]);
+
+/** The tombstone reason that erases a record: the rights to it were revoked. */
+const ERASURE_REASON = "rights_revoked";
+
+/** Whether a stored record is a peer's copy: it carries the origin chain of its receipt. */
+function isPeerCopy(record: Rec): boolean {
+  const chain = (record["provenance"] as Rec | undefined)?.["originChain"];
+  return Array.isArray(chain) && chain.length > 0;
+}
+
+/**
  * Tombstones stored records: a new revision whose record carries the
  * tombstone (content unchanged, so the content hash stays), the row marked,
  * and the effect and relation rows removed so nothing joins a record that no
  * longer exists. A feature keeps its component rows for its history.
+ *
+ * A peer's copy ended here (expired, withdrawn, rejected, superseded, erased)
+ * keeps the peer's revision and takes no history row: its revisions are the
+ * peer's to number, and a local one would make the stale check drop the
+ * peer's next change. Whether a later revision of the peer's restores it is
+ * the reason's ({@link DECIDED_TOMBSTONE_REASONS}). The peer's own retraction
+ * (`byOwner`) is a revision of the peer's, numbered as the peer numbered it.
+ *
+ * An erasure (`rights_revoked`) also removes the record's revision history:
+ * the erased content must not outlive the erasure there for the history
+ * window. The tombstoned row stays, as the fact that the record is erased.
  */
+/**
+ * What an erased record keeps of its provenance: whose and which record it
+ * was, under what terms, and where a peer's copy came from — the origin chain
+ * keeps a peer's erased copy from being federated as this instance's own, the
+ * upstream terms keep its licence what it was.
+ */
+const ERASED_PROVENANCE = [
+  "origin",
+  "sourceId",
+  "sourceFormat",
+  "accessMode",
+  "recordId",
+  "instanceId",
+  "attribution",
+  "upstream",
+  "originChain",
+  "privacy",
+] as const;
+
+/**
+ * An erased record as it stays until the history window purges its row: what
+ * it was (class, kind, ids, source) so its tombstone still answers for it,
+ * and nothing of what it said or where — the rights to that were revoked.
+ */
+function erasedStub(record: Rec): Rec {
+  const provenance = record["provenance"] as Rec;
+  const stub: Rec = {};
+  for (const key of ["id", "class", "kind", "type", "domain", "temporality", "canonicalId"]) {
+    if (record[key] !== undefined) stub[key] = record[key];
+  }
+  stub["provenance"] = Object.fromEntries(
+    ERASED_PROVENANCE.filter((k) => provenance[k] !== undefined).map((k) => [k, provenance[k]]),
+  );
+  return stub;
+}
+
 export async function tombstoneRecords(
   tx: Sql,
   cls: RevisionedClass,
   ids: readonly string[],
   reason: string,
-  ctx: Pick<WriteContext, "registry" | "now">,
+  ctx: Pick<WriteContext, "registry" | "now"> & { byOwner?: boolean },
   summary?: WriteSummary,
 ): Promise<void> {
   if (ids.length === 0) return;
   const previous = await loadRecords(tx, cls, ids);
   const revisions: Rec[] = [];
+  const bindings: { id: string; revision: number }[] = [];
   for (const id of ids) {
     const prev = previous.get(id);
     if (prev === undefined) continue;
-    const next = {
-      ...prev,
-      tombstone: { reason, at: ctx.now },
-      revision: (prev["revision"] as number) + 1,
-      recordedAt: ctx.now,
-    };
-    if (historyEligible(prev as unknown as Parameters<typeof historyEligible>[0])) {
+    const keepRevision = ctx.byOwner !== true && isPeerCopy(prev);
+    const revision = (prev["revision"] as number) + (keepRevision ? 0 : 1);
+    const recordedAt = keepRevision ? (prev["recordedAt"] as string) : ctx.now;
+    const kept = reason === ERASURE_REASON ? erasedStub(prev) : prev;
+    const next = { ...kept, tombstone: { reason, at: ctx.now }, revision, recordedAt };
+    if (
+      !keepRevision &&
+      historyEligible(prev as unknown as Parameters<typeof historyEligible>[0])
+    ) {
       revisions.push(revisionRow(cls, next, computeChangeKinds(ctx.registry, prev, next)));
     }
-    summary?.changed.push({ class: cls, id, revision: next.revision });
+    summary?.changed.push({ class: cls, id, revision });
+    bindings.push({ id, revision });
     await tx.unsafe(
       `UPDATE conditions.${cls}
           SET record = $2::text::jsonb, revision = $3, recorded_at = $4,
-              tombstone_reason = $5, tombstoned_at = $4
+              tombstone_reason = $5, tombstoned_at = $6
         WHERE id = $1`,
-      [id, JSON.stringify(next), next.revision, ctx.now, reason],
+      [id, JSON.stringify(next), revision, recordedAt, reason, ctx.now],
     );
   }
-  await insertRows(tx, `${cls}_revision`, REVISION_COLUMNS(cls), revisions);
+  if (reason === ERASURE_REASON) {
+    await tx.unsafe(`DELETE FROM conditions.${cls}_revision WHERE ${cls}_id = ANY($1::text[])`, [
+      ids as string[],
+    ]);
+    await tx.unsafe(`UPDATE conditions.${cls} SET geom = NULL WHERE id = ANY($1::text[])`, [
+      ids as string[],
+    ]);
+    if (cls === "feature") {
+      await tx`DELETE FROM conditions.feature_component WHERE feature_id = ANY(${ids as string[]})`;
+    }
+  } else {
+    await insertRows(tx, `${cls}_revision`, REVISION_COLUMNS(cls), revisions);
+  }
   if (cls === "situation") {
     await tx`DELETE FROM conditions.situation_effect WHERE situation_id = ANY(${ids as string[]})`;
-    await enqueueBindings(
-      tx,
-      ids.flatMap((id) => {
-        const prev = previous.get(id);
-        return prev === undefined ? [] : [{ id, revision: (prev["revision"] as number) + 1 }];
-      }),
-    );
+    await enqueueBindings(tx, bindings);
   }
   await tx`
     DELETE FROM conditions.record_relation

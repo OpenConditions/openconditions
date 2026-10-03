@@ -1,4 +1,5 @@
 import { federationEligible, type RecordClass, subjectKey } from "@openconditions/model";
+import { asyncBufferFromFile, parquetReadObjects } from "hyparquet";
 import type { ColumnSource, Writer } from "hyparquet-writer";
 import { geojsonToWkb, parquetWriteBuffer, parquetWriteRows } from "hyparquet-writer";
 import { type EgressRecord, permissiveRecords } from "./license.js";
@@ -266,6 +267,27 @@ export function recordArchiveBuffer(
   return new Uint8Array(parquetWriteBuffer({ columnData, kvMetadata: [GEO_METADATA] }));
 }
 
+const ROW_GROUP_SIZE = 1000;
+
+/** Writes rows already in a class's archive columns, one bounded row group at a time. */
+async function writeArchiveRows(
+  cls: RecordClass,
+  rows: AsyncIterable<Record<string, unknown>>,
+  writer: Writer,
+): Promise<void> {
+  await parquetWriteRows({
+    writer,
+    rows,
+    columns: recordArchiveColumns(cls).map((c) => ({
+      name: c.name,
+      type: c.type,
+      nullable: c.nullable ?? false,
+    })),
+    rowGroupSize: ROW_GROUP_SIZE,
+    kvMetadata: [GEO_METADATA],
+  });
+}
+
 /**
  * Writes one class's archive file from a consistent paged snapshot, one
  * bounded row group at a time. Every class has its own file, because each
@@ -286,11 +308,49 @@ export async function writeRecordArchive(
       }
     }
   }
-  await parquetWriteRows({
-    writer,
-    rows: rows(),
-    columns: columns.map((c) => ({ name: c.name, type: c.type, nullable: c.nullable ?? false })),
-    rowGroupSize: 1000,
-    kvMetadata: [GEO_METADATA],
-  });
+  await writeArchiveRows(cls, rows(), writer);
+}
+
+/** The keys of an archive row an erasure is matched by. */
+export interface ArchiveRowKey {
+  id: string;
+  canonicalId: string;
+}
+
+/**
+ * Rewrites one class's archive file without the rows `drop` names — an erased
+ * record must not stay in a night's file that is kept — copying every other
+ * row as it was written, a bounded row group at a time. Returns how many rows
+ * went; when none would, `writer` is never asked for and nothing is written.
+ */
+export async function pruneRecordArchive(
+  cls: RecordClass,
+  filePath: string,
+  drop: (key: ArchiveRowKey) => boolean,
+  writer: () => Writer,
+): Promise<number> {
+  const file = await asyncBufferFromFile(filePath);
+  const keys = (await parquetReadObjects({ file, columns: ["id", "canonical_id"] })).map(
+    (r): ArchiveRowKey => ({ id: r["id"] as string, canonicalId: r["canonical_id"] as string }),
+  );
+  const dropped = keys.filter(drop).length;
+  if (dropped === 0) return 0;
+  async function* rows(): AsyncGenerator<Record<string, unknown>> {
+    for (let start = 0; start < keys.length; start += ROW_GROUP_SIZE) {
+      const page = await parquetReadObjects({
+        file,
+        rowStart: start,
+        rowEnd: Math.min(start + ROW_GROUP_SIZE, keys.length),
+        // The geometry is copied as the WKB bytes it was written as; the
+        // string columns are annotated as such and still read as strings.
+        geoparquet: false,
+        utf8: false,
+      });
+      for (const [i, row] of page.entries()) {
+        if (!drop(keys[start + i]!)) yield row;
+      }
+    }
+  }
+  await writeArchiveRows(cls, rows(), writer());
+  return dropped;
 }

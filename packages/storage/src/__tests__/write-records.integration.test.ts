@@ -216,6 +216,20 @@ describe("writeSnapshot", () => {
     expect(restored).toEqual({ tombstone_reason: null, has_tombstone: false });
   });
 
+  it("leaves a peer's copy for the peer to withdraw", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw",
+      { situations: [situationDraft("a"), situationDraft("b")] },
+      { ...ctx(T1), instanceId: "peer.example" },
+    );
+    const own = await writeSnapshot(sql, "nl-ndw", { situations: [situationDraft("a")] }, ctx(T2));
+    expect(own.counts.situation.withdrawn).toBe(0);
+    const [b] = await sql`SELECT tombstoned_at, instance_id FROM conditions.situation
+      WHERE id = 'oc:situation:nl-ndw:b'`;
+    expect(b).toEqual({ tombstoned_at: null, instance_id: "peer.example" });
+  });
+
   it("withdraws nothing from a partial snapshot", async () => {
     await writeSnapshot(
       sql,
@@ -326,6 +340,9 @@ describe("writeSnapshot", () => {
     expect(summary.counts.situation).toMatchObject({ created: 1 });
     const rows = await sql`SELECT certainty FROM conditions.situation`;
     expect(rows).toEqual([{ certainty: "observed" }]);
+    expect(await revisions("situation", "oc:situation:nl-ndw:dup")).toEqual([
+      { revision: 1, change_kinds: ["created"] },
+    ]);
   });
 
   it("rejects a draft of another source, or one with a field no schema has", async () => {

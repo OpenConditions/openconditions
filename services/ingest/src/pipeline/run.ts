@@ -757,11 +757,15 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
   const { src, deps } = poll;
   let output = parse;
   // Best-effort: a baseline-load failure must never throw away a good fetch —
-  // fall back to the unenriched readings rather than reverting the feed.
+  // fall back to the unenriched readings rather than reverting the feed. The
+  // poll then cannot tell a cleared queue from an unknown one, so it keeps the
+  // congestion it derived last instead of withdrawing it.
+  let baselinesLoaded = true;
   try {
     const baselines = await loadBaselineMap(deps.sql, src.id);
     if (baselines.size > 0) output = enrichReadings(src, output, baselines);
   } catch (err) {
+    baselinesLoaded = false;
     console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
   }
   // A sensor network never legitimately vanishes to zero — this also covers a
@@ -783,6 +787,7 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
   try {
     published = await publishFlows(deps.sql, src, {
       output: stamped,
+      situationsComplete: baselinesLoaded,
       rejected: skippedNoGeometry,
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

@@ -70,7 +70,11 @@ export const SituationListQuery = z.strictObject({
   limit: z.coerce.number().int().min(1).max(5000).default(500),
   dedupe: z
     .enum(["0", "1"])
-    .describe("1 folds one phenomenon reported by several sources into one situation")
+    .describe(
+      "1 folds one phenomenon reported by several sources into one situation, within one page " +
+        "only: the page is ordered by id, so reports of one phenomenon on different pages are " +
+        "each returned. Request every record in one page (a large enough limit) for a complete fold",
+    )
     .optional(),
 });
 
@@ -151,7 +155,7 @@ export const LatestObservationQuery = z.strictObject({
   origin: list.describe("comma-separated origins: feed, crowd, federation, derived").optional(),
   at: at("readings"),
   canonical: canonical(
-    "the canonical view: the fused reading of each property several sources or the crowd may report, and the per-source readings of the rest",
+    "the canonical view: a feature's fused reading of each property several sources or the crowd may report, and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)",
   ),
   cursor: z
     .string()

@@ -458,6 +458,29 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(await liveFeatures("nl-ndw-flow")).toBe(3);
   }, 60_000);
 
+  it("keeps the last derived congestion when a poll cannot load the baselines", async () => {
+    await sql`
+      INSERT INTO conditions.sensor_baseline
+        (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+      VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
+        100, 'derived', 50, now())`;
+    clearSiteTableCache();
+    expect((await poll(fakeFetch)).activeEvents).toBe(1);
+    await sql`ALTER TABLE conditions.sensor_baseline RENAME TO sensor_baseline_away`;
+    try {
+      const blind = await poll(fakeFetch);
+      expect(blind.error).toBeUndefined();
+      expect(blind.deleted).toBe(0);
+      expect(blind.activeEvents).toBe(1);
+      expect(await liveSituations("nl-ndw-flow")).toBe(1);
+    } finally {
+      await sql`ALTER TABLE conditions.sensor_baseline_away RENAME TO sensor_baseline`;
+    }
+    await sql`DELETE FROM conditions.sensor_baseline`;
+    expect((await poll(fakeFetch)).deleted).toBe(1);
+    expect(await liveSituations("nl-ndw-flow")).toBe(0);
+  }, 60_000);
+
   it("keeps site readings as history and counts those the rollup has already passed", async () => {
     // The fixture's readings are of 2026-06-24 10:08–10:09: poll as of then.
     const at = "2026-06-24T10:10:00.000Z";

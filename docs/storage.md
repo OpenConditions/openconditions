@@ -66,6 +66,15 @@ go with it.
 peer's record it keeps with the peer's revision, ignoring one that is not newer
 and never writing over a record another instance wrote under the same id (two
 instances that ingest one feed mint the same ids, and each keeps its own).
+The other way round, a draft written here — a poll or a report — takes over a
+peer's copy of the same id even when the content is the same: it is sealed
+anew as this instance's own, so it is journalled to this instance's
+subscribers and the peer's later revisions and retraction no longer reach it.
+A peer's copy ended here — expired by the sweep, withdrawn by a poll, rejected
+by a reviewer, superseded by a merge, erased — keeps the peer's revision and
+takes no history row, so the peer's next revision is never mistaken for a stale
+one: it restores an expired or withdrawn copy, while a rejected or superseded
+copy stays ended. The peer's own retraction is the peer's next revision.
 
 A crowd situation's evidence summary lives in its own columns
 (`evidence_state`, `confidence_score`, `routing_eligible`, `corroborations`,

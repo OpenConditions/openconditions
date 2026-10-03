@@ -55,13 +55,14 @@ interface Rules {
  * situation or observation payload for the hot window, then the newest of
  * each bucket for its tier's thinned window.
  */
-function keepByTiers(rows: readonly HeldPayload[], policy: EvictionPolicy, rules: Rules) {
+function keepByTiers(
+  bySource: ReadonlyMap<string, readonly HeldPayload[]>,
+  policy: EvictionPolicy,
+  rules: Rules,
+) {
   const keep = new Set<HeldPayload>();
-  const bySource = new Map<string, HeldPayload[]>();
-  for (const r of rows) bySource.set(r.sourceId, [...(bySource.get(r.sourceId) ?? []), r]);
   const hot = policy.hotHours * HOUR_MS;
   for (const list of bySource.values()) {
-    list.sort((a, b) => b.lastSeenAt - a.lastSeenAt);
     const buckets = new Set<string>();
     list.forEach((r, i) => {
       const age = policy.now - r.lastSeenAt;
@@ -86,6 +87,18 @@ function keepByTiers(rows: readonly HeldPayload[], policy: EvictionPolicy, rules
   return keep;
 }
 
+/** Each source's payloads, newest first. */
+function newestFirstBySource(rows: readonly HeldPayload[]) {
+  const bySource = new Map<string, HeldPayload[]>();
+  for (const r of rows) {
+    const list = bySource.get(r.sourceId);
+    if (list) list.push(r);
+    else bySource.set(r.sourceId, [r]);
+  }
+  for (const list of bySource.values()) list.sort((a, b) => b.lastSeenAt - a.lastSeenAt);
+  return bySource;
+}
+
 const bytes = (rows: Iterable<HeldPayload>) => {
   let n = 0;
   for (const r of rows) n += r.bytesStored;
@@ -99,14 +112,15 @@ const bytes = (rows: Iterable<HeldPayload>) => {
  *  1. shorten the thinned windows a day at a time, observation feeds before
  *     situation feeds, down to one day past the hot window;
  *  2. thin the thinned windows further, to one payload per 6 hours, then
- *     per day;
+ *     per day, then drop what is left of them, oldest first;
  *  3. cut into the hot window, oldest first, observation feeds first — the
- *     only rung that loses replayable recent history, so its sources are
- *     reported.
+ *     only rung that loses replayable recent history, so the sources that
+ *     lost a hot-window payload are reported.
  */
 export function planEviction(rows: readonly HeldPayload[], policy: EvictionPolicy): EvictionPlan {
   const rules: Rules = { thinDays: { ...policy.thinDays }, bucketMs: HOUR_MS };
-  let keep = keepByTiers(rows, policy, rules);
+  const bySource = newestFirstBySource(rows);
+  let keep = keepByTiers(bySource, policy, rules);
   const over = () => policy.maxBytes > 0 && bytes(keep) > policy.maxBytes;
   let rung: EvictionPlan["rung"] = 0;
 
@@ -117,35 +131,41 @@ export function planEviction(rows: readonly HeldPayload[], policy: EvictionPolic
     while (over() && rules.thinDays[tier] > shortest) {
       rung = 1;
       rules.thinDays[tier] -= 1;
-      keep = keepByTiers(rows, policy, rules);
+      keep = keepByTiers(bySource, policy, rules);
     }
   }
   for (const bucketMs of [6 * HOUR_MS, DAY_MS]) {
     if (!over()) break;
     rung = 2;
     rules.bucketMs = bucketMs;
-    keep = keepByTiers(rows, policy, rules);
+    keep = keepByTiers(bySource, policy, rules);
   }
   const hotEvicted = new Set<string>();
   if (over()) {
-    rung = 3;
-    const newest = new Map<string, HeldPayload[]>();
-    for (const r of rows) newest.set(r.sourceId, [...(newest.get(r.sourceId) ?? []), r]);
     const untouchable = new Set<HeldPayload>();
-    for (const list of newest.values()) {
-      list.sort((a, b) => b.lastSeenAt - a.lastSeenAt);
+    for (const list of bySource.values()) {
       for (const r of list.slice(0, ALWAYS_NEWEST)) untouchable.add(r);
     }
+    const inHot = (r: HeldPayload) => policy.now - r.lastSeenAt <= policy.hotHours * HOUR_MS;
     const order = { observation: 0, hot: 1, situation: 2, reference: 3 };
+    // What the thinned windows still keep goes first, then the hot windows.
     const candidates = [...keep]
       .filter((r) => !r.protected && !untouchable.has(r))
-      .sort((a, b) => order[a.tier] - order[b.tier] || a.lastSeenAt - b.lastSeenAt);
+      .sort(
+        (a, b) =>
+          Number(inHot(a)) - Number(inHot(b)) ||
+          order[a.tier] - order[b.tier] ||
+          a.lastSeenAt - b.lastSeenAt,
+      );
     let total = bytes(keep);
     for (const r of candidates) {
       if (total <= policy.maxBytes) break;
       keep.delete(r);
       total -= r.bytesStored;
-      hotEvicted.add(r.sourceId);
+      if (inHot(r)) {
+        rung = 3;
+        hotEvicted.add(r.sourceId);
+      }
     }
   }
   return {
@@ -193,11 +213,25 @@ export async function evictRawPayloads(
   sql: postgres.Sql,
   opts: { dir: string; policy: EvictionPolicy; historyDays: number; dryRun?: boolean },
 ): Promise<EvictionResult> {
-  const referenced = await sql<{ hash: string }[]>`
-    SELECT DISTINCT record #>> '{provenance,rawRef,hash}' AS hash
-      FROM conditions.situation
-     WHERE tombstoned_at IS NULL AND record #>> '{provenance,rawRef,hash}' IS NOT NULL`;
-  const live = new Set(referenced.map((r) => r.hash));
+  // The payloads what is live now was read from: records not tombstoned, and
+  // each series' reading in effect (its history names its poll instead) —
+  // as long as they moved within the longest thinned window. A site
+  // unchanged for weeks, or a sensor that stopped reporting, would otherwise
+  // keep its payload forever and the archive could never reach its cap.
+  const since = new Date(
+    opts.policy.now -
+      Math.max(opts.policy.thinDays.situation, opts.policy.thinDays.observation) * DAY_MS,
+  ).toISOString();
+  const referenced = await sql<{ hash: string | null }[]>`
+    SELECT record #>> '{provenance,rawRef,hash}' AS hash
+      FROM conditions.situation WHERE tombstoned_at IS NULL AND recorded_at > ${since}
+    UNION SELECT record #>> '{provenance,rawRef,hash}'
+      FROM conditions.feature WHERE tombstoned_at IS NULL AND recorded_at > ${since}
+    UNION SELECT record #>> '{provenance,rawRef,hash}'
+      FROM conditions.offer WHERE tombstoned_at IS NULL AND recorded_at > ${since}
+    UNION SELECT reading #>> '{provenance,rawRef,hash}'
+      FROM conditions.observation_latest WHERE updated_at > ${since}`;
+  const live = new Set(referenced.flatMap((r) => (r.hash === null ? [] : [r.hash])));
   const rows = await sql<
     {
       source_id: string;
@@ -222,7 +256,7 @@ export async function evictRawPayloads(
     tier: r.tier,
     lastSeenAt: r.last_seen_at.getTime(),
     bytesStored: Number(r.bytes_stored),
-    protected: r.pinned || r.is_base || (r.tier === "situation" && live.has(r.hash)),
+    protected: r.pinned || r.is_base || live.has(r.hash),
   }));
   const plan = planEviction(held, opts.policy);
   if (opts.dryRun) return { ...plan, purged: 0 };

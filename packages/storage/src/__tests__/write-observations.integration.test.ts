@@ -4,7 +4,7 @@ import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
-import { type WriteContext, writeSnapshot } from "../write-records.js";
+import { type WriteContext, writeSnapshot, writeSnapshotIn } from "../write-records.js";
 import { createTestDatabase } from "./database.integration.js";
 import { FETCHED_AT, observationDraft } from "./drafts.js";
 
@@ -405,6 +405,77 @@ describe("observation writes", () => {
     );
     expect(summary.rejected).toEqual([]);
     expect((await history()).map((r) => r["value_num"])).toEqual([61]);
+  });
+
+  it("keep one history row for a reading a poll repeats under another spelling of its instant", async () => {
+    const summary = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [speed(60, "2026-10-01T10:00:00Z"), speed(61, "2026-10-01T12:00:00+02:00")],
+      },
+      ctx,
+    );
+    expect(summary.rejected).toEqual([]);
+    expect((await history()).map((r) => r["value_num"])).toEqual([61]);
+  });
+
+  it("set a series' result type from the registry when only its reading moves", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    // Written under a registry that declared the property otherwise.
+    await sql`UPDATE conditions.observation_latest SET result_type = 'count'`;
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(88, "2026-10-01T10:01:00Z")] },
+      ctx,
+    );
+    const [row] = await sql`SELECT result_type, value_num FROM conditions.observation_latest`;
+    expect(row).toEqual({ result_type: "quantity", value_num: 88 });
+  });
+
+  it("write the series again when its latest row went away while the poll was writing", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    const summary = await sql.begin(async (tx) => {
+      // Another session removes the row between the poll reading it and moving its reading.
+      const racing = new Proxy(tx, {
+        get(target, prop, receiver) {
+          const value = Reflect.get(target, prop, receiver);
+          if (prop !== "unsafe") return value;
+          return (query: string, params?: unknown[]) => {
+            const result = (value as typeof tx.unsafe).call(target, query, params as never);
+            if (!query.includes("JOIN jsonb_to_recordset")) return result;
+            return result.then(async (rows: unknown) => {
+              await db.sql`DELETE FROM conditions.observation_latest`;
+              return rows;
+            });
+          };
+        },
+      });
+      return writeSnapshotIn(
+        racing,
+        "nl-ndw-flow",
+        { observations: [speed(88, "2026-10-01T10:01:00Z")] },
+        ctx,
+      );
+    });
+    expect(summary.observations).toMatchObject({ latest: 1, history: 1 });
+    const rows = await sql`
+      SELECT l.value_num, l.template IS NOT NULL AS has_template,
+             (SELECT count(*)::int FROM conditions.observation o
+               WHERE o.series_id = l.series_id) AS history
+        FROM conditions.observation_latest l`;
+    expect(rows).toEqual([{ value_num: 88, has_template: true, history: 1 }]);
   });
 
   it("count a forecast beyond the partitions' look-ahead instead of failing the poll", async () => {

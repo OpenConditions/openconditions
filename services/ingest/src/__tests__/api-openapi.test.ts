@@ -79,4 +79,12 @@ describe("the OpenAPI document", () => {
       default: 500,
     });
   });
+
+  it("says the dedupe fold stops at a page boundary", () => {
+    const doc = openApiDocument();
+    const params = (
+      doc.paths["/situations"] as { get: { parameters: { name: string; description?: string }[] } }
+    ).get.parameters;
+    expect(params.find((p) => p.name === "dedupe")?.description).toMatch(/within one page/);
+  });
 });

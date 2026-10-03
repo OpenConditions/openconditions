@@ -80,6 +80,33 @@ describe("segmentConditionsToExclusions", () => {
     expect(exclusions([segmentRow({ segments: fullWay, effect: cycleway })])).toEqual(none);
   });
 
+  // The same table pins the OpenMapX live-traffic writer (data-manager
+  // conditions-to-edges): both must close the road for the same applicability.
+  const under35t = [
+    { dimension: "gross_weight", operator: "lt", value: { value: 3500, unit: "kg" } },
+  ];
+  it.each([
+    ["every vehicle", { kind: "all" }, true],
+    ["cars", { kind: "classes", include: [{ class: "car" }] }, true],
+    ["motor vehicles", { kind: "classes", include: [{ class: "motor_vehicle" }] }, true],
+    [
+      "all but emergency services",
+      { kind: "all", except: [{ usage: "emergency_services" }] },
+      true,
+    ],
+    ["all but residents", { kind: "all", except: [{ usage: "residents" }] }, true],
+    ["all but buses", { kind: "all", except: [{ class: "bus" }] }, true],
+    ["all but cars", { kind: "all", except: [{ class: "car" }] }, false],
+    ["all but electric vehicles", { kind: "all", except: [{ fuel: "electric" }] }, false],
+    ["all but vehicles under 3.5 t", { kind: "all", except: [{ when: under35t }] }, false],
+    ["cars under 3.5 t", { kind: "classes", include: [{ class: "car", when: under35t }] }, false],
+    ["lorries", { kind: "classes", include: [{ class: "hgv" }] }, false],
+  ])("closes the road to cars for a closure of %s", (_, applicability, closes) => {
+    const effect = { ...closure, applicability } as Effect;
+    const out = exclusions([segmentRow({ segments: fullWay, effect })]);
+    expect(out.exclude_locations.length > 0).toBe(closes);
+  });
+
   it("never excludes restriction evidence", () => {
     const unknown = { ...closure, applicability: { kind: "unknown" } } as Effect;
     expect(exclusions([segmentRow({ segments: fullWay, effect: unknown })])).toEqual({

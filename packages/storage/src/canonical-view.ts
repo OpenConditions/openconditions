@@ -87,8 +87,8 @@ const decided = (l: LinkRow) => l.status === "rejected" || l.decided_by !== null
  * set. A feature of a kind without linking rules is a cluster of one, so
  * every live feature has exactly one canonical row and a consumer resolves
  * any feature to its canonical feature with one lookup. A cluster whose id
- * changed takes its crowd rows along (see {@link rekeyCrowdSeries}); its
- * fused rows are the caller's to recompute.
+ * or whose component keys changed takes its crowd rows along (see
+ * {@link rekeyCrowdSeries}); its fused rows are the caller's to recompute.
  */
 export async function relinkFeatures(
   tx: Sql,
@@ -246,10 +246,16 @@ export async function relinkFeatures(
   }
   const vanished = replaced.filter((r) => !now.has(r.canonical_feature_id));
   result.vanished = vanished.map((r) => r.canonical_feature_id);
+  // A cluster that stays can still re-key its components (a member's charge
+  // point gains the uid that makes it the survivor's): its crowd rows follow.
+  const rekeyed = replaced.filter((r) => {
+    const kept = now.get(r.canonical_feature_id);
+    return kept !== undefined && jcs(kept.components) !== jcs(r.components);
+  });
   const moved = await rekeyCrowdSeries(
     tx,
     registry,
-    vanished.map((r) => ({
+    [...vanished, ...rekeyed].map((r) => ({
       canonicalFeatureId: r.canonical_feature_id,
       survivorId: r.survivor_id,
       memberIds: r.member_ids,
@@ -358,11 +364,12 @@ async function connected(
 }
 
 /**
- * Moves the crowd rows of canonical features that no longer exist onto the
- * clusters now holding what they report: a reading about a component goes
- * to the cluster holding the member component it stood for (the survivor's
- * first), a reading about the feature to the cluster holding the vanished
- * one's survivor (or, when the survivor ended, its first member still
+ * Moves the crowd rows of canonical features that no longer exist, or no
+ * longer as they were, onto the clusters now holding what they report: `former`
+ * holds each such cluster as it was, and a row already where it belongs stays
+ * as it is. A reading about a component goes to the cluster holding the
+ * member component it stood for (the survivor's first), a reading about the
+ * feature to the cluster holding the former one's survivor (or, when the survivor ended, its first member still
  * standing). The subject becomes that cluster's canonical feature and
  * canonical component, and the record is re-derived for its new subject, its
  * evidence and votes following its new id. A crowd row whose component no
@@ -373,14 +380,14 @@ async function connected(
 export async function rekeyCrowdSeries(
   tx: Sql,
   registry: Registry,
-  vanished: readonly CanonicalRow[],
+  former: readonly CanonicalRow[],
   current: readonly CanonicalRow[],
   ctx: { instanceId: string; now: string },
 ): Promise<{ moved: number; dropped: number }> {
   const out = { moved: 0, dropped: 0 };
-  if (vanished.length === 0) return out;
+  if (former.length === 0) return out;
   // Crowd rows are the crowd's to write: under its lock, a report resolved
-  // against the vanished cluster before this relink lands before the move
+  // against the former cluster before this relink lands before the move
   // reads the rows, and one resolved after it sees the new clusters.
   await tx`SELECT pg_advisory_xact_lock(hashtext('crowd'))`;
   const series = await tx<
@@ -397,12 +404,12 @@ export async function rekeyCrowdSeries(
            conditions.observation_record(template, reading) AS record, retention_days
       FROM conditions.observation_latest
      WHERE source_id = 'crowd'
-       AND feature_id = ANY(${vanished.map((v) => v.canonicalFeatureId)}::text[])
+       AND feature_id = ANY(${former.map((v) => v.canonicalFeatureId)}::text[])
      ORDER BY effective_from DESC`;
   if (series.length === 0) return out;
   const holding = new Map<string, CanonicalRow>();
   for (const c of current) for (const m of c.memberIds) holding.set(m, c);
-  const old = new Map(vanished.map((v) => [v.canonicalFeatureId, v]));
+  const old = new Map(former.map((v) => [v.canonicalFeatureId, v]));
 
   const drop: string[] = [];
   for (const s of series) {
@@ -431,6 +438,9 @@ export async function rekeyCrowdSeries(
     }
     if (target === undefined) {
       drop.push(s.series_id);
+      continue;
+    }
+    if (target.canonicalFeatureId === s.feature_id && (componentKey ?? null) === s.component_key) {
       continue;
     }
     const oldId = s.record["id"] as string;
