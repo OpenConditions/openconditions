@@ -3,7 +3,13 @@ import {
   type PriorReport,
   type SignedReport,
 } from "@openconditions/contrib-core";
-import { coarseCell, type GeoJsonGeometry } from "@openconditions/core";
+import {
+  canonicalKeyOf,
+  centroid,
+  coarseCell,
+  coarseCellCentre,
+  type GeoJsonGeometry,
+} from "@openconditions/core";
 import {
   crowdLocalId,
   type EvidenceState,
@@ -17,7 +23,7 @@ import {
   type ResolvedFeature,
   subjectKey,
 } from "@openconditions/model";
-import { canonicalKeyOf, loadCanonical, writeRecordIn } from "@openconditions/storage";
+import { isPublicCandidate, loadCanonical, writeRecordIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import { checkReportRate, ReportRateLimitError } from "../abuse/rate.js";
 import { lockCrowd } from "../crowd.js";
@@ -26,6 +32,7 @@ import { ClaimRefusedError, GeometryInvalidError, isGeometryError } from "./land
 
 type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
+type Rec = Record<string, unknown>;
 
 export interface ObservationLandingResult {
   record: { class: "observation"; id: string };
@@ -57,18 +64,23 @@ const refused = (path: string[], code: string, message: string) =>
  * Lands a verified observation claim: a reading of a feature, a component or
  * a place the crowd may report. A feature named by a per-source or a
  * canonical id lands on its canonical feature, a component on the canonical
- * component it stands in (`feature_canonical.components`), at the survivor's
- * location. A place lands only where a feed already publishes a series of
- * that property for it, and takes that series' location, never the
- * reporter's. The crowd row is written under the crowd lock with its
- * `report` evidence (`details.localId` keys replays: a reading's id is its
- * subject and instant, not its reporter), its evidence recomputed into the
- * row and the subject's fused row recomputed.
+ * component it stands in (`feature_canonical.components`), at a public
+ * member's location (see `resolveSubject`). A place lands only where a feed
+ * already publishes a series of that property for it, and takes a public
+ * series' location. The public scope serves crowd rows, so a crowd row never
+ * takes a restricted source's location: with no public member it sits at the
+ * centre of the reporter's area cell, and with no public series at the place
+ * the reporter named. Either way the reporter must stand within reach of
+ * where the restricted source puts it. The crowd row is written under the crowd
+ * lock with its `report` evidence (`details.localId` keys replays: a
+ * reading's id is its subject and instant, not its reporter), its evidence
+ * recomputed into the row and the subject's fused row recomputed.
  *
  * A second key reporting the same reading of the same subject at the same
  * instant confirms the stored report when the results agree and is refused
  * with {@link ConflictingReportError} when they do not. The rate limiter and
- * the kinematic check use where the reporter stood, which is never stored.
+ * the kinematic check use where the reporter stood, which is never stored as
+ * it is.
  *
  * @throws ClaimRefusedError when the claim cannot land.
  * @throws ConflictingReportError when another key reported another result.
@@ -78,7 +90,7 @@ export async function landObservationReport(
   sql: Sql,
   registry: Registry,
   report: SignedReport,
-  ctx: Omit<LandingContext, "resolveFeature">,
+  ctx: Omit<LandingContext, "resolveFeature" | "placeReachFrom">,
 ): Promise<ObservationLandingResult> {
   const claim = report.claim as ObservationClaim;
   const keyId = report.keyId;
@@ -89,11 +101,15 @@ export async function landObservationReport(
       const replayed = await replay(tx, keyId, localId);
       if (replayed !== undefined) return replayed;
 
-      const { claim: placed, resolveFeature } = await resolveSubject(tx, claim);
+      const { claim: placed, resolveFeature, placeReachFrom } = await resolveSubject(tx, claim);
       const landing = landClaim(
         registry,
         { claim: placed, keyId },
-        { ...ctx, ...(resolveFeature === undefined ? {} : { resolveFeature }) },
+        {
+          ...ctx,
+          ...(resolveFeature === undefined ? {} : { resolveFeature }),
+          ...(placeReachFrom === undefined ? {} : { placeReachFrom }),
+        },
       );
       if (!landing.ok) throw new ClaimRefusedError(landing.issues);
       const draft = landing.draft;
@@ -221,14 +237,27 @@ async function heldReading(
 /**
  * Where a claim lands. A feature claim resolves through the canonical view: a
  * per-source or canonical feature id, a component through the canonical
- * components, the location the survivor's. A place claim is placed on the
- * feed series of its property already published for that place, whose
- * location it takes; with none it names nothing this instance holds.
+ * components. Its location is a public member's (its source held
+ * unrestricted, its record's licences public, as fusion judges a member):
+ * the survivor's, else the first public member's in member order, else the
+ * centre of the reporter's area cell at low resolution, with its reach
+ * measured from a live member's location. A place claim is placed on the
+ * feed series of its property already published for that place, a public
+ * series first, whose location it takes; when only restricted sources
+ * publish one, it keeps the place the reporter named (one keyed by its
+ * geocode placed at the centre of its centroid's area cell, at low
+ * resolution), with its reach measured from the series' location. With no
+ * series it names nothing this
+ * instance holds.
  */
 async function resolveSubject(
   tx: Tx,
   claim: ObservationClaim,
-): Promise<{ claim: ObservationClaim; resolveFeature?: LandingContext["resolveFeature"] }> {
+): Promise<{
+  claim: ObservationClaim;
+  resolveFeature?: LandingContext["resolveFeature"];
+  placeReachFrom?: LocationRef;
+}> {
   if ("location" in claim.subject) {
     let key: string;
     try {
@@ -239,12 +268,15 @@ async function resolveSubject(
     } catch {
       throw refused(["subject"], "unknown_subject", "the place names no location");
     }
-    const [series] = await tx<{ location: LocationRef }[]>`
-      SELECT template->'location' AS location FROM conditions.observation_latest
-       WHERE subject_key = ${key} AND property = ${claim.property}
-         AND qualifier_key = ${qualifierKey(claim.qualifiers)}
-         AND source_id NOT IN ('crowd', '@fused') AND template #>> '{provenance,origin}' = 'feed'
-       ORDER BY effective_from DESC LIMIT 1`;
+    const [series] = await tx<{ location: LocationRef; restricted: boolean }[]>`
+      SELECT l.template->'location' AS location, COALESCE(s.restricted, false) AS restricted
+        FROM conditions.observation_latest l
+        LEFT JOIN conditions.source s ON s.id = l.source_id
+       WHERE l.subject_key = ${key} AND l.property = ${claim.property}
+         AND l.qualifier_key = ${qualifierKey(claim.qualifiers)}
+         AND l.source_id NOT IN ('crowd', '@fused', '@fused-public')
+         AND l.template #>> '{provenance,origin}' = 'feed'
+       ORDER BY COALESCE(s.restricted, false), l.effective_from DESC LIMIT 1`;
     if (series === undefined) {
       throw refused(
         ["subject"],
@@ -252,13 +284,64 @@ async function resolveSubject(
         `no feed publishes ${claim.property} for this place`,
       );
     }
+    // Only restricted feeds publish it: the reporter's own place, reached
+    // from the series'. A place keyed by its geocode is keyed apart from its
+    // geometry, which may then be the device's point: it is kept only as the
+    // centre of the area cell its centroid falls in, at low resolution.
+    if (series.restricted) {
+      const named = claim.subject.location;
+      if (named.admin?.geocodes?.[0] === undefined || named.geometry === null) {
+        return { claim, placeReachFrom: series.location };
+      }
+      const coarse: LocationRef = {
+        ...named,
+        geometry: { type: "Point", coordinates: coarseCellCentre(...centroid(named.geometry)) },
+        fuzziness: "low_res",
+      };
+      return {
+        claim: { ...claim, subject: { location: coarse } },
+        placeReachFrom: series.location,
+      };
+    }
     return { claim: { ...claim, subject: { location: series.location } } };
   }
   const [canonical] = await loadCanonical(tx, [claim.subject.featureId]);
   if (canonical === undefined) return { claim, resolveFeature: () => undefined };
-  const [survivor] = await tx<{ location: LocationRef }[]>`
-    SELECT record->'location' AS location FROM conditions.feature
-     WHERE id = ${canonical.survivorId} AND tombstoned_at IS NULL`;
+  const members = await tx<
+    {
+      id: string;
+      location: LocationRef;
+      source_id: string;
+      restricted: boolean | null;
+      record: Rec;
+    }[]
+  >`
+    SELECT f.id, f.record->'location' AS location, f.source_id, s.restricted,
+           jsonb_build_object('provenance', f.record->'provenance') AS record
+      FROM conditions.feature f
+      LEFT JOIN conditions.source s ON s.id = f.source_id
+     WHERE f.id = ANY(${canonical.memberIds}::text[]) AND f.tombstoned_at IS NULL`;
+  const live = new Map(members.map((m) => [m.id, m]));
+  const survivor = live.get(canonical.survivorId);
+  const ordered = [canonical.survivorId, ...canonical.memberIds].map((id) => live.get(id));
+  // The survivor's location when it is public, else the first public
+  // member's in member order, else the reporter's area cell. The reach is
+  // measured from where the feature stands, whoever holds it.
+  const publicMember = ordered.find(
+    (m) =>
+      m !== undefined &&
+      isPublicCandidate({ restricted: m.restricted, record: m.record, sourceId: m.source_id }),
+  );
+  const placed = ordered.find((m) => m?.location.geometry != null);
+  const [lon, lat] = claim.geometry.coordinates;
+  const location: LocationRef = publicMember?.location ?? {
+    geometry: { type: "Point", coordinates: coarseCellCentre(lon, lat) },
+    extent: "point",
+    geometryOrigin: "crowd_device",
+    fuzziness: "low_res",
+  };
+  const reachFrom =
+    publicMember === undefined ? (placed?.location ?? survivor?.location) : undefined;
   const resolveFeature = (
     featureId: string,
     componentKey?: string,
@@ -275,7 +358,8 @@ async function resolveSubject(
     return {
       featureId: canonical.canonicalFeatureId,
       ...(key === undefined ? {} : { componentKey: key }),
-      location: survivor.location,
+      location,
+      ...(reachFrom === undefined ? {} : { reachFrom }),
     };
   };
   return { claim, resolveFeature };

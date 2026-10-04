@@ -585,7 +585,11 @@
                   "renewable_petrol",
                   "agricultural_diesel",
                   "methanol",
-                  "ammonia"
+                  "ammonia",
+                  "e5_premium",
+                  "sp98_e10",
+                  "cng_bio",
+                  "lng_bio"
                 ]
               },
               "service": {
@@ -2188,7 +2192,10 @@
           "anyOf": [
             {
               "type": "string",
-              "const": "@fused"
+              "enum": [
+                "@fused",
+                "@fused-public"
+              ]
             },
             {
               "type": "string",
@@ -2238,7 +2245,12 @@
             "vic-disruptions",
             "webtris",
             "webtris-sites",
-            "wzdx"
+            "wzdx",
+            "tankerkoenig",
+            "econtrol",
+            "prix-carburants",
+            "minetur",
+            "overpass"
           ]
         },
         "accessMode": {

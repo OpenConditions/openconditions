@@ -12,7 +12,13 @@ const { INGEST_DOMAINS, loadIngestCatalog } = await import("../domains.js");
 describe("loadIngestCatalog layers", () => {
   beforeEach(() => {
     loadCatalog.mockReset();
-    loadCatalog.mockResolvedValue({ feeds: [], discovered: [], disabled: [], credentials: {} });
+    loadCatalog.mockResolvedValue({
+      feeds: [],
+      sources: [],
+      discovered: [],
+      disabled: [],
+      credentials: {},
+    });
   });
 
   it("takes the mount, the remote and its snapshot from the env", async () => {

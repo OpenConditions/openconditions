@@ -1,6 +1,7 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { loadIngestCatalog } from "../services/ingest/src/domains.js";
+import { SETTING_READERS } from "../services/ingest/src/pipeline/osm-import.js";
 import {
   type CredentialCatalog,
   configSchemaPropertiesFor,
@@ -14,23 +15,33 @@ export interface GenPaths {
   doc: string;
 }
 
-/** Splice generated configSchema.properties into service.json, preserving every other key. */
-function nextServiceJson(current: string, catalog: CredentialCatalog): string {
-  const svc = JSON.parse(current) as { configSchema?: { properties?: unknown } };
-  svc.configSchema = {
-    ...(svc.configSchema ?? {}),
-    properties: {
-      SEGMENT_REGIONS: {
-        type: "string",
-        title: "Road graph regions",
-        description:
-          "Complete JSON array of {id,bbox,tz,pbfUrls?,highwayClasses?}. Used by import, binding coverage and speed profiles. Unset or [] means no configured graph coverage. See graph-binding documentation.",
-        "x-openmapx-secret": false,
-      },
-      ...configSchemaPropertiesFor(catalog),
-    },
+interface ServiceJson {
+  id: string;
+  container?: { environment?: Record<string, string> };
+  configSchema?: { type?: "object"; properties?: unknown };
+}
+
+/**
+ * Write the configSchema (an object of the service's own fields and the
+ * catalogue's) into service.json, preserving every other key.
+ * `container.environment` is hand-written and left as it is, but may not name
+ * a config field: OpenMapX resolves the field into the environment (or mounts
+ * it as a secret file), and a hand-written entry would only hide that.
+ */
+function nextServiceJson(svc: ServiceJson, catalog: CredentialCatalog): string {
+  const properties = configSchemaPropertiesFor(catalog);
+  for (const key of Object.keys(svc.container?.environment ?? {})) {
+    if (properties[key] !== undefined) {
+      throw new Error(
+        `container.environment ${key} is a config field: remove the entry; OpenMapX sets it from the field`,
+      );
+    }
+  }
+  const next = {
+    ...svc,
+    configSchema: { type: "object", ...(svc.configSchema ?? {}), properties },
   };
-  return `${JSON.stringify(svc, null, 2)}\n`;
+  return `${JSON.stringify(next, null, 2)}\n`;
 }
 
 const ENV_MARKER =
@@ -56,6 +67,16 @@ HOST=0.0.0.0
 RATE_LIMIT_MAX=120
 RATE_LIMIT_WINDOW_MS=60000
 
+# Operator token (optional, at least 32 characters). A request with
+# \`Authorization: Bearer <token>\` reads in the operator scope: restricted sources
+# and licences that are not public included, no rate limit. Unset = public only.
+OPENCONDITIONS_OPERATOR_TOKEN=
+
+# How long a bbox read waits for the on-demand sources it fetches, in
+# milliseconds (optional; default 3000). A fetch still running then goes on and
+# lands for the next read; the response reports the source as \`deadline\`.
+OPENCONDITIONS_ON_DEMAND_DEADLINE_MS=
+
 # Immediate reverse-proxy address ranges to trust for client IPs (optional).
 # Only one proxy hop is accepted. Defaults cover local and container networks.
 TRUST_PROXY_CIDRS=loopback,linklocal,uniquelocal
@@ -64,10 +85,27 @@ TRUST_PROXY_CIDRS=loopback,linklocal,uniquelocal
 # carry only OpenLR (no coordinates) are dropped rather than resolved.
 OPENLR_RESOLVER_URL=
 
+# Road graph coverage: one JSON array used by import, binding and profiles.
+# Unset/[] imports no regions. Configure explicitly before enabling route effects.
+# See docs/graph-binding.md for the schema and a Germany motorway example.
+SEGMENT_REGIONS=[]
+
 # Egress guard caps applied to every feed fetch (optional; defaults shown)
 OPENCONDITIONS_MAX_FEED_BYTES=268435456
 OPENCONDITIONS_FETCH_TIMEOUT_MS=60000
 OPENCONDITIONS_MAX_REDIRECTS=5
+
+# Static archive (nightly GeoParquet published-view snapshot). The build writes a
+# dated \`archive-<class>-YYYY-MM-DD.parquet\` per record class of the
+# redistributable published view and points \`archive-<class>.parquet\` at it (see
+# docs/archive.md). Local filesystem only — object-storage/S3 upload is operator
+# infra, not wired here.
+# Output directory (optional; default ./data/archive).
+OPENCONDITIONS_ARCHIVE_DIR=
+# Nights of dated files to keep (optional; default 30; 0 keeps every night).
+OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS=
+# Cron for the nightly build (optional; default "30 3 * * *"; set "off" to disable).
+ARCHIVE_CRON=
 
 # Layered feed delivery (optional). Feeds load at boot from baked-in defaults +
 # an operator-mounted directory + an optional (default-off) remote bundle,
@@ -95,16 +133,21 @@ export function nextEnvExample(current: string, catalog: CredentialCatalog): str
   return `${preamble}\n\n${envExampleFor(catalog)}`;
 }
 
-/** In --write mode, writes the three artifacts. In check mode, compares and collects drift. */
+/**
+ * In --write mode, writes the three artifacts. In check mode, compares and
+ * collects drift. Throws, in either mode, on an environment entry naming an
+ * instance setting.
+ */
 export function applyOrCheck(
   catalog: CredentialCatalog,
   paths: GenPaths,
   write: boolean,
 ): { drift: string[] } {
+  const svc = JSON.parse(readFileSync(paths.serviceJson, "utf8")) as ServiceJson;
   const targets: [string, string][] = [
     [paths.envExample, nextEnvExample(safeRead(paths.envExample), catalog)],
-    [paths.serviceJson, nextServiceJson(readFileSync(paths.serviceJson, "utf8"), catalog)],
-    [paths.doc, credentialsDocFor(catalog)],
+    [paths.serviceJson, nextServiceJson(svc, catalog)],
+    [paths.doc, credentialsDocFor(catalog, svc.id)],
   ];
   const drift: string[] = [];
   for (const [file, next] of targets) {
@@ -126,7 +169,10 @@ function safeRead(file: string): string {
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   // The baked catalogue alone: what ships is documented, not an operator's mount.
-  const catalog = await loadIngestCatalog({});
+  const catalog = {
+    ...(await loadIngestCatalog({})),
+    settingReaders: SETTING_READERS,
+  };
   const paths: GenPaths = {
     envExample: fileURLToPath(new URL("../.env.example", import.meta.url)),
     serviceJson: fileURLToPath(new URL("../services/ingest/service.json", import.meta.url)),

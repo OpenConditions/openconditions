@@ -3,10 +3,17 @@ import {
   type CatalogFeed,
   type CredentialField,
   feedCredentialNames,
+  isSettingsGroup,
 } from "@openconditions/ingest-framework";
 
-/** What the credential artefacts are generated from: the polled feeds and the shared groups. */
-export type CredentialCatalog = Pick<Catalog, "feeds" | "credentials">;
+/**
+ * What the credential artefacts are generated from: the polled feeds, the
+ * shared groups, and the readers of a group of settings that are no feed
+ * (the road-graph import reads `@overpass.url`), by group.
+ */
+export type CredentialCatalog = Pick<Catalog, "feeds" | "credentials"> & {
+  settingReaders?: Readonly<Record<string, readonly string[]>>;
+};
 
 /** One credential env var and the field that documents it. */
 interface CredentialVar {
@@ -56,6 +63,22 @@ function keyedFeeds(catalog: CredentialCatalog): { feed: CatalogFeed; vars: Cred
   return out;
 }
 
+/** A var's own lines: its default, when it has one, then `VAR=`. */
+function varLines(v: CredentialVar): string[] {
+  return [
+    ...(v.field?.default === undefined ? [] : [`# Default: ${v.field.default}`]),
+    `${v.env}=`,
+  ];
+}
+
+/**
+ * Whether a var is a setting, a field of a group of settings (see
+ * `isSettingsGroup`): plain configuration with a default, not a secret.
+ */
+function isSetting(catalog: CredentialCatalog, v: CredentialVar): boolean {
+  return v.group !== undefined && isSettingsGroup(catalog.credentials.groups[v.group] ?? {});
+}
+
 /** The comment lines of a field's setup guide. */
 function guideLines(field: CredentialField | undefined): string[] {
   const setup = field?.setup;
@@ -89,13 +112,14 @@ export function envExampleFor(catalog: CredentialCatalog): string {
     }
   }
   for (const [group, { users, vars }] of groups) {
+    const readers = [...users, ...(catalog.settingReaders?.[group] ?? [])];
     const lines = [
-      `# Shared: ${group} (${users.join(", ")})`,
+      `# Shared: ${group} (${readers.join(", ")})`,
       ...guideLines(vars.find((v) => v.field?.setup)?.field),
     ];
     for (const v of vars) {
       seen.add(v.env);
-      lines.push(`${v.env}=`);
+      lines.push(...varLines(v));
     }
     blocks.push(lines.join("\n"));
   }
@@ -109,50 +133,273 @@ export function envExampleFor(catalog: CredentialCatalog): string {
     ];
     for (const v of own) {
       seen.add(v.env);
-      lines.push(`${v.env}=`);
+      lines.push(...varLines(v));
     }
     blocks.push(lines.join("\n"));
   }
   return `${blocks.join("\n\n")}\n`;
 }
 
+/** A field the ingest service itself reads, not one a feed declares. */
+interface ServiceField {
+  title: string;
+  description: string;
+  /** A vault secret: mounted as a file, read through `<KEY>_FILE`, never defaulted. */
+  secret?: true;
+  /** The value OpenMapX renders when the operator sets nothing; absent = unset. */
+  default?: string;
+}
+
 /**
- * Non-secret operational settings (not per-feed credentials). Layered feed
- * delivery is configured by these three env vars; they render as plain config
- * fields in the admin panel (no vault, no `*_FILE` path).
+ * The ingest service's own configuration, hand-written here and written into
+ * `service.json` beside the fields generated from the catalogue. Under
+ * OpenMapX a community service's `container.environment` reaches the
+ * container verbatim (a `${VAR}` stays literal), so everything an operator
+ * sets is one of these: a setting with its default, or a vault secret.
+ * An empty default renders the variable empty, which every reader takes as
+ * its built-in default.
  */
-const SERVICE_SETTINGS: Record<string, { title: string; description: string }> = {
-  OPENCONDITIONS_FEEDS_DIR: {
-    title: "Mounted feed catalogue directory",
+export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
+  DATABASE_URL: {
+    title: "Database URL",
     description:
-      "Directory laid out like the baked catalogue (<domain>/<region>.jsonc region files, optional credentials.jsonc) whose feeds add to or override the baked-in feeds by id, with no rebuild. Unset = no overrides.",
+      "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database, e.g. postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx. The service refuses to start without it.",
+    secret: true,
+  },
+  OPENCONDITIONS_OPERATOR_TOKEN: {
+    title: "Operator token",
+    description:
+      "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves no Tankerkönig (DE), E-Control (AT) or OpenStreetMap fuel station.",
+    secret: true,
+  },
+  SEGMENT_REGIONS: {
+    title: "Road graph regions",
+    description:
+      "Complete JSON array of {id,bbox,tz,pbfUrls?,highwayClasses?}. Used by import, binding coverage and speed profiles. Unset or [] means no configured graph coverage. See graph-binding documentation.",
+    default: "",
+  },
+  SEGMENT_HIGHWAY_CLASSES: {
+    title: "Road graph highway classes",
+    description:
+      "Comma-separated OSM highway values the road-graph import keeps. Empty: the built-in set.",
+    default: "",
+  },
+  BIND_ENABLED: {
+    title: "Bind records to the road graph",
+    description: '"false" turns binding records to road-graph segments off. Empty: on.',
+    default: "",
+  },
+  BIND_MAX_OFFSET_M: {
+    title: "Binding max offset (m)",
+    description:
+      "How far a record's geometry may lie from a segment and still bind to it. Empty: the built-in default.",
+    default: "",
+  },
+  BIND_CONCURRENCY: {
+    title: "Binding concurrency",
+    description: "Records bound in parallel. Empty: the built-in default.",
+    default: "",
+  },
+  OPENLR_RESOLVER_URL: {
+    title: "OpenLR resolver URL",
+    description:
+      "URL of the OpenLR map-match resolver service. Empty: observations that carry only OpenLR (no coordinates) are dropped rather than resolved.",
+    default: "",
+  },
+  OPENCONDITIONS_FETCH_TIMEOUT_MS: {
+    title: "Feed fetch timeout (ms)",
+    description: "Timeout of every feed fetch. Empty: 60000.",
+    default: "",
+  },
+  OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: {
+    title: "Egress allowed private hosts",
+    description:
+      "Comma-separated hostnames the egress guard lets the service fetch although they resolve to private addresses, e.g. overpass for a self-hosted Overpass on the compose network. Empty: none.",
+    default: "",
+  },
+  OPENCONDITIONS_DOWNLOAD_MAX_BYTES: {
+    title: "Artifact download cap (bytes)",
+    description: "Largest artifact (PBF extract) a download streams. Empty: 8 GiB.",
+    default: "",
+  },
+  OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS: {
+    title: "Artifact download timeout (ms)",
+    description: "Overall timeout of an artifact download. Empty: 30 minutes.",
+    default: "",
+  },
+  RATE_LIMIT_MAX: {
+    title: "Rate limit: requests per window",
+    description: "Requests one client may make per rate-limit window.",
+    default: "120",
+  },
+  RATE_LIMIT_WINDOW_MS: {
+    title: "Rate limit window (ms)",
+    description: "Length of the rate-limit window.",
+    default: "60000",
+  },
+  STREAM_MAX_CONNECTIONS: {
+    title: "Live streams open at once",
+    description: "Server-sent-event streams the service holds open at once.",
+    default: "100",
+  },
+  TRUST_PROXY_CIDRS: {
+    title: "Trusted proxy ranges",
+    description:
+      "Immediate reverse-proxy address ranges to trust for client IPs; only one proxy hop is accepted.",
+    default: "loopback,linklocal,uniquelocal",
+  },
+  OPENCONDITIONS_RAW_MAX_BYTES: {
+    title: "Raw archive cap (bytes)",
+    description: "Cap on the raw payload archive's stored bytes; 0 = no cap. Empty: 10 GiB.",
+    default: "",
+  },
+  OPENCONDITIONS_HISTORY_DAYS: {
+    title: "Record history (days)",
+    description:
+      "How long a tombstoned record and its revisions stay for the history API. Empty: 90.",
+    default: "",
+  },
+  OPENCONDITIONS_ON_DEMAND_DEADLINE_MS: {
+    title: "On-demand read deadline (ms)",
+    description:
+      "How long a read waits for its on-demand fetches before it answers from storage. Empty: 3000.",
+    default: "",
   },
   OPENCONDITIONS_FEEDS_REMOTE_URL: {
     title: "Remote feed bundle URL",
     description:
-      'URL of a remote feed bundle ({ "files": { "<domain>/<region>": <region file>, "credentials": <credentials file> } }, e.g. a published atlas/<domain>.json) to pull feeds from. Only used when remote-pull is enabled.',
+      'URL of a remote feed bundle ({ "files": { "<domain>/<region>": <region file>, "credentials": <credentials file> } }, e.g. a published atlas/<domain>.json) to pull feeds from: the way to run a custom catalogue here, whose feeds add to or override the baked-in feeds by id. Only used when remote-pull is enabled.',
   },
   OPENCONDITIONS_FEEDS_REMOTE_ENABLED: {
     title: "Enable remote feed-pull",
     description:
-      'Set to "true" to opt the instance into remote-pull (default off). The bundle is checked like the baked catalogue and every URL is egress-guarded; a snapshot is kept so the instance survives the remote being down.',
+      'Set to "true" to opt the instance into remote-pull (default off). The bundle is checked like the baked catalogue and every URL is egress-guarded; a snapshot is kept on the service\'s volume so the instance survives the remote being down.',
+  },
+  OPENCONDITIONS_INSTANCE_ID: {
+    title: "Instance id",
+    description:
+      "This instance's stable id, the namespace of every record it originates and its name to federation peers: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it before federating, and to the same value as the contributions API's. Empty: local.",
+    default: "",
+  },
+  OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS: {
+    title: "Archive nights kept",
+    description: "Nights of dated files the nightly archive keeps; 0 keeps every night. Empty: 30.",
+    default: "",
+  },
+  ARCHIVE_CRON: {
+    title: "Archive schedule",
+    description: 'Cron of the nightly archive build (UTC); "off" disables it. Empty: 30 3 * * *.',
+    default: "",
+  },
+  SEGMENT_PROFILE_CRON: {
+    title: "Segment profile schedule",
+    description:
+      'Cron of the weekly segment speed-profile derivation (UTC); "off" disables it. Empty: 30 3 * * 1.',
+    default: "",
+  },
+  SEGMENT_REBUILD_CRON: {
+    title: "Segment rebuild schedule",
+    description:
+      'Cron of the weekly road-graph segment rebuild (UTC); "off" disables it. Empty: 0 4 * * 1.',
+    default: "",
+  },
+  OPENCONDITIONS_SHRINK_TRIPWIRE_RATIO: {
+    title: "Shrink tripwire ratio",
+    description:
+      "An event feed's complete snapshot whose count does not exceed this share of its last published count is skipped as a likely partial parse, e.g. 0.1. Empty or 0: only a drop to zero is skipped.",
+    default: "",
+  },
+  OPENCONDITIONS_MAX_FEED_BYTES: {
+    title: "Feed response cap (bytes)",
+    description: "Largest feed response, compressed or decompressed. Empty: 256 MiB.",
+    default: "",
+  },
+  OPENCONDITIONS_MAX_REDIRECTS: {
+    title: "Feed redirects",
+    description: "Redirects a feed fetch follows. Empty: 5.",
+    default: "",
+  },
+  OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL: {
+    title: "Readings per poll",
+    description: "Cap on the readings one poll may hold; a poll above it fails. Empty: 1000000.",
+    default: "",
+  },
+  OPENCONDITIONS_OSM_MAXSPEED_FALLBACK: {
+    title: "OSM maxspeed fallback",
+    description:
+      '"false" turns off the nightly fallback that fills a sensor without a speed baseline from OpenStreetMap maxspeed tags. Empty: on.',
+    default: "",
+  },
+  OPENCONDITIONS_RAW_ZSTD_LEVEL: {
+    title: "Raw archive compression level",
+    description: "zstd level of the raw payload archive. Empty: 9.",
+    default: "",
+  },
+  OPENCONDITIONS_RAW_HOT_HOURS: {
+    title: "Raw archive: hours kept whole",
+    description: "Hours every distinct raw payload is kept. Empty: 48.",
+    default: "",
+  },
+  OPENCONDITIONS_RAW_THIN_DAYS_SITUATION: {
+    title: "Raw archive: days thinned (situation feeds)",
+    description: "Days situation feeds then keep one raw payload an hour. Empty: 14.",
+    default: "",
+  },
+  OPENCONDITIONS_RAW_THIN_DAYS_OBSERVATION: {
+    title: "Raw archive: days thinned (flow feeds)",
+    description: "Days flow feeds then keep one raw payload an hour. Empty: 7.",
+    default: "",
+  },
+  OPENCONDITIONS_ROLLUP_HOURLY_DAYS: {
+    title: "Hourly rollups kept (days)",
+    description: "Days hourly reading rollups are kept. Empty: 35.",
+    default: "",
+  },
+  OPENCONDITIONS_ROLLUP_DAILY_DAYS: {
+    title: "Daily rollups kept (days)",
+    description: "Days daily reading rollups are kept. Empty: 400.",
+    default: "",
   },
 };
 
-/** The `service.json` configSchema.properties object (admin-panel fields). */
+/**
+ * The `service.json` configSchema.properties object (admin-panel fields): the
+ * service's own fields ({@link SERVICE_FIELDS}), then a feed's credentials,
+ * each a secret, and the instance settings (the fields of a group of
+ * settings), each plain configuration with its `default`. OpenMapX resolves
+ * every non-secret field into the container's environment (its default, else
+ * the admin panel, else `SERVICE_<ID>_<KEY>` in its `.env`) and mounts every
+ * secret as a file named by `<KEY>_FILE`; those are the only routes a
+ * community service's environment has. Throws when a feed's credential takes
+ * the name of a service field.
+ */
 export function configSchemaPropertiesFor(catalog: CredentialCatalog): Record<string, unknown> {
   const props: Record<string, unknown> = {};
-  for (const [key, { title, description }] of Object.entries(SERVICE_SETTINGS)) {
-    props[key] = { type: "string", title, description, "x-openmapx-secret": false };
+  for (const [key, field] of Object.entries(SERVICE_FIELDS)) {
+    props[key] = {
+      type: "string",
+      title: field.title,
+      description: field.description,
+      ...(field.default === undefined ? {} : { default: field.default }),
+      "x-openmapx-secret": field.secret === true,
+    };
   }
   for (const { feed, vars } of keyedFeeds(catalog)) {
-    for (const { env, field } of vars) {
+    for (const v of vars) {
+      const { env, field } = v;
+      if (SERVICE_FIELDS[env]) {
+        throw new Error(
+          `${ownerId(feed)} reads ${env}, a field of the service itself: rename the credential`,
+        );
+      }
       if (props[env]) continue;
+      const setting = isSetting(catalog, v);
       props[env] = {
         type: "string",
         title: field?.title ?? `${feed.name} — ${env}`,
         ...(field?.description ? { description: field.description } : {}),
-        "x-openmapx-secret": true,
+        ...(setting ? { default: field?.default } : {}),
+        "x-openmapx-secret": !setting,
         ...(field?.setup ? { "x-openmapx-setup": field.setup } : {}),
       };
     }
@@ -160,8 +407,14 @@ export function configSchemaPropertiesFor(catalog: CredentialCatalog): Record<st
   return props;
 }
 
-/** The `docs/feed-credentials.md` table: one row per keyed feed, shared vars included. */
-export function credentialsDocFor(catalog: CredentialCatalog): string {
+/**
+ * `docs/feed-credentials.md`: one row per feed that needs a credential, shared
+ * credentials included, then the settings the feeds read (a group of settings'
+ * fields), each once, with its default, the name OpenMapX reads it under for
+ * the service `serviceId`, and its readers.
+ */
+export function credentialsDocFor(catalog: CredentialCatalog, serviceId: string): string {
+  const openmapxPrefix = `SERVICE_${serviceId.replaceAll("-", "_").toUpperCase()}_`;
   const header = [
     "# Feed credentials",
     "",
@@ -170,14 +423,51 @@ export function credentialsDocFor(catalog: CredentialCatalog): string {
     "Each variable may instead name a file holding the value: `<VAR>_FILE`. See",
     "[`feeds/README.md`](../feeds/README.md#credentials) for how the names are derived.",
     "",
+    `Under OpenMapX each variable is a field of the \`${serviceId}\` service. A credential`,
+    "is a secret set in the admin services panel, which OpenMapX mounts as a file named",
+    "by `<VAR>_FILE`. A setting is set there too, or in OpenMapX's `.env` under the name",
+    "the settings table gives. Settings kept in OpenMapX's `.env` are applied with",
+    `\`pnpm openmapx services start ${serviceId}\` (which resets every setting saved only in`,
+    "the admin form, so keep all of them in one place). Settings saved in the form are",
+    "applied with **Save & Apply**. OpenMapX mounts no directory of the operator's, so",
+    "`OPENCONDITIONS_FEEDS_DIR` is not a field there: a custom catalogue comes through",
+    "the remote feed bundle (`OPENCONDITIONS_FEEDS_REMOTE_URL`, with",
+    '`OPENCONDITIONS_FEEDS_REMOTE_ENABLED` set to "true"), whose snapshot is kept on the',
+    "service's volume beside its raw and nightly archives.",
+    "",
     "| Feed | Id | Env var(s) | Licence | How to get it |",
     "|---|---|---|---|---|",
   ];
-  const rows = keyedFeeds(catalog).map(({ feed, vars }) => {
-    const names = vars.map((v) => `\`${v.env}\``).join(", ");
-    const setup = vars.find((v) => v.field?.setup)?.field?.setup;
+  const rows: string[] = [];
+  const settings = new Map<string, { v: CredentialVar; readers: string[] }>();
+  for (const { feed, vars } of keyedFeeds(catalog)) {
+    const credentials = vars.filter((v) => !isSetting(catalog, v));
+    for (const v of vars.filter((s) => isSetting(catalog, s))) {
+      const entry = settings.get(v.env) ?? { v, readers: [] };
+      entry.readers.push(`\`${ownerId(feed)}\``);
+      settings.set(v.env, entry);
+    }
+    if (credentials.length === 0) continue;
+    const names = credentials.map((v) => `\`${v.env}\``).join(", ");
+    const setup = credentials.find((v) => v.field?.setup)?.field?.setup;
     const how = setup?.url ? `[${setup.urlLabel ?? "portal"}](${setup.url})` : (setup?.notes ?? "");
-    return `| ${feed.name} | \`${ownerId(feed)}\` | ${names} | ${feed.license} | ${how} |`;
-  });
-  return `${[...header, ...rows].join("\n")}\n`;
+    rows.push(`| ${feed.name} | \`${ownerId(feed)}\` | ${names} | ${feed.license} | ${how} |`);
+  }
+  const settingRows =
+    settings.size === 0
+      ? []
+      : [
+          "",
+          "## Settings",
+          "",
+          "Not credentials: where the instance reaches a service. Each has a default.",
+          "",
+          "| Env var | Under OpenMapX | Default | Read by | What |",
+          "|---|---|---|---|---|",
+          ...[...settings].map(([env, { v, readers }]) => {
+            const others = (catalog.settingReaders?.[v.group ?? ""] ?? []).map((r) => `\`${r}\``);
+            return `| \`${env}\` | \`${openmapxPrefix}${env}\` | \`${v.field?.default ?? ""}\` | ${[...readers, ...others].join(", ")} | ${v.field?.description ?? v.field?.title ?? ""} |`;
+          }),
+        ];
+  return `${[...header, ...rows, ...settingRows].join("\n")}\n`;
 }

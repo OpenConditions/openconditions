@@ -104,7 +104,18 @@ const cursor = z.string().min(1).describe("the `next` of the previous page").opt
 const limit = z.coerce.number().int().min(1).max(5000).default(500);
 const canonical = (what: string) => z.enum(["0", "1"]).describe(`1 serves ${what}`).optional();
 
-/** Query of a feature collection: filters, the canonical view, components, and the page. */
+/** What a feature read can expand: comma-separated, each at most once in effect. */
+const expand = (what: string) =>
+  list
+    .pipe(z.array(z.enum(["components", "latest", "offers"])))
+    .describe(
+      "comma-separated, of components, latest and offers. " +
+        "latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); " +
+        `offers adds its live offers and those of its members and components. ${what}`,
+    )
+    .optional();
+
+/** Query of a feature collection: filters, the canonical view, expansions, and the page. */
 export const FeatureListQuery = z.strictObject({
   ...SituationListQuery.pick({
     bbox: true,
@@ -114,19 +125,27 @@ export const FeatureListQuery = z.strictObject({
     source: true,
     origin: true,
   }).shape,
-  at: at("features"),
+  at: at("features, readings and offers"),
   canonical: canonical(
     "the canonical view: one feature per cluster of linked features, under its canonical id",
   ),
-  expand: z
-    .enum(["components"])
-    .describe("components includes each feature's components, which collections leave out")
-    .optional(),
+  expand: expand(
+    "components includes each feature's components, which collections leave out. " +
+      "The GeoJSON and JSON-LD collections take components only and ignore latest and offers.",
+  ),
   cursor,
   limit,
 });
 
 export type FeatureListQuery = z.output<typeof FeatureListQuery>;
+
+/** Query of one feature: the instant its readings and offers are current at, and expansions. */
+export const FeatureQuery = z.strictObject({
+  at: at("readings and offers"),
+  expand: expand("A single feature always carries its components."),
+});
+
+export type FeatureQuery = z.output<typeof FeatureQuery>;
 
 /** Query of an offer collection: filters, the instant offers are valid at, and the page. */
 export const OfferListQuery = z.strictObject({
@@ -151,11 +170,15 @@ export const LatestObservationQuery = z.strictObject({
   bbox: bbox.optional(),
   property: list.describe("comma-separated property codes").optional(),
   domain: z.string().min(1).describe("only properties of this domain").optional(),
-  source: list.describe("comma-separated source ids").optional(),
+  source: list
+    .describe(
+      "comma-separated source ids; with canonical=1, @fused and @fused-public name fused readings as the request's scope reads them: the operator's @fused only, the public scope's @fused where every contributor is public and @fused-public otherwise",
+    )
+    .optional(),
   origin: list.describe("comma-separated origins: feed, crowd, federation, derived").optional(),
   at: at("readings"),
   canonical: canonical(
-    "the canonical view: a feature's fused reading of each property several sources or the crowd may report, and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)",
+    "the canonical view: a feature's fused reading of each property several sources or the crowd may report (for the operator source @fused, fused from every source; in public scope fused from public sources only, source @fused when every contributor is public, else @fused-public), and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)",
   ),
   cursor: z
     .string()

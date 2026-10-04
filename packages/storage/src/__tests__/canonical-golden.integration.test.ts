@@ -27,9 +27,9 @@ const TIERS = {
   "de-bw-parkapi": "aggregator",
   "nl-ndw-truckparking": "authoritative",
   "de-autobahn-events": "operator",
-  "es-minetur": "authoritative",
+  "es-minetur-fuel": "authoritative",
   "it-mimit": "authoritative",
-  "at-econtrol": "authoritative",
+  "at-econtrol-fuel": "authoritative",
   "es-fuel-test": "authoritative",
 };
 const golden = goldenFacilities();
@@ -101,18 +101,18 @@ describe("the canonical view of the golden facilities", () => {
   });
 
   it("stores a lone station's components as its canonical components, keys kept", async () => {
-    const station = await canonicalOf("oc:feature:es-minetur:15493");
+    const station = await canonicalOf("oc:feature:es-minetur-fuel:15493");
     expect(station!.canonical_feature_id).toMatch(/^oc:feature:test\.local:[0-9a-f]{64}$/);
     expect(station!.components).toEqual([
       {
         key: "e5",
         kind: "fuel_product",
-        members: [{ featureId: "oc:feature:es-minetur:15493", key: "e5" }],
+        members: [{ featureId: "oc:feature:es-minetur-fuel:15493", key: "e5" }],
       },
       {
         key: "diesel",
         kind: "fuel_product",
-        members: [{ featureId: "oc:feature:es-minetur:15493", key: "diesel" }],
+        members: [{ featureId: "oc:feature:es-minetur-fuel:15493", key: "diesel" }],
       },
     ]);
   });
@@ -143,13 +143,13 @@ describe("the canonical view of the golden facilities", () => {
   });
 
   it("keeps a fused value of an on-demand source on demand, expiring with it", async () => {
-    const station = await canonicalOf("oc:feature:at-econtrol:34026");
+    const station = await canonicalOf("oc:feature:at-econtrol-fuel:34026");
     const [row] = (await fusedRows()).filter((r) => r.feature_id === station!.canonical_feature_id);
     expect(row!.access_mode).toBe("on_demand");
     const reading = golden
-      .get("at-econtrol")!
+      .get("at-econtrol-fuel")!
       .observations.find(
-        (o) => (o["subject"] as Rec)["featureId"] === "oc:feature:at-econtrol:34026",
+        (o) => (o["subject"] as Rec)["featureId"] === "oc:feature:at-econtrol-fuel:34026",
       )!;
     expect(row!.expires_at?.toISOString()).toBe(
       new Date((reading["freshness"] as Rec)["expiresAt"] as string).toISOString(),
@@ -164,8 +164,8 @@ describe("the canonical view of the golden facilities", () => {
 });
 
 describe("a station two sources describe", () => {
-  const minetur = golden.get("es-minetur")!;
-  const station = minetur.features.find((f) => f["id"] === "oc:feature:es-minetur:3119")!;
+  const minetur = golden.get("es-minetur-fuel")!;
+  const station = minetur.features.find((f) => f["id"] === "oc:feature:es-minetur-fuel:3119")!;
   const e5 = minetur.observations.find(
     (o) =>
       (o["subject"] as Rec)["featureId"] === station["id"] &&
@@ -228,12 +228,12 @@ describe("a station two sources describe", () => {
   it("links the two and keeps one canonical feature for them", async () => {
     const [link] = await sql`
       SELECT method, status FROM conditions.feature_link
-       WHERE a_id = 'oc:feature:es-fuel-test:3119' AND b_id = 'oc:feature:es-minetur:3119'`;
+       WHERE a_id = 'oc:feature:es-fuel-test:3119' AND b_id = 'oc:feature:es-minetur-fuel:3119'`;
     expect(link).toMatchObject({ status: "accepted" });
     const canonical = await canonicalOf(station["id"] as string);
     expect(canonical!.member_ids).toEqual([
       "oc:feature:es-fuel-test:3119",
-      "oc:feature:es-minetur:3119",
+      "oc:feature:es-minetur-fuel:3119",
     ]);
     expect(await canonicalOf(twin.id)).toEqual(canonical);
   });
@@ -281,9 +281,9 @@ describe("a station two sources describe", () => {
 
 describe("when an on-demand answer lapses", () => {
   it("drops the answer, its canonical row and the fused rows it fed", async () => {
-    const station = "oc:feature:at-econtrol:34026";
+    const station = "oc:feature:at-econtrol-fuel:34026";
     const canonical = await canonicalOf(station);
-    const expiry = (golden.get("at-econtrol")!.features[0]!["freshness"] as Rec)["expiresAt"];
+    const expiry = (golden.get("at-econtrol-fuel")!.features[0]!["freshness"] as Rec)["expiresAt"];
     const later = new Date(Date.parse(expiry as string) + 1000).toISOString();
     const counts = await sweepRecords(sql, {
       registry,
@@ -304,8 +304,8 @@ describe("when an on-demand answer lapses", () => {
 describe("a national register's first poll", () => {
   it("links ten thousand stations by their neighbours, not by every pair", async () => {
     const template = golden
-      .get("es-minetur")!
-      .features.find((f) => f["id"] === "oc:feature:es-minetur:3119")!;
+      .get("es-minetur-fuel")!
+      .features.find((f) => f["id"] === "oc:feature:es-minetur-fuel:3119")!;
     const location = template["location"] as Rec;
     // A grid with ~1 km between stations: none is a candidate of another.
     const stations = Array.from({ length: 10_000 }, (_, i) => ({
@@ -384,8 +384,8 @@ describe("moving crowd rows", () => {
 });
 
 describe("a crowd reading on a component whose canonical key changes", () => {
-  const minetur = golden.get("es-minetur")!;
-  const station = minetur.features.find((f) => f["id"] === "oc:feature:es-minetur:15493")!;
+  const minetur = golden.get("es-minetur-fuel")!;
+  const station = minetur.features.find((f) => f["id"] === "oc:feature:es-minetur-fuel:15493")!;
   const e5 = (station["components"] as Rec[]).find((c) => c["key"] === "e5")!;
   /** The station as a second mirror has it, its e5 at the given price level. */
   const mirror = (priceLevel: string): Rec => ({
@@ -400,7 +400,7 @@ describe("a crowd reading on a component whose canonical key changes", () => {
         FROM conditions.observation_latest
        WHERE source_id = 'crowd' AND feature_id = (
          SELECT canonical_feature_id FROM conditions.feature_canonical
-          WHERE 'oc:feature:es-minetur:15493' = ANY(member_ids))`;
+          WHERE 'oc:feature:es-minetur-fuel:15493' = ANY(member_ids))`;
 
   it("follows the component when its member matches another and the canonical id stays", async () => {
     const at = "2026-09-22T12:10:00.000Z";

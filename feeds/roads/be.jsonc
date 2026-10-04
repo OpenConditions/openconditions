@@ -63,6 +63,7 @@
       "operator": "miv",
       "product": "flow",
       "name": "MIV traffic speed (Flanders)",
+      "homepage": "https://www.verkeerscentrum.be",
       "tier": "authoritative",
       "format": "miv",
       "endpoints": {

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import { buildRegistry, extendVocabulary } from "@openconditions/model";
+import { buildRegistry } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import { writeSnapshot } from "@openconditions/storage";
 import type postgres from "postgres";
@@ -16,13 +16,7 @@ import {
 type Rec = Record<string, unknown>;
 
 /** The ministry's fuel stations from the facilities golden records (MINETUR, CC BY 4.0). */
-const facilityRegistry = buildRegistry([
-  ...productionModules,
-  {
-    name: "facilities-fit",
-    entries: [extendVocabulary({ vocabulary: "source_format", values: ["minetur"] })],
-  },
-]);
+const facilityRegistry = buildRegistry(productionModules);
 /** A golden record as the draft it was sealed from: sealing adds only these fields. */
 const goldenFeature = (id: string): Rec => {
   const {
@@ -231,7 +225,7 @@ describe("eraseRecord", () => {
   }, 30_000);
 
   it("takes an erased feature out of the canonical feature it was linked into", async () => {
-    const station = goldenFeature("oc:feature:es-minetur:3119");
+    const station = goldenFeature("oc:feature:es-minetur-fuel:3119");
     const twin = {
       ...station,
       id: "oc:feature:es-fuel-test:3119",
@@ -244,7 +238,7 @@ describe("eraseRecord", () => {
         { features: [feature] },
         { registry: facilityRegistry, instanceId: INSTANCE, now: T0, complete: false },
       );
-    await write("es-minetur", station);
+    await write("es-minetur-fuel", station);
     await write("es-fuel-test", twin);
     const membersOf = async (id: string) =>
       (

@@ -3,7 +3,16 @@
   "info": {
     "title": "OpenConditions",
     "version": "1.0.0",
-    "description": "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null."
+    "description": "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope."
+  },
+  "components": {
+    "securitySchemes": {
+      "operatorToken": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "The instance's `OPENCONDITIONS_OPERATOR_TOKEN`: grants the operator scope and skips the rate limiter."
+      }
+    }
   },
   "paths": {
     "/situations": {
@@ -137,6 +146,12 @@
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -146,6 +161,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -281,6 +308,7 @@
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -290,6 +318,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -425,6 +465,7 @@
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -434,6 +475,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -569,6 +622,7 @@
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -578,6 +632,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -713,6 +779,7 @@
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -722,6 +789,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -811,6 +890,7 @@
             "description": "the record class streamed; observations are not"
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -820,6 +900,24 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "503": {
+            "description": "The instance serves as many live streams as it allows; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -827,7 +925,7 @@
     "/situations/{id}": {
       "get": {
         "operationId": "getSituation",
-        "summary": "One situation, tombstoned or not, with its evidence, the graph binding of its place (`binding`) and of each effect with a place of its own (`effectBindings`, by effect id).",
+        "summary": "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place of its own (`effectBindings`, by effect id).",
         "parameters": [
           {
             "name": "id",
@@ -851,6 +949,12 @@
             }
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -861,8 +965,20 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
           "404": {
             "description": "No such record, series or schema"
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -870,7 +986,7 @@
     "/features": {
       "get": {
         "operationId": "listFeatures",
-        "summary": "Live features as records, one keyset page ordered by id; `canonical=1` serves one feature per cluster of linked features under its canonical id. Components only with `expand=components`.",
+        "summary": "Live features as records, one keyset page ordered by id (the limit counts features); `canonical=1` serves one feature per cluster of linked features under its canonical id. Components only with `expand=components`; `expand=latest` adds `latest` (each feature's readings in effect, by feature id) and `expand=offers` adds `offers` (each feature's live offers, by feature id). A reading is `{ property, componentKey?, qualifiers?, result, phenomenonTime, validUntil?, source, contributors? }`; a fused reading lists the sources it was fused from in `contributors`. The operator reads `@fused`, the fusion of every source; the public scope reads a fusion of public sources only: `@fused` when every contributor is public, else `@fused-public`, and none when no contributor is public. A read with `bbox` and a kind, property or domain an on-demand source produces, of the records this route lists, first fetches that source's stale grid cells inside its coverage, within its request limits, waiting up to `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000); the response then carries `coverage: { partial, sources: [{ id, complete, reason? }] }`, `reason` one of `too_many_cells`, `limited`, `failed`, `deadline` or `missing_configuration`. A partial answer is not cached. A read without `bbox`, or for a past `at`, never fetches; `source` limits the sources fetched.",
         "parameters": [
           {
             "name": "bbox",
@@ -939,9 +1055,9 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-              "description": "the instant features are current at"
+              "description": "the instant features, readings and offers are current at"
             },
-            "description": "the instant features are current at"
+            "description": "the instant features, readings and offers are current at"
           },
           {
             "name": "canonical",
@@ -959,11 +1075,10 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "enum": ["components"],
-              "description": "components includes each feature's components, which collections leave out"
+              "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. components includes each feature's components, which collections leave out. The GeoJSON and JSON-LD collections take components only and ignore latest and offers.",
+              "type": "string"
             },
-            "description": "components includes each feature's components, which collections leave out"
+            "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. components includes each feature's components, which collections leave out. The GeoJSON and JSON-LD collections take components only and ignore latest and offers."
           },
           {
             "name": "cursor",
@@ -986,6 +1101,12 @@
               "minimum": 1,
               "maximum": 5000
             }
+          }
+        ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
           }
         ],
         "responses": {
@@ -997,6 +1118,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1004,7 +1137,7 @@
     "/features.geojson": {
       "get": {
         "operationId": "listFeaturesGeoJson",
-        "summary": "Live features as a GeoJSON FeatureCollection, one keyset page.",
+        "summary": "Live features as a GeoJSON FeatureCollection, one keyset page. `expand` takes components only: latest and offers are ignored.",
         "parameters": [
           {
             "name": "bbox",
@@ -1073,9 +1206,9 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-              "description": "the instant features are current at"
+              "description": "the instant features, readings and offers are current at"
             },
-            "description": "the instant features are current at"
+            "description": "the instant features, readings and offers are current at"
           },
           {
             "name": "canonical",
@@ -1093,11 +1226,10 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "enum": ["components"],
-              "description": "components includes each feature's components, which collections leave out"
+              "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. components includes each feature's components, which collections leave out. The GeoJSON and JSON-LD collections take components only and ignore latest and offers.",
+              "type": "string"
             },
-            "description": "components includes each feature's components, which collections leave out"
+            "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. components includes each feature's components, which collections leave out. The GeoJSON and JSON-LD collections take components only and ignore latest and offers."
           },
           {
             "name": "cursor",
@@ -1122,6 +1254,7 @@
             }
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -1131,6 +1264,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1138,7 +1283,7 @@
     "/features.jsonld": {
       "get": {
         "operationId": "listFeaturesJsonLd",
-        "summary": "Live features as GeoJSON-LD (schema.org and SOSA context), one keyset page.",
+        "summary": "Live features as GeoJSON-LD (schema.org and SOSA context), one keyset page. `expand` takes components only: latest and offers are ignored.",
         "parameters": [
           {
             "name": "bbox",
@@ -1207,9 +1352,9 @@
               "type": "string",
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
-              "description": "the instant features are current at"
+              "description": "the instant features, readings and offers are current at"
             },
-            "description": "the instant features are current at"
+            "description": "the instant features, readings and offers are current at"
           },
           {
             "name": "canonical",
@@ -1227,11 +1372,10 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "string",
-              "enum": ["components"],
-              "description": "components includes each feature's components, which collections leave out"
+              "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. components includes each feature's components, which collections leave out. The GeoJSON and JSON-LD collections take components only and ignore latest and offers.",
+              "type": "string"
             },
-            "description": "components includes each feature's components, which collections leave out"
+            "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. components includes each feature's components, which collections leave out. The GeoJSON and JSON-LD collections take components only and ignore latest and offers."
           },
           {
             "name": "cursor",
@@ -1256,6 +1400,7 @@
             }
           }
         ],
+        "security": [{}],
         "responses": {
           "200": {
             "description": "OK",
@@ -1265,6 +1410,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1272,7 +1429,7 @@
     "/features/{id}": {
       "get": {
         "operationId": "getFeature",
-        "summary": "One feature, tombstoned or not, with its components and the canonical cluster it belongs to; a canonical id serves the cluster's canonical feature.",
+        "summary": "One feature, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its components and the canonical cluster it belongs to; a canonical id serves the cluster's canonical feature. An expired on-demand record the read would serve is first fetched again from its own source's grid cell, within that source's request limits and the read-through deadline; a read for a past `at` fetches nothing. `expand=latest` adds `latest`, its readings in effect (shaped as in `/features`; a fused reading names its contributing sources in `contributors`), and `expand=offers` adds `offers`, its live offers.",
         "parameters": [
           {
             "name": "id",
@@ -1284,6 +1441,34 @@
               "description": "the record id, URL-encoded"
             },
             "description": "the record id, URL-encoded"
+          },
+          {
+            "name": "at",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "the instant readings and offers are current at"
+            },
+            "description": "the instant readings and offers are current at"
+          },
+          {
+            "name": "expand",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. A single feature always carries its components.",
+              "type": "string"
+            },
+            "description": "comma-separated, of components, latest and offers. latest adds each feature's readings in effect (in the canonical view under canonical component keys, a fused reading standing in for its members' and naming the sources it was fused from in contributors: source @fused for the operator, fused from every source; in public scope a fusion of public sources only, source @fused when every contributor is public, else @fused-public); offers adds its live offers and those of its members and components. A single feature always carries its components."
+          }
+        ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
           }
         ],
         "responses": {
@@ -1296,8 +1481,20 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
           "404": {
             "description": "No such record, series or schema"
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1305,7 +1502,7 @@
     "/offers": {
       "get": {
         "operationId": "listOffers",
-        "summary": "Live offers (tariffs) as records, one keyset page ordered by id.",
+        "summary": "Live offers (tariffs) as records, one keyset page ordered by id. A read with `bbox` and a kind, property or domain an on-demand source produces, of the records this route lists, first fetches that source's stale grid cells inside its coverage, within its request limits, waiting up to `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000); the response then carries `coverage: { partial, sources: [{ id, complete, reason? }] }`, `reason` one of `too_many_cells`, `limited`, `failed`, `deadline` or `missing_configuration`. A partial answer is not cached. A read without `bbox`, or for a past `at`, never fetches; `source` limits the sources fetched.",
         "parameters": [
           {
             "name": "bbox",
@@ -1413,6 +1610,12 @@
             }
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1422,6 +1625,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1429,7 +1644,7 @@
     "/offers/{id}": {
       "get": {
         "operationId": "getOffer",
-        "summary": "One offer, tombstoned or not.",
+        "summary": "One offer, tombstoned or not; one past its `freshness.expiresAt` answers 404.",
         "parameters": [
           {
             "name": "id",
@@ -1443,6 +1658,12 @@
             "description": "the record id, URL-encoded"
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1453,8 +1674,20 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
           "404": {
             "description": "No such record, series or schema"
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1462,7 +1695,7 @@
     "/observations/latest": {
       "get": {
         "operationId": "listLatestObservations",
-        "summary": "The reading in effect of every matching series, one keyset page ordered by series (the cursor is a series id); `canonical=1` serves fused readings where several sources or the crowd report a property.",
+        "summary": "The reading in effect of every matching series, one keyset page ordered by series (the cursor is a series id); `canonical=1` serves fused readings where several sources or the crowd report a property: `@fused`, fused from every source, for the operator; in public scope a fusion of public sources only (`@fused` when every contributor is public, else `@fused-public`). `source=@fused` and `source=@fused-public` follow the request's scope the same way. A read with `bbox` and a kind, property or domain an on-demand source produces, of the records this route lists, first fetches that source's stale grid cells inside its coverage, within its request limits, waiting up to `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000); the response then carries `coverage: { partial, sources: [{ id, complete, reason? }] }`, `reason` one of `too_many_cells`, `limited`, `failed`, `deadline` or `missing_configuration`. A partial answer is not cached. A read without `bbox`, or for a past `at`, never fetches; `source` limits the sources fetched.",
         "parameters": [
           {
             "name": "bbox",
@@ -1500,10 +1733,10 @@
             "in": "query",
             "required": false,
             "schema": {
-              "description": "comma-separated source ids",
+              "description": "comma-separated source ids; with canonical=1, @fused and @fused-public name fused readings as the request's scope reads them: the operator's @fused only, the public scope's @fused where every contributor is public and @fused-public otherwise",
               "type": "string"
             },
-            "description": "comma-separated source ids"
+            "description": "comma-separated source ids; with canonical=1, @fused and @fused-public name fused readings as the request's scope reads them: the operator's @fused only, the public scope's @fused where every contributor is public and @fused-public otherwise"
           },
           {
             "name": "origin",
@@ -1534,9 +1767,9 @@
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 serves the canonical view: a feature's fused reading of each property several sources or the crowd may report, and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)"
+              "description": "1 serves the canonical view: a feature's fused reading of each property several sources or the crowd may report (for the operator source @fused, fused from every source; in public scope fused from public sources only, source @fused when every contributor is public, else @fused-public), and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)"
             },
-            "description": "1 serves the canonical view: a feature's fused reading of each property several sources or the crowd may report, and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)"
+            "description": "1 serves the canonical view: a feature's fused reading of each property several sources or the crowd may report (for the operator source @fused, fused from every source; in public scope fused from public sources only, source @fused when every contributor is public, else @fused-public), and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)"
           },
           {
             "name": "cursor",
@@ -1561,6 +1794,12 @@
             }
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1570,6 +1809,18 @@
           },
           "400": {
             "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1691,6 +1942,12 @@
             }
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1701,8 +1958,20 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
           "404": {
             "description": "No such record, series or schema"
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1733,6 +2002,12 @@
             "description": "the record id, URL-encoded"
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1743,8 +2018,20 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
           "404": {
             "description": "No such record, series or schema"
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1754,9 +2041,27 @@
         "operationId": "getTaxonomy",
         "summary": "The running registry: domains, kinds, types, properties, effects, vocabularies.",
         "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
             "content": {
               "application/json": {}
             }
@@ -1781,6 +2086,12 @@
             "description": "e.g. index.json or situation/incident@1.json"
           }
         ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1791,8 +2102,20 @@
           "400": {
             "description": "Invalid request"
           },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
           "404": {
             "description": "No such record, series or schema"
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
           }
         }
       }
@@ -1800,11 +2123,62 @@
     "/coverage": {
       "get": {
         "operationId": "getCoverage",
-        "summary": "Live records per country, subdivision, class, kind and access mode, and live series per property.",
+        "summary": "Live records (not tombstoned, not past their expiry) per country, subdivision, class, kind and access mode, and live series per property, with the sources behind them. The public scope neither counts nor names a restricted source.",
         "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/sources": {
+      "get": {
+        "operationId": "listSources",
+        "summary": "The feeds this instance serves, by id: name, licence, attribution, homepage, terms (url, review date and note) and rights, for crediting and disclosing them. Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
+        "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
             "content": {
               "application/json": {}
             }
@@ -1817,9 +2191,27 @@
         "operationId": "getOpenApi",
         "summary": "This document.",
         "parameters": [],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
             "content": {
               "application/json": {}
             }

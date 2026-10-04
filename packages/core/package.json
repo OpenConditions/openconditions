@@ -37,6 +37,7 @@
     "@types/geojson": "^7946.0.16",
     "@types/tz-lookup": "^6.1.2",
     "drizzle-kit": "^0.31.10",
+    "testcontainers": "^12.1.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

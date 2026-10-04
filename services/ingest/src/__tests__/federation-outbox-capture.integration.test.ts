@@ -2,6 +2,7 @@ import { observationId } from "@openconditions/model";
 import {
   ensureObservationPartitions,
   retentionClasses,
+  syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
 import type postgres from "postgres";
@@ -56,13 +57,13 @@ async function poll(situations: Rec[], now: string): Promise<void> {
   expect(summary.rejected).toEqual([]);
 }
 
-/** One flow reading of an NDW measurement site, as a flow poll writes it. */
-async function flowReading(speed: number, at: string): Promise<void> {
+/** One flow reading of a measurement site of `source`. */
+function flowReadingDraft(source: string, speed: number, at: string): Rec {
   const draft: Rec = {
     class: "observation",
     kind: "observation",
     property: "traffic.speed",
-    subject: { kind: "feature", featureId: `oc:feature:${FLOW_SOURCE}:s1` },
+    subject: { kind: "feature", featureId: `oc:feature:${source}:s1` },
     result: { type: "quantity", value: speed, unit: "km/h" },
     phenomenonTime: { instant: at },
     aggregation: "mean",
@@ -75,7 +76,7 @@ async function flowReading(speed: number, at: string): Promise<void> {
     },
     provenance: {
       origin: "feed",
-      sourceId: FLOW_SOURCE,
+      sourceId: source,
       sourceFormat: "datex2",
       accessMode: "bulk",
       recordId: "s1",
@@ -84,11 +85,71 @@ async function flowReading(speed: number, at: string): Promise<void> {
     },
     freshness: { fetchedAt: at },
   };
-  draft["id"] = observationId(FLOW_SOURCE, draft as Parameters<typeof observationId>[1]);
+  draft["id"] = observationId(source, draft as Parameters<typeof observationId>[1]);
+  return draft;
+}
+
+const feedProvenance = (source: string, recordId: string) => ({
+  origin: "feed",
+  sourceId: source,
+  sourceFormat: "datex2",
+  accessMode: "bulk",
+  recordId,
+  attribution: { provider: "Test", license: "CC0-1.0" },
+  privacy: { class: "authoritative" },
+});
+
+/** A measurement site of `source`. */
+function siteDraft(source: string, at: string): Rec {
+  return {
+    id: `oc:feature:${source}:s1`,
+    class: "feature",
+    kind: "measurement_site",
+    type: "traffic",
+    temporality: "static",
+    lifecycle: "operational",
+    details: { kind: "measurement_site", v: 1, measuredProperties: ["traffic.speed"] },
+    location: {
+      geometry: { type: "Point", coordinates: [4.9, 52.4] },
+      extent: "point",
+      geometryOrigin: "site_table",
+      fuzziness: "exact",
+    },
+    provenance: feedProvenance(source, "s1"),
+    freshness: { fetchedAt: at },
+  };
+}
+
+/** A car park's day rate from `source`. */
+function rateDraft(source: string, at: string): Rec {
+  return {
+    id: `oc:offer:${source}:r1`,
+    class: "offer",
+    kind: "parking_rate",
+    temporality: "static",
+    subject: { class: "feature", id: `oc:feature:${source}:p1` },
+    currency: "EUR",
+    elements: [
+      { components: [{ type: "parking_time", price: { amount: "2.50", currency: "EUR" } }] },
+    ],
+    validity: { status: "active" },
+    location: {
+      geometry: { type: "Point", coordinates: [4.9, 52.4] },
+      extent: "point",
+      geometryOrigin: "source",
+      fuzziness: "exact",
+    },
+    provenance: feedProvenance(source, "r1"),
+    freshness: { fetchedAt: at },
+  };
+}
+
+/** One flow reading of an NDW measurement site, as a flow poll writes it. */
+async function flowReading(speed: number, at: string): Promise<void> {
   const summary = await writeSnapshot(
     sql,
     FLOW_SOURCE,
-    { observations: [draft] },
+    { observations: [flowReadingDraft(FLOW_SOURCE, speed, at)] },
     { registry, instanceId: INSTANCE, now: at, complete: true },
   );
   expect(summary.rejected).toEqual([]);
@@ -186,5 +247,64 @@ describe("federation outbox capture through the ingest situation path", () => {
         property: "traffic.speed",
       }),
     ]);
+  }, 30_000);
+
+  it("a restricted source's records never enter the federation outbox", async () => {
+    const restricted = "xx-restricted-events";
+    await syncSources(sql, [
+      {
+        id: restricted,
+        domain: "roads",
+        format: "datex2",
+        product: "events",
+        tier: "authoritative",
+        operator: "Test",
+        license: "NOASSERTION",
+        attribution: "Test",
+        restricted: true,
+        cadenceSec: 60,
+        freshnessWindowSec: 600,
+      },
+    ]);
+    // The subscriptions the capture needs exist, so an empty journal is the
+    // restriction's doing: one wants every class, one names the property.
+    const [wants] = await sql<
+      { situation: boolean; feature: boolean; offer: boolean; speed: boolean }[]
+    >`
+      SELECT conditions.federation_wants('situation') AS situation,
+             conditions.federation_wants('feature') AS feature,
+             conditions.federation_wants('offer') AS offer,
+             EXISTS (SELECT 1 FROM conditions.federation_subscription
+                      WHERE filter -> 'properties' ? 'traffic.speed') AS speed`;
+    expect(wants).toEqual({ situation: true, feature: true, offer: true, speed: true });
+
+    const at = "2026-09-06T10:20:00.000Z";
+    const journalOf = async (source: string) => {
+      const summary = await writeSnapshot(
+        sql,
+        source,
+        {
+          situations: [situationDraft("R1", {}, source)],
+          features: [siteDraft(source, at)],
+          offers: [rateDraft(source, at)],
+          observations: [flowReadingDraft(source, 70, at)],
+        },
+        { registry, instanceId: INSTANCE, now: at, complete: true },
+      );
+      expect(summary.rejected).toEqual([]);
+      const rows = await sql<{ record_class: string }[]>`
+        SELECT record_class FROM conditions.federation_outbox
+         WHERE record_id LIKE ${`%:${source}:%`} ORDER BY record_class`;
+      return rows.map((r) => r.record_class);
+    };
+    // A source the catalogue does not restrict journals every class...
+    expect(await journalOf("xx-open-events")).toEqual([
+      "feature",
+      "observation",
+      "offer",
+      "situation",
+    ]);
+    // ...and the restricted one none.
+    expect(await journalOf(restricted)).toEqual([]);
   }, 30_000);
 });

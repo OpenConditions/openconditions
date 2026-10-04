@@ -72,8 +72,8 @@ export interface CanonicalPage {
 /**
  * The clusters of the canonical view with a live member matching `q`, one
  * keyset page ordered by canonical feature id, each with all its live
- * members (whether they match or not). Every feature has a cluster, a lone
- * one included, so the view is complete.
+ * members the scope allows (whether they match or not). Every feature has a
+ * cluster, a lone one included, so the view is complete.
  */
 export async function listCanonicalFeatures(
   db: QueryRunner,
@@ -83,7 +83,9 @@ export async function listCanonicalFeatures(
   const p = binder(params);
   const at = (q.at ?? new Date()).toISOString();
   const matching = liveClauses("f", at, q, p);
-  const live = liveClauses("m", at, {}, p);
+  // A member the scope withholds lends the cluster neither its record nor,
+  // through it, its components or credit.
+  const live = liveClauses("m", at, { scope: q.scope }, p);
   // Without a box, walking the clusters in id order and stopping at the page
   // limit is cheapest. A box may hold few features of many clusters: there
   // the box picks the features (spatial index) and each one's cluster is
@@ -135,7 +137,7 @@ export async function listCanonicalFeatures(
  * union of the members' components, keyed as the fused and crowd rows key
  * them), the other members credited in `provenance.mergedSources` and every
  * member named in `provenance.derivedFrom`. Built from `members` only, so a
- * caller that withholds a member (licence egress) withholds its components
+ * caller that withholds a member (scope, licence egress) withholds its components
  * and credit too; the cluster's survivor is replaced by the first member
  * left when it is withheld. Undefined when no member is left.
  */

@@ -1,6 +1,7 @@
 export * from "./bulk.js";
 export * from "./canonical-view.js";
 export * from "./caps.js";
+export * from "./federation-reconcile.js";
 export * from "./fused-rows.js";
 export * from "./observation-partitions.js";
 export * from "./observation-rollup.js";

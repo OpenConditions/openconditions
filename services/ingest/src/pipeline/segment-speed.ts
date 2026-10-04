@@ -252,7 +252,9 @@ export interface PropagateSegmentSpeedResult {
  * endpoint. Neighbors longer than `maxNeighborM` are excluded so one sensor
  * reading is never stretched across a long, likely-heterogeneous stretch of
  * road. A segment that already has any `segment_speed` row — measured or
- * estimated — is left alone; measured rows always win.
+ * estimated — is left alone; measured rows always win. An estimate keeps its
+ * measurement's `contributing` sources, so the public scope withholds it
+ * wherever it withholds the measurement.
  *
  * Runs its DELETE and INSERT directly against whatever `sql` it is given,
  * rather than wrapping them in an internal `sql.begin` — when called from
@@ -277,7 +279,7 @@ export async function propagateSegmentSpeed(
 
   const rows = await sql`
     INSERT INTO conditions.segment_speed
-      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, is_estimated, observed_at, updated_at)
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
     SELECT DISTINCT ON (nb.segment_id)
       nb.segment_id, m.current_kph, nb.free_flow_kph,
       CASE WHEN nb.free_flow_kph > 0 THEN m.current_kph / nb.free_flow_kph END,
@@ -286,7 +288,7 @@ export async function propagateSegmentSpeed(
            WHEN m.current_kph / nb.free_flow_kph >= 0.5  THEN 'heavy'
            WHEN m.current_kph / nb.free_flow_kph >= 0.15 THEN 'queuing'
            ELSE 'stationary' END,
-      'estimated', 'sensor', true, m.observed_at, ${nowIso}
+      'estimated', 'sensor', m.contributing, true, m.observed_at, ${nowIso}
     FROM conditions.segment_speed m
     JOIN conditions.road_segment ms ON ms.segment_id = m.segment_id
     JOIN conditions.road_segment nb

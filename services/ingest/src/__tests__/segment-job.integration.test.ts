@@ -12,6 +12,8 @@ let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-01-01T00:00:00.000Z";
+/** Where the rebuild's Overpass answers; the stub fetch ignores it. */
+const OVERPASS = "https://overpass.test/api/interpreter";
 
 // A single sensored region so the fake fetch below (which ignores the query
 // entirely) is only ever consulted once per run.
@@ -115,7 +117,11 @@ describe("runSegmentRebuild", () => {
     await seedFlowSensor();
     await seedClosureSituation();
 
-    const first = await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
+    const first = await runSegmentRebuild(sql, {
+      fetch: fetchFn,
+      now: () => NOW,
+      overpassUrl: OVERPASS,
+    });
     expect(first).toMatchObject({ imported: 1, built: 1, encoded: 1, matched: 1, rebound: 1 });
 
     const [graph] = await sql<
@@ -153,7 +159,11 @@ describe("runSegmentRebuild", () => {
 
     // Idempotent: a second full run yields the same road_segment count and
     // keeps openlr populated (re-encode is a no-op once already encoded).
-    const second = await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
+    const second = await runSegmentRebuild(sql, {
+      fetch: fetchFn,
+      now: () => NOW,
+      overpassUrl: OVERPASS,
+    });
     expect(second.imported).toBe(1);
     expect(second.built).toBe(1);
     expect(second.matched).toBe(1);
@@ -180,6 +190,7 @@ describe("runSegmentRebuild", () => {
     const result = await runSegmentRebuild(sql, {
       fetch: fetchFn,
       now: () => NOW,
+      overpassUrl: OVERPASS,
       steps: {
         encodeSegmentOpenlr: async () => {
           throw new Error("openlr encode blew up");
@@ -210,6 +221,7 @@ describe("runSegmentRebuild", () => {
     const result = await runSegmentRebuild(sql, {
       fetch: fetchFn,
       now: () => NOW,
+      overpassUrl: OVERPASS,
       steps: {
         rebindAll: async () => {
           throw new Error("rebind blew up");
@@ -228,6 +240,7 @@ describe("runSegmentRebuild", () => {
     const result = await runSegmentRebuild(sql, {
       fetch: fetchFn,
       now: () => NOW,
+      overpassUrl: OVERPASS,
       steps: {
         importOsmRoads: async () => ({ imported: 0, succeededRegions: [], failedRegions: ["nl"] }),
         buildSegments: async () => ({ built: 7 }),
@@ -296,7 +309,11 @@ it("rejects malformed regions before any graph mutation", async () => {
   ]);
   const query = vi.fn();
   await expect(
-    runSegmentRebuild(query as unknown as postgres.Sql, { fetch: fetchFn, now: () => NOW }),
+    runSegmentRebuild(query as unknown as postgres.Sql, {
+      fetch: fetchFn,
+      now: () => NOW,
+      overpassUrl: OVERPASS,
+    }),
   ).rejects.toThrow(/SEGMENT_REGIONS/);
   expect(query).not.toHaveBeenCalled();
 });
@@ -304,7 +321,7 @@ it("rejects malformed regions before any graph mutation", async () => {
 it("does not import or activate a graph without configured regions", async () => {
   delete process.env["SEGMENT_REGIONS"];
   const fetch = vi.fn();
-  expect(await runSegmentRebuild(sql, { fetch, now: () => NOW })).toEqual({
+  expect(await runSegmentRebuild(sql, { fetch, now: () => NOW, overpassUrl: OVERPASS })).toEqual({
     imported: 0,
     built: 0,
     encoded: 0,

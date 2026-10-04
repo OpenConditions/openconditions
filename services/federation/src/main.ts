@@ -12,7 +12,7 @@ import {
   refreshPeerCapabilities,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
-import { guardedFetch } from "@openconditions/ingest-framework";
+import { guardedFetch, requireCredential } from "@openconditions/ingest-framework";
 import { schemaVersions } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
@@ -32,10 +32,7 @@ const PRUNE_CYCLE_MS = OUTBOX_PRUNE_INTERVAL_HOURS * 60 * 60 * 1000;
 const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
-  const url = process.env["DATABASE_URL"];
-  if (!url) {
-    throw new Error("DATABASE_URL environment variable is required");
-  }
+  const url = requireCredential(process.env, "DATABASE_URL");
   console.info("[federation-api] applying database migrations…");
   await runMigrations(url);
   console.info("[federation-api] migrations applied");

@@ -74,6 +74,11 @@ function kernelColumns() {
     subdivision: text("subdivision"),
     tombstoneReason: text("tombstone_reason"),
     tombstonedAt: tstz("tombstoned_at"),
+    /**
+     * When this instance first stored the record, by the database clock that
+     * also stamps a source's `restricted_since`; never rewritten.
+     */
+    createdAt: tstz("created_at").notNull().defaultNow(),
   };
 }
 
@@ -145,7 +150,8 @@ export const situation = conditionsSchema.table(
     check("situation_evidence_state_enum", nullableEnum("evidence_state", EVIDENCE_STATES)),
     index("idx_situation_geom").using("gist", t.geom),
     index("idx_situation_kind_type").on(t.kind, t.type),
-    index("idx_situation_source").on(t.sourceId),
+    // A source's records, paged by id (the federation reconcile).
+    index("idx_situation_source").on(t.sourceId, t.id),
     index("idx_situation_canonical").on(t.canonicalId),
     index("idx_situation_valid_to").on(t.validTo),
     index("idx_situation_expires").on(t.expiresAt),
@@ -209,7 +215,7 @@ export const feature = conditionsSchema.table(
     check("feature_lifecycle_enum", sql.raw(enumCheckSql("lifecycle", LIFECYCLES))),
     index("idx_feature_geom").using("gist", t.geom),
     index("idx_feature_kind_type").on(t.kind, t.type),
-    index("idx_feature_source").on(t.sourceId),
+    index("idx_feature_source").on(t.sourceId, t.id),
     index("idx_feature_canonical").on(t.canonicalId),
     index("idx_feature_kind_lifecycle").on(t.kind, t.lifecycle),
     // Linking finds the features that share an external id with a written one.
@@ -310,7 +316,7 @@ export const offer = conditionsSchema.table(
     index("idx_offer_subject").on(t.subjectId, t.componentKey),
     index("idx_offer_kind_valid_to").on(t.kind, t.validTo),
     index("idx_offer_geom").using("gist", t.geom),
-    index("idx_offer_source").on(t.sourceId),
+    index("idx_offer_source").on(t.sourceId, t.id),
     index("idx_offer_canonical").on(t.canonicalId),
   ],
 );

@@ -3,7 +3,7 @@
   "name": "OpenConditions — Road & Traffic Conditions",
   "version": "0.1.5",
   "platform": "1.0",
-  "description": "Live road and traffic conditions as data (DATEX II / OpenLR / Open511 / WZDx) ingested into PostGIS and rendered as a map overlay, with Valhalla road-closure avoidance. Ships the ingestion service and the road-conditions provider integration; the overlay UI is built into OpenMapX.",
+  "description": "Live road and traffic conditions as data (DATEX II / OpenLR / Open511 / WZDx) ingested into PostGIS and rendered as a map overlay, with Valhalla road-closure avoidance. Ships the ingestion service and the contributions API, serving the roads and fuel domains; OpenMapX reads them through its built-in OpenConditions integration and renders the overlay UI.",
   "license": "Apache-2.0",
   "homepage": "https://github.com/OpenConditions/openconditions",
   "services": [
@@ -16,12 +16,6 @@
       "repo": "https://github.com/OpenConditions/openconditions",
       "ref": "v0.1.5",
       "service": "openconditions-contributions-api"
-    }
-  ],
-  "integrations": [
-    {
-      "id": "road-conditions-openconditions",
-      "artifact": "https://github.com/OpenConditions/openconditions/releases/latest/download/road-conditions-openconditions.tar.gz"
     }
   ]
 }

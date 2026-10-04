@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { resolveEndpointUrls } from "@openconditions/ingest-framework";
 import { describe, expect, it } from "vitest";
 import { formatOf, INGEST_DOMAINS, loadIngestCatalog } from "../domains.js";
 import { testFeed } from "./helpers/catalog.js";
@@ -11,7 +12,29 @@ describe("loadIngestCatalog", () => {
     expect(cat.feeds.length + cat.discovered.length + cat.disabled.length).toBeGreaterThanOrEqual(
       86,
     );
-    expect(cat.feeds.every((f) => f.domain === "roads")).toBe(true);
+    expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(new Set(["roads", "fuel"]));
+    expect(cat.feeds.map((f) => f.id)).toEqual(
+      expect.arrayContaining(["es-minetur-fuel", "fr-prixcarburants-fuel"]),
+    );
+  });
+
+  it("osm-fuel posts to the Overpass base URL plus /api/interpreter", async () => {
+    const cat = await loadIngestCatalog({});
+    const osm = cat.feeds.find((f) => f.id === "osm-fuel")!;
+    expect(resolveEndpointUrls(osm, "main", {})).toEqual([
+      "https://overpass-api.de/api/interpreter",
+    ]);
+    expect(resolveEndpointUrls(osm, "main", { OVERPASS_URL: "http://overpass:80" })).toEqual([
+      "http://overpass:80/api/interpreter",
+    ]);
+    // A base URL written with a trailing slash queries the same interpreter.
+    expect(resolveEndpointUrls(osm, "main", { OVERPASS_URL: "http://overpass:80/" })).toEqual([
+      "http://overpass:80/api/interpreter",
+    ]);
+    // So does the full interpreter URL, OpenMapX's other OVERPASS_URL form.
+    expect(
+      resolveEndpointUrls(osm, "main", { OVERPASS_URL: "http://overpass:80/api/interpreter" }),
+    ).toEqual(["http://overpass:80/api/interpreter"]);
   });
 
   it("layers an operator's mount over the baked catalogue", async () => {
@@ -25,11 +48,14 @@ describe("loadIngestCatalog", () => {
 
 describe("formatOf", () => {
   it("finds a feed's format in its domain", () => {
-    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads"]);
+    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads", "fuel"]);
     expect(formatOf(testFeed({ format: "datex2-measured", product: "flow" })).kind).toBe(
       "measurements",
     );
     expect(formatOf(testFeed()).kind).toBe("situations");
+    expect(formatOf(testFeed({ domain: "fuel", format: "minetur", product: "fuel" })).kind).toBe(
+      "features",
+    );
   });
 
   it("throws for an unknown domain or format", () => {

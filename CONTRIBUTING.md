@@ -27,9 +27,6 @@ covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
   database schema in [`@openconditions/core`](packages/core).
 - **The OpenLR resolver** — the Python map-matcher in
   [`services/openlr-resolver`](services/openlr-resolver).
-- **The OpenMapX integration** — the provider that reads situations and their
-  routing evidence from the ingest's API for OpenMapX lives in
-  [`integrations/road-conditions-openconditions`](integrations/road-conditions-openconditions).
 - **Bug reports / feature requests** — file an issue with reproduction steps and
   your environment (which feeds are configured, the affected component, and the
   version / commit SHA).

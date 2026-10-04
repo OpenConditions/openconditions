@@ -5,6 +5,7 @@ import {
   type EvidenceState,
   FUSED_SOURCE_ID,
   FUSION_TIERS,
+  type FusedSourceId,
   type FusionTier,
   type GrantState,
   type RoutingRights,
@@ -182,12 +183,14 @@ export interface FusedSubject {
  * `mergedSources`, credited to the winner's publisher with the most
  * restrictive rights of all contributors. A value derived from an on-demand
  * source stays on demand and expires with the earliest such contributor, so
- * fusing never turns a read-through answer into history.
+ * fusing never turns a read-through answer into history. The public fusion,
+ * over the public contributors only, is the same row under
+ * `@fused-public`.
  */
 export function fusedObservation(
   registry: Registry,
   fusion: Fusion,
-  at: FusedSubject & { instanceId: string; now: string },
+  at: FusedSubject & { instanceId: string; now: string; sourceId?: FusedSourceId },
 ): ValidationResult {
   const w = fusion.winner.observation;
   const contributors = fusion.contributors.map((c) => c.observation);
@@ -215,7 +218,7 @@ export function fusedObservation(
     location: at.location,
     provenance: {
       origin: "derived",
-      sourceId: FUSED_SOURCE_ID,
+      sourceId: at.sourceId ?? FUSED_SOURCE_ID,
       sourceFormat: "derived",
       accessMode: onDemand.length > 0 ? "on_demand" : "bulk",
       recordId: "",

@@ -34,6 +34,7 @@ const ndw: SourceEntry = {
   license: "CC0-1.0",
   attribution: "NDW / Rijkswaterstaat",
   rights: RIGHTS,
+  restricted: false,
   cadenceSec: 60,
   freshnessWindowSec: 300,
   laneNumbering: "left_first",
@@ -48,6 +49,7 @@ const longdo: SourceEntry = {
   operator: "longdo",
   license: "CC-BY-4.0",
   attribution: "Longdo",
+  restricted: false,
   cadenceSec: 300,
   freshnessWindowSec: 900,
   extrasAllow: ["category"],
@@ -104,6 +106,46 @@ describe("syncSources", () => {
     await expect(syncSources(sql, [{ ...ndw, tier: "official" }])).rejects.toThrow(
       /source_tier_enum/,
     );
+  });
+
+  it("syncSources stores whether a source is restricted", async () => {
+    await syncSources(sql, [ndw, { ...longdo, license: "NOASSERTION", restricted: true }]);
+    const rows = await sql`SELECT id, restricted FROM conditions.source ORDER BY id`;
+    expect(rows).toEqual([
+      { id: "nl-ndw-events", restricted: false },
+      { id: "th-longdo-events", restricted: true },
+    ]);
+    await syncSources(sql, [ndw, longdo]);
+    const [row] = await sql`SELECT restricted FROM conditions.source WHERE id = ${longdo.id}`;
+    expect(row).toEqual({ restricted: false });
+  });
+
+  it("leaves the basis a source's fusions were refreshed under alone", async () => {
+    await syncSources(sql, [ndw, longdo]);
+    await sql`
+      UPDATE conditions.source SET fusion_restricted = false, fusion_tier = 'authoritative'
+       WHERE id = ${ndw.id}`;
+    const fresh = { ...ndw, id: "nl-ndw-flow", product: "flow" };
+    await syncSources(sql, [{ ...ndw, restricted: true, tier: "operator" }, longdo, fresh]);
+    const rows = await sql`
+      SELECT id, restricted, tier, fusion_restricted, fusion_tier FROM conditions.source
+       WHERE id IN (${ndw.id}, ${fresh.id}) ORDER BY id`;
+    expect(rows).toEqual([
+      {
+        id: ndw.id,
+        restricted: true,
+        tier: "operator",
+        fusion_restricted: false,
+        fusion_tier: "authoritative",
+      },
+      {
+        id: fresh.id,
+        restricted: false,
+        tier: "authoritative",
+        fusion_restricted: null,
+        fusion_tier: null,
+      },
+    ]);
   });
 
   it("stores a source of no single country with no country", async () => {

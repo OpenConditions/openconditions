@@ -1,13 +1,18 @@
 /**
  * Federation of model records: the snapshot the outbox may carry, and the
  * subscriber filter applied at source to every page of records before it
- * leaves the instance. As with observations, the default is the safe one —
- * crowd records only once corroborated, and only permissively licensed
- * records — and a delete tombstone always passes, because a retraction must
- * reach every subscriber that might still hold the record.
+ * leaves the instance. Federation is always public scope: only records whose
+ * licence is public leave, whatever the subscriber asks. Crowd records pass
+ * once corroborated by default, and a delete tombstone always passes,
+ * because a retraction must reach every subscriber that might still hold
+ * the record.
  */
+import {
+  type EgressRecord,
+  publicRecords,
+  withoutReporter,
+} from "@openconditions/ingest-framework";
 import { federationEligible, type RecordClass } from "@openconditions/model";
-import { type EgressRecord, permissiveRecords, withoutReporter } from "@openconditions/publishers";
 import type { Geometry } from "geojson";
 import { intersectsBbox } from "./bbox.js";
 import type { OutboxOperation } from "./outbox.js";
@@ -68,8 +73,6 @@ export interface RecordFilter {
   /** Properties of observations. */
   properties?: string[];
   privacyClasses?: string[];
-  /** Drop share-alike records (default true). */
-  permissiveOnly?: boolean;
   /**
    * Weakest crowd evidence to pass (default "corroborated"); feed records are
    * never gated by it, and neither is a negated or expired crowd record.
@@ -179,8 +182,8 @@ export function applyRecordFilter<R extends FederatedRecord>(
     ) {
       continue;
     }
-    const [exported] =
-      (filter?.permissiveOnly ?? true) ? permissiveRecords([record]) : [withoutReporter(record)];
+    // Federation is always public scope: no subscriber can ask for more.
+    const [exported] = publicRecords([record]);
     if (exported === undefined) continue;
     out.push({ ...entry, record: exported });
   }

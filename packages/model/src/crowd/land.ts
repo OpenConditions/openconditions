@@ -27,12 +27,19 @@ export interface LandingContext {
    * when no such feature or component exists.
    */
   resolveFeature?: (featureId: string, componentKey?: string) => ResolvedFeature | undefined;
+  /**
+   * Where a place claim's reach is measured from when that is not the place
+   * it names: the series it lands on.
+   */
+  placeReachFrom?: LocationRef;
 }
 
 export interface ResolvedFeature {
   featureId: string;
   componentKey?: string;
   location: LocationRef;
+  /** Where the feature stands, when that is not the `location` the observation copies. */
+  reachFrom?: LocationRef;
 }
 
 export type Landing =
@@ -145,6 +152,10 @@ function observationDraft(
 ): { draft: Record<string, unknown> } | { issue: ValidationIssue } {
   let subject: Record<string, unknown>;
   let location: LocationRef;
+  let reachFrom: LocationRef;
+  // Reach measured to a location the draft does not carry (a restricted
+  // source's) is refused without the distance, which would locate it.
+  let reachHidden: boolean;
   if ("featureId" in claim.subject) {
     const { featureId, componentKey } = claim.subject;
     const resolved = ctx.resolveFeature?.(featureId, componentKey);
@@ -164,15 +175,19 @@ function observationDraft(
       ...(resolved.componentKey === undefined ? {} : { componentKey: resolved.componentKey }),
     };
     location = resolved.location;
+    reachFrom = resolved.reachFrom ?? location;
+    reachHidden = resolved.reachFrom !== undefined;
   } else {
     subject = { kind: "location" };
     location = claim.subject.location;
+    reachFrom = ctx.placeReachFrom ?? location;
+    reachHidden = ctx.placeReachFrom !== undefined;
   }
   const [lon, lat] = claim.geometry.coordinates;
   const away =
-    location.geometry === null
+    reachFrom.geometry === null
       ? undefined
-      : distanceToGeometryMetres([lon, lat], location.geometry);
+      : distanceToGeometryMetres([lon, lat], reachFrom.geometry);
   if (away === undefined || away > reachMetres) {
     return {
       issue: {
@@ -181,7 +196,9 @@ function observationDraft(
         message:
           away === undefined
             ? "the subject has no position to observe it at"
-            : `reported ${Math.round(away)} m from the subject, further than ${reachMetres} m`,
+            : reachHidden
+              ? `further than ${reachMetres} m from the subject`
+              : `reported ${Math.round(away)} m from the subject, further than ${reachMetres} m`,
       },
     };
   }
@@ -217,7 +234,10 @@ function observationDraft(
  * it had expired before it arrived. An observation claim about a feature
  * lands on the canonical feature `resolveFeature` names, so crowd rows sit
  * beside the fused row of every source, and only from a reporter who stood
- * within the property's reach of it; where the reporter stood is not kept.
+ * within the property's reach of where it stands (`reachFrom`, else the
+ * location it copies). Where the reporter stood is not kept: a reading takes
+ * the location its lander gives it, which for a feature no public source
+ * holds is the reporter's point coarsened to its area cell.
  */
 export function landClaim(
   registry: Registry,

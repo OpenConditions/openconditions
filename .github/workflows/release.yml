@@ -45,7 +45,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           if [ -z "$NODE_AUTH_TOKEN" ]; then
-            echo "NPM_TOKEN not set — skipping npm publish (images + integration artifact still publish)."
+            echo "NPM_TOKEN not set — skipping npm publish (images and the extension manifest still publish)."
             exit 0
           fi
           pnpm --filter "@openconditions/core" --filter "@openconditions/ingest-framework" --filter "@openconditions/roads" publish --access public --no-git-checks
@@ -157,41 +157,14 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
 
-  publish-integration:
-    name: publish road-conditions-openconditions artifact
+  publish-extension:
+    name: publish the extension manifest
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
       contents: write
-    env:
-      TURBO_TELEMETRY_DISABLED: 1
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
-
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
-
-      - run: pnpm install --frozen-lockfile
-
-      - name: Build the integration backend bundle
-        run: pnpm --filter "@openconditions/road-conditions-openconditions..." build
-
-      # The OpenMapX installer wants manifest.json at the tar root + the prebuilt
-      # dist/backend/index.mjs and no node_modules; the sha256 is over the tarball.
-      - name: Package the artifact
-        id: pack
-        run: |
-          dir=integrations/road-conditions-openconditions
-          out=road-conditions-openconditions.tar.gz
-          tar -czf "$out" -C "$dir" manifest.json dist/backend/index.mjs LICENSE
-          sha=$(sha256sum "$out" | cut -d' ' -f1)
-          echo "$sha" > "$out.sha256"
-          echo "sha256=$sha" >> "$GITHUB_OUTPUT"
-          echo "Artifact sha256: $sha"
 
       # Emit the extension.json for THIS tag (version + service ref pinned to it)
       # from the committed template. The OpenMapX catalog points `manifest` at
@@ -200,18 +173,9 @@ jobs:
       - name: Generate the release extension.json
         run: |
           ver="${GITHUB_REF_NAME#v}"
-          # Pin the integration component to THIS release's tarball + its sha256
-          # (the committed template carries the unpinned `…/latest/…` URL). The
-          # OpenMapX installer fetches this https .tar.gz, verifies the sha, and
-          # extracts it into custom_integrations — so `ext update` refreshes the
-          # provider integration, not just the ingest service.
-          artifact="https://github.com/${{ github.repository }}/releases/download/${GITHUB_REF_NAME}/road-conditions-openconditions.tar.gz"
           mkdir -p build
           jq --arg v "$ver" --arg ref "$GITHUB_REF_NAME" \
-            --arg art "$artifact" --arg sha "${{ steps.pack.outputs.sha256 }}" \
-            '.version = $v
-             | .services |= map(.ref = $ref)
-             | .integrations = [{ id: "road-conditions-openconditions", artifact: $art, sha256: $sha }]' \
+            '.version = $v | .services |= map(.ref = $ref)' \
             extension.json > build/extension.json
           echo "extension.json for $ver (service ref $GITHUB_REF_NAME):"
           cat build/extension.json
@@ -222,8 +186,6 @@ jobs:
         run: |
           gh release create "${{ github.ref_name }}" --verify-tag \
             --title "${{ github.ref_name }}" \
-            --notes "OpenConditions ${{ github.ref_name }} — road-conditions-openconditions artifact sha256: ${{ steps.pack.outputs.sha256 }}" \
+            --notes "OpenConditions ${{ github.ref_name }}" \
             || echo "release already exists"
-          gh release upload "${{ github.ref_name }}" \
-            road-conditions-openconditions.tar.gz road-conditions-openconditions.tar.gz.sha256 \
-            build/extension.json --clobber
+          gh release upload "${{ github.ref_name }}" build/extension.json --clobber

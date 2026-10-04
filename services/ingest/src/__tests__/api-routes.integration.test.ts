@@ -313,6 +313,28 @@ describe("GET /stream", () => {
     }
   });
 
+  it("ends a connected client's stream when the server closes, rather than waiting on it", async () => {
+    const streaming = Fastify();
+    registerApiRoutes(streaming, sql, { registry, streamPollMs: 50 });
+    const address = await streaming.listen({ port: 0, host: "127.0.0.1" });
+    const res = await fetch(`${address}/stream`);
+    expect(res.status).toBe(200);
+    const reader = res.body!.getReader();
+    await reader.read();
+    const started = Date.now();
+    await streaming.close();
+    expect(Date.now() - started).toBeLessThan(1000);
+    // The server ends the response: the body finishes or breaks off.
+    const ended = (async () => {
+      try {
+        for (;;) if ((await reader.read()).done) return "ended";
+      } catch {
+        return "ended";
+      }
+    })();
+    await expect(ended).resolves.toBe("ended");
+  });
+
   it("refuses a malformed query before opening the stream", async () => {
     expect((await get("/stream?class=feature")).res.statusCode).toBe(400);
     expect((await get("/stream?cursor=x")).res.statusCode).toBe(400);
@@ -354,6 +376,25 @@ describe("GET /situations/{id}", () => {
     expect(
       (await get("/situations/oc%3Asituation%3Ade-autobahn-events%3Anone")).res.statusCode,
     ).toBe(404);
+  });
+});
+
+describe("GET /situations/{id} past its expiry", () => {
+  it("answers 404 once the situation's expiry has passed, as the listing does", async () => {
+    await writeSituations(sql, "de-autobahn-events", [
+      at("lapsed", 6.81, 51.2, {
+        freshness: { fetchedAt: "2026-09-06T09:00:00.000Z", expiresAt: "2026-09-06T11:00:00.000Z" },
+      }),
+    ]);
+    const url = `/situations/${encodeURIComponent("oc:situation:de-autobahn-events:lapsed")}`;
+    expect((await get(`${url}?${AT}`)).res.statusCode).toBe(200);
+    expect(ids((await get(`/situations?${AT}`)).body)).toContain(
+      "oc:situation:de-autobahn-events:lapsed",
+    );
+    expect((await get(`${url}?at=2026-09-06T12:00:00Z`)).res.statusCode).toBe(404);
+    expect(ids((await get("/situations?at=2026-09-06T12:00:00Z")).body)).toEqual([]);
+    // Without `at`, the instant is now: long after it expired.
+    expect((await get(url)).res.statusCode).toBe(404);
   });
 });
 

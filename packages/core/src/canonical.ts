@@ -63,6 +63,13 @@ export function coarseCell(lon: number, lat: number, meters = 1000): string {
   return gridCell([lon, lat], meters);
 }
 
+/** The centre of the {@link coarseCell} a point falls in: the point at that cell's resolution. */
+export function coarseCellCentre(lon: number, lat: number, meters = 1000): [number, number] {
+  const [x, y] = coarseCell(lon, lat, meters).split(":").map(Number) as [number, number];
+  const step = meters / METERS_PER_DEG_LAT;
+  return [(x + 0.5) * step, (y + 0.5) * step];
+}
+
 const HAS_ZONE_DESIGNATOR = /(?:[zZ]|[+-]\d{2}:?\d{2})$/;
 // The string must start with the ISO calendar-date shape, optionally followed by
 // a `T` time part. This rejects locale/legacy formats ("07/10/2026",

@@ -30,8 +30,22 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/core/package.json packages/core/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
+COPY packages/fuel/package.json packages/fuel/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
+COPY packages/storage/package.json packages/storage/
+COPY packages/model/package.json packages/model/
+COPY packages/model-border/package.json packages/model-border/
+COPY packages/model-charging/package.json packages/model-charging/
+COPY packages/model-facilities/package.json packages/model-facilities/
+COPY packages/model-fuel/package.json packages/model-fuel/
+COPY packages/model-hazards/package.json packages/model-hazards/
+COPY packages/model-maritime/package.json packages/model-maritime/
+COPY packages/model-parking/package.json packages/model-parking/
+COPY packages/model-registry/package.json packages/model-registry/
+COPY packages/model-roads/package.json packages/model-roads/
+COPY packages/model-vehicles/package.json packages/model-vehicles/
+COPY packages/model-weather/package.json packages/model-weather/
 COPY services/ingest/package.json services/ingest/
 RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --prod --ignore-scripts
 
@@ -43,8 +57,22 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/core/package.json packages/core/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
+COPY packages/fuel/package.json packages/fuel/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
+COPY packages/storage/package.json packages/storage/
+COPY packages/model/package.json packages/model/
+COPY packages/model-border/package.json packages/model-border/
+COPY packages/model-charging/package.json packages/model-charging/
+COPY packages/model-facilities/package.json packages/model-facilities/
+COPY packages/model-fuel/package.json packages/model-fuel/
+COPY packages/model-hazards/package.json packages/model-hazards/
+COPY packages/model-maritime/package.json packages/model-maritime/
+COPY packages/model-parking/package.json packages/model-parking/
+COPY packages/model-registry/package.json packages/model-registry/
+COPY packages/model-roads/package.json packages/model-roads/
+COPY packages/model-vehicles/package.json packages/model-vehicles/
+COPY packages/model-weather/package.json packages/model-weather/
 COPY services/ingest/package.json services/ingest/
 RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --ignore-scripts
 
@@ -52,8 +80,22 @@ COPY tsconfig.base.json turbo.json ./
 COPY packages/core/ packages/core/
 COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
+COPY packages/fuel/ packages/fuel/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
+COPY packages/storage/ packages/storage/
+COPY packages/model/ packages/model/
+COPY packages/model-border/ packages/model-border/
+COPY packages/model-charging/ packages/model-charging/
+COPY packages/model-facilities/ packages/model-facilities/
+COPY packages/model-fuel/ packages/model-fuel/
+COPY packages/model-hazards/ packages/model-hazards/
+COPY packages/model-maritime/ packages/model-maritime/
+COPY packages/model-parking/ packages/model-parking/
+COPY packages/model-registry/ packages/model-registry/
+COPY packages/model-roads/ packages/model-roads/
+COPY packages/model-vehicles/ packages/model-vehicles/
+COPY packages/model-weather/ packages/model-weather/
 COPY services/ingest/ services/ingest/
 # The feed catalogue, which the ingest build copies into dist/feeds.
 COPY feeds/ feeds/
@@ -106,11 +148,13 @@ COPY --from=prod-deps /app/services/ingest/node_modules ./services/ingest/node_m
 COPY --from=builder /app/services/ingest/dist ./services/ingest/dist
 COPY services/ingest/package.json ./services/ingest/
 
-# Run as a dedicated non-root user. The service only reads its own bundle and
-# talks to PostGIS over the network — it writes nothing to the filesystem.
+# Run as a dedicated non-root user. Under OpenMapX it writes only under /data
+# (the raw and nightly archives, the remote feed snapshot), where service.json
+# mounts its volume; a fresh volume takes this directory's owner.
 RUN addgroup --system --gid 1001 ingest \
     && adduser --system --uid 1001 --ingroup ingest ingest \
-    && chown -R ingest:ingest /app
+    && mkdir -p /data \
+    && chown -R ingest:ingest /app /data
 USER ingest:ingest
 
 WORKDIR /app/services/ingest

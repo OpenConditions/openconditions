@@ -1733,8 +1733,15 @@
     "contentHash": "94f4589c36d7261844707007b87770518dac7bc6d7b0cf0729c885df27db0966"
   },
   {
-    "id": "oc:feature:es-minetur:3119",
+    "id": "oc:feature:es-minetur-fuel:3119",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "3119",
+        "authority": "es-minetur-fuel"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -1764,13 +1771,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "3119",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1865,15 +1873,22 @@
       "brand": "REPSOL",
       "productsComplete": true
     },
-    "canonicalId": "da1b8c129d90b94c1dda496189a12c02f97dfb6ebe4fc5ef0db0eeff59c3e1be",
+    "canonicalId": "58e049e8e78b2c814e926d25e4584938234d79ec8524afc83f225723c4b4cbc3",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "2086c6f16acdbd5be54a3d1110a064fb1aad8d6f81029bea0fe3c6ced23da4d7"
+    "contentHash": "42636a3682319198ffcd1d3cbcd90bf1d2ac906c60b241e83eebcb9d85705932"
   },
   {
-    "id": "oc:feature:es-minetur:15493",
+    "id": "oc:feature:es-minetur-fuel:15493",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "15493",
+        "authority": "es-minetur-fuel"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -1903,13 +1918,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "15493",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1965,14 +1981,14 @@
       "brand": "PLENERGY",
       "productsComplete": true
     },
-    "canonicalId": "c0718d840091d1167c3fb7d6d13c50d41f84cbd7e4a4a5aba89bb726d2255472",
+    "canonicalId": "dbdde34c13a7d269f0781c1df7f406783a5366f588925a3a3f720d1f527c6f9b",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "dc9d303aca8e0c527d9e278ada3e7e0018eae5ee02b19d2aef3f63e84a5faa3a"
+    "contentHash": "b27959e7feca7c743659f3b3294e14ac79e4a2e4f242fa5abd6aacb928b0945d"
   },
   {
-    "id": "oc:observation:es-minetur:18c32bed1821cd0f7b4ba5913b45e04c9f8301fa61c70fe4dd6161e99ee1bcdc",
+    "id": "oc:observation:es-minetur-fuel:03e85a003c9433cda35b064eb42193999caec3c0ce673ffe580543a42104e174",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2003,13 +2019,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "3119",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2024,7 +2041,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:3119",
+      "featureId": "oc:feature:es-minetur-fuel:3119",
       "componentKey": "e5"
     },
     "result": {
@@ -2034,17 +2051,17 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "e9e2a63260f38fe6873c428041e00973e762143145554d8593586db14bf4e8a8",
+    "canonicalId": "ec60f61c1f31840491a42f94de44075c32ee995365f15003eb3d19ab4ab91006",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "003c92ed240659009b2c4b28d89580b1ea61f399f2f8b04ff9ffa3de3b2be7d9"
+    "contentHash": "2ce43e11fbc6dbf80b3492a35ff72f43c61b06dce97b9f08a2e4b111268eed39"
   },
   {
-    "id": "oc:observation:es-minetur:854d6a87732deb1733398e53e0ca5d25e896c0d8242bf99834f82ca69965046b",
+    "id": "oc:observation:es-minetur-fuel:46667b1770a1bec60ee709622efeef5b0c2e4ad990fc6cb010cbab05278f2b02",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2075,13 +2092,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "3119",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2096,7 +2114,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:3119",
+      "featureId": "oc:feature:es-minetur-fuel:3119",
       "componentKey": "sp98"
     },
     "result": {
@@ -2106,17 +2124,17 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "28b4f44df0cdb57d699e4de1f66d56d75f0c3824f15e57d9e9545b343fac3a7b",
+    "canonicalId": "43f6fd2cda205522691d03119b99fbdbf55af57a1ecac383a64434c9f4e5cffc",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "52651cf0e75cde3e21c959a35344429825c8bd23f8922290458b80a39bd2e39b"
+    "contentHash": "0bc27ba01e1ba7a22a9a4928df9ab1fcfb00010b1ca2451dc729fefd0e151fee"
   },
   {
-    "id": "oc:observation:es-minetur:f62b6338de76b30e5e30a104b76ad6edd8af96287df29701be68fa60bf57b7df",
+    "id": "oc:observation:es-minetur-fuel:b1b30adc3350cc0519a79ca866d0318c0b0c0b642f6cf490c7e948d3b04fd400",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2147,13 +2165,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "3119",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2168,7 +2187,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:3119",
+      "featureId": "oc:feature:es-minetur-fuel:3119",
       "componentKey": "diesel"
     },
     "result": {
@@ -2178,17 +2197,17 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "4ef83526a4115b04ed368041f0ae4967ae63957b5371e360bedb6bc54bfa66fd",
+    "canonicalId": "6d3a0638684825988cc0462ebb0d5cde1c0ca2f7c2bac0a341548065087a4406",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "de6dd06f3f0bb0281566987e079f5a3c1cae405857811eb0756b3573ee3d4900"
+    "contentHash": "eff665eb5375fea3e8c0721a0d78d229a3c7adcfe1686fa92d12c7b12dbde8d0"
   },
   {
-    "id": "oc:observation:es-minetur:a1d1d514d5c8a5eed02564d11f234dd146215c043eb0828fe117a9bb836f7f59",
+    "id": "oc:observation:es-minetur-fuel:67892a26d620a8313ca83667557a86d1c5d534a7987c7b2b8b228186e03f4523",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2219,13 +2238,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "3119",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2240,7 +2260,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:3119",
+      "featureId": "oc:feature:es-minetur-fuel:3119",
       "componentKey": "hvo100"
     },
     "result": {
@@ -2250,17 +2270,17 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "518b8d99872489fa87a5c565900df7e94ef3f097a67684dea92154b79c7a578d",
+    "canonicalId": "0ac5e77e5a73a123d62c02cf35f36b1523b64ffa710b8691d382bc7029bd4e6b",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "da72e9bb10c3ec9a9a9e733b30a0fbcbb8a045505cd1924e43088d20811b3df0"
+    "contentHash": "ad956d81237a63e69c0391a3e4217ab4303551f5cdfdd9d75cf6feabc290b460"
   },
   {
-    "id": "oc:observation:es-minetur:51ef632f4a66ba4d583ba854df38017bfbda536f3f8b2d503d0c08dad19030c4",
+    "id": "oc:observation:es-minetur-fuel:b3cdc1264f2afc12c7351dc356cfe5561f0efe07e997e553302c4ae433665d14",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2291,13 +2311,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "3119",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2312,7 +2333,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:3119",
+      "featureId": "oc:feature:es-minetur-fuel:3119",
       "componentKey": "lpg"
     },
     "result": {
@@ -2322,17 +2343,17 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "eaddcf959aeeb0097e505b205ad436f35d9ef6c1c9560f22d095552e0613e5f6",
+    "canonicalId": "5b8a9e0afb5ba58f395e01102c687e27d0dab771d7baed3a9ab7e0a27d1a9efe",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "a676c9325386f3fb4f59650bd726b90e50125be9bd4c49ed8ac7bb2e0ec98acb"
+    "contentHash": "ba7a3a40d77d39a2386d028f2ce4c0b372237f1f21d5179c4e0187c8a708a488"
   },
   {
-    "id": "oc:observation:es-minetur:8ca43990205205d640e7929460153372b9dd432f290b4af0db2dfbd735998bf0",
+    "id": "oc:observation:es-minetur-fuel:2a1aa1ae70511d1195fb107f1cbeefdd132f31171c520699fab55b5f3ba2e42f",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2363,13 +2384,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "15493",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2384,7 +2406,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:15493",
+      "featureId": "oc:feature:es-minetur-fuel:15493",
       "componentKey": "e5"
     },
     "result": {
@@ -2394,17 +2416,17 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "76c1ead3e67a57fa8e6a885e349d29e5461a4a1a5899deebb1e7213a69b6e5af",
+    "canonicalId": "18d2989fb10ec85517e3c9479baaec4585c35b95295b24eb7f33d5d5a0faab65",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "e42ed07216d5aab9dd8d65e252a2a8457edb53b36510a55220c61c5067747a18"
+    "contentHash": "e4271903b9fceef167c75e8cb04a55cde1a446defbfe9a46f6adb7de880153d5"
   },
   {
-    "id": "oc:observation:es-minetur:2c55665524a2f01dc832bc325be8f46acae04680d8c845e735f75cde913225dc",
+    "id": "oc:observation:es-minetur-fuel:cb2a4eaa3597cb17e54123de47be4fec597f0d4cd3e8c453220ffbc1bf649ac3",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -2435,13 +2457,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "es-minetur",
+      "sourceId": "es-minetur-fuel",
       "sourceFormat": "minetur",
       "accessMode": "bulk",
       "recordId": "15493",
       "attribution": {
-        "provider": "Ministerio para la Transición Ecológica",
-        "license": "CC-BY-4.0"
+        "provider": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+        "license": "CC-BY-4.0",
+        "licenseUrl": "https://creativecommons.org/licenses/by/4.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -2456,7 +2479,7 @@
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:es-minetur:15493",
+      "featureId": "oc:feature:es-minetur-fuel:15493",
       "componentKey": "diesel"
     },
     "result": {
@@ -2466,14 +2489,14 @@
       "per": "L"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:07:59Z"
+      "instant": "2026-09-22T11:08:26Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "3d6a50602a3c41852ed8814049688f69fd46a62837eeb7d1cadac486f9b5c978",
+    "canonicalId": "c9fbe3e72003635b43b979b16e911c19c3a4e5f89ea3c0e526fc3ead64457390",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "3b3ce404eb35db5602cf604a6dc6eafe37c69b0792a0915b9d6f4c4c3b4fb6b6"
+    "contentHash": "69ca0bacf928c17791d8f7f5b1c4de584c9bfda22e0db3ef3d78ca712d349250"
   },
   {
     "id": "oc:feature:it-mimit:3464",
@@ -2995,8 +3018,15 @@
     "contentHash": "c9bbfd2d420a2d0b49a72cfd159323a444c88be7fab3e67493f8847ee8ac35dc"
   },
   {
-    "id": "oc:feature:at-econtrol:1494440",
+    "id": "oc:feature:at-econtrol-fuel:1494440",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "1494440",
+        "authority": "at-econtrol-fuel"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -3008,6 +3038,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "AT"
+      },
       "address": {
         "street": "Rechte Wienzeile 43",
         "postalCode": "1050",
@@ -3017,13 +3050,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "at-econtrol",
+      "sourceId": "at-econtrol-fuel",
       "sourceFormat": "econtrol",
       "accessMode": "on_demand",
       "recordId": "1494440",
       "attribution": {
-        "provider": "E-Control",
-        "license": "CC-BY-4.0"
+        "provider": "E-Control (Spritpreisrechner)",
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -3032,7 +3065,7 @@
     },
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z",
-      "expiresAt": "2026-09-22T11:40:00Z"
+      "expiresAt": "2026-09-22T11:25:00Z"
     },
     "class": "feature",
     "kind": "fuel_station",
@@ -3052,6 +3085,8 @@
           "v": 1,
           "grade": "diesel",
           "service": "served",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
           "per": "L",
           "priceBasis": "gross"
         }
@@ -3062,15 +3097,22 @@
       "v": 1,
       "productsComplete": false
     },
-    "canonicalId": "fde0161d44d185085dad9a72488869ee9dedce1884c61c180a66e02a2cd6b57d",
+    "canonicalId": "518571f3746ac6bc756793e04fe7e68efa223ab4f5e5e8dbdeb1964929564a60",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "c740f49797774dc41a65a8c8dc4a924e91f04fd7c25ae6ae9154c21b7c6b69e5"
+    "contentHash": "058b7cc5387da9a4aaf751209f2edc416c5495b022609b871e73ee92c2a63871"
   },
   {
-    "id": "oc:feature:at-econtrol:34026",
+    "id": "oc:feature:at-econtrol-fuel:34026",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "34026",
+        "authority": "at-econtrol-fuel"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -3082,6 +3124,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "AT"
+      },
       "address": {
         "street": "Seidengasse 12",
         "postalCode": "1070",
@@ -3091,13 +3136,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "at-econtrol",
+      "sourceId": "at-econtrol-fuel",
       "sourceFormat": "econtrol",
       "accessMode": "on_demand",
       "recordId": "34026",
       "attribution": {
-        "provider": "E-Control",
-        "license": "CC-BY-4.0"
+        "provider": "E-Control (Spritpreisrechner)",
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -3106,7 +3151,7 @@
     },
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z",
-      "expiresAt": "2026-09-22T11:40:00Z"
+      "expiresAt": "2026-09-22T11:25:00Z"
     },
     "class": "feature",
     "kind": "fuel_station",
@@ -3126,6 +3171,8 @@
           "v": 1,
           "grade": "diesel",
           "service": "served",
+          "priceLevel": "standard",
+          "vehicleScope": "any",
           "per": "L",
           "priceBasis": "gross"
         }
@@ -3136,14 +3183,14 @@
       "v": 1,
       "productsComplete": false
     },
-    "canonicalId": "34b4eb2993828756f3d3c8b984e858a1cb9257129f9932b3183e8856fda21474",
+    "canonicalId": "f34f9fde064140e2ab84362a6bbb837a72acb0bf58152be4354c877b08289b57",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "4cf9a4718ef800266bf7882033f7f383129dad3a910fad79d76363ac6d988f96"
+    "contentHash": "78be0253a1250aee1fac15a60e033eb309fb5b7a04df4b16cfa3363e2614f048"
   },
   {
-    "id": "oc:observation:at-econtrol:add2fcc4cb5e01efb70d3571161b7b082d0c180297b0b98033f43e6771859756",
+    "id": "oc:observation:at-econtrol-fuel:67741110db6890a444052cd7a715519121dfa5798271604171d282d6fcdb340c",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -3156,6 +3203,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "AT"
+      },
       "address": {
         "street": "Rechte Wienzeile 43",
         "postalCode": "1050",
@@ -3165,13 +3215,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "at-econtrol",
+      "sourceId": "at-econtrol-fuel",
       "sourceFormat": "econtrol",
       "accessMode": "on_demand",
       "recordId": "1494440",
       "attribution": {
-        "provider": "E-Control",
-        "license": "CC-BY-4.0"
+        "provider": "E-Control (Spritpreisrechner)",
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -3180,14 +3230,14 @@
     },
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z",
-      "expiresAt": "2026-09-22T11:40:00Z"
+      "expiresAt": "2026-09-22T11:25:00Z"
     },
     "class": "observation",
     "kind": "observation",
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:at-econtrol:1494440",
+      "featureId": "oc:feature:at-econtrol-fuel:1494440",
       "componentKey": "diesel"
     },
     "result": {
@@ -3200,14 +3250,14 @@
       "instant": "2026-09-22T11:10:00Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "c30b52c2a7b0a817380cfc1293828ffc0338a6d7975273017eabcbc93c9b4d92",
+    "canonicalId": "e284e246f854fdfcb43802c20b3a7379c02df75799b7b49a30c2754984ed1bdd",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "67ec61531a33e7b9a0838dc75d192e52a7bafd138cf4b72cbd0960dd3aa1c0f8"
+    "contentHash": "9a61cfa8f23e672e1b6302ba2c298d8f6bd2a2756a226e7bf1a090636310fdec"
   },
   {
-    "id": "oc:observation:at-econtrol:f868beac2f97867b1df8cf8f4d8de631e3bb82f30614db37de772b71cbf1ee31",
+    "id": "oc:observation:at-econtrol-fuel:923db8ad08d15a1ae815f0289a380b4a964150a048f7489720dfaf44681e5ac0",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -3220,6 +3270,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "AT"
+      },
       "address": {
         "street": "Seidengasse 12",
         "postalCode": "1070",
@@ -3229,13 +3282,13 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "at-econtrol",
+      "sourceId": "at-econtrol-fuel",
       "sourceFormat": "econtrol",
       "accessMode": "on_demand",
       "recordId": "34026",
       "attribution": {
-        "provider": "E-Control",
-        "license": "CC-BY-4.0"
+        "provider": "E-Control (Spritpreisrechner)",
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -3244,14 +3297,14 @@
     },
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z",
-      "expiresAt": "2026-09-22T11:40:00Z"
+      "expiresAt": "2026-09-22T11:25:00Z"
     },
     "class": "observation",
     "kind": "observation",
     "property": "fuel.price",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:at-econtrol:34026",
+      "featureId": "oc:feature:at-econtrol-fuel:34026",
       "componentKey": "diesel"
     },
     "result": {
@@ -3264,11 +3317,11 @@
       "instant": "2026-09-22T11:10:00Z"
     },
     "aggregation": "instantaneous",
-    "canonicalId": "1f0e8b105d200c6bb58e805ae2c5aeae8ecded8a5b53c8fc2dd760210b99691f",
+    "canonicalId": "3371b3ed7c609e2d27bb52b7d6d4b793750b2afc0d91fa9a14422c576df32811",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "887a57fcc18ed9a0a99efb9b052e257af18d6e4255c640fb538f3506d4af4bf4"
+    "contentHash": "be428b266ca8baac230c4564c477123914c218587080ec4049e861b0f59e33e3"
   },
   {
     "id": "oc:offer:de-bw-ocpdb:138586",

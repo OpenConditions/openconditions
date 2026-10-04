@@ -34,6 +34,21 @@ COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
+COPY packages/fuel/package.json packages/fuel/
+COPY packages/federation/package.json packages/federation/
+COPY packages/storage/package.json packages/storage/
+COPY packages/model/package.json packages/model/
+COPY packages/model-border/package.json packages/model-border/
+COPY packages/model-charging/package.json packages/model-charging/
+COPY packages/model-facilities/package.json packages/model-facilities/
+COPY packages/model-fuel/package.json packages/model-fuel/
+COPY packages/model-hazards/package.json packages/model-hazards/
+COPY packages/model-maritime/package.json packages/model-maritime/
+COPY packages/model-parking/package.json packages/model-parking/
+COPY packages/model-registry/package.json packages/model-registry/
+COPY packages/model-roads/package.json packages/model-roads/
+COPY packages/model-vehicles/package.json packages/model-vehicles/
+COPY packages/model-weather/package.json packages/model-weather/
 COPY services/ingest/package.json services/ingest/
 COPY services/contributions-api/package.json services/contributions-api/
 RUN pnpm install --filter @openconditions/contributions-api... --frozen-lockfile --prod --ignore-scripts
@@ -49,6 +64,21 @@ COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
+COPY packages/fuel/package.json packages/fuel/
+COPY packages/federation/package.json packages/federation/
+COPY packages/storage/package.json packages/storage/
+COPY packages/model/package.json packages/model/
+COPY packages/model-border/package.json packages/model-border/
+COPY packages/model-charging/package.json packages/model-charging/
+COPY packages/model-facilities/package.json packages/model-facilities/
+COPY packages/model-fuel/package.json packages/model-fuel/
+COPY packages/model-hazards/package.json packages/model-hazards/
+COPY packages/model-maritime/package.json packages/model-maritime/
+COPY packages/model-parking/package.json packages/model-parking/
+COPY packages/model-registry/package.json packages/model-registry/
+COPY packages/model-roads/package.json packages/model-roads/
+COPY packages/model-vehicles/package.json packages/model-vehicles/
+COPY packages/model-weather/package.json packages/model-weather/
 COPY services/ingest/package.json services/ingest/
 COPY services/contributions-api/package.json services/contributions-api/
 RUN pnpm install --filter @openconditions/contributions-api... --frozen-lockfile --ignore-scripts
@@ -60,6 +90,21 @@ COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
+COPY packages/fuel/ packages/fuel/
+COPY packages/federation/ packages/federation/
+COPY packages/storage/ packages/storage/
+COPY packages/model/ packages/model/
+COPY packages/model-border/ packages/model-border/
+COPY packages/model-charging/ packages/model-charging/
+COPY packages/model-facilities/ packages/model-facilities/
+COPY packages/model-fuel/ packages/model-fuel/
+COPY packages/model-hazards/ packages/model-hazards/
+COPY packages/model-maritime/ packages/model-maritime/
+COPY packages/model-parking/ packages/model-parking/
+COPY packages/model-registry/ packages/model-registry/
+COPY packages/model-roads/ packages/model-roads/
+COPY packages/model-vehicles/ packages/model-vehicles/
+COPY packages/model-weather/ packages/model-weather/
 COPY services/ingest/ services/ingest/
 COPY services/contributions-api/ services/contributions-api/
 # `...` builds the contributions-api's workspace dependencies first (topological),

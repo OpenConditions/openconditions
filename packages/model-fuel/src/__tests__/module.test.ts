@@ -4,6 +4,7 @@ import {
   DATEX2_DELIVERY_UNITS,
   DATEX2_V2_FUEL_GRADES,
   DATEX2_V3_FUEL_GRADES,
+  DATEX2_V3_FUEL_GRADES_OUT,
 } from "../crosswalk/datex2.js";
 import { fuelModule } from "../module.js";
 import { DATEX2_V2_FUEL, DATEX2_V3_FUEL } from "../vocabularies/datex2.js";
@@ -26,9 +27,10 @@ describe("fuel module", () => {
     });
   });
 
-  it("keeps a month of prices raw and a daily rollup after that", () => {
+  it("keeps a month of price changes raw and a daily rollup after that", () => {
     expect(registry.property("fuel.price")?.retention).toEqual({
       rawDays: 30,
+      changeOnly: true,
       rollup: { period: "daily" },
     });
   });
@@ -46,8 +48,17 @@ describe("fuel module", () => {
         "agricultural_diesel",
         "methanol",
         "ammonia",
+        "e5_premium",
+        "sp98_e10",
+        "cng_bio",
+        "lng_bio",
       ]),
     );
+  });
+
+  it("reads DATEX biogas as compressed biomethane and writes it back", () => {
+    expect(DATEX2_V3_FUEL_GRADES["organicGas:biogas"]).toBe("cng_bio");
+    expect(DATEX2_V3_FUEL_GRADES_OUT["cng_bio"]).toBe("organicGas:biogas");
   });
 
   it("registers the district scheme US averages are published per", () => {

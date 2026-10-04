@@ -1,13 +1,17 @@
-import { readSegmentConditionRows, type SegmentConditionRow } from "@openconditions/core";
+import {
+  readSegmentConditionRows,
+  type Scope,
+  type SegmentConditionRow,
+} from "@openconditions/core";
 import {
   type Catalog,
   type EffectiveRights,
+  isPublicLicense,
   missingCredentials,
 } from "@openconditions/ingest-framework";
 import type { RoutingRights } from "@openconditions/model";
 import {
   flowToSegmentSpeedCsv,
-  isPermissiveLicense,
   type SegmentSpeedCsvRow,
   type SegmentSpeedRow,
   segmentConditionsToExclusions,
@@ -18,6 +22,7 @@ import { RESOLVER_VERSION } from "@openconditions/roads";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { parseBbox } from "./api/query.js";
+import { scopeOf } from "./api/scope.js";
 import type { FeedRunStatus, FeedStatusStore } from "./feed-status.js";
 import {
   type BindingMetrics,
@@ -77,7 +82,20 @@ function routingRights(rights: RoutingRights | null | undefined): RoutingRights 
   return { ...rights, reviewed_at: fullIso(rights.reviewed_at) };
 }
 
-function hydrateSegmentRows(rows: SegmentConditionRow[], catalog: Catalog): SegmentConditionRow[] {
+/**
+ * Segment condition rows as `scope` may route on them, with their catalogue
+ * routing source, licence link, attribution and rights. The public scope
+ * drops a restricted source's rows (restricted in `storedRestricted`, read
+ * from `conditions.source`, or a feed the catalogue schedules, keeps
+ * disabled or only discovered), an unscheduled catalogue child's, and rows
+ * whose licence is not public; the operator scope keeps every row.
+ */
+export function hydrateSegmentRows(
+  rows: SegmentConditionRow[],
+  catalog: Catalog,
+  scope: Scope,
+  storedRestricted: ReadonlySet<string>,
+): SegmentConditionRow[] {
   const feedById = new Map(catalog.feeds.map((feed) => [feed.id, feed] as const));
   // A discovered catalogue child is explicitly outside the scheduled selection.
   // Its retained observations must not regain an old grant through the fallback
@@ -85,13 +103,21 @@ function hydrateSegmentRows(rows: SegmentConditionRow[], catalog: Catalog): Segm
   const unscheduledSourceIds = new Set(
     catalog.discovered.filter((feed) => !feedById.has(feed.id)).map((feed) => feed.id),
   );
+  const restrictedSourceIds = new Set([
+    ...storedRestricted,
+    ...[...catalog.feeds, ...catalog.discovered, ...catalog.disabled]
+      .filter((feed) => feed.restricted)
+      .map((feed) => feed.id),
+  ]);
   return rows
     .filter((row) => {
+      if (scope === "operator") return true;
       const license = row.provenance_attribution?.license;
       return (
         !unscheduledSourceIds.has(row.source_id) &&
-        isPermissiveLicense(license) &&
-        isPermissiveLicense(feedById.get(row.source_id)?.license ?? license)
+        !restrictedSourceIds.has(row.source_id) &&
+        isPublicLicense(license) &&
+        isPublicLicense(feedById.get(row.source_id)?.license ?? license)
       );
     })
     .map((row) => {
@@ -107,6 +133,49 @@ function hydrateSegmentRows(rows: SegmentConditionRow[], catalog: Catalog): Segm
         rights: routingRights(feed ? routingRightsOf(feed) : attribution?.rights),
       };
     });
+}
+
+/**
+ * The source ids of `rows` that `conditions.source` marks restricted, in one
+ * query; none for the operator, who routes on every row.
+ */
+async function storedRestrictedOf(
+  sql: Sql,
+  rows: readonly SegmentConditionRow[],
+  scope: Scope,
+): Promise<Set<string>> {
+  const ids = [...new Set(rows.map((r) => r.source_id))];
+  if (scope === "operator" || ids.length === 0) return new Set();
+  const found = await sql<{ id: string }[]>`
+    SELECT id FROM conditions.source WHERE id = ANY(${ids}::text[]) AND restricted`;
+  return new Set(found.map((r) => r.id));
+}
+
+/**
+ * The SQL condition, over a table with a `contributing` source-id array
+ * (`segment_speed` aliased `sp`, or whichever `alias` names), under which
+ * `scope` may read a derived value: the operator any, the public none a
+ * restricted source contributed to.
+ */
+function speedScopeClause(scope: Scope, alias = "sp"): string {
+  return scope === "operator"
+    ? "true"
+    : `NOT EXISTS (SELECT 1 FROM conditions.source scope_source
+                    WHERE scope_source.id = ANY(${alias}.contributing) AND scope_source.restricted)`;
+}
+
+/**
+ * The SQL condition, over `segment_profile` aliased `sp`, under which `scope`
+ * may read a segment's weekly profile: the operator any, the public none with
+ * a bucket that names a restricted source or no source at all (provenance
+ * unknown, so withheld). One pass over the buckets, not one per row.
+ */
+function profileScopeClause(scope: Scope): string {
+  if (scope === "operator") return "true";
+  return `sp.segment_id NOT IN (
+    SELECT withheld.segment_id FROM conditions.segment_profile withheld
+     WHERE cardinality(withheld.contributing) = 0
+        OR NOT (${speedScopeClause(scope, "withheld")}))`;
 }
 
 /** One `road_segment JOIN segment_profile` row: a single weekly-profile bucket
@@ -281,19 +350,26 @@ export function registerFeedStatusRoute(
  * and the speed surface and operator status
  *   GET /segments.geojson · /segments/speed.csv · /segments/profiles.json ·
  *       /feeds/status
- * Records themselves leave through the record API (`api/routes.ts`).
+ * Records themselves leave through the record API (`api/routes.ts`). Every
+ * route here reads in the request's scope.
  *
- * `/segments.geojson` is a projection of `conditions.road_segment` (LEFT JOIN
- * `segment_speed`), so unlike the routing outputs it does NOT drop
- * share-alike sources. `segment_speed` is a fused
- * product; for a segment with a single contributing source it is effectively
- * that source's own reading, so skipping the license filter is only safe while
- * no share-alike source feeds the surface. That holds for v1: the current
- * share-alike feeds are event/roadworks feeds (situations), not flow
- * measurements, so they never contribute to `segment_speed`.
- * Follow-up when a share-alike FLOW source is ever added: filter segments by the
- * licenses of their contributing sources (`segment_speed.contributing` carries
- * the source ids) before emitting here.
+ * The routing outputs drop, in the public scope, a restricted source's rows
+ * and rows whose licence is not public (`hydrateSegmentRows`).
+ *
+ * The speed surface (`/segments.geojson`, `/segments/speed.csv`) serves
+ * `segment_speed`, a fused product: for a segment with a single contributing
+ * source it is effectively that source's own reading. In the public scope a
+ * speed any restricted source contributed to (`segment_speed.contributing`,
+ * which a propagated estimate inherits from its measurement) is withheld:
+ * `/segments.geojson` keeps the segment's geometry without speed properties,
+ * `/segments/speed.csv` omits the row. A share-alike source is restricted, so
+ * this is the licence filter too. The operator scope serves every speed.
+ *
+ * `/segments/profiles.json` serves the weekly profiles, each bucket recording
+ * the sources it was built from (`segment_profile.contributing`). The public
+ * scope omits a segment whose profile any restricted source contributed to, or
+ * whose provenance is unrecorded;
+ * the operator scope serves every profile.
  */
 export function registerPublishRoutes(
   app: FastifyInstance,
@@ -317,7 +393,8 @@ export function registerPublishRoutes(
       resolverVersion: RESOLVER_VERSION,
     });
     const evaluatedAt = new Date();
-    const rows = hydrateSegmentRows(raw, catalog);
+    const scope = scopeOf(req);
+    const rows = hydrateSegmentRows(raw, catalog, scope, await storedRestrictedOf(sql, raw, scope));
     const projected = segmentConditionsToJson(rows, at, {
       resolverVersion: RESOLVER_VERSION,
       evaluatedAt,
@@ -347,7 +424,7 @@ export function registerPublishRoutes(
           );
     reply.header("Cache-Control", `public, max-age=${maxAge}`);
     const licenses = new Set(projected.conditions.map((c) => c.routing_evidence.source_license));
-    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].join(", ") : "unknown");
+    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].sort().join(", ") : "unknown");
     return reply.send({ ...exclusions, routing_evidence: projected });
   });
 
@@ -368,7 +445,8 @@ export function registerPublishRoutes(
               sp.current_kph AS "currentKph", sp.free_flow_kph AS "freeFlowKph",
               sp.observed_at AS "observedAt"
        FROM conditions.road_segment s
-       LEFT JOIN conditions.segment_speed sp USING (segment_id)
+       LEFT JOIN conditions.segment_speed sp
+         ON sp.segment_id = s.segment_id AND ${speedScopeClause(scopeOf(req))}
        WHERE s.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)
        LIMIT 20000`,
       [west, south, east, north],
@@ -386,13 +464,13 @@ export function registerPublishRoutes(
   // segment that HAS a measured/fused speed (unlike `/segments.geojson`,
   // segments with no `segment_speed` row are omitted rather than LEFT-JOINed
   // in as nulls — a routing consumer has no use for a speed-less row).
-  app.get("/segments/speed.csv", async (_req, reply) => {
+  app.get("/segments/speed.csv", async (req, reply) => {
     const rows = await db.execute<SegmentSpeedCsvRow[]>(
       `SELECT rs.way_id AS "wayId", rs.dir, sp.current_kph AS "currentKph",
               sp.free_flow_kph AS "freeFlowKph", sp.los
        FROM conditions.segment_speed sp
        JOIN conditions.road_segment rs USING (segment_id)
-       WHERE sp.current_kph IS NOT NULL`,
+       WHERE sp.current_kph IS NOT NULL AND ${speedScopeClause(scopeOf(req))}`,
     );
     reply.header("Content-Type", "text/csv");
     reply.header("Cache-Control", "public, max-age=60");
@@ -410,13 +488,19 @@ export function registerPublishRoutes(
   // bucket convention (source-verified), NOT UTC and NOT Monday-first. The baker indexes this array directly;
   // re-deriving a different week start on that side would silently shift
   // every region's rush hour.
-  app.get("/segments/profiles.json", async (_req, reply) => {
+  //
+  // In the public scope a segment is omitted whole when any of its buckets was
+  // built from a restricted source, or from no recorded source: `constrained_kph`
+  // blends the daytime buckets, so a partial profile would still carry that
+  // source's history.
+  app.get("/segments/profiles.json", async (req, reply) => {
     const rows = await db.execute<SegmentProfileBucketRow[]>(
       `SELECT rs.segment_id AS "segmentId", rs.way_id AS "wayId", rs.dir,
               rs.free_flow_kph AS "freeFlowKph",
               sp.dow, sp.tod_hour AS "todHour", sp.speed_kph AS "speedKph"
        FROM conditions.segment_profile sp
        JOIN conditions.road_segment rs USING (segment_id)
+       WHERE ${profileScopeClause(scopeOf(req))}
        ORDER BY rs.segment_id`,
     );
 
@@ -469,7 +553,8 @@ export function registerPublishRoutes(
 
   // Routing feed of the BOUND effects in effect at `at` (default now), one row
   // per effect keyed by directed OSM way spans, for the OpenMapX live traffic
-  // writer. Share-alike records are dropped like every other export. Only
+  // writer. In the public scope a restricted source's rows and rows whose
+  // licence is not public are dropped; the operator scope routes on all. Only
   // `exact`/`likely` bindings are read; see `readSegmentConditionRows` for the
   // span geometry.
   app.get("/segments/conditions.json", async (req, reply) => {
@@ -486,17 +571,22 @@ export function registerPublishRoutes(
       ...(bbox ? { bbox } : {}),
       resolverVersion: RESOLVER_VERSION,
     });
-    const permissive = hydrateSegmentRows(rows, catalog);
+    const scope = scopeOf(req);
+    const served = hydrateSegmentRows(
+      rows,
+      catalog,
+      scope,
+      await storedRestrictedOf(sql, rows, scope),
+    );
+    const projected = segmentConditionsToJson(served, at, {
+      resolverVersion: RESOLVER_VERSION,
+      evaluatedAt: new Date(),
+    });
     reply.header("Content-Type", "application/json");
     reply.header("Cache-Control", "public, max-age=60");
-    const licenses = new Set(permissive.map((r) => r.provenance_attribution?.license ?? "unknown"));
-    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].join(", ") : "unknown");
-    return reply.send(
-      segmentConditionsToJson(permissive, at, {
-        resolverVersion: RESOLVER_VERSION,
-        evaluatedAt: new Date(),
-      }),
-    );
+    const licenses = new Set(projected.conditions.map((c) => c.routing_evidence.source_license));
+    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].sort().join(", ") : "unknown");
+    return reply.send(projected);
   });
 
   registerFeedStatusRoute(

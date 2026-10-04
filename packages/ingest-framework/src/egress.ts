@@ -291,8 +291,8 @@ type PinnedInit = RequestInit & { dispatcher?: unknown };
  * single end-to-end timeout AbortSignal, and caps the streamed body size.
  *
  * The guard PINS the connection: it resolves+validates the hostname ONCE, then
- * dials exactly that address via a per-hop undici Agent whose `connect.lookup`
- * returns the pre-validated IP (the Host header and TLS SNI stay the original
+ * dials only those addresses via a per-hop undici Agent whose `connect.lookup`
+ * returns the pre-validated IPs, tried in turn (the Host header and TLS SNI stay the original
  * hostname). This closes the DNS-rebinding TOCTOU — a short-TTL name cannot pass
  * the check and then re-resolve to a private IP for the actual socket. Because
  * the dispatcher is honored by undici's fetch, `baseFetch` MUST default to
@@ -343,18 +343,21 @@ export function guardedFetch(
           resolvePublicIps(host, lookup, { allowPrivate }),
           signal,
         );
-        const pinned = addrs[0]!;
+        const pinned = addrs.map(({ address, family }) => ({ address, family }));
 
-        // Per-hop dispatcher that dials the exact validated IP. `connect.lookup`
+        // Per-hop dispatcher that dials only the validated IPs. `connect.lookup`
         // receives the ORIGINAL hostname (so Host/SNI stay correct) but resolves
-        // it to the pinned address — no second, unchecked DNS resolution happens.
+        // it to the pinned addresses — no second, unchecked DNS resolution
+        // happens. `autoSelectFamily` makes the socket try them in turn, so an
+        // address that refuses (an unreachable IPv6, say) falls back to the next.
         agent = new Agent({
           connect: {
+            autoSelectFamily: true,
             lookup: (
               _h: string,
               _o: unknown,
               cb: (e: Error | null, addrs: LookupAddress[]) => void,
-            ) => cb(null, [{ address: pinned.address, family: pinned.family }]),
+            ) => cb(null, pinned),
             ...(connect.cert ? { cert: connect.cert, key: connect.key, ca: connect.ca } : {}),
           },
         });

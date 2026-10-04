@@ -35,6 +35,7 @@ import {
   changedSituations,
   logRejections,
   type PollIdentity,
+  publishFeatures,
   publishFlows,
   publishSituations,
   stampAttribution,
@@ -74,6 +75,38 @@ function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): numbe
   if (raw == null || raw === "") return 0;
   const n = Number(raw);
   return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+/**
+ * The shrink tripwire: the previous count and the ratio when a fresh count of
+ * a complete snapshot does not exceed that share of the source's last
+ * published row count, else undefined.
+ */
+async function shrinkTripped(
+  sql: Sql,
+  sourceId: string,
+  fresh: number,
+): Promise<{ previous: number; ratio: number } | undefined> {
+  const ratio = shrinkTripwireRatioFromEnv();
+  const previous = await getLastRowCount(sql, sourceId);
+  return previous != null && previous > 0 && fresh <= previous * ratio
+    ? { previous, ratio }
+    : undefined;
+}
+
+/** Fails a poll the shrink tripwire stopped, keeping the last good publication. */
+function failShrunk(
+  poll: PollContext,
+  what: string,
+  unit: string,
+  fresh: number,
+  { previous, ratio }: { previous: number; ratio: number },
+): Promise<RunResult> {
+  const error =
+    `${what} feed shrank from ${previous} to ${fresh} ${unit} ` +
+    `(tripwire ratio ${ratio}) — skipping the write to avoid a suspected partial-failure wipe`;
+  console.warn(`[ingest] ${poll.src.id}: ${error}`);
+  return fail(poll, "error", error);
 }
 
 export interface RunResult {
@@ -180,8 +213,24 @@ export function createRoleState(): RoleState {
   return { lastFetchedAt: {}, payloads: {} };
 }
 
+/**
+ * The fetch every egress of a feed goes through: guarded at one seam
+ * (validate URL and DNS, re-check each redirect hop, cap size and time) and
+ * authorized with the feed's credentials on top. The guard pins the socket to
+ * the validated IP via an undici dispatcher, which only undici's fetch
+ * honours, so `deps.fetch` must be undici's fetch in production. Tests inject
+ * a fake fetch that serves fixtures and ignores the dispatcher.
+ */
+export function feedFetch(
+  src: CatalogFeed,
+  deps: { fetch: typeof fetch; lookup?: LookupFn; env?: Env },
+): typeof fetch {
+  const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
+  return makeAuthorizedFetch(src, guarded, deps.env ?? process.env);
+}
+
 /** The data endpoints of a feed: those its format parses itself, not reference data. */
-function dataRoles(src: CatalogFeed): string[] {
+export function dataRoles(src: CatalogFeed): string[] {
   return Object.entries(src.endpoints)
     .filter(([, endpoint]) => endpoint.decoder === undefined)
     .map(([role]) => role);
@@ -420,15 +469,10 @@ async function runAttempt(
   const feedCapture = capture(rawTierFor(src, "feed"));
   const referenceCapture = capture(rawTierFor(src, "reference"));
 
-  // Guard every egress path (feed, catalog, site-table, OAuth, mTLS) at one seam:
-  // validate URL + DNS, re-check each redirect hop, cap size + time. Authorize on top.
-  // The guard pins the socket to the validated IP via an undici dispatcher, which
-  // only undici's fetch honors — so `deps.fetch` MUST be undici's fetch in
-  // production (the scheduler passes it). Tests inject a fake fetch that serves
-  // fixtures and ignores the dispatcher, keeping the run path hermetic.
+  // Every egress path (feed, catalog, site-table, OAuth, mTLS) goes through
+  // one guarded, authorized fetch; the scheduler passes undici's fetch.
   const env = deps.env ?? process.env;
-  const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
-  const fetchFn = makeAuthorizedFetch(src, guarded, env);
+  const fetchFn = feedFetch(src, { ...deps, env });
   const format = formatOf(src);
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
@@ -465,6 +509,8 @@ async function runAttempt(
   let acceptFetch: (() => void) | undefined;
   let parse: ParseOutput;
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
+  // Whether any data payload had bytes: a streamed body is taken to have.
+  let heldPayload = true;
   if (format.stream) {
     // A payload too large to buffer (NDW's ~50 MB DATEX flow document): stream
     // fetch → gunzip → SAX, so it is never buffered or DOM-parsed whole. An
@@ -567,6 +613,7 @@ async function runAttempt(
         for (const accept of accepts) accept();
       };
       snapshotInspection = inspectSnapshotCompleteness(src, payloads["main"] ?? []);
+      heldPayload = Object.values(payloads).some((buffers) => buffers.some((b) => b.length > 0));
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] fetch failed for source ${src.id}:`, err);
@@ -603,6 +650,7 @@ async function runAttempt(
     identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
     ...(acceptFetch ? { acceptFetch } : {}),
   };
+  if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload);
   return format.kind === "measurements"
     ? finishFlowPoll(poll, {
         features: parse.features,
@@ -710,15 +758,8 @@ async function finishEventPoll(
   // explicit disposition, and the unlocatable check inside the publication
   // transaction protects a still-published record.
   if (accounting === undefined && !inspection?.completeEmpty) {
-    const ratio = shrinkTripwireRatioFromEnv();
-    const previous = await getLastRowCount(deps.sql, src.id);
-    if (previous != null && previous > 0 && situations.length <= previous * ratio) {
-      const error =
-        `event feed shrank from ${previous} to ${situations.length} situations ` +
-        `(tripwire ratio ${ratio}) — skipping the write to avoid a suspected partial-failure wipe`;
-      console.warn(`[ingest] ${src.id}: ${error}`);
-      return fail(poll, "error", error);
-    }
+    const shrunk = await shrinkTripped(deps.sql, src.id, situations.length);
+    if (shrunk) return failShrunk(poll, "event", "situations", situations.length, shrunk);
   }
 
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
@@ -856,6 +897,70 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
     rejected: counts.rejected,
     ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
     ...(pastRollup > 0 ? { pastRollup } : {}),
+  };
+}
+
+/**
+ * The last stages of a features feed's poll: refuse a payload that held bytes
+ * but parsed to no feature, or a feature count the shrink tripwire calls
+ * suspect; stamp the catalogue's rights on features, readings and offers;
+ * publish the complete snapshot.
+ */
+async function finishFeaturePoll(
+  poll: PollContext,
+  parse: ParseOutput,
+  heldPayload: boolean,
+): Promise<RunResult> {
+  const { src, deps } = poll;
+  if (heldPayload && parse.features.length === 0) {
+    const error =
+      "features feed produced zero features from a non-empty payload — skipping the write to keep the last good publication";
+    console.warn(`[ingest] ${src.id}: ${error}`);
+    return fail(poll, "failed", error);
+  }
+  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length);
+  if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
+
+  const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampAttribution(d, src));
+  const output = {
+    features: stamp(parse.features),
+    observations: stamp(parse.observations),
+    offers: stamp(parse.offers),
+  };
+  let published: Awaited<ReturnType<typeof publishFeatures>>;
+  try {
+    published = await publishFeatures(deps.sql, src, {
+      output,
+      rejected: parse.rejected ?? 0,
+      poll: poll.identity,
+      durationMs: Date.now() - poll.start,
+      now: deps.now(),
+      model: writeModel(deps.model),
+    });
+    poll.attempt.closed = true;
+  } catch (err) {
+    console.error(`[ingest] publish failed for source ${src.id}:`, err);
+    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+  }
+  const { summary, counts } = published;
+  logRejections(src.id, summary);
+  poll.acceptFetch?.();
+
+  const durationMs = Date.now() - poll.start;
+  console.info(
+    `[ingest] ${src.id}: ${output.features.length} features, ${output.observations.length} readings, ` +
+      `${output.offers.length} offers (${counts.inserted} inserted, ${counts.updated} updated, ` +
+      `${counts.deleted} withdrawn) in ${durationMs}ms`,
+  );
+  return {
+    count: counts.inserted + counts.updated,
+    durationMs,
+    outcome: output.features.length === 0 ? "complete_empty" : "changed",
+    activeEvents: counts.activeEvents,
+    inserted: counts.inserted,
+    updated: counts.updated,
+    deleted: counts.deleted,
+    rejected: counts.rejected,
   };
 }
 

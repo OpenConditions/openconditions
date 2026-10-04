@@ -13,7 +13,9 @@ The archive is written by `writeRecordArchive`
 the load-bearing gate. A record of the class reaches the archive only if:
 
 1. **A peer could receive it.** On-demand answers (cached reads of a source that
-   forbids bulk copies) and fused observation rows never leave the instance.
+   forbids bulk copies), fused observation rows and every record of a restricted
+   source (`restricted` in the catalogue: share-alike, or redistribution not
+   affirmatively granted) never leave the instance.
 2. **It is live.** A tombstoned record (withdrawn, expired, rejected, erased)
    never appears; a situation whose validity has ended, an offer past its end, a
    reading past its `validUntil` and a decommissioned feature are left out, so a
@@ -21,10 +23,11 @@ the load-bearing gate. A record of the class reaches the archive only if:
 3. **A crowd record is corroborated.** A crowd report reaches the archive once
    corroborated or externally resolved and before its lifetime ends — the same
    default a federation subscriber gets.
-4. **Its licence is permissive.** Share-alike (copyleft) records are dropped,
-   and share-alike entries are stripped from a record's merged sources. The
-   archive is a permissive redistributable bundle; ODbL/CC-BY-SA/GPL data never
-   rides along.
+4. **Its licence is public.** A record is dropped unless its own licence and
+   every licence an upstream publisher states grant redistribution and are not
+   share-alike (`isPublicLicense`); an unstated (`NOASSERTION`) or unknown licence
+   is not public. Merged sources whose licence is not public are stripped. The
+   archive is a redistributable bundle; ODbL/CC-BY-SA data never rides along.
 
 Surviving records lose the reporter (`provenance.reporter`, the crowd key), and a
 source's allow-listed `extras` ride along only when the source federates them
@@ -96,7 +99,8 @@ ${OPENCONDITIONS_ARCHIVE_DIR:-./data/archive}/archive-<class>-YYYY-MM-DD.parquet
 ${OPENCONDITIONS_ARCHIVE_DIR:-./data/archive}/archive-<class>.parquet   (latest)
 ```
 
-- `OPENCONDITIONS_ARCHIVE_DIR` — output directory (default `./data/archive`).
+- `OPENCONDITIONS_ARCHIVE_DIR` — output directory (default `./data/archive`;
+  under OpenMapX `/data/archive`, on the service's volume).
 - `OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS` — nights of dated files to keep (default
   `30`, a Tier 1 peer's backfill window; `0` keeps every night).
 - `ARCHIVE_CRON` — schedule override; `off` disables the job.

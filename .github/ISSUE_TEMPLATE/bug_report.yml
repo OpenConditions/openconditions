@@ -51,7 +51,6 @@ body:
         - "@openconditions/roads"
         - "@openconditions/publishers"
         - "@openconditions/openlr"
-        - OpenMapX integration (integrations/road-conditions-openconditions)
         - Documentation
         - Other / not sure
     validations:

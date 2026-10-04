@@ -1,3 +1,4 @@
+import { requireCredential } from "@openconditions/ingest-framework";
 import postgres from "postgres";
 
 export interface PollAttempt {
@@ -105,8 +106,7 @@ export function assessReadiness(rows: PollAttempt[], now: Date = new Date()): So
 }
 
 async function main(): Promise<void> {
-  const databaseUrl = process.env["DATABASE_URL"];
-  if (!databaseUrl) throw new Error("DATABASE_URL is required");
+  const databaseUrl = requireCredential(process.env, "DATABASE_URL");
   const sql = postgres(databaseUrl, { max: 1 });
   try {
     const rows = await sql<

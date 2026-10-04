@@ -30,16 +30,16 @@ import { productionModules } from "../index.js";
  * (CC BY 4.0), captured 2026-09-22 for central Karlsruhe and 2026-10-01 for
  * one car park that two of its sources describe — a live feed relayed from
  * chargecloud (CC0) and the Bundesnetzagentur register (CC BY 4.0); the fuel
- * prices are MINETUR's (CC BY 4.0), captured 2026-09-22. OpenConditions
- * parses none of these formats yet, so they are registered by a test-only
- * module.
+ * prices are MINETUR's (CC BY 4.0), captured 2026-09-22. The fuel module
+ * registers the MINETUR format; the others OpenConditions does not parse
+ * yet, so they are registered by a test-only module.
  */
 const fitFormats: RegistryModule = {
   name: "crowd-fit",
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["ocpi", "minetur", "autobahn-closure"],
+      values: ["ocpi", "autobahn-closure"],
     }),
   ],
 };

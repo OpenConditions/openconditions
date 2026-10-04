@@ -1,5 +1,7 @@
+import Fastify from "fastify";
 import { describe, expect, it } from "vitest";
-import { RateLimiter } from "../rate-limit.js";
+import { registerScope } from "../api/scope.js";
+import { RateLimiter, registerRateLimit } from "../rate-limit.js";
 
 /** A controllable clock so the token-bucket math is tested without real time. */
 function clock(start = 0) {
@@ -55,6 +57,63 @@ describe("RateLimiter.consume", () => {
     const later = rl.consume("a");
     expect(later.allowed).toBe(false);
     expect(later.retryAfterSec).toBeLessThanOrEqual(first.retryAfterSec);
+  });
+});
+
+describe("registerRateLimit", () => {
+  const TOKEN = "operator-token-of-the-limiter-suite-0123456789";
+
+  /** A server with the scope hook, a limiter of one request per minute, and one route. */
+  async function server() {
+    const app = Fastify();
+    registerScope(app, TOKEN);
+    registerRateLimit(app, new RateLimiter({ max: 1, windowMs: 60_000, now: () => 0 }));
+    app.get("/situations", async () => ({ records: [] }));
+    app.get("/status", async () => ({ status: "ok" }));
+    await app.ready();
+    const get = (
+      url: string,
+      headers: Record<string, string> = {},
+      remoteAddress = "203.0.113.9",
+    ) => app.inject({ method: "GET", url, headers, remoteAddress });
+    return { app, get };
+  }
+
+  it("operator requests skip the rate limiter", async () => {
+    const { app, get } = await server();
+    for (let i = 0; i < 3; i++) {
+      const res = await get("/situations", { authorization: `Bearer ${TOKEN}` });
+      expect(res.statusCode).toBe(200);
+    }
+    expect((await get("/situations")).statusCode).toBe(200);
+    expect((await get("/situations")).statusCode).toBe(429);
+    await app.close();
+  });
+
+  it("counts a rejected token against the caller's bucket, so guessing is throttled", async () => {
+    const { app, get } = await server();
+    expect((await get("/situations", { authorization: "Bearer nope" })).statusCode).toBe(401);
+    expect((await get("/situations", { authorization: "Bearer nope2" })).statusCode).toBe(429);
+    expect((await get("/situations")).statusCode).toBe(429);
+    await app.close();
+  });
+
+  it("reads a non-Bearer Authorization header in the public scope, and counts it", async () => {
+    const { app, get } = await server();
+    expect((await get("/situations", { authorization: "Basic dXNlcjpwYXNz" })).statusCode).toBe(
+      200,
+    );
+    expect((await get("/situations", { authorization: `Bearerxyz${TOKEN}` })).statusCode).toBe(429);
+    await app.close();
+  });
+
+  it("exempts the health probe and loopback peers", async () => {
+    const { app, get } = await server();
+    for (let i = 0; i < 3; i++) {
+      expect((await get("/status")).statusCode).toBe(200);
+      expect((await get("/situations", {}, "127.0.0.1")).statusCode).toBe(200);
+    }
+    await app.close();
   });
 });
 

@@ -1,4 +1,6 @@
+import { FUSED_SOURCE_IDS } from "@openconditions/model";
 import type { QueryRunner } from "./query-runner.js";
+import { type Scope, scopeClauses } from "./record-filters.js";
 
 /** What one country, subdivision, class, kind (or property) and access mode holds now. */
 export interface CoverageRow {
@@ -25,42 +27,55 @@ const iso = (v: unknown) =>
 /**
  * Live record counts per country, subdivision, record class, kind and access
  * mode, and live series per property, with the sources behind them and how
- * fresh those sources are, as of `at` (default now). A reading has no country of its own: it counts
- * under its source's catalogue country (none for crowd readings). Fused rows
- * restate other rows and are not counted.
+ * fresh those sources are, as of `at` (default now), as `scope` may see
+ * them: the public scope counts no record of a restricted source and names
+ * none. A record counts while it is not tombstoned and not past its expiry,
+ * as a reading does. A reading has no country of its own: it counts
+ * under its source's catalogue country (none for crowd readings). Fused rows,
+ * `@fused` and `@fused-public`, restate other rows and are not counted.
  */
 export async function readCoverage(
   db: QueryRunner,
-  opts: { at?: Date } = {},
+  opts: { scope: Scope; at?: Date },
 ): Promise<CoverageRow[]> {
+  const live = (t: string) =>
+    [
+      `${t}.tombstoned_at IS NULL`,
+      `(${t}.expires_at IS NULL OR ${t}.expires_at > $1::timestamptz)`,
+      ...scopeClauses(t, opts.scope),
+    ].join(" AND ");
+  const currentReadings = [
+    "l.source_id <> ALL($2::text[])",
+    "(l.expires_at IS NULL OR l.expires_at > $1::timestamptz)",
+    "(l.evidence_state IS NULL OR l.evidence_state NOT IN ('expired', 'negated'))",
+    ...scopeClauses("l", opts.scope),
+  ].join(" AND ");
   const rows = await db.execute<Record<string, unknown>[]>(
     `SELECT c.country, c.subdivision, c.class, c.kind, c.property, c.access_mode,
             count(*)::int AS records,
             array_agg(DISTINCT c.source_id ORDER BY c.source_id) AS sources,
             max(ss.last_success_at) AS last_success_at,
             min(ss.freshness_deadline) AS fresh_until
-       FROM (SELECT country, subdivision, 'situation' AS class, kind, NULL::text AS property,
-                    access_mode, source_id
-               FROM conditions.situation WHERE tombstoned_at IS NULL
+       FROM (SELECT r.country, r.subdivision, 'situation' AS class, r.kind,
+                    NULL::text AS property, r.access_mode, r.source_id
+               FROM conditions.situation r WHERE ${live("r")}
              UNION ALL
-             SELECT country, subdivision, 'feature', kind, NULL, access_mode, source_id
-               FROM conditions.feature WHERE tombstoned_at IS NULL
+             SELECT r.country, r.subdivision, 'feature', r.kind, NULL, r.access_mode, r.source_id
+               FROM conditions.feature r WHERE ${live("r")}
              UNION ALL
-             SELECT country, subdivision, 'offer', kind, NULL, access_mode, source_id
-               FROM conditions.offer WHERE tombstoned_at IS NULL
+             SELECT r.country, r.subdivision, 'offer', r.kind, NULL, r.access_mode, r.source_id
+               FROM conditions.offer r WHERE ${live("r")}
              UNION ALL
              SELECT s.country, s.subdivision, 'observation', 'observation', l.property,
                     l.access_mode, l.source_id
                FROM conditions.observation_latest l
                LEFT JOIN conditions.source s ON s.id = l.source_id
-              WHERE l.source_id <> '@fused'
-                AND (l.expires_at IS NULL OR l.expires_at > $1::timestamptz)
-                AND (l.evidence_state IS NULL OR l.evidence_state NOT IN ('expired', 'negated'))) c
+              WHERE ${currentReadings}) c
        LEFT JOIN conditions.source_status ss ON ss.source = c.source_id
       GROUP BY c.country, c.subdivision, c.class, c.kind, c.property, c.access_mode
       ORDER BY c.country NULLS LAST, c.subdivision NULLS FIRST, c.class, c.kind,
                c.property NULLS FIRST, c.access_mode`,
-    [(opts.at ?? new Date()).toISOString()],
+    [(opts.at ?? new Date()).toISOString(), [...FUSED_SOURCE_IDS]],
   );
   return rows.map((r) => ({
     country: (r["country"] as string | null) ?? null,

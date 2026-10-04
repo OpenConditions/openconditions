@@ -13,6 +13,15 @@ import {
 } from "./crosswalk/datex2.js";
 import { FUEL_KINDS, FUEL_PROPERTIES, fuelGradeVocabulary } from "./kinds.js";
 
+/** The wire formats the fuel parsers read. */
+export const FUEL_SOURCE_FORMATS = [
+  "tankerkoenig",
+  "econtrol",
+  "prix-carburants",
+  "minetur",
+  "overpass",
+] as const;
+
 const fuelKinds = withFeatureCrosswalks(
   FUEL_KINDS,
   [{ target: "osm", table: { "amenity=fuel": "fuel_station" } }],
@@ -33,6 +42,7 @@ export const fuelModule: RegistryModule = {
     }),
     /** US regional averages are published per Petroleum Administration for Defense District. */
     extendVocabulary({ vocabulary: "admin_geocode_scheme", values: ["padd"] }),
+    extendVocabulary({ vocabulary: "source_format", values: FUEL_SOURCE_FORMATS }),
     fuelGradeVocabulary,
     ...fuelKinds,
     ...FUEL_PROPERTIES,

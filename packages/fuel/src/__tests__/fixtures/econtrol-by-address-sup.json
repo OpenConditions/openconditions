@@ -1,0 +1,914 @@
+[
+  {
+    "id": 6083,
+    "name": "Turmöl Quick",
+    "location": {
+      "address": "Währinger Gürtel 116",
+      "postalCode": "1090",
+      "city": "Wien",
+      "latitude": 48.2266238,
+      "longitude": 16.3504673
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": false,
+      "unattended": true
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true,
+      "others": "Turmöl Quick Card"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 1,
+    "open": true,
+    "distance": 2.602001740369169,
+    "prices": [
+      {
+        "fuelType": "SUP",
+        "amount": 1.819,
+        "label": "Super 95"
+      }
+    ]
+  },
+  {
+    "id": 449481,
+    "name": "Shell Austria",
+    "location": {
+      "address": "FLORIDSDORFER HAUPTSTR 17",
+      "postalCode": "1210",
+      "city": "WIEN",
+      "latitude": 48.25439,
+      "longitude": 16.39411
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 2,
+    "open": true,
+    "distance": 3.3058571764336135,
+    "prices": [
+      {
+        "fuelType": "SUP",
+        "amount": 1.829,
+        "label": "Super 95"
+      }
+    ]
+  },
+  {
+    "id": 1354905,
+    "name": "OMV - Wien Prager Straße 32",
+    "location": {
+      "address": "Prager Strasse 32-34",
+      "postalCode": "1210",
+      "city": "Wien",
+      "latitude": 48.26513,
+      "longitude": 16.39386
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 3,
+    "open": true,
+    "distance": 3.6609639845959037,
+    "prices": [
+      {
+        "fuelType": "SUP",
+        "amount": 1.839,
+        "label": "Super 95"
+      }
+    ]
+  },
+  {
+    "id": 35714,
+    "name": "BP",
+    "location": {
+      "address": "Heiligenstaedterstr.77 ",
+      "postalCode": "1190",
+      "city": "Wien",
+      "latitude": 48.2438482,
+      "longitude": 16.3613545
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": true,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true,
+      "others": "Routex"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "otherServiceOffers": "Shop, Bistro, Car-Wash, Staubsauger",
+    "position": 4,
+    "open": true,
+    "distance": 1.0850286497020267,
+    "prices": [
+      {
+        "fuelType": "SUP",
+        "amount": 1.859,
+        "label": "Super 95"
+      }
+    ]
+  },
+  {
+    "id": 431256,
+    "name": "Shell Austria",
+    "location": {
+      "address": "HEILIGENSTAEDTERSTR. 60",
+      "postalCode": "1190",
+      "city": "WIEN",
+      "latitude": 48.24161,
+      "longitude": 16.36138
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 5,
+    "open": true,
+    "distance": 1.2584482077575876,
+    "prices": [
+      {
+        "fuelType": "SUP",
+        "amount": 1.859,
+        "label": "Super 95"
+      }
+    ]
+  },
+  {
+    "id": 437497,
+    "name": "Shell Austria",
+    "location": {
+      "address": "GERSTHOFERSTRASSE 2",
+      "postalCode": "1180",
+      "city": "WIEN",
+      "latitude": 48.229112,
+      "longitude": 16.32895
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 6,
+    "open": true,
+    "distance": 2.8000957925872845,
+    "prices": []
+  },
+  {
+    "id": 1354901,
+    "name": "AVANTI - Wien Gaussplatz 1",
+    "location": {
+      "address": "Gaussplatz 1",
+      "postalCode": "1020",
+      "city": "Wien",
+      "latitude": 48.22588,
+      "longitude": 16.3708
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": false,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 7,
+    "open": true,
+    "distance": 3.0959911882296867,
+    "prices": []
+  },
+  {
+    "id": 4311,
+    "name": " boesch energy,  turmöl",
+    "location": {
+      "address": "Hernalser Hauptstrasse 173-175",
+      "postalCode": "1170",
+      "city": "Wien",
+      "latitude": 48.2231967,
+      "longitude": 16.3157915
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": true,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true,
+      "others": " UTA, Austrocard, DKV, Fleetnet, IQ Fuel Card, AP-Card, SHELL-Card, AMEX, Maestro, Diners Club, MasterCard, VISA, Lieferschein"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "otherServiceOffers": "Shop (gut sortiert) \n....sehr große Auswahl an Weinen\nBackstube\nBistro (offenes Bier)\nWaschstrasse (geeignet auch für SUV's)\nStaubsaugen\nRacing Super\nRacing Diesel\nHeizöl",
+    "position": 8,
+    "open": true,
+    "distance": 3.915716622347098,
+    "prices": []
+  },
+  {
+    "id": 1354908,
+    "name": "OMV - Wien Gunoldstraße 7 / Muthgasse 1",
+    "location": {
+      "address": "Gunoldstrasse 7 / Muthgasse 1 ",
+      "postalCode": "1190",
+      "city": "Wien",
+      "latitude": 48.24531,
+      "longitude": 16.36578
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 9,
+    "open": true,
+    "distance": 1.2809438316448079,
+    "prices": []
+  },
+  {
+    "id": 35721,
+    "name": "BP",
+    "location": {
+      "address": "Dresdnerstrasse 8 ",
+      "postalCode": "1200",
+      "city": "Wien",
+      "latitude": 48.2408605,
+      "longitude": 16.3748223
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": true,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": true,
+      "creditCard": true,
+      "others": "Routex"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "otherServiceOffers": "Routex;;;;;Vertrieb von BP-Flaschengas,Vertrieb von Heizöl, 1 Portal-Carwash Anlage, 5 überdachte SB-Carwash Plätze,8 Staubsaugerplätze,Kundenparkplätze, Lebensmittel und Getränke Shop,Wild Bean Cafe,Karten Bücher Zeitschriften, e-loading Bons,Kurzparkscheine,Tabakwaren,Autopflegezubehör,Plüsch, Spielwaren,Eis,Eiswürfel,Crushed Eis,Blumen,Motoröl,Grillkohle,Kunden WC",
+    "position": 10,
+    "open": true,
+    "distance": 2.1025831967311936,
+    "prices": []
+  }
+]

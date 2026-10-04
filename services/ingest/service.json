@@ -2,7 +2,7 @@
   "id": "openconditions-ingest",
   "name": "OpenConditions Ingest",
   "version": "0.1.0",
-  "description": "Fetches open road-condition feeds (NDW, Autobahn, Digitraffic, DriveBC, WZDx), normalises them to the canonical model, and writes them to the shared PostGIS `conditions` schema for the road-conditions provider integration to read. Also serves public, rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla exclusions, SSE).",
+  "description": "Fetches open road-condition and fuel-price feeds (NDW, Autobahn, Digitraffic, DriveBC, WZDx, Tankerkoenig, and others), normalises them to the canonical model, and writes them to the shared PostGIS `conditions` schema for OpenMapX to read. Also serves public, rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla exclusions, SSE).",
   "author": "OpenConditions",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://openconditions.org",
@@ -20,25 +20,9 @@
     "environment": {
       "PORT": "4100",
       "HOST": "0.0.0.0",
-      "DATABASE_URL": "postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgis:5432/openmapx",
-      "OPENLR_RESOLVER_URL": "${OPENLR_RESOLVER_URL:-}",
-      "OVERPASS_URL": "${OVERPASS_URL:-}",
-      "SEGMENT_REGIONS": "${SEGMENT_REGIONS:-}",
-      "SEGMENT_HIGHWAY_CLASSES": "${SEGMENT_HIGHWAY_CLASSES:-}",
-      "BIND_ENABLED": "${BIND_ENABLED:-}",
-      "BIND_MAX_OFFSET_M": "${BIND_MAX_OFFSET_M:-}",
-      "BIND_CONCURRENCY": "${BIND_CONCURRENCY:-}",
-      "OPENCONDITIONS_FETCH_TIMEOUT_MS": "${OPENCONDITIONS_FETCH_TIMEOUT_MS:-}",
-      "OPENCONDITIONS_EGRESS_ALLOWED_HOSTS": "${OPENCONDITIONS_EGRESS_ALLOWED_HOSTS:-}",
-      "OPENCONDITIONS_DOWNLOAD_MAX_BYTES": "${OPENCONDITIONS_DOWNLOAD_MAX_BYTES:-}",
-      "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS": "${OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS:-}",
-      "RATE_LIMIT_MAX": "${OPENCONDITIONS_RATE_LIMIT_MAX:-120}",
-      "RATE_LIMIT_WINDOW_MS": "${OPENCONDITIONS_RATE_LIMIT_WINDOW_MS:-60000}",
-      "STREAM_MAX_CONNECTIONS": "${OPENCONDITIONS_STREAM_MAX_CONNECTIONS:-100}",
-      "TRUST_PROXY_CIDRS": "${TRUST_PROXY_CIDRS:-loopback,linklocal,uniquelocal}",
       "OPENCONDITIONS_RAW_DIR": "/data/raw",
-      "OPENCONDITIONS_RAW_MAX_BYTES": "${OPENCONDITIONS_RAW_MAX_BYTES:-}",
-      "OPENCONDITIONS_HISTORY_DAYS": "${OPENCONDITIONS_HISTORY_DAYS:-}"
+      "OPENCONDITIONS_ARCHIVE_DIR": "/data/archive",
+      "OPENCONDITIONS_STATE_DIR": "/data"
     },
     "memory": "${OPENCONDITIONS_INGEST_MEMORY:-4g}",
     "restart": "unless-stopped",
@@ -60,8 +44,8 @@
   },
   "volumes": [
     {
-      "name": "openconditions-raw",
-      "mountAt": "/data/raw",
+      "name": "openmapx-openconditions-ingest-data",
+      "mountAt": "/data",
       "backup": false,
       "readOnly": false
     }
@@ -71,29 +55,261 @@
   ],
   "ownsSchema": "conditions",
   "configSchema": {
+    "type": "object",
     "properties": {
+      "DATABASE_URL": {
+        "type": "string",
+        "title": "Database URL",
+        "description": "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database, e.g. postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx. The service refuses to start without it.",
+        "x-openmapx-secret": true
+      },
+      "OPENCONDITIONS_OPERATOR_TOKEN": {
+        "type": "string",
+        "title": "Operator token",
+        "description": "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves no Tankerkönig (DE), E-Control (AT) or OpenStreetMap fuel station.",
+        "x-openmapx-secret": true
+      },
       "SEGMENT_REGIONS": {
         "type": "string",
         "title": "Road graph regions",
         "description": "Complete JSON array of {id,bbox,tz,pbfUrls?,highwayClasses?}. Used by import, binding coverage and speed profiles. Unset or [] means no configured graph coverage. See graph-binding documentation.",
+        "default": "",
         "x-openmapx-secret": false
       },
-      "OPENCONDITIONS_FEEDS_DIR": {
+      "SEGMENT_HIGHWAY_CLASSES": {
         "type": "string",
-        "title": "Mounted feed catalogue directory",
-        "description": "Directory laid out like the baked catalogue (<domain>/<region>.jsonc region files, optional credentials.jsonc) whose feeds add to or override the baked-in feeds by id, with no rebuild. Unset = no overrides.",
+        "title": "Road graph highway classes",
+        "description": "Comma-separated OSM highway values the road-graph import keeps. Empty: the built-in set.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "BIND_ENABLED": {
+        "type": "string",
+        "title": "Bind records to the road graph",
+        "description": "\"false\" turns binding records to road-graph segments off. Empty: on.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "BIND_MAX_OFFSET_M": {
+        "type": "string",
+        "title": "Binding max offset (m)",
+        "description": "How far a record's geometry may lie from a segment and still bind to it. Empty: the built-in default.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "BIND_CONCURRENCY": {
+        "type": "string",
+        "title": "Binding concurrency",
+        "description": "Records bound in parallel. Empty: the built-in default.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENLR_RESOLVER_URL": {
+        "type": "string",
+        "title": "OpenLR resolver URL",
+        "description": "URL of the OpenLR map-match resolver service. Empty: observations that carry only OpenLR (no coordinates) are dropped rather than resolved.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FETCH_TIMEOUT_MS": {
+        "type": "string",
+        "title": "Feed fetch timeout (ms)",
+        "description": "Timeout of every feed fetch. Empty: 60000.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_EGRESS_ALLOWED_HOSTS": {
+        "type": "string",
+        "title": "Egress allowed private hosts",
+        "description": "Comma-separated hostnames the egress guard lets the service fetch although they resolve to private addresses, e.g. overpass for a self-hosted Overpass on the compose network. Empty: none.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_DOWNLOAD_MAX_BYTES": {
+        "type": "string",
+        "title": "Artifact download cap (bytes)",
+        "description": "Largest artifact (PBF extract) a download streams. Empty: 8 GiB.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS": {
+        "type": "string",
+        "title": "Artifact download timeout (ms)",
+        "description": "Overall timeout of an artifact download. Empty: 30 minutes.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "RATE_LIMIT_MAX": {
+        "type": "string",
+        "title": "Rate limit: requests per window",
+        "description": "Requests one client may make per rate-limit window.",
+        "default": "120",
+        "x-openmapx-secret": false
+      },
+      "RATE_LIMIT_WINDOW_MS": {
+        "type": "string",
+        "title": "Rate limit window (ms)",
+        "description": "Length of the rate-limit window.",
+        "default": "60000",
+        "x-openmapx-secret": false
+      },
+      "STREAM_MAX_CONNECTIONS": {
+        "type": "string",
+        "title": "Live streams open at once",
+        "description": "Server-sent-event streams the service holds open at once.",
+        "default": "100",
+        "x-openmapx-secret": false
+      },
+      "TRUST_PROXY_CIDRS": {
+        "type": "string",
+        "title": "Trusted proxy ranges",
+        "description": "Immediate reverse-proxy address ranges to trust for client IPs; only one proxy hop is accepted.",
+        "default": "loopback,linklocal,uniquelocal",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_RAW_MAX_BYTES": {
+        "type": "string",
+        "title": "Raw archive cap (bytes)",
+        "description": "Cap on the raw payload archive's stored bytes; 0 = no cap. Empty: 10 GiB.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_HISTORY_DAYS": {
+        "type": "string",
+        "title": "Record history (days)",
+        "description": "How long a tombstoned record and its revisions stay for the history API. Empty: 90.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_ON_DEMAND_DEADLINE_MS": {
+        "type": "string",
+        "title": "On-demand read deadline (ms)",
+        "description": "How long a read waits for its on-demand fetches before it answers from storage. Empty: 3000.",
+        "default": "",
         "x-openmapx-secret": false
       },
       "OPENCONDITIONS_FEEDS_REMOTE_URL": {
         "type": "string",
         "title": "Remote feed bundle URL",
-        "description": "URL of a remote feed bundle ({ \"files\": { \"<domain>/<region>\": <region file>, \"credentials\": <credentials file> } }, e.g. a published atlas/<domain>.json) to pull feeds from. Only used when remote-pull is enabled.",
+        "description": "URL of a remote feed bundle ({ \"files\": { \"<domain>/<region>\": <region file>, \"credentials\": <credentials file> } }, e.g. a published atlas/<domain>.json) to pull feeds from: the way to run a custom catalogue here, whose feeds add to or override the baked-in feeds by id. Only used when remote-pull is enabled.",
         "x-openmapx-secret": false
       },
       "OPENCONDITIONS_FEEDS_REMOTE_ENABLED": {
         "type": "string",
         "title": "Enable remote feed-pull",
-        "description": "Set to \"true\" to opt the instance into remote-pull (default off). The bundle is checked like the baked catalogue and every URL is egress-guarded; a snapshot is kept so the instance survives the remote being down.",
+        "description": "Set to \"true\" to opt the instance into remote-pull (default off). The bundle is checked like the baked catalogue and every URL is egress-guarded; a snapshot is kept on the service's volume so the instance survives the remote being down.",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_INSTANCE_ID": {
+        "type": "string",
+        "title": "Instance id",
+        "description": "This instance's stable id, the namespace of every record it originates and its name to federation peers: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it before federating, and to the same value as the contributions API's. Empty: local.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS": {
+        "type": "string",
+        "title": "Archive nights kept",
+        "description": "Nights of dated files the nightly archive keeps; 0 keeps every night. Empty: 30.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "ARCHIVE_CRON": {
+        "type": "string",
+        "title": "Archive schedule",
+        "description": "Cron of the nightly archive build (UTC); \"off\" disables it. Empty: 30 3 * * *.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "SEGMENT_PROFILE_CRON": {
+        "type": "string",
+        "title": "Segment profile schedule",
+        "description": "Cron of the weekly segment speed-profile derivation (UTC); \"off\" disables it. Empty: 30 3 * * 1.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "SEGMENT_REBUILD_CRON": {
+        "type": "string",
+        "title": "Segment rebuild schedule",
+        "description": "Cron of the weekly road-graph segment rebuild (UTC); \"off\" disables it. Empty: 0 4 * * 1.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_SHRINK_TRIPWIRE_RATIO": {
+        "type": "string",
+        "title": "Shrink tripwire ratio",
+        "description": "An event feed's complete snapshot whose count does not exceed this share of its last published count is skipped as a likely partial parse, e.g. 0.1. Empty or 0: only a drop to zero is skipped.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_MAX_FEED_BYTES": {
+        "type": "string",
+        "title": "Feed response cap (bytes)",
+        "description": "Largest feed response, compressed or decompressed. Empty: 256 MiB.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_MAX_REDIRECTS": {
+        "type": "string",
+        "title": "Feed redirects",
+        "description": "Redirects a feed fetch follows. Empty: 5.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL": {
+        "type": "string",
+        "title": "Readings per poll",
+        "description": "Cap on the readings one poll may hold; a poll above it fails. Empty: 1000000.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_OSM_MAXSPEED_FALLBACK": {
+        "type": "string",
+        "title": "OSM maxspeed fallback",
+        "description": "\"false\" turns off the nightly fallback that fills a sensor without a speed baseline from OpenStreetMap maxspeed tags. Empty: on.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_RAW_ZSTD_LEVEL": {
+        "type": "string",
+        "title": "Raw archive compression level",
+        "description": "zstd level of the raw payload archive. Empty: 9.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_RAW_HOT_HOURS": {
+        "type": "string",
+        "title": "Raw archive: hours kept whole",
+        "description": "Hours every distinct raw payload is kept. Empty: 48.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_RAW_THIN_DAYS_SITUATION": {
+        "type": "string",
+        "title": "Raw archive: days thinned (situation feeds)",
+        "description": "Days situation feeds then keep one raw payload an hour. Empty: 14.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_RAW_THIN_DAYS_OBSERVATION": {
+        "type": "string",
+        "title": "Raw archive: days thinned (flow feeds)",
+        "description": "Days flow feeds then keep one raw payload an hour. Empty: 7.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_ROLLUP_HOURLY_DAYS": {
+        "type": "string",
+        "title": "Hourly rollups kept (days)",
+        "description": "Days hourly reading rollups are kept. Empty: 35.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_ROLLUP_DAILY_DAYS": {
+        "type": "string",
+        "title": "Daily rollups kept (days)",
+        "description": "Days daily reading rollups are kept. Empty: 400.",
+        "default": "",
         "x-openmapx-secret": false
       },
       "AR_BA_CORTES_EVENTS_CLIENT_ID": {
@@ -560,14 +776,38 @@
           ],
           "notes": "Free key. Data is U.S. government public domain. Serves the travel delays, construction and incidents feeds."
         }
+      },
+      "DE_TANKERKOENIG_FUEL_API_KEY": {
+        "type": "string",
+        "title": "Tankerkönig API Key",
+        "description": "Tankerkoenig API key for German fuel prices.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://onboarding.tankerkoenig.de/",
+          "urlLabel": "Request Tankerkönig API key",
+          "steps": [
+            "Open onboarding.tankerkoenig.de (linked from creativecommons.tankerkoenig.de via 'API-Key').",
+            "Enter a working email address and describe your non-commercial use case.",
+            "Agree to the CC BY 4.0 terms (attribution to tankerkoenig.de required).",
+            "Submit the form; registration is reviewed manually and can take a few days.",
+            "Receive the API key by email once approved."
+          ],
+          "cost": "Free for non-commercial use (commercial use needs a paid agreement).",
+          "notes": "Data is CC BY 4.0 (MTS-K) — attribution required. Free-tier limits: 1 request/min, 25 km radius.",
+          "email": {
+            "to": "info@tankerkoenig.de",
+            "subject": "Tankerkönig API key request (non-commercial)",
+            "body": "Hello,\n\nI would like to request a free non-commercial Tankerkönig API key.\n\nUse case: displaying current German fuel prices in a self-hosted, non-commercial OpenMapX map application.\n\nI agree to the CC BY 4.0 terms and will attribute the data to tankerkoenig.de.\n\nThank you."
+          }
+        }
+      },
+      "OVERPASS_URL": {
+        "type": "string",
+        "title": "Overpass URL",
+        "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
+        "default": "https://overpass-api.de",
+        "x-openmapx-secret": false
       }
-    }
-  },
-  "exposure": {
-    "proxy": {
-      "enabled": true,
-      "pathPrefix": "/openconditions",
-      "stripPrefix": true
     }
   },
   "ui": {

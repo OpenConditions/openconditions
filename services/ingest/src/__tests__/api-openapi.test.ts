@@ -61,8 +61,25 @@ describe("the OpenAPI document", () => {
     expect(names("/observations")).toEqual(
       expect.arrayContaining(["subject", "property", "qualifiers", "from", "to", "resolution"]),
     );
-    expect(names("/features/{id}")).toEqual(["id"]);
+    expect(names("/features/{id}")).toEqual(["id", "at", "expand"]);
     expect(names("/offers/{id}")).toEqual(["id"]);
+  });
+
+  it("names the terms fields /sources serves, the note included", () => {
+    const doc = openApiDocument();
+    const { summary } = (doc.paths["/sources"] as { get: { summary: string } }).get;
+    expect(summary).toMatch(/terms \(url, review date and note\)/);
+  });
+
+  it("says which collections read on-demand sources through and report their coverage", () => {
+    const doc = openApiDocument();
+    const summary = (path: string) => (doc.paths[path] as { get: { summary: string } }).get.summary;
+    for (const path of ["/features", "/offers", "/observations/latest"]) {
+      expect(summary(path), path).toMatch(/on-demand.*`coverage: /s);
+    }
+    for (const path of ["/features.geojson", "/features.jsonld", "/situations"]) {
+      expect(summary(path), path).not.toMatch(/on-demand/);
+    }
   });
 
   it("describes every query parameter of a collection, with the page limit's bounds", () => {
@@ -86,5 +103,60 @@ describe("the OpenAPI document", () => {
       doc.paths["/situations"] as { get: { parameters: { name: string; description?: string }[] } }
     ).get.parameters;
     expect(params.find((p) => p.name === "dedupe")?.description).toMatch(/within one page/);
+  });
+
+  it("offers the operator bearer token on every route but the public emitters, and its 401", () => {
+    const doc = openApiDocument();
+    expect(doc.components.securitySchemes.operatorToken).toMatchObject({
+      type: "http",
+      scheme: "bearer",
+    });
+    const op = (path: string) =>
+      (
+        doc.paths[path] as {
+          get: { security: Record<string, string[]>[]; responses: Record<string, unknown> };
+        }
+      ).get;
+    const emitters = [
+      "/situations.geojson",
+      "/situations.jsonld",
+      "/traff.xml",
+      "/datex2/situations.xml",
+      "/stream",
+      "/features.geojson",
+      "/features.jsonld",
+    ];
+    for (const route of API_ROUTES) {
+      const { security, responses } = op(route.path);
+      expect(responses["401"], route.path).toBeDefined();
+      expect(security, route.path).toEqual(
+        emitters.includes(route.path) ? [{}] : [{}, { operatorToken: [] }],
+      );
+    }
+  });
+
+  it("documents the rate limit's 429 on every route and the stream cap's 503", () => {
+    const doc = openApiDocument();
+    const responses = (path: string) =>
+      (doc.paths[path] as { get: { responses: Record<string, unknown> } }).get.responses;
+    for (const route of API_ROUTES) expect(responses(route.path)["429"], route.path).toBeDefined();
+    expect(responses("/stream")["503"]).toBeDefined();
+    expect(responses("/situations")["503"]).toBeUndefined();
+  });
+
+  it("says a single record past its expiry answers 404, and when /features/{id} refetches", () => {
+    const doc = openApiDocument();
+    const summary = (path: string) => (doc.paths[path] as { get: { summary: string } }).get.summary;
+    for (const path of ["/situations/{id}", "/features/{id}", "/offers/{id}"]) {
+      expect(summary(path), path).toMatch(/past its `freshness\.expiresAt`.*404/s);
+    }
+    expect(summary("/features/{id}")).toMatch(/expired on-demand/);
+  });
+
+  it("says /sources names the scope it was served in, and the coverage is scoped", () => {
+    const doc = openApiDocument();
+    const summary = (path: string) => (doc.paths[path] as { get: { summary: string } }).get.summary;
+    expect(summary("/sources")).toMatch(/`scope`/);
+    expect(summary("/coverage")).toMatch(/restricted/);
   });
 });

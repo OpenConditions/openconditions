@@ -93,6 +93,9 @@ function childFeed(parent: CatalogFeed, child: ChildFeed): CatalogFeed {
   const feed = toCatalogFeed(def, parent);
   return {
     ...feed,
+    // A child reads its parent's shared fields.
+    ...(parent.sharedFields ? { sharedFields: parent.sharedFields } : {}),
+    ...(parent.settingRefs ? { settingRefs: parent.settingRefs } : {}),
     parentSourceId: parent.id,
     policyIds: [parent.id, feed.id],
     selectionState: child.selectionState,

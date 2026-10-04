@@ -1,5 +1,5 @@
 import { resolveInstanceId } from "@openconditions/core/server";
-import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
+import type { CatalogFeed, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
 import type { GrantState, Registry, RoutingRights } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type { FlowOutput } from "@openconditions/roads";
@@ -237,6 +237,63 @@ export async function publishFlows(
     await upsertSourceStatus(tx, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
       outcome: "changed",
+      attemptAt: input.poll.at,
+      networkValidated: true,
+      durationMs: input.durationMs,
+      attemptId: input.poll.id,
+      ...(input.poll.payloadHashes ? { payloadHashes: input.poll.payloadHashes } : {}),
+      publication: counts,
+    });
+    return { summary, counts };
+  }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+}
+
+/**
+ * Writes one poll of a features feed and closes its attempt, in one
+ * transaction under the source's lock: its features, their readings and its
+ * offers. The poll is a complete snapshot of features and offers, so a stored
+ * one it no longer holds is withdrawn; readings are never withdrawn, a series
+ * outliving a missing reading. The row count is the source's live features.
+ */
+export async function publishFeatures(
+  sql: Sql,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
+  input: {
+    output: Pick<ParseOutput, "features" | "observations" | "offers">;
+    rejected: number;
+    poll: PollIdentity;
+    durationMs: number;
+    now: string;
+    model: WriteModel;
+  },
+): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
+  return sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
+    const { output } = input;
+    const summary = await writeSnapshotIn(
+      tx,
+      src.id,
+      { features: output.features, observations: output.observations, offers: output.offers },
+      { ...writeContext(input), complete: { feature: true, offer: true } },
+    );
+    const [{ live }] = await tx<{ live: number }[]>`
+      SELECT count(*)::int AS live FROM conditions.feature
+       WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
+    const f = summary.counts.feature;
+    const o = summary.counts.offer;
+    const rejectedReadings = summary.rejected.filter((r) => r.class === "observation").length;
+    const readings = output.observations.length - summary.observations.unchanged - rejectedReadings;
+    const counts: PublicationCounts = {
+      activeEvents: live,
+      rowCount: live,
+      inserted: f.created + f.restored + o.created + o.restored,
+      updated: f.updated + o.updated + Math.max(0, readings),
+      deleted: f.withdrawn + o.withdrawn,
+      rejected: input.rejected + summary.rejected.length,
+    };
+    await upsertSourceStatus(tx, src.id, {
+      freshnessWindowSec: src.freshnessWindowSec,
+      outcome: output.features.length === 0 ? "complete_empty" : "changed",
       attemptAt: input.poll.at,
       networkValidated: true,
       durationMs: input.durationMs,

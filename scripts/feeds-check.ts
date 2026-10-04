@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   type CatalogFeed,
+  cellsCovering,
   createFetchState,
   type Env,
   type FeedPayloads,
@@ -38,7 +39,8 @@ import { type FeedFailure, renderReport } from "./lib/liveness-report.js";
  * fetch that fails on the network or with an HTTP status, a reference table
  * that cannot be loaded, or a well-formed payload with no records (nothing to
  * report right now) is a `warning`. A feed whose credentials are not set
- * is skipped, so a runner without secrets checks the keyless feeds only.
+ * is skipped, so a runner without secrets checks the keyless feeds only. An
+ * on-demand feed is fetched for one cell, the one holding its `onDemand.probe`.
  */
 
 export interface FeedCheck {
@@ -158,6 +160,10 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
     }
   }
 
+  // An on-demand feed answers for a cell: the one holding its probe.
+  const cell = feed.onDemand
+    ? cellsCovering([...feed.onDemand.probe, ...feed.onDemand.probe], feed.onDemand.cellDeg)[0]
+    : undefined;
   const payloads: Record<string, readonly Buffer[]> = {};
   for (const role of dataRoles(feed)) {
     try {
@@ -165,6 +171,7 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
         state: createFetchState(),
         resolvers: domainOf(feed).resolvers,
         env,
+        ...(cell ? { cell } : {}),
       });
       if (fetched.status === "no-endpoint") {
         return result("skipped", `endpoint ${role} resolves to no URL (missing configuration)`);

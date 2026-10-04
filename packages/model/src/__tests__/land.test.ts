@@ -193,6 +193,95 @@ describe("landing a claim", () => {
     expect(landed).toMatchObject({ ok: false, issues: [{ code: "out_of_reach" }] });
   });
 
+  it("measures a feature's reach from where it stands and stores the location it is given", () => {
+    const coarse: LocationRef = {
+      geometry: { type: "Point", coordinates: [-3.7038, 40.4618] },
+      extent: "point",
+      geometryOrigin: "crowd_device",
+      fuzziness: "low_res",
+    };
+    const at = (lon: number, lat: number) =>
+      landClaim(
+        crowdRegistry,
+        { claim: priceClaim({ geometry: { type: "Point", coordinates: [lon, lat] } }), keyId: KEY },
+        {
+          ...ctx,
+          resolveFeature: (featureId, componentKey) => ({
+            featureId,
+            ...(componentKey === undefined ? {} : { componentKey }),
+            location: coarse,
+            reachFrom: station,
+          }),
+        },
+      );
+    const near = at(-3.7037, 40.4169);
+    expect(near.ok && near.draft["location"]).toEqual(coarse);
+    // At the stored location, but five kilometres from the station.
+    expect(at(-3.7038, 40.4618)).toMatchObject({ ok: false, issues: [{ code: "out_of_reach" }] });
+  });
+
+  it("measures a place's reach from the series it lands on, when given one", () => {
+    const named: LocationRef = {
+      geometry: { type: "Point", coordinates: [-3.7038, 40.4618] },
+      extent: "point",
+      geometryOrigin: "crowd_device",
+      fuzziness: "low_res",
+      admin: { country: "ES", geocodes: [{ scheme: "iso3166-2", code: "ES-M" }] },
+    };
+    const claim = priceClaim({
+      subject: { location: named },
+      geometry: { type: "Point", coordinates: [-3.7038, 40.4618] },
+    });
+    expect(landClaim(crowdRegistry, { claim, keyId: KEY }, ctx).ok).toBe(true);
+    expect(
+      landClaim(crowdRegistry, { claim, keyId: KEY }, { ...ctx, placeReachFrom: station }),
+    ).toEqual({
+      ok: false,
+      issues: [
+        {
+          path: ["geometry"],
+          code: "out_of_reach",
+          message: "further than 300 m from the subject",
+        },
+      ],
+    });
+  });
+
+  it("never says how far a reporter stood from a location it does not store", () => {
+    const coarse: LocationRef = {
+      geometry: { type: "Point", coordinates: [-3.7038, 40.4618] },
+      extent: "point",
+      geometryOrigin: "crowd_device",
+      fuzziness: "low_res",
+    };
+    const landed = landClaim(
+      crowdRegistry,
+      {
+        claim: priceClaim({ geometry: { type: "Point", coordinates: [-3.7038, 40.4198] } }),
+        keyId: KEY,
+      },
+      {
+        ...ctx,
+        resolveFeature: (featureId, componentKey) => ({
+          featureId,
+          ...(componentKey === undefined ? {} : { componentKey }),
+          location: coarse,
+          reachFrom: station,
+        }),
+      },
+    );
+    expect(landed).toEqual({
+      ok: false,
+      issues: [
+        {
+          path: ["geometry"],
+          code: "out_of_reach",
+          message: "further than 300 m from the subject",
+        },
+      ],
+    });
+  });
+
   it("lands a replayed claim under the same id, and a draft the write seam seals", () => {
     const a = landClaim(crowdRegistry, { claim: accidentClaim(), keyId: KEY }, ctx);
     const b = landClaim(crowdRegistry, { claim: accidentClaim(), keyId: KEY }, ctx);

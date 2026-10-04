@@ -37,7 +37,7 @@ const REPO_FEEDS = fileURLToPath(new URL("../../../../feeds", import.meta.url));
 
 /** A road feed of the catalogue, read as a complete snapshot (the path that carries versions). */
 function feed(id: string): RoadFeed {
-  const { files } = readCatalogDir(REPO_FEEDS, [roadsDomain]);
+  const { files } = readCatalogDir(REPO_FEEDS, [roadsDomain], { otherDomains: "ignore" });
   const found = files
     .flatMap((file) =>
       file.feeds.map((def) =>

@@ -81,15 +81,6 @@ export function parseOutboxQuery(query: Record<string, unknown>): ParsedOutboxQu
     next.set(name, values.join(","));
   }
 
-  const permissiveOnly = single(query, "permissiveOnly");
-  if (permissiveOnly !== undefined) {
-    if (permissiveOnly !== "true" && permissiveOnly !== "false") {
-      throw new OutboxQueryError("permissiveOnly must be true or false");
-    }
-    filter.permissiveOnly = permissiveOnly === "true";
-    next.set("permissiveOnly", permissiveOnly);
-  }
-
   const minEvidenceTier = single(query, "minEvidenceTier");
   if (minEvidenceTier !== undefined) {
     if (!(EVIDENCE_TIERS as readonly string[]).includes(minEvidenceTier)) {

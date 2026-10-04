@@ -1,8 +1,9 @@
 # Feed atlas
 
 `<domain>.json` is the public commons snapshot of one domain's feed catalogue
-(`roads.json` today): the road-domain answer to the Mobility Database and
-Transitland feed registries. Each file holds two views of the same catalogue:
+(`roads.json`, `fuel.json`): the answer, for roads and fuel, to the Mobility
+Database and Transitland feed registries. Each file holds two views of the same
+catalogue:
 
 - `files`: a remote feed bundle, keyed `<domain>/<region>` for each region file
   and `credentials` for the shared credential groups those files use. The

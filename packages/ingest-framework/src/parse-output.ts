@@ -29,6 +29,8 @@ export interface ParseOutput {
   offers: RecordDraft[];
   /** A complete-snapshot source's record accounting. */
   records?: SnapshotAccounting;
+  /** Source records the parse could not use (a station with no usable position), counted as rejected. */
+  rejected?: number;
 }
 
 /** An empty parse output, to fill per class. */

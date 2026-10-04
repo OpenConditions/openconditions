@@ -45,5 +45,9 @@ describe("access modes", () => {
     };
     expect(federationEligible(fused)).toBe(false);
     expect(historyEligible(fused)).toBe(true);
+    const publicFused = {
+      provenance: { accessMode: "bulk", sourceId: "@fused-public" },
+    };
+    expect(federationEligible(publicFused)).toBe(false);
   });
 });

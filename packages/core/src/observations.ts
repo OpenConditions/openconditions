@@ -1,17 +1,16 @@
 import {
-  FUSED_SOURCE_ID,
+  FUSED_SOURCE_IDS,
   type PropertyEntry,
   qualifierKey,
   type Registry,
 } from "@openconditions/model";
 import { withEvidence } from "./db/records.js";
+import { CROWD_SOURCE_ID, currentReadingClauses, readingColumns } from "./live-rows.js";
 import { recordFromHistory } from "./observation-codec.js";
 import type { QueryRunner } from "./query-runner.js";
+import { type Scope, scopeClauses } from "./record-filters.js";
 
 type Rec = Record<string, unknown>;
-
-/** The source id of every crowd row, local or a peer's. */
-const CROWD_SOURCE_ID = "crowd";
 
 /**
  * The properties that get a fused row: those a feature of a linkable kind
@@ -71,6 +70,7 @@ export function fusableFeatureKinds(registry: Registry): Set<string> {
 }
 
 export interface LatestObservationQuery {
+  scope: Scope;
   /** west, south, east, north. */
   bbox?: [number, number, number, number];
   properties?: readonly string[];
@@ -80,9 +80,11 @@ export interface LatestObservationQuery {
   origins?: readonly string[];
   /**
    * The canonical view: the fused row of every fusable property of a
-   * feature and the per-source rows of the others, and every reading of a
-   * subject that is not a feature (a place: fusion does not cover it).
-   * Otherwise per-source and crowd rows, and no fused row.
+   * feature (in public scope the public fusion, `fused_public`; for the
+   * operator the fusion of every source, `@fused`) and the per-source rows
+   * of the others, and every reading of a subject that is not a feature (a
+   * place: fusion does not cover it). Otherwise per-source and crowd rows,
+   * and no fused row.
    */
   canonical?: boolean;
   /** The instant readings are current at: not past their expiry. Default now. */
@@ -118,20 +120,18 @@ export async function listLatestObservations(
     params.push(value);
     return `$${params.length}`;
   };
-  const clauses = [
-    "(l.expires_at IS NULL OR l.expires_at > $1::timestamptz)",
-    "(l.evidence_state IS NULL OR l.evidence_state NOT IN ('expired', 'negated'))",
-  ];
+  const clauses = currentReadingClauses("l", "$1", q.scope);
   if (q.canonical) {
     // Fusion covers features only: a place's readings, crowd ones among
     // them, have no fused row to stand for them and are served as they are.
+    // The scope's clauses leave the one fused row the scope reads.
     const fusable = [...fusableProperties(registry)];
     clauses.push(
-      `(l.source_id = ${p(FUSED_SOURCE_ID)} OR l.subject_kind <> 'feature'
+      `(l.source_id = ANY(${p([...FUSED_SOURCE_IDS])}::text[]) OR l.subject_kind <> 'feature'
          OR (l.property <> ALL(${p(fusable)}::text[]) AND l.source_id <> ${p(CROWD_SOURCE_ID)}))`,
     );
   } else {
-    clauses.push(`l.source_id <> ${p(FUSED_SOURCE_ID)}`);
+    clauses.push(`l.source_id <> ALL(${p([...FUSED_SOURCE_IDS])}::text[])`);
   }
   if (q.bbox) {
     const [w, s, e, n] = q.bbox;
@@ -152,10 +152,7 @@ export async function listLatestObservations(
   }
   if (q.cursor !== undefined) clauses.push(`l.series_id > ${p(q.cursor)}`);
   const rows = await db.execute<Rec[]>(
-    `SELECT l.series_id::text AS series_id,
-            conditions.observation_record(l.template, l.reading) AS record,
-            l.evidence_state, l.confidence_score,
-            false AS routing_eligible, l.corroborations
+    `SELECT l.series_id::text AS series_id, ${readingColumns("l")}
        FROM conditions.observation_latest l
       WHERE ${clauses.join(" AND ")}
       ORDER BY l.series_id
@@ -197,6 +194,7 @@ export function seriesResolution(
 
 /** What names one series: a subject key, a property, its qualifiers and, where needed, the source. */
 export interface SeriesSelector {
+  scope: Scope;
   subjectKey: string;
   property: string;
   qualifiers?: Rec;
@@ -273,16 +271,19 @@ export async function readSeries(
   const candidates = await db.execute<
     { series_id: string; source_id: string; template: Rec; retention_days: number | null }[]
   >(
-    `SELECT series_id::text AS series_id, source_id, template, retention_days
-       FROM conditions.observation_latest
-      WHERE subject_key = $1 AND property = $2 AND qualifier_key = $3 AND source_id <> $4
-        AND ($5::text IS NULL OR source_id = $5)
-      ORDER BY source_id`,
+    `SELECT l.series_id::text AS series_id, l.source_id, l.template, l.retention_days
+       FROM conditions.observation_latest l
+      WHERE l.subject_key = $1 AND l.property = $2 AND l.qualifier_key = $3
+        AND l.source_id <> ALL($4::text[]) AND ($5::text IS NULL OR l.source_id = $5)
+        ${scopeClauses("l", selector.scope)
+          .map((c) => `AND ${c}`)
+          .join(" ")}
+      ORDER BY l.source_id`,
     [
       selector.subjectKey,
       selector.property,
       qualifiers,
-      FUSED_SOURCE_ID,
+      [...FUSED_SOURCE_IDS],
       selector.sourceId ?? null,
     ],
   );

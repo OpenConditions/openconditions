@@ -1,13 +1,14 @@
 export * from "./canonical.js";
 export * from "./coverage.js";
 export * from "./evidence.js";
+export * from "./feature-expand.js";
 export * from "./features.js";
 export * from "./freshness.js";
 export * from "./observation-codec.js";
 export * from "./observations.js";
 export * from "./offers.js";
 export * from "./query-runner.js";
-export type { RecordFilters } from "./record-filters.js";
+export type { RecordFilters, Scope } from "./record-filters.js";
 export * from "./routing-evidence.js";
 export * from "./segment-conditions.js";
 export * from "./severity.js";

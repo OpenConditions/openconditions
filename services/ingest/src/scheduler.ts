@@ -15,6 +15,7 @@ import { buildDailyArchive } from "./pipeline/archive-build.js";
 import { deriveBaselines } from "./pipeline/baseline-derive.js";
 import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-records.js";
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
+import { overpassInterpreterUrl } from "./pipeline/osm-import.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { rebindOnBoot } from "./pipeline/rebind.js";
 import type { RunDeps } from "./pipeline/run.js";
@@ -28,6 +29,7 @@ import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
 import { refreshSegmentSpeed } from "./pipeline/segment-speed.js";
 import { pruneSourcePollAttempts, upsertSourceStatus } from "./pipeline/source-status.js";
 import { createRawArchive, rawArchiveOptionsFromEnv } from "./raw/archive.js";
+import type { InFlight } from "./shutdown.js";
 
 type Sql = postgres.Sql;
 
@@ -122,6 +124,8 @@ export interface FeedJobContext {
   deps: Omit<RunDeps, "roles" | "env">;
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** Tracks each poll, so shutdown waits for one in flight. */
+  inFlight?: Pick<InFlight, "track">;
 }
 
 /**
@@ -129,10 +133,12 @@ export interface FeedJobContext {
  * single-flight flag so slow runs do not overlap and the feed's role state,
  * so each poll fetches only the endpoints that are due. A feed missing a
  * credential it needs is not scheduled (not an error): its status names the
- * env vars to set, and it activates on the next start once they are.
+ * env vars to set, and it activates on the next start once they are. An
+ * on-demand feed is never polled: a read fetches the cells it needs.
  */
 export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | undefined {
   const { sql, statusStore } = ctx;
+  if (feed.accessMode === "on_demand") return undefined;
   const env = ctx.env ?? process.env;
   const missing = missingCredentials(feed, env);
   if (missing.length > 0) {
@@ -165,7 +171,8 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
     }
     running = true;
     try {
-      await runFeedOnce(feed, deps, statusStore);
+      const poll = runFeedOnce(feed, deps, statusStore);
+      await (ctx.inFlight?.track(poll) ?? poll);
     } finally {
       running = false;
     }
@@ -178,12 +185,14 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
 
 /**
  * Starts one job per scheduled feed of the catalogue, and the record and
- * segment jobs. Returns a cancel function that stops all scheduled jobs.
+ * segment jobs; `inFlight` tracks the feed polls. Returns a cancel function
+ * that stops all scheduled jobs.
  */
 export function startScheduler(
   sql: Sql,
   statusStore: FeedStatusStore,
   catalog: Catalog,
+  inFlight?: Pick<InFlight, "track">,
 ): () => void {
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
@@ -191,6 +200,8 @@ export function startScheduler(
   // Same egress-guarded dispatcher the per-feed jobs use, reused for the
   // low-frequency Fintraffic native-baseline refresh below.
   const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
+  // The Overpass the OpenStreetMap feeds query, read from the same setting.
+  const overpassUrl = overpassInterpreterUrl(catalog.credentials);
 
   for (const feed of catalog.feeds) {
     const job = scheduleFeed(feed, {
@@ -205,6 +216,7 @@ export function startScheduler(
         openlrClient,
         raw,
       },
+      ...(inFlight ? { inFlight } : {}),
     });
     if (job) jobs.push(job);
   }
@@ -266,6 +278,7 @@ export function startScheduler(
         fetch: guarded,
         now: () => new Date().toISOString(),
         batchCap: 200,
+        overpassUrl,
       });
       console.info(`[scheduler] osm-maxspeed fallback: ${osm.updated} baseline(s)`);
     } catch (err) {
@@ -338,6 +351,7 @@ export function startScheduler(
         const counts = await runSegmentRebuild(sql, {
           fetch: guarded,
           now: () => new Date().toISOString(),
+          overpassUrl,
         });
         console.info(
           `[scheduler] segment rebuild: imported ${counts.imported}, built ${counts.built}, ` +

@@ -1,3 +1,5 @@
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { gzipSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -319,6 +321,43 @@ describe("guardedFetch", () => {
     // undici's Agent exposes a `dispatch` method — a plain object would not.
     expect(seen.dispatcher).toBeDefined();
     expect(typeof (seen.dispatcher as { dispatch?: unknown }).dispatch).toBe("function");
+  });
+
+  it("falls back to the next validated address when the first one refuses the connection", async () => {
+    const server = createServer((_req, res) => res.end("second address"));
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as AddressInfo;
+    try {
+      // Nothing listens on ::1 at that port: the first address refuses.
+      const res = await guardedFetch(
+        undefined,
+        { ...OPTS, timeoutMs: 5_000, allowedHosts: new Set(["fallback.test"]) },
+        {},
+        pinLookup([
+          { address: "::1", family: 6 },
+          { address: "127.0.0.1", family: 4 },
+        ]),
+      )(`http://fallback.test:${port}/`);
+      expect(await res.text()).toBe("second address");
+    } finally {
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it("dials only addresses that passed validation", async () => {
+    const base = vi.fn(async () => new Response("ok", { status: 200 })) as unknown as typeof fetch;
+    await expect(
+      guardedFetch(
+        base,
+        OPTS,
+        {},
+        pinLookup([
+          { address: "93.184.216.34", family: 4 },
+          { address: "10.0.0.5", family: 4 },
+        ]),
+      )("https://rebind.example.com/"),
+    ).rejects.toThrow(/private IP/);
+    expect(base).not.toHaveBeenCalled();
   });
 
   it("rejects before opening a socket when the hostname resolves to a private IP", async () => {

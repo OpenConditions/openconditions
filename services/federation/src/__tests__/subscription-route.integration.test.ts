@@ -510,7 +510,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       const id = await createSub(app, peerA, {
         deliveryMode: "sse",
         priorityOnly: false,
-        filter: { bbox: [18, 51, 19, 53], permissiveOnly: false },
+        filter: { bbox: [18, 51, 19, 53] },
       });
       const path = `/peer/stream?subscriptionId=${id}`;
 
@@ -563,7 +563,6 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
         filter: {
           bbox: [20, 51, 21, 53],
           kinds: ["roadworks"],
-          permissiveOnly: false,
         },
       });
       const path = `/peer/stream?subscriptionId=${id}`;
@@ -596,7 +595,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       const id = await createSub(app, peer0, {
         deliveryMode: "sse",
         priorityOnly: false,
-        filter: { bbox: [29, 51, 31, 53], permissiveOnly: false },
+        filter: { bbox: [29, 51, 31, 53] },
       });
       await insertSituation("sse-t0-old", { lon: 30.5 });
       await insertSituation("sse-t0-new", { lon: 30.6 });
@@ -627,7 +626,7 @@ describe("GET /peer/stream — authenticated SSE THROUGH the subscription model"
       const id = await createSub(app, peerA, {
         deliveryMode: "sse",
         priorityOnly: false,
-        filter: { bbox: [31, 51, 32, 53], permissiveOnly: false },
+        filter: { bbox: [31, 51, 32, 53] },
       });
       await insertSituation("sse-t1-old", { lon: 31.5 });
       await setAge("sse-t1-old", 2 * 24 * 3_600_000); // 2 days — within the Tier-1 30d window

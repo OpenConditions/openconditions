@@ -34,15 +34,7 @@ const registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: [
-          "ocpi",
-          "parkapi",
-          "datex2-parking",
-          "autobahn-parking",
-          "minetur",
-          "mimit",
-          "econtrol",
-        ],
+        values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit"],
       }),
     ],
   },

@@ -1,4 +1,5 @@
 import {
+  reconcileFederation,
   syncSources,
   tombstoneRecords,
   writeRecord,
@@ -7,7 +8,12 @@ import {
 } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
+import {
+  decodeOutboxCursor,
+  encodeOutboxCursor,
+  type OutboxCursor,
+  readOutbox,
+} from "../outbox.js";
 import type { RecordOutboxEntry } from "../record-filter.js";
 import {
   crowdReportDraft,
@@ -483,6 +489,7 @@ describe("readOutbox maps journal rows to record entries", () => {
       operator: "Test",
       license: "CC0-1.0",
       attribution: "Test",
+      restricted: false,
       cadenceSec: 60,
       freshnessWindowSec: 600,
       extrasAllow: ["situationRecordExtension"],
@@ -500,6 +507,101 @@ describe("readOutbox maps journal rows to record entries", () => {
     expect(byId.get(situationId("shared", "nl-rws"))!.extras).toEqual({
       situationRecordExtension: "x",
     });
+  });
+
+  it("withholds a restricted source's changes journalled before it turned restricted, but not their deletes", async () => {
+    const source = (id: string, restricted: boolean) => ({
+      id,
+      domain: "roads",
+      format: "datex2",
+      product: id === "nl-ndw-flow" ? "flow" : "events",
+      tier: "authoritative",
+      country: "NL",
+      operator: "Test",
+      license: "CC0-1.0",
+      attribution: "Test",
+      restricted,
+      cadenceSec: 60,
+      freshnessWindowSec: 600,
+    });
+    const sync = (restricted: boolean) =>
+      syncSources(sql, [
+        source("nl-ndw-events", restricted),
+        source("nl-ndw-flow", restricted),
+        source("nl-rws", false),
+      ]);
+    await sync(false);
+    const base = await frontier();
+    await writeOwn(sql, incidentDraft("turned-restricted"));
+    await writeOwn(sql, incidentDraft("ended-before"));
+    await subscribe(sql, "speed", { classes: ["observation"], properties: ["traffic.speed"] });
+    await writeOwn(sql, speedReading(80, "2026-10-01T10:00:00Z"));
+    await writeOwn(sql, incidentDraft("public", { sourceId: "nl-rws" }));
+    await tombstone("situation", situationId("ended-before"), "cancelled");
+    try {
+      await sync(true);
+      const page = await readOutbox(sql, { after: base, now: NOW });
+      expect(page.orderedItems.map((e) => [e.operation, e.recordId])).toEqual([
+        ["create", situationId("public", "nl-rws")],
+        ["delete", situationId("ended-before")],
+      ]);
+      // The cursor still passes every withheld entry. It may run past the
+      // newest entry, as other transactions in the container move the fence.
+      const entries = await sql<{ txid: string; seq: string }[]>`
+        SELECT txid::text AS txid, seq::text AS seq FROM conditions.federation_outbox`;
+      const mark = decodeOutboxCursor(page.highWaterMark)!;
+      const passed = (e: { txid: string; seq: string }) =>
+        BigInt(e.txid) < BigInt(mark.txid) ||
+        (BigInt(e.txid) === BigInt(mark.txid) && Number(e.seq) <= mark.seq);
+      expect(entries.length).toBeGreaterThan(page.orderedItems.length);
+      expect(entries.filter((e) => !passed(e))).toEqual([]);
+    } finally {
+      await sync(false);
+    }
+  });
+
+  it("serves nothing of a record erased while its source was restricted, once the source turns public", async () => {
+    const source = (restricted: boolean) => ({
+      id: "nl-ndw-events",
+      domain: "roads",
+      format: "datex2",
+      product: "events",
+      tier: "authoritative",
+      country: "NL",
+      operator: "Test",
+      license: "CC0-1.0",
+      attribution: "Test",
+      restricted,
+      cadenceSec: 60,
+      freshnessWindowSec: 600,
+    });
+    await syncSources(sql, [source(false)]);
+    await sql`UPDATE conditions.source SET federation_restricted = restricted`;
+    const id = situationId("erased-restricted");
+    await writeOwn(
+      sql,
+      incidentDraft("erased-restricted", {
+        headline: [{ lang: "nl", text: "Ongeval, Jan de Vries" }],
+      }),
+    );
+    try {
+      await syncSources(sql, [source(true)]);
+      await reconcileFederation(sql);
+      await tombstone("situation", id, "rights_revoked");
+      await syncSources(sql, [source(false)]);
+      await reconcileFederation(sql);
+
+      const page = await readOutbox(sql, { now: NOW });
+      const served = page.orderedItems.filter((e) => e.recordId === id);
+      expect(served.map((e) => [e.operation, e.reason])).toEqual([
+        ["delete", "withdrawn"],
+        ["delete", "rights_revoked"],
+      ]);
+      expect(JSON.stringify(page)).not.toContain("Jan de Vries");
+      expect(JSON.stringify(await journalFor(id))).not.toContain("Jan de Vries");
+    } finally {
+      await syncSources(sql, [source(false)]);
+    }
   });
 
   it("applies the subscriber's filter on class, kind and domain", async () => {

@@ -1,0 +1,39 @@
+{
+  "$schema": "../schema/fuel.schema.json",
+  "feeds": [
+    {
+      "operator": "osm",
+      "product": "fuel",
+      "name": "OpenStreetMap filling stations",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "tier": "authoritative",
+      "format": "overpass",
+      // Every amenity=fuel node, way and relation in the cell, ways and
+      // relations at their centre. The public instance asks for at most about
+      // 10,000 requests a day, a User-Agent that names the client, and a
+      // backoff on 429. The body is sent form-encoded as written, so the query
+      // must contain no `+`, `&` or `%`.
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"fuel\"]({south},{west},{north},{east});out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmFuel/1.0 (+https://github.com/openconditions/openconditions)",
+          },
+          "cadenceSec": 3600,
+        },
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "onDemand": { "cellDeg": 0.1, "ttlSec": 3600, "maxCellsPerRead": 16, "probe": [8.4, 49.01] },
+      "requestLimits": { "perMinute": 30, "perDay": 5000 },
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+    },
+  ],
+}

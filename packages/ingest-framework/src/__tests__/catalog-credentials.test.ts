@@ -5,7 +5,9 @@ import { describe, expect, test } from "vitest";
 import {
   credentialEnvName,
   feedCredentialNames,
+  requireCredential,
   resolveCredential,
+  strictCredential,
 } from "../catalog/credentials.js";
 import type { CatalogFeed } from "../catalog/types.js";
 
@@ -70,6 +72,38 @@ describe("credentials", () => {
       "direct",
     );
     expect(resolveCredential({}, "MOBILITHEK_CA")).toBeUndefined();
+  });
+
+  test("a required service secret is read from its _FILE variant and named when missing", () => {
+    const dir = mkdtempSync(join(tmpdir(), "oc-cred-"));
+    const file = join(dir, "DATABASE_URL");
+    writeFileSync(file, "postgresql://postgres:pw@postgis:5432/openmapx\n");
+    expect(requireCredential({ DATABASE_URL_FILE: file }, "DATABASE_URL")).toBe(
+      "postgresql://postgres:pw@postgis:5432/openmapx",
+    );
+    expect(() => requireCredential({ DATABASE_URL: " " }, "DATABASE_URL")).toThrow(
+      /DATABASE_URL is required.*DATABASE_URL_FILE/,
+    );
+  });
+
+  test("a service secret whose _FILE is set but unreadable or empty names the file and why", () => {
+    const dir = mkdtempSync(join(tmpdir(), "oc-cred-"));
+    const missing = join(dir, "absent");
+    expect(() => requireCredential({ DATABASE_URL_FILE: missing }, "DATABASE_URL")).toThrow(
+      new RegExp(`DATABASE_URL_FILE .*${missing}.*ENOENT`),
+    );
+    expect(() => strictCredential({ DATABASE_URL_FILE: missing }, "DATABASE_URL")).toThrow(
+      /ENOENT/,
+    );
+    const empty = join(dir, "empty");
+    writeFileSync(empty, " \n");
+    expect(() => requireCredential({ DATABASE_URL_FILE: empty }, "DATABASE_URL")).toThrow(
+      new RegExp(`DATABASE_URL_FILE .*${empty}.*empty`),
+    );
+    // Neither set: an optional secret is simply absent.
+    expect(strictCredential({}, "DATABASE_URL")).toBeUndefined();
+    // A feed credential keeps the lenient read: the scheduler skips the feed.
+    expect(resolveCredential({ DATABASE_URL_FILE: missing }, "DATABASE_URL")).toBeUndefined();
   });
 
   test("names cover auth, template and expand references", () => {

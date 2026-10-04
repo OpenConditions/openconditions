@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { fuelDomain } from "@openconditions/fuel";
 import {
   type Catalog,
   type CatalogFeed,
@@ -11,7 +12,7 @@ import {
 import { roadsDomain } from "@openconditions/roads";
 
 /** The domains this service ingests. */
-export const INGEST_DOMAINS: readonly IngestDomain[] = [roadsDomain as unknown as IngestDomain];
+export const INGEST_DOMAINS: readonly IngestDomain<CatalogFeed>[] = [roadsDomain, fuelDomain];
 
 /**
  * The baked-in catalogue, in both layouts the code runs in: the shipped

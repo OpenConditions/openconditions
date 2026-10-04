@@ -7,13 +7,16 @@
  * much of a guess was right).
  */
 import { createHash, timingSafeEqual } from "node:crypto";
+import { strictCredential } from "@openconditions/ingest-framework";
 import type { FastifyReply, FastifyRequest, preHandlerHookHandler } from "fastify";
 
 /**
  * Resolves the reviewer bearer token from the environment, mirroring the grant
  * secret's fail-closed contract:
  *
- * - `OPENCONDITIONS_REVIEWER_TOKEN` set (non-empty): its value.
+ * - `OPENCONDITIONS_REVIEWER_TOKEN` (else the file
+ *   `OPENCONDITIONS_REVIEWER_TOKEN_FILE` names) set and non-blank: its trimmed value.
+ *   A file that is named but unreadable or empty THROWS, naming the file and the cause.
  * - Unset in production (`NODE_ENV=production`): THROWS — the moderation surface
  *   must not come up with an ephemeral token an operator cannot know.
  * - Unset elsewhere: a random ephemeral token is generated and `warn` is called
@@ -24,8 +27,8 @@ export function resolveReviewerToken(
   env: Record<string, string | undefined>,
   warn: (msg: string) => void,
 ): string {
-  const configured = env["OPENCONDITIONS_REVIEWER_TOKEN"];
-  if (configured !== undefined && configured !== "") {
+  const configured = strictCredential(env, "OPENCONDITIONS_REVIEWER_TOKEN");
+  if (configured !== undefined) {
     return configured;
   }
   if (env["NODE_ENV"] === "production") {

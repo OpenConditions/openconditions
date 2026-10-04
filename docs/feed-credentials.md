@@ -5,6 +5,18 @@
 Each variable may instead name a file holding the value: `<VAR>_FILE`. See
 [`feeds/README.md`](../feeds/README.md#credentials) for how the names are derived.
 
+Under OpenMapX each variable is a field of the `openconditions-ingest` service. A credential
+is a secret set in the admin services panel, which OpenMapX mounts as a file named
+by `<VAR>_FILE`. A setting is set there too, or in OpenMapX's `.env` under the name
+the settings table gives. Settings kept in OpenMapX's `.env` are applied with
+`pnpm openmapx services start openconditions-ingest` (which resets every setting saved only in
+the admin form, so keep all of them in one place). Settings saved in the form are
+applied with **Save & Apply**. OpenMapX mounts no directory of the operator's, so
+`OPENCONDITIONS_FEEDS_DIR` is not a field there: a custom catalogue comes through
+the remote feed bundle (`OPENCONDITIONS_FEEDS_REMOTE_URL`, with
+`OPENCONDITIONS_FEEDS_REMOTE_ENABLED` set to "true"), whose snapshot is kept on the
+service's volume beside its raw and nightly archives.
+
 | Feed | Id | Env var(s) | Licence | How to get it |
 |---|---|---|---|---|
 | Buenos Aires road closures (cortes) | `ar-ba-cortes-events` | `AR_BA_CORTES_EVENTS_CLIENT_ID`, `AR_BA_CORTES_EVENTS_CLIENT_SECRET` | LicenseRef-CC-BY-2.5-AR | [BA transport API registration](https://api-transporte.buenosaires.gob.ar/registro) |
@@ -57,3 +69,12 @@ Each variable may instead name a file holding the value: `<VAR>_FILE`. See
 | OHGO travel delays (Ohio) | `us-oh-ohgo-flow` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO construction (Ohio) | `us-oh-ohgo-construction-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO incidents (Ohio) | `us-oh-ohgo-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
+| Tankerkönig fuel prices (Germany) | `de-tankerkoenig-fuel` | `DE_TANKERKOENIG_FUEL_API_KEY` | CC-BY-4.0 | [Request Tankerkönig API key](https://onboarding.tankerkoenig.de/) |
+
+## Settings
+
+Not credentials: where the instance reaches a service. Each has a default.
+
+| Env var | Under OpenMapX | Default | Read by | What |
+|---|---|---|---|---|
+| `OVERPASS_URL` | `SERVICE_OPENCONDITIONS_INGEST_OVERPASS_URL` | `https://overpass-api.de` | `osm-fuel`, `osm-import`, `osm-maxspeed` | Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS. |

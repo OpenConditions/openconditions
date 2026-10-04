@@ -62,7 +62,6 @@ pnpm exec vitest run --project unit \
   packages/roads/src/bind/__tests__ \
   packages/model-roads/src/__tests__/restrictions.test.ts \
   packages/publishers/src/__tests__ \
-  integrations/road-conditions-openconditions/src/__tests__ \
   services/ingest/src/__tests__/run.test.ts \
   services/ingest/src/__tests__/resolve.test.ts \
   services/ingest/src/__tests__/smoke-road-restrictions.test.ts --no-cache

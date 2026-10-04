@@ -23,6 +23,23 @@ const feed = {
 };
 
 describe("catalogue schema", () => {
+  test("onDemand bounds the cell, ttl, cell count and probe", () => {
+    const base = z.object(feedBaseShape).strict();
+    const onDemand = { cellDeg: 0.25, ttlSec: 600, maxCellsPerRead: 8, probe: [13.4, 52.5] };
+    const parse = (over: object) => base.safeParse({ ...feed, onDemand: { ...onDemand, ...over } });
+    expect(parse({}).success).toBe(true);
+    expect(parse({ cellDeg: 1 }).success).toBe(true);
+    expect(parse({ cellDeg: 0 }).success).toBe(false);
+    expect(parse({ cellDeg: 1.5 }).success).toBe(false);
+    expect(parse({ ttlSec: 0 }).success).toBe(false);
+    expect(parse({ ttlSec: 1.5 }).success).toBe(false);
+    expect(parse({ maxCellsPerRead: 0 }).success).toBe(false);
+    expect(parse({ maxCellsPerRead: 65 }).success).toBe(false);
+    expect(parse({ maxCellsPerRead: 64 }).success).toBe(true);
+    expect(parse({ probe: [13.4] }).success).toBe(false);
+    expect(parse({ extra: 1 }).success).toBe(false);
+  });
+
   test("an endpoint has exactly one source", () => {
     expect(endpointSchema.safeParse({ cadenceSec: 60 }).success).toBe(false);
     expect(

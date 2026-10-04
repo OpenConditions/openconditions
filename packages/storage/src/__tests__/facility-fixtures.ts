@@ -29,16 +29,7 @@ export const registry: Registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: [
-          "ocpi",
-          "parkapi",
-          "datex2-parking",
-          "autobahn-parking",
-          "minetur",
-          "mimit",
-          "econtrol",
-          "osm",
-        ],
+        values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit", "osm"],
       }),
     ],
   },
@@ -95,6 +86,7 @@ export async function seedSources(sql: postgres.Sql, tiers: Record<string, strin
       operator: id,
       license: "CC-BY-4.0",
       attribution: id,
+      restricted: false,
       cadenceSec: 300,
       freshnessWindowSec: 900,
     })),

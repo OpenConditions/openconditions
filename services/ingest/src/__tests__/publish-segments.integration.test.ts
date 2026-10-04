@@ -1,8 +1,10 @@
 import { runMigrations } from "@openconditions/core/server";
+import { syncSources } from "@openconditions/storage";
 import Fastify from "fastify";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { registerScope } from "../api/scope.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG } from "./helpers/catalog.js";
@@ -31,6 +33,12 @@ const BASE_WKT = "LINESTRING(5.12 52.12, 5.13 52.12)";
 // A segment with a mix of daytime + nighttime segment_profile buckets.
 const PROFILE_SEGMENT_ID = "600:f";
 const PROFILE_WKT = "LINESTRING(5.14 52.14, 5.15 52.14)";
+
+// A segment whose speed a restricted flow source contributed to.
+const RESTRICTED_SEGMENT_ID = "550:f";
+const RESTRICTED_WKT = "LINESTRING(5.105 52.105, 5.115 52.105)";
+const RESTRICTED_FLOW = "xx-restricted-flow";
+const TOKEN = "operator-token-of-the-segments-suite-0123456789";
 
 // A segment with only a nighttime segment_profile bucket -- no daytime data.
 const NIGHT_ONLY_SEGMENT_ID = "800:f";
@@ -62,6 +70,33 @@ beforeAll(async () => {
       (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
     VALUES (${SEGMENT_ID}, 50, 100, 0.5, 'heavy', 'measured', 'sensor', ARRAY['test-source'], false, ${NOW}, ${NOW})`;
 
+  await syncSources(sql, [
+    {
+      id: RESTRICTED_FLOW,
+      domain: "roads",
+      format: "datex2",
+      product: "flow",
+      tier: "authoritative",
+      operator: RESTRICTED_FLOW,
+      license: "CC-BY-4.0",
+      attribution: RESTRICTED_FLOW,
+      restricted: true,
+      cadenceSec: 60,
+      freshnessWindowSec: 600,
+    },
+  ]);
+  await sql`
+    INSERT INTO conditions.road_segment
+      (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, free_flow_kph, computed_at)
+    VALUES (${RESTRICTED_SEGMENT_ID}, 550, 'f',
+      ST_SetSRID(ST_GeomFromText(${RESTRICTED_WKT}), 4326),
+      'motorway', 'A2', 1000, 5, 100, ${NOW})`;
+  await sql`
+    INSERT INTO conditions.segment_speed
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
+    VALUES (${RESTRICTED_SEGMENT_ID}, 30, 100, 0.3, 'queuing', 'measured', 'sensor',
+      ARRAY['test-source', ${RESTRICTED_FLOW}], false, ${NOW}, ${NOW})`;
+
   await sql`
     INSERT INTO conditions.road_segment
       (segment_id, way_id, dir, geom, highway, length_m, min_zoom, free_flow_kph, computed_at)
@@ -86,12 +121,12 @@ beforeAll(async () => {
       ST_SetSRID(ST_GeomFromText(${PROFILE_WKT}), 4326),
       'primary', 1000, 5, 100, ${NOW})`;
   await sql`
-    INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at)
+    INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at, contributing)
     VALUES
-      (${PROFILE_SEGMENT_ID}, 1, 7, 20, 30, ${NOW}),
-      (${PROFILE_SEGMENT_ID}, 1, 12, 30, 30, ${NOW}),
-      (${PROFILE_SEGMENT_ID}, 1, 19, 40, 30, ${NOW}),
-      (${PROFILE_SEGMENT_ID}, 1, 22, 90, 30, ${NOW})`;
+      (${PROFILE_SEGMENT_ID}, 1, 7, 20, 30, ${NOW}, ARRAY['test-source']),
+      (${PROFILE_SEGMENT_ID}, 1, 12, 30, 30, ${NOW}, ARRAY['test-source']),
+      (${PROFILE_SEGMENT_ID}, 1, 19, 40, 30, ${NOW}, ARRAY['test-source']),
+      (${PROFILE_SEGMENT_ID}, 1, 22, 90, 30, ${NOW}, ARRAY['test-source'])`;
 
   // A profiled segment with NO daytime buckets -- proves constrained_kph
   // falls back to free_flow_kph rather than being computed from nighttime
@@ -103,8 +138,8 @@ beforeAll(async () => {
       ST_SetSRID(ST_GeomFromText(${NIGHT_ONLY_WKT}), 4326),
       'primary', 1000, 5, 110, ${NOW})`;
   await sql`
-    INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at)
-    VALUES (${NIGHT_ONLY_SEGMENT_ID}, 0, 2, 60, 30, ${NOW})`;
+    INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at, contributing)
+    VALUES (${NIGHT_ONLY_SEGMENT_ID}, 0, 2, 60, 30, ${NOW}, ARRAY['test-source'])`;
 }, 120_000);
 
 afterAll(async () => {
@@ -224,7 +259,118 @@ describe("GET /segments/speed.csv", () => {
   }, 30_000);
 });
 
+describe("the speed surface's scope", () => {
+  async function withApp(fn: (app: ReturnType<typeof Fastify>) => Promise<void>) {
+    const app = Fastify();
+    registerScope(app, TOKEN);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
+    await app.ready();
+    try {
+      await fn(app);
+    } finally {
+      await app.close();
+    }
+  }
+  const operator = { authorization: `Bearer ${TOKEN}` };
+
+  it("keeps a restricted contributor's segment in /segments.geojson without its speed, except for the operator", async () => {
+    await withApp(async (app) => {
+      const props = async (headers: Record<string, string>) => {
+        const res = await app.inject({
+          method: "GET",
+          url: `/segments.geojson?bbox=${BBOX}`,
+          headers,
+        });
+        expect(res.statusCode).toBe(200);
+        const body = res.json() as { features: { properties: Record<string, unknown> }[] };
+        return body.features.find((f) => f.properties["segment_id"] === RESTRICTED_SEGMENT_ID)
+          ?.properties;
+      };
+      expect(await props({})).toEqual({
+        segment_id: RESTRICTED_SEGMENT_ID,
+        dir: "f",
+        highway: "motorway",
+        ref: "A2",
+      });
+      expect(await props(operator)).toMatchObject({
+        segment_id: RESTRICTED_SEGMENT_ID,
+        current_kph: 30,
+        los: "queuing",
+      });
+    });
+  }, 30_000);
+
+  it("omits a restricted contributor's row from /segments/speed.csv, except for the operator", async () => {
+    await withApp(async (app) => {
+      const csv = async (headers: Record<string, string>) =>
+        (await app.inject({ method: "GET", url: "/segments/speed.csv", headers })).body;
+      const anonymous = await csv({});
+      expect(anonymous).toContain("500,f,50,100,heavy");
+      expect(anonymous).not.toContain("550,");
+      expect(await csv(operator)).toContain("550,f,30,100,queuing");
+    });
+  }, 30_000);
+});
+
 describe("GET /segments/profiles.json", () => {
+  it("withholds a legacy profile with no recorded sources from the public scope; operator keeps it", async () => {
+    await sql`
+      INSERT INTO conditions.road_segment
+        (segment_id, way_id, dir, geom, highway, length_m, min_zoom, free_flow_kph, computed_at)
+      VALUES ('960:f', 960, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(5.3 52.3, 5.31 52.3)'), 4326),
+        'primary', 1000, 5, 100, ${NOW})`;
+    await sql`
+      INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at, contributing)
+      VALUES ('960:f', 1, 8, 25, 30, ${NOW}, '{}')`;
+    const app = Fastify();
+    registerScope(app, TOKEN);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
+    await app.ready();
+    try {
+      const wayIds = async (headers: Record<string, string>) =>
+        (
+          (await app.inject({ method: "GET", url: "/segments/profiles.json", headers })).json() as {
+            way_id: number | string;
+          }[]
+        ).map((s) => String(s.way_id));
+      expect(await wayIds({})).not.toContain("960");
+      expect(await wayIds({ authorization: `Bearer ${TOKEN}` })).toContain("960");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("public /segments/profiles.json drops a profile with a restricted contributor; operator keeps it", async () => {
+    await sql`
+      INSERT INTO conditions.road_segment
+        (segment_id, way_id, dir, geom, highway, length_m, min_zoom, free_flow_kph, computed_at)
+      VALUES ('950:f', 950, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(5.2 52.2, 5.21 52.2)'), 4326),
+        'primary', 1000, 5, 100, ${NOW})`;
+    await sql`
+      INSERT INTO conditions.segment_profile
+        (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at, contributing)
+      VALUES ('950:f', 1, 8, 25, 30, ${NOW}, ARRAY['test-source', ${RESTRICTED_FLOW}]),
+             ('950:f', 1, 9, 35, 30, ${NOW}, ARRAY['test-source'])`;
+    const app = Fastify();
+    registerScope(app, TOKEN);
+    registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);
+    await app.ready();
+    try {
+      const wayIds = async (headers: Record<string, string>) =>
+        (
+          (await app.inject({ method: "GET", url: "/segments/profiles.json", headers })).json() as {
+            way_id: number | string;
+          }[]
+        ).map((s) => String(s.way_id));
+      const anonymous = await wayIds({});
+      expect(anonymous).toContain("600");
+      expect(anonymous).not.toContain("950");
+      expect(await wayIds({ authorization: `Bearer ${TOKEN}` })).toContain("950");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
   it("assembles a 168-length hourly array and a daytime-median constrained_kph", async () => {
     const app = Fastify();
     registerPublishRoutes(app, sql, new FeedStatusStore(), REPO_CATALOG);

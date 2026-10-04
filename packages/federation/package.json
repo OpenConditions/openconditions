@@ -34,7 +34,6 @@
   "dependencies": {
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
-    "@openconditions/publishers": "workspace:*",
     "@tufjs/canonical-json": "2.0.0",
     "@tufjs/models": "5.0.0",
     "http-message-signatures": "1.0.6",

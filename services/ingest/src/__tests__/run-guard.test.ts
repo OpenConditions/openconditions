@@ -22,6 +22,7 @@ function blockedFeed(url: string): CatalogFeed {
   return testFeed({
     id: "blocked",
     format: "autobahn",
+    homepage: "https://blocked.example",
     endpoints: { main: { url, cadenceSec: 300 } },
   });
 }

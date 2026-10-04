@@ -1,13 +1,18 @@
 import { runMigrations } from "@openconditions/core/server";
+import { resolveEndpointUrls } from "@openconditions/ingest-framework";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import {
   importOsmRoads,
   loadOsmRegions,
+  overpassInterpreterUrl,
   overpassSource,
-  overpassUrl,
 } from "../pipeline/osm-import.js";
+import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
+
+/** Where the import tests' Overpass answers; the stub fetch ignores it. */
+const OVERPASS = "https://overpass.test/api/interpreter";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -56,7 +61,7 @@ afterEach(async () => {
 describe("importOsmRoads", () => {
   it("imports ways into osm_road with valid geometry", async () => {
     const { imported } = await importOsmRoads(sql, {
-      source: overpassSource(fetchFn),
+      source: overpassSource(fetchFn, OVERPASS),
       now: () => new Date().toISOString(),
       regions: [{ id: "nl", bbox: [4.8, 51.9, 5.0, 52.1], tz: "Europe/Amsterdam" }],
     });
@@ -86,13 +91,13 @@ describe("importOsmRoads", () => {
 
   it("re-imports an overlapping border way into a second region without a PK error", async () => {
     await importOsmRoads(sql, {
-      source: overpassSource(fetchFn),
+      source: overpassSource(fetchFn, OVERPASS),
       now: () => new Date().toISOString(),
       regions: [{ id: "nl", bbox: [4.8, 51.9, 5.0, 52.1], tz: "Europe/Amsterdam" }],
     });
 
     const { imported } = await importOsmRoads(sql, {
-      source: overpassSource(fetchFn),
+      source: overpassSource(fetchFn, OVERPASS),
       now: () => new Date().toISOString(),
       regions: [{ id: "se", bbox: [4.8, 51.9, 5.0, 52.1], tz: "Europe/Stockholm" }],
     });
@@ -113,7 +118,7 @@ describe("importOsmRoads", () => {
     }) as unknown as typeof fetch;
 
     const { imported } = await importOsmRoads(sql, {
-      source: overpassSource(flaky),
+      source: overpassSource(flaky, OVERPASS),
       now: () => new Date().toISOString(),
       regions: [
         { id: "fi", bbox: [20.6, 59.8, 31.6, 70.1], tz: "Europe/Helsinki" },
@@ -281,30 +286,62 @@ describe("loadOsmRegions", () => {
   });
 });
 
-describe("overpassUrl", () => {
-  it("falls back to the public instance when OVERPASS_URL is unset", () => {
-    expect(overpassUrl({})).toBe("https://overpass-api.de/api/interpreter");
-  });
+describe("overpassInterpreterUrl", () => {
+  const { credentials } = REPO_CATALOG;
 
-  it("falls back to the public instance on an empty OVERPASS_URL value", () => {
-    expect(overpassUrl({ OVERPASS_URL: "" })).toBe("https://overpass-api.de/api/interpreter");
-  });
-
-  it("uses a configured OVERPASS_URL override", () => {
-    expect(overpassUrl({ OVERPASS_URL: "http://overpass/api/interpreter" })).toBe(
-      "http://overpass/api/interpreter",
+  it("is the catalogue's Overpass base URL, the public instance by default, plus /api/interpreter", () => {
+    expect(overpassInterpreterUrl(credentials, {})).toBe("https://overpass-api.de/api/interpreter");
+    expect(overpassInterpreterUrl(credentials, { OVERPASS_URL: "" })).toBe(
+      "https://overpass-api.de/api/interpreter",
+    );
+    expect(overpassInterpreterUrl(credentials, { OVERPASS_URL: "http://overpass:80" })).toBe(
+      "http://overpass:80/api/interpreter",
+    );
+    expect(overpassInterpreterUrl(credentials, { OVERPASS_URL: "http://overpass:80/" })).toBe(
+      "http://overpass:80/api/interpreter",
     );
   });
 
-  it("normalizes a bare-origin OVERPASS_URL to the interpreter path", () => {
-    expect(overpassUrl({ OVERPASS_URL: "http://overpass" })).toBe(
-      "http://overpass/api/interpreter",
-    );
+  it("accepts the full interpreter URL as well as the base URL, as OpenMapX's OVERPASS_URL does", () => {
+    for (const OVERPASS_URL of [
+      "http://overpass:80/api/interpreter",
+      "http://overpass:80/api/interpreter/",
+    ]) {
+      expect(overpassInterpreterUrl(credentials, { OVERPASS_URL })).toBe(
+        "http://overpass:80/api/interpreter",
+      );
+    }
   });
 
-  it("normalizes a trailing-slash OVERPASS_URL", () => {
-    expect(overpassUrl({ OVERPASS_URL: "http://overpass/" })).toBe(
-      "http://overpass/api/interpreter",
-    );
+  it("is the URL the OSM fuel source posts to, so roads and fuel read one Overpass", () => {
+    for (const env of [
+      {},
+      { OVERPASS_URL: "http://overpass:80" },
+      { OVERPASS_URL: "http://o/" },
+      { OVERPASS_URL: "http://overpass:80/api/interpreter" },
+    ]) {
+      expect(resolveEndpointUrls(repoFeed("osm-fuel"), "main", env)).toEqual([
+        overpassInterpreterUrl(credentials, env),
+      ]);
+    }
   });
+
+  it("throws when the catalogue declares no Overpass setting", () => {
+    expect(() => overpassInterpreterUrl({ groups: {} }, {})).toThrow(/@overpass\.url/);
+  });
+
+  it("an import posts its query to the configured Overpass", async () => {
+    const posted: string[] = [];
+    const recording = (async (input: string | URL | Request) => {
+      posted.push(String(input));
+      return new Response(fixture, { status: 200 });
+    }) as unknown as typeof fetch;
+    const url = overpassInterpreterUrl(credentials, { OVERPASS_URL: "http://overpass:80" });
+    await importOsmRoads(sql, {
+      source: overpassSource(recording, url),
+      now: () => new Date().toISOString(),
+      regions: [{ id: "nl", bbox: [4.8, 51.9, 5.0, 52.1], tz: "Europe/Amsterdam" }],
+    });
+    expect(posted).toEqual(["http://overpass:80/api/interpreter"]);
+  }, 30_000);
 });

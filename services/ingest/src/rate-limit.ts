@@ -1,4 +1,5 @@
-import type { FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import { scopeOf } from "./api/scope.js";
 
 /**
  * In-memory token-bucket rate limiter for the public emitter feeds. Ported from
@@ -100,4 +101,24 @@ export class RateLimiter {
     if (this.cleanupTimer) clearInterval(this.cleanupTimer);
     this.buckets.clear();
   }
+}
+
+// Internal callers (the container healthcheck, a co-located CLI) reach us over
+// the loopback peer and skip the limiter entirely.
+const LOOPBACK = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
+/**
+ * Applies `limiter` to every request but the health probe (`/status`),
+ * loopback peers and the operator. Register it after `registerScope`, whose
+ * hook decides the scope this one reads.
+ */
+export function registerRateLimit(app: FastifyInstance, limiter: RateLimiter): void {
+  const rateLimit = limiter.hook();
+  app.addHook("onRequest", async (req, reply) => {
+    if (req.url === "/status" || req.url.startsWith("/status?")) return;
+    if (scopeOf(req) === "operator") return;
+    const peer = req.socket?.remoteAddress;
+    if (peer && LOOPBACK.has(peer)) return;
+    return rateLimit(req, reply);
+  });
 }

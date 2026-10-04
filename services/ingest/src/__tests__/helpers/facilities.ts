@@ -43,15 +43,7 @@ export const facilitiesRegistry: Registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: [
-          "ocpi",
-          "parkapi",
-          "datex2-parking",
-          "autobahn-parking",
-          "minetur",
-          "mimit",
-          "econtrol",
-        ],
+        values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit"],
       }),
     ],
   },
@@ -62,9 +54,9 @@ export const TIERS: Record<string, string> = {
   "de-bw-parkapi": "aggregator",
   "nl-ndw-truckparking": "authoritative",
   "de-autobahn-events": "operator",
-  "es-minetur": "authoritative",
+  "es-minetur-fuel": "authoritative",
   "it-mimit": "authoritative",
-  "at-econtrol": "authoritative",
+  "at-econtrol-fuel": "authoritative",
   "es-fuel-test": "authoritative",
 };
 
@@ -107,7 +99,7 @@ export function goldenFacilities(): Map<string, SourceDrafts> {
 }
 
 /** The fuel station both the ministry and a second (share-alike-free) mirror publish. */
-export const STATION = "oc:feature:es-minetur:3119";
+export const STATION = "oc:feature:es-minetur-fuel:3119";
 export const TWIN = "oc:feature:es-fuel-test:3119";
 
 /**
@@ -115,7 +107,7 @@ export const TWIN = "oc:feature:es-fuel-test:3119";
  * two link into one canonical feature whose E5 price is fused from both.
  */
 export function twinOf(golden: Map<string, SourceDrafts>): SourceDrafts {
-  const minetur = golden.get("es-minetur")!;
+  const minetur = golden.get("es-minetur-fuel")!;
   const station = minetur.features.find((f) => f["id"] === STATION)!;
   const e5 = minetur.observations.find(
     (o) =>
@@ -157,6 +149,7 @@ export async function seedSources(sql: postgres.Sql, now = NOW): Promise<void> {
       operator: id,
       license: "CC-BY-4.0",
       attribution: id,
+      restricted: false,
       cadenceSec: 300,
       freshnessWindowSec: 900,
     })),

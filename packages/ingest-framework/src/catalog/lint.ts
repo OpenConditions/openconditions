@@ -1,5 +1,6 @@
 import { assertPublicUrl } from "../egress.js";
-import { credentialEnvName, credentialRefs } from "./credentials.js";
+import { cellRadiusKm, usesCellPlaceholder } from "./cells.js";
+import { credentialEnvName, credentialRefs, isSettingsGroup } from "./credentials.js";
 import type { IngestDomain } from "./domain.js";
 import { deriveFeedId } from "./ids.js";
 import { licenseInfo } from "./licenses.js";
@@ -106,6 +107,62 @@ function formatIssues(feed: FeedDefinition, domain: IngestDomain): string[] {
     } else if (!spec.decoders.includes(endpoint.decoder)) {
       out.push(
         `endpoint ${role} decoder ${endpoint.decoder} is not one of ${spec.decoders.join(", ")}`,
+      );
+    }
+  }
+  return out;
+}
+
+/** The request texts of one endpoint that a cell placeholder may appear in. */
+function requestTexts(endpoint: FeedDefinition["endpoints"][string]): string[] {
+  return [
+    endpoint.url,
+    ...(endpoint.urls ?? []),
+    endpoint.body,
+    ...Object.values(endpoint.headers ?? {}),
+  ].filter((text): text is string => text !== undefined);
+}
+
+function onDemandIssues(feed: FeedDefinition, domain: IngestDomain): string[] {
+  const out: string[] = [];
+  const onDemand = feed.accessMode === "on_demand";
+  const usesCell = (endpoint: FeedDefinition["endpoints"][string]) =>
+    requestTexts(endpoint).some(usesCellPlaceholder);
+
+  if (!onDemand) {
+    if (feed.onDemand) out.push("bulk feed cannot have onDemand");
+    for (const [role, endpoint] of Object.entries(feed.endpoints)) {
+      if (usesCell(endpoint)) out.push(`bulk feed endpoint ${role} uses a cell placeholder`);
+    }
+    return out;
+  }
+
+  if (!feed.onDemand) out.push("on_demand feed needs onDemand");
+  const bbox = feed.coverage?.bbox;
+  if (!bbox) out.push("on_demand feed needs coverage.bbox");
+  const format = Object.hasOwn(domain.formats, feed.format)
+    ? domain.formats[feed.format]
+    : undefined;
+  if (format && (format.kind !== "features" || !format.produces)) {
+    out.push(`format ${feed.format} must be a features format that declares produces`);
+  }
+  const dataEndpoints = Object.values(feed.endpoints).filter((e) => e.decoder === undefined);
+  if (!dataEndpoints.some(usesCell)) {
+    out.push("on_demand feed needs a data endpoint that uses a cell placeholder");
+  }
+  if (feed.onDemand && bbox) {
+    const [lon, lat] = feed.onDemand.probe;
+    if (lon < bbox[0] || lon > bbox[2] || lat < bbox[1] || lat > bbox[3]) {
+      out.push(`onDemand probe outside coverage.bbox ([${lon}, ${lat}])`);
+    }
+  }
+  const maxRadiusKm = feed.requestLimits?.maxRadiusKm;
+  if (feed.onDemand && maxRadiusKm !== undefined) {
+    const { cellDeg } = feed.onDemand;
+    const radius = cellRadiusKm({ id: "", west: 0, south: 0, east: cellDeg, north: cellDeg });
+    if (maxRadiusKm < radius) {
+      out.push(
+        `requestLimits.maxRadiusKm ${maxRadiusKm} is below the ${radius} km radius of a ${cellDeg} degree cell`,
       );
     }
   }
@@ -221,7 +278,8 @@ function urlIssues(feed: FeedDefinition): string[] {
  * The catalogue as a whole, checked: unique ids across every domain; products,
  * formats, endpoint roles and decoders the domain declares; every credential
  * ref declared and every declared field used, a shared group serving at least
- * two feeds, no two declared fields read from one env var (or its `_FILE`);
+ * two feeds (one when every field has a default: a group of settings), no two
+ * declared fields read from one env var (or its `_FILE`);
  * known licences, `NOASSERTION` with terms; public static URLs; the domain's
  * `$schema`; no future `disabled.since`; and catalogue parents with a usable
  * registry URL, one per resolver, whose children resolve. Disabled feeds are
@@ -268,6 +326,7 @@ export function lintCatalog(
 
       const messages = [
         ...formatIssues(feed, domain),
+        ...onDemandIssues(feed, domain),
         ...credentialIssues(feed, credentials),
         ...rightsIssues(feed),
         ...urlIssues(feed),
@@ -285,6 +344,7 @@ export function lintCatalog(
           region: file.region,
           file: file.path,
           maintainers: file.maintainers,
+          shared: credentials.groups,
         });
         if (resolved.catalog) {
           const resolver = catalogResolverFor(resolved, domain.resolvers);
@@ -310,13 +370,17 @@ export function lintCatalog(
     }
   }
 
-  for (const group of Object.keys(credentials.groups)) {
+  for (const [group, fields] of Object.entries(credentials.groups)) {
     const n = groupUsers.get(group) ?? 0;
-    if (n < 2) {
+    // A group of settings (where the instance reaches a service) is not an
+    // account: one is shared by the feeds that will read it from the first on.
+    const settings = isSettingsGroup(fields);
+    const least = settings ? 1 : 2;
+    if (n < least) {
       issues.push({
         level: "error",
         file: CREDENTIALS_FILE,
-        message: `shared group ${group} is used by ${n} feed${n === 1 ? "" : "s"}; a group serves at least two`,
+        message: `shared group ${group} is used by ${n} feed${n === 1 ? "" : "s"}; ${settings ? "a group of settings serves at least one" : "a group serves at least two"}`,
       });
     }
   }

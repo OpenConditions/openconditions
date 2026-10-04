@@ -457,7 +457,7 @@ keyed by effect id (empty when no effect has one). Routing reads an effect's
 own binding where it has one, so a consumer judging an effect reads it there.
 The collections and the TraFF, DATEX II and SSE outputs carry no bindings.
 
-`integrations/road-conditions-openconditions` reads situations from
+The OpenMapX integration (built into OpenMapX) reads situations from
 `GET /situations` and their routing evidence from `/segments/conditions.json`,
 over HTTP. It attaches each condition's `routing_evidence` to its situation's
 effect by `effect_id`, and fails the routing read when the situation's revision
@@ -562,8 +562,13 @@ selecting a dashboard region does not trigger an import. Feed catalogue geograph
 is descriptive upstream scope, not authority to download a graph automatically.
 
 `SEGMENT_REGIONS`, `SEGMENT_HIGHWAY_CLASSES` and the three `BIND_*` knobs are
-all declared in `services/ingest/service.json`, so a Compose-rendered deployment
-passes them through from the host environment, so setting them there is enough.
+config fields of `services/ingest/service.json`. Under OpenMapX the operator
+sets them in the admin services panel, or as
+`SERVICE_OPENCONDITIONS_INGEST_<NAME>` in OpenMapX's `.env`; OpenMapX renders
+them into the container's environment. Settings kept in OpenMapX's `.env` are
+applied with `pnpm openmapx services start openconditions-ingest` (which resets
+every setting saved only in the admin form, so keep all of them in one place).
+Settings saved in the form are applied with **Save & Apply**.
 
 All of these except `SEGMENT_REBUILD_CRON` are read per call rather than cached,
 so a changed value takes effect on the next stage run. `SEGMENT_REBUILD_CRON` is

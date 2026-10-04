@@ -86,8 +86,45 @@ Every change of one of this instance's own records — a new revision, a crowd
 report's new evidence, a tombstone — is journalled in `federation_outbox` by a
 trigger on the record tables, in the same transaction, while a subscription
 wants the class (observations: only for a subscription naming the property). A
-peer's record (it carries an origin chain), an on-demand answer and a fused row
-are never journalled.
+peer's record (it carries an origin chain), an on-demand answer, a fused row
+and a record of a restricted source are never journalled.
+
+`conditions.source` also records the `restricted` flag the outbox last
+reflected for each source (`federation_restricted`). When a boot's catalogue
+sync flips it, the ingest service reconciles the outbox in the background, a
+page of one source's records per transaction under the source's lock:
+
+- **Turned restricted:** a delete is journalled for each record a peer may
+  hold (see below), so subscribers end their copies. A live record's reason is
+  `withdrawn`; an ended one's is its own. A reading gets none, because
+  subscribers keep no tombstone of an observation.
+- **Turned public:** a create is journalled for each live record, and for each
+  series' current reading, exactly as the trigger writes it.
+
+The first page marks the source pending (`federation_pending`). The
+transaction of its last page updates its basis and clears the mark. A
+reconcile that is stopped or fails resumes at the next boot: a record whose
+latest entry already says what the flag asks is skipped. A pending source is
+reconciled toward its current flag even when a flip back made its basis match
+again, so records retracted before the flip back are re-journalled. Meanwhile
+the outbox read withholds every change of a now-restricted source. It still
+serves the source's deletes.
+
+A peer may hold a record of a now-restricted source when the record has
+journal entries, or when a subscription wants its class and the record was
+stored (`created_at`) by the time its source last turned restricted
+(`restricted_since`, set by the catalogue sync). The second case covers a
+long-lived record whose entries were pruned. A record stored after that,
+including one a poll writes while the reconcile runs, never reached a peer.
+Neither did any record of a source that was restricted when it was added.
+Nothing of such a record is journalled, not even a delete.
+
+An erasure (`rights_revoked`) of a restricted source's own record that a peer
+may hold still removes the record's earlier changes from the journal. It also
+journals the delete, so a subscriber erases its copy.
+
+A source added after the column was introduced starts with no basis. It has
+nothing journalled to correct, so it is taken as in sync with its flag.
 
 The sweep, every five minutes, takes these actions:
 
@@ -238,13 +275,42 @@ its live members does. `/features/{id}` with a member id adds the cluster's
 summary; with a canonical id it serves the canonical feature.
 
 **Fused readings.** `/observations/latest` serves per-source and crowd rows by
-default and no fused row. `canonical=1` serves the `@fused` row of every
+default and no fused row. `canonical=1` serves the fused row of every
 fusable property (one a linkable feature kind carries, or the crowd reports)
-and the per-source rows of the rest (traffic readings, which never link). A
-fused row credits its contributors in `provenance.mergedSources` and carries
-the most restrictive of their rights; a share-alike winner withholds it. A
-crowd reading carries its evidence summary; one expired or negated is no longer
-listed.
+and the per-source rows of the rest (traffic readings, which never link). The
+operator reads `@fused`, the fusion of every source. The public scope reads a
+fusion of public contributors only: the `@fused` row when all its contributors
+are public (`fused_public`), else the `@fused-public` row fused from the
+public ones, and no fused row when none is public. A public fused row sits
+where a public member puts the feature (the winner's, else the survivor, else
+the first public member); a crowd-won fusion with no public member to sit at
+has no public row. A fused row credits its contributors in
+`provenance.mergedSources` and carries the most restrictive of their rights; a
+share-alike winner withholds it. A crowd reading carries its evidence summary;
+one expired or negated is no longer listed.
+
+`conditions.source` records the `restricted` flag, tier and licence registry
+classification (a hash of each licence's id, redistribution grant and
+share-alike flag) each source's fusions were last refreshed under
+(`fusion_restricted`, `fusion_tier`, `fusion_licenses`). When a boot's
+catalogue sync changes the first two, or a release reclassifies a licence
+(every source then), the fused rows of every canonical feature that source
+has a fusable reading on were fused under the old rule.
+The ingest service refreshes them in the background, in batches of canonical
+features, one transaction each under the features' fusion locks, and logs its
+progress. A source's basis is updated in the transaction of the batch holding
+its last canonical feature, so a refresh that is stopped or fails resumes at
+the next boot and a finished one is not repeated. Until a feature's batch
+commits, the public scope withholds a fused row any now-restricted source
+contributed to (its `fused_from`), and a now-unrestricted source has not yet
+joined the public fusion.
+
+The first boot after the migrations that add these columns finds every source
+outdated and re-fuses every canonical feature once, in the background. Until
+it finishes, public canonical reads serve no fused reading for a feature not
+yet refreshed (its members' readings remain, through the feature read's
+`expand`). A canonical feature only crowd readings fuse on is refreshed by its
+next crowd write.
 
 **Series.** `/observations` names one series by subject (a subject key, or a
 record id plus `component`), property, qualifiers (a JSON object) and, where

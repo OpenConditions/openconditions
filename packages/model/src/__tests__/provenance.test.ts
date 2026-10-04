@@ -31,6 +31,13 @@ describe("Provenance", () => {
     expect(stored.safeParse({ ...feed, origin: "crowd", sourceId: "crowd" }).success).toBe(true);
     expect(stored.safeParse({ ...feed, sourceId: "@fused" }).success).toBe(false);
     expect(stored.safeParse({ ...feed, origin: "derived", sourceId: "@fused" }).success).toBe(true);
+    expect(stored.safeParse({ ...feed, sourceId: "@fused-public" }).success).toBe(false);
+    expect(
+      stored.safeParse({ ...feed, origin: "derived", sourceId: "@fused-public" }).success,
+    ).toBe(true);
+    expect(stored.safeParse({ ...feed, origin: "derived", sourceId: "@fusedx" }).success).toBe(
+      false,
+    );
   });
 
   it("keeps a raw payload reference as a sha256", () => {

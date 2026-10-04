@@ -8,9 +8,9 @@ export interface OsmMaxspeedDeps {
   now: () => string;
   /** Hard cap on Overpass queries per run. */
   batchCap: number;
+  /** The Overpass interpreter to query (`overpassInterpreterUrl`). */
+  overpassUrl: string;
 }
-
-const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
 
 /** True unless explicitly disabled; empty/unset = on (the default). */
 export function osmFallbackEnabled(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -60,7 +60,7 @@ export async function resolveOsmMaxspeed(
   for (const t of targets) {
     try {
       const query = `[out:json][timeout:25];way(around:30,${t.lat},${t.lon})[highway][maxspeed];out tags 1;`;
-      const res = await deps.fetch(OVERPASS_URL, {
+      const res = await deps.fetch(deps.overpassUrl, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: query,

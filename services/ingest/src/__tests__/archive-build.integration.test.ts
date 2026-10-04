@@ -2,6 +2,7 @@ import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promise
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { runMigrations, scanRecords } from "@openconditions/core/server";
+import { syncSources } from "@openconditions/storage";
 import { parquetMetadata, parquetReadObjects } from "hyparquet";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -84,11 +85,48 @@ describe("nightly static archive", () => {
         const latest = path.join(dir, `archive-${cls}.parquet`);
         expect((await stat(latest)).ino).toBe((await stat(result![cls].path)).ino);
       }
-      // Share-alike and withdrawn records stay out of a permissive mirror.
+      // Share-alike and withdrawn records stay out of a public mirror.
       expect(await readIds(result!.situation.path)).toEqual([
         "oc:situation:de-autobahn-events:open",
       ]);
       expect(await readIds(result!.feature.path)).toEqual([]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it("the daily archive leaves restricted sources out", async () => {
+    const source = (id: string, restricted: boolean) => ({
+      id,
+      domain: "roads",
+      format: "autobahn",
+      product: "events",
+      tier: "authoritative",
+      country: "DE",
+      operator: id,
+      license: "DL-DE-BY-2.0",
+      attribution: id,
+      restricted,
+      cadenceSec: 60,
+      freshnessWindowSec: 600,
+    });
+    await syncSources(sql, [
+      source("de-autobahn-events", false),
+      source("de-restricted-events", true),
+    ]);
+    await writeSituations(sql, "de-autobahn-events", [situationDraft("open")]);
+    await writeSituations(sql, "de-restricted-events", [
+      situationDraft("kept-home", {}, "de-restricted-events"),
+    ]);
+    const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
+    try {
+      const result = await buildDailyArchive(sql, {
+        now: () => new Date("2026-09-07T03:30:00Z"),
+        outputDir: dir,
+      });
+      expect(await readIds(result!.situation.path)).toEqual([
+        "oc:situation:de-autobahn-events:open",
+      ]);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

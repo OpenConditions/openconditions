@@ -5,6 +5,7 @@
  */
 
 import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
+import { requireCredential } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
 import {
@@ -28,10 +29,7 @@ const HOST = process.env["HOST"] || "0.0.0.0";
 const CROSS_VALIDATE_SWEEP_MS = 3 * 60_000;
 
 async function boot() {
-  const url = process.env["DATABASE_URL"];
-  if (!url) {
-    throw new Error("DATABASE_URL environment variable is required");
-  }
+  const url = requireCredential(process.env, "DATABASE_URL");
   console.info("[contributions-api] applying database migrations…");
   await runMigrations(url);
   console.info("[contributions-api] migrations applied");

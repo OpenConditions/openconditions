@@ -94,6 +94,7 @@
       "operator": "verkehr",
       "product": "events",
       "name": "LVZ.NRW (Nordrhein-Westfalen) via Mobilithek",
+      "homepage": "https://www.strassen.nrw.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -122,6 +123,7 @@
       "operator": "duesseldorf",
       "product": "events",
       "name": "Düsseldorf (dmotion) via Mobilithek",
+      "homepage": "https://www.duesseldorf.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -154,6 +156,7 @@
       "operator": "koeln",
       "product": "events",
       "name": "Köln via Mobilithek",
+      "homepage": "https://www.stadt-koeln.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -185,6 +188,7 @@
       "operator": "unna",
       "product": "events",
       "name": "Kreis Unna via Mobilithek",
+      "homepage": "https://www.kreis-unna.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -215,6 +219,7 @@
       "operator": "mobidrom",
       "product": "events",
       "name": "NRW.Mobidrom bundled roadworks via Mobilithek",
+      "homepage": "https://www.mobidrom.nrw",
       "tier": "aggregator",
       "format": "datex2",
       "credentials": {
@@ -243,6 +248,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Bayern via Mobilithek",
+      "homepage": "https://www.stmb.bayern.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -271,6 +277,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Baden-Württemberg via Mobilithek",
+      "homepage": "https://im.baden-wuerttemberg.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -299,6 +306,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Berlin via Mobilithek",
+      "homepage": "https://www.berlin.de/sen/uvk",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -327,6 +335,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Brandenburg via Mobilithek",
+      "homepage": "https://mil.brandenburg.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -355,6 +364,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Bremen via Mobilithek",
+      "homepage": "https://vmz.bremen.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -383,6 +393,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Hamburg via Mobilithek",
+      "homepage": "https://lsbg.hamburg.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -461,6 +472,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Hessen via Mobilithek",
+      "homepage": "https://mobil.hessen.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -489,6 +501,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Mecklenburg-Vorpommern via Mobilithek",
+      "homepage": "https://strassenbau-mv.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -524,6 +537,7 @@
       "operator": "nlstbv",
       "product": "events",
       "name": "NLStBV (Niedersachsen) via Mobilithek",
+      "homepage": "https://www.strassenbau.niedersachsen.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -555,6 +569,7 @@
       "operator": "hannover",
       "product": "events",
       "name": "Hannover via Mobilithek",
+      "homepage": "https://www.hannover.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -583,6 +598,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Sachsen via Mobilithek",
+      "homepage": "https://www.lasuv.sachsen.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -611,6 +627,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Sachsen-Anhalt via Mobilithek",
+      "homepage": "https://lsbb.sachsen-anhalt.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -639,6 +656,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Schleswig-Holstein via Mobilithek",
+      "homepage": "https://www.lbv-sh.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -667,6 +685,7 @@
       "operator": "mobilithek",
       "product": "events",
       "name": "Thüringen via Mobilithek",
+      "homepage": "https://bau-verkehr.thueringen.de",
       "tier": "authoritative",
       "format": "datex2",
       "credentials": {
@@ -717,6 +736,7 @@
       "operator": "autobahn",
       "product": "flow",
       "name": "Autobahn GmbH BAB traffic data (NL Nord: Hamburg & Schleswig-Holstein)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-measured",
       "credentials": {
@@ -759,6 +779,7 @@
       "operator": "autobahn",
       "product": "flow",
       "name": "Autobahn GmbH BAB traffic data (Nordrhein-Westfalen, per lane)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-elaborated",
       "credentials": {
@@ -798,6 +819,7 @@
       "operator": "autobahn",
       "product": "flow",
       "name": "Autobahn GmbH BAB traffic data (VZD, Hessen)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-measured",
       "credentials": {
@@ -839,6 +861,7 @@
       "operator": "autobahn",
       "product": "flow",
       "name": "Autobahn GmbH BAB traffic data (NL Südwest, Baden-Württemberg)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-measured",
       "credentials": {
@@ -882,6 +905,7 @@
       "operator": "autobahn",
       "product": "flow",
       "name": "Autobahn GmbH BAB traffic data (Bayern, per lane)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-measured",
       "credentials": {
@@ -924,6 +948,7 @@
       "qualifier": "los",
       "product": "flow",
       "name": "Autobahn GmbH BAB Verkehrslage LoS (Nordrhein-Westfalen, per lane)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-elaborated",
       "credentials": {
@@ -964,6 +989,7 @@
       "qualifier": "los",
       "product": "flow",
       "name": "Autobahn GmbH BAB Verkehrslage LoS (NL Südwest, Baden-Württemberg)",
+      "homepage": "https://www.autobahn.de",
       "tier": "authoritative",
       "format": "datex2-measured",
       "credentials": {

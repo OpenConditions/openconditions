@@ -7,6 +7,7 @@ import {
   fusionTierOf,
   mostRestrictiveRights,
 } from "../fusion/fuse.js";
+import { FUSED_PUBLIC_SOURCE_ID } from "../kernel/provenance.js";
 import { crowdRegistry, NOW } from "./crowd-fixtures.js";
 
 const status = (
@@ -211,6 +212,26 @@ describe("fusion", () => {
     expect(fused.ok && fused.value["provenance"]).toMatchObject({ accessMode: "on_demand" });
     expect(fused.ok && fused.value["freshness"]).toMatchObject({
       expiresAt: "2026-10-01T12:10:00.000Z",
+    });
+  });
+
+  it("writes the public fusion under its own source id", () => {
+    const fusion = fuse(
+      crowdRegistry,
+      "charging.evse_status",
+      [feed("free_flow", "2026-10-01T11:00:00Z")],
+      NOW,
+    )!;
+    const fused = fusedObservation(crowdRegistry, fusion, {
+      subject: { kind: "feature", featureId: "oc:feature:oc.example.org:c1", componentKey: "2" },
+      location: { geometry: null, extent: "none", geometryOrigin: "none", fuzziness: "exact" },
+      instanceId: "oc.example.org",
+      now: NOW,
+      sourceId: FUSED_PUBLIC_SOURCE_ID,
+    });
+    expect(fused.ok && fused.value["provenance"]).toMatchObject({
+      origin: "derived",
+      sourceId: "@fused-public",
     });
   });
 });

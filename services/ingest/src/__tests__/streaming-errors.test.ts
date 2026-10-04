@@ -53,6 +53,7 @@ describe("streaming feed error handling", () => {
       id: "test-flow",
       product: "flow",
       format: "datex2-measured",
+      homepage: "https://example.test",
       endpoints: {
         main: { url: "http://example.test/measured.xml", cadenceSec: 60 },
         sites: {

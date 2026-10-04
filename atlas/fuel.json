@@ -1,0 +1,551 @@
+{
+  "files": {
+    "fuel/at": {
+      "$schema": "../schema/fuel.schema.json",
+      "feeds": [
+        {
+          "operator": "econtrol",
+          "product": "fuel",
+          "name": "E-Control Spritpreisrechner (Austria)",
+          "format": "econtrol",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "urls": [
+                "https://api.e-control.at/sprit/1.0/search/gas-stations/by-address?latitude={lat}&longitude={lon}&fuelType=DIE&includeClosed=false",
+                "https://api.e-control.at/sprit/1.0/search/gas-stations/by-address?latitude={lat}&longitude={lon}&fuelType=SUP&includeClosed=false",
+                "https://api.e-control.at/sprit/1.0/search/gas-stations/by-address?latitude={lat}&longitude={lon}&fuelType=GAS&includeClosed=false"
+              ],
+              "cadenceSec": 900
+            }
+          },
+          "freshnessWindowSec": 86400,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 20,
+            "maxRadiusKm": 10
+          },
+          "onDemand": {
+            "cellDeg": 0.1,
+            "ttlSec": 900,
+            "maxCellsPerRead": 9,
+            "probe": [
+              16.37,
+              48.21
+            ]
+          },
+          "license": "NOASSERTION",
+          "attribution": "E-Control (Spritpreisrechner)",
+          "terms": {
+            "url": "https://api.e-control.at/sprit/1.0/doc/index.html",
+            "reviewedAt": "2026-10-03",
+            "note": "No licence or terms published; data.gv.at does not list the fuel API"
+          },
+          "privacyUrl": "https://www.e-control.at/datenschutz",
+          "coverage": {
+            "bbox": [
+              9.5,
+              46.3,
+              17.2,
+              49.1
+            ]
+          }
+        }
+      ]
+    },
+    "fuel/de": {
+      "$schema": "../schema/fuel.schema.json",
+      "feeds": [
+        {
+          "operator": "tankerkoenig",
+          "product": "fuel",
+          "name": "Tankerkönig fuel prices (Germany)",
+          "format": "tankerkoenig",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://creativecommons.tankerkoenig.de/json/list.php?lat={lat}&lng={lon}&rad={radiusKm}&sort=dist&type=all&apikey=${api_key}",
+              "cadenceSec": 900
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Tankerkönig API Key",
+              "description": "Tankerkoenig API key for German fuel prices.",
+              "setup": {
+                "url": "https://onboarding.tankerkoenig.de/",
+                "urlLabel": "Request Tankerkönig API key",
+                "steps": [
+                  "Open onboarding.tankerkoenig.de (linked from creativecommons.tankerkoenig.de via 'API-Key').",
+                  "Enter a working email address and describe your non-commercial use case.",
+                  "Agree to the CC BY 4.0 terms (attribution to tankerkoenig.de required).",
+                  "Submit the form; registration is reviewed manually and can take a few days.",
+                  "Receive the API key by email once approved."
+                ],
+                "cost": "Free for non-commercial use (commercial use needs a paid agreement).",
+                "notes": "Data is CC BY 4.0 (MTS-K) — attribution required. Free-tier limits: 1 request/min, 25 km radius.",
+                "email": {
+                  "to": "info@tankerkoenig.de",
+                  "subject": "Tankerkönig API key request (non-commercial)",
+                  "body": "Hello,\n\nI would like to request a free non-commercial Tankerkönig API key.\n\nUse case: displaying current German fuel prices in a self-hosted, non-commercial OpenMapX map application.\n\nI agree to the CC BY 4.0 terms and will attribute the data to tankerkoenig.de.\n\nThank you."
+                }
+              }
+            }
+          },
+          "auth": {
+            "kind": "none"
+          },
+          "freshnessWindowSec": 86400,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 1,
+            "maxRadiusKm": 25,
+            "keyScope": "instance"
+          },
+          "onDemand": {
+            "cellDeg": 0.25,
+            "ttlSec": 900,
+            "maxCellsPerRead": 4,
+            "probe": [
+              13.4,
+              52.52
+            ]
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Tankerkönig (MTS-K), CC BY 4.0 – https://creativecommons.tankerkoenig.de",
+          "terms": {
+            "url": "https://creativecommons.tankerkoenig.de/",
+            "reviewedAt": "2026-10-03",
+            "note": "API data must not be obtained or passed on by mineral oil companies, filling-station operators or IT providers working for them; a public API cannot exclude them",
+            "redistribution": false
+          },
+          "privacyUrl": "https://onboarding.tankerkoenig.de/datenschutz",
+          "coverage": {
+            "bbox": [
+              5.8,
+              47.2,
+              15.1,
+              55.1
+            ]
+          }
+        }
+      ]
+    },
+    "fuel/es": {
+      "$schema": "../schema/fuel.schema.json",
+      "feeds": [
+        {
+          "operator": "minetur",
+          "product": "fuel",
+          "name": "MINETUR fuel prices (Spain)",
+          "format": "minetur",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/",
+              "headers": {
+                "Accept": "application/json"
+              },
+              "cadenceSec": 1800
+            }
+          },
+          "freshnessWindowSec": 86400,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+          "privacyUrl": "https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html"
+        }
+      ]
+    },
+    "fuel/fr": {
+      "$schema": "../schema/fuel.schema.json",
+      "feeds": [
+        {
+          "operator": "prixcarburants",
+          "product": "fuel",
+          "name": "Prix des carburants (France)",
+          "format": "prix-carburants",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json",
+              "cadenceSec": 900
+            }
+          },
+          "freshnessWindowSec": 86400,
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.data.gouv.fr/pages/legal/licences/etalab-2.0",
+          "attribution": "Ministère de l'Économie (prix-carburants.gouv.fr)",
+          "privacyUrl": "https://www.prix-carburants.gouv.fr/rubrique/donnees-personnelles/"
+        }
+      ]
+    },
+    "fuel/global": {
+      "$schema": "../schema/fuel.schema.json",
+      "feeds": [
+        {
+          "operator": "osm",
+          "product": "fuel",
+          "name": "OpenStreetMap filling stations",
+          "format": "overpass",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "${@overpass.url}/api/interpreter",
+              "method": "POST",
+              "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"fuel\"]({south},{west},{north},{east});out center tags;",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "OpenConditions-OsmFuel/1.0 (+https://github.com/openconditions/openconditions)"
+              },
+              "cadenceSec": 3600
+            }
+          },
+          "freshnessWindowSec": 86400,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 30,
+            "perDay": 5000
+          },
+          "onDemand": {
+            "cellDeg": 0.1,
+            "ttlSec": 3600,
+            "maxCellsPerRead": 16,
+            "probe": [
+              8.4,
+              49.01
+            ]
+          },
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "© OpenStreetMap contributors",
+          "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+          "homepage": "https://www.openstreetmap.org/copyright",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "credentials": {
+        "overpass": {
+          "url": {
+            "title": "Overpass URL",
+            "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
+            "default": "https://overpass-api.de"
+          }
+        }
+      }
+    }
+  },
+  "feeds": [
+    {
+      "operator": "econtrol",
+      "product": "fuel",
+      "name": "E-Control Spritpreisrechner (Austria)",
+      "format": "econtrol",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://api.e-control.at/sprit/1.0/search/gas-stations/by-address?latitude={lat}&longitude={lon}&fuelType=DIE&includeClosed=false",
+            "https://api.e-control.at/sprit/1.0/search/gas-stations/by-address?latitude={lat}&longitude={lon}&fuelType=SUP&includeClosed=false",
+            "https://api.e-control.at/sprit/1.0/search/gas-stations/by-address?latitude={lat}&longitude={lon}&fuelType=GAS&includeClosed=false"
+          ],
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 20,
+        "maxRadiusKm": 10
+      },
+      "onDemand": {
+        "cellDeg": 0.1,
+        "ttlSec": 900,
+        "maxCellsPerRead": 9,
+        "probe": [
+          16.37,
+          48.21
+        ]
+      },
+      "license": "NOASSERTION",
+      "attribution": "E-Control (Spritpreisrechner)",
+      "terms": {
+        "url": "https://api.e-control.at/sprit/1.0/doc/index.html",
+        "reviewedAt": "2026-10-03",
+        "note": "No licence or terms published; data.gv.at does not list the fuel API"
+      },
+      "privacyUrl": "https://www.e-control.at/datenschutz",
+      "coverage": {
+        "bbox": [
+          9.5,
+          46.3,
+          17.2,
+          49.1
+        ]
+      },
+      "homepage": "https://api.e-control.at",
+      "id": "at-econtrol-fuel",
+      "domain": "fuel",
+      "region": "at",
+      "file": "feeds/fuel/at.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "AT"
+    },
+    {
+      "operator": "tankerkoenig",
+      "product": "fuel",
+      "name": "Tankerkönig fuel prices (Germany)",
+      "format": "tankerkoenig",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://creativecommons.tankerkoenig.de/json/list.php?lat={lat}&lng={lon}&rad={radiusKm}&sort=dist&type=all&apikey=${api_key}",
+          "cadenceSec": 900
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Tankerkönig API Key",
+          "description": "Tankerkoenig API key for German fuel prices.",
+          "setup": {
+            "url": "https://onboarding.tankerkoenig.de/",
+            "urlLabel": "Request Tankerkönig API key",
+            "steps": [
+              "Open onboarding.tankerkoenig.de (linked from creativecommons.tankerkoenig.de via 'API-Key').",
+              "Enter a working email address and describe your non-commercial use case.",
+              "Agree to the CC BY 4.0 terms (attribution to tankerkoenig.de required).",
+              "Submit the form; registration is reviewed manually and can take a few days.",
+              "Receive the API key by email once approved."
+            ],
+            "cost": "Free for non-commercial use (commercial use needs a paid agreement).",
+            "notes": "Data is CC BY 4.0 (MTS-K) — attribution required. Free-tier limits: 1 request/min, 25 km radius.",
+            "email": {
+              "to": "info@tankerkoenig.de",
+              "subject": "Tankerkönig API key request (non-commercial)",
+              "body": "Hello,\n\nI would like to request a free non-commercial Tankerkönig API key.\n\nUse case: displaying current German fuel prices in a self-hosted, non-commercial OpenMapX map application.\n\nI agree to the CC BY 4.0 terms and will attribute the data to tankerkoenig.de.\n\nThank you."
+            }
+          }
+        }
+      },
+      "auth": {
+        "kind": "none"
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 1,
+        "maxRadiusKm": 25,
+        "keyScope": "instance"
+      },
+      "onDemand": {
+        "cellDeg": 0.25,
+        "ttlSec": 900,
+        "maxCellsPerRead": 4,
+        "probe": [
+          13.4,
+          52.52
+        ]
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Tankerkönig (MTS-K), CC BY 4.0 – https://creativecommons.tankerkoenig.de",
+      "terms": {
+        "url": "https://creativecommons.tankerkoenig.de/",
+        "reviewedAt": "2026-10-03",
+        "note": "API data must not be obtained or passed on by mineral oil companies, filling-station operators or IT providers working for them; a public API cannot exclude them",
+        "redistribution": false
+      },
+      "privacyUrl": "https://onboarding.tankerkoenig.de/datenschutz",
+      "coverage": {
+        "bbox": [
+          5.8,
+          47.2,
+          15.1,
+          55.1
+        ]
+      },
+      "homepage": "https://creativecommons.tankerkoenig.de",
+      "id": "de-tankerkoenig-fuel",
+      "domain": "fuel",
+      "region": "de",
+      "file": "feeds/fuel/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "DE"
+    },
+    {
+      "operator": "minetur",
+      "product": "fuel",
+      "name": "MINETUR fuel prices (Spain)",
+      "format": "minetur",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/",
+          "headers": {
+            "Accept": "application/json"
+          },
+          "cadenceSec": 1800
+        }
+      },
+      "freshnessWindowSec": 86400,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+      "privacyUrl": "https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html",
+      "homepage": "https://sedeaplicaciones.minetur.gob.es",
+      "id": "es-minetur-fuel",
+      "domain": "fuel",
+      "region": "es",
+      "file": "feeds/fuel/es.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "ES"
+        ]
+      },
+      "cadenceSec": 1800,
+      "country": "ES"
+    },
+    {
+      "operator": "prixcarburants",
+      "product": "fuel",
+      "name": "Prix des carburants (France)",
+      "format": "prix-carburants",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 86400,
+      "license": "etalab-2.0",
+      "licenseUrl": "https://www.data.gouv.fr/pages/legal/licences/etalab-2.0",
+      "attribution": "Ministère de l'Économie (prix-carburants.gouv.fr)",
+      "privacyUrl": "https://www.prix-carburants.gouv.fr/rubrique/donnees-personnelles/",
+      "homepage": "https://data.economie.gouv.fr",
+      "id": "fr-prixcarburants-fuel",
+      "domain": "fuel",
+      "region": "fr",
+      "file": "feeds/fuel/fr.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "FR"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "FR"
+    },
+    {
+      "operator": "osm",
+      "product": "fuel",
+      "name": "OpenStreetMap filling stations",
+      "format": "overpass",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"fuel\"]({south},{west},{north},{east});out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmFuel/1.0 (+https://github.com/openconditions/openconditions)"
+          },
+          "cadenceSec": 3600
+        }
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 30,
+        "perDay": 5000
+      },
+      "onDemand": {
+        "cellDeg": 0.1,
+        "ttlSec": 3600,
+        "maxCellsPerRead": 16,
+        "probe": [
+          8.4,
+          49.01
+        ]
+      },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "osm-fuel",
+      "domain": "fuel",
+      "region": "global",
+      "file": "feeds/fuel/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "cadenceSec": 3600
+    }
+  ]
+}

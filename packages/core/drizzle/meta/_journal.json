@@ -428,6 +428,20 @@
       "when": 1791042150903,
       "tag": "0060_feed_catalog",
       "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1791138532682,
+      "tag": "0061_operator_scope_fusion_federation",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1791138536258,
+      "tag": "0062_federation_capture",
+      "breakpoints": true
     }
   ]
 }

@@ -16,6 +16,7 @@
   "dependencies": {
     "@fastify/proxy-addr": "^5.1.0",
     "@openconditions/core": "workspace:*",
+    "@openconditions/fuel": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",

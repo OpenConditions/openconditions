@@ -40,7 +40,7 @@ const registry = buildRegistry([
   ...productionModules,
   {
     name: "crowd-fit",
-    entries: [extendVocabulary({ vocabulary: "source_format", values: ["ocpi", "minetur"] })],
+    entries: [extendVocabulary({ vocabulary: "source_format", values: ["ocpi"] })],
   },
 ]);
 const GRANT_SECRET_VALUE = "observation-claims-test-secret";
@@ -153,7 +153,7 @@ const [live, register] = (
 ];
 const lorenzSite = chargingSite(lorenz, "2026-09-22T12:00:00.000Z");
 const golden = (json("golden/facilities.json") as Rec[]).filter(
-  (r) => (r["provenance"] as Rec)["sourceId"] === "es-minetur",
+  (r) => (r["provenance"] as Rec)["sourceId"] === "es-minetur-fuel",
 );
 
 beforeAll(async () => {
@@ -166,16 +166,17 @@ beforeAll(async () => {
   });
   await syncSources(
     sql,
-    ["de-bw-ocpdb", "es-minetur"].map((id) => ({
+    ["de-bw-ocpdb", "es-minetur-fuel"].map((id) => ({
       id,
       domain: "facilities",
       format: "test",
       product: "facilities",
-      tier: id === "es-minetur" ? "authoritative" : "aggregator",
+      tier: id === "es-minetur-fuel" ? "authoritative" : "aggregator",
       country: "DE",
       operator: id,
       license: "CC-BY-4.0",
       attribution: id,
+      restricted: false,
       cadenceSec: 300,
       freshnessWindowSec: 900,
     })),
@@ -191,7 +192,7 @@ beforeAll(async () => {
   expect(summary.rejected).toEqual([]);
   summary = await writeSnapshot(
     sql,
-    "es-minetur",
+    "es-minetur-fuel",
     {
       features: golden.filter((r) => r["class"] === "feature").map(draftOf),
       observations: golden.filter((r) => r["class"] === "observation").map(draftOf),
@@ -532,7 +533,7 @@ describe("a charge point the operator reports out of order", () => {
 });
 
 describe("a fuel price a driver reads off the pole", () => {
-  const station = golden.find((r) => r["id"] === "oc:feature:es-minetur:3119")!;
+  const station = golden.find((r) => r["id"] === "oc:feature:es-minetur-fuel:3119")!;
   const price = golden.find(
     (r) =>
       r["class"] === "observation" &&
@@ -611,7 +612,7 @@ describe("a regional price a driver reports", () => {
       location: { ...region, admin: { country: "ES" } },
       provenance: {
         origin: "feed",
-        sourceId: "es-minetur",
+        sourceId: "es-minetur-fuel",
         sourceFormat: "minetur",
         accessMode: "bulk",
         recordId: "avg-e5",
@@ -623,10 +624,10 @@ describe("a regional price a driver reports", () => {
       phenomenonTime: { instant: "2026-09-22T11:00:00.000Z" },
       aggregation: "mean",
     };
-    average["id"] = observationId("es-minetur", average as never);
+    average["id"] = observationId("es-minetur-fuel", average as never);
     const summary = await writeSnapshot(
       sql,
-      "es-minetur",
+      "es-minetur-fuel",
       { observations: [average] },
       { registry, instanceId: INSTANCE, now: "2026-09-22T11:10:00.000Z", complete: false },
     );
@@ -651,6 +652,300 @@ describe("a regional price a driver reports", () => {
     expect(res.statusCode).toBe(200);
     const row = await crowdRow((res.json() as { record: { id: string } }).record.id);
     expect(row!.record["location"]).toEqual(average["location"]);
+  }, 60_000);
+});
+
+/**
+ * A mirror whose terms restrict it: its twin of the ministry's station
+ * survives their cluster (its id sorts first), and a station only it knows.
+ * The public scope serves crowd readings, so none may sit where only the
+ * mirror puts a station.
+ */
+describe("a crowd reading never takes a restricted source's location", () => {
+  const MIRROR = "es-fuel-mirror";
+  const station = draftOf(golden.find((r) => r["id"] === "oc:feature:es-minetur-fuel:3119")!);
+  const stationLocation = station["location"] as { geometry: { coordinates: number[] } };
+  const [lon, lat] = stationLocation.geometry.coordinates as [number, number];
+  const mirrored = (local: string, at: [number, number]): Rec => ({
+    ...station,
+    id: `oc:feature:${MIRROR}:${local}`,
+    location: { ...stationLocation, geometry: { type: "Point", coordinates: at } },
+    provenance: {
+      ...(station["provenance"] as Rec),
+      sourceId: MIRROR,
+      recordId: local,
+      attribution: { provider: MIRROR, license: "CC-BY-4.0" },
+    },
+  });
+  const twin = mirrored("3119", [lon + 0.0002, lat]);
+  const lone: Rec = {
+    ...mirrored("lone", [-3.6, 40.45]),
+    name: [{ lang: "es", text: "Gasolinera del espejo" }],
+    externalIds: [{ scheme: "provider", id: "lone", authority: MIRROR }],
+  };
+  /** The mirror's E5 price at the station only it knows: what the crowd reports there. */
+  const lonePrice = (() => {
+    const e5 = draftOf(
+      golden.find(
+        (r) =>
+          r["class"] === "observation" &&
+          (r["subject"] as Rec)["componentKey"] === "e5" &&
+          (r["subject"] as Rec)["featureId"] === "oc:feature:es-minetur-fuel:3119",
+      )!,
+    );
+    const draft: Rec = {
+      ...e5,
+      subject: { kind: "feature", featureId: lone["id"], componentKey: "e5" },
+      location: lone["location"],
+      provenance: lone["provenance"],
+      result: { type: "money", amount: "1.650", currency: "EUR", per: "L" },
+    };
+    delete draft["id"];
+    return { ...draft, id: observationId(MIRROR, draft as never) };
+  })();
+  const region = point(-3.65, 40.42);
+
+  const reportPrice = async (
+    subject: Rec,
+    geometry: unknown,
+    qualifiers?: Rec,
+    reportedAt = "2026-09-22T12:01:00.000Z",
+  ) => {
+    clock.now = "2026-09-22T12:01:00.000Z";
+    const { key, grant } = await reporter();
+    const res = await post(
+      await signReport(
+        registry,
+        claimOf({
+          property: "fuel.price",
+          subject,
+          ...(qualifiers === undefined ? {} : { qualifiers }),
+          result: { type: "money", amount: "1.650", currency: "EUR", per: "L" },
+          geometry,
+          reportedAt,
+        }),
+        key,
+      ),
+      grant,
+    );
+    expect(res.statusCode, res.body).toBe(200);
+    return crowdRow((res.json() as { record: { id: string } }).record.id);
+  };
+
+  const average = (sourceId: string, amount: string, observedAt: string): Rec => {
+    const draft: Rec = {
+      class: "observation",
+      kind: "observation",
+      property: "fuel.price",
+      temporality: "live",
+      subject: { kind: "location" },
+      qualifiers: { product: "e10" },
+      location: { ...region, admin: { country: "ES", subdivision: sourceId } },
+      provenance: {
+        origin: "feed",
+        sourceId,
+        sourceFormat: "minetur",
+        accessMode: "bulk",
+        recordId: "avg-e10",
+        attribution: { provider: sourceId, license: "CC-BY-4.0" },
+        privacy: { class: "authoritative" },
+      },
+      freshness: { fetchedAt: "2026-09-22T11:10:00.000Z" },
+      result: { type: "money", amount, currency: "EUR", per: "L" },
+      phenomenonTime: { instant: observedAt },
+      aggregation: "mean",
+    };
+    return { ...draft, id: observationId(sourceId, draft as never) };
+  };
+  /** The mirror's average for a province, keyed by its geocode rather than its geometry. */
+  const province = {
+    ...point(-3.5, 40.3),
+    admin: { country: "ES", geocodes: [{ scheme: "iso3166-2", code: "ES-M" }] },
+  };
+  const provinceAverage = (() => {
+    const { id: _id, ...draft } = average(MIRROR, "1.630", "2026-09-22T11:05:00.000Z");
+    const placed: Rec = {
+      ...draft,
+      location: province,
+      provenance: { ...(draft["provenance"] as Rec), recordId: "avg-e10-es-m" },
+    };
+    return { ...placed, id: observationId(MIRROR, placed as never) };
+  })();
+
+  const refusal = async (subject: Rec, geometry: unknown, qualifiers?: Rec) => {
+    clock.now = "2026-09-22T12:01:00.000Z";
+    const { key, grant } = await reporter();
+    const res = await post(
+      await signReport(
+        registry,
+        claimOf({
+          property: "fuel.price",
+          subject,
+          ...(qualifiers === undefined ? {} : { qualifiers }),
+          result: { type: "money", amount: "1.650", currency: "EUR", per: "L" },
+          geometry,
+          reportedAt: "2026-09-22T12:01:00.000Z",
+        }),
+        key,
+      ),
+      grant,
+    );
+    return res;
+  };
+
+  beforeAll(async () => {
+    await syncSources(
+      sql,
+      ["de-bw-ocpdb", "es-minetur-fuel", MIRROR].map((id) => ({
+        id,
+        domain: "facilities",
+        format: "test",
+        product: "facilities",
+        tier: id === "de-bw-ocpdb" ? "aggregator" : "authoritative",
+        country: "ES",
+        operator: id,
+        license: "CC-BY-4.0",
+        attribution: id,
+        restricted: id === MIRROR,
+        cadenceSec: 300,
+        freshnessWindowSec: 900,
+      })),
+    );
+    const summary = await writeSnapshot(
+      sql,
+      MIRROR,
+      {
+        features: [twin, lone],
+        // The mirror's regional average is newer than the ministry's.
+        observations: [
+          average(MIRROR, "1.640", "2026-09-22T11:05:00.000Z"),
+          provinceAverage,
+          lonePrice,
+        ],
+      },
+      { registry, instanceId: INSTANCE, now: "2026-09-22T11:10:00.000Z", complete: true },
+    );
+    expect(summary.rejected).toEqual([]);
+  }, 60_000);
+
+  it("lands a feature report at the cluster's public member, not the restricted survivor", async () => {
+    const [cluster] = await sql<{ survivor_id: string }[]>`
+      SELECT survivor_id FROM conditions.feature_canonical
+       WHERE ${twin["id"] as string} = ANY(member_ids)`;
+    expect(cluster!.survivor_id).toBe(twin["id"]);
+    const row = await reportPrice(
+      { featureId: twin["id"], componentKey: "e5" },
+      stationLocation.geometry,
+    );
+    expect((row!.record["location"] as Rec)["geometry"]).toEqual(stationLocation.geometry);
+  }, 60_000);
+
+  it("refuses a feature report from beyond reach of a station only a restricted source has", async () => {
+    // Five kilometres north of the mirror's lone station.
+    const res = await refusal(
+      { featureId: lone["id"], componentKey: "e5" },
+      { type: "Point", coordinates: [-3.6, 40.495] },
+    );
+    expect(res.statusCode, res.body).toBe(422);
+    expect(res.json()).toMatchObject({ issues: [{ code: "out_of_reach" }] });
+  }, 60_000);
+
+  it("lands a feature report a restricted source alone has at the reporter's coarse cell", async () => {
+    const stood = { type: "Point", coordinates: [-3.6001, 40.45] };
+    const row = await reportPrice({ featureId: lone["id"], componentKey: "e5" }, stood);
+    const location = row!.record["location"] as Rec;
+    expect(location).toMatchObject({ geometryOrigin: "crowd_device", fuzziness: "low_res" });
+    // The centre of the kilometre cell the reporter stood in, not the device's point.
+    const step = 1000 / 111_320;
+    const centre = (v: number) => (Math.floor(v / step) + 0.5) * step;
+    const [x, y] = (location["geometry"] as { coordinates: [number, number] }).coordinates;
+    expect(location["geometry"]).not.toEqual(stood);
+    expect(x).toBeCloseTo(centre(-3.6001), 9);
+    expect(y).toBeCloseTo(centre(40.45), 9);
+    // The mirror's equal price does not vouch for it: that would publish what it holds.
+    expect(row!.evidence_state).toBe("self_reported");
+  }, 60_000);
+
+  it("refuses a place report from beyond reach of a series only a restricted source has", async () => {
+    // The reporter names the province by its geocode, placed where they stand,
+    // five kilometres north of where the mirror's series is.
+    const stood = { type: "Point", coordinates: [-3.5, 40.345] };
+    const res = await refusal(
+      {
+        location: {
+          geometry: stood,
+          extent: "point",
+          geometryOrigin: "crowd_device",
+          fuzziness: "low_res",
+          admin: province.admin,
+        },
+      },
+      stood,
+      { product: "e10" },
+    );
+    expect(res.statusCode, res.body).toBe(422);
+    expect(res.json()).toMatchObject({ issues: [{ code: "out_of_reach" }] });
+  }, 60_000);
+
+  it("lands a geocode-keyed place only restricted sources publish at its coarse cell, keyed as theirs", async () => {
+    // The reporter names the province by its geocode, placed where they stand,
+    // within reach of the mirror's series.
+    const stood = { type: "Point", coordinates: [-3.5003, 40.3002] };
+    const row = await reportPrice(
+      {
+        location: {
+          geometry: stood,
+          extent: "point",
+          geometryOrigin: "crowd_device",
+          fuzziness: "exact",
+          admin: province.admin,
+        },
+      },
+      stood,
+      { product: "e10" },
+    );
+    const location = row!.record["location"] as Rec;
+    expect(location["geometry"]).not.toEqual(stood);
+    expect(location).toMatchObject({ fuzziness: "low_res", admin: province.admin });
+    const step = 1000 / 111_320;
+    const centre = (v: number) => (Math.floor(v / step) + 0.5) * step;
+    const [x, y] = (location["geometry"] as { coordinates: [number, number] }).coordinates;
+    expect(x).toBeCloseTo(centre(-3.5003), 9);
+    expect(y).toBeCloseTo(centre(40.3002), 9);
+    const keys = await sql<{ source_id: string; subject_key: string }[]>`
+      SELECT source_id, subject_key FROM conditions.observation_latest
+       WHERE subject_key = 'location:iso3166-2:ES-M' AND property = 'fuel.price'
+         AND source_id IN ('crowd', ${MIRROR})`;
+    expect(keys.map((k) => k.source_id).sort()).toEqual(["crowd", MIRROR].sort());
+  }, 60_000);
+
+  it("lands a place report at a public series' location, and else at the reporter's", async () => {
+    const reported = { ...region, geometryOrigin: "crowd_device", fuzziness: "low_res" };
+    const onlyRestricted = await reportPrice(
+      { location: reported },
+      region.geometry,
+      { product: "e10" },
+      "2026-09-22T12:00:45.000Z",
+    );
+    expect(onlyRestricted!.record["location"]).toEqual(reported);
+
+    const summary = await writeSnapshot(
+      sql,
+      "es-minetur-fuel",
+      { observations: [average("es-minetur-fuel", "1.660", "2026-09-22T11:00:00.000Z")] },
+      { registry, instanceId: INSTANCE, now: "2026-09-22T11:10:00.000Z", complete: false },
+    );
+    expect(summary.rejected).toEqual([]);
+    const withPublic = await reportPrice(
+      { location: reported },
+      region.geometry,
+      { product: "e10" },
+      "2026-09-22T12:01:00.000Z",
+    );
+    expect((withPublic!.record["location"] as Rec)["admin"]).toEqual({
+      country: "ES",
+      subdivision: "es-minetur-fuel",
+    });
   }, 60_000);
 });
 

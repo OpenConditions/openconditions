@@ -10,6 +10,7 @@
  * never sees them. All MAC checks go through `crypto.subtle.verify`, which is
  * a constant-time comparison; grant strings are never compared with `===`.
  */
+import { strictCredential } from "@openconditions/ingest-framework";
 import { ATTESTER_POLICY } from "./policy.js";
 
 const encoder = new TextEncoder();
@@ -117,7 +118,9 @@ export async function verifyReportingGrant(
 /**
  * Resolves the grant secret from the environment.
  *
- * - `OPENCONDITIONS_GRANT_SECRET` set (non-empty): its UTF-8 bytes.
+ * - `OPENCONDITIONS_GRANT_SECRET` (else the file `OPENCONDITIONS_GRANT_SECRET_FILE`
+ *   names) set and non-blank: its trimmed UTF-8 bytes. A file that is named
+ *   but unreadable or empty THROWS, naming the file and the cause.
  * - Unset in production (`NODE_ENV=production`): THROWS — fail closed, the
  *   service must not start with restart-scoped grants in production.
  * - Unset elsewhere: a random ephemeral secret is generated and `warn` is
@@ -128,8 +131,8 @@ export function resolveGrantSecret(
   env: Record<string, string | undefined>,
   warn: (msg: string) => void,
 ): Uint8Array {
-  const configured = env["OPENCONDITIONS_GRANT_SECRET"];
-  if (configured !== undefined && configured !== "") {
+  const configured = strictCredential(env, "OPENCONDITIONS_GRANT_SECRET");
+  if (configured !== undefined) {
     return encoder.encode(configured);
   }
   if (env["NODE_ENV"] === "production") {

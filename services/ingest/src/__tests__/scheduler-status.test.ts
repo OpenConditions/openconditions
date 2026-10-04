@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { FeedStatusStore } from "../feed-status.js";
 import { upsertSourceStatus } from "../pipeline/source-status.js";
 import { runFeedOnce, scheduleFeed } from "../scheduler.js";
+import { InFlight } from "../shutdown.js";
 import { repoFeed, testFeed } from "./helpers/catalog.js";
 
 vi.mock("../pipeline/source-status.js", async (importOriginal) => ({
@@ -37,6 +38,19 @@ describe("scheduleFeed", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("never polls an on-demand feed: reads fetch its cells", () => {
+    const sql = {} as never;
+    const fetchSpy = vi.fn();
+    const job = scheduleFeed(repoFeed("osm-fuel"), {
+      sql,
+      statusStore: new FeedStatusStore(),
+      deps: { sql, fetch: fetchSpy, now: () => "2026-10-03T00:00:00.000Z" },
+      env: {},
+    });
+    expect(job).toBeUndefined();
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("schedules a feed once its credential is set", () => {
     const sql = {} as never;
     const job = scheduleFeed(repoFeed("us-oh-ohgo-flow"), {
@@ -47,6 +61,26 @@ describe("scheduleFeed", () => {
     });
     try {
       expect(job).toBeDefined();
+    } finally {
+      job?.stop();
+    }
+  });
+
+  it("tracks each poll in flight, so shutdown waits for it", async () => {
+    const sql = {} as never;
+    const inFlight = new InFlight();
+    const track = vi.spyOn(inFlight, "track");
+    const job = scheduleFeed(repoFeed("us-oh-ohgo-flow"), {
+      sql,
+      statusStore: new FeedStatusStore(),
+      deps: { sql, fetch: vi.fn(), now: () => "2026-10-03T00:00:00.000Z" },
+      env: { US_OH_OHGO_API_KEY: "key" },
+      inFlight,
+    });
+    try {
+      await job!.trigger();
+      expect(track).toHaveBeenCalledOnce();
+      await inFlight.done;
     } finally {
       job?.stop();
     }

@@ -393,11 +393,14 @@ describe("propagateSegmentSpeed", () => {
         free_flow_kph: number;
         speed_ratio: number;
         los: string;
+        contributing: string[] | null;
       }[]
-    >`SELECT is_estimated, confidence, current_kph, free_flow_kph, speed_ratio, los
+    >`SELECT is_estimated, confidence, current_kph, free_flow_kph, speed_ratio, los, contributing
         FROM conditions.segment_speed WHERE segment_id = '901:f'`;
     expect(b).toHaveLength(1);
     expect(b[0]!.is_estimated).toBe(true);
+    // The estimate keeps its measurement's contributors, so scope reaches it.
+    expect(b[0]!.contributing).toEqual(["test-source"]);
     expect(b[0]!.confidence).toBe("estimated");
     expect(Number(b[0]!.current_kph)).toBeCloseTo(40, 5);
     expect(Number(b[0]!.free_flow_kph)).toBeCloseTo(120, 5);

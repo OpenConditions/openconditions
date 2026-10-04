@@ -222,17 +222,18 @@ describe("GET /peer/outbox", () => {
     }
   }, 30_000);
 
-  it("drops share-alike records unless the subscriber accepts them", async () => {
+  it("never serves a record whose licence is not public, whatever the subscriber asks", async () => {
     await seed("route-odbl", { license: "ODbL-1.0" });
     const app = await build({ sql, env: ENABLED_ENV, logger: false, now: () => NOW });
     try {
-      const permissive = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
-      expect(ids(permissive.json() as OutboxPage)).not.toContain(situationId("route-odbl"));
-      const all = await app.inject({
+      const publicPage = await app.inject({ method: "GET", url: "/peer/outbox?limit=500" });
+      expect(ids(publicPage.json() as OutboxPage)).not.toContain(situationId("route-odbl"));
+      // No query parameter widens the scope: an unknown one is ignored.
+      const asked = await app.inject({
         method: "GET",
-        url: "/peer/outbox?limit=500&permissiveOnly=false",
+        url: "/peer/outbox?limit=500&publicOnly=false",
       });
-      expect(ids(all.json() as OutboxPage)).toContain(situationId("route-odbl"));
+      expect(ids(asked.json() as OutboxPage)).not.toContain(situationId("route-odbl"));
     } finally {
       await app.close();
     }
@@ -243,14 +244,13 @@ describe("GET /peer/outbox", () => {
     try {
       const res = await app.inject({
         method: "GET",
-        url: "/peer/outbox?limit=1&bbox=4,50,6,54&classes=situation&kinds=incident&permissiveOnly=false",
+        url: "/peer/outbox?limit=1&bbox=4,50,6,54&classes=situation&kinds=incident",
       });
       const page = res.json() as OutboxPage;
       expect(page.next).toContain("after=");
       expect(page.next).toContain("bbox=4%2C50%2C6%2C54");
       expect(page.next).toContain("classes=situation");
       expect(page.next).toContain("kinds=incident");
-      expect(page.next).toContain("permissiveOnly=false");
     } finally {
       await app.close();
     }

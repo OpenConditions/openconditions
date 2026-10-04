@@ -15,12 +15,7 @@
     "networkAliases": ["openconditions-contributions-api"],
     "environment": {
       "PORT": "4200",
-      "HOST": "0.0.0.0",
-      "DATABASE_URL": "postgresql://postgres:${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set}@postgis:5432/openmapx",
-      "OPENCONDITIONS_GRANT_SECRET": "${OPENCONDITIONS_GRANT_SECRET:?OPENCONDITIONS_GRANT_SECRET must be set}",
-      "OPENCONDITIONS_REVIEWER_TOKEN": "${OPENCONDITIONS_REVIEWER_TOKEN:?OPENCONDITIONS_REVIEWER_TOKEN must be set}",
-      "OPENCONDITIONS_ISSUER_NAME": "${OPENCONDITIONS_ISSUER_NAME:-}",
-      "OPENCONDITIONS_CROSS_VALIDATE_SWEEP": "${OPENCONDITIONS_CROSS_VALIDATE_SWEEP:-}"
+      "HOST": "0.0.0.0"
     },
     "memory": "${OPENCONDITIONS_CONTRIBUTIONS_MEMORY:-1g}",
     "restart": "unless-stopped",
@@ -44,5 +39,70 @@
   "ownsSchema": "conditions",
   "ui": {
     "category": "data"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "DATABASE_URL": {
+        "type": "string",
+        "title": "Database URL",
+        "description": "Required. PostgreSQL/PostGIS connection URL of the shared OpenMapX database, e.g. postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx. The service refuses to start without it.",
+        "x-openmapx-secret": true
+      },
+      "OPENCONDITIONS_GRANT_SECRET": {
+        "type": "string",
+        "title": "Reporting grant secret",
+        "description": "Required. HMAC secret that signs reporting grants; generate with openssl rand -hex 32. The service refuses to start without it.",
+        "x-openmapx-secret": true
+      },
+      "OPENCONDITIONS_REVIEWER_TOKEN": {
+        "type": "string",
+        "title": "Reviewer token",
+        "description": "Required. Bearer token of the operator reviewer surface; generate with openssl rand -hex 32. The service refuses to start without it.",
+        "x-openmapx-secret": true
+      },
+      "OPENCONDITIONS_INSTANCE_ID": {
+        "type": "string",
+        "title": "Instance id",
+        "description": "This instance's stable id, the namespace of the crowd records it lands and its crowd's credit: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it to the same value as the ingest service's. Empty: local.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_ISSUER_NAME": {
+        "type": "string",
+        "title": "Issuer name",
+        "description": "TokenChallenge issuer name. Empty: contributions.openconditions.org.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_CROSS_VALIDATE_SWEEP": {
+        "type": "string",
+        "title": "Cross-validate sweep",
+        "description": "\"off\" stops the sweep that re-runs cross-validation over unresolved crowd reports when an official feed lands later. Empty: on.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_CROWD_LICENSE": {
+        "type": "string",
+        "title": "Crowd licence",
+        "description": "The licence this instance's crowd reports are published under: an SPDX id or LicenseRef-<name> of the licence registry, case exact. An unknown id fails boot. Empty: ODbL-1.0.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_CROWD_SOURCE_URI": {
+        "type": "string",
+        "title": "Crowd credit URL",
+        "description": "The link the crowd's credit carries on every report this instance lands. Empty: none.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_ALLOW_POLICE_CATEGORY": {
+        "type": "string",
+        "title": "Allow police-presence reports",
+        "description": "\"true\" lets crowd reports of police presence land. Empty: refused.",
+        "default": "",
+        "x-openmapx-secret": false
+      }
+    }
   }
 }

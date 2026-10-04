@@ -68,6 +68,18 @@ export const SOURCE_ID_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 export const INSTANCE_ID_PATTERN = /^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$/;
 /** The sentinel source id of fused observation rows. */
 export const FUSED_SOURCE_ID = "@fused";
+/**
+ * The sentinel source id of a public fusion: the fusion over a subject's
+ * public contributors only, kept beside the `@fused` row when that one used
+ * a contributor the public scope may not see.
+ */
+export const FUSED_PUBLIC_SOURCE_ID = "@fused-public";
+/** Every fused row's source id. */
+export const FUSED_SOURCE_IDS = [FUSED_SOURCE_ID, FUSED_PUBLIC_SOURCE_ID] as const;
+export type FusedSourceId = (typeof FUSED_SOURCE_IDS)[number];
+/** Whether a source id is a fused row's. */
+export const isFusedSourceId = (sourceId: string): sourceId is FusedSourceId =>
+  (FUSED_SOURCE_IDS as readonly string[]).includes(sourceId);
 
 export const GrantState = z.enum(GRANT_STATES);
 export const EvidenceState = z.enum(EVIDENCE_STATES);
@@ -137,8 +149,8 @@ export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
   return z
     .strictObject({
       origin: z.enum(ORIGINS),
-      /** feed id | "crowd" | instance id | "@fused" (fused observation rows only). */
-      sourceId: z.union([z.literal(FUSED_SOURCE_ID), z.string().regex(INSTANCE_ID_PATTERN)]),
+      /** feed id | "crowd" | instance id | "@fused" or "@fused-public" (fused observation rows only). */
+      sourceId: z.union([z.enum(FUSED_SOURCE_IDS), z.string().regex(INSTANCE_ID_PATTERN)]),
       sourceFormat: vocab("source_format"),
       accessMode: z.enum(ACCESS_MODES),
       /** Source-local id. */
@@ -202,11 +214,11 @@ export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
           message: 'a crowd record\'s sourceId is "crowd"',
         });
       }
-      if (p.sourceId === FUSED_SOURCE_ID && p.origin !== "derived") {
+      if (isFusedSourceId(p.sourceId) && p.origin !== "derived") {
         ctx.addIssue({
           code: "custom",
           path: ["origin"],
-          message: 'fused rows ("@fused") have origin "derived"',
+          message: 'fused rows ("@fused", "@fused-public") have origin "derived"',
         });
       }
     });

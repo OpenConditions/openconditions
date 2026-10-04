@@ -1,6 +1,11 @@
 import { createHash } from "node:crypto";
 import { rm } from "node:fs/promises";
-import { downloadLargeArtifact } from "@openconditions/ingest-framework";
+import {
+  downloadLargeArtifact,
+  type SharedCredentials,
+  settingUrl,
+  sharedCredentialValue,
+} from "@openconditions/ingest-framework";
 import { type OsmWay, parseOverpassWays } from "@openconditions/roads";
 import type postgres from "postgres";
 import { loadHighwayClasses, overpassHighwayRegex } from "./highway-classes.js";
@@ -120,32 +125,38 @@ export interface OsmWaySource {
   fetchRegion(region: OsmRegion): Promise<OsmWay[]>;
 }
 
-const DEFAULT_OVERPASS_URL = "https://overpass-api.de/api/interpreter";
+/** The catalogue setting naming the Overpass instance: its base URL. */
+const OVERPASS_SETTING = "@overpass.url";
 
 /**
- * Normalizes an Overpass endpoint to the `…/api/interpreter` path so a bare
- * origin (`http://overpass`) and a full endpoint (`http://overpass/api/interpreter`)
- * resolve identically. Mirrors the openmapx-side client (which also accepts
- * either form) so a shared `OVERPASS_URL` behaves the same for both — without OC
- * taking a dependency on openmapx's `@openmapx/core`.
+ * The readers of a group of settings that are no feed, by group: the
+ * road-graph import and the speed sensors' maxspeed lookup query the
+ * `overpass` group's instance. `pnpm gen:credentials` names them beside the
+ * feeds that read the group.
  */
-function normalizeOverpassUrl(url: string): string {
-  const trimmed = url.replace(/\/$/, "");
-  return trimmed.endsWith("/api/interpreter") ? trimmed : `${trimmed}/api/interpreter`;
-}
+export const SETTING_READERS: Readonly<Record<string, readonly string[]>> = {
+  overpass: ["osm-import", "osm-maxspeed"],
+};
 
 /**
- * Resolves the Overpass endpoint from `OVERPASS_URL`, falling back to the
- * public instance when unset or empty (Compose's `${VAR:-}` unset-injection).
- * A self-hoster running their own Overpass (e.g. a planet instance already on
- * the stack) can point large per-region pulls at it to avoid the public
- * server's fair-use budget and client-timeout risk on heavy bboxes. The value
- * may be a bare origin or a full `…/api/interpreter` endpoint — both normalize
- * to the same interpreter URL.
+ * The Overpass interpreter this instance queries: the catalogue's
+ * `@overpass.url` (`OVERPASS_URL`, else its default, the public instance)
+ * joined to `/api/interpreter` by `settingUrl`, exactly as the OpenStreetMap
+ * feeds build it, so the road-graph import, the maxspeed lookup and those feeds
+ * always query one Overpass. The value may be the base URL or the full
+ * interpreter URL, as OpenMapX's own `OVERPASS_URL` may. A self-hoster points
+ * it at their own instance to spare the public server's fair-use budget on
+ * heavy region pulls. Throws when the catalogue declares no such setting.
  */
-export function overpassUrl(env: NodeJS.ProcessEnv = process.env): string {
-  const raw = env["OVERPASS_URL"];
-  return raw != null && raw !== "" ? normalizeOverpassUrl(raw) : DEFAULT_OVERPASS_URL;
+export function overpassInterpreterUrl(
+  shared: SharedCredentials,
+  env: NodeJS.ProcessEnv = process.env,
+): string {
+  const base = sharedCredentialValue(shared.groups, OVERPASS_SETTING, env);
+  if (base === undefined) {
+    throw new Error(`the feed catalogue declares no ${OVERPASS_SETTING} setting`);
+  }
+  return settingUrl(base, "/api/interpreter");
 }
 
 // Distinct from osm-maxspeed.ts's per-sensor `around()` lookups, so
@@ -166,11 +177,12 @@ function overpassQuery(region: OsmRegion): string {
  * wrapped in `guardedFetch`) — this module never opens a bare socket.
  * `Accept-Encoding: gzip` and a distinct User-Agent are required by Overpass
  * etiquette for a query this size (NL alone is ~92k ways / ~87 MB raw).
+ * `interpreterUrl` is `overpassInterpreterUrl`'s.
  */
-export function overpassSource(fetchFn: typeof fetch): OsmWaySource {
+export function overpassSource(fetchFn: typeof fetch, interpreterUrl: string): OsmWaySource {
   return {
     async fetchRegion(region: OsmRegion): Promise<OsmWay[]> {
-      const res = await fetchFn(overpassUrl(), {
+      const res = await fetchFn(interpreterUrl, {
         method: "POST",
         headers: {
           "Content-Type": "text/plain",

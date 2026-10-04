@@ -1,10 +1,11 @@
 import { listCanonicalFeatures } from "@openconditions/core";
 import { observationId } from "@openconditions/model";
-import { writeSnapshot } from "@openconditions/storage";
+import { refreshFused, writeSnapshot } from "@openconditions/storage";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
+import { registerScope } from "../api/scope.js";
 import {
   facilitiesRegistry,
   goldenFacilities,
@@ -19,6 +20,7 @@ import {
 } from "./helpers/facilities.js";
 import { seedHourly, siteKey, speedSeriesId, writeSiteReadings } from "./helpers/flow-series.js";
 import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
+import { situationDraft, writeSituations } from "./helpers/situations.js";
 
 /**
  * The feature, offer and observation routes over the facilities golden
@@ -33,8 +35,11 @@ let golden: Map<string, SourceDrafts>;
 
 type Rec = Record<string, unknown>;
 
-/** The API's clock: after the facilities were fetched, before the on-demand prices lapse. */
-const READ_AT = "2026-09-22T11:30:00.000Z";
+/**
+ * The API's clock: after the facilities were fetched (11:10), before the
+ * on-demand prices lapse (E-Control's 15 minutes later).
+ */
+const READ_AT = "2026-09-22T11:20:00.000Z";
 
 beforeAll(async () => {
   db = await createRestrictionDatabase();
@@ -79,8 +84,17 @@ async function walk(path: string, query: string, limit: number): Promise<string[
   return seen;
 }
 
-const allFeatureIds = () =>
-  [...golden.values()].flatMap((d) => d.features.map((f) => f["id"] as string)).sort();
+/** E-Control publishes no licence (NOASSERTION), so the public scope withholds its records. */
+const UNLICENSED = "at-econtrol-fuel";
+
+/** The golden sources the public scope serves. */
+const publicGolden = () =>
+  [...golden.entries()].filter(([source]) => source !== UNLICENSED).map(([, drafts]) => drafts);
+
+const publicFeatureIds = () =>
+  publicGolden()
+    .flatMap((d) => d.features.map((f) => f["id"] as string))
+    .sort();
 
 /** Copies of a golden car park of `source` with local ids `locals`. */
 function carParks(source: string, locals: readonly string[], over: Rec = {}): Rec[] {
@@ -120,10 +134,10 @@ describe("GET /features", () => {
   beforeAll(reset, 120_000);
 
   it("walks every live feature once, page by page, without components unless asked", async () => {
-    expect((await walk("/features", "", 4)).sort()).toEqual(allFeatureIds());
-    const { body } = await get(`/features?source=es-minetur`);
+    expect((await walk("/features", "", 4)).sort()).toEqual(publicFeatureIds());
+    const { body } = await get(`/features?source=es-minetur-fuel`);
     expect((body["records"] as Rec[]).every((r) => r["components"] === undefined)).toBe(true);
-    const expanded = await get(`/features?source=es-minetur&expand=components`);
+    const expanded = await get(`/features?source=es-minetur-fuel&expand=components`);
     const station = (expanded.body["records"] as Rec[]).find((r) => r["id"] === STATION)!;
     expect((station["components"] as Rec[]).map((c) => c["key"])).toContain("e5");
   });
@@ -131,13 +145,14 @@ describe("GET /features", () => {
   it("filters by box, kind, type, domain, source and origin", async () => {
     const list = async (query: string) => ids((await get(`/features?${query}`)).body).sort();
     expect(await list("bbox=-4,40,-3,41")).toEqual(
-      [STATION, TWIN, "oc:feature:es-minetur:15493"].sort(),
+      [STATION, TWIN, "oc:feature:es-minetur-fuel:15493"].sort(),
     );
     expect(await list("kind=charging_site")).toEqual([
       "oc:feature:de-bw-ocpdb:72555",
       "oc:feature:de-bw-ocpdb:72557",
     ]);
-    expect(await list("source=it-mimit,at-econtrol")).toHaveLength(3);
+    expect(await list("source=it-mimit,es-minetur-fuel")).toHaveLength(3);
+    expect(await list(`source=${UNLICENSED}`)).toEqual([]);
     expect(await list("origin=crowd")).toEqual([]);
     expect(await list("domain=roads")).toEqual([]);
     expect(await list("kind=fuel_station&type=nothing")).toEqual([]);
@@ -157,7 +172,11 @@ describe("GET /features", () => {
         return [] as T;
       },
     };
-    await listCanonicalFeatures(explaining, { bbox: [-4, 40, -3, 41], limit: 10 });
+    await listCanonicalFeatures(explaining, {
+      scope: "public",
+      bbox: [-4, 40, -3, 41],
+      limit: 10,
+    });
     // The box picks the features, and each one's cluster is looked up by
     // member: no walk over every cluster in id order.
     expect(plans[0]).toMatch(/idx_feature_geom/);
@@ -166,7 +185,7 @@ describe("GET /features", () => {
 
   it("serves the canonical view: one record per cluster, carrying its members", async () => {
     const canonical = await walk("/features", "canonical=1", 3);
-    expect(canonical).toHaveLength(allFeatureIds().length - 1);
+    expect(canonical).toHaveLength(publicFeatureIds().length - 1);
     expect(canonical.every((id) => id.startsWith(`oc:feature:${INSTANCE}:`))).toBe(true);
     const { body } = await get(
       `/features?canonical=1&bbox=-3.4815,40.528,-3.4805,40.5285&expand=components`,
@@ -176,7 +195,7 @@ describe("GET /features", () => {
     const provenance = station!["provenance"] as Rec;
     expect(provenance["sourceId"]).toBe("es-fuel-test");
     expect(provenance["mergedSources"]).toEqual([
-      expect.objectContaining({ source: "es-minetur", recordId: STATION, link: "same_asset" }),
+      expect.objectContaining({ source: "es-minetur-fuel", recordId: STATION, link: "same_asset" }),
     ]);
     expect(provenance["derivedFrom"]).toEqual({
       records: [
@@ -187,8 +206,10 @@ describe("GET /features", () => {
       version: "1",
     });
     const keys = (station!["components"] as Rec[]).map((c) => c["key"]);
-    expect(keys).toEqual(expect.arrayContaining(["e5", "es-minetur/diesel", "es-minetur/lpg"]));
-    expect(keys).not.toContain("es-minetur/e5");
+    expect(keys).toEqual(
+      expect.arrayContaining(["e5", "es-minetur-fuel/diesel", "es-minetur-fuel/lpg"]),
+    );
+    expect(keys).not.toContain("es-minetur-fuel/e5");
   });
 
   it("withholds share-alike records, and a share-alike member's traces in the canonical view", async () => {
@@ -247,6 +268,250 @@ describe("GET /features", () => {
   });
 });
 
+describe("GET /features with expand=latest and offers", () => {
+  const TOKEN = "operator-token-of-the-expand-suite-0123456789";
+  let scoped: ReturnType<typeof Fastify>;
+
+  beforeAll(async () => {
+    await reset();
+    scoped = Fastify();
+    registerScope(scoped, TOKEN);
+    registerApiRoutes(scoped, sql, { registry: facilitiesRegistry, now: () => new Date(READ_AT) });
+    await scoped.ready();
+  }, 120_000);
+
+  afterAll(async () => {
+    await scoped?.close();
+  });
+
+  const as = async (url: string, operator: boolean) => {
+    const res = await scoped.inject({
+      method: "GET",
+      url,
+      ...(operator ? { headers: { authorization: `Bearer ${TOKEN}` } } : {}),
+    });
+    return { res, body: res.json() as Rec };
+  };
+  const latestOf = (body: Rec, id: string) => (body["latest"] as Record<string, Rec[]>)[id]!;
+  const byKey = (readings: Rec[]) =>
+    Object.fromEntries(readings.map((r) => [(r["componentKey"] as string | undefined) ?? "", r]));
+  const STATION_BOX = "bbox=-3.4815,40.528,-3.4805,40.5285";
+
+  it("expand=latest returns each feature's latest readings, component keys included", async () => {
+    const { res, body } = await get("/features?source=es-minetur-fuel&expand=latest");
+    expect(res.statusCode).toBe(200);
+    expect(body["offers"]).toBeUndefined();
+    expect((body["records"] as Rec[]).every((r) => r["components"] === undefined)).toBe(true);
+    expect(Object.keys(body["latest"] as Rec).sort()).toEqual(ids(body).sort());
+    const station = byKey(latestOf(body, STATION));
+    expect(Object.keys(station).sort()).toEqual(["diesel", "e5", "hvo100", "lpg", "sp98"]);
+    const e5 = golden
+      .get("es-minetur-fuel")!
+      .observations.find(
+        (o) =>
+          (o["subject"] as Rec)["featureId"] === STATION &&
+          (o["subject"] as Rec)["componentKey"] === "e5",
+      )!;
+    expect(station["e5"]).toEqual({
+      property: "fuel.price",
+      componentKey: "e5",
+      result: e5["result"],
+      phenomenonTime: e5["phenomenonTime"],
+      source: "es-minetur-fuel",
+    });
+    const both = await get("/features?source=es-minetur-fuel&expand=components,latest");
+    expect((both.body["records"] as Rec[])[0]!["components"]).toBeDefined();
+  });
+
+  it("in canonical mode a fused reading stands in for its members' readings", async () => {
+    const { body } = await get(`/features?canonical=1&${STATION_BOX}&expand=latest,components`);
+    const [station] = body["records"] as Rec[];
+    const readings = latestOf(body, station!["id"] as string);
+    const keys = (station!["components"] as Rec[]).map((c) => c["key"] as string);
+    // One reading per canonical component, keyed as the canonical record keys it.
+    expect(readings.map((r) => r["componentKey"]).sort()).toEqual([...keys].sort());
+    expect(new Set(readings.map((r) => r["source"]))).toEqual(new Set(["@fused"]));
+    expect(byKey(readings)["es-minetur-fuel/diesel"]).toMatchObject({ property: "fuel.price" });
+  });
+
+  it("expand=offers returns the live offers of a feature and its components", async () => {
+    const { body } = await get("/features?kind=charging_site&expand=offers");
+    const offers = body["offers"] as Record<string, Rec[]>;
+    expect(offers["oc:feature:de-bw-ocpdb:72555"]!.map((o) => o["id"]).sort()).toEqual([
+      "oc:offer:de-bw-ocpdb:138586",
+      "oc:offer:de-bw-ocpdb:138587",
+    ]);
+    expect(offers["oc:feature:de-bw-ocpdb:72557"]).toEqual([]);
+    expect(body["latest"]).toBeUndefined();
+    const canonical = await get("/features?canonical=1&kind=charging_site&expand=offers");
+    const counts = Object.values(canonical.body["offers"] as Record<string, Rec[]>)
+      .map((o) => o.length)
+      .sort();
+    expect(counts).toEqual([0, 2]);
+  });
+
+  it("expand honours public scope for readings and offers", async () => {
+    await sql`UPDATE conditions.source SET restricted = true WHERE id = 'es-fuel-test'`;
+    await sql`UPDATE conditions.offer
+                 SET record = jsonb_set(record, '{provenance,attribution,license}', '"ODbL-1.0"')
+               WHERE id = 'oc:offer:de-bw-ocpdb:138586'`;
+    try {
+      const url = `/features?canonical=1&${STATION_BOX}&expand=latest`;
+      const shown = await as(url, false);
+      const [station] = shown.body["records"] as Rec[];
+      const readings = latestOf(shown.body, station!["id"] as string);
+      // The fused E5 price has a restricted contributor: the public member's own reading stands.
+      expect(byKey(readings)["e5"]).toMatchObject({ source: "es-minetur-fuel" });
+      expect(readings.some((r) => r["source"] === "es-fuel-test")).toBe(false);
+      // A fused reading served in public scope names public contributors only.
+      const fused = readings.filter((r) => r["source"] === "@fused");
+      expect(fused.length).toBeGreaterThan(0);
+      for (const r of fused) expect(r["contributors"]).toEqual(["es-minetur-fuel"]);
+      const operator = await as(url, true);
+      const [all] = operator.body["records"] as Rec[];
+      expect(byKey(latestOf(operator.body, all!["id"] as string))["e5"]).toMatchObject({
+        source: "@fused",
+        contributors: expect.arrayContaining(["es-minetur-fuel", "es-fuel-test"]),
+      });
+
+      const offersUrl = "/features?kind=charging_site&expand=offers";
+      const offersOf = (body: Rec) =>
+        (body["offers"] as Record<string, Rec[]>)["oc:feature:de-bw-ocpdb:72555"]!.map(
+          (o) => o["id"],
+        );
+      const publicOffers = await as(offersUrl, false);
+      expect(offersOf(publicOffers.body)).toEqual(["oc:offer:de-bw-ocpdb:138587"]);
+      expect(publicOffers.res.headers["x-data-license"]).not.toContain("ODbL-1.0");
+      expect(offersOf((await as(offersUrl, true)).body)).toHaveLength(2);
+    } finally {
+      await sql`UPDATE conditions.source SET restricted = false WHERE id = 'es-fuel-test'`;
+      await sql`UPDATE conditions.offer
+                   SET record = jsonb_set(record, '{provenance,attribution,license}', '"CC-BY-4.0"')
+                 WHERE id = 'oc:offer:de-bw-ocpdb:138586'`;
+    }
+  });
+
+  it("public latest readings serve the public fusion, operator the full one", async () => {
+    const [cluster] = await sql<{ canonical_feature_id: string }[]>`
+      SELECT canonical_feature_id FROM conditions.feature_canonical
+       WHERE ${STATION} = ANY(member_ids)`;
+    const canonical = cluster!.canonical_feature_id;
+    const refresh = () =>
+      sql.begin((tx) =>
+        refreshFused(tx, facilitiesRegistry, [{ featureId: canonical }], {
+          instanceId: INSTANCE,
+          now: READ_AT,
+        }),
+      );
+    await sql`UPDATE conditions.source SET restricted = true WHERE id = 'es-fuel-test'`;
+    await refresh();
+    try {
+      const url = `/features?canonical=1&${STATION_BOX}&expand=latest`;
+      const shown = await as(url, false);
+      const e5 = byKey(latestOf(shown.body, canonical))["e5"];
+      expect(e5).toMatchObject({ source: "@fused-public", contributors: ["es-minetur-fuel"] });
+      const operator = await as(url, true);
+      expect(byKey(latestOf(operator.body, canonical))["e5"]).toMatchObject({
+        source: "@fused",
+        contributors: expect.arrayContaining(["es-minetur-fuel", "es-fuel-test"]),
+      });
+      expect(JSON.stringify(operator.body)).not.toContain("@fused-public");
+
+      const fusedE5 = async (operator: boolean) =>
+        (
+          (await as("/observations/latest?canonical=1&property=fuel.price&limit=5000", operator))
+            .body["records"] as Rec[]
+        ).filter(
+          (r) =>
+            (r["subject"] as Rec)["featureId"] === canonical &&
+            (r["subject"] as Rec)["componentKey"] === "e5",
+        );
+      const publicE5 = await fusedE5(false);
+      expect(publicE5.map((r) => (r["provenance"] as Rec)["sourceId"])).toEqual(["@fused-public"]);
+      expect(JSON.stringify(publicE5)).not.toContain("es-fuel-test");
+      const fullE5 = await fusedE5(true);
+      expect(fullE5.map((r) => (r["provenance"] as Rec)["sourceId"])).toEqual(["@fused"]);
+    } finally {
+      await sql`UPDATE conditions.source SET restricted = false WHERE id = 'es-fuel-test'`;
+      await refresh();
+    }
+  });
+
+  it("a restricted member lends a public canonical feature no offers, even a public source's", async () => {
+    const tariff = golden.get("de-bw-ocpdb")!.offers[0]!;
+    const station = golden.get("es-minetur-fuel")!.features.find((f) => f["id"] === STATION)!;
+    const { upstream: _upstream, ...provenance } = tariff["provenance"] as Rec;
+    const onTwin: Rec = {
+      ...tariff,
+      id: "oc:offer:es-minetur-fuel:twin-card",
+      location: station["location"],
+      subject: { class: "feature", id: TWIN },
+      provenance: {
+        ...provenance,
+        sourceId: "es-minetur-fuel",
+        sourceFormat: "minetur",
+        recordId: "twin-card",
+        attribution: { provider: "MINETUR", license: "CC-BY-4.0" },
+      },
+    };
+    const written = await writeSnapshot(
+      sql,
+      "es-minetur-fuel",
+      { offers: [onTwin] },
+      { registry: facilitiesRegistry, instanceId: INSTANCE, now: NOW, complete: false },
+    );
+    expect(written.rejected).toEqual([]);
+    await sql`UPDATE conditions.source SET restricted = true WHERE id = 'es-fuel-test'`;
+    try {
+      const url = `/features?canonical=1&${STATION_BOX}&expand=offers,latest`;
+      const offersOf = (body: Rec) =>
+        Object.values(body["offers"] as Record<string, Rec[]>).flatMap((o) =>
+          o.map((r) => r["id"]),
+        );
+      const shown = await as(url, false);
+      expect(shown.body["records"]).toHaveLength(1);
+      expect(offersOf(shown.body)).toEqual([]);
+      expect(JSON.stringify(shown.body)).not.toContain(TWIN);
+      expect(offersOf((await as(url, true)).body)).toEqual(["oc:offer:es-minetur-fuel:twin-card"]);
+    } finally {
+      await sql`UPDATE conditions.source SET restricted = false WHERE id = 'es-fuel-test'`;
+      await sql`DELETE FROM conditions.offer WHERE id = 'oc:offer:es-minetur-fuel:twin-card'`;
+    }
+  });
+
+  it("an unknown expand value is a 400", async () => {
+    const { res, body } = await get("/features?expand=latest,prices");
+    expect(res.statusCode).toBe(400);
+    expect(body).toMatchObject({ error: "invalid query" });
+    expect(JSON.stringify(body["issues"])).toContain("expand");
+    expect((await get(`/features/${enc(STATION)}?expand=prices`)).res.statusCode).toBe(400);
+    expect((await get("/features?expand=latest,latest&limit=1")).res.statusCode).toBe(200);
+  });
+
+  it("expand=latest on /features/:id returns the feature's readings", async () => {
+    const { body } = await get(`/features/${enc(STATION)}?expand=latest`);
+    expect((body["record"] as Rec)["id"]).toBe(STATION);
+    expect(body["offers"]).toBeUndefined();
+    const readings = body["latest"] as Rec[];
+    expect(readings.map((r) => r["componentKey"]).sort()).toEqual([
+      "diesel",
+      "e5",
+      "hvo100",
+      "lpg",
+      "sp98",
+    ]);
+    expect(new Set(readings.map((r) => r["source"]))).toEqual(new Set(["es-minetur-fuel"]));
+    const canonicalId = (body["canonical"] as Rec)["canonicalFeatureId"] as string;
+    const cluster = await get(`/features/${enc(canonicalId)}?expand=latest,offers`);
+    expect(new Set((cluster.body["latest"] as Rec[]).map((r) => r["source"]))).toEqual(
+      new Set(["@fused"]),
+    );
+    expect(cluster.body["offers"]).toEqual([]);
+    const site = await get(`/features/${enc("oc:feature:de-bw-ocpdb:72555")}?expand=offers`);
+    expect(site.body["offers"] as Rec[]).toHaveLength(2);
+  });
+});
+
 describe("GET /features.geojson and .jsonld", () => {
   beforeAll(reset, 120_000);
 
@@ -289,7 +554,49 @@ describe("GET /features/{id}", () => {
     const cluster = await get(`/features/${enc(canonicalId)}`);
     expect((cluster.body["record"] as Rec)["id"]).toBe(canonicalId);
     expect(cluster.body["canonical"]).toEqual(body["canonical"]);
-    expect((await get(`/features/${enc("oc:feature:es-minetur:none")}`)).res.statusCode).toBe(404);
+    expect((await get(`/features/${enc("oc:feature:es-minetur-fuel:none")}`)).res.statusCode).toBe(
+      404,
+    );
+  });
+});
+
+describe("single records follow the live rules", () => {
+  beforeEach(reset, 120_000);
+
+  /** Moves a stored record's expiry, in its column and its record alike. */
+  const expire = (table: "feature" | "offer", id: string, at: string) =>
+    sql.unsafe(
+      `UPDATE conditions.${table}
+          SET expires_at = $2::timestamptz,
+              record = jsonb_set(record, '{freshness,expiresAt}', to_jsonb($2::text))
+        WHERE id = $1`,
+      [id, at],
+    );
+
+  it("answers 404 for a feature or offer past its expiry, and drops it from its cluster", async () => {
+    await expire("feature", STATION, "2026-09-22T11:15:00.000Z");
+    expect((await get(`/features/${enc(STATION)}`)).res.statusCode).toBe(404);
+    const twin = await get(`/features/${enc(TWIN)}`);
+    expect(twin.res.statusCode).toBe(200);
+    expect(twin.body["canonical"]).toMatchObject({ survivorId: TWIN, memberIds: [TWIN] });
+
+    const offer = "oc:offer:de-bw-ocpdb:138586";
+    expect((await get(`/offers/${enc(offer)}`)).res.statusCode).toBe(200);
+    await expire("offer", offer, "2026-09-22T11:15:00.000Z");
+    expect((await get(`/offers/${enc(offer)}`)).res.statusCode).toBe(404);
+  });
+
+  it("names only the members it serves: a member whose licence is not public is not named", async () => {
+    await sql`
+      UPDATE conditions.feature
+         SET record = jsonb_set(record, '{provenance,attribution,license}', '"ODbL-1.0"')
+       WHERE id = ${TWIN}`;
+    const station = await get(`/features/${enc(STATION)}`);
+    expect(station.res.statusCode).toBe(200);
+    expect(station.body["canonical"]).toMatchObject({ survivorId: STATION, memberIds: [STATION] });
+    const canonicalId = (station.body["canonical"] as Rec)["canonicalFeatureId"] as string;
+    const cluster = await get(`/features/${enc(canonicalId)}`);
+    expect(cluster.body["canonical"]).toEqual(station.body["canonical"]);
   });
 });
 
@@ -301,7 +608,7 @@ describe("GET /offers and /offers/{id}", () => {
       "oc:offer:de-bw-ocpdb:138586",
       "oc:offer:de-bw-ocpdb:138587",
     ]);
-    expect(ids((await get("/offers?source=es-minetur")).body)).toEqual([]);
+    expect(ids((await get("/offers?source=es-minetur-fuel")).body)).toEqual([]);
     expect(ids((await get("/offers?bbox=7.5,51.6,7.6,51.7")).body)).toHaveLength(2);
     expect(ids((await get("/offers?kind=energy_tariff")).body)).toHaveLength(2);
     expect((await get("/offers?canonical=1")).res.statusCode).toBe(400);
@@ -330,7 +637,7 @@ describe("GET /observations/latest", () => {
   }, 120_000);
 
   const readings = () =>
-    [...golden.values()].flatMap((d) => d.observations.map((o) => o["id"] as string));
+    publicGolden().flatMap((d) => d.observations.map((o) => o["id"] as string));
 
   it("lists the reading in effect of every per-source series, never a fused row", async () => {
     const all = await walk("/observations/latest", "", 7);
@@ -366,7 +673,7 @@ describe("GET /observations/latest", () => {
     )!;
     expect((e5["provenance"] as Rec)["mergedSources"]).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ source: "es-minetur" }),
+        expect.objectContaining({ source: "es-minetur-fuel" }),
         expect.objectContaining({ source: "es-fuel-test" }),
       ]),
     );
@@ -391,7 +698,7 @@ describe("GET /observations/latest", () => {
       location,
       provenance: {
         origin: "feed",
-        sourceId: "es-minetur",
+        sourceId: "es-minetur-fuel",
         sourceFormat: "minetur",
         accessMode: "bulk",
         recordId: "avg-e5",
@@ -403,10 +710,10 @@ describe("GET /observations/latest", () => {
       phenomenonTime: { instant: "2026-09-22T11:00:00.000Z" },
       aggregation: "mean",
     };
-    average["id"] = observationId("es-minetur", average as never);
+    average["id"] = observationId("es-minetur-fuel", average as never);
     const summary = await writeSnapshot(
       sql,
-      "es-minetur",
+      "es-minetur-fuel",
       { observations: [average] },
       {
         registry: facilitiesRegistry,
@@ -638,7 +945,7 @@ describe("GET /observations (one series)", () => {
     expect(byId.res.statusCode).toBe(200);
     expect(byId.body["series"]).toMatchObject({
       subjectKey: `feature:${STATION}#e5`,
-      sourceId: "es-minetur",
+      sourceId: "es-minetur-fuel",
     });
   });
 });
@@ -659,11 +966,32 @@ describe("GET /coverage", () => {
           property: "fuel.price",
           accessMode: "bulk",
           records: 8,
-          sources: ["es-fuel-test", "es-minetur"],
+          sources: ["es-fuel-test", "es-minetur-fuel"],
         }),
         expect.objectContaining({ country: "AT", accessMode: "on_demand", records: 2 }),
       ]),
     );
-    expect(coverage.some((c) => (c["sources"] as string[]).includes("@fused"))).toBe(false);
+    for (const fused of ["@fused", "@fused-public"]) {
+      expect(coverage.some((c) => (c["sources"] as string[]).includes(fused))).toBe(false);
+    }
+  });
+
+  it("counts a feature or a situation only until its expiry, as a reading", async () => {
+    const events = "de-coverage-events";
+    await writeSituations(sql, events, [situationDraft("lapsing", {}, events)]);
+    await sql`UPDATE conditions.situation SET expires_at = NULL WHERE source_id = ${events}`;
+    const counted = async (cls: string, source: string) =>
+      ((await get("/coverage")).body["coverage"] as Rec[])
+        .filter((c) => c["class"] === cls && (c["sources"] as string[]).includes(source))
+        .reduce((n, c) => n + (c["records"] as number), 0);
+    expect(await counted("situation", events)).toBe(1);
+    expect(await counted("feature", "es-minetur-fuel")).toBeGreaterThan(0);
+
+    const lapsed = "2026-09-22T11:00:00Z";
+    await sql`UPDATE conditions.situation SET expires_at = ${lapsed} WHERE source_id = ${events}`;
+    await sql`UPDATE conditions.feature SET expires_at = ${lapsed}
+               WHERE source_id = 'es-minetur-fuel'`;
+    expect(await counted("situation", events)).toBe(0);
+    expect(await counted("feature", "es-minetur-fuel")).toBe(0);
   });
 });

@@ -10,7 +10,7 @@
  * forbid.
  */
 
-import { FUSED_SOURCE_ID } from "./provenance.js";
+import { isFusedSourceId } from "./provenance.js";
 
 interface AccessRecord {
   provenance: { accessMode: string; sourceId: string };
@@ -22,7 +22,7 @@ export function isOnDemand(record: AccessRecord): boolean {
 
 /** Whether a record may go to the federation outbox, an export or an archive. */
 export function federationEligible(record: AccessRecord): boolean {
-  return !isOnDemand(record) && record.provenance.sourceId !== FUSED_SOURCE_ID;
+  return !isOnDemand(record) && !isFusedSourceId(record.provenance.sourceId);
 }
 
 /** Whether a record's history is kept (revisions, observation partitions, rollups). */

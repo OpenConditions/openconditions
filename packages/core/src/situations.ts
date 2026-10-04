@@ -1,6 +1,7 @@
 import type { SEVERITY_LABELS } from "@openconditions/model";
 import { EVIDENCE, withEvidence } from "./db/records.js";
 import type { QueryRunner } from "./query-runner.js";
+import { binder, type Scope, scopeClauses } from "./record-filters.js";
 import { haversineMeters } from "./spatial.js";
 
 type Rec = Record<string, unknown>;
@@ -10,6 +11,7 @@ export type SeverityLabel = (typeof SEVERITY_LABELS)[number];
 const SEVERITY_ORDER: readonly SeverityLabel[] = ["minor", "moderate", "major", "critical"];
 
 export interface SituationQuery {
+  scope: Scope;
   /** west, south, east, north. */
   bbox?: [number, number, number, number];
   kinds?: readonly string[];
@@ -45,15 +47,13 @@ export interface SituationPage {
 export async function listSituations(db: QueryRunner, q: SituationQuery): Promise<SituationPage> {
   const at = (q.at ?? new Date()).toISOString();
   const params: unknown[] = [at];
-  const p = (value: unknown) => {
-    params.push(value);
-    return `$${params.length}`;
-  };
+  const p = binder(params);
   const clauses = [
     "s.tombstoned_at IS NULL",
     "(s.expires_at IS NULL OR s.expires_at > $1::timestamptz)",
     "(s.valid_to IS NULL OR s.valid_to > $1::timestamptz)",
     "s.validity_status NOT IN ('ended', 'cancelled')",
+    ...scopeClauses("s", q.scope),
   ];
   if (q.bbox) {
     const [w, s, e, n] = q.bbox;

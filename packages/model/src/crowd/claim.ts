@@ -49,7 +49,13 @@ export interface ObservationClaim {
   property: string;
   qualifiers?: Record<string, unknown>;
   result: Result;
-  /** Where the reporter stood: checked against the subject on landing, never stored. */
+  /**
+   * Where the reporter stood: checked against where the subject stands on
+   * landing; this field is never stored as it is (a place the claim names in
+   * `subject` is its own location, not this point). A reading of a feature no public
+   * source holds is placed at the centre of the area cell this point falls
+   * in, at low resolution.
+   */
   geometry: Point;
   reportedAt: string;
   nonce: string;

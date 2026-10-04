@@ -11,10 +11,12 @@ const V = "1.0";
 const HOUR = 3600;
 
 /**
- * The grades sources price separately; a grade is a product, not a pump. The
- * last five are grades no European standard names but Spain publishes a price
- * column for: a 25 % ethanol blend, renewable petrol, the red diesel sold for
- * agricultural use, methanol and ammonia.
+ * The grades sources price separately; a grade is a product, not a pump. From
+ * `e25` on are grades no European standard names but Spain publishes a price
+ * column for, beside the column of the standard grade where there is one: a
+ * 25 % ethanol blend, renewable petrol, the red diesel sold for agricultural
+ * use, methanol, ammonia, premium 95 E5, 98 octane E10, and compressed and
+ * liquefied biomethane.
  */
 export const FUEL_GRADES = [
   "e5",
@@ -40,6 +42,10 @@ export const FUEL_GRADES = [
   "agricultural_diesel",
   "methanol",
   "ammonia",
+  "e5_premium",
+  "sp98_e10",
+  "cng_bio",
+  "lng_bio",
 ] as const;
 
 export const fuelGradeVocabulary = defineVocabulary({
@@ -160,7 +166,10 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
       }
     },
     freshnessWindowSec: 24 * HOUR,
-    retention: { rawDays: 30, rollup: { period: "daily" } },
+    // A price holds until it changes; a source that restates it each poll
+    // (MINETUR's file carries a new publication time every half hour) adds
+    // no history row for an unchanged price.
+    retention: { rawDays: 30, changeOnly: true, rollup: { period: "daily" } },
     // Stations reprice several times a day; a reading agrees with the
     // station's own price within a cent of the price's currency.
     crowd: { ttlSec: 3 * HOUR, maxLifetimeSec: 12 * HOUR, agreement: { tolerance: 0.01 } },

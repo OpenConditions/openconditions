@@ -134,7 +134,7 @@ async function webhookSubFromNow(opts: {
       deliveryMode: "webhook",
       inboxUrl: INBOX_URL,
       priorityOnly: opts.priorityOnly,
-      filter: { bbox: opts.bbox, permissiveOnly: false },
+      filter: { bbox: opts.bbox },
     },
     NOW,
   );
@@ -185,7 +185,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
     // event must NOT be pushed AND the push cursor must stop on the priority
     // event, never jumping past the non-priority one (whose completeness is pull).
     const bbox: [number, number, number, number] = [12.0, 51.0, 13.0, 53.0];
-    const filter = { bbox, kinds: ["incident", "roadworks"], permissiveOnly: false };
+    const filter = { bbox, kinds: ["incident", "roadworks"] };
     const sub = await createSubscription(
       sql,
       PEER_ID,
@@ -225,7 +225,7 @@ describe("deliverWebhook — signed page, cursor advance, priority gating", () =
 
   it("does not starve behind a long run of non-priority events (SQL-level restriction)", async () => {
     const bbox: [number, number, number, number] = [22.0, 51.0, 23.0, 53.0];
-    const filter = { bbox, kinds: ["incident", "roadworks"], permissiveOnly: false };
+    const filter = { bbox, kinds: ["incident", "roadworks"] };
     const sub = await createSubscription(
       sql,
       PEER_ID,
@@ -308,7 +308,7 @@ describe("deliverWebhook — priorityRestricted self-describing marker", () => {
 
   it("the pull /peer/outbox page NEVER sets priorityRestricted (it is complete)", async () => {
     const bbox: [number, number, number, number] = [44.0, 51.0, 45.0, 53.0];
-    const filter = { bbox, permissiveOnly: false };
+    const filter = { bbox };
     const start = encodeOutboxCursor(await frontier());
     await insertEvent("mark-pull", { kind: "incident", lon: 44.5 });
 
@@ -351,7 +351,7 @@ describe("deliverWebhook — failure disables push after the threshold", () => {
 describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull share the cursor", () => {
   it("a dropped push falls back to a pull catch-up with no gap and no double-delivery", async () => {
     const bbox: [number, number, number, number] = [16.0, 51.0, 17.0, 53.0];
-    const filter = { bbox, permissiveOnly: false };
+    const filter = { bbox };
     const sub = await webhookSubFromNow({ priorityOnly: false, bbox });
     const startCursor = sub.cursor;
 
@@ -411,7 +411,7 @@ describe("deliverWebhook — priorityOnly=false is full-fidelity; push and pull 
 describe("deliverWebhook — priorityOnly push (priority) + peer pull (all) = every event once", () => {
   it("a dropped priority push re-pushes; the peer's independent pull covers everything", async () => {
     const bbox: [number, number, number, number] = [24.0, 51.0, 25.0, 53.0];
-    const filter = { bbox, kinds: ["incident", "roadworks"], permissiveOnly: false };
+    const filter = { bbox, kinds: ["incident", "roadworks"] };
     const sub = await createSubscription(
       sql,
       PEER_ID,

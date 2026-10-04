@@ -1,0 +1,665 @@
+[
+  {
+    "id": 1469766,
+    "name": "EVM - Biomethan Tankstelle",
+    "location": {
+      "address": "Energiestraße 9",
+      "postalCode": "2433",
+      "city": "Margarethen am Moos",
+      "latitude": 48.047635,
+      "longitude": 16.605493
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": false,
+      "selfService": true,
+      "unattended": true
+    },
+    "paymentMethods": {
+      "cash": false,
+      "debitCard": true,
+      "creditCard": true
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": false
+    },
+    "position": 1,
+    "open": true,
+    "distance": 29.45142054717543,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.5,
+        "label": "CNG"
+      }
+    ]
+  },
+  {
+    "id": 1354751,
+    "name": "OMV - Schwechat S1 KM 9",
+    "location": {
+      "address": "S1 ",
+      "postalCode": "2320",
+      "city": "Schwechat",
+      "latitude": 48.12249,
+      "longitude": 16.4387
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": true,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 2,
+    "open": true,
+    "distance": 15.644386447314352,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.649,
+        "label": "CNG"
+      }
+    ]
+  },
+  {
+    "id": 1354922,
+    "name": "OMV - Wien 7. Haidequerstraße 2 KM 1,5",
+    "location": {
+      "address": "7. Haidequerstrasse 2 KM 1,5",
+      "postalCode": "1110",
+      "city": "Wien",
+      "latitude": 48.18187,
+      "longitude": 16.44451
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 3,
+    "open": true,
+    "distance": 10.326864416149693,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.799,
+        "label": "CNG"
+      }
+    ]
+  },
+  {
+    "id": 334,
+    "name": "OMV - Wien Sterngasse 13",
+    "location": {
+      "address": "Sterngasse 13",
+      "postalCode": "1230",
+      "city": "Wien",
+      "latitude": 48.14891,
+      "longitude": 16.33836
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 4,
+    "open": true,
+    "distance": 11.28441719723875,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.799,
+        "label": "CNG"
+      }
+    ]
+  },
+  {
+    "id": 1354753,
+    "name": "OMV - Wiener Neudorf IZ NÖ Süd Straße 4 Objekt 9",
+    "location": {
+      "address": "IZ NÖ Süd Strasse 4 Objekt 9",
+      "postalCode": "2351",
+      "city": "Wiener Neudorf",
+      "latitude": 48.0776,
+      "longitude": 16.3233
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 5,
+    "open": true,
+    "distance": 19.29026236092917,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.799,
+        "label": "CNG"
+      }
+    ]
+  },
+  {
+    "id": 1354778,
+    "name": "OMV - Wiener Neustadt Wiener Straße 126",
+    "location": {
+      "address": "Wiener Strasse 126",
+      "postalCode": "2700",
+      "city": "Wiener Neustadt",
+      "latitude": 47.84322,
+      "longitude": 16.24631
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 6,
+    "open": true,
+    "distance": 45.927516480807306,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.799,
+        "label": "CNG"
+      }
+    ]
+  },
+  {
+    "id": 1354782,
+    "name": "OMV - Loosdorf Gewerbestraße 8",
+    "location": {
+      "address": "Gewerbestrasse 8",
+      "postalCode": "3382",
+      "city": "Loosdorf",
+      "latitude": 48.19,
+      "longitude": 15.409
+    },
+    "openingHours": [
+      {
+        "day": "MO",
+        "label": "Montag",
+        "order": 1,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DI",
+        "label": "Dienstag",
+        "order": 2,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "MI",
+        "label": "Mittwoch",
+        "order": 3,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "DO",
+        "label": "Donnerstag",
+        "order": 4,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FR",
+        "label": "Freitag",
+        "order": 5,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SA",
+        "label": "Samstag",
+        "order": 6,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "SO",
+        "label": "Sonntag",
+        "order": 7,
+        "from": "00:00",
+        "to": "24:00"
+      },
+      {
+        "day": "FE",
+        "label": "Feiertag",
+        "order": 8,
+        "from": "00:00",
+        "to": "24:00"
+      }
+    ],
+    "offerInformation": {
+      "service": true,
+      "selfService": false,
+      "unattended": false
+    },
+    "paymentMethods": {
+      "cash": true,
+      "debitCard": false,
+      "creditCard": false,
+      "others": " UTA, DKV, OMV ROUTEX, MASTERCARD, EUROTRAFIC, MAESTRO, ROUTEX, DINERS, VISA, AMEX, OMV STATIONSKARTE"
+    },
+    "paymentArrangements": {
+      "cooperative": false,
+      "clubCard": true,
+      "clubCardText": "ARBÖ"
+    },
+    "position": 7,
+    "open": true,
+    "distance": 70.11204211866385,
+    "prices": [
+      {
+        "fuelType": "GAS",
+        "amount": 1.799,
+        "label": "CNG"
+      }
+    ]
+  }
+]

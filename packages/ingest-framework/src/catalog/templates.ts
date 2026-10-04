@@ -1,4 +1,10 @@
 import {
+  CELL_PLACEHOLDER_NAMES,
+  type Cell,
+  type CellPlaceholderName,
+  cellValues,
+} from "./cells.js";
+import {
   CREDENTIAL_PLACEHOLDER,
   type CredentialRef,
   type Env,
@@ -32,14 +38,74 @@ function credentialValue(name: FeedCredentialName, env: Env): string | undefined
   return resolveCredential(env, name.env) ?? name.default;
 }
 
+/**
+ * One pass over both placeholder kinds: `${field}` is a credential and
+ * `{west}` a cell value. A single pass means a credential's value is never
+ * scanned for cell placeholders, and `${west}` stays a credential. A brace
+ * that is neither is left as written.
+ */
+const PLACEHOLDER = new RegExp(
+  `${CREDENTIAL_PLACEHOLDER.source}|\\{(${CELL_PLACEHOLDER_NAMES.join("|")})\\}`,
+  "g",
+);
+
+function withoutTrailingSlash(url: string): string {
+  return url.replace(/\/+$/, "");
+}
+
+/**
+ * The base a setting's value names for a template that appends `path` to it:
+ * the value without its trailing slashes and, when it already ends with that
+ * path, without the path too. So `http://overpass:80/`, `http://overpass:80`
+ * and `http://overpass:80/api/interpreter` all name `http://overpass:80`
+ * for `/api/interpreter`. The path matches only whole: it starts with `/`. A
+ * base URL carries no query or fragment; a value with one never ends with the
+ * path, so it is taken as written apart from its trailing slashes.
+ */
+function settingBase(value: string, path: string): string {
+  const base = withoutTrailingSlash(value);
+  const tail = withoutTrailingSlash(path);
+  return tail.startsWith("/") && base.endsWith(tail)
+    ? withoutTrailingSlash(base.slice(0, -tail.length))
+    : base;
+}
+
+/**
+ * A setting's value joined to the path a reader appends: a base URL, with or
+ * without a trailing slash, or the full URL it would make. The one rule for
+ * `${@overpass.url}/api/interpreter` in a template and for a reader that is no
+ * feed (the road-graph import).
+ */
+export function settingUrl(value: string, path: string): string {
+  return `${settingBase(value, path)}${path}`;
+}
+
+/** The literal path a template writes right after `from`, up to its query, fragment or next placeholder. */
+function literalPathAt(template: string, from: number): string {
+  const rest = template.slice(from);
+  if (!rest.startsWith("/")) return "";
+  const end = rest.search(/[?#]|\$?\{/);
+  return end < 0 ? rest : rest.slice(0, end);
+}
+
+/**
+ * Fills a template's placeholders. A feed's credential is filled verbatim. A
+ * setting is a base URL (see {@link settingUrl}): its trailing slashes are
+ * dropped, and so is a path it already ends with that the template appends.
+ */
 function fill(
   feed: CatalogFeed,
   template: string,
   names: Map<CredentialRef, FeedCredentialName>,
   env: Env,
   overrides: ReadonlyMap<CredentialRef, string> = new Map(),
+  cell?: Cell,
 ): string {
-  return template.replace(CREDENTIAL_PLACEHOLDER, (_match, ref: string) => {
+  const cellFill = cell ? cellValues(cell) : undefined;
+  return template.replace(PLACEHOLDER, (match, ref: string | undefined, cellName, offset) => {
+    if (ref === undefined) {
+      return cellFill ? cellFill[cellName as CellPlaceholderName] : match;
+    }
     const name = names.get(ref);
     if (!name) throw new Error(`feed ${feed.id}: template names ${ref}, which is not a credential`);
     const value = overrides.get(ref) ?? credentialValue(name, env);
@@ -48,7 +114,8 @@ function fill(
         `feed ${feed.id}: template credential ${name.env} (or ${name.env}_FILE) is unset`,
       );
     }
-    return value;
+    if (!name.setting) return value;
+    return settingBase(value, literalPathAt(template, (offset as number) + match.length));
   });
 }
 
@@ -61,8 +128,9 @@ export function resolveFeedTemplate(
   feed: CatalogFeed,
   template: string,
   env: Env = process.env,
+  cell?: Cell,
 ): string {
-  return fill(feed, template, templateNames(feed), env);
+  return fill(feed, template, templateNames(feed), env, undefined, cell);
 }
 
 /**
@@ -75,6 +143,7 @@ export function resolveEndpointUrls(
   feed: CatalogFeed,
   role: string,
   env: Env = process.env,
+  cell?: Cell,
 ): string[] {
   const endpoint = feedEndpoint(feed, role);
   if (endpoint.reference) {
@@ -82,7 +151,9 @@ export function resolveEndpointUrls(
   }
   const templates = endpoint.urls ?? (endpoint.url ? [endpoint.url] : []);
   const names = templateNames(feed);
-  if (!endpoint.expand) return templates.map((t) => fill(feed, t, names, env));
+  if (!endpoint.expand) {
+    return templates.map((t) => fill(feed, t, names, env, undefined, cell));
+  }
 
   const ref = endpoint.expand;
   const name = names.get(ref);
@@ -92,6 +163,6 @@ export function resolveEndpointUrls(
     .map((item) => item.trim())
     .filter(Boolean);
   return items.flatMap((item) =>
-    templates.map((t) => fill(feed, t, names, env, new Map([[ref, item]]))),
+    templates.map((t) => fill(feed, t, names, env, new Map([[ref, item]]), cell)),
   );
 }

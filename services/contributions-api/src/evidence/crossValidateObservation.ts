@@ -10,13 +10,13 @@
  * a fresh feed, and the feed may be what is wrong.
  */
 
-import { recordFromHistory } from "@openconditions/core";
+import { canonicalKeyOf, recordFromHistory } from "@openconditions/core";
 import {
   type AgreeingObservation,
   observationConfirms,
   type Registry,
 } from "@openconditions/model";
-import { canonicalKeyOf, loadCanonical } from "@openconditions/storage";
+import { loadCanonical } from "@openconditions/storage";
 import type postgres from "postgres";
 import { applyExternalResolution } from "../reputation/resolve.js";
 
@@ -109,12 +109,16 @@ export async function crossValidateObservation(
  * The feed series of the subjects a crowd reading's canonical subject stands
  * for: of a feature, every member's (and the member component its canonical
  * component stands for); of a place, the series of that place. Only this
- * instance's own feeds count: a peer's copy is not ours to vouch for.
+ * instance's own feeds count: a peer's copy is not ours to vouch for. A
+ * restricted source's series never does: the public evidence state and the
+ * reporter's trust a match earns would publish what it holds.
  */
 async function feedSeries(sql: Sql, crowd: CrowdRow): Promise<FeedSeries[]> {
   const own = sql`
-    l.source_id NOT IN ('crowd', '@fused') AND l.template #>> '{provenance,origin}' = 'feed'
+    l.source_id NOT IN ('crowd', '@fused', '@fused-public')
+    AND l.template #>> '{provenance,origin}' = 'feed'
     AND jsonb_array_length(COALESCE(l.template #> '{provenance,originChain}', '[]'::jsonb)) = 0
+    AND NOT EXISTS (SELECT 1 FROM conditions.source s WHERE s.id = l.source_id AND s.restricted)
     AND l.property = ${crowd.property} AND l.qualifier_key = ${crowd.qualifier_key}`;
   if (crowd.feature_id === null) {
     return sql<FeedSeries[]>`

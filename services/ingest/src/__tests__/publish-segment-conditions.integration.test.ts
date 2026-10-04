@@ -82,9 +82,9 @@ beforeAll(async () => {
       'motorway', 'A57', ${SEGMENT_LENGTH_M}, 5, 100, ${NOW})`;
 
   await writeSituations(sql, SOURCE, [
-    // Bound, permissive, in effect at 10:00: the condition the routing consumer wants.
+    // Bound, public licence, in effect at 10:00: the condition the routing consumer wants.
     closure("a1"),
-    // Share-alike: bound exactly, but must never reach a permissive export.
+    // Share-alike: bound exactly, but must never reach a public export.
     closure("sa", "ODbL-1.0"),
     // Ambiguous, with a second span on a segment the spine no longer has.
     closure("amb"),
@@ -316,7 +316,7 @@ describe("GET /segments/conditions.json", () => {
     }
   }, 30_000);
 
-  it("emits only bound, permissive, in-effect effects, as schema version 2", async () => {
+  it("emits only bound, public-licence, in-effect effects, as schema version 2", async () => {
     await withApp(async (app) => {
       const res = await app.inject({ method: "GET", url: AT_10 });
       expect(res.statusCode).toBe(200);

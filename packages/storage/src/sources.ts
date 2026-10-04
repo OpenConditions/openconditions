@@ -18,6 +18,8 @@ export interface SourceEntry {
   licenseUrl?: string;
   attribution: string;
   rights?: EffectiveRights;
+  /** Withheld from the public scope (from the effective rights: see `isRestricted`). */
+  restricted: boolean;
   /** How often the source is polled: its smallest data-endpoint cadence. */
   cadenceSec: number;
   freshnessWindowSec: number;
@@ -34,7 +36,13 @@ export interface SourceEntry {
  * Makes `conditions.source` mirror the loaded catalogue: every given source is
  * inserted or refreshed and marked active, every other row is marked inactive
  * (kept, because records still name it). One transaction, so a reader never
- * sees a half-synced catalogue.
+ * sees a half-synced catalogue. The basis a source's fusions were refreshed
+ * under (`fusion_restricted`, `fusion_tier`, `fusion_licenses`) is left alone: where it no
+ * longer matches, `refreshOutdatedFusions` refreshes them. So is the flag the federation
+ * outbox reflects (`federation_restricted`): `reconcileFederation` catches it up.
+ * `restricted_since` is set when a source turns restricted, or is added so, kept
+ * while it stays restricted, and cleared when it turns public. It is exact only because
+ * this runs at boot before the scheduler starts, so no poll transaction straddles a flip.
  */
 export async function syncSources(sql: postgres.Sql, sources: readonly SourceEntry[]) {
   const rows = sources.map((s) => ({
@@ -51,6 +59,7 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
     license_url: s.licenseUrl ?? null,
     attribution: s.attribution,
     rights: s.rights ?? null,
+    restricted: s.restricted,
     cadence_sec: s.cadenceSec,
     freshness_window_sec: s.freshnessWindowSec,
     raw_retention: s.rawRetention ?? null,
@@ -66,13 +75,13 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
       await tx`
         INSERT INTO conditions.source (
           id, domain, format, product, access_mode, tier, country, subdivision, operator,
-          license, license_url, attribution, rights, cadence_sec, freshness_window_sec,
-          raw_retention, extras_allow, extras_federate, lane_numbering, parent_source_id,
-          policy_ids, selection_state, active, updated_at
+          license, license_url, attribution, rights, restricted, restricted_since, cadence_sec,
+          freshness_window_sec, raw_retention, extras_allow, extras_federate, lane_numbering,
+          parent_source_id, policy_ids, selection_state, active, updated_at
         )
         SELECT r.id, r.domain, r.format, r.product, r.access_mode, r.tier, r.country,
           r.subdivision, r.operator, r.license, r.license_url, r.attribution, r.rights,
-          r.cadence_sec, r.freshness_window_sec, r.raw_retention,
+          r.restricted, CASE WHEN r.restricted THEN now() END, r.cadence_sec, r.freshness_window_sec, r.raw_retention,
           ARRAY(SELECT jsonb_array_elements_text(r.extras_allow)), r.extras_federate,
           r.lane_numbering, r.parent_source_id,
           CASE WHEN r.policy_ids IS NULL THEN NULL
@@ -81,7 +90,7 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
         FROM jsonb_to_recordset(${tx.json(rows as never)}) AS r(
           id text, domain text, format text, product text, access_mode text, tier text,
           country text, subdivision text, operator text, license text, license_url text,
-          attribution text, rights jsonb, cadence_sec int, freshness_window_sec int,
+          attribution text, rights jsonb, restricted boolean, cadence_sec int, freshness_window_sec int,
           raw_retention text, extras_allow jsonb, extras_federate boolean, lane_numbering text,
           parent_source_id text, policy_ids jsonb, selection_state text
         )
@@ -91,6 +100,10 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
           subdivision = excluded.subdivision, operator = excluded.operator,
           license = excluded.license, license_url = excluded.license_url,
           attribution = excluded.attribution, rights = excluded.rights,
+          restricted = excluded.restricted,
+          restricted_since = CASE WHEN NOT excluded.restricted THEN NULL
+                                  WHEN source.restricted THEN source.restricted_since
+                                  ELSE now() END,
           cadence_sec = excluded.cadence_sec,
           freshness_window_sec = excluded.freshness_window_sec,
           raw_retention = excluded.raw_retention, extras_allow = excluded.extras_allow,

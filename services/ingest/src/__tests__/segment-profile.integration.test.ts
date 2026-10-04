@@ -110,6 +110,34 @@ describe("deriveSegmentProfiles", () => {
     expect(rows[0]!.sample_count).toBe(5);
   }, 60_000);
 
+  it("a derived profile records the sources it was built from", async () => {
+    await seedChain({ wayId: 4, region: "nl", segmentId: "D:f", site: "d1" });
+    await sql`
+      INSERT INTO conditions.sensor_segment (subject_key, segment_id, fraction, offset_m, matched_at)
+      VALUES (${siteKey("other", "d2")}, 'D:f', 0.5, 5.0, ${NOW})`;
+    await seedSpeedSamples("d1", [50, 60, 70], SUMMER_UTC_HOUR6);
+    await seedSpeedHour(sql, "other", "d2", [60, 70], SUMMER_UTC_HOUR6, {
+      type: "Point",
+      coordinates: [5.05, 52.0],
+    });
+    // A source whose readings sit in another hour contributes only to that hour.
+    const otherHour = new Date(SUMMER_UTC_HOUR6.getTime() + 3_600_000);
+    await seedSpeedSamples("d1", [50, 60, 70, 80, 90], otherHour);
+
+    await deriveSegmentProfiles(sql, () => "2026-07-08T03:30:00.000Z", {
+      windowDays: 3650,
+      minSamples: 5,
+    });
+
+    const rows = await sql<{ tod_hour: number; contributing: string[] }[]>`
+      SELECT tod_hour, contributing FROM conditions.segment_profile
+      WHERE segment_id = 'D:f' ORDER BY tod_hour`;
+    expect(rows.map((r) => [r.tod_hour, [...r.contributing].sort()])).toEqual([
+      [8, ["other", "src"]],
+      [9, ["src"]],
+    ]);
+  }, 60_000);
+
   it("drops samples for a region absent from the tz CASE via the tzmap.tz IS NOT NULL guard", async () => {
     await seedChain({ wayId: 2, region: "xx-unmapped", segmentId: "B:f", site: "b" });
 

@@ -221,6 +221,36 @@ describe("observation writes", () => {
     expect(await history()).toHaveLength(2);
   });
 
+  it("keep no history row for a price a later poll restates at a new publication time", async () => {
+    const product = {
+      kind: "feature",
+      featureId: "oc:feature:es-minetur-fuel:42",
+      componentKey: "e5",
+    };
+    const price = (amount: string, at: string) =>
+      observationDraft(
+        "fuel.price",
+        { type: "money", amount, currency: "EUR", per: "L" },
+        { at, subject: product, sourceId: "es-minetur-fuel" },
+      );
+    const poll = (amount: string, at: string) =>
+      writeSnapshot(sql, "es-minetur-fuel", { observations: [price(amount, at)] }, ctx);
+    await poll("1.649", "2026-10-01T09:00:00Z");
+    const restated = await poll("1.649", "2026-10-01T09:30:00Z");
+    expect(restated.observations).toMatchObject({ latest: 1, history: 0 });
+    const [latest] =
+      await sql`SELECT value_text, effective_from, since_at FROM conditions.observation_latest`;
+    expect(latest).toMatchObject({
+      effective_from: new Date("2026-10-01T09:30:00Z"),
+      since_at: new Date("2026-10-01T09:00:00Z"),
+    });
+    await poll("1.659", "2026-10-01T10:00:00Z");
+    expect((await history()).map((r) => r["phenomenon_start"])).toEqual([
+      new Date("2026-10-01T09:00:00Z"),
+      new Date("2026-10-01T10:00:00Z"),
+    ]);
+  });
+
   it("keep no history of a latest-only property or of an on-demand reading", async () => {
     const image = observationDraft(
       "camera.image",

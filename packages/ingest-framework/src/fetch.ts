@@ -1,3 +1,4 @@
+import type { Cell } from "./catalog/cells.js";
 import type { Env } from "./catalog/credentials.js";
 import {
   type CatalogResolver,
@@ -75,6 +76,8 @@ export interface FetchOptions {
   resolvers?: readonly CatalogResolver[];
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** Fill the endpoint's cell placeholders for this cell. A cell read keeps no conditional-GET state. */
+  cell?: Cell;
 }
 
 function isGzip(buf: Buffer): boolean {
@@ -152,17 +155,26 @@ async function fetchOne(
 }
 
 /** Build the RequestInit for an endpoint: method, body and headers, their `${field}`s filled. */
-function requestInit(feed: CatalogFeed, role: string, env: Env): RequestInit | undefined {
+function requestInit(
+  feed: CatalogFeed,
+  role: string,
+  env: Env,
+  cell?: Cell,
+): RequestInit | undefined {
   const endpoint = feedEndpoint(feed, role);
   const headers = endpoint.headers
     ? Object.fromEntries(
-        Object.entries(endpoint.headers).map(([k, v]) => [k, resolveFeedTemplate(feed, v, env)]),
+        Object.entries(endpoint.headers).map(([k, v]) => [
+          k,
+          resolveFeedTemplate(feed, v, env, cell),
+        ]),
       )
     : undefined;
   if (endpoint.method !== "POST") return headers ? { headers } : undefined;
   return {
     method: "POST",
-    body: endpoint.body !== undefined ? resolveFeedTemplate(feed, endpoint.body, env) : undefined,
+    body:
+      endpoint.body !== undefined ? resolveFeedTemplate(feed, endpoint.body, env, cell) : undefined,
     headers,
   };
 }
@@ -410,6 +422,7 @@ export async function fetchEndpoint(
 ): Promise<FetchResult> {
   const state = opts.state ?? sharedFetchState;
   const env = opts.env ?? process.env;
+  const cell = opts.cell;
   const endpoint = feedEndpoint(feed, role);
 
   // Scrubs the feed's own secret values out of any string before it reaches a
@@ -435,7 +448,7 @@ export async function fetchEndpoint(
   // (short) page. Skips conditional-GET/`unchanged` handling (a paged resource
   // changes each cycle, so an ETag buys nothing) — like the fan-out paths above.
   if (endpoint.pagination) {
-    const baseUrls = resolveEndpointUrls(feed, role, env);
+    const baseUrls = resolveEndpointUrls(feed, role, env, cell);
     if (baseUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
@@ -443,7 +456,7 @@ export async function fetchEndpoint(
       baseUrls,
       feed.id,
       endpoint.pagination,
-      requestInit(feed, role, env),
+      requestInit(feed, role, env, cell),
       fetchFn,
       redact,
     );
@@ -457,7 +470,7 @@ export async function fetchEndpoint(
     };
   }
 
-  const urls = resolveEndpointUrls(feed, role, env);
+  const urls = resolveEndpointUrls(feed, role, env, cell);
 
   // `fanout: "tolerant"` opts a large multi-URL fan-out (one URL per site or
   // region) into the same per-URL tolerant fetcher the catalog path uses,
@@ -467,7 +480,33 @@ export async function fetchEndpoint(
   // ETag/304), the price of that tolerance. Endpoints without it (or with a
   // single URL) fall through to the static path.
   if (endpoint.fanout === "tolerant" && urls.length > 1) {
-    return fanoutResult(await fetchFanout(urls, fetchFn, redact, requestInit(feed, role, env)));
+    return fanoutResult(
+      await fetchFanout(urls, fetchFn, redact, requestInit(feed, role, env, cell)),
+    );
+  }
+
+  // A cell read is a one-off request for one place: no validators are read or
+  // written, so nothing of it outlives the call.
+  if (cell) {
+    if (urls.length === 0) {
+      return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
+    }
+    const results = await fetchAllBounded(
+      urls,
+      fetchFn,
+      requestInit(feed, role, env, cell),
+      undefined,
+      false,
+      redact,
+    );
+    return {
+      status: "fetched",
+      accept: () => {},
+      buffers: results.map((r) => r.buffer),
+      payloads: results.map((r) => r.payload),
+      validatedAtNetwork: true,
+      partitions: { succeeded: results.length, failed: 0, total: results.length },
+    };
   }
 
   // A changed parser or grant must be applied even when upstream content is unchanged.

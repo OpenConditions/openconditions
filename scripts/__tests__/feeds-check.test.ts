@@ -173,6 +173,47 @@ describe("feeds:check", () => {
     expect(await runFeedsCheck([file], { feedsDir: dir, fetch: stubFetch, env: {} })).toBe(0);
   });
 
+  it("checks an on-demand feed by fetching the cell of its probe", async () => {
+    quiet();
+    const dir = mkdtempSync(join(tmpdir(), "feeds-check-"));
+    dirs.push(dir);
+    mkdirSync(join(dir, "fuel"));
+    const file = join(dir, "fuel", "lu.jsonc");
+    writeFileSync(
+      file,
+      `{
+  "$schema": "../schema/fuel.schema.json",
+  "feeds": [{
+    "operator": "osm",
+    "product": "fuel",
+    "name": "OSM fuel",
+    "tier": "authoritative",
+    "format": "overpass",
+    "endpoints": { "main": { "url": "https://cells.example.org/?bbox={west},{south},{east},{north}", "cadenceSec": 3600 } },
+    "freshnessWindowSec": 86400,
+    "accessMode": "on_demand",
+    "onDemand": { "cellDeg": 0.1, "ttlSec": 3600, "maxCellsPerRead": 4, "probe": [6.13, 49.61] },
+    "coverage": { "bbox": [5.7, 49.4, 6.6, 50.2] },
+    "license": "ODbL-1.0",
+    "attribution": "© OpenStreetMap contributors",
+    "privacyUrl": "https://example.org/privacy",
+  }],
+}
+`,
+    );
+    const asked: string[] = [];
+    const cellFetch = (async (input: string | URL | Request) => {
+      asked.push(input instanceof Request ? input.url : String(input));
+      const station = { type: "node", id: 1, lat: 49.61, lon: 6.13, tags: { amenity: "fuel" } };
+      return new Response(JSON.stringify({ elements: [station] }));
+    }) as typeof fetch;
+
+    const results = await checkFeeds({ feedsDir: dir, files: [file], fetch: cellFetch, env: {} });
+    expect(results.map((r) => [r.feedId, r.level, r.records])).toEqual([["lu-osm-fuel", "ok", 1]]);
+    // The 0.1° cell holding the probe, its placeholders filled.
+    expect(asked).toEqual(["https://cells.example.org/?bbox=6.1,49.6,6.2,49.7"]);
+  });
+
   it("fails on a catalogue the schema rejects", async () => {
     quiet();
     const { dir, file } = catalogue([feed("good", "https://good.example.org/feed")]);

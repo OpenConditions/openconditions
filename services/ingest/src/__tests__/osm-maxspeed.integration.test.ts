@@ -8,6 +8,9 @@ import { seedSpeedHour } from "./helpers/flow-series.js";
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
+/** The Overpass interpreter the fallback is pointed at. */
+const OVERPASS = "http://overpass:80/api/interpreter";
+
 /**
  * A site the fallback can find: a speed series with a rolled-up hour in the
  * last week. A line site is located on the line (`ST_PointOnSurface`).
@@ -60,7 +63,9 @@ describe("resolveOsmMaxspeed", () => {
   it("upserts an osm_maxspeed overall baseline for a sensor lacking any baseline", async () => {
     const key = await seedSample("1", "src");
     const queries: string[] = [];
-    const recording = (async (_url: string, init?: RequestInit) => {
+    const urls: string[] = [];
+    const recording = (async (url: string, init?: RequestInit) => {
+      urls.push(url);
       queries.push(String(init?.body));
       return new Response(overpass, { status: 200 });
     }) as unknown as typeof fetch;
@@ -68,8 +73,10 @@ describe("resolveOsmMaxspeed", () => {
       fetch: recording,
       now: () => new Date().toISOString(),
       batchCap: 50,
+      overpassUrl: OVERPASS,
     });
     expect(updated).toBe(1);
+    expect(urls).toEqual([OVERPASS]);
     expect(queries[0]).toMatch(/around:30,60\.2,24\.9\d*\)/);
     const rows = await sql<
       { free_flow_kph: number; method: string; dow_bucket: number; source: string }[]
@@ -95,6 +102,7 @@ describe("resolveOsmMaxspeed", () => {
       fetch: bad,
       now: () => new Date().toISOString(),
       batchCap: 50,
+      overpassUrl: OVERPASS,
     });
     expect(updated).toBe(0);
     const rows = await sql<{ method: string }[]>`
@@ -110,6 +118,7 @@ describe("resolveOsmMaxspeed", () => {
       fetch: fetchFn,
       now: () => new Date().toISOString(),
       batchCap: 50,
+      overpassUrl: OVERPASS,
     });
     expect(updated).toBe(0);
     const rows = await sql<{ n: number }[]>`
@@ -130,6 +139,7 @@ describe("resolveOsmMaxspeed", () => {
       fetch: flaky,
       now: () => new Date().toISOString(),
       batchCap: 50,
+      overpassUrl: OVERPASS,
     });
     expect(updated).toBe(1);
   }, 30_000);

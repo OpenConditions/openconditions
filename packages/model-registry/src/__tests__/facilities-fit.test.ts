@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { type FuelFeed, fuelDomain } from "@openconditions/fuel";
 import {
   buildRegistry,
   extendVocabulary,
@@ -21,8 +22,9 @@ import { productionModules } from "../index.js";
  * in DATEX II v3), Autobahn GmbH (lorry parking along the A1, CC BY 4.0),
  * MINETUR (Spain, prices per grade), MIMIT (Italy, self and attended prices)
  * and E-Control (Austria, an on-demand source queried by radius).
- * OpenConditions parses none of these formats yet, so they are registered by
- * a test-only module.
+ * MINETUR and E-Control run through the fuel domain's own parsers, whose
+ * formats the fuel module registers; the formats OpenConditions does not
+ * parse yet are registered by a test-only module.
  *
  * The Austrian records are kept without their contact block: that feed
  * publishes what look like the operators' private mail addresses, and a
@@ -33,15 +35,7 @@ const fitFormats: RegistryModule = {
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: [
-        "ocpi",
-        "parkapi",
-        "datex2-parking",
-        "autobahn-parking",
-        "minetur",
-        "mimit",
-        "econtrol",
-      ],
+      values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit"],
     }),
   ],
 };
@@ -741,30 +735,18 @@ function autobahnLorryParking() {
   });
 }
 
-const MINETUR_GRADES: Readonly<Record<string, [string, string]>> = {
-  "Precio Gasolina 95 E5": ["e5", "L"],
-  "Precio Gasolina 95 E10": ["e10", "L"],
-  "Precio Gasolina 98 E5": ["sp98", "L"],
-  "Precio Gasolina 98 E10": ["sp98", "L"],
-  "Precio Gasoleo A": ["diesel", "L"],
-  "Precio Gasoleo Premium": ["diesel_premium", "L"],
-  "Precio Gasoleo B": ["agricultural_diesel", "L"],
-  "Precio Diésel Renovable": ["hvo100", "L"],
-  "Precio Biodiesel": ["b100", "L"],
-  "Precio Bioetanol": ["ethanol", "L"],
-  "Precio Gases licuados del petróleo": ["lpg", "L"],
-  "Precio Gas Natural Comprimido": ["cng", "kg"],
-  "Precio Gas Natural Licuado": ["lng", "kg"],
-  "Precio Hidrogeno": ["h2_700", "kg"],
-  "Precio Adblue": ["adblue", "L"],
-  "Precio Metanol": ["methanol", "L"],
-  "Precio Amoniaco": ["ammonia", "kg"],
-  "Precio Gasolina 95 E25": ["e25", "L"],
-  "Precio Gasolina 95 E85": ["e85", "L"],
-  "Precio Gasolina Renovable": ["renewable_petrol", "L"],
-  "Precio Biogas Natural Comprimido": ["cng", "kg"],
-  "Precio Biogas Natural Licuado": ["lng", "kg"],
-  "Precio Gasolina 95 E5 Premium": ["e5", "L"],
+const minetur = fuelDomain.formats["minetur"]!;
+
+/**
+ * `es-minetur-fuel` as `feeds/fuel/es.jsonc` writes it: the fields its records
+ * take from the feed (the loader's derived fields play no part in a parse).
+ */
+const mineturFeed: FuelFeed = {
+  id: "es-minetur-fuel",
+  format: "minetur",
+  license: "CC-BY-4.0",
+  licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+  attribution: "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
 };
 
 /**
@@ -773,73 +755,11 @@ const MINETUR_GRADES: Readonly<Record<string, [string, string]>> = {
  * lists all grades, so an empty one is known-absent rather than unknown.
  */
 function mineturStations() {
-  const file = json("minetur-stations.json");
-  const publicationTime = "2026-09-22T11:07:59Z";
-  const features: Draft[] = [];
-  const observations: Draft[] = [];
-  for (const station of file.ListaEESSPrecio as Record<string, string>[]) {
-    const id = station["IDEESS"]!;
-    const decimal = (value: string) => value.replace(",", ".");
-    const prov = provenance(
-      "es-minetur",
-      "minetur",
-      id,
-      "Ministerio para la Transición Ecológica",
-      "CC-BY-4.0",
-    );
-    const feature: Feature = {
-      id: `oc:feature:es-minetur:${id}`,
-      location: {
-        ...point(
-          Number(decimal(station["Longitud (WGS84)"]!)),
-          Number(decimal(station["Latitud"]!)),
-        ),
-        address: {
-          street: station["Dirección"],
-          postalCode: station["C.P."],
-          city: station["Municipio"],
-          country: "ES",
-        },
-        admin: { country: "ES", geocodes: [{ scheme: "iso3166-2", code: "ES-M" }] },
-      },
-      provenance: prov,
-    };
-    const sold = Object.entries(MINETUR_GRADES).filter(([field]) => (station[field] ?? "") !== "");
-    features.push({
-      ...feature,
-      class: "feature",
-      kind: "fuel_station",
-      temporality: "static",
-      lifecycle: "operational",
-      name: [{ lang: "es", text: station["Rótulo"]! }],
-      freshness: { fetchedAt: FETCHED },
-      access: { audience: station["Tipo Venta"] === "P" ? "public" : "restricted" },
-      components: sold.map(([, [grade, per]]) => ({
-        key: grade,
-        kind: "fuel_product",
-        details: {
-          kind: "fuel_product",
-          v: 1,
-          grade,
-          per,
-          priceBasis: "gross",
-          priceLevel: "standard",
-          vehicleScope: "any",
-        },
-      })),
-      details: { kind: "fuel_station", v: 1, brand: station["Rótulo"], productsComplete: true },
-    });
-    for (const [field, [grade]] of sold) {
-      observations.push(
-        observation(feature, {
-          property: "fuel.price",
-          componentKey: grade,
-          result: money(decimal(station[field]!), "EUR", MINETUR_GRADES[field]![1]),
-          at: { instant: publicationTime },
-        }),
-      );
-    }
-  }
+  const { features, observations } = minetur.parse(
+    mineturFeed as Parameters<typeof minetur.parse>[0],
+    { main: [Buffer.from(text("minetur-stations.json"))] },
+    { fetchedAt: FETCHED, cadenceSec: 1800, reference: {} },
+  );
   return { features, observations };
 }
 
@@ -932,92 +852,32 @@ function mimitStations() {
   return { features, observations };
 }
 
-const ECONTROL_GRADES: Readonly<Record<string, string>> = { DIE: "diesel", SUP: "e5", GAS: "lpg" };
+const econtrol = fuelDomain.formats["econtrol"]!;
+
+/**
+ * `at-econtrol-fuel` as `feeds/fuel/at.jsonc` writes it: the fields its
+ * records take from the feed, its expiry among them.
+ */
+const econtrolFeed: FuelFeed = {
+  id: "at-econtrol-fuel",
+  format: "econtrol",
+  license: "NOASSERTION",
+  attribution: "E-Control (Spritpreisrechner)",
+  accessMode: "on_demand",
+  onDemand: { cellDeg: 0.1, ttlSec: 900, maxCellsPerRead: 9, probe: [16.37, 48.21] },
+};
 
 /**
  * Austria answers only for the area a consumer asks about, so its records are
  * on-demand: they carry the moment their answer goes stale and never enter
- * the history or the federation outbox.
+ * the history or the federation outbox. The fixture is one diesel answer.
  */
 function econtrolStations() {
-  const expiresAt = "2026-09-22T11:40:00Z";
-  const features: Draft[] = [];
-  const observations: Draft[] = [];
-  for (const station of json("econtrol-stations.json") as {
-    id: number;
-    name: string;
-    location: {
-      address: string;
-      postalCode: string;
-      city: string;
-      latitude: number;
-      longitude: number;
-    };
-    offerInformation: { service: boolean; selfService: boolean };
-    open: boolean;
-    prices: { fuelType: string; amount: number }[];
-  }[]) {
-    const prov = provenance(
-      "at-econtrol",
-      "econtrol",
-      String(station.id),
-      "E-Control",
-      "CC-BY-4.0",
-      "on_demand",
-    );
-    const feature: Feature = {
-      id: `oc:feature:at-econtrol:${station.id}`,
-      location: {
-        ...point(station.location.longitude, station.location.latitude),
-        address: {
-          street: station.location.address,
-          postalCode: station.location.postalCode,
-          city: station.location.city,
-          country: "AT",
-        },
-      },
-      provenance: prov,
-      freshness: { fetchedAt: FETCHED, expiresAt },
-    };
-    const products = station.prices
-      .map((p) => ({ price: p, grade: ECONTROL_GRADES[p.fuelType] }))
-      .filter(
-        (p): p is { price: { fuelType: string; amount: number }; grade: string } =>
-          p.grade !== undefined,
-      );
-    features.push({
-      ...feature,
-      class: "feature",
-      kind: "fuel_station",
-      temporality: "static",
-      lifecycle: station.open ? "operational" : "temporarily_closed",
-      name: de(station.name),
-      freshness: { fetchedAt: FETCHED, expiresAt },
-      components: products.map(({ grade }) => ({
-        key: grade,
-        kind: "fuel_product",
-        details: {
-          kind: "fuel_product",
-          v: 1,
-          grade,
-          per: "L",
-          priceBasis: "gross",
-          service: station.offerInformation.selfService ? "self" : "served",
-        },
-      })),
-      details: { kind: "fuel_station", v: 1, productsComplete: false },
-    });
-    for (const { price, grade } of products) {
-      observations.push(
-        observation(feature, {
-          property: "fuel.price",
-          componentKey: grade,
-          result: money(price.amount.toFixed(3), "EUR", "L"),
-          at: { instant: FETCHED },
-        }),
-      );
-    }
-  }
+  const { features, observations } = econtrol.parse(
+    econtrolFeed as Parameters<typeof econtrol.parse>[0],
+    { main: [Buffer.from(text("econtrol-stations.json"))] },
+    { fetchedAt: FETCHED, cadenceSec: 900, reference: {} },
+  );
   return { features, observations };
 }
 

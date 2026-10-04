@@ -1,15 +1,18 @@
 /**
  * The federation outbox journal read (`conditions.federation_outbox`). The
- * journal is written exclusively by the database triggers on the record
- * tables (migration `record_outbox_capture`) in each change's own
- * transaction; a peer pages it with a COMPOSITE `(txid, seq)` cursor.
+ * journal is written by the database triggers on the record tables
+ * (migration `record_outbox_capture`) in each change's own transaction, and
+ * by the boot's reconcile of a source whose `restricted` flag flipped
+ * (`reconcileFederation`), in the same shape; a peer pages it with a
+ * COMPOSITE `(txid, seq)` cursor.
  *
  * Each entry is one record change: its class, id, kind, domain and property
  * as columns, and the stored record (with a crowd report's evidence) as the
  * snapshot. A page carries what the outbox may carry of each
  * (`federatedSnapshot`: the reporter stripped, extras only from a source that
- * federates them) and only what the subscriber's filter keeps
- * (`applyRecordFilter`). Delete entries carry the reason and no record.
+ * federates them; nothing of a source now restricted) and only what the
+ * subscriber's filter keeps (`applyRecordFilter`). Delete entries carry the
+ * reason and no record.
  *
  * WHY A COMPOSITE CURSOR (the gap-free ordering authority). `seq` (bigserial)
  * advances PER ROW, but `txid` (`pg_current_xact_id()`) is assigned at a
@@ -157,9 +160,14 @@ interface JournalRow {
   tombstone_reason: string | null;
   created_at: Date;
   extras_federate: boolean | null;
+  restricted: boolean | null;
 }
 
-/** The wire entry of a journal row; undefined for a record the outbox never carries. */
+/**
+ * The wire entry of a journal row; undefined for a record the outbox never
+ * carries. A change of a source restricted since it was journalled is
+ * withheld; its delete still goes out, so a subscriber ends its copy.
+ */
 function rowToEntry(row: JournalRow): RecordOutboxEntry | undefined {
   const base = {
     seq: Number(row.seq),
@@ -181,7 +189,7 @@ function rowToEntry(row: JournalRow): RecordOutboxEntry | undefined {
     };
   }
   const record =
-    row.snapshot === null
+    row.snapshot === null || row.restricted === true
       ? undefined
       : federatedSnapshot(row.snapshot, { federateExtras: row.extras_federate === true });
   return record === undefined ? undefined : { ...base, operation: row.operation, record };
@@ -226,7 +234,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
   const rows = await sql<JournalRow[]>`
     SELECT o.seq::text AS seq, o.txid::text AS txid, o.operation, o.record_class, o.record_id,
            o.canonical_id, o.kind, o.domain, o.property, o.snapshot, o.tombstone_reason,
-           o.created_at, src.extras_federate
+           o.created_at, src.extras_federate, src.restricted
     FROM conditions.federation_outbox o
     LEFT JOIN conditions.source src ON src.id = o.snapshot #>> '{provenance,sourceId}'
     WHERE (o.txid > ${after.txid}::xid8

@@ -38,6 +38,10 @@ function regionTzCase(sql: Sql, regions: OsmRegion[]) {
  * Sunday 00:00 local, so a UTC-bucketed profile would shift NL/FI/SE/US-NY rush
  * hours by 1-3 hours (see plan 12's Time semantics note).
  *
+ * Each bucket records the distinct sources whose readings fed its median
+ * (`contributing`, the rollup series' source ids), so the public export can
+ * withhold a profile a restricted source helped shape.
+ *
  * The median comes off each hour's merged histogram rather than a sort over raw
  * readings — raw speed history only keeps a few days, so this window exists
  * solely in the rollup.
@@ -68,7 +72,7 @@ export async function deriveSegmentProfiles(
 
   const rows = await sql<{ segment_id: string }[]>`
     WITH win AS (
-      SELECT ss.segment_id,
+      SELECT ss.segment_id, l.source_id,
              extract(dow  from h.hour_utc AT TIME ZONE tzmap.tz)::smallint AS local_dow,
              extract(hour from h.hour_utc AT TIME ZONE tzmap.tz)::smallint AS local_hour,
              u.bin, u.cnt
@@ -84,23 +88,30 @@ export async function deriveSegmentProfiles(
         AND tzmap.tz IS NOT NULL
     ),
     binned AS (
-      SELECT segment_id, local_dow, local_hour, bin, sum(cnt)::bigint AS c
+      SELECT segment_id, local_dow, local_hour, bin, sum(cnt)::bigint AS c,
+             array_agg(DISTINCT source_id) AS srcs
       FROM win GROUP BY 1, 2, 3, 4
     ),
     cum AS (
-      SELECT segment_id, local_dow, local_hour, bin,
+      SELECT segment_id, local_dow, local_hour, bin, srcs,
              sum(c) OVER (PARTITION BY segment_id, local_dow, local_hour ORDER BY bin
                           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cum_c,
              sum(c) OVER (PARTITION BY segment_id, local_dow, local_hour) AS total
       FROM binned
     )
-    INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at)
-    SELECT segment_id, local_dow, local_hour, ${median}, max(total)::int, ${now()}
+    INSERT INTO conditions.segment_profile
+      (segment_id, dow, tod_hour, speed_kph, sample_count, contributing, computed_at)
+    SELECT segment_id, local_dow, local_hour, ${median}, max(total)::int,
+           (SELECT array_agg(DISTINCT s ORDER BY s)
+              FROM jsonb_array_elements_text(
+                     jsonb_path_query_array(jsonb_agg(srcs), '$[*][*]')) s),
+           ${now()}
     FROM cum
     GROUP BY segment_id, local_dow, local_hour
     HAVING max(total) >= ${minSamples}
     ON CONFLICT (segment_id, dow, tod_hour) DO UPDATE SET
-      speed_kph = EXCLUDED.speed_kph, sample_count = EXCLUDED.sample_count, computed_at = EXCLUDED.computed_at
+      speed_kph = EXCLUDED.speed_kph, sample_count = EXCLUDED.sample_count,
+      contributing = EXCLUDED.contributing, computed_at = EXCLUDED.computed_at
     RETURNING segment_id`;
 
   return { upserted: rows.length };

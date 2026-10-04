@@ -2165,7 +2165,10 @@
           "anyOf": [
             {
               "type": "string",
-              "const": "@fused"
+              "enum": [
+                "@fused",
+                "@fused-public"
+              ]
             },
             {
               "type": "string",
@@ -2215,7 +2218,12 @@
             "vic-disruptions",
             "webtris",
             "webtris-sites",
-            "wzdx"
+            "wzdx",
+            "tankerkoenig",
+            "econtrol",
+            "prix-carburants",
+            "minetur",
+            "overpass"
           ]
         },
         "accessMode": {

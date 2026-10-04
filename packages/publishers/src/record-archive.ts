@@ -1,8 +1,8 @@
+import { type EgressRecord, publicRecords } from "@openconditions/ingest-framework";
 import { federationEligible, type RecordClass, subjectKey } from "@openconditions/model";
 import { asyncBufferFromFile, parquetReadObjects } from "hyparquet";
 import type { ColumnSource, Writer } from "hyparquet-writer";
 import { geojsonToWkb, parquetWriteBuffer, parquetWriteRows } from "hyparquet-writer";
-import { type EgressRecord, permissiveRecords } from "./license.js";
 
 /** The parts of a stored model record the archive reads. */
 export interface ArchivableRecord extends EgressRecord {
@@ -54,16 +54,19 @@ function current(r: ArchivableRecord, now: string): boolean {
 export interface ArchiveOptions {
   /** Whether a source opted in to sharing its allow-listed extras (the source registry's `extrasFederate`). */
   federateExtras?: (sourceId: string) => boolean;
+  /** Whether a source is restricted (the source registry's `restricted`): none of its records is archived. */
+  restricted?: (sourceId: string) => boolean;
 }
 
 /**
  * The records the archive may mirror, in one class: records a peer could
- * receive (no on-demand answers, no fused rows), not tombstoned, current for
- * their class, and — for crowd records — corroborated or better and not yet
- * decayed, as the federation's default filter asks. Then the permissive
- * projection: share-alike records out, reporters stripped, and a source's
- * allow-listed extras withheld unless `federateExtras` says the source shares
- * them, as for a peer. Pure: `now` is an input.
+ * receive (no on-demand answers, no fused rows, nothing of a restricted
+ * source), not tombstoned, current for their class, and — for crowd records
+ * — corroborated or better and not yet decayed, as the federation's default
+ * filter asks. Then the public projection: records whose licence is not
+ * public out, reporters stripped, and a source's allow-listed extras
+ * withheld unless `federateExtras` says the source shares them, as for a
+ * peer. Pure: `now` is an input.
  */
 export function publishedRecords<T extends ArchivableRecord>(
   cls: RecordClass,
@@ -73,6 +76,7 @@ export function publishedRecords<T extends ArchivableRecord>(
 ): T[] {
   const kept = records.filter((r) => {
     if (r.class !== cls || !federationEligible(r) || r.tombstone !== undefined) return false;
+    if (opts.restricted?.(r.provenance.sourceId)) return false;
     const crowd =
       r.provenance.origin === "crowd" || r.provenance.privacy.class === "crowd_pseudonym";
     if (
@@ -82,7 +86,7 @@ export function publishedRecords<T extends ArchivableRecord>(
       return false;
     return current(r, now);
   });
-  return permissiveRecords(kept).map((r) => {
+  return publicRecords(kept).map((r) => {
     if (r["extras"] === undefined || opts.federateExtras?.(r.provenance.sourceId)) return r;
     const { extras: _extras, ...rest } = r;
     return rest as T;

@@ -1,5 +1,13 @@
+/**
+ * Who a read is for. The public scope withholds every record of a restricted
+ * source (see `conditions.source.restricted`); the operator scope, granted
+ * to the instance's operator alone, withholds nothing.
+ */
+export type Scope = "public" | "operator";
+
 /** Filters every record collection takes, on a class table's promoted kernel columns. */
 export interface RecordFilters {
+  scope: Scope;
   /** west, south, east, north. */
   bbox?: [number, number, number, number];
   kinds?: readonly string[];
@@ -7,6 +15,20 @@ export interface RecordFilters {
   domain?: string;
   sources?: readonly string[];
   origins?: readonly string[];
+}
+
+/**
+ * The WHERE clauses `scope` adds over the table aliased `t`, which has a
+ * `source_id`: none for the operator, and for the public no record of a
+ * restricted source. A source the catalogue does not know (a peer's, the
+ * crowd's) is not restricted.
+ */
+export function scopeClauses(t: string, scope: Scope): string[] {
+  if (scope === "operator") return [];
+  return [
+    `NOT EXISTS (SELECT 1 FROM conditions.source scope_source
+                  WHERE scope_source.id = ${t}.source_id AND scope_source.restricted)`,
+  ];
 }
 
 /**
@@ -18,7 +40,7 @@ export function recordFilterClauses(
   f: RecordFilters,
   p: (value: unknown) => string,
 ): string[] {
-  const clauses: string[] = [];
+  const clauses = scopeClauses(t, f.scope);
   if (f.bbox) {
     const [w, s, e, n] = f.bbox;
     clauses.push(`${t}.geom && ST_MakeEnvelope(${p(w)}, ${p(s)}, ${p(e)}, ${p(n)}, 4326)`);

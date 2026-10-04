@@ -13,8 +13,14 @@ feeds/
     de.jsonc               one file per region
     nl.jsonc
     …
+  fuel/
+    de.jsonc
+    es.jsonc
+    global.jsonc
+    …
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
+    fuel.schema.json
     credentials.schema.json
 ```
 
@@ -57,7 +63,8 @@ A region file is JSONC (comments and trailing commas allowed):
 to complete and check fields. `maintainers` is optional. The fields every feed
 shares are defined in `packages/ingest-framework/src/catalog/schema.ts`; a domain
 adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
-`openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`).
+`openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`) or
+none (fuel).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
 relay of others' data. `freshnessWindowSec` is how old the last good poll may
@@ -70,8 +77,19 @@ The other optional fields every feed may carry:
 - `accessMode`: `bulk` (the default; each poll fetches the published set) or
   `on_demand` (the publisher answers queries), stamped on each record's
   provenance.
+- `homepage`: the publisher's site (an https URL), where consumers link the
+  feed's attribution. Left out, it is the `https` origin of the feed's first
+  data endpoint URL, read off the URL as written, so a credential never reaches
+  it; reference data (endpoints with a `decoder`) is skipped. Write it when the
+  data host is not the publisher's site (an API host), or when the URL is not
+  `https` on the default port or has a placeholder in its host: a credential,
+  or a shared group of settings such as `${@overpass.url}`, whose base is the
+  instance's own service (perhaps self-hosted, perhaps plain http) and no
+  credit link (`feeds:lint` reports those). `GET /sources` serves it.
 - `requestLimits`: the publisher's stated limits, `perMinute`, `perDay`,
   `maxRadiusKm` and `keyScope` (`instance` or `consumer`: whom one key serves).
+  `perMinute` and `perDay` count upstream requests: an on-demand cell of a
+  data endpoint with several `urls` spends one per URL.
 - `extrasAllow`: the source fields kept on each record under `extras`.
 - `extrasFederate`: whether those extras are sent to federation peers
   (default `false`).
@@ -107,6 +125,19 @@ what the feed publishes. The roads products are:
 | `events`     | situations: incidents, roadworks, closures, restrictions |
 | `conditions` | road and weather conditions along road segments          |
 | `flow`       | measured traffic: speed, volume, level of service        |
+
+The fuel product is:
+
+| product | what                                                                          |
+| ------- | ----------------------------------------------------------------------------- |
+| `fuel`  | filling stations, the grades they sell, their prices and what is out of stock |
+
+A fuel format is a `features` format. A bulk feed's poll is the publisher's
+complete set of stations, so a station missing from it is withdrawn: `minetur`
+(Spain) and `prix-carburants` (France). The others are read on demand (see
+below), each answer for one cell: `tankerkoenig` (Germany), `econtrol`
+(Austria) and `overpass` (OpenStreetMap, worldwide). The formats are in
+`packages/fuel/src/domain.ts`.
 
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
@@ -179,6 +210,38 @@ portal key that both the `vicroads` and the `transportvic` feeds use),
 `us-oh-ohgo`, `hr-hc`, …; a regional issuer's group is `<region>-<issuer>`. A
 group serves at least two feeds; a credential one feed uses stays on that feed.
 
+A group whose every field has a `default` holds instance settings rather than
+an account, and may serve a single feed: `overpass.url` is where this instance
+reaches Overpass (the public interpreter by default), read by every
+OpenStreetMap source as `${@overpass.url}/api/interpreter`.
+
+A setting is a base URL, which carries no query or fragment. Its trailing
+slashes are dropped, and when the template follows it with a path the value
+already ends with, that path is not written twice: `http://overpass:80`,
+`http://overpass:80/` and `http://overpass:80/api/interpreter` all fill
+`${@overpass.url}/api/interpreter` as `http://overpass:80/api/interpreter`.
+A value with a query or fragment is taken as written, apart from its trailing
+slashes. The road-graph import and the maxspeed lookup build their URL by the
+same rule. A feed's own credentials and the fields of an account group are
+filled verbatim.
+
+`pnpm gen:credentials` writes each setting into `services/ingest/service.json`
+as a non-secret `configSchema` field with its `default`, beside the
+credentials' secret fields and the service's own fields (`SERVICE_FIELDS` in
+`scripts/lib/gen-credentials-lib.ts`: `DATABASE_URL`, the operator token, rate
+limits and the like); `pnpm check-credentials` checks it. Under OpenMapX
+the operator sets it as the service's config: in the admin services panel, or
+as `SERVICE_OPENCONDITIONS_INGEST_<NAME>` in OpenMapX's `.env`
+(`SERVICE_OPENCONDITIONS_INGEST_OVERPASS_URL`). Settings kept in OpenMapX's
+`.env` are applied with `pnpm openmapx services start openconditions-ingest`
+(which resets every setting saved only in the admin form, so keep all of them
+in one place). Settings saved in the form are applied with **Save & Apply**.
+OpenMapX writes a `${VAR}` in a
+community service's `container.environment` as a literal, so a setting is never
+passed through there, and the generator fails on an environment entry that
+names any config field. A private Overpass host also needs
+`OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`.
+
 Each credential is read from an environment variable (or `<NAME>_FILE`): a
 feed's own field from `<FEED_ID>_<FIELD>`, a shared field from
 `<GROUP>_<FIELD>`, upper-cased with `-` as `_`. So `de-hh-autobahn-flow`'s
@@ -199,6 +262,46 @@ A feed with no known licence is `NOASSERTION` and must say what is known in
 `reviewedAt`, `note`, and any of `redistribution`, `derivedRedistribution`,
 `commercialUse`, `attributionRequired`, `retention`. A key set in `terms`
 (even to `null`) overrides the licence; an absent key defers to it.
+
+## On-demand feeds
+
+A publisher that answers queries by place rather than publishing its whole set
+is written as an on-demand feed. Nothing polls it: a read of a bounding box
+fetches the grid cells that cover the box, and the answer is kept for a while.
+
+```jsonc
+{
+  "operator": "…",
+  "product": "fuel",
+  "accessMode": "on_demand",
+  "onDemand": { "cellDeg": 0.25, "ttlSec": 900, "maxCellsPerRead": 4, "probe": [13.4, 52.52] },
+  "requestLimits": { "perMinute": 1, "maxRadiusKm": 25 },
+  "coverage": { "bbox": [5.8, 47.2, 15.1, 55.1] },
+  "endpoints": {
+    "main": { "url": "https://…/list?lat={lat}&lng={lon}&rad={radiusKm}", "cadenceSec": 900 },
+  },
+  …
+}
+```
+
+- `onDemand.cellDeg` is the cell size in degrees. The grid is anchored at 0°,
+  0°, so a place is always the same cell.
+- `onDemand.ttlSec` is how long a cell's answer is current; each record of it
+  expires then.
+- `onDemand.maxCellsPerRead` caps the cells one read may cover, fresh or
+  stale: a read whose area covers more cells fetches none of them, not even
+  the stale ones, and is answered from what is already held (coverage reason
+  `too_many_cells`).
+- `onDemand.probe` is the `[lon, lat]` whose cell `feeds:check` fetches. It lies
+  inside `coverage.bbox`.
+- `coverage.bbox` is required: a read outside it never fetches.
+- The data endpoint fills a cell into its URL, body or headers with
+  `{west}`, `{south}`, `{east}`, `{north}` (the cell's edges), `{lat}` and
+  `{lon}` (its centre) and `{radiusKm}` (centre to farthest corner). `${field}`
+  stays a credential. A bulk feed may not use these placeholders.
+- `requestLimits.maxRadiusKm`, when set, must reach a whole cell.
+- The format is a `features` format that declares what it `produces` (feature
+  kinds and properties), so a read fetches only the feeds that can answer it.
 
 ## Disabled feeds
 
@@ -234,7 +337,8 @@ pnpm feeds:check feeds/roads/nl.jsonc # fetch and parse the feeds of these files
 
 `feeds:lint` fails on any error: a duplicate id, an unknown product, format,
 role or decoder, a credential that is undeclared or never used, a shared group
-with fewer than two feeds, two credentials read from one environment variable
+with fewer than two feeds (a group of settings with none), two credentials read
+from one environment variable
 (`xx-op-flow`'s `events_k` and `xx-op-flow-events`' `k` are both
 `XX_OP_FLOW_EVENTS_K`, and a field `k_file` is field `k`'s `_FILE` variant), an
 unknown licence, `NOASSERTION` without `terms`, a private URL, a wrong

@@ -21,7 +21,7 @@ When reporting, please include:
 - A description of the vulnerability and its impact.
 - Steps to reproduce, ideally with a minimal proof of concept.
 - The affected component (`services/ingest`, `services/openlr-resolver`, a
-  specific `@openconditions/*` package, or the provider integration) and the
+  specific `@openconditions/*` package) and the
   version / commit SHA.
 - Whether the issue requires a specific feed to be configured, the public
   emitter feeds to be reachable, or a particular deployment topology.
@@ -56,8 +56,7 @@ In scope:
 - `services/openlr-resolver` — the Python OpenLR map-matcher.
 - The published `@openconditions/*` packages (`core`, `roads`, `publishers`,
   `openlr`).
-- The `road-conditions-openconditions` provider integration and the
-  `openconditions-ingest` service manifest / Dockerfiles / default deployment
+- The `openconditions-ingest` service manifest / Dockerfiles / default deployment
   configuration.
 
 Out of scope (report upstream instead):

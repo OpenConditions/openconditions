@@ -1,5 +1,6 @@
 export * from "./attribution.js";
 export * from "./auth.js";
+export * from "./catalog/cells.js";
 export * from "./catalog/credentials.js";
 export * from "./catalog/domain.js";
 export * from "./catalog/ids.js";
@@ -17,7 +18,9 @@ export * from "./catalog/types.js";
 export * from "./download.js";
 export * from "./egress.js";
 export * from "./fetch.js";
+export * from "./layouts/overpass.js";
 export * from "./parse-output.js";
 export * from "./payload.js";
+export * from "./public-license.js";
 export * from "./redact.js";
 export * from "./version.js";

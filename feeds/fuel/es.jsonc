@@ -1,0 +1,29 @@
+{
+  "$schema": "../schema/fuel.schema.json",
+  "feeds": [
+    {
+      "operator": "minetur",
+      "product": "fuel",
+      "name": "MINETUR fuel prices (Spain)",
+      "tier": "authoritative",
+      "format": "minetur",
+      // Every station in Spain with the price of every grade, republished every
+      // half hour (~12 MB of JSON); one publication time (`Fecha`, Madrid local
+      // time) for the whole file.
+      "endpoints": {
+        "main": {
+          "url": "https://sedeaplicaciones.minetur.gob.es/ServiciosRESTCarburantes/PreciosCarburantes/EstacionesTerrestres/",
+          "headers": { "Accept": "application/json" },
+          "cadenceSec": 1800,
+        },
+      },
+      "freshnessWindowSec": 86400,
+      // Licence as stated by MITECO's open-data catalogue:
+      // https://catalogo.datosabiertos.miteco.gob.es/catalogo/es/dataset/214e0895-b3aa-4662-8ebe-18134c21fb45
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+      "privacyUrl": "https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html",
+    },
+  ],
+}

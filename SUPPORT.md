@@ -15,10 +15,9 @@ Most answers live in the repository:
 - **[Packages](packages/)** — the reusable `@openconditions/*` libraries (the
   canonical model, parsers, and emitters).
 - **Using OpenConditions with OpenMapX** — install it as an extension via the ingest
-  service's [`service.json`](services/ingest/service.json) manifest and the
-  [`road-conditions-openconditions`](integrations/road-conditions-openconditions)
-  provider integration; see OpenMapX's _Building an external extension_ guide for
-  the end-to-end install flow.
+  service's [`service.json`](services/ingest/service.json) manifest; OpenMapX reads it
+  through its built-in OpenConditions integration. See OpenMapX's _Building an
+  external extension_ guide for the end-to-end install flow.
 
 ## Questions, ideas, and discussion
 

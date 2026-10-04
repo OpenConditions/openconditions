@@ -218,6 +218,15 @@ export const feedBaseShape = {
     })
     .strict()
     .optional(),
+  onDemand: z
+    .object({
+      cellDeg: z.number().positive().max(1),
+      ttlSec: z.number().int().positive(),
+      maxCellsPerRead: z.number().int().min(1).max(64),
+      probe: z.tuple([z.number().min(-180).max(180), z.number().min(-90).max(90)]),
+    })
+    .strict()
+    .optional(),
   extrasAllow: z.array(z.string().min(1)).optional(),
   extrasFederate: z.boolean().optional(),
   rawRetention: z.enum(RAW_RETENTION_CLASSES).optional(),
@@ -226,6 +235,15 @@ export const feedBaseShape = {
   attribution: z.string().min(1),
   terms: feedTermsSchema.optional(),
   privacyUrl: z.string().url(),
+  /**
+   * The publisher's site, where the attribution links to. Unwritten, it is the
+   * origin of the first data endpoint, see `deriveHomepage`.
+   */
+  homepage: z
+    .string()
+    .url()
+    .refine((url) => url.startsWith("https://"), { message: "homepage must be an https URL" })
+    .optional(),
   coverage: z
     .object({
       // A national feed names its country; a narrower one its subdivisions.

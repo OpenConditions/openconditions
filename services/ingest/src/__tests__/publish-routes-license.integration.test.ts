@@ -4,12 +4,14 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
+import { registerScope } from "../api/scope.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG } from "./helpers/catalog.js";
 import { registry as model, situationDraft, writeSituations } from "./helpers/situations.js";
 
 const BBOX = "13,52,14,53";
+const TOKEN = "operator-token-of-the-licence-suite-0123456789";
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -111,16 +113,17 @@ describe("license enforcement on the redistributable export routes", () => {
       await writeSituations(sql, "lic-test-ok", [licensed("sse-ok-1", "lic-test-ok", "CC-BY-4.0")]);
 
       const app = Fastify();
+      registerScope(app, TOKEN);
       registerApiRoutes(app, sql, { registry: model });
       await app.listen({ port: 0, host: "127.0.0.1" });
       const address = app.server.address();
       const port = typeof address === "object" && address ? address.port : 0;
 
-      const readFrames = async (url: string): Promise<string> => {
+      const readFrames = async (url: string, headers: Record<string, string> = {}) => {
         const controller = new AbortController();
         const timeout = setTimeout(() => controller.abort(), 5_000);
         try {
-          const res = await fetch(url, { signal: controller.signal });
+          const res = await fetch(url, { signal: controller.signal, headers });
           const reader = res.body!.getReader();
           const decoder = new TextDecoder();
           let buf = "";
@@ -143,6 +146,12 @@ describe("license enforcement on the redistributable export routes", () => {
         const frames = await readFrames(`http://127.0.0.1:${port}/stream?bbox=${BBOX}`);
         expect(frames).toContain("oc:situation:lic-test-ok:sse-ok-1");
         expect(frames).not.toContain("sse-sa-1");
+        // The stream is a public emitter: the operator token widens nothing.
+        const operatorFrames = await readFrames(`http://127.0.0.1:${port}/stream?bbox=${BBOX}`, {
+          authorization: `Bearer ${TOKEN}`,
+        });
+        expect(operatorFrames).toContain("oc:situation:lic-test-ok:sse-ok-1");
+        expect(operatorFrames).not.toContain("sse-sa-1");
       } finally {
         await app.close();
       }

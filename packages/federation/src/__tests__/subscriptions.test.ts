@@ -51,13 +51,16 @@ describe("validateSubscriptionShape", () => {
   it("keeps the subscriber's own fields in the recommendation", () => {
     const e = caught(() =>
       validateSubscriptionShape(
-        shape({ deliveryMode: "sse", filter: { classes: ["situation"], permissiveOnly: false } }),
+        shape({
+          deliveryMode: "sse",
+          filter: { classes: ["situation"], minEvidenceTier: "self_reported" },
+        }),
       ),
     );
     expect(e.code).toBe("over-broad-filter");
     expect(e.recommended).toEqual({
       classes: ["situation"],
-      permissiveOnly: false,
+      minEvidenceTier: "self_reported",
       kinds: ["closure", "incident"],
     });
   });
@@ -260,7 +263,6 @@ describe("validateSubscriptionShape: filter values (all delivery modes)", () => 
             domains: ["road"],
             properties: ["speed"],
             privacyClasses: ["authoritative"],
-            permissiveOnly: false,
             minEvidenceTier: "self_reported",
             maxAgeSec: 3600,
           },
@@ -280,9 +282,7 @@ describe("filterIsBounded", () => {
   it("is false for an empty filter and for one that only names classes or relaxes gates", () => {
     expect(filterIsBounded({})).toBe(false);
     expect(filterIsBounded({ classes: ["situation", "feature"] })).toBe(false);
-    expect(filterIsBounded({ permissiveOnly: false, minEvidenceTier: "self_reported" })).toBe(
-      false,
-    );
+    expect(filterIsBounded({ minEvidenceTier: "self_reported" })).toBe(false);
   });
 
   it("is true for each source-side bound", () => {

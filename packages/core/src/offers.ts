@@ -1,3 +1,4 @@
+import { liveOfferClauses } from "./live-rows.js";
 import type { QueryRunner } from "./query-runner.js";
 import { binder, type RecordFilters, recordFilterClauses } from "./record-filters.js";
 
@@ -30,12 +31,7 @@ export interface OfferPage {
 export async function listOffers(db: QueryRunner, q: OfferQuery): Promise<OfferPage> {
   const params: unknown[] = [(q.at ?? new Date()).toISOString()];
   const p = binder(params);
-  const clauses = [
-    "o.tombstoned_at IS NULL",
-    "(o.expires_at IS NULL OR o.expires_at > $1::timestamptz)",
-    "(o.valid_to IS NULL OR o.valid_to > $1::timestamptz)",
-    ...recordFilterClauses("o", q, p),
-  ];
+  const clauses = [...liveOfferClauses("o", "$1"), ...recordFilterClauses("o", q, p)];
   if (q.horizonDays !== undefined) {
     clauses.push(
       `(o.valid_from IS NULL OR o.valid_from <= $1::timestamptz + make_interval(days => ${p(q.horizonDays)}))`,

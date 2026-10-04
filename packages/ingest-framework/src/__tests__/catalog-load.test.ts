@@ -2,8 +2,10 @@ import { mkdir, mkdtemp, readFile, rm, rmdir, writeFile } from "node:fs/promises
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { missingCredentials } from "../auth.js";
 import { loadCatalog, readCatalogDir } from "../catalog/load.js";
 import type { ChildFeed } from "../catalog/resolvers.js";
+import { resolveEndpointUrls } from "../catalog/templates.js";
 import { fixture, otherDomain, testDomain, testDomainWith } from "./helpers/catalog-domain.js";
 
 const feed = (operator: string, name = operator) => ({
@@ -76,6 +78,20 @@ describe("readCatalogDir", () => {
     expect(readCatalogDir(dir, [testDomain]).files).toEqual([]);
   });
 
+  test("a reader of some domains can leave the other domains' directories unread", async () => {
+    await mkdir(path.join(dir, "roads"));
+    await writeFile(
+      path.join(dir, "roads", "de.jsonc"),
+      JSON.stringify({ $schema: "../schema/roads.schema.json", feeds: [feed("ok")] }),
+    );
+    await mkdir(path.join(dir, "fuel"));
+    // Not a roads region file: it would not parse as one, and is never read.
+    await writeFile(path.join(dir, "fuel", "es.jsonc"), JSON.stringify({ feeds: [{ x: 1 }] }));
+    expect(() => readCatalogDir(dir, [testDomain])).toThrow(/unknown domain directory.*fuel/);
+    const { files } = readCatalogDir(dir, [testDomain], { otherDomains: "ignore" });
+    expect(files.map((f) => [f.domain, f.region])).toEqual([["roads", "de"]]);
+  });
+
   test("a file in a domain directory that is not .jsonc is an error naming it", async () => {
     await mkdir(path.join(dir, "roads"));
     await writeFile(path.join(dir, "roads", "de.jsonc"), JSON.stringify({ feeds: [] }));
@@ -142,6 +158,38 @@ describe("loadCatalog", () => {
     expect(f?.coverage).toEqual({ countries: ["DE"] });
     expect(f?.maintainers).toEqual([{ name: "Test", github: "test" }]);
     expect(f?.file).toMatch(/baked\/roads\/de\.jsonc$/);
+  });
+
+  test("a shared field's default fills the feeds that read it, so none of them misses it", async () => {
+    await mkdir(path.join(dir, "roads"));
+    await writeFile(
+      path.join(dir, "credentials.jsonc"),
+      JSON.stringify({
+        credentials: {
+          overpass: { url: { title: "Overpass", default: "https://overpass.test/api" } },
+        },
+      }),
+    );
+    await writeFile(
+      path.join(dir, "roads", "de.jsonc"),
+      JSON.stringify({
+        $schema: "../schema/roads.schema.json",
+        feeds: [
+          {
+            ...feed("osm"),
+            homepage: "https://www.openstreetmap.org/copyright",
+            endpoints: { main: { url: "${@overpass.url}", cadenceSec: 300 } },
+          },
+        ],
+      }),
+    );
+    const cat = await loadCatalog([testDomain], { baked: dir });
+    const osm = cat.feeds.find((f) => f.id === "de-osm-events")!;
+    expect(missingCredentials(osm, {})).toEqual([]);
+    expect(resolveEndpointUrls(osm, "main", {})).toEqual(["https://overpass.test/api"]);
+    expect(resolveEndpointUrls(osm, "main", { OVERPASS_URL: "http://own/api" })).toEqual([
+      "http://own/api",
+    ]);
   });
 
   test("a catalogue that fails the lint does not load", async () => {
@@ -541,5 +589,12 @@ describe("loadCatalog", () => {
     const cat = await loadCatalog([domain], { baked: dir });
     expect(cat.feeds.map((f) => f.id)).toEqual(["us-reg-a-events"]);
     expect(cat.discovered.map((f) => f.id)).toEqual(["us-reg-b-events"]);
+    // Credited through the parent: the parent is a source, its children are not.
+    expect(cat.sources.map((f) => f.id)).toEqual(["us-reg-events"]);
+  });
+
+  test("sources are the enabled feeds as written", async () => {
+    const cat = await loadCatalog([testDomain], { baked: fixture("baked") });
+    expect(cat.sources.map((f) => f.id).sort()).toEqual(["de-hh-autobahn-flow", "de-ndw-events"]);
   });
 });

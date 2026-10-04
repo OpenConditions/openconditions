@@ -1,0 +1,56 @@
+{
+  "ok": true,
+  "license": "CC BY 4.0 -  https://creativecommons.tankerkoenig.de",
+  "data": "MTS-K",
+  "status": "ok",
+  "stations": [
+    {
+      "id": "474e5046-deaf-4f9b-9a32-9797b778f047",
+      "name": "TotalEnergies Berlin",
+      "brand": "TotalEnergies",
+      "street": "Margarete-Sommer-Str.",
+      "place": "Berlin",
+      "lat": 52.530831,
+      "lng": 13.440946,
+      "dist": 1.1,
+      "diesel": 1.009,
+      "e5": 1.009,
+      "e10": 1.009,
+      "isOpen": false,
+      "houseNumber": "2",
+      "postCode": 10407
+    },
+    {
+      "id": "278130b1-e062-4a0f-80cc-19e486b4c024",
+      "name": "Aral Tankstelle",
+      "brand": "ARAL",
+      "street": "Holzmarktstraße",
+      "place": "Berlin",
+      "lat": 52.514153,
+      "lng": 13.421487,
+      "dist": 1.4,
+      "diesel": 1.009,
+      "e5": 1.009,
+      "e10": 1.009,
+      "isOpen": true,
+      "houseNumber": "12/14",
+      "postCode": 10179
+    },
+    {
+      "id": "60c0eefa-d2a8-4f5c-82cc-b5244ecae955",
+      "name": "Autohof Lichtenberg",
+      "brand": "",
+      "street": "Landsberger Allee",
+      "place": "Berlin",
+      "lat": 52.53601,
+      "lng": 13.49702,
+      "dist": 4.1,
+      "diesel": 1.189,
+      "e5": false,
+      "e10": null,
+      "isOpen": true,
+      "houseNumber": "",
+      "postCode": 10365
+    }
+  ]
+}

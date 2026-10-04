@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { centroid, coarseCell, gridCell, isoUtcEpochMs } from "../canonical.js";
+import { centroid, coarseCell, coarseCellCentre, gridCell, isoUtcEpochMs } from "../canonical.js";
 
 describe("centroid", () => {
   it("averages all vertices of a MultiLineString", () => {
@@ -92,6 +92,22 @@ describe("coarseCell", () => {
   it("throws a TypeError on non-finite coordinates", () => {
     expect(() => coarseCell(Number.NaN, 52.0)).toThrow(TypeError);
     expect(() => coarseCell(6.5, Number.NEGATIVE_INFINITY)).toThrow(TypeError);
+  });
+});
+
+describe("coarseCellCentre", () => {
+  it("gives every point of a cell the same centre, inside that cell", () => {
+    const centre = coarseCellCentre(4.4961, 52.0);
+    expect(coarseCellCentre(4.497, 52.0)).toEqual(centre);
+    expect(coarseCell(...centre)).toBe(coarseCell(4.4961, 52.0));
+    expect(centre).not.toEqual([4.4961, 52.0]);
+  });
+
+  it("follows the cell size it is given", () => {
+    const step = 100 / 111_320;
+    const [lon, lat] = coarseCellCentre(6.5, 52.0, 100);
+    expect(lon).toBeCloseTo((Math.floor(6.5 / step) + 0.5) * step, 12);
+    expect(lat).toBeCloseTo((Math.floor(52.0 / step) + 0.5) * step, 12);
   });
 });
 

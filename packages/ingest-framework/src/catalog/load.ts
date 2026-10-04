@@ -16,10 +16,8 @@ import {
 } from "./lint.js";
 import { toCatalogFeed } from "./resolve.js";
 import { materializeCatalogChildren } from "./resolvers.js";
-import { type credentialFieldSchema, credentialsFileSchema, regionFileSchema } from "./schema.js";
-import type { CatalogFeed, FeedDefinition, FetchFn, Maintainer } from "./types.js";
-
-export type CredentialField = z.input<typeof credentialFieldSchema>;
+import { credentialsFileSchema, regionFileSchema } from "./schema.js";
+import type { CatalogFeed, CredentialField, FeedDefinition, FetchFn, Maintainer } from "./types.js";
 
 /** One `feeds/<domain>/<region>.jsonc` file as read. */
 export interface CatalogFile {
@@ -49,6 +47,11 @@ export interface CatalogLayers {
 export interface Catalog {
   /** What the scheduler polls: enabled feeds, catalogue parents replaced by their approved children. */
   feeds: readonly CatalogFeed[];
+  /**
+   * The enabled feeds as written, catalogue parents included: what the instance
+   * credits, a catalogue's children being credited through their parent.
+   */
+  sources: readonly CatalogFeed[];
   /** Catalogue children not approved: shown to operators, never polled. */
   discovered: readonly CatalogFeed[];
   /** Feeds kept in the catalogue with a reason, never polled. */
@@ -151,10 +154,16 @@ function throwIfAny(errors: string[], what: string): void {
  * directory that is not `.jsonc` (hidden files are skipped) and an id written twice. Every
  * problem is collected and thrown at once, naming `file:line:column` for a
  * syntax error and `file feeds[i].path` for a schema error.
+ *
+ * `otherDomains: "ignore"` reads only the given domains' directories and
+ * leaves the rest unread, for a reader that wants one domain's feeds (a
+ * domain package's own tests); the service and `feeds:lint` pass every domain
+ * and keep the default, where an unknown directory is an error.
  */
 export function readCatalogDir(
   dir: string,
   domains: readonly IngestDomain[],
+  opts: { otherDomains?: "error" | "ignore" } = {},
 ): { files: CatalogFile[]; credentials: SharedCredentials } {
   const errors: string[] = [];
   const files: CatalogFile[] = [];
@@ -162,7 +171,7 @@ export function readCatalogDir(
 
   for (const entry of entries) {
     if (!entry.isDirectory() || entry.name === SCHEMA_DIR) continue;
-    if (!domains.some((d) => d.id === entry.name)) {
+    if (opts.otherDomains !== "ignore" && !domains.some((d) => d.id === entry.name)) {
       errors.push(`${path.join(dir, entry.name)}: unknown domain directory ${entry.name}`);
     }
   }
@@ -415,12 +424,17 @@ function mergeLayers(layers: readonly Layer[]): Layer {
   };
 }
 
-function resolved(file: CatalogFile, feed: FeedDefinition): CatalogFeed {
+function resolved(
+  file: CatalogFile,
+  feed: FeedDefinition,
+  credentials: SharedCredentials,
+): CatalogFeed {
   return toCatalogFeed(feed, {
     domain: file.domain,
     region: file.region,
     file: file.path,
     maintainers: file.maintainers,
+    shared: credentials.groups,
   });
 }
 
@@ -451,14 +465,15 @@ export async function loadCatalog(
     console.warn(`[catalog] ${formatCatalogIssue(warning)}`);
   }
 
-  const feeds = files.flatMap((file) => file.feeds.map((feed) => resolved(file, feed)));
-  // Its issues are the lint's, already thrown or logged above.
-  const { scheduled, discovered } = materializeCatalogChildren(
-    feeds.filter((feed) => !feed.disabled),
-    domains,
+  const feeds = files.flatMap((file) =>
+    file.feeds.map((feed) => resolved(file, feed, credentials)),
   );
+  // Its issues are the lint's, already thrown or logged above.
+  const enabled = feeds.filter((feed) => !feed.disabled);
+  const { scheduled, discovered } = materializeCatalogChildren(enabled, domains);
   return {
     feeds: scheduled,
+    sources: enabled,
     discovered,
     disabled: feeds.filter((feed) => feed.disabled),
     credentials,

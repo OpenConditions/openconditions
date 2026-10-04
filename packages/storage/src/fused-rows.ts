@@ -1,9 +1,18 @@
-import { fusableProperties, seriesKeyOf } from "@openconditions/core";
+import { canonicalKeyOf, fusableProperties, seriesKeyOf } from "@openconditions/core";
+import {
+  type EgressRecord,
+  isPublicRecord,
+  publicLicenseClassification,
+} from "@openconditions/ingest-framework";
 import {
   type CanonicalComponent,
   type EvidenceState,
+  FUSED_PUBLIC_SOURCE_ID,
   FUSED_SOURCE_ID,
+  FUSED_SOURCE_IDS,
   type FusableObservation,
+  type FusedSourceId,
+  type Fusion,
   type FusionCandidate,
   fuse,
   fusedObservation,
@@ -13,6 +22,7 @@ import {
   type SourceTier,
   sealRecord,
 } from "@openconditions/model";
+import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
 import { SERIES_COLUMNS, SERIES_KEY, seriesRowOf } from "./write-observations.js";
 
@@ -20,6 +30,25 @@ type Rec = Record<string, unknown>;
 
 /** The source id of every crowd row, local or a peer's. */
 const CROWD_SOURCE_ID = "crowd";
+
+/**
+ * Whether a fusion candidate may feed the fusion the public scope reads: its
+ * source is one this catalogue holds and does not restrict
+ * (`conditions.source.restricted`, the catalogue's effective rights; a source
+ * the catalogue does not hold has no row, `restricted` null, and is not
+ * public), and its record passes the public licence gate every egress
+ * applies (`isPublicRecord`: its own licence and every upstream licence
+ * public). A crowd row has no catalogue source and is judged by its record's
+ * licence alone.
+ */
+export function isPublicCandidate(row: {
+  restricted: boolean | null;
+  record: Rec;
+  sourceId: string;
+}): boolean {
+  const licensed = isPublicRecord(row.record as unknown as EgressRecord);
+  return row.sourceId === CROWD_SOURCE_ID ? licensed : row.restricted === false && licensed;
+}
 
 /** One row of `feature_canonical`, as fusion and landing read it. */
 export interface CanonicalRow {
@@ -53,17 +82,6 @@ export async function loadCanonical(
     memberIds: r.member_ids,
     components: r.components,
   }));
-}
-
-/** The canonical component a member's component stands in, by its key. */
-export function canonicalKeyOf(
-  canonical: CanonicalRow,
-  featureId: string,
-  componentKey: string,
-): string | undefined {
-  return canonical.components.find((c) =>
-    c.members.some((m) => m.featureId === featureId && m.key === componentKey),
-  )?.key;
 }
 
 /**
@@ -103,19 +121,27 @@ interface CandidateRow {
   record: Rec;
   evidence_state: EvidenceState | null;
   tier: SourceTier | null;
+  restricted: boolean | null;
   stale: boolean;
 }
 
 interface FusedRow {
   series_id: string;
+  source_id: FusedSourceId;
   subject_key: string;
   property: string;
   qualifier_key: string;
   record: Rec;
   since_at: Date;
+  fused_public: boolean | null;
 }
 
-const FUSED_COLUMNS: ColumnSpec[] = [...SERIES_COLUMNS, { name: "fused_from", type: "text[]" }];
+const FUSED_COLUMNS: ColumnSpec[] = [
+  ...SERIES_COLUMNS,
+  { name: "fused_from", type: "text[]" },
+  { name: "fused_sources", type: "text[]" },
+  { name: "fused_public", type: "boolean" },
+];
 
 /** A fused record as compared between refreshes: everything but when it was computed. */
 const comparable = (record: Rec) => {
@@ -141,10 +167,19 @@ const comparable = (record: Rec) => {
  * does not fuse here), a crowd row's its evidence; a source is stale when its
  * last successful poll is older than its freshness window (a source with no
  * status row yet has never failed one, and counts as fresh). The winner is
- * written as the subject's fused row (latest only: it never enters history
- * or the federation), with its contributors in `fused_from`; a subject where
- * nothing qualifies has no fused row. A fused row whose value, contributors
- * and lifetime are unchanged is left alone.
+ * written as the subject's `@fused` row (latest only: it never enters history
+ * or the federation), with its contributing readings' ids in `fused_from`
+ * and their rows' sources in `fused_sources` (`crowd` for a crowd row); a
+ * subject where nothing qualifies has no fused row. When every contributor is public
+ * ({@link isPublicCandidate}), the row is flagged `fused_public`: dropping the
+ * other candidates would not change the fusion. Otherwise the fusion of the
+ * public candidates alone is written beside it as the `@fused-public` row,
+ * flagged `fused_public`, when any of them qualifies. A public row takes its
+ * location only from a public member (its source held unrestricted, its
+ * record's licences public): the winner's feature, else the survivor, else
+ * the first public member in member order. With none, the public row is not
+ * written, and an all-public fusion is written unflagged. A fused row whose
+ * value, contributors, lifetime and flag are unchanged is left alone.
  */
 export async function refreshFused(
   tx: Sql,
@@ -201,7 +236,7 @@ export async function refreshFused(
   const rows = await tx<CandidateRow[]>`
     SELECT l.series_id::text AS series_id, l.feature_id, l.component_key, l.source_id, l.property,
            l.qualifier_key, conditions.observation_record(l.template, l.reading) AS record,
-           l.evidence_state, s.tier,
+           l.evidence_state, s.tier, s.restricted,
            COALESCE(l.source_id <> ALL(${fresh as string[]}::text[]) AND ss.source IS NOT NULL
              AND (ss.last_success_at IS NULL
                OR ss.last_success_at < ${ctx.now}::timestamptz
@@ -210,7 +245,7 @@ export async function refreshFused(
       LEFT JOIN conditions.source s ON s.id = l.source_id
       LEFT JOIN conditions.source_status ss ON ss.source = l.source_id
      WHERE l.property = ANY(${[...fusable]}::text[])
-       AND l.source_id <> ${FUSED_SOURCE_ID}
+       AND l.source_id <> ALL(${[...FUSED_SOURCE_IDS]}::text[])
        AND ((l.source_id <> ${CROWD_SOURCE_ID} AND l.feature_id = ANY(${[...memberOf.keys()]}::text[]))
          OR (l.source_id = ${CROWD_SOURCE_ID}
              AND l.feature_id = ANY(${[...byCanonical.keys()]}::text[])))`;
@@ -220,7 +255,7 @@ export async function refreshFused(
     componentKey: string | undefined;
     property: string;
     qualifierKey: string;
-    candidates: { row: CandidateRow; candidate: FusionCandidate }[];
+    candidates: { row: CandidateRow; candidate: FusionCandidate; public: boolean }[];
   }
   const groups = new Map<string, Group>();
   for (const row of rows) {
@@ -258,43 +293,95 @@ export async function refreshFused(
       qualifierKey: row.qualifier_key,
       candidates: [],
     };
-    group.candidates.push({ row, candidate });
+    group.candidates.push({
+      row,
+      candidate,
+      public: isPublicCandidate({
+        restricted: row.restricted,
+        record: row.record,
+        sourceId: row.source_id,
+      }),
+    });
     groups.set(key, group);
   }
 
   // A fused row sits where the record whose value it shows puts the feature,
   // under that record's credit: another member's geometry may be licensed
-  // otherwise. A crowd value sits at the survivor's.
-  const locations = new Map(
+  // otherwise. A crowd value sits at the survivor's. A public row sits only
+  // where a public member puts it: the winner's feature, else the survivor,
+  // else the first public member in member order.
+  const members = new Map(
     (
-      await tx<{ id: string; location: LocationRef }[]>`
-        SELECT id, record->'location' AS location FROM conditions.feature
-         WHERE id = ANY(${canonical.flatMap((c) => c.memberIds)}::text[])`
-    ).map((r) => [r.id, r.location]),
+      await tx<
+        {
+          id: string;
+          location: LocationRef | null;
+          source_id: string;
+          restricted: boolean | null;
+          record: Rec;
+        }[]
+      >`
+        SELECT f.id, f.record->'location' AS location, f.source_id, s.restricted,
+               jsonb_build_object('provenance', f.record->'provenance') AS record
+          FROM conditions.feature f
+          LEFT JOIN conditions.source s ON s.id = f.source_id
+         WHERE f.id = ANY(${canonical.flatMap((c) => c.memberIds)}::text[])`
+    ).map((r) => [
+      r.id,
+      {
+        location: r.location ?? undefined,
+        public: isPublicCandidate({
+          restricted: r.restricted,
+          record: r.record,
+          sourceId: r.source_id,
+        }),
+      },
+    ]),
   );
+  const locationOf = (
+    group: Group,
+    winner: CandidateRow | undefined,
+    onlyPublic: boolean,
+  ): LocationRef | undefined => {
+    const order = [
+      ...(winner === undefined || winner.source_id === CROWD_SOURCE_ID ? [] : [winner.feature_id]),
+      group.canonical.survivorId,
+      ...(onlyPublic ? group.canonical.memberIds : []),
+    ];
+    for (const id of order) {
+      const member = members.get(id);
+      if (member?.location !== undefined && (!onlyPublic || member.public)) return member.location;
+    }
+    return undefined;
+  };
   const existing = await tx<FusedRow[]>`
-    SELECT series_id::text AS series_id, subject_key, property, qualifier_key,
-           conditions.observation_record(template, reading) AS record, since_at
+    SELECT series_id::text AS series_id, source_id, subject_key, property, qualifier_key,
+           conditions.observation_record(template, reading) AS record, since_at, fused_public
       FROM conditions.observation_latest
-     WHERE source_id = ${FUSED_SOURCE_ID}
+     WHERE source_id = ANY(${[...FUSED_SOURCE_IDS]}::text[])
        AND feature_id = ANY(${[...byCanonical.keys()]}::text[])`;
-  const held = new Map(existing.map((r) => [jcs([r.subject_key, r.property, r.qualifier_key]), r]));
+  const heldKey = (sourceId: string, subjectKey: string, property: string, qualifierKey: string) =>
+    jcs([sourceId, subjectKey, property, qualifierKey]);
+  const held = new Map(
+    existing.map((r) => [heldKey(r.source_id, r.subject_key, r.property, r.qualifier_key), r]),
+  );
 
   const keep = new Set<string>();
   const writes: Rec[] = [];
-  for (const group of groups.values()) {
-    const fusion = fuse(
-      registry,
-      group.property,
-      group.candidates.map((g) => g.candidate),
-      ctx.now,
-    );
-    if (fusion === undefined) continue;
+  const write = (
+    group: Group,
+    fusion: Fusion,
+    sourceId: FusedSourceId,
+    allPublic: boolean,
+  ): void => {
     const winner = group.candidates.find((g) => g.candidate === fusion.winner)?.row;
+    // An all-public fusion with no public member to sit at stays operator-only.
+    const publicLocation = allPublic ? locationOf(group, winner, true) : undefined;
+    const fusedPublic = publicLocation !== undefined;
     const location =
-      (winner === undefined ? undefined : locations.get(winner.feature_id)) ??
-      locations.get(group.canonical.survivorId);
-    if (location === undefined) continue;
+      publicLocation ??
+      (sourceId === FUSED_SOURCE_ID ? locationOf(group, winner, false) : undefined);
+    if (location === undefined) return;
     const draft = fusedObservation(registry, fusion, {
       subject: {
         kind: "feature",
@@ -304,6 +391,7 @@ export async function refreshFused(
       location,
       instanceId: ctx.instanceId,
       now: ctx.now,
+      sourceId,
     });
     if (!draft.ok) throw new TypeError(`a fused row failed validation: ${jcs(draft.issues)}`);
     const sealed = sealRecord(registry, draft.value, {
@@ -314,22 +402,51 @@ export async function refreshFused(
     if (!sealed.ok) throw new TypeError(`a fused row failed sealing: ${jcs(sealed.issues)}`);
     const record = sealed.value;
     const key = seriesKeyOf(record);
-    const k = jcs([key.subjectKey, key.property, key.qualifierKey]);
+    const k = heldKey(sourceId, key.subjectKey, key.property, key.qualifierKey);
     keep.add(k);
     const prev = held.get(k);
-    if (prev !== undefined && comparable(prev.record) === comparable(record)) {
+    if (
+      prev !== undefined &&
+      prev.fused_public === fusedPublic &&
+      comparable(prev.record) === comparable(record)
+    ) {
       counts.unchanged++;
-      continue;
+      return;
     }
     const property = registry.property(group.property)!;
     const sameValue = prev !== undefined && jcs(prev.record["result"]) === jcs(record["result"]);
     const sinceAt = sameValue
       ? prev.since_at.toISOString()
       : new Date(Date.parse(startOf(record))).toISOString();
+    const sourceOf = new Map(group.candidates.map((g) => [g.candidate, g.row.source_id]));
     writes.push({
       ...seriesRowOf({ ...record, sinceAt }, property, undefined, ctx.now),
       fused_from: fusion.contributors.map((c) => c.observation.id),
+      fused_sources: [...new Set(fusion.contributors.map((c) => sourceOf.get(c)!))],
+      fused_public: fusedPublic,
     });
+  };
+  for (const group of groups.values()) {
+    const fusion = fuse(
+      registry,
+      group.property,
+      group.candidates.map((g) => g.candidate),
+      ctx.now,
+    );
+    if (fusion === undefined) continue;
+    const isPublic = new Map(group.candidates.map((g) => [g.candidate, g.public]));
+    // Fusion ranks the candidates and keeps the winner's peers, so dropping
+    // candidates that did not contribute leaves the same fusion.
+    const allPublic = fusion.contributors.every((c) => isPublic.get(c) === true);
+    write(group, fusion, FUSED_SOURCE_ID, allPublic);
+    if (allPublic) continue;
+    const publicFusion = fuse(
+      registry,
+      group.property,
+      group.candidates.filter((g) => g.public).map((g) => g.candidate),
+      ctx.now,
+    );
+    if (publicFusion !== undefined) write(group, publicFusion, FUSED_PUBLIC_SOURCE_ID, true);
   }
   await insertRows(
     tx,
@@ -342,7 +459,7 @@ export async function refreshFused(
 
   const gone = existing
     .filter((r) => {
-      const k = jcs([r.subject_key, r.property, r.qualifier_key]);
+      const k = heldKey(r.source_id, r.subject_key, r.property, r.qualifier_key);
       const canonicalId = (r.record["subject"] as { featureId: string }).featureId;
       return !keep.has(k) && inScope(canonicalId, r.property);
     })
@@ -354,17 +471,163 @@ export async function refreshFused(
   return counts;
 }
 
+export interface OutdatedRefreshOptions {
+  registry: Registry;
+  instanceId: string;
+  /** The time each batch is fused at, read as it starts. */
+  now: () => string;
+  /** Canonical features per transaction. */
+  batchSize?: number;
+  /** The licence registry's public classification; the registry's own by default. */
+  licenses?: string;
+  /** Ends the refresh before its next batch. */
+  signal?: AbortSignal;
+  /** Called once the outdated sources and their canonical features are listed. */
+  onStart?: (plan: { sources: string[]; total: number }) => void;
+  /** Called after each committed batch. */
+  onBatch?: (progress: { done: number; total: number }) => void;
+}
+
+export interface OutdatedRefreshCounts extends FusedCounts {
+  /** The sources whose fusions were outdated, in id order. */
+  sources: string[];
+  /** Of those, the ones whose fusions are now refreshed under their current basis. */
+  settled: string[];
+  /** Canonical features refreshed. */
+  features: number;
+  /** Canonical features the outdated sources have member features or fusable readings in. */
+  total: number;
+}
+
+/**
+ * Brings every source's fusions up to its current `restricted` flag and tier
+ * and the licence registry's public classification
+ * ({@link publicLicenseClassification}). A source's fusions are outdated when
+ * the basis they were last refreshed under (`fusion_restricted`,
+ * `fusion_tier`, `fusion_licenses`; null for a source never refreshed)
+ * differs from its current one: a catalogue sync flipped it, a release
+ * reclassified a licence (every source then), or an earlier refresh did not
+ * finish. The fused rows of every canonical feature an outdated source has a
+ * member feature or a fusable reading in are refreshed (a member that only
+ * supplies the location still decides where a public row may sit), one
+ * transaction per batch of canonical features, so a source with readings on
+ * hundreds of thousands of them never holds one long transaction; each batch
+ * takes the canonical features' locks in {@link refreshFused}, like any other
+ * refresh, and fuses at its own `now`. A source's basis is recorded in the
+ * transaction of the batch that holds its last canonical feature (at once,
+ * when it has none), so a refresh stopped or failed part-way resumes at the
+ * next call, and a finished one is not repeated. A canonical feature relinked
+ * between the listing and its batch is refreshed by the write that relinked
+ * it.
+ */
+export async function refreshOutdatedFusions(
+  sql: postgres.Sql,
+  opts: OutdatedRefreshOptions,
+): Promise<OutdatedRefreshCounts> {
+  const counts: OutdatedRefreshCounts = {
+    sources: [],
+    settled: [],
+    features: 0,
+    total: 0,
+    written: 0,
+    unchanged: 0,
+    deleted: 0,
+  };
+  // The basis each source is refreshed under, as read now: a sync in between
+  // leaves its source outdated again.
+  const licenses = opts.licenses ?? publicLicenseClassification();
+  const outdated = await sql<{ id: string; restricted: boolean; tier: string }[]>`
+    SELECT id, restricted, tier FROM conditions.source
+     WHERE (restricted, tier, ${licenses}::text)
+           IS DISTINCT FROM (fusion_restricted, fusion_tier, fusion_licenses)
+     ORDER BY id`;
+  counts.sources = outdated.map((s) => s.id);
+  const fusable = [...fusableProperties(opts.registry)];
+  const touched = await sql<{ source_id: string; canonical_feature_id: string }[]>`
+    SELECT DISTINCT f.source_id, c.canonical_feature_id
+      FROM conditions.feature_canonical c
+      CROSS JOIN LATERAL unnest(c.member_ids) AS m(feature_id)
+      JOIN (SELECT l.source_id, l.feature_id FROM conditions.observation_latest l
+             WHERE l.source_id = ANY(${counts.sources}::text[])
+               AND l.feature_id IS NOT NULL
+               AND l.property = ANY(${fusable}::text[])
+            UNION
+            SELECT ft.source_id, ft.id FROM conditions.feature ft
+             WHERE ft.source_id = ANY(${counts.sources}::text[])) f
+        ON f.feature_id = m.feature_id`;
+  const canonicalIds = [...new Set(touched.map((t) => t.canonical_feature_id))].sort();
+  const index = new Map(canonicalIds.map((id, i) => [id, i]));
+  // Each source settles with the batch of its last canonical feature.
+  const last = new Map<string, number>();
+  for (const t of touched) {
+    const i = index.get(t.canonical_feature_id)!;
+    last.set(t.source_id, Math.max(last.get(t.source_id) ?? -1, i));
+  }
+  counts.total = canonicalIds.length;
+  opts.onStart?.({ sources: counts.sources, total: counts.total });
+  const settle = async (tx: Sql, ids: readonly string[]) => {
+    const basis = outdated.filter((s) => ids.includes(s.id));
+    if (basis.length === 0) return;
+    // Row locks in id order before the update, so two refreshes settling
+    // overlapping sources never wait on each other in a cycle.
+    await tx`
+      SELECT id FROM conditions.source
+       WHERE id = ANY(${basis.map((b) => b.id)}::text[])
+       ORDER BY id FOR NO KEY UPDATE`;
+    await tx`
+      UPDATE conditions.source s
+         SET fusion_restricted = b.restricted, fusion_tier = b.tier, fusion_licenses = ${licenses}
+        FROM jsonb_to_recordset(${tx.json(basis as never)}) AS b(id text, restricted boolean, tier text)
+       WHERE s.id = b.id`;
+    counts.settled.push(...basis.map((b) => b.id));
+  };
+  const stopped = () => opts.signal?.aborted === true;
+  if (stopped()) return counts;
+  await sql.begin((tx) =>
+    settle(
+      tx,
+      counts.sources.filter((id) => !last.has(id)),
+    ),
+  );
+  const size = opts.batchSize ?? 500;
+  for (let i = 0; i < canonicalIds.length && !stopped(); i += size) {
+    const batch = canonicalIds.slice(i, i + size);
+    const end = i + batch.length;
+    const batchCounts = (await sql.begin(async (tx) => {
+      const c = await refreshFused(
+        tx,
+        opts.registry,
+        batch.map((featureId) => ({ featureId })),
+        { instanceId: opts.instanceId, now: opts.now() },
+      );
+      await settle(
+        tx,
+        [...last].filter(([, at]) => at >= i && at < end).map(([id]) => id),
+      );
+      return c;
+    })) as FusedCounts;
+    counts.features += batch.length;
+    counts.written += batchCounts.written;
+    counts.unchanged += batchCounts.unchanged;
+    counts.deleted += batchCounts.deleted;
+    opts.onBatch?.({ done: counts.features, total: counts.total });
+  }
+  counts.settled.sort();
+  return counts;
+}
+
 const startOf = (record: Rec) => {
   const t = record["phenomenonTime"] as { instant?: string; start?: string };
   return (t.instant ?? t.start)!;
 };
 
-/** Deletes the fused rows of canonical features that no longer exist. */
+/** Deletes the fused rows, full and public, of canonical features that no longer exist. */
 export async function dropFused(tx: Sql, canonicalIds: readonly string[]): Promise<number> {
   if (canonicalIds.length === 0) return 0;
   const rows = await tx`
     DELETE FROM conditions.observation_latest
-     WHERE source_id = ${FUSED_SOURCE_ID} AND feature_id = ANY(${canonicalIds as string[]}::text[])
+     WHERE source_id = ANY(${[...FUSED_SOURCE_IDS]}::text[])
+       AND feature_id = ANY(${canonicalIds as string[]}::text[])
     RETURNING series_id`;
   return rows.length;
 }

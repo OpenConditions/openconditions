@@ -32,7 +32,8 @@ export const DATEX2_V3_FUEL_GRADES: SourceTable = {
   "organicGas:cng": "cng",
   "organicGas:lng": "lng",
   "organicGas:lpg": "lpg",
-  "organicGas:biogas": "cng",
+  // Biomethane is sold compressed, as bio-CNG.
+  "organicGas:biogas": "cng_bio",
   "organicGas:all": null,
   "organicGas:other": null,
   "organicGas:unknown": null,
@@ -60,8 +61,13 @@ export const DATEX2_V3_FUEL_GRADES_OUT: TargetTable = {
   lpg: "organicGas:lpg",
   h2_350: "hydrogen:gaseousHydrogen350barCar",
   h2_700: "hydrogen:gaseousHydrogen700barCar",
-  // No DATEX code: the premium diesels, the drop-in renewables, the blends
-  // sold by their biodiesel share, ethanol as a fuel, AdBlue and kerosene.
+  cng_bio: "organicGas:biogas",
+  // No DATEX code: the premium grades, 98 octane E10, liquefied biomethane, the
+  // drop-in renewables, the blends sold by their biodiesel share, ethanol as a
+  // fuel, AdBlue and kerosene.
+  e5_premium: null,
+  sp98_e10: null,
+  lng_bio: null,
   diesel_premium: null,
   hvo100: null,
   b7: null,

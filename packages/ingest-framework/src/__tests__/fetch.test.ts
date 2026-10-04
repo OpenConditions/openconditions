@@ -103,6 +103,37 @@ function rowsIn(buffers: Buffer[]): number {
   );
 }
 
+describe("fetchEndpoint — cell reads", () => {
+  const cell = { id: "0.25/53/209", west: 13.25, south: 52.25, east: 13.5, north: 52.5 };
+
+  it("fills the cell into url and body and keeps no conditional-GET state", async () => {
+    const feed = makeFeed("cell-feed", {
+      url: "https://h.test/q?w={west}&s={south}",
+      method: "POST",
+      body: "({south},{west},{north},{east})",
+    });
+    const state = createFetchState();
+    const seen: { url: string; body: unknown; headers: Headers }[] = [];
+    const fetchFn = (async (input: string | URL | Request, init?: RequestInit) => {
+      seen.push({ url: String(input), body: init?.body, headers: new Headers(init?.headers) });
+      return new Response("{}", { status: 200, headers: { etag: '"v1"' } });
+    }) as unknown as typeof fetch;
+
+    for (let i = 0; i < 2; i++) {
+      const res = await fetchEndpoint(feed, "main", fetchFn, { state, cell });
+      expect(res.status).toBe("fetched");
+    }
+    expect(seen.map((s) => s.url)).toEqual([
+      "https://h.test/q?w=13.25&s=52.25",
+      "https://h.test/q?w=13.25&s=52.25",
+    ]);
+    expect(seen[0]!.body).toBe("(52.25,13.25,52.5,13.5)");
+    expect(seen[1]!.headers.get("if-none-match")).toBeNull();
+    expect(state.conditional.size).toBe(0);
+    expect(state.sourceConfig.size).toBe(0);
+  });
+});
+
 describe("fetchEndpoint — offset pagination", () => {
   const pagedFeed = (
     pagination: FeedEndpoint["pagination"] = { skipParam: "$skip", pageSize: 500 },

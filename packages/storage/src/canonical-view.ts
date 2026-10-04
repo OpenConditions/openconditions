@@ -1,4 +1,5 @@
 import {
+  canonicalKeyOf,
   fusableFeatureKinds,
   fusableProperties,
   seriesKeyOf,
@@ -22,7 +23,6 @@ import {
 import type { Sql } from "./bulk.js";
 import {
   type CanonicalRow,
-  canonicalKeyOf,
   dropFused,
   type FusedScope,
   LOCK_SPACES,

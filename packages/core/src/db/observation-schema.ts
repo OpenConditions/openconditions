@@ -3,6 +3,7 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   bigserial,
+  boolean,
   check,
   date,
   doublePrecision,
@@ -31,9 +32,14 @@ import { conditionsSchema, geometry, tstz } from "./columns.js";
  * `toast_tuple_target = 1200`, the reading `STORAGE MAIN`) and written only
  * when `template_hash` changes, so an update of a reading rewrites a few
  * hundred bytes, not the record.
- * Crowd rows (source `crowd`) and the fused row (source `@fused`) sit beside
- * the per-source rows. A crowd row carries the evidence summary of the report
- * it holds, materialised from its `report_evidence` ledger as a crowd
+ * Crowd rows (source `crowd`) and the fused rows sit beside the per-source
+ * rows. A subject's `@fused` row is fused from every candidate; when one of
+ * its contributors is not public, a `@fused-public` row holds the fusion of
+ * the public candidates (when there is one). `fused_public` is true on the
+ * fused row the public scope reads (an all-public `@fused`, or the
+ * `@fused-public` beside it), false on a `@fused` row with a contributor
+ * that is not public, and null on every other row. A crowd row carries the
+ * evidence summary of the report it holds, materialised from its `report_evidence` ledger as a crowd
  * situation's is. The custom migrations set `fillfactor = 50`, and nothing
  * indexes `value_num`, `reading` or the effective times: the per-minute
  * updates of a quantity series without an expiry (every flow reading) stay
@@ -69,6 +75,9 @@ export const observationLatest = conditionsSchema.table(
     effectiveUntil: tstz("effective_until"),
     sinceAt: tstz("since_at").notNull(),
     fusedFrom: text("fused_from").array(),
+    /** A fused row's contributing sources (their rows' `source_id`), in contributor order without repeats. */
+    fusedSources: text("fused_sources").array(),
+    fusedPublic: boolean("fused_public"),
     evidenceState: text("evidence_state"),
     confidenceScore: doublePrecision("confidence_score"),
     corroborations: integer("corroborations").notNull().default(0),
@@ -89,8 +98,10 @@ export const observationLatest = conditionsSchema.table(
     index("idx_observation_latest_geom").using("gist", t.geom),
     // Leads with the property, so it serves a filter by property alone too.
     index("idx_observation_latest_property_text").on(t.property, t.valueText),
-    // A poll compares its readings with every series of its source.
-    index("idx_observation_latest_source").on(t.sourceId),
+    // A poll compares its readings with every series of its source; the
+    // federation reconcile pages them by series id. Neither column changes
+    // on a reading's update, which stays heap-only.
+    index("idx_observation_latest_source").on(t.sourceId, t.seriesId),
     index("idx_observation_latest_component").on(t.featureId, t.componentKey),
     index("idx_observation_latest_fuel_price")
       .on(t.valueMoney)

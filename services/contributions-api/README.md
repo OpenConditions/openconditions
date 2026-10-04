@@ -19,9 +19,10 @@ on (`@openconditions/core`, `model`, `contrib-core`).
   occupancy) lands on the canonical feature and canonical component its
   subject stands for (`feature_canonical`, which a per-source or a canonical
   feature id both resolve through), at the survivor's location, as a crowd row
-  of `observation_latest` beside the feeds' rows; the subject's `@fused` row is
-  recomputed. A place (a regional fuel price) is accepted only where a feed
-  already publishes that property for it, and takes that series' location. The
+  of `observation_latest` beside the feeds' rows; the subject's fused rows
+  (`@fused` and, where needed, `@fused-public`) are recomputed. A place (a
+  regional fuel price) is accepted only where a feed already publishes that
+  property for it, and takes that series' location. The
   answer is `{record: {class: "observation", id}, evidenceState}`. A replay is
   recognised by the key and nonce (`report_evidence.details.localId`); a
   second key reporting the same reading of the same subject at the same
@@ -55,3 +56,32 @@ record by record (`admitFederatedRecord`, then the write seam); a peer's crowd
 report goes through the same evidence and agreement as a local one. The
 federation service's `POST /peer/inbox` calls it. `eraseRecord` is the
 operator's erasure (see `docs/federation-gdpr.md`).
+
+## Configuration
+
+| Variable                               | Meaning                                                                                | Default                            |
+| -------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
+| `DATABASE_URL`                         | PostgreSQL/PostGIS connection URL. Required.                                           | none                               |
+| `OPENCONDITIONS_GRANT_SECRET`          | HMAC secret signing reporting grants. Required in production.                          | ephemeral outside production       |
+| `OPENCONDITIONS_REVIEWER_TOKEN`        | Bearer token of the reviewer surface. Required in production.                          | ephemeral outside production       |
+| `OPENCONDITIONS_ISSUER_NAME`           | TokenChallenge issuer name.                                                            | `contributions.openconditions.org` |
+| `OPENCONDITIONS_CROSS_VALIDATE_SWEEP`  | `off` stops the sweep that retries cross-validation of unresolved crowd reports.       | on                                 |
+| `OPENCONDITIONS_INSTANCE_ID`           | This instance's id, the namespace of the crowd records it lands; the ingest service's. | `local`                            |
+| `OPENCONDITIONS_CROWD_LICENSE`         | Licence of this instance's crowd reports (an id of the licence registry).              | `ODbL-1.0`                         |
+| `OPENCONDITIONS_CROWD_SOURCE_URI`      | Link the crowd's credit carries.                                                       | none                               |
+| `OPENCONDITIONS_ALLOW_POLICE_CATEGORY` | `true` lets crowd reports of police presence land.                                     | off                                |
+
+Each of the three secrets may instead be a file named by `<KEY>_FILE`. Under
+OpenMapX the service is a community service whose `container.environment`
+reaches the container verbatim, so `service.json` declares these as
+`configSchema` fields. The secrets are vault secrets the operator sets once in
+the admin services panel (`openconditions-contributions-api`, Credentials);
+OpenMapX mounts each as a file and sets `<KEY>_FILE`. On the shared OpenMapX
+database `DATABASE_URL` is
+`postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx`. The
+settings are set in the same panel, or as
+`SERVICE_OPENCONDITIONS_CONTRIBUTIONS_API_<KEY>` in OpenMapX's `.env`.
+Settings kept in OpenMapX's `.env` are applied with
+`pnpm openmapx services start openconditions-contributions-api` (which resets
+every setting saved only in the admin form, so keep all of them in one place).
+Settings saved in the form are applied with **Save & Apply**.

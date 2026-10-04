@@ -1,8 +1,12 @@
 import { describe, expect, test } from "vitest";
+import { isSettingsGroup } from "../catalog/credentials.js";
+import { defineIngestDomain, type FeedFormat, type IngestDomain } from "../catalog/domain.js";
 import { lintCatalog } from "../catalog/lint.js";
 import { type CatalogFile, readCatalogDir, type SharedCredentials } from "../catalog/load.js";
 import type { ChildFeed } from "../catalog/resolvers.js";
+import { feedBaseShape } from "../catalog/schema.js";
 import type { FeedDefinition } from "../catalog/types.js";
+import { emptyParseOutput } from "../parse-output.js";
 import { fixture, otherDomain, testDomain, testDomainWith } from "./helpers/catalog-domain.js";
 
 const filesOf = (name: string) => readCatalogDir(fixture(name), [testDomain]).files;
@@ -63,6 +67,61 @@ describe("lintCatalog", () => {
       level: "error",
       feedId: "de-keyed-events",
     });
+  });
+
+  test("a group of settings is a non-empty group whose every field has a default", () => {
+    expect(isSettingsGroup({ url: { title: "URL", default: "https://x.test" } })).toBe(true);
+    expect(
+      isSettingsGroup({ url: { title: "URL", default: "https://x.test" }, k: { title: "K" } }),
+    ).toBe(false);
+    expect(isSettingsGroup({})).toBe(false);
+    // An empty group is a credential group: it must serve two feeds.
+    expect(messages([file([def()])], { groups: { empty: {} } })).toEqual([
+      "shared group empty is used by 0 feeds; a group serves at least two",
+    ]);
+  });
+
+  test("a group of settings, every field with a default, may serve one feed but not none", () => {
+    const settings: SharedCredentials = {
+      groups: { overpass: { url: { title: "Overpass URL", default: "https://overpass.test/" } } },
+    };
+    const reader = def({
+      homepage: "https://op.example",
+      endpoints: { main: { url: "${@overpass.url}", cadenceSec: 300 } },
+    });
+    expect(messages([file([reader])], settings)).toEqual([]);
+    expect(messages([file([def()])], settings)).toEqual([
+      "shared group overpass is used by 0 feeds; a group of settings serves at least one",
+    ]);
+    // A field without a default is a credential: its group still serves two.
+    const keyed: SharedCredentials = {
+      groups: {
+        overpass: {
+          url: { title: "Overpass URL", default: "https://overpass.test/" },
+          key: { title: "Overpass key" },
+        },
+      },
+    };
+    const both = def({
+      homepage: "https://op.example",
+      endpoints: { main: { url: "${@overpass.url}?k=${@overpass.key}", cadenceSec: 300 } },
+    });
+    expect(messages([file([both])], keyed)).toEqual([
+      "shared group overpass is used by 1 feed; a group serves at least two",
+    ]);
+  });
+
+  test("a feed read from a settings base URL needs a written homepage", () => {
+    // A self-hosted base is the instance's own service, not the publisher's
+    // site, and may well be plain http.
+    const settings: SharedCredentials = {
+      groups: { overpass: { url: { title: "Overpass URL", default: "https://overpass.test/" } } },
+    };
+    const reader = def({ endpoints: { main: { url: "${@overpass.url}/api", cadenceSec: 300 } } });
+    expect(messages([file([reader])], settings)).toEqual([
+      expect.stringMatching(/needs a written homepage/),
+    ]);
+    expect(messages([file([{ ...reader, homepage: "https://op.example" }])], settings)).toEqual([]);
   });
 
   test("duplicate ids across files and domains name both files", () => {
@@ -328,7 +387,12 @@ describe("lintCatalog", () => {
   test("static URLs must be public and $schema must name the domain schema", () => {
     expect(
       messages([
-        file([def({ endpoints: { main: { url: "http://10.0.0.1/feed", cadenceSec: 60 } } })]),
+        file([
+          def({
+            homepage: "https://op.example",
+            endpoints: { main: { url: "http://10.0.0.1/feed", cadenceSec: 60 } },
+          }),
+        ]),
       ]),
     ).toEqual([
       expect.stringMatching(/endpoint main URL http:\/\/10\.0\.0\.1\/feed is not public/),
@@ -457,6 +521,113 @@ describe("lintCatalog", () => {
           domain([child("odd", true, "Not-A-Licence")]),
         ]),
       ).toEqual([expect.stringMatching(/de-reg-odd-events.*unknown licence/)]);
+    });
+  });
+
+  describe("on-demand feeds", () => {
+    const featuresFormat = (produces: boolean): FeedFormat => ({
+      id: "overpass",
+      kind: "features",
+      products: ["events"],
+      endpoints: { main: { required: true } },
+      ...(produces ? { produces: { kinds: ["station"], properties: ["brand"] } } : {}),
+      parse: () => emptyParseOutput(),
+    });
+    const onDemandDomain = (produces = true): IngestDomain =>
+      defineIngestDomain({
+        id: "roads",
+        products: ["events"],
+        feedShape: feedBaseShape,
+        formats: {
+          overpass: featuresFormat(produces),
+          plain: { ...featuresFormat(true), id: "plain", kind: "situations" },
+        },
+        resolvers: [],
+      });
+    const BBOX: [number, number, number, number] = [5, 47, 15, 55];
+    const ON_DEMAND = { cellDeg: 0.25, ttlSec: 600, maxCellsPerRead: 8, probe: [13.4, 52.5] };
+    const cellUrl = "https://example.test/list?lat={lat}&lon={lon}&r={radiusKm}";
+    const onDemand = (over: Partial<FeedDefinition> = {}): FeedDefinition =>
+      def({
+        format: "overpass",
+        accessMode: "on_demand",
+        onDemand: ON_DEMAND as FeedDefinition["onDemand"],
+        coverage: { bbox: BBOX },
+        endpoints: { main: { url: cellUrl, cadenceSec: 300 } },
+        ...over,
+      });
+    const lint = (feed: FeedDefinition, produces = true) =>
+      messages([file([feed])], NO_SHARED, [onDemandDomain(produces)]);
+
+    test("a complete on-demand feed is clean", () => {
+      expect(lint(onDemand())).toEqual([]);
+    });
+
+    test("lint rejects an on-demand feed without onDemand, coverage.bbox or a produces-declaring features format", () => {
+      expect(lint(onDemand({ onDemand: undefined }))).toEqual([
+        expect.stringMatching(/on_demand feed needs onDemand/),
+      ]);
+      expect(lint(onDemand({ coverage: { countries: ["DE"] } }))).toEqual([
+        expect.stringMatching(/on_demand feed needs coverage\.bbox/),
+      ]);
+      expect(lint(onDemand(), false)).toEqual([
+        expect.stringMatching(/format overpass must be a features format that declares produces/),
+      ]);
+      expect(lint(onDemand({ format: "plain" }))).toEqual([
+        expect.stringMatching(/format plain must be a features format that declares produces/),
+      ]);
+    });
+
+    test("a bulk feed may not carry onDemand", () => {
+      const staticEndpoints = { main: { url: "https://example.test/all", cadenceSec: 300 } };
+      for (const accessMode of ["bulk", undefined] as const) {
+        expect(lint(onDemand({ accessMode, endpoints: staticEndpoints }))).toEqual([
+          expect.stringMatching(/bulk feed cannot have onDemand/),
+        ]);
+      }
+    });
+
+    test("lint rejects cell placeholders in a bulk feed", () => {
+      expect(
+        lint(
+          def({
+            format: "overpass",
+            endpoints: { main: { url: cellUrl, cadenceSec: 300 } },
+          }),
+        ),
+      ).toEqual([expect.stringMatching(/bulk feed endpoint main uses a cell placeholder/)]);
+    });
+
+    test("an on-demand feed needs a data endpoint that uses a cell placeholder", () => {
+      expect(
+        lint(
+          onDemand({ endpoints: { main: { url: "https://example.test/all", cadenceSec: 300 } } }),
+        ),
+      ).toEqual([expect.stringMatching(/needs a data endpoint that uses a cell placeholder/)]);
+    });
+
+    test("a probe outside coverage.bbox is an issue", () => {
+      expect(
+        lint(
+          onDemand({
+            onDemand: { ...ON_DEMAND, probe: [100, 52.5] } as FeedDefinition["onDemand"],
+          }),
+        ),
+      ).toEqual([expect.stringMatching(/probe outside coverage\.bbox/)]);
+    });
+
+    test("lint rejects a cell larger than the source's radius limit", () => {
+      expect(
+        lint(
+          onDemand({
+            onDemand: { ...ON_DEMAND, cellDeg: 0.5 } as FeedDefinition["onDemand"],
+            requestLimits: { maxRadiusKm: 25 },
+          }),
+        ),
+      ).toEqual([
+        expect.stringMatching(/maxRadiusKm 25 is below the 39\.\d km radius of a 0\.5 degree cell/),
+      ]);
+      expect(lint(onDemand({ requestLimits: { maxRadiusKm: 25 } }))).toEqual([]);
     });
   });
 });

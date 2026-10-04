@@ -7,7 +7,7 @@ export default defineConfig({
     coverage: {
       provider: "v8",
       reporter: ["text", "html"],
-      include: ["packages/*/src/**", "services/*/src/**", "integrations/*/src/**"],
+      include: ["packages/*/src/**", "services/*/src/**"],
       exclude: [
         "**/node_modules/**",
         "**/*.test.ts",
@@ -23,12 +23,7 @@ export default defineConfig({
           name: "unit",
           environment: "node",
           globals: true,
-          include: [
-            "packages/**/*.test.ts",
-            "services/**/*.test.ts",
-            "integrations/**/*.test.ts",
-            "scripts/**/*.test.ts",
-          ],
+          include: ["packages/**/*.test.ts", "services/**/*.test.ts", "scripts/**/*.test.ts"],
           exclude: ["**/node_modules/**", "**/*.integration.test.ts"],
         },
       },
@@ -40,7 +35,6 @@ export default defineConfig({
           include: [
             "packages/**/*.integration.test.ts",
             "services/**/*.integration.test.ts",
-            "integrations/**/*.integration.test.ts",
             "scripts/**/*.integration.test.ts",
           ],
           exclude: ["**/node_modules/**"],

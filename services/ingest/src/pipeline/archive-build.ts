@@ -172,10 +172,11 @@ async function sameFile(a: string, b: string): Promise<boolean> {
  * offers and the latest reading of every series, and points the class's
  * stable name (`archive-<class>.parquet`) at it. All four read one
  * repeatable-read snapshot. The writer applies the published view
- * (`publishedRecords`: no on-demand answers or fused rows, nothing
- * tombstoned or out of date, crowd records only once corroborated,
- * permissive licences, reporters stripped, a source's extras only when the
- * source federates them), so the artifact carries what a peer may receive.
+ * (`publishedRecords`: no on-demand answers, fused rows or restricted
+ * sources, nothing tombstoned or out of date, crowd records only once
+ * corroborated, public licences, reporters stripped, a source's extras only
+ * when the source federates them), so the artifact carries what a peer may
+ * receive.
  *
  * Best-effort: an unwritable or misconfigured output dir is logged and
  * swallowed (returns `null`) so a failed archive write never crashes the
@@ -192,12 +193,15 @@ export async function buildDailyArchive(
   const temporary: string[] = [];
   try {
     await mkdir(dir, { recursive: true });
-    const federated = new Set(
-      (await sql<{ id: string }[]>`SELECT id FROM conditions.source WHERE extras_federate`).map(
-        (r) => r.id,
-      ),
-    );
-    const opts = { federateExtras: (sourceId: string) => federated.has(sourceId) };
+    const sources = await sql<{ id: string; extras_federate: boolean; restricted: boolean }[]>`
+      SELECT id, extras_federate, restricted FROM conditions.source
+       WHERE extras_federate OR restricted`;
+    const federated = new Set(sources.filter((s) => s.extras_federate).map((s) => s.id));
+    const restricted = new Set(sources.filter((s) => s.restricted).map((s) => s.id));
+    const opts = {
+      federateExtras: (sourceId: string) => federated.has(sourceId),
+      restricted: (sourceId: string) => restricted.has(sourceId),
+    };
     const written = {} as Record<RecordClass, { temp: string; path: string }>;
     await sql.begin("isolation level repeatable read read only", async (tx) => {
       for (const cls of ARCHIVE_CLASSES) {

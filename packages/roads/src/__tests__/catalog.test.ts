@@ -18,8 +18,9 @@ const repoFeedsDir = path.resolve(import.meta.dirname, "../../../../feeds");
 
 let loaded: { files: CatalogFile[]; credentials: SharedCredentials } | undefined;
 
+/** The repo catalogue's roads files (the other domains' directories unread) and its shared credentials. */
 function repoCatalog(): { files: CatalogFile[]; credentials: SharedCredentials } {
-  loaded ??= readCatalogDir(repoFeedsDir, [roadsDomain]);
+  loaded ??= readCatalogDir(repoFeedsDir, [roadsDomain], { otherDomains: "ignore" });
   return loaded;
 }
 
@@ -65,7 +66,7 @@ const AUTOBAHN_FLOW = [
 
 describe("the roads catalogue", () => {
   test("the catalogue holds the 86 roads feeds under their new ids", () => {
-    const { files, credentials } = readCatalogDir(repoFeedsDir, [roadsDomain]);
+    const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
     expect(ids).toHaveLength(86);
     expect(ids).toEqual(
@@ -76,13 +77,19 @@ describe("the roads catalogue", () => {
         "ca-on-511-conditions",
       ]),
     );
+    // The issues of the roads files. Whether a shared group serves enough feeds
+    // depends on every domain's feeds, so `feeds:lint` judges it on the whole
+    // catalogue; read alone, the roads files leave the other domains' groups unused.
+    const roadsFiles = new Set(files.map((f) => f.path));
     expect(
-      lintCatalog(files, credentials, [roadsDomain]).filter((i) => i.level === "error"),
+      lintCatalog(files, credentials, [roadsDomain]).filter(
+        (i) => i.level === "error" && roadsFiles.has(i.file),
+      ),
     ).toEqual([]);
   });
 
   test("one Mobilithek setup guide serves every Mobilithek feed", () => {
-    const { credentials } = readCatalogDir(repoFeedsDir, [roadsDomain]);
+    const { credentials } = repoCatalog();
     expect(Object.keys(credentials.groups.mobilithek!)).toEqual(["cert", "key"]);
   });
 
@@ -181,13 +188,14 @@ describe("the roads catalogue", () => {
     expect(allFeeds().filter((f) => !licenseInfo(f.license))).toEqual([]);
   });
 
-  test("the shared credential groups are Mobilithek's and one per operator account", () => {
+  test("the shared credential groups are Mobilithek's, one per operator account and the Overpass setting", () => {
     const groups = repoCatalog().credentials.groups;
     expect(Object.keys(groups).sort()).toEqual([
       "au-vic-transportvic",
       "hr-hc",
       "mobilithek",
       "no-vegvesen",
+      "overpass",
       "se-trafikverket",
       "sg-lta",
       "us-ny-511",

@@ -1,14 +1,10 @@
+import { requireCredential } from "@openconditions/ingest-framework";
 import postgres from "postgres";
 
-const url = process.env["DATABASE_URL"];
-
-if (!url) {
-  throw new Error("DATABASE_URL environment variable is required");
-}
-
 /** The validated connection string (used both for the app pool and, by
- * runMigrations, for its own short-lived migration connection). */
-export const DATABASE_URL: string = url;
+ * runMigrations, for its own short-lived migration connection). Read from
+ * `DATABASE_URL`, else the file `DATABASE_URL_FILE` names. */
+export const DATABASE_URL: string = requireCredential(process.env, "DATABASE_URL");
 
 /**
  * Shared postgres-js client. The ingest service opens a single pool

@@ -40,6 +40,12 @@ export function effectiveRights(license: string, terms: FeedTerms = {}): Effecti
   };
 }
 
+/** Whether a feed's data is withheld from the public scope: share-alike, or
+ *  redistribution not granted (denied, unknown or unstated). */
+export function isRestricted(r: EffectiveRights): boolean {
+  return r.shareAlike || r.redistribution !== true;
+}
+
 /** Whether a feed's data may be offered to a catalogue's children: redistribution,
  *  derived redistribution, commercial use and retention must all be granted. */
 export function admitsCatalogChild(r: EffectiveRights): boolean {

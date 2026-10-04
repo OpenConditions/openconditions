@@ -24,7 +24,11 @@ Road domain, v0.1:
   all public, rate-limited, and bbox-filterable.
 - **Graph binding:** road situations, and effects with a location of their own, are bound to the directed
   OSM segment spine (`way_id:f|b` spans with confidence); see [docs/graph-binding.md](docs/graph-binding.md).
-- **OpenMapX integration:** ships as an installable extension (a service + a provider integration).
+- **Fuel domain:** station fuel prices from Tankerkönig (DE), E-Control (AT), Prix Carburants (FR), MITECO (ES)
+  and OpenStreetMap, as features with per-grade price components; the Tankerkönig, E-Control and OpenStreetMap feeds are
+  fetched on demand for the area a read asks about.
+- **OpenMapX integration:** ships as an installable extension (the ingest and contributions services, serving
+  the roads and fuel domains); OpenMapX reads them through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
   See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
@@ -51,9 +55,6 @@ services/          deployable services
   ingest/          Fastify: fetch → parse → write records, bind + public record API and routing outputs; ships
                    the OpenMapX service.json so `repos add` can install it (AGPL-3.0)
   openlr-resolver/ Python/FastAPI OpenLR → geometry map-matcher (dormant)
-
-integrations/
-  road-conditions-openconditions/   OpenMapX provider integration (reads situations over HTTP into the map and routing)
 ```
 
 The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot.
@@ -106,17 +107,34 @@ describes it all, and [storage](docs/storage.md#read-api) says what each route r
 
 ## Using OpenConditions with OpenMapX
 
-OpenConditions installs into an OpenMapX deployment as a community extension:
+OpenConditions installs into an OpenMapX deployment as an extension, in one step:
 
 ```bash
-pnpm openmapx repos add https://github.com/openconditions/openconditions
-pnpm openmapx services enable openconditions-ingest
-pnpm openmapx compose render && pnpm openmapx compose up
-# then install the road-conditions-openconditions provider integration artifact
+pnpm openmapx ext install openconditions
 ```
 
-See OpenMapX's _Building an external extension_ guide for the full flow. The provider integration reads situations
-and their routing evidence from the ingest's API into the OpenMapX map overlay and routing avoidance.
+This registers both services (ingest and contributions API) at their pinned tag and starts them. It installs no
+integration code: OpenMapX's built-in `openconditions` integration reads them once `OPENCONDITIONS_URL` (and, for
+Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, `OPENCONDITIONS_OPERATOR_TOKEN`) is set in
+OpenMapX's `.env`. It feeds both the roads domain (conditions overlay, routing avoidance, live traffic) and the
+fuel domain (fuel stations and prices).
+
+OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
+configuration is `configSchema` fields: set the database URL (and the contributions API's grant secret and
+reviewer token) once as secrets in the admin services panel. Until they are set, both services stop at boot
+and their containers restart in a loop; once they are, apply the change and the services start. Set any
+setting there, or as `SERVICE_OPENCONDITIONS_INGEST_<KEY>` in OpenMapX's `.env`. Settings kept in OpenMapX's
+`.env` are applied with `pnpm openmapx services start openconditions-ingest` (which resets every setting saved
+only in the admin form, so keep all of them in one place). Settings saved in the form are applied with
+**Save & Apply**. See
+[services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
+
+See OpenMapX's _Building an external extension_ guide for the full flow. OpenMapX's built-in OpenConditions
+integration reads roads situations, routing evidence and fuel features from the ingest's API into the map
+overlay, routing avoidance and fuel search. A request carrying `Authorization: Bearer
+<OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
+public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
+`OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).
 
 ## Crowd reporting
 
@@ -140,11 +158,12 @@ Releases are cut by tagging `vX.Y.Z` (see [`.github/workflows/release.yml`](.git
 A two-license split — see [LICENSING.md](LICENSING.md):
 
 - **AGPL-3.0-or-later** — the ingest service (the deployable network commons server).
-- **Apache-2.0** — the reusable `@openconditions/*` libraries, the OpenMapX provider integration, and the
+- **Apache-2.0** — the reusable `@openconditions/*` libraries and the
   standalone OpenLR resolver.
 - **Source data** keeps each feed's upstream license (CC0 / CC-BY / dl-de/by / OGL / …); OSM-derived data is
-  ODbL. Observations carry their `source_license`, and the emitters can filter share-alike-incompatible records
-  out of permissive exports.
+  ODbL. Every record carries its licence; public exports (the public API, federation, the archive and the
+  emitters) carry only records whose licence grants redistribution and is not share-alike, and never a record
+  of a source whose terms restrict it.
 
 ## Contributing
 

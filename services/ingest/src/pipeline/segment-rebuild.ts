@@ -35,6 +35,8 @@ export interface SegmentRebuildSteps {
 export interface RunSegmentRebuildDeps {
   fetch: typeof fetch;
   now: () => string;
+  /** The Overpass interpreter a region without `pbfUrls` is imported from (`overpassInterpreterUrl`). */
+  overpassUrl: string;
   /** Test-only overrides for individual stages; absent stages use the real pipeline functions. */
   steps?: Partial<SegmentRebuildSteps>;
 }
@@ -85,7 +87,7 @@ export async function runSegmentRebuild(
         // Per-region source selection: regions with `pbfUrls` use the PBF-extract
         // source (deterministic, complete), the rest use Overpass. No fallback.
         source: autoOsmSource(
-          overpassSource(deps.fetch),
+          overpassSource(deps.fetch, deps.overpassUrl),
           pbfExtractSource({ logger: { info: (m) => console.info(m) } }),
         ),
         now: deps.now,

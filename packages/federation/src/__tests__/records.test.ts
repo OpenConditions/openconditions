@@ -225,12 +225,12 @@ describe("the subscriber filter on records", () => {
     expect(ids({ domains: ["hazards"] })).toEqual([]);
   });
 
-  it("drops share-alike records unless asked, and strips reporters either way", () => {
+  it("drops share-alike records whatever the filter, and strips reporters", () => {
     const shareAlike = entry(feedClosure("CC-BY-SA-4.0"), 4);
     expect(applyRecordFilter([shareAlike], undefined, NOW)).toEqual([]);
-    expect(applyRecordFilter([shareAlike], { permissiveOnly: false }, NOW)).toHaveLength(1);
+    expect(applyRecordFilter([shareAlike], { minEvidenceTier: "self_reported" }, NOW)).toEqual([]);
     const withReporter = entry(crowdAccident("corroborated"), 5);
-    const [out] = applyRecordFilter([withReporter], { permissiveOnly: false }, NOW);
+    const [out] = applyRecordFilter([withReporter], undefined, NOW);
     expect(out!.record!.provenance.reporter).toBeUndefined();
   });
 

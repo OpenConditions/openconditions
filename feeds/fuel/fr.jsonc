@@ -1,0 +1,25 @@
+{
+  "$schema": "../schema/fuel.schema.json",
+  "feeds": [
+    {
+      "operator": "prixcarburants",
+      "product": "fuel",
+      "name": "Prix des carburants (France)",
+      "tier": "authoritative",
+      "format": "prix-carburants",
+      // The ministry's instant flux as data.economie.gouv.fr exports it: every
+      // station with each grade's price and update time and its stock-outs.
+      "endpoints": {
+        "main": {
+          "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json",
+          "cadenceSec": 900,
+        },
+      },
+      "freshnessWindowSec": 86400,
+      "license": "etalab-2.0",
+      "licenseUrl": "https://www.data.gouv.fr/pages/legal/licences/etalab-2.0",
+      "attribution": "Ministère de l'Économie (prix-carburants.gouv.fr)",
+      "privacyUrl": "https://www.prix-carburants.gouv.fr/rubrique/donnees-personnelles/",
+    },
+  ],
+}

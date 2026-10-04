@@ -68,6 +68,17 @@ const MODEL_REGISTRY: Boundary = {
   message: "The production registry assembles model packages only.",
 };
 
+/** The domain parser packages, whose real parsers the registry's fit checks run over captured records. */
+const DOMAIN_PARSERS = ["roads", "fuel"];
+
+const MODEL_REGISTRY_TESTS: Boundary = {
+  id: "model-registry-tests",
+  pattern: new RegExp(
+    `^@openconditions\\/(?!(?:model(?:-[a-z0-9-]+)?|${DOMAIN_PARSERS.join("|")})(?:\\/|$))`,
+  ),
+  message: "The registry's fit checks use model packages and the domain parser packages only.",
+};
+
 const ASSEMBLY: Boundary = {
   id: "assembly",
   pattern: /^@openconditions\/model-registry(?:\/|$)/,
@@ -76,7 +87,7 @@ const ASSEMBLY: Boundary = {
 };
 
 /** Packages that must not import the assembled registry: storage and the domain parser packages. */
-const BELOW_ASSEMBLY = ["packages/core/", "packages/roads/"];
+const BELOW_ASSEMBLY = ["packages/core/", "packages/roads/", "packages/fuel/"];
 
 /** Files whose conclusions must not depend on federation transport health. */
 const TRUTH_PATHS = [
@@ -114,8 +125,9 @@ export function boundariesFor(path: string): Boundary[] {
   const boundaries: Boundary[] = [];
   if (!isIntegrationFile(path)) boundaries.push(CONTAINERS);
   if (path.startsWith("packages/model/")) boundaries.push(MODEL);
-  else if (path.startsWith("packages/model-registry/")) boundaries.push(MODEL_REGISTRY);
-  else if (path.startsWith("packages/model-")) boundaries.push(DOMAIN_MODEL);
+  else if (path.startsWith("packages/model-registry/")) {
+    boundaries.push(isTestFile(path) ? MODEL_REGISTRY_TESTS : MODEL_REGISTRY);
+  } else if (path.startsWith("packages/model-")) boundaries.push(DOMAIN_MODEL);
   if (BELOW_ASSEMBLY.some((root) => path.startsWith(root))) boundaries.push(ASSEMBLY);
   if (!isTestFile(path)) {
     if (isPackageOrServiceSource(path) && !path.startsWith("packages/probe-spike/")) {

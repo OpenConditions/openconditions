@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { admitsCatalogChild, effectiveRights } from "../catalog/terms.js";
+import { admitsCatalogChild, effectiveRights, isRestricted } from "../catalog/terms.js";
+import { catalogFeed } from "./helpers/catalog-feed.js";
 
 describe("effective rights", () => {
   it("an open licence admits catalogue children", () => {
@@ -46,6 +47,20 @@ describe("effective rights", () => {
   it("share-alike is a licence fact", () => {
     expect(effectiveRights("ODbL-1.0").shareAlike).toBe(true);
     expect(effectiveRights("CC-BY-4.0").shareAlike).toBe(false);
+  });
+
+  it("a share-alike, unknown or unstated licence restricts a feed", () => {
+    expect(isRestricted(effectiveRights("ODbL-1.0"))).toBe(true);
+    expect(isRestricted(effectiveRights("NOASSERTION"))).toBe(true);
+    expect(
+      isRestricted(effectiveRights("CC-BY-4.0", { url: "https://x", redistribution: false })),
+    ).toBe(true);
+    expect(isRestricted(effectiveRights("CC-BY-4.0"))).toBe(false);
+  });
+
+  it("toCatalogFeed marks a restricted feed", () => {
+    expect(catalogFeed({ license: "ODbL-1.0" }).restricted).toBe(true);
+    expect(catalogFeed({ license: "CC-BY-4.0" }).restricted).toBe(false);
   });
 
   it("licence lookup is exact", () => {

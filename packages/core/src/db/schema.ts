@@ -11,11 +11,13 @@ import {
   bigserial,
   boolean,
   check,
+  date,
   doublePrecision,
   index,
   integer,
   jsonb,
   primaryKey,
+  real,
   smallint,
   text,
   timestamp,
@@ -244,6 +246,8 @@ export const segmentProfile = conditionsSchema.table(
     todHour: smallint("tod_hour").notNull(),
     speedKph: doublePrecision("speed_kph").notNull(),
     sampleCount: integer("sample_count").notNull(),
+    /** The sources whose readings built this bucket's median. */
+    contributing: text("contributing").array().notNull().default(sql`'{}'::text[]`),
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
   (t) => [
@@ -449,6 +453,46 @@ export const federationTombstone = conditionsSchema.table(
 export const archiveErasure = conditionsSchema.table("archive_erasure", {
   key: text("key").primaryKey(),
   appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/**
+ * The cells of on-demand sources this instance has fetched: a `fresh` cell
+ * is not fetched again before `expires_at`, a `failed` one not before
+ * `retry_at`. A cell is the id of a fixed grid square of the source's cell
+ * size, so reads of overlapping boxes share it. A reader fetching a cell
+ * claims it until `claimed_until`, so no other reader, in any process,
+ * fetches it meanwhile; a claim its claimant never cleared lapses then.
+ */
+export const onDemandFetch = conditionsSchema.table(
+  "on_demand_fetch",
+  {
+    sourceId: text("source_id").notNull(),
+    cell: text("cell").notNull(),
+    /** When the cell was last answered; null until its first answer. */
+    fetchedAt: timestamp("fetched_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    /** `pending` until the cell's first fetch ends, then `fresh` or `failed`. */
+    status: text("status").notNull(),
+    retryAt: timestamp("retry_at", { withTimezone: true }),
+    claimedUntil: timestamp("claimed_until", { withTimezone: true }),
+  },
+  (t) => [
+    primaryKey({ columns: [t.sourceId, t.cell] }),
+    check("on_demand_fetch_status_enum", sql`${t.status} IN ('pending','fresh','failed')`),
+  ],
+);
+
+/**
+ * The request budget of each on-demand source, kept in the database so a
+ * restart does not reset it: a per-minute token bucket (`tokens`, last
+ * refilled at `refilled_at`) and the requests made on the UTC day `day`.
+ */
+export const onDemandQuota = conditionsSchema.table("on_demand_quota", {
+  sourceId: text("source_id").primaryKey(),
+  tokens: real("tokens").notNull(),
+  refilledAt: timestamp("refilled_at", { withTimezone: true }).notNull(),
+  day: date("day").notNull(),
+  dayCount: integer("day_count").notNull(),
 });
 
 /**
