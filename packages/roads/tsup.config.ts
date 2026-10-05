@@ -7,5 +7,10 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["@openconditions/core", "@openconditions/ingest-framework", "zod"],
+  external: [
+    "@openconditions/core",
+    "@openconditions/datex2",
+    "@openconditions/ingest-framework",
+    "zod",
+  ],
 });

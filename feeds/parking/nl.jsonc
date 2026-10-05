@@ -1,0 +1,59 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "operator": "rdw",
+      "product": "parking",
+      "name": "RDW parking areas",
+      "tier": "authoritative",
+      "format": "rdw",
+      // The parking specifications (capacity, charging points, disabled
+      // spaces, height) joined by area id to the garage, P+R and carpool
+      // area datasets, which place them. Socrata answers 1,000 rows unless
+      // asked for more.
+      "endpoints": {
+        "specs": {
+          "url": "https://opendata.rdw.nl/resource/b3us-f26s.json?$limit=50000",
+          "cadenceSec": 86400,
+        },
+        "areas": {
+          "urls": [
+            "https://opendata.rdw.nl/resource/t5pc-eb34.json?$limit=50000",
+            "https://opendata.rdw.nl/resource/6wzd-evwu.json?$limit=50000",
+            "https://opendata.rdw.nl/resource/9c54-cmfx.json?$limit=50000",
+          ],
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "RDW",
+      "privacyUrl": "https://www.rdw.nl/over-rdw/privacy-en-security/privacyverklaring",
+    },
+    {
+      "operator": "ndw",
+      "qualifier": "truck",
+      "product": "parking",
+      "name": "NDW truck parking",
+      "tier": "authoritative",
+      "format": "datex2",
+      // A DATEX II v2.2 site table and a v3 status, refreshed every minute.
+      "endpoints": {
+        "sites": {
+          "url": "https://opendata.ndw.nu/Truckparking_Parking_Table.xml",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://opendata.ndw.nu/Truckparking_Parking_Status.xml",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "NDW",
+      "privacyUrl": "https://www.ndw.nu/service/privacy",
+    },
+  ],
+}

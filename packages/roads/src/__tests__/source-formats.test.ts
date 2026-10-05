@@ -1,4 +1,5 @@
-import { ROADS_SOURCE_FORMATS } from "@openconditions/model-roads";
+import { buildRegistry, kernelModule } from "@openconditions/model";
+import { ROADS_SOURCE_FORMATS, roadsModule } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
 import { ROAD_REFERENCE_DECODERS, roadsDomain } from "../domain.js";
 import { FLOW_FORMAT_CODES, flowParserOf } from "../flow-parsers.js";
@@ -11,11 +12,18 @@ describe("road source formats", () => {
     );
   });
 
-  it("registers every format and reference decoder in the roads source_format vocabulary", () => {
+  it("registers every format and reference decoder in the source_format vocabulary", () => {
+    const registered = buildRegistry([kernelModule, roadsModule]).vocabulary("source_format")!;
     for (const format of Object.keys(roadsDomain.formats)) {
-      expect(ROADS_SOURCE_FORMATS).toContain(format);
+      expect(registered.values).toContain(format);
     }
-    for (const decoder of ROAD_REFERENCE_DECODERS) expect(ROADS_SOURCE_FORMATS).toContain(decoder);
+    for (const decoder of ROAD_REFERENCE_DECODERS) expect(registered.values).toContain(decoder);
+  });
+
+  it("leaves the shared formats to the kernel", () => {
+    for (const shared of ["datex2", "geojson"]) {
+      expect(ROADS_SOURCE_FORMATS).not.toContain(shared);
+    }
   });
 
   it("resolves parsers by format and rejects unknown and inherited names", () => {

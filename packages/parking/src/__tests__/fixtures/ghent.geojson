@@ -1,0 +1,129 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.6864592214319964,
+          51.02542334883013
+        ]
+      },
+      "properties": {
+        "name": "The Loop",
+        "lastupdate": "2026-10-05T05:10:03+02:00",
+        "totalcapacity": 2490,
+        "availablecapacity": 2489,
+        "occupation": 0,
+        "type": "offStreetParkingGround",
+        "description": "Bovengrondse parkeergarage The Loop in Gent",
+        "id": "https://stad.gent/nl/loop/mobiliteit-loop#Parkeerterreinen_Stad_Gent",
+        "openingtimesdescription": "24/7",
+        "isopennow": 1,
+        "temporaryclosed": 0,
+        "operatorinformation": "Mobiliteitsbedrijf Gent",
+        "freeparking": 0,
+        "urllinkaddress": "https://stad.gent/nl/loop/mobiliteit-loop#Parkeerterreinen_Stad_Gent",
+        "occupancytrend": "unknown",
+        "locationanddimension": "{\"specificAccessInformation\": [\"inrit\"], \"level\": \"0\", \"roadNumber\": \"?\", \"roadName\": \"?\", \"coordinatesForDisplay\": {\"latitude\": 51.02542334883013, \"longitude\": 3.6864592214319964}}",
+        "text": null,
+        "categorie": "parking buiten LEZ",
+        "dashboard": "False"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.73956,
+          51.0561
+        ]
+      },
+      "properties": {
+        "name": "B-Park Dampoort",
+        "lastupdate": "2026-10-05T05:06:35+02:00",
+        "totalcapacity": 90,
+        "availablecapacity": 93,
+        "occupation": 0,
+        "type": "offStreetParkingGround",
+        "description": "Bovengrondse parkeergarage NMBS Dampoort in Gent",
+        "id": "https://www.belgiantrain.be/nl/station-information/car-or-bike-at-station/b-parking/my-b-parking/gent-dampoort",
+        "openingtimesdescription": "24/7",
+        "isopennow": 1,
+        "temporaryclosed": 0,
+        "operatorinformation": "Skidata",
+        "freeparking": 0,
+        "urllinkaddress": "https://www.belgiantrain.be/nl/station-information/car-or-bike-at-station/b-parking/my-b-parking/gent-dampoort",
+        "occupancytrend": "unknown",
+        "locationanddimension": "{\"specificAccessInformation\": [\"inrit\"], \"level\": \"0\", \"roadNumber\": \"?\", \"roadName\": \"?\", \"coordinatesForDisplay\": {\"latitude\": 51.0561, \"longitude\": 3.73956}}",
+        "text": null,
+        "categorie": "parking buiten LEZ",
+        "dashboard": "False"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.724968367281895,
+          51.0637023559265
+        ]
+      },
+      "properties": {
+        "name": "Tolhuis",
+        "lastupdate": "2026-10-05T05:10:20+02:00",
+        "totalcapacity": 148,
+        "availablecapacity": 63,
+        "occupation": 57,
+        "type": "offStreetParkingGround",
+        "description": "Ondergrondse parkeergarage Tolhuis in Gent",
+        "id": "https://stad.gent/nl/mobiliteit-openbare-werken/parkeren/parkings-gent/parking-tolhuis",
+        "openingtimesdescription": "24/7",
+        "isopennow": 1,
+        "temporaryclosed": 0,
+        "operatorinformation": "Mobiliteitsbedrijf Gent",
+        "freeparking": 0,
+        "urllinkaddress": "https://stad.gent/nl/mobiliteit-openbare-werken/parkeren/parkings-gent/parking-tolhuis",
+        "occupancytrend": "unknown",
+        "locationanddimension": "{\"specificAccessInformation\": [\"inrit\"], \"level\": \"0\", \"roadNumber\": \"?\", \"roadName\": \"?\", \"coordinatesForDisplay\": {\"latitude\": 51.0637023559265, \"longitude\": 3.724968367281895}}",
+        "text": null,
+        "categorie": "parking in LEZ",
+        "dashboard": "True"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          3.726071777876147,
+          51.05713405953412
+        ]
+      },
+      "properties": {
+        "name": "Vrijdagmarkt",
+        "lastupdate": "2026-10-05T05:10:20+02:00",
+        "totalcapacity": 580,
+        "availablecapacity": -1,
+        "occupation": 16,
+        "type": "carPark",
+        "description": "Ondergrondse parkeergarage Vrijdagmarkt in Gent",
+        "id": "https://stad.gent/nl/mobiliteit-openbare-werken/parkeren/parkings-gent/parking-vrijdagmarkt",
+        "openingtimesdescription": "24/7",
+        "isopennow": 0,
+        "temporaryclosed": 1,
+        "operatorinformation": "Mobiliteitsbedrijf Gent",
+        "freeparking": 0,
+        "urllinkaddress": "https://stad.gent/nl/mobiliteit-openbare-werken/parkeren/parkings-gent/parking-vrijdagmarkt",
+        "occupancytrend": "unknown",
+        "locationanddimension": "{\"specificAccessInformation\": [\"inrit\"], \"level\": \"0\", \"roadNumber\": \"?\", \"roadName\": \"Vrijdagmarkt 1\\n9000 Gent\", \"contactDetailsTelephoneNumber\": \"Tel.: 09 266 29 00\\n(permanentie)\\nTel.: 09 266 29 01\\n(tijdens kantooruren)\", \"coordinatesForDisplay\": {\"latitude\": 51.05713405953412, \"longitude\": 3.726071777876147}}",
+        "text": null,
+        "categorie": "parking in LEZ",
+        "dashboard": "True"
+      }
+    }
+  ]
+}

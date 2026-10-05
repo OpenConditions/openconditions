@@ -62,6 +62,8 @@ export const PARKING_VEHICLE_TYPES = [
   "any",
 ] as const;
 
+export type ParkingVehicleType = (typeof PARKING_VEHICLE_TYPES)[number];
+
 /** Who an area is reserved for. A site's untyped spaces are the `any` area. */
 export const PARKING_USER_GROUPS = [
   "any",
@@ -76,7 +78,37 @@ export const PARKING_USER_GROUPS = [
   "hazmat",
 ] as const;
 
-const PARKING_USAGES = [
+export type ParkingUserGroup = (typeof PARKING_USER_GROUPS)[number];
+
+export type ParkingStatus = (typeof PARKING_STATUSES)[number];
+
+/** What a site is for: the `parking_site` feature types. */
+export const PARKING_SITE_TYPES = [
+  "off_street",
+  "on_street",
+  "park_and_ride",
+  "truck_parking",
+  "rest_area_parking",
+] as const;
+
+export type ParkingSiteType = (typeof PARKING_SITE_TYPES)[number];
+
+/** The physical structure of a site, independent of what it is used for. */
+export const PARKING_LAYOUTS = [
+  "single_level",
+  "multi_storey",
+  "underground",
+  "surface",
+  "automated",
+  "covered",
+  "nested",
+  "unknown",
+] as const;
+
+export type ParkingLayout = (typeof PARKING_LAYOUTS)[number];
+
+/** Every usage a site is published for. */
+export const PARKING_USAGES = [
   "park_and_ride",
   "carpool",
   "truck",
@@ -85,6 +117,8 @@ const PARKING_USAGES = [
   "residents",
   "event",
 ] as const;
+
+export type ParkingUsage = (typeof PARKING_USAGES)[number];
 
 /**
  * Parking sites and the sub-units their occupancy is reported for. A site is
@@ -132,28 +166,11 @@ export const PARKING_KINDS = [
     domain: DOMAIN,
     version: V,
     description: "A place to park: a garage, a lot, a stretch of on-street bays, a lorry park.",
-    types: {
-      off_street: [],
-      on_street: [],
-      park_and_ride: [],
-      truck_parking: [],
-      rest_area_parking: [],
-    },
+    types: Object.fromEntries(PARKING_SITE_TYPES.map((type) => [type, []])),
     components: ["parking_area", "parking_space"],
     details: (k) => ({
       /** The physical structure, independent of what the site is used for. */
-      layout: z
-        .enum([
-          "single_level",
-          "multi_storey",
-          "underground",
-          "surface",
-          "automated",
-          "covered",
-          "nested",
-          "unknown",
-        ])
-        .optional(),
+      layout: z.enum(PARKING_LAYOUTS).optional(),
       capacityTotal: z.number().int().nonnegative().optional(),
       heightLimit: Quantity.optional(),
       lengthLimit: Quantity.optional(),
@@ -188,9 +205,15 @@ export const PARKING_KINDS = [
       reservation: z.boolean().optional(),
       /** Every usage the site is published for, the primary one included. */
       usage: z.array(z.enum(PARKING_USAGES)).min(1).optional(),
+      /** The operator's page for the site; the kernel feature carries no URL. */
+      website: z.url().optional(),
+      /** A tariff as the publisher wrote it, where it cannot be broken into priced elements. */
+      tariffText: k.Text.optional(),
+      /** Opening hours as the publisher wrote them, where they are not OSM grammar. */
+      openingHoursText: k.Text.optional(),
     }),
     linking: {
-      idSchemes: ["datex:parking", "tpims:site", "osm:node", "osm:way", "osm:relation"],
+      idSchemes: ["provider", "datex:parking", "tpims:site", "osm:node", "osm:way", "osm:relation"],
       alwaysMetres: 40,
       neverMetres: 150,
       attribute: { name: 0.5, address: 0.6 },

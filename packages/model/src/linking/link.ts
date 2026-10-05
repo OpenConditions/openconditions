@@ -30,7 +30,7 @@ export interface LinkableFeature {
       text?: string;
     };
   };
-  provenance: { sourceId: string };
+  provenance: { sourceId: string; sourceFormat?: string; accessMode?: string };
 }
 
 export interface FeatureLink {

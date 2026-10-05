@@ -2,8 +2,8 @@
  * Real published facility records as drafts, for the canonical view suites:
  * the facilities fit check's golden records, and the linking and crowd fit
  * fixtures (MobiData BW charge points and car parks, OpenStreetMap's for the
- * same streets) as a parser would hand them to the write seam. OpenConditions
- * parses none of these formats yet, so the registry registers them.
+ * same streets) as a parser would hand them to the write seam. The registry
+ * registers the formats among them OpenConditions does not parse.
  * Test-only: no runtime module imports this file.
  */
 import { readFileSync } from "node:fs";
@@ -29,7 +29,7 @@ export const registry: Registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit", "osm"],
+        values: ["ocpi", "autobahn-parking", "mimit", "osm"],
       }),
     ],
   },
@@ -323,7 +323,7 @@ export function parkapiKarlsruhe(fetchedAt: string): Rec[] {
       ...(site.operator_name === undefined
         ? {}
         : { operator: { role: "operator", name: [{ lang: "de", text: site.operator_name }] } }),
-      provenance: feed("de-bw-parkapi", "parkapi", String(site.id), "MobiData BW", "CC-BY-4.0"),
+      provenance: feed("de-bw-parkapi", "parkapi-v3", String(site.id), "MobiData BW", "CC-BY-4.0"),
       freshness: { fetchedAt },
       details: { kind: "parking_site", v: 1 },
     }),

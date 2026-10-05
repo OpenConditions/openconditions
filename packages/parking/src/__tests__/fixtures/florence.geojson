@@ -1,0 +1,96 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.2449018,
+          43.7755934
+        ]
+      },
+      "properties": {
+        "id": "1",
+        "nome": "Stazione Santa Maria Novella",
+        "cap": "50123",
+        "indirizzo": "Piazza della Stazione, 13 50123 Firenze",
+        "ultimo_aggiornamento": "2026-10-05T05:10:03.109076+02:00",
+        "posti_totali": "880",
+        "posti_a_pagamento": "572",
+        "posti_riservati_disabili": "17",
+        "citta": "Firenze",
+        "paese": "Italia",
+        "telefono": "055 50 30 22 09",
+        "fax": "055 50 30 22 19",
+        "orario": "24/24h",
+        "posti_liberi": "424",
+        "tariffe": "Tariffa auto\nTariffa oraria in vigore\n - Prima ora non frazionabile: € 4,00\n - Seconda ora e tutte le ore successive frazionabili alla 1/2 ora: € 4,00\n\nTariffa moto/scooter\nTariffa giornaliera\n - Tariffa giornaliera - Dalle ore 8.00 alle ore 20.00 dal lunedì al sabato a forfait: € 1,00\nTariffa notturna \n - Tariffa notturna - Ogni ora o frazione successiva di ora dalle 20.00 alle 8.00 dal lunedì al sabato.: € 0,50\nTariffa domenica\n - Tariffa domenica - Ogni ora o frazione successiva di ora dalle ore 00.00 alle ore 24.00.: € 0,50\n\nAbbonamenti auto\n - Abbonamento mensile notturno valido esclusivamente nella fascia oraria dalle ore 20.00 alle ore 08.00 tutti i giorni della settimana (*) (**): € 70\n - Abbonamento mensile h24 (***): € 200\n\nAbbonamento moto/scooter\nAbbonamento mensile\n - Abbonamento mensile 24h ordinario*: € 35"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 6,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.238617,
+          43.778273
+        ]
+      },
+      "properties": {
+        "id": "9",
+        "nome": "Porta al Prato - Leopolda",
+        "cap": "50126",
+        "indirizzo": "Via Gabbuggiani, 2/4 50126 Firenze - nei pressi del Teatro del Maggio Musicale Fiorentino",
+        "ultimo_aggiornamento": "2026-10-05T05:10:03.109306+02:00",
+        "posti_totali": "371",
+        "posti_a_pagamento": "339",
+        "posti_riservati_disabili": "8 non sono posizionati all’interno della struttura",
+        "citta": "Firenze",
+        "paese": "Italia",
+        "telefono": "055 50 30 22 09",
+        "fax": "055 50 30 22 19",
+        "orario": "24/24h",
+        "posti_liberi": "210",
+        "tariffe": "Tariffa oraria\n - La prima ora non frazionabile: € 2,00\n - La seconda ora e tutte le ore successive frazionabili alla 1/2 ora: € 2,00\n - Tariffa giornaliera: € 20,00\n\nAbbonamenti mensili\n - Abbonamento mensile 24h ordinario (*): € 105\n - Abbonamento mensile 24h riservato ai soli residenti (*): € 80\n - Abbonamento annuale 24h ordinario Promo 11+1 (*): € 1155\n - Abbonamento annuale 24h riservato residenti Promo 11+1 (*): € 880\n - Abbonamento mensile notturno valido esclusivamente nella fascia oraria dalle ore 20.00 alle ore 08.00 tutti i giorni della settimana (*) (**): € 70\n - Tessera a scalare dal valore € 120 al costo di (*): € 100"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 12,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          11.246613,
+          43.780661
+        ]
+      },
+      "properties": {
+        "id": "4",
+        "nome": "Stazione Binario 16",
+        "cap": "50129",
+        "indirizzo": "Piazzale Montelungo, 2 50129 Firenze",
+        "ultimo_aggiornamento": "2026-10-05T05:10:03.109461+02:00",
+        "posti_totali": "41",
+        "posti_a_pagamento": "39",
+        "posti_riservati_disabili": "2",
+        "citta": "Firenze",
+        "paese": "Italia",
+        "telefono": "055 50 30 22 09",
+        "fax": "055 50 30 22 19",
+        "orario": "24/24h",
+        "posti_liberi": "36",
+        "tariffe": "Tariffa oraria\n - Ogni ora non frazionabile: € 2,00\n\nAbbonamenti\n -  Tessera a scalare dal valore € 120 al costo di (*): € 100\n - Abbonamento mensile notturno valido esclusivamente nella fascia oraria dalle ore 20.00 alle ore 08.00 tutti i giorni della settimana (*) (**): € 70"
+      }
+    }
+  ],
+  "totalFeatures": 3,
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  }
+}

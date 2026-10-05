@@ -15,7 +15,7 @@ export const crowdTestModule: RegistryModule = {
   entries: [
     defineDomain({ code: "roads", description: "test roads" }),
     defineDomain({ code: "charging", description: "test charging" }),
-    extendVocabulary({ vocabulary: "source_format", values: ["datex2", "ocpi"] }),
+    extendVocabulary({ vocabulary: "source_format", values: ["ocpi"] }),
     defineKind({
       class: "situation",
       code: "incident",

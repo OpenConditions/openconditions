@@ -1,0 +1,61 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "operator": "bnls",
+      "product": "parking",
+      "name": "Base nationale des lieux de stationnement",
+      "tier": "aggregator",
+      "format": "csv",
+      // The national point of access's canonical file, not a portal mirror:
+      // off-street car parks with their spaces by kind and hourly tariffs.
+      // Static and, by its own account, not exhaustive.
+      "endpoints": {
+        "main": {
+          "url": "https://transport.data.gouv.fr/resources/78899/download",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "transport.data.gouv.fr – Base nationale des lieux de stationnement, ODbL",
+      "privacyUrl": "https://doc.transport.data.gouv.fr/le-point-d-acces-national/generalites/mentions-legales-et-conditions-generales-dutilisation",
+      "layout": { "delimiter": ";", "lon": "Xlong", "lat": "Ylat" },
+      "parking": {
+        "id": "id",
+        "name": ["nom"],
+        "lang": "fr",
+        "defaultType": "off_street",
+        "layout": { "field": "type_ouvrage", "map": { "enclos_en_surface": "surface" } },
+        "capacity": "nb_places",
+        "address": { "text": "adresse" },
+        "website": "url",
+        "free": { "field": "gratuit", "equals": 1 },
+        "heightLimit": { "field": "hauteur_max", "unit": "cm" },
+        "areas": [
+          { "vehicleType": "car", "userGroup": "disabled", "capacity": "nb_pmr" },
+          {
+            "vehicleType": "car",
+            "userGroup": "ev_charging",
+            "capacity": "nb_voitures_electriques",
+          },
+          { "vehicleType": "car", "userGroup": "car_sharing", "capacity": "nb_autopartage" },
+          { "vehicleType": "motorcycle", "userGroup": "any", "capacity": "nb_2_rm" },
+          { "vehicleType": "bicycle", "userGroup": "any", "capacity": "nb_velo" },
+        ],
+        "rates": {
+          "currency": "EUR",
+          "rows": [
+            { "field": "tarif_1h", "maxDuration": { "value": 1, "unit": "h" } },
+            { "field": "tarif_2h", "maxDuration": { "value": 2, "unit": "h" } },
+            { "field": "tarif_3h", "maxDuration": { "value": 3, "unit": "h" } },
+            { "field": "tarif_4h", "maxDuration": { "value": 4, "unit": "h" } },
+            { "field": "tarif_24h", "maxDuration": { "value": 24, "unit": "h" } },
+          ],
+        },
+        "notes": "info",
+      },
+    },
+  ],
+}

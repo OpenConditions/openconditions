@@ -1,0 +1,35 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "operator": "hdb",
+      "product": "parking",
+      "name": "HDB car parks",
+      "tier": "authoritative",
+      "format": "hdb",
+      // The HDB car park table (about 2,300 rows; `limit` must cover them),
+      // in SVY21, and the live lot counts of every car park.
+      "endpoints": {
+        "sites": {
+          "url": "https://data.gov.sg/api/action/datastore_search?resource_id=d_23f946fa557947f93a8043bbef41dd09&limit=5000",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://api.data.gov.sg/v1/transport/carpark-availability",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perMinute": 60 },
+      "license": "LicenseRef-Singapore-ODL-1.0",
+      "licenseUrl": "https://data.gov.sg/open-data-licence",
+      "attribution": "Contains information from HDB Carpark Information and Carpark Availability from data.gov.sg, made available under the terms of the Singapore Open Data Licence version 1.0 (https://data.gov.sg/open-data-licence)",
+      "terms": {
+        "url": "https://data.gov.sg/open-data-licence",
+        "reviewedAt": "2026-10-05",
+        "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from data.gov.sg. Availability API: 60 requests/minute per API key.",
+      },
+      "privacyUrl": "https://data.gov.sg/privacy-and-terms",
+    },
+  ],
+}

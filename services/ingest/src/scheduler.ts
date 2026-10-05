@@ -23,6 +23,7 @@ import {
   createOpenlrClient,
   createRoleState,
   runSource as defaultRunSource,
+  pollTickSec,
 } from "./pipeline/run.js";
 import { deriveSegmentProfiles } from "./pipeline/segment-profile.js";
 import { runSegmentRebuild } from "./pipeline/segment-rebuild.js";
@@ -99,8 +100,10 @@ const SEGMENT_CRON = "0 4 * * 1";
 const SEGMENT_PROFILE_CRON = "30 3 * * 1";
 
 function cadenceToCron(cadenceSec: number): string {
-  if (cadenceSec < 60) return `*/${cadenceSec} * * * * *`;
-  const mins = Math.round(cadenceSec / 60);
+  const tickSec = pollTickSec(cadenceSec);
+  if (tickSec < 60) return `*/${tickSec} * * * * *`;
+  if (tickSec === 3600) return "0 * * * *";
+  const mins = Math.round(tickSec / 60);
   return `*/${mins} * * * *`;
 }
 

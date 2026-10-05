@@ -28,9 +28,11 @@ FROM base AS prod-deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/core/package.json packages/core/
+COPY packages/datex2/package.json packages/datex2/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/fuel/package.json packages/fuel/
+COPY packages/parking/package.json packages/parking/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/storage/package.json packages/storage/
@@ -55,9 +57,11 @@ FROM base AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/core/package.json packages/core/
+COPY packages/datex2/package.json packages/datex2/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/fuel/package.json packages/fuel/
+COPY packages/parking/package.json packages/parking/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/storage/package.json packages/storage/
@@ -78,9 +82,11 @@ RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --ignore-s
 
 COPY tsconfig.base.json turbo.json ./
 COPY packages/core/ packages/core/
+COPY packages/datex2/ packages/datex2/
 COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
 COPY packages/fuel/ packages/fuel/
+COPY packages/parking/ packages/parking/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
 COPY packages/storage/ packages/storage/

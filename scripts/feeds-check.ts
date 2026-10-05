@@ -2,6 +2,7 @@ import { existsSync, readdirSync } from "node:fs";
 import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseXmlDocument } from "@openconditions/datex2";
 import {
   type CatalogFeed,
   cellsCovering,
@@ -19,7 +20,6 @@ import {
   redactSecrets,
   redactUrl,
 } from "@openconditions/ingest-framework";
-import { parseXmlDocument } from "@openconditions/roads";
 import { domainOf, formatOf, INGEST_DOMAINS } from "../services/ingest/src/domains.js";
 import {
   type BodyStreamFactory,

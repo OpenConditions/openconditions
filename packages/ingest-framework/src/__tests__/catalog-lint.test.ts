@@ -524,6 +524,28 @@ describe("lintCatalog", () => {
     });
   });
 
+  test("a domain's own feed checks are errors of the lint, disabled feeds included", () => {
+    const checked: IngestDomain = {
+      ...testDomain,
+      lintFeed: (feed) => (feed.name.startsWith("Bad") ? [`${feed.name} is bad`] : []),
+    };
+    const issues = lintCatalog(
+      [file([def({ name: "Bad feed", disabled: { reason: "off", since: "2026-10-01" } })])],
+      NO_SHARED,
+      [checked],
+      NOW,
+    );
+    expect(issues).toEqual([
+      {
+        level: "error",
+        file: "feeds/roads/de.jsonc",
+        feedId: "de-op-events",
+        message: "Bad feed is bad",
+      },
+    ]);
+    expect(messages([file([def()])], NO_SHARED, [checked])).toEqual([]);
+  });
+
   describe("on-demand feeds", () => {
     const featuresFormat = (produces: boolean): FeedFormat => ({
       id: "overpass",

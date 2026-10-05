@@ -30,17 +30,15 @@
   },
   "dependencies": {
     "@openconditions/core": "workspace:*",
+    "@openconditions/datex2": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-roads": "workspace:*",
-    "fast-xml-parser": "^5.11.1",
-    "proj4": "^2.21.0",
     "saxes": "^6.0.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
-    "@types/proj4": "^2.19.0",
     "tsup": "^8.5.1",
     "typescript": "^5.9.3",
     "vitest": "^4.1.11"

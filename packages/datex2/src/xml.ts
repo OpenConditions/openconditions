@@ -87,7 +87,8 @@ export function parseXmlDocument(
     processEntities: true,
     removeNSPrefix: options.removeNSPrefix ?? false,
     trimValues: true,
-    isArray: options.isArray,
+    // fast-xml-parser calls `isArray` whenever the key is present, even when undefined.
+    ...(options.isArray ? { isArray: options.isArray } : {}),
   });
 
   const parsed = parser.parse(str) as unknown;

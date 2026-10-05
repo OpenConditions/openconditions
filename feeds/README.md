@@ -18,9 +18,15 @@ feeds/
     es.jsonc
     global.jsonc
     …
+  parking/
+    de.jsonc
+    nl.jsonc
+    global.jsonc
+    …
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
     fuel.schema.json
+    parking.schema.json
     credentials.schema.json
 ```
 
@@ -63,8 +69,9 @@ A region file is JSONC (comments and trailing commas allowed):
 to complete and check fields. `maintainers` is optional. The fields every feed
 shares are defined in `packages/ingest-framework/src/catalog/schema.ts`; a domain
 adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
-`openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`) or
-none (fuel).
+`openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`;
+parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`, see
+[Generic layouts](#generic-layouts)) or none (fuel).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
 relay of others' data. `freshnessWindowSec` is how old the last good poll may
@@ -139,6 +146,21 @@ below), each answer for one cell: `tankerkoenig` (Germany), `econtrol`
 (Austria) and `overpass` (OpenStreetMap, worldwide). The formats are in
 `packages/fuel/src/domain.ts`.
 
+The parking product is:
+
+| product   | what                                                                                 |
+| --------- | ------------------------------------------------------------------------------------ |
+| `parking` | car parks, garages and lorry parks, their spaces by kind, live occupancy and tariffs |
+
+Every parking format is a `features` format. A publisher whose payload is a
+plain GeoJSON, JSON or CSV table is written in the generic layout of that name
+(`geojson`, `json`, `csv`) with a `layout` block and a `parking` mapping, so it
+needs no code. A standard or a publisher's own API has a format of its own:
+`datex2` (DATEX II v2 or v3 site table and status), `datex2-light` (DATEX II
+Light JSON), `parkapi-v3`, `db-bahnpark`, `rdw`, `sbb`, `opendatahub`, `hdb`,
+`utmc`, `tfnsw` and `overpass` (OpenStreetMap, on demand). The formats are in
+`packages/parking/src/domain.ts`.
+
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
 `ca-on-511-events`, `de-nw-autobahn-los-flow` beside `de-nw-autobahn-flow`.
@@ -166,6 +188,14 @@ hours (`21600`). The optional request fields are `method`, `body`, `headers`,
 endpoint of several URLs (`urls` or `expand`): `"all"`, the default, needs every
 URL to answer, so one failure fails the poll; `"tolerant"` costs only the
 failing URL's records, and sends no conditional requests.
+
+A parking format that reads a site table and the live state of its sites
+declares `sites` and `status` in place of `main` (`datex2`, `opendatahub`,
+`hdb`, `utmc`); each is fetched at its own cadence, and a role that fails while
+an earlier payload of it is held is parsed with that payload, so a failing
+daily site table never stops the occupancy. `parkapi-v3` declares `main` and
+`sources` (the upstream sources that type and credit the sites), `rdw` declares
+`specs` and `areas`.
 
 `decoder` names how a reference endpoint is read. The roads decoders are
 `datex2-sites` (a DATEX II measurement site table), `datex2-locations` (DATEX II
@@ -303,6 +333,62 @@ fetches the grid cells that cover the box, and the answer is kept for a while.
 - The format is a `features` format that declares what it `produces` (feature
   kinds and properties), so a read fetches only the feeds that can answer it.
 
+## Generic layouts
+
+A parking feed in the `geojson`, `json` or `csv` layout is read through two
+blocks, both required (`feeds:lint` reports a missing one):
+
+```jsonc
+"format": "csv",
+"layout": { "delimiter": ";", "encoding": "latin1", "lon": "LONGITUD", "lat": "LATITUD" },
+"parking": {
+  "id": "PK",
+  "name": ["NOMBRE"],
+  "lang": "es",
+  "defaultType": "off_street",
+  "capacity": { "field": "DESCRIPCION", "pattern": "Plazas:\\s*(\\d+)" },
+  "address": { "street": "NOMBRE-VIA", "houseNumber": "NUM", "postalCode": "CODIGO-POSTAL" },
+},
+```
+
+`layout` cuts the payload into records and places each:
+
+- `records`: the path of the record array (GeoJSON: `features`; JSON: the root);
+- `lon` and `lat`: the coordinate fields, or `point`, one field holding both
+  (`{ "field": "Geo Point", "order": "latlon" }`, a `"a,b"` string or an array);
+  a GeoJSON record without them takes its geometry's point, a JSON record the
+  geometry at `geometryPath`;
+- `crs`: the geometry's CRS when the payload does not name it (`EPSG:31468`);
+- CSV only: `delimiter` (default `,`), `encoding` (`utf-8` or `latin1`) and
+  `decimalComma`.
+
+`parking` maps a record onto a parking site. Every value is a field reference:
+a dotted path into the record (`addresses.0.zip_code`; a GeoJSON record is its
+`properties`), or `{ "field", "pattern" }`, whose regular expression's first
+capture group is the value. The members:
+
+| member                                    | what                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `id`                                      | the publisher's id of the site (required)                                                              |
+| `name`, `lang`                            | name candidates, the first non-empty wins; the language of the texts                                   |
+| `type`, `defaultType`                     | the site type through a value map (`park_and_ride`, `off_street`, …), else the default                 |
+| `layout`, `defaultLayout`                 | the structure (`multi_storey`, `underground`, `surface`, …) through a value map, else the default      |
+| `capacity`, `available`, `occupied`       | the counts; `available` is derived from the other two when absent                                      |
+| `status`, `trend`                         | value maps onto `parking.status` and `parking.trend`; `status` may be a list, the first that maps wins |
+| `updated`                                 | when the counts were measured: ISO or `d.m.y h:m` in the required `timezone`; undated is no reading    |
+| `liveWhen`                                | readings only when this `{ field, equals }` holds                                                      |
+| `address`, `operator`, `website`, `notes` | site details                                                                                           |
+| `openingHours`, `tariffText`              | opening hours (`syntax`: `osm` or `text`) and tariff text                                              |
+| `free`, `heightLimit`                     | free of charge when the condition holds; the height limit in `m` or `cm`                               |
+| `areas`                                   | spaces by vehicle type and user group, each with a `capacity` field or a `presentWhen` condition       |
+| `rates`                                   | priced rows of one tariff, each a flat price with an optional `maxDuration`, in `currency`             |
+| `filter`                                  | the records kept: each filter's field among `include`, not among `exclude`                             |
+
+The value maps hold the closed vocabularies, so the generated schema lists the
+values an editor may write. A count is never invented: a negative, unreadable
+or impossible count gives no reading, and a source that only says a site has
+disabled spaces gives an area without a capacity.
+
 ## Disabled feeds
 
 A dead or blocked feed stays documented in its region file:
@@ -312,7 +398,23 @@ A dead or blocked feed stays documented in its region file:
 ```
 
 It is checked like any other feed but never polled, and `/feeds/status` lists it
-with its reason.
+with its reason. A disabled feed still names an implemented format, so only a
+source an existing format reads is written as one. The parking sources that
+cannot be run, and need no entry, are listed under
+[Sources not taken](#sources-not-taken).
+
+## Sources not taken
+
+Parking sources considered and left out, reviewed on 2026-10-05. Taking one
+needs the change its reason names.
+
+| source                                                              | reason                                                                                                                   |
+| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| ParkenDD ParkAPI v2 (`api.parkendd.de`)                             | No data licence for 23 of its 28 cities (it scrapes operator pages), and its scraper has been frozen since 2026-07-18.   |
+| Autobahn GmbH rest areas (`verkehr.autobahn.de` `parking_lorry`)    | No published licence or terms. The same lorry parks come live and licensed from `de-bw-mobidata-parking` (Toll Collect). |
+| Stadtwerke Bamberg car park counter                                 | The imprint requires written consent, and the records carry no coordinates.                                              |
+| Stadtwerke Trier `parken-v2.xml`                                    | The imprint requires written consent, and the records carry no coordinates.                                              |
+| APCOA, GOLDBECK and APAG on Mobidrom, Bielefeld WFS, Düsseldorf WFS | Exact subsets of `de-nw-mobidrom-parking`.                                                                               |
 
 ## Catalogue resolvers
 

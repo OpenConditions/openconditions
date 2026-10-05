@@ -1,0 +1,79 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "52",
+      "operator": "florence",
+      "product": "parking",
+      "name": "Comune di Firenze free spaces in car parks",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The current distribution of the dataset; the older ParkFreeSpot.json
+      // stopped updating on 2026-09-01.
+      "endpoints": {
+        "main": {
+          "url": "https://datigis.comune.fi.it/resources/open-data/dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi/fipark_posti_liberi.geojson",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Comune di Firenze / Firenze Parcheggi, CC BY 4.0",
+      "privacyUrl": "https://www.comune.fi.it/pagina/privacy",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": ["nome"],
+        "lang": "it",
+        "defaultType": "off_street",
+        "capacity": "posti_totali",
+        "available": "posti_liberi",
+        "updated": { "field": "ultimo_aggiornamento", "timezone": "Europe/Rome" },
+        "address": { "text": "indirizzo", "postalCode": "cap", "city": "citta" },
+        "openingHours": { "field": "orario", "syntax": "text" },
+        "tariffText": "tariffe",
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "disabled",
+            "capacity": { "field": "posti_riservati_disabili", "pattern": "^(\\d+)" },
+          },
+        ],
+      },
+    },
+    {
+      "subdivision": "32",
+      "operator": "opendatahub",
+      "product": "parking",
+      "name": "Open Data Hub South Tyrol parking",
+      "tier": "aggregator",
+      "format": "opendatahub",
+      // Active stations except those of origin SBB, which are Swiss and come
+      // from ch-sbb-parking; `limit=-1` turns paging off.
+      "endpoints": {
+        "sites": {
+          "url": "https://mobility.api.opendatahub.com/v2/flat/ParkingStation?limit=-1&where=sactive.eq.true,sorigin.neq.SBB&shownull=false&distinct=true",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://mobility.api.opendatahub.com/v2/flat/ParkingStation/*/latest?limit=-1&where=sactive.eq.true,sorigin.neq.SBB&shownull=false&distinct=true",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Open Data Hub – NOI Techpark",
+      // The publisher's affirmative statement allows redistribution, so the
+      // feed is public; `redistribution: false` would restrict it.
+      "terms": {
+        "url": "https://github.com/noi-techpark/odh-docs/blob/master/source/datasets.rst",
+        "reviewedAt": "2026-10-05",
+        "note": "Open Data Hub states that anonymous API responses are always distributed as Open Data; no licence is named",
+        "redistribution": true,
+      },
+      "homepage": "https://opendatahub.com/",
+      "privacyUrl": "https://noi.bz.it/en/privacy",
+    },
+  ],
+}

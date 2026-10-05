@@ -1,0 +1,123 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "p_hus.fid-1656e3dd_1a10a0bd4fc_-1b99",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.58268745,
+          55.68308951
+        ]
+      },
+      "geometry_name": "wkb_geometry",
+      "properties": {
+        "id": 106,
+        "vejkode": "0024",
+        "vejnavn": "Adelgade",
+        "husnr": "7-9",
+        "postdistrikt": null,
+        "antal_pladser": null,
+        "ejer_status": "Privat",
+        "p_hus_type": "0",
+        "type_beskrivelse": "",
+        "opret_dato": null,
+        "ret_dato": null,
+        "bemaerkning": "OnePark",
+        "ogc_fid": "1"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "p_hus.fid-1656e3dd_1a10a0bd4fc_-1b97",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.58228733,
+          55.68268042
+        ]
+      },
+      "geometry_name": "wkb_geometry",
+      "properties": {
+        "id": 8,
+        "vejkode": "0024",
+        "vejnavn": "Adelgade",
+        "husnr": "5",
+        "postdistrikt": "1304 København K",
+        "antal_pladser": 92,
+        "ejer_status": "Privat",
+        "p_hus_type": "2",
+        "type_beskrivelse": "P-Kælder",
+        "opret_dato": "2010-02-18T23:00:00Z",
+        "ret_dato": null,
+        "bemaerkning": "Adelgade 5-7, Q-park.",
+        "ogc_fid": "2"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "p_hus.fid-1656e3dd_1a10a0bd4fc_-1b93",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.58411323,
+          55.67847305
+        ]
+      },
+      "geometry_name": "wkb_geometry",
+      "properties": {
+        "id": 6,
+        "vejkode": "0264",
+        "vejnavn": "Asylgade",
+        "husnr": "1",
+        "postdistrikt": "1064 København K",
+        "antal_pladser": 105,
+        "ejer_status": "Privat",
+        "p_hus_type": "1",
+        "type_beskrivelse": "P-Hus",
+        "opret_dato": "2001-05-29T22:00:00Z",
+        "ret_dato": null,
+        "bemaerkning": "Asylgade 1, Danske Bank.",
+        "ogc_fid": "4"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "p_hus.fid-1656e3dd_1a10a0bd4fc_-1b8a",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          12.5736535,
+          55.67362612
+        ]
+      },
+      "geometry_name": "wkb_geometry",
+      "properties": {
+        "id": 110,
+        "vejkode": "1276",
+        "vejnavn": "Dantes Plads",
+        "husnr": null,
+        "postdistrikt": null,
+        "antal_pladser": 214,
+        "ejer_status": null,
+        "p_hus_type": "7",
+        "type_beskrivelse": "",
+        "opret_dato": "2019-10-09T22:00:00Z",
+        "ret_dato": null,
+        "bemaerkning": "Dantes Plads (koommende)",
+        "ogc_fid": "10"
+      }
+    }
+  ],
+  "totalFeatures": 4,
+  "numberMatched": 4,
+  "numberReturned": 4,
+  "timeStamp": "2026-10-05T03:12:30.850Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  }
+}

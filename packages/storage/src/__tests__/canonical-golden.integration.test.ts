@@ -24,8 +24,8 @@ const INSTANCE = "test.local";
 const ctx: WriteContext = { registry, instanceId: INSTANCE, now: NOW, complete: true };
 const TIERS = {
   "de-bw-ocpdb": "aggregator",
-  "de-bw-parkapi": "aggregator",
-  "nl-ndw-truckparking": "authoritative",
+  "de-bw-mobidata-parking": "aggregator",
+  "nl-ndw-truck-parking": "authoritative",
   "de-autobahn-events": "operator",
   "es-minetur-fuel": "authoritative",
   "it-mimit": "authoritative",
@@ -119,8 +119,13 @@ describe("the canonical view of the golden facilities", () => {
 
   it("gives every fusable reading a fused row on its canonical subject, and history none", async () => {
     const fusable = fusableProperties(registry);
-    const readings = [...golden.values()].flatMap((d) => d.observations);
-    expect(readings.every((r) => fusable.has(r["property"] as string))).toBe(true);
+    const all = [...golden.values()].flatMap((d) => d.observations);
+    expect(all.every((r) => fusable.has(r["property"] as string))).toBe(true);
+    // A reading past its validity (a car park's count, half an hour on) is in effect no more.
+    const inEffect = (r: Rec) =>
+      r["validUntil"] === undefined || Date.parse(r["validUntil"] as string) > Date.parse(NOW);
+    const readings = all.filter(inEffect);
+    expect(readings.length).toBeLessThan(all.length);
     const rows = await fusedRows();
     expect(rows).toHaveLength(readings.length);
     for (const reading of readings) {

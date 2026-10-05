@@ -26,7 +26,7 @@ const FACILITIES_GOLDEN = path.join(
   "model-registry/src/__tests__/golden/facilities.json",
 );
 
-// The facilities fit check registers the formats OpenConditions does not parse yet.
+// The facilities fit check registers the formats OpenConditions does not parse.
 const registry = buildRegistry([
   ...productionModules,
   {
@@ -34,7 +34,7 @@ const registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit"],
+        values: ["ocpi", "autobahn-parking", "mimit"],
       }),
     ],
   },

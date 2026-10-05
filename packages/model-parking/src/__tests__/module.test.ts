@@ -1,7 +1,13 @@
-import { buildRegistry, kernelModule } from "@openconditions/model";
+import {
+  buildRegistry,
+  kernelModule,
+  type LinkableFeature,
+  proposeLink,
+} from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import {
   DATEX2_PARKING_MEASURES,
+  DATEX2_PARKING_VEHICLE_TYPES,
   DATEX2_V2_FACILITIES,
   DATEX2_V2_PARKING_STATUSES,
   DATEX2_V2_PARKING_TRENDS,
@@ -12,8 +18,13 @@ import {
   DATEX2_V3_PARKING_TYPES,
 } from "../crosswalk/datex2.js";
 import { PARKAPI_PARKING_TYPES } from "../crosswalk/parkapi.js";
-import { parkingModule } from "../module.js";
-import { DATEX2_V2_PARKING, DATEX2_V3_PARKING } from "../vocabularies/datex2.js";
+import { PARKING_VEHICLE_TYPES } from "../kinds.js";
+import { parkingCrosswalk, parkingModule } from "../module.js";
+import {
+  DATEX2_V2_PARKING,
+  DATEX2_V3_2_PARKING_SITE_STATUSES,
+  DATEX2_V3_PARKING,
+} from "../vocabularies/datex2.js";
 import { DATEX2_FACILITIES } from "../vocabularies/facilities.js";
 import { PARKAPI_V3 } from "../vocabularies/parkapi.js";
 
@@ -111,5 +122,114 @@ describe("parking crosswalk coverage", () => {
       registry.crosswalk.property("datex2_v3", "ParkingOccupancy/parkingNumberOfVacantSpaces"),
     ).toBe("parking.available");
     expect(DATEX2_PARKING_MEASURES["Occupancy/occupancyGraded"]).toBeNull();
+  });
+});
+
+describe("source formats", () => {
+  it("the kernel holds the shared source formats and parking adds its own", () => {
+    const formats = registry.vocabulary("source_format")?.values ?? [];
+    for (const id of ["datex2", "geojson", "json", "csv", "overpass", "parkapi-v3", "hdb"]) {
+      expect(formats).toContain(id);
+    }
+    const kernelOnly = buildRegistry([kernelModule]).vocabulary("source_format")?.values ?? [];
+    expect([...kernelOnly].sort()).toEqual(
+      ["crowd", "derived", "datex2", "geojson", "json", "csv", "overpass"].sort(),
+    );
+  });
+});
+
+describe("parking site linking", () => {
+  const rules = registry.kind("feature", "parking_site")!.linking!;
+  const site = (id: string, lon: number, id1: string, authority: string): LinkableFeature =>
+    ({
+      id,
+      kind: "parking_site",
+      location: { geometry: { type: "Point", coordinates: [lon, 49.0] }, fuzziness: "exact" },
+      provenance: { sourceId: "src" },
+      externalIds: [{ scheme: "provider", id: id1, authority }],
+    }) as LinkableFeature;
+
+  it("two sites of one feed never link, whatever their distance", () => {
+    const a = site("oc:feature:de-x-parking:1", 8.4, "1", "de-x-parking");
+    const b = site("oc:feature:de-x-parking:2", 8.40002, "2", "de-x-parking");
+    expect(proposeLink(a, b, rules)).toBeUndefined();
+  });
+
+  it("sites of two upstream sources of one aggregator may still link", () => {
+    const a = site("oc:feature:agg:1", 8.4, "1", "de-bw-mobidata-parking/pbw");
+    const b = site("oc:feature:agg:2", 8.40014, "2", "de-bw-mobidata-parking/bfrk_bw_car");
+    expect(proposeLink(a, b, rules)?.status).toBe("accepted");
+  });
+});
+
+describe("parking vocabularies and details", () => {
+  it("a DATEX v3 parkingSiteStatus resolves to the parking_status vocabulary", () => {
+    expect(
+      parkingCrosswalk.value("parking_status", "datex2_v3", "parkingSiteStatus:spacesAvailable"),
+    ).toBe("spaces_available");
+  });
+
+  it("maps every DATEX II v3 parkingSiteStatus value", () => {
+    const prefix = "parkingSiteStatus:";
+    expect(unmapped(DATEX2_V3_2_PARKING_SITE_STATUSES, DATEX2_V3_PARKING_STATUSES, prefix)).toEqual(
+      [],
+    );
+    const keys = Object.keys(DATEX2_V3_PARKING_STATUSES)
+      .filter((code) => code.startsWith(prefix))
+      .map((code) => code.slice(prefix.length));
+    expect(keys.sort()).toEqual([...DATEX2_V3_2_PARKING_SITE_STATUSES].sort());
+  });
+
+  it("maps every DATEX II vehicle type to a parking vehicle type", () => {
+    const known = new Set<string>(PARKING_VEHICLE_TYPES);
+    for (const [code, type] of Object.entries(DATEX2_PARKING_VEHICLE_TYPES)) {
+      expect(known.has(type), code).toBe(true);
+    }
+    expect(DATEX2_PARKING_VEHICLE_TYPES.lorry).toBe("truck");
+    expect(DATEX2_PARKING_VEHICLE_TYPES.heavyHaulageVehicle).toBe("truck");
+  });
+
+  it("parking_site details take a website and verbatim tariff and opening-hours text", () => {
+    const details = (extra: Record<string, unknown>) => ({
+      kind: "parking_site",
+      v: 1,
+      ...extra,
+    });
+    const draft = (d: Record<string, unknown>) => ({
+      id: "oc:feature:de-x-parking:1",
+      class: "feature",
+      kind: "parking_site",
+      type: "off_street",
+      location: {
+        geometry: { type: "Point", coordinates: [8.4, 49.0] },
+        extent: "point",
+        geometryOrigin: "source",
+        fuzziness: "exact",
+      },
+      provenance: {
+        origin: "feed",
+        sourceId: "de-x-parking",
+        sourceFormat: "parkapi-v3",
+        accessMode: "bulk",
+        recordId: "1",
+        attribution: { provider: "Example", license: "CC-BY-4.0" },
+        privacy: { class: "authoritative" },
+      },
+      temporality: "static",
+      lifecycle: "operational",
+      freshness: { fetchedAt: "2026-10-05T12:00:00Z" },
+      details: d,
+    });
+    const good = registry.validateDraft(
+      draft(
+        details({
+          website: "https://example.org/garage",
+          tariffText: [{ lang: "de", text: "2 EUR pro Stunde" }],
+          openingHoursText: [{ lang: "de", text: "Mo-Fr 6-22 Uhr" }],
+        }),
+      ),
+    );
+    expect(good.ok, JSON.stringify(good)).toBe(true);
+    expect(registry.validateDraft(draft(details({ website: "not a url" }))).ok).toBe(false);
   });
 });

@@ -390,8 +390,8 @@ describe("on-demand read-through", () => {
     const outside = await h.features("10,49,10.1,49.1");
     expect(outside.coverage).toBeUndefined();
     // A kind, property or domain the source does not produce.
-    const parking = await h.get(`/features?kind=parking_facility&bbox=${TWO_CELLS}`);
-    expect(parking.coverage).toBeUndefined();
+    const charging = await h.get(`/features?kind=charging_site&bbox=${TWO_CELLS}`);
+    expect(charging.coverage).toBeUndefined();
     const speed = await h.get(`/observations/latest?property=traffic.speed&bbox=${TWO_CELLS}`);
     expect(speed.coverage).toBeUndefined();
     const roads = await h.get(`/features?domain=roads&bbox=${TWO_CELLS}`);

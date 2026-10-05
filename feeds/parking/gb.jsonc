@@ -1,0 +1,67 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "eng",
+      "operator": "netraveldata",
+      "product": "parking",
+      "name": "North East Travel Data car parks",
+      "tier": "authoritative",
+      "format": "utmc",
+      "credentials": {
+        "username": {
+          "title": "NE Travel Data username",
+          "description": "The username of a netraveldata.co.uk account; the website login is the API credential.",
+          "setup": {
+            "url": "https://www.netraveldata.co.uk/?page_id=9",
+            "urlLabel": "Register for NE Travel Data",
+            "steps": [
+              "Go to the UTMC Open Data Service (NE Travel Data) at netraveldata.co.uk and register a free account via the 'Register' link.",
+              "Confirm your registration email and set a password.",
+              "Use the username you signed up with as this value — the same site account credentials authenticate the API feeds.",
+            ],
+            "cost": "Free",
+            "notes": "This is the Newcastle / Tyne & Wear (UTMC) feed at netraveldata.co.uk — not a Glasgow contact. The website login you create is the API credential.",
+            "email": {
+              "to": "info@netraveldata.co.uk",
+              "subject": "API access request — UTMC Open Data Service (car park feed)",
+              "body": "Hello,\n\nI would like to access the UTMC / NE Travel Data open-data API, in particular the car park occupancy feeds for Tyne & Wear / Newcastle.\n\nI have registered an account on netraveldata.co.uk; could you please confirm that my account credentials are enabled for API access, or advise if any additional registration step is required?\n\nIntended use: integrating live car-park availability into an open-source mapping application.\n\nThank you,\n[Your name]",
+            },
+          },
+        },
+        "password": {
+          "title": "NE Travel Data password",
+          "description": "The password of the same netraveldata.co.uk account.",
+          "setup": {
+            "url": "https://www.netraveldata.co.uk/?page_id=9",
+            "urlLabel": "Register for NE Travel Data",
+            "steps": [
+              "During registration on netraveldata.co.uk, set (or reset) the password for your account.",
+              "Use that account password as this value.",
+              "The username + password pair is sent as HTTP credentials when fetching the UTMC car-park feed.",
+            ],
+            "cost": "Free",
+            "notes": "Same netraveldata.co.uk account as the UTMC username — there is no separate API password; the website login doubles as the API credential.",
+          },
+        },
+      },
+      "auth": { "kind": "basic", "user": "username", "password": "password" },
+      // The Tyne and Wear car park list and their occupancy, every two minutes.
+      "endpoints": {
+        "sites": {
+          "url": "https://www.netraveldata.co.uk/api/v2/carpark/static",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://www.netraveldata.co.uk/api/v2/carpark/dynamic",
+          "cadenceSec": 120,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "OGL-UK-3.0",
+      "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+      "attribution": "Contains public sector information licensed under the Open Government Licence v3.0 (North East UTMC / Newcastle City Council)",
+      "privacyUrl": "https://www.netraveldata.co.uk/?page_id=610",
+    },
+  ],
+}

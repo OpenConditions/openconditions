@@ -8,7 +8,7 @@ import {
   type RegistryModule,
   sealRecord,
 } from "@openconditions/model";
-import { XMLParser } from "fast-xml-parser";
+import { type ParkingFeed, parkingDomain } from "@openconditions/parking";
 import { describe, expect, it } from "vitest";
 import { productionModules } from "../index.js";
 
@@ -19,12 +19,12 @@ import { productionModules } from "../index.js";
  * 2026-09-22 from the MobiData BW charge-point database (OCPI 2.2 locations
  * and tariffs, CC BY 4.0), MobiData BW ParkAPI v3 (parking sites and their
  * upstream sources), NDW (CC0: lorry-park table in DATEX II v2 and its status
- * in DATEX II v3), Autobahn GmbH (lorry parking along the A1, CC BY 4.0),
+ * in DATEX II v3), Autobahn GmbH (lorry parking along the A1, no licence published),
  * MINETUR (Spain, prices per grade), MIMIT (Italy, self and attended prices)
  * and E-Control (Austria, an on-demand source queried by radius).
- * MINETUR and E-Control run through the fuel domain's own parsers, whose
- * formats the fuel module registers; the formats OpenConditions does not
- * parse yet are registered by a test-only module.
+ * ParkAPI, NDW, MINETUR and E-Control run through the parking and fuel
+ * domains' own parsers, whose formats their modules register; the formats
+ * OpenConditions does not parse are registered by a test-only module.
  *
  * The Austrian records are kept without their contact block: that feed
  * publishes what look like the operators' private mail addresses, and a
@@ -35,7 +35,7 @@ const fitFormats: RegistryModule = {
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit"],
+      values: ["ocpi", "autobahn-parking", "mimit"],
     }),
   ],
 };
@@ -46,12 +46,6 @@ const FETCHED = "2026-09-22T11:10:00Z";
 const text = (name: string) =>
   readFileSync(new URL(`./fixtures/facilities/${name}`, import.meta.url), "utf8");
 const json = (name: string) => JSON.parse(text(name));
-const xml = (name: string) =>
-  new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@", removeNSPrefix: true }).parse(
-    text(name),
-  );
-const list = <T>(v: T | T[] | undefined): T[] =>
-  v === undefined ? [] : Array.isArray(v) ? v : [v];
 const csv = (name: string, separator: string) => {
   const [, header, ...rows] = text(name).trim().split("\n");
   const keys = header!.split(separator);
@@ -127,8 +121,6 @@ function observation(
   return { id: observationId(feature.provenance.sourceId, draft as never), ...draft };
 }
 
-const count = (value: number) => ({ type: "count", value });
-const quantity = (value: number, unit: string) => ({ type: "quantity", value, unit });
 const category = (value: string, vocabulary: string) => ({ type: "category", value, vocabulary });
 const money = (amount: string, currency: string, per?: string) => ({
   type: "money",
@@ -337,35 +329,20 @@ function ocpiTariffs() {
   }));
 }
 
-interface ParkapiSite {
-  id: number;
-  source_id: number;
-  original_uid: string;
-  name: string;
-  operator_name?: string;
-  public_url?: string;
-  address?: string;
-  type: string;
-  purpose: string;
-  max_height?: number;
-  capacity?: number;
-  capacity_disabled?: number;
-  capacity_woman?: number;
-  capacity_family?: number;
-  capacity_charging?: number;
-  realtime_free_capacity?: number;
-  realtime_data_updated_at?: string;
-  static_data_updated_at: string;
-  lat: number;
-  lon: number;
-}
+const parkapi = parkingDomain.formats["parkapi-v3"]!;
 
-const PARKAPI_AREAS: Readonly<Record<string, string>> = {
-  capacity_disabled: "disabled",
-  capacity_woman: "women",
-  capacity_family: "family",
-  capacity_charging: "ev_charging",
-};
+/**
+ * `de-bw-mobidata-parking` as `feeds/parking/de.jsonc` writes it: the fields
+ * its records take from the feed.
+ */
+const mobidataFeed = {
+  id: "de-bw-mobidata-parking",
+  format: "parkapi-v3",
+  region: "de",
+  license: "DL-DE-BY-2.0",
+  licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
+  attribution: "MobiData BW (NVBW)",
+} as ParkingFeed;
 
 /**
  * ParkAPI relays city and operator feeds, so every site names the source it
@@ -373,139 +350,28 @@ const PARKAPI_AREAS: Readonly<Record<string, string>> = {
  * height limit is published in centimetres.
  */
 function parkapiSites() {
-  const sources = new Map<
-    number,
-    { uid: string; name: string; attribution_license: string | null }
-  >(
-    (
-      json("parkapi-sources.json").items as {
-        id: number;
-        uid: string;
-        name: string;
-        attribution_license: string | null;
-      }[]
-    ).map((s) => [s.id, s]),
+  const { features, observations } = parkapi.parse(
+    mobidataFeed as Parameters<typeof parkapi.parse>[0],
+    {
+      main: [Buffer.from(text("parkapi-sites.json"))],
+      sources: [Buffer.from(text("parkapi-sources.json"))],
+    },
+    { fetchedAt: FETCHED, cadenceSec: 300, reference: {} },
   );
-  const features: Draft[] = [];
-  const observations: Draft[] = [];
-  for (const site of json("parkapi-sites.json").items as ParkapiSite[]) {
-    const source = sources.get(site.source_id);
-    const prov = {
-      ...provenance("de-bw-parkapi", "parkapi", String(site.id), "MobiData BW", "CC-BY-4.0"),
-      ...(source === undefined
-        ? {}
-        : {
-            upstream: [
-              {
-                publisher: source.uid,
-                recordId: site.original_uid,
-                ...(source.attribution_license === null
-                  ? {}
-                  : { license: source.attribution_license }),
-              },
-            ],
-          }),
-    };
-    const feature: Feature = {
-      id: `oc:feature:de-bw-parkapi:${site.id}`,
-      location: {
-        ...point(site.lon, site.lat),
-        ...(site.address === undefined ? {} : { address: { text: site.address, country: "DE" } }),
-      },
-      provenance: prov,
-    };
-    const classification = crosswalk.feature(
-      "parkapi",
-      `purpose:${site.purpose}|type:${site.type}`,
-    );
-    const areas = Object.entries(PARKAPI_AREAS)
-      .filter(([field]) => ((site as unknown as Record<string, number>)[field] ?? 0) > 0)
-      .map(([field, userGroup]) => ({
-        key: field,
-        kind: "parking_area",
-        details: {
-          kind: "parking_area",
-          v: 1,
-          vehicleType: site.purpose === "BIKE" ? "bicycle" : "car",
-          userGroup,
-          capacity: (site as unknown as Record<string, number>)[field]!,
-        },
-      }));
-    features.push({
-      ...feature,
-      class: "feature",
-      kind: "parking_site",
-      ...(classification?.type === undefined ? {} : { type: classification.type }),
-      temporality: "static",
-      lifecycle: "operational",
-      name: de(site.name),
-      ...(site.operator_name === undefined
-        ? {}
-        : {
-            operator: { role: "operator", name: de(site.operator_name), website: site.public_url },
-          }),
-      freshness: { fetchedAt: FETCHED },
-      ...(areas.length === 0 ? {} : { components: areas }),
-      details: {
-        kind: "parking_site",
-        v: 1,
-        ...(site.capacity === undefined ? {} : { capacityTotal: site.capacity }),
-        ...(site.max_height === undefined
-          ? {}
-          : { heightLimit: { value: site.max_height / 100, unit: "m" } }),
-      },
-    });
-    if (site.realtime_free_capacity !== undefined && site.realtime_data_updated_at !== undefined) {
-      observations.push(
-        observation(feature, {
-          property: "parking.available",
-          result: count(site.realtime_free_capacity),
-          at: { instant: site.realtime_data_updated_at },
-        }),
-      );
-    }
-  }
   return { features, observations };
 }
 
-interface NdwGroup {
-  "@groupIndex": string;
-  assignedParkingAmongOthers?: { vehicleType?: string; vehicleType2?: string };
-  parkingNumberOfSpaces?: number;
-}
-interface NdwRecord {
-  "@id": string;
-  parkingName?: { values: { value: string | { "#text": string } } };
-  parkingLocation: {
-    pointByCoordinates: { pointCoordinates: { latitude: number; longitude: number } };
-  };
-  groupOfParkingSpaces?: NdwGroup | NdwGroup[];
-  parkingUsageScenario?: { parkingUsageScenario: { parkingUsageScenario: string } };
-  parkingStandardsAndSecurity?: {
-    labelSecurityLevel?: string;
-    parkingSecurity?: string | string[];
-    parkingSupervision?: string | string[];
-  };
-  parkingEquipmentOrServiceFacility?: unknown;
-}
+const datex2 = parkingDomain.formats["datex2"]!;
 
-const NDW_VEHICLES: Readonly<Record<string, string>> = {
-  lorry: "truck",
-  car: "car",
-  bus: "bus",
-  coach: "coach",
-  motorcycle: "motorcycle",
-  caravan: "caravan",
-  heavyHaulageVehicle: "truck",
-};
-const NDW_SUPERVISION: Readonly<Record<string, string>> = {
-  remote: "remote",
-  onSite: "on_site",
-  controlCentreOnSite: "control_centre",
-  controlCentreOffSite: "control_centre",
-  patrol: "patrol",
-  none: "none",
-};
+/** `nl-ndw-truck-parking` as `feeds/parking/nl.jsonc` writes it. */
+const ndwFeed = {
+  id: "nl-ndw-truck-parking",
+  format: "datex2",
+  region: "nl",
+  license: "CC0-1.0",
+  licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
+  attribution: "NDW",
+} as ParkingFeed;
 
 /**
  * The Dutch lorry-park feed publishes its table in DATEX II v2 and the status
@@ -513,153 +379,14 @@ const NDW_SUPERVISION: Readonly<Record<string, string>> = {
  * profiles. Its space groups are the areas the status reports per group.
  */
 function ndwTruckParking() {
-  const table = xml("ndw-parking-table.xml");
-  const status = xml("ndw-parking-status.xml");
-  // The v2 profile has no parking publication of its own: the table arrives
-  // inside a generic publication's extension.
-  const records = list<NdwRecord>(
-    table.d2LogicalModel.payloadPublication.genericPublicationExtension.parkingTablePublication
-      .parkingTable.parkingRecord,
+  return datex2.parse(
+    ndwFeed as Parameters<typeof datex2.parse>[0],
+    {
+      sites: [Buffer.from(text("ndw-parking-table.xml"))],
+      status: [Buffer.from(text("ndw-parking-status.xml"))],
+    },
+    { fetchedAt: FETCHED, cadenceSec: 300, reference: {} },
   );
-  const statuses = new Map<string, Record<string, never>>(
-    list<Record<string, never>>(status.payload.parkingRecordStatus).map((s) => [
-      (s as unknown as { parkingRecordReference: { "@id": string } }).parkingRecordReference["@id"],
-      s,
-    ]),
-  );
-  const features: Draft[] = [];
-  const observations: Draft[] = [];
-  for (const record of records) {
-    const id = record["@id"];
-    const coords = record.parkingLocation.pointByCoordinates.pointCoordinates;
-    const prov = provenance("nl-ndw-truckparking", "datex2-parking", id, "NDW", "CC0-1.0");
-    const feature: Feature = {
-      id: `oc:feature:nl-ndw-truckparking:${id}`,
-      location: point(coords.longitude, coords.latitude),
-      provenance: prov,
-    };
-    const groups = list(record.groupOfParkingSpaces);
-    const areas = groups.map((group) => {
-      const vehicle =
-        group.assignedParkingAmongOthers?.vehicleType ??
-        group.assignedParkingAmongOthers?.vehicleType2;
-      return {
-        key: group["@groupIndex"],
-        kind: "parking_area",
-        details: {
-          kind: "parking_area",
-          v: 1,
-          vehicleType: vehicle === undefined ? "any" : (NDW_VEHICLES[vehicle] ?? "any"),
-          ...(group.parkingNumberOfSpaces === undefined
-            ? {}
-            : { capacity: group.parkingNumberOfSpaces }),
-        },
-      };
-    });
-    const security = record.parkingStandardsAndSecurity;
-    const features_ = list(security?.parkingSecurity)
-      .map((v) => crosswalk.value("parking_security", "datex2_v2", v))
-      .filter((v): v is string => v !== undefined);
-    const supervision = list(security?.parkingSupervision)[0];
-    const scenario = record.parkingUsageScenario?.parkingUsageScenario.parkingUsageScenario;
-    const classification =
-      scenario === undefined
-        ? undefined
-        : crosswalk.feature("datex2_v2", `usageScenario:${scenario}`);
-    const name = record.parkingName?.values.value;
-    features.push({
-      ...feature,
-      class: "feature",
-      kind: "parking_site",
-      ...(classification?.type === undefined ? {} : { type: classification.type }),
-      temporality: "static",
-      lifecycle: "operational",
-      ...(name === undefined
-        ? {}
-        : { name: [{ lang: "nl", text: typeof name === "string" ? name : name["#text"] }] }),
-      externalIds: [{ scheme: "datex:parking", id, authority: "NDW" }],
-      freshness: { fetchedAt: FETCHED },
-      ...(areas.length === 0 ? {} : { components: areas }),
-      details: {
-        kind: "parking_site",
-        v: 1,
-        ...(security?.labelSecurityLevel === undefined
-          ? {}
-          : {
-              securityRating: {
-                scheme: "eu_label",
-                level: security.labelSecurityLevel.replace("securityLevel", ""),
-              },
-            }),
-        ...(features_.length === 0 ? {} : { securityFeatures: features_ }),
-        ...(supervision === undefined
-          ? {}
-          : { supervision: NDW_SUPERVISION[supervision] ?? "unknown" }),
-      },
-    });
-    const recordStatus = statuses.get(id) as
-      | {
-          parkingStatusOriginTime: string;
-          parkingOccupancy?: {
-            parkingNumberOfVacantSpaces?: number;
-            parkingNumberOfOccupiedSpaces?: number;
-            parkingOccupancy?: number;
-          };
-          groupOfParkingSpacesStatus?: unknown;
-        }
-      | undefined;
-    if (recordStatus === undefined) continue;
-    const at = { instant: recordStatus.parkingStatusOriginTime };
-    const occupancy = recordStatus.parkingOccupancy;
-    if (occupancy?.parkingNumberOfVacantSpaces !== undefined) {
-      observations.push(
-        observation(feature, {
-          property: "parking.available",
-          result: count(occupancy.parkingNumberOfVacantSpaces),
-          at,
-        }),
-      );
-    }
-    if (occupancy?.parkingNumberOfOccupiedSpaces !== undefined) {
-      // The feed computes occupied spaces from a capacity it does not always
-      // have, and publishes the difference even when it comes out negative.
-      // A count of minus 1 261 lorries is not a reading, so it is recorded as
-      // unknown rather than repaired into a plausible number.
-      const occupied = occupancy.parkingNumberOfOccupiedSpaces;
-      observations.push(
-        observation(feature, {
-          property: "parking.occupied",
-          result: occupied >= 0 ? count(occupied) : { type: "unknown" },
-          at,
-        }),
-      );
-    }
-    if (occupancy?.parkingOccupancy !== undefined) {
-      observations.push(
-        observation(feature, {
-          property: "parking.occupancy_pct",
-          result: quantity(occupancy.parkingOccupancy, "%"),
-          at,
-        }),
-      );
-    }
-    for (const group of list<{
-      "@groupIndex": string;
-      groupOfParkingSpacesStatus: { parkingNumberOfVacantSpaces?: number };
-    }>(recordStatus.groupOfParkingSpacesStatus as never)) {
-      const vacant = group.groupOfParkingSpacesStatus.parkingNumberOfVacantSpaces;
-      if (vacant === undefined || !areas.some((a) => a.key === group["@groupIndex"])) continue;
-      observations.push(
-        observation(feature, {
-          property: "parking.available",
-          componentKey: group["@groupIndex"],
-          result: count(vacant),
-          at,
-        }),
-      );
-    }
-  }
-  return { features, observations };
 }
 
 interface AutobahnParking {
@@ -719,7 +446,8 @@ function autobahnLorryParking() {
         "autobahn-parking",
         site.identifier,
         "Autobahn GmbH des Bundes",
-        "CC-BY-4.0",
+        // verkehr.autobahn.de publishes no licence.
+        "NOASSERTION",
       ),
       freshness: { fetchedAt: FETCHED },
       ...(areas.length === 0 ? {} : { components: areas }),
@@ -893,7 +621,9 @@ const CASES = [
 
 const recordsOf = (make: (typeof CASES)[number][1]): Draft[] => {
   const produced = make();
-  return Array.isArray(produced) ? produced : [...produced.features, ...produced.observations];
+  if (Array.isArray(produced)) return produced;
+  const offers: Draft[] = "offers" in produced ? (produced.offers as Draft[]) : [];
+  return [...produced.features, ...produced.observations, ...offers];
 };
 
 describe("facilities fit", () => {
@@ -939,17 +669,32 @@ describe("facilities fit", () => {
     });
   });
 
-  it("records an impossible count as unknown instead of repairing it", () => {
-    const { observations } = ndwTruckParking();
-    const occupied = observations.filter((o) => o["property"] === "parking.occupied");
-    expect(occupied.map((o) => (o["result"] as { type: string }).type)).toContain("unknown");
+  it("records an impossible count as no reading instead of repairing it", () => {
+    // The feed computes occupied spaces from a capacity it does not always
+    // have, and publishes the difference even when it comes out negative. A
+    // count of minus 1 261 lorries is not a reading.
+    const { features, observations } = ndwTruckParking();
+    const asten = features.find((f) => String(f["id"]).endsWith(":NL-12_8"))!["id"];
+    const occupied = observations.filter(
+      (o) =>
+        o["property"] === "parking.occupied" &&
+        (o["subject"] as { featureId: string }).featureId === asten,
+    );
+    expect(occupied).toEqual([]);
+    expect(observations.every((o) => (o["result"] as { type: string }).type !== "unknown")).toBe(
+      true,
+    );
   });
 
-  it("keeps the three occupancy numbers a feed publishes as three series", () => {
+  it("keeps the occupancy numbers a feed publishes as their own series, and drops an impossible one", () => {
     const { observations } = ndwTruckParking();
-    const properties = observations.map((o) => o["property"]);
+    const properties = observations
+      .filter((o) => (o["subject"] as { componentKey?: string }).componentKey === undefined)
+      .map((o) => o["property"]);
+    // Both sites report more free spaces (1746, 1601) than their groups hold
+    // (402, 420): no free count, while the occupied count and share stand.
     expect(new Set(properties)).toEqual(
-      new Set(["parking.available", "parking.occupied", "parking.occupancy_pct"]),
+      new Set(["parking.occupied", "parking.occupancy_pct", "parking.status"]),
     );
   });
 

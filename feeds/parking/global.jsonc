@@ -1,0 +1,43 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "operator": "osm",
+      "product": "parking",
+      "name": "OpenStreetMap parking",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "tier": "authoritative",
+      "format": "overpass",
+      // Every amenity=parking node, way and relation in the cell, ways and
+      // relations at their centre. Car parks are dense, so the cells are
+      // smaller than fuel's. The body is sent form-encoded as written, so the
+      // query must contain no `+`, `&` or `%`.
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"parking\"]({south},{west},{north},{east});out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmParking/1.0 (+https://github.com/openconditions/openconditions)",
+          },
+          "cadenceSec": 3600,
+        },
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "onDemand": {
+        "cellDeg": 0.05,
+        "ttlSec": 21600,
+        "maxCellsPerRead": 16,
+        "probe": [8.4, 49.01],
+      },
+      "requestLimits": { "perMinute": 30, "perDay": 5000 },
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+    },
+  ],
+}

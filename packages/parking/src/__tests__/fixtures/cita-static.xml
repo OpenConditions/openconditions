@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ns2:d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:ns2="lu.cita" modelBaseVersion="2">
+    <exchange>
+        <supplierIdentification>
+            <country>lu</country>
+            <nationalIdentifier>PCH</nationalIdentifier>
+        </supplierIdentification>
+    </exchange>
+    <payloadPublication xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="GenericPublication" lang="en">
+         <publicationTime>2019-06-14T11:34:33.700+02:00</publicationTime>
+        <publicationCreator>
+            <country>lu</country>
+            <nationalIdentifier>PCH</nationalIdentifier>
+        </publicationCreator>
+        <genericPublicationName>ParkingTablePublication</genericPublicationName>
+        <genericPublicationExtension>
+            <parkingTablePublication>
+                <headerInformation>
+                    <confidentiality>noRestriction</confidentiality>
+                    <informationStatus>real</informationStatus>
+                </headerInformation>
+                <parkingTable id="parkingTableID" version="1">
+                    <parkingTableVersionTime>2018-09-26T08:49:00.423+02:00</parkingTableVersionTime>
+                    <parkingRecord xsi:type="InterUrbanParkingSite" id="G-MB-B" version="1">
+                        <parkingName>
+                            <values>
+								<value lang="fr">Aire de Berchem direction France</value>
+                            </values>
+                        </parkingName>
+                        <parkingAlias>
+                            <values>
+								<value lang="fr">Aire de Berchem VM</value>
+                            </values>
+                        </parkingAlias>
+                        <parkingRecordVersionTime>2018-09-26T08:49:00.685+02:00</parkingRecordVersionTime>
+                        <operator xsi:type="ContactDetails" id="PCH-CIEA" version="1">
+                            <contactOrganisationName>
+								<values>
+									<value lang="fr">Administration des Ponts et Chaussées</value>
+								</values>
+                            </contactOrganisationName>
+                            <contactPersonName></contactPersonName>
+                            <contactPersonFirstName></contactPersonFirstName>
+                            <contactDetailsTelephoneNumber>00352 2846 5000</contactDetailsTelephoneNumber>
+                            <contactDetailsEMail>ciea@pch.etat.lu</contactDetailsEMail>
+                            <publishingAgreement>false</publishingAgreement>
+                        </operator>
+                        <parkingLocation xsi:type="Point">
+                            <alertCPoint xsi:type="AlertCMethod2Point">
+								<alertCLocationCountryCode>7</alertCLocationCountryCode>
+								<alertCLocationTableNumber>1</alertCLocationTableNumber>
+								<alertCLocationTableVersion>3.0</alertCLocationTableVersion>
+								<alertCDirection>
+    								<alertCDirectionCoded>positive</alertCDirectionCoded>
+								</alertCDirection>
+								<alertCMethod2PrimaryPointLocation>
+									<alertCLocation>
+										<alertCLocationName>
+											<values>
+												<value lang="fr">Berchem</value>
+											</values>
+										</alertCLocationName>
+										<specificLocation>2104</specificLocation>
+									</alertCLocation>
+								</alertCMethod2PrimaryPointLocation>
+															</alertCPoint>
+															<pointByCoordinates>
+								<pointCoordinates>
+									<latitude>49.543915</latitude>
+									<longitude>6.1201115</longitude>
+								</pointCoordinates>
+                            </pointByCoordinates>
+                        </parkingLocation>
+                        <tariffsAndPayment>
+                            <freeOfCharge>true</freeOfCharge>
+                        </tariffsAndPayment>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="0">
+                            <parkingEquipmentOrServiceFacility xsi:type="Equipment">
+								<availability>available</availability>
+								<equipmentType>toilet</equipmentType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="1">
+                            <parkingEquipmentOrServiceFacility xsi:type="Equipment">
+								<availability>notAvailable</availability>
+								<equipmentType>electricChargingStation</equipmentType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="2">
+                            <parkingEquipmentOrServiceFacility xsi:type="ServiceFacility">
+								<nameOrBrand>
+									<values>
+										<value lang="en">Aral</value>
+									</values>
+								</nameOrBrand>
+								<serviceFacilityType>petrolStation</serviceFacilityType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <groupOfParkingSpaces>
+                            <parkingNumberOfSpaces>106</parkingNumberOfSpaces>
+                            <parkingSpace parkingSpaceIndex="1">
+								<parkingSpace>
+									<assignedParkingAmongOthers>
+										<vehicleCharacteristics>
+											<vehicleType>lorry</vehicleType>
+										</vehicleCharacteristics>
+									</assignedParkingAmongOthers>
+								</parkingSpace>
+                            </parkingSpace>
+                        </groupOfParkingSpaces>
+                        <groupOfParkingSpaces>
+                            <parkingNumberOfSpaces>0</parkingNumberOfSpaces>
+                            <parkingSpace parkingSpaceIndex="3">
+								<parkingSpace>
+									<onlyAssignedParking>
+										<vehicleCharacteristics>
+											<vehicleCharacteristicsExtension>
+												<vehicleCharacteristicsExtended>
+													<loadType2>refrigeratedGoods</loadType2>
+												</vehicleCharacteristicsExtended>
+											</vehicleCharacteristicsExtension>
+										</vehicleCharacteristics>
+									</onlyAssignedParking>
+								</parkingSpace>
+                            </parkingSpace>
+                        </groupOfParkingSpaces>
+                        <parkingSiteAddress xsi:type="ContactDetails" id="MB" version="1">
+                            <contactDetailsAddress>
+								<values>
+									<value lang="en">Along the motorway</value>
+								</values>
+                            </contactDetailsAddress>
+                            <country>lu</country>
+                        </parkingSiteAddress>
+                        <parkingUsageScenario scenarioIndex="0">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>truckParking</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>
+						<parkingUsageScenario scenarioIndex="1">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>restArea</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>
+                        <parkingUsageScenario scenarioIndex="2">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>serviceArea</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>										
+                        <parkingAccess id="MB">
+                            <accessCategory>vehicleEntrance</accessCategory>
+                            <primaryRoad>
+								<nameOfRoad>
+									<values>
+										<value lang="fr">Autoroute de Thionville</value>
+									</values>
+								</nameOfRoad>
+								<roadIdentifier>
+									<values>
+										<value lang="fr">A3 (E25)</value>
+									</values>
+								</roadIdentifier>
+								<typeOfRoad>motorway</typeOfRoad>
+								<roadDestination>
+									<values>
+										<value lang="fr">France</value>
+									</values>
+								</roadDestination>
+                            </primaryRoad>
+                        </parkingAccess>
+                        <parkingStandardsAndSecurity>
+                            <labelSecurityLevel>unknown</labelSecurityLevel>
+                            <labelServiceLevel>unknown</labelServiceLevel>
+                            <parkingSecurity>areaSeperatedFromSurroundings</parkingSecurity>
+                            <parkingSecurity>lighting</parkingSecurity>
+                            <parkingSecurity>fences</parkingSecurity>
+                        </parkingStandardsAndSecurity>
+                        <interUrbanParkingSiteLocation>motorway</interUrbanParkingSiteLocation>
+                    </parkingRecord>
+					<parkingRecord xsi:type="InterUrbanParkingSite" id="B-MB-G" version="1">
+                        <parkingName>
+                            <values>
+								<value lang="fr">Aire de Berchem direction Luxembourg-Ville</value>
+                            </values>
+                        </parkingName>
+                        <parkingAlias>
+                            <values>
+								<value lang="fr">Aire de Berchem MV</value>
+                            </values>
+                        </parkingAlias>
+                        <parkingRecordVersionTime>2018-09-26T08:49:00.685+02:00</parkingRecordVersionTime>
+                        <operator xsi:type="ContactDetails" id="PCH-CIEA" version="1">
+                            <contactOrganisationName>
+								<values>
+									<value lang="fr">Administration des Ponts et Chaussées</value>
+								</values>
+                            </contactOrganisationName>
+                            <contactPersonName></contactPersonName>
+                            <contactPersonFirstName></contactPersonFirstName>
+                            <contactDetailsTelephoneNumber>00352 2846 5000</contactDetailsTelephoneNumber>
+                            <contactDetailsEMail>ciea@pch.etat.lu</contactDetailsEMail>
+                            <publishingAgreement>false</publishingAgreement>
+                        </operator>
+                        <parkingLocation xsi:type="Point">
+                            <alertCPoint xsi:type="AlertCMethod2Point">
+								<alertCLocationCountryCode>7</alertCLocationCountryCode>
+								<alertCLocationTableNumber>1</alertCLocationTableNumber>
+								<alertCLocationTableVersion>3.0</alertCLocationTableVersion>
+								<alertCDirection>
+    								<alertCDirectionCoded>positive</alertCDirectionCoded>
+								</alertCDirection>
+								<alertCMethod2PrimaryPointLocation>
+									<alertCLocation>
+										<alertCLocationName>
+											<values>
+												<value lang="fr">Berchem</value>
+											</values>
+										</alertCLocationName>
+										<specificLocation>2104</specificLocation>
+									</alertCLocation>
+								</alertCMethod2PrimaryPointLocation>
+							</alertCPoint>
+							<pointByCoordinates>
+								<pointCoordinates>
+									<latitude>49.54027778</latitude>
+									<longitude>6.11666667</longitude>
+							</pointCoordinates>
+                            </pointByCoordinates>
+                        </parkingLocation>
+                        <tariffsAndPayment>
+                            <freeOfCharge>true</freeOfCharge>
+                        </tariffsAndPayment>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="0">
+                            <parkingEquipmentOrServiceFacility xsi:type="Equipment">
+								<availability>available</availability>
+								<equipmentType>toilet</equipmentType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="1">
+                            <parkingEquipmentOrServiceFacility xsi:type="Equipment">
+								<availability>notAvailable</availability>
+								<equipmentType>electricChargingStation</equipmentType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="2">
+                            <parkingEquipmentOrServiceFacility xsi:type="ServiceFacility">
+								<nameOrBrand>
+									<values>
+										<value lang="en">Shell</value>
+									</values>
+								</nameOrBrand>
+								<serviceFacilityType>petrolStation</serviceFacilityType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <groupOfParkingSpaces>
+                            <parkingNumberOfSpaces>72</parkingNumberOfSpaces>
+                            <parkingSpace parkingSpaceIndex="1">
+								<parkingSpace>
+									<assignedParkingAmongOthers>
+										<vehicleCharacteristics>
+											<vehicleType>lorry</vehicleType>
+										</vehicleCharacteristics>
+									</assignedParkingAmongOthers>
+								</parkingSpace>
+                            </parkingSpace>
+                        </groupOfParkingSpaces>
+                        <groupOfParkingSpaces>
+                            <parkingNumberOfSpaces>0</parkingNumberOfSpaces>
+                            <parkingSpace parkingSpaceIndex="3">
+								<parkingSpace>
+									<onlyAssignedParking>
+										<vehicleCharacteristics>
+											<vehicleCharacteristicsExtension>
+												<vehicleCharacteristicsExtended>
+													<loadType2>refrigeratedGoods</loadType2>
+												</vehicleCharacteristicsExtended>
+											</vehicleCharacteristicsExtension>
+										</vehicleCharacteristics>
+									</onlyAssignedParking>
+								</parkingSpace>
+                            </parkingSpace>
+                        </groupOfParkingSpaces>
+                        <parkingSiteAddress xsi:type="ContactDetails" id="MB" version="1">
+                            <contactDetailsAddress>
+								<values>
+									<value lang="en">Along the motorway</value>
+								</values>
+                            </contactDetailsAddress>
+                            <country>lu</country>
+                        </parkingSiteAddress>
+                        <parkingUsageScenario scenarioIndex="0">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>truckParking</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>
+						<parkingUsageScenario scenarioIndex="1">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>restArea</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>
+                        <parkingUsageScenario scenarioIndex="2">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>serviceArea</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>										
+                        <parkingAccess id="MB">
+                            <accessCategory>vehicleEntrance</accessCategory>
+                            <primaryRoad>
+								<nameOfRoad>
+									<values>
+										<value lang="fr">Autoroute de Thionville</value>
+									</values>
+								</nameOfRoad>
+								<roadIdentifier>
+									<values>
+										<value lang="fr">A3 (E25)</value>
+									</values>
+								</roadIdentifier>
+								<typeOfRoad>motorway</typeOfRoad>
+								<roadDestination>
+									<values>
+										<value lang="fr">Luxembourg-Ville</value>
+									</values>
+								</roadDestination>
+                            </primaryRoad>
+                        </parkingAccess>
+                        <parkingStandardsAndSecurity>
+                            <labelSecurityLevel>unknown</labelSecurityLevel>
+                            <labelServiceLevel>unknown</labelServiceLevel>
+                            <parkingSecurity>areaSeperatedFromSurroundings</parkingSecurity>
+                            <parkingSecurity>lighting</parkingSecurity>
+                            <parkingSecurity>fences</parkingSecurity>
+                        </parkingStandardsAndSecurity>
+                        <interUrbanParkingSiteLocation>motorway</interUrbanParkingSiteLocation>
+                    </parkingRecord>
+					<parkingRecord xsi:type="InterUrbanParkingSite" id="C-WC-W" version="1">
+                        <parkingName>
+                            <values>
+								<value lang="fr">Aire de Capellen direction Belgique</value>
+                            </values>
+                        </parkingName>
+                        <parkingAlias>
+                            <values>
+								<value lang="fr">Aire de Capellen GW</value>
+                            </values>
+                        </parkingAlias>
+                        <parkingRecordVersionTime>2018-09-26T08:49:00.685+02:00</parkingRecordVersionTime>
+                        <operator xsi:type="ContactDetails" id="PCH-CIEA" version="1">
+                            <contactOrganisationName>
+								<values>
+									<value lang="fr">Administration des Ponts et Chaussées</value>
+								</values>
+                            </contactOrganisationName>
+                            <contactPersonName></contactPersonName>
+                            <contactPersonFirstName></contactPersonFirstName>
+                            <contactDetailsTelephoneNumber>00352 2846 5000</contactDetailsTelephoneNumber>
+                            <contactDetailsEMail>ciea@pch.etat.lu</contactDetailsEMail>
+                            <publishingAgreement>false</publishingAgreement>
+                        </operator>
+                        <parkingLocation xsi:type="Point">
+                            <alertCPoint xsi:type="AlertCMethod2Point">
+								<alertCLocationCountryCode>7</alertCLocationCountryCode>
+								<alertCLocationTableNumber>1</alertCLocationTableNumber>
+								<alertCLocationTableVersion>3.0</alertCLocationTableVersion>
+								<alertCDirection>
+    								<alertCDirectionCoded>positive</alertCDirectionCoded>
+								</alertCDirection>
+								<alertCMethod2PrimaryPointLocation>
+									<alertCLocation>
+										<alertCLocationName>
+											<values>
+												<value lang="fr">Capellen</value>
+											</values>
+										</alertCLocationName>
+										<specificLocation>2307</specificLocation>
+									</alertCLocation>
+								</alertCMethod2PrimaryPointLocation>
+							</alertCPoint>
+							<pointByCoordinates>
+								<pointCoordinates>
+									<latitude>49.63555556</latitude>
+									<longitude>5.97500000</longitude>
+							</pointCoordinates>
+                            </pointByCoordinates>
+                        </parkingLocation>
+                        <tariffsAndPayment>
+                            <freeOfCharge>true</freeOfCharge>
+                        </tariffsAndPayment>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="0">
+                            <parkingEquipmentOrServiceFacility xsi:type="Equipment">
+								<availability>available</availability>
+								<equipmentType>toilet</equipmentType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="1">
+                            <parkingEquipmentOrServiceFacility xsi:type="Equipment">
+								<availability>notAvailable</availability>
+								<equipmentType>electricChargingStation</equipmentType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <parkingEquipmentOrServiceFacility equipmentOrServiceFacilityIndex="2">
+                            <parkingEquipmentOrServiceFacility xsi:type="ServiceFacility">
+								<nameOrBrand>
+									<values>
+										<value lang="en">Q8</value>
+									</values>
+								</nameOrBrand>
+								<serviceFacilityType>petrolStation</serviceFacilityType>
+                            </parkingEquipmentOrServiceFacility>
+                        </parkingEquipmentOrServiceFacility>
+                        <groupOfParkingSpaces>
+                            <parkingNumberOfSpaces>78</parkingNumberOfSpaces>
+                            <parkingSpace parkingSpaceIndex="1">
+								<parkingSpace>
+									<assignedParkingAmongOthers>
+										<vehicleCharacteristics>
+											<vehicleType>lorry</vehicleType>
+										</vehicleCharacteristics>
+									</assignedParkingAmongOthers>
+								</parkingSpace>
+                            </parkingSpace>
+                        </groupOfParkingSpaces>
+                        <groupOfParkingSpaces>
+                            <parkingNumberOfSpaces>0</parkingNumberOfSpaces>
+                            <parkingSpace parkingSpaceIndex="3">
+								<parkingSpace>
+									<onlyAssignedParking>
+										<vehicleCharacteristics>
+											<vehicleCharacteristicsExtension>
+												<vehicleCharacteristicsExtended>
+													<loadType2>refrigeratedGoods</loadType2>
+												</vehicleCharacteristicsExtended>
+											</vehicleCharacteristicsExtension>
+										</vehicleCharacteristics>
+									</onlyAssignedParking>
+								</parkingSpace>
+                            </parkingSpace>
+                        </groupOfParkingSpaces>
+                        <parkingSiteAddress xsi:type="ContactDetails" id="GW" version="1">
+                            <contactDetailsAddress>
+								<values>
+									<value lang="en">Along the motorway</value>
+								</values>
+                            </contactDetailsAddress>
+                            <country>lu</country>
+                        </parkingSiteAddress>
+                        <parkingUsageScenario scenarioIndex="0">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>truckParking</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>
+						<parkingUsageScenario scenarioIndex="1">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>restArea</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>
+                        <parkingUsageScenario scenarioIndex="2">
+                            <parkingUsageScenario>
+								<parkingUsageScenario>serviceArea</parkingUsageScenario>
+                            </parkingUsageScenario>
+                        </parkingUsageScenario>										
+                        <parkingAccess id="GW">
+                            <accessCategory>vehicleEntrance</accessCategory>
+                            <primaryRoad>
+								<nameOfRoad>
+									<values>
+										<value lang="fr">Autoroute d'Arlon</value>
+									</values>
+								</nameOfRoad>
+								<roadIdentifier>
+									<values>
+										<value lang="fr">A6 (E25/E44)</value>
+									</values>
+								</roadIdentifier>
+								<typeOfRoad>motorway</typeOfRoad>
+								<roadDestination>
+									<values>
+										<value lang="fr">Liège</value>
+									</values>
+								</roadDestination>
+                            </primaryRoad>
+                        </parkingAccess>
+                        <parkingStandardsAndSecurity>
+                            <labelSecurityLevel>unknown</labelSecurityLevel>
+                            <labelServiceLevel>unknown</labelServiceLevel>
+                            <parkingSecurity>areaSeperatedFromSurroundings</parkingSecurity>
+                            <parkingSecurity>lighting</parkingSecurity>
+                            <parkingSecurity>fences</parkingSecurity>
+                        </parkingStandardsAndSecurity>
+                        <interUrbanParkingSiteLocation>motorway</interUrbanParkingSiteLocation>
+                    </parkingRecord>
+					</parkingTable>
+            </parkingTablePublication>
+        </genericPublicationExtension>
+    </payloadPublication>
+</ns2:d2LogicalModel>

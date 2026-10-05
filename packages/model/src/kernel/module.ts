@@ -176,8 +176,8 @@ export const kernelModule: RegistryModule = {
     ),
     open(
       "source_format",
-      ["crowd", "derived"],
-      "Wire formats records are parsed from; parser packages add theirs.",
+      ["crowd", "derived", "datex2", "geojson", "json", "csv", "overpass"],
+      "Wire formats records are parsed from. The kernel holds the standards and layouts several domains read; domain packages add their publishers' own.",
     ),
     open(
       "amenity",

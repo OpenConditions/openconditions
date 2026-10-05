@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
 import {
   getXmlAttribute,
   getXmlChild,
@@ -8,7 +7,8 @@ import {
   getXmlChildText,
   parseXmlDocument,
   xmlNodeToArray,
-} from "../xml.js";
+} from "@openconditions/datex2";
+import { describe, expect, it } from "vitest";
 
 /**
  * Source fixture: six real reduced situationRecord elements from the reviewed

@@ -1,8 +1,14 @@
+import {
+  getXmlChild,
+  getXmlChildren,
+  isXmlObject,
+  parseXmlDocument,
+  xmlText,
+} from "@openconditions/datex2";
 import type { Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import { type FlowParse, type FlowReading, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
-import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 function num(raw: unknown): number | undefined {
   if (raw == null || raw === "") return undefined;

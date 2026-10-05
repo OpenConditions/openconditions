@@ -265,6 +265,8 @@ export async function publishFeatures(
     durationMs: number;
     now: string;
     model: WriteModel;
+    /** Shown on the status beside the publication, e.g. a held payload standing in for a failed role. */
+    warning?: string;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   return sql.begin(async (tx) => {
@@ -299,6 +301,7 @@ export async function publishFeatures(
       durationMs: input.durationMs,
       attemptId: input.poll.id,
       ...(input.poll.payloadHashes ? { payloadHashes: input.poll.payloadHashes } : {}),
+      ...(input.warning ? { error: input.warning } : {}),
       publication: counts,
     });
     return { summary, counts };

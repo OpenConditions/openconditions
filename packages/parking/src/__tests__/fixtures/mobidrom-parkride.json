@@ -1,0 +1,89 @@
+{
+  "modelBaseVersion": "3",
+  "parkingPublicationLight": {
+    "publicationTime": "2026-10-01T10:00:00.139933624Z",
+    "parkingSite": [
+      {
+        "id": "park-and-ride-bonn-743457",
+        "type": "other",
+        "name": "Tannenbusch-SÃ¼d",
+        "freeParking": true,
+        "locationAndDimension": {
+          "locationDescriptor": "Hohe StraÃe, Bonn",
+          "coordinatesForDisplay": {
+            "latitude": 50.7430836637,
+            "longitude": 7.055771087
+          }
+        }
+      },
+      {
+        "id": "park-and-ride-bonn-744694",
+        "type": "other",
+        "name": "Park & Ride Ramersdorf",
+        "freeParking": true,
+        "locationAndDimension": {
+          "locationDescriptor": "Oberkasseler StraÃe 2, Bonn",
+          "coordinatesForDisplay": {
+            "latitude": 50.7219490965,
+            "longitude": 7.1575050025
+          }
+        }
+      },
+      {
+        "id": "park-and-ride-vrr-1201",
+        "type": "other",
+        "name": "Bottrop-Süd (Plankenschemm)",
+        "zoneDescription": [
+          "ifopt: de:05512:3337",
+          "name: Bottrop Plankenschemm",
+          "nameWithoutLocality: Plankenschemm",
+          "place: Bottrop"
+        ],
+        "locationAndDimension": {
+          "coordinatesForDisplay": {
+            "latitude": 6.936064,
+            "longitude": 51.504094
+          }
+        }
+      },
+      {
+        "id": "park-and-ride-vrr-33461",
+        "type": "other",
+        "name": "Wesel Bf. Ost P&R 3",
+        "operatorInformation": ["PARKLAB II"],
+        "freeParking": true,
+        "zoneDescription": [
+          "ifopt: de:05170:36918",
+          "name: Wesel Bahnhof",
+          "nameWithoutLocality: Wesel Bahnhof",
+          "place: Wesel"
+        ],
+        "numberOfSpaces": 195,
+        "availableSpaces": 116,
+        "assignedFor": [
+          {
+            "typeOfAssignment": "onlyFor",
+            "user": "disabled",
+            "availableSpaces": 3
+          },
+          {
+            "typeOfAssignment": "onlyFor",
+            "user": "women",
+            "availableSpaces": 0
+          },
+          {
+            "typeOfAssignment": "onlyFor",
+            "user": "familys",
+            "availableSpaces": 0
+          }
+        ],
+        "locationAndDimension": {
+          "coordinatesForDisplay": {
+            "latitude": 51.658587,
+            "longitude": 6.62894
+          }
+        }
+      }
+    ]
+  }
+}

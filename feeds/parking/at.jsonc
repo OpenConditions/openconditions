@@ -1,0 +1,95 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "9",
+      "operator": "vienna",
+      "product": "parking",
+      "name": "Stadt Wien garages and Park & Ride",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The GARAGENOGD WFS layer, static. Its GetCapabilities still names
+      // CC BY 3.0 AT; the dataset and the city's OGD terms say CC BY 4.0.
+      "endpoints": {
+        "main": {
+          "url": "https://data.wien.gv.at/daten/geo?service=WFS&request=GetFeature&version=1.1.0&typeName=ogdwien:GARAGENOGD&srsName=EPSG:4326&outputFormat=json",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Datenquelle: Stadt Wien – data.wien.gv.at",
+      "privacyUrl": "https://www.wien.gv.at/inhalt/datenschutz",
+      "layout": {},
+      "parking": {
+        "id": "GARAGE_ID",
+        "name": ["BEZEICHNUNG"],
+        "lang": "de",
+        "type": { "field": "PARK_AND_RIDE", "map": { "Y": "park_and_ride" } },
+        "defaultType": "off_street",
+        "operator": "BETREIBER",
+        "website": "WEBLINK_BETR_DE",
+        "address": { "street": "ADRESSE", "postalCode": "PLZ", "city": "ORT" },
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "disabled",
+            "presentWhen": { "field": "BEHINDERTENPARKPL", "equals": "Y" },
+          },
+        ],
+      },
+    },
+    {
+      "subdivision": "5",
+      "operator": "salzburg",
+      "product": "parking",
+      "name": "Stadt Salzburg car parks",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The city WFS with live free spaces; it refuses a request without a
+      // browser User-Agent.
+      "endpoints": {
+        "main": {
+          "url": "https://data.stadt-salzburg.at/geodaten/wfs?service=WFS&version=1.1.0&request=GetFeature&srsName=urn:x-ogc:def:crs:EPSG:4326&outputFormat=application/json&typeName=ogdsbg:parkplatz",
+          "headers": { "User-Agent": "Mozilla/5.0" },
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-3.0-AT",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/at/",
+      "attribution": "Datenquelle: Stadt Salzburg – data.stadt-salzburg.at",
+      "privacyUrl": "https://www.stadt-salzburg.at/datenschutz/",
+      "layout": {},
+      "parking": {
+        "id": "ID",
+        "name": ["BEZEICHNUNG"],
+        "lang": "de",
+        "type": {
+          "field": { "field": "BEZEICHNUNG", "pattern": "^(Park & Ride) " },
+          "map": { "Park & Ride": "park_and_ride" },
+        },
+        "defaultType": "off_street",
+        "layout": { "field": "TYP", "map": { "Parkplatz": "surface" } },
+        "capacity": "KAPAZITAET",
+        "available": { "field": "FREIE_PLAETZE", "pattern": "^(\\d+) \\(" },
+        "trend": {
+          "field": "BELEGUNG_TENDENZ",
+          "map": { "steigend": "filling", "fallend": "clearing", "gleichbleibend": "steady" },
+        },
+        "updated": {
+          "field": "BELEGUNG_AKTUALISIERT",
+          "format": "d.m.y h:m",
+          "timezone": "Europe/Vienna",
+        },
+        "liveWhen": { "field": "FREIE_PLAETZE_STATUS", "equals": 1 },
+        "address": { "street": "ADRESSE" },
+        "website": "URL",
+        "openingHours": { "field": "OEFFNUNGSZEITEN", "syntax": "text" },
+        "tariffText": "TARIF",
+        "notes": "ANMERKUNGEN",
+      },
+    },
+  ],
+}

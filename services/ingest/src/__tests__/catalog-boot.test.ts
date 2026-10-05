@@ -12,9 +12,17 @@ describe("loadIngestCatalog", () => {
     expect(cat.feeds.length + cat.discovered.length + cat.disabled.length).toBeGreaterThanOrEqual(
       86,
     );
-    expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(new Set(["roads", "fuel"]));
+    expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(new Set(["roads", "fuel", "parking"]));
     expect(cat.feeds.map((f) => f.id)).toEqual(
-      expect.arrayContaining(["es-minetur-fuel", "fr-prixcarburants-fuel"]),
+      expect.arrayContaining([
+        "es-minetur-fuel",
+        "fr-prixcarburants-fuel",
+        "de-bw-mobidata-parking",
+        "osm-parking",
+      ]),
+    );
+    expect(cat.disabled.map((f) => f.id)).toEqual(
+      expect.arrayContaining(["de-ni-braunschweig-parking", "de-bb-potsdam-parking"]),
     );
   });
 
@@ -48,7 +56,7 @@ describe("loadIngestCatalog", () => {
 
 describe("formatOf", () => {
   it("finds a feed's format in its domain", () => {
-    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads", "fuel"]);
+    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads", "fuel", "parking"]);
     expect(formatOf(testFeed({ format: "datex2-measured", product: "flow" })).kind).toBe(
       "measurements",
     );
@@ -56,6 +64,9 @@ describe("formatOf", () => {
     expect(formatOf(testFeed({ domain: "fuel", format: "minetur", product: "fuel" })).kind).toBe(
       "features",
     );
+    expect(
+      formatOf(testFeed({ domain: "parking", format: "geojson", product: "parking" })).kind,
+    ).toBe("features");
   });
 
   it("throws for an unknown domain or format", () => {

@@ -1,0 +1,3333 @@
+{
+  "files": {
+    "parking/at": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "9",
+          "operator": "vienna",
+          "product": "parking",
+          "name": "Stadt Wien garages and Park & Ride",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.wien.gv.at/daten/geo?service=WFS&request=GetFeature&version=1.1.0&typeName=ogdwien:GARAGENOGD&srsName=EPSG:4326&outputFormat=json",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Datenquelle: Stadt Wien – data.wien.gv.at",
+          "privacyUrl": "https://www.wien.gv.at/inhalt/datenschutz",
+          "layout": {},
+          "parking": {
+            "id": "GARAGE_ID",
+            "name": [
+              "BEZEICHNUNG"
+            ],
+            "lang": "de",
+            "type": {
+              "field": "PARK_AND_RIDE",
+              "map": {
+                "Y": "park_and_ride"
+              }
+            },
+            "defaultType": "off_street",
+            "address": {
+              "street": "ADRESSE",
+              "postalCode": "PLZ",
+              "city": "ORT"
+            },
+            "operator": "BETREIBER",
+            "website": "WEBLINK_BETR_DE",
+            "areas": [
+              {
+                "vehicleType": "car",
+                "userGroup": "disabled",
+                "presentWhen": {
+                  "field": "BEHINDERTENPARKPL",
+                  "equals": "Y"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "subdivision": "5",
+          "operator": "salzburg",
+          "product": "parking",
+          "name": "Stadt Salzburg car parks",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.stadt-salzburg.at/geodaten/wfs?service=WFS&version=1.1.0&request=GetFeature&srsName=urn:x-ogc:def:crs:EPSG:4326&outputFormat=application/json&typeName=ogdsbg:parkplatz",
+              "headers": {
+                "User-Agent": "Mozilla/5.0"
+              },
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-3.0-AT",
+          "licenseUrl": "https://creativecommons.org/licenses/by/3.0/at/",
+          "attribution": "Datenquelle: Stadt Salzburg – data.stadt-salzburg.at",
+          "privacyUrl": "https://www.stadt-salzburg.at/datenschutz/",
+          "layout": {},
+          "parking": {
+            "id": "ID",
+            "name": [
+              "BEZEICHNUNG"
+            ],
+            "lang": "de",
+            "type": {
+              "field": {
+                "field": "BEZEICHNUNG",
+                "pattern": "^(Park & Ride) "
+              },
+              "map": {
+                "Park & Ride": "park_and_ride"
+              }
+            },
+            "defaultType": "off_street",
+            "layout": {
+              "field": "TYP",
+              "map": {
+                "Parkplatz": "surface"
+              }
+            },
+            "capacity": "KAPAZITAET",
+            "available": {
+              "field": "FREIE_PLAETZE",
+              "pattern": "^(\\d+) \\("
+            },
+            "trend": {
+              "field": "BELEGUNG_TENDENZ",
+              "map": {
+                "steigend": "filling",
+                "fallend": "clearing",
+                "gleichbleibend": "steady"
+              }
+            },
+            "updated": {
+              "field": "BELEGUNG_AKTUALISIERT",
+              "format": "d.m.y h:m",
+              "timezone": "Europe/Vienna"
+            },
+            "liveWhen": {
+              "field": "FREIE_PLAETZE_STATUS",
+              "equals": 1
+            },
+            "address": {
+              "street": "ADRESSE"
+            },
+            "website": "URL",
+            "openingHours": {
+              "field": "OEFFNUNGSZEITEN",
+              "syntax": "text"
+            },
+            "tariffText": "TARIF",
+            "notes": "ANMERKUNGEN"
+          }
+        }
+      ]
+    },
+    "parking/au": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "nsw",
+          "operator": "tfnsw",
+          "product": "parking",
+          "name": "Transport for NSW Park&Ride",
+          "format": "tfnsw",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://api.transport.nsw.gov.au/v1/carpark/full-list",
+              "cadenceSec": 300
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Transport for NSW Open Data API key",
+              "description": "An Open Data Hub API token subscribed to the Car Park API.",
+              "setup": {
+                "url": "https://opendata.transport.nsw.gov.au/",
+                "urlLabel": "Get API key",
+                "steps": [
+                  "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+                  "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+                  "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
+                  "Paste the generated token here (sent as the 'apikey' authorization header)."
+                ],
+                "cost": "Free",
+                "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy."
+              }
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "Authorization",
+            "credential": "api_key",
+            "valuePrefix": "apikey "
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perDay": 60000
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Transport for NSW, CC BY 4.0",
+          "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+          "homepage": "https://opendata.transport.nsw.gov.au/"
+        }
+      ]
+    },
+    "parking/be": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "vlg",
+          "operator": "gent",
+          "product": "parking",
+          "name": "Stad Gent real-time garage occupancy",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/geojson",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+          "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
+          "attribution": "Stad Gent – Mobiliteitsbedrijf, Modellicentie Gratis Hergebruik Vlaanderen v1.0",
+          "privacyUrl": "https://data.stad.gent/terms/privacy-policy/",
+          "layout": {},
+          "parking": {
+            "id": "id",
+            "name": [
+              "name"
+            ],
+            "lang": "nl",
+            "defaultType": "off_street",
+            "layout": {
+              "field": {
+                "field": "description",
+                "pattern": "^(Ondergrondse|Bovengrondse) "
+              },
+              "map": {
+                "Ondergrondse": "underground",
+                "Bovengrondse": "multi_storey"
+              }
+            },
+            "capacity": "totalcapacity",
+            "available": "availablecapacity",
+            "status": [
+              {
+                "field": "temporaryclosed",
+                "map": {
+                  "1": "closed"
+                }
+              },
+              {
+                "field": "isopennow",
+                "map": {
+                  "0": "closed",
+                  "1": "open"
+                }
+              }
+            ],
+            "updated": {
+              "field": "lastupdate",
+              "timezone": "Europe/Brussels"
+            },
+            "operator": "operatorinformation",
+            "website": "urllinkaddress",
+            "openingHours": {
+              "field": "openingtimesdescription",
+              "syntax": "text"
+            },
+            "free": {
+              "field": "freeparking",
+              "equals": 1
+            }
+          }
+        },
+        {
+          "subdivision": "bru",
+          "operator": "brussels",
+          "product": "parking",
+          "name": "Ville de Bruxelles public car parks",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics/exports/geojson",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Ville de Bruxelles / mobilite.brussels, CC BY 4.0",
+          "privacyUrl": "https://opendata.brussels.be/terms/privacy-policy/",
+          "layout": {},
+          "parking": {
+            "id": "name_fr",
+            "name": [
+              "name_fr",
+              "name_nl"
+            ],
+            "lang": "fr",
+            "type": {
+              "field": {
+                "field": "name_fr",
+                "pattern": "^(P\\+R) "
+              },
+              "map": {
+                "P+R": "park_and_ride"
+              }
+            },
+            "defaultType": "off_street",
+            "capacity": "capacity",
+            "address": {
+              "text": "adressee"
+            },
+            "operator": "operator_fr",
+            "heightLimit": {
+              "field": "maxheight",
+              "unit": "m"
+            },
+            "areas": [
+              {
+                "vehicleType": "car",
+                "userGroup": "disabled",
+                "capacity": "disabledcapacity"
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "parking/ch": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "bs",
+          "operator": "basel",
+          "product": "parking",
+          "name": "Parkhäuser Basel-Stadt current occupancy",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088/exports/geojson",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Parkhäuser Basel-Stadt / data.bs.ch, CC BY 4.0",
+          "privacyUrl": "https://data.bs.ch/terms/privacy-policy/",
+          "layout": {},
+          "parking": {
+            "id": "id",
+            "name": [
+              "title"
+            ],
+            "lang": "de",
+            "defaultType": "off_street",
+            "layout": {
+              "field": "lot_type",
+              "map": {
+                "Parkhaus": "multi_storey"
+              }
+            },
+            "capacity": "total",
+            "available": "free",
+            "status": {
+              "field": "status",
+              "map": {
+                "offen": "open",
+                "zu": "closed"
+              }
+            },
+            "updated": {
+              "field": "published",
+              "timezone": "Europe/Zurich"
+            },
+            "address": {
+              "street": "address"
+            },
+            "website": "link"
+          }
+        },
+        {
+          "operator": "sbb",
+          "product": "parking",
+          "name": "SBB car parking",
+          "format": "sbb",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking/permalink",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "LicenseRef-opentransportdata-swiss-ToU",
+          "licenseUrl": "https://opentransportdata.swiss/en/terms-of-use/",
+          "attribution": "opentransportdata.swiss",
+          "privacyUrl": "https://opentransportdata.swiss/en/privacy-notice/"
+        }
+      ]
+    },
+    "parking/de": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "bw",
+          "operator": "mobidata",
+          "product": "parking",
+          "name": "MobiData BW ParkAPI car parking sites",
+          "format": "parkapi-v3",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-sites?purpose=CAR",
+              "cadenceSec": 300
+            },
+            "sources": {
+              "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "DL-DE-BY-2.0",
+          "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+          "attribution": "MobiData BW (NVBW)",
+          "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+          "homepage": "https://mobidata-bw.de/",
+          "coverage": {
+            "bbox": [
+              5.87,
+              47.27,
+              15.04,
+              55.06
+            ]
+          }
+        },
+        {
+          "subdivision": "nw",
+          "operator": "mobidrom",
+          "product": "parking",
+          "name": "Mobidrom Parken NRW",
+          "format": "datex2-light",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://www.mobilitaetsdaten.nrw/api/systemadapter-mobilithek-exporter/parken-nrw.json",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "DL-DE-BY-2.0",
+          "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+          "attribution": "NRW.Mobidrom GmbH",
+          "privacyUrl": "https://www.mobidrom.nrw/datenschutz"
+        },
+        {
+          "subdivision": "nw",
+          "operator": "mobidrom",
+          "qualifier": "parkride",
+          "product": "parking",
+          "name": "Mobidrom Park+Ride NRW",
+          "format": "datex2-light",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://www.mobilitaetsdaten.nrw/api/systemadapter-mobilithek-exporter/gebndelte-daten-parkride-nrw.json",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-SA-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "attribution": "NRW.Mobidrom GmbH",
+          "privacyUrl": "https://www.mobidrom.nrw/datenschutz"
+        },
+        {
+          "operator": "db",
+          "qualifier": "bahnpark",
+          "product": "parking",
+          "name": "DB BahnPark station parking",
+          "format": "db-bahnpark",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://apis.deutschebahn.com/db-api-marketplace/apis/parking-information/db-bahnpark/v2/parking-facilities",
+              "headers": {
+                "Accept": "application/json",
+                "DB-Client-Id": "${client_id}",
+                "DB-Api-Key": "${api_key}"
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "credentials": {
+            "client_id": {
+              "title": "DB BahnPark client ID",
+              "description": "The client ID of a DB API Marketplace application subscribed to Parking Information (DB BahnPark).",
+              "setup": {
+                "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+                "urlLabel": "Open DB API Marketplace",
+                "steps": [
+                  "Register/log in to the DB API Marketplace via 'DB Kundenkonto'.",
+                  "Create an application with 'Neue Anwendung erstellen'.",
+                  "In the Katalog, open 'Parking Information Service - DB BahnPark' and subscribe the free Testzugang plan.",
+                  "Open the application's details and copy its Client ID into this field."
+                ],
+                "cost": "Free: Testzugang allows up to 1,000 transactions/month (max 10 req/min), no approval.",
+                "notes": "Provides ~315 DB BahnPark facilities. The higher transit-authority plan needs a separate data agreement."
+              }
+            },
+            "api_key": {
+              "title": "DB BahnPark API key",
+              "description": "The client secret of the same DB API Marketplace application.",
+              "setup": {
+                "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+                "urlLabel": "Open DB API Marketplace",
+                "steps": [
+                  "Register/log in to the DB API Marketplace and create an application ('Neue Anwendung erstellen').",
+                  "Copy the Client Secret (API key) shown once during application creation.",
+                  "Subscribe ('Abonnieren') the 'Parking Information Service - DB BahnPark' Testzugang plan to that application.",
+                  "Paste the Client Secret here (sent as the DB-Api-Key header)."
+                ],
+                "cost": "Free: Testzugang allows up to 1,000 transactions/month (max 10 req/min), no approval.",
+                "notes": "The Client Secret is displayed only once at creation; regenerate it in the application settings if lost."
+              }
+            }
+          },
+          "auth": {
+            "kind": "none"
+          },
+          "freshnessWindowSec": 172800,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "DL-DE-BY-2.0",
+          "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+          "attribution": "Parking Information Daten der DB BahnPark – API über den DB API Marketplace (https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark)",
+          "terms": {
+            "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+            "reviewedAt": "2026-10-05",
+            "note": "DL-DE-BY-2.0 with the mandated Quellenvermerk. Free 'Testzugang' plan: 1,000 transactions/month and 10/min; API key must stay private. Service deprecated, expected shutdown end of 2026; successor RIS::Mobility."
+          },
+          "privacyUrl": "https://developers.deutschebahn.com/db-api-marketplace/apis/privacypolicy",
+          "homepage": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark"
+        },
+        {
+          "subdivision": "ni",
+          "operator": "braunschweig",
+          "product": "parking",
+          "name": "Stadt Braunschweig car parks",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://www.braunschweig.de/apps/pulp/result/parkhaeuser.geojson",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "NOASSERTION",
+          "attribution": "Stadt Braunschweig",
+          "terms": {
+            "url": "https://www.braunschweig.de/impressum.php",
+            "reviewedAt": "2026-10-05",
+            "note": "The map app's backend is not Open GeoData; the imprint requires the city's consent to reuse"
+          },
+          "privacyUrl": "https://www.braunschweig.de/datenschutz.php",
+          "disabled": {
+            "reason": "The city's consent to reuse is outstanding",
+            "since": "2026-10-05"
+          },
+          "layout": {},
+          "parking": {
+            "id": "id",
+            "name": [
+              "title",
+              "name"
+            ],
+            "lang": "de",
+            "defaultType": "off_street",
+            "capacity": "capacity",
+            "available": "free",
+            "occupied": "occupancy",
+            "status": {
+              "field": "openingState",
+              "map": {
+                "open": "open",
+                "closed": "closed"
+              }
+            },
+            "trend": {
+              "field": "trend",
+              "map": {
+                "increasing": "filling",
+                "decreasing": "clearing",
+                "constant": "steady"
+              }
+            },
+            "updated": {
+              "field": "timestamp",
+              "timezone": "Europe/Berlin"
+            }
+          }
+        },
+        {
+          "subdivision": "hb",
+          "operator": "bremen",
+          "product": "parking",
+          "name": "VMZ Bremen car parks",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://vmz.bremen.de/geojson/parking.geojson",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "NOASSERTION",
+          "attribution": "Verkehrsmanagementzentrale Bremen",
+          "terms": {
+            "url": "https://vmz.bremen.de/impressum/",
+            "reviewedAt": "2026-10-05",
+            "note": "Footer shows CC BY-NC-ND (unversioned); imprint says reproduction and distribution only with VMZ permission. At most non-commercial, unmodified display.",
+            "redistribution": false
+          },
+          "privacyUrl": "https://vmz.bremen.de/datenschutz/",
+          "disabled": {
+            "reason": "VMZ Bremen's permission to reuse is outstanding",
+            "since": "2026-10-05"
+          },
+          "layout": {},
+          "parking": {
+            "id": "id",
+            "name": [
+              "title",
+              "name"
+            ],
+            "lang": "de",
+            "defaultType": "off_street",
+            "status": {
+              "field": "openingState",
+              "map": {
+                "open": "open",
+                "closed": "closed"
+              }
+            },
+            "trend": {
+              "field": "trend",
+              "map": {
+                "increasing": "filling",
+                "decreasing": "clearing",
+                "constant": "steady"
+              }
+            },
+            "website": "permanentLink",
+            "heightLimit": {
+              "field": {
+                "field": "height_restriction",
+                "pattern": "(\\d+(?:[.,]\\d+)?)"
+              },
+              "unit": "m"
+            }
+          }
+        },
+        {
+          "subdivision": "nw",
+          "operator": "apag",
+          "product": "parking",
+          "name": "APAG Aachener Parkhaus car parks",
+          "format": "json",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://www.apag.de/api/v1/pms/facilities",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "NOASSERTION",
+          "attribution": "APAG Aachener Parkhaus GmbH",
+          "terms": {
+            "url": "https://www.apag.de/de/impressum",
+            "reviewedAt": "2026-10-05",
+            "note": "No API terms; the imprint requires APAG's prior written consent for any use copyright does not allow"
+          },
+          "privacyUrl": "https://www.apag.de/de/datenschutz",
+          "disabled": {
+            "reason": "APAG's written consent to reuse is outstanding",
+            "since": "2026-10-05"
+          },
+          "layout": {
+            "lon": "lng",
+            "lat": "lat"
+          },
+          "parking": {
+            "id": "uuid",
+            "name": [
+              "label",
+              "name"
+            ],
+            "lang": "de",
+            "defaultType": "off_street",
+            "layout": {
+              "field": "facility_type.de",
+              "map": {
+                "Parkhaus": "multi_storey",
+                "Parkplatz": "surface"
+              }
+            },
+            "capacity": "capacity_parking",
+            "available": "available_parking",
+            "address": {
+              "street": "address_street",
+              "postalCode": "address_zip",
+              "city": "address_city"
+            },
+            "openingHours": {
+              "field": "opening_times",
+              "syntax": "text"
+            },
+            "heightLimit": {
+              "field": {
+                "field": "entrance_height",
+                "pattern": "(\\d+(?:[.,]\\d+)?)"
+              },
+              "unit": "m"
+            },
+            "areas": [
+              {
+                "vehicleType": "car",
+                "userGroup": "ev_charging",
+                "capacity": "capacity_charging"
+              }
+            ],
+            "filter": [
+              {
+                "field": "type",
+                "include": [
+                  "ParkingFacility"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "subdivision": "bb",
+          "operator": "potsdam",
+          "product": "parking",
+          "name": "Stadtwerke Potsdam car parks",
+          "format": "csv",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://cs1-swp.westeurope.cloudapp.azure.com:8443/parking_csv",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "NOASSERTION",
+          "attribution": "Stadtwerke Potsdam GmbH",
+          "terms": {
+            "url": "https://www.swp-potsdam.de/impressum/",
+            "reviewedAt": "2026-10-05",
+            "note": "The imprint forbids passing on or reproducing any part without Stadtwerke Potsdam's express permission",
+            "redistribution": false
+          },
+          "privacyUrl": "https://www.swp-potsdam.de/datenschutz/",
+          "homepage": "https://www.swp-potsdam.de/",
+          "disabled": {
+            "reason": "The imprint forbids passing the data on, and the endpoint now sits behind a login",
+            "since": "2026-10-05"
+          },
+          "layout": {
+            "point": {
+              "field": "Geo Point",
+              "order": "latlon"
+            },
+            "delimiter": ";"
+          },
+          "parking": {
+            "id": "Parkplatz",
+            "name": [
+              "Parkplatz"
+            ],
+            "lang": "de",
+            "type": {
+              "field": {
+                "field": "Parkplatz",
+                "pattern": "^(P\\+R) "
+              },
+              "map": {
+                "P+R": "park_and_ride"
+              }
+            },
+            "defaultType": "off_street",
+            "capacity": "Kapazitaet",
+            "occupied": "Belegung",
+            "liveWhen": {
+              "field": "Dynamische Daten",
+              "equals": "True"
+            }
+          }
+        }
+      ]
+    },
+    "parking/dk": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "84",
+          "operator": "copenhagen",
+          "product": "parking",
+          "name": "Københavns Kommune parking garages",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://wfs-kbhkort.kk.dk/k101/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=k101:p_hus&outputFormat=json&SRSNAME=EPSG:4326",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Københavns Kommune, CC BY 4.0",
+          "privacyUrl": "https://www.kk.dk/om-kommunen/databeskyttelse",
+          "homepage": "https://www.kk.dk/",
+          "layout": {},
+          "parking": {
+            "id": "id",
+            "lang": "da",
+            "defaultType": "off_street",
+            "layout": {
+              "field": "p_hus_type",
+              "map": {
+                "1": "multi_storey",
+                "2": "underground"
+              }
+            },
+            "capacity": "antal_pladser",
+            "address": {
+              "street": "vejnavn",
+              "houseNumber": "husnr",
+              "postalCode": {
+                "field": "postdistrikt",
+                "pattern": "^(\\d{4}) "
+              },
+              "city": {
+                "field": "postdistrikt",
+                "pattern": "^\\d{4} (.+)$"
+              }
+            },
+            "notes": "bemaerkning",
+            "filter": [
+              {
+                "field": "p_hus_type",
+                "exclude": [
+                  "7"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "parking/es": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "ct",
+          "operator": "barcelona",
+          "product": "parking",
+          "name": "Ajuntament de Barcelona car parks",
+          "format": "json",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/a8b29664-ab16-4341-9460-33f60d048d82/resource/3ed73d45-8ea6-4cdf-8984-11a4c4cfc9e8/download",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Ajuntament de Barcelona, CC BY 4.0",
+          "privacyUrl": "https://opendata-ajuntament.barcelona.cat/en/avis-legal",
+          "layout": {
+            "point": {
+              "field": "addresses.0.location_4326.geometries.0.coordinates",
+              "order": "latlon"
+            }
+          },
+          "parking": {
+            "id": "register_id",
+            "name": [
+              "name"
+            ],
+            "lang": "ca",
+            "defaultType": "off_street",
+            "address": {
+              "street": "addresses.0.address_name",
+              "houseNumber": "addresses.0.start_street_number",
+              "postalCode": "addresses.0.zip_code",
+              "city": "addresses.0.town"
+            }
+          }
+        },
+        {
+          "subdivision": "md",
+          "operator": "madrid",
+          "product": "parking",
+          "name": "Ayuntamiento de Madrid municipal car parks",
+          "format": "csv",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://datos.madrid.es/dataset/202625-0-aparcamientos-publicos/resource/202625-3-aparcamientos-publicos-csv/download/202625-3-aparcamientos-publicos-csv.csv",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Ayuntamiento de Madrid – datos.madrid.es, CC BY 4.0",
+          "privacyUrl": "https://datos.madrid.es/pages/proteccion-datos",
+          "layout": {
+            "lon": "LONGITUD",
+            "lat": "LATITUD",
+            "delimiter": ";",
+            "encoding": "latin1"
+          },
+          "parking": {
+            "id": "PK",
+            "name": [
+              "NOMBRE"
+            ],
+            "lang": "es",
+            "type": {
+              "field": {
+                "field": "NOMBRE",
+                "pattern": "^Aparcamiento (disuasorio)"
+              },
+              "map": {
+                "disuasorio": "park_and_ride"
+              }
+            },
+            "defaultType": "off_street",
+            "capacity": {
+              "field": "DESCRIPCION",
+              "pattern": "Plazas:\\s*(?:para automóviles:\\s*)?(\\d+)"
+            },
+            "address": {
+              "street": "NOMBRE-VIA",
+              "houseNumber": "NUM",
+              "postalCode": "CODIGO-POSTAL",
+              "city": "LOCALIDAD"
+            },
+            "website": "CONTENT-URL",
+            "openingHours": {
+              "field": "HORARIO",
+              "syntax": "text"
+            },
+            "notes": "DESCRIPCION"
+          }
+        }
+      ]
+    },
+    "parking/fr": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "bnls",
+          "product": "parking",
+          "name": "Base nationale des lieux de stationnement",
+          "format": "csv",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://transport.data.gouv.fr/resources/78899/download",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "transport.data.gouv.fr – Base nationale des lieux de stationnement, ODbL",
+          "privacyUrl": "https://doc.transport.data.gouv.fr/le-point-d-acces-national/generalites/mentions-legales-et-conditions-generales-dutilisation",
+          "layout": {
+            "lon": "Xlong",
+            "lat": "Ylat",
+            "delimiter": ";"
+          },
+          "parking": {
+            "id": "id",
+            "name": [
+              "nom"
+            ],
+            "lang": "fr",
+            "defaultType": "off_street",
+            "layout": {
+              "field": "type_ouvrage",
+              "map": {
+                "enclos_en_surface": "surface"
+              }
+            },
+            "capacity": "nb_places",
+            "address": {
+              "text": "adresse"
+            },
+            "website": "url",
+            "notes": "info",
+            "free": {
+              "field": "gratuit",
+              "equals": 1
+            },
+            "heightLimit": {
+              "field": "hauteur_max",
+              "unit": "cm"
+            },
+            "areas": [
+              {
+                "vehicleType": "car",
+                "userGroup": "disabled",
+                "capacity": "nb_pmr"
+              },
+              {
+                "vehicleType": "car",
+                "userGroup": "ev_charging",
+                "capacity": "nb_voitures_electriques"
+              },
+              {
+                "vehicleType": "car",
+                "userGroup": "car_sharing",
+                "capacity": "nb_autopartage"
+              },
+              {
+                "vehicleType": "motorcycle",
+                "userGroup": "any",
+                "capacity": "nb_2_rm"
+              },
+              {
+                "vehicleType": "bicycle",
+                "userGroup": "any",
+                "capacity": "nb_velo"
+              }
+            ],
+            "rates": {
+              "currency": "EUR",
+              "rows": [
+                {
+                  "field": "tarif_1h",
+                  "maxDuration": {
+                    "value": 1,
+                    "unit": "h"
+                  }
+                },
+                {
+                  "field": "tarif_2h",
+                  "maxDuration": {
+                    "value": 2,
+                    "unit": "h"
+                  }
+                },
+                {
+                  "field": "tarif_3h",
+                  "maxDuration": {
+                    "value": 3,
+                    "unit": "h"
+                  }
+                },
+                {
+                  "field": "tarif_4h",
+                  "maxDuration": {
+                    "value": 4,
+                    "unit": "h"
+                  }
+                },
+                {
+                  "field": "tarif_24h",
+                  "maxDuration": {
+                    "value": 24,
+                    "unit": "h"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "parking/gb": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "eng",
+          "operator": "netraveldata",
+          "product": "parking",
+          "name": "North East Travel Data car parks",
+          "format": "utmc",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://www.netraveldata.co.uk/api/v2/carpark/static",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://www.netraveldata.co.uk/api/v2/carpark/dynamic",
+              "cadenceSec": 120
+            }
+          },
+          "credentials": {
+            "username": {
+              "title": "NE Travel Data username",
+              "description": "The username of a netraveldata.co.uk account; the website login is the API credential.",
+              "setup": {
+                "url": "https://www.netraveldata.co.uk/?page_id=9",
+                "urlLabel": "Register for NE Travel Data",
+                "steps": [
+                  "Go to the UTMC Open Data Service (NE Travel Data) at netraveldata.co.uk and register a free account via the 'Register' link.",
+                  "Confirm your registration email and set a password.",
+                  "Use the username you signed up with as this value — the same site account credentials authenticate the API feeds."
+                ],
+                "cost": "Free",
+                "notes": "This is the Newcastle / Tyne & Wear (UTMC) feed at netraveldata.co.uk — not a Glasgow contact. The website login you create is the API credential.",
+                "email": {
+                  "to": "info@netraveldata.co.uk",
+                  "subject": "API access request — UTMC Open Data Service (car park feed)",
+                  "body": "Hello,\n\nI would like to access the UTMC / NE Travel Data open-data API, in particular the car park occupancy feeds for Tyne & Wear / Newcastle.\n\nI have registered an account on netraveldata.co.uk; could you please confirm that my account credentials are enabled for API access, or advise if any additional registration step is required?\n\nIntended use: integrating live car-park availability into an open-source mapping application.\n\nThank you,\n[Your name]"
+                }
+              }
+            },
+            "password": {
+              "title": "NE Travel Data password",
+              "description": "The password of the same netraveldata.co.uk account.",
+              "setup": {
+                "url": "https://www.netraveldata.co.uk/?page_id=9",
+                "urlLabel": "Register for NE Travel Data",
+                "steps": [
+                  "During registration on netraveldata.co.uk, set (or reset) the password for your account.",
+                  "Use that account password as this value.",
+                  "The username + password pair is sent as HTTP credentials when fetching the UTMC car-park feed."
+                ],
+                "cost": "Free",
+                "notes": "Same netraveldata.co.uk account as the UTMC username — there is no separate API password; the website login doubles as the API credential."
+              }
+            }
+          },
+          "auth": {
+            "kind": "basic",
+            "user": "username",
+            "password": "password"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "OGL-UK-3.0",
+          "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+          "attribution": "Contains public sector information licensed under the Open Government Licence v3.0 (North East UTMC / Newcastle City Council)",
+          "privacyUrl": "https://www.netraveldata.co.uk/?page_id=610"
+        }
+      ]
+    },
+    "parking/global": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "osm",
+          "product": "parking",
+          "name": "OpenStreetMap parking",
+          "format": "overpass",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "${@overpass.url}/api/interpreter",
+              "method": "POST",
+              "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"parking\"]({south},{west},{north},{east});out center tags;",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "OpenConditions-OsmParking/1.0 (+https://github.com/openconditions/openconditions)"
+              },
+              "cadenceSec": 3600
+            }
+          },
+          "freshnessWindowSec": 86400,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 30,
+            "perDay": 5000
+          },
+          "onDemand": {
+            "cellDeg": 0.05,
+            "ttlSec": 21600,
+            "maxCellsPerRead": 16,
+            "probe": [
+              8.4,
+              49.01
+            ]
+          },
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "© OpenStreetMap contributors",
+          "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+          "homepage": "https://www.openstreetmap.org/copyright",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        }
+      ]
+    },
+    "parking/it": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "subdivision": "52",
+          "operator": "florence",
+          "product": "parking",
+          "name": "Comune di Firenze free spaces in car parks",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://datigis.comune.fi.it/resources/open-data/dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi/fipark_posti_liberi.geojson",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Comune di Firenze / Firenze Parcheggi, CC BY 4.0",
+          "privacyUrl": "https://www.comune.fi.it/pagina/privacy",
+          "layout": {},
+          "parking": {
+            "id": "id",
+            "name": [
+              "nome"
+            ],
+            "lang": "it",
+            "defaultType": "off_street",
+            "capacity": "posti_totali",
+            "available": "posti_liberi",
+            "updated": {
+              "field": "ultimo_aggiornamento",
+              "timezone": "Europe/Rome"
+            },
+            "address": {
+              "postalCode": "cap",
+              "city": "citta",
+              "text": "indirizzo"
+            },
+            "openingHours": {
+              "field": "orario",
+              "syntax": "text"
+            },
+            "tariffText": "tariffe",
+            "areas": [
+              {
+                "vehicleType": "car",
+                "userGroup": "disabled",
+                "capacity": {
+                  "field": "posti_riservati_disabili",
+                  "pattern": "^(\\d+)"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "subdivision": "32",
+          "operator": "opendatahub",
+          "product": "parking",
+          "name": "Open Data Hub South Tyrol parking",
+          "format": "opendatahub",
+          "tier": "aggregator",
+          "endpoints": {
+            "sites": {
+              "url": "https://mobility.api.opendatahub.com/v2/flat/ParkingStation?limit=-1&where=sactive.eq.true,sorigin.neq.SBB&shownull=false&distinct=true",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://mobility.api.opendatahub.com/v2/flat/ParkingStation/*/latest?limit=-1&where=sactive.eq.true,sorigin.neq.SBB&shownull=false&distinct=true",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "NOASSERTION",
+          "attribution": "Open Data Hub – NOI Techpark",
+          "terms": {
+            "url": "https://github.com/noi-techpark/odh-docs/blob/master/source/datasets.rst",
+            "reviewedAt": "2026-10-05",
+            "note": "Open Data Hub states that anonymous API responses are always distributed as Open Data; no licence is named",
+            "redistribution": true
+          },
+          "privacyUrl": "https://noi.bz.it/en/privacy",
+          "homepage": "https://opendatahub.com/"
+        }
+      ]
+    },
+    "parking/lu": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "cita",
+          "product": "parking",
+          "name": "CITA motorway parking",
+          "format": "datex2",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://www.cita.lu/info_trafic/datex/parking_static.xml",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://www.cita.lu/info_trafic/datex/parking_dynamic.xml",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "attribution": "Administration des Ponts et Chaussées – CITA",
+          "privacyUrl": "https://data.public.lu/en/pages/legal/privacy/"
+        }
+      ]
+    },
+    "parking/nl": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "rdw",
+          "product": "parking",
+          "name": "RDW parking areas",
+          "format": "rdw",
+          "tier": "authoritative",
+          "endpoints": {
+            "specs": {
+              "url": "https://opendata.rdw.nl/resource/b3us-f26s.json?$limit=50000",
+              "cadenceSec": 86400
+            },
+            "areas": {
+              "urls": [
+                "https://opendata.rdw.nl/resource/t5pc-eb34.json?$limit=50000",
+                "https://opendata.rdw.nl/resource/6wzd-evwu.json?$limit=50000",
+                "https://opendata.rdw.nl/resource/9c54-cmfx.json?$limit=50000"
+              ],
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "attribution": "RDW",
+          "privacyUrl": "https://www.rdw.nl/over-rdw/privacy-en-security/privacyverklaring"
+        },
+        {
+          "operator": "ndw",
+          "qualifier": "truck",
+          "product": "parking",
+          "name": "NDW truck parking",
+          "format": "datex2",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://opendata.ndw.nu/Truckparking_Parking_Table.xml",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://opendata.ndw.nu/Truckparking_Parking_Status.xml",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "attribution": "NDW",
+          "privacyUrl": "https://www.ndw.nu/service/privacy"
+        }
+      ]
+    },
+    "parking/sg": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "hdb",
+          "product": "parking",
+          "name": "HDB car parks",
+          "format": "hdb",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://data.gov.sg/api/action/datastore_search?resource_id=d_23f946fa557947f93a8043bbef41dd09&limit=5000",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://api.data.gov.sg/v1/transport/carpark-availability",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 60
+          },
+          "license": "LicenseRef-Singapore-ODL-1.0",
+          "licenseUrl": "https://data.gov.sg/open-data-licence",
+          "attribution": "Contains information from HDB Carpark Information and Carpark Availability from data.gov.sg, made available under the terms of the Singapore Open Data Licence version 1.0 (https://data.gov.sg/open-data-licence)",
+          "terms": {
+            "url": "https://data.gov.sg/open-data-licence",
+            "reviewedAt": "2026-10-05",
+            "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from data.gov.sg. Availability API: 60 requests/minute per API key."
+          },
+          "privacyUrl": "https://data.gov.sg/privacy-and-terms"
+        }
+      ]
+    },
+    "credentials": {
+      "credentials": {
+        "overpass": {
+          "url": {
+            "title": "Overpass URL",
+            "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
+            "default": "https://overpass-api.de"
+          }
+        }
+      }
+    }
+  },
+  "feeds": [
+    {
+      "subdivision": "9",
+      "operator": "vienna",
+      "product": "parking",
+      "name": "Stadt Wien garages and Park & Ride",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.wien.gv.at/daten/geo?service=WFS&request=GetFeature&version=1.1.0&typeName=ogdwien:GARAGENOGD&srsName=EPSG:4326&outputFormat=json",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Datenquelle: Stadt Wien – data.wien.gv.at",
+      "privacyUrl": "https://www.wien.gv.at/inhalt/datenschutz",
+      "layout": {},
+      "parking": {
+        "id": "GARAGE_ID",
+        "name": [
+          "BEZEICHNUNG"
+        ],
+        "lang": "de",
+        "type": {
+          "field": "PARK_AND_RIDE",
+          "map": {
+            "Y": "park_and_ride"
+          }
+        },
+        "defaultType": "off_street",
+        "address": {
+          "street": "ADRESSE",
+          "postalCode": "PLZ",
+          "city": "ORT"
+        },
+        "operator": "BETREIBER",
+        "website": "WEBLINK_BETR_DE",
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "disabled",
+            "presentWhen": {
+              "field": "BEHINDERTENPARKPL",
+              "equals": "Y"
+            }
+          }
+        ]
+      },
+      "homepage": "https://data.wien.gv.at",
+      "id": "at-9-vienna-parking",
+      "domain": "parking",
+      "region": "at",
+      "file": "feeds/parking/at.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AT"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "AT"
+    },
+    {
+      "subdivision": "5",
+      "operator": "salzburg",
+      "product": "parking",
+      "name": "Stadt Salzburg car parks",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.stadt-salzburg.at/geodaten/wfs?service=WFS&version=1.1.0&request=GetFeature&srsName=urn:x-ogc:def:crs:EPSG:4326&outputFormat=application/json&typeName=ogdsbg:parkplatz",
+          "headers": {
+            "User-Agent": "Mozilla/5.0"
+          },
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-3.0-AT",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/at/",
+      "attribution": "Datenquelle: Stadt Salzburg – data.stadt-salzburg.at",
+      "privacyUrl": "https://www.stadt-salzburg.at/datenschutz/",
+      "layout": {},
+      "parking": {
+        "id": "ID",
+        "name": [
+          "BEZEICHNUNG"
+        ],
+        "lang": "de",
+        "type": {
+          "field": {
+            "field": "BEZEICHNUNG",
+            "pattern": "^(Park & Ride) "
+          },
+          "map": {
+            "Park & Ride": "park_and_ride"
+          }
+        },
+        "defaultType": "off_street",
+        "layout": {
+          "field": "TYP",
+          "map": {
+            "Parkplatz": "surface"
+          }
+        },
+        "capacity": "KAPAZITAET",
+        "available": {
+          "field": "FREIE_PLAETZE",
+          "pattern": "^(\\d+) \\("
+        },
+        "trend": {
+          "field": "BELEGUNG_TENDENZ",
+          "map": {
+            "steigend": "filling",
+            "fallend": "clearing",
+            "gleichbleibend": "steady"
+          }
+        },
+        "updated": {
+          "field": "BELEGUNG_AKTUALISIERT",
+          "format": "d.m.y h:m",
+          "timezone": "Europe/Vienna"
+        },
+        "liveWhen": {
+          "field": "FREIE_PLAETZE_STATUS",
+          "equals": 1
+        },
+        "address": {
+          "street": "ADRESSE"
+        },
+        "website": "URL",
+        "openingHours": {
+          "field": "OEFFNUNGSZEITEN",
+          "syntax": "text"
+        },
+        "tariffText": "TARIF",
+        "notes": "ANMERKUNGEN"
+      },
+      "homepage": "https://data.stadt-salzburg.at",
+      "id": "at-5-salzburg-parking",
+      "domain": "parking",
+      "region": "at",
+      "file": "feeds/parking/at.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AT"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "AT"
+    },
+    {
+      "subdivision": "nsw",
+      "operator": "tfnsw",
+      "product": "parking",
+      "name": "Transport for NSW Park&Ride",
+      "format": "tfnsw",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://api.transport.nsw.gov.au/v1/carpark/full-list",
+          "cadenceSec": 300
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Transport for NSW Open Data API key",
+          "description": "An Open Data Hub API token subscribed to the Car Park API.",
+          "setup": {
+            "url": "https://opendata.transport.nsw.gov.au/",
+            "urlLabel": "Get API key",
+            "steps": [
+              "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+              "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+              "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
+              "Paste the generated token here (sent as the 'apikey' authorization header)."
+            ],
+            "cost": "Free",
+            "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy."
+          }
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "api_key",
+        "valuePrefix": "apikey "
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perDay": 60000
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Transport for NSW, CC BY 4.0",
+      "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+      "homepage": "https://opendata.transport.nsw.gov.au/",
+      "id": "au-nsw-tfnsw-parking",
+      "domain": "parking",
+      "region": "au",
+      "file": "feeds/parking/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AU"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "AU"
+    },
+    {
+      "subdivision": "vlg",
+      "operator": "gent",
+      "product": "parking",
+      "name": "Stad Gent real-time garage occupancy",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
+      "attribution": "Stad Gent – Mobiliteitsbedrijf, Modellicentie Gratis Hergebruik Vlaanderen v1.0",
+      "privacyUrl": "https://data.stad.gent/terms/privacy-policy/",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": [
+          "name"
+        ],
+        "lang": "nl",
+        "defaultType": "off_street",
+        "layout": {
+          "field": {
+            "field": "description",
+            "pattern": "^(Ondergrondse|Bovengrondse) "
+          },
+          "map": {
+            "Ondergrondse": "underground",
+            "Bovengrondse": "multi_storey"
+          }
+        },
+        "capacity": "totalcapacity",
+        "available": "availablecapacity",
+        "status": [
+          {
+            "field": "temporaryclosed",
+            "map": {
+              "1": "closed"
+            }
+          },
+          {
+            "field": "isopennow",
+            "map": {
+              "0": "closed",
+              "1": "open"
+            }
+          }
+        ],
+        "updated": {
+          "field": "lastupdate",
+          "timezone": "Europe/Brussels"
+        },
+        "operator": "operatorinformation",
+        "website": "urllinkaddress",
+        "openingHours": {
+          "field": "openingtimesdescription",
+          "syntax": "text"
+        },
+        "free": {
+          "field": "freeparking",
+          "equals": 1
+        }
+      },
+      "homepage": "https://data.stad.gent",
+      "id": "be-vlg-gent-parking",
+      "domain": "parking",
+      "region": "be",
+      "file": "feeds/parking/be.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "BE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "BE"
+    },
+    {
+      "subdivision": "bru",
+      "operator": "brussels",
+      "product": "parking",
+      "name": "Ville de Bruxelles public car parks",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics/exports/geojson",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ville de Bruxelles / mobilite.brussels, CC BY 4.0",
+      "privacyUrl": "https://opendata.brussels.be/terms/privacy-policy/",
+      "layout": {},
+      "parking": {
+        "id": "name_fr",
+        "name": [
+          "name_fr",
+          "name_nl"
+        ],
+        "lang": "fr",
+        "type": {
+          "field": {
+            "field": "name_fr",
+            "pattern": "^(P\\+R) "
+          },
+          "map": {
+            "P+R": "park_and_ride"
+          }
+        },
+        "defaultType": "off_street",
+        "capacity": "capacity",
+        "address": {
+          "text": "adressee"
+        },
+        "operator": "operator_fr",
+        "heightLimit": {
+          "field": "maxheight",
+          "unit": "m"
+        },
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "disabled",
+            "capacity": "disabledcapacity"
+          }
+        ]
+      },
+      "homepage": "https://opendata.brussels.be",
+      "id": "be-bru-brussels-parking",
+      "domain": "parking",
+      "region": "be",
+      "file": "feeds/parking/be.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "BE"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "BE"
+    },
+    {
+      "subdivision": "bs",
+      "operator": "basel",
+      "product": "parking",
+      "name": "Parkhäuser Basel-Stadt current occupancy",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088/exports/geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Parkhäuser Basel-Stadt / data.bs.ch, CC BY 4.0",
+      "privacyUrl": "https://data.bs.ch/terms/privacy-policy/",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": [
+          "title"
+        ],
+        "lang": "de",
+        "defaultType": "off_street",
+        "layout": {
+          "field": "lot_type",
+          "map": {
+            "Parkhaus": "multi_storey"
+          }
+        },
+        "capacity": "total",
+        "available": "free",
+        "status": {
+          "field": "status",
+          "map": {
+            "offen": "open",
+            "zu": "closed"
+          }
+        },
+        "updated": {
+          "field": "published",
+          "timezone": "Europe/Zurich"
+        },
+        "address": {
+          "street": "address"
+        },
+        "website": "link"
+      },
+      "homepage": "https://data.bs.ch",
+      "id": "ch-bs-basel-parking",
+      "domain": "parking",
+      "region": "ch",
+      "file": "feeds/parking/ch.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "CH"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "CH"
+    },
+    {
+      "operator": "sbb",
+      "product": "parking",
+      "name": "SBB car parking",
+      "format": "sbb",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking/permalink",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-opentransportdata-swiss-ToU",
+      "licenseUrl": "https://opentransportdata.swiss/en/terms-of-use/",
+      "attribution": "opentransportdata.swiss",
+      "privacyUrl": "https://opentransportdata.swiss/en/privacy-notice/",
+      "homepage": "https://data.opentransportdata.swiss",
+      "id": "ch-sbb-parking",
+      "domain": "parking",
+      "region": "ch",
+      "file": "feeds/parking/ch.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "CH"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "CH"
+    },
+    {
+      "subdivision": "bw",
+      "operator": "mobidata",
+      "product": "parking",
+      "name": "MobiData BW ParkAPI car parking sites",
+      "format": "parkapi-v3",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-sites?purpose=CAR",
+          "cadenceSec": 300
+        },
+        "sources": {
+          "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "MobiData BW (NVBW)",
+      "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+      "homepage": "https://mobidata-bw.de/",
+      "coverage": {
+        "bbox": [
+          5.87,
+          47.27,
+          15.04,
+          55.06
+        ]
+      },
+      "id": "de-bw-mobidata-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "subdivision": "nw",
+      "operator": "mobidrom",
+      "product": "parking",
+      "name": "Mobidrom Parken NRW",
+      "format": "datex2-light",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://www.mobilitaetsdaten.nrw/api/systemadapter-mobilithek-exporter/parken-nrw.json",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "NRW.Mobidrom GmbH",
+      "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
+      "homepage": "https://www.mobilitaetsdaten.nrw",
+      "id": "de-nw-mobidrom-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "subdivision": "nw",
+      "operator": "mobidrom",
+      "qualifier": "parkride",
+      "product": "parking",
+      "name": "Mobidrom Park+Ride NRW",
+      "format": "datex2-light",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://www.mobilitaetsdaten.nrw/api/systemadapter-mobilithek-exporter/gebndelte-daten-parkride-nrw.json",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "NRW.Mobidrom GmbH",
+      "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
+      "homepage": "https://www.mobilitaetsdaten.nrw",
+      "id": "de-nw-mobidrom-parkride-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "operator": "db",
+      "qualifier": "bahnpark",
+      "product": "parking",
+      "name": "DB BahnPark station parking",
+      "format": "db-bahnpark",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://apis.deutschebahn.com/db-api-marketplace/apis/parking-information/db-bahnpark/v2/parking-facilities",
+          "headers": {
+            "Accept": "application/json",
+            "DB-Client-Id": "${client_id}",
+            "DB-Api-Key": "${api_key}"
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "credentials": {
+        "client_id": {
+          "title": "DB BahnPark client ID",
+          "description": "The client ID of a DB API Marketplace application subscribed to Parking Information (DB BahnPark).",
+          "setup": {
+            "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+            "urlLabel": "Open DB API Marketplace",
+            "steps": [
+              "Register/log in to the DB API Marketplace via 'DB Kundenkonto'.",
+              "Create an application with 'Neue Anwendung erstellen'.",
+              "In the Katalog, open 'Parking Information Service - DB BahnPark' and subscribe the free Testzugang plan.",
+              "Open the application's details and copy its Client ID into this field."
+            ],
+            "cost": "Free: Testzugang allows up to 1,000 transactions/month (max 10 req/min), no approval.",
+            "notes": "Provides ~315 DB BahnPark facilities. The higher transit-authority plan needs a separate data agreement."
+          }
+        },
+        "api_key": {
+          "title": "DB BahnPark API key",
+          "description": "The client secret of the same DB API Marketplace application.",
+          "setup": {
+            "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+            "urlLabel": "Open DB API Marketplace",
+            "steps": [
+              "Register/log in to the DB API Marketplace and create an application ('Neue Anwendung erstellen').",
+              "Copy the Client Secret (API key) shown once during application creation.",
+              "Subscribe ('Abonnieren') the 'Parking Information Service - DB BahnPark' Testzugang plan to that application.",
+              "Paste the Client Secret here (sent as the DB-Api-Key header)."
+            ],
+            "cost": "Free: Testzugang allows up to 1,000 transactions/month (max 10 req/min), no approval.",
+            "notes": "The Client Secret is displayed only once at creation; regenerate it in the application settings if lost."
+          }
+        }
+      },
+      "auth": {
+        "kind": "none"
+      },
+      "freshnessWindowSec": 172800,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Parking Information Daten der DB BahnPark – API über den DB API Marketplace (https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark)",
+      "terms": {
+        "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+        "reviewedAt": "2026-10-05",
+        "note": "DL-DE-BY-2.0 with the mandated Quellenvermerk. Free 'Testzugang' plan: 1,000 transactions/month and 10/min; API key must stay private. Service deprecated, expected shutdown end of 2026; successor RIS::Mobility."
+      },
+      "privacyUrl": "https://developers.deutschebahn.com/db-api-marketplace/apis/privacypolicy",
+      "homepage": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+      "id": "de-db-bahnpark-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "DE"
+    },
+    {
+      "subdivision": "ni",
+      "operator": "braunschweig",
+      "product": "parking",
+      "name": "Stadt Braunschweig car parks",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://www.braunschweig.de/apps/pulp/result/parkhaeuser.geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Stadt Braunschweig",
+      "terms": {
+        "url": "https://www.braunschweig.de/impressum.php",
+        "reviewedAt": "2026-10-05",
+        "note": "The map app's backend is not Open GeoData; the imprint requires the city's consent to reuse"
+      },
+      "privacyUrl": "https://www.braunschweig.de/datenschutz.php",
+      "disabled": {
+        "reason": "The city's consent to reuse is outstanding",
+        "since": "2026-10-05"
+      },
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": [
+          "title",
+          "name"
+        ],
+        "lang": "de",
+        "defaultType": "off_street",
+        "capacity": "capacity",
+        "available": "free",
+        "occupied": "occupancy",
+        "status": {
+          "field": "openingState",
+          "map": {
+            "open": "open",
+            "closed": "closed"
+          }
+        },
+        "trend": {
+          "field": "trend",
+          "map": {
+            "increasing": "filling",
+            "decreasing": "clearing",
+            "constant": "steady"
+          }
+        },
+        "updated": {
+          "field": "timestamp",
+          "timezone": "Europe/Berlin"
+        }
+      },
+      "homepage": "https://www.braunschweig.de",
+      "id": "de-ni-braunschweig-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "subdivision": "hb",
+      "operator": "bremen",
+      "product": "parking",
+      "name": "VMZ Bremen car parks",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://vmz.bremen.de/geojson/parking.geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Verkehrsmanagementzentrale Bremen",
+      "terms": {
+        "url": "https://vmz.bremen.de/impressum/",
+        "reviewedAt": "2026-10-05",
+        "note": "Footer shows CC BY-NC-ND (unversioned); imprint says reproduction and distribution only with VMZ permission. At most non-commercial, unmodified display.",
+        "redistribution": false
+      },
+      "privacyUrl": "https://vmz.bremen.de/datenschutz/",
+      "disabled": {
+        "reason": "VMZ Bremen's permission to reuse is outstanding",
+        "since": "2026-10-05"
+      },
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": [
+          "title",
+          "name"
+        ],
+        "lang": "de",
+        "defaultType": "off_street",
+        "status": {
+          "field": "openingState",
+          "map": {
+            "open": "open",
+            "closed": "closed"
+          }
+        },
+        "trend": {
+          "field": "trend",
+          "map": {
+            "increasing": "filling",
+            "decreasing": "clearing",
+            "constant": "steady"
+          }
+        },
+        "website": "permanentLink",
+        "heightLimit": {
+          "field": {
+            "field": "height_restriction",
+            "pattern": "(\\d+(?:[.,]\\d+)?)"
+          },
+          "unit": "m"
+        }
+      },
+      "homepage": "https://vmz.bremen.de",
+      "id": "de-hb-bremen-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "subdivision": "nw",
+      "operator": "apag",
+      "product": "parking",
+      "name": "APAG Aachener Parkhaus car parks",
+      "format": "json",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://www.apag.de/api/v1/pms/facilities",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "APAG Aachener Parkhaus GmbH",
+      "terms": {
+        "url": "https://www.apag.de/de/impressum",
+        "reviewedAt": "2026-10-05",
+        "note": "No API terms; the imprint requires APAG's prior written consent for any use copyright does not allow"
+      },
+      "privacyUrl": "https://www.apag.de/de/datenschutz",
+      "disabled": {
+        "reason": "APAG's written consent to reuse is outstanding",
+        "since": "2026-10-05"
+      },
+      "layout": {
+        "lon": "lng",
+        "lat": "lat"
+      },
+      "parking": {
+        "id": "uuid",
+        "name": [
+          "label",
+          "name"
+        ],
+        "lang": "de",
+        "defaultType": "off_street",
+        "layout": {
+          "field": "facility_type.de",
+          "map": {
+            "Parkhaus": "multi_storey",
+            "Parkplatz": "surface"
+          }
+        },
+        "capacity": "capacity_parking",
+        "available": "available_parking",
+        "address": {
+          "street": "address_street",
+          "postalCode": "address_zip",
+          "city": "address_city"
+        },
+        "openingHours": {
+          "field": "opening_times",
+          "syntax": "text"
+        },
+        "heightLimit": {
+          "field": {
+            "field": "entrance_height",
+            "pattern": "(\\d+(?:[.,]\\d+)?)"
+          },
+          "unit": "m"
+        },
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "ev_charging",
+            "capacity": "capacity_charging"
+          }
+        ],
+        "filter": [
+          {
+            "field": "type",
+            "include": [
+              "ParkingFacility"
+            ]
+          }
+        ]
+      },
+      "homepage": "https://www.apag.de",
+      "id": "de-nw-apag-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "subdivision": "bb",
+      "operator": "potsdam",
+      "product": "parking",
+      "name": "Stadtwerke Potsdam car parks",
+      "format": "csv",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://cs1-swp.westeurope.cloudapp.azure.com:8443/parking_csv",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Stadtwerke Potsdam GmbH",
+      "terms": {
+        "url": "https://www.swp-potsdam.de/impressum/",
+        "reviewedAt": "2026-10-05",
+        "note": "The imprint forbids passing on or reproducing any part without Stadtwerke Potsdam's express permission",
+        "redistribution": false
+      },
+      "privacyUrl": "https://www.swp-potsdam.de/datenschutz/",
+      "homepage": "https://www.swp-potsdam.de/",
+      "disabled": {
+        "reason": "The imprint forbids passing the data on, and the endpoint now sits behind a login",
+        "since": "2026-10-05"
+      },
+      "layout": {
+        "point": {
+          "field": "Geo Point",
+          "order": "latlon"
+        },
+        "delimiter": ";"
+      },
+      "parking": {
+        "id": "Parkplatz",
+        "name": [
+          "Parkplatz"
+        ],
+        "lang": "de",
+        "type": {
+          "field": {
+            "field": "Parkplatz",
+            "pattern": "^(P\\+R) "
+          },
+          "map": {
+            "P+R": "park_and_ride"
+          }
+        },
+        "defaultType": "off_street",
+        "capacity": "Kapazitaet",
+        "occupied": "Belegung",
+        "liveWhen": {
+          "field": "Dynamische Daten",
+          "equals": "True"
+        }
+      },
+      "id": "de-bb-potsdam-parking",
+      "domain": "parking",
+      "region": "de",
+      "file": "feeds/parking/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "subdivision": "84",
+      "operator": "copenhagen",
+      "product": "parking",
+      "name": "Københavns Kommune parking garages",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://wfs-kbhkort.kk.dk/k101/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=k101:p_hus&outputFormat=json&SRSNAME=EPSG:4326",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Københavns Kommune, CC BY 4.0",
+      "privacyUrl": "https://www.kk.dk/om-kommunen/databeskyttelse",
+      "homepage": "https://www.kk.dk/",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "lang": "da",
+        "defaultType": "off_street",
+        "layout": {
+          "field": "p_hus_type",
+          "map": {
+            "1": "multi_storey",
+            "2": "underground"
+          }
+        },
+        "capacity": "antal_pladser",
+        "address": {
+          "street": "vejnavn",
+          "houseNumber": "husnr",
+          "postalCode": {
+            "field": "postdistrikt",
+            "pattern": "^(\\d{4}) "
+          },
+          "city": {
+            "field": "postdistrikt",
+            "pattern": "^\\d{4} (.+)$"
+          }
+        },
+        "notes": "bemaerkning",
+        "filter": [
+          {
+            "field": "p_hus_type",
+            "exclude": [
+              "7"
+            ]
+          }
+        ]
+      },
+      "id": "dk-84-copenhagen-parking",
+      "domain": "parking",
+      "region": "dk",
+      "file": "feeds/parking/dk.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DK"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "DK"
+    },
+    {
+      "subdivision": "ct",
+      "operator": "barcelona",
+      "product": "parking",
+      "name": "Ajuntament de Barcelona car parks",
+      "format": "json",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/a8b29664-ab16-4341-9460-33f60d048d82/resource/3ed73d45-8ea6-4cdf-8984-11a4c4cfc9e8/download",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ajuntament de Barcelona, CC BY 4.0",
+      "privacyUrl": "https://opendata-ajuntament.barcelona.cat/en/avis-legal",
+      "layout": {
+        "point": {
+          "field": "addresses.0.location_4326.geometries.0.coordinates",
+          "order": "latlon"
+        }
+      },
+      "parking": {
+        "id": "register_id",
+        "name": [
+          "name"
+        ],
+        "lang": "ca",
+        "defaultType": "off_street",
+        "address": {
+          "street": "addresses.0.address_name",
+          "houseNumber": "addresses.0.start_street_number",
+          "postalCode": "addresses.0.zip_code",
+          "city": "addresses.0.town"
+        }
+      },
+      "homepage": "https://opendata-ajuntament.barcelona.cat",
+      "id": "es-ct-barcelona-parking",
+      "domain": "parking",
+      "region": "es",
+      "file": "feeds/parking/es.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "ES"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "ES"
+    },
+    {
+      "subdivision": "md",
+      "operator": "madrid",
+      "product": "parking",
+      "name": "Ayuntamiento de Madrid municipal car parks",
+      "format": "csv",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://datos.madrid.es/dataset/202625-0-aparcamientos-publicos/resource/202625-3-aparcamientos-publicos-csv/download/202625-3-aparcamientos-publicos-csv.csv",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ayuntamiento de Madrid – datos.madrid.es, CC BY 4.0",
+      "privacyUrl": "https://datos.madrid.es/pages/proteccion-datos",
+      "layout": {
+        "lon": "LONGITUD",
+        "lat": "LATITUD",
+        "delimiter": ";",
+        "encoding": "latin1"
+      },
+      "parking": {
+        "id": "PK",
+        "name": [
+          "NOMBRE"
+        ],
+        "lang": "es",
+        "type": {
+          "field": {
+            "field": "NOMBRE",
+            "pattern": "^Aparcamiento (disuasorio)"
+          },
+          "map": {
+            "disuasorio": "park_and_ride"
+          }
+        },
+        "defaultType": "off_street",
+        "capacity": {
+          "field": "DESCRIPCION",
+          "pattern": "Plazas:\\s*(?:para automóviles:\\s*)?(\\d+)"
+        },
+        "address": {
+          "street": "NOMBRE-VIA",
+          "houseNumber": "NUM",
+          "postalCode": "CODIGO-POSTAL",
+          "city": "LOCALIDAD"
+        },
+        "website": "CONTENT-URL",
+        "openingHours": {
+          "field": "HORARIO",
+          "syntax": "text"
+        },
+        "notes": "DESCRIPCION"
+      },
+      "homepage": "https://datos.madrid.es",
+      "id": "es-md-madrid-parking",
+      "domain": "parking",
+      "region": "es",
+      "file": "feeds/parking/es.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "ES"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "ES"
+    },
+    {
+      "operator": "bnls",
+      "product": "parking",
+      "name": "Base nationale des lieux de stationnement",
+      "format": "csv",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://transport.data.gouv.fr/resources/78899/download",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "transport.data.gouv.fr – Base nationale des lieux de stationnement, ODbL",
+      "privacyUrl": "https://doc.transport.data.gouv.fr/le-point-d-acces-national/generalites/mentions-legales-et-conditions-generales-dutilisation",
+      "layout": {
+        "lon": "Xlong",
+        "lat": "Ylat",
+        "delimiter": ";"
+      },
+      "parking": {
+        "id": "id",
+        "name": [
+          "nom"
+        ],
+        "lang": "fr",
+        "defaultType": "off_street",
+        "layout": {
+          "field": "type_ouvrage",
+          "map": {
+            "enclos_en_surface": "surface"
+          }
+        },
+        "capacity": "nb_places",
+        "address": {
+          "text": "adresse"
+        },
+        "website": "url",
+        "notes": "info",
+        "free": {
+          "field": "gratuit",
+          "equals": 1
+        },
+        "heightLimit": {
+          "field": "hauteur_max",
+          "unit": "cm"
+        },
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "disabled",
+            "capacity": "nb_pmr"
+          },
+          {
+            "vehicleType": "car",
+            "userGroup": "ev_charging",
+            "capacity": "nb_voitures_electriques"
+          },
+          {
+            "vehicleType": "car",
+            "userGroup": "car_sharing",
+            "capacity": "nb_autopartage"
+          },
+          {
+            "vehicleType": "motorcycle",
+            "userGroup": "any",
+            "capacity": "nb_2_rm"
+          },
+          {
+            "vehicleType": "bicycle",
+            "userGroup": "any",
+            "capacity": "nb_velo"
+          }
+        ],
+        "rates": {
+          "currency": "EUR",
+          "rows": [
+            {
+              "field": "tarif_1h",
+              "maxDuration": {
+                "value": 1,
+                "unit": "h"
+              }
+            },
+            {
+              "field": "tarif_2h",
+              "maxDuration": {
+                "value": 2,
+                "unit": "h"
+              }
+            },
+            {
+              "field": "tarif_3h",
+              "maxDuration": {
+                "value": 3,
+                "unit": "h"
+              }
+            },
+            {
+              "field": "tarif_4h",
+              "maxDuration": {
+                "value": 4,
+                "unit": "h"
+              }
+            },
+            {
+              "field": "tarif_24h",
+              "maxDuration": {
+                "value": 24,
+                "unit": "h"
+              }
+            }
+          ]
+        }
+      },
+      "homepage": "https://transport.data.gouv.fr",
+      "id": "fr-bnls-parking",
+      "domain": "parking",
+      "region": "fr",
+      "file": "feeds/parking/fr.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "FR"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "FR"
+    },
+    {
+      "subdivision": "eng",
+      "operator": "netraveldata",
+      "product": "parking",
+      "name": "North East Travel Data car parks",
+      "format": "utmc",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://www.netraveldata.co.uk/api/v2/carpark/static",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://www.netraveldata.co.uk/api/v2/carpark/dynamic",
+          "cadenceSec": 120
+        }
+      },
+      "credentials": {
+        "username": {
+          "title": "NE Travel Data username",
+          "description": "The username of a netraveldata.co.uk account; the website login is the API credential.",
+          "setup": {
+            "url": "https://www.netraveldata.co.uk/?page_id=9",
+            "urlLabel": "Register for NE Travel Data",
+            "steps": [
+              "Go to the UTMC Open Data Service (NE Travel Data) at netraveldata.co.uk and register a free account via the 'Register' link.",
+              "Confirm your registration email and set a password.",
+              "Use the username you signed up with as this value — the same site account credentials authenticate the API feeds."
+            ],
+            "cost": "Free",
+            "notes": "This is the Newcastle / Tyne & Wear (UTMC) feed at netraveldata.co.uk — not a Glasgow contact. The website login you create is the API credential.",
+            "email": {
+              "to": "info@netraveldata.co.uk",
+              "subject": "API access request — UTMC Open Data Service (car park feed)",
+              "body": "Hello,\n\nI would like to access the UTMC / NE Travel Data open-data API, in particular the car park occupancy feeds for Tyne & Wear / Newcastle.\n\nI have registered an account on netraveldata.co.uk; could you please confirm that my account credentials are enabled for API access, or advise if any additional registration step is required?\n\nIntended use: integrating live car-park availability into an open-source mapping application.\n\nThank you,\n[Your name]"
+            }
+          }
+        },
+        "password": {
+          "title": "NE Travel Data password",
+          "description": "The password of the same netraveldata.co.uk account.",
+          "setup": {
+            "url": "https://www.netraveldata.co.uk/?page_id=9",
+            "urlLabel": "Register for NE Travel Data",
+            "steps": [
+              "During registration on netraveldata.co.uk, set (or reset) the password for your account.",
+              "Use that account password as this value.",
+              "The username + password pair is sent as HTTP credentials when fetching the UTMC car-park feed."
+            ],
+            "cost": "Free",
+            "notes": "Same netraveldata.co.uk account as the UTMC username — there is no separate API password; the website login doubles as the API credential."
+          }
+        }
+      },
+      "auth": {
+        "kind": "basic",
+        "user": "username",
+        "password": "password"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "OGL-UK-3.0",
+      "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+      "attribution": "Contains public sector information licensed under the Open Government Licence v3.0 (North East UTMC / Newcastle City Council)",
+      "privacyUrl": "https://www.netraveldata.co.uk/?page_id=610",
+      "homepage": "https://www.netraveldata.co.uk",
+      "id": "gb-eng-netraveldata-parking",
+      "domain": "parking",
+      "region": "gb",
+      "file": "feeds/parking/gb.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "GB"
+        ]
+      },
+      "cadenceSec": 120,
+      "country": "GB"
+    },
+    {
+      "operator": "osm",
+      "product": "parking",
+      "name": "OpenStreetMap parking",
+      "format": "overpass",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"parking\"]({south},{west},{north},{east});out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmParking/1.0 (+https://github.com/openconditions/openconditions)"
+          },
+          "cadenceSec": 3600
+        }
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 30,
+        "perDay": 5000
+      },
+      "onDemand": {
+        "cellDeg": 0.05,
+        "ttlSec": 21600,
+        "maxCellsPerRead": 16,
+        "probe": [
+          8.4,
+          49.01
+        ]
+      },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "osm-parking",
+      "domain": "parking",
+      "region": "global",
+      "file": "feeds/parking/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "cadenceSec": 3600
+    },
+    {
+      "subdivision": "52",
+      "operator": "florence",
+      "product": "parking",
+      "name": "Comune di Firenze free spaces in car parks",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://datigis.comune.fi.it/resources/open-data/dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi/fipark_posti_liberi.geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Comune di Firenze / Firenze Parcheggi, CC BY 4.0",
+      "privacyUrl": "https://www.comune.fi.it/pagina/privacy",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": [
+          "nome"
+        ],
+        "lang": "it",
+        "defaultType": "off_street",
+        "capacity": "posti_totali",
+        "available": "posti_liberi",
+        "updated": {
+          "field": "ultimo_aggiornamento",
+          "timezone": "Europe/Rome"
+        },
+        "address": {
+          "postalCode": "cap",
+          "city": "citta",
+          "text": "indirizzo"
+        },
+        "openingHours": {
+          "field": "orario",
+          "syntax": "text"
+        },
+        "tariffText": "tariffe",
+        "areas": [
+          {
+            "vehicleType": "car",
+            "userGroup": "disabled",
+            "capacity": {
+              "field": "posti_riservati_disabili",
+              "pattern": "^(\\d+)"
+            }
+          }
+        ]
+      },
+      "homepage": "https://datigis.comune.fi.it",
+      "id": "it-52-florence-parking",
+      "domain": "parking",
+      "region": "it",
+      "file": "feeds/parking/it.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "IT"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "IT"
+    },
+    {
+      "subdivision": "32",
+      "operator": "opendatahub",
+      "product": "parking",
+      "name": "Open Data Hub South Tyrol parking",
+      "format": "opendatahub",
+      "tier": "aggregator",
+      "endpoints": {
+        "sites": {
+          "url": "https://mobility.api.opendatahub.com/v2/flat/ParkingStation?limit=-1&where=sactive.eq.true,sorigin.neq.SBB&shownull=false&distinct=true",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://mobility.api.opendatahub.com/v2/flat/ParkingStation/*/latest?limit=-1&where=sactive.eq.true,sorigin.neq.SBB&shownull=false&distinct=true",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Open Data Hub – NOI Techpark",
+      "terms": {
+        "url": "https://github.com/noi-techpark/odh-docs/blob/master/source/datasets.rst",
+        "reviewedAt": "2026-10-05",
+        "note": "Open Data Hub states that anonymous API responses are always distributed as Open Data; no licence is named",
+        "redistribution": true
+      },
+      "privacyUrl": "https://noi.bz.it/en/privacy",
+      "homepage": "https://opendatahub.com/",
+      "id": "it-32-opendatahub-parking",
+      "domain": "parking",
+      "region": "it",
+      "file": "feeds/parking/it.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "IT"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "IT"
+    },
+    {
+      "operator": "cita",
+      "product": "parking",
+      "name": "CITA motorway parking",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://www.cita.lu/info_trafic/datex/parking_static.xml",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://www.cita.lu/info_trafic/datex/parking_dynamic.xml",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Administration des Ponts et Chaussées – CITA",
+      "privacyUrl": "https://data.public.lu/en/pages/legal/privacy/",
+      "homepage": "https://www.cita.lu",
+      "id": "lu-cita-parking",
+      "domain": "parking",
+      "region": "lu",
+      "file": "feeds/parking/lu.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "LU"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "LU"
+    },
+    {
+      "operator": "rdw",
+      "product": "parking",
+      "name": "RDW parking areas",
+      "format": "rdw",
+      "tier": "authoritative",
+      "endpoints": {
+        "specs": {
+          "url": "https://opendata.rdw.nl/resource/b3us-f26s.json?$limit=50000",
+          "cadenceSec": 86400
+        },
+        "areas": {
+          "urls": [
+            "https://opendata.rdw.nl/resource/t5pc-eb34.json?$limit=50000",
+            "https://opendata.rdw.nl/resource/6wzd-evwu.json?$limit=50000",
+            "https://opendata.rdw.nl/resource/9c54-cmfx.json?$limit=50000"
+          ],
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "RDW",
+      "privacyUrl": "https://www.rdw.nl/over-rdw/privacy-en-security/privacyverklaring",
+      "homepage": "https://opendata.rdw.nl",
+      "id": "nl-rdw-parking",
+      "domain": "parking",
+      "region": "nl",
+      "file": "feeds/parking/nl.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NL"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "NL"
+    },
+    {
+      "operator": "ndw",
+      "qualifier": "truck",
+      "product": "parking",
+      "name": "NDW truck parking",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://opendata.ndw.nu/Truckparking_Parking_Table.xml",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://opendata.ndw.nu/Truckparking_Parking_Status.xml",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "NDW",
+      "privacyUrl": "https://www.ndw.nu/service/privacy",
+      "homepage": "https://opendata.ndw.nu",
+      "id": "nl-ndw-truck-parking",
+      "domain": "parking",
+      "region": "nl",
+      "file": "feeds/parking/nl.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NL"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "NL"
+    },
+    {
+      "operator": "hdb",
+      "product": "parking",
+      "name": "HDB car parks",
+      "format": "hdb",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://data.gov.sg/api/action/datastore_search?resource_id=d_23f946fa557947f93a8043bbef41dd09&limit=5000",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://api.data.gov.sg/v1/transport/carpark-availability",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 60
+      },
+      "license": "LicenseRef-Singapore-ODL-1.0",
+      "licenseUrl": "https://data.gov.sg/open-data-licence",
+      "attribution": "Contains information from HDB Carpark Information and Carpark Availability from data.gov.sg, made available under the terms of the Singapore Open Data Licence version 1.0 (https://data.gov.sg/open-data-licence)",
+      "terms": {
+        "url": "https://data.gov.sg/open-data-licence",
+        "reviewedAt": "2026-10-05",
+        "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from data.gov.sg. Availability API: 60 requests/minute per API key."
+      },
+      "privacyUrl": "https://data.gov.sg/privacy-and-terms",
+      "homepage": "https://data.gov.sg",
+      "id": "sg-hdb-parking",
+      "domain": "parking",
+      "region": "sg",
+      "file": "feeds/parking/sg.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "SG"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "SG"
+    }
+  ]
+}

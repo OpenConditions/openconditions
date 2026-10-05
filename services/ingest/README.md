@@ -1,9 +1,11 @@
 # OpenConditions Ingest
 
-Fetches open road-condition feeds, parses road events into model situations and
-flow feeds into measurement sites (features) and their `traffic.*` readings
-(observations), and writes them to the shared PostGIS
-`conditions` schema. Also serves the public,
+Fetches open road-condition, fuel and parking feeds, parses road events into
+model situations, flow feeds into measurement sites (features) and their
+`traffic.*` readings (observations), fuel feeds into stations and their prices,
+and parking feeds into parking sites, their `parking.*` occupancy readings and
+their rates (offers), and writes them to the shared PostGIS `conditions`
+schema. Also serves the public,
 rate-limited record API (described at `GET /openapi.json`) and the routing
 outputs (`/segments/conditions.json`, Valhalla exclusions):
 
@@ -85,11 +87,12 @@ escapes it.
     data-manager send as their bearer token; the two are set separately.
     Without it, OpenMapX reads in the public scope and serves no Tankerkönig
     (DE), E-Control (AT) or OpenStreetMap station: its fuel layer shows France
-    and Spain only. Its reads also count against `RATE_LIMIT_MAX` like any
+    and Spain only, and its parking layer no OpenStreetMap, BNLS (FR) or
+    Mobidrom Park+Ride (DE) site. Its reads also count against `RATE_LIMIT_MAX` like any
     public client's, which operator scope skips. Set here but different from
     OpenMapX's, every OpenMapX read fails with 401, which stops the road
-    conditions overlay, closure avoidance, fuel search and the traffic
-    cycles. So set this credential first, then OpenMapX's `.env`, and change
+    conditions overlay, closure avoidance, fuel and parking search and the
+    traffic cycles. So set this credential first, then OpenMapX's `.env`, and change
     both together when rotating it. After changing OpenMapX's
     `OPENCONDITIONS_OPERATOR_TOKEN`, run
     `pnpm openmapx services start app-api data-manager` on the OpenMapX host;

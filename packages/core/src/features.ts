@@ -1,4 +1,9 @@
-import { canonicalIdOf, parseRecordId } from "@openconditions/model";
+import {
+  canonicalIdOf,
+  type LinkableFeature,
+  parseRecordId,
+  survivorRank,
+} from "@openconditions/model";
 import type { CanonicalFeature } from "./db/records.js";
 import type { QueryRunner } from "./query-runner.js";
 import { binder, type RecordFilters, recordFilterClauses } from "./record-filters.js";
@@ -135,11 +140,14 @@ export async function listCanonicalFeatures(
  * The canonical feature of a cluster as a record: the survivor's record
  * under the cluster's canonical id, with the canonical component set (the
  * union of the members' components, keyed as the fused and crowd rows key
- * them), the other members credited in `provenance.mergedSources` and every
- * member named in `provenance.derivedFrom`. Built from `members` only, so a
+ * them), the other members credited in `provenance.mergedSources` (each with
+ * its own upstream publishers) and every member named in
+ * `provenance.derivedFrom`. A survivor without a name takes the first name
+ * another member has, publisher feeds before OSM. Built from `members` only, so a
  * caller that withholds a member (scope, licence egress) withholds its components
- * and credit too; the cluster's survivor is replaced by the first member
- * left when it is withheld. Undefined when no member is left.
+ * and credit too; the cluster's survivor is replaced by the highest-ranked
+ * member left (`survivorRank`, then id) when it is withheld. Undefined when no
+ * member is left.
  */
 export function canonicalFeatureRecord(
   cluster: Pick<CanonicalFeature, "canonicalFeatureId" | "survivorId" | "memberIds" | "components">,
@@ -148,7 +156,12 @@ export function canonicalFeatureRecord(
   const byId = new Map(members.map((m) => [m["id"] as string, m]));
   const present = cluster.memberIds.filter((id) => byId.has(id));
   if (present.length === 0) return undefined;
-  const survivorId = byId.has(cluster.survivorId) ? cluster.survivorId : present[0]!;
+  const rankOf = (m: Rec) => survivorRank(m as unknown as LinkableFeature);
+  const byRank = (x: Rec, y: Rec) =>
+    rankOf(y) - rankOf(x) || (x["id"] as string).localeCompare(y["id"] as string);
+  const survivorId = byId.has(cluster.survivorId)
+    ? cluster.survivorId
+    : (present.map((id) => byId.get(id)!).sort(byRank)[0]!["id"] as string);
   const survivor = byId.get(survivorId)!;
   const componentOf = (featureId: string, key: string) =>
     ((byId.get(featureId)?.["components"] as Rec[] | undefined) ?? []).find(
@@ -174,15 +187,20 @@ export function canonicalFeatureRecord(
     (c) => c["parentKey"] === undefined || keys.has(c["parentKey"] as string),
   );
   const provenance = survivor["provenance"] as Rec;
-  const others = present.filter((id) => id !== survivorId).map((id) => byId.get(id)!);
+  const others = present
+    .filter((id) => id !== survivorId)
+    .map((id) => byId.get(id)!)
+    .sort(byRank);
   const merged = [
     ...((provenance["mergedSources"] as Rec[] | undefined) ?? []),
     ...others.map((m) => {
       const p = m["provenance"] as Rec;
+      const upstream = p["upstream"] as Rec[] | undefined;
       return {
         source: p["sourceId"],
         recordId: m["id"],
         attribution: p["attribution"],
+        ...(upstream === undefined || upstream.length === 0 ? {} : { upstream }),
         link: "same_asset",
       };
     }),
@@ -190,8 +208,12 @@ export function canonicalFeatureRecord(
   const id = cluster.canonicalFeatureId;
   const parts = parseRecordId(id);
   const { components: _components, ...record } = survivor;
+  // A survivor without a name takes the first name a member has, in rank order.
+  const named = (m: Rec) => ((m["name"] as unknown[] | undefined) ?? []).length > 0;
+  const name = named(survivor) ? undefined : others.find(named)?.["name"];
   return {
     ...record,
+    ...(name === undefined ? {} : { name }),
     id,
     ...(parts ? { canonicalId: canonicalIdOf(parts.namespace, parts.localId) } : {}),
     ...(kept.length > 0 ? { components: kept } : {}),

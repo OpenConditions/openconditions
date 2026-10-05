@@ -7,6 +7,7 @@ import {
   matchOsm,
   proposeLink,
   representativePoint,
+  survivorRank,
   tokenSimilarity,
 } from "../index.js";
 
@@ -288,6 +289,64 @@ describe("canonicalClusters", () => {
       rank: (f) => (f.id === "oc:feature:b:1" ? 1 : 0),
     });
     expect(clusters[0]?.survivorId).toBe("oc:feature:b:1");
+  });
+
+  it("ranks a publisher feed's member above an OSM one, then by id", () => {
+    const osm = site("oc:feature:osm-parking:way/1", 8.4, 49, {
+      provenance: { sourceId: "osm-parking", sourceFormat: "overpass", accessMode: "on_demand" },
+    });
+    const hdb = site("oc:feature:sg-hdb-parking:BTM", 8.4, 49, {
+      provenance: { sourceId: "sg-hdb-parking", sourceFormat: "json", accessMode: "bulk" },
+    });
+    const vienna = site("oc:feature:at-9-vienna-parking:1", 8.4, 49, {
+      provenance: { sourceId: "at-9-vienna-parking", sourceFormat: "json", accessMode: "bulk" },
+    });
+    expect(survivorRank(hdb)).toBeGreaterThan(survivorRank(osm));
+    const [pair] = canonicalClusters([osm, hdb], [link(osm.id, hdb.id)], {
+      instanceId: "oc.example",
+      rank: survivorRank,
+    });
+    expect(pair?.survivorId).toBe(hdb.id);
+    const [three] = canonicalClusters(
+      [osm, hdb, vienna],
+      [link(osm.id, hdb.id), link(osm.id, vienna.id), link(hdb.id, vienna.id)],
+      { instanceId: "oc.example", rank: survivorRank },
+    );
+    expect(three?.survivorId).toBe(vienna.id);
+  });
+
+  it("ranks an on-demand publisher feed above OSM whatever its id", () => {
+    const pair = (domain: string, kind: string) => {
+      const osm = site(`oc:feature:osm-${domain}:node/1`, 8.4, 49, {
+        kind,
+        provenance: {
+          sourceId: `osm-${domain}`,
+          sourceFormat: "overpass",
+          accessMode: "on_demand",
+        },
+      });
+      const feed = site(`oc:feature:pt-feed-${domain}:1`, 8.4, 49, {
+        kind,
+        provenance: {
+          sourceId: `pt-feed-${domain}`,
+          sourceFormat: "json",
+          accessMode: "on_demand",
+        },
+      });
+      expect(feed.id > osm.id).toBe(true);
+      const [cluster] = canonicalClusters([osm, feed], [link(osm.id, feed.id)], {
+        instanceId: "oc.example",
+        rank: survivorRank,
+      });
+      return { cluster, feed };
+    };
+    for (const [domain, kind] of [
+      ["fuel", "fuel_station"],
+      ["parking", "parking_site"],
+    ] as const) {
+      const { cluster, feed } = pair(domain, kind);
+      expect(cluster?.survivorId).toBe(feed.id);
+    }
   });
 });
 

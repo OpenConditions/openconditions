@@ -582,8 +582,15 @@
     "contentHash": "ada0fcaed7710483f357dc3a635587d0c38efd1c642b3f85fa7114d69e2b3751"
   },
   {
-    "id": "oc:feature:de-bw-parkapi:390",
+    "id": "oc:feature:de-bw-mobidata-parking:390",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "390",
+        "authority": "de-bw-mobidata-parking/pbw"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -595,6 +602,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      },
       "address": {
         "country": "DE",
         "text": "Erzbergerstraße 117, 76133 Karlsruhe"
@@ -602,17 +612,18 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-parkapi",
-      "sourceFormat": "parkapi",
+      "sourceId": "de-bw-mobidata-parking",
+      "sourceFormat": "parkapi-v3",
       "accessMode": "bulk",
       "recordId": "390",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW)",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
-          "publisher": "pbw",
+          "publisher": "Parkraumgesellschaft Baden-Württemberg",
           "recordId": "110"
         }
       ],
@@ -641,27 +652,35 @@
           "lang": "de",
           "text": "Parkraumgesellschaft Baden-Württemberg mbH"
         }
-      ],
-      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*110"
+      ]
     },
     "details": {
       "kind": "parking_site",
       "v": 1,
+      "layout": "underground",
       "capacityTotal": 337,
       "heightLimit": {
         "value": 2,
         "unit": "m"
-      }
+      },
+      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*110"
     },
-    "canonicalId": "b3cd0e706325fd21d52e896f7ac682ff4680a8116499db68c1adba34e85da8b6",
+    "canonicalId": "a0353988e612ec016c37d0f29371dafc70dc88d20d5e0c9b6f452fb3a3e755ce",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "428d1c9acd7ab83df70fa1fcab15c7a9f14dd12801d016749c9f4bee879c78ad"
+    "contentHash": "f98b17abb2f3d7a24b26554ebc50c1eede8ed2bfe717da844c2054cda42be64c"
   },
   {
-    "id": "oc:feature:de-bw-parkapi:391",
+    "id": "oc:feature:de-bw-mobidata-parking:391",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "391",
+        "authority": "de-bw-mobidata-parking/pbw"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -673,6 +692,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      },
       "address": {
         "country": "DE",
         "text": "Ritterstraße 20, 76133 Karlsruhe"
@@ -680,17 +702,18 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-parkapi",
-      "sourceFormat": "parkapi",
+      "sourceId": "de-bw-mobidata-parking",
+      "sourceFormat": "parkapi-v3",
       "accessMode": "bulk",
       "recordId": "391",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW)",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
-          "publisher": "pbw",
+          "publisher": "Parkraumgesellschaft Baden-Württemberg",
           "recordId": "111"
         }
       ],
@@ -719,27 +742,35 @@
           "lang": "de",
           "text": "Parkraumgesellschaft Baden-Württemberg mbH"
         }
-      ],
-      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*111"
+      ]
     },
     "details": {
       "kind": "parking_site",
       "v": 1,
+      "layout": "underground",
       "capacityTotal": 100,
       "heightLimit": {
         "value": 2,
         "unit": "m"
-      }
+      },
+      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*111"
     },
-    "canonicalId": "f510104001225c21906e83b8915c495350cedcca8b02bb1ed7f15d5a061978cd",
+    "canonicalId": "c65a0730cef83454abe85f194e790481f864885d5ed1b9d3c72d8f73060c1f84",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "b9d3aa6feea52f2bf77b810467141ed37480b1fcc0bfe9e1af1b02f47191715b"
+    "contentHash": "64aec14d6dc1db128dd4bf54bd12eab7efe3101b2208251843ca94748faab8fa"
   },
   {
-    "id": "oc:feature:de-bw-parkapi:384",
+    "id": "oc:feature:de-bw-mobidata-parking:384",
     "temporality": "static",
+    "externalIds": [
+      {
+        "scheme": "provider",
+        "id": "384",
+        "authority": "de-bw-mobidata-parking/pbw"
+      }
+    ],
     "location": {
       "geometry": {
         "type": "Point",
@@ -751,6 +782,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      },
       "address": {
         "country": "DE",
         "text": "Flandernstraße 101 A, 73732 Esslingen"
@@ -758,17 +792,18 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-parkapi",
-      "sourceFormat": "parkapi",
+      "sourceId": "de-bw-mobidata-parking",
+      "sourceFormat": "parkapi-v3",
       "accessMode": "bulk",
       "recordId": "384",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW)",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
-          "publisher": "pbw",
+          "publisher": "Parkraumgesellschaft Baden-Württemberg",
           "recordId": "8"
         }
       ],
@@ -797,26 +832,27 @@
           "lang": "de",
           "text": "Parkraumgesellschaft Baden-Württemberg mbH"
         }
-      ],
-      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*8"
+      ]
     },
     "details": {
       "kind": "parking_site",
       "v": 1,
+      "layout": "multi_storey",
       "capacityTotal": 459,
       "heightLimit": {
         "value": 1.85,
         "unit": "m"
-      }
+      },
+      "website": "https://www.pbw.de/?menu=parkplatz-finder&search=*8"
     },
-    "canonicalId": "3a83f40f3e9991c446a6df2616e5e461456d33fb0c53126fcd05f22aabd02e30",
+    "canonicalId": "8eba655a65138363c11045d4bf9235854284bba323f0c1e34fd5fb280b23979c",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "f68ba7e5f8e6a49aaeb54f7025da447a508a63f58b52003ae4654ef136355e7d"
+    "contentHash": "d93de0fac3dc892ffa19727eaa49e786d9084586ad484f59a6c3509e60c56671"
   },
   {
-    "id": "oc:observation:de-bw-parkapi:a6eaf4d4ab5c7bda17e82adf4b8a77c2b07628abe163544b2b50501d5ac94a59",
+    "id": "oc:observation:de-bw-mobidata-parking:5dda9bd294327a42bd465b564a34bf6cf6c1d426ada6f5957ca2b3715a24776b",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -828,28 +864,19 @@
       },
       "extent": "point",
       "geometryOrigin": "source",
-      "fuzziness": "exact",
-      "address": {
-        "country": "DE",
-        "text": "Erzbergerstraße 117, 76133 Karlsruhe"
-      }
+      "fuzziness": "exact"
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-parkapi",
-      "sourceFormat": "parkapi",
+      "sourceId": "de-bw-mobidata-parking",
+      "sourceFormat": "parkapi-v3",
       "accessMode": "bulk",
       "recordId": "390",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW)",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "upstream": [
-        {
-          "publisher": "pbw",
-          "recordId": "110"
-        }
-      ],
       "privacy": {
         "class": "authoritative"
       },
@@ -863,7 +890,7 @@
     "property": "parking.available",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:de-bw-parkapi:390"
+      "featureId": "oc:feature:de-bw-mobidata-parking:390"
     },
     "result": {
       "type": "count",
@@ -872,15 +899,16 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:11:29Z"
     },
+    "validUntil": "2026-09-22T11:41:29.000Z",
     "aggregation": "instantaneous",
-    "canonicalId": "8b3cc0e21defcea21c86cdd6f18fff9acc507e58b3a6971decec836a60054b57",
+    "canonicalId": "c91f433fec7b8c78d4e14c3d540c845d7109448e21752f104b44da3b243e97be",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "28d51a2987e88705f55970c827147f3b12da9ed7de7d3aff8faa801a69242763"
+    "contentHash": "72b1820c61bbd0ca30650818150a3a9f3184fa1d03f8ddbabd4b1fa2df53b75d"
   },
   {
-    "id": "oc:observation:de-bw-parkapi:5610b07a516db846a210b7afc53d7c6a9e1db273c23205473ecff7dc1e7deb49",
+    "id": "oc:observation:de-bw-mobidata-parking:84b91c4818b03b7f6c39b307f376278bddc74fd2edde3d776651ce6c08cec07a",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -892,28 +920,19 @@
       },
       "extent": "point",
       "geometryOrigin": "source",
-      "fuzziness": "exact",
-      "address": {
-        "country": "DE",
-        "text": "Ritterstraße 20, 76133 Karlsruhe"
-      }
+      "fuzziness": "exact"
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-parkapi",
-      "sourceFormat": "parkapi",
+      "sourceId": "de-bw-mobidata-parking",
+      "sourceFormat": "parkapi-v3",
       "accessMode": "bulk",
       "recordId": "391",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW)",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
-      "upstream": [
-        {
-          "publisher": "pbw",
-          "recordId": "111"
-        }
-      ],
       "privacy": {
         "class": "authoritative"
       },
@@ -927,7 +946,7 @@
     "property": "parking.available",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:de-bw-parkapi:391"
+      "featureId": "oc:feature:de-bw-mobidata-parking:391"
     },
     "result": {
       "type": "count",
@@ -936,21 +955,27 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:11:29Z"
     },
+    "validUntil": "2026-09-22T11:41:29.000Z",
     "aggregation": "instantaneous",
-    "canonicalId": "d8e4f8c830666c4378affe9a4d1353cf5cd6f1fb042fef52da25ba870cbfe390",
+    "canonicalId": "6be4f4a9e01201da8076ffc63f92ccb1b1c4de51e7133c0ea2f22051eeee0088",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "d0c1c0c1f865e4aec45277a3bd7fefb63e6456d37eabd268134cdcc405c1ebb8"
+    "contentHash": "83f627d701fd96aa989c246928bf777aace11576b5a5236d29d81e5e43378692"
   },
   {
-    "id": "oc:feature:nl-ndw-truckparking:NL-12_421",
+    "id": "oc:feature:nl-ndw-truck-parking:NL-12_421",
     "temporality": "static",
     "externalIds": [
       {
+        "scheme": "provider",
+        "id": "NL-12_421",
+        "authority": "nl-ndw-truck-parking"
+      },
+      {
         "scheme": "datex:parking",
         "id": "NL-12_421",
-        "authority": "NDW"
+        "authority": "NL-12"
       }
     ],
     "location": {
@@ -963,17 +988,25 @@
       },
       "extent": "point",
       "geometryOrigin": "source",
-      "fuzziness": "exact"
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NL"
+      },
+      "address": {
+        "country": "NL",
+        "text": "James Cookweg 31, 5928LJ Venlo"
+      }
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NL-12_421",
       "attribution": {
         "provider": "NDW",
-        "license": "CC0-1.0"
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -993,32 +1026,25 @@
       }
     ],
     "lifecycle": "operational",
+    "amenities": [
+      "charging_station",
+      "restaurant",
+      "fresh_water",
+      "waste_disposal",
+      "wifi",
+      "toilets",
+      "shower"
+    ],
     "components": [
       {
-        "key": "0",
+        "key": "truck:any",
         "kind": "parking_area",
         "details": {
           "kind": "parking_area",
           "v": 1,
-          "vehicleType": "any"
-        }
-      },
-      {
-        "key": "1",
-        "kind": "parking_area",
-        "details": {
-          "kind": "parking_area",
-          "v": 1,
-          "vehicleType": "any"
-        }
-      },
-      {
-        "key": "2",
-        "kind": "parking_area",
-        "details": {
-          "kind": "parking_area",
-          "v": 1,
-          "vehicleType": "any"
+          "vehicleType": "truck",
+          "userGroup": "any",
+          "capacity": 390
         }
       }
     ],
@@ -1035,22 +1061,30 @@
         "lighting",
         "guard_24h"
       ],
-      "supervision": "patrol"
+      "supervision": "patrol",
+      "usage": [
+        "truck"
+      ]
     },
-    "canonicalId": "61c1eb96467199890c796d8a548a49041a9183c4cee1ffe8c1093891ad1ca19d",
+    "canonicalId": "73cccaeeefc04018defc92542a05be21c5be8aab8f648e891a061bf8181e6978",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "fc762085caaf5f8a7ea9601c49754aea96600b0383645b6a7c2a6acee42fe9e2"
+    "contentHash": "9bd2cbc4eca743eeb8432141d27e8b9e2f8680cfd8108a9b25ed85fcca3078f3"
   },
   {
-    "id": "oc:feature:nl-ndw-truckparking:NL-12_8",
+    "id": "oc:feature:nl-ndw-truck-parking:NL-12_8",
     "temporality": "static",
     "externalIds": [
       {
+        "scheme": "provider",
+        "id": "NL-12_8",
+        "authority": "nl-ndw-truck-parking"
+      },
+      {
         "scheme": "datex:parking",
         "id": "NL-12_8",
-        "authority": "NDW"
+        "authority": "NL-12"
       }
     ],
     "location": {
@@ -1063,17 +1097,25 @@
       },
       "extent": "point",
       "geometryOrigin": "source",
-      "fuzziness": "exact"
+      "fuzziness": "exact",
+      "admin": {
+        "country": "NL"
+      },
+      "address": {
+        "country": "NL",
+        "text": "Nobisweg 1, 5721VA ASTEN"
+      }
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NL-12_8",
       "attribution": {
         "provider": "NDW",
-        "license": "CC0-1.0"
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1095,30 +1137,14 @@
     "lifecycle": "operational",
     "components": [
       {
-        "key": "0",
+        "key": "truck:any",
         "kind": "parking_area",
         "details": {
           "kind": "parking_area",
           "v": 1,
-          "vehicleType": "any"
-        }
-      },
-      {
-        "key": "1",
-        "kind": "parking_area",
-        "details": {
-          "kind": "parking_area",
-          "v": 1,
-          "vehicleType": "any"
-        }
-      },
-      {
-        "key": "2",
-        "kind": "parking_area",
-        "details": {
-          "kind": "parking_area",
-          "v": 1,
-          "vehicleType": "any"
+          "vehicleType": "truck",
+          "userGroup": "any",
+          "capacity": 210
         }
       }
     ],
@@ -1131,16 +1157,19 @@
         "lighting",
         "guard_24h"
       ],
-      "supervision": "patrol"
+      "supervision": "patrol",
+      "usage": [
+        "truck"
+      ]
     },
-    "canonicalId": "ea409da7b974b4e7c66862fc5f182aa901fd20f40fb3478d7d37706a8ff1046e",
+    "canonicalId": "0200478309cb6addca6a0cede18635c117c0641d74f4e3cde8b7b10e61c85618",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "75c560da6a44863b45efad883f9b4542f5402207d1466098d5d3bc0825b499cb"
+    "contentHash": "47f9e85b668b2c5e06bd47992591de5c47d65fe7746208e60d47affbc1646de9"
   },
   {
-    "id": "oc:observation:nl-ndw-truckparking:704f408dbf9f426af1808736a5332e335aa37693e1c4d9f57a9bf800385477d0",
+    "id": "oc:observation:nl-ndw-truck-parking:f1bc0fca67255d6cae1cc3ea76ab678d9d17d904e591ec2aa506513c306988bb",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -1156,67 +1185,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NL-12_421",
       "attribution": {
         "provider": "NDW",
-        "license": "CC0-1.0"
-      },
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "observation",
-    "kind": "observation",
-    "property": "parking.available",
-    "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421"
-    },
-    "result": {
-      "type": "count",
-      "value": 1746
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-22T11:06:57.472809998Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "5097fe42522b134cef9d92131fbe7da7e0405264cf8fd9eaba32d898de37ce24",
-    "domain": "parking",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "49f0f8271da0738341c84fd45f4f0e19314797de8c9f3b40b504de2b1c1d6980"
-  },
-  {
-    "id": "oc:observation:nl-ndw-truckparking:3e5162ff27f0eba8210ee33e13ca597bf8651be07922cf8dfa3588d08010d0c0",
-    "temporality": "live",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          6.108905,
-          51.39038
-        ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact"
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
-      "accessMode": "bulk",
-      "recordId": "NL-12_421",
-      "attribution": {
-        "provider": "NDW",
-        "license": "CC0-1.0"
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1231,24 +1207,25 @@
     "property": "parking.occupied",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421"
+      "featureId": "oc:feature:nl-ndw-truck-parking:NL-12_421"
     },
     "result": {
       "type": "count",
       "value": 0
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:06:57.472809998Z"
+      "instant": "2026-09-22T11:06:57.472Z"
     },
+    "validUntil": "2026-09-22T11:36:57.472Z",
     "aggregation": "instantaneous",
-    "canonicalId": "ded5ca18e09e2aa73f1273c94a7e289d7289377fb1a6a2730fd38f845593d2ea",
+    "canonicalId": "5a0d6cbc68047310a4b287b04b16ce347335df1445c96e2fb0c0c438065f78e0",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "a29f8792ebb927c879d75a9dc047d52b1aa077623fbc325985941b1f6afab515"
+    "contentHash": "b8672f39de389d53fdc210779010c965f58ebcc98887b7c2c1c5d1e5db6b03d2"
   },
   {
-    "id": "oc:observation:nl-ndw-truckparking:89217f0a502cc4b89d1dc12897c2450cb18bde3b9da809f070b9a572366bd65e",
+    "id": "oc:observation:nl-ndw-truck-parking:5810fe4cef974c48168c9126314acd7a7e6ff82a67bc86c931aafa16f6730f23",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -1264,13 +1241,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NL-12_421",
       "attribution": {
         "provider": "NDW",
-        "license": "CC0-1.0"
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1285,7 +1263,7 @@
     "property": "parking.occupancy_pct",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421"
+      "featureId": "oc:feature:nl-ndw-truck-parking:NL-12_421"
     },
     "result": {
       "type": "quantity",
@@ -1293,17 +1271,18 @@
       "unit": "%"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:06:57.472809998Z"
+      "instant": "2026-09-22T11:06:57.472Z"
     },
+    "validUntil": "2026-09-22T11:36:57.472Z",
     "aggregation": "instantaneous",
-    "canonicalId": "6df62469ed4cb248a92ded734ff4c8f43721eca6a047acd8421feaeef1002b46",
+    "canonicalId": "acd2afcc73495fac2726aa2eb5e3ba753960984faf8fd941593acaae760deb46",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "618d7bedf46fd54b696ed3c870243023d107d77f9dc8796dc18db861e12c3d7a"
+    "contentHash": "197423740117ed651695b0d565039ad41d98350e92fb709d6e710b56d4e9be33"
   },
   {
-    "id": "oc:observation:nl-ndw-truckparking:0ea676cb6fb2e6b9b3a9e1c70162dd0d93985fbe7d47dd3390f8e253f7f157d8",
+    "id": "oc:observation:nl-ndw-truck-parking:3fe2a61f0b71037a0e62be85e1e06625f9a42130d6fed222a643d3e760ac4344",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -1319,13 +1298,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NL-12_421",
       "attribution": {
         "provider": "NDW",
-        "license": "CC0-1.0"
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1337,29 +1317,87 @@
     },
     "class": "observation",
     "kind": "observation",
-    "property": "parking.available",
+    "property": "parking.status",
     "subject": {
       "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421",
-      "componentKey": "1"
+      "featureId": "oc:feature:nl-ndw-truck-parking:NL-12_421"
     },
     "result": {
-      "type": "count",
-      "value": 291
+      "type": "category",
+      "value": "spaces_available",
+      "vocabulary": "parking_status"
     },
     "phenomenonTime": {
-      "instant": "2026-09-22T11:06:57.472809998Z"
+      "instant": "2026-09-22T11:06:57.472Z"
     },
+    "validUntil": "2026-09-22T11:36:57.472Z",
     "aggregation": "instantaneous",
-    "canonicalId": "746eb4c5b278878a46cb53a804ebd306e3b1fd07f6c1b2f796b3ca2024f4d4f2",
+    "canonicalId": "0434a82dbd52b437b1cc71bb6a64105dcff95c6465dd0ff5bf65cd070b30c511",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "cf85cf506ff6d023e9742c0579cf7981bea9770d9587572e037784ea11d87dd4"
+    "contentHash": "2bf335634c6b87ad0126931c7105e542657139f320e51e11c0e54dbe6fde8f90"
   },
   {
-    "id": "oc:observation:nl-ndw-truckparking:7e7050a9377230920409cbe906bbca31b48696cce6941d2aa7e424ba46c2455f",
+    "id": "oc:observation:nl-ndw-truck-parking:4e61c89a43616c400954ef16db9cfa55d695c072b6f50d6c2e8f803651648bd5",
     "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          5.7572865,
+          51.416557
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact"
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
+      "accessMode": "bulk",
+      "recordId": "NL-12_8",
+      "attribution": {
+        "provider": "NDW",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "fit.example"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z"
+    },
+    "class": "observation",
+    "kind": "observation",
+    "property": "parking.status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:nl-ndw-truck-parking:NL-12_8"
+    },
+    "result": {
+      "type": "category",
+      "value": "spaces_available",
+      "vocabulary": "parking_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:07:00.346Z"
+    },
+    "validUntil": "2026-09-22T11:37:00.346Z",
+    "aggregation": "instantaneous",
+    "canonicalId": "54551cd15d96aac9378f47ff6860e148e24e27d19447475d8670598a57cca81c",
+    "domain": "parking",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "contentHash": "4624cfb130136be99c77e317bac42eb5f13be7d56822546e71d329b174a03fed"
+  },
+  {
+    "id": "oc:offer:nl-ndw-truck-parking:NL-12_421:1",
+    "temporality": "static",
     "location": {
       "geometry": {
         "type": "Point",
@@ -1374,13 +1412,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
+      "sourceId": "nl-ndw-truck-parking",
+      "sourceFormat": "datex2",
       "accessMode": "bulk",
       "recordId": "NL-12_421",
       "attribution": {
         "provider": "NDW",
-        "license": "CC0-1.0"
+        "license": "CC0-1.0",
+        "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
       },
       "privacy": {
         "class": "authoritative"
@@ -1390,189 +1429,41 @@
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z"
     },
-    "class": "observation",
-    "kind": "observation",
-    "property": "parking.available",
+    "class": "offer",
+    "kind": "parking_rate",
     "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_421",
-      "componentKey": "2"
+      "class": "feature",
+      "id": "oc:feature:nl-ndw-truck-parking:NL-12_421"
     },
-    "result": {
-      "type": "count",
-      "value": 291
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-22T11:06:57.472809998Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "8d7ca2c82a0ed17bcef974756c3e9db36252bc689e0df9eb173e3d542aa7535b",
-    "domain": "parking",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "6e08324e0aeec7c0097a0f8cc161d4ad99ac70b0b8e3c4dc362ddfe8f21b0d43"
-  },
-  {
-    "id": "oc:observation:nl-ndw-truckparking:e920df436809e9085884edc2e5eae2aade87567e0d445b0671afacd05da82c99",
-    "temporality": "live",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7572865,
-          51.416557
+    "currency": "EUR",
+    "elements": [
+      {
+        "components": [
+          {
+            "type": "parking_time",
+            "price": {
+              "amount": "1.00",
+              "currency": "EUR"
+            },
+            "stepSize": 3600
+          }
         ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact"
+      }
+    ],
+    "validity": {
+      "status": "active"
     },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
-      "accessMode": "bulk",
-      "recordId": "NL-12_8",
-      "attribution": {
-        "provider": "NDW",
-        "license": "CC0-1.0"
-      },
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "observation",
-    "kind": "observation",
-    "property": "parking.available",
-    "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_8"
-    },
-    "result": {
-      "type": "count",
-      "value": 1601
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-22T11:07:00.346688815Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "3ff87369b074f639e8599641a772f501f32c268f469c885ce0081f1494c0d2af",
+    "displayText": [
+      {
+        "lang": "nl",
+        "text": "Tarief per uur"
+      }
+    ],
+    "canonicalId": "88944f9ae27064f50dc51d2d912e617cb5deeb8b14a50e7e01202f315b194fb2",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "3c6f844ca6d8587c2867a37a13c7b7ddc553d13a1f9c947d71b4bce7ca4cc9be"
-  },
-  {
-    "id": "oc:observation:nl-ndw-truckparking:d6926e6ec014aec6692399bf96f65e36058cca708aee1de5996f8af880531dbe",
-    "temporality": "live",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7572865,
-          51.416557
-        ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact"
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
-      "accessMode": "bulk",
-      "recordId": "NL-12_8",
-      "attribution": {
-        "provider": "NDW",
-        "license": "CC0-1.0"
-      },
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "observation",
-    "kind": "observation",
-    "property": "parking.occupied",
-    "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_8"
-    },
-    "result": {
-      "type": "unknown"
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-22T11:07:00.346688815Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "5a7dc3c9590754e83d25d46c940d383ea68ebd8f5dc2e9cbed291572ac4740c1",
-    "domain": "parking",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "be98bc824817ba27142df491a549c20c686066c2f6c0a5431672315378118d51"
-  },
-  {
-    "id": "oc:observation:nl-ndw-truckparking:5ab82937c96f93703c875f3c6e429b7c1ba0a4be046909c74f195483dfc19786",
-    "temporality": "live",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          5.7572865,
-          51.416557
-        ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact"
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "nl-ndw-truckparking",
-      "sourceFormat": "datex2-parking",
-      "accessMode": "bulk",
-      "recordId": "NL-12_8",
-      "attribution": {
-        "provider": "NDW",
-        "license": "CC0-1.0"
-      },
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "observation",
-    "kind": "observation",
-    "property": "parking.occupancy_pct",
-    "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:nl-ndw-truckparking:NL-12_8"
-    },
-    "result": {
-      "type": "quantity",
-      "value": -637,
-      "unit": "%"
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-22T11:07:00.346688815Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "cd42e8ca5052383dc5afb20e0d989b306222810247f0721b6a9c785b761f70ea",
-    "domain": "parking",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "bb29e80d9e245fc4f0293a3a941dd28339106da9cdfddd4aa73d44e242ef302e"
+    "contentHash": "9ce0e206162de1bc1d702673352e8209a20addb9c5f7dfea227362715e381ab9"
   },
   {
     "id": "oc:feature:de-autobahn-events:DE-SL-000009",
@@ -1597,7 +1488,7 @@
       "recordId": "DE-SL-000009",
       "attribution": {
         "provider": "Autobahn GmbH des Bundes",
-        "license": "CC-BY-4.0"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -1651,7 +1542,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "2bef2a725661ad0fd4e025c9b0127baa08b5304a5735ed6810087f87fd845bf1"
+    "contentHash": "68e738014538c71fe9dca82e79be8d4e0c31c537d5e2dcec97eccf7fb7c84bb6"
   },
   {
     "id": "oc:feature:de-autobahn-events:DE-SL-000008",
@@ -1676,7 +1567,7 @@
       "recordId": "DE-SL-000008",
       "attribution": {
         "provider": "Autobahn GmbH des Bundes",
-        "license": "CC-BY-4.0"
+        "license": "NOASSERTION"
       },
       "privacy": {
         "class": "authoritative"
@@ -1730,7 +1621,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "94f4589c36d7261844707007b87770518dac7bc6d7b0cf0729c885df27db0966"
+    "contentHash": "b15b0edd2702e9629604fc0b3050ecd83eaee91876faa124c08c7378ad009299"
   },
   {
     "id": "oc:feature:es-minetur-fuel:3119",

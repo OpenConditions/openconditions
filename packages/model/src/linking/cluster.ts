@@ -51,6 +51,16 @@ class Clusters {
 const pairKey = (a: string, b: string) => (a < b ? `${a}\u0000${b}` : `${b}\u0000${a}`);
 
 /**
+ * The survivor rank of the canonical view: a publisher feed's member above a
+ * community-mapped one (OSM, read through Overpass), whose record is thinner,
+ * whatever either feed's access mode. The survivor's record is the canonical
+ * record, so it should be the authoritative one.
+ */
+export function survivorRank(feature: Pick<LinkableFeature, "provenance">): number {
+  return feature.provenance.sourceFormat === "overpass" ? 0 : 1;
+}
+
+/**
  * Groups features into canonical clusters from the accepted links. Two
  * clusters only merge when every feature of one links to every feature of the
  * other: without that guard a line of separately-accepted pairs, each within

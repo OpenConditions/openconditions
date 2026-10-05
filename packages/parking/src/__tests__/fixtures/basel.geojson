@@ -1,0 +1,113 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.5824076,
+          47.561101
+        ]
+      },
+      "properties": {
+        "title": "Parkhaus City",
+        "published": "2026-10-05T03:12:00+00:00",
+        "free": 1057,
+        "total": 1114,
+        "anteil_frei": 0.9488330341113106,
+        "auslastung": 0.05116696588868941,
+        "auslastung_prozent": 5,
+        "link": "https://www.parkleitsystem-basel.ch/parkhaus/city",
+        "name": "City",
+        "id2": "city",
+        "id": "baselparkhauscity",
+        "status": "offen",
+        "last_downloaded": "2026-10-05T03:12:04+00:00",
+        "address": "Schanzenstrasse 48",
+        "lot_type": "Parkhaus"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.594263,
+          47.5607142
+        ]
+      },
+      "properties": {
+        "title": "Parkhaus Rebgasse",
+        "published": "2026-10-05T03:12:00+00:00",
+        "free": 227,
+        "total": 250,
+        "anteil_frei": 0.908,
+        "auslastung": 0.09199999999999997,
+        "auslastung_prozent": 9,
+        "link": "https://www.parkleitsystem-basel.ch/parkhaus/rebgasse",
+        "name": "Rebgasse",
+        "id2": "rebgasse",
+        "id": "baselparkhausrebgasse",
+        "status": "zu",
+        "last_downloaded": "2026-10-05T03:12:04+00:00",
+        "address": "Rebgasse 20",
+        "lot_type": "Parkhaus"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.5929374,
+          47.5468617
+        ]
+      },
+      "properties": {
+        "title": "Parkhaus Post Basel",
+        "published": "2026-10-05T03:12:00+00:00",
+        "free": 77,
+        "total": null,
+        "anteil_frei": null,
+        "auslastung": null,
+        "auslastung_prozent": null,
+        "link": "https://www.parkleitsystem-basel.ch/parkhaus/postbasel",
+        "name": "Post Basel",
+        "id2": "postbasel",
+        "id": "baselparkhauspostbasel",
+        "status": "zu",
+        "last_downloaded": "2026-10-05T03:12:04+00:00",
+        "address": "Gartenstrasse 143",
+        "lot_type": "Parkhaus"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          7.593512,
+          47.5515968
+        ]
+      },
+      "properties": {
+        "title": "Parkhaus Anfos",
+        "published": "2026-10-05T03:12:00+00:00",
+        "free": 168,
+        "total": 165,
+        "anteil_frei": 1.018181818181818,
+        "auslastung": -0.018181818181818077,
+        "auslastung_prozent": -1,
+        "link": "https://www.parkleitsystem-basel.ch/parkhaus/anfos",
+        "name": "Anfos",
+        "id2": "anfos",
+        "id": "baselparkhausanfos",
+        "status": "offen",
+        "last_downloaded": "2026-10-05T03:12:04+00:00",
+        "address": "Henric Petri-Strasse 21",
+        "lot_type": "Parkhaus"
+      }
+    }
+  ]
+}

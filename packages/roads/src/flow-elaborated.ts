@@ -7,6 +7,16 @@
  * grouped by their `predefinedLocationReference` id into one site reading;
  * a value stated for one vehicle class is also kept as a channel of the site.
  */
+import {
+  getXmlChild,
+  getXmlChildText,
+  isXmlObject,
+  parseXmlDocument,
+  stripXmlNamespace,
+  type XmlObject,
+  xmlNodeToArray,
+  xmlText,
+} from "@openconditions/datex2";
 import type { Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import {
@@ -24,16 +34,6 @@ import {
   VOLUME,
 } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
-import type { XmlObject } from "./xml.js";
-import {
-  getXmlChild,
-  getXmlChildText,
-  isXmlObject,
-  parseXmlDocument,
-  stripXmlNamespace,
-  xmlNodeToArray,
-  xmlText,
-} from "./xml.js";
 
 /** Per-site accumulator across the elaboratedData items that share a location. */
 interface SiteAcc {

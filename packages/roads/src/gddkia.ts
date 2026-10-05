@@ -1,10 +1,15 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import {
+  getXmlChild,
+  getXmlChildren,
+  getXmlChildText,
+  parseXmlDocument,
+} from "@openconditions/datex2";
 import { gddkiaClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
-import { getXmlChild, getXmlChildren, getXmlChildText, parseXmlDocument } from "./xml.js";
 
 /**
  * Parser for Poland's GDDKiA `utrdane.xml` road-obstructions feed (CC0). A flat

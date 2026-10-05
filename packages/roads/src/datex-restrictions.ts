@@ -1,3 +1,14 @@
+import {
+  getXmlAttribute,
+  getXmlChild,
+  getXmlChildren,
+  getXmlChildText,
+  isXmlObject,
+  stripXmlNamespace,
+  type XmlObject,
+  xmlNodeToArray,
+  xmlText,
+} from "@openconditions/datex2";
 import type { Schedule } from "@openconditions/model";
 import {
   boundRestrictionIssue,
@@ -10,17 +21,6 @@ import {
   toRestrictionInstant,
 } from "@openconditions/model-roads";
 import type { SourceDescriptor } from "./types.js";
-import {
-  getXmlAttribute,
-  getXmlChild,
-  getXmlChildren,
-  getXmlChildText,
-  isXmlObject,
-  stripXmlNamespace,
-  type XmlObject,
-  xmlNodeToArray,
-  xmlText,
-} from "./xml.js";
 
 /**
  * Normalizes DATEX II vehicle applicability into the shared restriction

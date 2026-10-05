@@ -1,6 +1,7 @@
 import {
   buildCrosswalk,
   defineDomain,
+  extendVocabulary,
   type RegistryModule,
   vocabularyCrosswalk,
   withFeatureCrosswalks,
@@ -52,12 +53,23 @@ const parkingProperties = withPropertyCrosswalks(
   [{ target: "datex2_v3", table: DATEX2_PARKING_MEASURES_OUT }],
 );
 
+/** The publisher formats the parking parsers read; the shared standards and layouts are the kernel's. */
+export const PARKING_SOURCE_FORMATS = [
+  "parkapi-v3",
+  "datex2-light",
+  "db-bahnpark",
+  "rdw",
+  "sbb",
+  "opendatahub",
+  "hdb",
+  "utmc",
+  "tfnsw",
+] as const;
+
 /**
  * The parking registry module: the `parking` domain, parking sites with
- * their areas and spaces, the occupancy properties and the parking-rate
- * offer. Definitions only — OpenConditions parses no parking feed yet, so no
- * source format is registered here; the fit check registers the formats it
- * reads for itself.
+ * their areas and spaces, the occupancy properties, the parking-rate offer
+ * and the source formats of the parking publishers. Definitions only.
  *
  * ParkAPI's classification is not a vocabulary crosswalk but a pair of
  * fields, so its table is exported for parsers and indexed here under the
@@ -70,6 +82,7 @@ export const parkingModule: RegistryModule = {
       code: "parking",
       description: "Where vehicles can be parked, and how full it is.",
     }),
+    extendVocabulary({ vocabulary: "source_format", values: PARKING_SOURCE_FORMATS }),
     parkingStatusVocabulary,
     parkingSecurityVocabulary,
     ...parkingKinds,

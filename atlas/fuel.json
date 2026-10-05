@@ -42,6 +42,7 @@
             "note": "No licence or terms published; data.gv.at does not list the fuel API"
           },
           "privacyUrl": "https://www.e-control.at/datenschutz",
+          "homepage": "https://www.e-control.at",
           "coverage": {
             "bbox": [
               9.5,
@@ -285,6 +286,7 @@
         "note": "No licence or terms published; data.gv.at does not list the fuel API"
       },
       "privacyUrl": "https://www.e-control.at/datenschutz",
+      "homepage": "https://www.e-control.at",
       "coverage": {
         "bbox": [
           9.5,
@@ -293,7 +295,6 @@
           49.1
         ]
       },
-      "homepage": "https://api.e-control.at",
       "id": "at-econtrol-fuel",
       "domain": "fuel",
       "region": "at",

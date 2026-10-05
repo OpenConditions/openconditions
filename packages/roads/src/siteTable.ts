@@ -20,11 +20,11 @@
  * skipped. A `posList` (gml linear) wins over a coordinate pair, which wins over
  * a display point — the same priority the DOM parser used.
  */
+import { flattenString, stripXmlNamespace } from "@openconditions/datex2";
 import type { LineString, Point } from "geojson";
 import { SaxesParser } from "saxes";
 import type { FlowChannel, FlowSite, FlowSites } from "./flow-output.js";
 import { datexLaneNumber, datexValueProperty, datexVehicleClass } from "./flow-reading.js";
-import { flattenString, stripXmlNamespace } from "./xml.js";
 
 /** Geometry shapes a measurement site can resolve to. */
 type SiteGeometry = Point | LineString;

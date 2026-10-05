@@ -70,6 +70,9 @@ service's volume beside its raw and nightly archives.
 | OHGO construction (Ohio) | `us-oh-ohgo-construction-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO incidents (Ohio) | `us-oh-ohgo-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | Tankerkönig fuel prices (Germany) | `de-tankerkoenig-fuel` | `DE_TANKERKOENIG_FUEL_API_KEY` | CC-BY-4.0 | [Request Tankerkönig API key](https://onboarding.tankerkoenig.de/) |
+| Transport for NSW Park&Ride | `au-nsw-tfnsw-parking` | `AU_NSW_TFNSW_PARKING_API_KEY` | CC-BY-4.0 | [Get API key](https://opendata.transport.nsw.gov.au/) |
+| DB BahnPark station parking | `de-db-bahnpark-parking` | `DE_DB_BAHNPARK_PARKING_CLIENT_ID`, `DE_DB_BAHNPARK_PARKING_API_KEY` | DL-DE-BY-2.0 | [Open DB API Marketplace](https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark) |
+| North East Travel Data car parks | `gb-eng-netraveldata-parking` | `GB_ENG_NETRAVELDATA_PARKING_USERNAME`, `GB_ENG_NETRAVELDATA_PARKING_PASSWORD` | OGL-UK-3.0 | [Register for NE Travel Data](https://www.netraveldata.co.uk/?page_id=9) |
 
 ## Settings
 
@@ -77,4 +80,4 @@ Not credentials: where the instance reaches a service. Each has a default.
 
 | Env var | Under OpenMapX | Default | Read by | What |
 |---|---|---|---|---|
-| `OVERPASS_URL` | `SERVICE_OPENCONDITIONS_INGEST_OVERPASS_URL` | `https://overpass-api.de` | `osm-fuel`, `osm-import`, `osm-maxspeed` | Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS. |
+| `OVERPASS_URL` | `SERVICE_OPENCONDITIONS_INGEST_OVERPASS_URL` | `https://overpass-api.de` | `osm-fuel`, `osm-parking`, `osm-import`, `osm-maxspeed` | Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS. |

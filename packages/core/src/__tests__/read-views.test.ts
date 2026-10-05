@@ -85,6 +85,89 @@ describe("canonicalFeatureRecord", () => {
     expect(canonicalFeatureRecord(cluster, [])).toBeUndefined();
   });
 
+  it("stands on the highest-ranked member left when the scope withholds the survivor", () => {
+    const trio = {
+      canonicalFeatureId: CANONICAL,
+      survivorId: "oc:feature:de-restricted-parking:1",
+      memberIds: [
+        "oc:feature:de-restricted-parking:1",
+        "oc:feature:osm-parking:way/1",
+        "oc:feature:sg-hdb-parking:1",
+      ],
+      components: [],
+    };
+    const member = (id: string, source: string, sourceFormat: string): Rec => ({
+      ...station(id, source, []),
+      provenance: {
+        sourceId: source,
+        sourceFormat,
+        accessMode: sourceFormat === "overpass" ? "on_demand" : "bulk",
+        attribution: { provider: source, license: "x" },
+      },
+    });
+    const publicScope = [
+      member("oc:feature:osm-parking:way/1", "osm-parking", "overpass"),
+      member("oc:feature:sg-hdb-parking:1", "sg-hdb-parking", "json"),
+    ];
+    const record = canonicalFeatureRecord(trio, publicScope)!;
+    expect((record["provenance"] as Rec)["sourceId"]).toBe("sg-hdb-parking");
+    expect(
+      ((record["provenance"] as Rec)["mergedSources"] as Rec[]).map((m) => m["source"]),
+    ).toEqual(["osm-parking"]);
+  });
+
+  it("credits each other member's upstream publishers with its source", () => {
+    const upstream = [{ publisher: "Stadt Karlsruhe", recordId: "19775", license: "CC-BY-4.0" }];
+    const mobidata = {
+      ...station("oc:feature:b:1", "b", ["E5"]),
+      provenance: {
+        sourceId: "b",
+        attribution: { provider: "b", license: "DL-DE-BY-2.0" },
+        upstream,
+      },
+    };
+    const record = canonicalFeatureRecord(cluster, [a, mobidata])!;
+    expect((record["provenance"] as Rec)["mergedSources"]).toEqual([
+      {
+        source: "b",
+        recordId: "oc:feature:b:1",
+        attribution: { provider: "b", license: "DL-DE-BY-2.0" },
+        upstream,
+        link: "same_asset",
+      },
+    ]);
+  });
+
+  it("takes its name from the first named member, publisher feeds before OSM, when the survivor has none", () => {
+    const pair = {
+      canonicalFeatureId: CANONICAL,
+      survivorId: "oc:feature:z:1",
+      memberIds: ["oc:feature:osm:1", "oc:feature:y:1", "oc:feature:z:1"],
+      components: [],
+    };
+    const member = (id: string, source: string, sourceFormat: string, text?: string): Rec => ({
+      ...station(id, source, []),
+      provenance: {
+        sourceId: source,
+        sourceFormat,
+        attribution: { provider: source, license: "x" },
+      },
+      ...(text === undefined ? {} : { name: [{ lang: "de", text }] }),
+    });
+    const record = canonicalFeatureRecord(pair, [
+      member("oc:feature:osm:1", "osm", "overpass", "OSM name"),
+      member("oc:feature:y:1", "y", "json", "Feed name"),
+      member("oc:feature:z:1", "z", "json"),
+    ])!;
+    expect((record["provenance"] as Rec)["sourceId"]).toBe("z");
+    expect(record["name"]).toEqual([{ lang: "de", text: "Feed name" }]);
+    const named = canonicalFeatureRecord(pair, [
+      member("oc:feature:osm:1", "osm", "overpass", "OSM name"),
+      member("oc:feature:z:1", "z", "json", "Survivor name"),
+    ])!;
+    expect(named["name"]).toEqual([{ lang: "de", text: "Survivor name" }]);
+  });
+
   it("leaves a collection's record without its components", () => {
     expect(withoutComponents(a)["components"]).toBeUndefined();
     expect(withoutComponents(a)["id"]).toBe("oc:feature:a:1");

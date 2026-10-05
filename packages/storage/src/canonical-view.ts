@@ -19,6 +19,7 @@ import {
   proposeLink,
   type Registry,
   sealRecord,
+  survivorRank,
 } from "@openconditions/model";
 import type { Sql } from "./bulk.js";
 import {
@@ -198,7 +199,7 @@ export async function relinkFeatures(
   const clusters = canonicalClusters(
     live.map((m) => linkableOf(m.record)),
     links,
-    { instanceId: opts.instanceId },
+    { instanceId: opts.instanceId, rank: survivorRank },
   );
   const byId = new Map(live.map((m) => [m.id, m]));
   const rows = clusters.map((cluster) => ({

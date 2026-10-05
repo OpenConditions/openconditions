@@ -1,7 +1,13 @@
+import {
+  getXmlChild,
+  getXmlChildren,
+  isXmlObject,
+  parseXmlDocument,
+  xmlText,
+} from "@openconditions/datex2";
 import type { FlowContext, FlowSite, FlowSites } from "./flow-output.js";
 import { type FlowParse, type FlowReading, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
-import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 /** Parse a MIV number, which uses a comma decimal separator (no thousands sep). */
 function numNl(raw: string | undefined): number | undefined {

@@ -4,8 +4,8 @@
  * readings and tariffs) written per source the way a poll writes them, a
  * second source describing one of the fuel stations so the canonical view
  * holds a linked cluster, and crowd readings landed on a canonical subject.
- * OpenConditions parses none of these formats yet, so the registry registers
- * them. Test-only: no runtime module imports this file.
+ * The registry registers the formats among them OpenConditions does not
+ * parse. Test-only: no runtime module imports this file.
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
@@ -43,7 +43,7 @@ export const facilitiesRegistry: Registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: ["ocpi", "parkapi", "datex2-parking", "autobahn-parking", "mimit"],
+        values: ["ocpi", "autobahn-parking", "mimit"],
       }),
     ],
   },
@@ -51,8 +51,8 @@ export const facilitiesRegistry: Registry = buildRegistry([
 
 export const TIERS: Record<string, string> = {
   "de-bw-ocpdb": "aggregator",
-  "de-bw-parkapi": "aggregator",
-  "nl-ndw-truckparking": "authoritative",
+  "de-bw-mobidata-parking": "aggregator",
+  "nl-ndw-truck-parking": "authoritative",
   "de-autobahn-events": "operator",
   "es-minetur-fuel": "authoritative",
   "it-mimit": "authoritative",

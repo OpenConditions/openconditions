@@ -1,0 +1,1762 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "f35490f4-f622-4881-90d0-f4041bdeef78",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [9.04154158, 46.22479428]
+          },
+          {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [9.04182118, 46.22371601],
+                [9.04162679, 46.22370808],
+                [9.04175822, 46.22137849],
+                [9.04195675, 46.22138687],
+                [9.04182118, 46.22371601]
+              ]
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "additionalInformationForCustomers": {
+          "deText": "2 E-Ladestationen vorhanden. Die Parkuhr ist in Pension. Ihre Nachfolgerin, die P+R App, kann aber noch viel mehr. Tagesparkingtickets können auch am Billettautomaten gekauft werden.",
+          "enText": "2 e-charging stations available. The parking meter is retired. But the P+Rail app can do much more.",
+          "frText": "2 stations de recharge électrique disponibles. Cette caisse prend sa retraite. Mais sa remplaçante, l’appli P+R, est encore mieux.",
+          "itText": "2 stazioni di ricarica elettronica disponibili. Questo parchimetro va in pensione. Ma la sua sostituta, l’app P+R, è ancora migliore.   "
+        },
+        "address": {
+          "addressLine": "Via Stazione 9",
+          "city": "Castione-Arbedo",
+          "postalCode": "6532"
+        },
+        "bikeFacilityTraits": [],
+        "bookingSystem": {
+          "id": "84",
+          "type": "NOVA"
+        },
+        "callToAction": {
+          "externalDesktop": {
+            "de": "https://www.sbb.ch/de/kaufen/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo",
+            "en": "https://www.sbb.ch/en/buying/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo",
+            "it": "https://www.sbb.ch/it/acquistare/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo",
+            "fr": "https://www.sbb.ch/fr/acheter/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo"
+          },
+          "externalMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78"
+          },
+          "sbbDesktop": {
+            "de": "https://www.sbb.ch/de/kaufen/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo",
+            "en": "https://www.sbb.ch/en/buying/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo",
+            "it": "https://www.sbb.ch/it/acquistare/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo",
+            "fr": "https://www.sbb.ch/fr/acheter/pages/produkte/produkte.xhtml?produktid=80029&locationid=84&locationname=Castione-Arbedo"
+          },
+          "sbbMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=f35490f4-f622-4881-90d0-f4041bdeef78"
+          }
+        },
+        "capacities": [
+          {
+            "categoryType": "STANDARD",
+            "total": 200
+          },
+          {
+            "categoryType": "DISABLED_PARKING_SPACE",
+            "total": 4
+          },
+          {
+            "categoryType": "RESERVABLE_PARKING_SPACE",
+            "total": 3
+          },
+          {
+            "categoryType": "WITH_CHARGING_STATION",
+            "total": 2
+          }
+        ],
+        "currentEstimatedOccupancy": 0.39856285,
+        "currentEstimatedOccupancyLevel": "LOW",
+        "didokId": "05212",
+        "displayName": "Castione-Arbedo",
+        "eChargingStationOperator": {
+          "eChargingStationOperatorID": "6811e973-050c-4f81-a245-73d531249105",
+          "eChargingStationOperatorLink": "https://emoti.evpass.ch/Map",
+          "eChargingStationOperatorName": "emoti"
+        },
+        "operationTime": {
+          "daysOfWeek": [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+          ],
+          "operatingFrom": "00:00:00",
+          "operatingTo": "00:00:00"
+        },
+        "operator": "SBB",
+        "parkingFacilityCategory": "CAR",
+        "parkingFacilityType": "PARK_AND_RAIL",
+        "poiLevel": 0,
+        "predictedForecastedOccupancy": [
+          {
+            "dayOfWeek": "WEDNESDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.3570985
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.48370278
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.5118836
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.531429
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.5256338
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.5229196
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.5256218
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.5404482
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.53173274
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.5481784
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.5107798
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.4234455
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.3169771
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.2507003
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.16805848
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.12709337
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.0749834
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.37821
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "FRIDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.3475243
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.41331226
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.4529851
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.47697073
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.4811477
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.47832972
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.49552494
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.53179795
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.5232516
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.5280356
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.48397017
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.4053244
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.3049709
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.24675685
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.1765123
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.14571263
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.12066397
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.41796345
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "TUESDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.41213712
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.46045586
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.50955814
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.505025
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.5078872
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.51748353
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.534182
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.5246469
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.5245728
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.48845297
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.40107444
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.29169875
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.24110425
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.1562068
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.115182735
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.109056234
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.3935635
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "MONDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.29212484
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.36371723
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.42169178
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.45607218
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.47112927
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.4667593
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.47408003
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.49320585
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.4831027
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.48521733
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.4432388
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.34414476
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.23863733
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.17770886
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.07727219
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.046506133
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.030721538
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.3327013
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "SUNDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.064062335
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.17459384
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.25328356
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.23454888
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.27183098
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.2487527
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.32428584
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.301327
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.3607577
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.3299449
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.28482994
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.26142427
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.17654102
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.1382855
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.12616402
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.09405984
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.14161852
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.0016080104
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "SATURDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.049318347
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.17749754
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.28413555
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.29321915
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.35424986
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.3339088
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.3967877
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.3402636
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.43460932
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.42112675
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.39281267
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.38468224
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.31501642
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.26739025
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.25587466
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.18951318
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.22473094
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.07865369
+              }
+            ]
+          }
+        ],
+        "pricingModel": {
+          "maximumDayPrice": 800,
+          "maximumDuration": 10080,
+          "minimumDuration": 60,
+          "monthlyTicketPrice": 6000,
+          "monthlyTicketPriceWithPublicTransportSeasonTicketDiscount": null,
+          "priceSegments": [
+            {
+              "price": 100,
+              "startingFrom": 0
+            }
+          ],
+          "viableIncrement": 60,
+          "yearlyTicketPrice": 60000,
+          "yearlyTicketPriceWithPublicTransportSeasonTicketDiscount": null
+        },
+        "publicAccess": true,
+        "salesChannels": ["ICT_PORTAL", "P_RAIL_APP", "ONLINE_AND_AUTOMAT"],
+        "temporaryInformationForCustomers": null,
+        "uic": 8505212
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6e189b1d-1424-41f2-92f7-efc2daa960de",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [8.503713, 46.599056]
+          }
+        ]
+      },
+      "properties": {
+        "additionalInformationForCustomers": {
+          "deText": "Es gibt zwei Parkplätze in Realp:  38 Plätze am Bahnhof, mit Nachtparkverbot  ca. 50 Plätze auf dem Parkplatz Lochbach (nicht eingezeichnet), mit Nachtparkverbot.",
+          "enText": "There are two car parks in Realp:  38 spaces at the station, with night parking ban  approx. 50 spaces in the Lochbach car park (not marked), with night parking ban approx.",
+          "frText": "Il y a deux parkings à Realp : 38 places à la gare, avec interdiction de stationnement de nuit environ 50 places dans le parking Lochbach (non marqué), avec interdiction de stationnement de nuit ",
+          "itText": "Ci sono due parcheggi a Realp:  38 posti alla stazione, con divieto di sosta notturna  circa 50 posti nel parcheggio Lochbach (non segnato), con divieto di sosta notturna"
+        },
+        "address": {
+          "addressLine": "Bahnhof Realp",
+          "city": "Realp ",
+          "postalCode": "6491"
+        },
+        "bikeFacilityTraits": [],
+        "bookingSystem": {
+          "id": "1373",
+          "type": "NOVA"
+        },
+        "callToAction": {
+          "externalDesktop": {},
+          "externalMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de"
+          },
+          "sbbDesktop": {},
+          "sbbMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6e189b1d-1424-41f2-92f7-efc2daa960de"
+          }
+        },
+        "capacities": [
+          {
+            "categoryType": "STANDARD",
+            "total": 38
+          },
+          {
+            "categoryType": "DISABLED_PARKING_SPACE",
+            "total": 2
+          },
+          {
+            "categoryType": "RESERVABLE_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "WITH_CHARGING_STATION",
+            "total": 0
+          }
+        ],
+        "currentEstimatedOccupancy": null,
+        "currentEstimatedOccupancyLevel": null,
+        "didokId": "05163",
+        "displayName": "Realp Bahnhof (MGB)",
+        "eChargingStationOperator": null,
+        "operationTime": {
+          "daysOfWeek": [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+          ],
+          "operatingFrom": "07:15:00",
+          "operatingTo": "02:00:00"
+        },
+        "operator": "MGB",
+        "parkingFacilityCategory": "CAR",
+        "parkingFacilityType": "PARK_AND_RAIL",
+        "poiLevel": 0,
+        "predictedForecastedOccupancy": [],
+        "pricingModel": {
+          "maximumDayPrice": null,
+          "maximumDuration": 1080,
+          "minimumDuration": 60,
+          "monthlyTicketPrice": null,
+          "monthlyTicketPriceWithPublicTransportSeasonTicketDiscount": null,
+          "priceSegments": [
+            {
+              "price": 100,
+              "startingFrom": 0
+            },
+            {
+              "price": 0,
+              "startingFrom": 300
+            }
+          ],
+          "viableIncrement": 60,
+          "yearlyTicketPrice": null,
+          "yearlyTicketPriceWithPublicTransportSeasonTicketDiscount": null
+        },
+        "publicAccess": true,
+        "salesChannels": ["P_RAIL_APP"],
+        "temporaryInformationForCustomers": {
+          "deText": "Parkverbot von 02:00 bis 08:00 Uhr",
+          "enText": "No parking from 02:00 to 08:00",
+          "frText": "Stationnement interdit de 02:00 à 08:00",
+          "itText": "Divieto di sosta dalle 02:00 alle 08:00"
+        },
+        "uic": 8505163
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "ef3699d3-2e29-431d-ad4b-df64551c2caa",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [8.65721604, 47.68874783]
+          }
+        ]
+      },
+      "properties": {
+        "additionalInformationForCustomers": null,
+        "address": {
+          "addressLine": "Rheinhaldenstrasse 76",
+          "city": "Schaffhausen",
+          "postalCode": "8200"
+        },
+        "bikeFacilityTraits": [],
+        "bookingSystem": {
+          "id": "1430",
+          "type": "NOVA"
+        },
+        "callToAction": {
+          "externalDesktop": {},
+          "externalMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa"
+          },
+          "sbbDesktop": {},
+          "sbbMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=ef3699d3-2e29-431d-ad4b-df64551c2caa"
+          }
+        },
+        "capacities": [
+          {
+            "categoryType": "STANDARD",
+            "total": 20
+          },
+          {
+            "categoryType": "DISABLED_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "RESERVABLE_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "WITH_CHARGING_STATION",
+            "total": 0
+          }
+        ],
+        "currentEstimatedOccupancy": null,
+        "currentEstimatedOccupancyLevel": null,
+        "didokId": null,
+        "displayName": "415 - Rhyhalde",
+        "eChargingStationOperator": null,
+        "operationTime": {
+          "daysOfWeek": ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY"],
+          "operatingFrom": "08:00:00",
+          "operatingTo": "18:00:00"
+        },
+        "operator": "Stadt Schaffhausen",
+        "parkingFacilityCategory": "CAR",
+        "parkingFacilityType": "PARKING",
+        "poiLevel": 0,
+        "predictedForecastedOccupancy": [],
+        "pricingModel": {
+          "maximumDayPrice": 1200,
+          "maximumDuration": 4320,
+          "minimumDuration": 6,
+          "monthlyTicketPrice": null,
+          "monthlyTicketPriceWithPublicTransportSeasonTicketDiscount": null,
+          "priceSegments": [
+            {
+              "price": 5,
+              "startingFrom": 0
+            }
+          ],
+          "viableIncrement": 6,
+          "yearlyTicketPrice": null,
+          "yearlyTicketPriceWithPublicTransportSeasonTicketDiscount": null
+        },
+        "publicAccess": true,
+        "salesChannels": ["P_RAIL_APP"],
+        "temporaryInformationForCustomers": null,
+        "uic": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6935079d-baaa-4f13-a1f5-2ce83941b307",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [8.61855218, 47.41898641]
+          },
+          {
+            "type": "MultiPolygon",
+            "coordinates": [
+              [
+                [
+                  [8.61884738, 47.41956025],
+                  [8.61891982, 47.41954322],
+                  [8.61910392, 47.41987708],
+                  [8.61903571, 47.41989578],
+                  [8.61884738, 47.41956025]
+                ]
+              ],
+              [
+                [
+                  [8.61846144, 47.41893779],
+                  [8.61853923, 47.41891889],
+                  [8.61876752, 47.41936373],
+                  [8.61869243, 47.4193826],
+                  [8.61846144, 47.41893779]
+                ]
+              ],
+              [
+                [
+                  [8.61808791, 47.41811025],
+                  [8.61810668, 47.41810481],
+                  [8.61814691, 47.4181774],
+                  [8.61841589, 47.4186641],
+                  [8.61855134, 47.41890548],
+                  [8.61852988, 47.41890911],
+                  [8.61840382, 47.41868951],
+                  [8.61833006, 47.41866319],
+                  [8.61807599, 47.41815632],
+                  [8.61810416, 47.41814724],
+                  [8.61808791, 47.41811025]
+                ]
+              ],
+              [
+                [
+                  [8.61805185, 47.41805196],
+                  [8.61802101, 47.41801113],
+                  [8.61808672, 47.41799479],
+                  [8.6181055, 47.41803381],
+                  [8.61805185, 47.41805196]
+                ]
+              ]
+            ]
+          }
+        ]
+      },
+      "properties": {
+        "additionalInformationForCustomers": {
+          "deText": "Es stehen weitere Parkplätze auf dem Gemeindeparkplatz Faisswiesen zur Verfügung. Die P+Rail Tickets sind auch auf dieser Anlage gültig.",
+          "enText": "Additional parking spaces are available at the Faisswiesen municipal car park. P+Rail tickets are also valid at this facility.",
+          "frText": "D’autres places de stationnement sont disponibles sur le parking communal Faisswiesen. Les billets P+Rail sont également valables pour cette installation.",
+          "itText": "Sono disponibili altri posti auto nel parcheggio comunale Faisswiesen. I biglietti P+Rail sono validi anche per questa struttura."
+        },
+        "address": {
+          "addressLine": "Bahnhofstrasse 30",
+          "city": "Dietlikon",
+          "postalCode": "8305"
+        },
+        "bikeFacilityTraits": [],
+        "bookingSystem": {
+          "id": "221",
+          "type": "NOVA"
+        },
+        "callToAction": {
+          "externalDesktop": {
+            "de": "https://www.sbb.ch/de/kaufen/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon",
+            "en": "https://www.sbb.ch/en/buying/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon",
+            "it": "https://www.sbb.ch/it/acquistare/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon",
+            "fr": "https://www.sbb.ch/fr/acheter/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon"
+          },
+          "externalMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307"
+          },
+          "sbbDesktop": {
+            "de": "https://www.sbb.ch/de/kaufen/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon",
+            "en": "https://www.sbb.ch/en/buying/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon",
+            "it": "https://www.sbb.ch/it/acquistare/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon",
+            "fr": "https://www.sbb.ch/fr/acheter/pages/produkte/produkte.xhtml?produktid=80029&locationid=221&locationname=Dietlikon"
+          },
+          "sbbMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=6935079d-baaa-4f13-a1f5-2ce83941b307"
+          }
+        },
+        "capacities": [
+          {
+            "categoryType": "STANDARD",
+            "total": 299
+          },
+          {
+            "categoryType": "DISABLED_PARKING_SPACE",
+            "total": 5
+          },
+          {
+            "categoryType": "RESERVABLE_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "WITH_CHARGING_STATION",
+            "total": 0
+          }
+        ],
+        "currentEstimatedOccupancy": 0.13594227,
+        "currentEstimatedOccupancyLevel": "LOW",
+        "didokId": "03306",
+        "displayName": "Dietlikon",
+        "eChargingStationOperator": null,
+        "operationTime": {
+          "daysOfWeek": [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+          ],
+          "operatingFrom": "00:00:00",
+          "operatingTo": "00:00:00"
+        },
+        "operator": "SBB",
+        "parkingFacilityCategory": "CAR",
+        "parkingFacilityType": "PARK_AND_RAIL",
+        "poiLevel": 0,
+        "predictedForecastedOccupancy": [
+          {
+            "dayOfWeek": "WEDNESDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.5780697
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.5903162
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.6936216
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.71143997
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.7078566
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.707832
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.71086544
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.7189241
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.8082025
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.82199866
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.7788312
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.7521989
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.6886232
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.7314933
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.6775975
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.6658851
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.6010574
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.6971188
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "FRIDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.6348079
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.65221727
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.7344784
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.6799597
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.75318855
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.7115417
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.7292067
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.79284376
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.80486476
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.7472641
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.8055792
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.7473223
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.61314654
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.58173406
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.53751624
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.52023405
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.51099867
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.6053046
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "TUESDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.5080816
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.6339565
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.6713715
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.68087596
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.6837695
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.6966349
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.75750446
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.76694834
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.751089
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.7644965
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.7372701
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.76491094
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.77501637
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.67802304
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.6520476
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.58564687
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.6536139
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "MONDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.32879066
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.44678697
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.51916975
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.56249547
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.5450537
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.5598773
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.56251115
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.5681064
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.6275189
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.5832861
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.56989086
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.5292136
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.494751
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.46166295
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.42814228
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.3862355
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.35040888
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.4160845
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "SUNDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.37564135
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.41447046
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.43904334
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.39212334
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.421937
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.4294841
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.46532258
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.46958053
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.50352484
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.49741018
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.49273396
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.42137396
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.36021253
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.330131
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.30236223
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.2896162
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.3060265
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.2177303
+              }
+            ]
+          },
+          {
+            "dayOfWeek": "SATURDAY",
+            "hourlyOccupancyPrediction": [
+              {
+                "localTime": "05:00",
+                "occupancyRate": 0.33909273
+              },
+              {
+                "localTime": "06:00",
+                "occupancyRate": 0.3388431
+              },
+              {
+                "localTime": "07:00",
+                "occupancyRate": 0.33347386
+              },
+              {
+                "localTime": "08:00",
+                "occupancyRate": 0.38067234
+              },
+              {
+                "localTime": "09:00",
+                "occupancyRate": 0.4098509
+              },
+              {
+                "localTime": "10:00",
+                "occupancyRate": 0.4404807
+              },
+              {
+                "localTime": "11:00",
+                "occupancyRate": 0.528488
+              },
+              {
+                "localTime": "12:00",
+                "occupancyRate": 0.58761024
+              },
+              {
+                "localTime": "13:00",
+                "occupancyRate": 0.6383073
+              },
+              {
+                "localTime": "14:00",
+                "occupancyRate": 0.68029594
+              },
+              {
+                "localTime": "15:00",
+                "occupancyRate": 0.7147813
+              },
+              {
+                "localTime": "16:00",
+                "occupancyRate": 0.7801853
+              },
+              {
+                "localTime": "17:00",
+                "occupancyRate": 0.68048817
+              },
+              {
+                "localTime": "18:00",
+                "occupancyRate": 0.69442797
+              },
+              {
+                "localTime": "19:00",
+                "occupancyRate": 0.72726375
+              },
+              {
+                "localTime": "20:00",
+                "occupancyRate": 0.7315285
+              },
+              {
+                "localTime": "21:00",
+                "occupancyRate": 0.7158942
+              },
+              {
+                "localTime": "22:00",
+                "occupancyRate": 0.6395583
+              }
+            ]
+          }
+        ],
+        "pricingModel": {
+          "maximumDayPrice": 800,
+          "maximumDuration": 10080,
+          "minimumDuration": 60,
+          "monthlyTicketPrice": 5000,
+          "monthlyTicketPriceWithPublicTransportSeasonTicketDiscount": 5000,
+          "priceSegments": [
+            {
+              "price": 100,
+              "startingFrom": 0
+            }
+          ],
+          "viableIncrement": 60,
+          "yearlyTicketPrice": 50000,
+          "yearlyTicketPriceWithPublicTransportSeasonTicketDiscount": 50000
+        },
+        "publicAccess": true,
+        "salesChannels": ["ICT_PORTAL", "P_RAIL_APP", "ONLINE_AND_AUTOMAT"],
+        "temporaryInformationForCustomers": {
+          "deText": "Aufgrund von Bauarbeiten wird ein Teil der P+Rail-Parkplätze vom 01.04.2026 bis am 31.12.2026 gesperrt sein. Die P+Rail Anlage Dietlikon wird per Ende 2026 aufgehoben.",
+          "enText": "Due to construction work, some P+Rail parking spaces will be closed from 01.04.2026 until 31.12.2026. The P+Rail facility in Dietlikon will be decommissioned at the end of 2026.",
+          "frText": "Une partie des places de stationnement P+Rail sera inaccessible du 01.04.2026 au 31.12.2026 en raison de travaux de construction. L'installation P+Rail de Dietlikon sera supprimée à la fin de 2026.",
+          "itText": "Una parte del parcheggio P+Rail resterà chiusa dal 01.04.2026 al 31.12.2026 per lavori di costruzione.  L'impianto P+Rail di Dietlikon sarà soppresso alla fine del 2026."
+        },
+        "uic": 8503306
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "0057697d-defb-4ce6-94fa-6c0a14bb5372",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [9.27857468, 47.39039481]
+          }
+        ]
+      },
+      "properties": {
+        "additionalInformationForCustomers": null,
+        "address": {
+          "addressLine": "Güterstrasse",
+          "city": "Herisau",
+          "postalCode": "9100"
+        },
+        "bikeFacilityTraits": [],
+        "bookingSystem": {
+          "id": "1505",
+          "type": "NOVA"
+        },
+        "callToAction": {
+          "externalDesktop": {},
+          "externalMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372"
+          },
+          "sbbDesktop": {},
+          "sbbMobile": {
+            "de": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372",
+            "en": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372",
+            "it": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372",
+            "fr": "https://app.parking.sbb.ch/appLinks/booking?facilityUuid=0057697d-defb-4ce6-94fa-6c0a14bb5372"
+          }
+        },
+        "capacities": [
+          {
+            "categoryType": "STANDARD",
+            "total": 19
+          },
+          {
+            "categoryType": "DISABLED_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "RESERVABLE_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "WITH_CHARGING_STATION",
+            "total": 0
+          }
+        ],
+        "currentEstimatedOccupancy": null,
+        "currentEstimatedOccupancyLevel": null,
+        "didokId": null,
+        "displayName": "Herisau (AB)",
+        "eChargingStationOperator": null,
+        "operationTime": {
+          "daysOfWeek": [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+          ],
+          "operatingFrom": "00:00:00",
+          "operatingTo": "00:00:00"
+        },
+        "operator": "AB",
+        "parkingFacilityCategory": "CAR",
+        "parkingFacilityType": "PARK_AND_RAIL",
+        "poiLevel": 0,
+        "predictedForecastedOccupancy": [],
+        "pricingModel": {
+          "maximumDayPrice": 800,
+          "maximumDuration": 10080,
+          "minimumDuration": 60,
+          "monthlyTicketPrice": null,
+          "monthlyTicketPriceWithPublicTransportSeasonTicketDiscount": null,
+          "priceSegments": [
+            {
+              "price": 100,
+              "startingFrom": 0
+            },
+            {
+              "price": 0,
+              "startingFrom": 360
+            },
+            {
+              "price": 200,
+              "startingFrom": 420
+            }
+          ],
+          "viableIncrement": 60,
+          "yearlyTicketPrice": null,
+          "yearlyTicketPriceWithPublicTransportSeasonTicketDiscount": null
+        },
+        "publicAccess": true,
+        "salesChannels": ["P_RAIL_APP"],
+        "temporaryInformationForCustomers": null,
+        "uic": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6b868d5e-f242-4543-b904-0473e27f01c0",
+      "geometry": {
+        "type": "GeometryCollection",
+        "geometries": [
+          {
+            "type": "Point",
+            "coordinates": [7.851499, 46.681737]
+          }
+        ]
+      },
+      "properties": {
+        "additionalInformationForCustomers": null,
+        "address": {
+          "addressLine": "Bahnhofstrasse 28",
+          "city": "Interlaken",
+          "postalCode": "3800"
+        },
+        "bikeFacilityTraits": [
+          {
+            "bikeFacilityTraitId": "6305c7ef-7b3e-4cb6-8b3f-bf759b528ef3",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Velo-Reparaturen",
+              "en": " Bicycle repairs",
+              "it": " Riparazioni bici",
+              "fr": " Réparation des vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "6940aebd-4b43-496c-a8da-8245405e0368",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Verkauf Velo-Zubehör",
+              "en": " Sale of cycling accessories",
+              "it": " Vendita di accessori per bici",
+              "fr": " Vente d’accessoires pour vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "b95cc64d-e417-4376-8505-ac2edf67a25c",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Mit Personal bedient",
+              "en": "Staffed",
+              "it": "Con personale",
+              "fr": "Avec personnel"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "5f4e0366-9e97-49e7-bbc3-c9b394bc4f18",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Velo-Check",
+              "en": " Bicycle check",
+              "it": " Servizio check bici",
+              "fr": " Révision des vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "4b90202b-dbbb-4d22-9f12-45f6dfcd2f6b",
+            "bikeFacilityTraitNameI18n": {
+              "de": "24h-Zugang mit Badge",
+              "en": " 24h access with badge",
+              "it": " Accesso 24 ore su 24 con badge",
+              "fr": " Accès 24h/24 avec un badge"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "8559f957-8b53-4c6a-a76c-586d0e633bcc",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Velo-Reinigung",
+              "en": " Bicycle cleaning",
+              "it": " Pulizia bici",
+              "fr": " Nettoyage des vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "3d1fc037-66b4-4f14-bf68-21255a128404",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Ordnungsdienst",
+              "en": " Security service",
+              "it": " Servizio d’ordine",
+              "fr": " Service d’ordre"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "80ac4552-285c-4401-8c82-45afae3d5171",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Abgabestelle für Veloentsorgung",
+              "en": " Drop-off point for bicycle disposal",
+              "it": " Punto di consegna per smaltimento bici",
+              "fr": " Lieu de dépôt pour l’élimination des vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "aea758f6-675e-4a1b-8261-60e63877fbd8",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Velo-Recycling",
+              "en": " Bicycle recycling",
+              "it": " Riciclaggio bici",
+              "fr": " Recyclage des vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "0b264dfe-ad0b-4d1c-9ed2-e2acd62796aa",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Veloverkauf",
+              "en": " Bicycle sale",
+              "it": " Vendita bici",
+              "fr": " Vente de vélos"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "331cb54d-d7e1-4508-b69a-6988d07a2466",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Direkter Zugang zu Gleisen",
+              "en": "Direct access to the tracks",
+              "it": "Accesso diretto ai binari",
+              "fr": "Accès direct aux voies ferrées"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "13e91a50-e061-4a4b-8736-202090eed85c",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Verkauf von Ersatzteilen",
+              "en": " Sale of spare parts",
+              "it": " Vendita di parti di ricambio",
+              "fr": " Vente de pièces détachées"
+            }
+          },
+          {
+            "bikeFacilityTraitId": "ea7cea12-241a-4ff8-81d4-68e153b8d1b3",
+            "bikeFacilityTraitNameI18n": {
+              "de": "Videoüberwachung",
+              "en": " Video surveillance",
+              "it": " Videosorveglianza",
+              "fr": " Vidéosurveillance"
+            }
+          }
+        ],
+        "bookingSystem": {
+          "id": null,
+          "type": "NOVA"
+        },
+        "callToAction": {
+          "externalDesktop": {},
+          "externalMobile": {},
+          "sbbDesktop": {},
+          "sbbMobile": {}
+        },
+        "capacities": [
+          {
+            "categoryType": "STANDARD",
+            "total": 60
+          },
+          {
+            "categoryType": "DISABLED_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "RESERVABLE_PARKING_SPACE",
+            "total": 0
+          },
+          {
+            "categoryType": "WITH_CHARGING_STATION",
+            "total": 0
+          }
+        ],
+        "currentEstimatedOccupancy": null,
+        "currentEstimatedOccupancyLevel": null,
+        "didokId": null,
+        "displayName": "Bahnhof Interlaken West",
+        "eChargingStationOperator": null,
+        "operationTime": {
+          "daysOfWeek": [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+          ],
+          "operatingFrom": "00:00:00",
+          "operatingTo": "00:00:00"
+        },
+        "operator": "SAH Bern",
+        "parkingFacilityCategory": "BIKE",
+        "parkingFacilityType": "BIKE_STATION",
+        "poiLevel": 0,
+        "predictedForecastedOccupancy": [],
+        "pricingModel": {
+          "maximumDayPrice": null,
+          "maximumDuration": 1000,
+          "minimumDuration": 5,
+          "monthlyTicketPrice": null,
+          "monthlyTicketPriceWithPublicTransportSeasonTicketDiscount": null,
+          "priceSegments": [
+            {
+              "price": 0,
+              "startingFrom": 0
+            }
+          ],
+          "viableIncrement": 5,
+          "yearlyTicketPrice": null,
+          "yearlyTicketPriceWithPublicTransportSeasonTicketDiscount": null
+        },
+        "publicAccess": true,
+        "salesChannels": [],
+        "temporaryInformationForCustomers": null,
+        "uic": null
+      }
+    }
+  ],
+  "$schema": "https://geojson.org/schema/FeatureCollection.json"
+}

@@ -1,3 +1,10 @@
+import {
+  getXmlChild,
+  getXmlChildren,
+  isXmlObject,
+  parseXmlDocument,
+  xmlText,
+} from "@openconditions/datex2";
 import { localTimestamp } from "./flow.js";
 import type { FlowContext, FlowSite, FlowSites } from "./flow-output.js";
 import {
@@ -12,7 +19,6 @@ import {
   VOLUME,
 } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
-import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 function num(raw: unknown): number | undefined {
   if (raw == null || raw === "") return undefined;

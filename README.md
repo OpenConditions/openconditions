@@ -27,8 +27,13 @@ Road domain, v0.1:
 - **Fuel domain:** station fuel prices from Tankerkönig (DE), E-Control (AT), Prix Carburants (FR), MITECO (ES)
   and OpenStreetMap, as features with per-grade price components; the Tankerkönig, E-Control and OpenStreetMap feeds are
   fetched on demand for the area a read asks about.
+- **Parking domain:** car parks, garages and lorry parks with their spaces by kind, live occupancy and tariffs
+  from 23 feeds in 13 countries, among them MobiData BW (DE, with Toll Collect's lorry parks Germany-wide),
+  Mobidrom NRW (DE), RDW and NDW (NL), SBB and Basel (CH), HDB (SG) and OpenStreetMap, read on demand. A
+  publisher's plain GeoJSON, JSON or CSV table is mapped in the catalogue with no code; see
+  [feeds/README.md](feeds/README.md#generic-layouts).
 - **OpenMapX integration:** ships as an installable extension (the ingest and contributions services, serving
-  the roads and fuel domains); OpenMapX reads them through its built-in OpenConditions integration.
+  the roads, fuel and parking domains); OpenMapX reads them through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
   See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
@@ -115,9 +120,10 @@ pnpm openmapx ext install openconditions
 
 This registers both services (ingest and contributions API) at their pinned tag and starts them. It installs no
 integration code: OpenMapX's built-in `openconditions` integration reads them once `OPENCONDITIONS_URL` (and, for
-Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, `OPENCONDITIONS_OPERATOR_TOKEN`) is set in
-OpenMapX's `.env`. It feeds both the roads domain (conditions overlay, routing avoidance, live traffic) and the
-fuel domain (fuel stations and prices).
+Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations and for the share-alike parking feeds,
+`OPENCONDITIONS_OPERATOR_TOKEN`) is set in OpenMapX's `.env`. It feeds the roads domain (conditions overlay,
+routing avoidance, live traffic), the fuel domain (fuel stations and prices) and the parking domain (car parks
+and their occupancy).
 
 OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
 configuration is `configSchema` fields: set the database URL (and the contributions API's grant secret and
@@ -130,8 +136,8 @@ only in the admin form, so keep all of them in one place). Settings saved in the
 [services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
 
 See OpenMapX's _Building an external extension_ guide for the full flow. OpenMapX's built-in OpenConditions
-integration reads roads situations, routing evidence and fuel features from the ingest's API into the map
-overlay, routing avoidance and fuel search. A request carrying `Authorization: Bearer
+integration reads roads situations, routing evidence, fuel features and parking sites from the ingest's API
+into the map overlay, routing avoidance, fuel search and the parking layer. A request carrying `Authorization: Bearer
 <OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
 public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
 `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).

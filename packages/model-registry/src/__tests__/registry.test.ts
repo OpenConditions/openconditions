@@ -14,6 +14,16 @@ describe("production registry", () => {
     expect(registry.vocabulary("source_tier")).toBeDefined();
   });
 
+  it("holds the shared source formats in the kernel and the parking ones in parking", () => {
+    const formats = productionRegistry().vocabulary("source_format")!;
+    for (const id of ["datex2", "geojson", "json", "csv", "overpass"]) {
+      expect(formats.contributedBy[id], id).toBe("kernel");
+    }
+    for (const id of ["parkapi-v3", "hdb", "tfnsw"]) {
+      expect(formats.contributedBy[id], id).toBe("parking");
+    }
+  });
+
   it("registers every domain OpenConditions models", () => {
     const registry = productionRegistry();
     expect(productionModules.map((m) => m.name)).toEqual([

@@ -1,0 +1,62 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "bs",
+      "operator": "basel",
+      "product": "parking",
+      "name": "Parkhäuser Basel-Stadt current occupancy",
+      "tier": "authoritative",
+      "format": "geojson",
+      // Dataset 100088, the current state updated every minute; 100014 is the
+      // hourly history.
+      "endpoints": {
+        "main": {
+          "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088/exports/geojson",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Parkhäuser Basel-Stadt / data.bs.ch, CC BY 4.0",
+      "privacyUrl": "https://data.bs.ch/terms/privacy-policy/",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": ["title"],
+        "lang": "de",
+        "defaultType": "off_street",
+        "layout": { "field": "lot_type", "map": { "Parkhaus": "multi_storey" } },
+        "capacity": "total",
+        "available": "free",
+        "status": { "field": "status", "map": { "offen": "open", "zu": "closed" } },
+        "updated": { "field": "published", "timezone": "Europe/Zurich" },
+        "address": { "street": "address" },
+        "website": "link",
+      },
+    },
+    {
+      "operator": "sbb",
+      "product": "parking",
+      "name": "SBB car parking",
+      "tier": "authoritative",
+      "format": "sbb",
+      // The dataset series' permalink: it redirects to the day's resource,
+      // which redirects to a signed URL valid for a minute, so the redirects
+      // are followed on every fetch and nothing of them is kept. The terms ask
+      // that the data be refreshed as often as the source, which is daily.
+      "endpoints": {
+        "main": {
+          "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking/permalink",
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-opentransportdata-swiss-ToU",
+      "licenseUrl": "https://opentransportdata.swiss/en/terms-of-use/",
+      "attribution": "opentransportdata.swiss",
+      "privacyUrl": "https://opentransportdata.swiss/en/privacy-notice/",
+    },
+  ],
+}

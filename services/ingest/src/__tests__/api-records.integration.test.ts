@@ -84,12 +84,17 @@ async function walk(path: string, query: string, limit: number): Promise<string[
   return seen;
 }
 
-/** E-Control publishes no licence (NOASSERTION), so the public scope withholds its records. */
-const UNLICENSED = "at-econtrol-fuel";
+/**
+ * E-Control and Autobahn GmbH publish no licence (NOASSERTION), so the public
+ * scope withholds their records.
+ */
+const UNLICENSED = ["at-econtrol-fuel", "de-autobahn-events"];
 
 /** The golden sources the public scope serves. */
 const publicGolden = () =>
-  [...golden.entries()].filter(([source]) => source !== UNLICENSED).map(([, drafts]) => drafts);
+  [...golden.entries()]
+    .filter(([source]) => !UNLICENSED.includes(source))
+    .map(([, drafts]) => drafts);
 
 const publicFeatureIds = () =>
   publicGolden()
@@ -98,10 +103,11 @@ const publicFeatureIds = () =>
 
 /** Copies of a golden car park of `source` with local ids `locals`. */
 function carParks(source: string, locals: readonly string[], over: Rec = {}): Rec[] {
-  const park = goldenFacilities().get("de-bw-parkapi")!.features[0]!;
+  const park = goldenFacilities().get("de-bw-mobidata-parking")!.features[0]!;
   return locals.map((local, i) => ({
     ...park,
     id: `oc:feature:${source}:${local}`,
+    externalIds: [{ scheme: "provider", id: local, authority: source }],
     location: {
       ...(park["location"] as Rec),
       geometry: { type: "Point", coordinates: [8.0 + i / 10, 49.0] },
@@ -152,7 +158,7 @@ describe("GET /features", () => {
       "oc:feature:de-bw-ocpdb:72557",
     ]);
     expect(await list("source=it-mimit,es-minetur-fuel")).toHaveLength(3);
-    expect(await list(`source=${UNLICENSED}`)).toEqual([]);
+    expect(await list(`source=${UNLICENSED.join(",")}`)).toEqual([]);
     expect(await list("origin=crowd")).toEqual([]);
     expect(await list("domain=roads")).toEqual([]);
     expect(await list("kind=fuel_station&type=nothing")).toEqual([]);
@@ -216,7 +222,7 @@ describe("GET /features", () => {
     await writeParks("de-sa", carParks("de-sa", ["p1"]), NOW, "ODbL-1.0");
     const { res, body } = await get("/features?kind=parking_site");
     expect(ids(body)).not.toContain("oc:feature:de-sa:p1");
-    expect(res.headers["x-data-license"]).toBe("CC-BY-4.0, CC0-1.0");
+    expect(res.headers["x-data-license"]).toBe("CC0-1.0, DL-DE-BY-2.0");
     const canonical = await get("/features?canonical=1&kind=parking_site");
     expect(
       (canonical.body["records"] as Rec[]).some(
@@ -558,6 +564,16 @@ describe("GET /features/{id}", () => {
       404,
     );
   });
+
+  it("serves a feature whose source id is a URL with a fragment, as Ghent's are", async () => {
+    const local = "https://stad.gent/nl/loop/mobiliteit-loop#Parkeerterreinen_Stad_Gent";
+    const [park] = carParks("be-vlg-gent-parking", [local]);
+    await writeParks("be-vlg-gent-parking", [park!], NOW, "CC-BY-4.0");
+    const id = `oc:feature:be-vlg-gent-parking:${local}`;
+    const { res, body } = await get(`/features/${enc(id)}`);
+    expect(res.statusCode).toBe(200);
+    expect((body["record"] as Rec)["id"]).toBe(id);
+  });
 });
 
 describe("single records follow the live rules", () => {
@@ -607,6 +623,7 @@ describe("GET /offers and /offers/{id}", () => {
     expect((await walk("/offers", "", 1)).sort()).toEqual([
       "oc:offer:de-bw-ocpdb:138586",
       "oc:offer:de-bw-ocpdb:138587",
+      "oc:offer:nl-ndw-truck-parking:NL-12_421:1",
     ]);
     expect(ids((await get("/offers?source=es-minetur-fuel")).body)).toEqual([]);
     expect(ids((await get("/offers?bbox=7.5,51.6,7.6,51.7")).body)).toHaveLength(2);

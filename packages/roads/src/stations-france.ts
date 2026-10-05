@@ -1,5 +1,5 @@
+import { reprojectorFor } from "@openconditions/ingest-framework";
 import type { FlowSite, FlowSites } from "./flow-output.js";
-import { reprojectorFor } from "./reproject.js";
 
 /**
  * Build the `code_pme` → LineString sites from the French national road counting-

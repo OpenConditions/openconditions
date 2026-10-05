@@ -1,4 +1,5 @@
 import type { SourceTable, TargetTable } from "@openconditions/model";
+import type { ParkingVehicleType } from "../kinds.js";
 
 /**
  * DATEX II parking codes → OpenConditions classifications and vocabulary
@@ -90,6 +91,12 @@ export const DATEX2_V3_PARKING_TYPES_OUT: TargetTable = {
  * enumeration, which is what the Dutch and Luxembourgish feeds publish.
  */
 export const DATEX2_V3_PARKING_STATUSES: SourceTable = {
+  "parkingSiteStatus:spacesAvailable": "spaces_available",
+  "parkingSiteStatus:almostFull": "almost_full",
+  "parkingSiteStatus:fullAtEntrance": "full",
+  "parkingSiteStatus:full": "full",
+  "parkingSiteStatus:unknown": "unknown",
+  "parkingSiteStatus:other": null,
   "openingStatus:open": "open",
   "openingStatus:openWithServiceLimitation": "open",
   "openingStatus:closed": "closed",
@@ -352,6 +359,38 @@ export const DATEX2_PARKING_SECURITY_OUT: TargetTable = {
   fences: "fences",
   separated_area: "areaSeperatedFromSurroundings",
   none: "none",
+};
+
+/**
+ * The vehicle a parking group is assigned to, from DATEX II v2 and v3
+ * `VehicleTypeEnum`. Types that name a use rather than a vehicle (a car with
+ * a trailer is still a car; "any vehicle" is the untyped area) are mapped by
+ * what the bay has to fit; the rest have no parking area of their own.
+ */
+export const DATEX2_PARKING_VEHICLE_TYPES: Readonly<Record<string, ParkingVehicleType>> = {
+  anyVehicle: "any",
+  car: "car",
+  van: "car",
+  fourWheelDriveVehicle: "car",
+  vehicleWithCatalyticConverter: "car",
+  vehicleWithoutCatalyticConverter: "car",
+  highSidedVehicle: "truck",
+  lorry: "truck",
+  articulatedVehicle: "truck",
+  heavyHaulageVehicle: "truck",
+  tanker: "truck",
+  bus: "bus",
+  minibus: "bus",
+  coach: "coach",
+  motorcycle: "motorcycle",
+  motorscooter: "motorcycle",
+  moped: "motorcycle",
+  motorcycleWithSideCar: "motorcycle",
+  twoWheeledVehicle: "motorcycle",
+  bicycle: "bicycle",
+  caravan: "caravan",
+  carWithCaravan: "caravan",
+  vehicleWithCaravan: "caravan",
 };
 
 /** How closely a site is watched; v2 and v3 publish the same list. */

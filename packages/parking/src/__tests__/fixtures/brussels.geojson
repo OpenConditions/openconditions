@@ -1,0 +1,101 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.354795996362325,
+          50.84361600286775
+        ]
+      },
+      "properties": {
+        "name_fr": "Albertine Square",
+        "name_nl": "Albertine Square",
+        "adressee": "Place de la Justice, 16 - 1000 Bruxelles",
+        "adres_": "Gerechtsplein, 16 - 1000 Brussel",
+        "operator_fr": "Interparking",
+        "contact_phone": "+32 2 549 58 11",
+        "capacity": 703,
+        "disabledcapacity": 15,
+        "floors": 4,
+        "maxwidth": -999.0,
+        "maxheight": 2.0,
+        "commune_gemeente": "Bruxelles - Brussel"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.35298999636594,
+          50.85257000236315
+        ]
+      },
+      "properties": {
+        "name_fr": "Alhambra",
+        "name_nl": "Alhambra",
+        "adressee": "Boulevard Emile Jacqmain, 14 - 1000 Bruxelles",
+        "adres_": "Emile Jacqmainlaan, 14 - 1000 Brussel",
+        "operator_fr": "Interparking",
+        "contact_phone": "+32 2 549 58 11",
+        "capacity": 191,
+        "disabledcapacity": 0,
+        "floors": 4,
+        "maxwidth": -999.0,
+        "maxheight": 2.0,
+        "commune_gemeente": "Bruxelles - Brussel"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.352269996425862,
+          50.86316000274566
+        ]
+      },
+      "properties": {
+        "name_fr": "Up-site",
+        "name_nl": "Up-Site",
+        "adressee": "Quai de Willebroeck, 35 - 1000 Bruxelles",
+        "adres_": "Willebroekkaai, 35 - 1000 Brussel",
+        "operator_fr": "Indigo Belgium",
+        "contact_phone": "+32 2 432 80 10",
+        "capacity": 142,
+        "disabledcapacity": -999,
+        "floors": 1,
+        "maxwidth": -999.0,
+        "maxheight": 1.9,
+        "commune_gemeente": "Bruxelles - Brussel"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          4.3355129956134935,
+          50.89740100218349
+        ]
+      },
+      "properties": {
+        "name_fr": "P+R HEYSEL",
+        "name_nl": "P+R HEYSEL",
+        "adressee": "Avenue Impératrice Charlotte - 1020 Laeken",
+        "adres_": "Keizerin Charlottelaan - 1020 Laken",
+        "operator_fr": "Parking Brussels",
+        "contact_phone": null,
+        "capacity": 100,
+        "disabledcapacity": -999,
+        "floors": -999,
+        "maxwidth": -999.0,
+        "maxheight": 2.1,
+        "commune_gemeente": "Laeken - Laken"
+      }
+    }
+  ]
+}

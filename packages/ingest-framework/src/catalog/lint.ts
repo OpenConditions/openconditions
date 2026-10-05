@@ -281,7 +281,7 @@ function urlIssues(feed: FeedDefinition): string[] {
  * two feeds (one when every field has a default: a group of settings), no two
  * declared fields read from one env var (or its `_FILE`);
  * known licences, `NOASSERTION` with terms; public static URLs; the domain's
- * `$schema`; no future `disabled.since`; and catalogue parents with a usable
+ * `$schema` and its own feed checks (`lintFeed`); no future `disabled.since`; and catalogue parents with a usable
  * registry URL, one per resolver, whose children resolve. Disabled feeds are
  * checked like the rest.
  */
@@ -330,6 +330,7 @@ export function lintCatalog(
         ...credentialIssues(feed, credentials),
         ...rightsIssues(feed),
         ...urlIssues(feed),
+        ...(domain.lintFeed?.(feed) ?? []),
       ];
       if (feed.disabled && feed.disabled.since > today) {
         messages.push(`disabled.since ${feed.disabled.since} is in the future`);

@@ -9,10 +9,15 @@ import {
   type IngestDomain,
   loadCatalog,
 } from "@openconditions/ingest-framework";
+import { parkingDomain } from "@openconditions/parking";
 import { roadsDomain } from "@openconditions/roads";
 
 /** The domains this service ingests. */
-export const INGEST_DOMAINS: readonly IngestDomain<CatalogFeed>[] = [roadsDomain, fuelDomain];
+export const INGEST_DOMAINS: readonly IngestDomain<CatalogFeed>[] = [
+  roadsDomain,
+  fuelDomain,
+  parkingDomain,
+];
 
 /**
  * The baked-in catalogue, in both layouts the code runs in: the shipped

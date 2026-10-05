@@ -9,12 +9,12 @@
  * as GeoJSON [lon, lat]. A location that stands for one lane (the NRW
  * fahrstreifen feeds) names it in `affectedCarriagewayAndLanes`.
  */
+import { flattenString, stripXmlNamespace } from "@openconditions/datex2";
 import type { LineString, Point } from "geojson";
 import { SaxesParser } from "saxes";
 import type { FlowSite, FlowSites } from "./flow-output.js";
 import { datexLaneNumber } from "./flow-reading.js";
 import type { SiteTableParser } from "./siteTable.js";
-import { flattenString, stripXmlNamespace } from "./xml.js";
 
 type SiteGeometry = Point | LineString;
 

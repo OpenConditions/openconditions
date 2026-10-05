@@ -1,0 +1,105 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "GARAGENOGD.1017070",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.3762062,
+          48.20498313
+        ]
+      },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "OBJECTID": 1017070,
+        "GARAGE_ID": "226",
+        "BETREIBER": "WIPARK Garagen GmbH",
+        "BEZEICHNUNG": "Weihburggasse",
+        "PLZ": 1010,
+        "ORT": "Wien",
+        "ADRESSE": "Hegelgasse 1",
+        "WEBLINK_BETR_DE": "http://wipark.com",
+        "WEBLINK_BETR_EN": "http://wipark.com",
+        "WEBLINK_WK_DE": "http://www.parken.at/garage/226/",
+        "WEBLINK_WK_EN": "http://www.parken.at/en/garage/226/",
+        "LONGITUDE": 16.3762063,
+        "LATITUDE": 48.204983,
+        "PARK_AND_RIDE": "N",
+        "BEHINDERTENPARKPL": "Y",
+        "SE_ANNO_CAD_DATA": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "GARAGENOGD.1017092",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.06473951,
+          48.32671313
+        ]
+      },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "OBJECTID": 1017092,
+        "GARAGE_ID": "1268",
+        "BETREIBER": "Betreuung der Garagenanlage durch die Gemeinde.",
+        "BEZEICHNUNG": "P+R Tulln",
+        "PLZ": 3430,
+        "ORT": "Tulln",
+        "ADRESSE": "Bahnhofstraße",
+        "WEBLINK_BETR_DE": "http://www.noe.gv.at/Verkehr-Technik/Oeffentlicher-Verkehr/Park-Ride.html",
+        "WEBLINK_BETR_EN": "http://www.noe.gv.at/Verkehr-Technik/Oeffentlicher-Verkehr/Park-Ride.html",
+        "WEBLINK_WK_DE": "http://www.parken.at/garage/1268/",
+        "WEBLINK_WK_EN": "http://www.parken.at/en/garage/1268/",
+        "LONGITUDE": 16.0647396074402,
+        "LATITUDE": 48.3267130014367,
+        "PARK_AND_RIDE": "Y",
+        "BEHINDERTENPARKPL": "N",
+        "SE_ANNO_CAD_DATA": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "GARAGENOGD.1017069",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.56535605,
+          48.12605131
+        ]
+      },
+      "geometry_name": "SHAPE",
+      "properties": {
+        "OBJECTID": 1017069,
+        "GARAGE_ID": "3553",
+        "BETREIBER": "Flughafen Wien AG",
+        "BEZEICHNUNG": "Flughafen Wien - Stromtankstelle beim Parkplatz C an der B9",
+        "PLZ": 1300,
+        "ORT": "Schwechat",
+        "ADRESSE": "Anlieferstraße - Kreuzung mit Landesstraße B9",
+        "WEBLINK_BETR_DE": "http://www.viennaairport.com/parken",
+        "WEBLINK_BETR_EN": "http://www.viennaairport.com/parking",
+        "WEBLINK_WK_DE": "http://www.parken.at/garage/3553/",
+        "WEBLINK_WK_EN": "http://www.parken.at/en/garage/3553/",
+        "LONGITUDE": 16.5653561493348,
+        "LATITUDE": 48.1260511825881,
+        "PARK_AND_RIDE": "N",
+        "BEHINDERTENPARKPL": "N",
+        "SE_ANNO_CAD_DATA": null
+      }
+    }
+  ],
+  "totalFeatures": 3,
+  "numberMatched": 3,
+  "numberReturned": 3,
+  "timeStamp": "2026-10-05T03:12:31.184Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  }
+}

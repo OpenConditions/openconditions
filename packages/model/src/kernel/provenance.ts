@@ -114,10 +114,20 @@ export const OriginHop = z.strictObject({
   receivedAt: Iso8601,
 });
 
+/** A publisher an aggregating feed took the record from, credited with it. */
+export const UpstreamPublisher = z.strictObject({
+  publisher: z.string().min(1),
+  recordId: z.string().min(1).optional(),
+  license: z.string().min(1).optional(),
+  attribution: z.string().min(1).optional(),
+});
+
 export const MergedSource = z.strictObject({
   source: z.string().min(1),
   recordId: z.string().min(1),
   attribution: Attribution,
+  /** The merged record's own upstream publishers, credited with its source. */
+  upstream: z.array(UpstreamPublisher).min(1).optional(),
   link: z.enum(MERGE_LINKS).optional(),
 });
 
@@ -160,17 +170,7 @@ export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
       /** Publisher's record time; absent when the publisher gives none — never defaulted. */
       sourceUpdatedAt: Iso8601.optional(),
       attribution: Attribution,
-      upstream: z
-        .array(
-          z.strictObject({
-            publisher: z.string().min(1),
-            recordId: z.string().min(1).optional(),
-            license: z.string().min(1).optional(),
-            attribution: z.string().min(1).optional(),
-          }),
-        )
-        .min(1)
-        .optional(),
+      upstream: z.array(UpstreamPublisher).min(1).optional(),
       rawRef: z
         .strictObject({
           hash: Sha256Hex,

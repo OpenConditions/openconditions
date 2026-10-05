@@ -18,7 +18,7 @@ export const testModule: RegistryModule = {
   name: "test",
   entries: [
     defineDomain({ code: "roads", description: "test roads" }),
-    extendVocabulary({ vocabulary: "source_format", values: ["datex2"] }),
+    extendVocabulary({ vocabulary: "source_format", values: ["ocpi"] }),
     extendVocabulary({ vocabulary: "issue_code", values: ["datex_unknown_record"] }),
     defineKind({
       class: "situation",

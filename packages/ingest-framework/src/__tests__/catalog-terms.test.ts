@@ -63,6 +63,18 @@ describe("effective rights", () => {
     expect(catalogFeed({ license: "CC-BY-4.0" }).restricted).toBe(false);
   });
 
+  it("CC-BY-3.0-AT and the Flemish and Swiss licences are public", () => {
+    for (const id of [
+      "CC-BY-3.0-AT",
+      "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "LicenseRef-opentransportdata-swiss-ToU",
+    ]) {
+      const rights = effectiveRights(id);
+      expect(isRestricted(rights), id).toBe(false);
+      expect(rights.attributionRequired, id).toBe(true);
+    }
+  });
+
   it("licence lookup is exact", () => {
     expect(() => effectiveRights("dl-de/by-2-0")).toThrow(/unknown licence/);
     expect(() => effectiveRights("cc-by-4.0")).toThrow(/unknown licence/);

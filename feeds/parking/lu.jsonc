@@ -1,0 +1,30 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "operator": "cita",
+      "product": "parking",
+      "name": "CITA motorway parking",
+      "tier": "authoritative",
+      "format": "datex2",
+      // The motorway rest areas as a DATEX II v2 site table, and their vacant
+      // spaces.
+      "endpoints": {
+        "sites": {
+          "url": "https://www.cita.lu/info_trafic/datex/parking_static.xml",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://www.cita.lu/info_trafic/datex/parking_dynamic.xml",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Administration des Ponts et Chaussées – CITA",
+      // CITA has no privacy page of its own; this is the open-data portal's.
+      "privacyUrl": "https://data.public.lu/en/pages/legal/privacy/",
+    },
+  ],
+}

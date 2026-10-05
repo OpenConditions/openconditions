@@ -21,6 +21,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.2.2
         version: 21.2.2
+      '@openconditions/datex2':
+        specifier: workspace:*
+        version: link:packages/datex2
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:packages/ingest-framework
@@ -126,6 +129,25 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/datex2:
+    dependencies:
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
+      fast-xml-parser:
+        specifier: ^5.11.1
+        version: 5.11.1
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/federation:
     dependencies:
       '@openconditions/ingest-framework':
@@ -214,6 +236,9 @@ importers:
       jsonc-parser:
         specifier: ^3.3.1
         version: 3.3.1
+      proj4:
+        specifier: ^2.21.0
+        version: 2.22.0
       undici:
         specifier: ^8.10.0
         version: 8.11.2
@@ -221,6 +246,12 @@ importers:
         specifier: ^4.4.3
         version: 4.6.5
     devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
+      '@types/proj4':
+        specifier: ^2.19.0
+        version: 2.19.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
@@ -422,6 +453,9 @@ importers:
       '@openconditions/fuel':
         specifier: workspace:*
         version: link:../fuel
+      '@openconditions/parking':
+        specifier: workspace:*
+        version: link:../parking
       fast-xml-parser:
         specifier: ^5.11.1
         version: 5.11.1
@@ -504,6 +538,34 @@ importers:
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/parking:
+    dependencies:
+      '@openconditions/datex2':
+        specifier: workspace:*
+        version: link:../datex2
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      '@openconditions/model-parking':
+        specifier: workspace:*
+        version: link:../model-parking
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.5
+    devDependencies:
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
@@ -602,6 +664,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../core
+      '@openconditions/datex2':
+        specifier: workspace:*
+        version: link:../datex2
       '@openconditions/ingest-framework':
         specifier: workspace:*
         version: link:../ingest-framework
@@ -611,12 +676,6 @@ importers:
       '@openconditions/model-roads':
         specifier: workspace:*
         version: link:../model-roads
-      fast-xml-parser:
-        specifier: ^5.11.1
-        version: 5.11.1
-      proj4:
-        specifier: ^2.21.0
-        version: 2.22.0
       saxes:
         specifier: ^6.0.0
         version: 6.0.0
@@ -627,9 +686,6 @@ importers:
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
-      '@types/proj4':
-        specifier: ^2.19.0
-        version: 2.19.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
@@ -783,6 +839,9 @@ importers:
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
+      '@openconditions/datex2':
+        specifier: workspace:*
+        version: link:../../packages/datex2
       '@openconditions/fuel':
         specifier: workspace:*
         version: link:../../packages/fuel
@@ -801,6 +860,9 @@ importers:
       '@openconditions/openlr':
         specifier: workspace:*
         version: link:../../packages/openlr
+      '@openconditions/parking':
+        specifier: workspace:*
+        version: link:../../packages/parking
       '@openconditions/publishers':
         specifier: workspace:*
         version: link:../../packages/publishers

@@ -1,9 +1,15 @@
+import {
+  getXmlChild,
+  getXmlChildren,
+  isXmlObject,
+  parseXmlDocument,
+  xmlText,
+} from "@openconditions/datex2";
+import { reprojectorFor } from "@openconditions/ingest-framework";
 import type { Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import type { FlowParse, FlowReading, Los } from "./flow-reading.js";
-import { reprojectorFor } from "./reproject.js";
 import type { SourceDescriptor } from "./types.js";
-import { getXmlChild, getXmlChildren, isXmlObject, parseXmlDocument, xmlText } from "./xml.js";
 
 // INFORMO's nivelServicio: 0 fluido, 1 lento, 2 retenido, 3 congestionado.
 function losFromNivel(raw: string | undefined): Los {

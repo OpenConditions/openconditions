@@ -1,0 +1,167 @@
+{
+  "modelBaseVersion": "3",
+  "parkingPublicationLight": {
+    "publicationTime": "2026-10-05T03:29:00.389006155Z",
+    "parkingSite": [
+      {
+        "id": "32[Stadthalle]",
+        "lastUpdate": "2026-10-05T03:24:54.954Z",
+        "type": "carPark",
+        "name": "Stadthalle",
+        "description": "P15",
+        "openingTimesDescription": [
+          "MO-DO 0:00-0:00",
+          "FR 0:00-0:00",
+          "SA 0:00-0:00",
+          "SO 0:00-0:00"
+        ],
+        "isOpenNow": true,
+        "operatorInformation": ["Stadtverwaltung Wuppertal"],
+        "numberOfSpaces": 125,
+        "availableSpaces": 0,
+        "occupancyTrend": "decreasing",
+        "assignedFor": [
+          {
+            "typeOfAssignment": "allowedFor",
+            "user": "disabled",
+            "availableSpaces": 2
+          },
+          {
+            "typeOfAssignment": "allowedFor",
+            "user": "women",
+            "availableSpaces": 9
+          }
+        ],
+        "locationAndDimension": {
+          "coordinatesForDisplay": {
+            "latitude": 51.25246810913086,
+            "longitude": 7.141963958740234
+          }
+        }
+      },
+      {
+        "id": "parking-contipark-de-305200",
+        "type": "carPark",
+        "name": "Stadtmitte / Goerdelerstraße",
+        "description": "Das Contipark Parkhaus Stadtmitte / Goerdelerstraße in Solingen befindet sich in zentraler Lage und ist der ideale Ausgangspunkt für Ihren Besuch in der Innenstadt.\r\n\r\nVon hier aus erreichen Sie in wenigen Minuten die Solinger Fußgängerzone mit zahlreichen Einkaufsmöglichkeiten, Cafés und Restaurants. Auch der Neumarkt als beliebter Treffpunkt sowie das Theater und Konzerthaus Solingen befinden sich in unmittelbarer Nähe. Mit dem Pcard-Service profitieren Sie von ticketlosem, bargeldlosem Parken und attraktiven Sonderkonditionen.\r\n\r\nParken Sie bequem im Herzen von Solingen und genießen Sie die kurzen Wege zu Shopping, Kultur und urbanem Leben.",
+        "isOpenNow": false,
+        "temporaryClosed": true,
+        "operatorInformation": [
+          "Steuerleitzentrale",
+          "kundenservice@contipark.de",
+          "+49 (0)30 319871-555"
+        ],
+        "urlLinkAddress": "https://www.contipark.de/de/parken/solingen/parkhaus-stadtmitte-goerdelerstrae/",
+        "numberOfSpaces": 689,
+        "locationAndDimension": {
+          "locationDescriptor": "Florastraße 3, 42651",
+          "specificAccessInformation": [
+            "Außerhalb der Öffnungszeiten: geschlossen (Ausfahrt möglich)"
+          ],
+          "roadName": "Florastraße",
+          "coordinatesForDisplay": {
+            "latitude": 51.172565,
+            "longitude": 7.087072
+          }
+        }
+      },
+      {
+        "id": "67[P+R Wittlaer Nord]",
+        "lastUpdate": "2026-10-05T03:00:10.004Z",
+        "type": "carPark",
+        "name": "P+R Wittlaer Nord",
+        "description": "Park and Ride Wittlaer Nord",
+        "numberOfSpaces": 45,
+        "locationAndDimension": {
+          "coordinatesForDisplay": {
+            "latitude": 51.318790435791016,
+            "longitude": 6.744541645050049
+          }
+        }
+      },
+      {
+        "id": "parking-apag-8621",
+        "type": "carPark",
+        "name": "Uniklinik Franziskus",
+        "equipmentAndServices": ["Barzahlung / Debit- & Kreditkarte", "Fahrzeug aufladen"],
+        "openingTimesDescription": ["6:00 - 22:00"],
+        "isOpenNow": true,
+        "tariffDescription": [
+          "Tages-Tarif – 08:00 – 20:00 Uhr – 1,50 € / 60 Min. – Max. 8,00 €",
+          "Nacht-Tarif – 20:00 – 08:00 Uhr – 1,50 € / 60 Min. – Max. 4,00 €"
+        ],
+        "freeParking": false,
+        "urlLinkAddress": "https://www.apag.de/de/parkobjekte/parkplatz-uniklinik-franziskus",
+        "numberOfSpaces": 69,
+        "availableSpaces": 32,
+        "occupancyTrend": "stable",
+        "assignedFor": [
+          {
+            "typeOfAssignment": "allowedFor",
+            "vehicleType": "car",
+            "fuelType": "battery",
+            "user": "allUsers",
+            "availableSpaces": 2
+          }
+        ],
+        "locationAndDimension": {
+          "locationDescriptor": "Lütticher Str., 52074 Aachen",
+          "specificAccessInformation": [
+            "Der Parkplatz Uniklinik Franziskus befindet sich neben der Uniklinik RWTH Aachen – Franziskus in Aachen. Sie erreichen den Parkplatz über die Lütticher Straße."
+          ],
+          "roadName": "Lütticher Str.",
+          "coordinatesForDisplay": {
+            "latitude": 50.76486,
+            "longitude": 6.07049
+          }
+        }
+      },
+      {
+        "id": "parking-contipark-de-107700",
+        "type": "carPark",
+        "name": "StadtCenter",
+        "description": "Das Contipark Parkhaus Kuhgasse in Düren überzeugt durch seine zentrale Lage und moderne Ausstattung – ideal für alle, die bequem in der Innenstadt parken möchten.\r\n\r\nNur wenige Schritte entfernt laden die Einkaufsstraße Wirtelstraße, das StadtCenter Düren und der Wochenmarkt auf dem Kaiserplatz zum Bummeln ein. Auch das Leopold-Hoesch-Museum und der Willy-Brandt-Park befinden sich in fußläufiger Umgebung und bieten kulturelle sowie grüne Erlebnisse mitten in der City.\r\n\r\nIm Parkhaus Kuhgasse stehen Ihnen E-Ladestationen für Elektrofahrzeuge zur Verfügung. Mit dem Pcard-Service profitieren Sie zudem von schnellem, bargeldlosem Parken – komfortabel, effizient und oft günstiger als zum regulären Tarif.",
+        "equipmentAndServices": [
+          "Notruf (über Leitzentrale)",
+          "Rollstuhlgerecht",
+          "Geldautomat",
+          "Öffentliche Toiletten",
+          "Behindertentoiletten"
+        ],
+        "isOpenNow": true,
+        "temporaryClosed": false,
+        "operatorInformation": ["Steuerleitzentrale"],
+        "urlLinkAddress": "https://www.contipark.de/de/parken/dueren/parkhaus-stadtcenter/",
+        "numberOfSpaces": 689,
+        "assignedFor": [
+          {
+            "typeOfAssignment": "onlyFor",
+            "user": "women",
+            "availableSpaces": 22
+          },
+          {
+            "typeOfAssignment": "onlyFor",
+            "user": "disabled",
+            "availableSpaces": 9
+          },
+          {
+            "typeOfAssignment": "onlyFor",
+            "user": "familys",
+            "availableSpaces": 20
+          }
+        ],
+        "locationAndDimension": {
+          "locationDescriptor": "Kuhgasse 8, 52349",
+          "specificAccessInformation": [
+            "Außerhalb der Öffnungszeiten: geschlossen (Ein- und Ausfahrt für Dauerparker möglich; Zugang mit Karte).\n"
+          ],
+          "roadName": "Kuhgasse",
+          "coordinatesForDisplay": {
+            "latitude": 50.805752,
+            "longitude": 6.47938
+          }
+        }
+      }
+    ]
+  }
+}

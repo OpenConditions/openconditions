@@ -1,5 +1,29 @@
 import type { Confidence } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
+import {
+  multilingual as datexMultilingual,
+  datexPublications,
+  recordBody as datexRecordBody,
+  datexRoot,
+  detectReprojector,
+  displayCoordinates,
+  elementType,
+  getXmlAttribute,
+  getXmlChild,
+  getXmlChildren,
+  getXmlChildText,
+  isXmlObject,
+  parseLatLonList,
+  parseXmlDocument,
+  type Reprojector,
+  recId,
+  stripXmlNamespace,
+  unnamedCoordinateLists,
+  type XmlObject,
+  xmlNodeToArray,
+  xmlText,
+} from "@openconditions/datex2";
+import { isPlausibleWgs84, reprojectorFor } from "@openconditions/ingest-framework";
 import type { Schedule, Text } from "@openconditions/model";
 import {
   datexClassification,
@@ -17,7 +41,6 @@ import {
   datexRestrictionDetails,
 } from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
-import { isPlausibleWgs84, reprojectorFor } from "./reproject.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
@@ -30,18 +53,6 @@ import {
 } from "./snapshot.js";
 import { type AlertCReference, resolveAlertC, tmcTables } from "./tmc/index.js";
 import type { SourceDescriptor } from "./types.js";
-import {
-  getXmlAttribute,
-  getXmlChild,
-  getXmlChildren,
-  getXmlChildText,
-  isXmlObject,
-  parseXmlDocument,
-  stripXmlNamespace,
-  type XmlObject,
-  xmlNodeToArray,
-  xmlText,
-} from "./xml.js";
 
 type ValidityStatus = "active" | "inactive" | "archived" | "cancelled";
 
@@ -57,12 +68,6 @@ function validityStatusToStatus(raw: string | undefined): ValidityStatus {
   return "active";
 }
 
-function elementType(rec: XmlObject): string {
-  const raw = getXmlAttribute(rec, "type") ?? "";
-  const colonIdx = raw.indexOf(":");
-  return colonIdx >= 0 ? raw.slice(colonIdx + 1) : raw;
-}
-
 /**
  * DATEX types whose coordinate members describe a path in source order.
  * `LinearByCoordinates` is intentionally excluded here: its `start` and
@@ -71,19 +76,6 @@ function elementType(rec: XmlObject): string {
  */
 function isLinearPathType(type: string): boolean {
   return type === "Linear" || type.endsWith("LinearLocation");
-}
-
-/**
- * The publisher's own record identity, or an empty string when it supplied
- * none. Identity must never be invented: a generated id would look like a new
- * record on every poll, and the previous one would look withdrawn.
- */
-function recId(rec: XmlObject): string {
-  // xsi-typed records carry an `id` attribute; substitution-group records (e.g.
-  // National Highways) carry a stable `<idG>` leaf instead.
-  return (
-    getXmlAttribute(rec, "id") ?? getXmlChildText(rec, "idG") ?? getXmlChildText(rec, "id") ?? ""
-  );
 }
 
 function situationIdOf(situation: XmlObject): string | undefined {
@@ -117,30 +109,15 @@ function multilingual(node: unknown, lang: string): string | undefined {
   return text(comment);
 }
 
-const BCP47 = /^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$/;
-
 /**
- * A DATEX multilingual block in every language it carries, in document order
- * (the publisher's primary first). A value without a usable `lang` is
- * undetermined; a block with no `values` is its plain text.
+ * A public comment's multilingual block (the `comment` it wraps, or the node
+ * itself) in every language it carries, in document order.
  */
 function multilingualText(node: unknown): Text | undefined {
   if (!isXmlObject(node)) return undefined;
-  const comment = getXmlChild(node, "comment") ?? node;
-  const values = getXmlChild(comment, "values");
-  const out: Text = [];
-  if (values) {
-    for (const v of xmlNodeToArray(values["value"]).filter(isXmlObject)) {
-      const t = text(v)?.trim();
-      if (!t) continue;
-      const lang = getXmlAttribute(v, "lang")?.trim();
-      const entry = { lang: lang && BCP47.test(lang) ? lang : "und", text: t };
-      if (!out.some((e) => e.lang === entry.lang && e.text === entry.text)) out.push(entry);
-    }
-  } else {
-    const t = text(comment)?.trim();
-    if (t) out.push({ lang: "und", text: t });
-  }
+  const out: Text = datexMultilingual(getXmlChild(node, "comment") ?? node).map(
+    ({ lang, value }) => ({ lang, text: value }),
+  );
   return out.length > 0 ? out : undefined;
 }
 
@@ -195,45 +172,6 @@ function defaultHeadline(type: string): string {
   return labels[type] ?? "Traffic information";
 }
 
-type Reprojector = (p: [number, number]) => [number, number];
-
-/**
- * GML `posList` / `pos` to `[lon,lat]` pairs (finite only). Under WGS84 the
- * values are "lat lon" → swapped to GeoJSON order, unless `lonFirst` (the feed
- * publishes "lon lat", e.g. Trafikverket) → kept as-is. When a `reproject` is
- * given (the feed's geometry is a projected grid, e.g. Flanders EPSG:31370) the
- * values are "easting northing" in CRS axis order → reprojected to [lon,lat].
- */
-function parseLatLonList(
-  raw: string | undefined,
-  reproject?: Reprojector | null,
-  lonFirst = false,
-): [number, number][] {
-  if (!raw) return [];
-  const nums = raw.trim().split(/\s+/).map(Number);
-  const out: [number, number][] = [];
-  for (let i = 0; i + 1 < nums.length; i += 2) {
-    const a = nums[i]!;
-    const b = nums[i + 1]!;
-    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
-    out.push(reproject ? reproject([a, b]) : lonFirst ? [a, b] : [b, a]);
-  }
-  return out;
-}
-
-/** The first projected `srsName` in the document, as a reprojector to WGS84
- * (null when the feed is already WGS84). Feeds use a single CRS throughout. */
-function detectReprojector(input: string | Buffer): Reprojector | null {
-  const text = typeof input === "string" ? input : input.toString("utf8");
-  const matches = text.match(/srsName="([^"]+)"/g);
-  if (!matches) return null;
-  for (const m of matches) {
-    const r = reprojectorFor(m.slice(9, -1));
-    if (r) return r;
-  }
-  return null;
-}
-
 /**
  * Resolve a situationRecord's geometry by walking its location subtree for any
  * coordinate-bearing element — DATEX nests these at varying depths and shapes:
@@ -258,88 +196,6 @@ function resolveGeometry(
     reproject,
     lonFirst,
   );
-}
-
-/**
- * Coordinate lists hiding in leaves that no element name identifies.
- *
- * Hamburg publishes its geometry as a bare `posList` wrapped in an element
- * literally called `any` — an XSD wildcard the publisher never named — so
- * nothing keyed on element names could find it. Content identifies it instead:
- * a whitespace-separated run of numbers that reads as a sequence of plausible
- * WGS84 pairs is a coordinate list, whatever it is called. Requiring at least
- * two valid pairs keeps arbitrary numeric text from qualifying.
- */
-function unnamedCoordinateLists(
-  node: unknown,
-  reproject?: Reprojector | null,
-  lonFirst = false,
-): [number, number][][] {
-  const out: [number, number][][] = [];
-
-  const walk = (n: unknown): void => {
-    if (Array.isArray(n)) {
-      n.forEach(walk);
-      return;
-    }
-    if (!isXmlObject(n)) return;
-    for (const [key, value] of Object.entries(n)) {
-      if (key.startsWith("@_")) continue;
-      if (isXmlObject(value) || Array.isArray(value)) {
-        walk(value);
-        continue;
-      }
-      const raw = xmlText(value);
-      if (!raw || !/^[\d\s.eE+-]+$/.test(raw)) continue;
-      const coords = parseLatLonList(raw, reproject, lonFirst);
-      if (coords.length >= 2 && coords.every(isPlausibleWgs84)) out.push(coords);
-    }
-  };
-
-  walk(node);
-  return out;
-}
-
-/**
- * Every coordinate in a subtree expressed as explicit latitude/longitude
- * leaves, whatever element carries them.
- *
- * Deliberately name-agnostic: allow-listing element names one at a time is what
- * lost `locationForDisplay`, and the next publisher will use a name nobody has
- * seen. An element carrying both a finite latitude and longitude is a
- * coordinate regardless of what it is called.
- */
-function displayCoordinates(node: unknown, reproject?: Reprojector | null): [number, number][] {
-  const out: [number, number][] = [];
-  const seen = new Set<string>();
-
-  const walk = (n: unknown): void => {
-    if (Array.isArray(n)) {
-      n.forEach(walk);
-      return;
-    }
-    if (!isXmlObject(n)) return;
-
-    const lat = Number(getXmlChildText(n, "latitude"));
-    const lon = Number(getXmlChildText(n, "longitude"));
-    if (Number.isFinite(lat) && Number.isFinite(lon)) {
-      const p = reproject ? reproject([lon, lat]) : ([lon, lat] as [number, number]);
-      const key = `${p[0]},${p[1]}`;
-      // The same position is often repeated (an area's display point echoed by
-      // an extension); one place should not become several markers.
-      if (!seen.has(key)) {
-        seen.add(key);
-        out.push(p);
-      }
-      return;
-    }
-    for (const [key, value] of Object.entries(n)) {
-      if (!key.startsWith("@_")) walk(value);
-    }
-  };
-
-  walk(node);
-  return out;
 }
 
 /** Walk a location subtree (locationReference, groupOfLocations, alternativeRoute,
@@ -1275,49 +1131,8 @@ interface SituationRecord {
 }
 
 function listSituationRecords(doc: XmlObject): SituationRecord[] {
-  let root = doc;
-
-  // Some national access points (e.g. France DIR / Bison Futé) wrap the DATEX
-  // document in a SOAP envelope. Unwrap it (namespace prefixes are already
-  // stripped) so the publication lookup below sees the d2LogicalModel directly.
-  const envelope = getXmlChild(root, "Envelope");
-  if (envelope) {
-    const body = getXmlChild(envelope, "Body");
-    if (body) root = body;
-  }
-
-  let publication: XmlObject | undefined;
-
-  const msgContainer =
-    getXmlChild(root, "messageContainer") ?? getXmlChild(root, "mc:messageContainer");
-
-  if (msgContainer) {
-    publication =
-      getXmlChild(msgContainer, "payload") ?? getXmlChild(msgContainer, "payloadPublication");
-  }
-
-  if (!publication) {
-    const logicalModel = getXmlChild(root, "D2LogicalModel") ?? getXmlChild(root, "d2LogicalModel");
-
-    if (logicalModel) {
-      publication =
-        getXmlChild(logicalModel, "payload") ?? getXmlChild(logicalModel, "payloadPublication");
-
-      if (!publication) {
-        for (const [key, value] of Object.entries(logicalModel)) {
-          if (key.startsWith("@_")) continue;
-          const stripped = stripXmlNamespace(key);
-          if (stripped.endsWith("Publication")) {
-            const candidate = xmlNodeToArray(value).find(isXmlObject);
-            if (candidate) {
-              publication = candidate;
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
+  const root = datexRoot(doc);
+  let publication: XmlObject | undefined = datexPublications(doc)[0]?.body;
 
   if (!publication) {
     for (const [key, value] of Object.entries(root)) {
@@ -1378,27 +1193,14 @@ const RECORD_BODY_MARKERS = [
 ];
 
 /**
- * Resolve the effective record body and its class name. Most DATEX feeds put the
- * fields directly on `<situationRecord xsi:type="…">`. Others (e.g. National
- * Highways) use the v3 substitution group: `<situationRecord><sit{Class}>…fields,
- * locationReference…</sit{Class}></situationRecord>` with NO xsi:type. There the
- * real body — and the only locationReference the geometry walk can reach — is one
- * level down, and the wrapper element name carries the record class. Descend into
- * that wrapper so the field/geometry getters see the body, and surface the class
- * name (`sitRoadOrCarriagewayOrLaneManagement` → `RoadOrCarriagewayOrLaneManagement`).
+ * The effective situationRecord body and its class name. National Highways and
+ * others use the v3 substitution group (`<situationRecord><sit{Class}>…`) with no
+ * xsi:type; there the real body — and the only locationReference the geometry
+ * walk can reach — is one level down, and the wrapper name carries the class
+ * (`sitRoadOrCarriagewayOrLaneManagement` → `RoadOrCarriagewayOrLaneManagement`).
  */
 function recordBody(rawRec: XmlObject): { body: XmlObject; className?: string } {
-  if (RECORD_BODY_MARKERS.some((m) => m in rawRec)) return { body: rawRec };
-  for (const [key, value] of Object.entries(rawRec)) {
-    if (key.startsWith("@_")) continue;
-    const child = xmlNodeToArray(value).find(isXmlObject);
-    if (child && RECORD_BODY_MARKERS.some((m) => m in child)) {
-      const stripped = stripXmlNamespace(key);
-      const className = stripped.startsWith("sit") ? stripped.slice(3) : stripped;
-      return { body: child, className };
-    }
-  }
-  return { body: rawRec };
+  return datexRecordBody(rawRec, { markers: RECORD_BODY_MARKERS, classPrefix: "sit" });
 }
 
 /**

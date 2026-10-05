@@ -27,8 +27,18 @@ const issuePaths = (r: { ok: boolean; issues?: { path: (string | number)[] }[] }
 describe("buildRegistry", () => {
   it("merges vocabulary extensions and records who contributed each value", () => {
     const formats = registry.vocabulary("source_format")!;
-    expect(formats.values).toEqual(["crowd", "derived", "datex2"]);
-    expect(formats.contributedBy["datex2"]).toBe("test");
+    expect(formats.values).toEqual([
+      "crowd",
+      "derived",
+      "datex2",
+      "geojson",
+      "json",
+      "csv",
+      "overpass",
+      "ocpi",
+    ]);
+    expect(formats.contributedBy["datex2"]).toBe("kernel");
+    expect(formats.contributedBy["ocpi"]).toBe("test");
   });
 
   it.each([

@@ -1,0 +1,185 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "parkplatz.22101",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.03783547,
+          47.79744591
+        ]
+      },
+      "geometry_name": "GEOMETRIE",
+      "properties": {
+        "FREIE_PLAETZE": "490 (79%)",
+        "TELEFON": null,
+        "ADRESSE": "Hildmannplatz",
+        "KAPAZITAET": null,
+        "BEZEICHNUNG": "Altstadtgarage A",
+        "FAX": null,
+        "URL": "https://www.mein-contipark.at/parkplatz-finden/parken-in-salzburg/tiefgarage-altstadtgarage-a-salzburg--ci3cp112518681",
+        "ANSPRECHPARTNER_NAME": null,
+        "FREIE_PLAETZE_STATUS": 1,
+        "TYP": "Garage/Parkhaus",
+        "OEFFNUNGSZEITEN": null,
+        "BELEGUNG_AKTUALISIERT": "5.10.2026 5:11",
+        "EMAIL": null,
+        "TARIF": null,
+        "ANMERKUNGEN": null,
+        "BELEGUNG_TENDENZ": "gleichbleibend",
+        "ID": 22101,
+        "DATENQUELLE_URL": "https://www.yunextraffic.com/de/",
+        "DATENQUELLE_NAME": "Yunex-Traffic",
+        "ANSPRECHPARTNER_URL": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "parkplatz.22151",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.04368224,
+          47.81539145
+        ]
+      },
+      "geometry_name": "GEOMETRIE",
+      "properties": {
+        "FREIE_PLAETZE": "nicht bekannt",
+        "TELEFON": null,
+        "ADRESSE": "Fanny-von-Lehnert-Straße 7",
+        "KAPAZITAET": null,
+        "BEZEICHNUNG": "Renaissance Hotel",
+        "FAX": null,
+        "URL": "https://www.salzburg.info/de/reiseinfos/salzburg-a-z/tiefgarage-wyndham-grand_az_7876",
+        "ANSPRECHPARTNER_NAME": null,
+        "FREIE_PLAETZE_STATUS": 0,
+        "TYP": "Garage/Parkhaus",
+        "OEFFNUNGSZEITEN": null,
+        "BELEGUNG_AKTUALISIERT": null,
+        "EMAIL": null,
+        "TARIF": null,
+        "ANMERKUNGEN": null,
+        "BELEGUNG_TENDENZ": null,
+        "ID": 22151,
+        "DATENQUELLE_URL": "//www.stadt-salzburg.at/org-db/ORGTEBW?TODO=TEBSY&ORG=OU64",
+        "DATENQUELLE_NAME": "0503 - Amt für Stadtplanung und Verkehr",
+        "ANSPRECHPARTNER_URL": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "parkplatz.22159",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.07152624,
+          47.76983285
+        ]
+      },
+      "geometry_name": "GEOMETRIE",
+      "properties": {
+        "FREIE_PLAETZE": "230 (79%)",
+        "TELEFON": null,
+        "ADRESSE": "Alpenstraße - Stadteinfahrt Süd",
+        "KAPAZITAET": null,
+        "BEZEICHNUNG": "Park & Ride Süd",
+        "FAX": null,
+        "URL": "https://www.salzburg.info/de/reiseinfos/anreise-verkehr/auto/parken/salzburg-sued",
+        "ANSPRECHPARTNER_NAME": null,
+        "FREIE_PLAETZE_STATUS": 1,
+        "TYP": "Parkplatz",
+        "OEFFNUNGSZEITEN": null,
+        "BELEGUNG_AKTUALISIERT": "5.10.2026 5:11",
+        "EMAIL": null,
+        "TARIF": null,
+        "ANMERKUNGEN": null,
+        "BELEGUNG_TENDENZ": "gleichbleibend",
+        "ID": 22159,
+        "DATENQUELLE_URL": "//www.stadt-salzburg.at/org-db/ORGTEBW?TODO=TEBSY&ORG=OU64",
+        "DATENQUELLE_NAME": "0503 - Amt für Stadtplanung und Verkehr",
+        "ANSPRECHPARTNER_URL": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "parkplatz.22163",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.04475886,
+          47.81321948
+        ]
+      },
+      "geometry_name": "GEOMETRIE",
+      "properties": {
+        "FREIE_PLAETZE": "67 (54%)",
+        "TELEFON": null,
+        "ADRESSE": "Südtirolerplatz 1",
+        "KAPAZITAET": null,
+        "BEZEICHNUNG": "Bahnhofsgarage",
+        "FAX": null,
+        "URL": "https://www.mein-contipark.at/parkplatz-finden/parken-in-salzburg/tiefgarage-bahnhofsgarage-salzburg--ci3cp112518932",
+        "ANSPRECHPARTNER_NAME": null,
+        "FREIE_PLAETZE_STATUS": 1,
+        "TYP": "Garage/Parkhaus",
+        "OEFFNUNGSZEITEN": null,
+        "BELEGUNG_AKTUALISIERT": "5.10.2026 5:11",
+        "EMAIL": null,
+        "TARIF": null,
+        "ANMERKUNGEN": null,
+        "BELEGUNG_TENDENZ": "fallend",
+        "ID": 22163,
+        "DATENQUELLE_URL": "https://www.yunextraffic.com/de/",
+        "DATENQUELLE_NAME": "Yunex-Traffic",
+        "ANSPRECHPARTNER_URL": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "parkplatz.22158",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.02828664,
+          47.82296985
+        ]
+      },
+      "geometry_name": "GEOMETRIE",
+      "properties": {
+        "FREIE_PLAETZE": "derzeit nicht bekannt",
+        "TELEFON": null,
+        "ADRESSE": "Am Messezentrum 1",
+        "KAPAZITAET": null,
+        "BEZEICHNUNG": "Park & Ride Messezentrum Salzburg",
+        "FAX": null,
+        "URL": "https://www.mzs.at/de/kontakt-anreise/anfahrt-parken/",
+        "ANSPRECHPARTNER_NAME": null,
+        "FREIE_PLAETZE_STATUS": 0,
+        "TYP": "Garage/Parkhaus",
+        "OEFFNUNGSZEITEN": null,
+        "BELEGUNG_AKTUALISIERT": null,
+        "EMAIL": null,
+        "TARIF": null,
+        "ANMERKUNGEN": null,
+        "BELEGUNG_TENDENZ": null,
+        "ID": 22158,
+        "DATENQUELLE_URL": "https://www.yunextraffic.com/de/",
+        "DATENQUELLE_NAME": "Yunex-Traffic",
+        "ANSPRECHPARTNER_URL": null
+      }
+    }
+  ],
+  "totalFeatures": 5,
+  "numberMatched": 5,
+  "numberReturned": 5,
+  "timeStamp": "2026-10-05T03:12:30.865Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  }
+}

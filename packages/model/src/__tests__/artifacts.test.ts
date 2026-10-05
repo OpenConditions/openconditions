@@ -62,7 +62,9 @@ describe("CHECK constraint SQL", () => {
 describe("registryMarkdown", () => {
   it("lists vocabularies, kinds, properties and effects", () => {
     const md = registryMarkdown(registry);
-    expect(md).toContain("| `source_format` | yes | `crowd`, `derived`, `datex2` |");
+    expect(md).toContain(
+      "| `source_format` | yes | `crowd`, `derived`, `datex2`, `geojson`, `json`, `csv`, `overpass`, `ocpi` |",
+    );
     expect(md).toContain(
       "| `incident` | roads | 1.2 | `accident` (multi_vehicle, overturned); `breakdown` |",
     );

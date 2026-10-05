@@ -1,4 +1,5 @@
 import { type Severity, toIsoTimestamp } from "@openconditions/core";
+import { readFeatureCollection, reprojectGeometry } from "@openconditions/ingest-framework";
 import { type RoadClassification, registeredClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
@@ -8,7 +9,6 @@ import {
   type RoadEvent,
   type RoadEventType,
 } from "./model.js";
-import { reprojectorFor } from "./reproject.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
@@ -117,41 +117,11 @@ function defaultHeadline(type: RoadEventType): string {
     : type.replace(/_/g, " ").replace(/^\w/, (c) => c.toUpperCase());
 }
 
-/** The CRS name on a geometry or FeatureCollection `crs` member, if any. */
-function crsName(crs: unknown): string | undefined {
-  const name = (crs as { properties?: { name?: unknown } })?.properties?.name;
-  return typeof name === "string" ? name : undefined;
-}
-
-/** Recursively remap every coordinate pair of a geometry through `fn`, dropping
- * any now-stale `crs` member (coords become WGS84). */
-function remapCoords(geometry: Geometry, fn: (p: [number, number]) => [number, number]): Geometry {
-  const { crs: _crs, ...geom } = geometry as Geometry & { crs?: unknown };
-  if (geom.type === "GeometryCollection") {
-    return { ...geom, geometries: geom.geometries.map((g) => remapCoords(g, fn)) };
-  }
-  const walk = (c: unknown): unknown =>
-    Array.isArray(c) && typeof c[0] === "number" && typeof c[1] === "number"
-      ? fn([c[0], c[1]])
-      : Array.isArray(c)
-        ? c.map(walk)
-        : c;
-  return {
-    ...geom,
-    coordinates: walk((geom as { coordinates: unknown }).coordinates),
-  } as Geometry;
-}
-
 export function parseGeoJson(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   const text = typeof input === "string" ? input : input.toString("utf8");
-  let fc: { features?: unknown; crs?: unknown };
-  try {
-    fc = JSON.parse(text) as { features?: unknown; crs?: unknown };
-  } catch {
-    return [];
-  }
-  const features = Array.isArray(fc.features) ? (fc.features as Feature[]) : [];
-  return featuresToRoadEvents(features, crsName(fc.crs), src, "geojson");
+  const collection = readFeatureCollection(text);
+  if (!collection) return [];
+  return featuresToRoadEvents(collection.features as Feature[], collection.crs, src, "geojson");
 }
 
 /**
@@ -196,10 +166,7 @@ export function featuresToRoadEvents(
       if (hasShape) {
         // CRS may be declared on the collection (ArcGIS/WFS) or per-geometry
         // (Brussels OGC API). Reproject to WGS84 when it's a known projected grid.
-        const reproject = reprojectorFor(
-          crsName((rawGeometry as { crs?: unknown }).crs) ?? collectionCrs,
-        );
-        geometry = reproject ? remapCoords(rawGeometry, reproject) : rawGeometry;
+        geometry = reprojectGeometry(rawGeometry, collectionCrs);
       } else {
         // Last resort before dropping the record: endpoints published as WGS84
         // columns rather than as geometry.

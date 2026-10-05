@@ -3,7 +3,7 @@ import type { ZodRawShape } from "zod";
 import type { ParseOutput } from "../parse-output.js";
 import type { DigestTee, PayloadDigest } from "../payload.js";
 import type { CatalogResolver } from "./resolvers.js";
-import type { CatalogFeed } from "./types.js";
+import type { CatalogFeed, FeedDefinition } from "./types.js";
 
 /**
  * One endpoint role a format reads. A role with `decoders` holds reference data
@@ -84,6 +84,12 @@ export interface IngestDomain<F extends CatalogFeed = CatalogFeed> {
   feedShape: ZodRawShape;
   formats: Readonly<Record<string, FeedFormat<F>>>;
   resolvers: readonly CatalogResolver[];
+  /**
+   * The domain's own checks of one feed as its region file writes it, beyond
+   * what the feed shape can say (a field a format needs); one message per
+   * issue, each an error of the catalogue lint.
+   */
+  lintFeed?(feed: FeedDefinition): string[];
 }
 
 /**

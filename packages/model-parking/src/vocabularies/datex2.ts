@@ -1,4 +1,20 @@
 /**
+ * `ParkingSiteStatusEnum` from the DATEX II v3.2 Parking schema
+ * (https://docs.datex2.eu/_static/data/v3.2/DATEXII_3_Parking.xsd). Version 3.7
+ * removed it, but NDW's live v3 status feed still publishes
+ * `<parkingSiteStatus>`, so the values stay in the census apart from
+ * `DATEX2_V3_PARKING`.
+ */
+export const DATEX2_V3_2_PARKING_SITE_STATUSES = [
+  "spacesAvailable",
+  "almostFull",
+  "fullAtEntrance",
+  "full",
+  "unknown",
+  "other",
+] as const;
+
+/**
  * DATEX II v3.7 parking vocabularies, verbatim from the official schemas
  * `DATEXII_3_Parking.xsd` and `DATEXII_3_Facilities.xsd`
  * (https://docs.datex2.eu/_static/data/v3.7/). The `_extended` value every

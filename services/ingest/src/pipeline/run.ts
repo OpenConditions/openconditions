@@ -1,4 +1,5 @@
 import type { RawTier } from "@openconditions/core/server";
+import { parseXmlDocument } from "@openconditions/datex2";
 import type {
   CatalogFeed,
   Env,
@@ -20,7 +21,7 @@ import {
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import type { FlowOutput } from "@openconditions/roads";
-import { drainSkippedNoGeometry, enrichReadings, parseXmlDocument } from "@openconditions/roads";
+import { drainSkippedNoGeometry, enrichReadings } from "@openconditions/roads";
 import type { WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
@@ -207,10 +208,12 @@ export interface RoleState {
    * role, whose roles fall due apart: a single-role poll holds them all.
    */
   payloads: Record<string, readonly Buffer[]>;
+  /** The roles whose last fetch failed and fell back to a held payload, so an outage warns once. */
+  failing: Record<string, true>;
 }
 
 export function createRoleState(): RoleState {
-  return { lastFetchedAt: {}, payloads: {} };
+  return { lastFetchedAt: {}, payloads: {}, failing: {} };
 }
 
 /**
@@ -237,13 +240,22 @@ export function dataRoles(src: CatalogFeed): string[] {
 }
 
 /**
+ * The seconds between a feed's scheduler ticks: its cadence, at most an hour.
+ * Cron steps cannot span more than an hour of minutes, so a feed slower than
+ * that ticks hourly and polls on the tick its cadence ends.
+ */
+export function pollTickSec(cadenceSec: number): number {
+  return Math.min(cadenceSec, 3600);
+}
+
+/**
  * The data roles due this poll. A cron tick fires a little after its slot, so
  * a role counts as due half a tick early: the roles on the feed's own cadence
  * are due every tick, and a slower role on the tick its cadence ends.
  */
 function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): string[] {
   if (!roles) return dataRoles(src);
-  return dueRoles(src, roles.lastFetchedAt, now + src.cadenceSec * 500);
+  return dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
 }
 
 function valueAtPath(value: unknown, path: string): unknown {
@@ -511,6 +523,7 @@ async function runAttempt(
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
   // Whether any data payload had bytes: a streamed body is taken to have.
   let heldPayload = true;
+  let warning: string | undefined;
   if (format.stream) {
     // A payload too large to buffer (NDW's ~50 MB DATEX flow document): stream
     // fetch → gunzip → SAX, so it is never buffered or DOM-parsed whole. An
@@ -546,12 +559,40 @@ async function runAttempt(
     const accepts: (() => void)[] = [];
     const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
     let payloads: FeedPayloads;
+    // A due role that failed while its latest payload is held: the poll goes on
+    // with that payload, and the role stays due for the next tick.
+    const warnings: string[] = [];
+    /** Due roles the network answered (fetched or not modified). */
+    let answered = 0;
+    const holdsPayload = (role: string) => keepPayloads && deps.roles!.payloads[role] !== undefined;
+    const fallBack = (role: string, reason: string) => {
+      warnings.push(`${role}: ${reason} (held payload used)`);
+      if (!deps.roles!.failing[role]) {
+        deps.roles!.failing[role] = true;
+        console.warn(`[ingest] ${src.id}: ${role} failed, using its held payload: ${reason}`, {
+          feed: src.id,
+          role,
+        });
+      }
+    };
     try {
       for (const role of due) {
-        const result = await fetchEndpoint(src, role, fetchFn, {
-          resolvers: domainOf(src).resolvers,
-          env,
-        });
+        let result: Awaited<ReturnType<typeof fetchEndpoint>>;
+        try {
+          result = await fetchEndpoint(src, role, fetchFn, {
+            resolvers: domainOf(src).resolvers,
+            env,
+          });
+        } catch (err) {
+          if (!holdsPayload(role)) throw err;
+          fallBack(role, err instanceof Error ? err.message : String(err));
+          continue;
+        }
+        if (result.status === "partial" && holdsPayload(role)) {
+          const { failed, total } = result.partitions;
+          fallBack(role, `partial snapshot: ${failed}/${total} partitions failed`);
+          continue;
+        }
         if (result.status === "fetched" || result.status === "partial") {
           payloadHashes = [...(payloadHashes ?? []), ...result.payloads.map((p) => p.sha256)];
           if (feedCapture) {
@@ -594,7 +635,25 @@ async function runAttempt(
           accepts.push(result.accept);
           if (keepPayloads) deps.roles!.payloads[role] = result.buffers;
         }
-        if (deps.roles) deps.roles.lastFetchedAt[role] = Date.parse(attemptAt);
+        answered++;
+        if (deps.roles) {
+          deps.roles.lastFetchedAt[role] = Date.parse(attemptAt);
+          delete deps.roles.failing[role];
+        }
+      }
+      if (answered === 0 && warnings.length > 0) {
+        // Every due role failed and its held payload stood in: nothing was
+        // validated against the network, so the source's freshness stays as it was.
+        const error = warnings.join("; ");
+        await recordStatus({
+          freshnessWindowSec: src.freshnessWindowSec,
+          outcome: "failed",
+          attemptAt,
+          networkValidated: false,
+          durationMs: Date.now() - start,
+          error,
+        });
+        return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
       }
       if (Object.keys(fresh).length === 0) {
         await recordStatus({
@@ -603,6 +662,7 @@ async function runAttempt(
           attemptAt,
           networkValidated: true,
           durationMs: Date.now() - start,
+          ...(warnings.length > 0 ? { error: warnings.join("; ") } : {}),
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "validated_unchanged" };
       }
@@ -612,6 +672,7 @@ async function runAttempt(
       acceptFetch = () => {
         for (const accept of accepts) accept();
       };
+      if (warnings.length > 0) warning = warnings.join("; ");
       snapshotInspection = inspectSnapshotCompleteness(src, payloads["main"] ?? []);
       heldPayload = Object.values(payloads).some((buffers) => buffers.some((b) => b.length > 0));
     } catch (err) {
@@ -649,6 +710,7 @@ async function runAttempt(
     recordStatus,
     identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
     ...(acceptFetch ? { acceptFetch } : {}),
+    ...(warning ? { warning } : {}),
   };
   if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload);
   return format.kind === "measurements"
@@ -669,6 +731,8 @@ interface PollContext {
   recordStatus: (update: SourceStatusUpdate) => Promise<void>;
   identity: PollIdentity;
   acceptFetch?: () => void;
+  /** A data role failed and its held payload stood in; shown on the attempt's status. */
+  warning?: string;
 }
 
 /** Records a failure that keeps the last good publication, and the run's result for it. */
@@ -936,6 +1000,7 @@ async function finishFeaturePoll(
       durationMs: Date.now() - poll.start,
       now: deps.now(),
       model: writeModel(deps.model),
+      ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
   } catch (err) {

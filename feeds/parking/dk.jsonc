@@ -1,0 +1,43 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "84",
+      "operator": "copenhagen",
+      "product": "parking",
+      "name": "Københavns Kommune parking garages",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The `k101:p_hus` WFS layer, static.
+      "endpoints": {
+        "main": {
+          "url": "https://wfs-kbhkort.kk.dk/k101/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=k101:p_hus&outputFormat=json&SRSNAME=EPSG:4326",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Københavns Kommune, CC BY 4.0",
+      "homepage": "https://www.kk.dk/",
+      "privacyUrl": "https://www.kk.dk/om-kommunen/databeskyttelse",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "lang": "da",
+        "defaultType": "off_street",
+        "layout": { "field": "p_hus_type", "map": { "1": "multi_storey", "2": "underground" } },
+        "capacity": "antal_pladser",
+        "address": {
+          "street": "vejnavn",
+          "houseNumber": "husnr",
+          "postalCode": { "field": "postdistrikt", "pattern": "^(\\d{4}) " },
+          "city": { "field": "postdistrikt", "pattern": "^\\d{4} (.+)$" },
+        },
+        "notes": "bemaerkning",
+        // Type 7 marks a garage still being built.
+        "filter": [{ "field": "p_hus_type", "exclude": ["7"] }],
+      },
+    },
+  ],
+}

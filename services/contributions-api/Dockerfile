@@ -30,11 +30,13 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/core/package.json packages/core/
 COPY packages/contrib-core/package.json packages/contrib-core/
+COPY packages/datex2/package.json packages/datex2/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/fuel/package.json packages/fuel/
+COPY packages/parking/package.json packages/parking/
 COPY packages/federation/package.json packages/federation/
 COPY packages/storage/package.json packages/storage/
 COPY packages/model/package.json packages/model/
@@ -60,11 +62,13 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/core/package.json packages/core/
 COPY packages/contrib-core/package.json packages/contrib-core/
+COPY packages/datex2/package.json packages/datex2/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/fuel/package.json packages/fuel/
+COPY packages/parking/package.json packages/parking/
 COPY packages/federation/package.json packages/federation/
 COPY packages/storage/package.json packages/storage/
 COPY packages/model/package.json packages/model/
@@ -86,11 +90,13 @@ RUN pnpm install --filter @openconditions/contributions-api... --frozen-lockfile
 COPY tsconfig.base.json turbo.json ./
 COPY packages/core/ packages/core/
 COPY packages/contrib-core/ packages/contrib-core/
+COPY packages/datex2/ packages/datex2/
 COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
 COPY packages/fuel/ packages/fuel/
+COPY packages/parking/ packages/parking/
 COPY packages/federation/ packages/federation/
 COPY packages/storage/ packages/storage/
 COPY packages/model/ packages/model/

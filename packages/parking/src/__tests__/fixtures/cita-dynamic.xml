@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<d2LogicalModel modelBaseVersion="2" xmlns="http://datex2.eu/schema/2/2_0">
+    <exchange>
+        <supplierIdentification>
+            <country>lu</country>
+            <nationalIdentifier>PCH</nationalIdentifier>
+        </supplierIdentification>
+    </exchange>
+    <payloadPublication xsi:type="GenericPublication" lang="en" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        <publicationTime>2026-10-05T05:30:10.583728024+02:00</publicationTime>
+        <publicationCreator>
+            <country>lu</country>
+            <nationalIdentifier>PCH</nationalIdentifier>
+        </publicationCreator>
+        <genericPublicationName>ParkingStatusPublication</genericPublicationName>
+        <genericPublicationExtension>
+            <parkingStatusPublication>
+                <headerInformation>
+                    <confidentiality>noRestriction</confidentiality>
+                    <informationStatus>real</informationStatus>
+                </headerInformation>
+                <parkingRecordStatus xsi:type="ParkingSiteStatus">
+                    <parkingRecordReference targetClass="ParkingRecord" id="G-MB-B" version="1"/>
+                    <parkingStatusOriginTime>2026-10-05T05:30:00+02:00</parkingStatusOriginTime>
+                    <parkingStatusDescription>
+                        <values>
+                            <value lang="fr">Aire de Berchem: Luxembourg-Metz</value>
+                        </values>
+                    </parkingStatusDescription>
+                    <parkingQueueingTime>0.0</parkingQueueingTime>
+                    <parkingOccupancy>
+                        <parkingNumberOfVacantSpaces>4</parkingNumberOfVacantSpaces>
+                        <parkingNumberOfOccupiedSpaces>36</parkingNumberOfOccupiedSpaces>
+                        <parkingOccupancy>90.0</parkingOccupancy>
+                        <parkingOccupancyTrend>stable</parkingOccupancyTrend>
+                        <vehicleCountAndRate>
+                            <vehicleRate>
+                                <fillRate>
+                                    <vehicleFlowRate>0</vehicleFlowRate>
+                                </fillRate>
+                            </vehicleRate>
+                        </vehicleCountAndRate>
+                        <vehicleCountAndRate>
+                            <vehicleRate>
+                                <exitRate>
+                                    <vehicleFlowRate>0</vehicleFlowRate>
+                                </exitRate>
+                            </vehicleRate>
+                        </vehicleCountAndRate>
+                    </parkingOccupancy>
+                    <parkingSiteStatus>almostFull</parkingSiteStatus>
+                </parkingRecordStatus>
+                <parkingRecordStatus xsi:type="ParkingSiteStatus">
+                    <parkingRecordReference targetClass="ParkingRecord" id="B-MB-G" version="1"/>
+                    <parkingStatusOriginTime>2026-10-05T05:30:00+02:00</parkingStatusOriginTime>
+                    <parkingStatusDescription>
+                        <values>
+                            <value lang="fr">Aire de Berchem: Metz-Luxembourg</value>
+                        </values>
+                    </parkingStatusDescription>
+                    <parkingOccupancy>
+                        <parkingNumberOfVacantSpaces>22</parkingNumberOfVacantSpaces>
+                        <parkingNumberOfOccupiedSpaces>49</parkingNumberOfOccupiedSpaces>
+                        <parkingOccupancy>69.0</parkingOccupancy>
+                        <parkingOccupancyTrend>stable</parkingOccupancyTrend>
+                    </parkingOccupancy>
+                    <parkingSiteStatus>spacesAvailable</parkingSiteStatus>
+                </parkingRecordStatus>
+            </parkingStatusPublication>
+        </genericPublicationExtension>
+    </payloadPublication>
+</d2LogicalModel>

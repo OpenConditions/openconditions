@@ -1,0 +1,92 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.515174071670435,
+          52.26121211194521
+        ]
+      },
+      "properties": {
+        "mapsightIconId": "parkhaus",
+        "type": "parking",
+        "externalId": "PH004",
+        "name": "Parkhaus Eiermarkt",
+        "id": "2605832cf112cb970b3af61a2266c3e553e7ae",
+        "openingState": "open",
+        "occupancy": 14,
+        "occupancyRate": 3,
+        "subTypes": [
+          "shortterm",
+          "longterm"
+        ],
+        "capacity": 500,
+        "free": 486,
+        "trend": "constant",
+        "timestamp": "2026-10-05T05:11:00+02:00",
+        "tooltip": "486 freie Plätze",
+        "occupancyTrendString": "constant_0",
+        "title": "Parkhaus Eiermarkt"
+      },
+      "id": "2605832cf112cb970b3af61a2266c3e553e7ae"
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.518574,
+          52.266929
+        ]
+      },
+      "properties": {
+        "mapsightIconId": "parkhaus",
+        "type": "parking",
+        "externalId": "PH010",
+        "name": "Parkhaus Lange Str. Nord",
+        "id": "2605823b1c49c8a9740ccce9895e8f8bac76e9",
+        "openingState": "closed",
+        "occupancy": 58,
+        "occupancyRate": 16,
+        "subTypes": [
+          "shortterm",
+          "longterm"
+        ],
+        "capacity": 370,
+        "free": 312,
+        "trend": "constant",
+        "timestamp": "2026-10-05T04:34:23+02:00",
+        "tooltip": "312 freie Plätzegeschlossen",
+        "occupancyTrendString": "geschlossen",
+        "title": "Parkhaus Lange Str. Nord"
+      },
+      "id": "2605823b1c49c8a9740ccce9895e8f8bac76e9"
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          10.526942,
+          52.262162
+        ]
+      },
+      "properties": {
+        "mapsightIconId": "parkhaus",
+        "type": "parking",
+        "externalId": "PH001_DYNAMISCH_AUSLAUSTUNGSDATEN_DEAKTIVIERT",
+        "name": "Parkhaus Magni",
+        "id": "260580365a948d771e7406382925d0a5920a81",
+        "openingState": "",
+        "trend": "konstant",
+        "tooltip": "",
+        "title": "Parkhaus Magni"
+      },
+      "id": "260580365a948d771e7406382925d0a5920a81"
+    }
+  ],
+  "buildTimestamp": "2026-10-05T05:12:01+0200"
+}

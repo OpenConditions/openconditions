@@ -21,6 +21,7 @@
  * `gml:posList` on a measurement, then the site table entry joined by
  * `measurementSiteReference id` (the NDW layout).
  */
+import { flattenString, stripXmlNamespace } from "@openconditions/datex2";
 import type { LineString } from "geojson";
 import { SaxesParser } from "saxes";
 import type { FlowContext, FlowSites } from "./flow-output.js";
@@ -40,7 +41,6 @@ import {
   VOLUME,
 } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
-import { flattenString, stripXmlNamespace } from "./xml.js";
 
 /** Incremental, streaming DATEX MeasuredData parser. */
 export interface MeasuredDataParser {

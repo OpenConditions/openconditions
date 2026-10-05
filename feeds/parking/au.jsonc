@@ -1,0 +1,51 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "tfnsw",
+      "product": "parking",
+      "name": "Transport for NSW Park&Ride",
+      "tier": "authoritative",
+      "format": "tfnsw",
+      "credentials": {
+        "api_key": {
+          "title": "Transport for NSW Open Data API key",
+          "description": "An Open Data Hub API token subscribed to the Car Park API.",
+          "setup": {
+            "url": "https://opendata.transport.nsw.gov.au/",
+            "urlLabel": "Get API key",
+            "steps": [
+              "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+              "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+              "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
+              "Paste the generated token here (sent as the 'apikey' authorization header).",
+            ],
+            "cost": "Free",
+            "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy.",
+          },
+        },
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "api_key",
+        "valuePrefix": "apikey ",
+      },
+      // Every car park with its occupancy in one call.
+      "endpoints": {
+        "main": {
+          "url": "https://api.transport.nsw.gov.au/v1/carpark/full-list",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perDay": 60000 },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Transport for NSW, CC BY 4.0",
+      "homepage": "https://opendata.transport.nsw.gov.au/",
+      "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+    },
+  ],
+}

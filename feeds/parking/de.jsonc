@@ -1,0 +1,331 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "bw",
+      "operator": "mobidata",
+      "product": "parking",
+      "name": "MobiData BW ParkAPI car parking sites",
+      "tier": "aggregator",
+      "format": "parkapi-v3",
+      // Every car site of every source MobiData BW bundles, live occupancy
+      // inline, in one unpaginated answer (about 25 MB). Beside Baden-Württemberg
+      // it carries national sources: Toll Collect's lorry parks on every
+      // motorway, live, which is why the feed covers Germany. `/sources` types
+      // and credits each site's upstream source; some name their own licence
+      // (Karlsruhe CC BY 4.0, Herrenberg CC0), all redistributable.
+      "endpoints": {
+        "main": {
+          "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-sites?purpose=CAR",
+          "cadenceSec": 300,
+        },
+        "sources": {
+          "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "coverage": { "bbox": [5.87, 47.27, 15.04, 55.06] },
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "MobiData BW (NVBW)",
+      "homepage": "https://mobidata-bw.de/",
+      "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+    },
+    {
+      "subdivision": "nw",
+      "operator": "mobidrom",
+      "product": "parking",
+      "name": "Mobidrom Parken NRW",
+      "tier": "aggregator",
+      "format": "datex2-light",
+      // The NRW bundle: Bielefeld, Düsseldorf, Köln, Dortmund, APCOA, Goldbeck,
+      // APAG and others in one DATEX II Light file, so none of those is a feed
+      // of its own.
+      "endpoints": {
+        "main": {
+          "url": "https://www.mobilitaetsdaten.nrw/api/systemadapter-mobilithek-exporter/parken-nrw.json",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "NRW.Mobidrom GmbH",
+      // The portal is a single-page app that answers 200 for any path, so its
+      // own privacy URL cannot be confirmed; this is the operator's.
+      "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
+    },
+    {
+      "subdivision": "nw",
+      "operator": "mobidrom",
+      "qualifier": "parkride",
+      "product": "parking",
+      "name": "Mobidrom Park+Ride NRW",
+      "tier": "aggregator",
+      "format": "datex2-light",
+      // The bundle is published share-alike although each of its nine P+R
+      // datasets is CC BY 4.0 or DL-DE-ZERO-2.0; taking those one by one would
+      // make the data public.
+      "endpoints": {
+        "main": {
+          "url": "https://www.mobilitaetsdaten.nrw/api/systemadapter-mobilithek-exporter/gebndelte-daten-parkride-nrw.json",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "NRW.Mobidrom GmbH",
+      "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
+    },
+    {
+      "operator": "db",
+      "qualifier": "bahnpark",
+      "product": "parking",
+      "name": "DB BahnPark station parking",
+      "tier": "authoritative",
+      "format": "db-bahnpark",
+      "credentials": {
+        "client_id": {
+          "title": "DB BahnPark client ID",
+          "description": "The client ID of a DB API Marketplace application subscribed to Parking Information (DB BahnPark).",
+          "setup": {
+            "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+            "urlLabel": "Open DB API Marketplace",
+            "steps": [
+              "Register/log in to the DB API Marketplace via 'DB Kundenkonto'.",
+              "Create an application with 'Neue Anwendung erstellen'.",
+              "In the Katalog, open 'Parking Information Service - DB BahnPark' and subscribe the free Testzugang plan.",
+              "Open the application's details and copy its Client ID into this field.",
+            ],
+            "cost": "Free: Testzugang allows up to 1,000 transactions/month (max 10 req/min), no approval.",
+            "notes": "Provides ~315 DB BahnPark facilities. The higher transit-authority plan needs a separate data agreement.",
+          },
+        },
+        "api_key": {
+          "title": "DB BahnPark API key",
+          "description": "The client secret of the same DB API Marketplace application.",
+          "setup": {
+            "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+            "urlLabel": "Open DB API Marketplace",
+            "steps": [
+              "Register/log in to the DB API Marketplace and create an application ('Neue Anwendung erstellen').",
+              "Copy the Client Secret (API key) shown once during application creation.",
+              "Subscribe ('Abonnieren') the 'Parking Information Service - DB BahnPark' Testzugang plan to that application.",
+              "Paste the Client Secret here (sent as the DB-Api-Key header).",
+            ],
+            "cost": "Free: Testzugang allows up to 1,000 transactions/month (max 10 req/min), no approval.",
+            "notes": "The Client Secret is displayed only once at creation; regenerate it in the application settings if lost.",
+          },
+        },
+      },
+      // The marketplace takes the application's ID and secret as two headers.
+      "auth": { "kind": "none" },
+      // The facility list, read once a day: occupancy is served per facility
+      // only, which the free plan's 1,000 calls a month cannot poll.
+      "endpoints": {
+        "main": {
+          "url": "https://apis.deutschebahn.com/db-api-marketplace/apis/parking-information/db-bahnpark/v2/parking-facilities",
+          "headers": {
+            "Accept": "application/json",
+            "DB-Client-Id": "${client_id}",
+            "DB-Api-Key": "${api_key}",
+          },
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Parking Information Daten der DB BahnPark – API über den DB API Marketplace (https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark)",
+      "terms": {
+        "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+        "reviewedAt": "2026-10-05",
+        "note": "DL-DE-BY-2.0 with the mandated Quellenvermerk. Free 'Testzugang' plan: 1,000 transactions/month and 10/min; API key must stay private. Service deprecated, expected shutdown end of 2026; successor RIS::Mobility.",
+      },
+      "homepage": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+      "privacyUrl": "https://developers.deutschebahn.com/db-api-marketplace/apis/privacypolicy",
+    },
+    {
+      "subdivision": "ni",
+      "operator": "braunschweig",
+      "product": "parking",
+      "name": "Stadt Braunschweig car parks",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": {
+          "url": "https://www.braunschweig.de/apps/pulp/result/parkhaeuser.geojson",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Stadt Braunschweig",
+      "terms": {
+        "url": "https://www.braunschweig.de/impressum.php",
+        "reviewedAt": "2026-10-05",
+        "note": "The map app's backend is not Open GeoData; the imprint requires the city's consent to reuse",
+      },
+      "privacyUrl": "https://www.braunschweig.de/datenschutz.php",
+      "disabled": { "reason": "The city's consent to reuse is outstanding", "since": "2026-10-05" },
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": ["title", "name"],
+        "lang": "de",
+        "defaultType": "off_street",
+        "capacity": "capacity",
+        "available": "free",
+        "occupied": "occupancy",
+        "status": { "field": "openingState", "map": { "open": "open", "closed": "closed" } },
+        "trend": {
+          "field": "trend",
+          "map": { "increasing": "filling", "decreasing": "clearing", "constant": "steady" },
+        },
+        "updated": { "field": "timestamp", "timezone": "Europe/Berlin" },
+      },
+    },
+    {
+      "subdivision": "hb",
+      "operator": "bremen",
+      "product": "parking",
+      "name": "VMZ Bremen car parks",
+      "tier": "authoritative",
+      "format": "geojson",
+      "endpoints": {
+        "main": { "url": "https://vmz.bremen.de/geojson/parking.geojson", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Verkehrsmanagementzentrale Bremen",
+      "terms": {
+        "url": "https://vmz.bremen.de/impressum/",
+        "reviewedAt": "2026-10-05",
+        "note": "Footer shows CC BY-NC-ND (unversioned); imprint says reproduction and distribution only with VMZ permission. At most non-commercial, unmodified display.",
+        "redistribution": false,
+      },
+      "privacyUrl": "https://vmz.bremen.de/datenschutz/",
+      "disabled": {
+        "reason": "VMZ Bremen's permission to reuse is outstanding",
+        "since": "2026-10-05",
+      },
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": ["title", "name"],
+        "lang": "de",
+        "defaultType": "off_street",
+        "status": { "field": "openingState", "map": { "open": "open", "closed": "closed" } },
+        "trend": {
+          "field": "trend",
+          "map": { "increasing": "filling", "decreasing": "clearing", "constant": "steady" },
+        },
+        "website": "permanentLink",
+        "heightLimit": {
+          "field": { "field": "height_restriction", "pattern": "(\\d+(?:[.,]\\d+)?)" },
+          "unit": "m",
+        },
+      },
+    },
+    {
+      "subdivision": "nw",
+      "operator": "apag",
+      "product": "parking",
+      "name": "APAG Aachener Parkhaus car parks",
+      "tier": "authoritative",
+      "format": "json",
+      // APAG's own PMS API, 21 car parks beside its bike stations. Seven of
+      // them are open data through Mobidrom (de-nw-mobidrom-parking).
+      "endpoints": {
+        "main": { "url": "https://www.apag.de/api/v1/pms/facilities", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "APAG Aachener Parkhaus GmbH",
+      "terms": {
+        "url": "https://www.apag.de/de/impressum",
+        "reviewedAt": "2026-10-05",
+        "note": "No API terms; the imprint requires APAG's prior written consent for any use copyright does not allow",
+      },
+      "privacyUrl": "https://www.apag.de/de/datenschutz",
+      "disabled": {
+        "reason": "APAG's written consent to reuse is outstanding",
+        "since": "2026-10-05",
+      },
+      "layout": { "lon": "lng", "lat": "lat" },
+      "parking": {
+        "id": "uuid",
+        "name": ["label", "name"],
+        "lang": "de",
+        "defaultType": "off_street",
+        "layout": {
+          "field": "facility_type.de",
+          "map": { "Parkhaus": "multi_storey", "Parkplatz": "surface" },
+        },
+        "capacity": "capacity_parking",
+        "available": "available_parking",
+        "address": {
+          "street": "address_street",
+          "postalCode": "address_zip",
+          "city": "address_city",
+        },
+        "openingHours": { "field": "opening_times", "syntax": "text" },
+        "heightLimit": {
+          "field": { "field": "entrance_height", "pattern": "(\\d+(?:[.,]\\d+)?)" },
+          "unit": "m",
+        },
+        "areas": [
+          { "vehicleType": "car", "userGroup": "ev_charging", "capacity": "capacity_charging" },
+        ],
+        "filter": [{ "field": "type", "include": ["ParkingFacility"] }],
+      },
+    },
+    {
+      "subdivision": "bb",
+      "operator": "potsdam",
+      "product": "parking",
+      "name": "Stadtwerke Potsdam car parks",
+      "tier": "authoritative",
+      "format": "csv",
+      // `Belegung` is the occupied count; `Geo Point` is "lat,lon".
+      "endpoints": {
+        "main": {
+          "url": "https://cs1-swp.westeurope.cloudapp.azure.com:8443/parking_csv",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "Stadtwerke Potsdam GmbH",
+      "terms": {
+        "url": "https://www.swp-potsdam.de/impressum/",
+        "reviewedAt": "2026-10-05",
+        "note": "The imprint forbids passing on or reproducing any part without Stadtwerke Potsdam's express permission",
+        "redistribution": false,
+      },
+      "homepage": "https://www.swp-potsdam.de/",
+      "privacyUrl": "https://www.swp-potsdam.de/datenschutz/",
+      "disabled": {
+        "reason": "The imprint forbids passing the data on, and the endpoint now sits behind a login",
+        "since": "2026-10-05",
+      },
+      "layout": { "delimiter": ";", "point": { "field": "Geo Point", "order": "latlon" } },
+      "parking": {
+        "id": "Parkplatz",
+        "name": ["Parkplatz"],
+        "lang": "de",
+        "type": {
+          "field": { "field": "Parkplatz", "pattern": "^(P\\+R) " },
+          "map": { "P+R": "park_and_ride" },
+        },
+        "defaultType": "off_street",
+        "capacity": "Kapazitaet",
+        "occupied": "Belegung",
+        "liveWhen": { "field": "Dynamische Daten", "equals": "True" },
+      },
+    },
+  ],
+}

@@ -1,0 +1,86 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "vlg",
+      "operator": "gent",
+      "product": "parking",
+      "name": "Stad Gent real-time garage occupancy",
+      "tier": "authoritative",
+      "format": "geojson",
+      // Refreshed every three minutes. A record's `id` is the garage's web
+      // page, so its feature id carries a URL.
+      "endpoints": {
+        "main": {
+          "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time/exports/geojson",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
+      "attribution": "Stad Gent – Mobiliteitsbedrijf, Modellicentie Gratis Hergebruik Vlaanderen v1.0",
+      "privacyUrl": "https://data.stad.gent/terms/privacy-policy/",
+      "layout": {},
+      "parking": {
+        "id": "id",
+        "name": ["name"],
+        "lang": "nl",
+        "defaultType": "off_street",
+        "layout": {
+          "field": { "field": "description", "pattern": "^(Ondergrondse|Bovengrondse) " },
+          "map": { "Ondergrondse": "underground", "Bovengrondse": "multi_storey" },
+        },
+        "capacity": "totalcapacity",
+        "available": "availablecapacity",
+        "status": [
+          { "field": "temporaryclosed", "map": { "1": "closed" } },
+          { "field": "isopennow", "map": { "1": "open", "0": "closed" } },
+        ],
+        "updated": { "field": "lastupdate", "timezone": "Europe/Brussels" },
+        "operator": "operatorinformation",
+        "website": "urllinkaddress",
+        "openingHours": { "field": "openingtimesdescription", "syntax": "text" },
+        "free": { "field": "freeparking", "equals": 1 },
+      },
+    },
+    {
+      "subdivision": "bru",
+      "operator": "brussels",
+      "product": "parking",
+      "name": "Ville de Bruxelles public car parks",
+      "tier": "authoritative",
+      "format": "geojson",
+      // Static locations, updated irregularly.
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics/exports/geojson",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ville de Bruxelles / mobilite.brussels, CC BY 4.0",
+      "privacyUrl": "https://opendata.brussels.be/terms/privacy-policy/",
+      "layout": {},
+      "parking": {
+        "id": "name_fr",
+        "name": ["name_fr", "name_nl"],
+        "lang": "fr",
+        "type": {
+          "field": { "field": "name_fr", "pattern": "^(P\\+R) " },
+          "map": { "P+R": "park_and_ride" },
+        },
+        "defaultType": "off_street",
+        "capacity": "capacity",
+        "address": { "text": "adressee" },
+        "operator": "operator_fr",
+        "heightLimit": { "field": "maxheight", "unit": "m" },
+        "areas": [
+          { "vehicleType": "car", "userGroup": "disabled", "capacity": "disabledcapacity" },
+        ],
+      },
+    },
+  ],
+}

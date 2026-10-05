@@ -2186,11 +2186,15 @@
           "enum": [
             "crowd",
             "derived",
+            "datex2",
+            "geojson",
+            "json",
+            "csv",
+            "overpass",
             "autobahn",
             "bcn-trams",
             "bcn-trams-csv",
             "bonn",
-            "datex2",
             "datex2-elaborated",
             "datex2-locations",
             "datex2-measured",
@@ -2203,7 +2207,6 @@
             "flatjson",
             "france-comptage-csv",
             "gddkia",
-            "geojson",
             "geojson-flow",
             "hk-detector-csv",
             "hk-td",
@@ -2224,11 +2227,19 @@
             "webtris",
             "webtris-sites",
             "wzdx",
+            "parkapi-v3",
+            "datex2-light",
+            "db-bahnpark",
+            "rdw",
+            "sbb",
+            "opendatahub",
+            "hdb",
+            "utmc",
+            "tfnsw",
             "tankerkoenig",
             "econtrol",
             "prix-carburants",
-            "minetur",
-            "overpass"
+            "minetur"
           ]
         },
         "accessMode": {
@@ -2355,6 +2366,35 @@
               },
               "attribution": {
                 "$ref": "#/$defs/Attribution"
+              },
+              "upstream": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "publisher": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "recordId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "license": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "attribution": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "publisher"
+                  ],
+                  "additionalProperties": false
+                }
               },
               "link": {
                 "type": "string",

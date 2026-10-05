@@ -126,6 +126,21 @@ export const LICENSES: readonly LicenseInfo[] = [
     shareAlike: false,
   },
   open({
+    id: "CC-BY-3.0-AT",
+    name: "Creative Commons Attribution 3.0 Austria",
+    url: "https://creativecommons.org/licenses/by/3.0/at/",
+  }),
+  open({
+    id: "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+    name: "Modellicentie Gratis Hergebruik Vlaanderen 1.0",
+    url: "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
+  }),
+  open({
+    id: "LicenseRef-opentransportdata-swiss-ToU",
+    name: "opentransportdata.swiss Terms of Use",
+    url: "https://opentransportdata.swiss/en/terms-of-use/",
+  }),
+  open({
     id: "LicenseRef-Singapore-ODL-1.0",
     name: "Singapore Open Data Licence 1.0",
     url: "https://data.gov.sg/open-data-licence",

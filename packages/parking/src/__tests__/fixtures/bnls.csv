@@ -1,0 +1,4 @@
+id;nom;insee;adresse;url;type_usagers;gratuit;nb_places;nb_pr;nb_pmr;nb_voitures_electriques;nb_velo;nb_2r_el;nb_autopartage;nb_2_rm;nb_covoit;hauteur_max;num_siret;Xlong;Ylat;tarif_pmr;tarif_1h;tarif_2h;tarif_3h;tarif_4h;tarif_24h;abo_resident;abo_non_resident;type_ouvrage;info;id_local
+06027-P-001;PLANASTEL;06027;12 rue du château. 06800. Cagnes-sur-Mer;http://niceazurparking.fr/;tous;0;158;0;0;0;0;0;0;0;0;180;83187208000013;7.145722;43.668532;normal_payant;2.00;3.60;5.20;6.80;27.20;70.7;116.9;ouvrage;;
+06088-P-013;ACROPOLIS - JEAN BOUIN;06088;Place du XVème Corps. 06000. Nice;http://niceazurparking.fr/;tous;0;1827;386;42;6;0;0;15;0;0;190;83187208000013;7.281192;43.707654;normal_payant;2.40;4.40;5.60;6.80;24.70;;93;ouvrage;;
+38039-P-001;BERNIN CLOYÈRES;38039;Chemin des Fontaines. 38190. Bernin;;tous;1;22;22;1;;8;;;;;220;20001816600245;5.878285;45.264254;gratuit;0.00;;0.00;0.00;0.00;0;0;enclos_en_surface;;

@@ -19,7 +19,7 @@ import { ensureObservationPartitions, retentionClasses } from "@openconditions/s
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { runSource } from "../pipeline/run.js";
+import { createRoleState, runSource } from "../pipeline/run.js";
 
 type Rec = Record<string, unknown>;
 
@@ -115,6 +115,28 @@ function parseStations(feed: CatalogFeed, payloads: Readonly<Record<string, read
   return out;
 }
 
+const TWO_ROLE_FORMAT = "station-sites-status";
+
+/**
+ * A daily `sites` payload (a JSON list of `{ id, lon, lat }`) and a 5-minute
+ * `status` payload (a JSON object of price by station id), joined into the
+ * stations the single-role parser reads.
+ */
+function parseSitesAndStatus(
+  feed: CatalogFeed,
+  payloads: Readonly<Record<string, readonly Buffer[]>>,
+) {
+  const sites = (payloads["sites"] ?? []).flatMap(
+    (b) => JSON.parse(b.toString("utf8")) as { id: string; lon: number; lat: number }[],
+  );
+  const prices = Object.assign(
+    {},
+    ...(payloads["status"] ?? []).map((b) => JSON.parse(b.toString("utf8")) as object),
+  ) as Record<string, string>;
+  const joined = sites.map((s) => ({ ...s, e5: prices[s.id] ?? "1.999" }));
+  return parseStations(feed, { main: [Buffer.from(JSON.stringify(joined))] });
+}
+
 const testDomain: IngestDomain = defineIngestDomain({
   id: "fuel",
   products: ["fuel"],
@@ -126,6 +148,13 @@ const testDomain: IngestDomain = defineIngestDomain({
       products: ["fuel"],
       endpoints: { main: { required: true } },
       parse: parseStations,
+    },
+    [TWO_ROLE_FORMAT]: {
+      id: TWO_ROLE_FORMAT,
+      kind: "features",
+      products: ["fuel"],
+      endpoints: { sites: { required: true }, status: { required: true } },
+      parse: parseSitesAndStatus,
     },
   },
   resolvers: [],
@@ -147,7 +176,7 @@ const registry: Registry = buildRegistry([
   ...productionModules,
   {
     name: "station-list",
-    entries: [extendVocabulary({ vocabulary: "source_format", values: [FORMAT] })],
+    entries: [extendVocabulary({ vocabulary: "source_format", values: [FORMAT, TWO_ROLE_FORMAT] })],
   },
 ]);
 
@@ -160,6 +189,31 @@ function feedNamed(operator: string): CatalogFeed {
     format: FORMAT,
     tier: "authoritative",
     endpoints: { main: { url: `https://example.test/${operator}.json`, cadenceSec: 300 } },
+    freshnessWindowSec: 900,
+    license: "CC0-1.0",
+    attribution: "Test stations",
+    privacyUrl: "https://example.test/privacy",
+  };
+  return toCatalogFeed(definition, {
+    domain: "fuel",
+    region: "de",
+    file: "feeds/fuel/de.jsonc",
+    maintainers: [],
+  });
+}
+
+/** A feed with a daily `sites` endpoint and a 5-minute `status` endpoint. */
+function sitesAndStatusFeed(operator: string): CatalogFeed {
+  const definition: FeedDefinition = {
+    operator,
+    product: "fuel",
+    name: "Test stations",
+    format: TWO_ROLE_FORMAT,
+    tier: "authoritative",
+    endpoints: {
+      sites: { url: `https://example.test/${operator}/sites.json`, cadenceSec: 86_400 },
+      status: { url: `https://example.test/${operator}/status.json`, cadenceSec: 300 },
+    },
     freshnessWindowSec: 900,
     license: "CC0-1.0",
     attribution: "Test stations",
@@ -342,5 +396,177 @@ describe("features poll", () => {
     expect(retry.error).toBeUndefined();
     expect(retry.outcome).not.toBe("validated_unchanged");
     expect(h.requests.at(-1)).toEqual({ ifNoneMatch: '"good"', status: 200 });
+  }, 60_000);
+});
+
+describe("features poll with a slow endpoint", () => {
+  const T0 = Date.parse("2026-10-03T10:00:00.000Z");
+  const DAY = 86_400_000;
+  const at = (offsetMs: number) => new Date(T0 + offsetMs).toISOString();
+
+  /** A sites + status feed whose endpoints each answer, or fail, as the test sets. */
+  function sitesHarness(name: string) {
+    const feed = sitesAndStatusFeed(name);
+    const roles = createRoleState();
+    const answer = { sitesFails: false, statusFails: false, ids: ["a", "b"], price: "1.700" };
+    const requested: string[] = [];
+    const fetch = (async (url: string | URL | Request) => {
+      const href = String(url);
+      requested.push(href.endsWith("/sites.json") ? "sites" : "status");
+      if (href.endsWith("/sites.json")) {
+        if (answer.sitesFails) throw new Error("connect ECONNRESET");
+        return new Response(
+          JSON.stringify(answer.ids.map((id, i) => ({ id, lon: 8 + i / 100, lat: 50 }))),
+        );
+      }
+      if (answer.statusFails) throw new Error("connect ETIMEDOUT");
+      return new Response(
+        JSON.stringify(Object.fromEntries(answer.ids.map((id) => [id, answer.price]))),
+      );
+    }) as typeof globalThis.fetch;
+    const tick = (offsetMs: number) =>
+      runSource(feed, {
+        sql,
+        fetch,
+        now: () => at(offsetMs),
+        lookup: fakeLookup,
+        model: { registry, instanceId: "test.local" },
+        roles,
+      });
+    const liveFeatures = async () =>
+      (
+        await sql<{ id: string }[]>`
+          SELECT id FROM conditions.feature
+           WHERE source_id = ${feed.id} AND tombstoned_at IS NULL ORDER BY id`
+      ).map((r) => r.id);
+    const prices = async () =>
+      (
+        await sql<{ price: string }[]>`
+          SELECT DISTINCT reading->'result'->>'amount' AS price
+            FROM conditions.observation_latest WHERE source_id = ${feed.id}`
+      ).map((r) => r.price);
+    const lastAttempt = async () => {
+      const [row] = await sql<{ outcome: string; error: string | null }[]>`
+        SELECT outcome, error FROM conditions.source_poll_attempt
+         WHERE source = ${feed.id} ORDER BY id DESC LIMIT 1`;
+      return row!;
+    };
+    return { feed, roles, answer, requested, tick, liveFeatures, prices, lastAttempt };
+  }
+
+  it("a failing sites endpoint with a held payload still publishes fresh status readings", async () => {
+    const h = sitesHarness("held-sites");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      expect((await h.tick(0)).error).toBeUndefined();
+      expect(await h.prices()).toEqual(["1.700"]);
+
+      h.answer.sitesFails = true;
+      h.answer.price = "1.800";
+      h.requested.length = 0;
+      const result = await h.tick(DAY);
+
+      expect(result.error).toBeUndefined();
+      expect(result.outcome).toBe("changed");
+      expect(h.requested).toEqual(["sites", "status"]);
+      expect(await h.liveFeatures()).toEqual([
+        `oc:feature:${h.feed.id}:a`,
+        `oc:feature:${h.feed.id}:b`,
+      ]);
+      expect(await h.prices()).toEqual(["1.800"]);
+      expect(h.roles.lastFetchedAt).toEqual({ sites: T0, status: T0 + DAY });
+      expect((await h.lastAttempt()).error).toMatch(
+        /^sites: .*ECONNRESET.* \(held payload used\)$/,
+      );
+      expect(warn).toHaveBeenCalledTimes(1);
+      expect(warn.mock.calls[0]).toContainEqual({ feed: h.feed.id, role: "sites" });
+
+      // Still failing on the next tick: it publishes again, and does not warn again.
+      h.answer.price = "1.900";
+      expect((await h.tick(DAY + 300_000)).error).toBeUndefined();
+      expect(await h.prices()).toEqual(["1.900"]);
+      expect(warn).toHaveBeenCalledTimes(1);
+    } finally {
+      warn.mockRestore();
+    }
+  }, 60_000);
+
+  it("a poll whose every fetched role fell back to its held payload is no network success", async () => {
+    const h = sitesHarness("all-held");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const freshness = async () => {
+      const [row] = await sql<
+        { freshness_deadline: Date; last_network_success_at: Date; last_outcome: string }[]
+      >`
+        SELECT freshness_deadline, last_network_success_at, last_outcome
+          FROM conditions.source_status WHERE source = ${h.feed.id}`;
+      return row!;
+    };
+    try {
+      await h.tick(0);
+      const before = await freshness();
+
+      h.answer.sitesFails = true;
+      h.answer.statusFails = true;
+      const result = await h.tick(DAY);
+
+      expect(result.outcome).not.toBe("validated_unchanged");
+      const after = await freshness();
+      expect(after.freshness_deadline).toEqual(before.freshness_deadline);
+      expect(after.last_network_success_at).toEqual(before.last_network_success_at);
+      expect(after.last_outcome).toBe("failed");
+      expect((await h.lastAttempt()).error).toMatch(/sites: .*ECONNRESET.*status: .*ETIMEDOUT/);
+      // The features stay as published.
+      expect(await h.liveFeatures()).toHaveLength(2);
+    } finally {
+      warn.mockRestore();
+    }
+  }, 60_000);
+
+  it("a failing sites endpoint with nothing held fails the poll", async () => {
+    const h = sitesHarness("nothing-held");
+    h.answer.sitesFails = true;
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      const result = await h.tick(0);
+      expect(result.error).toMatch(/ECONNRESET/);
+      expect(result.count).toBe(0);
+      expect(await h.liveFeatures()).toEqual([]);
+      expect((await h.lastAttempt()).outcome).toBe("failed");
+      expect(h.roles.lastFetchedAt).toEqual({});
+    } finally {
+      error.mockRestore();
+    }
+  }, 60_000);
+
+  it("the failed role is retried on the next tick", async () => {
+    const h = sitesHarness("retried");
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    try {
+      await h.tick(0);
+      h.answer.sitesFails = true;
+      await h.tick(DAY);
+
+      h.answer.sitesFails = false;
+      h.answer.ids = ["a", "b", "c"];
+      h.requested.length = 0;
+      const result = await h.tick(DAY + 300_000);
+
+      expect(result.error).toBeUndefined();
+      expect(h.requested).toEqual(["sites", "status"]);
+      expect(await h.liveFeatures()).toHaveLength(3);
+      expect(h.roles.lastFetchedAt).toEqual({
+        sites: T0 + DAY + 300_000,
+        status: T0 + DAY + 300_000,
+      });
+      expect((await h.lastAttempt()).error).toBeNull();
+
+      // A later outage warns afresh.
+      h.answer.sitesFails = true;
+      await h.tick(2 * DAY + 600_000);
+      expect(warn).toHaveBeenCalledTimes(2);
+    } finally {
+      warn.mockRestore();
+    }
   }, 60_000);
 });

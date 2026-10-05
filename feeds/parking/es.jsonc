@@ -1,0 +1,89 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "ct",
+      "operator": "barcelona",
+      "product": "parking",
+      "name": "Ajuntament de Barcelona car parks",
+      "tier": "authoritative",
+      "format": "json",
+      // The city's equipment records for its car parks (about 37 MB), updated
+      // weekly; static.
+      "endpoints": {
+        "main": {
+          "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/a8b29664-ab16-4341-9460-33f60d048d82/resource/3ed73d45-8ea6-4cdf-8984-11a4c4cfc9e8/download",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ajuntament de Barcelona, CC BY 4.0",
+      "privacyUrl": "https://opendata-ajuntament.barcelona.cat/en/avis-legal",
+      "layout": {
+        "point": {
+          "field": "addresses.0.location_4326.geometries.0.coordinates",
+          "order": "latlon",
+        },
+      },
+      "parking": {
+        "id": "register_id",
+        "name": ["name"],
+        "lang": "ca",
+        "defaultType": "off_street",
+        "address": {
+          "street": "addresses.0.address_name",
+          "houseNumber": "addresses.0.start_street_number",
+          "postalCode": "addresses.0.zip_code",
+          "city": "addresses.0.town",
+        },
+      },
+    },
+    {
+      "subdivision": "md",
+      "operator": "madrid",
+      "product": "parking",
+      "name": "Ayuntamiento de Madrid municipal car parks",
+      "tier": "authoritative",
+      "format": "csv",
+      // The dataset's CSV resource, semicolon-separated Latin-1. Its JSON
+      // twin is malformed (a longitude written `--3.65…`).
+      "endpoints": {
+        "main": {
+          "url": "https://datos.madrid.es/dataset/202625-0-aparcamientos-publicos/resource/202625-3-aparcamientos-publicos-csv/download/202625-3-aparcamientos-publicos-csv.csv",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Ayuntamiento de Madrid – datos.madrid.es, CC BY 4.0",
+      "privacyUrl": "https://datos.madrid.es/pages/proteccion-datos",
+      "layout": { "delimiter": ";", "encoding": "latin1", "lon": "LONGITUD", "lat": "LATITUD" },
+      "parking": {
+        "id": "PK",
+        "name": ["NOMBRE"],
+        "lang": "es",
+        "type": {
+          "field": { "field": "NOMBRE", "pattern": "^Aparcamiento (disuasorio)" },
+          "map": { "disuasorio": "park_and_ride" },
+        },
+        "defaultType": "off_street",
+        "capacity": {
+          "field": "DESCRIPCION",
+          "pattern": "Plazas:\\s*(?:para automóviles:\\s*)?(\\d+)",
+        },
+        "address": {
+          "street": "NOMBRE-VIA",
+          "houseNumber": "NUM",
+          "postalCode": "CODIGO-POSTAL",
+          "city": "LOCALIDAD",
+        },
+        "website": "CONTENT-URL",
+        "openingHours": { "field": "HORARIO", "syntax": "text" },
+        "notes": "DESCRIPCION",
+      },
+    },
+  ],
+}
