@@ -1,0 +1,148 @@
+{
+  "data": [
+    {
+      "cctv": {
+        "index": "1",
+        "recordTimestamp": {
+          "recordDate": "2024-05-07",
+          "recordTime": "16:27:07",
+          "recordEpoch": "1715124427"
+        },
+        "location": {
+          "district": "7",
+          "locationName": "I-110 : (196) Avenue 26 Off Ramp",
+          "nearbyPlace": "Cypress Park",
+          "longitude": "-118.2215",
+          "latitude": "34.0837",
+          "elevation": "95",
+          "direction": "South",
+          "county": "Alameda",
+          "route": "I-110",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "26.01",
+          "alignment": "",
+          "milepost": "25.892"
+        },
+        "inService": "true",
+        "imageData": {
+          "imageDescription": "",
+          "streamingVideoURL": "https://wzmedia.dot.ca.gov/D7/CCTV-196.stream/playlist.m3u8",
+          "static": {
+            "currentImageUpdateFrequency": "2",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i110196avenue26offramp/i110196avenue26offramp.jpg",
+            "referenceImageUpdateFrequency": "15"
+          }
+        }
+      }
+    },
+    {
+      "cctv": {
+        "index": "7",
+        "recordTimestamp": {
+          "recordDate": "2026-09-04",
+          "recordTime": "09:35:59",
+          "recordEpoch": "1788539759"
+        },
+        "location": {
+          "district": "7",
+          "locationName": "I-5 : (7) Triggs St",
+          "nearbyPlace": "Los Angeles",
+          "longitude": "-118.16267",
+          "latitude": "34.01224",
+          "elevation": "157",
+          "direction": "North",
+          "county": "Los Angeles",
+          "route": "I-5",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "13.132",
+          "alignment": "R",
+          "milepost": "129.555"
+        },
+        "inService": "false",
+        "imageData": {
+          "imageDescription": "",
+          "streamingVideoURL": "https://wzmedia.dot.ca.gov/D7/CCTV-007.stream/playlist.m3u8",
+          "static": {
+            "currentImageUpdateFrequency": "2",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i57triggsst/i57triggsst.jpg",
+            "referenceImageUpdateFrequency": "15"
+          }
+        }
+      }
+    },
+    {
+      "cctv": {
+        "index": "1041",
+        "recordTimestamp": {
+          "recordDate": "2024-09-20",
+          "recordTime": "15:30:04",
+          "recordEpoch": "1726871404"
+        },
+        "location": {
+          "district": "7",
+          "locationName": "I-110 : (812) Florence Ave SB Off Ramp",
+          "nearbyPlace": "Florence",
+          "longitude": "-118.281331",
+          "latitude": "33.975807",
+          "elevation": "95",
+          "direction": "",
+          "county": "Los Angeles",
+          "route": "I-110",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "17.00",
+          "alignment": "",
+          "milepost": "17.00"
+        },
+        "inService": "true",
+        "imageData": {
+          "imageDescription": "",
+          "streamingVideoURL": "https://wzmedia.dot.ca.gov/D7/CCTV-812.stream/playlist.m3u8",
+          "static": {
+            "currentImageUpdateFrequency": "2",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i110812florenceavesbofframp/i110812florenceavesbofframp.jpg",
+            "referenceImageUpdateFrequency": "15"
+          }
+        }
+      }
+    },
+    {
+      "cctv": {
+        "index": "349",
+        "recordTimestamp": {
+          "recordDate": "2026-04-13",
+          "recordTime": "10:46:27",
+          "recordEpoch": "1776102387"
+        },
+        "location": {
+          "district": "7",
+          "locationName": "I-405 : (349) Hawthorne",
+          "nearbyPlace": "Lawndale",
+          "longitude": "-118.35384",
+          "latitude": "33.88521",
+          "elevation": "75",
+          "direction": "South",
+          "county": "Los Angeles",
+          "route": "I-405",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "17.674",
+          "alignment": "L",
+          "milepost": "41.446"
+        },
+        "inService": "true",
+        "imageData": {
+          "imageDescription": "",
+          "streamingVideoURL": "https://wzmedia.dot.ca.gov/D7/CCTV-349.stream/playlist.m3u8",
+          "static": {
+            "currentImageUpdateFrequency": "60",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d7/cctv/image/i405349hawthorne/i405349hawthorne.jpg",
+            "referenceImageUpdateFrequency": "15"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -69,7 +69,7 @@ const MODEL_REGISTRY: Boundary = {
 };
 
 /** The domain parser packages, whose real parsers the registry's fit checks run over captured records. */
-const DOMAIN_PARSERS = ["roads", "fuel", "parking", "charging"];
+const DOMAIN_PARSERS = ["roads", "fuel", "parking", "charging", "cameras"];
 
 const MODEL_REGISTRY_TESTS: Boundary = {
   id: "model-registry-tests",
@@ -100,6 +100,7 @@ const BELOW_ASSEMBLY = [
   "packages/fuel/",
   "packages/parking/",
   "packages/charging/",
+  "packages/cameras/",
 ];
 
 /** Files whose conclusions must not depend on federation transport health. */

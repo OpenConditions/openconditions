@@ -1,0 +1,111 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "windy",
+      "product": "cameras",
+      "name": "Windy webcams",
+      "homepage": "https://www.windy.com/webcams",
+      "tier": "aggregator",
+      "format": "windy",
+      // Read per cell: the only full listing is a paid export, and the terms
+      // call scanning many webcams by automated software misuse. A cell's
+      // list holds every webcam in its box, not the zoom-thinned clusters.
+      // Free-tier image URLs expire after ten minutes, so a cell is kept
+      // nine. Windy states no request limit; these caps are our own.
+      "credentials": {
+        "api_key": {
+          "title": "Windy Webcams API Key",
+          "description": "Get a free key at https://api.windy.com/keys",
+          "setup": {
+            "url": "https://api.windy.com/keys",
+            "urlLabel": "Get a Windy Webcams API key",
+            "steps": [
+              "Sign in to (or create) a free Windy account, then open api.windy.com/keys.",
+              "Create a new API key and select the Webcams API; the free tier requires no payment.",
+              "Copy the key (it may take a few minutes to propagate); it is sent as the 'x-windy-api-key' header.",
+            ],
+            "cost": "Free (paid 'professional' tier optional)",
+            "notes": "Free tier returns only low-resolution images, image URLs expire after 10 minutes, and the listing offset is capped (~1000).",
+          },
+        },
+      },
+      "auth": { "kind": "header-key", "header": "x-windy-api-key", "credential": "api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://api.windy.com/webcams/api/v3/webcams?bbox={north},{east},{south},{west}&limit=50&include=categories,images,location,player,urls&lang=en",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 50,
+            "recordsPath": "webcams",
+            "maxPages": 2,
+          },
+          "cadenceSec": 540,
+        },
+      },
+      "freshnessWindowSec": 1080,
+      "accessMode": "on_demand",
+      "onDemand": {
+        "cellDeg": 0.25,
+        "ttlSec": 540,
+        "maxCellsPerRead": 16,
+        "probe": [11.39, 47.27],
+      },
+      "requestLimits": { "perMinute": 10, "perDay": 2000 },
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+        "reviewedAt": "2026-10-08",
+        "note": "Proprietary API terms: no redistribution of the API's data to any third party, no publishing of graphics showing the webcam images, images used only through the URLs the API gives and each linked to its Windy webcam page or player, and the courtesy line \"Webcams provided by windy.com\". Free-tier image URLs expire after 10 minutes. Served in the operator's scope only, as the operator's own application.",
+        "redistribution": false,
+        "derivedRedistribution": false,
+        "retention": false,
+        "attributionRequired": true,
+      },
+      "attribution": "Webcams provided by windy.com",
+      "privacyUrl": "https://www.windy.com/privacy",
+      "cameras": { "imageHosts": ["images-webcams.windy.com"] },
+    },
+    {
+      "operator": "osm",
+      "product": "cameras",
+      "name": "OpenStreetMap webcams",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "tier": "authoritative",
+      "format": "overpass",
+      // Every object tagged with a webcam link, or mapped as a webcam, in the
+      // cell; ways and relations at their centre. Webcams are sparse and the
+      // camera layer starts at zoom 8, so a cell is a degree wide. Their
+      // stills sit on whatever host a mapper wrote, so none is declared. The
+      // body is sent form-encoded as written, so the query must contain no
+      // `+`, `&` or `%`.
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];(nwr[\"contact:webcam\"]({south},{west},{north},{east});nwr[\"man_made\"=\"surveillance\"][\"surveillance:type\"=\"webcam\"]({south},{west},{north},{east});nwr[\"webcam\"]({south},{west},{north},{east}););out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmCameras/1.0 (+https://github.com/openconditions/openconditions)",
+          },
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "accessMode": "on_demand",
+      "onDemand": {
+        "cellDeg": 1,
+        "ttlSec": 86400,
+        "maxCellsPerRead": 32,
+        "probe": [11.4, 47.27],
+      },
+      "requestLimits": { "perMinute": 30, "perDay": 5000 },
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+    },
+  ],
+}

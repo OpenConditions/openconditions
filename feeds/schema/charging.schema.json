@@ -219,6 +219,29 @@
                   },
                   "additionalProperties": false
                 },
+                "each": {
+                  "type": "object",
+                  "properties": {
+                    "role": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "records": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "field": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "role",
+                    "records",
+                    "field"
+                  ],
+                  "additionalProperties": false
+                },
                 "impersonate": {
                   "type": "boolean"
                 },
@@ -674,6 +697,9 @@
               "LicenseRef-HK-CSDI-ToU",
               "LicenseRef-HK-Gov-Open-Data",
               "LicenseRef-NYC-Open-Data",
+              "LicenseRef-TfL-Transport-Data-Service",
+              "LicenseRef-Caltrans-Conditions-of-Use",
+              "LicenseRef-ODOT-TripCheck",
               "LicenseRef-US-Gov-Public-Domain"
             ]
           },

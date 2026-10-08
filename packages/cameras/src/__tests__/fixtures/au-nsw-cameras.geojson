@@ -1,0 +1,54 @@
+{
+  "type": "FeatureCollection",
+  "rights": {
+    "copyright": "Transport for NSW",
+    "licence": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-cameras"
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "023651ee-389c-4677-978e-d39b6c24c1e7",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [151.10533, -34.02977]
+      },
+      "properties": {
+        "region": "SYD_SOUTH",
+        "title": "5 Ways (Miranda)",
+        "view": "5 Ways at The Boulevarde looking west towards Sutherland.",
+        "direction": "W",
+        "href": "https://webcams.transport.nsw.gov.au/livetraffic-webcams/cameras/5_ways_miranda.jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "95054500-072d-4c07-8509-1025b1160131",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [151.171829, -33.87175]
+      },
+      "properties": {
+        "region": "SYD_MET",
+        "title": "City West Link",
+        "view": "City West Link at Lilyfield looking east towards Victoria Road intersection.",
+        "direction": "N-E",
+        "href": "https://webcams.transport.nsw.gov.au/livetraffic-webcams/cameras/city_west_link.jpeg"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "deed2090-7deb-429d-8cf7-0b247c17f653",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [150.2315, -33.582099]
+      },
+      "properties": {
+        "region": "REG_WEST",
+        "title": "Great Western Highway (Victoria Pass)",
+        "view": "Transport for NSW is carrying out work at Victoria Pass to reinstate this section of the Great Western Highway and reconnect the Blue Mountains with the Central West. While the work is underway, the Live Traffic NSW camera at this location will be switched off. Project specific images provided above will be updated as work progresses.",
+        "direction": "E",
+        "href": "https://data.livetraffic.com/cameras/victoriapass_4.jpg"
+      }
+    }
+  ]
+}

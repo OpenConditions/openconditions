@@ -10,6 +10,7 @@ import {
 import {
   feedEndpoint,
   referencesCredential,
+  resolveEachUrl,
   resolveEndpointUrls,
   resolveFeedTemplate,
 } from "./catalog/templates.js";
@@ -17,6 +18,7 @@ import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
 import { boundedGunzip, maxFeedBytes } from "./egress.js";
 import { type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
+import { getPath } from "./layouts/row.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 
@@ -125,6 +127,8 @@ export interface FetchOptions {
   cell?: Cell;
   /** Replaces the impersonating client and DNS lookup (tests). */
   impersonation?: ImpersonationOptions;
+  /** The payloads of the role a per-item (`each`) endpoint reads its ids from. */
+  eachSource?: readonly Buffer[];
 }
 
 function isGzip(buf: Buffer): boolean {
@@ -493,6 +497,96 @@ async function fetchFollowing(
   return { buffers, payloads };
 }
 
+/**
+ * The ids a per-item endpoint is fetched for: `field` of every record at
+ * `records` in each source payload, in order, each id once. A record without a
+ * string or number there contributes nothing; an id is never made up.
+ */
+function eachItems(each: NonNullable<FeedEndpoint["each"]>, sources: readonly Buffer[]): string[] {
+  const items = new Set<string>();
+  for (const source of sources) {
+    let doc: unknown;
+    try {
+      doc = JSON.parse(source.toString("utf8"));
+    } catch {
+      throw new Error(`each: the ${each.role} payload is not valid JSON`);
+    }
+    const records = getPath(doc, each.records);
+    if (!Array.isArray(records)) {
+      throw new Error(`each: no list at ${each.records} in the ${each.role} payload`);
+    }
+    for (const record of records) {
+      const id = getPath(record, each.field);
+      if (typeof id === "string" && id !== "") items.add(id);
+      else if (typeof id === "number" && Number.isFinite(id)) items.add(String(id));
+    }
+  }
+  return [...items];
+}
+
+/**
+ * Fetches each URL, keeping order. Without `tolerant` the first failure rejects
+ * the role and no further item is requested; with it a failed item is logged
+ * and skipped, and the role fails only when every item did. No validator is
+ * read or written: an item's response is never conditional on another's, and
+ * the list of items changes with its source.
+ */
+async function fetchEach(
+  urls: string[],
+  fetchFn: FetchFn,
+  init: RequestInit | undefined,
+  redact: (s: string) => string,
+  tolerant: boolean,
+): Promise<Awaited<ReturnType<typeof fetchFanout>>> {
+  const slots = new Array<{ buffer: Buffer; payload: PayloadDigest } | undefined>(urls.length);
+  let failures = 0;
+  let cursor = 0;
+  // Without `tolerant` the role has failed at its first failed item: the
+  // other workers send no further request, which would only spend the
+  // publisher's quota on a result that is thrown away.
+  let stopped = false;
+  async function worker(): Promise<void> {
+    while (!stopped && cursor < urls.length) {
+      const i = cursor++;
+      try {
+        const { buffer, payload } = await fetchOne(
+          urls[i]!,
+          fetchFn,
+          init,
+          undefined,
+          false,
+          redact,
+        );
+        if (looksLikeHtml(buffer)) throw new Error("returned an HTML page, not feed data");
+        slots[i] = { buffer, payload };
+      } catch (err) {
+        if (!tolerant) {
+          stopped = true;
+          throw err;
+        }
+        failures++;
+        console.warn(
+          `[ingest] item fetch failed (${redact(redactUrl(urls[i]!))}):`,
+          err instanceof Error ? err.message : err,
+        );
+      }
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.min(FANOUT_CONCURRENCY, urls.length) }, () => worker()),
+  );
+  const done = slots.filter((s) => s !== undefined);
+  if (urls.length > 0 && done.length === 0) {
+    throw new Error(`all ${urls.length} item requests failed`);
+  }
+  return {
+    buffers: done.map((s) => s.buffer),
+    payloads: done.map((s) => s.payload),
+    failures,
+    total: urls.length,
+  };
+}
+
 /** Shallow equality match of a resolved child against a catalog filter. */
 function matchesFilter(child: ChildFeed, filter?: Record<string, unknown>): boolean {
   if (!filter) return true;
@@ -607,6 +701,27 @@ export async function fetchEndpoint(
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
     return fanoutResult(fanout);
+  }
+
+  // Each: one request per id read from another role's payload. The ids come
+  // from `opts.eachSource`, which the caller supplies from that role's latest
+  // fetch; without it there is nothing to read and the role fails.
+  if (endpoint.each) {
+    if (!opts.eachSource) {
+      throw new Error(`each: no ${endpoint.each.role} payload to read ids from`);
+    }
+    const urls = eachItems(endpoint.each, opts.eachSource).map((item) =>
+      resolveEachUrl(feed, role, item, env),
+    );
+    return fanoutResult(
+      await fetchEach(
+        urls,
+        fetchFn,
+        requestInit(feed, role, env),
+        redact,
+        endpoint.fanout === "tolerant",
+      ),
+    );
   }
 
   // Follow: the response names the URL of the data (a download page's CSV

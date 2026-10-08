@@ -98,6 +98,7 @@ describe("GET /sources", () => {
       accessMode: flow.accessMode ?? "bulk",
       restricted: true,
       license: "CC0-1.0",
+      licenseName: "Creative Commons Zero 1.0",
       attribution: "Alpha",
       homepage: "https://example.test",
       privacyUrl: "https://example.test/privacy",

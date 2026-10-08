@@ -418,6 +418,84 @@ describe("lintCatalog", () => {
     ]);
   });
 
+  test("a per-item endpoint reads a fetched data role of its own feed", () => {
+    const perItem = defineIngestDomain({
+      id: "roads",
+      products: ["events"],
+      feedShape: feedBaseShape,
+      formats: {
+        datex2: {
+          id: "datex2",
+          kind: "situations",
+          products: ["events"],
+          endpoints: {
+            main: { required: true },
+            details: { required: false },
+            more: { required: false },
+            sites: { required: false, decoders: ["d"] },
+          },
+          parse: () => emptyParseOutput(),
+        },
+      },
+      resolvers: [],
+    });
+    const item = (role: string) => ({
+      url: "https://example.test/x/{item}",
+      cadenceSec: 60,
+      each: { role, records: "a", field: "id" },
+    });
+    const plain = { url: "https://example.test/x", cadenceSec: 60 };
+    const check = (endpoints: FeedDefinition["endpoints"]) =>
+      messages([file([def({ endpoints })])], NO_SHARED, [perItem]);
+
+    expect(check({ main: plain, details: item("main") })).toEqual([]);
+    expect(check({ main: plain, details: item("nope") })).toEqual([
+      "endpoint details each names nope, which is not a role",
+    ]);
+    expect(check({ main: plain, details: item("details") })).toEqual([
+      "endpoint details each cannot read its own payload",
+    ]);
+    expect(
+      check({ main: plain, sites: { ...plain, decoder: "d" }, details: item("sites") }),
+    ).toEqual(["endpoint details each reads sites, which is reference data"]);
+    expect(check({ main: plain, details: item("main"), more: item("details") })).toEqual([
+      "endpoint more each reads details, which is itself per-item",
+    ]);
+
+    // An on-demand cell fetch and a catalogue's resolved children never run
+    // a per-item role: it would be silently left unfetched.
+    const onDemand = messages(
+      [
+        file([
+          def({
+            accessMode: "on_demand",
+            endpoints: { main: plain, details: item("main") },
+          }),
+        ]),
+      ],
+      NO_SHARED,
+      [perItem],
+    );
+    expect(onDemand).toEqual(
+      expect.arrayContaining(["endpoint details each cannot be used by an on_demand feed"]),
+    );
+    const catalogue = messages(
+      [
+        file([
+          def({
+            catalog: { resolver: "registry" },
+            endpoints: { main: plain, details: item("main") },
+          }),
+        ]),
+      ],
+      NO_SHARED,
+      [perItem],
+    );
+    expect(catalogue).toEqual(
+      expect.arrayContaining(["endpoint details each cannot be used by a catalogue feed"]),
+    );
+  });
+
   test("a catalogue parent's endpoints cannot follow or impersonate", () => {
     const registry = testDomainWith([
       { id: "registry", snapshotPath: "/unused", snapshot: [], resolve: async () => [] },

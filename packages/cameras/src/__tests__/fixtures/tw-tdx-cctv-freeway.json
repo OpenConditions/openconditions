@@ -1,0 +1,40 @@
+{
+  "UpdateTime": "2026-10-08T00:13:26+08:00",
+  "UpdateInterval": 21600,
+  "SrcUpdateTime": "2026-10-08T00:05:43+08:00",
+  "SrcUpdateInterval": 86400,
+  "AuthorityCode": "NFB",
+  "LinkVersion": "25.06.1",
+  "CCTVs": [
+    {
+      "CCTVID": "CCTV-N1-S-0.000-M",
+      "SubAuthorityCode": "NFB-NR",
+      "LinkID": "0000100000000C",
+      "VideoStreamURL": "https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=10000",
+      "LocationType": 1,
+      "PositionLon": 121.735695,
+      "PositionLat": 25.1229931,
+      "RoadID": "000010",
+      "RoadName": "國道1號",
+      "RoadClass": 0,
+      "RoadDirection": "S",
+      "RoadSection": { "Start": "基隆端", "End": "基隆交流道" },
+      "LocationMile": "0K+000"
+    },
+    {
+      "CCTVID": "CCTV-N1-S-0.070-M",
+      "SubAuthorityCode": "NFB-NR",
+      "LinkID": "0000100000000C",
+      "VideoStreamURL": "https://cctvn.freeway.gov.tw/abs2mjpg/bmjpg?camera=10002",
+      "LocationType": 1,
+      "PositionLon": 121.735127048479,
+      "PositionLat": 25.1220774328133,
+      "RoadID": "000010",
+      "RoadName": "國道1號",
+      "RoadClass": 0,
+      "RoadDirection": "S",
+      "RoadSection": { "Start": "基隆端", "End": "基隆交流道" },
+      "LocationMile": "0K+070"
+    }
+  ]
+}

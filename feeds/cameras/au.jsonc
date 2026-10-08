@@ -1,0 +1,61 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "livetraffic",
+      "product": "cameras",
+      "name": "Live Traffic NSW cameras",
+      "tier": "authoritative",
+      "format": "json",
+      // A GeoJSON FeatureCollection whose camera id is the Feature's own `id`,
+      // outside `properties`, so it is read through the JSON layout. One
+      // view per camera, no status and no image time.
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "@au-nsw-tfnsw.api_key",
+        "valuePrefix": "apikey ",
+      },
+      "endpoints": {
+        "main": { "url": "https://api.transport.nsw.gov.au/v1/live/cameras", "cadenceSec": 3600 },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "features" },
+      "freshnessWindowSec": 7200,
+      "coverage": { "countries": ["AU-NSW"] },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-08",
+      },
+      "attribution": "Transport for NSW",
+      "homepage": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-cameras",
+      "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+      "layout": { "records": "features", "geometryPath": "geometry" },
+      "cameras": {
+        "imageHosts": ["webcams.transport.nsw.gov.au", "data.livetraffic.com"],
+        "id": "id",
+        "name": "properties.title",
+        "description": "properties.view",
+        "lang": "en",
+        "type": "traffic",
+        "direction": {
+          "field": "properties.direction",
+          "map": {
+            "N": "N",
+            "N-E": "NE",
+            "E": "E",
+            "S-E": "SE",
+            "S": "S",
+            "S-W": "SW",
+            "W": "W",
+            "N-W": "NW",
+          },
+        },
+        "imageUrl": "properties.href",
+        "imageRedistribution": "allowed",
+      },
+    },
+  ],
+}

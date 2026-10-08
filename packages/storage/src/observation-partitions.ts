@@ -6,7 +6,7 @@ const DAY_MS = 86_400_000;
 /**
  * How many days of raw readings a property keeps: its registry `rawDays`, or
  * 0 for a property that keeps every reading. Undefined for a property that
- * keeps no history at all (`latestOnly`, camera images).
+ * keeps no history at all (`latestOnly`).
  */
 export function retentionDaysOf(entry: Pick<PropertyEntry, "retention">): number | undefined {
   if (entry.retention?.latestOnly) return undefined;

@@ -1,0 +1,64 @@
+{
+  "type": "Feature",
+  "id": "C01632",
+  "geometry": { "type": "Point", "coordinates": [26.263, 60.47487, 0.0] },
+  "properties": {
+    "id": "C01632",
+    "name": "vt7_Loviisa_Itä",
+    "cameraType": "VMX_MPH",
+    "nearestWeatherStationId": 1022,
+    "annualMaintenanceTime": null,
+    "collectionInterval": 600,
+    "collectionStatus": "GATHERING",
+    "country": null,
+    "dataUpdatedTime": "2026-10-08T03:27:42Z",
+    "liviId": "Livi1089367",
+    "municipality": "Loviisa",
+    "municipalityCode": 434,
+    "names": { "fi": "Tie 7 Loviisa Itä", "sv": "Väg 7 Lovisa öst", "en": "Road 7 Loviisa east" },
+    "presets": [
+      {
+        "id": "C0163201",
+        "presentationName": "Kotkaan",
+        "inCollection": false,
+        "resolution": "704x576",
+        "directionCode": "1",
+        "imageUrl": "https://weathercam.digitraffic.fi/C0163201.jpg",
+        "direction": "INCREASING_DIRECTION"
+      },
+      {
+        "id": "C0163202",
+        "presentationName": "Helsinkiin",
+        "inCollection": true,
+        "resolution": "704x576",
+        "directionCode": "2",
+        "imageUrl": "https://weathercam.digitraffic.fi/C0163202.jpg",
+        "direction": "DECREASING_DIRECTION"
+      },
+      {
+        "id": "C0163209",
+        "presentationName": "Tienpinta",
+        "inCollection": false,
+        "resolution": "704x576",
+        "directionCode": "9",
+        "imageUrl": "https://weathercam.digitraffic.fi/C0163209.jpg",
+        "direction": "SPECIAL_DIRECTION"
+      }
+    ],
+    "province": "Uusimaa",
+    "provinceCode": 1,
+    "purpose": "liikenne",
+    "repairMaintenanceTime": null,
+    "roadAddress": {
+      "roadNumber": 7,
+      "roadSection": 19,
+      "distanceFromRoadSectionStart": 4212,
+      "carriageway": "DUAL_CARRIAGEWAY_RIGHT_IN_INCREASING_DIRECTION",
+      "side": "RIGHT",
+      "contractArea": "",
+      "contractAreaCode": 321
+    },
+    "startTime": "2014-06-06T00:00:00Z",
+    "state": null
+  }
+}

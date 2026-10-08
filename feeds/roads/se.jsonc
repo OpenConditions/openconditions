@@ -32,7 +32,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://data.trafikverket.se/",
       "attribution": "Trafikverket",
-      "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
     },
     {
       // The TrafficFlow object (speed/flow sensors) lives on the object API, a
@@ -57,7 +57,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://api.trafikinfo.trafikverket.se/",
       "attribution": "Trafikverket",
-      "privacyUrl": "https://www.trafikverket.se/en/privacy-policy/",
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
     },
   ],
 }

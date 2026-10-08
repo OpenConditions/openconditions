@@ -1,0 +1,227 @@
+{
+  "type": "FeatureCollection",
+  "totalFeatures": 895,
+  "numberMatched": 895,
+  "numberReturned": 895,
+  "timeStamp": "2026-10-08T06:46:55.622Z",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::4326"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "6707b6d757c76d466ad9dc37",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5.459189, 61.832706]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/3000063_1",
+        "videoEncodingStandard": "",
+        "cameraId": "3000063_1",
+        "lastUpdateTime": "2026-10-08T08:46:02+0200",
+        "recordId": "3000063_1",
+        "pubId": 1791441928,
+        "_id": "6707b6d757c76d466ad9dc37",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "F614",
+        "status.stillImageAvailability": "videoOrImagesAvailable",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:02+0200",
+        "orientationDescription": "Svelgen",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/61.8327048,5.4591888/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 0,
+        "description": "Langesi"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6707b6d757c76d466ad9dc45",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5.194947, 61.66738]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/1429014_1",
+        "videoEncodingStandard": "",
+        "cameraId": "1429014_1",
+        "lastUpdateTime": "2026-10-08T08:46:02+0200",
+        "recordId": "1429014_1",
+        "pubId": 1791441928,
+        "_id": "6707b6d757c76d466ad9dc45",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "F614",
+        "status.stillImageAvailability": "videoOrImagesUnavailableDueToCameraFault",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:02+0200",
+        "orientationDescription": "Florø",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/61.6673802,5.1949467/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 0,
+        "description": "Grytadalen"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6707b6d757c76d466ad9e2d2",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5.194947, 61.66738]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/1429014_2",
+        "videoEncodingStandard": "",
+        "cameraId": "1429014_2",
+        "lastUpdateTime": "2026-10-08T08:46:03+0200",
+        "recordId": "1429014_2",
+        "pubId": 1791441928,
+        "_id": "6707b6d757c76d466ad9e2d2",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "F614",
+        "status.stillImageAvailability": "videoOrImagesUnavailableDueToCameraFault",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:03+0200",
+        "orientationDescription": "Svelgen",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/61.6673802,5.1949467/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 0,
+        "description": "Grytadalen"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6707b6d757c76d466ad9dce9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [5.339726, 60.37364]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/3000061_1",
+        "videoEncodingStandard": "hls",
+        "cameraId": "3000061_1",
+        "lastUpdateTime": "2026-10-08T08:46:02+0200",
+        "recordId": "3000061_1",
+        "pubId": 1791441928,
+        "_id": "6707b6d757c76d466ad9dce9",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "E39",
+        "status.stillImageAvailability": "videoOrImagesAvailable",
+        "videoUrl": "https://kamera.vegvesen.no/public/3000061_1/manifest.m3u8",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:02+0200",
+        "videoFrameRate": 60,
+        "orientationDescription": "sentrum",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/60.3736382,5.3397261/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 1,
+        "description": "Fjøsangerveien v/BKK"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6707b6d857c76d466ad9e4db",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7.847677, 61.079605]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/1429011_1",
+        "videoEncodingStandard": "",
+        "cameraId": "1429011_1",
+        "lastUpdateTime": "2026-10-08T08:46:04+0200",
+        "recordId": "1429011_1",
+        "pubId": 1791441928,
+        "_id": "6707b6d857c76d466ad9e4db",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "E16",
+        "status.stillImageAvailability": "videoOrImagesAvailable",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:04+0200",
+        "orientationDescription": "Lærdal",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/61.0796042,7.8476772/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 0,
+        "description": "Borgund"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6707b6d757c76d466ad9dfff",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7.847677, 61.079605]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/1429011_2",
+        "videoEncodingStandard": "",
+        "cameraId": "1429011_2",
+        "lastUpdateTime": "2026-10-08T08:46:03+0200",
+        "recordId": "1429011_2",
+        "pubId": 1791441928,
+        "_id": "6707b6d757c76d466ad9dfff",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "E16",
+        "status.stillImageAvailability": "videoOrImagesAvailable",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:03+0200",
+        "orientationDescription": "Fagernes",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/61.0796042,7.8476772/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 0,
+        "description": "Borgund"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "6707b6d757c76d466ad9e2a9",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [7.847677, 61.079605]
+      },
+      "properties": {
+        "@featureType": "geoJsonCctvSimple",
+        "stillImageUrl": "https://kamera.atlas.vegvesen.no/api/images/1429011_3",
+        "videoEncodingStandard": "",
+        "cameraId": "1429011_3",
+        "lastUpdateTime": "2026-10-08T08:46:03+0200",
+        "recordId": "1429011_3",
+        "pubId": 1791441928,
+        "_id": "6707b6d757c76d466ad9e2a9",
+        "status.stillImageServiceLevel": "1",
+        "roadNumber": "E16",
+        "status.stillImageAvailability": "videoOrImagesAvailable",
+        "endJsonTime": "2026-10-08T08:46:05+0200",
+        "publicationTime": "2026-10-08T08:46:03+0200",
+        "orientationDescription": "døgnhvileplass",
+        "geometry_name": "GEOMETRY_OBJECT",
+        "stillImageUrlDescription": "https://www.yr.no/nb/værvarsel/daglig-tabell/61.0796042,7.8476772/",
+        "stillImageServiceLevel": 1,
+        "stillImageFormat": "jpeg",
+        "videoServiceLevel": 0,
+        "description": "Borgund"
+      }
+    }
+  ]
+}

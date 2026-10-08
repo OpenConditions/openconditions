@@ -117,11 +117,12 @@ export const LICENSES: readonly LicenseInfo[] = [
   {
     id: "LicenseRef-511NY-DAA",
     name: "511NY Developer Access Agreement",
-    url: "https://511ny.org/developers/daa",
-    redistribution: null,
-    derivedRedistribution: null,
+    url: "https://511ny.org/help/24",
+    redistribution: true,
+    derivedRedistribution: true,
     commercialUse: null,
-    attributionRequired: true,
+    // The agreement permits the "powered by 511NY" credit but does not require it.
+    attributionRequired: false,
     retention: null,
     shareAlike: false,
   },
@@ -183,6 +184,22 @@ export const LICENSES: readonly LicenseInfo[] = [
     name: "NYC Open Data Terms of Use",
     url: "https://www.nyc.gov/html/data/terms.html",
     attributionRequired: false,
+  }),
+  open({
+    id: "LicenseRef-TfL-Transport-Data-Service",
+    name: "TfL Transport Data Service licence (OGL v2.0 with TfL amendments)",
+    url: "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+  }),
+  open({
+    id: "LicenseRef-Caltrans-Conditions-of-Use",
+    name: "Caltrans Conditions of Use",
+    url: "https://dot.ca.gov/conditions-of-use",
+    attributionRequired: false,
+  }),
+  open({
+    id: "LicenseRef-ODOT-TripCheck",
+    name: "ODOT TripCheck data terms of use",
+    url: "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
   }),
   open({
     id: "LicenseRef-US-Gov-Public-Domain",

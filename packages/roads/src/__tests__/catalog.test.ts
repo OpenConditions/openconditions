@@ -191,19 +191,30 @@ describe("the roads catalogue", () => {
   test("the shared credential groups are Mobilithek's, one per operator account and the Overpass setting", () => {
     const groups = repoCatalog().credentials.groups;
     expect(Object.keys(groups).sort()).toEqual([
+      "au-nsw-tfnsw",
       "au-vic-transportvic",
+      "ca-on-511",
       "hr-hc",
       "mobilithek",
       "no-vegvesen",
       "overpass",
       "se-trafikverket",
       "sg-lta",
+      "tw-tdx",
       "us-ny-511",
       "us-oh-ohgo",
     ]);
     expect(Object.keys(groups["hr-hc"]!)).toEqual(["user", "password"]);
     expect(Object.keys(groups["no-vegvesen"]!)).toEqual(["user", "password"]);
-    for (const group of ["au-vic-transportvic", "se-trafikverket", "sg-lta", "us-ny-511"]) {
+    expect(Object.keys(groups["tw-tdx"]!)).toEqual(["client_id", "client_secret"]);
+    for (const group of [
+      "au-nsw-tfnsw",
+      "au-vic-transportvic",
+      "ca-on-511",
+      "se-trafikverket",
+      "sg-lta",
+      "us-ny-511",
+    ]) {
       expect(Object.keys(groups[group]!), group).toEqual(["api_key"]);
     }
   });
@@ -583,26 +594,39 @@ describe("one feed per publisher", () => {
     expect(f.country).toBe("DE");
   });
 
-  test("Ontario 511 needs no key", () => {
-    const f = feed("ca-on-511-events");
-    expect(f.format).toBe("ibi511");
-    expect(f.auth).toBeUndefined();
-    expect(f.credentials).toBeUndefined();
+  test("Ontario 511's events, construction projects and road conditions share one developer key", () => {
+    expect(feed("ca-on-511-events").format).toBe("ibi511");
+    for (const id of [
+      "ca-on-511-events",
+      "ca-on-511-construction-events",
+      "ca-on-511-conditions",
+    ]) {
+      expect(feed(id).auth, id).toEqual({
+        kind: "query-key",
+        param: "key",
+        credential: "@ca-on-511.api_key",
+      });
+      expect(feed(id).credentials, id).toBeUndefined();
+    }
   });
 
-  test("511NY events and winter roads share one documented API key", () => {
+  test("511NY events and winter roads wait for access under the Developer Access Agreement", () => {
     for (const id of ["us-ny-511-events", "us-ny-511-conditions"]) {
       expect(feed(id).auth, id).toEqual({
         kind: "query-key",
         param: "key",
         credential: "@us-ny-511.api_key",
       });
+      expect(feed(id).disabled?.reason, id).toContain("Developer Access Agreement");
+      // Restricted until the operator's approved request names wider recipients.
+      expect(feed(id).terms?.redistribution, id).toBe(false);
     }
     expect(feed("us-ny-511-events").format).toBe("ibi511");
     expect(feed("us-ny-511-conditions").format).toBe("ibi511-conditions");
     const key = repoCatalog().credentials.groups["us-ny-511"]!["api_key"]!;
     expect(key.title).toBeTruthy();
-    expect(key.setup?.url).toContain("511ny.org");
+    expect(key.setup?.url).toBe("https://511ny.org/help/24");
+    expect(key.setup?.steps?.join(" ")).toContain("CARS Agencies' XML Feed Request Form");
   });
 
   test("LTA incidents and speed bands share one AccountKey", () => {
@@ -704,13 +728,13 @@ describe("one feed per publisher", () => {
     expect(main(f.id).urls).toHaveLength(2);
   });
 
-  test("Live Traffic NSW sends its key as a header", () => {
+  test("Live Traffic NSW sends the shared Open Data Hub key as a header", () => {
     const f = feed("au-nsw-livetraffic-events");
     expect(f.format).toBe("geojson");
     expect(f.auth).toEqual({
       kind: "header-key",
       header: "Authorization",
-      credential: "api_key",
+      credential: "@au-nsw-tfnsw.api_key",
       valuePrefix: "apikey ",
     });
     expect(main(f.id).urls).toHaveLength(6);

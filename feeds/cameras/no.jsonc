@@ -1,0 +1,61 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "vegvesen",
+      "product": "cameras",
+      "name": "Statens vegvesen web cameras",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The keyless DATEX II WFS layer, which carries the DATEX server's CCTV
+      // site table and still availability in one GeoJSON answer: one record
+      // per view, `<site>_<n>`, so a site's views group into one camera.
+      // Stills renew about every minute; the list and the availability are
+      // read every ten.
+      "endpoints": {
+        "main": {
+          "url": "https://ogckart-sn1.atlas.vegvesen.no/datex_3_1/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=datex_3_1%3ACctvSimple&outputFormat=application%2Fjson",
+          "cadenceSec": 600,
+        },
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features",
+        "totalCountPath": "totalFeatures",
+      },
+      "freshnessWindowSec": 1800,
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+      "terms": {
+        "url": "https://dataut.vegvesen.no/en/dataset/webkamera",
+        "reviewedAt": "2026-10-08",
+        "note": "NLOD 2.0 dataset whose content is the camera images. Statens vegvesen asks consumers of the open WFS to identify themselves at datex@vegvesen.no, and Norwegian texts are not to be translated.",
+      },
+      "attribution": "Statens vegvesen",
+      "homepage": "https://www.vegvesen.no/en/",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
+      "layout": {},
+      "cameras": {
+        "imageHosts": ["kamera.atlas.vegvesen.no"],
+        "groupBy": { "field": "cameraId", "pattern": "^([^_]+)_" },
+        "viewKey": "cameraId",
+        "name": "description",
+        "lang": "no",
+        "viewName": "orientationDescription",
+        "road": "roadNumber",
+        "type": "traffic",
+        "imageUrl": "stillImageUrl",
+        "streamUrl": "videoUrl",
+        "streamType": "hls",
+        "status": {
+          "field": "status.stillImageAvailability",
+          "map": {
+            "videoOrImagesAvailable": "online",
+            "videoOrImagesUnavailableDueToCameraFault": "offline",
+          },
+        },
+        "imageRedistribution": "allowed",
+      },
+    },
+  ],
+}

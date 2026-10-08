@@ -18,7 +18,7 @@
       "license": "NLOD-2.0",
       "licenseUrl": "https://data.norge.no/nlod/en/2.0",
       "attribution": "Statens vegvesen",
-      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
     },
     {
       // Measured traffic data (speed/volume) joined to the MeasurementSiteTable for
@@ -45,7 +45,7 @@
       "license": "NLOD-2.0",
       "licenseUrl": "https://data.norge.no/nlod/en/2.0",
       "attribution": "Statens vegvesen",
-      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
     },
   ],
 }

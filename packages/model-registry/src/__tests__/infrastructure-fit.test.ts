@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { type CamerasCatalogFeed, camerasDomain } from "@openconditions/cameras";
 import {
   buildRegistry,
   extendVocabulary,
@@ -17,20 +18,17 @@ import { productionModules } from "../index.js";
  * Digitraffic (Fintraffic, CC BY 4.0: road weather station, weather camera,
  * variable signs, traffic measurement station as DATEX II 3.7), NDW (CC0:
  * route-information panels as DATEX II 3), WSDOT (WZDx 4.2 device feed),
- * Ontario 511 (cameras) and Iowa DOT (snowplow AVL). Only the formats
- * OpenConditions does not parse yet are registered here, by a test-only module.
+ * Ontario 511 (cameras) and Iowa DOT (snowplow AVL). The weather camera and
+ * the Ontario cameras run through the cameras domain's own parsers, whose
+ * formats the roads module registers; only the formats OpenConditions does
+ * not parse yet are registered here, by a test-only module.
  */
 const fitFormats: RegistryModule = {
   name: "infrastructure-fit",
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: [
-        "digitraffic-weather",
-        "digitraffic-weathercam",
-        "digitraffic-variable-signs",
-        "arcgis-avl",
-      ],
+      values: ["digitraffic-weather", "digitraffic-variable-signs", "arcgis-avl"],
     }),
   ],
 };
@@ -272,119 +270,71 @@ function digitrafficWeatherStation() {
   return { feature, observations };
 }
 
-function digitrafficWeathercam() {
-  const cam = json("digitraffic-weathercam-C01503.json");
-  const data = json("digitraffic-weathercam-C01503-data.json") as {
-    presets: { id: string; measuredTime: string }[];
-  };
-  const p = cam.properties;
-  const [lon, lat] = cam.geometry.coordinates;
-  const prov = provenance(
-    "fi-digitraffic-weathercam",
-    "digitraffic-weathercam",
-    p.id,
-    "Fintraffic / digitraffic.fi",
-    "CC-BY-4.0",
-  );
-  const direction = (d: string) =>
-    d === "INCREASING_DIRECTION"
-      ? { value: "positive", basis: "road_reference" }
-      : d === "DECREASING_DIRECTION"
-        ? { value: "negative", basis: "road_reference" }
-        : undefined;
-  const feature = {
-    id: `oc:feature:fi-digitraffic-weathercam:${p.id}`,
-    class: "feature",
-    kind: "camera",
-    type: "weather",
-    temporality: "static",
-    lifecycle: "operational",
-    name: (["fi", "sv", "en"] as const).map((lang) => ({ lang, text: p.names[lang] })),
-    location: { ...point(lon, lat), roads: [{ ref: String(p.roadAddress.roadNumber) }] },
-    provenance: prov,
-    freshness: { fetchedAt: FETCHED },
-    components: p.presets.map(
-      (preset: { id: string; presentationName: string; direction: string }) => {
-        const d = direction(preset.direction);
-        return {
-          key: preset.id,
-          kind: "camera_view",
-          name: [{ lang: "fi", text: preset.presentationName }],
-          details: { kind: "camera_view", v: 1, ...(d ? { direction: d } : {}) },
-        };
-      },
+type CamerasParse = ReturnType<(typeof camerasDomain.formats)[string]["parse"]>;
+
+/** A parse's features, each with the readings about it. */
+function perFeature(out: CamerasParse) {
+  return out.features.map((feature) => ({
+    feature,
+    observations: out.observations.filter(
+      (o) => (o["subject"] as { featureId: string }).featureId === feature["id"],
     ),
-    details: {
-      kind: "camera",
-      v: 1,
-      refreshSec: p.collectionInterval,
-      imageRedistribution: "allowed",
-    },
-  };
-  const observations = data.presets.map((d) => {
-    const preset = p.presets.find((x: { id: string }) => x.id === d.id);
-    return observation(feature, {
-      property: "camera.image",
-      componentKey: d.id,
-      result: structured("camera_image", {
-        status: "online",
-        imageUrl: preset.imageUrl,
-        imageAt: d.measuredTime,
-      }),
-      at: { instant: d.measuredTime },
-    });
-  });
-  return { feature, observations };
+  }));
 }
 
-interface OntarioCamera {
-  Id: number;
-  Source: string;
-  SourceId: string;
-  Roadway: string;
-  Latitude: number;
-  Longitude: number;
-  Location: string;
-  Views: { Id: number; Url: string; Status: string; Description: string }[];
-}
+/** `fi-digitraffic-cameras` as `feeds/cameras/fi.jsonc` writes it: the fields its records take from the feed. */
+const digitrafficCamerasFeed = {
+  id: "fi-digitraffic-cameras",
+  format: "digitraffic",
+  region: "fi",
+  license: "CC-BY-4.0",
+  licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+  attribution: "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+  cameras: { imageHosts: ["weathercam.digitraffic.fi"] },
+} as CamerasCatalogFeed;
 
-function ontarioCamera() {
-  const [cam] = json("ontario511-cameras.json") as [OntarioCamera];
-  const prov = provenance("ca-on-511-events", "ibi511", String(cam.Id), "Ontario 511", "unknown");
-  const feature = {
-    id: `oc:feature:ca-on-511-events:${cam.Id}`,
-    class: "feature",
-    kind: "camera",
-    type: "traffic",
-    temporality: "static",
-    lifecycle: "operational",
-    name: [{ lang: "en", text: cam.Location }],
-    externalIds: [{ scheme: "provider", id: cam.SourceId, authority: cam.Source }],
-    location: {
-      ...point(cam.Longitude, cam.Latitude),
-      roads: [{ name: [{ lang: "en", text: cam.Roadway }] }],
-    },
-    provenance: prov,
-    freshness: { fetchedAt: FETCHED },
-    components: cam.Views.map((v) => ({
-      key: String(v.Id),
-      kind: "camera_view",
-      ...(v.Description ? { name: [{ lang: "en", text: v.Description }] } : {}),
-      details: { kind: "camera_view", v: 1 },
-    })),
-    // No licence is published for the images: link to them, never republish.
-    details: { kind: "camera", v: 1, provider: cam.Source, imageRedistribution: "unknown" },
-  };
-  // "Enabled" says the view is configured, not that it delivers current images; there is no image time.
-  const observations = cam.Views.map((v) =>
-    observation(feature, {
-      property: "camera.image",
-      componentKey: String(v.Id),
-      result: structured("camera_image", { status: "unknown", imageUrl: v.Url }),
-      at: { instant: FETCHED },
-    }),
+/**
+ * A Digitraffic weather camera through the cameras domain's parser: the
+ * station as the list carries it (the captured details document is the
+ * list's feature with more properties), its details, and its presets'
+ * latest image times as the data document lists them.
+ */
+function digitrafficWeathercam() {
+  const station = json("digitraffic-weathercam-C01503.json");
+  const data = json("digitraffic-weathercam-C01503-data.json");
+  return perFeature(
+    camerasDomain.formats["digitraffic"]!.parse(
+      digitrafficCamerasFeed,
+      {
+        sites: [Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [station] }))],
+        details: [Buffer.from(text("digitraffic-weathercam-C01503.json"))],
+        status: [Buffer.from(JSON.stringify({ stations: [data] }))],
+      },
+      { fetchedAt: FETCHED, cadenceSec: 600, reference: {} },
+    ),
   );
-  return { feature, observations };
+}
+
+/** `ca-on-511-cameras` as `feeds/cameras/ca.jsonc` writes it. */
+const ontarioCamerasFeed = {
+  id: "ca-on-511-cameras",
+  format: "ibi511",
+  region: "ca",
+  license: "LicenseRef-OGL-ON",
+  licenseUrl: "https://www.ontario.ca/page/open-government-licence-ontario",
+  attribution: "Contains information licensed under the Open Government Licence – Ontario",
+  cameras: { imageHosts: ["511on.ca"], imageRedistribution: "unknown" },
+} as CamerasCatalogFeed;
+
+/** Ontario 511's cameras through the cameras domain's IBI 511 parser. */
+function ontarioCameras() {
+  return perFeature(
+    camerasDomain.formats["ibi511"]!.parse(
+      ontarioCamerasFeed,
+      { main: [Buffer.from(text("ontario511-cameras.json"))] },
+      { fetchedAt: FETCHED, cadenceSec: 3600, reference: {} },
+    ),
+  );
 }
 
 /** Digitraffic sign types → sign type; INFORMATION signs show a pictogram with text rows. */
@@ -774,8 +724,8 @@ function iowaSnowplows() {
 describe("road infrastructure fit check", () => {
   it.each([
     ["a Digitraffic road-weather station", () => [digitrafficWeatherStation()]],
-    ["a Digitraffic weather camera", () => [digitrafficWeathercam()]],
-    ["an Ontario 511 camera", () => [ontarioCamera()]],
+    ["a Digitraffic weather camera", digitrafficWeathercam],
+    ["Ontario 511 cameras", ontarioCameras],
     ["Digitraffic variable signs", digitrafficSigns],
     ["NDW route-information panels (DATEX II 3)", ndwRoutePanels],
     ["WZDx arrow boards", wzdxArrowBoards],
@@ -799,6 +749,39 @@ describe("road infrastructure fit check", () => {
       "5",
     ]);
     expect(new Set(surface.map((o) => o["id"])).size).toBe(2);
+  });
+
+  it("reads a Digitraffic station as one camera whose presets are its views, each with its latest still", () => {
+    const [camera] = digitrafficWeathercam();
+    expect(camera!.feature).toMatchObject({
+      id: "oc:feature:fi-digitraffic-cameras:C01503",
+      type: "weather",
+      details: { refreshSec: 600, imageRedistribution: "allowed" },
+    });
+    const views = camera!.feature["components"] as { key: string }[];
+    expect(views.map((v) => v.key)).toEqual(["C0150301", "C0150302", "C0150309"]);
+    expect(
+      camera!.observations.map((o) => [
+        (o["subject"] as { componentKey: string }).componentKey,
+        (o["result"] as { value: { status: string } }).value.status,
+      ]),
+    ).toEqual([
+      ["C0150301", "online"],
+      ["C0150302", "online"],
+      ["C0150309", "online"],
+    ]);
+  });
+
+  it("keeps Ontario's images unknown: no image time and no image licence", () => {
+    const cameras = ontarioCameras();
+    expect(cameras.map((c) => c.feature["details"])).toEqual(
+      cameras.map(() => expect.objectContaining({ imageRedistribution: "unknown" })),
+    );
+    for (const o of cameras.flatMap((c) => c.observations)) {
+      const value = (o["result"] as { value: Record<string, unknown> }).value;
+      expect(value["status"]).toBe("unknown");
+      expect(value["imageAt"]).toBeUndefined();
+    }
   });
 
   it("rejects a sign display in an unregistered working status", () => {

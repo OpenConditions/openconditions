@@ -1,0 +1,46 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "vegagerdin",
+      "product": "cameras",
+      "name": "Vegagerðin web cameras",
+      "tier": "authoritative",
+      "format": "json",
+      // One row per view of a road weather station: the rows of one station
+      // number are one camera, each still its view. The list carries no
+      // status or image time, and changes rarely.
+      "endpoints": {
+        "main": {
+          "url": "https://gagnaveita.vegagerdin.is/api/vefmyndavelar2014_1",
+          "cadenceSec": 86400,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "terms": {
+        "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/terms-and-conditions",
+        "reviewedAt": "2026-10-08",
+        "note": "IRCA data and photographs, road cameras named, are CC BY 4.0. The attribution names the licensor (the Icelandic Road and Coastal Administration, IRCA), the dataset, the date or period the data was retrieved, and the CC BY 4.0 licence.",
+      },
+      "attribution": "Vegagerðin (Icelandic Road and Coastal Administration), web cameras, CC BY 4.0",
+      "homepage": "https://www.vegagerdin.is/",
+      "privacyUrl": "https://www.vegagerdin.is/",
+      "layout": { "lon": "Lengd", "lat": "Breidd" },
+      "cameras": {
+        "imageHosts": ["www.vegagerdin.is"],
+        "id": "Maelist_nr",
+        "viewKey": { "field": "Slod", "pattern": "/([^/]+)\\.jpg$" },
+        "name": "Myndavel",
+        "lang": "is",
+        "viewName": "Skyring",
+        "road": "NrVegur",
+        "type": "weather",
+        "imageUrl": "Slod",
+        "imageRedistribution": "allowed",
+      },
+    },
+  ],
+}

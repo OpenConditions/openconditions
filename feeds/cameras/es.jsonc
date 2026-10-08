@@ -1,0 +1,34 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "dgt",
+      "product": "cameras",
+      "name": "DGT traffic cameras",
+      "tier": "authoritative",
+      "format": "datex2",
+      // A DATEX II v3.7 device publication (about 3.7 MB) of every DGT camera
+      // outside the Basque Country and Catalonia, with the still's address in
+      // a Spanish extension. It carries no status, and DGT renews it hourly.
+      "endpoints": {
+        "main": {
+          "url": "https://nap.dgt.es/datex2/v3/dgt/DevicePublication/camaras_datex2_v37.xml",
+          "cadenceSec": 3600,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "terms": {
+        "url": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+        "reviewedAt": "2026-10-08",
+        "note": "NAP dataset licence CC BY (unversioned, CKAN cc-by); its 'condition for use' links the generic dgt.es aviso legal, which reserves website content. Dataset licence taken as governing. The stills sit on the etraffic.dgt.es portal, which the aviso legal reserves: they are not republished. A consumer's image proxy fetches a still from the publisher's URL when a user views it and stores nothing (Cache-Control: no-store), which is linking, not republishing.",
+      },
+      "attribution": "Dirección General de Tráfico (DGT), CC BY",
+      "homepage": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+      "privacyUrl": "https://sede.dgt.gob.es/es/proteccion-datos/",
+      "cameras": { "imageHosts": ["etraffic.dgt.es"] },
+    },
+  ],
+}

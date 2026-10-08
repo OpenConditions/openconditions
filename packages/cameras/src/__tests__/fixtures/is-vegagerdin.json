@@ -1,0 +1,62 @@
+[
+  {
+    "Maelist_nr": 7001,
+    "Myndavel": "Hellisheiði",
+    "Vegheiti": "Hringvegur",
+    "NrVegur": "1",
+    "Skyring": "Hellisheiði séð til vesturs",
+    "Slod": "https://www.vegagerdin.is/vgdata/vefmyndavelar/hellisheidi_1.jpg",
+    "PntX": 385465.0,
+    "PntY": 392681.0,
+    "Breidd": 64.018296,
+    "Lengd": -21.342636
+  },
+  {
+    "Maelist_nr": 7001,
+    "Myndavel": "Hellisheiði",
+    "Vegheiti": "Hringvegur",
+    "NrVegur": "1",
+    "Skyring": "Hellisheiði séð niður á veg",
+    "Slod": "https://www.vegagerdin.is/vgdata/vefmyndavelar/hellisheidi_2.jpg",
+    "PntX": 385465.0,
+    "PntY": 392681.0,
+    "Breidd": 64.018296,
+    "Lengd": -21.342636
+  },
+  {
+    "Maelist_nr": 7001,
+    "Myndavel": "Hellisheiði",
+    "Vegheiti": "Hringvegur",
+    "NrVegur": "1",
+    "Skyring": "Hellisheiði séð til austurs",
+    "Slod": "https://www.vegagerdin.is/vgdata/vefmyndavelar/hellisheidi_3.jpg",
+    "PntX": 385465.0,
+    "PntY": 392681.0,
+    "Breidd": 64.018296,
+    "Lengd": -21.342636
+  },
+  {
+    "Maelist_nr": 7040,
+    "Myndavel": "Nónskarð",
+    "Vegheiti": "Reykjanesbraut",
+    "NrVegur": "41",
+    "Skyring": "Nónskarð séð að Smáralind",
+    "Slod": "https://www.vegagerdin.is/vgdata/vefmyndavelar/nonskard_1.jpg",
+    "PntX": 359203.3,
+    "PntY": 402348.7,
+    "Breidd": 64.095198,
+    "Lengd": -21.888131
+  },
+  {
+    "Maelist_nr": 7040,
+    "Myndavel": "Nónskarð",
+    "Vegheiti": "Reykjanesbraut",
+    "NrVegur": "41",
+    "Skyring": "Nónskarð séð að Garðabæ",
+    "Slod": "https://www.vegagerdin.is/vgdata/vefmyndavelar/nonskard_2.jpg",
+    "PntX": 359203.3,
+    "PntY": 402348.7,
+    "Breidd": 64.095198,
+    "Lengd": -21.888131
+  }
+]

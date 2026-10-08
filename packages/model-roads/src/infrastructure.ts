@@ -77,6 +77,14 @@ export const ROADS_INFRASTRUCTURE_KINDS = [
       bearingDeg: z.number().min(0).lt(360).optional(),
       direction: k.DirectionRef.optional(),
       road: k.RoadRef.optional(),
+      /**
+       * The publisher's page for this view's camera. A canonical camera lists
+       * the views of every member, so each view keeps its own publisher's
+       * link (and licence below) rather than the survivor's.
+       */
+      detailUrl: z.url().optional(),
+      /** What the licence of this view's image allows: republish it, or only link to it. */
+      imageRedistribution: z.enum(["allowed", "link_only", "unknown"]).optional(),
     }),
   }),
   defineKind({
@@ -123,6 +131,20 @@ export const ROADS_INFRASTRUCTURE_KINDS = [
       /** What the image licence allows: republish the image, or only link to it. */
       imageRedistribution: z.enum(["allowed", "link_only", "unknown"]),
     }),
+    linking: {
+      idSchemes: ["provider", "osm:node", "osm:way", "osm:relation"],
+      alwaysMetres: 15,
+      neverMetres: 80,
+      attribute: { name: 0.6, operator: 0.75 },
+      nameStopwords: ["webcam", "camera", "cam", "kamera", "cctv", "traffic"],
+      /**
+       * `other` says no one stated what the camera shows (most OpenStreetMap
+       * webcams), so it may be any typed camera; two stated types must agree.
+       */
+      typeCompatible: (a, b) =>
+        a === b || a === undefined || b === undefined || a === "other" || b === "other",
+      osm: { tags: ["man_made=surveillance"] },
+    },
   }),
   defineKind({
     class: "feature",
@@ -309,7 +331,7 @@ export const ROADS_PROPERTIES = [
     description: "A camera's current image or stream.",
     result: { type: "structured", schema: "camera_image" },
     subjects: [{ kind: "feature", featureKinds: ["camera"], componentKinds: ["camera_view"] }],
-    retention: { latestOnly: true },
+    retention: { changeOnly: true, componentHistory: false },
   }),
   defineProperty({
     code: "device.status",

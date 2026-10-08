@@ -13,7 +13,7 @@ describe("loadIngestCatalog", () => {
       86,
     );
     expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(
-      new Set(["roads", "fuel", "parking", "charging"]),
+      new Set(["roads", "fuel", "parking", "charging", "cameras"]),
     );
     expect(cat.feeds.map((f) => f.id)).toEqual(
       expect.arrayContaining([
@@ -21,6 +21,8 @@ describe("loadIngestCatalog", () => {
         "fr-prixcarburants-fuel",
         "de-bw-mobidata-parking",
         "osm-parking",
+        "fi-digitraffic-cameras",
+        "osm-cameras",
       ]),
     );
     expect(cat.disabled.map((f) => f.id)).toEqual(
@@ -58,7 +60,13 @@ describe("loadIngestCatalog", () => {
 
 describe("formatOf", () => {
   it("finds a feed's format in its domain", () => {
-    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads", "fuel", "parking", "charging"]);
+    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual([
+      "roads",
+      "fuel",
+      "parking",
+      "charging",
+      "cameras",
+    ]);
     expect(formatOf(testFeed({ format: "datex2-measured", product: "flow" })).kind).toBe(
       "measurements",
     );
@@ -68,6 +76,9 @@ describe("formatOf", () => {
     );
     expect(
       formatOf(testFeed({ domain: "parking", format: "geojson", product: "parking" })).kind,
+    ).toBe("features");
+    expect(
+      formatOf(testFeed({ domain: "cameras", format: "overpass", product: "cameras" })).kind,
     ).toBe("features");
   });
 

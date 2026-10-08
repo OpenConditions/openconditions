@@ -96,6 +96,58 @@ describe("on-demand read-through limits", () => {
     expect(up.calls).toEqual([]);
   });
 
+  test("a source missing its credentials is listed with its reason but does not make the read partial", async () => {
+    const keyed = onDemandFeed("unkeyed", {
+      endpoints: {
+        main: {
+          url: "https://example.test/unkeyed?w={west}&s={south}&e={east}&n={north}&key=${api_key}",
+          cadenceSec: 900,
+        },
+      },
+      credentials: { api_key: { title: "API key" } },
+    });
+    // A second source whose area is too large: it could answer, so it is a gap.
+    const wide = onDemandFeed("wide", {
+      onDemand: { cellDeg: 0.1, ttlSec: 900, maxCellsPerRead: 1, probe: [8.45, 49.05] },
+    });
+    const read = (feeds: ReturnType<typeof onDemandFeed>[]) => {
+      const { sql, queries } = noDatabase();
+      const up = upstream();
+      const coverage = readThrough(
+        sql,
+        { feeds },
+        { bbox: [8, 49, 8.3, 49.1], class: "feature", kinds: ["fuel_station"], scope: "operator" },
+        {
+          fetch: up.fetch,
+          now: () => START,
+          deadlineMs: 3000,
+          registry,
+          instanceId: "test.local",
+          lookup: fakeLookup,
+          env: {},
+        },
+      );
+      return { coverage, queries, up };
+    };
+
+    const alone = read([keyed]);
+    expect(await alone.coverage).toEqual({
+      partial: false,
+      sources: [{ id: keyed.id, complete: false, reason: "missing_configuration" }],
+    });
+    expect(alone.queries).toEqual([]);
+    expect(alone.up.calls).toEqual([]);
+
+    const both = read([keyed, wide]);
+    expect(await both.coverage).toEqual({
+      partial: true,
+      sources: [
+        { id: keyed.id, complete: false, reason: "missing_configuration" },
+        { id: wide.id, complete: false, reason: "too_many_cells" },
+      ],
+    });
+  });
+
   test("an offer read fetches only the sources that produce offers of what it asks for", async () => {
     // The test format produces fuel stations (domain fuel) and energy tariffs (domain charging).
     const feed = onDemandFeed("offers");

@@ -8,10 +8,12 @@ import {
 
 /**
  * What the credential artefacts are generated from: the polled feeds, the
- * shared groups, and the readers of a group of settings that are no feed
- * (the road-graph import reads `@overpass.url`), by group.
+ * disabled ones (whose access an operator may have to request before they can
+ * be enabled), the shared groups, and the readers of a group of settings that
+ * are no feed (the road-graph import reads `@overpass.url`), by group.
  */
 export type CredentialCatalog = Pick<Catalog, "feeds" | "credentials"> & {
+  disabled?: readonly CatalogFeed[];
   settingReaders?: Readonly<Record<string, readonly string[]>>;
 };
 
@@ -54,7 +56,7 @@ function ownerId(feed: CatalogFeed): string {
 function keyedFeeds(catalog: CredentialCatalog): { feed: CatalogFeed; vars: CredentialVar[] }[] {
   const out: { feed: CatalogFeed; vars: CredentialVar[] }[] = [];
   const seen = new Set<string>();
-  for (const feed of catalog.feeds) {
+  for (const feed of [...catalog.feeds, ...(catalog.disabled ?? [])]) {
     const vars = feedVars(feed, catalog);
     if (vars.length === 0 || seen.has(ownerId(feed))) continue;
     seen.add(ownerId(feed));
@@ -128,7 +130,7 @@ export function envExampleFor(catalog: CredentialCatalog): string {
     const own = vars.filter((v) => !seen.has(v.env));
     if (own.length === 0) continue;
     const lines = [
-      `# ${feed.name} (${ownerId(feed)})`,
+      `# ${feed.name} (${ownerId(feed)})${feed.disabled ? `, disabled: ${feed.disabled.reason}` : ""}`,
       ...guideLines(own.find((v) => v.field?.setup)?.field),
     ];
     for (const v of own) {
@@ -451,7 +453,8 @@ export function credentialsDocFor(catalog: CredentialCatalog, serviceId: string)
     const names = credentials.map((v) => `\`${v.env}\``).join(", ");
     const setup = credentials.find((v) => v.field?.setup)?.field?.setup;
     const how = setup?.url ? `[${setup.urlLabel ?? "portal"}](${setup.url})` : (setup?.notes ?? "");
-    rows.push(`| ${feed.name} | \`${ownerId(feed)}\` | ${names} | ${feed.license} | ${how} |`);
+    const name = feed.disabled ? `${feed.name} (disabled)` : feed.name;
+    rows.push(`| ${name} | \`${ownerId(feed)}\` | ${names} | ${feed.license} | ${how} |`);
   }
   const settingRows =
     settings.size === 0

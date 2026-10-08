@@ -180,11 +180,38 @@ describe("on-demand request limits", () => {
           env,
         },
       );
+    // Listed with its reason, yet no gap: waiting or zooming in never helps it.
     expect(await read({})).toEqual({
-      partial: true,
+      partial: false,
       sources: [{ id: feed.id, complete: false, reason: "missing_configuration" }],
     });
     expect(up.calls).toHaveLength(0);
+
+    // Beside a source held back by its request limit, the read is partial.
+    const limitedFeed = onDemandFeed("keyedlimited", { requestLimits: { perMinute: 1 } });
+    const limitedUp = upstream();
+    expect(
+      await readThrough(
+        sql,
+        { feeds: [feed, limitedFeed] },
+        { bbox: THREE_CELLS, class: "feature", domain: "fuel", scope: "public" },
+        {
+          fetch: limitedUp.fetch,
+          now: () => START,
+          deadlineMs: 5000,
+          registry,
+          instanceId: "test.local",
+          lookup: fakeLookup,
+          env: {},
+        },
+      ),
+    ).toEqual({
+      partial: true,
+      sources: [
+        { id: feed.id, complete: false, reason: "missing_configuration" },
+        { id: limitedFeed.id, complete: false, reason: "limited" },
+      ],
+    });
 
     expect(await read({ DE_KEYED_FUEL_API_KEY: "k-123" })).toEqual({
       partial: false,

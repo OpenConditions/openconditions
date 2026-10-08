@@ -96,6 +96,28 @@ describe("gen-credentials-lib", () => {
     });
   });
 
+  it("lists a disabled feed's credential, so access can be obtained before the feed is enabled", () => {
+    const waiting = feed({
+      subdivision: "ny",
+      operator: "511",
+      name: "511NY (New York)",
+      license: "LicenseRef-511NY-DAA",
+      credentials: ny.credentials!,
+      auth: { kind: "query-key", param: "key", credential: "api_key" },
+      disabled: { reason: "access is granted on request", since: "2026-10-08" },
+    });
+    const catalog: CredentialCatalog = { feeds: [], disabled: [waiting], credentials: shared };
+    expect(configSchemaPropertiesFor(catalog)["US_NY_511_EVENTS_API_KEY"]).toMatchObject({
+      "x-openmapx-setup": { url: "https://511ny.org/my511/register" },
+    });
+    expect(envExampleFor(catalog)).toContain(
+      "# 511NY (New York) (us-ny-511-events), disabled: access is granted on request",
+    );
+    expect(credentialsDocFor(catalog, "openconditions-ingest")).toContain(
+      "| 511NY (New York) (disabled) | `us-ny-511-events` |",
+    );
+  });
+
   it("emits the service's own secrets as vault fields without a default", () => {
     const props = configSchemaPropertiesFor(ofFeeds([]));
     for (const key of ["DATABASE_URL", "OPENCONDITIONS_OPERATOR_TOKEN"]) {

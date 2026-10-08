@@ -13,7 +13,7 @@
     "test": "pnpm build && vitest run",
     "test:watch": "pnpm build && vitest",
     "test:coverage": "pnpm build && vitest run --coverage",
-    "build:domains": "turbo run build --filter=@openconditions/datex2... --filter=@openconditions/ocpi... --filter=@openconditions/roads... --filter=@openconditions/fuel... --filter=@openconditions/parking... --filter=@openconditions/charging... --output-logs=errors-only",
+    "build:domains": "turbo run build --filter=@openconditions/datex2... --filter=@openconditions/ocpi... --filter=@openconditions/roads... --filter=@openconditions/fuel... --filter=@openconditions/parking... --filter=@openconditions/charging... --filter=@openconditions/cameras... --output-logs=errors-only",
     "gen:credentials": "pnpm build:domains && tsx scripts/gen-credentials.ts --write",
     "check-credentials": "pnpm build:domains && tsx scripts/gen-credentials.ts",
     "gen:feed-schemas": "pnpm build:domains && tsx scripts/gen-feed-schemas.ts --write",

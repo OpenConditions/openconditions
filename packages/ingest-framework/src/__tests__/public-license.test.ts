@@ -55,7 +55,7 @@ describe("licence egress of model records", () => {
     expect(isPublicRecord(record())).toBe(true);
     expect(isPublicRecord(record({ attribution: { license: "CC-BY-SA-4.0" } }))).toBe(false);
     expect(isPublicRecord(record({ upstream: [{ license: "ODbL-1.0" }] }))).toBe(false);
-    expect(isPublicRecord(record({ upstream: [{ license: "LicenseRef-511NY-DAA" }] }))).toBe(false);
+    expect(isPublicRecord(record({ upstream: [{ license: "NOASSERTION" }] }))).toBe(false);
     expect(isPublicRecord(record({ upstream: [{ license: "CC-BY-4.0" }] }))).toBe(true);
   });
 

@@ -1,4 +1,9 @@
-import type { Catalog, CatalogFeed, EffectiveRights } from "@openconditions/ingest-framework";
+import {
+  type Catalog,
+  type CatalogFeed,
+  type EffectiveRights,
+  licenseInfo,
+} from "@openconditions/ingest-framework";
 
 /** One feed the instance serves, as a consumer credits and discloses it. */
 export interface Source {
@@ -13,7 +18,10 @@ export interface Source {
   accessMode: "bulk" | "on_demand";
   /** Its records are withheld from the public scope; this entry is metadata only. */
   restricted: boolean;
+  /** The licence id: SPDX where SPDX lists it, else `LicenseRef-<name>`, or `NOASSERTION`. */
   license: string;
+  /** The licence's readable name, from the licence registry, for showing to people. */
+  licenseName?: string;
   licenseUrl?: string;
   attribution: string;
   homepage: string;
@@ -27,9 +35,30 @@ export interface Source {
    * neither, such as an `eu` feed without written coverage.
    */
   coverage?: { countries?: string[]; bbox?: [number, number, number, number] };
+  /**
+   * The hosts the feed's camera stills are fetched from, as its `cameras`
+   * block declares them: an exact host, `*.domain`, or `host/path/`. A
+   * consumer's image proxy admits exactly these for the feed's images.
+   */
+  imageHosts?: string[];
+}
+
+/**
+ * The image hosts a feed's `cameras` block declares, read from the
+ * catalogue entry as written: the block belongs to the cameras domain's feed
+ * shape, which this generic listing does not import.
+ */
+function imageHostsOf(feed: CatalogFeed): string[] | undefined {
+  const block = (feed as CatalogFeed & { cameras?: { imageHosts?: unknown } }).cameras;
+  const hosts = block?.imageHosts;
+  return Array.isArray(hosts) && hosts.every((h) => typeof h === "string")
+    ? [...(hosts as string[])]
+    : undefined;
 }
 
 function sourceOf(feed: CatalogFeed): Source {
+  const imageHosts = imageHostsOf(feed);
+  const licenseName = licenseInfo(feed.license)?.name;
   const terms = {
     ...(feed.terms?.url ? { url: feed.terms.url } : {}),
     ...(feed.terms?.reviewedAt ? { reviewedAt: feed.terms.reviewedAt } : {}),
@@ -47,6 +76,7 @@ function sourceOf(feed: CatalogFeed): Source {
     accessMode: feed.accessMode ?? "bulk",
     restricted: feed.restricted,
     license: feed.license,
+    ...(licenseName ? { licenseName } : {}),
     ...(feed.licenseUrl ? { licenseUrl: feed.licenseUrl } : {}),
     attribution: feed.attribution,
     homepage: feed.homepage,
@@ -61,6 +91,7 @@ function sourceOf(feed: CatalogFeed): Source {
             ...(feed.coverage.bbox ? { bbox: feed.coverage.bbox } : {}),
           },
         }),
+    ...(imageHosts === undefined ? {} : { imageHosts }),
   };
 }
 

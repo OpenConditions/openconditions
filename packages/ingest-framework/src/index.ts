@@ -22,6 +22,7 @@ export * from "./held.js";
 export * from "./impersonate.js";
 export * from "./layouts/block.js";
 export * from "./layouts/decode.js";
+export * from "./layouts/fields.js";
 export { crsName, readFeatureCollection, reprojectGeometry } from "./layouts/geojson.js";
 export * from "./layouts/overpass.js";
 export { getPath, type LayoutRow } from "./layouts/row.js";

@@ -1,0 +1,412 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "product": "cameras",
+      "name": "Caltrans CCTV",
+      "tier": "authoritative",
+      "format": "json",
+      // One file per district, one dataset: a district that fails does not
+      // fail the poll, but leaves the set incomplete, so the last complete
+      // publication stands until every district answers again. The files
+      // change "as necessary". A camera's direction is the road's travel
+      // direction, not where it looks.
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://cwwp2.dot.ca.gov/data/d1/cctv/cctvStatusD01.json",
+            "https://cwwp2.dot.ca.gov/data/d2/cctv/cctvStatusD02.json",
+            "https://cwwp2.dot.ca.gov/data/d3/cctv/cctvStatusD03.json",
+            "https://cwwp2.dot.ca.gov/data/d4/cctv/cctvStatusD04.json",
+            "https://cwwp2.dot.ca.gov/data/d5/cctv/cctvStatusD05.json",
+            "https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json",
+            "https://cwwp2.dot.ca.gov/data/d7/cctv/cctvStatusD07.json",
+            "https://cwwp2.dot.ca.gov/data/d8/cctv/cctvStatusD08.json",
+            "https://cwwp2.dot.ca.gov/data/d9/cctv/cctvStatusD09.json",
+            "https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json",
+            "https://cwwp2.dot.ca.gov/data/d11/cctv/cctvStatusD11.json",
+            "https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json",
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 3600,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "data" },
+      "freshnessWindowSec": 86400,
+      "coverage": { "countries": ["US-CA"] },
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "terms": {
+        "url": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+        "reviewedAt": "2026-10-08",
+        "note": "Free for integration into applications under the Caltrans Conditions of Use. Caltrans traffic camera footage and stills are neither retained nor archived by Caltrans.",
+      },
+      "attribution": "Caltrans",
+      "homepage": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "layout": {
+        "records": "data",
+        "lon": "cctv.location.longitude",
+        "lat": "cctv.location.latitude",
+      },
+      "cameras": {
+        "imageHosts": ["cwwp2.dot.ca.gov"],
+        "id": ["cctv.location.district", "cctv.index"],
+        "name": "cctv.location.locationName",
+        "lang": "en",
+        "type": "traffic",
+        "road": "cctv.location.route",
+        "viewName": "cctv.imageData.imageDescription",
+        "direction": {
+          "field": "cctv.location.direction",
+          "map": { "North": "N", "South": "S", "East": "E", "West": "W" },
+        },
+        "imageUrl": "cctv.imageData.static.currentImageURL",
+        "streamUrl": "cctv.imageData.streamingVideoURL",
+        "streamType": "hls",
+        "status": {
+          "field": "cctv.inService",
+          "map": { "true": "unknown", "false": "offline", "Not Reported": "unknown" },
+        },
+        "refreshSec": {
+          "field": "cctv.imageData.static.currentImageUpdateFrequency",
+          "unit": "min",
+        },
+        "imageRedistribution": "allowed",
+      },
+    },
+    {
+      "operator": "nps",
+      "product": "cameras",
+      "name": "National Park Service webcams",
+      "tier": "authoritative",
+      "format": "nps",
+      // Every NPS webcam in one call. The API carries each camera's page and
+      // a stock photo, never the live still, so the cameras link to their
+      // pages and declare no image hosts.
+      "credentials": {
+        "api_key": {
+          "title": "NPS API Key",
+          "description": "Get a free key at https://developer.nps.gov/signup/",
+          "default": "DEMO_KEY",
+          "setup": {
+            "url": "https://www.nps.gov/subjects/developer/get-started.htm",
+            "urlLabel": "Get an NPS API key",
+            "steps": [
+              "Open nps.gov/subjects/developer/get-started.htm and fill out the 'Get Started' sign-up form.",
+              "Submit the form; an email with your personalized 40-character API key is sent to you.",
+              "Copy the key; it is sent on each request in the X-Api-Key header.",
+            ],
+            "cost": "Free",
+            "notes": "Self-service form on nps.gov; the key arrives by email (developer portal is developer.nps.gov). Delivery is usually near-instant.",
+          },
+        },
+      },
+      "auth": { "kind": "header-key", "header": "X-Api-Key", "credential": "api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://developer.nps.gov/api/v1/webcams?limit=500",
+          "cadenceSec": 86400,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "data" },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "attribution": "National Park Service",
+      "homepage": "https://www.nps.gov/subjects/developer/",
+      "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
+    },
+    {
+      "subdivision": "ga",
+      "operator": "511",
+      "product": "cameras",
+      "name": "511GA cameras (Georgia)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      // Every camera with its views in one call; the key allows ten calls a
+      // minute across the system's endpoints.
+      "credentials": {
+        "api_key": {
+          "title": "Georgia 511 API Key",
+          "description": "The 511GA developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://511ga.org/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free My511 account at 511ga.org/my511/register (or log in).",
+              "Open the Developer Resources page (Developers → Documentation) at 511ga.org/developers/doc.",
+              "Request a Developer API key from your account; it is issued automatically.",
+              "Copy the key (sent as the 'key' query parameter).",
+            ],
+            "cost": "Free",
+            "notes": "Georgia 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds.",
+          },
+        },
+      },
+      "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },
+      "endpoints": {
+        "main": { "url": "https://511ga.org/api/v2/get/cameras?format=json", "cadenceSec": 900 },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["US-GA"] },
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://511ga.org/developers/doc",
+        "reviewedAt": "2026-10-08",
+        "note": "No data licence: the API is offered so that developers \"create mobile traffic apps\". The 511GA and GDOT trademarks and logos may not be used without written permission (https://511ga.org/privacy).",
+      },
+      "attribution": "511GA / Georgia DOT",
+      "homepage": "https://511ga.org/",
+      "privacyUrl": "https://511ga.org/privacy",
+      "cameras": { "imageHosts": ["511ga.org"] },
+    },
+    {
+      "subdivision": "az",
+      "operator": "511",
+      "product": "cameras",
+      "name": "AZ511 cameras (Arizona)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      "credentials": {
+        "api_key": {
+          "title": "Arizona 511 API Key",
+          "description": "The AZ511 developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://az511.com/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free My AZ 511 account at az511.com/my511/register (or log in).",
+              "Open the Developer Resources page at az511.com/developers/doc.",
+              "Request a Developer API key from your account; it is issued automatically.",
+              "Copy the key (sent as the 'key' query parameter).",
+            ],
+            "cost": "Free",
+            "notes": "Arizona 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds.",
+          },
+        },
+      },
+      "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },
+      "endpoints": {
+        "main": { "url": "https://az511.com/api/v2/get/cameras?format=json", "cadenceSec": 900 },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["US-AZ"] },
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://az511.com/developers/doc",
+        "reviewedAt": "2026-10-08",
+        "note": "No data licence: \"This API enables developers to create mobile traffic apps for Arizona.\" The site's disclaimer (https://az511.com/about/disclaimer) covers suggested routes only.",
+      },
+      "attribution": "AZ511 / Arizona DOT",
+      "homepage": "https://az511.com/",
+      "privacyUrl": "https://az511.com/about/privacy",
+      "cameras": { "imageHosts": ["az511.com"] },
+    },
+    {
+      "subdivision": "id",
+      "operator": "511",
+      "product": "cameras",
+      "name": "Idaho 511 cameras",
+      "tier": "authoritative",
+      "format": "ibi511",
+      "credentials": {
+        "api_key": {
+          "title": "Idaho 511 API Key",
+          "description": "The Idaho 511 developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://511.idaho.gov/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free account at 511.idaho.gov/my511/register (or log in).",
+              "Open the Developer Resources page at 511.idaho.gov/developers/doc.",
+              "Request a Developer API key from your account; it is issued automatically.",
+              "Copy the key (sent as the 'key' query parameter).",
+            ],
+            "cost": "Free",
+            "notes": "Idaho 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds.",
+          },
+        },
+      },
+      "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://511.idaho.gov/api/v2/get/cameras?format=json",
+          "cadenceSec": 900,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["US-ID"] },
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://511.idaho.gov/about/privacy",
+        "reviewedAt": "2026-10-08",
+        "note": "\"The information that is provided on this web site is a property of Idaho Transportation Department. It is not to be sold, or used in any process for resale as a value-added product, or otherwise distributed for profit in any form.\" Shown free of charge in a traffic app, the API's stated purpose; never sold.",
+        "commercialUse": false,
+      },
+      "attribution": "Idaho 511 / Idaho Transportation Department",
+      "homepage": "https://511.idaho.gov/",
+      "privacyUrl": "https://511.idaho.gov/about/privacy",
+      "cameras": { "imageHosts": ["511.idaho.gov"] },
+    },
+    {
+      "subdivision": "ut",
+      "operator": "511",
+      "product": "cameras",
+      "name": "UDOT Traffic cameras (Utah)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      // The documented public host, which answered 403 to requests from
+      // outside the US on 2026-10-08. An operator outside the US sets the
+      // platform's origin, https://prod-ut.ibi511.com, in its local
+      // catalogue layer; both hosts serve the stills.
+      "credentials": {
+        "api_key": {
+          "title": "Utah 511 API Key",
+          "description": "The UDOT Traffic developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://udottraffic.utah.gov/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free account at udottraffic.utah.gov/my511/register (or log in).",
+              "Open the Developer Resources / API documentation page and request a Developer API key.",
+              "Copy the key (sent as the 'key' query parameter).",
+            ],
+            "cost": "Free",
+            "notes": "UDOT Traffic 511 runs the IBI Group / Castle Rock platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds.",
+          },
+        },
+      },
+      "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://www.udottraffic.utah.gov/api/v2/get/cameras?format=json",
+          "cadenceSec": 900,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["US-UT"] },
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://www.utah.gov/support/disclaimer.html",
+        "reviewedAt": "2026-10-08",
+        "note": "\"Anyone may view, copy, or distribute information found within these web pages (not including the design or layout of the pages) for personal or informational use without owing an obligation to the State if the documents are not modified in any respect.\" A traveller map is informational use; the records are not modified.",
+      },
+      "attribution": "UDOT Traffic / Utah DOT",
+      "homepage": "https://www.udottraffic.utah.gov/",
+      "privacyUrl": "https://www.utah.gov/support/privacypolicy.html",
+      "cameras": { "imageHosts": ["www.udottraffic.utah.gov", "prod-ut.ibi511.com"] },
+    },
+    {
+      "subdivision": "la",
+      "operator": "511",
+      "product": "cameras",
+      "name": "511LA cameras (Louisiana)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      // Views carry an HLS stream beside the still; the stream plays in the
+      // browser and is not proxied.
+      "credentials": {
+        "api_key": {
+          "title": "Louisiana 511 API Key",
+          "description": "The 511LA developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://www.511la.org/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free account at 511la.org/my511/register and verify via the emailed link.",
+              "Log in and open the Developer Resources page at 511la.org/developers/doc.",
+              "Request a Developer API key from your account.",
+              "Copy the key (sent as the 'key' query parameter).",
+            ],
+            "cost": "Free",
+            "notes": "Louisiana 511 runs the IBI Group / Castle Rock 511 platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds.",
+          },
+        },
+      },
+      "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },
+      "endpoints": {
+        "main": { "url": "https://511la.org/api/v2/get/cameras?format=json", "cadenceSec": 900 },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 3600,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["US-LA"] },
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://511la.org/developers/doc",
+        "reviewedAt": "2026-10-08",
+        "note": "No data licence: \"This API enables developers to create mobile traffic apps for Louisiana.\" The terms of use (https://511la.org/about/disclaimer) are a warranty disclaimer only.",
+      },
+      "attribution": "511LA / Louisiana DOTD",
+      "homepage": "https://511la.org/",
+      "privacyUrl": "https://511la.org/about/privacy",
+      "cameras": { "imageHosts": ["511la.org"] },
+    },
+    {
+      "subdivision": "or",
+      "operator": "tripcheck",
+      "product": "cameras",
+      "name": "ODOT TripCheck cameras (Oregon)",
+      "tier": "authoritative",
+      "format": "tripcheck",
+      // The TripCheck API's CCTV inventory: every camera ODOT and its partner
+      // agencies show on TripCheck, refreshed daily upstream and read hourly
+      // to catch additions. No numeric limit is published; ODOT's legacy
+      // API allows ten calls a minute.
+      "credentials": {
+        "api_key": {
+          "title": "ODOT TripCheck API subscription key",
+          "description": "The primary key of a subscription to the TripCheck Data product, sent as the 'Ocp-Apim-Subscription-Key' header.",
+          "setup": {
+            "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+            "urlLabel": "ODOT API portal: TripCheck Data",
+            "steps": [
+              "Sign up for an account on the ODOT API portal (apiportal.odot.state.or.us) and sign in.",
+              "Open Products → TripCheck Data and subscribe; read the Terms of Use with the 'Show' button and confirm them with 'I agree'.",
+              "Open your profile and copy the subscription's primary key.",
+            ],
+            "cost": "Free",
+            "notes": "Self-service, no approval step. Republishers credit the agency that provides each camera, mirror the data rather than hotlink it, and repeat ODOT's disclaimer.",
+          },
+        },
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "Ocp-Apim-Subscription-Key",
+        "credential": "api_key",
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://api.odot.state.or.us/tripcheck/Cctv/Inventory",
+          "cadenceSec": 3600,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "CCTVInventoryRequest" },
+      "freshnessWindowSec": 7200,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["US-OR"] },
+      "license": "LicenseRef-ODOT-TripCheck",
+      "licenseUrl": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+      "terms": {
+        "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+        "reviewedAt": "2026-10-08",
+        "note": "ODOT and the partner agencies allow the public and private business to use and circulate the data and camera images on three conditions: republishers credit the public agency providing the data (on many stills the agency is embedded in the image); they mirror the data on their own server rather than hotlink it, so the stills reach users only through the consumer's image proxy; and they repeat ODOT's disclaimer of warranty when acknowledging the data.",
+      },
+      "attribution": "Oregon Department of Transportation (TripCheck) and the providing agencies",
+      "homepage": "https://www.tripcheck.com/",
+      "privacyUrl": "https://www.oregon.gov/pages/privacy.aspx",
+      "cameras": { "imageHosts": ["tripcheck.com", "www.tripcheck.com"] },
+    },
+  ],
+}

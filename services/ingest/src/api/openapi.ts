@@ -33,7 +33,7 @@ const RecordId = z.string().min(1).describe("the record id, URL-encoded");
 
 /** How a JSON collection reads on-demand sources through, appended to its summary. */
 const ON_DEMAND =
-  " A read with `bbox` and a kind, property or domain an on-demand source produces, of the records this route lists, first fetches that source's stale grid cells inside its coverage, within its request limits, waiting up to `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000); the response then carries `coverage: { partial, sources: [{ id, complete, reason? }] }`, `reason` one of `too_many_cells`, `limited`, `failed`, `deadline` or `missing_configuration`. A partial answer is not cached. A read without `bbox`, or for a past `at`, never fetches; `source` limits the sources fetched.";
+  " A read with `bbox` and a kind, property or domain an on-demand source produces, of the records this route lists, first fetches that source's stale grid cells inside its coverage, within its request limits, waiting up to `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000); the response then carries `coverage: { partial, sources: [{ id, complete, reason? }] }`, `reason` one of `too_many_cells`, `limited`, `failed`, `deadline` or `missing_configuration`. `partial` is true when a source that could answer fell short; a source missing its configuration is listed with its reason but does not make the answer partial. A partial answer is not cached. A read without `bbox`, or for a past `at`, never fetches; `source` limits the sources fetched.";
 
 /** The record API: every route here is registered by `registerApiRoutes`. */
 export const API_ROUTES: readonly ApiRoute[] = [
@@ -202,7 +202,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/sources",
     operationId: "listSources",
     summary:
-      "The feeds this instance serves, by id: name, licence, attribution, homepage, terms (url, review date and note), rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
+      "The feeds this instance serves, by id: name, licence (`license`, the SPDX or `LicenseRef-` id, and `licenseName`, its readable name), attribution, homepage, terms (url, review date and note), rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. A camera feed whose stills a consumer may proxy lists their hosts in `imageHosts` (an exact host, `*.domain`, or `host/path/`). Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
     produces: ["application/json"],
   },
   {

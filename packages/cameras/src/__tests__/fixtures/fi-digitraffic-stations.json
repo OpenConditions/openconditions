@@ -1,0 +1,53 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-10-08T06:15:02Z",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "C01503",
+      "geometry": { "type": "Point", "coordinates": [23.99616, 60.05374, 0.0] },
+      "properties": {
+        "id": "C01503",
+        "name": "kt51_Inkoo",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2026-10-08T03:25:35Z",
+        "presets": [
+          { "id": "C0150301", "inCollection": true },
+          { "id": "C0150302", "inCollection": true },
+          { "id": "C0150309", "inCollection": true }
+        ],
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "C01539",
+      "geometry": { "type": "Point", "coordinates": [25.170316, 60.224998, 0.0] },
+      "properties": {
+        "id": "C01539",
+        "name": "VUO_SAT",
+        "collectionStatus": "REMOVED_TEMPORARILY",
+        "dataUpdatedTime": "2026-10-08T03:26:31Z",
+        "presets": [{ "id": "C0153900", "inCollection": true }],
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "C01632",
+      "geometry": { "type": "Point", "coordinates": [26.263, 60.47487, 0.0] },
+      "properties": {
+        "id": "C01632",
+        "name": "vt7_Loviisa_Itä",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2026-10-08T03:27:42Z",
+        "presets": [
+          { "id": "C0163201", "inCollection": false },
+          { "id": "C0163202", "inCollection": true },
+          { "id": "C0163209", "inCollection": false }
+        ],
+        "state": null
+      }
+    }
+  ]
+}

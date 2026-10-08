@@ -111,6 +111,12 @@ export const ROADS_SOURCE_FORMATS = [
   "wzdx",
 ] as const;
 
+/**
+ * The camera wire formats roads adds beyond the ones its event and flow
+ * parsers already read (`digitraffic`, `ibi511`, `trafikverket`, `hk-td`).
+ */
+export const CAMERA_SOURCE_FORMATS = ["windy", "tfl", "nps", "tripcheck"] as const;
+
 type DatexVocabulary = typeof DATEX2_V3 | typeof DATEX2_V2;
 
 /** Whether a `Class` / `Class:value` key exists in one DATEX version. */
@@ -215,6 +221,7 @@ export const roadsModule: RegistryModule = {
         "Traffic information about the road network: incidents, works, closures, restrictions and conditions, even when weather-caused.",
     }),
     extendVocabulary({ vocabulary: "source_format", values: ROADS_SOURCE_FORMATS }),
+    extendVocabulary({ vocabulary: "source_format", values: CAMERA_SOURCE_FORMATS }),
     ...situationKinds,
     cameraStatusVocabulary,
     vmsWorkingStatusVocabulary,

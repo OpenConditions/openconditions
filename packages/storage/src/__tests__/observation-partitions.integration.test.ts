@@ -54,7 +54,8 @@ describe("retention classes", () => {
   it("come from the registry: raw days, 0 to keep everything, none for latest-only", () => {
     const registry = productionRegistry();
     expect(retentionDaysOf(registry.property("traffic.speed")!)).toBe(2);
-    expect(retentionDaysOf(registry.property("camera.image")!)).toBeUndefined();
+    expect(retentionDaysOf(registry.property("camera.image")!)).toBe(0);
+    expect(retentionDaysOf({ retention: { latestOnly: true } })).toBeUndefined();
     expect(retentionDaysOf(registry.property("traffic.los")!)).toBe(7);
     expect(retentionDaysOf(registry.property("device.status")!)).toBe(0);
     expect(retentionClasses(registry)).toEqual(expect.arrayContaining([0, 1, 2, 7, 30]));

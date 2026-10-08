@@ -1,0 +1,42 @@
+[
+  {
+    "Id": 1,
+    "Source": "LADOTD",
+    "SourceId": "100",
+    "Roadway": "I-20",
+    "Direction": "Unknown",
+    "Latitude": 32.538889,
+    "Longitude": -93.630833,
+    "Location": "I-20 at I-220 Off Ramp",
+    "SortOrder": 0,
+    "Views": [
+      {
+        "Id": 2205,
+        "Url": "https://lu.stage.traveliq.co/map/Cctv/2205",
+        "Status": "Enabled",
+        "Description": "Traffic closest to this camera is traveling eastbound on I-20.",
+        "VideoUrl": "https://ITSStreamingBR2.dotd.la.gov/public/shr-cam-030.streams/playlist.m3u8"
+      }
+    ]
+  },
+  {
+    "Id": 2,
+    "Source": "LADOTD",
+    "SourceId": "101",
+    "Roadway": "I-20 N ",
+    "Direction": "Unknown",
+    "Latitude": 32.46091,
+    "Longitude": -93.831,
+    "Location": "I-20 at Monkhouse Drive t",
+    "SortOrder": 2,
+    "Views": [
+      {
+        "Id": 2206,
+        "Url": "https://lu.stage.traveliq.co/map/Cctv/2206",
+        "Status": "Enabled",
+        "Description": "Traffic closest to this camera is traveling eastbound on I-20.",
+        "VideoUrl": "https://ITSStreamingBR2.dotd.la.gov/public/shr-cam-002.streams/playlist.m3u8"
+      }
+    ]
+  }
+]

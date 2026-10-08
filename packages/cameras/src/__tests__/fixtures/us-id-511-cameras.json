@@ -1,0 +1,40 @@
+[
+  {
+    "Id": 946,
+    "Source": "INET",
+    "SourceId": "978",
+    "Roadway": "I-184 Milwaukee",
+    "Direction": "West",
+    "Latitude": 43.60515,
+    "Longitude": -116.28108,
+    "Location": "I-184 Milwaukee Franklin. User password weird on camera",
+    "SortOrder": 0,
+    "Views": [
+      {
+        "Id": 2403,
+        "Url": "https://511.idaho.gov/map/Cctv/2403",
+        "Status": "Disabled",
+        "Description": "D3 I-184 0.9 Milwauke Frankln504"
+      }
+    ]
+  },
+  {
+    "Id": 947,
+    "Source": "INET",
+    "SourceId": "979",
+    "Roadway": "US-20 Myrtle",
+    "Direction": "East",
+    "Latitude": 43.613018,
+    "Longitude": -116.207596,
+    "Location": "US-20 Myrtle 9th",
+    "SortOrder": 0,
+    "Views": [
+      {
+        "Id": 2404,
+        "Url": "https://511.idaho.gov/map/Cctv/2404",
+        "Status": "Disabled",
+        "Description": "D3 US-20 48.8 Myrtle 9th 505"
+      }
+    ]
+  }
+]

@@ -1,7 +1,9 @@
 import {
   type CatalogFeed,
   feedBaseShape,
+  fieldRef,
   layoutBlockSchema,
+  mapped,
 } from "@openconditions/ingest-framework";
 import { Quantity } from "@openconditions/model";
 import {
@@ -13,42 +15,11 @@ import {
 } from "@openconditions/model-parking";
 import { z } from "zod";
 
-const compiles = (pattern: string) => {
-  try {
-    new RegExp(pattern);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-/**
- * Where a value sits in a record: a dotted path, or a path and a regular
- * expression whose first capture group (else the whole match) is the value.
- */
-const fieldRef = z.union([
-  z.string().min(1),
-  z.strictObject({
-    field: z.string().min(1),
-    pattern: z
-      .string()
-      .min(1)
-      .refine(compiles, { message: "not a valid regular expression" })
-      .optional(),
-  }),
-]);
-
-export type FieldRef = z.infer<typeof fieldRef>;
-
 /** A source value: what `equals` and the value maps compare against. */
 const scalar = z.union([z.string(), z.number(), z.boolean()]);
 
 /** Holds when the field's value, as text, is the given one. */
 const condition = z.strictObject({ field: fieldRef, equals: scalar });
-
-/** A field whose source values map onto a closed vocabulary. */
-const mapped = <T extends readonly [string, ...string[]]>(values: T) =>
-  z.strictObject({ field: fieldRef, map: z.record(z.string(), z.enum(values)) });
 
 const TRENDS = ["filling", "clearing", "steady"] as const;
 

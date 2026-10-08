@@ -172,6 +172,36 @@ function ignoredOptionIssues(feed: FeedDefinition, domain: IngestDomain): string
   });
 }
 
+/**
+ * A per-item endpoint reads its ids from another data role of the same feed,
+ * which is fetched itself (not reference data, not another per-item role), so
+ * the source is always fetched before the roles that read it.
+ */
+function eachIssues(feed: FeedDefinition): string[] {
+  return Object.entries(feed.endpoints).flatMap(([role, endpoint]) => {
+    if (!endpoint.each) return [];
+    // Only a feed's own bulk poll fetches a per-item role after its source
+    // and hands it the source's payload; an on-demand cell fetch and a
+    // catalogue's resolved children have no such step.
+    if (feed.accessMode === "on_demand") {
+      return [`endpoint ${role} each cannot be used by an on_demand feed`];
+    }
+    if (feed.catalog) return [`endpoint ${role} each cannot be used by a catalogue feed`];
+    const source = Object.hasOwn(feed.endpoints, endpoint.each.role)
+      ? feed.endpoints[endpoint.each.role]
+      : undefined;
+    if (!source) return [`endpoint ${role} each names ${endpoint.each.role}, which is not a role`];
+    if (endpoint.each.role === role) return [`endpoint ${role} each cannot read its own payload`];
+    if (source.decoder !== undefined || source.reference !== undefined) {
+      return [`endpoint ${role} each reads ${endpoint.each.role}, which is reference data`];
+    }
+    if (source.each) {
+      return [`endpoint ${role} each reads ${endpoint.each.role}, which is itself per-item`];
+    }
+    return [];
+  });
+}
+
 function onDemandIssues(feed: FeedDefinition, domain: IngestDomain): string[] {
   const out: string[] = [];
   const onDemand = feed.accessMode === "on_demand";
@@ -378,6 +408,7 @@ export function lintCatalog(
         ...onDemandIssues(feed, domain),
         ...catalogEndpointIssues(feed),
         ...ignoredOptionIssues(feed, domain),
+        ...eachIssues(feed),
         ...credentialIssues(feed, credentials),
         ...rightsIssues(feed),
         ...urlIssues(feed),

@@ -139,6 +139,25 @@ export function resolveFeedTemplate(
 }
 
 /**
+ * The URL of a per-item endpoint for one item: the item, URL-encoded, goes into
+ * `{item}` before any credential is filled, so an item can never name a
+ * credential placeholder and a credential's value is never scanned for `{item}`.
+ */
+export function resolveEachUrl(
+  feed: CatalogFeed,
+  role: string,
+  item: string,
+  env: Env = process.env,
+): string {
+  const endpoint = feedEndpoint(feed, role);
+  if (!endpoint.each || endpoint.url === undefined) {
+    throw new Error(`feed ${feed.id}: endpoint ${role} is not a per-item endpoint`);
+  }
+  const template = endpoint.url.replaceAll("{item}", () => encodeURIComponent(item));
+  return fill(feed, template, templateNames(feed), env);
+}
+
+/**
  * The concrete URLs of one endpoint. With `expand`, the named credential's value
  * is split on commas and every template is filled once per item — the
  * Mobilithek "one client-pull URL per subscription id" case, where the id sits

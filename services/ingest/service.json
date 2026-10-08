@@ -350,19 +350,22 @@
         "title": "ASFINAG (Austria) — password",
         "x-openmapx-secret": true
       },
-      "AU_NSW_LIVETRAFFIC_EVENTS_API_KEY": {
+      "AU_NSW_TFNSW_API_KEY": {
         "type": "string",
-        "title": "Live Traffic NSW API key (Australia)",
+        "title": "Transport for NSW Open Data API key (Australia)",
+        "description": "An Open Data Hub API token, sent as the 'apikey' authorization header. Serves the Live Traffic hazards, the Park&Ride car parks and the Live Traffic cameras.",
         "x-openmapx-secret": true,
         "x-openmapx-setup": {
-          "url": "https://opendata.transport.nsw.gov.au/data/user/register",
-          "urlLabel": "Register at Transport NSW Open Data",
+          "url": "https://opendata.transport.nsw.gov.au/",
+          "urlLabel": "Get API key",
           "steps": [
-            "Register at opendata.transport.nsw.gov.au/data/user/register.",
-            "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints."
+            "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+            "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+            "In the data catalogue, open the 'Car park API' and 'Live Traffic Cameras API' datasets and subscribe each to your application; the token alone authorises the live-hazard endpoints.",
+            "Paste the generated token here (sent as the 'apikey' authorization header)."
           ],
           "cost": "Free",
-          "notes": "CC-BY-4.0; attribution \"Transport for NSW\"."
+          "notes": "CC-BY-4.0; attribution \"Transport for NSW\". One token for the hazards, car-park and camera feeds."
         }
       },
       "AU_QLD_TRAFFIC_EVENTS_API_KEY": {
@@ -396,6 +399,23 @@
           ],
           "cost": "Free",
           "notes": "CC-BY-4.0 (Freeway Travel Time — NOT the CC-BY-NC Bluetooth feed); attribution \"Department of Transport and Planning (Victoria)\". Rate limit 5 req/min."
+        }
+      },
+      "CA_ON_511_API_KEY": {
+        "type": "string",
+        "title": "Ontario 511 developer key (Canada)",
+        "description": "Sent as the 'key' query parameter. Serves the Ontario 511 events, construction projects, road conditions and cameras feeds.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://511on.ca/developers/doc",
+          "urlLabel": "Ontario 511 developer resources",
+          "steps": [
+            "Create a free account at 511on.ca/my511/register (or log in); an account is needed before a key can be requested.",
+            "Request a Developer API key from the developer resources page. The request names your organisation and primary contact, describes the proposed service, and identifies every third party that will receive, redistribute or display Ontario 511 data through it (for an OpenMapX instance: OpenMapX, and federation peers if federation is on).",
+            "The Ministry reviews requests case by case; once granted, copy the key (sent as the 'key' query parameter)."
+          ],
+          "cost": "Free",
+          "notes": "Developer's Access Agreement: https://511on.ca/developers/resources. Data under the Open Government Licence – Ontario; the disclaimer travels with the data when it is distributed. Ontario 511 allows ten calls every 60 seconds per key. Each of the four feeds paces itself to that limit on its own, not together; their cadences (five minutes for the events, construction projects and road conditions, an hour for the cameras) keep the four well inside ten calls a minute."
         }
       },
       "MOBILITHEK_CERT": {
@@ -746,23 +766,6 @@
         "title": "NAP Slovenia (promet.si) — password",
         "x-openmapx-secret": true
       },
-      "US_NY_511_API_KEY": {
-        "type": "string",
-        "title": "511NY API key (New York)",
-        "description": "Query key for the 511NY events and winter road conditions feeds.",
-        "x-openmapx-secret": true,
-        "x-openmapx-setup": {
-          "url": "https://511ny.org/my511/register",
-          "urlLabel": "Create a 511NY account",
-          "steps": [
-            "Create an account at 511ny.org/my511/register.",
-            "Request an API key at 511ny.org/developers/help. The form asks for your reasons, and submitting accepts the Developer's Access Agreement (DAA), which permits commercial redistribution.",
-            "Ready-to-paste reason: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app. I would use the 511NY events feed to display live incidents, road work, and closures on the map and to help travelers route around active disruptions in New York, with 'Powered by 511NY' attribution shown to users. It serves the general public at no charge; the data is shown only to end users, not resold or provided to any third-party data broker."
-          ],
-          "cost": "Free",
-          "notes": "Attribution required: \"Powered by 511NY\". 10 calls per 60s across the account, shared by both feeds."
-        }
-      },
       "US_OH_OHGO_API_KEY": {
         "type": "string",
         "title": "OHGO API key",
@@ -807,24 +810,6 @@
         "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
         "default": "https://overpass-api.de",
         "x-openmapx-secret": false
-      },
-      "AU_NSW_TFNSW_PARKING_API_KEY": {
-        "type": "string",
-        "title": "Transport for NSW Open Data API key",
-        "description": "An Open Data Hub API token subscribed to the Car Park API.",
-        "x-openmapx-secret": true,
-        "x-openmapx-setup": {
-          "url": "https://opendata.transport.nsw.gov.au/",
-          "urlLabel": "Get API key",
-          "steps": [
-            "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
-            "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
-            "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
-            "Paste the generated token here (sent as the 'apikey' authorization header)."
-          ],
-          "cost": "Free",
-          "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy."
-        }
       },
       "DE_DB_BAHNPARK_PARKING_CLIENT_ID": {
         "type": "string",
@@ -1001,7 +986,7 @@
         "description": "The password of that NAP account.",
         "x-openmapx-secret": true
       },
-      "TW_TDX_CHARGING_CLIENT_ID": {
+      "TW_TDX_CLIENT_ID": {
         "type": "string",
         "title": "TDX client id",
         "x-openmapx-secret": true,
@@ -1015,10 +1000,10 @@
             "Copy both values — the Client Secret is only shown once."
           ],
           "cost": "Free",
-          "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs."
+          "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station, ChargingRate and ConnectorLiveStatus APIs and the road CCTV lists. The free tier's quota (about 4,500 calls a month at 5 a minute) is the account's, shared by both feeds."
         }
       },
-      "TW_TDX_CHARGING_CLIENT_SECRET": {
+      "TW_TDX_CLIENT_SECRET": {
         "type": "string",
         "title": "TDX client secret",
         "description": "The secret of the same Client Id / Client Secret pair.",
@@ -1039,6 +1024,165 @@
           ],
           "cost": "Free, instant",
           "notes": "This NREL / api.data.gov key powers the AFDC Alternative Fuel Stations dataset. DEMO_KEY works for testing but has very low rate limits."
+        }
+      },
+      "WINDY_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "Windy Webcams API Key",
+        "description": "Get a free key at https://api.windy.com/keys",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://api.windy.com/keys",
+          "urlLabel": "Get a Windy Webcams API key",
+          "steps": [
+            "Sign in to (or create) a free Windy account, then open api.windy.com/keys.",
+            "Create a new API key and select the Webcams API; the free tier requires no payment.",
+            "Copy the key (it may take a few minutes to propagate); it is sent as the 'x-windy-api-key' header."
+          ],
+          "cost": "Free (paid 'professional' tier optional)",
+          "notes": "Free tier returns only low-resolution images, image URLs expire after 10 minutes, and the listing offset is capped (~1000)."
+        }
+      },
+      "US_NPS_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "NPS API Key",
+        "description": "Get a free key at https://developer.nps.gov/signup/",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.nps.gov/subjects/developer/get-started.htm",
+          "urlLabel": "Get an NPS API key",
+          "steps": [
+            "Open nps.gov/subjects/developer/get-started.htm and fill out the 'Get Started' sign-up form.",
+            "Submit the form; an email with your personalized 40-character API key is sent to you.",
+            "Copy the key; it is sent on each request in the X-Api-Key header."
+          ],
+          "cost": "Free",
+          "notes": "Self-service form on nps.gov; the key arrives by email (developer portal is developer.nps.gov). Delivery is usually near-instant."
+        }
+      },
+      "US_GA_511_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "Georgia 511 API Key",
+        "description": "The 511GA developer key, sent as the 'key' query parameter.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://511ga.org/developers/doc",
+          "urlLabel": "Register for API access",
+          "steps": [
+            "Create a free My511 account at 511ga.org/my511/register (or log in).",
+            "Open the Developer Resources page (Developers → Documentation) at 511ga.org/developers/doc.",
+            "Request a Developer API key from your account; it is issued automatically.",
+            "Copy the key (sent as the 'key' query parameter)."
+          ],
+          "cost": "Free",
+          "notes": "Georgia 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+        }
+      },
+      "US_AZ_511_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "Arizona 511 API Key",
+        "description": "The AZ511 developer key, sent as the 'key' query parameter.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://az511.com/developers/doc",
+          "urlLabel": "Register for API access",
+          "steps": [
+            "Create a free My AZ 511 account at az511.com/my511/register (or log in).",
+            "Open the Developer Resources page at az511.com/developers/doc.",
+            "Request a Developer API key from your account; it is issued automatically.",
+            "Copy the key (sent as the 'key' query parameter)."
+          ],
+          "cost": "Free",
+          "notes": "Arizona 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+        }
+      },
+      "US_ID_511_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "Idaho 511 API Key",
+        "description": "The Idaho 511 developer key, sent as the 'key' query parameter.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://511.idaho.gov/developers/doc",
+          "urlLabel": "Register for API access",
+          "steps": [
+            "Create a free account at 511.idaho.gov/my511/register (or log in).",
+            "Open the Developer Resources page at 511.idaho.gov/developers/doc.",
+            "Request a Developer API key from your account; it is issued automatically.",
+            "Copy the key (sent as the 'key' query parameter)."
+          ],
+          "cost": "Free",
+          "notes": "Idaho 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+        }
+      },
+      "US_UT_511_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "Utah 511 API Key",
+        "description": "The UDOT Traffic developer key, sent as the 'key' query parameter.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://udottraffic.utah.gov/developers/doc",
+          "urlLabel": "Register for API access",
+          "steps": [
+            "Create a free account at udottraffic.utah.gov/my511/register (or log in).",
+            "Open the Developer Resources / API documentation page and request a Developer API key.",
+            "Copy the key (sent as the 'key' query parameter)."
+          ],
+          "cost": "Free",
+          "notes": "UDOT Traffic 511 runs the IBI Group / Castle Rock platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds."
+        }
+      },
+      "US_LA_511_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "Louisiana 511 API Key",
+        "description": "The 511LA developer key, sent as the 'key' query parameter.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.511la.org/developers/doc",
+          "urlLabel": "Register for API access",
+          "steps": [
+            "Create a free account at 511la.org/my511/register and verify via the emailed link.",
+            "Log in and open the Developer Resources page at 511la.org/developers/doc.",
+            "Request a Developer API key from your account.",
+            "Copy the key (sent as the 'key' query parameter)."
+          ],
+          "cost": "Free",
+          "notes": "Louisiana 511 runs the IBI Group / Castle Rock 511 platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds."
+        }
+      },
+      "US_OR_TRIPCHECK_CAMERAS_API_KEY": {
+        "type": "string",
+        "title": "ODOT TripCheck API subscription key",
+        "description": "The primary key of a subscription to the TripCheck Data product, sent as the 'Ocp-Apim-Subscription-Key' header.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+          "urlLabel": "ODOT API portal: TripCheck Data",
+          "steps": [
+            "Sign up for an account on the ODOT API portal (apiportal.odot.state.or.us) and sign in.",
+            "Open Products → TripCheck Data and subscribe; read the Terms of Use with the 'Show' button and confirm them with 'I agree'.",
+            "Open your profile and copy the subscription's primary key."
+          ],
+          "cost": "Free",
+          "notes": "Self-service, no approval step. Republishers credit the agency that provides each camera, mirror the data rather than hotlink it, and repeat ODOT's disclaimer."
+        }
+      },
+      "US_NY_511_API_KEY": {
+        "type": "string",
+        "title": "511NY data feed access (New York)",
+        "description": "The access NYSDOT grants under the 511NY Developer Access Agreement, for the events and winter road conditions feeds (and the camera inventory).",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://511ny.org/help/24",
+          "urlLabel": "Read the 511NY data feed page and Developer Access Agreement",
+          "steps": [
+            "Read the Developer Access Agreement on 511ny.org/help/24 (last updated 2026-09-18). Submitting a request accepts it.",
+            "Open the request form linked on that page (\"CARS Agencies' XML Feed Request Form\", shared by several state DOTs). Fill in Name, \"Company, Agency, or Personal Use\", the company or project name, and the email the approval should go to, and tick NY under the agencies.",
+            "Reason for Access is the only free-text field, so it must cover what the agreement asks a request to describe: the intended use and the product (name the traffic events, winter road conditions and camera inventory feeds); the intended market and the benefit to travelers; any similar products you have built or plan; and every intermediate or third-party disseminator. Name OpenConditions, the self-hosted data service that fetches the feeds for your map, and, if this instance serves its public API or federates with peers, those as recipients too. Then state that you accept the agreement and its attribution and display duties.",
+            "Ready-to-adapt reason: \"I am requesting access to the NYSDOT (511NY) XML data feeds (traffic events, winter road conditions and the camera inventory) for OpenMapX, a free, non-commercial, open-source maps and navigation app. Our instance fetches the feeds through OpenConditions, our own self-hosted traffic data service, and shows live incidents, road work, closures, winter road conditions and traffic cameras on the map and in route planning, so travelers in New York can plan around them. Audience: the general public, free of charge. Similar products: none. Recipients: our app's end users through OpenConditions, operated by us; no other third parties, and we will tell NYSDOT before that changes. We will show when each report was published or last updated, keep the meaning of every report as NYSDOT published it, pass on NYSDOT's disclaimer, and credit 511NY / NYSDOT as the source. We accept the 511NY Developer Access Agreement.\"",
+            "Requests are reviewed weekly. An approval email brings the feed addresses, the access credential and the documentation. Send those to whoever maintains this OpenConditions instance: the feeds need their new addresses, and a reader if the format differs from the retired IBI 511 API, before they can be enabled."
+          ],
+          "cost": "Free",
+          "notes": "Agreement duties: show when each report was published or last updated; keep the meaning of every report as published; use best efforts to pass on NYSDOT's disclaimer; keep NYSDOT informed of changes to your product, distribution plans and recipients. Permitted, not required: the \"powered by 511NY\" tag line with the unaltered 511NY logo and a link to 511ny.org; otherwise \"511NY\" may not be used to market or brand your product. Questions and feed problems go to the 511NY program manager named on 511ny.org/help/24. The old 511ny.org developer keys and API no longer work."
         }
       }
     }

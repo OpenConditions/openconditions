@@ -1,7 +1,10 @@
 import {
   type CatalogFeed,
   feedBaseShape,
+  fieldRef,
   layoutBlockSchema,
+  mapped,
+  regexSource,
 } from "@openconditions/ingest-framework";
 import { AUDIENCES, LIFECYCLES } from "@openconditions/model";
 import {
@@ -10,35 +13,6 @@ import {
   CONNECTOR_STANDARDS,
 } from "@openconditions/model-charging";
 import { z } from "zod";
-
-const compiles = (pattern: string) => {
-  try {
-    new RegExp(pattern);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const regexSource = z
-  .string()
-  .min(1)
-  .refine(compiles, { message: "not a valid regular expression" });
-
-/**
- * Where a value sits in a record: a dotted path, or a path and a regular
- * expression whose first capture group (else the whole match) is the value.
- */
-const fieldRef = z.union([
-  z.string().min(1),
-  z.strictObject({ field: z.string().min(1), pattern: regexSource.optional() }),
-]);
-
-export type FieldRef = z.infer<typeof fieldRef>;
-
-/** A field whose source values map onto a closed vocabulary. */
-const mapped = <T extends readonly [string, ...string[]]>(values: T) =>
-  z.strictObject({ field: fieldRef, map: z.record(z.string(), z.enum(values)) });
 
 const CURRENTS = ["ac", "dc"] as const;
 const FORMATS = ["socket", "cable"] as const;

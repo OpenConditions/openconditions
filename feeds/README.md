@@ -28,11 +28,17 @@ feeds/
     fr.jsonc
     global.jsonc
     …
+  cameras/
+    fi.jsonc
+    us.jsonc
+    global.jsonc
+    …
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
     fuel.schema.json
     parking.schema.json
     charging.schema.json
+    cameras.schema.json
     credentials.schema.json
 ```
 
@@ -77,7 +83,8 @@ shares are defined in `packages/ingest-framework/src/catalog/schema.ts`; a domai
 adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
 `openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`;
 parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
-charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`; see
+charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`;
+cameras: `layout` and `cameras`, in `packages/cameras/src/feed-schema.ts`; see
 [Generic layouts](#generic-layouts)) or none (fuel).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
@@ -191,6 +198,35 @@ publisher's own API or file has a format of its own: `digitraffic`, `bnetza`,
 `tdx` and `ocm` (Open Charge Map, on demand). The formats are in
 `packages/charging/src/domain.ts`.
 
+The cameras product is:
+
+| product   | what                                                                              |
+| --------- | --------------------------------------------------------------------------------- |
+| `cameras` | traffic, weather and landscape cameras, their views, and each view's latest image |
+
+Every camera format is a `features` format, whose records are the model's
+`camera` features with their `camera_view` components and a `camera.image`
+reading per view (they stay in the model's `roads` domain, so a read asks for
+`kind=camera`). A plain GeoJSON, JSON or CSV table is written in the generic
+layout of that name with a `layout` block and a `cameras` mapping. The
+standards and publishers' APIs have a format each: `datex2` (a DATEX II v3
+device publication), `ibi511` (the IBI 511 platform's camera list),
+`digitraffic`, `trafikverket`, `tdx`, `hk-td`, `tfl`, `nps`, `tripcheck`,
+`windy` (on demand) and `overpass` (OpenStreetMap, on demand). The formats are
+in `packages/cameras/src/domain.ts`.
+
+Every camera feed whose records carry image URLs declares, in its `cameras`
+block, the hosts its stills are fetched from (`imageHosts`): an exact host
+(`weathercam.digitraffic.fi`), every subdomain of a domain (`*.thb.gov.tw`), or
+a host and a path prefix ending in `/`
+(`s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/`). A still on any other host
+is dropped, and `GET /sources` serves the list, so a consumer's image proxy
+admits exactly these hosts. A feed whose stills sit on hosts no one can list
+(`osm-cameras`) declares none: its image URLs are kept for a consumer to link,
+never to proxy. `imageRedistribution` in the same block says what the images'
+licence allows (`allowed`, `link_only`, `unknown`) where the feed's terms
+differ from its format's default (`ca-on-511-cameras`).
+
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
 `ca-on-511-events`, `de-nw-autobahn-los-flow` beside `de-nw-autobahn-flow`.
@@ -218,10 +254,13 @@ hours (`21600`). The optional request fields are `method`, `body`, `headers`,
 `skipParam` carries a page number counted from `firstPage`, 1 by default;
 `xmlLists: true` for JSON converted from XML, where a list of one is the item
 itself and an empty last page has no list),
-`follow`, `impersonate`, `expand` (see credentials) and `fanout`, for an
+`follow`, `each`, `impersonate`, `expand` (see credentials) and `fanout`, for an
 endpoint of several URLs (`urls` or `expand`): `"all"`, the default, needs every
-URL to answer, so one failure fails the poll; `"tolerant"` costs only the
-failing URL's records, and sends no conditional requests.
+URL to answer, so one failure fails the poll; with `"tolerant"` a failing URL
+does not fail the poll, but the set is incomplete, so a bulk feed keeps its
+last complete publication (or the role's held payload) and asks again at the
+next poll, and an on-demand cell is written without withdrawing anything.
+`"tolerant"` sends no conditional requests.
 
 `follow` is for a URL that answers with the address of the data rather than the
 data: a download page that links the CSV, a batch call that returns a presigned
@@ -233,6 +272,26 @@ carries the endpoint's `headers` except any whose value names a credential
 (`${field}`), and none of the feed's auth, whatever its kind. It passes the
 same egress checks as any request. A page without a match fails the fetch. A
 followed endpoint is fetched in full every time and cannot be paginated.
+
+`each` is for a detail endpoint that is fetched once per id found in another
+role's payload: `{ "role": "sites", "records": "features", "field": "id" }`.
+`role` is a data role of the same feed (not reference data, not itself `each`);
+`records` is the dotted path to the list in that role's JSON payload and `field`
+the path of the id within each record (numeric segments index arrays, as in
+`follow.path`). The endpoint's `url` is the only address it may have and must
+contain `{item}`, which is filled with the id, URL-encoded; it cannot be
+combined with `urls`, `expand`, `follow` or `pagination`. A record without a
+string or number at `field` is skipped, and an id that appears twice is fetched
+once. The payloads arrive in the order of the ids. The source role is fetched
+first in the same poll; when it was not due or failed, the payload it last
+delivered stands in, and with none the role fails. The requests carry the
+feed's `auth` and the endpoint's `headers`, share the feed's
+`requestLimits.perMinute` with its other requests, and send no conditional
+requests. With `fanout: "tolerant"` a failing id costs only that id's payload:
+the ids that answered are the role's payload for the poll, which goes on and
+publishes, and the role is not asked again before its cadence; the shortfall
+is recorded on the poll. Otherwise the first failure stops the requests and
+fails the poll.
 
 `impersonate: true` sends the request with a browser's TLS and HTTP fingerprint,
 for an upstream whose bot protection refuses ordinary clients. It needs `https`
@@ -254,6 +313,13 @@ the sites: `ocpi`, `oicp`, `datex2`, `digitraffic`, `irve`, `keco`), `tariffs`
 `tdx` reads `sites`, `tariffs` and `status`; `eipa` reads the register's files
 as `pools`, `stations` and `points` (required), `operators`, `dictionary` and
 `status`.
+
+A camera format reads its cameras from `main`, except two. `digitraffic` reads
+the station list as `sites` (required), each station's details as `details`
+(an `each` endpoint over the list's ids) and every preset's latest image time
+as `status`, which is parsed on its own between the daily lists. `hk-td` reads
+the English list as `main` and the Traditional Chinese one, for the names, as
+`names`.
 
 `decoder` names how a reference endpoint is read. The roads decoders are
 `datex2-sites` (a DATEX II measurement site table), `datex2-locations` (DATEX II
@@ -295,8 +361,11 @@ A group is named after the account or portal that issues the credential, not
 after the feeds that use it: `mobilithek` (the org machine certificate every
 Mobilithek feed uses), `au-vic-transportvic` (the Transport Victoria open-data
 portal key that both the `vicroads` and the `transportvic` feeds use),
-`us-oh-ohgo`, `hr-hc`, …; a regional issuer's group is `<region>-<issuer>`. A
-group serves at least two feeds; a credential one feed uses stays on that feed.
+`au-nsw-tfnsw` (the Open Data Hub token of the NSW hazards, car parks and
+cameras), `tw-tdx` (the TDX client pair of the charging and camera feeds),
+`ca-on-511` (Ontario 511's developer key), `us-oh-ohgo`, `hr-hc`, …; a regional
+issuer's group is `<region>-<issuer>`. A group serves at least two feeds, which
+may be of different domains; a credential one feed uses stays on that feed.
 
 A group whose every field has a `default` holds instance settings rather than
 an account, and may serve a single feed: `overpass.url` is where this instance
@@ -383,6 +452,12 @@ fetches the grid cells that cover the box, and the answer is kept for a while.
 - `onDemand.probe` is the `[lon, lat]` whose cell `feeds:check` fetches. It lies
   inside `coverage.bbox`.
 - `coverage.bbox` is required: a read outside it never fetches.
+- A read's `coverage` block lists each on-demand source it touched, with the
+  reason one fell short (`too_many_cells`, `limited`, `failed`, `deadline` or
+  `missing_configuration`). `partial` is set, and the answer is not cached,
+  only when a source that could answer fell short: a source missing its
+  credentials is listed with `missing_configuration` but leaves the read
+  complete, since waiting or zooming in never helps it.
 - The data endpoint fills a cell into its URL, body or headers with
   `{west}`, `{south}`, `{east}`, `{north}` (the cell's edges), `{lat}` and
   `{lon}` (its centre) and `{radiusKm}` (centre to farthest corner). `${field}`
@@ -493,6 +568,49 @@ one site, whose own fields come from the first:
 A plug count is never read as a charge-point count, and a power range is not a
 rating: a source that does not say gives no value.
 
+A camera feed in a generic layout is read through `layout` and the whole
+`cameras` mapping, both required; a format with its own parser reads neither
+beyond `imageHosts` and `imageRedistribution`, and `feeds:lint` refuses any
+other mapping field there. A JSON record keeps its geometry at `geometryPath`
+(`geometry`, for a GeoJSON collection whose id lies outside `properties`).
+Records sharing a camera id are one camera and each record one of its views:
+
+```jsonc
+"format": "geojson",
+"layout": {},
+"cameras": {
+  "imageHosts": ["kamera.atlas.vegvesen.no"],
+  "groupBy": { "field": "cameraId", "pattern": "^([^_]+)_" },
+  "viewKey": "cameraId",
+  "name": "description",
+  "lang": "no",
+  "type": "traffic",
+  "imageUrl": "stillImageUrl",
+  "status": { "field": "status.stillImageAvailability", "map": { "videoOrImagesAvailable": "online" } },
+  "imageRedistribution": "allowed",
+},
+```
+
+| member                        | what                                                                                                                |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `id`, `groupBy`               | exactly one: the camera id (a list of fields joins into one), or the field all of a camera's per-view records share |
+| `viewKey`                     | the view's key within its camera; `0` by default                                                                    |
+| `name`, `lang`, `description` | the camera's name and description; the language of the texts (required)                                             |
+| `type`                        | `traffic`, `weather`, `landscape`, `city`, `beach` or `other`, or a value map with a `default` (required)           |
+| `road`                        | the road the camera stands on, by its number                                                                        |
+| `viewName`, `direction`       | the view's name; a compass word (value map) for where it looks or the road's travel direction                       |
+| `bearing`                     | where the view looks in degrees: only a true camera bearing                                                         |
+| `imageUrl`, `thumbnailUrl`    | the still and its thumbnail, which need the feed's `imageHosts`                                                     |
+| `streamUrl`, `streamType`     | a video stream (`hls`, `mjpeg`, `mp4`, …), played by the consumer's browser and never proxied                       |
+| `status`                      | value map onto `online`, `offline`, `stale`, `unknown`; a value it does not map is `unknown`                        |
+| `refreshSec`, `imageAt`       | how often the still renews (seconds, or a field in `s` or `min`); when it was taken (`iso`, `epoch-s`, `epoch-ms`)  |
+| `detailUrl`                   | the publisher's page of the camera                                                                                  |
+| `imageRedistribution`         | what the images' licence allows: `allowed`, `link_only` or `unknown` (required)                                     |
+
+A camera's own fields come from the record of its first view key, so the
+publisher's row order changes nothing. Nothing is guessed from free text: a
+caption saying where a view looks stays its name, never a bearing.
+
 ## Disabled feeds
 
 A dead or blocked feed stays documented in its region file:
@@ -530,6 +648,21 @@ Charging sources considered and left out, reviewed on 2026-10-06.
 | TMR Queensland `csl_ev.csv`                    | Unchanged since 2022-12-06, 17 sites.                                                                                                                              |
 | Hong Kong EPD app JSON (`evca_ver_1_0.json`)   | The EV-Charging Easy app's backend: no published dataset, licence or terms. The licensed CSDI copy is taken (`hk-epd-charging`).                                   |
 | data.go.kr EV "standard data" download         | Frozen at 2020-10-28, municipal stations only. The KECO OpenAPI is taken (`kr-keco-charging`).                                                                     |
+
+Camera sources considered and left out, reviewed on 2026-10-08.
+
+| source                                              | reason                                                                                                                                                                                                                                                                  |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FL511 (Florida DOT)                                 | "For personal purposes only", and re-use needs FDOT's written consent. There is no key programme.                                                                                                                                                                       |
+| 511PA (PennDOT)                                     | The terms forbid republishing or storing the material "in any public or private retrieval system". There is no key programme.                                                                                                                                           |
+| 511SC (SCDOT)                                       | It left the IBI platform and has no API, and the terms forbid publishing any content without written permission.                                                                                                                                                        |
+| Mass511 (MassDOT)                                   | It left the IBI platform. The only camera list is the website's internal API, scraping is forbidden, and the images are TrafficLand streams.                                                                                                                            |
+| 511NY (NYSDOT) cameras                              | The camera inventory is granted on request under the Developer Access Agreement of 2026-09-18, and its format is sent only after approval. The old API is gone. The `us-ny-511` credential guide says how to request it together with the events and winter road feeds. |
+| NPS live stills                                     | They exist only on each camera's HTML page; the API carries stock photos. `us-nps-cameras` links each camera to its page.                                                                                                                                               |
+| Windy `all-webcams.json` export                     | Paid tier, with the same redistribution terms. `windy-cameras` reads per cell.                                                                                                                                                                                          |
+| TDX `CCTV/City/{City}`                              | The streams are web player pages with no stills.                                                                                                                                                                                                                        |
+| NSW `data.livetraffic.com/cameras/traffic-cam.json` | A keyless copy, but not a documented API. The keyed API is taken (`au-nsw-livetraffic-cameras`).                                                                                                                                                                        |
+| NFB `CCTV.xml` (`tisvcloud.freeway.gov.tw`)         | Unreachable from Europe. TDX carries the same freeway list (`tw-tdx-cameras`).                                                                                                                                                                                          |
 
 ## Catalogue resolvers
 

@@ -1,0 +1,36 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "subdivision": "on",
+      "operator": "511",
+      "product": "cameras",
+      "name": "Ontario 511 cameras (Canada)",
+      "tier": "authoritative",
+      "format": "ibi511",
+      // Every camera with its views in one call, behind the developer key the
+      // Ontario 511 roads feeds share, ten calls a minute for the key.
+      "auth": { "kind": "query-key", "param": "key", "credential": "@ca-on-511.api_key" },
+      "endpoints": {
+        "main": { "url": "https://511on.ca/api/v2/get/cameras?format=json", "cadenceSec": 3600 },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 7200,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
+      "coverage": { "countries": ["CA-ON"] },
+      "license": "LicenseRef-OGL-ON",
+      "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+      "terms": {
+        "url": "https://511on.ca/developers/resources",
+        "reviewedAt": "2026-10-08",
+        "note": "Developer's Access Agreement: the data is under the Open Government Licence – Ontario, but a key is granted case by case, and the request must name every third party that receives, redistributes or displays the data through the operator's service. The disclaimer travels with the data when it is distributed. An operator whose key does not cover public redistribution restricts the feed in its local catalogue layer.",
+      },
+      "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+      "homepage": "https://511on.ca/",
+      "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+      // No licence is published for the images themselves: they are neither
+      // link-only nor free.
+      "cameras": { "imageHosts": ["511on.ca"], "imageRedistribution": "unknown" },
+    },
+  ],
+}

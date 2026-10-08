@@ -8,28 +8,10 @@
       "name": "Transport for NSW Park&Ride",
       "tier": "authoritative",
       "format": "tfnsw",
-      "credentials": {
-        "api_key": {
-          "title": "Transport for NSW Open Data API key",
-          "description": "An Open Data Hub API token subscribed to the Car Park API.",
-          "setup": {
-            "url": "https://opendata.transport.nsw.gov.au/",
-            "urlLabel": "Get API key",
-            "steps": [
-              "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
-              "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
-              "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
-              "Paste the generated token here (sent as the 'apikey' authorization header).",
-            ],
-            "cost": "Free",
-            "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy.",
-          },
-        },
-      },
       "auth": {
         "kind": "header-key",
         "header": "Authorization",
-        "credential": "api_key",
+        "credential": "@au-nsw-tfnsw.api_key",
         "valuePrefix": "apikey ",
       },
       // Every car park with its occupancy in one call.

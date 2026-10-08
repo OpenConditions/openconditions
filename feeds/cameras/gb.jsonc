@@ -1,0 +1,31 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "subdivision": "eng",
+      "operator": "tfl",
+      "product": "cameras",
+      "name": "TfL JamCams",
+      "tier": "authoritative",
+      "format": "tfl",
+      // Every London JamCam in one list, cached at TfL's edge for up to a
+      // day; a removed camera vanishes from it. Stills renew about every
+      // three minutes at a fixed address on TfL's S3 bucket.
+      "endpoints": {
+        "main": { "url": "https://api.tfl.gov.uk/Place/Type/JamCam", "cadenceSec": 3600 },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 86400,
+      "requestLimits": { "perMinute": 500 },
+      "coverage": { "countries": ["GB-ENG"], "bbox": [-0.52, 51.28, 0.34, 51.7] },
+      "license": "LicenseRef-TfL-Transport-Data-Service",
+      "licenseUrl": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+      "attribution": "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016 and Geomni UK Map data © and database rights [2019]",
+      "homepage": "https://tfl.gov.uk/info-for/open-data-users/",
+      "privacyUrl": "https://tfl.gov.uk/corporate/privacy-and-cookies/",
+      // The path-style S3 host serves every bucket of the region: only TfL's
+      // bucket path is admitted.
+      "cameras": { "imageHosts": ["s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/"] },
+    },
+  ],
+}

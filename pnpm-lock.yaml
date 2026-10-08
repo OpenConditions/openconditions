@@ -64,6 +64,37 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.1))
 
+  packages/cameras:
+    dependencies:
+      '@openconditions/datex2':
+        specifier: workspace:*
+        version: link:../datex2
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../model-roads
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.5
+    devDependencies:
+      '@openconditions/model-charging':
+        specifier: workspace:*
+        version: link:../model-charging
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/charging:
     dependencies:
       '@openconditions/datex2':
@@ -487,6 +518,9 @@ importers:
         specifier: workspace:*
         version: link:../model-weather
     devDependencies:
+      '@openconditions/cameras':
+        specifier: workspace:*
+        version: link:../cameras
       '@openconditions/charging':
         specifier: workspace:*
         version: link:../charging
@@ -891,6 +925,9 @@ importers:
       '@fastify/proxy-addr':
         specifier: ^5.1.0
         version: 5.1.1
+      '@openconditions/cameras':
+        specifier: workspace:*
+        version: link:../../packages/cameras
       '@openconditions/charging':
         specifier: workspace:*
         version: link:../../packages/charging

@@ -2,14 +2,18 @@ import {
   decodeLayout,
   emptyParseOutput,
   type FeedPayloads,
-  getPath,
+  type FieldRef,
   type LayoutRow,
+  lookupField as lookup,
   type ParseContext,
   type ParseOutput,
+  cachedRegex as regex,
+  scalarText,
+  fieldText as text,
 } from "@openconditions/ingest-framework";
 import { chargingCrosswalk } from "@openconditions/model-charging";
 import { colocateSites } from "../colocate.js";
-import type { ChargingCatalogFeed, ChargingMapping, FieldRef } from "../feed-schema.js";
+import type { ChargingCatalogFeed, ChargingMapping } from "../feed-schema.js";
 import {
   type ConnectorInput,
   type EvseInput,
@@ -25,55 +29,11 @@ export const CHARGING_LAYOUT_FORMATS = ["geojson", "json", "csv"] as const;
 
 export type ChargingLayoutFormat = (typeof CHARGING_LAYOUT_FORMATS)[number];
 
-const patterns = new Map<string, RegExp>();
-
-function regex(pattern: string): RegExp {
-  let re = patterns.get(pattern);
-  if (re === undefined) {
-    re = new RegExp(pattern);
-    patterns.set(pattern, re);
-  }
-  return re;
-}
-
-/** A string, number or boolean as trimmed text; undefined when empty or not a scalar. */
-function scalarText(value: unknown): string | undefined {
-  if (typeof value === "string") {
-    const text = value.trim();
-    return text === "" ? undefined : text;
-  }
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : undefined;
-  if (typeof value === "boolean") return String(value);
-  return undefined;
-}
-
-/**
- * A field's text in a record: the trimmed value at its path, or, with a
- * pattern, the pattern's first capture group (else the whole match) in it.
- */
-function text(fields: Record<string, unknown>, ref: FieldRef | undefined): string | undefined {
-  if (ref === undefined) return undefined;
-  if (typeof ref === "string") return scalarText(getPath(fields, ref));
-  const value = scalarText(getPath(fields, ref.field));
-  if (value === undefined || ref.pattern === undefined) return value;
-  const m = value.match(regex(ref.pattern));
-  return m === null ? undefined : scalarText(m[1] ?? m[0]);
-}
-
 /** A whole number of zero or more; undefined for anything else. */
 function countOf(fields: Record<string, unknown>, ref: FieldRef | undefined): number | undefined {
   const t = text(fields, ref);
   if (t === undefined || !/^\d+$/.test(t)) return undefined;
   return Number(t);
-}
-
-function lookup<T>(
-  fields: Record<string, unknown>,
-  rule: { field: FieldRef; map: Record<string, T> } | undefined,
-): T | undefined {
-  if (rule === undefined) return undefined;
-  const key = text(fields, rule.field);
-  return key !== undefined && Object.hasOwn(rule.map, key) ? rule.map[key] : undefined;
 }
 
 function kept(fields: Record<string, unknown>, mapping: ChargingMapping): boolean {

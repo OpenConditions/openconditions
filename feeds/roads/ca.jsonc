@@ -30,10 +30,14 @@
       "name": "Ontario 511 (Canada)",
       "tier": "authoritative",
       "format": "ibi511",
+      // Every Ontario 511 API call needs the developer key, which the four
+      // Ontario 511 feeds share with its ten calls a minute.
+      "auth": { "kind": "query-key", "param": "key", "credential": "@ca-on-511.api_key" },
       "endpoints": {
         "main": { "url": "https://511on.ca/api/v2/get/event?format=json", "cadenceSec": 300 },
       },
       "freshnessWindowSec": 900,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
       "license": "LicenseRef-OGL-ON",
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -50,6 +54,7 @@
       "name": "Ontario 511 construction projects (Canada)",
       "tier": "authoritative",
       "format": "ibi511",
+      "auth": { "kind": "query-key", "param": "key", "credential": "@ca-on-511.api_key" },
       "endpoints": {
         "main": {
           "url": "https://511on.ca/api/v2/get/constructionprojects?format=json",
@@ -57,6 +62,7 @@
         },
       },
       "freshnessWindowSec": 900,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
       "license": "LicenseRef-OGL-ON",
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -69,6 +75,7 @@
       "name": "Ontario 511 road conditions (Canada)",
       "tier": "authoritative",
       "format": "ibi511-conditions",
+      "auth": { "kind": "query-key", "param": "key", "credential": "@ca-on-511.api_key" },
       "endpoints": {
         "main": {
           // v3, not v2: only v3 exposes roadconditions, and it sends EncodedPolyline
@@ -78,6 +85,7 @@
         },
       },
       "freshnessWindowSec": 900,
+      "requestLimits": { "perMinute": 10, "keyScope": "instance" },
       "license": "LicenseRef-OGL-ON",
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",

@@ -1,12 +1,13 @@
 # OpenConditions Ingest
 
-Fetches open road-condition, fuel, parking and charging feeds, parses road
+Fetches open road-condition, fuel, parking, charging and camera feeds, parses road
 events into model situations, flow feeds into measurement sites (features) and
 their `traffic.*` readings (observations), fuel feeds into stations and their
 prices, parking feeds into parking sites, their `parking.*` occupancy readings
 and their rates (offers), and charging feeds into charging sites with their
 EVSEs and connectors, their `charging.*` status readings and their energy
-tariffs (offers), and writes them to the shared PostGIS `conditions` schema. Also serves the public,
+tariffs (offers), and camera feeds into cameras with their views and each
+view's `camera.image` reading, and writes them to the shared PostGIS `conditions` schema. Also serves the public,
 rate-limited record API (described at `GET /openapi.json`) and the routing
 outputs (`/segments/conditions.json`, Valhalla exclusions):
 
@@ -89,11 +90,12 @@ escapes it.
     Without it, OpenMapX reads in the public scope and serves no Tankerkönig
     (DE), E-Control (AT) or OpenStreetMap station: its fuel layer shows France
     and Spain only, its parking layer no OpenStreetMap, BNLS (FR) or
-    Mobidrom Park+Ride (DE) site, and its charging layer no OpenStreetMap,
-    Open Charge Map or NAP Slovenija site. Its reads also count against `RATE_LIMIT_MAX` like any
+    Mobidrom Park+Ride (DE) site, its charging layer no OpenStreetMap,
+    Open Charge Map or NAP Slovenija site, and its webcam layer no Windy,
+    OpenStreetMap or US 511 state camera. Its reads also count against `RATE_LIMIT_MAX` like any
     public client's, which operator scope skips. Set here but different from
     OpenMapX's, every OpenMapX read fails with 401, which stops the road
-    conditions overlay, closure avoidance, fuel, parking and charging search and the
+    conditions overlay, closure avoidance, fuel, parking, charging and camera search and the
     traffic cycles. So set this credential first, then OpenMapX's `.env`, and change
     both together when rotating it. After changing OpenMapX's
     `OPENCONDITIONS_OPERATOR_TOKEN`, run

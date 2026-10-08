@@ -256,6 +256,64 @@ describe("feeds:check", () => {
     ]);
   });
 
+  it("fetches a per-item endpoint once per id of its source role, after that role", async () => {
+    quiet();
+    const dir = mkdtempSync(join(tmpdir(), "feeds-check-"));
+    dirs.push(dir);
+    mkdirSync(join(dir, "cameras"));
+    const file = join(dir, "cameras", "fi.jsonc");
+    writeFileSync(
+      file,
+      `{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [{
+    "operator": "digitraffic",
+    "product": "cameras",
+    "name": "Weather cameras",
+    "tier": "authoritative",
+    "format": "digitraffic",
+    "endpoints": {
+      "details": {
+        "url": "https://cams.example.org/stations/{item}",
+        "each": { "role": "sites", "records": "features", "field": "id" },
+        "cadenceSec": 86400,
+      },
+      "sites": { "url": "https://cams.example.org/stations", "cadenceSec": 86400 },
+      "status": { "url": "https://cams.example.org/data", "cadenceSec": 600 },
+    },
+    "freshnessWindowSec": 1800,
+    "license": "CC-BY-4.0",
+    "attribution": "Fintraffic",
+    "privacyUrl": "https://example.org/privacy",
+    "cameras": { "imageHosts": ["weathercam.digitraffic.fi"] },
+  }],
+}
+`,
+    );
+    const station = (id: string, extra: Record<string, unknown> = {}) => ({
+      type: "Feature",
+      id,
+      geometry: { type: "Point", coordinates: [24, 60] },
+      properties: { id, presets: [{ id: `${id}01`, inCollection: true }], ...extra },
+    });
+    const asked: string[] = [];
+    const cams = (async (input: string | URL | Request) => {
+      const url = new URL(input instanceof Request ? input.url : String(input));
+      asked.push(url.pathname);
+      if (url.pathname === "/stations") {
+        return new Response(JSON.stringify({ features: [station("C1"), station("C2")] }));
+      }
+      if (url.pathname === "/data") return new Response(JSON.stringify({ stations: [] }));
+      const id = url.pathname.split("/").at(-1)!;
+      return new Response(JSON.stringify(station(id, { names: { en: `Station ${id}` } })));
+    }) as typeof fetch;
+
+    const results = await checkFeeds({ feedsDir: dir, files: [file], fetch: cams, env: {} });
+    expect(results.map((r) => [r.feedId, r.level])).toEqual([["fi-digitraffic-cameras", "ok"]]);
+    expect(asked.indexOf("/stations")).toBeLessThan(asked.indexOf("/stations/C1"));
+    expect(asked).toEqual(expect.arrayContaining(["/stations/C1", "/stations/C2", "/data"]));
+  });
+
   it("fails on a catalogue the schema rejects", async () => {
     quiet();
     const { dir, file } = catalogue([feed("good", "https://good.example.org/feed")]);

@@ -1,0 +1,2769 @@
+{
+  "files": {
+    "cameras/au": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "subdivision": "nsw",
+          "operator": "livetraffic",
+          "product": "cameras",
+          "name": "Live Traffic NSW cameras",
+          "format": "json",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://api.transport.nsw.gov.au/v1/live/cameras",
+              "cadenceSec": 3600
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "Authorization",
+            "credential": "@au-nsw-tfnsw.api_key",
+            "valuePrefix": "apikey "
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "features"
+          },
+          "freshnessWindowSec": 7200,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Transport for NSW",
+          "terms": {
+            "url": "https://opendata.transport.nsw.gov.au/datalicence",
+            "reviewedAt": "2026-10-08"
+          },
+          "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+          "homepage": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-cameras",
+          "coverage": {
+            "countries": [
+              "AU-NSW"
+            ]
+          },
+          "layout": {
+            "records": "features",
+            "geometryPath": "geometry"
+          },
+          "cameras": {
+            "imageHosts": [
+              "webcams.transport.nsw.gov.au",
+              "data.livetraffic.com"
+            ],
+            "id": "id",
+            "name": "properties.title",
+            "lang": "en",
+            "type": "traffic",
+            "description": "properties.view",
+            "direction": {
+              "field": "properties.direction",
+              "map": {
+                "N": "N",
+                "N-E": "NE",
+                "E": "E",
+                "S-E": "SE",
+                "S": "S",
+                "S-W": "SW",
+                "W": "W",
+                "N-W": "NW"
+              }
+            },
+            "imageUrl": "properties.href",
+            "imageRedistribution": "allowed"
+          }
+        }
+      ]
+    },
+    "cameras/ca": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "subdivision": "on",
+          "operator": "511",
+          "product": "cameras",
+          "name": "Ontario 511 cameras (Canada)",
+          "format": "ibi511",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://511on.ca/api/v2/get/cameras?format=json",
+              "cadenceSec": 3600
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "@ca-on-511.api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 7200,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "LicenseRef-OGL-ON",
+          "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+          "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+          "terms": {
+            "url": "https://511on.ca/developers/resources",
+            "reviewedAt": "2026-10-08",
+            "note": "Developer's Access Agreement: the data is under the Open Government Licence – Ontario, but a key is granted case by case, and the request must name every third party that receives, redistributes or displays the data through the operator's service. The disclaimer travels with the data when it is distributed. An operator whose key does not cover public redistribution restricts the feed in its local catalogue layer."
+          },
+          "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+          "homepage": "https://511on.ca/",
+          "coverage": {
+            "countries": [
+              "CA-ON"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "511on.ca"
+            ],
+            "imageRedistribution": "unknown"
+          }
+        }
+      ]
+    },
+    "cameras/es": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "dgt",
+          "product": "cameras",
+          "name": "DGT traffic cameras",
+          "format": "datex2",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://nap.dgt.es/datex2/v3/dgt/DevicePublication/camaras_datex2_v37.xml",
+              "cadenceSec": 3600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 7200,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Dirección General de Tráfico (DGT), CC BY",
+          "terms": {
+            "url": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+            "reviewedAt": "2026-10-08",
+            "note": "NAP dataset licence CC BY (unversioned, CKAN cc-by); its 'condition for use' links the generic dgt.es aviso legal, which reserves website content. Dataset licence taken as governing. The stills sit on the etraffic.dgt.es portal, which the aviso legal reserves: they are not republished. A consumer's image proxy fetches a still from the publisher's URL when a user views it and stores nothing (Cache-Control: no-store), which is linking, not republishing."
+          },
+          "privacyUrl": "https://sede.dgt.gob.es/es/proteccion-datos/",
+          "homepage": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+          "cameras": {
+            "imageHosts": [
+              "etraffic.dgt.es"
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/fi": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "digitraffic",
+          "product": "cameras",
+          "name": "Fintraffic Digitraffic weather cameras",
+          "format": "digitraffic",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 86400
+            },
+            "details": {
+              "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations/{item}",
+              "fanout": "tolerant",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "each": {
+                "role": "sites",
+                "records": "features",
+                "field": "id"
+              },
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations/data",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 1800,
+          "requestLimits": {
+            "perMinute": 60
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+          "terms": {
+            "url": "https://www.digitraffic.fi/en/terms-of-service/",
+            "reviewedAt": "2026-10-08"
+          },
+          "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+          "homepage": "https://www.digitraffic.fi/en/",
+          "cameras": {
+            "imageHosts": [
+              "weathercam.digitraffic.fi"
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/gb": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "subdivision": "eng",
+          "operator": "tfl",
+          "product": "cameras",
+          "name": "TfL JamCams",
+          "format": "tfl",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://api.tfl.gov.uk/Place/Type/JamCam",
+              "cadenceSec": 3600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 86400,
+          "requestLimits": {
+            "perMinute": 500
+          },
+          "license": "LicenseRef-TfL-Transport-Data-Service",
+          "licenseUrl": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+          "attribution": "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016 and Geomni UK Map data © and database rights [2019]",
+          "privacyUrl": "https://tfl.gov.uk/corporate/privacy-and-cookies/",
+          "homepage": "https://tfl.gov.uk/info-for/open-data-users/",
+          "coverage": {
+            "countries": [
+              "GB-ENG"
+            ],
+            "bbox": [
+              -0.52,
+              51.28,
+              0.34,
+              51.7
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/"
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/global": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "windy",
+          "product": "cameras",
+          "name": "Windy webcams",
+          "format": "windy",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://api.windy.com/webcams/api/v3/webcams?bbox={north},{east},{south},{west}&limit=50&include=categories,images,location,player,urls&lang=en",
+              "pagination": {
+                "skipParam": "offset",
+                "pageSize": 50,
+                "recordsPath": "webcams",
+                "maxPages": 2
+              },
+              "cadenceSec": 540
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Windy Webcams API Key",
+              "description": "Get a free key at https://api.windy.com/keys",
+              "setup": {
+                "url": "https://api.windy.com/keys",
+                "urlLabel": "Get a Windy Webcams API key",
+                "steps": [
+                  "Sign in to (or create) a free Windy account, then open api.windy.com/keys.",
+                  "Create a new API key and select the Webcams API; the free tier requires no payment.",
+                  "Copy the key (it may take a few minutes to propagate); it is sent as the 'x-windy-api-key' header."
+                ],
+                "cost": "Free (paid 'professional' tier optional)",
+                "notes": "Free tier returns only low-resolution images, image URLs expire after 10 minutes, and the listing offset is capped (~1000)."
+              }
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "x-windy-api-key",
+            "credential": "api_key"
+          },
+          "freshnessWindowSec": 1080,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 10,
+            "perDay": 2000
+          },
+          "onDemand": {
+            "cellDeg": 0.25,
+            "ttlSec": 540,
+            "maxCellsPerRead": 16,
+            "probe": [
+              11.39,
+              47.27
+            ]
+          },
+          "license": "NOASSERTION",
+          "attribution": "Webcams provided by windy.com",
+          "terms": {
+            "url": "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+            "reviewedAt": "2026-10-08",
+            "note": "Proprietary API terms: no redistribution of the API's data to any third party, no publishing of graphics showing the webcam images, images used only through the URLs the API gives and each linked to its Windy webcam page or player, and the courtesy line \"Webcams provided by windy.com\". Free-tier image URLs expire after 10 minutes. Served in the operator's scope only, as the operator's own application.",
+            "redistribution": false,
+            "derivedRedistribution": false,
+            "attributionRequired": true,
+            "retention": false
+          },
+          "privacyUrl": "https://www.windy.com/privacy",
+          "homepage": "https://www.windy.com/webcams",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "images-webcams.windy.com"
+            ]
+          }
+        },
+        {
+          "operator": "osm",
+          "product": "cameras",
+          "name": "OpenStreetMap webcams",
+          "format": "overpass",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "${@overpass.url}/api/interpreter",
+              "method": "POST",
+              "body": "data=[out:json][timeout:25];(nwr[\"contact:webcam\"]({south},{west},{north},{east});nwr[\"man_made\"=\"surveillance\"][\"surveillance:type\"=\"webcam\"]({south},{west},{north},{east});nwr[\"webcam\"]({south},{west},{north},{east}););out center tags;",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "OpenConditions-OsmCameras/1.0 (+https://github.com/openconditions/openconditions)"
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 30,
+            "perDay": 5000
+          },
+          "onDemand": {
+            "cellDeg": 1,
+            "ttlSec": 86400,
+            "maxCellsPerRead": 32,
+            "probe": [
+              11.4,
+              47.27
+            ]
+          },
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "© OpenStreetMap contributors",
+          "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+          "homepage": "https://www.openstreetmap.org/copyright",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/hk": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "td",
+          "product": "cameras",
+          "name": "Transport Department traffic snapshot cameras",
+          "format": "hk-td",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_En.xml",
+              "cadenceSec": 86400
+            },
+            "names": {
+              "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_Tc.xml",
+              "cadenceSec": 86400
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 172800,
+          "license": "LicenseRef-HK-Gov-Open-Data",
+          "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
+          "attribution": "Transport Department, HKSAR",
+          "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
+          "homepage": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
+          "cameras": {
+            "imageHosts": [
+              "tdcctv.data.one.gov.hk"
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/is": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "vegagerdin",
+          "product": "cameras",
+          "name": "Vegagerðin web cameras",
+          "format": "json",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://gagnaveita.vegagerdin.is/api/vefmyndavelar2014_1",
+              "cadenceSec": 86400
+            }
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Vegagerðin (Icelandic Road and Coastal Administration), web cameras, CC BY 4.0",
+          "terms": {
+            "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/terms-and-conditions",
+            "reviewedAt": "2026-10-08",
+            "note": "IRCA data and photographs, road cameras named, are CC BY 4.0. The attribution names the licensor (the Icelandic Road and Coastal Administration, IRCA), the dataset, the date or period the data was retrieved, and the CC BY 4.0 licence."
+          },
+          "privacyUrl": "https://www.vegagerdin.is/",
+          "homepage": "https://www.vegagerdin.is/",
+          "layout": {
+            "lon": "Lengd",
+            "lat": "Breidd"
+          },
+          "cameras": {
+            "imageHosts": [
+              "www.vegagerdin.is"
+            ],
+            "id": "Maelist_nr",
+            "viewKey": {
+              "field": "Slod",
+              "pattern": "/([^/]+)\\.jpg$"
+            },
+            "name": "Myndavel",
+            "lang": "is",
+            "type": "weather",
+            "road": "NrVegur",
+            "viewName": "Skyring",
+            "imageUrl": "Slod",
+            "imageRedistribution": "allowed"
+          }
+        }
+      ]
+    },
+    "cameras/no": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "vegvesen",
+          "product": "cameras",
+          "name": "Statens vegvesen web cameras",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://ogckart-sn1.atlas.vegvesen.no/datex_3_1/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=datex_3_1%3ACctvSimple&outputFormat=application%2Fjson",
+              "cadenceSec": 600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "features",
+            "totalCountPath": "totalFeatures"
+          },
+          "freshnessWindowSec": 1800,
+          "license": "NLOD-2.0",
+          "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+          "attribution": "Statens vegvesen",
+          "terms": {
+            "url": "https://dataut.vegvesen.no/en/dataset/webkamera",
+            "reviewedAt": "2026-10-08",
+            "note": "NLOD 2.0 dataset whose content is the camera images. Statens vegvesen asks consumers of the open WFS to identify themselves at datex@vegvesen.no, and Norwegian texts are not to be translated."
+          },
+          "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
+          "homepage": "https://www.vegvesen.no/en/",
+          "layout": {},
+          "cameras": {
+            "imageHosts": [
+              "kamera.atlas.vegvesen.no"
+            ],
+            "groupBy": {
+              "field": "cameraId",
+              "pattern": "^([^_]+)_"
+            },
+            "viewKey": "cameraId",
+            "name": "description",
+            "lang": "no",
+            "type": "traffic",
+            "road": "roadNumber",
+            "viewName": "orientationDescription",
+            "imageUrl": "stillImageUrl",
+            "streamUrl": "videoUrl",
+            "streamType": "hls",
+            "status": {
+              "field": "status.stillImageAvailability",
+              "map": {
+                "videoOrImagesAvailable": "online",
+                "videoOrImagesUnavailableDueToCameraFault": "offline"
+              }
+            },
+            "imageRedistribution": "allowed"
+          }
+        }
+      ]
+    },
+    "cameras/se": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "trafikverket",
+          "product": "cameras",
+          "name": "Trafikverket traffic cameras",
+          "format": "trafikverket",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+              "method": "POST",
+              "body": "<REQUEST><LOGIN authenticationkey=\"${@se-trafikverket.api_key}\"/><QUERY objecttype=\"Camera\" namespace=\"road.infrastructure\" schemaversion=\"1.1\"><FILTER><EQ name=\"Deleted\" value=\"false\"/></FILTER></QUERY></REQUEST>",
+              "headers": {
+                "Content-Type": "text/xml"
+              },
+              "cadenceSec": 600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "RESPONSE.RESULT.0.Camera"
+          },
+          "freshnessWindowSec": 1800,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "attribution": "Trafikverket",
+          "terms": {
+            "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+            "reviewedAt": "2026-10-08"
+          },
+          "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+          "homepage": "https://data.trafikverket.se/",
+          "cameras": {
+            "imageHosts": [
+              "api.trafikinfo.trafikverket.se"
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/tw": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "operator": "tdx",
+          "product": "cameras",
+          "name": "TDX road CCTV",
+          "format": "tdx",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "urls": [
+                "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/CCTV/Freeway?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/CCTV/Highway?$top=10000&$format=JSON"
+              ],
+              "fanout": "tolerant",
+              "cadenceSec": 86400
+            }
+          },
+          "auth": {
+            "kind": "oauth2-client-credentials",
+            "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+            "clientId": "@tw-tdx.client_id",
+            "clientSecret": "@tw-tdx.client_secret"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "CCTVs"
+          },
+          "freshnessWindowSec": 172800,
+          "requestLimits": {
+            "perMinute": 5
+          },
+          "license": "OGDL-Taiwan-1.0",
+          "licenseUrl": "https://data.gov.tw/license",
+          "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+          "terms": {
+            "url": "https://tdx.transportdata.tw/term",
+            "reviewedAt": "2026-10-08",
+            "note": "Data under the Open Government Data License v1.0, redistribution allowed; the source must be labelled 交通部運輸資料流通服務平臺 (TDX) or the source agency. Access itself is paid by quota, shared with the charging feed on the same account. The stills sit on the highway bureau's hosts, which state no image licence."
+          },
+          "privacyUrl": "https://tdx.transportdata.tw/privacy",
+          "homepage": "https://tdx.transportdata.tw",
+          "cameras": {
+            "imageHosts": [
+              "*.thb.gov.tw"
+            ]
+          }
+        }
+      ]
+    },
+    "cameras/us": {
+      "$schema": "../schema/cameras.schema.json",
+      "feeds": [
+        {
+          "subdivision": "ca",
+          "operator": "caltrans",
+          "product": "cameras",
+          "name": "Caltrans CCTV",
+          "format": "json",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "urls": [
+                "https://cwwp2.dot.ca.gov/data/d1/cctv/cctvStatusD01.json",
+                "https://cwwp2.dot.ca.gov/data/d2/cctv/cctvStatusD02.json",
+                "https://cwwp2.dot.ca.gov/data/d3/cctv/cctvStatusD03.json",
+                "https://cwwp2.dot.ca.gov/data/d4/cctv/cctvStatusD04.json",
+                "https://cwwp2.dot.ca.gov/data/d5/cctv/cctvStatusD05.json",
+                "https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json",
+                "https://cwwp2.dot.ca.gov/data/d7/cctv/cctvStatusD07.json",
+                "https://cwwp2.dot.ca.gov/data/d8/cctv/cctvStatusD08.json",
+                "https://cwwp2.dot.ca.gov/data/d9/cctv/cctvStatusD09.json",
+                "https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json",
+                "https://cwwp2.dot.ca.gov/data/d11/cctv/cctvStatusD11.json",
+                "https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json"
+              ],
+              "fanout": "tolerant",
+              "cadenceSec": 3600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "data"
+          },
+          "freshnessWindowSec": 86400,
+          "license": "LicenseRef-Caltrans-Conditions-of-Use",
+          "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+          "attribution": "Caltrans",
+          "terms": {
+            "url": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+            "reviewedAt": "2026-10-08",
+            "note": "Free for integration into applications under the Caltrans Conditions of Use. Caltrans traffic camera footage and stills are neither retained nor archived by Caltrans."
+          },
+          "privacyUrl": "https://dot.ca.gov/privacy-policy",
+          "homepage": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+          "coverage": {
+            "countries": [
+              "US-CA"
+            ]
+          },
+          "layout": {
+            "records": "data",
+            "lon": "cctv.location.longitude",
+            "lat": "cctv.location.latitude"
+          },
+          "cameras": {
+            "imageHosts": [
+              "cwwp2.dot.ca.gov"
+            ],
+            "id": [
+              "cctv.location.district",
+              "cctv.index"
+            ],
+            "name": "cctv.location.locationName",
+            "lang": "en",
+            "type": "traffic",
+            "road": "cctv.location.route",
+            "viewName": "cctv.imageData.imageDescription",
+            "direction": {
+              "field": "cctv.location.direction",
+              "map": {
+                "North": "N",
+                "South": "S",
+                "East": "E",
+                "West": "W"
+              }
+            },
+            "imageUrl": "cctv.imageData.static.currentImageURL",
+            "streamUrl": "cctv.imageData.streamingVideoURL",
+            "streamType": "hls",
+            "status": {
+              "field": "cctv.inService",
+              "map": {
+                "true": "unknown",
+                "false": "offline",
+                "Not Reported": "unknown"
+              }
+            },
+            "refreshSec": {
+              "field": "cctv.imageData.static.currentImageUpdateFrequency",
+              "unit": "min"
+            },
+            "imageRedistribution": "allowed"
+          }
+        },
+        {
+          "operator": "nps",
+          "product": "cameras",
+          "name": "National Park Service webcams",
+          "format": "nps",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://developer.nps.gov/api/v1/webcams?limit=500",
+              "cadenceSec": 86400
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "NPS API Key",
+              "description": "Get a free key at https://developer.nps.gov/signup/",
+              "setup": {
+                "url": "https://www.nps.gov/subjects/developer/get-started.htm",
+                "urlLabel": "Get an NPS API key",
+                "steps": [
+                  "Open nps.gov/subjects/developer/get-started.htm and fill out the 'Get Started' sign-up form.",
+                  "Submit the form; an email with your personalized 40-character API key is sent to you.",
+                  "Copy the key; it is sent on each request in the X-Api-Key header."
+                ],
+                "cost": "Free",
+                "notes": "Self-service form on nps.gov; the key arrives by email (developer portal is developer.nps.gov). Delivery is usually near-instant."
+              },
+              "default": "DEMO_KEY"
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "X-Api-Key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "data"
+          },
+          "freshnessWindowSec": 172800,
+          "license": "LicenseRef-US-Gov-Public-Domain",
+          "licenseUrl": "https://www.nps.gov/aboutus/disclaimer.htm",
+          "attribution": "National Park Service",
+          "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
+          "homepage": "https://www.nps.gov/subjects/developer/"
+        },
+        {
+          "subdivision": "ga",
+          "operator": "511",
+          "product": "cameras",
+          "name": "511GA cameras (Georgia)",
+          "format": "ibi511",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://511ga.org/api/v2/get/cameras?format=json",
+              "cadenceSec": 900
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Georgia 511 API Key",
+              "description": "The 511GA developer key, sent as the 'key' query parameter.",
+              "setup": {
+                "url": "https://511ga.org/developers/doc",
+                "urlLabel": "Register for API access",
+                "steps": [
+                  "Create a free My511 account at 511ga.org/my511/register (or log in).",
+                  "Open the Developer Resources page (Developers → Documentation) at 511ga.org/developers/doc.",
+                  "Request a Developer API key from your account; it is issued automatically.",
+                  "Copy the key (sent as the 'key' query parameter)."
+                ],
+                "cost": "Free",
+                "notes": "Georgia 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+              }
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "NOASSERTION",
+          "attribution": "511GA / Georgia DOT",
+          "terms": {
+            "url": "https://511ga.org/developers/doc",
+            "reviewedAt": "2026-10-08",
+            "note": "No data licence: the API is offered so that developers \"create mobile traffic apps\". The 511GA and GDOT trademarks and logos may not be used without written permission (https://511ga.org/privacy)."
+          },
+          "privacyUrl": "https://511ga.org/privacy",
+          "homepage": "https://511ga.org/",
+          "coverage": {
+            "countries": [
+              "US-GA"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "511ga.org"
+            ]
+          }
+        },
+        {
+          "subdivision": "az",
+          "operator": "511",
+          "product": "cameras",
+          "name": "AZ511 cameras (Arizona)",
+          "format": "ibi511",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://az511.com/api/v2/get/cameras?format=json",
+              "cadenceSec": 900
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Arizona 511 API Key",
+              "description": "The AZ511 developer key, sent as the 'key' query parameter.",
+              "setup": {
+                "url": "https://az511.com/developers/doc",
+                "urlLabel": "Register for API access",
+                "steps": [
+                  "Create a free My AZ 511 account at az511.com/my511/register (or log in).",
+                  "Open the Developer Resources page at az511.com/developers/doc.",
+                  "Request a Developer API key from your account; it is issued automatically.",
+                  "Copy the key (sent as the 'key' query parameter)."
+                ],
+                "cost": "Free",
+                "notes": "Arizona 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+              }
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "NOASSERTION",
+          "attribution": "AZ511 / Arizona DOT",
+          "terms": {
+            "url": "https://az511.com/developers/doc",
+            "reviewedAt": "2026-10-08",
+            "note": "No data licence: \"This API enables developers to create mobile traffic apps for Arizona.\" The site's disclaimer (https://az511.com/about/disclaimer) covers suggested routes only."
+          },
+          "privacyUrl": "https://az511.com/about/privacy",
+          "homepage": "https://az511.com/",
+          "coverage": {
+            "countries": [
+              "US-AZ"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "az511.com"
+            ]
+          }
+        },
+        {
+          "subdivision": "id",
+          "operator": "511",
+          "product": "cameras",
+          "name": "Idaho 511 cameras",
+          "format": "ibi511",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://511.idaho.gov/api/v2/get/cameras?format=json",
+              "cadenceSec": 900
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Idaho 511 API Key",
+              "description": "The Idaho 511 developer key, sent as the 'key' query parameter.",
+              "setup": {
+                "url": "https://511.idaho.gov/developers/doc",
+                "urlLabel": "Register for API access",
+                "steps": [
+                  "Create a free account at 511.idaho.gov/my511/register (or log in).",
+                  "Open the Developer Resources page at 511.idaho.gov/developers/doc.",
+                  "Request a Developer API key from your account; it is issued automatically.",
+                  "Copy the key (sent as the 'key' query parameter)."
+                ],
+                "cost": "Free",
+                "notes": "Idaho 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+              }
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "NOASSERTION",
+          "attribution": "Idaho 511 / Idaho Transportation Department",
+          "terms": {
+            "url": "https://511.idaho.gov/about/privacy",
+            "reviewedAt": "2026-10-08",
+            "note": "\"The information that is provided on this web site is a property of Idaho Transportation Department. It is not to be sold, or used in any process for resale as a value-added product, or otherwise distributed for profit in any form.\" Shown free of charge in a traffic app, the API's stated purpose; never sold.",
+            "commercialUse": false
+          },
+          "privacyUrl": "https://511.idaho.gov/about/privacy",
+          "homepage": "https://511.idaho.gov/",
+          "coverage": {
+            "countries": [
+              "US-ID"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "511.idaho.gov"
+            ]
+          }
+        },
+        {
+          "subdivision": "ut",
+          "operator": "511",
+          "product": "cameras",
+          "name": "UDOT Traffic cameras (Utah)",
+          "format": "ibi511",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://www.udottraffic.utah.gov/api/v2/get/cameras?format=json",
+              "cadenceSec": 900
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Utah 511 API Key",
+              "description": "The UDOT Traffic developer key, sent as the 'key' query parameter.",
+              "setup": {
+                "url": "https://udottraffic.utah.gov/developers/doc",
+                "urlLabel": "Register for API access",
+                "steps": [
+                  "Create a free account at udottraffic.utah.gov/my511/register (or log in).",
+                  "Open the Developer Resources / API documentation page and request a Developer API key.",
+                  "Copy the key (sent as the 'key' query parameter)."
+                ],
+                "cost": "Free",
+                "notes": "UDOT Traffic 511 runs the IBI Group / Castle Rock platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds."
+              }
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "NOASSERTION",
+          "attribution": "UDOT Traffic / Utah DOT",
+          "terms": {
+            "url": "https://www.utah.gov/support/disclaimer.html",
+            "reviewedAt": "2026-10-08",
+            "note": "\"Anyone may view, copy, or distribute information found within these web pages (not including the design or layout of the pages) for personal or informational use without owing an obligation to the State if the documents are not modified in any respect.\" A traveller map is informational use; the records are not modified."
+          },
+          "privacyUrl": "https://www.utah.gov/support/privacypolicy.html",
+          "homepage": "https://www.udottraffic.utah.gov/",
+          "coverage": {
+            "countries": [
+              "US-UT"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "www.udottraffic.utah.gov",
+              "prod-ut.ibi511.com"
+            ]
+          }
+        },
+        {
+          "subdivision": "la",
+          "operator": "511",
+          "product": "cameras",
+          "name": "511LA cameras (Louisiana)",
+          "format": "ibi511",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://511la.org/api/v2/get/cameras?format=json",
+              "cadenceSec": 900
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Louisiana 511 API Key",
+              "description": "The 511LA developer key, sent as the 'key' query parameter.",
+              "setup": {
+                "url": "https://www.511la.org/developers/doc",
+                "urlLabel": "Register for API access",
+                "steps": [
+                  "Create a free account at 511la.org/my511/register and verify via the emailed link.",
+                  "Log in and open the Developer Resources page at 511la.org/developers/doc.",
+                  "Request a Developer API key from your account.",
+                  "Copy the key (sent as the 'key' query parameter)."
+                ],
+                "cost": "Free",
+                "notes": "Louisiana 511 runs the IBI Group / Castle Rock 511 platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds."
+              }
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
+          },
+          "freshnessWindowSec": 3600,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "NOASSERTION",
+          "attribution": "511LA / Louisiana DOTD",
+          "terms": {
+            "url": "https://511la.org/developers/doc",
+            "reviewedAt": "2026-10-08",
+            "note": "No data licence: \"This API enables developers to create mobile traffic apps for Louisiana.\" The terms of use (https://511la.org/about/disclaimer) are a warranty disclaimer only."
+          },
+          "privacyUrl": "https://511la.org/about/privacy",
+          "homepage": "https://511la.org/",
+          "coverage": {
+            "countries": [
+              "US-LA"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "511la.org"
+            ]
+          }
+        },
+        {
+          "subdivision": "or",
+          "operator": "tripcheck",
+          "product": "cameras",
+          "name": "ODOT TripCheck cameras (Oregon)",
+          "format": "tripcheck",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://api.odot.state.or.us/tripcheck/Cctv/Inventory",
+              "cadenceSec": 3600
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "ODOT TripCheck API subscription key",
+              "description": "The primary key of a subscription to the TripCheck Data product, sent as the 'Ocp-Apim-Subscription-Key' header.",
+              "setup": {
+                "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+                "urlLabel": "ODOT API portal: TripCheck Data",
+                "steps": [
+                  "Sign up for an account on the ODOT API portal (apiportal.odot.state.or.us) and sign in.",
+                  "Open Products → TripCheck Data and subscribe; read the Terms of Use with the 'Show' button and confirm them with 'I agree'.",
+                  "Open your profile and copy the subscription's primary key."
+                ],
+                "cost": "Free",
+                "notes": "Self-service, no approval step. Republishers credit the agency that provides each camera, mirror the data rather than hotlink it, and repeat ODOT's disclaimer."
+              }
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "Ocp-Apim-Subscription-Key",
+            "credential": "api_key"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "CCTVInventoryRequest"
+          },
+          "freshnessWindowSec": 7200,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
+          "license": "LicenseRef-ODOT-TripCheck",
+          "licenseUrl": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+          "attribution": "Oregon Department of Transportation (TripCheck) and the providing agencies",
+          "terms": {
+            "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+            "reviewedAt": "2026-10-08",
+            "note": "ODOT and the partner agencies allow the public and private business to use and circulate the data and camera images on three conditions: republishers credit the public agency providing the data (on many stills the agency is embedded in the image); they mirror the data on their own server rather than hotlink it, so the stills reach users only through the consumer's image proxy; and they repeat ODOT's disclaimer of warranty when acknowledging the data."
+          },
+          "privacyUrl": "https://www.oregon.gov/pages/privacy.aspx",
+          "homepage": "https://www.tripcheck.com/",
+          "coverage": {
+            "countries": [
+              "US-OR"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "tripcheck.com",
+              "www.tripcheck.com"
+            ]
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "credentials": {
+        "au-nsw-tfnsw": {
+          "api_key": {
+            "title": "Transport for NSW Open Data API key (Australia)",
+            "description": "An Open Data Hub API token, sent as the 'apikey' authorization header. Serves the Live Traffic hazards, the Park&Ride car parks and the Live Traffic cameras.",
+            "setup": {
+              "url": "https://opendata.transport.nsw.gov.au/",
+              "urlLabel": "Get API key",
+              "steps": [
+                "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+                "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+                "In the data catalogue, open the 'Car park API' and 'Live Traffic Cameras API' datasets and subscribe each to your application; the token alone authorises the live-hazard endpoints.",
+                "Paste the generated token here (sent as the 'apikey' authorization header)."
+              ],
+              "cost": "Free",
+              "notes": "CC-BY-4.0; attribution \"Transport for NSW\". One token for the hazards, car-park and camera feeds."
+            }
+          }
+        },
+        "ca-on-511": {
+          "api_key": {
+            "title": "Ontario 511 developer key (Canada)",
+            "description": "Sent as the 'key' query parameter. Serves the Ontario 511 events, construction projects, road conditions and cameras feeds.",
+            "setup": {
+              "url": "https://511on.ca/developers/doc",
+              "urlLabel": "Ontario 511 developer resources",
+              "steps": [
+                "Create a free account at 511on.ca/my511/register (or log in); an account is needed before a key can be requested.",
+                "Request a Developer API key from the developer resources page. The request names your organisation and primary contact, describes the proposed service, and identifies every third party that will receive, redistribute or display Ontario 511 data through it (for an OpenMapX instance: OpenMapX, and federation peers if federation is on).",
+                "The Ministry reviews requests case by case; once granted, copy the key (sent as the 'key' query parameter)."
+              ],
+              "cost": "Free",
+              "notes": "Developer's Access Agreement: https://511on.ca/developers/resources. Data under the Open Government Licence – Ontario; the disclaimer travels with the data when it is distributed. Ontario 511 allows ten calls every 60 seconds per key. Each of the four feeds paces itself to that limit on its own, not together; their cadences (five minutes for the events, construction projects and road conditions, an hour for the cameras) keep the four well inside ten calls a minute."
+            }
+          }
+        },
+        "overpass": {
+          "url": {
+            "title": "Overpass URL",
+            "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
+            "default": "https://overpass-api.de"
+          }
+        },
+        "se-trafikverket": {
+          "api_key": {
+            "title": "Trafikverket key (Sweden)",
+            "description": "Authentication key: sent as ?authenticationkey= to the DATEX II situation feed and in the POST request body to the traffic-flow feed.",
+            "setup": {
+              "url": "https://data.trafikverket.se/oauth2/Account/register",
+              "urlLabel": "Sign up at Trafikverket",
+              "steps": [
+                "Sign up at data.trafikverket.se/oauth2/Account/register.",
+                "Create an authentication key under data.trafikverket.se/mypage/systems (My systems)."
+              ],
+              "cost": "Free",
+              "notes": "CC0 — no restrictions. API endpoint: api.trafikinfo.trafikverket.se/v2/data.json (the bare host has no web page)."
+            }
+          }
+        },
+        "tw-tdx": {
+          "client_id": {
+            "title": "TDX client id",
+            "setup": {
+              "url": "https://tdx.transportdata.tw/register",
+              "urlLabel": "Register for a TDX platform account",
+              "steps": [
+                "Go to tdx.transportdata.tw/register and create a free platform member account.",
+                "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
+                "Create a Client Id / Client Secret pair (up to 3 per account).",
+                "Copy both values — the Client Secret is only shown once."
+              ],
+              "cost": "Free",
+              "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station, ChargingRate and ConnectorLiveStatus APIs and the road CCTV lists. The free tier's quota (about 4,500 calls a month at 5 a minute) is the account's, shared by both feeds."
+            }
+          },
+          "client_secret": {
+            "title": "TDX client secret",
+            "description": "The secret of the same Client Id / Client Secret pair."
+          }
+        }
+      }
+    }
+  },
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "livetraffic",
+      "product": "cameras",
+      "name": "Live Traffic NSW cameras",
+      "format": "json",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://api.transport.nsw.gov.au/v1/live/cameras",
+          "cadenceSec": 3600
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "Authorization",
+        "credential": "@au-nsw-tfnsw.api_key",
+        "valuePrefix": "apikey "
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Transport for NSW",
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-08"
+      },
+      "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+      "homepage": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-cameras",
+      "coverage": {
+        "countries": [
+          "AU-NSW"
+        ]
+      },
+      "layout": {
+        "records": "features",
+        "geometryPath": "geometry"
+      },
+      "cameras": {
+        "imageHosts": [
+          "webcams.transport.nsw.gov.au",
+          "data.livetraffic.com"
+        ],
+        "id": "id",
+        "name": "properties.title",
+        "lang": "en",
+        "type": "traffic",
+        "description": "properties.view",
+        "direction": {
+          "field": "properties.direction",
+          "map": {
+            "N": "N",
+            "N-E": "NE",
+            "E": "E",
+            "S-E": "SE",
+            "S": "S",
+            "S-W": "SW",
+            "W": "W",
+            "N-W": "NW"
+          }
+        },
+        "imageUrl": "properties.href",
+        "imageRedistribution": "allowed"
+      },
+      "id": "au-nsw-livetraffic-cameras",
+      "domain": "cameras",
+      "region": "au",
+      "file": "feeds/cameras/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600,
+      "country": "AU"
+    },
+    {
+      "subdivision": "on",
+      "operator": "511",
+      "product": "cameras",
+      "name": "Ontario 511 cameras (Canada)",
+      "format": "ibi511",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://511on.ca/api/v2/get/cameras?format=json",
+          "cadenceSec": 3600
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "@ca-on-511.api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 7200,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "LicenseRef-OGL-ON",
+      "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
+      "attribution": "Contains information licensed under the Open Government Licence – Ontario",
+      "terms": {
+        "url": "https://511on.ca/developers/resources",
+        "reviewedAt": "2026-10-08",
+        "note": "Developer's Access Agreement: the data is under the Open Government Licence – Ontario, but a key is granted case by case, and the request must name every third party that receives, redistributes or displays the data through the operator's service. The disclaimer travels with the data when it is distributed. An operator whose key does not cover public redistribution restricts the feed in its local catalogue layer."
+      },
+      "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+      "homepage": "https://511on.ca/",
+      "coverage": {
+        "countries": [
+          "CA-ON"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "511on.ca"
+        ],
+        "imageRedistribution": "unknown"
+      },
+      "id": "ca-on-511-cameras",
+      "domain": "cameras",
+      "region": "ca",
+      "file": "feeds/cameras/ca.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600,
+      "country": "CA"
+    },
+    {
+      "operator": "dgt",
+      "product": "cameras",
+      "name": "DGT traffic cameras",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://nap.dgt.es/datex2/v3/dgt/DevicePublication/camaras_datex2_v37.xml",
+          "cadenceSec": 3600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Dirección General de Tráfico (DGT), CC BY",
+      "terms": {
+        "url": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+        "reviewedAt": "2026-10-08",
+        "note": "NAP dataset licence CC BY (unversioned, CKAN cc-by); its 'condition for use' links the generic dgt.es aviso legal, which reserves website content. Dataset licence taken as governing. The stills sit on the etraffic.dgt.es portal, which the aviso legal reserves: they are not republished. A consumer's image proxy fetches a still from the publisher's URL when a user views it and stores nothing (Cache-Control: no-store), which is linking, not republishing."
+      },
+      "privacyUrl": "https://sede.dgt.gob.es/es/proteccion-datos/",
+      "homepage": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+      "cameras": {
+        "imageHosts": [
+          "etraffic.dgt.es"
+        ]
+      },
+      "id": "es-dgt-cameras",
+      "domain": "cameras",
+      "region": "es",
+      "file": "feeds/cameras/es.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "ES"
+        ]
+      },
+      "cadenceSec": 3600,
+      "country": "ES"
+    },
+    {
+      "operator": "digitraffic",
+      "product": "cameras",
+      "name": "Fintraffic Digitraffic weather cameras",
+      "format": "digitraffic",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 86400
+        },
+        "details": {
+          "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations/{item}",
+          "fanout": "tolerant",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "each": {
+            "role": "sites",
+            "records": "features",
+            "field": "id"
+          },
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations/data",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 1800,
+      "requestLimits": {
+        "perMinute": 60
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-08"
+      },
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+      "homepage": "https://www.digitraffic.fi/en/",
+      "cameras": {
+        "imageHosts": [
+          "weathercam.digitraffic.fi"
+        ]
+      },
+      "id": "fi-digitraffic-cameras",
+      "domain": "cameras",
+      "region": "fi",
+      "file": "feeds/cameras/fi.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "FI"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "FI"
+    },
+    {
+      "subdivision": "eng",
+      "operator": "tfl",
+      "product": "cameras",
+      "name": "TfL JamCams",
+      "format": "tfl",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://api.tfl.gov.uk/Place/Type/JamCam",
+          "cadenceSec": 3600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 86400,
+      "requestLimits": {
+        "perMinute": 500
+      },
+      "license": "LicenseRef-TfL-Transport-Data-Service",
+      "licenseUrl": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+      "attribution": "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016 and Geomni UK Map data © and database rights [2019]",
+      "privacyUrl": "https://tfl.gov.uk/corporate/privacy-and-cookies/",
+      "homepage": "https://tfl.gov.uk/info-for/open-data-users/",
+      "coverage": {
+        "countries": [
+          "GB-ENG"
+        ],
+        "bbox": [
+          -0.52,
+          51.28,
+          0.34,
+          51.7
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/"
+        ]
+      },
+      "id": "gb-eng-tfl-cameras",
+      "domain": "cameras",
+      "region": "gb",
+      "file": "feeds/cameras/gb.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600,
+      "country": "GB"
+    },
+    {
+      "operator": "windy",
+      "product": "cameras",
+      "name": "Windy webcams",
+      "format": "windy",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://api.windy.com/webcams/api/v3/webcams?bbox={north},{east},{south},{west}&limit=50&include=categories,images,location,player,urls&lang=en",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 50,
+            "recordsPath": "webcams",
+            "maxPages": 2
+          },
+          "cadenceSec": 540
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Windy Webcams API Key",
+          "description": "Get a free key at https://api.windy.com/keys",
+          "setup": {
+            "url": "https://api.windy.com/keys",
+            "urlLabel": "Get a Windy Webcams API key",
+            "steps": [
+              "Sign in to (or create) a free Windy account, then open api.windy.com/keys.",
+              "Create a new API key and select the Webcams API; the free tier requires no payment.",
+              "Copy the key (it may take a few minutes to propagate); it is sent as the 'x-windy-api-key' header."
+            ],
+            "cost": "Free (paid 'professional' tier optional)",
+            "notes": "Free tier returns only low-resolution images, image URLs expire after 10 minutes, and the listing offset is capped (~1000)."
+          }
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "x-windy-api-key",
+        "credential": "api_key"
+      },
+      "freshnessWindowSec": 1080,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 10,
+        "perDay": 2000
+      },
+      "onDemand": {
+        "cellDeg": 0.25,
+        "ttlSec": 540,
+        "maxCellsPerRead": 16,
+        "probe": [
+          11.39,
+          47.27
+        ]
+      },
+      "license": "NOASSERTION",
+      "attribution": "Webcams provided by windy.com",
+      "terms": {
+        "url": "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+        "reviewedAt": "2026-10-08",
+        "note": "Proprietary API terms: no redistribution of the API's data to any third party, no publishing of graphics showing the webcam images, images used only through the URLs the API gives and each linked to its Windy webcam page or player, and the courtesy line \"Webcams provided by windy.com\". Free-tier image URLs expire after 10 minutes. Served in the operator's scope only, as the operator's own application.",
+        "redistribution": false,
+        "derivedRedistribution": false,
+        "attributionRequired": true,
+        "retention": false
+      },
+      "privacyUrl": "https://www.windy.com/privacy",
+      "homepage": "https://www.windy.com/webcams",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "images-webcams.windy.com"
+        ]
+      },
+      "id": "windy-cameras",
+      "domain": "cameras",
+      "region": "global",
+      "file": "feeds/cameras/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": false,
+        "commercialUse": null,
+        "attributionRequired": true,
+        "retention": false,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 540
+    },
+    {
+      "operator": "osm",
+      "product": "cameras",
+      "name": "OpenStreetMap webcams",
+      "format": "overpass",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];(nwr[\"contact:webcam\"]({south},{west},{north},{east});nwr[\"man_made\"=\"surveillance\"][\"surveillance:type\"=\"webcam\"]({south},{west},{north},{east});nwr[\"webcam\"]({south},{west},{north},{east}););out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmCameras/1.0 (+https://github.com/openconditions/openconditions)"
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 30,
+        "perDay": 5000
+      },
+      "onDemand": {
+        "cellDeg": 1,
+        "ttlSec": 86400,
+        "maxCellsPerRead": 32,
+        "probe": [
+          11.4,
+          47.27
+        ]
+      },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "osm-cameras",
+      "domain": "cameras",
+      "region": "global",
+      "file": "feeds/cameras/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "cadenceSec": 86400
+    },
+    {
+      "operator": "td",
+      "product": "cameras",
+      "name": "Transport Department traffic snapshot cameras",
+      "format": "hk-td",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_En.xml",
+          "cadenceSec": 86400
+        },
+        "names": {
+          "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_Tc.xml",
+          "cadenceSec": 86400
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-HK-Gov-Open-Data",
+      "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
+      "attribution": "Transport Department, HKSAR",
+      "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
+      "homepage": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
+      "cameras": {
+        "imageHosts": [
+          "tdcctv.data.one.gov.hk"
+        ]
+      },
+      "id": "hk-td-cameras",
+      "domain": "cameras",
+      "region": "hk",
+      "file": "feeds/cameras/hk.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "HK"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "HK"
+    },
+    {
+      "operator": "vegagerdin",
+      "product": "cameras",
+      "name": "Vegagerðin web cameras",
+      "format": "json",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://gagnaveita.vegagerdin.is/api/vefmyndavelar2014_1",
+          "cadenceSec": 86400
+        }
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Vegagerðin (Icelandic Road and Coastal Administration), web cameras, CC BY 4.0",
+      "terms": {
+        "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/terms-and-conditions",
+        "reviewedAt": "2026-10-08",
+        "note": "IRCA data and photographs, road cameras named, are CC BY 4.0. The attribution names the licensor (the Icelandic Road and Coastal Administration, IRCA), the dataset, the date or period the data was retrieved, and the CC BY 4.0 licence."
+      },
+      "privacyUrl": "https://www.vegagerdin.is/",
+      "homepage": "https://www.vegagerdin.is/",
+      "layout": {
+        "lon": "Lengd",
+        "lat": "Breidd"
+      },
+      "cameras": {
+        "imageHosts": [
+          "www.vegagerdin.is"
+        ],
+        "id": "Maelist_nr",
+        "viewKey": {
+          "field": "Slod",
+          "pattern": "/([^/]+)\\.jpg$"
+        },
+        "name": "Myndavel",
+        "lang": "is",
+        "type": "weather",
+        "road": "NrVegur",
+        "viewName": "Skyring",
+        "imageUrl": "Slod",
+        "imageRedistribution": "allowed"
+      },
+      "id": "is-vegagerdin-cameras",
+      "domain": "cameras",
+      "region": "is",
+      "file": "feeds/cameras/is.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "IS"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "IS"
+    },
+    {
+      "operator": "vegvesen",
+      "product": "cameras",
+      "name": "Statens vegvesen web cameras",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://ogckart-sn1.atlas.vegvesen.no/datex_3_1/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=datex_3_1%3ACctvSimple&outputFormat=application%2Fjson",
+          "cadenceSec": 600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features",
+        "totalCountPath": "totalFeatures"
+      },
+      "freshnessWindowSec": 1800,
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/en/2.0",
+      "attribution": "Statens vegvesen",
+      "terms": {
+        "url": "https://dataut.vegvesen.no/en/dataset/webkamera",
+        "reviewedAt": "2026-10-08",
+        "note": "NLOD 2.0 dataset whose content is the camera images. Statens vegvesen asks consumers of the open WFS to identify themselves at datex@vegvesen.no, and Norwegian texts are not to be translated."
+      },
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
+      "homepage": "https://www.vegvesen.no/en/",
+      "layout": {},
+      "cameras": {
+        "imageHosts": [
+          "kamera.atlas.vegvesen.no"
+        ],
+        "groupBy": {
+          "field": "cameraId",
+          "pattern": "^([^_]+)_"
+        },
+        "viewKey": "cameraId",
+        "name": "description",
+        "lang": "no",
+        "type": "traffic",
+        "road": "roadNumber",
+        "viewName": "orientationDescription",
+        "imageUrl": "stillImageUrl",
+        "streamUrl": "videoUrl",
+        "streamType": "hls",
+        "status": {
+          "field": "status.stillImageAvailability",
+          "map": {
+            "videoOrImagesAvailable": "online",
+            "videoOrImagesUnavailableDueToCameraFault": "offline"
+          }
+        },
+        "imageRedistribution": "allowed"
+      },
+      "id": "no-vegvesen-cameras",
+      "domain": "cameras",
+      "region": "no",
+      "file": "feeds/cameras/no.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NO"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "NO"
+    },
+    {
+      "operator": "trafikverket",
+      "product": "cameras",
+      "name": "Trafikverket traffic cameras",
+      "format": "trafikverket",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+          "method": "POST",
+          "body": "<REQUEST><LOGIN authenticationkey=\"${@se-trafikverket.api_key}\"/><QUERY objecttype=\"Camera\" namespace=\"road.infrastructure\" schemaversion=\"1.1\"><FILTER><EQ name=\"Deleted\" value=\"false\"/></FILTER></QUERY></REQUEST>",
+          "headers": {
+            "Content-Type": "text/xml"
+          },
+          "cadenceSec": 600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "RESPONSE.RESULT.0.Camera"
+      },
+      "freshnessWindowSec": 1800,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Trafikverket",
+      "terms": {
+        "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+        "reviewedAt": "2026-10-08"
+      },
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+      "homepage": "https://data.trafikverket.se/",
+      "cameras": {
+        "imageHosts": [
+          "api.trafikinfo.trafikverket.se"
+        ]
+      },
+      "id": "se-trafikverket-cameras",
+      "domain": "cameras",
+      "region": "se",
+      "file": "feeds/cameras/se.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "SE"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "SE"
+    },
+    {
+      "operator": "tdx",
+      "product": "cameras",
+      "name": "TDX road CCTV",
+      "format": "tdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/CCTV/Freeway?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/CCTV/Highway?$top=10000&$format=JSON"
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 86400
+        }
+      },
+      "auth": {
+        "kind": "oauth2-client-credentials",
+        "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+        "clientId": "@tw-tdx.client_id",
+        "clientSecret": "@tw-tdx.client_secret"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "CCTVs"
+      },
+      "freshnessWindowSec": 172800,
+      "requestLimits": {
+        "perMinute": 5
+      },
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+      "terms": {
+        "url": "https://tdx.transportdata.tw/term",
+        "reviewedAt": "2026-10-08",
+        "note": "Data under the Open Government Data License v1.0, redistribution allowed; the source must be labelled 交通部運輸資料流通服務平臺 (TDX) or the source agency. Access itself is paid by quota, shared with the charging feed on the same account. The stills sit on the highway bureau's hosts, which state no image licence."
+      },
+      "privacyUrl": "https://tdx.transportdata.tw/privacy",
+      "homepage": "https://tdx.transportdata.tw",
+      "cameras": {
+        "imageHosts": [
+          "*.thb.gov.tw"
+        ]
+      },
+      "id": "tw-tdx-cameras",
+      "domain": "cameras",
+      "region": "tw",
+      "file": "feeds/cameras/tw.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "TW"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "TW"
+    },
+    {
+      "subdivision": "ca",
+      "operator": "caltrans",
+      "product": "cameras",
+      "name": "Caltrans CCTV",
+      "format": "json",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://cwwp2.dot.ca.gov/data/d1/cctv/cctvStatusD01.json",
+            "https://cwwp2.dot.ca.gov/data/d2/cctv/cctvStatusD02.json",
+            "https://cwwp2.dot.ca.gov/data/d3/cctv/cctvStatusD03.json",
+            "https://cwwp2.dot.ca.gov/data/d4/cctv/cctvStatusD04.json",
+            "https://cwwp2.dot.ca.gov/data/d5/cctv/cctvStatusD05.json",
+            "https://cwwp2.dot.ca.gov/data/d6/cctv/cctvStatusD06.json",
+            "https://cwwp2.dot.ca.gov/data/d7/cctv/cctvStatusD07.json",
+            "https://cwwp2.dot.ca.gov/data/d8/cctv/cctvStatusD08.json",
+            "https://cwwp2.dot.ca.gov/data/d9/cctv/cctvStatusD09.json",
+            "https://cwwp2.dot.ca.gov/data/d10/cctv/cctvStatusD10.json",
+            "https://cwwp2.dot.ca.gov/data/d11/cctv/cctvStatusD11.json",
+            "https://cwwp2.dot.ca.gov/data/d12/cctv/cctvStatusD12.json"
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 3600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "data"
+      },
+      "freshnessWindowSec": 86400,
+      "license": "LicenseRef-Caltrans-Conditions-of-Use",
+      "licenseUrl": "https://dot.ca.gov/conditions-of-use",
+      "attribution": "Caltrans",
+      "terms": {
+        "url": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+        "reviewedAt": "2026-10-08",
+        "note": "Free for integration into applications under the Caltrans Conditions of Use. Caltrans traffic camera footage and stills are neither retained nor archived by Caltrans."
+      },
+      "privacyUrl": "https://dot.ca.gov/privacy-policy",
+      "homepage": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+      "coverage": {
+        "countries": [
+          "US-CA"
+        ]
+      },
+      "layout": {
+        "records": "data",
+        "lon": "cctv.location.longitude",
+        "lat": "cctv.location.latitude"
+      },
+      "cameras": {
+        "imageHosts": [
+          "cwwp2.dot.ca.gov"
+        ],
+        "id": [
+          "cctv.location.district",
+          "cctv.index"
+        ],
+        "name": "cctv.location.locationName",
+        "lang": "en",
+        "type": "traffic",
+        "road": "cctv.location.route",
+        "viewName": "cctv.imageData.imageDescription",
+        "direction": {
+          "field": "cctv.location.direction",
+          "map": {
+            "North": "N",
+            "South": "S",
+            "East": "E",
+            "West": "W"
+          }
+        },
+        "imageUrl": "cctv.imageData.static.currentImageURL",
+        "streamUrl": "cctv.imageData.streamingVideoURL",
+        "streamType": "hls",
+        "status": {
+          "field": "cctv.inService",
+          "map": {
+            "true": "unknown",
+            "false": "offline",
+            "Not Reported": "unknown"
+          }
+        },
+        "refreshSec": {
+          "field": "cctv.imageData.static.currentImageUpdateFrequency",
+          "unit": "min"
+        },
+        "imageRedistribution": "allowed"
+      },
+      "id": "us-ca-caltrans-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600,
+      "country": "US"
+    },
+    {
+      "operator": "nps",
+      "product": "cameras",
+      "name": "National Park Service webcams",
+      "format": "nps",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://developer.nps.gov/api/v1/webcams?limit=500",
+          "cadenceSec": 86400
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "NPS API Key",
+          "description": "Get a free key at https://developer.nps.gov/signup/",
+          "setup": {
+            "url": "https://www.nps.gov/subjects/developer/get-started.htm",
+            "urlLabel": "Get an NPS API key",
+            "steps": [
+              "Open nps.gov/subjects/developer/get-started.htm and fill out the 'Get Started' sign-up form.",
+              "Submit the form; an email with your personalized 40-character API key is sent to you.",
+              "Copy the key; it is sent on each request in the X-Api-Key header."
+            ],
+            "cost": "Free",
+            "notes": "Self-service form on nps.gov; the key arrives by email (developer portal is developer.nps.gov). Delivery is usually near-instant."
+          },
+          "default": "DEMO_KEY"
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "X-Api-Key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "data"
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.nps.gov/aboutus/disclaimer.htm",
+      "attribution": "National Park Service",
+      "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
+      "homepage": "https://www.nps.gov/subjects/developer/",
+      "id": "us-nps-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "US"
+    },
+    {
+      "subdivision": "ga",
+      "operator": "511",
+      "product": "cameras",
+      "name": "511GA cameras (Georgia)",
+      "format": "ibi511",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://511ga.org/api/v2/get/cameras?format=json",
+          "cadenceSec": 900
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Georgia 511 API Key",
+          "description": "The 511GA developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://511ga.org/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free My511 account at 511ga.org/my511/register (or log in).",
+              "Open the Developer Resources page (Developers → Documentation) at 511ga.org/developers/doc.",
+              "Request a Developer API key from your account; it is issued automatically.",
+              "Copy the key (sent as the 'key' query parameter)."
+            ],
+            "cost": "Free",
+            "notes": "Georgia 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+          }
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "NOASSERTION",
+      "attribution": "511GA / Georgia DOT",
+      "terms": {
+        "url": "https://511ga.org/developers/doc",
+        "reviewedAt": "2026-10-08",
+        "note": "No data licence: the API is offered so that developers \"create mobile traffic apps\". The 511GA and GDOT trademarks and logos may not be used without written permission (https://511ga.org/privacy)."
+      },
+      "privacyUrl": "https://511ga.org/privacy",
+      "homepage": "https://511ga.org/",
+      "coverage": {
+        "countries": [
+          "US-GA"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "511ga.org"
+        ]
+      },
+      "id": "us-ga-511-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "US"
+    },
+    {
+      "subdivision": "az",
+      "operator": "511",
+      "product": "cameras",
+      "name": "AZ511 cameras (Arizona)",
+      "format": "ibi511",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://az511.com/api/v2/get/cameras?format=json",
+          "cadenceSec": 900
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Arizona 511 API Key",
+          "description": "The AZ511 developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://az511.com/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free My AZ 511 account at az511.com/my511/register (or log in).",
+              "Open the Developer Resources page at az511.com/developers/doc.",
+              "Request a Developer API key from your account; it is issued automatically.",
+              "Copy the key (sent as the 'key' query parameter)."
+            ],
+            "cost": "Free",
+            "notes": "Arizona 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+          }
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "NOASSERTION",
+      "attribution": "AZ511 / Arizona DOT",
+      "terms": {
+        "url": "https://az511.com/developers/doc",
+        "reviewedAt": "2026-10-08",
+        "note": "No data licence: \"This API enables developers to create mobile traffic apps for Arizona.\" The site's disclaimer (https://az511.com/about/disclaimer) covers suggested routes only."
+      },
+      "privacyUrl": "https://az511.com/about/privacy",
+      "homepage": "https://az511.com/",
+      "coverage": {
+        "countries": [
+          "US-AZ"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "az511.com"
+        ]
+      },
+      "id": "us-az-511-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "US"
+    },
+    {
+      "subdivision": "id",
+      "operator": "511",
+      "product": "cameras",
+      "name": "Idaho 511 cameras",
+      "format": "ibi511",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://511.idaho.gov/api/v2/get/cameras?format=json",
+          "cadenceSec": 900
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Idaho 511 API Key",
+          "description": "The Idaho 511 developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://511.idaho.gov/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free account at 511.idaho.gov/my511/register (or log in).",
+              "Open the Developer Resources page at 511.idaho.gov/developers/doc.",
+              "Request a Developer API key from your account; it is issued automatically.",
+              "Copy the key (sent as the 'key' query parameter)."
+            ],
+            "cost": "Free",
+            "notes": "Idaho 511 runs the IBI Group / Castle Rock 511 platform. Self-service. Rate limit: 10 calls per 60 seconds."
+          }
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "NOASSERTION",
+      "attribution": "Idaho 511 / Idaho Transportation Department",
+      "terms": {
+        "url": "https://511.idaho.gov/about/privacy",
+        "reviewedAt": "2026-10-08",
+        "note": "\"The information that is provided on this web site is a property of Idaho Transportation Department. It is not to be sold, or used in any process for resale as a value-added product, or otherwise distributed for profit in any form.\" Shown free of charge in a traffic app, the API's stated purpose; never sold.",
+        "commercialUse": false
+      },
+      "privacyUrl": "https://511.idaho.gov/about/privacy",
+      "homepage": "https://511.idaho.gov/",
+      "coverage": {
+        "countries": [
+          "US-ID"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "511.idaho.gov"
+        ]
+      },
+      "id": "us-id-511-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": false,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "US"
+    },
+    {
+      "subdivision": "ut",
+      "operator": "511",
+      "product": "cameras",
+      "name": "UDOT Traffic cameras (Utah)",
+      "format": "ibi511",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://www.udottraffic.utah.gov/api/v2/get/cameras?format=json",
+          "cadenceSec": 900
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Utah 511 API Key",
+          "description": "The UDOT Traffic developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://udottraffic.utah.gov/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free account at udottraffic.utah.gov/my511/register (or log in).",
+              "Open the Developer Resources / API documentation page and request a Developer API key.",
+              "Copy the key (sent as the 'key' query parameter)."
+            ],
+            "cost": "Free",
+            "notes": "UDOT Traffic 511 runs the IBI Group / Castle Rock platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds."
+          }
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "NOASSERTION",
+      "attribution": "UDOT Traffic / Utah DOT",
+      "terms": {
+        "url": "https://www.utah.gov/support/disclaimer.html",
+        "reviewedAt": "2026-10-08",
+        "note": "\"Anyone may view, copy, or distribute information found within these web pages (not including the design or layout of the pages) for personal or informational use without owing an obligation to the State if the documents are not modified in any respect.\" A traveller map is informational use; the records are not modified."
+      },
+      "privacyUrl": "https://www.utah.gov/support/privacypolicy.html",
+      "homepage": "https://www.udottraffic.utah.gov/",
+      "coverage": {
+        "countries": [
+          "US-UT"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "www.udottraffic.utah.gov",
+          "prod-ut.ibi511.com"
+        ]
+      },
+      "id": "us-ut-511-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "US"
+    },
+    {
+      "subdivision": "la",
+      "operator": "511",
+      "product": "cameras",
+      "name": "511LA cameras (Louisiana)",
+      "format": "ibi511",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://511la.org/api/v2/get/cameras?format=json",
+          "cadenceSec": 900
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Louisiana 511 API Key",
+          "description": "The 511LA developer key, sent as the 'key' query parameter.",
+          "setup": {
+            "url": "https://www.511la.org/developers/doc",
+            "urlLabel": "Register for API access",
+            "steps": [
+              "Create a free account at 511la.org/my511/register and verify via the emailed link.",
+              "Log in and open the Developer Resources page at 511la.org/developers/doc.",
+              "Request a Developer API key from your account.",
+              "Copy the key (sent as the 'key' query parameter)."
+            ],
+            "cost": "Free",
+            "notes": "Louisiana 511 runs the IBI Group / Castle Rock 511 platform. Self-service; an account is required first. Rate limit: 10 calls per 60 seconds."
+          }
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
+      },
+      "freshnessWindowSec": 3600,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "NOASSERTION",
+      "attribution": "511LA / Louisiana DOTD",
+      "terms": {
+        "url": "https://511la.org/developers/doc",
+        "reviewedAt": "2026-10-08",
+        "note": "No data licence: \"This API enables developers to create mobile traffic apps for Louisiana.\" The terms of use (https://511la.org/about/disclaimer) are a warranty disclaimer only."
+      },
+      "privacyUrl": "https://511la.org/about/privacy",
+      "homepage": "https://511la.org/",
+      "coverage": {
+        "countries": [
+          "US-LA"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "511la.org"
+        ]
+      },
+      "id": "us-la-511-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
+      "country": "US"
+    },
+    {
+      "subdivision": "or",
+      "operator": "tripcheck",
+      "product": "cameras",
+      "name": "ODOT TripCheck cameras (Oregon)",
+      "format": "tripcheck",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://api.odot.state.or.us/tripcheck/Cctv/Inventory",
+          "cadenceSec": 3600
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "ODOT TripCheck API subscription key",
+          "description": "The primary key of a subscription to the TripCheck Data product, sent as the 'Ocp-Apim-Subscription-Key' header.",
+          "setup": {
+            "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+            "urlLabel": "ODOT API portal: TripCheck Data",
+            "steps": [
+              "Sign up for an account on the ODOT API portal (apiportal.odot.state.or.us) and sign in.",
+              "Open Products → TripCheck Data and subscribe; read the Terms of Use with the 'Show' button and confirm them with 'I agree'.",
+              "Open your profile and copy the subscription's primary key."
+            ],
+            "cost": "Free",
+            "notes": "Self-service, no approval step. Republishers credit the agency that provides each camera, mirror the data rather than hotlink it, and repeat ODOT's disclaimer."
+          }
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "Ocp-Apim-Subscription-Key",
+        "credential": "api_key"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "CCTVInventoryRequest"
+      },
+      "freshnessWindowSec": 7200,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
+      "license": "LicenseRef-ODOT-TripCheck",
+      "licenseUrl": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+      "attribution": "Oregon Department of Transportation (TripCheck) and the providing agencies",
+      "terms": {
+        "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+        "reviewedAt": "2026-10-08",
+        "note": "ODOT and the partner agencies allow the public and private business to use and circulate the data and camera images on three conditions: republishers credit the public agency providing the data (on many stills the agency is embedded in the image); they mirror the data on their own server rather than hotlink it, so the stills reach users only through the consumer's image proxy; and they repeat ODOT's disclaimer of warranty when acknowledging the data."
+      },
+      "privacyUrl": "https://www.oregon.gov/pages/privacy.aspx",
+      "homepage": "https://www.tripcheck.com/",
+      "coverage": {
+        "countries": [
+          "US-OR"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "tripcheck.com",
+          "www.tripcheck.com"
+        ]
+      },
+      "id": "us-or-tripcheck-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600,
+      "country": "US"
+    }
+  ]
+}

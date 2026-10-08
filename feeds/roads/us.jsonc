@@ -37,13 +37,25 @@
       "tier": "authoritative",
       "format": "ibi511",
       "auth": { "kind": "query-key", "param": "key", "credential": "@us-ny-511.api_key" },
+      // The address of the retired IBI 511 API; every path on 511ny.org now serves the new
+      // web app. The feed granted under the access agreement replaces it.
       "endpoints": {
         "main": { "url": "https://511ny.org/api/v2/get/event?format=json", "cadenceSec": 300 },
       },
+      "disabled": {
+        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
+        "since": "2026-10-08",
+      },
       "freshnessWindowSec": 900,
       "license": "LicenseRef-511NY-DAA",
-      "licenseUrl": "https://511ny.org/developers/daa",
-      "attribution": "Powered by 511NY",
+      "licenseUrl": "https://511ny.org/help/24",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-08",
+        "redistribution": false,
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+      },
+      "attribution": "511NY / New York State DOT",
       "privacyUrl": "https://511ny.org/privacy",
     },
     {
@@ -54,17 +66,27 @@
       "tier": "authoritative",
       "format": "ibi511-conditions",
       "auth": { "kind": "query-key", "param": "key", "credential": "@us-ny-511.api_key" },
+      // The address of the retired IBI 511 API, as for the events feed above.
       "endpoints": {
         "main": {
           "url": "https://511ny.org/api/v3/get/winterroads?format=json",
-          // 10 calls per 60s across the account, shared with the events feed above.
           "cadenceSec": 600,
         },
       },
+      "disabled": {
+        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
+        "since": "2026-10-08",
+      },
       "freshnessWindowSec": 1800,
       "license": "LicenseRef-511NY-DAA",
-      "licenseUrl": "https://511ny.org/developers/daa",
-      "attribution": "Powered by 511NY",
+      "licenseUrl": "https://511ny.org/help/24",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-08",
+        "redistribution": false,
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+      },
+      "attribution": "511NY / New York State DOT",
       "privacyUrl": "https://511ny.org/privacy",
       // Winter feed: outside the season every segment reports a nominal condition
       // and the parser skips them all, so an empty result is the normal state.

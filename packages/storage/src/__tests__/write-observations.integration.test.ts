@@ -609,33 +609,17 @@ describe("observation writes", () => {
     ]);
   });
 
-  it("keep no history of a latest-only property or of an on-demand reading", async () => {
-    const image = observationDraft(
-      "camera.image",
-      {
-        type: "structured",
-        schema: "camera_image",
-        v: 1,
-        value: { v: 1, status: "online", imageUrl: "https://cams.example/1.jpg" },
-      },
-      { subject: { kind: "feature", featureId: "oc:feature:nl-ndw-flow:cam1" } },
-    );
+  it("keep no history of an on-demand reading", async () => {
     const onDemand = speed(55, "2026-10-01T10:00:00Z");
     onDemand["provenance"] = { ...(onDemand["provenance"] as object), accessMode: "on_demand" };
     onDemand["freshness"] = { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T10:15:00Z" };
-    const summary = await writeSnapshot(
-      sql,
-      "nl-ndw-flow",
-      { observations: [image, onDemand] },
-      ctx,
-    );
+    const summary = await writeSnapshot(sql, "nl-ndw-flow", { observations: [onDemand] }, ctx);
     expect(summary.rejected).toEqual([]);
-    expect(summary.observations).toMatchObject({ latest: 2, history: 0 });
+    expect(summary.observations).toMatchObject({ latest: 1, history: 0 });
     const rows =
       await sql`SELECT property, access_mode, expires_at FROM conditions.observation_latest
       ORDER BY property`;
     expect(rows).toEqual([
-      { property: "camera.image", access_mode: "bulk", expires_at: null },
       {
         property: "traffic.speed",
         access_mode: "on_demand",
@@ -905,6 +889,43 @@ describe("observation writes", () => {
       subject_key: "feature:oc:feature:nl-ndw-flow:s1#lane1",
       value_num: 81,
     });
+    expect(await history()).toEqual([]);
+  });
+
+  it("keep one row per camera view and skip an unchanged image, with no history", async () => {
+    const view = (key: string, imageUrl: string) => {
+      const d = observationDraft(
+        "camera.image",
+        {
+          type: "structured",
+          schema: "camera_image",
+          v: 1,
+          value: { v: 1, status: "unknown", imageUrl },
+        },
+        {
+          at: "2026-10-01T10:00:00Z",
+          subject: { kind: "feature", featureId: "oc:feature:nl-ndw-flow:cam1", componentKey: key },
+        },
+      );
+      return { ...d, id: observationIdOf(d) };
+    };
+    const first = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [view("0", "https://cams.example/1.jpg")] },
+      ctx,
+    );
+    expect(first.rejected).toEqual([]);
+    expect(first.observations).toMatchObject({ latest: 1, history: 0 });
+    const again = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [view("0", "https://cams.example/1.jpg")] },
+      { ...ctx, now: "2026-10-01T10:30:00.000Z" },
+    );
+    expect(again.observations).toMatchObject({ latest: 0, history: 0, unchanged: 1 });
+    const rows = await sql`SELECT subject_key FROM conditions.observation_latest`;
+    expect(rows).toEqual([{ subject_key: "feature:oc:feature:nl-ndw-flow:cam1#0" }]);
     expect(await history()).toEqual([]);
   });
 

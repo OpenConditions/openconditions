@@ -293,6 +293,27 @@ function rolesDue(src: CatalogFeed, roles: RoleState | undefined, now: number): 
   return dueRoles(src, roles.lastFetchedAt, now + pollTickSec(src.cadenceSec) * 500);
 }
 
+/**
+ * The due roles in fetch order: a role another role reads its ids from
+ * (`each`) comes first, so the same poll's payload is the one they use; then
+ * the plain roles; the per-item roles last. A per-item sweep can take minutes
+ * (one request per id under the feed's rate limit), and the poll is read as
+ * of its start, so a role fetched after the sweep would carry states newer
+ * than the time they are dated to. The order within each group is the feed's
+ * own.
+ */
+function fetchOrder(src: CatalogFeed, due: readonly string[]): string[] {
+  const sources = new Set(
+    Object.values(src.endpoints).flatMap((endpoint) => (endpoint.each ? [endpoint.each.role] : [])),
+  );
+  const perItem = (role: string) => src.endpoints[role]?.each !== undefined;
+  return [
+    ...due.filter((role) => sources.has(role)),
+    ...due.filter((role) => !sources.has(role) && !perItem(role)),
+    ...due.filter((role) => !sources.has(role) && perItem(role)),
+  ];
+}
+
 function valueAtPath(value: unknown, path: string): unknown {
   if (path === "$" || path === "") return value;
   let current = value;
@@ -643,12 +664,22 @@ async function runAttempt(
     /** The roles the network answered this poll, fetched or not modified. */
     const renewed = new Set<string>();
     try {
-      for (const role of due) {
+      for (const role of fetchOrder(src, due)) {
         let result: Awaited<ReturnType<typeof fetchEndpoint>>;
         try {
+          // A per-item role reads the ids of its source role: this poll's
+          // payload when the source was fetched, else the source's held one;
+          // with neither, fetchEndpoint fails the role.
+          const eachRole = src.endpoints[role]?.each?.role;
+          const heldSource = eachRole === undefined ? undefined : deps.roles?.payloads[eachRole];
+          const eachSource =
+            eachRole === undefined
+              ? undefined
+              : (fresh[eachRole] ?? (heldSource ? await heldBuffers(heldSource) : undefined));
           result = await fetchEndpoint(src, role, guardedFeedFetch(deps), {
             resolvers: domainOf(src).resolvers,
             env,
+            ...(eachSource ? { eachSource } : {}),
             ...(deps.impersonation ? { impersonation: deps.impersonation } : {}),
           });
         } catch (err) {
@@ -669,7 +700,22 @@ async function runAttempt(
           });
           continue;
         }
-        if (result.status === "partial" && holdsPayload(role)) {
+        // A per-item role's items are details of the records its source role
+        // lists, not partitions of one snapshot: the items that answered are
+        // this poll's payload, and the role is not asked again before its
+        // cadence. A held copy would only be older, and a poll that ended here
+        // would fetch every item again each tick and, holding nothing after a
+        // restart, publish nothing until every item answered at once.
+        const eachPartial = result.status === "partial" && src.endpoints[role]?.each !== undefined;
+        if (result.status === "partial" && eachPartial) {
+          const { failed, total } = result.partitions;
+          warnings.push(`${role}: ${failed}/${total} items failed (left out)`);
+          console.warn(`[ingest] ${src.id}: ${role}: ${failed}/${total} items failed, left out`, {
+            feed: src.id,
+            role,
+          });
+        }
+        if (result.status === "partial" && !eachPartial && holdsPayload(role)) {
           const { failed, total } = result.partitions;
           fallBack(role, `partial snapshot: ${failed}/${total} partitions failed`);
           continue;
@@ -696,7 +742,7 @@ async function runAttempt(
           });
           return { count: 0, durationMs: Date.now() - start, outcome: "missing_configuration" };
         }
-        if (result.status === "partial") {
+        if (result.status === "partial" && !eachPartial) {
           const { failed, total } = result.partitions;
           const error = `partial snapshot: ${failed}/${total} partitions failed — preserving last-good publication`;
           console.warn(`[ingest] ${src.id}: ${error}`);
@@ -715,6 +761,7 @@ async function runAttempt(
           fresh[role] = result.buffers;
           accepts.push(result.accept);
         }
+        if (result.status === "partial") fresh[role] = result.buffers;
         answered++;
         renewed.add(role);
         if (deps.roles) {

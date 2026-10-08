@@ -1,0 +1,42 @@
+{
+  "name": "@openconditions/cameras",
+  "version": "0.1.0",
+  "description": "Camera parsers for OpenConditions: traffic, weather and landscape camera registers into camera features with one view per direction or preset and per-view image readings, and the cameras ingest domain",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openconditions/datex2": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/model": "workspace:*",
+    "@openconditions/model-roads": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@openconditions/model-charging": "workspace:*",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

@@ -1,0 +1,48 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "tdx",
+      "product": "cameras",
+      "name": "TDX road CCTV",
+      "tier": "authoritative",
+      "format": "tdx",
+      // The freeway and highway CCTV lists, which TDX refreshes daily from
+      // the bureaus. Highway cameras carry a snapshot on the highway
+      // bureau's hosts; freeway cameras only an MJPEG stream. The city lists
+      // are left out: their streams are web player pages with no stills.
+      // Two calls a day on the account the charging feed uses, whose free
+      // tier allows 5 calls a minute.
+      "auth": {
+        "kind": "oauth2-client-credentials",
+        "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+        "clientId": "@tw-tdx.client_id",
+        "clientSecret": "@tw-tdx.client_secret",
+      },
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/CCTV/Freeway?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v2/Road/Traffic/CCTV/Highway?$top=10000&$format=JSON",
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 86400,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "CCTVs" },
+      "freshnessWindowSec": 172800,
+      "requestLimits": { "perMinute": 5 },
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+      "terms": {
+        "url": "https://tdx.transportdata.tw/term",
+        "reviewedAt": "2026-10-08",
+        "note": "Data under the Open Government Data License v1.0, redistribution allowed; the source must be labelled 交通部運輸資料流通服務平臺 (TDX) or the source agency. Access itself is paid by quota, shared with the charging feed on the same account. The stills sit on the highway bureau's hosts, which state no image licence.",
+      },
+      "homepage": "https://tdx.transportdata.tw",
+      "privacyUrl": "https://tdx.transportdata.tw/privacy",
+      "cameras": { "imageHosts": ["*.thb.gov.tw"] },
+    },
+  ],
+}

@@ -1,6 +1,12 @@
-import { buildRegistry, kernelModule, observationId } from "@openconditions/model";
+import {
+  buildRegistry,
+  kernelModule,
+  type LinkableFeature,
+  observationId,
+  proposeLink,
+} from "@openconditions/model";
 import { describe, expect, it } from "vitest";
-import { roadsModule } from "../module.js";
+import { CAMERA_SOURCE_FORMATS, roadsModule } from "../module.js";
 
 const registry = buildRegistry([kernelModule, roadsModule]);
 
@@ -116,9 +122,74 @@ describe("roads infrastructure", () => {
     ).toMatchObject({ ok: true });
   });
 
-  it("keeps sign displays as changes and camera images latest-only", () => {
+  it("keeps sign displays as changes and camera images as change-only without view history", () => {
     expect(registry.property("vms.display")?.retention).toEqual({ changeOnly: true, rawDays: 30 });
-    expect(registry.property("camera.image")?.retention).toEqual({ latestOnly: true });
+    expect(registry.property("camera.image")?.retention).toEqual({
+      changeOnly: true,
+      componentHistory: false,
+    });
+  });
+
+  it("roads contributes the camera formats once", () => {
+    const formats = registry.vocabulary("source_format")?.values ?? [];
+    for (const id of [
+      "windy",
+      "tfl",
+      "nps",
+      "tripcheck",
+      "digitraffic",
+      "ibi511",
+      "trafikverket",
+      "hk-td",
+    ]) {
+      expect(formats.filter((f) => f === id)).toHaveLength(1);
+    }
+    expect([...CAMERA_SOURCE_FORMATS]).toEqual(["windy", "tfl", "nps", "tripcheck"]);
+  });
+
+  it("two cameras of one feed never link; an OSM webcam at the pole does", () => {
+    const rules = registry.kind("feature", "camera")?.linking;
+    const cam = (
+      id: string,
+      lat: number,
+      source: string,
+      ids: { scheme: string; id: string; authority?: string }[],
+    ) =>
+      ({
+        id,
+        kind: "camera",
+        type: "traffic",
+        externalIds: ids,
+        location: {
+          geometry: { type: "Point", coordinates: [25.0, lat] },
+          fuzziness: "exact",
+        },
+        provenance: { sourceId: source },
+      }) as LinkableFeature;
+    const provider = (id: string) => ({
+      scheme: "provider",
+      id,
+      authority: "fi-digitraffic-cameras",
+    });
+    const a = cam("oc:feature:fi-digitraffic-cameras:C1", 60.0, "fi-digitraffic-cameras", [
+      provider("C1"),
+    ]);
+    const b = cam("oc:feature:fi-digitraffic-cameras:C2", 60.000045, "fi-digitraffic-cameras", [
+      provider("C2"),
+    ]);
+    expect(proposeLink(a, b, rules)).toBeUndefined();
+    const osm = cam("oc:feature:osm-cameras:node8", 60.00007, "osm-cameras", [
+      { scheme: "osm:node", id: "8" },
+    ]);
+    expect(proposeLink(a, osm, rules)?.status).toBe("accepted");
+  });
+
+  it("a webcam whose kind of view no one stated links with a typed camera; two typed ones must agree", () => {
+    const rules = registry.kind("feature", "camera")?.linking;
+    expect(rules?.typeCompatible?.("other", "weather")).toBe(true);
+    expect(rules?.typeCompatible?.("traffic", "other")).toBe(true);
+    expect(rules?.typeCompatible?.("weather", "weather")).toBe(true);
+    expect(rules?.typeCompatible?.("weather", "traffic")).toBe(false);
   });
 });
 

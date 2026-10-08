@@ -21,11 +21,14 @@ service's volume beside its raw and nightly archives.
 |---|---|---|---|---|
 | Buenos Aires road closures (cortes) | `ar-ba-cortes-events` | `AR_BA_CORTES_EVENTS_CLIENT_ID`, `AR_BA_CORTES_EVENTS_CLIENT_SECRET` | LicenseRef-CC-BY-2.5-AR | [BA transport API registration](https://api-transporte.buenosaires.gob.ar/registro) |
 | ASFINAG events (Austria) | `at-asfinag-events` | `AT_ASFINAG_EVENTS_USER`, `AT_ASFINAG_EVENTS_PASSWORD` | CC-BY-4.0 | [ASFINAG content portal](https://contentportal.asfinag.at/) |
-| Live Traffic NSW (New South Wales) | `au-nsw-livetraffic-events` | `AU_NSW_LIVETRAFFIC_EVENTS_API_KEY` | CC-BY-4.0 | [Register at Transport NSW Open Data](https://opendata.transport.nsw.gov.au/data/user/register) |
+| Live Traffic NSW (New South Wales) | `au-nsw-livetraffic-events` | `AU_NSW_TFNSW_API_KEY` | CC-BY-4.0 | [Get API key](https://opendata.transport.nsw.gov.au/) |
 | QLDTraffic (Queensland) | `au-qld-traffic-events` | `AU_QLD_TRAFFIC_EVENTS_API_KEY` | CC-BY-4.0 | [QLDTraffic](https://www.qldtraffic.qld.gov.au/) |
 | Freeway Travel Time (Victoria) | `au-vic-vicroads-flow` | `AU_VIC_TRANSPORTVIC_API_KEY` | CC-BY-4.0 | [Transport Victoria Open Data Portal](https://opendata.transport.vic.gov.au/) |
 | Planned road disruptions (Victoria) | `au-vic-transportvic-planned-events` | `AU_VIC_TRANSPORTVIC_API_KEY` | CC-BY-4.0 | [Transport Victoria Open Data Portal](https://opendata.transport.vic.gov.au/) |
 | Unplanned road disruptions (Victoria) | `au-vic-transportvic-unplanned-events` | `AU_VIC_TRANSPORTVIC_API_KEY` | CC-BY-4.0 | [Transport Victoria Open Data Portal](https://opendata.transport.vic.gov.au/) |
+| Ontario 511 (Canada) | `ca-on-511-events` | `CA_ON_511_API_KEY` | LicenseRef-OGL-ON | [Ontario 511 developer resources](https://511on.ca/developers/doc) |
+| Ontario 511 construction projects (Canada) | `ca-on-511-construction-events` | `CA_ON_511_API_KEY` | LicenseRef-OGL-ON | [Ontario 511 developer resources](https://511on.ca/developers/doc) |
+| Ontario 511 road conditions (Canada) | `ca-on-511-conditions` | `CA_ON_511_API_KEY` | LicenseRef-OGL-ON | [Ontario 511 developer resources](https://511on.ca/developers/doc) |
 | LVZ.NRW (Nordrhein-Westfalen) via Mobilithek | `de-nw-verkehr-events` | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_VERKEHR_EVENTS_SUBSCRIPTION_ID` | DL-DE-ZERO-2.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Düsseldorf (dmotion) via Mobilithek | `de-nw-duesseldorf-events` | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_DUESSELDORF_EVENTS_SUBSCRIPTION_ID` | DL-DE-ZERO-2.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
 | Köln via Mobilithek | `de-nw-koeln-events` | `MOBILITHEK_CERT`, `MOBILITHEK_KEY`, `DE_NW_KOELN_EVENTS_SUBSCRIPTION_ID` | DL-DE-ZERO-2.0 | [Mobilithek registration](https://mobilithek.info/registration-request) |
@@ -64,13 +67,11 @@ service's volume beside its raw and nightly archives.
 | LTA DataMall Traffic Incidents (Singapore) | `sg-lta-events` | `SG_LTA_API_KEY` | LicenseRef-Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | LTA DataMall Traffic Speed Bands (Singapore) | `sg-lta-flow` | `SG_LTA_API_KEY` | LicenseRef-Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | NAP Slovenia (promet.si) | `si-nap-events` | `SI_NAP_EVENTS_USER`, `SI_NAP_EVENTS_PASSWORD` | CC-BY-SA-4.0 | [Register at NAP Slovenia](https://www.nap.si/en/registration) |
-| 511NY (New York) | `us-ny-511-events` | `US_NY_511_API_KEY` | LicenseRef-511NY-DAA | [Create a 511NY account](https://511ny.org/my511/register) |
-| 511NY winter road conditions (New York) | `us-ny-511-conditions` | `US_NY_511_API_KEY` | LicenseRef-511NY-DAA | [Create a 511NY account](https://511ny.org/my511/register) |
 | OHGO travel delays (Ohio) | `us-oh-ohgo-flow` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO construction (Ohio) | `us-oh-ohgo-construction-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO incidents (Ohio) | `us-oh-ohgo-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | Tankerkönig fuel prices (Germany) | `de-tankerkoenig-fuel` | `DE_TANKERKOENIG_FUEL_API_KEY` | CC-BY-4.0 | [Request Tankerkönig API key](https://onboarding.tankerkoenig.de/) |
-| Transport for NSW Park&Ride | `au-nsw-tfnsw-parking` | `AU_NSW_TFNSW_PARKING_API_KEY` | CC-BY-4.0 | [Get API key](https://opendata.transport.nsw.gov.au/) |
+| Transport for NSW Park&Ride | `au-nsw-tfnsw-parking` | `AU_NSW_TFNSW_API_KEY` | CC-BY-4.0 | [Get API key](https://opendata.transport.nsw.gov.au/) |
 | DB BahnPark station parking | `de-db-bahnpark-parking` | `DE_DB_BAHNPARK_PARKING_CLIENT_ID`, `DE_DB_BAHNPARK_PARKING_API_KEY` | DL-DE-BY-2.0 | [Open DB API Marketplace](https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark) |
 | North East Travel Data car parks | `gb-eng-netraveldata-parking` | `GB_ENG_NETRAVELDATA_PARKING_USERNAME`, `GB_ENG_NETRAVELDATA_PARKING_PASSWORD` | OGL-UK-3.0 | [Register for NE Travel Data](https://www.netraveldata.co.uk/?page_id=9) |
 | Open Charge Map | `ocm-charging` | `OCM_CHARGING_API_KEY` | CC-BY-4.0 | [Get Open Charge Map API key](https://openchargemap.org/site/loginprovider/beginlogin) |
@@ -78,8 +79,22 @@ service's volume beside its raw and nightly archives.
 | NOBIL charging stations (Enova) | `no-nobil-charging` | `NO_NOBIL_CHARGING_API_KEY` | CC-BY-4.0 | [Request a NOBIL API key](https://info.nobil.no/api) |
 | LTA DataMall EV charging points | `sg-lta-charging` | `SG_LTA_CHARGING_ACCOUNT_KEY` | LicenseRef-Singapore-ODL-1.0 | [Register for an LTA DataMall AccountKey](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | NAP Slovenija charge points (Prometej IDACS) | `si-nap-charging` | `SI_NAP_CHARGING_USERNAME`, `SI_NAP_CHARGING_PASSWORD` | CC-BY-SA-4.0 | [Register with NAP Slovenija](https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba) |
-| TDX EV charging stations | `tw-tdx-charging` | `TW_TDX_CHARGING_CLIENT_ID`, `TW_TDX_CHARGING_CLIENT_SECRET` | OGDL-Taiwan-1.0 | [Register for a TDX platform account](https://tdx.transportdata.tw/register) |
+| TDX EV charging stations | `tw-tdx-charging` | `TW_TDX_CLIENT_ID`, `TW_TDX_CLIENT_SECRET` | OGDL-Taiwan-1.0 | [Register for a TDX platform account](https://tdx.transportdata.tw/register) |
 | Alternative Fuel Stations, electric charging (AFDC) | `us-afdc-charging` | `US_AFDC_CHARGING_API_KEY` | LicenseRef-NLR-Developer-Network-Terms | [Sign up for an NREL API key](https://developer.nlr.gov/signup/) |
+| Live Traffic NSW cameras | `au-nsw-livetraffic-cameras` | `AU_NSW_TFNSW_API_KEY` | CC-BY-4.0 | [Get API key](https://opendata.transport.nsw.gov.au/) |
+| Ontario 511 cameras (Canada) | `ca-on-511-cameras` | `CA_ON_511_API_KEY` | LicenseRef-OGL-ON | [Ontario 511 developer resources](https://511on.ca/developers/doc) |
+| Windy webcams | `windy-cameras` | `WINDY_CAMERAS_API_KEY` | NOASSERTION | [Get a Windy Webcams API key](https://api.windy.com/keys) |
+| Trafikverket traffic cameras | `se-trafikverket-cameras` | `SE_TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
+| TDX road CCTV | `tw-tdx-cameras` | `TW_TDX_CLIENT_ID`, `TW_TDX_CLIENT_SECRET` | OGDL-Taiwan-1.0 | [Register for a TDX platform account](https://tdx.transportdata.tw/register) |
+| National Park Service webcams | `us-nps-cameras` | `US_NPS_CAMERAS_API_KEY` | LicenseRef-US-Gov-Public-Domain | [Get an NPS API key](https://www.nps.gov/subjects/developer/get-started.htm) |
+| 511GA cameras (Georgia) | `us-ga-511-cameras` | `US_GA_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://511ga.org/developers/doc) |
+| AZ511 cameras (Arizona) | `us-az-511-cameras` | `US_AZ_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://az511.com/developers/doc) |
+| Idaho 511 cameras | `us-id-511-cameras` | `US_ID_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://511.idaho.gov/developers/doc) |
+| UDOT Traffic cameras (Utah) | `us-ut-511-cameras` | `US_UT_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://udottraffic.utah.gov/developers/doc) |
+| 511LA cameras (Louisiana) | `us-la-511-cameras` | `US_LA_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://www.511la.org/developers/doc) |
+| ODOT TripCheck cameras (Oregon) | `us-or-tripcheck-cameras` | `US_OR_TRIPCHECK_CAMERAS_API_KEY` | LicenseRef-ODOT-TripCheck | [ODOT API portal: TripCheck Data](https://apiportal.odot.state.or.us/product#product=tripcheck-api-data) |
+| 511NY (New York) (disabled) | `us-ny-511-events` | `US_NY_511_API_KEY` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
+| 511NY winter road conditions (New York) (disabled) | `us-ny-511-conditions` | `US_NY_511_API_KEY` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
 
 ## Settings
 
@@ -87,4 +102,4 @@ Not credentials: where the instance reaches a service. Each has a default.
 
 | Env var | Under OpenMapX | Default | Read by | What |
 |---|---|---|---|---|
-| `OVERPASS_URL` | `SERVICE_OPENCONDITIONS_INGEST_OVERPASS_URL` | `https://overpass-api.de` | `osm-fuel`, `osm-parking`, `osm-charging`, `osm-import`, `osm-maxspeed` | Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS. |
+| `OVERPASS_URL` | `SERVICE_OPENCONDITIONS_INGEST_OVERPASS_URL` | `https://overpass-api.de` | `osm-fuel`, `osm-parking`, `osm-charging`, `osm-cameras`, `osm-import`, `osm-maxspeed` | Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS. |

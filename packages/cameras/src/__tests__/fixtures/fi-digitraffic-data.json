@@ -1,0 +1,28 @@
+{
+  "dataUpdatedTime": "2026-10-08T07:15:21Z",
+  "stations": [
+    {
+      "id": "C01503",
+      "dataUpdatedTime": "2026-10-08T07:14:11Z",
+      "presets": [
+        { "id": "C0150301", "measuredTime": "2026-10-08T07:13:44Z" },
+        { "id": "C0150302", "measuredTime": "2026-10-08T07:14:11Z" },
+        { "id": "C0150309", "measuredTime": "2026-10-08T07:13:57Z" }
+      ]
+    },
+    {
+      "id": "C01539",
+      "dataUpdatedTime": "2026-01-06T09:54:22Z",
+      "presets": [{ "id": "C0153900", "measuredTime": "2026-01-06T09:54:22Z" }]
+    },
+    {
+      "id": "C01632",
+      "dataUpdatedTime": "2026-10-08T07:12:34Z",
+      "presets": [
+        { "id": "C0163201", "measuredTime": "2016-12-22T09:12:27Z" },
+        { "id": "C0163202", "measuredTime": "2026-10-08T07:12:34Z" },
+        { "id": "C0163209", "measuredTime": "2016-12-22T09:12:15Z" }
+      ]
+    }
+  ]
+}

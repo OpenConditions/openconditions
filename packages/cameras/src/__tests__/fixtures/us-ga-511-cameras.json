@@ -1,0 +1,44 @@
+[
+  {
+    "Id": 186,
+    "Source": "SKYLINE",
+    "SourceId": "591",
+    "Roadway": "SR154",
+    "Direction": "Westbound",
+    "Latitude": 33.698067,
+    "Longitude": -84.44784,
+    "Location": "GDOT-0054: SR154 W at StantonRd MM 25.7 (Fulton)",
+    "SortOrder": 0,
+    "Views": [
+      {
+        "Id": 186,
+        "Url": "https://511ga.org/map/Cctv/186",
+        "Status": "Enabled",
+        "Description": "GDOT-0054: SR154 W at StantonRd MM 25.7 (Fulton)",
+        "SortId": 0
+      }
+    ],
+    "Name": "GDOT-CCTV-0054"
+  },
+  {
+    "Id": 187,
+    "Source": "SKYLINE",
+    "SourceId": "592",
+    "Roadway": "SR141",
+    "Direction": "Southbound",
+    "Latitude": 33.935137,
+    "Longitude": -84.256115,
+    "Location": "GDOT-0596: SR141 S before WintersChapelRd MM 0.6 (Gwinnett)",
+    "SortOrder": 0,
+    "Views": [
+      {
+        "Id": 187,
+        "Url": "https://511ga.org/map/Cctv/187",
+        "Status": "Enabled",
+        "Description": "GDOT-0596: SR141 S before WintersChapelRd MM 0.6 (Gwinnett)",
+        "SortId": 0
+      }
+    ],
+    "Name": "GDOT-CCTV-0596"
+  }
+]

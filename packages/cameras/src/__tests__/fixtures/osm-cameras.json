@@ -1,0 +1,179 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-08T06:45:58Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 8729244903,
+      "lat": 47.3136846,
+      "lon": 11.4517434,
+      "tags": {
+        "camera:angle": "0",
+        "camera:direction": "140",
+        "camera:mount": "wall",
+        "camera:type": "fixed",
+        "contact:webcam": "https://mdw.ag/camglungezer/thaureralm.jpg",
+        "description": "https://thaureralm.at/webcam/",
+        "height": "12",
+        "man_made": "surveillance",
+        "name": "Thaurer Alm Weather camera",
+        "surveillance": "webcam",
+        "surveillance:type": "camera"
+      }
+    },
+    {
+      "type": "node",
+      "id": 9569407667,
+      "lat": 47.264167,
+      "lon": 11.384111,
+      "tags": {
+        "camera:direction": "250",
+        "camera:type": "fixed",
+        "contact:webcam": "https://www.foto-webcam.eu/webcam/innsbruck-uni-west/current/1920.jpg",
+        "contact:website": "https://www.foto-webcam.eu/webcam/innsbruck-uni-west/",
+        "description": "Universität Innsbruck / Blick nach Westen",
+        "ele": "610",
+        "man_made": "surveillance",
+        "name": "UNI Innsbruck West",
+        "surveillance": "public",
+        "surveillance:type": "camera"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11351370844,
+      "lat": 47.2572728,
+      "lon": 11.3460702,
+      "tags": {
+        "camera:direction": "0 - 360",
+        "contact:webcam": "https://innsbruck-airport.panomax.com/",
+        "man_made": "surveillance",
+        "surveillance": "webcam",
+        "surveillance:type": "camera"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11842260461,
+      "lat": 47.2219946,
+      "lon": 11.4266569,
+      "tags": {
+        "camera:direction": "190",
+        "camera:mount": "roof",
+        "camera:type": "fixed",
+        "contact:webcam": "https://patscherkofel.panomax.com/talstation",
+        "man_made": "surveillance",
+        "surveillance": "webcam",
+        "surveillance:type": "camera"
+      }
+    },
+    {
+      "type": "node",
+      "id": 282834988,
+      "lat": 47.4660357,
+      "lon": 10.1050506,
+      "tags": {
+        "addr:country": "DE",
+        "addr:housenumber": "5",
+        "addr:street": "Dorf",
+        "charging_station": "yes",
+        "check_date": "2024-10-05",
+        "contact:webcam": "https://www.hotel-hubertus.de/webcam",
+        "dog": "yes",
+        "name": "Hubertus",
+        "phone": "+49 8328 9200",
+        "rooms": "66",
+        "source": "survey",
+        "tourism": "hotel",
+        "website": "https://www.hotel-hubertus.de/",
+        "wheelchair": "yes"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11982041643,
+      "lat": 47.5278145,
+      "lon": 12.0550684,
+      "tags": {
+        "camera:angle": "34;210",
+        "camera:mount": "street_lamp",
+        "camera:type": "fixed",
+        "contact:webcam": "https://www.tirol.gv.at/verkehr/strassenbau-und-strassenerhaltung/webcams/webcams-bezirk-kufstein/l-211-unterinntalstrasse-1-teil/",
+        "description": "Blickrichtung Kufstein bzw Wörgl",
+        "highway": "street_lamp",
+        "man_made": "surveillance",
+        "operator": "Land Tirol",
+        "surveillance": "public",
+        "surveillance:type": "camera",
+        "surveillance:zone": "traffic"
+      }
+    },
+    {
+      "type": "way",
+      "id": 117881300,
+      "center": {
+        "lat": 48.2613098,
+        "lon": 11.6640858
+      },
+      "tags": {
+        "alt_name": "Wetterturm",
+        "building": "tower",
+        "contact:webcam": "https://www.meteo.physik.uni-muenchen.de/dokuwiki/lib/exe/fetch.php?cache=&media=garching.jpg",
+        "height": "62",
+        "local_name": "TUrM",
+        "man_made": "tower",
+        "name": "Oskar von Miller TUrM",
+        "name:etymology": "Oskar von Miller",
+        "name:etymology:wikidata": "Q76456",
+        "name:etymology:wikipedia": "de:Oskar von Miller",
+        "start_date": "2010",
+        "tower:construction": "freestanding",
+        "tower:type": "monitoring",
+        "url:measurements": "https://www.meteo.physik.uni-muenchen.de/dokuwiki/doku.php?id=wetter:garching:neu",
+        "wikidata": "Q2033514",
+        "wikipedia": "de:Oskar-von-Miller-Turm"
+      }
+    },
+    {
+      "type": "way",
+      "id": 127912350,
+      "center": {
+        "lat": 48.6307821,
+        "lon": 9.4266436
+      },
+      "tags": {
+        "aeroway": "aerodrome",
+        "contact:webcam": "https://wolf-hirth.de/webcams/cam5_org_HW.jpg",
+        "ele": "352",
+        "icao": "EDST",
+        "name": "Fluggelände Hahnweide",
+        "name:de": "Fluggelände Hahnweide",
+        "name:en": "Kirchheim-Hahnweide Airfield",
+        "website": "http://www.hahnweide.com/",
+        "wikidata": "Q1433618",
+        "wikipedia": "de:Flugplatz Hahnweide"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1315949605,
+      "center": {
+        "lat": 46.4943356,
+        "lon": 13.720724
+      },
+      "tags": {
+        "area": "yes",
+        "artist_name": "Matej Blenkuš, Andrej Bizjak",
+        "artwork_type": "sculpture",
+        "contact:webcam": "https://www.drsc.si/kamere/KamSlike/Ratece/slike/Rat1_0001.jpg",
+        "material": "steel",
+        "start_date": "2018",
+        "tourism": "artwork"
+      }
+    }
+  ]
+}

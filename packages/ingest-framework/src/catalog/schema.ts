@@ -130,6 +130,19 @@ export const endpointSchema = z
         { path: ["pattern"], message: "pattern is not a valid regular expression" },
       )
       .optional(),
+    /**
+     * Fetched once per id read from another role's payload: `records` is the
+     * path to that payload's list and `field` the id within each record. The
+     * `url` names the id as `{item}`.
+     */
+    each: z
+      .object({
+        role: z.string().min(1),
+        records: z.string().min(1),
+        field: z.string().min(1),
+      })
+      .strict()
+      .optional(),
     impersonate: z.boolean().optional(),
     gzip: z.boolean().optional(),
     decoder: z.string().min(1).optional(),
@@ -137,6 +150,24 @@ export const endpointSchema = z
   })
   .strict()
   .superRefine((e, ctx) => {
+    if (e.each) {
+      if (e.url === undefined || !e.url.includes("{item}")) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["each"],
+          message: "each needs a url that contains {item}",
+        });
+      }
+      for (const field of ["urls", "expand", "follow", "pagination"] as const) {
+        if (e[field] !== undefined) {
+          ctx.addIssue({
+            code: "custom",
+            path: [field],
+            message: `each cannot be combined with ${field}`,
+          });
+        }
+      }
+    }
     const sources = [e.url, e.urls, e.reference].filter((s) => s !== undefined).length;
     if (sources !== 1) {
       ctx.addIssue({
@@ -147,7 +178,7 @@ export const endpointSchema = z
     if (e.reference && !e.decoder) {
       ctx.addIssue({ code: "custom", path: ["decoder"], message: "reference requires a decoder" });
     }
-    if (e.fanout && !e.urls && !e.expand) {
+    if (e.fanout && !e.urls && !e.expand && !e.each) {
       ctx.addIssue({ code: "custom", path: ["fanout"], message: "fanout requires urls or expand" });
     }
     if (e.follow && e.pagination) {

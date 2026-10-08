@@ -3492,6 +3492,42 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a623-warning",
+    "name": "Autobahn A623 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a623-closure",
+    "name": "Autobahn A623 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a623-roadworks",
+    "name": "Autobahn A623 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a640-warning",
     "name": "Autobahn A640 — warning",
     "endpoints": {

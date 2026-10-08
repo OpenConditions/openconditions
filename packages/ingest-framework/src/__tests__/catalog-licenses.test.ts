@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { LICENSES, licenseInfo } from "../catalog/licenses.js";
 
 describe("licence registry", () => {
-  it("holds the twenty-eight licences in use", () => {
-    expect(LICENSES).toHaveLength(28);
+  it("holds the thirty-one licences in use", () => {
+    expect(LICENSES).toHaveLength(31);
   });
 
   it("every licence id is an SPDX id, LicenseRef- or NOASSERTION", () => {

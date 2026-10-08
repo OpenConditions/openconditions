@@ -150,28 +150,10 @@
               "cadenceSec": 300
             }
           },
-          "credentials": {
-            "api_key": {
-              "title": "Transport for NSW Open Data API key",
-              "description": "An Open Data Hub API token subscribed to the Car Park API.",
-              "setup": {
-                "url": "https://opendata.transport.nsw.gov.au/",
-                "urlLabel": "Get API key",
-                "steps": [
-                  "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
-                  "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
-                  "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
-                  "Paste the generated token here (sent as the 'apikey' authorization header)."
-                ],
-                "cost": "Free",
-                "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy."
-              }
-            }
-          },
           "auth": {
             "kind": "header-key",
             "header": "Authorization",
-            "credential": "api_key",
+            "credential": "@au-nsw-tfnsw.api_key",
             "valuePrefix": "apikey "
           },
           "freshnessWindowSec": 3600,
@@ -1407,6 +1389,24 @@
     },
     "credentials": {
       "credentials": {
+        "au-nsw-tfnsw": {
+          "api_key": {
+            "title": "Transport for NSW Open Data API key (Australia)",
+            "description": "An Open Data Hub API token, sent as the 'apikey' authorization header. Serves the Live Traffic hazards, the Park&Ride car parks and the Live Traffic cameras.",
+            "setup": {
+              "url": "https://opendata.transport.nsw.gov.au/",
+              "urlLabel": "Get API key",
+              "steps": [
+                "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+                "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+                "In the data catalogue, open the 'Car park API' and 'Live Traffic Cameras API' datasets and subscribe each to your application; the token alone authorises the live-hazard endpoints.",
+                "Paste the generated token here (sent as the 'apikey' authorization header)."
+              ],
+              "cost": "Free",
+              "notes": "CC-BY-4.0; attribution \"Transport for NSW\". One token for the hazards, car-park and camera feeds."
+            }
+          }
+        },
         "overpass": {
           "url": {
             "title": "Overpass URL",
@@ -1604,28 +1604,10 @@
           "cadenceSec": 300
         }
       },
-      "credentials": {
-        "api_key": {
-          "title": "Transport for NSW Open Data API key",
-          "description": "An Open Data Hub API token subscribed to the Car Park API.",
-          "setup": {
-            "url": "https://opendata.transport.nsw.gov.au/",
-            "urlLabel": "Get API key",
-            "steps": [
-              "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
-              "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
-              "In the data catalogue, open the 'Car park API' dataset and subscribe it to your application.",
-              "Paste the generated token here (sent as the 'apikey' authorization header)."
-            ],
-            "cost": "Free",
-            "notes": "Transport for NSW (Australia). The Car Park API provides real-time Park&Ride / Sydney Metro car-park occupancy."
-          }
-        }
-      },
       "auth": {
         "kind": "header-key",
         "header": "Authorization",
-        "credential": "api_key",
+        "credential": "@au-nsw-tfnsw.api_key",
         "valuePrefix": "apikey "
       },
       "freshnessWindowSec": 3600,

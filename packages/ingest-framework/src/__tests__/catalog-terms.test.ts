@@ -75,6 +75,21 @@ describe("effective rights", () => {
     }
   });
 
+  it("the camera licences resolve open", () => {
+    for (const id of [
+      "LicenseRef-TfL-Transport-Data-Service",
+      "LicenseRef-Caltrans-Conditions-of-Use",
+      "LicenseRef-ODOT-TripCheck",
+    ]) {
+      expect(isRestricted(effectiveRights(id)), id).toBe(false);
+    }
+    expect(effectiveRights("LicenseRef-Caltrans-Conditions-of-Use").attributionRequired).toBe(
+      false,
+    );
+    expect(effectiveRights("LicenseRef-TfL-Transport-Data-Service").attributionRequired).toBe(true);
+    expect(effectiveRights("LicenseRef-ODOT-TripCheck").attributionRequired).toBe(true);
+  });
+
   it("licence lookup is exact", () => {
     expect(() => effectiveRights("dl-de/by-2-0")).toThrow(/unknown licence/);
     expect(() => effectiveRights("cc-by-4.0")).toThrow(/unknown licence/);

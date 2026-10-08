@@ -94,11 +94,21 @@ function undecodable(buffer: Buffer): string | undefined {
   }
 }
 
-/** The roles a feed's format parses itself; the others are reference data. */
+/**
+ * The roles a feed's format parses itself (the others are reference data),
+ * a role a per-item endpoint reads its ids from before the rest, as the
+ * service fetches them.
+ */
 function dataRoles(feed: CatalogFeed): string[] {
-  return Object.entries(feed.endpoints)
+  const roles = Object.entries(feed.endpoints)
     .filter(([, endpoint]) => endpoint.decoder === undefined)
     .map(([role]) => role);
+  const sources = new Set(
+    Object.values(feed.endpoints).flatMap((endpoint) =>
+      endpoint.each ? [endpoint.each.role] : [],
+    ),
+  );
+  return [...roles.filter((r) => sources.has(r)), ...roles.filter((r) => !sources.has(r))];
 }
 
 async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promise<FeedCheck> {
@@ -166,12 +176,15 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
     : undefined;
   const payloads: Record<string, readonly Buffer[]> = {};
   for (const role of dataRoles(feed)) {
+    const eachRole = feed.endpoints[role]?.each?.role;
+    const eachSource = eachRole === undefined ? undefined : payloads[eachRole];
     try {
       const fetched = await fetchEndpoint(feed, role, baseFetch, {
         state: createFetchState(),
         resolvers: domainOf(feed).resolvers,
         env,
         ...(cell ? { cell } : {}),
+        ...(eachSource ? { eachSource } : {}),
       });
       if (fetched.status === "no-endpoint") {
         return result("skipped", `endpoint ${role} resolves to no URL (missing configuration)`);
@@ -323,5 +336,13 @@ export async function runFeedsCheck(
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  process.exitCode = await runFeedsCheck(process.argv.slice(2));
+  // A paced feed waits for its turn on timers that never hold a stopping
+  // service open; this check has nothing else running, so it holds the
+  // process open itself until every feed is checked.
+  const keepAlive = setInterval(() => {}, 60_000);
+  try {
+    process.exitCode = await runFeedsCheck(process.argv.slice(2));
+  } finally {
+    clearInterval(keepAlive);
+  }
 }

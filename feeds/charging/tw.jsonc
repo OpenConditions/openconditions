@@ -12,35 +12,15 @@
       // 30, so every URL sets it. The free tier allows about 4,500 calls a
       // month at 5 a minute, and every request is paced to that rate: the
       // daily stations and rates (22 calls each, about 4.5 minutes per role)
-      // fit it, and so do the live states every six hours. An operator on
-      // the paid Bronze tier lowers the `status` cadence through the local
-      // catalogue layer.
-      "credentials": {
-        "client_id": {
-          "title": "TDX client id",
-          "setup": {
-            "url": "https://tdx.transportdata.tw/register",
-            "urlLabel": "Register for a TDX platform account",
-            "steps": [
-              "Go to tdx.transportdata.tw/register and create a free platform member account.",
-              "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
-              "Create a Client Id / Client Secret pair (up to 3 per account).",
-              "Copy both values — the Client Secret is only shown once.",
-            ],
-            "cost": "Free",
-            "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs.",
-          },
-        },
-        "client_secret": {
-          "title": "TDX client secret",
-          "description": "The secret of the same Client Id / Client Secret pair.",
-        },
-      },
+      // fit it, and so do the live states every six hours. The account's
+      // quota is shared with `tw-tdx-cameras`, whose two daily calls leave
+      // the total near 4,000 calls a month. An operator on the paid Bronze
+      // tier lowers the `status` cadence through the local catalogue layer.
       "auth": {
         "kind": "oauth2-client-credentials",
         "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
-        "clientId": "client_id",
-        "clientSecret": "client_secret",
+        "clientId": "@tw-tdx.client_id",
+        "clientSecret": "@tw-tdx.client_secret",
       },
       "endpoints": {
         "sites": {

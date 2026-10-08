@@ -1,0 +1,79 @@
+{
+  "RESPONSE": {
+    "RESULT": [
+      {
+        "Camera": [
+          {
+            "Active": true,
+            "ContentType": "Jpeg",
+            "CountyNo": 1,
+            "Deleted": false,
+            "Description": "Kameran är placerad på Arlandaleden vid trafikplats Nybygget och är riktad mot Arlanda flygplats.",
+            "Direction": "40",
+            "HasFullSizePhoto": true,
+            "HasSketchImage": true,
+            "IconId": "trafficCamera",
+            "Id": "SE_STA_CAMERA_Orion_386",
+            "Location": "Kameran är placerad på Arlandaleden vid trafikplats Nybygget och är riktad mot Arlanda flygplats.",
+            "Name": "Tpl Nybygget",
+            "Type": "Trafikflödeskamera",
+            "PhotoTime": "2026-08-29T17:24:30.000+02:00",
+            "PhotoUrl": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626507.jpg",
+            "PhotoUrlFullsize": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626507_fullsize.jpg",
+            "PhotoUrlThumbnail": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626507_thumbnail.jpg",
+            "PhotoUrlSketch": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626507_sketch.jpg",
+            "Status": "videoOrImagesAvailable",
+            "Geometry": {
+              "SWEREF99TM": "POINT (664738 6613645)",
+              "WGS84": "POINT (17.921395 59.62833)"
+            },
+            "ModifiedTime": "2026-08-29T15:25:34.553Z"
+          },
+          {
+            "Active": true,
+            "ContentType": "Jpeg",
+            "CountyNo": 1,
+            "Deleted": false,
+            "Description": "Kameran är riktad söderut längs E4.",
+            "Direction": "180",
+            "HasFullSizePhoto": false,
+            "HasSketchImage": false,
+            "IconId": "trafficCamera",
+            "Id": "SE_STA_CAMERA_Orion_387",
+            "Location": "E4 Rotebro",
+            "Name": "Rotebro",
+            "Type": "Trafikflödeskamera",
+            "PhotoTime": "2026-08-29T17:22:10.000+02:00",
+            "PhotoUrl": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626508.jpg",
+            "PhotoUrlThumbnail": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626508_thumbnail.jpg",
+            "Status": "videoOrImagesAvailable",
+            "Geometry": {
+              "SWEREF99TM": "POINT (665012 6600481)",
+              "WGS84": "POINT (17.9029 59.51146)"
+            },
+            "ModifiedTime": "2026-08-29T15:22:40.120Z"
+          },
+          {
+            "Active": false,
+            "ContentType": "Jpeg",
+            "CountyNo": 1,
+            "Deleted": false,
+            "Direction": "",
+            "HasFullSizePhoto": false,
+            "HasSketchImage": false,
+            "IconId": "trafficCamera",
+            "Id": "SE_STA_CAMERA_Orion_388",
+            "Name": "Häggvik",
+            "Type": "Trafikflödeskamera",
+            "PhotoUrl": "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera/TrafficFlowCamera_39626509.jpg",
+            "Geometry": {
+              "SWEREF99TM": "POINT (665230 6597060)",
+              "WGS84": "POINT (17.9301 59.4428)"
+            },
+            "ModifiedTime": "2026-08-29T15:20:00.000Z"
+          }
+        ]
+      }
+    ]
+  }
+}

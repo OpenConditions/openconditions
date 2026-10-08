@@ -8,25 +8,10 @@
       "name": "Live Traffic NSW (New South Wales)",
       "tier": "authoritative",
       "format": "geojson",
-      "credentials": {
-        "api_key": {
-          "title": "Live Traffic NSW API key (Australia)",
-          "setup": {
-            "url": "https://opendata.transport.nsw.gov.au/data/user/register",
-            "urlLabel": "Register at Transport NSW Open Data",
-            "steps": [
-              "Register at opendata.transport.nsw.gov.au/data/user/register.",
-              "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints.",
-            ],
-            "cost": "Free",
-            "notes": "CC-BY-4.0; attribution \"Transport for NSW\".",
-          },
-        },
-      },
       "auth": {
         "kind": "header-key",
         "header": "Authorization",
-        "credential": "api_key",
+        "credential": "@au-nsw-tfnsw.api_key",
         "valuePrefix": "apikey ",
       },
       "endpoints": {

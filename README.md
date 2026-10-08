@@ -38,8 +38,14 @@ Road domain, v0.1:
   Lietuva; OICP from BFE; DATEX II from DGT and NAP Slovenija; the Bundesnetzagentur register, the French IRVE
   base, AFDC for the US and Canada, NOBIL for Norway and Sweden, and more), Open Charge Map and OpenStreetMap,
   the last two read on demand.
+- **Cameras domain:** traffic, weather and landscape cameras with their views and each view's latest still
+  from 20 feeds: Digitraffic (FI), Trafikverket (SE), Statens vegvesen (NO), Vegagerðin (IS), DGT (ES),
+  Ontario 511 (CA), the Transport Department (HK), Live Traffic NSW (AU), TDX (TW), TfL (GB), Caltrans, the
+  National Park Service, ODOT TripCheck and five IBI 511 states (US), and Windy and OpenStreetMap, the last two
+  read on demand. Each feed whose records carry proxyable stills declares the hosts they come from, which
+  `GET /sources` serves for a consumer's image proxy (`osm-cameras` and `us-nps-cameras` declare none), and an OpenStreetMap webcam links with the publisher's camera it stands beside.
 - **OpenMapX integration:** ships as an installable extension (the ingest and contributions services, serving
-  the roads, fuel, parking and charging domains); OpenMapX reads them through its built-in OpenConditions integration.
+  the roads, fuel, parking, charging and cameras domains); OpenMapX reads them through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
   See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
@@ -126,10 +132,11 @@ pnpm openmapx ext install openconditions
 
 This registers both services (ingest and contributions API) at their pinned tag and starts them. It installs no
 integration code: OpenMapX's built-in `openconditions` integration reads them once `OPENCONDITIONS_URL` (and, for
-Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations and for the share-alike parking and charging
-feeds, `OPENCONDITIONS_OPERATOR_TOKEN`) is set in OpenMapX's `.env`. It feeds the roads domain (conditions
-overlay, routing avoidance, live traffic), the fuel domain (fuel stations and prices), the parking domain (car
-parks and their occupancy) and the charging domain (charging sites, charge-point status and tariffs).
+Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, for the share-alike parking and charging
+feeds and for the Windy, OpenStreetMap and US 511 cameras, `OPENCONDITIONS_OPERATOR_TOKEN`) is set in OpenMapX's
+`.env`. It feeds the roads domain (conditions overlay, routing avoidance, live traffic), the fuel domain (fuel
+stations and prices), the parking domain (car parks and their occupancy), the charging domain (charging sites,
+charge-point status and tariffs) and the cameras domain (the webcam layer and its stills).
 
 OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
 configuration is `configSchema` fields: set the database URL (and the contributions API's grant secret and
@@ -142,8 +149,9 @@ only in the admin form, so keep all of them in one place). Settings saved in the
 [services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
 
 See OpenMapX's _Building an external extension_ guide for the full flow. OpenMapX's built-in OpenConditions
-integration reads roads situations, routing evidence, fuel features, parking sites and charging sites from the
-ingest's API into the map overlay, routing avoidance, fuel search, the parking layer and the EV charging layer. A request carrying `Authorization: Bearer
+integration reads roads situations, routing evidence, fuel features, parking sites, charging sites and cameras
+from the ingest's API into the map overlay, routing avoidance, fuel search, the parking layer, the EV charging
+layer and the webcam layer. A request carrying `Authorization: Bearer
 <OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
 public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
 `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).

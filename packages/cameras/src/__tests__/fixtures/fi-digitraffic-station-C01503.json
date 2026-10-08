@@ -1,0 +1,64 @@
+{
+  "type": "Feature",
+  "id": "C01503",
+  "geometry": { "type": "Point", "coordinates": [23.99616, 60.05374, 0.0] },
+  "properties": {
+    "id": "C01503",
+    "name": "kt51_Inkoo",
+    "cameraType": "BOSCH",
+    "nearestWeatherStationId": 1013,
+    "annualMaintenanceTime": null,
+    "collectionInterval": 600,
+    "collectionStatus": "GATHERING",
+    "country": null,
+    "dataUpdatedTime": "2026-10-08T03:25:35Z",
+    "liviId": "Livi1089648",
+    "municipality": "Inkoo",
+    "municipalityCode": 149,
+    "names": { "fi": "Tie 51 Inkoo", "sv": "Väg 51 Ingå", "en": "Road 51 Inkoo" },
+    "presets": [
+      {
+        "id": "C0150301",
+        "presentationName": "Inkooseen",
+        "inCollection": true,
+        "resolution": "1280x720",
+        "directionCode": "1",
+        "imageUrl": "https://weathercam.digitraffic.fi/C0150301.jpg",
+        "direction": "INCREASING_DIRECTION"
+      },
+      {
+        "id": "C0150302",
+        "presentationName": "Hankoon",
+        "inCollection": true,
+        "resolution": "1280x720",
+        "directionCode": "2",
+        "imageUrl": "https://weathercam.digitraffic.fi/C0150302.jpg",
+        "direction": "DECREASING_DIRECTION"
+      },
+      {
+        "id": "C0150309",
+        "presentationName": "Tienpinta",
+        "inCollection": true,
+        "resolution": "1280x720",
+        "directionCode": "9",
+        "imageUrl": "https://weathercam.digitraffic.fi/C0150309.jpg",
+        "direction": "SPECIAL_DIRECTION"
+      }
+    ],
+    "province": "Uusimaa",
+    "provinceCode": 1,
+    "purpose": "keli",
+    "repairMaintenanceTime": null,
+    "roadAddress": {
+      "roadNumber": 51,
+      "roadSection": 14,
+      "distanceFromRoadSectionStart": 422,
+      "carriageway": "ONE_CARRIAGEWAY",
+      "side": "UNKNOWN",
+      "contractArea": "",
+      "contractAreaCode": 279
+    },
+    "startTime": "2001-08-01T00:00:00Z",
+    "state": null
+  }
+}

@@ -1240,32 +1240,11 @@
               "cadenceSec": 21600
             }
           },
-          "credentials": {
-            "client_id": {
-              "title": "TDX client id",
-              "setup": {
-                "url": "https://tdx.transportdata.tw/register",
-                "urlLabel": "Register for a TDX platform account",
-                "steps": [
-                  "Go to tdx.transportdata.tw/register and create a free platform member account.",
-                  "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
-                  "Create a Client Id / Client Secret pair (up to 3 per account).",
-                  "Copy both values — the Client Secret is only shown once."
-                ],
-                "cost": "Free",
-                "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs."
-              }
-            },
-            "client_secret": {
-              "title": "TDX client secret",
-              "description": "The secret of the same Client Id / Client Secret pair."
-            }
-          },
           "auth": {
             "kind": "oauth2-client-credentials",
             "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
-            "clientId": "client_id",
-            "clientSecret": "client_secret"
+            "clientId": "@tw-tdx.client_id",
+            "clientSecret": "@tw-tdx.client_secret"
           },
           "freshnessWindowSec": 43200,
           "requestLimits": {
@@ -1343,6 +1322,27 @@
             "title": "Overpass URL",
             "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
             "default": "https://overpass-api.de"
+          }
+        },
+        "tw-tdx": {
+          "client_id": {
+            "title": "TDX client id",
+            "setup": {
+              "url": "https://tdx.transportdata.tw/register",
+              "urlLabel": "Register for a TDX platform account",
+              "steps": [
+                "Go to tdx.transportdata.tw/register and create a free platform member account.",
+                "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
+                "Create a Client Id / Client Secret pair (up to 3 per account).",
+                "Copy both values — the Client Secret is only shown once."
+              ],
+              "cost": "Free",
+              "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station, ChargingRate and ConnectorLiveStatus APIs and the road CCTV lists. The free tier's quota (about 4,500 calls a month at 5 a minute) is the account's, shared by both feeds."
+            }
+          },
+          "client_secret": {
+            "title": "TDX client secret",
+            "description": "The secret of the same Client Id / Client Secret pair."
           }
         }
       }
@@ -2953,32 +2953,11 @@
           "cadenceSec": 21600
         }
       },
-      "credentials": {
-        "client_id": {
-          "title": "TDX client id",
-          "setup": {
-            "url": "https://tdx.transportdata.tw/register",
-            "urlLabel": "Register for a TDX platform account",
-            "steps": [
-              "Go to tdx.transportdata.tw/register and create a free platform member account.",
-              "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
-              "Create a Client Id / Client Secret pair (up to 3 per account).",
-              "Copy both values — the Client Secret is only shown once."
-            ],
-            "cost": "Free",
-            "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs."
-          }
-        },
-        "client_secret": {
-          "title": "TDX client secret",
-          "description": "The secret of the same Client Id / Client Secret pair."
-        }
-      },
       "auth": {
         "kind": "oauth2-client-credentials",
         "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
-        "clientId": "client_id",
-        "clientSecret": "client_secret"
+        "clientId": "@tw-tdx.client_id",
+        "clientSecret": "@tw-tdx.client_secret"
       },
       "freshnessWindowSec": 43200,
       "requestLimits": {

@@ -1,0 +1,137 @@
+[
+  {
+    "$type": "Tfl.Api.Presentation.Entities.Place, Tfl.Api.Presentation.Entities",
+    "id": "JamCams_00002.00876",
+    "url": "/Place/JamCams_00002.00876",
+    "commonName": "Fore St West Ramp",
+    "placeType": "JamCam",
+    "additionalProperties": [
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "available",
+        "sourceSystemKey": "JamCams",
+        "value": "true",
+        "modified": "2026-10-01T22:22:03.43Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "imageUrl",
+        "sourceSystemKey": "JamCams",
+        "value": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00002.00876.jpg",
+        "modified": "2026-10-01T22:22:03.43Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "videoUrl",
+        "sourceSystemKey": "JamCams",
+        "value": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00002.00876.mp4",
+        "modified": "2026-10-01T22:22:03.43Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "cameraView",
+        "key": "view",
+        "sourceSystemKey": "JamCams",
+        "value": "East Facing (Home)",
+        "modified": "2026-10-01T22:22:03.43Z"
+      }
+    ],
+    "children": [],
+    "childrenUrls": [],
+    "lat": 51.61461,
+    "lon": -0.0733
+  },
+  {
+    "$type": "Tfl.Api.Presentation.Entities.Place, Tfl.Api.Presentation.Entities",
+    "id": "JamCams_00001.07929",
+    "url": "/Place/JamCams_00001.07929",
+    "commonName": "A41 Hendon Way/Cricklewood Lane",
+    "placeType": "JamCam",
+    "additionalProperties": [
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "available",
+        "sourceSystemKey": "JamCams",
+        "value": "false",
+        "modified": "2026-10-07T09:28:56.267Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "imageUrl",
+        "sourceSystemKey": "JamCams",
+        "value": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00001.07929.jpg",
+        "modified": "2026-10-07T09:28:56.267Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "videoUrl",
+        "sourceSystemKey": "JamCams",
+        "value": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00001.07929.mp4",
+        "modified": "2026-10-07T09:28:56.267Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "cameraView",
+        "key": "view",
+        "sourceSystemKey": "JamCams",
+        "value": "Zoom-The Vale jct",
+        "modified": "2026-10-07T09:28:56.267Z"
+      }
+    ],
+    "children": [],
+    "childrenUrls": [],
+    "lat": 51.5613,
+    "lon": -0.20345
+  },
+  {
+    "$type": "Tfl.Api.Presentation.Entities.Place, Tfl.Api.Presentation.Entities",
+    "id": "JamCams_00001.02255",
+    "url": "/Place/JamCams_00001.02255",
+    "commonName": "Commercial Rd/Dean Cross St",
+    "placeType": "JamCam",
+    "additionalProperties": [
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "available",
+        "sourceSystemKey": "JamCams",
+        "value": "true",
+        "modified": "2026-10-07T09:28:56.267Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "imageUrl",
+        "sourceSystemKey": "JamCams",
+        "value": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00001.02255.jpg",
+        "modified": "2026-10-07T09:28:56.267Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "payload",
+        "key": "videoUrl",
+        "sourceSystemKey": "JamCams",
+        "value": "https://s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/00001.02255.mp4",
+        "modified": "2026-10-07T09:28:56.267Z"
+      },
+      {
+        "$type": "Tfl.Api.Presentation.Entities.AdditionalProperties, Tfl.Api.Presentation.Entities",
+        "category": "cameraView",
+        "key": "view",
+        "sourceSystemKey": "JamCams",
+        "value": "WEST-A13 Commercial Rd twds Whitechapel",
+        "modified": "2026-10-07T09:28:56.267Z"
+      }
+    ],
+    "children": [],
+    "childrenUrls": [],
+    "lat": 51.5143,
+    "lon": -0.05451
+  }
+]

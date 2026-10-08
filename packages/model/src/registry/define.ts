@@ -264,8 +264,8 @@ export type SubjectSpec =
  * How long a property's history is kept and in what form. A series keeps
  * every distinct result (`changeOnly`: only results that differ from the
  * latest), raw rows for `rawDays`, then only its rollups; `latestOnly` keeps
- * no history at all (camera images). Rollups aggregate numeric results; an
- * hourly histogram keeps the distribution (bins of `binWidth` in the
+ * no history at all, only the reading in effect. Rollups aggregate numeric
+ * results; an hourly histogram keeps the distribution (bins of `binWidth` in the
  * property's unit), because percentiles over a window cannot be rebuilt from
  * per-hour percentiles. A property without a retention entry keeps every row,
  * which only suits a sparse series (a regulated price cap).

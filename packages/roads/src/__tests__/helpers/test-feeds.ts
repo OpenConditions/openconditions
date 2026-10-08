@@ -739,9 +739,9 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     region: "us",
     product: "events",
     format: "ibi511",
-    attribution: "Powered by 511NY",
+    attribution: "511NY / New York State DOT",
     license: "LicenseRef-511NY-DAA",
-    licenseUrl: "https://511ny.org/developers/daa",
+    licenseUrl: "https://511ny.org/help/24",
   },
   "us-nyc-dot-flow": {
     region: "us",

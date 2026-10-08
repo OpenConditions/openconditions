@@ -1,0 +1,167 @@
+{
+  "total": "288",
+  "limit": "500",
+  "start": "0",
+  "data": [
+    {
+      "id": "81B464EA-1DD8-B71B-0B367470E91A4A7F",
+      "url": "https://www.nps.gov/subjects/air/webcams.htm?site=yose",
+      "title": "Turtleback Dome & Air Quality",
+      "description": "This air quality camera shows the view to the west from near Yosemite Valley and also displays current air quality and weather data.",
+      "images": [],
+      "relatedParks": [
+        {
+          "states": "CA",
+          "parkCode": "yose",
+          "designation": "National Park",
+          "fullName": "Yosemite National Park",
+          "url": "https://www.nps.gov/yose/index.htm",
+          "name": "Yosemite"
+        }
+      ],
+      "status": "Active",
+      "statusMessage": "",
+      "isStreaming": false,
+      "tags": ["Yosemite", "Yosemite National Park", "Merced River Canyon", "foothills"],
+      "latitude": 37.71335804198748,
+      "longitude": -119.70603346824646,
+      "geometryPoiId": "",
+      "credit": ""
+    },
+    {
+      "id": "A1D747E2-D28F-7E9B-791E4F715D376D01",
+      "url": "https://www.nps.gov/media/webcam/view.htm?id=A1D747E2-D28F-7E9B-791E4F715D376D01",
+      "title": "Anacapa Island Webcam",
+      "description": "The Anacapa Island Webcam provides incredible views of the park's iconic symbol Arch Rock, seabird rookeries, and the historic lighthouse, as well as the ocean life and sea conditions at the landing cove and nearby waters.",
+      "images": [
+        {
+          "url": "https://www.nps.govhttps://www.nps.gov/common/uploads/cropped_image/FB433FDB-A01F-8F9F-5D030367A1EF247C.jpg",
+          "credit": "",
+          "altText": "steep rugged ocean cliffs with lighhouse on top.",
+          "title": "",
+          "description": "",
+          "caption": "",
+          "crops": []
+        }
+      ],
+      "relatedParks": [
+        {
+          "states": "CA",
+          "parkCode": "chis",
+          "designation": "National Park",
+          "fullName": "Channel Islands National Park",
+          "url": "https://www.nps.gov/chis/index.htm",
+          "name": "Channel Islands"
+        }
+      ],
+      "status": "Active",
+      "statusMessage": "",
+      "isStreaming": true,
+      "tags": ["lighthouse", "ocean", "Anacapa Island"],
+      "latitude": 34.016535,
+      "longitude": -119.362184,
+      "geometryPoiId": "BCFFC9A8-A2E6-4C1D-BA13-C8E424953A11",
+      "credit": ""
+    },
+    {
+      "id": "81B46554-1DD8-B71B-0BF6D4520C2357E9",
+      "url": "https://www.nps.gov/media/webcam/view.htm?id=81B46554-1DD8-B71B-0BF6D4520C2357E9",
+      "title": "Big Hole National Battlefield Web Camera",
+      "description": "Please excuse our mess! We are actively working to replace our webcam so that you can once again admire the scenic beauty of our site. We apologize for the inconvenience. Dominating the background is Battle Mountain. On the slopes of this hill, the Nez Perce kept their horses. On the flat at the base of Battle Mountain is the north fork of the Big Hole River. If you look off to the right, you can see the tipi poles that mark and memorialize the village site that was attacked on the morning of August 9, 1877.",
+      "images": [],
+      "relatedParks": [
+        {
+          "states": "MT",
+          "parkCode": "biho",
+          "designation": "National Battlefield",
+          "fullName": "Big Hole National Battlefield",
+          "url": "https://www.nps.gov/biho/index.htm",
+          "name": "Big Hole"
+        }
+      ],
+      "status": "Inactive",
+      "statusMessage": "Please excuse our mess! We are actively working to replace our webcam so that you can once again admire the scenic beauty of our site. We apologize for the inconvenience.",
+      "isStreaming": false,
+      "tags": ["big hole battlefield"],
+      "latitude": 45.650360107421875,
+      "longitude": -113.65060424804688,
+      "geometryPoiId": "",
+      "credit": ""
+    },
+    {
+      "id": "9603ED1D-F805-714D-AC4557683B558B00",
+      "url": "https://www.nps.gov/media/webcam/view.htm?id=9603ED1D-F805-714D-AC4557683B558B00",
+      "title": "Current view from the Craig Thomas Discovery & Visitor Center in Moose, WY",
+      "description": "This live webcam, made possible by Grand Teton National Park Foundation, offers a real-time view of the iconic Teton Range from Moose, Wyoming. Whether you're planning your next visit or simply seeking a moment of inspiration, we hope you enjoy the view of Grand Teton National Park from wherever you are!",
+      "images": [],
+      "relatedParks": [
+        {
+          "states": "WY",
+          "parkCode": "grte",
+          "designation": "National Park",
+          "fullName": "Grand Teton National Park",
+          "url": "https://www.nps.gov/grte/index.htm",
+          "name": "Grand Teton"
+        }
+      ],
+      "status": "Active",
+      "statusMessage": "",
+      "isStreaming": true,
+      "tags": [],
+      "latitude": null,
+      "longitude": null,
+      "geometryPoiId": "",
+      "credit": ""
+    },
+    {
+      "id": "C589EEEF-1DD8-B71B-0B0463C308FF64DD",
+      "url": "https://www.nps.gov/media/webcam/view.htm?id=C589EEEF-1DD8-B71B-0B0463C308FF64DD",
+      "title": "Newfound Gap Webcam",
+      "description": "Located at high elevation in the center of the park, Newfound Gap webcam views to the South",
+      "images": [],
+      "relatedParks": [
+        {
+          "states": "NC,TN",
+          "parkCode": "grsm",
+          "designation": "National Park",
+          "fullName": "Great Smoky Mountains National Park",
+          "url": "https://www.nps.gov/grsm/index.htm",
+          "name": "Great Smoky Mountains"
+        }
+      ],
+      "status": "Active",
+      "statusMessage": "",
+      "isStreaming": false,
+      "tags": [],
+      "latitude": 35.61113313363304,
+      "longitude": -83.42655139590175,
+      "geometryPoiId": "",
+      "credit": ""
+    },
+    {
+      "id": "C589EEEF-1DD8-B71B-0B0463C308FF64DD",
+      "url": "https://www.nps.gov/subjects/air/webcams.htm?site=grsm",
+      "title": "Newfound Gap Webcam",
+      "description": "Located at high elevation in the center of the park, Newfound Gap webcam views to the South",
+      "images": [],
+      "relatedParks": [
+        {
+          "states": "NC,TN",
+          "parkCode": "grsm",
+          "designation": "National Park",
+          "fullName": "Great Smoky Mountains National Park",
+          "url": "https://www.nps.gov/grsm/index.htm",
+          "name": "Great Smoky Mountains"
+        }
+      ],
+      "status": "Active",
+      "statusMessage": "",
+      "isStreaming": false,
+      "tags": [],
+      "latitude": 35.61113313363304,
+      "longitude": -83.42655139590175,
+      "geometryPoiId": "",
+      "credit": ""
+    }
+  ]
+}

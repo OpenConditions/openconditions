@@ -2,14 +2,18 @@ import {
   decodeLayout,
   emptyParseOutput,
   type FeedPayloads,
-  getPath,
+  type FieldRef,
   type LayoutRow,
+  lookupField as lookup,
   type ParseContext,
   type ParseOutput,
+  readField as read,
+  scalarText,
+  fieldText as text,
 } from "@openconditions/ingest-framework";
 import { zonedWallClockToInstant } from "@openconditions/model";
 import type { ParkingStatus } from "@openconditions/model-parking";
-import type { FieldRef, ParkingCatalogFeed, ParkingMapping } from "../feed-schema.js";
+import type { ParkingCatalogFeed, ParkingMapping } from "../feed-schema.js";
 import {
   type AreaInput,
   instantIn,
@@ -28,45 +32,6 @@ import {
 export const PARKING_LAYOUT_FORMATS = ["geojson", "json", "csv"] as const;
 
 export type ParkingLayoutFormat = (typeof PARKING_LAYOUT_FORMATS)[number];
-
-const patterns = new Map<string, RegExp>();
-
-function regex(pattern: string): RegExp {
-  let re = patterns.get(pattern);
-  if (re === undefined) {
-    re = new RegExp(pattern);
-    patterns.set(pattern, re);
-  }
-  return re;
-}
-
-/**
- * A field's value in a record: the raw value at its path, or, with a pattern,
- * the pattern's first capture group (else the whole match) in its text.
- */
-function read(fields: Record<string, unknown>, ref: FieldRef): unknown {
-  if (typeof ref === "string") return getPath(fields, ref);
-  const value = getPath(fields, ref.field);
-  if (ref.pattern === undefined) return value;
-  const text = scalarText(value);
-  if (text === undefined) return undefined;
-  const m = text.match(regex(ref.pattern));
-  return m === null ? undefined : (m[1] ?? m[0]);
-}
-
-/** A string, number or boolean as trimmed text; undefined when empty or not a scalar. */
-function scalarText(value: unknown): string | undefined {
-  if (typeof value === "string") {
-    const text = value.trim();
-    return text === "" ? undefined : text;
-  }
-  if (typeof value === "number") return Number.isFinite(value) ? String(value) : undefined;
-  if (typeof value === "boolean") return String(value);
-  return undefined;
-}
-
-const text = (fields: Record<string, unknown>, ref: FieldRef | undefined) =>
-  ref === undefined ? undefined : scalarText(read(fields, ref));
 
 /** A number from a number or numeric text; a decimal comma is read as a point. */
 function numberOf(value: unknown): number | undefined {
@@ -87,15 +52,6 @@ const holds = (
   fields: Record<string, unknown>,
   rule: { field: FieldRef; equals: string | number | boolean },
 ) => text(fields, rule.field) === String(rule.equals);
-
-function lookup<T>(
-  fields: Record<string, unknown>,
-  rule: { field: FieldRef; map: Record<string, T> } | undefined,
-): T | undefined {
-  if (rule === undefined) return undefined;
-  const key = text(fields, rule.field);
-  return key !== undefined && Object.hasOwn(rule.map, key) ? rule.map[key] : undefined;
-}
 
 function kept(fields: Record<string, unknown>, mapping: ParkingMapping): boolean {
   return (mapping.filter ?? []).every((f) => {

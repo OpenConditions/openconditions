@@ -581,6 +581,18 @@
               },
               "road": {
                 "$ref": "#/$defs/RoadRef"
+              },
+              "detailUrl": {
+                "type": "string",
+                "format": "uri"
+              },
+              "imageRedistribution": {
+                "type": "string",
+                "enum": [
+                  "allowed",
+                  "link_only",
+                  "unknown"
+                ]
               }
             },
             "required": [
@@ -2222,6 +2234,10 @@
             "webtris",
             "webtris-sites",
             "wzdx",
+            "windy",
+            "tfl",
+            "nps",
+            "tripcheck",
             "parkapi-v3",
             "datex2-light",
             "db-bahnpark",

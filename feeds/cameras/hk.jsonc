@@ -1,0 +1,33 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "td",
+      "product": "cameras",
+      "name": "Transport Department traffic snapshot cameras",
+      "tier": "authoritative",
+      "format": "hk-td",
+      // The camera list in English, and in Traditional Chinese for the
+      // names. The list changes rarely; each snapshot renews every two
+      // minutes at its own address.
+      "endpoints": {
+        "main": {
+          "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_En.xml",
+          "cadenceSec": 86400,
+        },
+        "names": {
+          "url": "https://static.data.gov.hk/td/traffic-snapshot-images/code/Traffic_Camera_Locations_Tc.xml",
+          "cadenceSec": 86400,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-HK-Gov-Open-Data",
+      "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
+      "attribution": "Transport Department, HKSAR",
+      "homepage": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
+      "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
+      "cameras": { "imageHosts": ["tdcctv.data.one.gov.hk"] },
+    },
+  ],
+}

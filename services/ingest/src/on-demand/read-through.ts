@@ -25,7 +25,11 @@ export type OnDemandShortfall =
 
 /** Which on-demand sources a read's area was complete for. */
 export interface OnDemandCoverage {
-  /** True when any source was not complete. */
+  /**
+   * True when any source that could answer was not complete; a source missing
+   * its configuration is listed in `sources` with its reason but never makes
+   * the read partial.
+   */
   partial: boolean;
   sources: { id: string; complete: boolean; reason?: OnDemandShortfall }[];
 }
@@ -136,7 +140,8 @@ type Plan =
  * read of a past instant, the answer is undefined and nothing is fetched.
  * For each:
  * - a source whose credentials are missing is not fetched
- *   (`missing_configuration`);
+ *   (`missing_configuration`); it is listed with that reason but does not make
+ *   the read `partial`, since waiting or a smaller area never helps it;
  * - an area inside its coverage of more grid cells than
  *   `onDemand.maxCellsPerRead` fetches none (`too_many_cells`), counted
  *   before any cell is built or the ledger read;
@@ -222,7 +227,10 @@ export async function readThrough(
       ? { id: plan.id, complete: true }
       : { id: plan.id, complete: false, reason };
   });
-  return { partial: reports.some((r) => !r.complete), sources: reports };
+  // A source that cannot run for want of configuration will not answer however
+  // long the client waits or far it zooms in, so it is listed but is no gap.
+  const partial = reports.some((r) => !r.complete && r.reason !== "missing_configuration");
+  return { partial, sources: reports };
 }
 
 /**

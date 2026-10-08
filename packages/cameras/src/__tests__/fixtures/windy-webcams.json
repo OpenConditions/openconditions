@@ -1,0 +1,147 @@
+{
+  "total": 3,
+  "webcams": [
+    {
+      "webcamId": 1179853135,
+      "title": "Innsbruck: Maria-Theresien-Strasse",
+      "viewCount": 1282618,
+      "status": "active",
+      "lastUpdatedOn": "2026-10-08T06:50:00.000Z",
+      "categories": [{ "id": "traffic", "name": "Traffic" }, { "id": "city", "name": "City" }],
+      "images": {
+        "current": {
+          "icon": "https://images-webcams.windy.com/35/1179853135/current/icon/1179853135.jpg?token=sample",
+          "thumbnail": "https://images-webcams.windy.com/35/1179853135/current/thumbnail/1179853135.jpg?token=sample",
+          "preview": "https://images-webcams.windy.com/35/1179853135/current/preview/1179853135.jpg?token=sample"
+        },
+        "sizes": {
+          "icon": { "width": 48, "height": 48 },
+          "thumbnail": { "width": 200, "height": 112 },
+          "preview": { "width": 400, "height": 224 }
+        },
+        "daylight": {
+          "icon": "https://images-webcams.windy.com/35/1179853135/daylight/icon/1179853135.jpg?token=sample",
+          "thumbnail": "https://images-webcams.windy.com/35/1179853135/daylight/thumbnail/1179853135.jpg?token=sample",
+          "preview": "https://images-webcams.windy.com/35/1179853135/daylight/preview/1179853135.jpg?token=sample"
+        }
+      },
+      "location": {
+        "city": "Innsbruck",
+        "region": "Tyrol",
+        "region_code": "AT.07",
+        "country": "Austria",
+        "country_code": "AT",
+        "continent": "Europe",
+        "continent_code": "EU",
+        "latitude": 47.2692,
+        "longitude": 11.4041
+      },
+      "player": {
+        "live": "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=live",
+        "day": "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=day",
+        "month": "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=month",
+        "year": "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=year",
+        "lifetime": "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=lifetime"
+      },
+      "urls": {
+        "detail": "https://www.windy.com/webcams/1179853135",
+        "edit": "https://webcams-admin.windy.com/webcams/1179853135",
+        "provider": "https://www.innsbruck.info"
+      }
+    },
+    {
+      "webcamId": 1179853136,
+      "title": "Innsbruck: Nordkette",
+      "viewCount": 5231,
+      "status": "inactive",
+      "lastUpdatedOn": "2026-09-02T10:00:00.000Z",
+      "categories": [{ "id": "mountain", "name": "Mountain" }],
+      "images": {
+        "current": {
+          "icon": "https://images-webcams.windy.com/36/1179853136/current/icon/1179853136.jpg?token=sample",
+          "thumbnail": "https://images-webcams.windy.com/36/1179853136/current/thumbnail/1179853136.jpg?token=sample",
+          "preview": "https://images-webcams.windy.com/36/1179853136/current/preview/1179853136.jpg?token=sample"
+        },
+        "sizes": {
+          "icon": { "width": 48, "height": 48 },
+          "thumbnail": { "width": 200, "height": 112 },
+          "preview": { "width": 400, "height": 224 }
+        },
+        "daylight": {
+          "icon": "",
+          "thumbnail": "",
+          "preview": ""
+        }
+      },
+      "location": {
+        "city": "Innsbruck",
+        "region": "Tyrol",
+        "region_code": "AT.07",
+        "country": "Austria",
+        "country_code": "AT",
+        "continent": "Europe",
+        "continent_code": "EU",
+        "latitude": 47.3101,
+        "longitude": 11.3822
+      },
+      "player": {
+        "day": "https://webcams.windy.com/webcams/public//player?webcamId=1179853136&playerType=day",
+        "month": "https://webcams.windy.com/webcams/public//player?webcamId=1179853136&playerType=month",
+        "year": "https://webcams.windy.com/webcams/public//player?webcamId=1179853136&playerType=year",
+        "lifetime": "https://webcams.windy.com/webcams/public//player?webcamId=1179853136&playerType=lifetime"
+      },
+      "urls": {
+        "detail": "https://www.windy.com/webcams/1179853136",
+        "edit": "https://webcams-admin.windy.com/webcams/1179853136",
+        "provider": ""
+      }
+    },
+    {
+      "webcamId": 1179853137,
+      "title": "Patscherkofel Summit",
+      "viewCount": 88,
+      "status": "active",
+      "lastUpdatedOn": "2026-10-08T06:58:00.000Z",
+      "images": {
+        "current": {
+          "icon": "https://images-webcams.windy.com/37/1179853137/current/icon/1179853137.jpg?token=sample",
+          "thumbnail": "https://images-webcams.windy.com/37/1179853137/current/thumbnail/1179853137.jpg?token=sample",
+          "preview": "https://images-webcams.windy.com/37/1179853137/current/preview/1179853137.jpg?token=sample"
+        },
+        "sizes": {
+          "icon": { "width": 48, "height": 48 },
+          "thumbnail": { "width": 200, "height": 112 },
+          "preview": { "width": 400, "height": 224 }
+        },
+        "daylight": {
+          "icon": "",
+          "thumbnail": "",
+          "preview": ""
+        }
+      },
+      "location": {
+        "city": "Innsbruck",
+        "region": "Tyrol",
+        "region_code": "AT.07",
+        "country": "Austria",
+        "country_code": "AT",
+        "continent": "Europe",
+        "continent_code": "EU",
+        "latitude": 47.2093,
+        "longitude": 11.4614
+      },
+      "player": {
+        "live": "https://webcams.windy.com/webcams/public//player?webcamId=1179853137&playerType=live",
+        "day": "https://webcams.windy.com/webcams/public//player?webcamId=1179853137&playerType=day",
+        "month": "https://webcams.windy.com/webcams/public//player?webcamId=1179853137&playerType=month",
+        "year": "https://webcams.windy.com/webcams/public//player?webcamId=1179853137&playerType=year",
+        "lifetime": "https://webcams.windy.com/webcams/public//player?webcamId=1179853137&playerType=lifetime"
+      },
+      "urls": {
+        "detail": "https://www.windy.com/webcams/1179853137",
+        "edit": "https://webcams-admin.windy.com/webcams/1179853137",
+        "provider": "https://www.patscherkofelbahn.at"
+      }
+    }
+  ]
+}

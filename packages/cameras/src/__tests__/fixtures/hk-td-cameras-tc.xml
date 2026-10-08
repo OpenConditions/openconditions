@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<image-list>
+	<image>
+		<key>H429F</key>
+		<region>香港島</region>
+		<district>南區</district>
+		<description>香港仔海傍道近魚市場 [H429F]</description>
+		<easting>833549</easting>
+		<northing>812187</northing>
+		<latitude>22.24845</latitude>
+		<longitude>114.1505</longitude>
+		<url>https://tdcctv.data.one.gov.hk/H429F.JPG</url>
+	</image>
+	<image>
+		<key>AID01101</key>
+		<region>香港島</region>
+		<district>南區</district>
+		<description>香港仔海旁道近福群大樓 - 東行 [AID01101]</description>
+		<easting>833758</easting>
+		<northing>812147</northing>
+		<latitude>22.248083364</latitude>
+		<longitude>114.152524708</longitude>
+		<url>https://tdcctv.data.one.gov.hk/AID01101.JPG</url>
+	</image>
+</image-list>

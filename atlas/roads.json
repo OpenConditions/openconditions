@@ -117,25 +117,10 @@
               "cadenceSec": 180
             }
           },
-          "credentials": {
-            "api_key": {
-              "title": "Live Traffic NSW API key (Australia)",
-              "setup": {
-                "url": "https://opendata.transport.nsw.gov.au/data/user/register",
-                "urlLabel": "Register at Transport NSW Open Data",
-                "steps": [
-                  "Register at opendata.transport.nsw.gov.au/data/user/register.",
-                  "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints."
-                ],
-                "cost": "Free",
-                "notes": "CC-BY-4.0; attribution \"Transport for NSW\"."
-              }
-            }
-          },
           "auth": {
             "kind": "header-key",
             "header": "Authorization",
-            "credential": "api_key",
+            "credential": "@au-nsw-tfnsw.api_key",
             "valuePrefix": "apikey "
           },
           "freshnessWindowSec": 600,
@@ -482,7 +467,16 @@
               "cadenceSec": 300
             }
           },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "@ca-on-511.api_key"
+          },
           "freshnessWindowSec": 900,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
           "license": "LicenseRef-OGL-ON",
           "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
           "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -502,7 +496,16 @@
               "cadenceSec": 300
             }
           },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "@ca-on-511.api_key"
+          },
           "freshnessWindowSec": 900,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
           "license": "LicenseRef-OGL-ON",
           "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
           "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -521,11 +524,20 @@
               "cadenceSec": 300
             }
           },
+          "auth": {
+            "kind": "query-key",
+            "param": "key",
+            "credential": "@ca-on-511.api_key"
+          },
           "snapshot": {
             "completeness": "complete",
             "recordsPath": "$"
           },
           "freshnessWindowSec": 900,
+          "requestLimits": {
+            "perMinute": 10,
+            "keyScope": "instance"
+          },
           "license": "LicenseRef-OGL-ON",
           "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
           "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -2406,7 +2418,7 @@
           "license": "NLOD-2.0",
           "licenseUrl": "https://data.norge.no/nlod/en/2.0",
           "attribution": "Statens vegvesen",
-          "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/"
+          "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/"
         },
         {
           "operator": "vegvesen",
@@ -2434,7 +2446,7 @@
           "license": "NLOD-2.0",
           "licenseUrl": "https://data.norge.no/nlod/en/2.0",
           "attribution": "Statens vegvesen",
-          "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/"
+          "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/"
         }
       ]
     },
@@ -2536,7 +2548,7 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://data.trafikverket.se/",
           "attribution": "Trafikverket",
-          "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
+          "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
           "posListLonLat": true
         },
         {
@@ -2560,7 +2572,7 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://api.trafikinfo.trafikverket.se/",
           "attribution": "Trafikverket",
-          "privacyUrl": "https://www.trafikverket.se/en/privacy-policy/"
+          "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/"
         }
       ]
     },
@@ -2755,9 +2767,19 @@
           },
           "freshnessWindowSec": 900,
           "license": "LicenseRef-511NY-DAA",
-          "licenseUrl": "https://511ny.org/developers/daa",
-          "attribution": "Powered by 511NY",
-          "privacyUrl": "https://511ny.org/privacy"
+          "licenseUrl": "https://511ny.org/help/24",
+          "attribution": "511NY / New York State DOT",
+          "terms": {
+            "url": "https://511ny.org/help/24",
+            "reviewedAt": "2026-10-08",
+            "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+            "redistribution": false
+          },
+          "privacyUrl": "https://511ny.org/privacy",
+          "disabled": {
+            "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
+            "since": "2026-10-08"
+          }
         },
         {
           "subdivision": "ny",
@@ -2783,9 +2805,19 @@
           },
           "freshnessWindowSec": 1800,
           "license": "LicenseRef-511NY-DAA",
-          "licenseUrl": "https://511ny.org/developers/daa",
-          "attribution": "Powered by 511NY",
-          "privacyUrl": "https://511ny.org/privacy"
+          "licenseUrl": "https://511ny.org/help/24",
+          "attribution": "511NY / New York State DOT",
+          "terms": {
+            "url": "https://511ny.org/help/24",
+            "reviewedAt": "2026-10-08",
+            "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+            "redistribution": false
+          },
+          "privacyUrl": "https://511ny.org/privacy",
+          "disabled": {
+            "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
+            "since": "2026-10-08"
+          }
         },
         {
           "subdivision": "nyc",
@@ -2923,6 +2955,41 @@
             }
           }
         },
+        "au-nsw-tfnsw": {
+          "api_key": {
+            "title": "Transport for NSW Open Data API key (Australia)",
+            "description": "An Open Data Hub API token, sent as the 'apikey' authorization header. Serves the Live Traffic hazards, the Park&Ride car parks and the Live Traffic cameras.",
+            "setup": {
+              "url": "https://opendata.transport.nsw.gov.au/",
+              "urlLabel": "Get API key",
+              "steps": [
+                "Register for a free account at opendata.transport.nsw.gov.au and log in to the Open Data Hub.",
+                "Click your profile icon, choose 'API Tokens', enter a name, click 'CREATE API TOKEN' and copy the key (shown only once).",
+                "In the data catalogue, open the 'Car park API' and 'Live Traffic Cameras API' datasets and subscribe each to your application; the token alone authorises the live-hazard endpoints.",
+                "Paste the generated token here (sent as the 'apikey' authorization header)."
+              ],
+              "cost": "Free",
+              "notes": "CC-BY-4.0; attribution \"Transport for NSW\". One token for the hazards, car-park and camera feeds."
+            }
+          }
+        },
+        "ca-on-511": {
+          "api_key": {
+            "title": "Ontario 511 developer key (Canada)",
+            "description": "Sent as the 'key' query parameter. Serves the Ontario 511 events, construction projects, road conditions and cameras feeds.",
+            "setup": {
+              "url": "https://511on.ca/developers/doc",
+              "urlLabel": "Ontario 511 developer resources",
+              "steps": [
+                "Create a free account at 511on.ca/my511/register (or log in); an account is needed before a key can be requested.",
+                "Request a Developer API key from the developer resources page. The request names your organisation and primary contact, describes the proposed service, and identifies every third party that will receive, redistribute or display Ontario 511 data through it (for an OpenMapX instance: OpenMapX, and federation peers if federation is on).",
+                "The Ministry reviews requests case by case; once granted, copy the key (sent as the 'key' query parameter)."
+              ],
+              "cost": "Free",
+              "notes": "Developer's Access Agreement: https://511on.ca/developers/resources. Data under the Open Government Licence – Ontario; the disclaimer travels with the data when it is distributed. Ontario 511 allows ten calls every 60 seconds per key. Each of the four feeds paces itself to that limit on its own, not together; their cadences (five minutes for the events, construction projects and road conditions, an hour for the cameras) keep the four well inside ten calls a minute."
+            }
+          }
+        },
         "hr-hc": {
           "user": {
             "title": "Hrvatske ceste (Croatia) — B2B username",
@@ -2991,18 +3058,20 @@
         },
         "us-ny-511": {
           "api_key": {
-            "title": "511NY API key (New York)",
-            "description": "Query key for the 511NY events and winter road conditions feeds.",
+            "title": "511NY data feed access (New York)",
+            "description": "The access NYSDOT grants under the 511NY Developer Access Agreement, for the events and winter road conditions feeds (and the camera inventory).",
             "setup": {
-              "url": "https://511ny.org/my511/register",
-              "urlLabel": "Create a 511NY account",
+              "url": "https://511ny.org/help/24",
+              "urlLabel": "Read the 511NY data feed page and Developer Access Agreement",
               "steps": [
-                "Create an account at 511ny.org/my511/register.",
-                "Request an API key at 511ny.org/developers/help. The form asks for your reasons, and submitting accepts the Developer's Access Agreement (DAA), which permits commercial redistribution.",
-                "Ready-to-paste reason: OpenMapX (https://openmapx.com) is a free, open-source maps and navigation app. I would use the 511NY events feed to display live incidents, road work, and closures on the map and to help travelers route around active disruptions in New York, with 'Powered by 511NY' attribution shown to users. It serves the general public at no charge; the data is shown only to end users, not resold or provided to any third-party data broker."
+                "Read the Developer Access Agreement on 511ny.org/help/24 (last updated 2026-09-18). Submitting a request accepts it.",
+                "Open the request form linked on that page (\"CARS Agencies' XML Feed Request Form\", shared by several state DOTs). Fill in Name, \"Company, Agency, or Personal Use\", the company or project name, and the email the approval should go to, and tick NY under the agencies.",
+                "Reason for Access is the only free-text field, so it must cover what the agreement asks a request to describe: the intended use and the product (name the traffic events, winter road conditions and camera inventory feeds); the intended market and the benefit to travelers; any similar products you have built or plan; and every intermediate or third-party disseminator. Name OpenConditions, the self-hosted data service that fetches the feeds for your map, and, if this instance serves its public API or federates with peers, those as recipients too. Then state that you accept the agreement and its attribution and display duties.",
+                "Ready-to-adapt reason: \"I am requesting access to the NYSDOT (511NY) XML data feeds (traffic events, winter road conditions and the camera inventory) for OpenMapX, a free, non-commercial, open-source maps and navigation app. Our instance fetches the feeds through OpenConditions, our own self-hosted traffic data service, and shows live incidents, road work, closures, winter road conditions and traffic cameras on the map and in route planning, so travelers in New York can plan around them. Audience: the general public, free of charge. Similar products: none. Recipients: our app's end users through OpenConditions, operated by us; no other third parties, and we will tell NYSDOT before that changes. We will show when each report was published or last updated, keep the meaning of every report as NYSDOT published it, pass on NYSDOT's disclaimer, and credit 511NY / NYSDOT as the source. We accept the 511NY Developer Access Agreement.\"",
+                "Requests are reviewed weekly. An approval email brings the feed addresses, the access credential and the documentation. Send those to whoever maintains this OpenConditions instance: the feeds need their new addresses, and a reader if the format differs from the retired IBI 511 API, before they can be enabled."
               ],
               "cost": "Free",
-              "notes": "Attribution required: \"Powered by 511NY\". 10 calls per 60s across the account, shared by both feeds."
+              "notes": "Agreement duties: show when each report was published or last updated; keep the meaning of every report as published; use best efforts to pass on NYSDOT's disclaimer; keep NYSDOT informed of changes to your product, distribution plans and recipients. Permitted, not required: the \"powered by 511NY\" tag line with the unaltered 511NY logo and a link to 511ny.org; otherwise \"511NY\" may not be used to market or brand your product. Questions and feed problems go to the 511NY program manager named on 511ny.org/help/24. The old 511ny.org developer keys and API no longer work."
             }
           }
         },
@@ -3172,25 +3241,10 @@
           "cadenceSec": 180
         }
       },
-      "credentials": {
-        "api_key": {
-          "title": "Live Traffic NSW API key (Australia)",
-          "setup": {
-            "url": "https://opendata.transport.nsw.gov.au/data/user/register",
-            "urlLabel": "Register at Transport NSW Open Data",
-            "steps": [
-              "Register at opendata.transport.nsw.gov.au/data/user/register.",
-              "Create an API token under your account (Account → API tokens) and copy it. No need to create a separate application — the token alone authorises the live-hazard endpoints."
-            ],
-            "cost": "Free",
-            "notes": "CC-BY-4.0; attribution \"Transport for NSW\"."
-          }
-        }
-      },
       "auth": {
         "kind": "header-key",
         "header": "Authorization",
-        "credential": "api_key",
+        "credential": "@au-nsw-tfnsw.api_key",
         "valuePrefix": "apikey "
       },
       "freshnessWindowSec": 600,
@@ -3746,7 +3800,16 @@
           "cadenceSec": 300
         }
       },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "@ca-on-511.api_key"
+      },
       "freshnessWindowSec": 900,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
       "license": "LicenseRef-OGL-ON",
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -3788,7 +3851,16 @@
           "cadenceSec": 300
         }
       },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "@ca-on-511.api_key"
+      },
       "freshnessWindowSec": 900,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
       "license": "LicenseRef-OGL-ON",
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -3829,11 +3901,20 @@
           "cadenceSec": 300
         }
       },
+      "auth": {
+        "kind": "query-key",
+        "param": "key",
+        "credential": "@ca-on-511.api_key"
+      },
       "snapshot": {
         "completeness": "complete",
         "recordsPath": "$"
       },
       "freshnessWindowSec": 900,
+      "requestLimits": {
+        "perMinute": 10,
+        "keyScope": "instance"
+      },
       "license": "LicenseRef-OGL-ON",
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
@@ -17401,6 +17482,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A623 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a623-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a623-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a623-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A623 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a623-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a623-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a623-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A623 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a623-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a623-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a623-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A640 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -22008,7 +22227,7 @@
       "license": "NLOD-2.0",
       "licenseUrl": "https://data.norge.no/nlod/en/2.0",
       "attribution": "Statens vegvesen",
-      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
       "homepage": "https://datex-server-get-v3-1.atlas.vegvesen.no",
       "id": "no-vegvesen-events",
       "domain": "roads",
@@ -22058,7 +22277,7 @@
       "license": "NLOD-2.0",
       "licenseUrl": "https://data.norge.no/nlod/en/2.0",
       "attribution": "Statens vegvesen",
-      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-norwegian-public-roads-administration/privacy/",
+      "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
       "homepage": "https://datex-server-get-v3-1.atlas.vegvesen.no",
       "id": "no-vegvesen-flow",
       "domain": "roads",
@@ -22211,7 +22430,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://data.trafikverket.se/",
       "attribution": "Trafikverket",
-      "privacyUrl": "https://www.trafikverket.se/integritetspolicy/",
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
       "posListLonLat": true,
       "homepage": "https://api.trafikinfo.trafikverket.se",
       "id": "se-trafikverket-events",
@@ -22257,7 +22476,7 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://api.trafikinfo.trafikverket.se/",
       "attribution": "Trafikverket",
-      "privacyUrl": "https://www.trafikverket.se/en/privacy-policy/",
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
       "homepage": "https://api.trafikinfo.trafikverket.se",
       "id": "se-trafikverket-flow",
       "domain": "roads",
@@ -24185,9 +24404,19 @@
       },
       "freshnessWindowSec": 900,
       "license": "LicenseRef-511NY-DAA",
-      "licenseUrl": "https://511ny.org/developers/daa",
-      "attribution": "Powered by 511NY",
+      "licenseUrl": "https://511ny.org/help/24",
+      "attribution": "511NY / New York State DOT",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-08",
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+        "redistribution": false
+      },
       "privacyUrl": "https://511ny.org/privacy",
+      "disabled": {
+        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
+        "since": "2026-10-08"
+      },
       "homepage": "https://511ny.org",
       "id": "us-ny-511-events",
       "domain": "roads",
@@ -24195,10 +24424,10 @@
       "file": "feeds/roads/us.jsonc",
       "maintainers": [],
       "rights": {
-        "redistribution": null,
-        "derivedRedistribution": null,
+        "redistribution": false,
+        "derivedRedistribution": true,
         "commercialUse": null,
-        "attributionRequired": true,
+        "attributionRequired": false,
         "retention": null,
         "shareAlike": false
       },
@@ -24235,9 +24464,19 @@
       },
       "freshnessWindowSec": 1800,
       "license": "LicenseRef-511NY-DAA",
-      "licenseUrl": "https://511ny.org/developers/daa",
-      "attribution": "Powered by 511NY",
+      "licenseUrl": "https://511ny.org/help/24",
+      "attribution": "511NY / New York State DOT",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-08",
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+        "redistribution": false
+      },
       "privacyUrl": "https://511ny.org/privacy",
+      "disabled": {
+        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
+        "since": "2026-10-08"
+      },
       "homepage": "https://511ny.org",
       "id": "us-ny-511-conditions",
       "domain": "roads",
@@ -24245,10 +24484,10 @@
       "file": "feeds/roads/us.jsonc",
       "maintainers": [],
       "rights": {
-        "redistribution": null,
-        "derivedRedistribution": null,
+        "redistribution": false,
+        "derivedRedistribution": true,
         "commercialUse": null,
-        "attributionRequired": true,
+        "attributionRequired": false,
         "retention": null,
         "shareAlike": false
       },

@@ -1,0 +1,57 @@
+{
+  "UpdateTime": "2026-10-08T03:43:26+08:00",
+  "UpdateInterval": 21600,
+  "SrcUpdateTime": "2026-10-08T02:10:26+08:00",
+  "SrcUpdateInterval": 86400,
+  "AuthorityCode": "THB",
+  "LinkVersion": "25.12.1",
+  "CCTVs": [
+    {
+      "CCTVID": "CCTV-14-0620-009-002",
+      "SubAuthorityCode": "THB-1R",
+      "LinkID": "1006200100900C",
+      "VideoStreamURL": "https://cctv-ss02.thb.gov.tw:443/T62-9K+020",
+      "VideoImageURL": "https://cctv-ss02.thb.gov.tw:443/T62-9K+020/snapshot",
+      "LocationType": 6,
+      "PositionLon": 121.7321,
+      "PositionLat": 25.10529,
+      "SurveillanceDescription": "快速公路62號(暖暖交流道到大華系統交流道)(W)",
+      "RoadID": "100620",
+      "RoadName": "台62線",
+      "RoadClass": 1,
+      "RoadDirection": "W",
+      "LocationMile": "9K+020"
+    },
+    {
+      "CCTVID": "CCTV-25-0080-080-001",
+      "SubAuthorityCode": "THB-2R",
+      "LinkID": "6080630A00010B",
+      "VideoStreamURL": "https://cctv-ss03.thb.gov.tw:443/T8-081K+750",
+      "VideoImageURL": "https://cctv-ss03.thb.gov.tw:443/T8-081K+750/snapshot",
+      "LocationType": 6,
+      "PositionLon": 121.2460688,
+      "PositionLat": 24.2549991,
+      "SurveillanceDescription": "和平區(中正路=中興路四段-台7甲線)(逆樁)",
+      "RoadID": "608063B",
+      "RoadName": "和平中正中興路圓環",
+      "RoadClass": 6,
+      "RoadDirection": "A",
+      "LocationMile": "80K+050"
+    },
+    {
+      "CCTVID": "CCTV-T74-E-0.610-M",
+      "SubAuthorityCode": "NFB-CR",
+      "LinkID": "1007400000010N",
+      "VideoStreamURL": "https://cctvc.freeway.gov.tw/abs2mjpg/bmjpg?camera=322",
+      "LocationType": 1,
+      "PositionLon": 120.607434,
+      "PositionLat": 24.095196,
+      "RoadID": "100740",
+      "RoadName": "快速公路74號",
+      "RoadClass": 1,
+      "RoadDirection": "E",
+      "RoadSection": { "Start": "快官交流道", "End": "成功交流道" },
+      "LocationMile": "0K+610"
+    }
+  ]
+}

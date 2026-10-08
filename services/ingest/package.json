@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fastify/proxy-addr": "^5.1.0",
+    "@openconditions/cameras": "workspace:*",
     "@openconditions/charging": "workspace:*",
     "@openconditions/core": "workspace:*",
     "@openconditions/datex2": "workspace:*",

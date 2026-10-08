@@ -1,0 +1,148 @@
+{
+  "data": [
+    {
+      "cctv": {
+        "index": "22",
+        "recordTimestamp": {
+          "recordDate": "2025-12-17",
+          "recordTime": "15:04:30",
+          "recordEpoch": "1766012670"
+        },
+        "location": {
+          "district": "9",
+          "locationName": "US-6 : State Line",
+          "nearbyPlace": "Benton",
+          "longitude": "-118.47842",
+          "latitude": "37.84225",
+          "elevation": "5472",
+          "direction": "West",
+          "county": "Mono",
+          "route": "US-6",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "27.378",
+          "alignment": "L",
+          "milepost": "35.593"
+        },
+        "inService": "true",
+        "imageData": {
+          "imageDescription": "Looking South",
+          "streamingVideoURL": "",
+          "static": {
+            "currentImageUpdateFrequency": "5",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d9/cctv/image/us6stateline/us6stateline.jpg",
+            "referenceImageUpdateFrequency": "60"
+          }
+        }
+      }
+    },
+    {
+      "cctv": {
+        "index": "42",
+        "recordTimestamp": {
+          "recordDate": "2024-05-30",
+          "recordTime": "11:47:13",
+          "recordEpoch": "1717094833"
+        },
+        "location": {
+          "district": "9",
+          "locationName": "SR-58 : Cameron Road",
+          "nearbyPlace": "Mojave",
+          "longitude": "-118.30306",
+          "latitude": "35.09684",
+          "elevation": "3861",
+          "direction": "East",
+          "county": "Kern",
+          "route": "SR-58",
+          "routeSuffix": "",
+          "postmilePrefix": "R",
+          "postmile": "100.94",
+          "alignment": "",
+          "milepost": "153.13"
+        },
+        "inService": "false",
+        "imageData": {
+          "imageDescription": "",
+          "streamingVideoURL": "",
+          "static": {
+            "currentImageUpdateFrequency": "5",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d9/cctv/image/sr58cameronroad/sr58cameronroad.jpg",
+            "referenceImageUpdateFrequency": "15"
+          }
+        }
+      }
+    },
+    {
+      "cctv": {
+        "index": "50",
+        "recordTimestamp": {
+          "recordDate": "2024-08-06",
+          "recordTime": "16:08:59",
+          "recordEpoch": "1722985739"
+        },
+        "location": {
+          "district": "9",
+          "locationName": "US-395 : Bridgeport",
+          "nearbyPlace": "Bridgeport",
+          "longitude": "-119.224608",
+          "latitude": "38.234129",
+          "elevation": "6486",
+          "direction": "",
+          "county": "Mono",
+          "route": "US-395",
+          "routeSuffix": "",
+          "postmilePrefix": "",
+          "postmile": "74.778",
+          "alignment": "L",
+          "milepost": "308.313"
+        },
+        "inService": "true",
+        "imageData": {
+          "imageDescription": "",
+          "streamingVideoURL": "",
+          "static": {
+            "currentImageUpdateFrequency": "5",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d9/cctv/image/us395bridgeport/us395bridgeport.jpg",
+            "referenceImageUpdateFrequency": "60"
+          }
+        }
+      }
+    },
+    {
+      "cctv": {
+        "index": "33",
+        "recordTimestamp": {
+          "recordDate": "2023-12-19",
+          "recordTime": "15:03:32",
+          "recordEpoch": "1703027012"
+        },
+        "location": {
+          "district": "9",
+          "locationName": "US-395 : North of SR-14 1",
+          "nearbyPlace": "Inyokern",
+          "longitude": "-117.86918",
+          "latitude": "35.72336",
+          "elevation": "2522",
+          "direction": "South",
+          "county": "Kern",
+          "route": "US-395",
+          "routeSuffix": "",
+          "postmilePrefix": "R",
+          "postmile": "31.65",
+          "alignment": "",
+          "milepost": "100.06"
+        },
+        "inService": "true",
+        "imageData": {
+          "imageDescription": "Looking South",
+          "streamingVideoURL": "",
+          "static": {
+            "currentImageUpdateFrequency": "20",
+            "currentImageURL": "https://cwwp2.dot.ca.gov/data/d9/cctv/image/us395northofsr141/us395northofsr141.jpg",
+            "referenceImageUpdateFrequency": "60"
+          }
+        }
+      }
+    }
+  ]
+}

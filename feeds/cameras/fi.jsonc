@@ -1,0 +1,51 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "digitraffic",
+      "product": "cameras",
+      "name": "Fintraffic Digitraffic weather cameras",
+      "tier": "authoritative",
+      "format": "digitraffic",
+      // The station list, each station's details (names, preset names and
+      // directions, collection interval: one call per station, about 810),
+      // and every preset's latest image time, whose stills renew about every
+      // ten minutes. Without accepted compression the API answers 406, and
+      // the user header raises its per-IP limit.
+      "endpoints": {
+        "sites": {
+          "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 86400,
+        },
+        "details": {
+          "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations/{item}",
+          "each": { "role": "sites", "records": "features", "field": "id" },
+          "fanout": "tolerant",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://tie.digitraffic.fi/api/weathercam/v1/stations/data",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 600,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 1800,
+      "requestLimits": { "perMinute": 60 },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      // The weather camera stills are Fintraffic open data of the same API,
+      // so the review records evidence and overrides nothing.
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-08",
+      },
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "homepage": "https://www.digitraffic.fi/en/",
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+      "cameras": { "imageHosts": ["weathercam.digitraffic.fi"] },
+    },
+  ],
+}

@@ -1,0 +1,37 @@
+{
+  "$schema": "../schema/cameras.schema.json",
+  "feeds": [
+    {
+      "operator": "trafikverket",
+      "product": "cameras",
+      "name": "Trafikverket traffic cameras",
+      "tier": "authoritative",
+      "format": "trafikverket",
+      // The Camera object of the object API, queried by a POST XML body like
+      // the traffic-flow feed's, so the key travels in the body's
+      // ${@se-trafikverket.api_key} expansion. Photos renew every five to
+      // fifteen minutes, and each camera names its photo's time.
+      "endpoints": {
+        "main": {
+          "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+          "method": "POST",
+          "headers": { "Content-Type": "text/xml" },
+          "body": "<REQUEST><LOGIN authenticationkey=\"${@se-trafikverket.api_key}\"/><QUERY objecttype=\"Camera\" namespace=\"road.infrastructure\" schemaversion=\"1.1\"><FILTER><EQ name=\"Deleted\" value=\"false\"/></FILTER></QUERY></REQUEST>",
+          "cadenceSec": 600,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "RESPONSE.RESULT.0.Camera" },
+      "freshnessWindowSec": 1800,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "terms": {
+        "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+        "reviewedAt": "2026-10-08",
+      },
+      "attribution": "Trafikverket",
+      "homepage": "https://data.trafikverket.se/",
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+      "cameras": { "imageHosts": ["api.trafikinfo.trafikverket.se"] },
+    },
+  ],
+}

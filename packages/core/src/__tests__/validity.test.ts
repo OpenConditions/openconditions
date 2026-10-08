@@ -8,9 +8,11 @@ const registry = {
   property: (code: string) =>
     code === "charging.evse_status"
       ? ({ retention: { changeOnly: true } } as never)
-      : code === "traffic.speed"
-        ? ({ retention: { rawDays: 2 } } as never)
-        : undefined,
+      : code === "camera.image"
+        ? ({ retention: { changeOnly: true, componentHistory: false } } as never)
+        : code === "traffic.speed"
+          ? ({ retention: { rawDays: 2 } } as never)
+          : undefined,
 };
 
 const reading = (over: Rec = {}, provenance: Rec = {}): Rec => ({
@@ -61,6 +63,12 @@ describe("validWhilePolled", () => {
     expect(validWhilePolled(registry, reading({}, { accessMode: "on_demand" }))).toBe(false);
     expect(validWhilePolled(registry, reading({}, { origin: "crowd" }))).toBe(false);
     expect(validWhilePolled(registry, reading({ property: "traffic.speed" }))).toBe(false);
+  });
+
+  it("holds for a camera image a bulk feed polls, not an on-demand one", () => {
+    const image = { property: "camera.image" };
+    expect(validWhilePolled(registry, reading(image, { accessMode: "bulk" }))).toBe(true);
+    expect(validWhilePolled(registry, reading(image, { accessMode: "on_demand" }))).toBe(false);
   });
 });
 

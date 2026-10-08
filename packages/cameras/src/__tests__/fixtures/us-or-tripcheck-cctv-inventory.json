@@ -1,0 +1,45 @@
+{
+  "organization-information": {
+    "organization-id": "ODOT",
+    "organization-name": "Oregon Department of Transportation",
+    "last-update-time": "2026-10-08T05:00:00Z"
+  },
+  "CCTVInventoryRequest": [
+    {
+      "device-id": 1101,
+      "device-name": "I-5 at Delta Park",
+      "latitude": 45.6048,
+      "longitude": -122.6757,
+      "hwy-id": 1,
+      "route-id": "I5",
+      "milepoint": 306.7,
+      "cctv-url": "https://tripcheck.com/RoadCams/cams/I5_DeltaPark_pid1101.jpg",
+      "cctv-other": "Looking south toward the Columbia Slough",
+      "last-update-time": "2026-10-08T05:00:00Z"
+    },
+    {
+      "device-id": 1101,
+      "device-name": "I-5 at Delta Park",
+      "latitude": 45.6048,
+      "longitude": -122.6757,
+      "hwy-id": 1,
+      "route-id": "I5",
+      "milepoint": 306.7,
+      "cctv-url": "https://tripcheck.com/RoadCams/cams/I5_DeltaPark_pid1102.jpg",
+      "cctv-other": "Looking north toward the Columbia River",
+      "last-update-time": "2026-10-08T05:00:00Z"
+    },
+    {
+      "device-id": 2240,
+      "device-name": "US 26 at Sylvan",
+      "latitude": 45.5118,
+      "longitude": -122.7205,
+      "hwy-id": 47,
+      "route-id": "US26",
+      "milepoint": 71.9,
+      "cctv-url": "https://tripcheck.com/RoadCams/cams/US26_Sylvan_pid2240.jpg",
+      "cctv-other": "",
+      "last-update-time": "2026-10-08T05:00:00Z"
+    }
+  ]
+}
