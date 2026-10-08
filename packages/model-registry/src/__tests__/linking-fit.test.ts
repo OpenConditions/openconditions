@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { type ChargingCatalogFeed, chargingDomain } from "@openconditions/charging";
 import {
   canonicalClusters,
   type FeatureLink,
@@ -74,51 +75,34 @@ const osmFeatures = (kind: string, amenity: string): LinkableFeature[] =>
     ];
   });
 
-interface OcpdbLocation {
-  id: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  coordinates: { latitude: number; longitude: number };
-  operator?: { name: string };
-  evses?: { evse_id?: string }[];
-}
+/** `de-bw-mobidata-charging`: the fields its records take from the feed. */
+const ocpdbFeed = {
+  id: "de-bw-mobidata-charging",
+  format: "ocpi",
+  region: "de",
+  license: "DL-DE-BY-2.0",
+  licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
+  attribution: "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+} as ChargingCatalogFeed;
 
-/** eMI3 EVSE ids: country, operator, `E`, outlet — with or without the separators. */
-const EMI3 = /^[A-Z]{2}\*?[A-Z0-9]{3}\*?E[A-Z0-9*]{1,31}$/;
-
+/**
+ * The database's sites as the charging parser writes them. Their provider id
+ * is the database's row id, not an operator's OCPI location id: it keeps one
+ * row per upstream source of a site. Register rows carry the register's own
+ * ids (BNETZA*…) as EVSE ids, which are no eMI3 ids.
+ */
 const chargingFeatures = (): LinkableFeature[] =>
-  (json("ocpdb-charging-karlsruhe.json").items as OcpdbLocation[]).map((loc) => ({
-    id: `oc:feature:de-bw-ocpdb:${loc.id}`,
-    kind: "charging_site",
-    location: {
-      geometry: {
-        type: "Point",
-        coordinates: [loc.coordinates.longitude, loc.coordinates.latitude],
-      },
-      fuzziness: "exact",
-      address: { street: loc.address, postalCode: loc.postal_code, city: loc.city },
+  chargingDomain.formats["ocpi"]!.parse(
+    ocpdbFeed,
+    {
+      main: [
+        readFileSync(
+          new URL("./fixtures/facilities/ocpdb-charging-karlsruhe.json", import.meta.url),
+        ),
+      ],
     },
-    ...(loc.operator === undefined
-      ? {}
-      : { operator: { name: [{ lang: "de", text: loc.operator.name }] } }),
-    // The database's row id, not an operator's OCPI location id: it keeps one
-    // row per upstream source of a site.
-    externalIds: [{ scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" }],
-    components: (loc.evses ?? []).flatMap((evse) =>
-      evse.evse_id === undefined
-        ? []
-        : [
-            {
-              externalIds: [
-                // Register rows carry the register's own ids (BNETZA*…), not eMI3 ones.
-                { scheme: EMI3.test(evse.evse_id) ? "emi3:evse" : "bnetza", id: evse.evse_id },
-              ],
-            },
-          ],
-    ),
-    provenance: { sourceId: "de-bw-ocpdb" },
-  }));
+    { fetchedAt: "2026-09-22T11:10:00Z", cadenceSec: 300, reference: {} },
+  ).features as unknown as LinkableFeature[];
 
 interface ParkapiSite {
   id: number;
@@ -174,7 +158,8 @@ describe("charging sites against OpenStreetMap", () => {
   const links = linkAll(ocpdb, osm, chargingRules);
 
   it("has real records to work with", () => {
-    expect(ocpdb.length).toBe(12);
+    // Twelve rows; the two the register holds for one device pair 1 m apart are one site.
+    expect(ocpdb.length).toBe(11);
     expect(osm.length).toBe(24);
   });
 
@@ -183,7 +168,7 @@ describe("charging sites against OpenStreetMap", () => {
     // and only one pair in the city centre is inside the 20 m window.
     expect(links.filter((l) => l.status === "accepted")).toHaveLength(1);
     const [link] = links;
-    expect(link?.aId).toBe("oc:feature:de-bw-ocpdb:206019");
+    expect(link?.aId).toBe("oc:feature:de-bw-mobidata-charging:206019");
     expect(link?.method).toBe("spatial_attribute");
     expect(link?.reasons[0]).toMatch(/^12\.\d m$/);
   });
@@ -203,16 +188,46 @@ describe("charging sites against OpenStreetMap", () => {
     expect(withRef.some((c) => c.tags["ref:EU:EVSE"]!.includes(";"))).toBe(true);
     const listed = withRef[0]!.tags["ref:EU:EVSE"]!.split(";")[0]!;
     const site: LinkableFeature = {
-      id: "oc:feature:de-bw-ocpdb:test",
+      id: "oc:feature:de-bw-mobidata-charging:test",
       kind: "charging_site",
       location: { geometry: { type: "Point", coordinates: [0, 0] }, fuzziness: "exact" },
       components: [{ externalIds: [{ scheme: "emi3:evse", id: listed }] }],
-      provenance: { sourceId: "de-bw-ocpdb" },
+      provenance: { sourceId: "de-bw-mobidata-charging" },
     };
     expect(matchOsm(site, candidates, chargingRules)).toEqual({
       id: withRef[0]!.id,
       method: "id",
       confidence: 1,
+    });
+  });
+});
+
+describe("a relayed register row against the register", () => {
+  it("links the Luisenstraße 2F register row to the register's own device by its id", () => {
+    const [, relayed] = chargingDomain.formats["ocpi"]!.parse(
+      ocpdbFeed,
+      {
+        main: [
+          readFileSync(new URL("./fixtures/crowd/ocpdb-luisenstrasse-2f.json", import.meta.url)),
+        ],
+      },
+      { fetchedAt: "2026-09-22T11:10:00Z", cadenceSec: 300, reference: {} },
+    ).features as unknown as LinkableFeature[];
+    // The register's own row, 120 m off and its operator written otherwise:
+    // only the device id says the two are one.
+    const csv = [
+      "Ladeeinrichtungs-ID;Betreiber;Status;Anzahl Ladepunkte;Breitengrad;Längengrad",
+      "1031489;Stadtwerke Karlsruhe;In Betrieb;1;49,001725;8,404824",
+    ].join("\r\n");
+    const [device] = chargingDomain.formats["bnetza"]!.parse(
+      { id: "de-bnetza-charging", format: "bnetza", region: "de" } as ChargingCatalogFeed,
+      { main: [Buffer.from(`${csv}\r\n`)] },
+      { fetchedAt: "2026-09-22T11:10:00Z", cadenceSec: 86400, reference: {} },
+    ).features as unknown as LinkableFeature[];
+    expect(proposeLink(relayed!, device!, chargingRules)).toMatchObject({
+      method: "external_id",
+      status: "accepted",
+      reasons: ["bnetza 1031489"],
     });
   });
 });

@@ -1,0 +1,62 @@
+{
+  "pagination": {
+    "limit": 9
+  },
+  "modifiedAt": "2026-10-06T00:01:09.039Z",
+  "statuses": [
+    {
+      "evseId": "FI*WTY*E13355*1",
+      "modifiedAt": "2026-09-04T05:27:32.179Z",
+      "lastUpdatedAt": "2026-09-03T12:54:59.000Z",
+      "status": "UNKNOWN"
+    },
+    {
+      "evseId": "FI*TSL*E5FTM6L",
+      "modifiedAt": "2026-10-05T07:55:18.768Z",
+      "lastUpdatedAt": "2026-10-05T23:20:37.000Z",
+      "status": "AVAILABLE"
+    },
+    {
+      "evseId": "FI*TSL*E5FTM6K",
+      "modifiedAt": "2026-10-05T14:52:41.604Z",
+      "lastUpdatedAt": "2026-10-05T23:00:25.000Z",
+      "status": "AVAILABLE"
+    },
+    {
+      "evseId": "FI*PLG*E20207",
+      "modifiedAt": "2026-10-05T16:22:56.047Z",
+      "lastUpdatedAt": "2026-10-05T16:22:55.447Z",
+      "status": "AVAILABLE"
+    },
+    {
+      "evseId": "FI*PLG*E20206",
+      "modifiedAt": "2026-10-05T08:26:58.019Z",
+      "lastUpdatedAt": "2026-10-05T08:26:57.485Z",
+      "status": "AVAILABLE"
+    },
+    {
+      "evseId": "FI*ABC*E0617*1011*11",
+      "modifiedAt": "2026-10-05T17:02:00.288Z",
+      "lastUpdatedAt": "2026-10-05T17:01:58.410Z",
+      "status": "CHARGING"
+    },
+    {
+      "evseId": "FI*ABC*E0617*1011*12",
+      "modifiedAt": "2026-10-03T13:58:59.937Z",
+      "lastUpdatedAt": "2026-10-05T04:54:08.337Z",
+      "status": "AVAILABLE"
+    },
+    {
+      "evseId": "FI*LDL*E00000027",
+      "modifiedAt": "2026-10-05T19:15:05.483Z",
+      "lastUpdatedAt": "2026-10-05T19:15:04.000Z",
+      "status": "INOPERATIVE"
+    },
+    {
+      "evseId": "FI*LDL*E00000025",
+      "modifiedAt": "2026-10-05T19:15:05.638Z",
+      "lastUpdatedAt": "2026-10-05T19:15:05.000Z",
+      "status": "INOPERATIVE"
+    }
+  ]
+}

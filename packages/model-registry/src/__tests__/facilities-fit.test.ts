@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { type ChargingCatalogFeed, chargingDomain } from "@openconditions/charging";
 import { type FuelFeed, fuelDomain } from "@openconditions/fuel";
 import {
   buildRegistry,
@@ -22,8 +23,9 @@ import { productionModules } from "../index.js";
  * in DATEX II v3), Autobahn GmbH (lorry parking along the A1, no licence published),
  * MINETUR (Spain, prices per grade), MIMIT (Italy, self and attended prices)
  * and E-Control (Austria, an on-demand source queried by radius).
- * ParkAPI, NDW, MINETUR and E-Control run through the parking and fuel
- * domains' own parsers, whose formats their modules register; the formats
+ * The charge-point database, ParkAPI, NDW, MINETUR and E-Control run through
+ * the charging, parking and fuel domains' own parsers, whose formats their
+ * modules register; the formats
  * OpenConditions does not parse are registered by a test-only module.
  *
  * The Austrian records are kept without their contact block: that feed
@@ -35,12 +37,11 @@ const fitFormats: RegistryModule = {
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["ocpi", "autobahn-parking", "mimit"],
+      values: ["autobahn-parking", "mimit"],
     }),
   ],
 };
 const registry = buildRegistry([...productionModules, fitFormats]);
-const crosswalk = registry.crosswalk;
 const FETCHED = "2026-09-22T11:10:00Z";
 
 const text = (name: string) =>
@@ -121,7 +122,6 @@ function observation(
   return { id: observationId(feature.provenance.sourceId, draft as never), ...draft };
 }
 
-const category = (value: string, vocabulary: string) => ({ type: "category", value, vocabulary });
 const money = (amount: string, currency: string, per?: string) => ({
   type: "money",
   amount,
@@ -141,193 +141,56 @@ function sealAll(records: readonly Draft[]) {
   });
 }
 
-interface OcpiConnector {
-  id: string;
-  standard: string;
-  format: string;
-  power_type: string;
-  max_voltage?: number;
-  max_amperage?: number;
-  max_electric_power?: number;
-}
-interface OcpiEvse {
-  uid: string;
-  evse_id?: string;
-  status: string;
-  capabilities?: string[];
-  connectors: OcpiConnector[];
-  last_updated: string;
-}
-interface OcpiLocation {
-  id: string;
-  address: string;
-  postal_code: string;
-  city: string;
-  country: string;
-  coordinates: { latitude: number; longitude: number };
-  operator?: { name: string };
-  opening_times?: { twentyfourseven?: boolean };
-  publish?: boolean;
-  source: string;
-  original_id: string;
-  last_updated: string;
-  evses: OcpiEvse[];
-}
+const ocpi = chargingDomain.formats["ocpi"]!;
+
+/** `de-bw-mobidata-charging`: the fields its records take from the feed. */
+const ocpdbFeed = {
+  id: "de-bw-mobidata-charging",
+  format: "ocpi",
+  region: "de",
+  license: "DL-DE-BY-2.0",
+  licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
+  attribution: "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+} as ChargingCatalogFeed;
+
+/**
+ * Which tariff applies to which charge point is the database's tariff
+ * associations; these name the first site's two charge points for the two
+ * tariffs of the fixture, which belong to another source's sites.
+ */
+const ocpiAssociations = () => {
+  const evses = (json("ocpi-locations.json").items as { evses: { uid: string }[] }[])[0]!.evses;
+  return Buffer.from(
+    JSON.stringify({
+      items: (json("ocpi-tariffs.json").items as { id: string }[]).map((tariff, i) => ({
+        id: tariff.id,
+        evses: [{ evse_uid: evses[i]!.uid }],
+      })),
+    }),
+  );
+};
 
 /**
  * An OCPI location is one charging site: its charge points become `evse`
- * components and their plugs `connector` components below them. The database
- * that publishes these relays a national register, so each record names the
- * register it came from as its upstream publisher.
+ * components and their plugs `connector` components below them, and its
+ * tariffs offers on the site. The database that publishes these relays a
+ * national register, so each record names the register it came from as its
+ * upstream publisher, and the register's rows carry no live state.
  */
 function ocpiChargingSites() {
-  const features: Draft[] = [];
-  const observations: Draft[] = [];
-  for (const loc of json("ocpi-locations.json").items as OcpiLocation[]) {
-    const prov = {
-      ...provenance("de-bw-ocpdb", "ocpi", loc.id, "MobiData BW", "CC-BY-4.0"),
-      upstream: [{ publisher: loc.source, recordId: loc.original_id }],
-    };
-    const feature: Feature = {
-      id: `oc:feature:de-bw-ocpdb:${loc.id}`,
-      location: {
-        ...point(loc.coordinates.longitude, loc.coordinates.latitude),
-        address: {
-          street: loc.address,
-          postalCode: loc.postal_code,
-          city: loc.city,
-          country: "DE",
-        },
-      },
-      provenance: prov,
-    };
-    const components = loc.evses.flatMap((evse) => [
-      {
-        key: evse.uid,
-        kind: "evse",
-        ...(evse.evse_id === undefined
-          ? {}
-          : { externalIds: [{ scheme: "emi3:evse", id: evse.evse_id }] }),
-        details: {
-          kind: "evse",
-          v: 1,
-          ...(evse.evse_id === undefined ? {} : { evseId: evse.evse_id }),
-          uid: evse.uid,
-          ...(evse.capabilities === undefined ? {} : { capabilities: evse.capabilities }),
-        },
-      },
-      ...evse.connectors.map((c) => ({
-        key: c.id,
-        parentKey: evse.uid,
-        kind: "connector",
-        details: {
-          kind: "connector",
-          v: 1,
-          standard: crosswalk.value("connector_standard", "ocpi", c.standard) ?? "UNKNOWN",
-          format: c.format.toLowerCase(),
-          powerType: c.power_type,
-          ...(c.max_voltage === undefined ? {} : { maxVoltage: c.max_voltage }),
-          ...(c.max_amperage === undefined ? {} : { maxAmperage: c.max_amperage }),
-          ...(c.max_electric_power === undefined
-            ? {}
-            : { maxPowerKw: c.max_electric_power / 1000 }),
-        },
-      })),
-    ]);
-    features.push({
-      ...feature,
-      class: "feature",
-      kind: "charging_site",
-      temporality: "static",
-      lifecycle: "operational",
-      // The database's row id, not an operator's OCPI location id: it keeps
-      // one row per upstream source of a site.
-      externalIds: [{ scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" }],
-      ...(loc.operator === undefined
-        ? {}
-        : { operator: { role: "operator", name: de(loc.operator.name) } }),
-      ...(loc.opening_times?.twentyfourseven === true
-        ? { openingHours: { osm: "24/7", twentyFourSeven: true } }
-        : {}),
-      freshness: { fetchedAt: FETCHED },
-      components,
-      details: {
-        kind: "charging_site",
-        v: 1,
-        ...(loc.publish === undefined ? {} : { publish: loc.publish }),
-      },
-    });
-    for (const evse of loc.evses) {
-      observations.push(
-        observation(feature, {
-          property: "charging.evse_status",
-          componentKey: evse.uid,
-          result: category(
-            crosswalk.value("evse_status", "ocpi", evse.status) ?? "unknown",
-            "evse_status",
-          ),
-          at: { instant: evse.last_updated },
-        }),
-      );
-    }
-  }
-  return { features, observations };
-}
-
-interface OcpiTariff {
-  id: string;
-  currency: string;
-  source: string;
-  elements: {
-    price_components: { type: string; price: number; taxes?: { percentage: string }[] }[];
-    restrictions?: { min_duration?: number; max_duration?: number };
-  }[];
+  return ocpi.parse(
+    ocpdbFeed,
+    {
+      main: [Buffer.from(text("ocpi-locations.json"))],
+      tariffs: [Buffer.from(text("ocpi-tariffs.json"))],
+      associations: [ocpiAssociations()],
+    },
+    { fetchedAt: FETCHED, cadenceSec: 300, reference: {} },
+  );
 }
 
 /** An OCPI tariff is an offer on the site it belongs to. */
-function ocpiTariffs() {
-  const site = (json("ocpi-locations.json").items as OcpiLocation[])[0]!;
-  return (json("ocpi-tariffs.json").items as OcpiTariff[]).map((tariff) => ({
-    id: `oc:offer:de-bw-ocpdb:${tariff.id}`,
-    class: "offer",
-    kind: "energy_tariff",
-    temporality: "static",
-    location: point(site.coordinates.longitude, site.coordinates.latitude),
-    provenance: {
-      ...provenance("de-bw-ocpdb", "ocpi", tariff.id, "MobiData BW", "CC-BY-4.0"),
-      upstream: [{ publisher: tariff.source }],
-    },
-    freshness: { fetchedAt: FETCHED },
-    subject: { class: "feature", id: `oc:feature:de-bw-ocpdb:${site.id}` },
-    currency: tariff.currency,
-    elements: tariff.elements.map((el) => ({
-      components: el.price_components.map((c) => ({
-        type: (
-          { ENERGY: "energy", TIME: "time", FLAT: "flat", PARKING_TIME: "parking_time" } as Record<
-            string,
-            string
-          >
-        )[c.type],
-        price: { amount: c.price.toFixed(4), currency: tariff.currency },
-        ...(c.taxes?.[0] === undefined ? {} : { vatPct: Number(c.taxes[0].percentage) }),
-      })),
-      ...(el.restrictions === undefined
-        ? {}
-        : {
-            restrictions: {
-              ...(el.restrictions.min_duration === undefined
-                ? {}
-                : { minDuration: { value: el.restrictions.min_duration, unit: "s" } }),
-              ...(el.restrictions.max_duration === undefined
-                ? {}
-                : { maxDuration: { value: el.restrictions.max_duration, unit: "s" } }),
-            },
-          }),
-    })),
-    priceIncludesVat: false,
-    validity: { status: "active" },
-  }));
-}
+const ocpiTariffs = (): Draft[] => ocpiChargingSites().offers;
 
 const parkapi = parkingDomain.formats["parkapi-v3"]!;
 
@@ -632,7 +495,12 @@ describe("facilities fit", () => {
   });
 
   it("seals an OCPI tariff as an offer on its site", () => {
-    expect(sealAll(ocpiTariffs())).toEqual([]);
+    const offers = ocpiTariffs();
+    expect(offers.map((o) => (o["subject"] as { id: string }).id)).toEqual([
+      "oc:feature:de-bw-mobidata-charging:72555",
+      "oc:feature:de-bw-mobidata-charging:72555",
+    ]);
+    expect(sealAll(offers)).toEqual([]);
   });
 
   it("carries the register a relayed charge point came from", () => {
@@ -642,13 +510,8 @@ describe("facilities fit", () => {
     ]);
   });
 
-  it("reads a charge point of a static register as being in no known state", () => {
-    const status = ocpiChargingSites().observations[0]!;
-    expect(status["result"]).toEqual({
-      type: "category",
-      value: "unknown",
-      vocabulary: "evse_status",
-    });
+  it("gives a charge point of a static register no reading", () => {
+    expect(ocpiChargingSites().observations).toEqual([]);
   });
 
   it("converts a height limit published in centimetres", () => {
@@ -736,7 +599,7 @@ describe("facilities fit", () => {
   });
 
   it("seals records the stored schema takes as they are", () => {
-    const drafts = [...CASES.flatMap(([, make]) => recordsOf(make)), ...ocpiTariffs()];
+    const drafts = CASES.flatMap(([, make]) => recordsOf(make));
     for (const draft of drafts) {
       const sealed = sealRecord(registry, draft, {
         instanceId: "fit.example",
@@ -752,7 +615,7 @@ describe("facilities fit", () => {
 
   // The storage tests write these records through the record tables.
   it("seals every record as its golden file holds it", async () => {
-    const drafts = [...CASES.flatMap(([, make]) => recordsOf(make)), ...ocpiTariffs()];
+    const drafts = CASES.flatMap(([, make]) => recordsOf(make));
     const sealed = drafts.map((r) => {
       const result = sealRecord(registry, r, {
         instanceId: "fit.example",

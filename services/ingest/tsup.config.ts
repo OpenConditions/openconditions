@@ -23,7 +23,9 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["fastify", "postgres", "croner"],
+  // impit is a native module, imported lazily by the ingest framework's
+  // impersonating fetch; esbuild cannot bundle its per-platform binaries.
+  external: ["fastify", "postgres", "croner", "impit"],
   noExternal: [/^@openconditions\//, "fast-xml-parser", "drizzle-orm"],
   bundle: true,
   async onSuccess() {

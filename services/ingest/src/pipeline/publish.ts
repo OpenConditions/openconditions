@@ -253,7 +253,9 @@ export async function publishFlows(
  * transaction under the source's lock: its features, their readings and its
  * offers. The poll is a complete snapshot of features and offers, so a stored
  * one it no longer holds is withdrawn; readings are never withdrawn, a series
- * outliving a missing reading. The row count is the source's live features.
+ * outliving a missing reading, but when every role's states are in it
+ * (`statesComplete`) a polled change-only series it does not state ends. The
+ * row count is the source's live features.
  */
 export async function publishFeatures(
   sql: Sql,
@@ -267,6 +269,8 @@ export async function publishFeatures(
     model: WriteModel;
     /** Shown on the status beside the publication, e.g. a held payload standing in for a failed role. */
     warning?: string;
+    /** Every role's states are in the output: a polled series it does not state has ended. */
+    statesComplete?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   return sql.begin(async (tx) => {
@@ -276,7 +280,11 @@ export async function publishFeatures(
       tx,
       src.id,
       { features: output.features, observations: output.observations, offers: output.offers },
-      { ...writeContext(input), complete: { feature: true, offer: true } },
+      {
+        ...writeContext(input),
+        complete: { feature: true, offer: true },
+        statesComplete: input.statesComplete === true,
+      },
     );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
@@ -296,6 +304,63 @@ export async function publishFeatures(
     await upsertSourceStatus(tx, src.id, {
       freshnessWindowSec: src.freshnessWindowSec,
       outcome: output.features.length === 0 ? "complete_empty" : "changed",
+      attemptAt: input.poll.at,
+      networkValidated: true,
+      durationMs: input.durationMs,
+      attemptId: input.poll.id,
+      ...(input.poll.payloadHashes ? { payloadHashes: input.poll.payloadHashes } : {}),
+      ...(input.warning ? { error: input.warning } : {}),
+      publication: counts,
+    });
+    return { summary, counts };
+  }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+}
+
+/**
+ * Writes the readings of a poll that fetched live states alone and closes its
+ * attempt, in one transaction under the source's lock. The poll holds no
+ * feature and no offer, so none is touched or withdrawn; it is a successful
+ * poll of the source all the same. The row count stays the source's live
+ * features.
+ */
+export async function publishReadings(
+  sql: Sql,
+  src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
+  input: {
+    observations: readonly RecordDraft[];
+    rejected: number;
+    poll: PollIdentity;
+    durationMs: number;
+    now: string;
+    model: WriteModel;
+    /** Shown on the status beside the publication, e.g. a held payload standing in for a failed role. */
+    warning?: string;
+  },
+): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
+  return sql.begin(async (tx) => {
+    await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
+    const summary = await writeSnapshotIn(
+      tx,
+      src.id,
+      { observations: input.observations },
+      { ...writeContext(input), complete: false },
+    );
+    const [{ live }] = await tx<{ live: number }[]>`
+      SELECT count(*)::int AS live FROM conditions.feature
+       WHERE source_id = ${src.id} AND tombstoned_at IS NULL`;
+    const rejectedReadings = summary.rejected.filter((r) => r.class === "observation").length;
+    const readings = input.observations.length - summary.observations.unchanged - rejectedReadings;
+    const counts: PublicationCounts = {
+      activeEvents: live,
+      rowCount: live,
+      inserted: 0,
+      updated: Math.max(0, readings),
+      deleted: 0,
+      rejected: input.rejected + summary.rejected.length,
+    };
+    await upsertSourceStatus(tx, src.id, {
+      freshnessWindowSec: src.freshnessWindowSec,
+      outcome: "changed",
       attemptAt: input.poll.at,
       networkValidated: true,
       durationMs: input.durationMs,

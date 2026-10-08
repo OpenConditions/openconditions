@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<d2:payload xsi:type="egi:EnergyInfrastructureStatusPublication" lang="lt" modelBaseVersion="3" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:com="https://datex2.eu/schema/3/common" xmlns:egi="https://datex2.eu/schema/3/energyInfrastructure" xmlns:fac="https://datex2.eu/schema/3/facilities" xmlns:loc="https://datex2.eu/schema/3/locationReferencing" xmlns:d2="https://datex2.eu/schema/3/d2Payload" xsi:schemaLocation="https://datex2.eu/schema/3/common https://datex2.eu/schema/3/common/DATEXII_3_Common.xsd https://datex2.eu/schema/3/energyInfrastructure https://datex2.eu/schema/3/energyInfrastructure/DATEXII_3_EnergyInfrastructure.xsd https://datex2.eu/schema/3/facilities https://datex2.eu/schema/3/facilities/DATEXII_3_Facilities.xsd https://datex2.eu/schema/3/locationReferencing https://datex2.eu/schema/3/locationReferencing/DATEXII_3_LocationReferencing.xsd https://datex2.eu/schema/3/d2Payload https://datex2.eu/schema/3/d2Payload/DATEXII_3_D2Payload.xsd">
+  <com:feedDescription/>
+  <com:publicationTime>2026-10-06T05:01:29+03:00</com:publicationTime>
+  <com:publicationCreator>
+    <com:country>lt</com:country>
+    <com:nationalIdentifier>lakd</com:nationalIdentifier>
+  </com:publicationCreator>
+  <egi:energyInfrastructureSiteStatus id="EGI-S-257" version="v1">
+    <fac:lastUpdated>2025-11-21T13:00:10+02:00</fac:lastUpdated>
+    <egi:energyInfrastructureStationStatus id="EGI-ST-257" version="v1">
+      <egi:isAvailable>true</egi:isAvailable>
+      <egi:refillPointStatus id="0" connectorIndex="1">
+        <egi:status>REMOVED</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="1" connectorIndex="2">
+        <egi:status>OUTOFORDER</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="2" connectorIndex="3">
+        <egi:status>OUTOFORDER</egi:status>
+      </egi:refillPointStatus>
+    </egi:energyInfrastructureStationStatus>
+  </egi:energyInfrastructureSiteStatus>
+  <egi:energyInfrastructureSiteStatus id="EGI-S-258" version="v1">
+    <fac:lastUpdated>2026-10-06T05:00:46+03:00</fac:lastUpdated>
+    <egi:energyInfrastructureStationStatus id="EGI-ST-258" version="v1">
+      <egi:isAvailable>true</egi:isAvailable>
+      <egi:refillPointStatus id="0" connectorIndex="1">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="1" connectorIndex="2">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+    </egi:energyInfrastructureStationStatus>
+  </egi:energyInfrastructureSiteStatus>
+  <egi:energyInfrastructureSiteStatus id="EGI-S-375" version="v1">
+    <fac:lastUpdated>2026-08-31T13:15:38+03:00</fac:lastUpdated>
+    <egi:energyInfrastructureStationStatus id="EGI-ST-375" version="v1">
+      <egi:isAvailable>true</egi:isAvailable>
+      <egi:refillPointStatus id="0" connectorIndex="1">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="1" connectorIndex="2">
+        <egi:status>CHARGING</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="2" connectorIndex="3">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="3" connectorIndex="4">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+    </egi:energyInfrastructureStationStatus>
+  </egi:energyInfrastructureSiteStatus>
+  <egi:energyInfrastructureSiteStatus id="EGI-S-1510" version="v1">
+    <fac:lastUpdated>2026-10-06T05:00:32+03:00</fac:lastUpdated>
+    <egi:energyInfrastructureStationStatus id="EGI-ST-1510" version="v1">
+      <egi:isAvailable>true</egi:isAvailable>
+      <egi:refillPointStatus id="0" connectorIndex="1">
+        <egi:status>INOPERATIVE</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="1" connectorIndex="2">
+        <egi:status>INOPERATIVE</egi:status>
+      </egi:refillPointStatus>
+    </egi:energyInfrastructureStationStatus>
+  </egi:energyInfrastructureSiteStatus>
+  <egi:energyInfrastructureSiteStatus id="EGI-S-260" version="v1">
+    <fac:lastUpdated>2026-10-06T05:01:30+03:00</fac:lastUpdated>
+    <egi:energyInfrastructureStationStatus id="EGI-ST-260" version="v1">
+      <egi:isAvailable>true</egi:isAvailable>
+      <egi:refillPointStatus id="0" connectorIndex="1">
+        <egi:status>Unknown</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="1" connectorIndex="2">
+        <egi:status>Unknown</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="2" connectorIndex="3">
+        <egi:status>Unknown</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="3" connectorIndex="4">
+        <egi:status>Unknown</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="4" connectorIndex="5">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+      <egi:refillPointStatus id="5" connectorIndex="6">
+        <egi:status>AVAILABLE</egi:status>
+      </egi:refillPointStatus>
+    </egi:energyInfrastructureStationStatus>
+  </egi:energyInfrastructureSiteStatus>
+</d2:payload>

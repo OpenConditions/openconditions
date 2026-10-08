@@ -9,6 +9,7 @@ import { CROWD_SOURCE_ID, currentReadingClauses, readingColumns } from "./live-r
 import { recordFromHistory } from "./observation-codec.js";
 import type { QueryRunner } from "./query-runner.js";
 import { type Scope, scopeClauses } from "./record-filters.js";
+import { validWhilePolled, withPolledValidity } from "./validity.js";
 
 type Rec = Record<string, unknown>;
 
@@ -107,7 +108,10 @@ export interface LatestObservationPage {
  * poll: a walk never returns a series twice and never skips one that exists
  * throughout it, and a series that moved mid-walk may appear in either
  * state. A crowd reading carries its evidence summary; one whose evidence
- * expired or was negated is no longer current.
+ * expired or was negated is no longer current. A polled feed's reading of a
+ * change-only property, and a fusion of such readings, carries the validity
+ * its sources' polling gives it (`withPolledValidity`): their polling now,
+ * whatever `at` the read asks for.
  */
 export async function listLatestObservations(
   db: QueryRunner,
@@ -161,7 +165,7 @@ export async function listLatestObservations(
   );
   const page = rows.slice(0, q.limit);
   return {
-    records: page.map(withEvidence),
+    records: await withPolledValidity(db, registry, page.map(withEvidence)),
     next: rows.length > q.limit ? String(page.at(-1)!["series_id"]) : null,
   };
 }
@@ -257,7 +261,9 @@ const iso = (v: unknown) => (v instanceof Date ? v : new Date(String(v))).toISOS
  * or daily rollups (see {@link seriesResolution}), a page at a time. A raw
  * page's cursor is the last reading's phenomenon start and issue time, a
  * rollup page's the last period's start. A fused row keeps no history, so it
- * is never a series here.
+ * is never a series here. A polled feed's raw reading of a change-only
+ * property is valid until the next change of its series, the one in effect
+ * as long as its source's polling gives it (`withPolledValidity`).
  */
 export async function readSeries(
   db: QueryRunner,
@@ -318,8 +324,14 @@ export async function readSeries(
     const [start, issued] = q.cursor === undefined ? [] : q.cursor.split("|");
     // The cursor binds as text: a client serialising a timestamptz parameter
     // through a Date cannot carry the `-infinity` of a reading that is no forecast.
-    const rows = await db.execute<(Rec & { payload_hashes: string[] | null })[]>(
-      `SELECT o.*, a.payload_hashes
+    const rows = await db.execute<
+      (Rec & { payload_hashes: string[] | null; superseded_at: Date | string | null })[]
+    >(
+      `SELECT o.*, a.payload_hashes,
+              (SELECT min(n.phenomenon_start) FROM conditions.observation n
+                WHERE n.series_id = o.series_id AND n.retention_days = o.retention_days
+                  AND n.phenomenon_start > o.phenomenon_start)
+                AS superseded_at
          FROM conditions.observation o
          LEFT JOIN conditions.source_poll_attempt a ON a.id = o.fetch_id
         WHERE o.series_id = $1 AND o.phenomenon_start >= $2 AND o.phenomenon_start < $3
@@ -330,8 +342,19 @@ export async function readSeries(
       [series.series_id, from, to, start ?? null, issued ?? null, q.limit + 1],
     );
     const page = rows.slice(0, q.limit);
-    found.records = page.map((row) =>
-      recordFromHistory(registry, series.template, row, row.payload_hashes ?? []),
+    // A polled feed's change-only reading held until the next change; the
+    // one in effect, while its source polls.
+    found.records = await withPolledValidity(
+      db,
+      registry,
+      page.map(({ superseded_at, ...row }) => {
+        const record = recordFromHistory(registry, series.template, row, row.payload_hashes ?? []);
+        return superseded_at !== null &&
+          record["validUntil"] === undefined &&
+          validWhilePolled(registry, record)
+          ? { ...record, validUntil: iso(superseded_at) }
+          : record;
+      }),
     );
     if (rows.length > q.limit) {
       const last = page.at(-1)!;

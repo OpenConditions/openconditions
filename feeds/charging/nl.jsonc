@@ -1,0 +1,31 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "ndw",
+      "product": "charging",
+      "name": "NDW publicly accessible charge points (DOT-NL)",
+      "tier": "authoritative",
+      "format": "ocpi",
+      // The national access point's OCPI 2.2.1 locations, rebuilt every
+      // minute with each EVSE's live status inline, and the tariffs, rebuilt
+      // hourly. Both are gzip bodies served without a Content-Encoding.
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.ndw.nu/charging_point_locations_ocpi.json.gz",
+          "cadenceSec": 600,
+        },
+        "tariffs": {
+          "url": "https://opendata.ndw.nu/charging_point_tariffs_ocpi.json.gz",
+          "cadenceSec": 3600,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "NDW / DOT-NL",
+      "homepage": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
+      "privacyUrl": "https://www.ndw.nu/service/privacy",
+    },
+  ],
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "lta",
+      "product": "charging",
+      "name": "LTA DataMall EV charging points",
+      "tier": "authoritative",
+      "format": "lta",
+      // The batch call answers with a presigned link, valid 15 minutes, to
+      // one file of every charging point with its prices and live state,
+      // rebuilt every five minutes. The link is fetched without the key.
+      "credentials": {
+        "account_key": {
+          "title": "LTA DataMall AccountKey",
+          "setup": {
+            "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+            "urlLabel": "Register for an LTA DataMall AccountKey",
+            "steps": [
+              "Open datamall.lta.gov.sg and go to 'Request for API Access'.",
+              "Register with your name, email, and organisation, and accept the Singapore Open Data Licence.",
+              "Confirm your email; the AccountKey is issued to your registered email.",
+              "Copy the AccountKey — it is sent in the 'AccountKey' request header.",
+            ],
+            "cost": "Free",
+            "notes": "Covers the EV Charging Points APIs (station location, connector types, real-time availability by postal code). Sent via the 'AccountKey' header, never as a query parameter.",
+          },
+        },
+      },
+      "auth": { "kind": "header-key", "header": "AccountKey", "credential": "account_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://datamall2.mytransport.sg/ltaodataservice/EVCBatch",
+          "follow": { "path": "value.0.Link" },
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-Singapore-ODL-1.0",
+      "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+      "attribution": "Contains information from EV Charging Points Batch from LTA DataMall, made available under the terms of the Singapore Open Data Licence version 1.0 (https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html)",
+      "terms": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/api-terms-of-service.html",
+        "reviewedAt": "2026-10-06",
+        "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from LTA. API: up to 10 million calls a day; the AccountKey must stay confidential.",
+      },
+      "homepage": "https://datamall.lta.gov.sg",
+      "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy-statement.html",
+    },
+  ],
+}

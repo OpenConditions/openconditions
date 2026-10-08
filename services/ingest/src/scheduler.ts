@@ -17,6 +17,7 @@ import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-r
 import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js";
 import { overpassInterpreterUrl } from "./pipeline/osm-import.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
+import { createParseGate } from "./pipeline/parse-gate.js";
 import { rebindOnBoot } from "./pipeline/rebind.js";
 import type { RunDeps } from "./pipeline/run.js";
 import {
@@ -205,6 +206,9 @@ export function startScheduler(
   const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
   // The Overpass the OpenStreetMap feeds query, read from the same setting.
   const overpassUrl = overpassInterpreterUrl(catalog.credentials);
+  // One gate for all feeds: a large payload is parsed and written while no
+  // other large one is, which bounds the heap two national registers need.
+  const parseGate = createParseGate();
 
   for (const feed of catalog.feeds) {
     const job = scheduleFeed(feed, {
@@ -218,6 +222,7 @@ export function startScheduler(
         now: () => new Date().toISOString(),
         openlrClient,
         raw,
+        parseGate,
       },
       ...(inFlight ? { inFlight } : {}),
     });

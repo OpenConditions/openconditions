@@ -7,7 +7,6 @@ import {
   guardedFetch,
   guardOptionsFromEnv,
   type LookupFn,
-  makeAuthorizedFetch,
   type RecordDraft,
 } from "@openconditions/ingest-framework";
 import { isVehicleSpecific, situationEffects } from "@openconditions/model";
@@ -186,7 +185,7 @@ export async function runRestrictionSmoke(
     {},
     deps.lookup,
   );
-  const acquired = await fetchEndpoint(feed, "main", makeAuthorizedFetch(feed, guarded), {
+  const acquired = await fetchEndpoint(feed, "main", guarded, {
     state: createFetchState(),
     resolvers: domainOf(feed).resolvers,
   });

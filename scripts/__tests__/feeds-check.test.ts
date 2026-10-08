@@ -214,6 +214,48 @@ describe("feeds:check", () => {
     expect(asked).toEqual(["https://cells.example.org/?bbox=6.1,49.6,6.2,49.7"]);
   });
 
+  it("parses an on-demand answer for its cell, so what lies outside is not counted", async () => {
+    quiet();
+    const dir = mkdtempSync(join(tmpdir(), "feeds-check-"));
+    dirs.push(dir);
+    mkdirSync(join(dir, "charging"));
+    const file = join(dir, "charging", "lu.jsonc");
+    writeFileSync(
+      file,
+      `{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [{
+    "operator": "ocm",
+    "product": "charging",
+    "name": "OCM charging",
+    "tier": "community",
+    "format": "ocm",
+    "endpoints": { "main": { "url": "https://ocm.example.org/poi?boundingbox=({south},{west}),({north},{east})", "cadenceSec": 3600 } },
+    "freshnessWindowSec": 86400,
+    "accessMode": "on_demand",
+    "onDemand": { "cellDeg": 0.1, "ttlSec": 3600, "maxCellsPerRead": 4, "probe": [6.13, 49.61] },
+    "coverage": { "bbox": [5.7, 49.4, 6.6, 50.2] },
+    "license": "CC-BY-4.0",
+    "attribution": "Open Charge Map",
+    "privacyUrl": "https://example.org/privacy",
+  }],
+}
+`,
+    );
+    // OCM answers a radius around the box, so it reaches past the cell.
+    const poi = (id: number, lat: number) => ({
+      ID: id,
+      AddressInfo: { Title: `Site ${id}`, Latitude: lat, Longitude: 6.13 },
+      Connections: [],
+    });
+    const ocm = (async () =>
+      new Response(JSON.stringify([poi(1, 49.61), poi(2, 49.75)]))) as unknown as typeof fetch;
+    const results = await checkFeeds({ feedsDir: dir, files: [file], fetch: ocm, env: {} });
+    expect(results.map((r) => [r.feedId, r.level, r.records])).toEqual([
+      ["lu-ocm-charging", "ok", 1],
+    ]);
+  });
+
   it("fails on a catalogue the schema rejects", async () => {
     quiet();
     const { dir, file } = catalogue([feed("good", "https://good.example.org/feed")]);

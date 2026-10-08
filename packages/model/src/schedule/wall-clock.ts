@@ -9,17 +9,27 @@ interface WallClockParts {
   second: number;
 }
 
+/**
+ * One formatter per zone: building one costs native memory that a feed of
+ * tens of thousands of local timestamps would otherwise multiply.
+ */
+const FORMATTERS = new Map<string, Intl.DateTimeFormat>();
+
 function partsAt(timeZone: string, epochMs: number): WallClockParts {
-  const fmt = new Intl.DateTimeFormat("en-US", {
-    timeZone,
-    hourCycle: "h23",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-  });
+  let fmt = FORMATTERS.get(timeZone);
+  if (fmt === undefined) {
+    fmt = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      hourCycle: "h23",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+    FORMATTERS.set(timeZone, fmt);
+  }
   const map: Record<string, number> = {};
   for (const p of fmt.formatToParts(new Date(epochMs))) {
     if (p.type !== "literal") map[p.type] = Number(p.value);

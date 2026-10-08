@@ -11,8 +11,15 @@ import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
 import { updateCanonicalView } from "./canonical-view.js";
 import { capRows, maxObservationsPerPollFromEnv } from "./caps.js";
+import { refreshFused } from "./fused-rows.js";
+import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
-import { type ObservationCounts, type PollRef, writeObservationsIn } from "./write-observations.js";
+import {
+  endUnstatedSeries,
+  type ObservationCounts,
+  type PollRef,
+  writeObservationsIn,
+} from "./write-observations.js";
 
 type Rec = Record<string, unknown>;
 
@@ -35,9 +42,16 @@ export interface WriteContext extends PollRef {
    * it no longer holds has been withdrawn. False for a partial poll; per
    * class for a poll that holds some classes in full and others not (a flow
    * poll holds all its derived congestion, but only the sites that reported).
-   * Observations are never withdrawn: a series outlives a missing reading.
+   * Observations are never withdrawn: a series outlives a missing reading
+   * (see `statesComplete`).
    */
   complete: boolean | Readonly<Partial<Record<RevisionedClass, boolean>>>;
+  /**
+   * The snapshot states every change-only reading its source publishes now
+   * (a full parse with every role answered): a polled change-only series it
+   * does not state has ended, and its reading stops holding.
+   */
+  statesComplete?: boolean;
   /** The most records of one class a poll may hold (default `MAX_ROWS_PER_SOURCE`). */
   maxRowsPerClass?: number;
   /**
@@ -223,7 +237,14 @@ export async function writeSnapshotIn(
 ): Promise<WriteSummary> {
   const summary: WriteSummary = {
     counts: { situation: emptyCounts(), feature: emptyCounts(), offer: emptyCounts() },
-    observations: { latest: 0, history: 0, unchanged: 0, outsideRetention: 0, pastRollup: 0 },
+    observations: {
+      latest: 0,
+      history: 0,
+      unchanged: 0,
+      outsideRetention: 0,
+      pastRollup: 0,
+      ended: 0,
+    },
     rejected: [],
     changed: [],
   };
@@ -238,13 +259,28 @@ export async function writeSnapshotIn(
   for (const cls of ["feature", "situation", "offer"] as const) {
     await writeClass(tx, cls, sourceId, drafts[DRAFTS_OF[cls]] ?? [], ctx, summary);
   }
+  const changedFeatures = new Set(
+    summary.changed.filter((c) => c.class === "feature").map((c) => c.id),
+  );
   summary.observations = await writeObservationsIn(
     tx,
     sourceId,
     drafts.observations ?? [],
-    ctx,
+    { ...ctx, changedFeatures },
     summary.rejected,
   );
+  if (ctx.statesComplete) {
+    const ended = await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx);
+    summary.observations.ended = ended.length;
+    await refreshFused(
+      tx,
+      ctx.registry,
+      ended.flatMap((e) =>
+        e.featureId === null ? [] : [{ featureId: e.featureId, properties: [e.property] }],
+      ),
+      { instanceId: ctx.instanceId, now: ctx.now, freshSources: [sourceId] },
+    );
+  }
   await updateCanonicalView(
     tx,
     ctx.registry,
@@ -330,7 +366,9 @@ async function writeClass(
   const seen = new Set<string>();
   const sealed: { record: Rec; prev: Stored | undefined }[] = [];
   const expiryMoved: Rec[] = [];
+  let handled = 0;
   for (const draft of new Map(drafts.map((d) => [d["id"] as string, d])).values()) {
+    if (++handled % RECORDS_PER_TURN === 0) await pause();
     const id = typeof draft["id"] === "string" ? draft["id"] : undefined;
     if (id !== undefined) seen.add(id);
     const owner = (draft["provenance"] as Rec | undefined)?.["sourceId"];

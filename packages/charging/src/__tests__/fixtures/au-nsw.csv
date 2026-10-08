@@ -1,0 +1,8 @@
+﻿OBJECTID,Station_name,Station_address,Operator,Number_of_plugs,Charger_Type,Charger_rating,Latitude,Longitude,LGANAME,PCODE,Source
+1,,129 Pacific Hwy Ourimbah NSW 2258 Australia,NRMA Electric,4,Upcoming,2x350kW & 2x175kW,-33.353198,151.369027,,,
+16,,"1 - 7 Ross St, Wilcannia NSW 2836, Australia",NRMA,4,DC,50 kW,-31.557629,143.386007,Central Darling Shire Council,2350,TfNSW Regional
+324,,"19 Princes Hwy, Figtree NSW 2525, Australia",Tesla,6,DC,175 kW,-34.436615,150.863298,Wollongong City Council,2525,Fast Charging R1
+1099,,"19 Princes Hwy, Figtree NSW 2525, Australia",Tesla Motors ,6,DC,2x350kW & 2x175kW,-34.436615,150.863298,,,
+1160,Figtree Grove Shopping Centre,"19 Princes Hwy, Figtree NSW 2525",Non-networked,2,AC,AC,-34.436615,150.863298,Wollongong City Council,2525,Existing Destination Chargers
+1006,Jac & Jones Wines Hunter Valley,"771 Hermitage Rd, Pokolbin NSW 2320",Non-networked,1,AC,AC,-32.716558,151.257288,Cessnock City Council,2320,Existing Destination Chargers
+1070,EVE Australia,1A Keith St Dulwich Hill NSW,EVE Australia,2,AC,22,-33.909859,151.141688,,,

@@ -23,10 +23,16 @@ feeds/
     nl.jsonc
     global.jsonc
     …
+  charging/
+    de.jsonc
+    fr.jsonc
+    global.jsonc
+    …
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
     fuel.schema.json
     parking.schema.json
+    charging.schema.json
     credentials.schema.json
 ```
 
@@ -70,7 +76,8 @@ to complete and check fields. `maintainers` is optional. The fields every feed
 shares are defined in `packages/ingest-framework/src/catalog/schema.ts`; a domain
 adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
 `openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`;
-parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`, see
+parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
+charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`; see
 [Generic layouts](#generic-layouts)) or none (fuel).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
@@ -96,7 +103,11 @@ The other optional fields every feed may carry:
 - `requestLimits`: the publisher's stated limits, `perMinute`, `perDay`,
   `maxRadiusKm` and `keyScope` (`instance` or `consumer`: whom one key serves).
   `perMinute` and `perDay` count upstream requests: an on-demand cell of a
-  data endpoint with several `urls` spends one per URL.
+  data endpoint with several `urls` spends one per URL. A polled feed with
+  `perMinute` is paced to it: its requests, across all its roles, a fan-out's
+  URLs and a paginated endpoint's pages, start at most `perMinute` times in any
+  60 seconds, waiting their turn rather than failing. A followed URL is not
+  counted.
 - `extrasAllow`: the source fields kept on each record under `extras`.
 - `extrasFederate`: whether those extras are sent to federation peers
   (default `false`).
@@ -110,7 +121,9 @@ codes, and `bbox`, `[west, south, east, north]` in degrees. A national feed
 covers its country (`["DE"]`); a narrower one names the ISO 3166-2
 subdivisions it covers (`["DE-BY"]`, `["US-NY"]`). Left out, a feed in a
 country's region file covers that country, and one in `eu.jsonc` or
-`global.jsonc` covers nothing in particular.
+`global.jsonc` covers nothing in particular. `GET /sources` serves each feed's
+coverage, so a consumer can tell which areas a feed stands for (a global
+on-demand feed's box is the world).
 
 ## Feed ids
 
@@ -161,6 +174,23 @@ Light JSON), `parkapi-v3`, `db-bahnpark`, `rdw`, `sbb`, `opendatahub`, `hdb`,
 `utmc`, `tfnsw` and `overpass` (OpenStreetMap, on demand). The formats are in
 `packages/parking/src/domain.ts`.
 
+The charging product is:
+
+| product    | what                                                                                          |
+| ---------- | --------------------------------------------------------------------------------------------- |
+| `charging` | charging sites, their charge points (EVSEs) and connectors, live charge-point status, tariffs |
+
+Every charging format is a `features` format. A plain GeoJSON, JSON or CSV
+table is written in the generic layout of that name with a `layout` block and a
+`charging` mapping. The standards have a format each: `ocpi` (OCPI 2.2/2.3
+locations, EVSE status, tariffs, and OCPDB's tariff associations and sources),
+`oicp` (OICP EVSE data and status files), `datex2` (DATEX II v3 energy
+infrastructure table and status) and `overpass` (OpenStreetMap, on demand). A
+publisher's own API or file has a format of its own: `digitraffic`, `bnetza`,
+`irve`, `afdc`, `nobil`, `eipa`, `cynap`, `chargy`, `evroam`, `keco`, `lta`,
+`tdx` and `ocm` (Open Charge Map, on demand). The formats are in
+`packages/charging/src/domain.ts`.
+
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
 `ca-on-511-events`, `de-nw-autobahn-los-flow` beside `de-nw-autobahn-flow`.
@@ -184,10 +214,30 @@ An endpoint has exactly one of:
 and `cadenceSec`, how often it is fetched. Reference endpoints refresh every six
 hours (`21600`). The optional request fields are `method`, `body`, `headers`,
 `gzip` (the body is gzipped), `pagination` (`skipParam`, `pageSize`,
-`recordsPath`, `maxPages`), `expand` (see credentials) and `fanout`, for an
+`recordsPath`, `maxPages`; `mode`, `"offset"` by default, or `"page"` where
+`skipParam` carries a page number counted from `firstPage`, 1 by default;
+`xmlLists: true` for JSON converted from XML, where a list of one is the item
+itself and an empty last page has no list),
+`follow`, `impersonate`, `expand` (see credentials) and `fanout`, for an
 endpoint of several URLs (`urls` or `expand`): `"all"`, the default, needs every
 URL to answer, so one failure fails the poll; `"tolerant"` costs only the
 failing URL's records, and sends no conditional requests.
+
+`follow` is for a URL that answers with the address of the data rather than the
+data: a download page that links the CSV, a batch call that returns a presigned
+link. It has exactly one of `path` (a dotted JSON path; a numeric segment
+indexes an array, as in `value.0.Link`) or `pattern` (a regular expression whose
+first group is the URL). The URL found is resolved against the page URL and
+fetched next, and that body is the payload. The followed request is a GET that
+carries the endpoint's `headers` except any whose value names a credential
+(`${field}`), and none of the feed's auth, whatever its kind. It passes the
+same egress checks as any request. A page without a match fails the fetch. A
+followed endpoint is fetched in full every time and cannot be paginated.
+
+`impersonate: true` sends the request with a browser's TLS and HTTP fingerprint,
+for an upstream whose bot protection refuses ordinary clients. It needs `https`
+URLs, cannot be combined with `mtls` auth, and keeps the egress checks: private
+addresses are refused by name and by DNS on every hop, and the body is capped.
 
 A parking format that reads a site table and the live state of its sites
 declares `sites` and `status` in place of `main` (`datex2`, `opendatahub`,
@@ -196,6 +246,14 @@ an earlier payload of it is held is parsed with that payload, so a failing
 daily site table never stops the occupancy. `parkapi-v3` declares `main` and
 `sources` (the upstream sources that type and credit the sites), `rdw` declares
 `specs` and `areas`.
+
+A charging format reads its sites from `main` and may declare more roles, each
+optional: `status` (the live charge-point states, where they come apart from
+the sites: `ocpi`, `oicp`, `datex2`, `digitraffic`, `irve`, `keco`), `tariffs`
+(`ocpi`, `digitraffic`), and OCPDB's `associations` and `sources` (`ocpi`).
+`tdx` reads `sites`, `tariffs` and `status`; `eipa` reads the register's files
+as `pools`, `stations` and `points` (required), `operators`, `dictionary` and
+`status`.
 
 `decoder` names how a reference endpoint is read. The roads decoders are
 `datex2-sites` (a DATEX II measurement site table), `datex2-locations` (DATEX II
@@ -389,6 +447,52 @@ values an editor may write. A count is never invented: a negative, unreadable
 or impossible count gives no reading, and a source that only says a site has
 disabled spaces gives an area without a capacity.
 
+A charging feed in a generic layout is read the same way, through `layout` and
+a `charging` mapping, both required. `layout` may also name `wkt`, a field
+holding a WKT point (in `crs` when it is not WGS 84). Records sharing an id form
+one site, whose own fields come from the first:
+
+```jsonc
+"format": "csv",
+"layout": { "delimiter": ";", "wkt": "WKT_GEOM", "crs": "EPSG:31370" },
+"charging": {
+  "id": "EMPLACEMENT_ID",
+  "lang": "fr",
+  "operator": "OPERATEUR",
+  "address": { "street": "ADRESSE", "postalCode": "CODE_POSTAL", "city": "VILLE" },
+  "evse": { "key": "CONNECTEUR_ID" },
+  "connectors": { "row": { "powerKw": { "field": "PUISSANCE_KW", "unit": "kW" } } },
+},
+```
+
+| member                                    | what                                                                                                                     |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| `id`                                      | the publisher's id of the site, or a list of fields joined into one (required)                                           |
+| `name`, `lang`                            | name candidates, the first non-empty wins; the language of the texts                                                     |
+| `operator`, `website`, `address`, `notes` | site details                                                                                                             |
+| `openingHours`, `tariffText`              | opening hours (`syntax`: `osm` or `text`) and tariff text                                                                |
+| `audience`, `lifecycle`, `parkingType`    | value maps onto the site's audience, lifecycle and OCPI parking type                                                     |
+| `completion`                              | when building finishes (`31/07/2023`, `30 November 2023`, `November 2023`): a later date than the fetch is planned       |
+| `evse`                                    | which records are one charge point (`key`) and its eMI3 id (`evseId`); without it each connector is its own charge point |
+| `connectors`                              | exactly one of `row`, `columns` and `list` (below) (required)                                                            |
+| `filter`                                  | the records kept, as for parking                                                                                         |
+
+`connectors` says how a record names what it offers:
+
+- `row`: one connector per record, with `standard` (OCPI `ConnectorType` codes,
+  or a value map), `format`, `current`, `powerType`, `powerKw` (in `kW` or `W`)
+  and `count` (a charge point standing for that many identical ones);
+- `columns`: a count column per kind of charge point (`standard`, `current`,
+  `format`, `powerKw`), each count above zero one group of charge points;
+- `list`: a text split on `separator` into parts matching `pattern`, whose
+  named groups `count`, `type` and `power` are read; each part is a group of
+  charge points (`as: "evses"`, the default) or one connector type of every
+  charge point (`as: "connectors"`, the charge points then being the parts of
+  the `groups` text).
+
+A plug count is never read as a charge-point count, and a power range is not a
+rating: a source that does not say gives no value.
+
 ## Disabled feeds
 
 A dead or blocked feed stays documented in its region file:
@@ -399,8 +503,8 @@ A dead or blocked feed stays documented in its region file:
 
 It is checked like any other feed but never polled, and `/feeds/status` lists it
 with its reason. A disabled feed still names an implemented format, so only a
-source an existing format reads is written as one. The parking sources that
-cannot be run, and need no entry, are listed under
+source an existing format reads is written as one. The sources that cannot be
+run, and need no entry, are listed under
 [Sources not taken](#sources-not-taken).
 
 ## Sources not taken
@@ -415,6 +519,17 @@ needs the change its reason names.
 | Stadtwerke Bamberg car park counter                                 | The imprint requires written consent, and the records carry no coordinates.                                              |
 | Stadtwerke Trier `parken-v2.xml`                                    | The imprint requires written consent, and the records carry no coordinates.                                              |
 | APCOA, GOLDBECK and APAG on Mobidrom, Bielefeld WFS, Düsseldorf WFS | Exact subsets of `de-nw-mobidrom-parking`.                                                                               |
+
+Charging sources considered and left out, reviewed on 2026-10-06.
+
+| source                                         | reason                                                                                                                                                             |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| E-Control Ladestellenverzeichnis API (Austria) | The API terms forbid modifying the data and passing it on as a file or webservice, and bind each user to logo, visitor reporting and a €10,000 penalty per breach. |
+| PUN ArcGIS layer (Italy)                       | No licence or terms anywhere, and the layer has been frozen since 2024-09-19; the live PUN API is a private web-app backend.                                       |
+| ESB ecars CSV (Ireland)                        | Unchanged since 2024-12-20 despite a quarterly schedule, with out-of-date prices. Ireland's AFIR access point (OCPI via TII) will replace it.                      |
+| TMR Queensland `csl_ev.csv`                    | Unchanged since 2022-12-06, 17 sites.                                                                                                                              |
+| Hong Kong EPD app JSON (`evca_ver_1_0.json`)   | The EV-Charging Easy app's backend: no published dataset, licence or terms. The licensed CSDI copy is taken (`hk-epd-charging`).                                   |
+| data.go.kr EV "standard data" download         | Frozen at 2020-10-28, municipal stations only. The KECO OpenAPI is taken (`kr-keco-charging`).                                                                     |
 
 ## Catalogue resolvers
 

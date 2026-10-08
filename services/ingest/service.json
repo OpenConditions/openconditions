@@ -2,7 +2,7 @@
   "id": "openconditions-ingest",
   "name": "OpenConditions Ingest",
   "version": "0.1.0",
-  "description": "Fetches open road-condition and fuel-price feeds (NDW, Autobahn, Digitraffic, DriveBC, WZDx, Tankerkoenig, and others), normalises them to the canonical model, and writes them to the shared PostGIS `conditions` schema for OpenMapX to read. Also serves public, rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla exclusions, SSE).",
+  "description": "Fetches open road-condition, fuel-price, parking and EV-charging feeds (NDW, Autobahn, Digitraffic, DriveBC, WZDx, Tankerkoenig, ParkAPI, BNetzA, OCPI and DATEX II charging publishers, and others), normalises them to the canonical model, and writes them to the shared PostGIS `conditions` schema for OpenMapX to read. Also serves public, rate-limited emitter feeds (GeoJSON, TraFF, DATEX II, GTFS-RT, JSON-LD, Valhalla exclusions, SSE).",
   "author": "OpenConditions",
   "license": "AGPL-3.0-or-later",
   "homepage": "https://openconditions.org",
@@ -24,7 +24,7 @@
       "OPENCONDITIONS_ARCHIVE_DIR": "/data/archive",
       "OPENCONDITIONS_STATE_DIR": "/data"
     },
-    "memory": "${OPENCONDITIONS_INGEST_MEMORY:-4g}",
+    "memory": "${OPENCONDITIONS_INGEST_MEMORY:-6g}",
     "restart": "unless-stopped",
     "dependsOn": [
       {
@@ -66,7 +66,7 @@
       "OPENCONDITIONS_OPERATOR_TOKEN": {
         "type": "string",
         "title": "Operator token",
-        "description": "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves no Tankerkönig (DE), E-Control (AT) or OpenStreetMap fuel station.",
+        "description": "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves none of the restricted sources, those whose licence or terms keep their records from public redistribution: Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, OpenStreetMap, BNLS (FR) and Mobidrom Park+Ride (DE) car parks, and OpenStreetMap, Open Charge Map and NAP Slovenija charge points.",
         "x-openmapx-secret": true
       },
       "SEGMENT_REGIONS": {
@@ -899,6 +899,146 @@
           ],
           "cost": "Free",
           "notes": "Same netraveldata.co.uk account as the UTMC username — there is no separate API password; the website login doubles as the API credential."
+        }
+      },
+      "OCM_CHARGING_API_KEY": {
+        "type": "string",
+        "title": "Open Charge Map API key",
+        "description": "An Open Charge Map application key.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://openchargemap.org/site/loginprovider/beginlogin",
+          "urlLabel": "Get Open Charge Map API key",
+          "steps": [
+            "Go to openchargemap.org and create an account or sign in.",
+            "Open 'My Profile' → 'My Apps'.",
+            "Click 'Register an Application' and enter a name and description.",
+            "Copy the API key issued immediately."
+          ],
+          "cost": "Free",
+          "notes": "Required for regular use and for calls with maxresults > 250. Sent via the 'X-API-Key' header or 'key' query parameter."
+        }
+      },
+      "KR_KECO_CHARGING_SERVICE_KEY": {
+        "type": "string",
+        "title": "data.go.kr service key",
+        "description": "The general authentication key (Decoding) of a data.go.kr account approved for the KECO EV charger OpenAPI.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.data.go.kr/data/15076352/openapi.do",
+          "urlLabel": "Apply for the KECO EV charger OpenAPI",
+          "steps": [
+            "Register at data.go.kr.",
+            "Open https://www.data.go.kr/data/15076352/openapi.do and press 활용신청 (apply for use); approval is automatic.",
+            "Copy the 일반 인증키 (general authentication key), the Decoding form; it is sent as the serviceKey query parameter."
+          ],
+          "cost": "Free",
+          "notes": "A development account allows 1,000 calls a day per operation; registering a use case raises it."
+        }
+      },
+      "NO_NOBIL_CHARGING_API_KEY": {
+        "type": "string",
+        "title": "NOBIL API key",
+        "description": "A NOBIL API v3 key, issued by email per registered website.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://info.nobil.no/api",
+          "urlLabel": "Request a NOBIL API key",
+          "steps": [
+            "Open info.nobil.no/api and review the Creative Commons (CC BY 4.0) terms.",
+            "Use the 'Ask for an API-key' section to contact NOBIL with your project details.",
+            "Accept the CC BY 4.0 terms of use.",
+            "Receive the API key by email."
+          ],
+          "cost": "Free (Creative Commons data, attribution required)",
+          "notes": "Norway/Sweden charging data. The request is handled by email rather than an instant self-service form.",
+          "email": {
+            "to": "post@nobil.no",
+            "subject": "NOBIL API key request",
+            "body": "Hello,\n\nI would like to request a NOBIL API key (API v3) to display Norwegian/Swedish EV charging station data in a self-hosted OpenMapX map application.\n\nI have read and accept the Creative Commons Attribution 4.0 (CC BY 4.0) terms of use and will attribute NOBIL accordingly.\n\nProject: self-hosted, non-commercial mapping application.\n\nThank you."
+          }
+        }
+      },
+      "SG_LTA_CHARGING_ACCOUNT_KEY": {
+        "type": "string",
+        "title": "LTA DataMall AccountKey",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+          "urlLabel": "Register for an LTA DataMall AccountKey",
+          "steps": [
+            "Open datamall.lta.gov.sg and go to 'Request for API Access'.",
+            "Register with your name, email, and organisation, and accept the Singapore Open Data Licence.",
+            "Confirm your email; the AccountKey is issued to your registered email.",
+            "Copy the AccountKey — it is sent in the 'AccountKey' request header."
+          ],
+          "cost": "Free",
+          "notes": "Covers the EV Charging Points APIs (station location, connector types, real-time availability by postal code). Sent via the 'AccountKey' header, never as a query parameter."
+        }
+      },
+      "SI_NAP_CHARGING_USERNAME": {
+        "type": "string",
+        "title": "NAP Slovenija account email",
+        "description": "The email of the NAP business-entity account that holds access to the Prometej IDACS datasets.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+          "urlLabel": "Register with NAP Slovenija",
+          "steps": [
+            "Create a business-entity account at nap.si (click the user icon → Registration) and confirm the email.",
+            "Log in, open your profile, and request permission for the 'Prometej IDACS Energy Infrastructure Table (DATEX II v3.6)' dataset. Accept the general terms of use.",
+            "Also request the 'Prometej IDACS Energy Infrastructure Status' dataset for live status.",
+            "Wait for NAP to grant the requests (shown as 'granted' on your profile page).",
+            "Enter the account's email here and its password in the password field; requests use HTTP Basic auth."
+          ],
+          "cost": "Free (business-entity registration required)",
+          "notes": "The dataset licence is CC BY-SA 4.0, so the feed is served to the operator only."
+        }
+      },
+      "SI_NAP_CHARGING_PASSWORD": {
+        "type": "string",
+        "title": "NAP Slovenija account password",
+        "description": "The password of that NAP account.",
+        "x-openmapx-secret": true
+      },
+      "TW_TDX_CHARGING_CLIENT_ID": {
+        "type": "string",
+        "title": "TDX client id",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://tdx.transportdata.tw/register",
+          "urlLabel": "Register for a TDX platform account",
+          "steps": [
+            "Go to tdx.transportdata.tw/register and create a free platform member account.",
+            "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
+            "Create a Client Id / Client Secret pair (up to 3 per account).",
+            "Copy both values — the Client Secret is only shown once."
+          ],
+          "cost": "Free",
+          "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs."
+        }
+      },
+      "TW_TDX_CHARGING_CLIENT_SECRET": {
+        "type": "string",
+        "title": "TDX client secret",
+        "description": "The secret of the same Client Id / Client Secret pair.",
+        "x-openmapx-secret": true
+      },
+      "US_AFDC_CHARGING_API_KEY": {
+        "type": "string",
+        "title": "NLR developer API key",
+        "description": "A National Laboratory of the Rockies (formerly NREL) developer network key.",
+        "x-openmapx-secret": true,
+        "x-openmapx-setup": {
+          "url": "https://developer.nlr.gov/signup/",
+          "urlLabel": "Sign up for an NREL API key",
+          "steps": [
+            "Open developer.nlr.gov/signup/.",
+            "Enter your first name, last name, and email, and accept the terms.",
+            "Submit the form; the 40-character API key is generated instantly and emailed to you."
+          ],
+          "cost": "Free, instant",
+          "notes": "This NREL / api.data.gov key powers the AFDC Alternative Fuel Stations dataset. DEMO_KEY works for testing but has very low rate limits."
         }
       }
     }

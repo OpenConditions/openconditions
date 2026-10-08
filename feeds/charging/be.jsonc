@@ -1,0 +1,99 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "subdivision": "vlg",
+      "operator": "mow",
+      "product": "charging",
+      "name": "Departement MOW public charge points (Flanders)",
+      "tier": "authoritative",
+      "format": "geojson",
+      // One row per charge point, about 87 000 in all; the server honours
+      // large pages. Without `srsName` the coordinates come in Lambert 2008.
+      // A row's id is `<location>__<charge point>`; the rows of one location
+      // form one site.
+      "endpoints": {
+        "main": {
+          "url": "https://geoserver.gis.cloud.mow.vlaanderen.be/geoserver/beleid/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=laadpunten_public&outputFormat=application/json&srsName=EPSG:4326&count=20000",
+          "pagination": { "skipParam": "startIndex", "pageSize": 20000, "recordsPath": "features" },
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "licenseUrl": "https://overheid.vlaanderen.be/sites/default/files/documenten/ict-egov/licenties/hergebruik/modellicentie_gratis_hergebruik_v1_0.html",
+      "attribution": "Departement Mobiliteit en Openbare Werken (Vlaamse overheid), Modellicentie Gratis Hergebruik",
+      "privacyUrl": "https://www.vlaanderen.be/departement-mobiliteit-en-openbare-werken/privacyverklaring",
+      "layout": {},
+      "charging": {
+        "id": { "field": "uniek_identificatienummer", "pattern": "^(.+?)__" },
+        "lang": "nl",
+        "operator": "uitbater",
+        "address": { "street": "adres", "postalCode": "postcode", "city": "gemeente" },
+        "audience": {
+          "field": "toegankelijkheid",
+          "map": { "publiek": "public", "semi-publiek": "restricted" },
+        },
+        "evse": { "key": "evse" },
+        // `connector` and `stroomtype` hold OCPI's ConnectorType and PowerType.
+        "connectors": {
+          "row": {
+            "standard": { "field": "connector" },
+            "powerType": {
+              "field": "stroomtype",
+              "map": { "ac_1_phase": "AC_1_PHASE", "ac_3_phase": "AC_3_PHASE", "dc": "DC" },
+            },
+            "powerKw": { "field": "maximaal_vermogen_kw", "unit": "kW" },
+          },
+        },
+      },
+    },
+    {
+      "subdivision": "wal",
+      "operator": "spw",
+      "product": "charging",
+      "name": "Service public de Wallonie charging infrastructure",
+      "tier": "authoritative",
+      "format": "csv",
+      // A quarterly snapshot, one row per connector, each point a WKT point in
+      // Belgian Lambert 72. The file names no plug standard.
+      "endpoints": {
+        "main": {
+          "url": "https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/c731a282-e378-49f3-8ab6-f9a90e7a5683/BORNES_RECHARGE_XY_31370.csv",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Service public de Wallonie (SPW), CC BY 4.0",
+      "homepage": "https://geoportail.wallonie.be/catalogue/c731a282-e378-49f3-8ab6-f9a90e7a5683.html",
+      "privacyUrl": "https://www.wallonie.be/fr/vie-privee",
+      "layout": { "delimiter": ";", "wkt": "WKT_GEOM", "crs": "EPSG:31370" },
+      "charging": {
+        "id": "EMPLACEMENT_ID",
+        "lang": "fr",
+        "operator": "OPERATEUR",
+        "address": { "street": "ADRESSE", "postalCode": "CODE_POSTAL", "city": "VILLE" },
+        "audience": {
+          "field": "TYPE_ACCES",
+          "map": { "public": "public", "semi-public": "restricted", "unknown": "unknown" },
+        },
+        // OCPI's ParkingType, `UNDERGROUND_GARAGE` cut short by the export.
+        "parkingType": {
+          "field": "TYPE_EMPLACEMENT",
+          "map": {
+            "ON_STREET": "on_street",
+            "PARKING_LOT": "parking_lot",
+            "PARKING_GARAGE": "parking_garage",
+            "UNDERGROUND_GA": "underground_garage",
+            "ALONG_MOTORWAY": "along_motorway",
+            "OTHER": "other",
+          },
+        },
+        "evse": { "key": "CONNECTEUR_ID" },
+        "connectors": { "row": { "powerKw": { "field": "PUISSANCE_KW", "unit": "kW" } } },
+      },
+    },
+  ],
+}

@@ -1,0 +1,84 @@
+{
+  "items": [
+    {
+      "id": "138586",
+      "original_id": "b54961d2769ad8ce574d40fed26e213a",
+      "source": "datex2_enbw",
+      "tariff_id": "131404",
+      "start_date_time": "2026-08-03T08:26:43.619000+00:00",
+      "last_updated": "2026-10-04T22:00:00.836000+00:00",
+      "audience": "AD_HOC_PAYMENT",
+      "evses": [
+        {
+          "evse_uid": "262347508"
+        },
+        {
+          "evse_uid": "262347503"
+        },
+        {
+          "evse_uid": "262347502"
+        },
+        {
+          "evse_uid": "262347506"
+        },
+        {
+          "evse_uid": "262347505"
+        },
+        {
+          "evse_uid": "262347500"
+        },
+        {
+          "evse_uid": "262347501"
+        },
+        {
+          "evse_uid": "262347504"
+        }
+      ],
+      "connectors": []
+    },
+    {
+      "id": "138587",
+      "original_id": "2d920dc88bc32d4b1cd13d1ee4f469c4",
+      "source": "datex2_enbw",
+      "tariff_id": "131405",
+      "start_date_time": "2026-08-03T08:26:43.020000+00:00",
+      "last_updated": "2026-10-04T21:51:08.656000+00:00",
+      "audience": "AD_HOC_PAYMENT",
+      "evses": [
+        {
+          "evse_uid": "262347507"
+        },
+        {
+          "evse_uid": "262359899"
+        },
+        {
+          "evse_uid": "262350627"
+        }
+      ],
+      "connectors": []
+    },
+    {
+      "id": "138644",
+      "original_id": "e715c23a8b04c6ce5c3d85fb67617a62",
+      "source": "datex2_ecomovement",
+      "tariff_id": "131426",
+      "start_date_time": "2018-07-20T10:23:41+00:00",
+      "last_updated": "2026-09-07T00:13:10+00:00",
+      "audience": "AD_HOC_PAYMENT",
+      "evses": [
+        {
+          "evse_uid": "262861938"
+        },
+        {
+          "evse_uid": "262863435"
+        },
+        {
+          "evse_uid": "262873254"
+        }
+      ],
+      "connectors": []
+    }
+  ],
+  "total_count": 1031,
+  "next_offset": 3
+}

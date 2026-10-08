@@ -445,6 +445,24 @@ export const federationTombstone = conditionsSchema.table(
 );
 
 /**
+ * When this instance last received each source from each peer: any record
+ * of the source a delivery from that peer carried, landed or no newer than
+ * the stored copy. A peer sends a polled change-only reading only when it
+ * changes, and states no `validUntil` for it; the reading holds while its
+ * source keeps arriving from that peer (`withPolledValidity`). Kept apart
+ * from `source_status`, which is this instance's own polling.
+ */
+export const federationSourceReceipt = conditionsSchema.table(
+  "federation_source_receipt",
+  {
+    peerInstanceId: text("peer_instance_id").notNull(),
+    sourceId: text("source_id").notNull(),
+    lastReceivedAt: timestamp("last_received_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.peerInstanceId, t.sourceId] })],
+);
+
+/**
  * The erasures the kept nightly archive files are already free of, each
  * `id:<record id>` or `canonical:<canonical id>`, so a night rescans the files
  * only for an erasure it has not applied. Kept in the database, not beside the

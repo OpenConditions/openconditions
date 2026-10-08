@@ -1,0 +1,117 @@
+{
+  "items": [
+    {
+      "id": "138586",
+      "original_id": "b54961d2769ad8ce574d40fed26e213a",
+      "source": "datex2_enbw",
+      "currency": "EUR",
+      "elements": [
+        {
+          "price_components": [
+            {
+              "type": "ENERGY",
+              "price": 0.66386555,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "price_components": [
+            {
+              "type": "TIME",
+              "price": 0.20168067,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ],
+          "restrictions": {
+            "min_duration": 1800,
+            "max_duration": 0
+          }
+        }
+      ],
+      "start_date_time": "2026-08-03T08:26:43.619000+00:00",
+      "last_updated": "2026-10-04T22:00:00.836000+00:00",
+      "type": "AD_HOC_PAYMENT"
+    },
+    {
+      "id": "138587",
+      "original_id": "2d920dc88bc32d4b1cd13d1ee4f469c4",
+      "source": "datex2_enbw",
+      "currency": "EUR",
+      "elements": [
+        {
+          "price_components": [
+            {
+              "type": "ENERGY",
+              "price": 0.58823529,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "price_components": [
+            {
+              "type": "TIME",
+              "price": 0.10084034,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ],
+          "restrictions": {
+            "min_duration": 7200,
+            "max_duration": 0
+          }
+        }
+      ],
+      "start_date_time": "2026-08-03T08:26:43.020000+00:00",
+      "last_updated": "2026-10-04T21:51:08.656000+00:00",
+      "type": "AD_HOC_PAYMENT"
+    },
+    {
+      "id": "138644",
+      "original_id": "e715c23a8b04c6ce5c3d85fb67617a62",
+      "source": "datex2_ecomovement",
+      "currency": "EUR",
+      "elements": [
+        {
+          "price_components": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "taxes": [
+                {
+                  "name": "VAT",
+                  "percentage": "19"
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "start_date_time": "2018-07-20T10:23:41+00:00",
+      "last_updated": "2026-09-07T00:13:10+00:00",
+      "type": "AD_HOC_PAYMENT"
+    }
+  ],
+  "total_count": 1031,
+  "next_offset": 3
+}

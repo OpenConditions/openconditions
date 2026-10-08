@@ -1,4 +1,9 @@
-import { canonicalKeyOf, fusableProperties, seriesKeyOf } from "@openconditions/core";
+import {
+  canonicalKeyOf,
+  fusableProperties,
+  lastSuccessEnd,
+  seriesKeyOf,
+} from "@openconditions/core";
 import {
   type EgressRecord,
   isPublicRecord,
@@ -103,6 +108,13 @@ export interface FusedContext {
    * written now, whose status commits after its records.
    */
   freshSources?: readonly string[];
+  /**
+   * Canonical features this write ended: their fused rows are deleted under
+   * the same locks, taken with the others in one ordered set. Deleting them
+   * unlocked lets a writer that still sees the old cluster hold its lock
+   * while waiting on the deleted row, as the deleter waits for that lock.
+   */
+  vanished?: readonly string[];
 }
 
 export interface FusedCounts {
@@ -165,7 +177,7 @@ const comparable = (record: Rec) => {
  * canonical subject compete in `fuse`. A feed row's tier is its source's
  * (`conditions.source.tier`; a source the catalogue does not hold, a peer's,
  * does not fuse here), a crowd row's its evidence; a source is stale when its
- * last successful poll is older than its freshness window (a source with no
+ * last successful poll finished longer ago than its freshness window (`lastSuccessEnd`; a source with no
  * status row yet has never failed one, and counts as fresh). The winner is
  * written as the subject's `@fused` row (latest only: it never enters history
  * or the federation), with its contributing readings' ids in `fused_from`
@@ -189,27 +201,31 @@ export async function refreshFused(
 ): Promise<FusedCounts> {
   const counts: FusedCounts = { written: 0, unchanged: 0, deleted: 0 };
   const fusable = fusableProperties(registry);
+  const vanished = ctx.vanished ?? [];
   const wanted = scopes
     .map((s) => ({
       ...s,
       properties: s.properties?.filter((p) => fusable.has(p)),
     }))
     .filter((s) => s.properties === undefined || s.properties.length > 0);
-  if (wanted.length === 0) return counts;
+  if (wanted.length === 0 && vanished.length === 0) return counts;
 
-  const canonical = await loadCanonical(
-    tx,
-    wanted.map((s) => s.featureId),
-  );
-  if (canonical.length === 0) return counts;
+  const canonical =
+    wanted.length === 0
+      ? []
+      : await loadCanonical(
+          tx,
+          wanted.map((s) => s.featureId),
+        );
   // Writers of different sources refresh the same fused rows under their own
   // source locks; each canonical feature's lock, taken in id order, keeps one
   // refresh from overwriting another's newer view with its older one.
-  await lockKeys(
-    tx,
-    LOCK_SPACES.fused,
-    canonical.map((c) => c.canonicalFeatureId),
-  );
+  await lockKeys(tx, LOCK_SPACES.fused, [
+    ...canonical.map((c) => c.canonicalFeatureId),
+    ...vanished,
+  ]);
+  counts.deleted += await dropFused(tx, vanished);
+  if (canonical.length === 0) return counts;
   // The properties in scope of each canonical feature: all fusable ones once any scope asks for all.
   const scopeOf = new Map<string, Set<string> | "all">();
   for (const c of canonical) {
@@ -239,7 +255,7 @@ export async function refreshFused(
            l.evidence_state, s.tier, s.restricted,
            COALESCE(l.source_id <> ALL(${fresh as string[]}::text[]) AND ss.source IS NOT NULL
              AND (ss.last_success_at IS NULL
-               OR ss.last_success_at < ${ctx.now}::timestamptz
+               OR ${tx.unsafe(lastSuccessEnd("ss"))} < ${ctx.now}::timestamptz
                     - make_interval(secs => ss.freshness_window_sec)), false) AS stale
       FROM conditions.observation_latest l
       LEFT JOIN conditions.source s ON s.id = l.source_id
@@ -467,7 +483,7 @@ export async function refreshFused(
   if (gone.length > 0) {
     await tx`DELETE FROM conditions.observation_latest WHERE series_id = ANY(${gone}::bigint[])`;
   }
-  counts.deleted = gone.length;
+  counts.deleted += gone.length;
   return counts;
 }
 
@@ -616,13 +632,75 @@ export async function refreshOutdatedFusions(
   return counts;
 }
 
+/**
+ * Refreshes the fusions of the sources whose freshness flipped in
+ * (`from`, `to`]: a source whose last success passed its freshness window
+ * then went stale, and a source whose success then followed none within its
+ * window before it came back fresh. A polled feed restating its readings
+ * writes nothing, so nothing else would refuse a stale winner, or give a
+ * returning source its fusions back. Every canonical feature with a member
+ * reading of a flipped source is refreshed as of `to`, 500 a transaction.
+ * Returns the number of flipped sources.
+ */
+export async function refreshFlippedFusions(
+  sql: postgres.Sql,
+  registry: Registry,
+  opts: { from: string; to: string; instanceId: string },
+): Promise<number> {
+  // Each source dated by when its last successful poll finished, as fusion
+  // and read validity date it (`lastSuccessEnd`).
+  const flipped = await sql<{ source: string }[]>`
+    WITH last AS (
+      SELECT ss.source, ss.last_success_at, ss.freshness_window_sec,
+             ${sql.unsafe(lastSuccessEnd("ss"))} AS ended_at
+        FROM conditions.source_status ss WHERE ss.last_success_at IS NOT NULL
+    )
+    SELECT source FROM last
+     WHERE ended_at + make_interval(secs => freshness_window_sec) > ${opts.from}::timestamptz
+       AND ended_at + make_interval(secs => freshness_window_sec) <= ${opts.to}::timestamptz
+    UNION
+    SELECT last.source FROM last
+     WHERE ended_at > ${opts.from}::timestamptz AND ended_at <= ${opts.to}::timestamptz
+       AND EXISTS (SELECT 1 FROM conditions.source_poll_attempt pa
+                    WHERE pa.source = last.source AND pa.network_validated
+                      AND pa.attempted_at < last.last_success_at)
+       AND NOT EXISTS (SELECT 1 FROM conditions.source_poll_attempt pa
+                        WHERE pa.source = last.source AND pa.network_validated
+                          AND pa.attempted_at < last.last_success_at
+                          AND COALESCE(pa.finished_at, pa.attempted_at)
+                                >= last.ended_at - make_interval(secs => last.freshness_window_sec))`;
+  if (flipped.length === 0) return 0;
+  const fusable = [...fusableProperties(registry)];
+  const features = await sql<{ feature_id: string }[]>`
+    SELECT DISTINCT l.feature_id FROM conditions.observation_latest l
+     WHERE l.source_id = ANY(${flipped.map((f) => f.source)}::text[])
+       AND l.feature_id IS NOT NULL AND l.property = ANY(${fusable}::text[])`;
+  const members = await sql<{ canonical_feature_id: string }[]>`
+    SELECT canonical_feature_id FROM conditions.feature_canonical
+     WHERE member_ids && ${features.map((f) => f.feature_id)}::text[]
+     ORDER BY canonical_feature_id`;
+  const ids = members.map((m) => m.canonical_feature_id);
+  for (let i = 0; i < ids.length; i += 500) {
+    const batch = ids.slice(i, i + 500);
+    await sql.begin((tx) =>
+      refreshFused(
+        tx,
+        registry,
+        batch.map((featureId) => ({ featureId })),
+        { instanceId: opts.instanceId, now: opts.to },
+      ),
+    );
+  }
+  return flipped.length;
+}
+
 const startOf = (record: Rec) => {
   const t = record["phenomenonTime"] as { instant?: string; start?: string };
   return (t.instant ?? t.start)!;
 };
 
 /** Deletes the fused rows, full and public, of canonical features that no longer exist. */
-export async function dropFused(tx: Sql, canonicalIds: readonly string[]): Promise<number> {
+async function dropFused(tx: Sql, canonicalIds: readonly string[]): Promise<number> {
   if (canonicalIds.length === 0) return 0;
   const rows = await tx`
     DELETE FROM conditions.observation_latest

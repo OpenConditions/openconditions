@@ -78,7 +78,7 @@ export interface RecordFilter {
    * never gated by it, and neither is a negated or expired crowd record.
    */
   minEvidenceTier?: string;
-  /** Drop records last stated more than this many seconds ago. */
+  /** Drop records last stated (a reading: stated or journalled) more than this many seconds ago. */
   maxAgeSec?: number;
 }
 
@@ -169,7 +169,13 @@ export function applyRecordFilter<R extends FederatedRecord>(
       if (rank === undefined || rank < minRank) continue;
     }
     if (filter?.maxAgeSec !== undefined) {
-      const at = statedAt(record);
+      // A reading is journalled when it changes, its time the publisher's: a
+      // state stated days ago and first written now is news now.
+      const stated = statedAt(record);
+      const at =
+        entry.recordClass === "observation"
+          ? Math.max(stated, Date.parse(entry.createdAt))
+          : stated;
       if (!Number.isFinite(at) || nowMs - at > filter.maxAgeSec * 1000) continue;
     }
     if (filter?.bbox !== undefined) {

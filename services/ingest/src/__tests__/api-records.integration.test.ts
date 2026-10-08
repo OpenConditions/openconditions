@@ -154,8 +154,8 @@ describe("GET /features", () => {
       [STATION, TWIN, "oc:feature:es-minetur-fuel:15493"].sort(),
     );
     expect(await list("kind=charging_site")).toEqual([
-      "oc:feature:de-bw-ocpdb:72555",
-      "oc:feature:de-bw-ocpdb:72557",
+      "oc:feature:de-bw-mobidata-charging:72555",
+      "oc:feature:de-bw-mobidata-charging:72557",
     ]);
     expect(await list("source=it-mimit,es-minetur-fuel")).toHaveLength(3);
     expect(await list(`source=${UNLICENSED.join(",")}`)).toEqual([]);
@@ -323,6 +323,8 @@ describe("GET /features with expand=latest and offers", () => {
       componentKey: "e5",
       result: e5["result"],
       phenomenonTime: e5["phenomenonTime"],
+      // A price is kept as its changes: it holds 30 minutes past its source's last poll.
+      validUntil: new Date(Date.parse(NOW) + 1800_000).toISOString(),
       source: "es-minetur-fuel",
     });
     const both = await get("/features?source=es-minetur-fuel&expand=components,latest");
@@ -343,11 +345,11 @@ describe("GET /features with expand=latest and offers", () => {
   it("expand=offers returns the live offers of a feature and its components", async () => {
     const { body } = await get("/features?kind=charging_site&expand=offers");
     const offers = body["offers"] as Record<string, Rec[]>;
-    expect(offers["oc:feature:de-bw-ocpdb:72555"]!.map((o) => o["id"]).sort()).toEqual([
-      "oc:offer:de-bw-ocpdb:138586",
-      "oc:offer:de-bw-ocpdb:138587",
+    expect(offers["oc:feature:de-bw-mobidata-charging:72555"]!.map((o) => o["id"]).sort()).toEqual([
+      "oc:offer:de-bw-mobidata-charging:72555:138586",
+      "oc:offer:de-bw-mobidata-charging:72555:138587",
     ]);
-    expect(offers["oc:feature:de-bw-ocpdb:72557"]).toEqual([]);
+    expect(offers["oc:feature:de-bw-mobidata-charging:72557"]).toEqual([]);
     expect(body["latest"]).toBeUndefined();
     const canonical = await get("/features?canonical=1&kind=charging_site&expand=offers");
     const counts = Object.values(canonical.body["offers"] as Record<string, Rec[]>)
@@ -360,7 +362,7 @@ describe("GET /features with expand=latest and offers", () => {
     await sql`UPDATE conditions.source SET restricted = true WHERE id = 'es-fuel-test'`;
     await sql`UPDATE conditions.offer
                  SET record = jsonb_set(record, '{provenance,attribution,license}', '"ODbL-1.0"')
-               WHERE id = 'oc:offer:de-bw-ocpdb:138586'`;
+               WHERE id = 'oc:offer:de-bw-mobidata-charging:72555:138586'`;
     try {
       const url = `/features?canonical=1&${STATION_BOX}&expand=latest`;
       const shown = await as(url, false);
@@ -382,18 +384,20 @@ describe("GET /features with expand=latest and offers", () => {
 
       const offersUrl = "/features?kind=charging_site&expand=offers";
       const offersOf = (body: Rec) =>
-        (body["offers"] as Record<string, Rec[]>)["oc:feature:de-bw-ocpdb:72555"]!.map(
+        (body["offers"] as Record<string, Rec[]>)["oc:feature:de-bw-mobidata-charging:72555"]!.map(
           (o) => o["id"],
         );
       const publicOffers = await as(offersUrl, false);
-      expect(offersOf(publicOffers.body)).toEqual(["oc:offer:de-bw-ocpdb:138587"]);
+      expect(offersOf(publicOffers.body)).toEqual([
+        "oc:offer:de-bw-mobidata-charging:72555:138587",
+      ]);
       expect(publicOffers.res.headers["x-data-license"]).not.toContain("ODbL-1.0");
       expect(offersOf((await as(offersUrl, true)).body)).toHaveLength(2);
     } finally {
       await sql`UPDATE conditions.source SET restricted = false WHERE id = 'es-fuel-test'`;
       await sql`UPDATE conditions.offer
-                   SET record = jsonb_set(record, '{provenance,attribution,license}', '"CC-BY-4.0"')
-                 WHERE id = 'oc:offer:de-bw-ocpdb:138586'`;
+                   SET record = jsonb_set(record, '{provenance,attribution,license}', '"DL-DE-BY-2.0"')
+                 WHERE id = 'oc:offer:de-bw-mobidata-charging:72555:138586'`;
     }
   });
 
@@ -444,7 +448,7 @@ describe("GET /features with expand=latest and offers", () => {
   });
 
   it("a restricted member lends a public canonical feature no offers, even a public source's", async () => {
-    const tariff = golden.get("de-bw-ocpdb")!.offers[0]!;
+    const tariff = golden.get("de-bw-mobidata-charging")!.offers[0]!;
     const station = golden.get("es-minetur-fuel")!.features.find((f) => f["id"] === STATION)!;
     const { upstream: _upstream, ...provenance } = tariff["provenance"] as Rec;
     const onTwin: Rec = {
@@ -513,7 +517,9 @@ describe("GET /features with expand=latest and offers", () => {
       new Set(["@fused"]),
     );
     expect(cluster.body["offers"]).toEqual([]);
-    const site = await get(`/features/${enc("oc:feature:de-bw-ocpdb:72555")}?expand=offers`);
+    const site = await get(
+      `/features/${enc("oc:feature:de-bw-mobidata-charging:72555")}?expand=offers`,
+    );
     expect(site.body["offers"] as Rec[]).toHaveLength(2);
   });
 });
@@ -524,11 +530,14 @@ describe("GET /features.geojson and .jsonld", () => {
   it("wraps each feature as a GeoJSON feature, components inline only when asked", async () => {
     const { res, body } = await get("/features.geojson?kind=charging_site&limit=1");
     expect(res.headers["content-type"]).toContain("application/geo+json");
-    expect(body).toMatchObject({ type: "FeatureCollection", next: "oc:feature:de-bw-ocpdb:72555" });
+    expect(body).toMatchObject({
+      type: "FeatureCollection",
+      next: "oc:feature:de-bw-mobidata-charging:72555",
+    });
     const [feature] = body["features"] as Rec[];
     expect(feature).toMatchObject({
       type: "Feature",
-      id: "oc:feature:de-bw-ocpdb:72555",
+      id: "oc:feature:de-bw-mobidata-charging:72555",
       geometry: { type: "Point", coordinates: [7.522998, 51.608953] },
     });
     expect((feature!["properties"] as Rec)["components"]).toBeUndefined();
@@ -539,7 +548,7 @@ describe("GET /features.geojson and .jsonld", () => {
     expect(ld.res.headers["content-type"]).toContain("application/ld+json");
     expect(JSON.stringify(ld.body["@context"])).toContain("http://www.w3.org/ns/sosa/");
     expect((ld.body["features"] as Rec[])[0]).toMatchObject({
-      "@id": `https://openconditions.org/id/${enc("oc:feature:de-bw-ocpdb:72555")}`,
+      "@id": `https://openconditions.org/id/${enc("oc:feature:de-bw-mobidata-charging:72555")}`,
       "@type": "schema:Place",
     });
   });
@@ -596,7 +605,7 @@ describe("single records follow the live rules", () => {
     expect(twin.res.statusCode).toBe(200);
     expect(twin.body["canonical"]).toMatchObject({ survivorId: TWIN, memberIds: [TWIN] });
 
-    const offer = "oc:offer:de-bw-ocpdb:138586";
+    const offer = "oc:offer:de-bw-mobidata-charging:72555:138586";
     expect((await get(`/offers/${enc(offer)}`)).res.statusCode).toBe(200);
     await expire("offer", offer, "2026-09-22T11:15:00.000Z");
     expect((await get(`/offers/${enc(offer)}`)).res.statusCode).toBe(404);
@@ -621,8 +630,8 @@ describe("GET /offers and /offers/{id}", () => {
 
   it("walks the live offers and filters them", async () => {
     expect((await walk("/offers", "", 1)).sort()).toEqual([
-      "oc:offer:de-bw-ocpdb:138586",
-      "oc:offer:de-bw-ocpdb:138587",
+      "oc:offer:de-bw-mobidata-charging:72555:138586",
+      "oc:offer:de-bw-mobidata-charging:72555:138587",
       "oc:offer:nl-ndw-truck-parking:NL-12_421:1",
     ]);
     expect(ids((await get("/offers?source=es-minetur-fuel")).body)).toEqual([]);
@@ -632,10 +641,14 @@ describe("GET /offers and /offers/{id}", () => {
   });
 
   it("serves one offer, 404 for an unknown one", async () => {
-    const { res, body } = await get(`/offers/${enc("oc:offer:de-bw-ocpdb:138586")}`);
-    expect(res.headers["x-data-license"]).toBe("CC-BY-4.0");
-    expect((body["record"] as Rec)["id"]).toBe("oc:offer:de-bw-ocpdb:138586");
-    expect((await get(`/offers/${enc("oc:offer:de-bw-ocpdb:0")}`)).res.statusCode).toBe(404);
+    const { res, body } = await get(
+      `/offers/${enc("oc:offer:de-bw-mobidata-charging:72555:138586")}`,
+    );
+    expect(res.headers["x-data-license"]).toBe("DL-DE-BY-2.0");
+    expect((body["record"] as Rec)["id"]).toBe("oc:offer:de-bw-mobidata-charging:72555:138586");
+    expect((await get(`/offers/${enc("oc:offer:de-bw-mobidata-charging:0")}`)).res.statusCode).toBe(
+      404,
+    );
   });
 });
 
@@ -664,6 +677,36 @@ describe("GET /observations/latest", () => {
     expect((body["records"] as Rec[]).map((r) => (r["result"] as Rec)["value"]).sort()).toEqual([
       60, 80,
     ]);
+  });
+
+  it("dates a polled feed's change-only reading by its source's last successful poll", async () => {
+    const prices = async () =>
+      (await get("/observations/latest?property=fuel.price&source=es-minetur-fuel&limit=100")).body[
+        "records"
+      ] as Rec[];
+    const polled = await prices();
+    expect(polled.length).toBeGreaterThan(0);
+    // Polled at NOW, every 300 s: 30 minutes on, however old the price.
+    expect(new Set(polled.map((r) => r["validUntil"]))).toEqual(
+      new Set([new Date(Date.parse(NOW) + 1800_000).toISOString()]),
+    );
+    // A speed is no change-only property: it keeps what its source states.
+    const speeds = (await get("/observations/latest?property=traffic.speed")).body[
+      "records"
+    ] as Rec[];
+    expect(speeds.every((r) => r["validUntil"] === undefined)).toBe(true);
+    // Its source's last success two hours back: the price reads stale.
+    await sql`UPDATE conditions.source_status SET last_success_at = ${"2026-09-22T09:20:00.000Z"}
+      WHERE source = 'es-minetur-fuel'`;
+    try {
+      const stale = await prices();
+      expect(stale.every((r) => Date.parse(r["validUntil"] as string) < Date.parse(READ_AT))).toBe(
+        true,
+      );
+    } finally {
+      await sql`UPDATE conditions.source_status SET last_success_at = ${NOW}
+        WHERE source = 'es-minetur-fuel'`;
+    }
   });
 
   it("filters by property, box, source, origin and domain", async () => {
@@ -757,7 +800,7 @@ describe("GET /observations/latest", () => {
   });
 
   it("strips a crowd reporter, and withholds a share-alike crowd reading", async () => {
-    const site = golden.get("de-bw-ocpdb")!.features[0]!;
+    const site = golden.get("de-bw-mobidata-charging")!.features[0]!;
     const component = (site["components"] as Rec[]).find((c) => c["kind"] === "evse")!;
     const station = (await get(`/features/${enc(site["id"] as string)}`)).body;
     const canonicalId = (station["canonical"] as Rec)["canonicalFeatureId"] as string;
@@ -866,6 +909,34 @@ describe("GET /observations (one series)", () => {
 
   const url = (query: string) =>
     `/observations?subject=${enc(site)}&property=traffic.speed&${query}`;
+
+  it("holds a change-only reading until the next change, the one in effect while its source polls", async () => {
+    const los = siteKey("nl-ndw-flow", "h2");
+    for (const [at, value] of [
+      [T0, "free_flow"],
+      [T1, "queuing"],
+    ] as const) {
+      await writeSiteReadings(
+        sql,
+        "nl-ndw-flow",
+        [{ site: "h2", geometry: { type: "Point", coordinates: [4.5, 52.0] }, at, los: value }],
+        at,
+      );
+    }
+    await sql`INSERT INTO conditions.source_status (source, last_success_at, freshness_window_sec)
+      VALUES ('nl-ndw-flow', ${READ_AT}, 300)
+      ON CONFLICT (source) DO UPDATE SET last_success_at = excluded.last_success_at`;
+    const { body } = await get(
+      `/observations?subject=${enc(los)}&property=traffic.los&from=2026-09-22T00:00:00Z&to=2026-09-22T12:00:00Z`,
+    );
+    expect(
+      (body["records"] as Rec[]).map((r) => [(r["result"] as Rec)["value"], r["validUntil"]]),
+    ).toEqual([
+      ["free_flow", T1],
+      // Polled at READ_AT every 60 s: half an hour on.
+      ["queuing", new Date(Date.parse(READ_AT) + 1800_000).toISOString()],
+    ]);
+  });
 
   it("reads raw readings within the property's retention, oldest first", async () => {
     const { res, body } = await get(url(`from=2026-09-22T00:00:00Z&to=2026-09-22T12:00:00Z`));

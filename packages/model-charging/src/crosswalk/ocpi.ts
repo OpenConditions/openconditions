@@ -30,7 +30,7 @@ export const OCPI_EVSE_STATUSES_OUT: TargetTable = {
 
 /**
  * Connector standards are OCPI's own list, so the crosswalk is the identity
- * plus the megawatt standard OCPI 2.2.1 predates.
+ * plus OCPI 2.3's SAE_J3400.
  */
 export const OCPI_CONNECTOR_STANDARDS: SourceTable = Object.fromEntries(
   [
@@ -74,6 +74,7 @@ export const OCPI_CONNECTOR_STANDARDS: SourceTable = Object.fromEntries(
     "PANTOGRAPH_TOP_DOWN",
     "TESLA_R",
     "TESLA_S",
+    "SAE_J3400",
     "UNKNOWN",
   ].map((value) => [value, value]),
 );
@@ -83,6 +84,17 @@ export const OCPI_CONNECTOR_STANDARDS_OUT: TargetTable = {
   /** OCPI 2.2.1 predates megawatt charging and has no code for it. */
   MCS: null,
 };
+
+/** OCPI tariff-restriction weekday names → the opening-hours day codes. */
+export const OCPI_DAYS = {
+  MONDAY: "MO",
+  TUESDAY: "TU",
+  WEDNESDAY: "WE",
+  THURSDAY: "TH",
+  FRIDAY: "FR",
+  SATURDAY: "SA",
+  SUNDAY: "SU",
+} as const satisfies Record<string, string>;
 
 /** OCPI facilities → the shared amenity vocabulary. */
 export const OCPI_FACILITIES: SourceTable = {

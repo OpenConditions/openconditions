@@ -1,0 +1,43 @@
+{
+  "name": "@openconditions/charging",
+  "version": "0.1.0",
+  "description": "Charging parsers for OpenConditions: charge point registers and live feeds into charging-site features with charge-point status readings and energy tariffs, and the charging ingest domain",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openconditions/datex2": "workspace:*",
+    "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/model": "workspace:*",
+    "@openconditions/model-charging": "workspace:*",
+    "@openconditions/ocpi": "workspace:*",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@openconditions/model-roads": "workspace:*",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

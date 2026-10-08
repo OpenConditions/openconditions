@@ -33,11 +33,34 @@ describe("decodeLayout csv", () => {
     expect(rows[0]!.fields).toEqual({ id: "1", lon: "8", lat: "47", desc: 'two\nlines "q"' });
     expect(rows[0]!.point).toEqual([8, 47]);
   });
+
+  test("csv reads a WKT point field in the block's crs", () => {
+    const text =
+      'id;geom\n1;"POINT (184781.200000003 128873.100000002)"\n2;"POINT EMPTY"\n3;"LINESTRING (1 2, 3 4)"\n';
+    const rows = decodeLayout("csv", Buffer.from(text), {
+      delimiter: ";",
+      wkt: "geom",
+      crs: "EPSG:31370",
+    });
+    // Namur, Boulevard de Merckem, from Belgian Lambert 72.
+    expect(rows[0]!.point![0]).toBeCloseTo(4.858691, 5);
+    expect(rows[0]!.point![1]).toBeCloseTo(50.469649, 5);
+    expect(rows[1]!.point).toBeUndefined();
+    expect(rows[2]!.point).toBeUndefined();
+  });
+
+  test("a WKT point without a crs is WGS84 lon/lat, and an implausible one is no point", () => {
+    const text = "id,geom\n1,POINT(8.54 47.378)\n2,point ( -0.5 51.2 )\n3,POINT (184781 128873)\n";
+    const rows = decodeLayout("csv", Buffer.from(text), { wkt: "geom" });
+    expect(rows.map((r) => r.point)).toEqual([[8.54, 47.378], [-0.5, 51.2], undefined]);
+  });
 });
 
 describe("layoutBlockSchema", () => {
   test("is strict", () => {
     expect(layoutBlockSchema.safeParse({ nope: 1 }).success).toBe(false);
     expect(layoutBlockSchema.safeParse({ lon: "x", lat: "y" }).success).toBe(true);
+    expect(layoutBlockSchema.safeParse({ wkt: "WKT_GEOM", crs: "EPSG:31370" }).success).toBe(true);
+    expect(layoutBlockSchema.safeParse({ wkt: "" }).success).toBe(false);
   });
 });

@@ -1,0 +1,240 @@
+{
+  "timestamp": "2026-10-06T00:01:40Z",
+  "status_code": 1000,
+  "status_message": "Success",
+  "data": [
+    {
+      "country_code": "LT",
+      "party_id": "IBG",
+      "id": 258,
+      "publish": true,
+      "name": "L3 | Inbalance grid",
+      "address": "Laisvės pr. 3",
+      "city": "Vilnius",
+      "country": "LTU",
+      "coordinates": {
+        "latitude": "54.6745570",
+        "longitude": "25.2243550"
+      },
+      "parking_type": null,
+      "evses": [
+        {
+          "uid": 535,
+          "evse_id": "IBG-P-A9MY-A",
+          "status": "AVAILABLE",
+          "capabilities": [],
+          "connectors": [
+            {
+              "id": 650306,
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_1_PHASE",
+              "voltage": 400,
+              "amperage": 32,
+              "max_electric_power": 22000,
+              "tariff_ids": ["d37ff71c-0a3d-11f0-9a21-06a2d3719779"],
+              "terms_and_conditions": null,
+              "capabilities": [],
+              "last_updated": "2024-09-02T15:49:50"
+            }
+          ],
+          "physical_reference": "2037",
+          "parking_restrictions": [],
+          "parking": [],
+          "last_updated": "2026-10-06T00:01:09"
+        },
+        {
+          "uid": 12032,
+          "evse_id": "IBG-P-A9MY-B",
+          "status": "AVAILABLE",
+          "capabilities": [],
+          "connectors": [
+            {
+              "id": 650307,
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_1_PHASE",
+              "voltage": 400,
+              "amperage": 32,
+              "max_electric_power": 22000,
+              "tariff_ids": ["d37ff71c-0a3d-11f0-9a21-06a2d3719779"],
+              "terms_and_conditions": null,
+              "capabilities": [],
+              "last_updated": "2024-09-02T15:49:50"
+            }
+          ],
+          "physical_reference": "2038",
+          "parking_restrictions": [],
+          "parking": [],
+          "last_updated": "2026-10-06T00:01:09"
+        }
+      ],
+      "parking_places": [],
+      "directions": [],
+      "operator": {
+        "name": "In Balance grid, UAB",
+        "website": "www.inbalancegrid.lt"
+      },
+      "owner": {
+        "name": "In Balance grid, UAB",
+        "website": "www.inbalancegrid.lt"
+      },
+      "facilities": [],
+      "time_zone": "Europe/Vilnius",
+      "charging_when_closed": true,
+      "images": [],
+      "help_phone": "+37062247472",
+      "help_email": "support@inbalancegrid.com",
+      "energy_mix": [],
+      "last_updated": "2026-10-06T00:01:09"
+    },
+    {
+      "country_code": "LT",
+      "party_id": "IGN",
+      "id": 440,
+      "publish": true,
+      "name": "Kevigus | Partneris",
+      "address": "Vilniaus g. 61A, Pasvalys Lithuania",
+      "city": "Pasvalys",
+      "country": "LTU",
+      "coordinates": {
+        "latitude": "56.0562790",
+        "longitude": "24.4085320"
+      },
+      "parking_type": null,
+      "evses": [
+        {
+          "uid": 69058,
+          "evse_id": "IGN-E-5641-A",
+          "status": "AVAILABLE",
+          "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+          "connectors": [
+            {
+              "id": 706999,
+              "standard": "IEC_62196_T2",
+              "format": "CABLE",
+              "power_type": "AC_1_PHASE",
+              "voltage": 400,
+              "amperage": 18,
+              "max_electric_power": 22000,
+              "tariff_ids": ["4"],
+              "terms_and_conditions": null,
+              "capabilities": [],
+              "last_updated": "2026-09-11T15:31:03"
+            }
+          ],
+          "physical_reference": "1065-01",
+          "parking_restrictions": [],
+          "parking": [],
+          "last_updated": "2026-10-05T15:36:59"
+        }
+      ],
+      "parking_places": [],
+      "directions": [],
+      "operator": {
+        "name": "Ignitis, UAB",
+        "website": "ignitison.lt"
+      },
+      "owner": {
+        "name": "UAB \"Kevigus\"",
+        "website": "ignitison.lt"
+      },
+      "facilities": [],
+      "time_zone": "Europe/Vilnius",
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "charging_when_closed": true,
+      "images": [],
+      "help_phone": "+37061255515",
+      "help_email": "info@ignitison.lt",
+      "energy_mix": [],
+      "last_updated": "2026-10-05T15:36:59"
+    },
+    {
+      "country_code": "LT",
+      "party_id": "IBG",
+      "id": 278,
+      "publish": true,
+      "name": "Maxima, V. Grybo g. | Inbalance grid",
+      "address": "V. Grybo str. 21",
+      "city": "Vilnius",
+      "country": "LTU",
+      "coordinates": {
+        "latitude": "54.7039670",
+        "longitude": "25.3164110"
+      },
+      "parking_type": null,
+      "evses": [
+        {
+          "uid": 26897,
+          "evse_id": "IBG-E-IAXA-D",
+          "status": "CHARGING",
+          "capabilities": [],
+          "connectors": [
+            {
+              "id": 663099,
+              "standard": "IEC_62196_T2",
+              "format": "CABLE",
+              "power_type": "AC_1_PHASE",
+              "voltage": 400,
+              "amperage": 32,
+              "max_electric_power": 22000,
+              "tariff_ids": ["669292aa-fa65-11ef-8688-0a58a9feac0d"],
+              "terms_and_conditions": null,
+              "capabilities": [],
+              "last_updated": "2026-03-21T08:01:37"
+            }
+          ],
+          "physical_reference": "2965",
+          "parking_restrictions": [],
+          "parking": [],
+          "last_updated": "2026-10-06T02:54:07"
+        },
+        {
+          "uid": 26901,
+          "evse_id": "IBG-E-IAXA-E",
+          "status": "CHARGING",
+          "capabilities": [],
+          "connectors": [
+            {
+              "id": 663103,
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_1_PHASE",
+              "voltage": 400,
+              "amperage": 32,
+              "max_electric_power": 22000,
+              "tariff_ids": ["669292aa-fa65-11ef-8688-0a58a9feac0d"],
+              "terms_and_conditions": null,
+              "capabilities": [],
+              "last_updated": "2026-03-22T09:20:33"
+            }
+          ],
+          "physical_reference": "2966",
+          "parking_restrictions": [],
+          "parking": [],
+          "last_updated": "2026-10-06T02:54:07"
+        }
+      ],
+      "parking_places": [],
+      "directions": [],
+      "operator": {
+        "name": "In Balance grid, UAB",
+        "website": "www.inbalancegrid.lt"
+      },
+      "owner": {
+        "name": "In Balance grid, UAB",
+        "website": "www.inbalancegrid.lt"
+      },
+      "facilities": [],
+      "time_zone": "Europe/Vilnius",
+      "charging_when_closed": true,
+      "images": [],
+      "help_phone": "+37062247472",
+      "help_email": "support@inbalancegrid.com",
+      "energy_mix": [],
+      "last_updated": "2026-10-06T02:54:07"
+    }
+  ]
+}

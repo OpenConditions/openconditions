@@ -8,8 +8,8 @@ import {
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
-  dropFused,
   type OutdatedRefreshOptions,
+  refreshFlippedFusions,
   refreshFused,
   refreshOutdatedFusions,
 } from "../fused-rows.js";
@@ -192,6 +192,89 @@ const refresh = async () => {
   );
 };
 
+describe("a contributor's source going stale, or fresh again", () => {
+  const full = async () => (await fusedOf("e5")).find((r) => r.source_id === FUSED_SOURCE_ID)!;
+  const flips = (from: string, to: string) =>
+    refreshFlippedFusions(sql, registry, { from, to, instanceId: INSTANCE });
+
+  test("refuses the fusion its stale winner held, and gives it back when it polls again", async () => {
+    // The mirror's newer price wins while every source is fresh.
+    expect(amountOf(await full())).toBe("1.999");
+    // The mirror's last success, at 11:40, goes stale at 11:55: nothing it
+    // writes says so, yet the register's fresh price takes over.
+    await sql`UPDATE conditions.source_status SET last_success_at = '2026-09-22T11:40:00Z'
+      WHERE source = ${RESTRICTED}`;
+    try {
+      expect(await flips("2026-09-22T11:50:00Z", "2026-09-22T12:00:00Z")).toBe(1);
+      expect(amountOf(await full())).toBe((priceOf("e5")["result"] as Rec)["amount"]);
+      // Polled again at 12:20 after its 11:40 success: fresh again, it wins again.
+      await sql`
+        INSERT INTO conditions.source_poll_attempt
+          (source, attempted_at, finished_at, outcome, network_validated, published)
+        VALUES (${RESTRICTED}, '2026-09-22T11:40:00Z', '2026-09-22T11:41:00Z', 'changed', true, true),
+               (${RESTRICTED}, '2026-09-22T12:20:00Z', '2026-09-22T12:21:00Z', 'changed', true, true)`;
+      await sql`UPDATE conditions.source_status SET last_success_at = '2026-09-22T12:20:00Z'
+        WHERE source = ${RESTRICTED}`;
+      // The register and the relay, last polled at 12:05, go stale at 12:20 too.
+      expect(await flips("2026-09-22T12:15:00Z", "2026-09-22T12:25:00Z")).toBe(3);
+      expect(amountOf(await full())).toBe("1.999");
+      // Nothing flipped since: nothing is refreshed.
+      expect(await flips("2026-09-22T12:25:00Z", "2026-09-22T12:30:00Z")).toBe(0);
+    } finally {
+      await sql`DELETE FROM conditions.source_poll_attempt WHERE source = ${RESTRICTED}`;
+      await polled(sql, RESTRICTED, LATER);
+      await refresh();
+    }
+  });
+});
+
+describe("a contributor's poll that ran long", () => {
+  test("counts as fresh from when it finished, for fusion and for its flips", async () => {
+    const full = async () => (await fusedOf("e5")).find((r) => r.source_id === FUSED_SOURCE_ID)!;
+    // The mirror's success began at 11:30 (stale by 12:05 if dated so) and finished at 12:03.
+    await sql`
+      INSERT INTO conditions.source_poll_attempt
+        (source, attempted_at, finished_at, outcome, network_validated, published)
+      VALUES (${RESTRICTED}, '2026-09-22T11:00:00Z', '2026-09-22T11:01:00Z', 'changed', true, true),
+             (${RESTRICTED}, '2026-09-22T11:30:00Z', '2026-09-22T12:03:00Z', 'changed', true, true)`;
+    await sql`UPDATE conditions.source_status SET last_success_at = '2026-09-22T11:30:00Z'
+      WHERE source = ${RESTRICTED}`;
+    try {
+      await refresh();
+      expect(amountOf(await full())).toBe("1.999");
+      const flips = (from: string, to: string) =>
+        refreshFlippedFusions(sql, registry, { from, to, instanceId: INSTANCE });
+      // Back fresh when the 12:03 finish landed, after the 11:01 one lapsed.
+      expect(await flips("2026-09-22T12:00:00Z", "2026-09-22T12:05:00Z")).toBe(1);
+      // Stale fifteen minutes after that finish, not after the start.
+      expect(await flips("2026-09-22T11:40:00Z", "2026-09-22T11:50:00Z")).toBe(0);
+    } finally {
+      await sql`DELETE FROM conditions.source_poll_attempt WHERE source = ${RESTRICTED}`;
+      await polled(sql, RESTRICTED, LATER);
+      await refresh();
+    }
+  });
+});
+
+describe("a series a complete poll ends", () => {
+  test("leaves the fusion it won to the next contributor, and wins it back when stated again", async () => {
+    const full = async () => (await fusedOf("e5")).find((r) => r.source_id === FUSED_SOURCE_ID)!;
+    expect(amountOf(await full())).toBe("1.999");
+    const poll = (observations: Rec[]) =>
+      writeSnapshot(
+        sql,
+        RESTRICTED,
+        { observations },
+        { ...ctx, complete: false, statesComplete: true },
+      );
+    // The mirror stops stating its E5 price.
+    expect((await poll([twinE10])).observations.ended).toBe(1);
+    expect(amountOf(await full())).toBe((priceOf("e5")["result"] as Rec)["amount"]);
+    await poll([twinE5, twinE10]);
+    expect(amountOf(await full())).toBe("1.999");
+  });
+});
+
 describe("the public fusion beside the full one", () => {
   test("an all-public fusion is written once, flagged public", async () => {
     const rows = await fusedOf("diesel");
@@ -298,8 +381,21 @@ describe("the public fusion beside the full one", () => {
     await refresh();
     expect(await fusedOf("e5")).toHaveLength(2);
     const canonical = await canonicalId();
-    const dropped = await sql.begin((tx) => dropFused(tx, [canonical]));
-    expect(dropped).toBeGreaterThan(5);
+    // Another writer holds the cluster's fused lock: the drop waits for it,
+    // so it never deletes a row that writer is about to upsert.
+    const holder = await sql.reserve();
+    await holder`SELECT pg_advisory_lock(2, hashtext(${canonical}) & 1023)`;
+    const dropping = sql.begin((tx) =>
+      refreshFused(tx, registry, [], { instanceId: INSTANCE, now: LATER, vanished: [canonical] }),
+    );
+    const waited = await Promise.race([
+      dropping.then(() => "dropped"),
+      new Promise((resolve) => setTimeout(() => resolve("waiting"), 500)),
+    ]);
+    expect(waited).toBe("waiting");
+    await holder`SELECT pg_advisory_unlock(2, hashtext(${canonical}) & 1023)`;
+    holder.release();
+    expect((await dropping).deleted).toBeGreaterThan(5);
     const [left] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.observation_latest
        WHERE source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})
@@ -566,6 +662,7 @@ describe("where a crowd-won public fusion sits", () => {
     const latest = await latestOfFeatures(
       { execute: (q, p) => sql.unsafe(q, p as never[]) as never },
       {
+        registry,
         features: [{ id: await canonicalId() }],
         canonical: true,
         scope: "public",

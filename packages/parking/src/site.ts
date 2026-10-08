@@ -8,6 +8,7 @@ import {
   zonedWallClockToInstant,
 } from "@openconditions/model";
 import {
+  PARKING_PROPERTIES,
   PARKING_USAGES,
   type ParkingLayout,
   type ParkingSiteType,
@@ -361,10 +362,18 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
   };
 }
 
+/** The properties written only when their result changes. */
+const CHANGE_ONLY = new Set(
+  PARKING_PROPERTIES.filter((p) => p.retention?.changeOnly).map((p) => p.code),
+);
+
 /**
  * A reading of the site or one of its areas, current until
- * `max(30 min, two poll cadences)` after it was measured. Undefined when the
- * measuring time is unreadable.
+ * `max(30 min, two poll cadences)` after it was measured. A polled feed's
+ * reading of a change-only property (a count, a status, a trend) states no
+ * validity: it is written when it changes and holds while the feed polls,
+ * which the read computes from the source's last successful poll. Undefined
+ * when the measuring time is unreadable.
  */
 function readingDraft(
   feed: ParkingFeed,
@@ -375,6 +384,7 @@ function readingDraft(
 ): RecordDraft | undefined {
   const at = Date.parse(r.at);
   if (!Number.isFinite(at)) return undefined;
+  const polled = (feed.accessMode ?? "bulk") === "bulk" && CHANGE_ONLY.has(property);
   const validitySec = r.validForSec ?? Math.max(MIN_VALIDITY_SEC, 2 * (ctx.cadenceSec ?? 0));
   const draft = {
     class: "observation",
@@ -391,7 +401,7 @@ function readingDraft(
     },
     result,
     phenomenonTime: { instant: r.at },
-    validUntil: new Date(at + validitySec * 1000).toISOString(),
+    ...(polled ? {} : { validUntil: new Date(at + validitySec * 1000).toISOString() }),
     aggregation: "instantaneous",
   };
   return { id: observationId(feed.id, draft as never), ...draft };

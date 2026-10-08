@@ -1,8 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { link, mkdir, readdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
+import { type QueryRunner, withPolledValidity } from "@openconditions/core";
 import { scanLatestObservations, scanRecords } from "@openconditions/core/server";
-import type { RecordClass } from "@openconditions/model";
+import type { RecordClass, Registry } from "@openconditions/model";
+import { productionRegistry } from "@openconditions/model-registry";
 import {
   type ArchivableRecord,
   type ArchiveRowKey,
@@ -39,6 +41,8 @@ export interface ArchiveBuildDeps {
   outputDir?: string;
   /** Nights of dated files to keep; else env `OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS`, else 30. */
   keepNights?: number;
+  /** The registry that says which readings hold while their source polls; else the production one. */
+  registry?: Registry;
 }
 
 export type ArchiveBuildResult = Record<RecordClass, { path: string; bytes: number }>;
@@ -52,9 +56,24 @@ function resolveOutputDir(override?: string): string {
 function pagesOf(
   tx: postgres.TransactionSql,
   cls: RecordClass,
+  registry: Registry,
 ): AsyncIterable<readonly ArchivableRecord[]> {
-  const pages = cls === "observation" ? scanLatestObservations(tx) : scanRecords(tx, cls);
+  const pages = cls === "observation" ? polledPages(tx, registry) : scanRecords(tx, cls);
   return pages as AsyncIterable<readonly ArchivableRecord[]>;
+}
+
+/** The latest readings, each with the validity its source's polling gives it. */
+async function* polledPages(
+  tx: postgres.TransactionSql,
+  registry: Registry,
+): AsyncGenerator<Record<string, unknown>[]> {
+  const db: QueryRunner = {
+    execute: async <T>(query: string, params?: unknown[]) =>
+      (await tx.unsafe(query, params as never)) as T,
+  };
+  for await (const page of scanLatestObservations(tx)) {
+    yield await withPolledValidity(db, registry, page);
+  }
 }
 
 const DATED_ARCHIVE = /^archive-(situation|feature|offer|observation)-\d{4}-\d{2}-\d{2}\.parquet$/;
@@ -176,7 +195,8 @@ async function sameFile(a: string, b: string): Promise<boolean> {
  * sources, nothing tombstoned or out of date, crowd records only once
  * corroborated, public licences, reporters stripped, a source's extras only
  * when the source federates them), so the artifact carries what a peer may
- * receive.
+ * receive. A polled feed's change-only reading is dated by its source's
+ * polling (`withPolledValidity`): one whose source stopped is out of date.
  *
  * Best-effort: an unwritable or misconfigured output dir is logged and
  * swallowed (returns `null`) so a failed archive write never crashes the
@@ -190,6 +210,7 @@ export async function buildDailyArchive(
   const nowIso = now.toISOString();
   const day = nowIso.slice(0, 10);
   const dir = resolveOutputDir(deps.outputDir);
+  const registry = deps.registry ?? productionRegistry();
   const temporary: string[] = [];
   try {
     await mkdir(dir, { recursive: true });
@@ -208,7 +229,7 @@ export async function buildDailyArchive(
         const outPath = path.join(dir, archiveFileName(cls, day));
         const temp = `${outPath}.${randomUUID()}.tmp`;
         temporary.push(temp);
-        await writeRecordArchive(cls, pagesOf(tx, cls), nowIso, fileWriter(temp), opts);
+        await writeRecordArchive(cls, pagesOf(tx, cls, registry), nowIso, fileWriter(temp), opts);
         written[cls] = { temp, path: outPath };
       }
     });

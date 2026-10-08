@@ -31,6 +31,12 @@ let runner: QueryRunner;
 
 const price = (amount: string) => ({ type: "money", amount, currency: "EUR", per: "L" });
 
+/** The registry's word on the one property here: a price is kept as its changes. */
+const registry = {
+  property: (code: string) =>
+    code === "fuel.price" ? ({ retention: { changeOnly: true } } as never) : undefined,
+};
+
 interface Reading {
   id: string;
   source: string;
@@ -42,6 +48,9 @@ interface Reading {
   fusedPublic?: boolean;
   expiresAt?: string;
   validUntil?: string;
+  accessMode?: string;
+  mergedSources?: string[];
+  at?: string;
 }
 
 async function insertReading(r: Reading): Promise<void> {
@@ -58,13 +67,17 @@ async function insertReading(r: Reading): Promise<void> {
     provenance: {
       origin: isFusedSourceId(r.source) ? "derived" : "feed",
       sourceId: r.source,
+      ...(r.accessMode === undefined ? {} : { accessMode: r.accessMode }),
       attribution: { provider: r.source, license: r.license ?? "CC-BY-4.0" },
+      ...(r.mergedSources === undefined
+        ? {}
+        : { mergedSources: r.mergedSources.map((source) => ({ source })) }),
     },
   };
   const reading = {
     id: r.id,
     result: price(r.amount),
-    phenomenonTime: { instant: "2026-09-22T11:00:00.000Z" },
+    phenomenonTime: { instant: r.at ?? "2026-09-22T11:00:00.000Z" },
     ...(r.validUntil === undefined ? {} : { validUntil: r.validUntil }),
   };
   const subjectKey = `feature:${r.featureId}${r.componentKey === undefined ? "" : `#${r.componentKey}`}`;
@@ -241,6 +254,7 @@ describe("latestOfFeatures", () => {
   test("returns each feature's latest readings, component keys included, in one query", async () => {
     calls = 0;
     const latest = await latestOfFeatures(runner, {
+      registry,
       features: [{ id: STATION }, { id: TWIN }, { id: LONE }],
       canonical: false,
       scope: "operator",
@@ -266,6 +280,7 @@ describe("latestOfFeatures", () => {
   test("in canonical mode a fused reading stands in for its members' readings", async () => {
     calls = 0;
     const latest = await latestOfFeatures(runner, {
+      registry,
       features: [{ id: CANONICAL, memberIds: [STATION, TWIN] }],
       canonical: true,
       scope: "operator",
@@ -290,6 +305,7 @@ describe("latestOfFeatures", () => {
   test("reads no canonical components the caller already holds", async () => {
     calls = 0;
     const latest = await latestOfFeatures(runner, {
+      registry,
       features: [
         {
           id: CANONICAL,
@@ -308,6 +324,7 @@ describe("latestOfFeatures", () => {
   test("expand=latest in public scope stands in the public fusion for the members", async () => {
     calls = 0;
     const latest = await latestOfFeatures(runner, {
+      registry,
       features: [{ id: CANONICAL, memberIds: [STATION] }],
       canonical: true,
       scope: "public",
@@ -333,6 +350,7 @@ describe("latestOfFeatures", () => {
 
   test("honours public scope: a withheld fused reading gives way to the public member's", async () => {
     const latest = await latestOfFeatures(runner, {
+      registry,
       features: [{ id: CANONICAL, memberIds: [STATION] }],
       canonical: true,
       scope: "public",
@@ -344,6 +362,7 @@ describe("latestOfFeatures", () => {
     const e5 = (latest.get(CANONICAL) ?? []).filter((r) => r.componentKey === "e5");
     expect(e5).toEqual([expect.objectContaining({ source: PUBLIC, result: price("1.700") })]);
     const perSource = await latestOfFeatures(runner, {
+      registry,
       features: [{ id: TWIN }],
       canonical: false,
       scope: "public",
@@ -354,6 +373,7 @@ describe("latestOfFeatures", () => {
 
   test("runs every row through the egress before a fused reading stands in", async () => {
     const latest = await latestOfFeatures(runner, {
+      registry,
       features: [{ id: CANONICAL, memberIds: [STATION, TWIN] }],
       canonical: true,
       scope: "operator",
@@ -363,6 +383,200 @@ describe("latestOfFeatures", () => {
     });
     const e5 = (latest.get(CANONICAL) ?? []).filter((r) => r.componentKey === "e5");
     expect(e5.map((r) => r.source).sort()).toEqual([RESTRICTED, PUBLIC].sort());
+  });
+});
+
+describe("latestOfFeatures: validity of a polled feed's change-only readings", () => {
+  const POLLED = "fr-polled";
+  const STOPPED = "fr-stopped";
+  const SITE = `oc:feature:${POLLED}:1`;
+  const IDLE = `oc:feature:${STOPPED}:1`;
+  const PAIR = "oc:feature:test.local:c2";
+  const ago = (sec: number) => new Date(AT.getTime() - sec * 1000).toISOString();
+  const THREE_DAYS = 3 * 86400;
+
+  beforeAll(async () => {
+    for (const [id, lastSuccess] of [
+      [POLLED, ago(120)],
+      [STOPPED, ago(7200)],
+    ] as const) {
+      await sql`
+        INSERT INTO conditions.source
+          (id, domain, format, product, access_mode, tier, operator, license, attribution,
+           cadence_sec, freshness_window_sec)
+        VALUES (${id}, 'fuel', 'test', 'fuel', 'bulk', 'authoritative', ${id}, 'CC-BY-4.0', ${id},
+                300, 900)`;
+      await sql`
+        INSERT INTO conditions.source_status (source, last_success_at, freshness_window_sec)
+        VALUES (${id}, ${lastSuccess}, 900)`;
+    }
+    await sql`
+      INSERT INTO conditions.feature_canonical
+        (canonical_feature_id, survivor_id, member_ids, components, computed_at)
+      VALUES (${PAIR}, ${SITE}, ${[SITE, IDLE]}, ${sql.json([
+        {
+          key: "e5",
+          kind: "fuel_grade",
+          members: [
+            { featureId: SITE, key: "e5" },
+            { featureId: IDLE, key: "e5" },
+          ],
+        },
+      ])}, ${AT.toISOString()})`;
+    for (const [source, featureId] of [
+      [POLLED, SITE],
+      [STOPPED, IDLE],
+    ] as const) {
+      await insertReading({
+        id: `oc:observation:${source}:e5`,
+        source,
+        featureId,
+        componentKey: "e5",
+        amount: "1.700",
+        accessMode: "bulk",
+        at: ago(THREE_DAYS),
+      });
+    }
+    await insertReading({
+      id: `oc:observation:${POLLED}:diesel`,
+      source: POLLED,
+      featureId: SITE,
+      componentKey: "diesel",
+      amount: "1.600",
+      accessMode: "bulk",
+      validUntil: "2026-09-22T18:00:00.000Z",
+    });
+    await insertReading({
+      id: "oc:observation:test.local:fused-pair-e5",
+      source: FUSED_SOURCE_ID,
+      featureId: PAIR,
+      componentKey: "e5",
+      amount: "1.700",
+      accessMode: "bulk",
+      at: ago(THREE_DAYS),
+      fusedSources: [STOPPED, POLLED],
+      mergedSources: [STOPPED, POLLED],
+      fusedPublic: true,
+    });
+  });
+
+  test("a reading of a source that polled two minutes ago is valid, however old its time", async () => {
+    const latest = await latestOfFeatures(runner, {
+      registry,
+      features: [{ id: SITE }, { id: IDLE }],
+      canonical: false,
+      scope: "operator",
+      at: AT,
+    });
+    const site = byKey(latest.get(SITE));
+    expect(site["e5"]).toMatchObject({
+      phenomenonTime: { instant: ago(THREE_DAYS) },
+      validUntil: new Date(AT.getTime() - 120_000 + 1800_000).toISOString(),
+    });
+    // A reading that states its own validity keeps it.
+    expect(site["diesel"]?.validUntil).toBe("2026-09-22T18:00:00.000Z");
+    // A source whose last success aged past the window reads stale.
+    const idle = byKey(latest.get(IDLE))["e5"]!;
+    expect(Date.parse(idle.validUntil!)).toBeLessThan(AT.getTime());
+    expect(idle.validUntil).toBe(new Date(AT.getTime() - 7200_000 + 1800_000).toISOString());
+  });
+
+  test("a poll that ran long is dated by when it finished, not when it began", async () => {
+    // The status poll began 40 minutes back and committed a minute ago.
+    await sql`UPDATE conditions.source_status SET last_success_at = ${ago(2400)}
+      WHERE source = ${POLLED}`;
+    await sql`
+      INSERT INTO conditions.source_poll_attempt
+        (source, attempted_at, finished_at, outcome, network_validated, published)
+      VALUES (${POLLED}, ${ago(2400)}, ${ago(60)}, 'changed', true, true)`;
+    try {
+      const latest = await latestOfFeatures(runner, {
+        registry,
+        features: [{ id: SITE }],
+        canonical: false,
+        scope: "operator",
+        at: AT,
+      });
+      expect(byKey(latest.get(SITE))["e5"]?.validUntil).toBe(
+        new Date(AT.getTime() - 60_000 + 1800_000).toISOString(),
+      );
+    } finally {
+      await sql`DELETE FROM conditions.source_poll_attempt WHERE source = ${POLLED}`;
+      await sql`UPDATE conditions.source_status SET last_success_at = ${ago(120)}
+        WHERE source = ${POLLED}`;
+    }
+  });
+
+  test("a peer's reading holds from when this instance last received its source from that peer", async () => {
+    const PEER_SITE = `oc:feature:${POLLED}:peer`;
+    const STALE_PEER_SITE = `oc:feature:${STOPPED}:peer`;
+    const peerReading = async (source: string, featureId: string) => {
+      const template = {
+        class: "observation",
+        kind: "observation",
+        property: "fuel.price",
+        subject: { kind: "feature", featureId, componentKey: "e5" },
+        provenance: {
+          origin: "feed",
+          sourceId: source,
+          accessMode: "bulk",
+          instanceId: "peer.example",
+          originChain: [{ instanceId: "peer.example", receivedAt: ago(60) }],
+          attribution: { provider: source, license: "CC-BY-4.0" },
+        },
+      };
+      const reading = {
+        id: `oc:observation:${source}:peer-e5`,
+        result: price("1.710"),
+        phenomenonTime: { instant: ago(THREE_DAYS) },
+      };
+      await sql`
+        INSERT INTO conditions.observation_latest
+          (subject_key, property, source_id, subject_kind, feature_id, component_key, reading,
+           template, template_hash, access_mode, result_type, effective_from, since_at)
+        VALUES (${`feature:${featureId}#e5`}, 'fuel.price', ${source}, 'feature', ${featureId}, 'e5',
+                ${sql.json(reading)}, ${sql.json(template)}, ${`peer-${source}`}, 'bulk', 'money',
+                ${ago(THREE_DAYS)}, ${ago(THREE_DAYS)})`;
+    };
+    await peerReading(POLLED, PEER_SITE);
+    await peerReading(STOPPED, STALE_PEER_SITE);
+    // POLLED is also polled here, two minutes ago: that is not the peer's polling.
+    await sql`
+      INSERT INTO conditions.federation_source_receipt (peer_instance_id, source_id, last_received_at)
+      VALUES ('peer.example', ${POLLED}, ${ago(600)}), ('peer.example', ${STOPPED}, ${ago(7200)})`;
+    try {
+      const latest = await latestOfFeatures(runner, {
+        registry,
+        features: [{ id: PEER_SITE }, { id: STALE_PEER_SITE }],
+        canonical: false,
+        scope: "operator",
+        at: AT,
+      });
+      expect(byKey(latest.get(PEER_SITE))["e5"]?.validUntil).toBe(
+        new Date(AT.getTime() - 600_000 + 1800_000).toISOString(),
+      );
+      expect(byKey(latest.get(STALE_PEER_SITE))["e5"]?.validUntil).toBe(
+        new Date(AT.getTime() - 7200_000 + 1800_000).toISOString(),
+      );
+    } finally {
+      await sql`DELETE FROM conditions.federation_source_receipt`;
+      await sql`DELETE FROM conditions.observation_latest
+        WHERE feature_id IN (${PEER_SITE}, ${STALE_PEER_SITE})`;
+    }
+  });
+
+  test("a fused reading is valid as long as the latest of its contributors", async () => {
+    const latest = await latestOfFeatures(runner, {
+      registry,
+      features: [{ id: PAIR, memberIds: [SITE, IDLE] }],
+      canonical: true,
+      scope: "operator",
+      at: AT,
+    });
+    expect(byKey(latest.get(PAIR))["e5"]).toMatchObject({
+      source: FUSED_SOURCE_ID,
+      validUntil: new Date(AT.getTime() - 120_000 + 1800_000).toISOString(),
+    });
   });
 });
 

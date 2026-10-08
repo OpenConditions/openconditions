@@ -145,6 +145,34 @@ export const LICENSES: readonly LicenseInfo[] = [
     name: "Singapore Open Data Licence 1.0",
     url: "https://data.gov.sg/open-data-licence",
   }),
+  {
+    ...open({
+      id: "LicenseRef-opendata-swiss-terms-by-ask",
+      name: "opendata.swiss terms of use: open use, must provide the source, commercial use by permission",
+      url: "https://opendata.swiss/en/terms-of-use",
+    }),
+    commercialUse: false,
+  },
+  open({
+    id: "LicenseRef-NLR-Developer-Network-Terms",
+    name: "NLR Developer Network Terms and Conditions",
+    url: "https://developer.nlr.gov/terms/",
+  }),
+  open({
+    id: "OGDL-Taiwan-1.0",
+    name: "Open Government Data License, Taiwan, version 1.0 (政府資料開放授權條款-第1版)",
+    url: "https://data.gov.tw/license",
+  }),
+  open({
+    id: "LicenseRef-KOGL-Type-1",
+    name: "Korea Open Government License Type 1 (공공누리 제1유형: 출처표시)",
+    url: "https://www.kogl.or.kr/info/licenseType1.do",
+  }),
+  open({
+    id: "LicenseRef-HK-CSDI-ToU",
+    name: "CSDI Portal Terms and Conditions of Use (Hong Kong)",
+    url: "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+  }),
   open({
     id: "LicenseRef-HK-Gov-Open-Data",
     name: "DATA.GOV.HK Terms and Conditions of Use",

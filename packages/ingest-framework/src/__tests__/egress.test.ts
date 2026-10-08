@@ -248,6 +248,87 @@ describe("guardedFetch", () => {
     expect(seenAuth).toEqual(["Bearer SEKRET", null]);
   });
 
+  it("keeps only content-neutral headers on a cross-origin redirect, so a header key stays home", async () => {
+    const start = "http://198.51.100.7/";
+    const seen: Record<string, string>[] = [];
+    const base = (async (input: string | URL | Request, init?: RequestInit) => {
+      seen.push(Object.fromEntries(new Headers(init?.headers)));
+      if (String(input) === start) {
+        return new Response(null, {
+          status: 302,
+          headers: { location: "http://93.184.216.34/next" },
+        });
+      }
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const res = await guardedFetch(base, OPTS)(start, {
+      headers: {
+        "X-Api-Key": "SEKRET",
+        AccountKey: "SEKRET2",
+        Accept: "application/json",
+        "User-Agent": "OpenConditions",
+      },
+    });
+    expect(await res.text()).toBe("ok");
+    expect(seen[1]).toEqual({ accept: "application/json", "user-agent": "OpenConditions" });
+  });
+
+  it("refuses to replay a request body to another host, and follows it on the same host", async () => {
+    const seen: string[] = [];
+    const redirecting = (location: string) =>
+      (async (input: string | URL | Request) => {
+        seen.push(String(input));
+        if (seen.length === 1) {
+          return new Response(null, { status: 307, headers: { location } });
+        }
+        return new Response("ok", { status: 200 });
+      }) as unknown as typeof fetch;
+    const token = { method: "POST", body: "grant_type=client_credentials&client_secret=SEKRET" };
+    await expect(
+      guardedFetch(redirecting("http://93.184.216.34/token"), OPTS)("http://198.51.100.7/", token),
+    ).rejects.toThrow(/body/);
+    expect(seen).toEqual(["http://198.51.100.7/"]);
+    seen.length = 0;
+    const res = await guardedFetch(redirecting("http://93.184.216.34/next"), OPTS)(PUBLIC, token);
+    expect(await res.text()).toBe("ok");
+  });
+
+  it("follows a 301 after a POST to another host as a GET without the body, as fetch does", async () => {
+    const seen: { url: string; method?: string; body?: unknown; headers: string[] }[] = [];
+    const base = (async (input: string | URL | Request, init?: RequestInit) => {
+      seen.push({
+        url: String(input),
+        method: init?.method,
+        body: init?.body,
+        headers: [...new Headers(init?.headers).keys()],
+      });
+      if (seen.length === 1) {
+        return new Response(null, {
+          status: 301,
+          headers: { location: "http://93.184.216.34/moved" },
+        });
+      }
+      return new Response("ok", { status: 200 });
+    }) as unknown as typeof fetch;
+    const res = await guardedFetch(base, OPTS)("http://198.51.100.7/", {
+      method: "POST",
+      body: "client_secret=SEKRET",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Language": "en",
+      },
+    });
+    expect(await res.text()).toBe("ok");
+    // The body's own headers go with the body.
+    expect(seen[1]).toEqual({
+      url: "http://93.184.216.34/moved",
+      method: "GET",
+      body: undefined,
+      headers: ["accept"],
+    });
+  });
+
   it("preserves the Authorization header on a same-host redirect", async () => {
     const seenAuth: Array<string | null> = [];
     const base = (async (input: string | URL | Request, init?: RequestInit) => {

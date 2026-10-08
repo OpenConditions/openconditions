@@ -1,0 +1,31 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "bfe",
+      "product": "charging",
+      "name": "BFE charging points for electric cars (ich-tanke-strom.ch)",
+      "tier": "authoritative",
+      "format": "oicp",
+      // The OICP files of every operator reporting to the federal office:
+      // the EVSE data, and their status rewritten every minute. No tariffs.
+      // BFE announces a public OCPI API with tariffs from November 2026.
+      "endpoints": {
+        "main": {
+          "url": "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/data/oicp/ch.bfe.ladestellen-elektromobilitaet.json",
+          "cadenceSec": 3600,
+        },
+        "status": {
+          "url": "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/status/oicp/ch.bfe.ladestellen-elektromobilitaet.json",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-opendata-swiss-terms-by-ask",
+      "licenseUrl": "https://opendata.swiss/en/terms-of-use",
+      "attribution": "Bundesamt für Energie BFE / ich-tanke-strom.ch",
+      "homepage": "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos",
+      "privacyUrl": "https://www.geo.admin.ch/en/legal-framework",
+    },
+  ],
+}

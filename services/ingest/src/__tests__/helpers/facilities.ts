@@ -43,14 +43,14 @@ export const facilitiesRegistry: Registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: ["ocpi", "autobahn-parking", "mimit"],
+        values: ["autobahn-parking", "mimit"],
       }),
     ],
   },
 ]);
 
 export const TIERS: Record<string, string> = {
-  "de-bw-ocpdb": "aggregator",
+  "de-bw-mobidata-charging": "aggregator",
   "de-bw-mobidata-parking": "aggregator",
   "nl-ndw-truck-parking": "authoritative",
   "de-autobahn-events": "operator",

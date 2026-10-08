@@ -1,0 +1,651 @@
+[
+  {
+    "DateLastVerified": "2016-06-04T02:38:00Z",
+    "ID": 32021,
+    "UUID": "256B25A7-27A0-45C6-80DD-208726826BE6",
+    "DataProviderID": 26,
+    "DataProvidersReference": "51727",
+    "OperatorID": 78,
+    "OperatorsReference": "Essent EM-LU-00011001-01-00006",
+    "UsageCost": "0.00 jaarabonnement",
+    "AddressInfo": {
+      "ID": 32367,
+      "Title": "Rue de Neudorf",
+      "AddressLine1": "Rue de Neudorf",
+      "Town": "Scheidhof",
+      "Postcode": "2517",
+      "CountryID": 132,
+      "Country": { "ISOCode": "LU", "ContinentCode": "EU", "ID": 132, "Title": "Luxembourg" },
+      "Latitude": 49.621391,
+      "Longitude": 6.189275,
+      "RelatedURL": "http://www.essent.nl",
+      "DistanceUnit": 0
+    },
+    "Connections": [
+      {
+        "ID": 35532,
+        "ConnectionTypeID": 25,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-2 Type 2",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 25,
+          "Title": "Type 2 (Socket Only)"
+        },
+        "LevelID": 2,
+        "Level": {
+          "Comments": "Over 2 kW, usually non-domestic socket type",
+          "IsFastChargeCapable": false,
+          "ID": 2,
+          "Title": "Level 2 : Medium (Over 2kW)"
+        },
+        "PowerKW": 11,
+        "CurrentTypeID": 10,
+        "CurrentType": {
+          "Description": "Alternating Current - Single Phase",
+          "ID": 10,
+          "Title": "AC (Single-Phase)"
+        }
+      },
+      {
+        "ID": 46145,
+        "ConnectionTypeID": 25,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-2 Type 2",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 25,
+          "Title": "Type 2 (Socket Only)"
+        },
+        "LevelID": 2,
+        "Level": {
+          "Comments": "Over 2 kW, usually non-domestic socket type",
+          "IsFastChargeCapable": false,
+          "ID": 2,
+          "Title": "Level 2 : Medium (Over 2kW)"
+        },
+        "PowerKW": 11,
+        "CurrentTypeID": 10,
+        "CurrentType": {
+          "Description": "Alternating Current - Single Phase",
+          "ID": 10,
+          "Title": "AC (Single-Phase)"
+        }
+      },
+      {
+        "ID": 95315,
+        "ConnectionTypeID": 25,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-2 Type 2",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 25,
+          "Title": "Type 2 (Socket Only)"
+        },
+        "LevelID": 2,
+        "Level": {
+          "Comments": "Over 2 kW, usually non-domestic socket type",
+          "IsFastChargeCapable": false,
+          "ID": 2,
+          "Title": "Level 2 : Medium (Over 2kW)"
+        },
+        "PowerKW": 11,
+        "CurrentTypeID": 10,
+        "CurrentType": {
+          "Description": "Alternating Current - Single Phase",
+          "ID": 10,
+          "Title": "AC (Single-Phase)"
+        }
+      },
+      {
+        "ID": 95316,
+        "ConnectionTypeID": 25,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-2 Type 2",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 25,
+          "Title": "Type 2 (Socket Only)"
+        },
+        "LevelID": 2,
+        "Level": {
+          "Comments": "Over 2 kW, usually non-domestic socket type",
+          "IsFastChargeCapable": false,
+          "ID": 2,
+          "Title": "Level 2 : Medium (Over 2kW)"
+        },
+        "PowerKW": 11,
+        "CurrentTypeID": 10,
+        "CurrentType": {
+          "Description": "Alternating Current - Single Phase",
+          "ID": 10,
+          "Title": "AC (Single-Phase)"
+        }
+      }
+    ],
+    "NumberOfPoints": 1,
+    "StatusTypeID": 50,
+    "DateLastStatusUpdate": "2016-06-04T02:38:00Z",
+    "DateCreated": "2015-01-09T06:03:00Z",
+    "SubmissionStatusTypeID": 100,
+    "DataProvider": {
+      "WebsiteURL": "http://www.oplaadpalen.nl/",
+      "Comments": null,
+      "DataProviderStatusType": {
+        "IsProviderEnabled": true,
+        "ID": 20,
+        "Title": "Automated Import"
+      },
+      "IsRestrictedEdit": false,
+      "IsOpenDataLicensed": true,
+      "IsApprovedImport": true,
+      "License": "Licensed under Attribution-NonCommercial-ShareAlike 3.0 : http://creativecommons.org/licenses/by-nc-sa/3.0/",
+      "DateLastImported": "2016-06-04T03:04:53.05Z",
+      "ID": 26,
+      "Title": "Oplaadpalen.nl"
+    },
+    "OperatorInfo": {
+      "WebsiteURL": "http://www.essent.nl/content/particulier/producten/elektrisch_rijden/index.html",
+      "Comments": null,
+      "PhonePrimaryContact": "0800 377 36 83",
+      "PhoneSecondaryContact": null,
+      "IsPrivateIndividual": null,
+      "AddressInfo": null,
+      "BookingURL": null,
+      "ContactEmail": "elektrischrijden@essent.nl",
+      "FaultReportEmail": null,
+      "IsRestrictedEdit": null,
+      "ID": 78,
+      "Title": "Essent (NL)"
+    },
+    "StatusType": {
+      "IsOperational": true,
+      "IsUserSelectable": true,
+      "ID": 50,
+      "Title": "Operational"
+    },
+    "SubmissionStatus": { "IsLive": true, "ID": 100, "Title": "Imported and Published" }
+  },
+  {
+    "DateLastVerified": "2018-03-16T06:58:00Z",
+    "ID": 77677,
+    "UUID": "880C7872-9CD4-4528-9754-66C77FE9129E",
+    "DataProviderID": 1,
+    "OperatorID": 13,
+    "OperatorsReference": "SI006E043*2,SI006E043*2,SI006E043*3,SI006E043*1",
+    "UsageTypeID": 4,
+    "UsageCost": "0,20€/min",
+    "AddressInfo": {
+      "ID": 78023,
+      "Title": "PETROL A2/E70 Grič",
+      "AddressLine1": "A2",
+      "AddressLine2": "Trnje",
+      "Town": "Brežice",
+      "Postcode": "8250",
+      "CountryID": 205,
+      "Country": { "ISOCode": "SI", "ContinentCode": "EU", "ID": 205, "Title": "Slovenia" },
+      "Latitude": 45.89152,
+      "Longitude": 15.5970469,
+      "DistanceUnit": 0
+    },
+    "Connections": [
+      {
+        "ID": 112212,
+        "ConnectionTypeID": 2,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-3 Configuration AA",
+          "IsDiscontinued": null,
+          "IsObsolete": null,
+          "ID": 2,
+          "Title": "CHAdeMO"
+        },
+        "StatusTypeID": 50,
+        "StatusType": {
+          "IsOperational": true,
+          "IsUserSelectable": true,
+          "ID": 50,
+          "Title": "Operational"
+        },
+        "LevelID": 3,
+        "Level": {
+          "Comments": "40KW and Higher",
+          "IsFastChargeCapable": true,
+          "ID": 3,
+          "Title": "Level 3:  High (Over 40kW)"
+        },
+        "PowerKW": 50,
+        "CurrentTypeID": 30,
+        "CurrentType": { "Description": "Direct Current", "ID": 30, "Title": "DC" },
+        "Quantity": 1
+      },
+      {
+        "ID": 112213,
+        "ConnectionTypeID": 1036,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-2",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 1036,
+          "Title": "Type 2 (Tethered Connector) "
+        },
+        "StatusTypeID": 50,
+        "StatusType": {
+          "IsOperational": true,
+          "IsUserSelectable": true,
+          "ID": 50,
+          "Title": "Operational"
+        },
+        "LevelID": 3,
+        "Level": {
+          "Comments": "40KW and Higher",
+          "IsFastChargeCapable": true,
+          "ID": 3,
+          "Title": "Level 3:  High (Over 40kW)"
+        },
+        "Amps": 63,
+        "Voltage": 400,
+        "PowerKW": 43,
+        "CurrentTypeID": 20,
+        "CurrentType": {
+          "Description": "Alternating Current - Three Phase",
+          "ID": 20,
+          "Title": "AC (Three-Phase)"
+        },
+        "Quantity": 1
+      },
+      {
+        "ID": 112214,
+        "ConnectionTypeID": 33,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-3 Configuration FF",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 33,
+          "Title": "CCS (Type 2)"
+        },
+        "StatusTypeID": 50,
+        "StatusType": {
+          "IsOperational": true,
+          "IsUserSelectable": true,
+          "ID": 50,
+          "Title": "Operational"
+        },
+        "LevelID": 3,
+        "Level": {
+          "Comments": "40KW and Higher",
+          "IsFastChargeCapable": true,
+          "ID": 3,
+          "Title": "Level 3:  High (Over 40kW)"
+        },
+        "PowerKW": 50,
+        "CurrentTypeID": 30,
+        "CurrentType": { "Description": "Direct Current", "ID": 30, "Title": "DC" },
+        "Quantity": 1
+      }
+    ],
+    "NumberOfPoints": 1,
+    "StatusTypeID": 50,
+    "DateLastStatusUpdate": "2018-03-16T06:58:00Z",
+    "DateCreated": "2017-01-22T14:58:00Z",
+    "SubmissionStatusTypeID": 200,
+    "DataProvider": {
+      "WebsiteURL": "http://openchargemap.org",
+      "Comments": null,
+      "DataProviderStatusType": {
+        "IsProviderEnabled": true,
+        "ID": 1,
+        "Title": "Manual Data Entry"
+      },
+      "IsRestrictedEdit": false,
+      "IsOpenDataLicensed": true,
+      "IsApprovedImport": true,
+      "License": "Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)",
+      "DateLastImported": null,
+      "ID": 1,
+      "Title": "Open Charge Map Contributors"
+    },
+    "OperatorInfo": {
+      "WebsiteURL": "http://www.petrol.eu/road/car/electrical-mobility-petrol",
+      "Comments": "PETROL is a fuel supplier and runs charge points in Slovenia, part of the CENTRAL EUROPEAN GREEN CORRIDORS (CEGC) PROJECT",
+      "PhonePrimaryContact": null,
+      "PhoneSecondaryContact": null,
+      "IsPrivateIndividual": false,
+      "AddressInfo": null,
+      "BookingURL": null,
+      "ContactEmail": null,
+      "FaultReportEmail": null,
+      "IsRestrictedEdit": false,
+      "ID": 13,
+      "Title": "PETROL"
+    },
+    "UsageType": {
+      "IsPayAtLocation": false,
+      "IsMembershipRequired": true,
+      "IsAccessKeyRequired": true,
+      "ID": 4,
+      "Title": "Public - Membership Required"
+    },
+    "StatusType": {
+      "IsOperational": true,
+      "IsUserSelectable": true,
+      "ID": 50,
+      "Title": "Operational"
+    },
+    "SubmissionStatus": { "IsLive": true, "ID": 200, "Title": "Submission Published" }
+  },
+  {
+    "DateLastVerified": "2018-07-06T02:05:00Z",
+    "ID": 7708,
+    "UUID": "AEBF7B99-6633-45C7-AE87-E9589AF41752",
+    "DataProviderID": 15,
+    "DataProvidersReference": "6779",
+    "OperatorID": 26,
+    "AddressInfo": {
+      "ID": 7605,
+      "Title": "3985 Plainfield Ave NE",
+      "AddressLine1": "3985 Plainfield Ave NE",
+      "Town": "Grand Rapids",
+      "StateOrProvince": "MI",
+      "Postcode": "49525",
+      "CountryID": 2,
+      "Country": { "ISOCode": "US", "ContinentCode": "NA", "ID": 2, "Title": "United States" },
+      "Latitude": 43.0363,
+      "Longitude": -85.61863,
+      "ContactTelephone1": " (616) 361-7361",
+      "RelatedURL": "http://carstations.com/6779",
+      "DistanceUnit": 0
+    },
+    "Connections": [
+      {
+        "ID": 5140,
+        "ConnectionTypeID": 1,
+        "ConnectionType": {
+          "FormalName": "SAE J1772-2009",
+          "IsDiscontinued": null,
+          "IsObsolete": null,
+          "ID": 1,
+          "Title": "Type 1 (J1772)"
+        },
+        "Reference": "J1772",
+        "LevelID": 2,
+        "Level": {
+          "Comments": "Over 2 kW, usually non-domestic socket type",
+          "IsFastChargeCapable": false,
+          "ID": 2,
+          "Title": "Level 2 : Medium (Over 2kW)"
+        }
+      }
+    ],
+    "StatusTypeID": 0,
+    "DateLastStatusUpdate": "2018-07-06T02:05:00Z",
+    "DateCreated": "2011-11-11T12:05:00Z",
+    "SubmissionStatusTypeID": 100,
+    "DataProvider": {
+      "WebsiteURL": "http://www.carstations.com",
+      "Comments": null,
+      "DataProviderStatusType": {
+        "IsProviderEnabled": true,
+        "ID": 20,
+        "Title": "Automated Import"
+      },
+      "IsRestrictedEdit": false,
+      "IsOpenDataLicensed": false,
+      "IsApprovedImport": null,
+      "License": null,
+      "DateLastImported": "2017-11-04T14:07:02.687Z",
+      "ID": 15,
+      "Title": "CarStations.com"
+    },
+    "OperatorInfo": {
+      "WebsiteURL": "http://www.avinc.com/",
+      "Comments": null,
+      "PhonePrimaryContact": null,
+      "PhoneSecondaryContact": null,
+      "IsPrivateIndividual": false,
+      "AddressInfo": null,
+      "BookingURL": null,
+      "ContactEmail": null,
+      "FaultReportEmail": null,
+      "IsRestrictedEdit": null,
+      "ID": 26,
+      "Title": "AeroVironment"
+    },
+    "StatusType": { "IsOperational": null, "IsUserSelectable": true, "ID": 0, "Title": "Unknown" },
+    "SubmissionStatus": { "IsLive": true, "ID": 100, "Title": "Imported and Published" }
+  },
+  {
+    "DateLastVerified": "2025-03-28T16:27:00Z",
+    "ID": 311421,
+    "UUID": "819DAAB8-7B37-4360-8527-D1338DD64BC2",
+    "DataProviderID": 1,
+    "OperatorID": 3510,
+    "UsageTypeID": 5,
+    "AddressInfo": {
+      "ID": 311810,
+      "Title": "Circle K Belmont",
+      "AddressLine1": "Sandford Rd",
+      "Town": "Ranelagh",
+      "StateOrProvince": "Dublin 6",
+      "CountryID": 3,
+      "Country": { "ISOCode": "IE", "ContinentCode": "EU", "ID": 3, "Title": "Ireland" },
+      "Latitude": 53.320236257855726,
+      "Longitude": -6.243756712789832,
+      "DistanceUnit": 0
+    },
+    "Connections": [
+      {
+        "ID": 600084,
+        "ConnectionTypeID": 33,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-3 Configuration FF",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 33,
+          "Title": "CCS (Type 2)"
+        },
+        "StatusTypeID": 50,
+        "StatusType": {
+          "IsOperational": true,
+          "IsUserSelectable": true,
+          "ID": 50,
+          "Title": "Operational"
+        },
+        "LevelID": 3,
+        "Level": {
+          "Comments": "40KW and Higher",
+          "IsFastChargeCapable": true,
+          "ID": 3,
+          "Title": "Level 3:  High (Over 40kW)"
+        },
+        "PowerKW": 300,
+        "CurrentTypeID": 30,
+        "CurrentType": { "Description": "Direct Current", "ID": 30, "Title": "DC" },
+        "Quantity": 4
+      },
+      {
+        "ID": 600085,
+        "ConnectionTypeID": 2,
+        "ConnectionType": {
+          "FormalName": "IEC 62196-3 Configuration AA",
+          "IsDiscontinued": null,
+          "IsObsolete": null,
+          "ID": 2,
+          "Title": "CHAdeMO"
+        },
+        "StatusTypeID": 50,
+        "StatusType": {
+          "IsOperational": true,
+          "IsUserSelectable": true,
+          "ID": 50,
+          "Title": "Operational"
+        },
+        "LevelID": 3,
+        "Level": {
+          "Comments": "40KW and Higher",
+          "IsFastChargeCapable": true,
+          "ID": 3,
+          "Title": "Level 3:  High (Over 40kW)"
+        },
+        "PowerKW": 100,
+        "CurrentTypeID": 30,
+        "CurrentType": { "Description": "Direct Current", "ID": 30, "Title": "DC" },
+        "Quantity": 2
+      }
+    ],
+    "NumberOfPoints": 4,
+    "StatusTypeID": 150,
+    "DateLastStatusUpdate": "2025-03-28T16:27:00Z",
+    "DateCreated": "2025-03-28T16:27:00Z",
+    "SubmissionStatusTypeID": 200,
+    "DataProvider": {
+      "WebsiteURL": "http://openchargemap.org",
+      "Comments": null,
+      "DataProviderStatusType": {
+        "IsProviderEnabled": true,
+        "ID": 1,
+        "Title": "Manual Data Entry"
+      },
+      "IsRestrictedEdit": false,
+      "IsOpenDataLicensed": true,
+      "IsApprovedImport": true,
+      "License": "Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)",
+      "DateLastImported": null,
+      "ID": 1,
+      "Title": "Open Charge Map Contributors"
+    },
+    "OperatorInfo": {
+      "WebsiteURL": "https://www.circlek.com/",
+      "Comments": null,
+      "PhonePrimaryContact": null,
+      "PhoneSecondaryContact": null,
+      "IsPrivateIndividual": false,
+      "AddressInfo": null,
+      "BookingURL": null,
+      "ContactEmail": null,
+      "FaultReportEmail": null,
+      "IsRestrictedEdit": false,
+      "ID": 3510,
+      "Title": "Circle K"
+    },
+    "UsageType": {
+      "IsPayAtLocation": true,
+      "IsMembershipRequired": false,
+      "IsAccessKeyRequired": false,
+      "ID": 5,
+      "Title": "Public - Pay At Location"
+    },
+    "StatusType": {
+      "IsOperational": false,
+      "IsUserSelectable": true,
+      "ID": 150,
+      "Title": "Planned For Future Date"
+    },
+    "SubmissionStatus": { "IsLive": true, "ID": 200, "Title": "Submission Published" }
+  },
+  {
+    "DateLastVerified": "2023-12-09T18:40:00Z",
+    "ID": 8538,
+    "UUID": "11B10A78-B643-4BE7-87EB-E134D4891F48",
+    "DataProviderID": 1,
+    "OperatorID": 23,
+    "OperatorsReference": "29020",
+    "UsageTypeID": 1,
+    "UsageCost": "$0.26/kWh; other tariffs for older cars",
+    "AddressInfo": {
+      "ID": 8435,
+      "Title": "Fountain Valley, CA",
+      "AddressLine1": "17940 Newhope Street",
+      "Town": "Fountain Valley",
+      "StateOrProvince": "CA",
+      "Postcode": "92708-5422",
+      "CountryID": 2,
+      "Country": { "ISOCode": "US", "ContinentCode": "NA", "ID": 2, "Title": "United States" },
+      "Latitude": 33.7027066882307,
+      "Longitude": -117.934198379517,
+      "ContactTelephone2": "(877) 798-3752",
+      "AccessComments": "Located at PetSmart/Souplantation",
+      "DistanceUnit": 0
+    },
+    "Connections": [
+      {
+        "ID": 5962,
+        "ConnectionTypeID": 27,
+        "ConnectionType": {
+          "FormalName": "SAE J3400",
+          "IsDiscontinued": false,
+          "IsObsolete": false,
+          "ID": 27,
+          "Title": "NACS / Tesla Supercharger"
+        },
+        "StatusTypeID": 50,
+        "StatusType": {
+          "IsOperational": true,
+          "IsUserSelectable": true,
+          "ID": 50,
+          "Title": "Operational"
+        },
+        "LevelID": 3,
+        "Level": {
+          "Comments": "40KW and Higher",
+          "IsFastChargeCapable": true,
+          "ID": 3,
+          "Title": "Level 3:  High (Over 40kW)"
+        },
+        "PowerKW": 150,
+        "CurrentTypeID": 30,
+        "CurrentType": { "Description": "Direct Current", "ID": 30, "Title": "DC" },
+        "Quantity": 16
+      }
+    ],
+    "NumberOfPoints": 16,
+    "GeneralComments": "16 Superchargers, available 24/7, up to 150kW",
+    "StatusTypeID": 50,
+    "DateLastStatusUpdate": "2023-12-09T18:40:00Z",
+    "DateCreated": "2011-11-11T12:06:00Z",
+    "SubmissionStatusTypeID": 200,
+    "DataProvider": {
+      "WebsiteURL": "http://openchargemap.org",
+      "Comments": null,
+      "DataProviderStatusType": {
+        "IsProviderEnabled": true,
+        "ID": 1,
+        "Title": "Manual Data Entry"
+      },
+      "IsRestrictedEdit": false,
+      "IsOpenDataLicensed": true,
+      "IsApprovedImport": true,
+      "License": "Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0)",
+      "DateLastImported": null,
+      "ID": 1,
+      "Title": "Open Charge Map Contributors"
+    },
+    "OperatorInfo": {
+      "WebsiteURL": "http://www.teslamotors.com",
+      "Comments": null,
+      "PhonePrimaryContact": null,
+      "PhoneSecondaryContact": null,
+      "IsPrivateIndividual": false,
+      "AddressInfo": null,
+      "BookingURL": null,
+      "ContactEmail": null,
+      "FaultReportEmail": null,
+      "IsRestrictedEdit": false,
+      "ID": 23,
+      "Title": "Tesla (Tesla-only charging)"
+    },
+    "UsageType": {
+      "IsPayAtLocation": null,
+      "IsMembershipRequired": null,
+      "IsAccessKeyRequired": null,
+      "ID": 1,
+      "Title": "Public"
+    },
+    "StatusType": {
+      "IsOperational": true,
+      "IsUserSelectable": true,
+      "ID": 50,
+      "Title": "Operational"
+    },
+    "SubmissionStatus": { "IsLive": true, "ID": 200, "Title": "Submission Published" }
+  }
+]

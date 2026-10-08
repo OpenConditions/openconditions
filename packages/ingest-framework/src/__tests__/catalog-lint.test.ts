@@ -372,6 +372,75 @@ describe("lintCatalog", () => {
     ]);
   });
 
+  test("fetch options an endpoint would silently ignore are errors", () => {
+    const streamed = defineIngestDomain({
+      id: "roads",
+      products: ["events"],
+      feedShape: feedBaseShape,
+      formats: {
+        datex2: {
+          id: "datex2",
+          kind: "situations",
+          products: ["events"],
+          endpoints: { main: { required: true }, sites: { required: false, decoders: ["d"] } },
+          parse: () => emptyParseOutput(),
+          stream: { read: async () => ({ output: emptyParseOutput(), payload: {} as never }) },
+        },
+      },
+      resolvers: [],
+    });
+    const feed = def({
+      endpoints: {
+        main: {
+          url: "https://example.test/x",
+          cadenceSec: 60,
+          pagination: { skipParam: "offset", pageSize: 10 },
+        },
+        sites: {
+          url: "https://example.test/sites",
+          cadenceSec: 3600,
+          decoder: "d",
+          follow: { path: "u" },
+        },
+      },
+    });
+    expect(messages([file([feed])], NO_SHARED, [streamed])).toEqual([
+      "endpoint main is streamed, which ignores pagination",
+      "endpoint sites is reference data, which ignores follow",
+    ]);
+    const capturing = def({
+      endpoints: {
+        main: { url: "https://example.test/x", cadenceSec: 60, follow: { pattern: "href=\\S+" } },
+      },
+    });
+    expect(messages([file([capturing])])).toEqual([
+      "endpoint main follow.pattern has no capture group for the URL",
+    ]);
+  });
+
+  test("a catalogue parent's endpoints cannot follow or impersonate", () => {
+    const registry = testDomainWith([
+      { id: "registry", snapshotPath: "/unused", snapshot: [], resolve: async () => [] },
+    ]);
+    const parent = def({
+      operator: "reg",
+      product: "flow",
+      catalog: { resolver: "registry" },
+      endpoints: {
+        main: {
+          url: "https://example.test/x",
+          cadenceSec: 60,
+          follow: { path: "u" },
+          impersonate: true,
+        },
+      },
+    });
+    expect(messages([file([parent])], NO_SHARED, [registry])).toEqual([
+      "catalogue feed endpoint main cannot use follow",
+      "catalogue feed endpoint main cannot use impersonate",
+    ]);
+  });
+
   test("licences must be known, and NOASSERTION needs terms", () => {
     expect(messages([file([def({ license: "cc-by-4.0" })])])).toEqual([
       expect.stringMatching(/unknown licence cc-by-4\.0/),

@@ -123,6 +123,55 @@ function requestTexts(endpoint: FeedDefinition["endpoints"][string]): string[] {
   ].filter((text): text is string => text !== undefined);
 }
 
+/**
+ * A catalogue parent's children are fetched by the fan-out, which neither
+ * follows nor impersonates.
+ */
+function catalogEndpointIssues(feed: FeedDefinition): string[] {
+  if (!feed.catalog) return [];
+  return Object.entries(feed.endpoints).flatMap(([role, endpoint]) =>
+    (["follow", "impersonate"] as const)
+      .filter((field) => endpoint[field])
+      .map((field) => `catalogue feed endpoint ${role} cannot use ${field}`),
+  );
+}
+
+/**
+ * Fetch options an endpoint would ignore without a word: reference data and a
+ * streamed body are fetched plainly, so `follow`, `pagination` and
+ * `impersonate` do nothing there; a `follow.pattern` without a capture group
+ * never yields a URL.
+ */
+function ignoredOptionIssues(feed: FeedDefinition, domain: IngestDomain): string[] {
+  const format = Object.hasOwn(domain.formats, feed.format)
+    ? domain.formats[feed.format]
+    : undefined;
+  return Object.entries(feed.endpoints).flatMap(([role, endpoint]) => {
+    const plain =
+      endpoint.decoder !== undefined || endpoint.reference !== undefined
+        ? "is reference data"
+        : format?.stream !== undefined && role === "main"
+          ? "is streamed"
+          : undefined;
+    const ignored =
+      plain === undefined
+        ? []
+        : (["follow", "impersonate", "pagination"] as const)
+            .filter((field) => endpoint[field] !== undefined && endpoint[field] !== false)
+            .map((field) => `endpoint ${role} ${plain}, which ignores ${field}`);
+    const pattern = endpoint.follow?.pattern;
+    // An empty alternative always matches, so the match lists every group.
+    const captures =
+      pattern === undefined ? 1 : (new RegExp(`${pattern}|`).exec("")?.length ?? 1) - 1;
+    return [
+      ...ignored,
+      ...(captures === 0
+        ? [`endpoint ${role} follow.pattern has no capture group for the URL`]
+        : []),
+    ];
+  });
+}
+
 function onDemandIssues(feed: FeedDefinition, domain: IngestDomain): string[] {
   const out: string[] = [];
   const onDemand = feed.accessMode === "on_demand";
@@ -327,6 +376,8 @@ export function lintCatalog(
       const messages = [
         ...formatIssues(feed, domain),
         ...onDemandIssues(feed, domain),
+        ...catalogEndpointIssues(feed),
+        ...ignoredOptionIssues(feed, domain),
         ...credentialIssues(feed, credentials),
         ...rightsIssues(feed),
         ...urlIssues(feed),

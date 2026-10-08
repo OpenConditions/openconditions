@@ -1,0 +1,88 @@
+{
+  "value": [
+    {
+      "address": "123 Road A Singapore 123456",
+      "name": "123 Road A",
+      "longtitude": 103.123456,
+      "latitude": 1.123456,
+      "locationId": "123456123456",
+      "status": "",
+      "chargingPoints": [
+        {
+          "status": "1",
+          "operationHours": "",
+          "operator": "EVCO A",
+          "position": "L1 Lot 123",
+          "name": "123 Road A",
+          "id": "R123456A",
+          "plugTypes": [
+            {
+              "plugType": "Type 2",
+              "powerRating": "AC",
+              "chargingSpeed": 7.4,
+              "price": 0.7,
+              "priceType": "kWh"
+            }
+          ],
+          "evIds": [{ "id": "R123456A-001", "evCpId": "R123456A-001", "status": "1" }]
+        }
+      ]
+    },
+    {
+      "address": "45 Example Avenue Singapore 654321",
+      "name": "45 Example Avenue",
+      "longtitude": 103.654321,
+      "latitude": 1.354321,
+      "locationId": "654321654321",
+      "status": "",
+      "chargingPoints": [
+        {
+          "status": "1",
+          "operationHours": "24 hours",
+          "operator": "EVCO B",
+          "position": "B1 Lot 7",
+          "name": "45 Example Avenue",
+          "id": "R654321B",
+          "plugTypes": [
+            {
+              "plugType": "CCS2",
+              "powerRating": "DC",
+              "chargingSpeed": 50,
+              "price": 0.65,
+              "priceType": "$/kWh"
+            },
+            {
+              "plugType": "Type 2",
+              "powerRating": "AC",
+              "chargingSpeed": 22,
+              "price": 3,
+              "priceType": "$/h"
+            }
+          ],
+          "evIds": [
+            { "id": "R654321B-001", "evCpId": "R654321B-001", "status": "0" },
+            { "id": "R654321B-002", "evCpId": "R654321B-002", "status": "1" }
+          ]
+        },
+        {
+          "status": "100",
+          "operationHours": "24 hours",
+          "operator": "EVCO B",
+          "position": "B1 Lot 8",
+          "name": "45 Example Avenue",
+          "id": "R654321C",
+          "plugTypes": [
+            {
+              "plugType": "Type 2",
+              "powerRating": "AC",
+              "chargingSpeed": 22,
+              "price": 3,
+              "priceType": "$/h"
+            }
+          ],
+          "evIds": [{ "id": "R654321C-001", "evCpId": "R654321C-001", "status": "100" }]
+        }
+      ]
+    }
+  ]
+}

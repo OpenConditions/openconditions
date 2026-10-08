@@ -1,0 +1,74 @@
+{
+  "EVSEStatuses": [
+    {
+      "EVSEStatusRecord": [
+        {
+          "EvseID": "CH*CCI*E22078",
+          "EVSEStatus": "Unknown"
+        },
+        {
+          "EvseID": "CH*CCI*E22076",
+          "EVSEStatus": "Unknown"
+        },
+        {
+          "EvseID": "CH*CCI*E22079",
+          "EVSEStatus": "Unknown"
+        },
+        {
+          "EvseID": "CH*CCI*E22077",
+          "EVSEStatus": "Unknown"
+        },
+        {
+          "EvseID": "CH*CCI*E22075",
+          "EVSEStatus": "Unknown"
+        },
+        {
+          "EvseID": "CH*CCI*E22896",
+          "EVSEStatus": "Available"
+        },
+        {
+          "EvseID": "CH*CCI*E22459",
+          "EVSEStatus": "OutOfService"
+        },
+        {
+          "EvseID": "CH*CCI*E20277",
+          "EVSEStatus": "Occupied"
+        }
+      ],
+      "OperatorID": "CH*CCC",
+      "OperatorName": "Move"
+    },
+    {
+      "EVSEStatusRecord": [
+        {
+          "EvseID": "CHFASE410051",
+          "EVSEStatus": "EvseNotFound"
+        }
+      ],
+      "OperatorID": "CH*FASTNED",
+      "OperatorName": "Fastned"
+    },
+    {
+      "EVSEStatusRecord": [
+        {
+          "EvseID": "CH*MIG*E*247297",
+          "EVSEStatus": "Available"
+        },
+        {
+          "EvseID": "CH*MIG*E*247296",
+          "EVSEStatus": "Available"
+        },
+        {
+          "EvseID": "CH*MIG*E*247298",
+          "EVSEStatus": "Available"
+        },
+        {
+          "EvseID": "CH*MIG*E*247299",
+          "EVSEStatus": "Available"
+        }
+      ],
+      "OperatorID": "CH*MIG",
+      "OperatorName": "M-Charge"
+    }
+  ]
+}

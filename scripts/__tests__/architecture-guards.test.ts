@@ -97,6 +97,9 @@ describe("AST architecture boundaries", () => {
     expect(await violations('import { parkingDomain } from "@openconditions/parking";', fit)).toBe(
       0,
     );
+    expect(
+      await violations('import { chargingDomain } from "@openconditions/charging";', fit),
+    ).toBe(0);
     expect(await violations(source, "packages/model-registry/src/index.ts")).toBe(1);
     for (const other of ["core", "ingest-framework", "storage"]) {
       expect(await violations(`import { x } from "@openconditions/${other}";`, fit)).toBe(1);
@@ -107,9 +110,11 @@ describe("AST architecture boundaries", () => {
     "packages/core/src/db/schema.ts",
     "packages/ingest-framework/src/reproject.ts",
     "packages/datex2/src/parking.ts",
+    "packages/ocpi/src/decode.ts",
     "packages/roads/src/__tests__/restriction-effects.test.ts",
     "packages/fuel/src/domain.ts",
     "packages/parking/src/domain.ts",
+    "packages/charging/src/domain.ts",
   ])("keeps the assembled registry out of storage and domain packages: %s", async (path) => {
     expect(
       await violations(
@@ -220,9 +225,11 @@ describe("workspace dependency declarations", () => {
           }
           if (
             (manifest.name === "@openconditions/core" ||
+              manifest.name === "@openconditions/ocpi" ||
               manifest.name === "@openconditions/roads" ||
               manifest.name === "@openconditions/fuel" ||
-              manifest.name === "@openconditions/parking") &&
+              manifest.name === "@openconditions/parking" ||
+              manifest.name === "@openconditions/charging") &&
             dependency === "@openconditions/model-registry"
           ) {
             offenders.push(`${manifest.name} -> ${dependency}`);

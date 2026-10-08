@@ -4,6 +4,7 @@ import { describe, expect, test } from "vitest";
 import {
   availableDraft,
   occupancyDrafts,
+  occupancyPctDraft,
   occupiedDraft,
   type ParkingFeed,
   rateDraft,
@@ -282,17 +283,23 @@ describe("readings", () => {
     ).toEqual([["parking.available", 0]]);
   });
 
-  test("a reading is valid for max(30 min, two status cadences)", () => {
+  test("a share is valid for max(30 min, two status cadences); a change-only reading states none", () => {
     expect(
-      statusDraft(baselFeed(), { stationId: "1", at: "2026-10-05T10:00:00Z", status: "open" }, {
+      occupancyPctDraft(baselFeed(), { stationId: "1", at: "2026-10-05T10:00:00Z", pct: 40 }, {
         cadenceSec: 3600,
       } as never)!.validUntil,
     ).toBe("2026-10-05T12:00:00.000Z");
+    // A count or a status is written when it changes and holds while the feed polls.
+    expect(
+      statusDraft(baselFeed(), { stationId: "1", at: "2026-10-05T10:00:00Z", status: "open" }, {
+        cadenceSec: 3600,
+      } as never),
+    ).not.toHaveProperty("validUntil");
     expect(
       availableDraft(baselFeed(), { stationId: "1", at: "2026-10-05T10:00:00Z", count: 4 }, {
         cadenceSec: 300,
-      } as never)!.validUntil,
-    ).toBe("2026-10-05T10:30:00.000Z");
+      } as never),
+    ).not.toHaveProperty("validUntil");
   });
 
   test("status and trend are category readings in their vocabularies", () => {

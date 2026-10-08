@@ -1,0 +1,27 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "cynap",
+      "product": "charging",
+      "name": "CYNAP public EV chargers (EMS)",
+      "tier": "authoritative",
+      "format": "cynap",
+      // The national access point's charging-point table, generated on
+      // request: an XML in DATEX II namespaces but not the DATEX energy
+      // structure. Its point status is an operational state, not occupancy.
+      "endpoints": {
+        "main": {
+          "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/electric_vehicle_chargers/",
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Department of Electrical and Mechanical Services (EMS), Cyprus",
+      "homepage": "https://www.traffic4cyprus.org.cy",
+      "privacyUrl": "https://www.traffic4cyprus.org.cy/pages/privacy-policy",
+    },
+  ],
+}

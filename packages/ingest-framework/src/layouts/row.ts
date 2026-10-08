@@ -1,4 +1,4 @@
-import { isPlausibleWgs84 } from "../reproject.js";
+import { isPlausibleWgs84, reprojectorFor } from "../reproject.js";
 import type { LayoutBlock } from "./block.js";
 
 /** One decoded record: where it sits (when placeable) and its raw fields. */
@@ -85,11 +85,32 @@ function pointFromColumns(fields: unknown, block: LayoutBlock): [number, number]
   );
 }
 
+const WKT_POINT = /^\s*POINT\s*\(\s*(\S+)\s+(\S+)\s*\)\s*$/i;
+
 /**
- * The point a record's own fields name: the `point` field, else `lon`/`lat`.
- * Geometry is the caller's last resort, since only the geojson and json
- * layouts carry any.
+ * A point from the block's `wkt` field, `POINT (x y)`, reprojected from the
+ * block's `crs` when it names one; any other geometry is no point.
+ */
+function pointFromWkt(fields: unknown, block: LayoutBlock): [number, number] | undefined {
+  if (!block.wkt) return undefined;
+  const raw = getPath(fields, block.wkt);
+  const m = typeof raw === "string" ? raw.match(WKT_POINT) : null;
+  if (!m) return undefined;
+  const x = toNumber(m[1]);
+  const y = toNumber(m[2]);
+  if (x === undefined || y === undefined) return undefined;
+  const reproject = reprojectorFor(block.crs);
+  const [lon, lat] = reproject ? reproject([x, y]) : [x, y];
+  return placeable(lon, lat);
+}
+
+/**
+ * The point a record's own fields name: the `point` field, else the `wkt`
+ * field, else `lon`/`lat`. Geometry is the caller's last resort, since only
+ * the geojson and json layouts carry any.
  */
 export function pointFromFields(fields: unknown, block: LayoutBlock): [number, number] | undefined {
-  return pointFromField(fields, block) ?? pointFromColumns(fields, block);
+  return (
+    pointFromField(fields, block) ?? pointFromWkt(fields, block) ?? pointFromColumns(fields, block)
+  );
 }

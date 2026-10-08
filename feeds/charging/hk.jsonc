@@ -1,0 +1,63 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "epd",
+      "product": "charging",
+      "name": "Environmental Protection Department public EV chargers",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The CSDI copy of the dataset, updated weekly: counts of chargers by
+      // power tier and standard per car park, without status or prices. The
+      // tiers are ranges (Medium <20 kW, Quick <100 kW, Fast >=100 kW), not
+      // ratings, so no power is set. A car park's English name is its id.
+      "endpoints": {
+        "main": {
+          "url": "https://portal.csdi.gov.hk/csdi-webpage/file-api?dataset_id=epd_rcd_1631080339740_69941&format=geojson&layer_name=geotagging",
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-HK-CSDI-ToU",
+      "licenseUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+      "attribution": "Environmental Protection Department, HKSAR Government; source: CSDI Portal (portal.csdi.gov.hk)",
+      "homepage": "https://portal.csdi.gov.hk/geoportal/?datasetId=epd_rcd_1631080339740_69941",
+      "privacyUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+      "layout": {},
+      "charging": {
+        "id": "LOCATION_EN",
+        "name": ["LOCATION_EN"],
+        "lang": "en",
+        "address": { "text": "ADDRESS_EN" },
+        "connectors": {
+          "columns": [
+            {
+              "count": "STANDARD_BS1363_no",
+              "standard": "DOMESTIC_G",
+              "current": "ac",
+              "format": "socket",
+            },
+            {
+              "count": "MEDIUM_CCS_DC_COMBO_no",
+              "standard": "IEC_62196_T2_COMBO",
+              "current": "dc",
+            },
+            { "count": "MEDIUM_IEC62196_no", "standard": "IEC_62196_T2", "current": "ac" },
+            { "count": "MEDIUM_SAEJ1772_no", "standard": "IEC_62196_T1", "current": "ac" },
+            { "count": "MEDIUM_GB_T20234_2_AC__no", "standard": "GBT_AC", "current": "ac" },
+            { "count": "MEDIUM_OTHERS_no", "standard": "UNKNOWN" },
+            { "count": "QUICK_CHAdeMO_no", "standard": "CHADEMO", "current": "dc" },
+            { "count": "QUICK_CCS_DC_COMBO_no", "standard": "IEC_62196_T2_COMBO", "current": "dc" },
+            { "count": "QUICK_IEC62196_no", "standard": "IEC_62196_T2", "current": "ac" },
+            { "count": "QUICK_GB_T20234_3_DC__no", "standard": "GBT_DC", "current": "dc" },
+            { "count": "QUICK_OTHERS_no", "standard": "UNKNOWN" },
+            { "count": "FAST_CHAdeMO_no", "standard": "CHADEMO", "current": "dc" },
+            { "count": "FAST_CCS_DC_COMBO_no", "standard": "IEC_62196_T2_COMBO", "current": "dc" },
+            { "count": "FAST_GB_T20234_3_DC__no", "standard": "GBT_DC", "current": "dc" },
+            { "count": "FAST_OTHERS_no", "standard": "UNKNOWN" },
+          ],
+        },
+      },
+    },
+  ],
+}

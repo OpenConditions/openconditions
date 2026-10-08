@@ -59,6 +59,80 @@ const addressOf = (f: LinkableFeature): string | undefined => {
   return parts.length > 0 ? parts.join(" ") : a.text;
 };
 
+/** A number, a letter after it, a range (`6`, `2F`, `49-51`) at the end of a street. */
+const TRAILING_HOUSE_NUMBER = /\s(\d+\s*[a-z]?(?:\s*[-–/]\s*\d+\s*[a-z]?)?)$/i;
+
+/** A road named by a short letter code and a number (`B 3`, `N7`), which is no house number. */
+const ROAD_NUMBER = /^[a-z]{1,3}\s*\d+$/i;
+
+/** The street and house number linking compares. */
+export interface HouseAddress {
+  street?: string;
+  houseNumber?: string;
+}
+
+const spaced = (text: string) => text.trim().replace(/\s+/g, " ").toLowerCase();
+
+/**
+ * The house number an address gives, by its own field or at the end of its
+ * street. A street's trailing number is part of its name when the street is
+ * a road number (`B 3`), or when the other address's street starts with the
+ * whole street (`Straße 101` against `Straße 101 5`).
+ */
+function houseNumberOf(a: HouseAddress, other: HouseAddress): string | undefined {
+  let written = a.houseNumber;
+  const street = a.street?.trim();
+  if (written === undefined && street !== undefined && !ROAD_NUMBER.test(street)) {
+    const otherStreet = other.street === undefined ? "" : spaced(other.street);
+    const named = otherStreet === spaced(street) || otherStreet.startsWith(`${spaced(street)} `);
+    if (!named) written = street.match(TRAILING_HOUSE_NUMBER)?.[1];
+  }
+  const number = written?.replace(/\s+/g, "").toLowerCase();
+  return number === undefined || number === "" ? undefined : number;
+}
+
+/** `49-51` as 49 to 51, `2F` as 2 with its letter; undefined for anything else. */
+function houseSpan(number: string): { from: number; to: number; letter: string } | undefined {
+  const m = number.match(/^(\d+)([a-z]?)(?:[-–/](\d+)[a-z]?)?$/);
+  if (m === null) return undefined;
+  const from = Number(m[1]);
+  const to = m[3] === undefined ? from : Number(m[3]);
+  return {
+    from: Math.min(from, to),
+    to: Math.max(from, to),
+    letter: m[3] === undefined ? (m[2] ?? "") : "",
+  };
+}
+
+/**
+ * Whether two addresses name different houses: both give a house number and
+ * the numbers cannot be one house. A letter one side leaves off (`2F`, `2`)
+ * and a number within the other's range (`49`, `49-51`) are one house; two
+ * letters (`2a`, `2b`) are two.
+ */
+export function houseNumbersDiffer(a: HouseAddress, b: HouseAddress): boolean {
+  const na = houseNumberOf(a, b);
+  const nb = houseNumberOf(b, a);
+  if (na === undefined || nb === undefined || na === nb) return false;
+  const sa = houseSpan(na);
+  const sb = houseSpan(nb);
+  if (sa === undefined || sb === undefined) return true;
+  if (sa.to < sb.from || sb.to < sa.from) return true;
+  return sa.from === sa.to && sb.from === sb.to && sa.letter !== "" && sb.letter !== ""
+    ? sa.letter !== sb.letter
+    : false;
+}
+
+/**
+ * How far two addresses agree. Two different house numbers are two
+ * addresses, however much of the rest they share: the street, postcode and
+ * city of neighbours are the same words.
+ */
+function addressSimilarity(a: LinkableFeature, b: LinkableFeature): number {
+  if (houseNumbersDiffer(a.location.address ?? {}, b.location.address ?? {})) return 0;
+  return tokenSimilarity(addressOf(a), addressOf(b));
+}
+
 /**
  * A position to measure from: the point itself, else the mean of the
  * geometry's vertices. The mean is not the area centroid, but linking only
@@ -178,7 +252,7 @@ export function proposeLink(
   const scores = {
     name: tokenSimilarity(textOf(a.name), textOf(b.name), stopwords),
     operator: tokenSimilarity(textOf(a.operator?.name), textOf(b.operator?.name)),
-    address: tokenSimilarity(addressOf(a), addressOf(b)),
+    address: addressSimilarity(a, b),
   };
   const metres = `${distance.toFixed(1)} m`;
   const agreeing = (thresholds: LinkingRules["attribute"]) =>
@@ -189,7 +263,12 @@ export function proposeLink(
   if (distance <= rules.alwaysMetres) {
     return link("spatial_attribute", NEAR_CONFIDENCE, "accepted", [metres]);
   }
-  const accepted = agreeing(rules.attribute);
+  // An attribute that may decide only nearby says nothing further out.
+  const within = rules.attributeWithinMetres ?? {};
+  const accepted = agreeing(rules.attribute).filter((reason) => {
+    const limit = within[reason.split(" ")[0] as keyof typeof scores];
+    return limit === undefined || distance <= limit;
+  });
   if (accepted.length > 0) {
     return link("spatial_attribute", ATTRIBUTE_CONFIDENCE, "accepted", [metres, ...accepted]);
   }

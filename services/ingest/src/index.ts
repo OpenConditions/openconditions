@@ -83,6 +83,7 @@ async function boot() {
   const stopRecordJobs = startRecordJobs(sql, {
     registry: model,
     instanceId: resolveInstanceId(),
+    feeds: catalog.feeds,
   });
   const stopMemTelemetry = startMemTelemetry();
   // The fusions a catalogue change (or an unfinished refresh) left outdated,

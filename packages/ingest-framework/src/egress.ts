@@ -188,8 +188,25 @@ function redact(url: string): string {
   }
 }
 
+/** The request headers a redirect to another host keeps: none can carry a credential. */
+export const CROSS_HOST_HEADERS: ReadonlySet<string> = new Set([
+  "accept",
+  "accept-language",
+  "content-type",
+  "user-agent",
+]);
+
+/** The headers that describe a request body, dropped with it when a redirect turns the request into a GET. */
+export const BODY_HEADERS: ReadonlySet<string> = new Set([
+  "content-encoding",
+  "content-language",
+  "content-length",
+  "content-location",
+  "content-type",
+]);
+
 /** Wait for an operation without letting an unresponsive DNS resolver or body outlive the deadline. */
-function withinDeadline<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
+export function withinDeadline<T>(operation: Promise<T>, signal: AbortSignal): Promise<T> {
   signal.throwIfAborted();
   return new Promise<T>((resolve, reject) => {
     const aborted = () => reject(signal.reason);
@@ -384,17 +401,33 @@ export function guardedFetch(
           // Re-validate the hop before the next iteration checks DNS. The allowlist
           // is passed too, so a redirect to a NON-allowed private host is still rejected.
           assertPublicUrl(next, opts.allowedHosts);
-          // A 303 downgrades to GET and drops the body; 307/308 preserve method + body.
-          if (res.status === 303) currentInit = { ...currentInit, method: "GET", body: undefined };
-          // Mirror browser redirect behavior: a cross-origin hop must not replay
-          // credentials the outer caller (e.g. makeAuthorizedFetch) injected for the
-          // ORIGINAL host onto a DIFFERENT host.
+          // As fetch does: a 303 becomes a GET without the body, and so does a
+          // 301 or 302 after a POST; 307/308 preserve method + body.
+          const method = (currentInit.method ?? "GET").toUpperCase();
+          if (
+            res.status === 303 ||
+            ((res.status === 301 || res.status === 302) && method === "POST")
+          ) {
+            const kept = [...new Headers(currentInit.headers)].filter(
+              ([k]) => !BODY_HEADERS.has(k),
+            );
+            currentInit = { ...currentInit, method: "GET", body: undefined, headers: kept };
+          }
+          // A cross-origin hop must not replay credentials the outer caller
+          // (e.g. makeAuthorizedFetch) injected for the ORIGINAL host onto a
+          // DIFFERENT host. A key travels in any header a publisher names
+          // (`X-Api-Key`, `AccountKey`), so only content-neutral ones go on.
           if (new URL(next).host !== new URL(currentUrl).host) {
-            const h = new Headers(currentInit.headers);
-            h.delete("authorization");
-            h.delete("cookie");
-            h.delete("proxy-authorization");
-            currentInit = { ...currentInit, headers: h };
+            // A body may be a credential itself (an OAuth client secret).
+            if (currentInit.body !== undefined && currentInit.body !== null) {
+              throw new Error(
+                `redirect ${res.status} would send the request body to another host: ${redact(next)}`,
+              );
+            }
+            const kept = [...new Headers(currentInit.headers)].filter(([k]) =>
+              CROSS_HOST_HEADERS.has(k),
+            );
+            currentInit = { ...currentInit, headers: new Headers(kept) };
           }
           currentUrl = next;
           continue;

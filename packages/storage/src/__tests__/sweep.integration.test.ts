@@ -128,6 +128,29 @@ describe("sweepRecords", () => {
     });
   });
 
+  it("keeps the records of a source whose poll is still running, however long it runs", async () => {
+    await sql`TRUNCATE conditions.source_poll_attempt`;
+    await polled("nl-ndw-events", "2026-10-01T09:00:00Z");
+    await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [situationDraft("publishing")] },
+      { ...write, complete: true },
+    );
+    // A first publish that has been writing since 10:30.
+    const [attempt] = await sql<{ id: string }[]>`
+      INSERT INTO conditions.source_poll_attempt (source, attempted_at, outcome, network_validated)
+      VALUES ('nl-ndw-events', '2026-10-01T10:30:00Z', 'running', false) RETURNING id`;
+    expect(await sweep(LATER)).toMatchObject({ orphaned: 0 });
+    expect(await state("oc:situation:nl-ndw-events:publishing")).toMatchObject({
+      tombstone_reason: null,
+    });
+    // The poll ended without success: the source has stopped, and its records go.
+    await sql`UPDATE conditions.source_poll_attempt SET outcome = 'failed', finished_at = now()
+      WHERE id = ${attempt!.id}`;
+    expect(await sweep(LATER)).toMatchObject({ orphaned: 1 });
+  });
+
   it("deletes on-demand rows at expiry, records and series alike", async () => {
     const onDemand = (draft: Record<string, unknown>) => ({
       ...draft,

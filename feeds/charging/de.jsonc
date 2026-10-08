@@ -1,0 +1,88 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "bnetza",
+      "product": "charging",
+      "name": "Bundesnetzagentur Ladesäulenregister",
+      "tier": "authoritative",
+      "format": "bnetza",
+      // The register, updated about monthly, under a date-stamped file name
+      // that the download page links; the CSV lags the XLSX by a month. Static:
+      // no live status and no prices.
+      "endpoints": {
+        "main": {
+          "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html",
+          "follow": {
+            "pattern": "href=\"(https://data\\.bundesnetzagentur\\.de/[^\"]*/Ladesaeulenregister[^\"]*\\.csv)\"",
+          },
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Bundesnetzagentur.de, CC BY 4.0",
+      "homepage": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
+      "privacyUrl": "https://www.bundesnetzagentur.de/DE/Service/Datenschutz/start.html",
+    },
+    {
+      "subdivision": "bw",
+      "operator": "mobidata",
+      "product": "charging",
+      "name": "MobiData BW charge-point database",
+      "tier": "aggregator",
+      "format": "ocpi",
+      // OCPDB bundles the Bundesnetzagentur's web service, the Mobilithek
+      // DATEX II feeds and a few operators, nationwide. The Swiss federal
+      // source is excluded: its terms are BFE's (`ch-bfe-charging`). The
+      // EVSE list pages by at most 1,000 and holds about 270,000 EVSEs, most
+      // of them register entries (`STATIC`) without a live state, so the
+      // status role asks for the live states only. Tariffs and their
+      // associations also page by at most 1,000.
+      "endpoints": {
+        "main": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/locations?exclude_source_uid=opendata_swiss&limit=5000",
+          "pagination": { "skipParam": "offset", "pageSize": 5000, "recordsPath": "items" },
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 1000,
+            "recordsPath": "items",
+            "maxPages": 300,
+          },
+          "cadenceSec": 300,
+        },
+        "tariffs": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
+          "pagination": { "skipParam": "offset", "pageSize": 1000, "recordsPath": "items" },
+          "cadenceSec": 86400,
+        },
+        "associations": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/3.0/tariff-associations?limit=1000",
+          "pagination": { "skipParam": "offset", "pageSize": 1000, "recordsPath": "items" },
+          "cadenceSec": 86400,
+        },
+        "sources": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/v1/sources?limit=100",
+          "cadenceSec": 86400,
+        },
+      },
+      "coverage": { "countries": ["DE"] },
+      "freshnessWindowSec": 3600,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+      "terms": {
+        "url": "https://mobidata-bw.de/dataset/e-ladesaulen",
+        "reviewedAt": "2026-10-06",
+        "note": "DL-DE-BY-2.0 for the bundle; per-source licences in /api/public/v1/sources (BNetzA and EnBW CC BY 4.0 with contributor, Mobilithek DATEX feeds CC0). The opendata_swiss source is excluded: SFOE data needs permission for commercial use.",
+      },
+      "homepage": "https://mobidata-bw.de/dataset/e-ladesaulen",
+      "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+    },
+  ],
+}

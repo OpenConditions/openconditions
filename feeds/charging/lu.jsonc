@@ -1,0 +1,27 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "chargy",
+      "product": "charging",
+      "name": "Chargy public charging network",
+      "tier": "authoritative",
+      "format": "chargy",
+      // The state network's KML, generated on request with each device's
+      // connector states. The data.public.lu link redirects to Chargy's own
+      // URL, whose key Chargy publishes there; the catalogue keeps the link.
+      "endpoints": {
+        "main": {
+          "url": "https://data.public.lu/fr/datasets/r/22f9d77a-5138-4b02-b315-15f306b77034",
+          "cadenceSec": 600,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Chargy / data.public.lu",
+      "homepage": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
+      "privacyUrl": "https://data.public.lu/en/pages/legal/privacy",
+    },
+  ],
+}

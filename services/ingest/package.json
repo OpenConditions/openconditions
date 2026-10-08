@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@fastify/proxy-addr": "^5.1.0",
+    "@openconditions/charging": "workspace:*",
     "@openconditions/core": "workspace:*",
     "@openconditions/datex2": "workspace:*",
     "@openconditions/fuel": "workspace:*",
@@ -30,6 +31,7 @@
     "croner": "^10.0.1",
     "fastify": "^5.12.1",
     "hyparquet-writer": "0.16.10",
+    "impit": "^0.14.5",
     "postgres": "^3.4.9",
     "undici": "^8.10.0",
     "zod": "^4.4.3"

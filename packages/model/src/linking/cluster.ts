@@ -14,8 +14,14 @@ export interface CanonicalCluster {
   mergedSources: readonly { source: string; recordId: string }[];
 }
 
+/**
+ * Union-find over feature ids that keeps each cluster's members under its
+ * root, so a link reads the two clusters it would join without regrouping
+ * every feature (a register's first poll brings tens of thousands of links).
+ */
 class Clusters {
   private readonly parent = new Map<string, string>();
+  private readonly groups = new Map<string, string[]>();
 
   root(id: string): string {
     const seen: string[] = [];
@@ -25,22 +31,33 @@ class Clusters {
       cur = this.parent.get(cur)!;
     }
     for (const s of seen) this.parent.set(s, cur);
-    if (!this.parent.has(cur)) this.parent.set(cur, cur);
+    if (!this.parent.has(cur)) {
+      this.parent.set(cur, cur);
+      this.groups.set(cur, [cur]);
+    }
     return cur;
   }
 
-  members(): Map<string, string[]> {
-    const groups = new Map<string, string[]>();
-    for (const id of this.parent.keys()) {
-      const root = this.root(id);
-      groups.set(root, [...(groups.get(root) ?? []), id]);
-    }
-    return groups;
+  /** The members of the cluster holding `id`. */
+  membersOf(id: string): readonly string[] {
+    return this.groups.get(this.root(id)) ?? [id];
+  }
+
+  members(): ReadonlyMap<string, readonly string[]> {
+    return this.groups;
   }
 
   join(a: string, b: string): void {
     const [ra, rb] = [this.root(a), this.root(b)];
-    if (ra !== rb) this.parent.set(rb, ra);
+    if (ra === rb) return;
+    // The smaller cluster moves into the larger one.
+    const [left, right] = [this.groups.get(ra) ?? [ra], this.groups.get(rb) ?? [rb]];
+    const [big, small, moved, into] =
+      left.length >= right.length ? [ra, rb, right, left] : [rb, ra, left, right];
+    this.parent.set(small, big);
+    for (const id of moved) into.push(id);
+    this.groups.set(big, into);
+    this.groups.delete(small);
   }
 
   add(id: string): void {
@@ -89,10 +106,9 @@ export function canonicalClusters(
   const linked = new Set(accepted.map((l) => pairKey(l.aId, l.bId)));
 
   for (const link of accepted) {
-    const groups = clusters.members();
-    const left = groups.get(clusters.root(link.aId)) ?? [link.aId];
-    const right = groups.get(clusters.root(link.bId)) ?? [link.bId];
     if (clusters.root(link.aId) === clusters.root(link.bId)) continue;
+    const left = clusters.membersOf(link.aId);
+    const right = clusters.membersOf(link.bId);
     const complete = left.every((a) => right.every((b) => linked.has(pairKey(a, b))));
     if (complete) clusters.join(link.aId, link.bId);
   }

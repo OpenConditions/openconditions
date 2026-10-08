@@ -1,0 +1,56 @@
+{
+  "items": [
+    {
+      "uid": "bnetza_api",
+      "name": "Bundesnetzagentur",
+      "public_url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
+      "static_data_updated_at": "2026-09-25T09:19:50Z",
+      "realtime_data_updated_at": null,
+      "attribution_license": "CC BY 4.0",
+      "attribution_contributor": null,
+      "attribution_url": "https://creativecommons.org/licenses/by/4.0/deed.de",
+      "static_status": "ACTIVE",
+      "realtime_status": "PROVISIONED",
+      "static_error_count": 0,
+      "realtime_error_count": 0,
+      "id": 5,
+      "created": "2025-05-20T07:23:11Z",
+      "modified": "2026-09-25T08:26:28Z"
+    },
+    {
+      "uid": "datex2_enbw",
+      "name": "EnBW Datex II",
+      "public_url": "https://mobilithek.info/offers/907574882292453376",
+      "static_data_updated_at": "2026-10-04T22:00:32Z",
+      "realtime_data_updated_at": "2026-10-05T23:00:00Z",
+      "attribution_license": "CC BY 4.0",
+      "attribution_contributor": "EnBW AG",
+      "attribution_url": null,
+      "static_status": "ACTIVE",
+      "realtime_status": "ACTIVE",
+      "static_error_count": 0,
+      "realtime_error_count": 0,
+      "id": 14,
+      "created": "2026-03-24T11:58:39Z",
+      "modified": "2026-10-05T22:58:27Z"
+    },
+    {
+      "uid": "opendata_swiss",
+      "name": "OpenData Swiss",
+      "public_url": "https://opendata.swiss/de/dataset/ladestationen-fuer-elektroautos",
+      "static_data_updated_at": "2026-10-05T01:11:24Z",
+      "realtime_data_updated_at": "2026-10-06T00:01:35Z",
+      "attribution_license": null,
+      "attribution_contributor": null,
+      "attribution_url": null,
+      "static_status": "ACTIVE",
+      "realtime_status": "ACTIVE",
+      "static_error_count": 8,
+      "realtime_error_count": 0,
+      "id": 8,
+      "created": "2025-05-20T07:24:06Z",
+      "modified": "2026-10-04T01:34:46Z"
+    }
+  ],
+  "total_count": 12
+}

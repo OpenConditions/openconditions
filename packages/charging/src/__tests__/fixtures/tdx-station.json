@@ -1,0 +1,109 @@
+{
+  "UpdateTime": "2026-10-06T03:35:37+08:00",
+  "UpdateInterval": 14400,
+  "SrcUpdateTime": "2026-10-05T23:55:33+08:00",
+  "SrcUpdateInterval": 86400,
+  "AuthorityCode": "TPE",
+  "Stations": [
+    {
+      "StationID": "33029464-STP6360001",
+      "StationName": { "Zh_tw": "中山國中站" },
+      "Description": "充電車位6格，充電樁6座",
+      "OperatorID": "33029464",
+      "OperationType": 1,
+      "PositionLat": 25.06043,
+      "PositionLon": 121.54553,
+      "Spaces": 6,
+      "ChargingPoints": 6,
+      "Connectors": [{ "Type": 5, "Power": 1, "Quantity": 6 }],
+      "ServiceTime": "每日/00:00-24:00",
+      "ParkingRate": "每1小時20元",
+      "ChargingRate": "計時/每日/10元每1時",
+      "Floors": "B1",
+      "PhotoURLs": [],
+      "Location": {
+        "Address": {
+          "City": "台北市",
+          "Town": "松山區",
+          "Road": "復興北路361巷",
+          "Lane": "",
+          "Alley": "",
+          "No": "7號B1-B2停車場"
+        }
+      },
+      "Telephone": "02-26550818"
+    },
+    {
+      "StationID": "TPE0201U03",
+      "StationName": { "Zh_tw": "國立臺灣大學新南地下停車場" },
+      "Description": "平日40元/時，假日40元/時",
+      "OperatorID": "90807408",
+      "OperationType": 2,
+      "PositionLat": 25.01912,
+      "PositionLon": 121.53387,
+      "Spaces": 3,
+      "ChargingPoints": 3,
+      "Connectors": [
+        { "Type": 5, "Power": 1, "Quantity": 2 },
+        { "Type": 6, "Power": 1, "Quantity": 1 }
+      ],
+      "ServiceTime": "每日/00:00-24:00",
+      "ParkingRate": "平日40元/時，假日40元/時",
+      "ChargingRate": "AC/計度/一般/ 7.8000元每度",
+      "Floors": "B1",
+      "PhotoURLs": [],
+      "Location": { "Place": { "POI": "羅斯福路4段1號臺北市新生南路三段76巷對面" } },
+      "Telephone": "33663366"
+    },
+    {
+      "StationID": "TPE0514",
+      "StationName": { "Zh_tw": "USPACE福林第二停車場" },
+      "Description": "電動汽車充電不收停車費",
+      "OperatorID": "90505425",
+      "OperationType": 3,
+      "PositionLat": 25.09327,
+      "PositionLon": 121.52761,
+      "Spaces": 4,
+      "ChargingPoints": 2,
+      "Connectors": [
+        { "Type": 1, "Power": 2, "Quantity": 2 },
+        { "Type": 2, "Power": 2, "Quantity": 2 }
+      ],
+      "ServiceTime": "7x24小時",
+      "ParkingRate": "電動汽車充電不收停車費",
+      "ChargingRate": "計度/離峰/6.5元每度，計度/尖峰/13.5元每度",
+      "Floors": "1",
+      "PhotoURLs": [],
+      "Location": { "Place": { "POI": "中山北路5段465號旁空地" } },
+      "Telephone": "0277518097"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "StationName": { "Zh_tw": "台北小巨蛋站" },
+      "Description": "充電車位8格，充電樁8座",
+      "OperatorID": "28371994",
+      "OperationType": 3,
+      "PositionLat": 25.04993,
+      "PositionLon": 121.5492,
+      "Spaces": 8,
+      "ChargingPoints": 8,
+      "Connectors": [{ "Type": 5, "Power": 1, "Quantity": 8 }],
+      "ServiceTime": "每日/00:00-24:00",
+      "ParkingRate": "每1小時0元",
+      "ChargingRate": "計時/每日/5元每1度",
+      "Floors": "B1",
+      "PhotoURLs": [],
+      "Location": {
+        "Address": {
+          "City": "台北市",
+          "Town": "松山區",
+          "Road": "南京東路",
+          "Lane": "",
+          "Alley": "",
+          "No": "四段2號B1-B2"
+        }
+      },
+      "Telephone": "02-26550818"
+    }
+  ]
+}

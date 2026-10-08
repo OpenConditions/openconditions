@@ -595,6 +595,11 @@
                   "directions": {
                     "$ref": "#/$defs/Text"
                   },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 2,
+                    "maximum": 9007199254740991
+                  },
                   "statusSchedule": {
                     "minItems": 1,
                     "type": "array",
@@ -804,6 +809,7 @@
                       "PANTOGRAPH_TOP_DOWN",
                       "TESLA_R",
                       "TESLA_S",
+                      "SAE_J3400",
                       "MCS",
                       "UNKNOWN"
                     ]
@@ -823,6 +829,13 @@
                       "AC_2_PHASE_SPLIT",
                       "AC_3_PHASE",
                       "DC"
+                    ]
+                  },
+                  "current": {
+                    "type": "string",
+                    "enum": [
+                      "ac",
+                      "dc"
                     ]
                   },
                   "maxVoltage": {
@@ -867,9 +880,7 @@
                 "required": [
                   "kind",
                   "v",
-                  "standard",
-                  "format",
-                  "powerType"
+                  "standard"
                 ],
                 "additionalProperties": false
               }
@@ -1038,6 +1049,20 @@
             "false",
             "auto"
           ]
+        },
+        "website": {
+          "type": "string",
+          "format": "uri"
+        },
+        "tariffText": {
+          "$ref": "#/$defs/Text"
+        },
+        "openingHoursText": {
+          "$ref": "#/$defs/Text"
+        },
+        "brand": {
+          "type": "string",
+          "minLength": 1
         }
       },
       "required": [
@@ -2622,6 +2647,19 @@
             "hdb",
             "utmc",
             "tfnsw",
+            "ocpi",
+            "oicp",
+            "bnetza",
+            "irve",
+            "afdc",
+            "nobil",
+            "eipa",
+            "cynap",
+            "chargy",
+            "evroam",
+            "keco",
+            "tdx",
+            "ocm",
             "tankerkoenig",
             "econtrol",
             "prix-carburants",

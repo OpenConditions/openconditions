@@ -21,6 +21,7 @@ const onDemand = testFeed({
   name: "Mid on demand",
   accessMode: "on_demand",
   endpoints: { main: { url: "https://cells.example/q?lat={south}", cadenceSec: 60 } },
+  coverage: { bbox: [5.7, 49.4, 6.6, 50.2] },
 });
 const parent = testFeed({
   operator: "parent",
@@ -103,6 +104,13 @@ describe("GET /sources", () => {
       terms: { reviewedAt: "2026-09-01", note: "licence says no" },
       rights: { redistribution: false },
     });
+  });
+
+  it("carries each feed's coverage: its countries, or the box an on-demand feed answers for", async () => {
+    const body = (await app.inject({ method: "GET", url: "/sources" })).json() as Body;
+    const coverage = Object.fromEntries(body.sources.map((s) => [s["id"], s["coverage"]]));
+    expect(coverage[flow.id]).toEqual({ countries: ["LU"] });
+    expect(coverage[onDemand.id]).toEqual({ bbox: [5.7, 49.4, 6.6, 50.2] });
   });
 
   it("marks only restricted feeds restricted", async () => {

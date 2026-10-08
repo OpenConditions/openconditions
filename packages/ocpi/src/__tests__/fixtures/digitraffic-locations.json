@@ -1,0 +1,476 @@
+{
+  "pagination": {
+    "limit": 3831
+  },
+  "modifiedAt": "2026-10-06T00:00:37.924Z",
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.07985, 60.32151]
+      },
+      "properties": {
+        "id": "347",
+        "name": "Asunto Oy Lehdespolku 5 ",
+        "operator": {
+          "id": "FI*WTY",
+          "partyId": "WTY",
+          "countryCode": "FI",
+          "details": {
+            "name": "Wattery"
+          }
+        },
+        "address": {
+          "street": "Lehdespolku 5",
+          "city": "Vantaa",
+          "postalCode": "01360",
+          "countryCode": "FIN"
+        },
+        "createdAt": "2026-05-21T12:05:35.342Z",
+        "modifiedAt": "2026-09-04T05:27:34.373Z",
+        "evses": [
+          {
+            "id": "FI*WTY*E13355*1",
+            "capabilities": null,
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [25.07985, 60.32151]
+            },
+            "physicalReference": null,
+            "directions": [
+              {
+                "text": "Aloita lataus: https://start.wattery.io/fi/num/FI-13355-1",
+                "language": "fi"
+              }
+            ],
+            "createdAt": "2026-05-21T12:05:35.851Z",
+            "modifiedAt": "2026-09-04T05:27:32.179Z",
+            "connectors": [
+              {
+                "powerType": "AC_3_PHASE",
+                "standard": "IEC_62196_T2",
+                "format": "SOCKET",
+                "capabilities": null,
+                "maxVoltage": 230,
+                "maxAmperage": 32,
+                "maxElectricPower": 22000,
+                "tariffIds": ["FI*WTY*E13355*1-tariff"],
+                "createdAt": "2026-05-22T12:09:52.122Z",
+                "modifiedAt": "2026-09-04T05:27:34.373Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.606531, 60.388088]
+      },
+      "properties": {
+        "id": "1d7c95f5-5924-461e-9d99-ae5396eab63c",
+        "name": "Porvoo, Finland",
+        "chargingWhenClosed": false,
+        "openingTimes": {
+          "twentyFourSeven": true,
+          "regularHours": []
+        },
+        "operator": {
+          "id": "FI*TSL",
+          "partyId": "TSL",
+          "countryCode": "FI",
+          "details": {
+            "logo": {
+              "url": "https://digitalassets.tesla.com/oxp/image/upload/v1743531183/TeslaCharging_e28b8efd65c74.jpg",
+              "type": "jpg",
+              "category": "OPERATOR"
+            },
+            "name": "Tesla"
+          }
+        },
+        "address": {
+          "street": "9, Ratsumestarinkatu",
+          "city": "Porvoo",
+          "postalCode": "06100",
+          "countryCode": "FIN"
+        },
+        "createdAt": "2026-01-21T05:12:03.799Z",
+        "modifiedAt": "2026-10-05T23:55:39.991Z",
+        "evses": [
+          {
+            "id": "FI*TSL*E5FTM6L",
+            "capabilities": null,
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [25.606531, 60.388088]
+            },
+            "physicalReference": "2D",
+            "directions": null,
+            "createdAt": "2026-01-21T08:32:03.999Z",
+            "modifiedAt": "2026-10-05T23:20:37.608Z",
+            "connectors": [
+              {
+                "powerType": "DC",
+                "standard": "IEC_62196_T2_COMBO",
+                "format": "CABLE",
+                "capabilities": null,
+                "maxVoltage": 470,
+                "maxAmperage": 1000,
+                "maxElectricPower": 250000,
+                "tariffIds": ["e81d652e-a5c7-439c-b0ff-e12fb621e0ce"],
+                "createdAt": "2026-04-02T05:01:55.085Z",
+                "modifiedAt": "2026-09-30T05:15:59.453Z"
+              }
+            ]
+          },
+          {
+            "id": "FI*TSL*E5FTM6K",
+            "capabilities": null,
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": {
+              "type": "Point",
+              "coordinates": [25.606531, 60.388088]
+            },
+            "physicalReference": "3C",
+            "directions": null,
+            "createdAt": "2026-01-21T08:32:03.999Z",
+            "modifiedAt": "2026-10-05T23:00:26.241Z",
+            "connectors": [
+              {
+                "powerType": "DC",
+                "standard": "IEC_62196_T2_COMBO",
+                "format": "CABLE",
+                "capabilities": null,
+                "maxVoltage": 470,
+                "maxAmperage": 1000,
+                "maxElectricPower": 250000,
+                "tariffIds": ["e81d652e-a5c7-439c-b0ff-e12fb621e0ce"],
+                "createdAt": "2026-01-21T08:32:04.983Z",
+                "modifiedAt": "2026-09-30T05:15:59.453Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.282871, 61.912895]
+      },
+      "properties": {
+        "id": "284b30ff6993f7f1aaab6a1ea5f8baaf",
+        "name": "OP Kerimäki",
+        "chargingWhenClosed": true,
+        "openingTimes": {
+          "twentyFourSeven": false,
+          "regularHours": [],
+          "exceptionalOpenings": [],
+          "exceptionalClosings": []
+        },
+        "operator": {
+          "id": "FI*PLG",
+          "partyId": "PLG",
+          "countryCode": "FI",
+          "details": {
+            "name": "Plugit Finland Oy"
+          }
+        },
+        "address": {
+          "street": "Hälväntie 2",
+          "city": "Kerimäki",
+          "postalCode": "58200",
+          "countryCode": "FIN"
+        },
+        "createdAt": "2026-05-18T11:44:52.548Z",
+        "modifiedAt": "2026-10-05T16:22:56.047Z",
+        "evses": [
+          {
+            "id": "FI*PLG*E20207",
+            "capabilities": [
+              "REMOTE_START_STOP_CAPABLE",
+              "RFID_READER",
+              "START_SESSION_CONNECTOR_REQUIRED",
+              "UNLOCK_CAPABLE"
+            ],
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": null,
+            "physicalReference": "20207",
+            "directions": null,
+            "createdAt": "2026-05-18T11:44:52.560Z",
+            "modifiedAt": "2026-10-05T16:22:56.047Z",
+            "connectors": [
+              {
+                "powerType": "AC_3_PHASE",
+                "standard": "IEC_62196_T2",
+                "format": "SOCKET",
+                "capabilities": null,
+                "maxVoltage": 0,
+                "maxAmperage": 0,
+                "maxElectricPower": 22000,
+                "tariffIds": ["d69022a6fa14b3bb19a879ccf9dda37b"],
+                "createdAt": "2026-05-18T11:44:52.578Z",
+                "modifiedAt": "2026-10-03T05:44:00.700Z"
+              }
+            ]
+          },
+          {
+            "id": "FI*PLG*E20206",
+            "capabilities": [
+              "REMOTE_START_STOP_CAPABLE",
+              "RFID_READER",
+              "START_SESSION_CONNECTOR_REQUIRED",
+              "UNLOCK_CAPABLE"
+            ],
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": null,
+            "physicalReference": "20206",
+            "directions": null,
+            "createdAt": "2026-05-18T11:44:52.560Z",
+            "modifiedAt": "2026-10-05T08:26:58.019Z",
+            "connectors": [
+              {
+                "powerType": "AC_3_PHASE",
+                "standard": "IEC_62196_T2",
+                "format": "SOCKET",
+                "capabilities": null,
+                "maxVoltage": 0,
+                "maxAmperage": 0,
+                "maxElectricPower": 22000,
+                "tariffIds": ["d69022a6fa14b3bb19a879ccf9dda37b"],
+                "createdAt": "2026-05-18T11:44:52.578Z",
+                "modifiedAt": "2026-10-03T05:44:00.700Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [26.754857, 62.955061]
+      },
+      "properties": {
+        "id": "FI-ABC-639153842735658913",
+        "name": "Sale Tervo",
+        "parkingType": "PARKING_LOT",
+        "operator": {
+          "id": "FI*ABC",
+          "partyId": "ABC",
+          "countryCode": "FI",
+          "details": {
+            "name": "ABC",
+            "website": "https://www.abcasemat.fi/sahkoauton-lataus"
+          }
+        },
+        "address": {
+          "street": "Laiturintie 2",
+          "city": "Tervo",
+          "postalCode": "72210",
+          "countryCode": "FIN"
+        },
+        "directions": [],
+        "createdAt": "2026-05-26T09:24:34.953Z",
+        "modifiedAt": "2026-10-05T17:02:00.288Z",
+        "evses": [
+          {
+            "id": "FI*ABC*E0617*1011*11",
+            "capabilities": [],
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": null,
+            "physicalReference": "11",
+            "directions": [],
+            "createdAt": "2026-05-26T09:24:34.969Z",
+            "modifiedAt": "2026-10-05T17:02:00.288Z",
+            "connectors": [
+              {
+                "powerType": "AC_3_PHASE",
+                "standard": "IEC_62196_T2",
+                "format": "SOCKET",
+                "capabilities": null,
+                "maxVoltage": 500,
+                "maxAmperage": 32,
+                "maxElectricPower": 22000,
+                "tariffIds": ["FIABCTTRF639253312014930211"],
+                "createdAt": "2026-05-26T09:24:34.999Z",
+                "modifiedAt": "2026-10-05T05:06:20.631Z"
+              }
+            ]
+          },
+          {
+            "id": "FI*ABC*E0617*1011*12",
+            "capabilities": [],
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": null,
+            "physicalReference": "12",
+            "directions": [],
+            "createdAt": "2026-05-26T09:24:34.969Z",
+            "modifiedAt": "2026-10-05T05:06:04.147Z",
+            "connectors": [
+              {
+                "powerType": "AC_3_PHASE",
+                "standard": "IEC_62196_T2",
+                "format": "SOCKET",
+                "capabilities": null,
+                "maxVoltage": 500,
+                "maxAmperage": 32,
+                "maxElectricPower": 22000,
+                "tariffIds": ["FIABCTTRF639253312014930211"],
+                "createdAt": "2026-05-26T09:24:34.999Z",
+                "modifiedAt": "2026-10-04T05:01:14.397Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.667606, 60.154936]
+      },
+      "properties": {
+        "id": "9689a0c8-6a9a-11ed-a7c2-42010aa40fc0",
+        "name": "Lidl Espoo - Nöykkiö",
+        "parkingType": "ON_STREET",
+        "chargingWhenClosed": true,
+        "openingTimes": {
+          "twentyFourSeven": false,
+          "regularHours": [
+            {
+              "weekday": "MONDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            },
+            {
+              "weekday": "SUNDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            },
+            {
+              "weekday": "SATURDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            },
+            {
+              "weekday": "FRIDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            },
+            {
+              "weekday": "THURSDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            },
+            {
+              "weekday": "WEDNESDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            },
+            {
+              "weekday": "TUESDAY",
+              "periodBegin": "06:45",
+              "periodEnd": "22:15"
+            }
+          ]
+        },
+        "operator": {
+          "id": "FI*LDL",
+          "partyId": "LDL",
+          "countryCode": "FI",
+          "details": {
+            "name": "Lidl",
+            "website": "https://www.lidl.de/c/echarge-app/s10007751"
+          }
+        },
+        "address": {
+          "street": "Sillankorva 3",
+          "city": "Espoo",
+          "postalCode": "02300",
+          "countryCode": "FIN"
+        },
+        "createdAt": "2025-08-11T12:43:12.438Z",
+        "modifiedAt": "2026-10-05T19:15:05.638Z",
+        "evses": [
+          {
+            "id": "FI*LDL*E00000027",
+            "capabilities": [
+              "CREDIT_CARD_PAYABLE",
+              "REMOTE_START_STOP_CAPABLE",
+              "RESERVABLE",
+              "UNLOCK_CAPABLE"
+            ],
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": null,
+            "physicalReference": "00000027",
+            "directions": null,
+            "createdAt": "2025-08-11T12:43:12.779Z",
+            "modifiedAt": "2026-10-05T19:15:05.483Z",
+            "connectors": [
+              {
+                "powerType": "AC_3_PHASE",
+                "standard": "IEC_62196_T2",
+                "format": "CABLE",
+                "capabilities": null,
+                "maxVoltage": 230,
+                "maxAmperage": 32,
+                "maxElectricPower": 22000,
+                "tariffIds": null,
+                "createdAt": "2025-08-11T12:43:13.706Z",
+                "modifiedAt": "2026-10-05T05:27:22.448Z"
+              }
+            ]
+          },
+          {
+            "id": "FI*LDL*E00000025",
+            "capabilities": [
+              "CREDIT_CARD_PAYABLE",
+              "REMOTE_START_STOP_CAPABLE",
+              "RESERVABLE",
+              "UNLOCK_CAPABLE"
+            ],
+            "acceptedServiceProviders": null,
+            "floorLevel": null,
+            "geometry": null,
+            "physicalReference": "00000025",
+            "directions": null,
+            "createdAt": "2025-08-11T12:43:12.779Z",
+            "modifiedAt": "2026-10-05T19:15:05.638Z",
+            "connectors": [
+              {
+                "powerType": "DC",
+                "standard": "IEC_62196_T2_COMBO",
+                "format": "CABLE",
+                "capabilities": null,
+                "maxVoltage": 500,
+                "maxAmperage": 100,
+                "maxElectricPower": 50000,
+                "tariffIds": null,
+                "createdAt": "2025-08-11T12:43:13.706Z",
+                "modifiedAt": "2026-10-05T05:27:22.448Z"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -95,12 +95,15 @@ export async function listCanonicalFeatures(
   // limit is cheapest. A box may hold few features of many clusters: there
   // the box picks the features (spatial index) and each one's cluster is
   // looked up by member, rather than testing every cluster until a page fills.
+  // The lookup is its own subplan: as a semi-join the planner walks the
+  // clusters in id order and tests each one's members against the boxed
+  // features, which on a national register takes tens of seconds.
   const clauses = [
     q.bbox
-      ? `c.canonical_feature_id IN (
+      ? `c.canonical_feature_id = ANY(ARRAY(
            SELECT h.canonical_feature_id FROM conditions.feature f
              JOIN conditions.feature_canonical h ON h.member_ids @> ARRAY[f.id]
-            WHERE ${matching.join(" AND ")})`
+            WHERE ${matching.join(" AND ")}))`
       : `EXISTS (SELECT 1 FROM conditions.feature f
                   WHERE f.id = ANY(c.member_ids) AND ${matching.join(" AND ")})`,
   ];

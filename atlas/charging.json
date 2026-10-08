@@ -1,0 +1,3083 @@
+{
+  "files": {
+    "charging/au": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "subdivision": "nsw",
+          "operator": "tfnsw",
+          "product": "charging",
+          "name": "Transport for NSW EV charging locations",
+          "format": "csv",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://opendata.transport.nsw.gov.au/data/dataset/be1c4de4-4517-4bd0-8a09-2965ddfc7179/resource/7bbb6461-e52d-4fe7-ace4-a15c30198de0/download",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Transport for NSW, CC BY 4.0",
+          "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+          "homepage": "https://opendata.transport.nsw.gov.au/dataset/ev-charging-locations",
+          "layout": {
+            "lon": "Longitude",
+            "lat": "Latitude"
+          },
+          "charging": {
+            "id": [
+              "Latitude",
+              "Longitude",
+              "Operator"
+            ],
+            "name": [
+              "Station_name"
+            ],
+            "lang": "en",
+            "operator": {
+              "field": "Operator",
+              "pattern": "^(?!Non-networked$)(.+)$"
+            },
+            "address": {
+              "postalCode": "PCODE",
+              "text": "Station_address"
+            },
+            "lifecycle": {
+              "field": "Charger_Type",
+              "map": {
+                "Upcoming": "planned"
+              }
+            },
+            "connectors": {
+              "list": {
+                "field": "Charger_rating",
+                "separator": "\\s*&\\s*",
+                "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?:(?<power>\\d+(?:\\.\\d+)?\\s*(?:kW)?)|AC|DC)$",
+                "current": {
+                  "field": "Charger_Type",
+                  "map": {
+                    "AC": "ac",
+                    "DC": "dc"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "subdivision": "vic",
+          "operator": "deeca",
+          "product": "charging",
+          "name": "Victoria government-funded public EV chargers",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://opendata.maps.vic.gov.au/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=open-data-platform:dcav_site&outputFormat=application/json&srsName=EPSG:4326",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "© State of Victoria (Department of Energy, Environment and Climate Action), CC BY 4.0",
+          "privacyUrl": "https://www.vic.gov.au/privacy-vicgovau",
+          "homepage": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+          "layout": {},
+          "charging": {
+            "id": "address",
+            "name": [
+              "location"
+            ],
+            "lang": "en",
+            "operator": "company",
+            "address": {
+              "text": "address"
+            },
+            "completion": "estimated_project_completion",
+            "connectors": {
+              "list": {
+                "field": "plug_type",
+                "separator": "\\s*(?:,|\\band\\b)\\s*",
+                "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?<type>.+)$",
+                "as": "connectors",
+                "map": {
+                  "CCS2": {
+                    "standard": "IEC_62196_T2_COMBO",
+                    "current": "dc"
+                  },
+                  "CCS2/SAE": {
+                    "standard": "IEC_62196_T2_COMBO",
+                    "current": "dc"
+                  },
+                  "CHAdeMO": {
+                    "standard": "CHADEMO",
+                    "current": "dc"
+                  },
+                  "Type 2": {
+                    "standard": "IEC_62196_T2",
+                    "current": "ac"
+                  }
+                },
+                "groups": {
+                  "field": "chargers",
+                  "separator": "\\s*(?:[,;\\n]|\\band\\b)\\s*",
+                  "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?<power>\\d+(?:\\.\\d+)?\\s*kW)\\b.*$"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "charging/be": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "subdivision": "vlg",
+          "operator": "mow",
+          "product": "charging",
+          "name": "Departement MOW public charge points (Flanders)",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://geoserver.gis.cloud.mow.vlaanderen.be/geoserver/beleid/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=laadpunten_public&outputFormat=application/json&srsName=EPSG:4326&count=20000",
+              "pagination": {
+                "skipParam": "startIndex",
+                "pageSize": 20000,
+                "recordsPath": "features"
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+          "licenseUrl": "https://overheid.vlaanderen.be/sites/default/files/documenten/ict-egov/licenties/hergebruik/modellicentie_gratis_hergebruik_v1_0.html",
+          "attribution": "Departement Mobiliteit en Openbare Werken (Vlaamse overheid), Modellicentie Gratis Hergebruik",
+          "privacyUrl": "https://www.vlaanderen.be/departement-mobiliteit-en-openbare-werken/privacyverklaring",
+          "layout": {},
+          "charging": {
+            "id": {
+              "field": "uniek_identificatienummer",
+              "pattern": "^(.+?)__"
+            },
+            "lang": "nl",
+            "operator": "uitbater",
+            "address": {
+              "street": "adres",
+              "postalCode": "postcode",
+              "city": "gemeente"
+            },
+            "audience": {
+              "field": "toegankelijkheid",
+              "map": {
+                "publiek": "public",
+                "semi-publiek": "restricted"
+              }
+            },
+            "evse": {
+              "key": "evse"
+            },
+            "connectors": {
+              "row": {
+                "standard": {
+                  "field": "connector"
+                },
+                "powerType": {
+                  "field": "stroomtype",
+                  "map": {
+                    "ac_1_phase": "AC_1_PHASE",
+                    "ac_3_phase": "AC_3_PHASE",
+                    "dc": "DC"
+                  }
+                },
+                "powerKw": {
+                  "field": "maximaal_vermogen_kw",
+                  "unit": "kW"
+                }
+              }
+            }
+          }
+        },
+        {
+          "subdivision": "wal",
+          "operator": "spw",
+          "product": "charging",
+          "name": "Service public de Wallonie charging infrastructure",
+          "format": "csv",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/c731a282-e378-49f3-8ab6-f9a90e7a5683/BORNES_RECHARGE_XY_31370.csv",
+              "cadenceSec": 604800
+            }
+          },
+          "freshnessWindowSec": 1209600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Service public de Wallonie (SPW), CC BY 4.0",
+          "privacyUrl": "https://www.wallonie.be/fr/vie-privee",
+          "homepage": "https://geoportail.wallonie.be/catalogue/c731a282-e378-49f3-8ab6-f9a90e7a5683.html",
+          "layout": {
+            "wkt": "WKT_GEOM",
+            "crs": "EPSG:31370",
+            "delimiter": ";"
+          },
+          "charging": {
+            "id": "EMPLACEMENT_ID",
+            "lang": "fr",
+            "operator": "OPERATEUR",
+            "address": {
+              "street": "ADRESSE",
+              "postalCode": "CODE_POSTAL",
+              "city": "VILLE"
+            },
+            "audience": {
+              "field": "TYPE_ACCES",
+              "map": {
+                "public": "public",
+                "semi-public": "restricted",
+                "unknown": "unknown"
+              }
+            },
+            "parkingType": {
+              "field": "TYPE_EMPLACEMENT",
+              "map": {
+                "ON_STREET": "on_street",
+                "PARKING_LOT": "parking_lot",
+                "PARKING_GARAGE": "parking_garage",
+                "UNDERGROUND_GA": "underground_garage",
+                "ALONG_MOTORWAY": "along_motorway",
+                "OTHER": "other"
+              }
+            },
+            "evse": {
+              "key": "CONNECTEUR_ID"
+            },
+            "connectors": {
+              "row": {
+                "powerKw": {
+                  "field": "PUISSANCE_KW",
+                  "unit": "kW"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "charging/ch": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "bfe",
+          "product": "charging",
+          "name": "BFE charging points for electric cars (ich-tanke-strom.ch)",
+          "format": "oicp",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/data/oicp/ch.bfe.ladestellen-elektromobilitaet.json",
+              "cadenceSec": 3600
+            },
+            "status": {
+              "url": "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/status/oicp/ch.bfe.ladestellen-elektromobilitaet.json",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "LicenseRef-opendata-swiss-terms-by-ask",
+          "licenseUrl": "https://opendata.swiss/en/terms-of-use",
+          "attribution": "Bundesamt für Energie BFE / ich-tanke-strom.ch",
+          "privacyUrl": "https://www.geo.admin.ch/en/legal-framework",
+          "homepage": "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos"
+        }
+      ]
+    },
+    "charging/cy": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "cynap",
+          "product": "charging",
+          "name": "CYNAP public EV chargers (EMS)",
+          "format": "cynap",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/electric_vehicle_chargers/",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Department of Electrical and Mechanical Services (EMS), Cyprus",
+          "privacyUrl": "https://www.traffic4cyprus.org.cy/pages/privacy-policy",
+          "homepage": "https://www.traffic4cyprus.org.cy"
+        }
+      ]
+    },
+    "charging/de": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "bnetza",
+          "product": "charging",
+          "name": "Bundesnetzagentur Ladesäulenregister",
+          "format": "bnetza",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html",
+              "follow": {
+                "pattern": "href=\"(https://data\\.bundesnetzagentur\\.de/[^\"]*/Ladesaeulenregister[^\"]*\\.csv)\""
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Bundesnetzagentur.de, CC BY 4.0",
+          "privacyUrl": "https://www.bundesnetzagentur.de/DE/Service/Datenschutz/start.html",
+          "homepage": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html"
+        },
+        {
+          "subdivision": "bw",
+          "operator": "mobidata",
+          "product": "charging",
+          "name": "MobiData BW charge-point database",
+          "format": "ocpi",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/locations?exclude_source_uid=opendata_swiss&limit=5000",
+              "pagination": {
+                "skipParam": "offset",
+                "pageSize": 5000,
+                "recordsPath": "items"
+              },
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
+              "pagination": {
+                "skipParam": "offset",
+                "pageSize": 1000,
+                "recordsPath": "items",
+                "maxPages": 300
+              },
+              "cadenceSec": 300
+            },
+            "tariffs": {
+              "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
+              "pagination": {
+                "skipParam": "offset",
+                "pageSize": 1000,
+                "recordsPath": "items"
+              },
+              "cadenceSec": 86400
+            },
+            "associations": {
+              "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/3.0/tariff-associations?limit=1000",
+              "pagination": {
+                "skipParam": "offset",
+                "pageSize": 1000,
+                "recordsPath": "items"
+              },
+              "cadenceSec": 86400
+            },
+            "sources": {
+              "url": "https://api.mobidata-bw.de/ocpdb/api/public/v1/sources?limit=100",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "DL-DE-BY-2.0",
+          "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+          "attribution": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+          "terms": {
+            "url": "https://mobidata-bw.de/dataset/e-ladesaulen",
+            "reviewedAt": "2026-10-06",
+            "note": "DL-DE-BY-2.0 for the bundle; per-source licences in /api/public/v1/sources (BNetzA and EnBW CC BY 4.0 with contributor, Mobilithek DATEX feeds CC0). The opendata_swiss source is excluded: SFOE data needs permission for commercial use."
+          },
+          "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+          "homepage": "https://mobidata-bw.de/dataset/e-ladesaulen",
+          "coverage": {
+            "countries": [
+              "DE"
+            ]
+          }
+        }
+      ]
+    },
+    "charging/es": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "dgt",
+          "product": "charging",
+          "name": "DGT national access point charge points (MITERD)",
+          "format": "datex2",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://nap.dgt.es/datex2/v3/miterd/EnergyInfrastructureTablePublication/electrolineras.xml",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "DGT / MITERD – Punto de Acceso Nacional (nap.dgt.es), CC BY",
+          "terms": {
+            "url": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos",
+            "reviewedAt": "2026-10-06",
+            "note": "NAP dataset licence CC BY (unversioned, CKAN cc-by); its 'condition for use' links the generic dgt.es aviso legal, which reserves website content. Dataset licence taken as governing."
+          },
+          "privacyUrl": "https://sede.dgt.gob.es/es/proteccion-datos/",
+          "homepage": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos"
+        }
+      ]
+    },
+    "charging/fi": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "digitraffic",
+          "product": "charging",
+          "name": "Fintraffic Digitraffic charging network",
+          "format": "digitraffic",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://afir.digitraffic.fi/api/charging-network/v1/locations/all",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://afir.digitraffic.fi/api/charging-network/v1/locations/statuses/all",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 300
+            },
+            "tariffs": {
+              "url": "https://afir.digitraffic.fi/api/charging-network/v1/tariffs/all",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+          "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+          "homepage": "https://www.digitraffic.fi/en/"
+        }
+      ]
+    },
+    "charging/fr": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "irve",
+          "product": "charging",
+          "name": "Base nationale des IRVE",
+          "format": "irve",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://www.data.gouv.fr/api/1/datasets/r/eb76d20a-8501-400e-b336-d85724de5435",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://transport.data.gouv.fr/resources/84098/download",
+              "cadenceSec": 600
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "etalab-2.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+          "attribution": "data.gouv.fr / transport.data.gouv.fr, Base nationale des IRVE, Licence Ouverte 2.0",
+          "privacyUrl": "https://www.data.gouv.fr/pages/legal/cgu",
+          "homepage": "https://transport.data.gouv.fr/datasets?type=charging-stations"
+        }
+      ]
+    },
+    "charging/global": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "ocm",
+          "product": "charging",
+          "name": "Open Charge Map",
+          "format": "ocm",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://api.openchargemap.io/v3/poi/?output=json&boundingbox=({south},{west}),({north},{east})&maxresults=1000&compact=false&verbose=false",
+              "impersonate": true,
+              "cadenceSec": 86400
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "Open Charge Map API key",
+              "description": "An Open Charge Map application key.",
+              "setup": {
+                "url": "https://openchargemap.org/site/loginprovider/beginlogin",
+                "urlLabel": "Get Open Charge Map API key",
+                "steps": [
+                  "Go to openchargemap.org and create an account or sign in.",
+                  "Open 'My Profile' → 'My Apps'.",
+                  "Click 'Register an Application' and enter a name and description.",
+                  "Copy the API key issued immediately."
+                ],
+                "cost": "Free",
+                "notes": "Required for regular use and for calls with maxresults > 250. Sent via the 'X-API-Key' header or 'key' query parameter."
+              }
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "X-API-Key",
+            "credential": "api_key"
+          },
+          "freshnessWindowSec": 172800,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 10,
+            "perDay": 2000
+          },
+          "onDemand": {
+            "cellDeg": 0.25,
+            "ttlSec": 86400,
+            "maxCellsPerRead": 16,
+            "probe": [
+              8.4,
+              49.01
+            ]
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "© Open Charge Map contributors (CC BY 4.0) and the listed Data Providers",
+          "terms": {
+            "url": "https://www.openchargemap.org/about/terms",
+            "reviewedAt": "2026-10-06",
+            "note": "User-contributed data is CC BY 4.0; data imported from third-party Data Providers stays under each provider's own licence (some NC-SA, some none), which every record names. The provider and its licence must be shown to the end user.",
+            "redistribution": false
+          },
+          "privacyUrl": "https://www.openchargemap.org/about/terms",
+          "homepage": "https://openchargemap.org",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        },
+        {
+          "operator": "osm",
+          "product": "charging",
+          "name": "OpenStreetMap charging stations",
+          "format": "overpass",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "${@overpass.url}/api/interpreter",
+              "method": "POST",
+              "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"charging_station\"]({south},{west},{north},{east});out center tags;",
+              "headers": {
+                "Content-Type": "application/x-www-form-urlencoded",
+                "User-Agent": "OpenConditions-OsmCharging/1.0 (+https://github.com/openconditions/openconditions)"
+              },
+              "cadenceSec": 21600
+            }
+          },
+          "freshnessWindowSec": 86400,
+          "accessMode": "on_demand",
+          "requestLimits": {
+            "perMinute": 30,
+            "perDay": 5000
+          },
+          "onDemand": {
+            "cellDeg": 0.1,
+            "ttlSec": 21600,
+            "maxCellsPerRead": 16,
+            "probe": [
+              8.4,
+              49.01
+            ]
+          },
+          "license": "ODbL-1.0",
+          "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+          "attribution": "© OpenStreetMap contributors",
+          "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+          "homepage": "https://www.openstreetmap.org/copyright",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        }
+      ]
+    },
+    "charging/hk": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "epd",
+          "product": "charging",
+          "name": "Environmental Protection Department public EV chargers",
+          "format": "geojson",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://portal.csdi.gov.hk/csdi-webpage/file-api?dataset_id=epd_rcd_1631080339740_69941&format=geojson&layer_name=geotagging",
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "LicenseRef-HK-CSDI-ToU",
+          "licenseUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+          "attribution": "Environmental Protection Department, HKSAR Government; source: CSDI Portal (portal.csdi.gov.hk)",
+          "privacyUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+          "homepage": "https://portal.csdi.gov.hk/geoportal/?datasetId=epd_rcd_1631080339740_69941",
+          "layout": {},
+          "charging": {
+            "id": "LOCATION_EN",
+            "name": [
+              "LOCATION_EN"
+            ],
+            "lang": "en",
+            "address": {
+              "text": "ADDRESS_EN"
+            },
+            "connectors": {
+              "columns": [
+                {
+                  "count": "STANDARD_BS1363_no",
+                  "standard": "DOMESTIC_G",
+                  "current": "ac",
+                  "format": "socket"
+                },
+                {
+                  "count": "MEDIUM_CCS_DC_COMBO_no",
+                  "standard": "IEC_62196_T2_COMBO",
+                  "current": "dc"
+                },
+                {
+                  "count": "MEDIUM_IEC62196_no",
+                  "standard": "IEC_62196_T2",
+                  "current": "ac"
+                },
+                {
+                  "count": "MEDIUM_SAEJ1772_no",
+                  "standard": "IEC_62196_T1",
+                  "current": "ac"
+                },
+                {
+                  "count": "MEDIUM_GB_T20234_2_AC__no",
+                  "standard": "GBT_AC",
+                  "current": "ac"
+                },
+                {
+                  "count": "MEDIUM_OTHERS_no",
+                  "standard": "UNKNOWN"
+                },
+                {
+                  "count": "QUICK_CHAdeMO_no",
+                  "standard": "CHADEMO",
+                  "current": "dc"
+                },
+                {
+                  "count": "QUICK_CCS_DC_COMBO_no",
+                  "standard": "IEC_62196_T2_COMBO",
+                  "current": "dc"
+                },
+                {
+                  "count": "QUICK_IEC62196_no",
+                  "standard": "IEC_62196_T2",
+                  "current": "ac"
+                },
+                {
+                  "count": "QUICK_GB_T20234_3_DC__no",
+                  "standard": "GBT_DC",
+                  "current": "dc"
+                },
+                {
+                  "count": "QUICK_OTHERS_no",
+                  "standard": "UNKNOWN"
+                },
+                {
+                  "count": "FAST_CHAdeMO_no",
+                  "standard": "CHADEMO",
+                  "current": "dc"
+                },
+                {
+                  "count": "FAST_CCS_DC_COMBO_no",
+                  "standard": "IEC_62196_T2_COMBO",
+                  "current": "dc"
+                },
+                {
+                  "count": "FAST_GB_T20234_3_DC__no",
+                  "standard": "GBT_DC",
+                  "current": "dc"
+                },
+                {
+                  "count": "FAST_OTHERS_no",
+                  "standard": "UNKNOWN"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "charging/kr": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "keco",
+          "product": "charging",
+          "name": "Korea Environment Corporation EV chargers",
+          "format": "keco",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://apis.data.go.kr/B552584/EvCharger/getChargerInfo?dataType=JSON&numOfRows=9999",
+              "pagination": {
+                "skipParam": "pageNo",
+                "pageSize": 9999,
+                "mode": "page",
+                "recordsPath": "items.item",
+                "xmlLists": true
+              },
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://apis.data.go.kr/B552584/EvCharger/getChargerStatus?dataType=JSON&period=10&numOfRows=9999",
+              "cadenceSec": 300
+            }
+          },
+          "credentials": {
+            "service_key": {
+              "title": "data.go.kr service key",
+              "description": "The general authentication key (Decoding) of a data.go.kr account approved for the KECO EV charger OpenAPI.",
+              "setup": {
+                "url": "https://www.data.go.kr/data/15076352/openapi.do",
+                "urlLabel": "Apply for the KECO EV charger OpenAPI",
+                "steps": [
+                  "Register at data.go.kr.",
+                  "Open https://www.data.go.kr/data/15076352/openapi.do and press 활용신청 (apply for use); approval is automatic.",
+                  "Copy the 일반 인증키 (general authentication key), the Decoding form; it is sent as the serviceKey query parameter."
+                ],
+                "cost": "Free",
+                "notes": "A development account allows 1,000 calls a day per operation; registering a use case raises it."
+              }
+            }
+          },
+          "auth": {
+            "kind": "query-key",
+            "param": "serviceKey",
+            "credential": "service_key"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "LicenseRef-KOGL-Type-1",
+          "licenseUrl": "https://www.kogl.or.kr/info/licenseType1.do",
+          "attribution": "한국환경공단 (Korea Environment Corporation), 공공누리 제1유형, https://www.data.go.kr/data/15076352/openapi.do",
+          "privacyUrl": "https://www.data.go.kr/ugs/selectPortalPolicyView.do",
+          "homepage": "https://www.data.go.kr/data/15076352/openapi.do"
+        }
+      ]
+    },
+    "charging/lt": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "vialietuva",
+          "product": "charging",
+          "name": "Via Lietuva charge points",
+          "format": "ocpi",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://ev.vialietuva.lt/ocpi/2.3.0/locations?limit=10000",
+              "headers": {
+                "User-Agent": "OpenConditions/1.0"
+              },
+              "cadenceSec": 600
+            },
+            "tariffs": {
+              "url": "https://ev.vialietuva.lt/ocpi/2.3.0/tariffs",
+              "headers": {
+                "User-Agent": "OpenConditions/1.0"
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Via Lietuva, CC BY 4.0",
+          "privacyUrl": "https://vialietuva.lt/en/privacy-policy",
+          "homepage": "https://ev.vialietuva.lt/en/data-provision"
+        }
+      ]
+    },
+    "charging/lu": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "chargy",
+          "product": "charging",
+          "name": "Chargy public charging network",
+          "format": "chargy",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://data.public.lu/fr/datasets/r/22f9d77a-5138-4b02-b315-15f306b77034",
+              "cadenceSec": 600
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "attribution": "Chargy / data.public.lu",
+          "privacyUrl": "https://data.public.lu/en/pages/legal/privacy",
+          "homepage": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/"
+        }
+      ]
+    },
+    "charging/nl": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "ndw",
+          "product": "charging",
+          "name": "NDW publicly accessible charge points (DOT-NL)",
+          "format": "ocpi",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://opendata.ndw.nu/charging_point_locations_ocpi.json.gz",
+              "cadenceSec": 600
+            },
+            "tariffs": {
+              "url": "https://opendata.ndw.nu/charging_point_tariffs_ocpi.json.gz",
+              "cadenceSec": 3600
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+          "attribution": "NDW / DOT-NL",
+          "privacyUrl": "https://www.ndw.nu/service/privacy",
+          "homepage": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56"
+        }
+      ]
+    },
+    "charging/no": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "nobil",
+          "product": "charging",
+          "name": "NOBIL charging stations (Enova)",
+          "format": "nobil",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://nobil.no/api/server/datadump.php?apikey=${api_key}&format=json&file=false",
+              "cadenceSec": 86400
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "NOBIL API key",
+              "description": "A NOBIL API v3 key, issued by email per registered website.",
+              "setup": {
+                "url": "https://info.nobil.no/api",
+                "urlLabel": "Request a NOBIL API key",
+                "steps": [
+                  "Open info.nobil.no/api and review the Creative Commons (CC BY 4.0) terms.",
+                  "Use the 'Ask for an API-key' section to contact NOBIL with your project details.",
+                  "Accept the CC BY 4.0 terms of use.",
+                  "Receive the API key by email."
+                ],
+                "cost": "Free (Creative Commons data, attribution required)",
+                "notes": "Norway/Sweden charging data. The request is handled by email rather than an instant self-service form.",
+                "email": {
+                  "to": "post@nobil.no",
+                  "subject": "NOBIL API key request",
+                  "body": "Hello,\n\nI would like to request a NOBIL API key (API v3) to display Norwegian/Swedish EV charging station data in a self-hosted OpenMapX map application.\n\nI have read and accept the Creative Commons Attribution 4.0 (CC BY 4.0) terms of use and will attribute NOBIL accordingly.\n\nProject: self-hosted, non-commercial mapping application.\n\nThank you."
+                }
+              }
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "NOBIL by Enova, CC BY 4.0, https://nobil.no",
+          "terms": {
+            "url": "https://info.nobil.no/images/API_NOBIL_Documentation_v3_20260816.pdf",
+            "reviewedAt": "2026-10-06",
+            "note": "Data CC BY 4.0. API usage terms: no direct end-user calls; data must be processed or cached in an intermediate service; key issued per registered website and must stay private."
+          },
+          "privacyUrl": "https://info.nobil.no/om?catid=8%3Aom&id=246%3Anobil-privacy-policy&view=article",
+          "homepage": "https://nobil.no",
+          "coverage": {
+            "countries": [
+              "NO",
+              "SE"
+            ]
+          }
+        }
+      ]
+    },
+    "charging/nz": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "nzta",
+          "product": "charging",
+          "name": "EVRoam charging stations (NZ Transport Agency)",
+          "format": "evroam",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/EV_Roam_charging_stations/FeatureServer/0/query?where=1=1&outFields=*&f=geojson&resultRecordCount=2000",
+              "pagination": {
+                "skipParam": "resultOffset",
+                "pageSize": 2000,
+                "recordsPath": "features"
+              },
+              "cadenceSec": 86400
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Waka Kotahi NZ Transport Agency (EVRoam), CC BY 4.0",
+          "privacyUrl": "https://www.nzta.govt.nz/privacy/",
+          "homepage": "https://www.nzta.govt.nz/planning-and-investment/planning/transport-planning/planning-for-electric-vehicles/evroam"
+        }
+      ]
+    },
+    "charging/pl": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "eipa",
+          "product": "charging",
+          "name": "EIPA alternative-fuel infrastructure register (UDT)",
+          "format": "eipa",
+          "tier": "authoritative",
+          "endpoints": {
+            "pools": {
+              "url": "https://eipa.udt.gov.pl/reader/api/pool.json",
+              "cadenceSec": 86400
+            },
+            "stations": {
+              "url": "https://eipa.udt.gov.pl/reader/api/station.json",
+              "cadenceSec": 86400
+            },
+            "points": {
+              "url": "https://eipa.udt.gov.pl/reader/api/point.json",
+              "cadenceSec": 86400
+            },
+            "operators": {
+              "url": "https://eipa.udt.gov.pl/reader/api/operator.json",
+              "cadenceSec": 86400
+            },
+            "dictionary": {
+              "url": "https://eipa.udt.gov.pl/reader/api/dictionary.json",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://eipa.udt.gov.pl/reader/api/dynamic.json",
+              "cadenceSec": 600
+            }
+          },
+          "freshnessWindowSec": 3600,
+          "license": "NOASSERTION",
+          "attribution": "EIPA – Urząd Dozoru Technicznego",
+          "terms": {
+            "url": "https://eipa.udt.gov.pl/faq",
+            "reviewedAt": "2026-10-06",
+            "note": "No licence stated. UDT's FAQ: downloaded data may be presented on your own site or processed otherwise, free for commercial and non-commercial use; hourly download limits; registration required.",
+            "redistribution": true,
+            "derivedRedistribution": true,
+            "commercialUse": true,
+            "attributionRequired": null,
+            "retention": true
+          },
+          "privacyUrl": "https://eipa.udt.gov.pl/privacy",
+          "homepage": "https://eipa.udt.gov.pl",
+          "disabled": {
+            "reason": "download URLs and limits are issued on registration; set them in the local catalogue layer",
+            "since": "2026-10-06"
+          }
+        }
+      ]
+    },
+    "charging/sg": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "lta",
+          "product": "charging",
+          "name": "LTA DataMall EV charging points",
+          "format": "lta",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://datamall2.mytransport.sg/ltaodataservice/EVCBatch",
+              "follow": {
+                "path": "value.0.Link"
+              },
+              "cadenceSec": 300
+            }
+          },
+          "credentials": {
+            "account_key": {
+              "title": "LTA DataMall AccountKey",
+              "setup": {
+                "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+                "urlLabel": "Register for an LTA DataMall AccountKey",
+                "steps": [
+                  "Open datamall.lta.gov.sg and go to 'Request for API Access'.",
+                  "Register with your name, email, and organisation, and accept the Singapore Open Data Licence.",
+                  "Confirm your email; the AccountKey is issued to your registered email.",
+                  "Copy the AccountKey — it is sent in the 'AccountKey' request header."
+                ],
+                "cost": "Free",
+                "notes": "Covers the EV Charging Points APIs (station location, connector types, real-time availability by postal code). Sent via the 'AccountKey' header, never as a query parameter."
+              }
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "AccountKey",
+            "credential": "account_key"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "LicenseRef-Singapore-ODL-1.0",
+          "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+          "attribution": "Contains information from EV Charging Points Batch from LTA DataMall, made available under the terms of the Singapore Open Data Licence version 1.0 (https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html)",
+          "terms": {
+            "url": "https://datamall.lta.gov.sg/content/datamall/en/api-terms-of-service.html",
+            "reviewedAt": "2026-10-06",
+            "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from LTA. API: up to 10 million calls a day; the AccountKey must stay confidential."
+          },
+          "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy-statement.html",
+          "homepage": "https://datamall.lta.gov.sg"
+        }
+      ]
+    },
+    "charging/si": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "nap",
+          "product": "charging",
+          "name": "NAP Slovenija charge points (Prometej IDACS)",
+          "format": "datex2",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://b2b.nap.si/data/b2b.prometej.energyInfrastructureTablePublication",
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://b2b.nap.si/data/b2b.prometej.energyInfrastructureStatusPublication",
+              "cadenceSec": 300
+            }
+          },
+          "credentials": {
+            "username": {
+              "title": "NAP Slovenija account email",
+              "description": "The email of the NAP business-entity account that holds access to the Prometej IDACS datasets.",
+              "setup": {
+                "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+                "urlLabel": "Register with NAP Slovenija",
+                "steps": [
+                  "Create a business-entity account at nap.si (click the user icon → Registration) and confirm the email.",
+                  "Log in, open your profile, and request permission for the 'Prometej IDACS Energy Infrastructure Table (DATEX II v3.6)' dataset. Accept the general terms of use.",
+                  "Also request the 'Prometej IDACS Energy Infrastructure Status' dataset for live status.",
+                  "Wait for NAP to grant the requests (shown as 'granted' on your profile page).",
+                  "Enter the account's email here and its password in the password field; requests use HTTP Basic auth."
+                ],
+                "cost": "Free (business-entity registration required)",
+                "notes": "The dataset licence is CC BY-SA 4.0, so the feed is served to the operator only."
+              }
+            },
+            "password": {
+              "title": "NAP Slovenija account password",
+              "description": "The password of that NAP account."
+            }
+          },
+          "auth": {
+            "kind": "basic",
+            "user": "username",
+            "password": "password"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC-BY-SA-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+          "attribution": "MZIE / NAP Slovenija, CC BY-SA 4.0",
+          "privacyUrl": "https://www.nap.si/en/privacy",
+          "homepage": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba"
+        }
+      ]
+    },
+    "charging/tw": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "tdx",
+          "product": "charging",
+          "name": "TDX EV charging stations",
+          "format": "tdx",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "urls": [
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taipei?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/NewTaipei?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taoyuan?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taichung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Tainan?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Kaohsiung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Keelung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Hsinchu?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/HsinchuCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/MiaoliCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/ChanghuaCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/NantouCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/YunlinCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/ChiayiCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Chiayi?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/PingtungCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/YilanCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/HualienCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/TaitungCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/KinmenCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/PenghuCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/LienchiangCounty?$top=10000&$format=JSON"
+              ],
+              "cadenceSec": 86400
+            },
+            "tariffs": {
+              "urls": [
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taipei?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/NewTaipei?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taoyuan?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taichung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Tainan?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Kaohsiung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Keelung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Hsinchu?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/HsinchuCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/MiaoliCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/ChanghuaCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/NantouCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/YunlinCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/ChiayiCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Chiayi?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/PingtungCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/YilanCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/HualienCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/TaitungCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/KinmenCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/PenghuCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/LienchiangCounty?$top=10000&$format=JSON"
+              ],
+              "cadenceSec": 86400
+            },
+            "status": {
+              "urls": [
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taipei?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/NewTaipei?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taoyuan?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taichung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Tainan?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Kaohsiung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Keelung?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Hsinchu?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/HsinchuCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/MiaoliCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/ChanghuaCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/NantouCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/YunlinCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/ChiayiCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Chiayi?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/PingtungCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/YilanCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/HualienCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/TaitungCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/KinmenCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/PenghuCounty?$top=10000&$format=JSON",
+                "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/LienchiangCounty?$top=10000&$format=JSON"
+              ],
+              "cadenceSec": 21600
+            }
+          },
+          "credentials": {
+            "client_id": {
+              "title": "TDX client id",
+              "setup": {
+                "url": "https://tdx.transportdata.tw/register",
+                "urlLabel": "Register for a TDX platform account",
+                "steps": [
+                  "Go to tdx.transportdata.tw/register and create a free platform member account.",
+                  "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
+                  "Create a Client Id / Client Secret pair (up to 3 per account).",
+                  "Copy both values — the Client Secret is only shown once."
+                ],
+                "cost": "Free",
+                "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs."
+              }
+            },
+            "client_secret": {
+              "title": "TDX client secret",
+              "description": "The secret of the same Client Id / Client Secret pair."
+            }
+          },
+          "auth": {
+            "kind": "oauth2-client-credentials",
+            "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+            "clientId": "client_id",
+            "clientSecret": "client_secret"
+          },
+          "freshnessWindowSec": 43200,
+          "requestLimits": {
+            "perMinute": 5
+          },
+          "license": "OGDL-Taiwan-1.0",
+          "licenseUrl": "https://data.gov.tw/license",
+          "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+          "terms": {
+            "url": "https://tdx.transportdata.tw/term",
+            "reviewedAt": "2026-10-06",
+            "note": "Data under the Open Government Data License v1.0, redistribution allowed; the source must be labelled 交通部運輸資料流通服務平臺 (TDX) or the source agency. Access itself is paid by quota: the free tier is 3 points a month (about 4,500 calls) at 5 calls a minute, which fits live states every six hours; operators on the paid Bronze tier lower the status cadence through the local catalogue layer."
+          },
+          "privacyUrl": "https://tdx.transportdata.tw/privacy",
+          "homepage": "https://tdx.transportdata.tw"
+        }
+      ]
+    },
+    "charging/us": {
+      "$schema": "../schema/charging.schema.json",
+      "feeds": [
+        {
+          "operator": "afdc",
+          "product": "charging",
+          "name": "Alternative Fuel Stations, electric charging (AFDC)",
+          "format": "afdc",
+          "tier": "aggregator",
+          "endpoints": {
+            "main": {
+              "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1.json?fuel_type=ELEC&country=all&status=E,P&access=public&limit=all",
+              "cadenceSec": 86400
+            }
+          },
+          "credentials": {
+            "api_key": {
+              "title": "NLR developer API key",
+              "description": "A National Laboratory of the Rockies (formerly NREL) developer network key.",
+              "setup": {
+                "url": "https://developer.nlr.gov/signup/",
+                "urlLabel": "Sign up for an NREL API key",
+                "steps": [
+                  "Open developer.nlr.gov/signup/.",
+                  "Enter your first name, last name, and email, and accept the terms.",
+                  "Submit the form; the 40-character API key is generated instantly and emailed to you."
+                ],
+                "cost": "Free, instant",
+                "notes": "This NREL / api.data.gov key powers the AFDC Alternative Fuel Stations dataset. DEMO_KEY works for testing but has very low rate limits."
+              }
+            }
+          },
+          "auth": {
+            "kind": "header-key",
+            "header": "X-Api-Key",
+            "credential": "api_key"
+          },
+          "freshnessWindowSec": 172800,
+          "license": "LicenseRef-NLR-Developer-Network-Terms",
+          "licenseUrl": "https://developer.nlr.gov/terms/",
+          "attribution": "U.S. DOE / NLR – Alternative Fuels Data Center (afdc.energy.gov/stations)",
+          "privacyUrl": "https://afdc.energy.gov/stations-privacy",
+          "homepage": "https://afdc.energy.gov/stations",
+          "coverage": {
+            "countries": [
+              "US",
+              "CA"
+            ]
+          }
+        }
+      ]
+    },
+    "credentials": {
+      "credentials": {
+        "overpass": {
+          "url": {
+            "title": "Overpass URL",
+            "description": "Base URL of the Overpass instance (http://overpass:80, https://overpass-api.de) or its full interpreter URL (http://overpass:80/api/interpreter), as OpenMapX's OVERPASS_URL accepts: queries go to the base URL plus /api/interpreter. Defaults to the public instance, which allows about 10,000 requests a day; point it at a self-hosted Overpass for heavier use. A private host also needs OPENCONDITIONS_EGRESS_ALLOWED_HOSTS.",
+            "default": "https://overpass-api.de"
+          }
+        }
+      }
+    }
+  },
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "tfnsw",
+      "product": "charging",
+      "name": "Transport for NSW EV charging locations",
+      "format": "csv",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.transport.nsw.gov.au/data/dataset/be1c4de4-4517-4bd0-8a09-2965ddfc7179/resource/7bbb6461-e52d-4fe7-ace4-a15c30198de0/download",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Transport for NSW, CC BY 4.0",
+      "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+      "homepage": "https://opendata.transport.nsw.gov.au/dataset/ev-charging-locations",
+      "layout": {
+        "lon": "Longitude",
+        "lat": "Latitude"
+      },
+      "charging": {
+        "id": [
+          "Latitude",
+          "Longitude",
+          "Operator"
+        ],
+        "name": [
+          "Station_name"
+        ],
+        "lang": "en",
+        "operator": {
+          "field": "Operator",
+          "pattern": "^(?!Non-networked$)(.+)$"
+        },
+        "address": {
+          "postalCode": "PCODE",
+          "text": "Station_address"
+        },
+        "lifecycle": {
+          "field": "Charger_Type",
+          "map": {
+            "Upcoming": "planned"
+          }
+        },
+        "connectors": {
+          "list": {
+            "field": "Charger_rating",
+            "separator": "\\s*&\\s*",
+            "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?:(?<power>\\d+(?:\\.\\d+)?\\s*(?:kW)?)|AC|DC)$",
+            "current": {
+              "field": "Charger_Type",
+              "map": {
+                "AC": "ac",
+                "DC": "dc"
+              }
+            }
+          }
+        }
+      },
+      "id": "au-nsw-tfnsw-charging",
+      "domain": "charging",
+      "region": "au",
+      "file": "feeds/charging/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AU"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "AU"
+    },
+    {
+      "subdivision": "vic",
+      "operator": "deeca",
+      "product": "charging",
+      "name": "Victoria government-funded public EV chargers",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.maps.vic.gov.au/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=open-data-platform:dcav_site&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "© State of Victoria (Department of Energy, Environment and Climate Action), CC BY 4.0",
+      "privacyUrl": "https://www.vic.gov.au/privacy-vicgovau",
+      "homepage": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+      "layout": {},
+      "charging": {
+        "id": "address",
+        "name": [
+          "location"
+        ],
+        "lang": "en",
+        "operator": "company",
+        "address": {
+          "text": "address"
+        },
+        "completion": "estimated_project_completion",
+        "connectors": {
+          "list": {
+            "field": "plug_type",
+            "separator": "\\s*(?:,|\\band\\b)\\s*",
+            "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?<type>.+)$",
+            "as": "connectors",
+            "map": {
+              "CCS2": {
+                "standard": "IEC_62196_T2_COMBO",
+                "current": "dc"
+              },
+              "CCS2/SAE": {
+                "standard": "IEC_62196_T2_COMBO",
+                "current": "dc"
+              },
+              "CHAdeMO": {
+                "standard": "CHADEMO",
+                "current": "dc"
+              },
+              "Type 2": {
+                "standard": "IEC_62196_T2",
+                "current": "ac"
+              }
+            },
+            "groups": {
+              "field": "chargers",
+              "separator": "\\s*(?:[,;\\n]|\\band\\b)\\s*",
+              "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?<power>\\d+(?:\\.\\d+)?\\s*kW)\\b.*$"
+            }
+          }
+        }
+      },
+      "id": "au-vic-deeca-charging",
+      "domain": "charging",
+      "region": "au",
+      "file": "feeds/charging/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AU"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "AU"
+    },
+    {
+      "subdivision": "vlg",
+      "operator": "mow",
+      "product": "charging",
+      "name": "Departement MOW public charge points (Flanders)",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://geoserver.gis.cloud.mow.vlaanderen.be/geoserver/beleid/wfs?service=WFS&version=2.0.0&request=GetFeature&typeName=laadpunten_public&outputFormat=application/json&srsName=EPSG:4326&count=20000",
+          "pagination": {
+            "skipParam": "startIndex",
+            "pageSize": 20000,
+            "recordsPath": "features"
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "licenseUrl": "https://overheid.vlaanderen.be/sites/default/files/documenten/ict-egov/licenties/hergebruik/modellicentie_gratis_hergebruik_v1_0.html",
+      "attribution": "Departement Mobiliteit en Openbare Werken (Vlaamse overheid), Modellicentie Gratis Hergebruik",
+      "privacyUrl": "https://www.vlaanderen.be/departement-mobiliteit-en-openbare-werken/privacyverklaring",
+      "layout": {},
+      "charging": {
+        "id": {
+          "field": "uniek_identificatienummer",
+          "pattern": "^(.+?)__"
+        },
+        "lang": "nl",
+        "operator": "uitbater",
+        "address": {
+          "street": "adres",
+          "postalCode": "postcode",
+          "city": "gemeente"
+        },
+        "audience": {
+          "field": "toegankelijkheid",
+          "map": {
+            "publiek": "public",
+            "semi-publiek": "restricted"
+          }
+        },
+        "evse": {
+          "key": "evse"
+        },
+        "connectors": {
+          "row": {
+            "standard": {
+              "field": "connector"
+            },
+            "powerType": {
+              "field": "stroomtype",
+              "map": {
+                "ac_1_phase": "AC_1_PHASE",
+                "ac_3_phase": "AC_3_PHASE",
+                "dc": "DC"
+              }
+            },
+            "powerKw": {
+              "field": "maximaal_vermogen_kw",
+              "unit": "kW"
+            }
+          }
+        }
+      },
+      "homepage": "https://geoserver.gis.cloud.mow.vlaanderen.be",
+      "id": "be-vlg-mow-charging",
+      "domain": "charging",
+      "region": "be",
+      "file": "feeds/charging/be.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "BE"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "BE"
+    },
+    {
+      "subdivision": "wal",
+      "operator": "spw",
+      "product": "charging",
+      "name": "Service public de Wallonie charging infrastructure",
+      "format": "csv",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://geoservices.wallonie.be/geotraitement/spwdatadownload/results/c731a282-e378-49f3-8ab6-f9a90e7a5683/BORNES_RECHARGE_XY_31370.csv",
+          "cadenceSec": 604800
+        }
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Service public de Wallonie (SPW), CC BY 4.0",
+      "privacyUrl": "https://www.wallonie.be/fr/vie-privee",
+      "homepage": "https://geoportail.wallonie.be/catalogue/c731a282-e378-49f3-8ab6-f9a90e7a5683.html",
+      "layout": {
+        "wkt": "WKT_GEOM",
+        "crs": "EPSG:31370",
+        "delimiter": ";"
+      },
+      "charging": {
+        "id": "EMPLACEMENT_ID",
+        "lang": "fr",
+        "operator": "OPERATEUR",
+        "address": {
+          "street": "ADRESSE",
+          "postalCode": "CODE_POSTAL",
+          "city": "VILLE"
+        },
+        "audience": {
+          "field": "TYPE_ACCES",
+          "map": {
+            "public": "public",
+            "semi-public": "restricted",
+            "unknown": "unknown"
+          }
+        },
+        "parkingType": {
+          "field": "TYPE_EMPLACEMENT",
+          "map": {
+            "ON_STREET": "on_street",
+            "PARKING_LOT": "parking_lot",
+            "PARKING_GARAGE": "parking_garage",
+            "UNDERGROUND_GA": "underground_garage",
+            "ALONG_MOTORWAY": "along_motorway",
+            "OTHER": "other"
+          }
+        },
+        "evse": {
+          "key": "CONNECTEUR_ID"
+        },
+        "connectors": {
+          "row": {
+            "powerKw": {
+              "field": "PUISSANCE_KW",
+              "unit": "kW"
+            }
+          }
+        }
+      },
+      "id": "be-wal-spw-charging",
+      "domain": "charging",
+      "region": "be",
+      "file": "feeds/charging/be.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "BE"
+        ]
+      },
+      "cadenceSec": 604800,
+      "country": "BE"
+    },
+    {
+      "operator": "bfe",
+      "product": "charging",
+      "name": "BFE charging points for electric cars (ich-tanke-strom.ch)",
+      "format": "oicp",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/data/oicp/ch.bfe.ladestellen-elektromobilitaet.json",
+          "cadenceSec": 3600
+        },
+        "status": {
+          "url": "https://data.geo.admin.ch/ch.bfe.ladestellen-elektromobilitaet/status/oicp/ch.bfe.ladestellen-elektromobilitaet.json",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-opendata-swiss-terms-by-ask",
+      "licenseUrl": "https://opendata.swiss/en/terms-of-use",
+      "attribution": "Bundesamt für Energie BFE / ich-tanke-strom.ch",
+      "privacyUrl": "https://www.geo.admin.ch/en/legal-framework",
+      "homepage": "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos",
+      "id": "ch-bfe-charging",
+      "domain": "charging",
+      "region": "ch",
+      "file": "feeds/charging/ch.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": false,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "CH"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "CH"
+    },
+    {
+      "operator": "cynap",
+      "product": "charging",
+      "name": "CYNAP public EV chargers (EMS)",
+      "format": "cynap",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://fixcyprus.cy/gnosis/open/api/nap/datasets/electric_vehicle_chargers/",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Department of Electrical and Mechanical Services (EMS), Cyprus",
+      "privacyUrl": "https://www.traffic4cyprus.org.cy/pages/privacy-policy",
+      "homepage": "https://www.traffic4cyprus.org.cy",
+      "id": "cy-cynap-charging",
+      "domain": "charging",
+      "region": "cy",
+      "file": "feeds/charging/cy.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "CY"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "CY"
+    },
+    {
+      "operator": "bnetza",
+      "product": "charging",
+      "name": "Bundesnetzagentur Ladesäulenregister",
+      "format": "bnetza",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/DownloadundKontakt.html",
+          "follow": {
+            "pattern": "href=\"(https://data\\.bundesnetzagentur\\.de/[^\"]*/Ladesaeulenregister[^\"]*\\.csv)\""
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Bundesnetzagentur.de, CC BY 4.0",
+      "privacyUrl": "https://www.bundesnetzagentur.de/DE/Service/Datenschutz/start.html",
+      "homepage": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
+      "id": "de-bnetza-charging",
+      "domain": "charging",
+      "region": "de",
+      "file": "feeds/charging/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "DE"
+    },
+    {
+      "subdivision": "bw",
+      "operator": "mobidata",
+      "product": "charging",
+      "name": "MobiData BW charge-point database",
+      "format": "ocpi",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/locations?exclude_source_uid=opendata_swiss&limit=5000",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 5000,
+            "recordsPath": "items"
+          },
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 1000,
+            "recordsPath": "items",
+            "maxPages": 300
+          },
+          "cadenceSec": 300
+        },
+        "tariffs": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 1000,
+            "recordsPath": "items"
+          },
+          "cadenceSec": 86400
+        },
+        "associations": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/3.0/tariff-associations?limit=1000",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 1000,
+            "recordsPath": "items"
+          },
+          "cadenceSec": 86400
+        },
+        "sources": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/v1/sources?limit=100",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+      "terms": {
+        "url": "https://mobidata-bw.de/dataset/e-ladesaulen",
+        "reviewedAt": "2026-10-06",
+        "note": "DL-DE-BY-2.0 for the bundle; per-source licences in /api/public/v1/sources (BNetzA and EnBW CC BY 4.0 with contributor, Mobilithek DATEX feeds CC0). The opendata_swiss source is excluded: SFOE data needs permission for commercial use."
+      },
+      "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+      "homepage": "https://mobidata-bw.de/dataset/e-ladesaulen",
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "id": "de-bw-mobidata-charging",
+      "domain": "charging",
+      "region": "de",
+      "file": "feeds/charging/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "operator": "dgt",
+      "product": "charging",
+      "name": "DGT national access point charge points (MITERD)",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://nap.dgt.es/datex2/v3/miterd/EnergyInfrastructureTablePublication/electrolineras.xml",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "DGT / MITERD – Punto de Acceso Nacional (nap.dgt.es), CC BY",
+      "terms": {
+        "url": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos",
+        "reviewedAt": "2026-10-06",
+        "note": "NAP dataset licence CC BY (unversioned, CKAN cc-by); its 'condition for use' links the generic dgt.es aviso legal, which reserves website content. Dataset licence taken as governing."
+      },
+      "privacyUrl": "https://sede.dgt.gob.es/es/proteccion-datos/",
+      "homepage": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos",
+      "id": "es-dgt-charging",
+      "domain": "charging",
+      "region": "es",
+      "file": "feeds/charging/es.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "ES"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "ES"
+    },
+    {
+      "operator": "digitraffic",
+      "product": "charging",
+      "name": "Fintraffic Digitraffic charging network",
+      "format": "digitraffic",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://afir.digitraffic.fi/api/charging-network/v1/locations/all",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://afir.digitraffic.fi/api/charging-network/v1/locations/statuses/all",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 300
+        },
+        "tariffs": {
+          "url": "https://afir.digitraffic.fi/api/charging-network/v1/tariffs/all",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+      "homepage": "https://www.digitraffic.fi/en/",
+      "id": "fi-digitraffic-charging",
+      "domain": "charging",
+      "region": "fi",
+      "file": "feeds/charging/fi.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "FI"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "FI"
+    },
+    {
+      "operator": "irve",
+      "product": "charging",
+      "name": "Base nationale des IRVE",
+      "format": "irve",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://www.data.gouv.fr/api/1/datasets/r/eb76d20a-8501-400e-b336-d85724de5435",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://transport.data.gouv.fr/resources/84098/download",
+          "cadenceSec": 600
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "etalab-2.0",
+      "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "attribution": "data.gouv.fr / transport.data.gouv.fr, Base nationale des IRVE, Licence Ouverte 2.0",
+      "privacyUrl": "https://www.data.gouv.fr/pages/legal/cgu",
+      "homepage": "https://transport.data.gouv.fr/datasets?type=charging-stations",
+      "id": "fr-irve-charging",
+      "domain": "charging",
+      "region": "fr",
+      "file": "feeds/charging/fr.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "FR"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "FR"
+    },
+    {
+      "operator": "ocm",
+      "product": "charging",
+      "name": "Open Charge Map",
+      "format": "ocm",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://api.openchargemap.io/v3/poi/?output=json&boundingbox=({south},{west}),({north},{east})&maxresults=1000&compact=false&verbose=false",
+          "impersonate": true,
+          "cadenceSec": 86400
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "Open Charge Map API key",
+          "description": "An Open Charge Map application key.",
+          "setup": {
+            "url": "https://openchargemap.org/site/loginprovider/beginlogin",
+            "urlLabel": "Get Open Charge Map API key",
+            "steps": [
+              "Go to openchargemap.org and create an account or sign in.",
+              "Open 'My Profile' → 'My Apps'.",
+              "Click 'Register an Application' and enter a name and description.",
+              "Copy the API key issued immediately."
+            ],
+            "cost": "Free",
+            "notes": "Required for regular use and for calls with maxresults > 250. Sent via the 'X-API-Key' header or 'key' query parameter."
+          }
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "X-API-Key",
+        "credential": "api_key"
+      },
+      "freshnessWindowSec": 172800,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 10,
+        "perDay": 2000
+      },
+      "onDemand": {
+        "cellDeg": 0.25,
+        "ttlSec": 86400,
+        "maxCellsPerRead": 16,
+        "probe": [
+          8.4,
+          49.01
+        ]
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "© Open Charge Map contributors (CC BY 4.0) and the listed Data Providers",
+      "terms": {
+        "url": "https://www.openchargemap.org/about/terms",
+        "reviewedAt": "2026-10-06",
+        "note": "User-contributed data is CC BY 4.0; data imported from third-party Data Providers stays under each provider's own licence (some NC-SA, some none), which every record names. The provider and its licence must be shown to the end user.",
+        "redistribution": false
+      },
+      "privacyUrl": "https://www.openchargemap.org/about/terms",
+      "homepage": "https://openchargemap.org",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "ocm-charging",
+      "domain": "charging",
+      "region": "global",
+      "file": "feeds/charging/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 86400
+    },
+    {
+      "operator": "osm",
+      "product": "charging",
+      "name": "OpenStreetMap charging stations",
+      "format": "overpass",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"charging_station\"]({south},{west},{north},{east});out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmCharging/1.0 (+https://github.com/openconditions/openconditions)"
+          },
+          "cadenceSec": 21600
+        }
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "requestLimits": {
+        "perMinute": 30,
+        "perDay": 5000
+      },
+      "onDemand": {
+        "cellDeg": 0.1,
+        "ttlSec": 21600,
+        "maxCellsPerRead": 16,
+        "probe": [
+          8.4,
+          49.01
+        ]
+      },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "osm-charging",
+      "domain": "charging",
+      "region": "global",
+      "file": "feeds/charging/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "cadenceSec": 21600
+    },
+    {
+      "operator": "epd",
+      "product": "charging",
+      "name": "Environmental Protection Department public EV chargers",
+      "format": "geojson",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://portal.csdi.gov.hk/csdi-webpage/file-api?dataset_id=epd_rcd_1631080339740_69941&format=geojson&layer_name=geotagging",
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-HK-CSDI-ToU",
+      "licenseUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+      "attribution": "Environmental Protection Department, HKSAR Government; source: CSDI Portal (portal.csdi.gov.hk)",
+      "privacyUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+      "homepage": "https://portal.csdi.gov.hk/geoportal/?datasetId=epd_rcd_1631080339740_69941",
+      "layout": {},
+      "charging": {
+        "id": "LOCATION_EN",
+        "name": [
+          "LOCATION_EN"
+        ],
+        "lang": "en",
+        "address": {
+          "text": "ADDRESS_EN"
+        },
+        "connectors": {
+          "columns": [
+            {
+              "count": "STANDARD_BS1363_no",
+              "standard": "DOMESTIC_G",
+              "current": "ac",
+              "format": "socket"
+            },
+            {
+              "count": "MEDIUM_CCS_DC_COMBO_no",
+              "standard": "IEC_62196_T2_COMBO",
+              "current": "dc"
+            },
+            {
+              "count": "MEDIUM_IEC62196_no",
+              "standard": "IEC_62196_T2",
+              "current": "ac"
+            },
+            {
+              "count": "MEDIUM_SAEJ1772_no",
+              "standard": "IEC_62196_T1",
+              "current": "ac"
+            },
+            {
+              "count": "MEDIUM_GB_T20234_2_AC__no",
+              "standard": "GBT_AC",
+              "current": "ac"
+            },
+            {
+              "count": "MEDIUM_OTHERS_no",
+              "standard": "UNKNOWN"
+            },
+            {
+              "count": "QUICK_CHAdeMO_no",
+              "standard": "CHADEMO",
+              "current": "dc"
+            },
+            {
+              "count": "QUICK_CCS_DC_COMBO_no",
+              "standard": "IEC_62196_T2_COMBO",
+              "current": "dc"
+            },
+            {
+              "count": "QUICK_IEC62196_no",
+              "standard": "IEC_62196_T2",
+              "current": "ac"
+            },
+            {
+              "count": "QUICK_GB_T20234_3_DC__no",
+              "standard": "GBT_DC",
+              "current": "dc"
+            },
+            {
+              "count": "QUICK_OTHERS_no",
+              "standard": "UNKNOWN"
+            },
+            {
+              "count": "FAST_CHAdeMO_no",
+              "standard": "CHADEMO",
+              "current": "dc"
+            },
+            {
+              "count": "FAST_CCS_DC_COMBO_no",
+              "standard": "IEC_62196_T2_COMBO",
+              "current": "dc"
+            },
+            {
+              "count": "FAST_GB_T20234_3_DC__no",
+              "standard": "GBT_DC",
+              "current": "dc"
+            },
+            {
+              "count": "FAST_OTHERS_no",
+              "standard": "UNKNOWN"
+            }
+          ]
+        }
+      },
+      "id": "hk-epd-charging",
+      "domain": "charging",
+      "region": "hk",
+      "file": "feeds/charging/hk.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "HK"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "HK"
+    },
+    {
+      "operator": "keco",
+      "product": "charging",
+      "name": "Korea Environment Corporation EV chargers",
+      "format": "keco",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://apis.data.go.kr/B552584/EvCharger/getChargerInfo?dataType=JSON&numOfRows=9999",
+          "pagination": {
+            "skipParam": "pageNo",
+            "pageSize": 9999,
+            "mode": "page",
+            "recordsPath": "items.item",
+            "xmlLists": true
+          },
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://apis.data.go.kr/B552584/EvCharger/getChargerStatus?dataType=JSON&period=10&numOfRows=9999",
+          "cadenceSec": 300
+        }
+      },
+      "credentials": {
+        "service_key": {
+          "title": "data.go.kr service key",
+          "description": "The general authentication key (Decoding) of a data.go.kr account approved for the KECO EV charger OpenAPI.",
+          "setup": {
+            "url": "https://www.data.go.kr/data/15076352/openapi.do",
+            "urlLabel": "Apply for the KECO EV charger OpenAPI",
+            "steps": [
+              "Register at data.go.kr.",
+              "Open https://www.data.go.kr/data/15076352/openapi.do and press 활용신청 (apply for use); approval is automatic.",
+              "Copy the 일반 인증키 (general authentication key), the Decoding form; it is sent as the serviceKey query parameter."
+            ],
+            "cost": "Free",
+            "notes": "A development account allows 1,000 calls a day per operation; registering a use case raises it."
+          }
+        }
+      },
+      "auth": {
+        "kind": "query-key",
+        "param": "serviceKey",
+        "credential": "service_key"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-KOGL-Type-1",
+      "licenseUrl": "https://www.kogl.or.kr/info/licenseType1.do",
+      "attribution": "한국환경공단 (Korea Environment Corporation), 공공누리 제1유형, https://www.data.go.kr/data/15076352/openapi.do",
+      "privacyUrl": "https://www.data.go.kr/ugs/selectPortalPolicyView.do",
+      "homepage": "https://www.data.go.kr/data/15076352/openapi.do",
+      "id": "kr-keco-charging",
+      "domain": "charging",
+      "region": "kr",
+      "file": "feeds/charging/kr.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "KR"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "KR"
+    },
+    {
+      "operator": "vialietuva",
+      "product": "charging",
+      "name": "Via Lietuva charge points",
+      "format": "ocpi",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://ev.vialietuva.lt/ocpi/2.3.0/locations?limit=10000",
+          "headers": {
+            "User-Agent": "OpenConditions/1.0"
+          },
+          "cadenceSec": 600
+        },
+        "tariffs": {
+          "url": "https://ev.vialietuva.lt/ocpi/2.3.0/tariffs",
+          "headers": {
+            "User-Agent": "OpenConditions/1.0"
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Via Lietuva, CC BY 4.0",
+      "privacyUrl": "https://vialietuva.lt/en/privacy-policy",
+      "homepage": "https://ev.vialietuva.lt/en/data-provision",
+      "id": "lt-vialietuva-charging",
+      "domain": "charging",
+      "region": "lt",
+      "file": "feeds/charging/lt.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "LT"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "LT"
+    },
+    {
+      "operator": "chargy",
+      "product": "charging",
+      "name": "Chargy public charging network",
+      "format": "chargy",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://data.public.lu/fr/datasets/r/22f9d77a-5138-4b02-b315-15f306b77034",
+          "cadenceSec": 600
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Chargy / data.public.lu",
+      "privacyUrl": "https://data.public.lu/en/pages/legal/privacy",
+      "homepage": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
+      "id": "lu-chargy-charging",
+      "domain": "charging",
+      "region": "lu",
+      "file": "feeds/charging/lu.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "LU"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "LU"
+    },
+    {
+      "operator": "ndw",
+      "product": "charging",
+      "name": "NDW publicly accessible charge points (DOT-NL)",
+      "format": "ocpi",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.ndw.nu/charging_point_locations_ocpi.json.gz",
+          "cadenceSec": 600
+        },
+        "tariffs": {
+          "url": "https://opendata.ndw.nu/charging_point_tariffs_ocpi.json.gz",
+          "cadenceSec": 3600
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "NDW / DOT-NL",
+      "privacyUrl": "https://www.ndw.nu/service/privacy",
+      "homepage": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
+      "id": "nl-ndw-charging",
+      "domain": "charging",
+      "region": "nl",
+      "file": "feeds/charging/nl.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NL"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "NL"
+    },
+    {
+      "operator": "nobil",
+      "product": "charging",
+      "name": "NOBIL charging stations (Enova)",
+      "format": "nobil",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://nobil.no/api/server/datadump.php?apikey=${api_key}&format=json&file=false",
+          "cadenceSec": 86400
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "NOBIL API key",
+          "description": "A NOBIL API v3 key, issued by email per registered website.",
+          "setup": {
+            "url": "https://info.nobil.no/api",
+            "urlLabel": "Request a NOBIL API key",
+            "steps": [
+              "Open info.nobil.no/api and review the Creative Commons (CC BY 4.0) terms.",
+              "Use the 'Ask for an API-key' section to contact NOBIL with your project details.",
+              "Accept the CC BY 4.0 terms of use.",
+              "Receive the API key by email."
+            ],
+            "cost": "Free (Creative Commons data, attribution required)",
+            "notes": "Norway/Sweden charging data. The request is handled by email rather than an instant self-service form.",
+            "email": {
+              "to": "post@nobil.no",
+              "subject": "NOBIL API key request",
+              "body": "Hello,\n\nI would like to request a NOBIL API key (API v3) to display Norwegian/Swedish EV charging station data in a self-hosted OpenMapX map application.\n\nI have read and accept the Creative Commons Attribution 4.0 (CC BY 4.0) terms of use and will attribute NOBIL accordingly.\n\nProject: self-hosted, non-commercial mapping application.\n\nThank you."
+            }
+          }
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "NOBIL by Enova, CC BY 4.0, https://nobil.no",
+      "terms": {
+        "url": "https://info.nobil.no/images/API_NOBIL_Documentation_v3_20260816.pdf",
+        "reviewedAt": "2026-10-06",
+        "note": "Data CC BY 4.0. API usage terms: no direct end-user calls; data must be processed or cached in an intermediate service; key issued per registered website and must stay private."
+      },
+      "privacyUrl": "https://info.nobil.no/om?catid=8%3Aom&id=246%3Anobil-privacy-policy&view=article",
+      "homepage": "https://nobil.no",
+      "coverage": {
+        "countries": [
+          "NO",
+          "SE"
+        ]
+      },
+      "id": "no-nobil-charging",
+      "domain": "charging",
+      "region": "no",
+      "file": "feeds/charging/no.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 86400,
+      "country": "NO"
+    },
+    {
+      "operator": "nzta",
+      "product": "charging",
+      "name": "EVRoam charging stations (NZ Transport Agency)",
+      "format": "evroam",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/EV_Roam_charging_stations/FeatureServer/0/query?where=1=1&outFields=*&f=geojson&resultRecordCount=2000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features"
+          },
+          "cadenceSec": 86400
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Waka Kotahi NZ Transport Agency (EVRoam), CC BY 4.0",
+      "privacyUrl": "https://www.nzta.govt.nz/privacy/",
+      "homepage": "https://www.nzta.govt.nz/planning-and-investment/planning/transport-planning/planning-for-electric-vehicles/evroam",
+      "id": "nz-nzta-charging",
+      "domain": "charging",
+      "region": "nz",
+      "file": "feeds/charging/nz.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NZ"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "NZ"
+    },
+    {
+      "operator": "eipa",
+      "product": "charging",
+      "name": "EIPA alternative-fuel infrastructure register (UDT)",
+      "format": "eipa",
+      "tier": "authoritative",
+      "endpoints": {
+        "pools": {
+          "url": "https://eipa.udt.gov.pl/reader/api/pool.json",
+          "cadenceSec": 86400
+        },
+        "stations": {
+          "url": "https://eipa.udt.gov.pl/reader/api/station.json",
+          "cadenceSec": 86400
+        },
+        "points": {
+          "url": "https://eipa.udt.gov.pl/reader/api/point.json",
+          "cadenceSec": 86400
+        },
+        "operators": {
+          "url": "https://eipa.udt.gov.pl/reader/api/operator.json",
+          "cadenceSec": 86400
+        },
+        "dictionary": {
+          "url": "https://eipa.udt.gov.pl/reader/api/dictionary.json",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://eipa.udt.gov.pl/reader/api/dynamic.json",
+          "cadenceSec": 600
+        }
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "EIPA – Urząd Dozoru Technicznego",
+      "terms": {
+        "url": "https://eipa.udt.gov.pl/faq",
+        "reviewedAt": "2026-10-06",
+        "note": "No licence stated. UDT's FAQ: downloaded data may be presented on your own site or processed otherwise, free for commercial and non-commercial use; hourly download limits; registration required.",
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": null,
+        "retention": true
+      },
+      "privacyUrl": "https://eipa.udt.gov.pl/privacy",
+      "homepage": "https://eipa.udt.gov.pl",
+      "disabled": {
+        "reason": "download URLs and limits are issued on registration; set them in the local catalogue layer",
+        "since": "2026-10-06"
+      },
+      "id": "pl-eipa-charging",
+      "domain": "charging",
+      "region": "pl",
+      "file": "feeds/charging/pl.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": null,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "PL"
+        ]
+      },
+      "cadenceSec": 600,
+      "country": "PL"
+    },
+    {
+      "operator": "lta",
+      "product": "charging",
+      "name": "LTA DataMall EV charging points",
+      "format": "lta",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://datamall2.mytransport.sg/ltaodataservice/EVCBatch",
+          "follow": {
+            "path": "value.0.Link"
+          },
+          "cadenceSec": 300
+        }
+      },
+      "credentials": {
+        "account_key": {
+          "title": "LTA DataMall AccountKey",
+          "setup": {
+            "url": "https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html",
+            "urlLabel": "Register for an LTA DataMall AccountKey",
+            "steps": [
+              "Open datamall.lta.gov.sg and go to 'Request for API Access'.",
+              "Register with your name, email, and organisation, and accept the Singapore Open Data Licence.",
+              "Confirm your email; the AccountKey is issued to your registered email.",
+              "Copy the AccountKey — it is sent in the 'AccountKey' request header."
+            ],
+            "cost": "Free",
+            "notes": "Covers the EV Charging Points APIs (station location, connector types, real-time availability by postal code). Sent via the 'AccountKey' header, never as a query parameter."
+          }
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "AccountKey",
+        "credential": "account_key"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-Singapore-ODL-1.0",
+      "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+      "attribution": "Contains information from EV Charging Points Batch from LTA DataMall, made available under the terms of the Singapore Open Data Licence version 1.0 (https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html)",
+      "terms": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/api-terms-of-service.html",
+        "reviewedAt": "2026-10-06",
+        "note": "Redistribution allowed with the licence notice and link. No rights pass to downstream sub-licensees; re-users must take the licence from LTA. API: up to 10 million calls a day; the AccountKey must stay confidential."
+      },
+      "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy-statement.html",
+      "homepage": "https://datamall.lta.gov.sg",
+      "id": "sg-lta-charging",
+      "domain": "charging",
+      "region": "sg",
+      "file": "feeds/charging/sg.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "SG"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "SG"
+    },
+    {
+      "operator": "nap",
+      "product": "charging",
+      "name": "NAP Slovenija charge points (Prometej IDACS)",
+      "format": "datex2",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://b2b.nap.si/data/b2b.prometej.energyInfrastructureTablePublication",
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://b2b.nap.si/data/b2b.prometej.energyInfrastructureStatusPublication",
+          "cadenceSec": 300
+        }
+      },
+      "credentials": {
+        "username": {
+          "title": "NAP Slovenija account email",
+          "description": "The email of the NAP business-entity account that holds access to the Prometej IDACS datasets.",
+          "setup": {
+            "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+            "urlLabel": "Register with NAP Slovenija",
+            "steps": [
+              "Create a business-entity account at nap.si (click the user icon → Registration) and confirm the email.",
+              "Log in, open your profile, and request permission for the 'Prometej IDACS Energy Infrastructure Table (DATEX II v3.6)' dataset. Accept the general terms of use.",
+              "Also request the 'Prometej IDACS Energy Infrastructure Status' dataset for live status.",
+              "Wait for NAP to grant the requests (shown as 'granted' on your profile page).",
+              "Enter the account's email here and its password in the password field; requests use HTTP Basic auth."
+            ],
+            "cost": "Free (business-entity registration required)",
+            "notes": "The dataset licence is CC BY-SA 4.0, so the feed is served to the operator only."
+          }
+        },
+        "password": {
+          "title": "NAP Slovenija account password",
+          "description": "The password of that NAP account."
+        }
+      },
+      "auth": {
+        "kind": "basic",
+        "user": "username",
+        "password": "password"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "MZIE / NAP Slovenija, CC BY-SA 4.0",
+      "privacyUrl": "https://www.nap.si/en/privacy",
+      "homepage": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+      "id": "si-nap-charging",
+      "domain": "charging",
+      "region": "si",
+      "file": "feeds/charging/si.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": true
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "SI"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "SI"
+    },
+    {
+      "operator": "tdx",
+      "product": "charging",
+      "name": "TDX EV charging stations",
+      "format": "tdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/NewTaipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taoyuan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taichung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Tainan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Kaohsiung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Keelung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Hsinchu?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/HsinchuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/MiaoliCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/ChanghuaCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/NantouCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/YunlinCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/ChiayiCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Chiayi?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/PingtungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/YilanCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/HualienCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/TaitungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/KinmenCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/PenghuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/LienchiangCounty?$top=10000&$format=JSON"
+          ],
+          "cadenceSec": 86400
+        },
+        "tariffs": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/NewTaipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taoyuan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taichung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Tainan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Kaohsiung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Keelung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Hsinchu?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/HsinchuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/MiaoliCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/ChanghuaCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/NantouCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/YunlinCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/ChiayiCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Chiayi?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/PingtungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/YilanCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/HualienCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/TaitungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/KinmenCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/PenghuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/LienchiangCounty?$top=10000&$format=JSON"
+          ],
+          "cadenceSec": 86400
+        },
+        "status": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/NewTaipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taoyuan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taichung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Tainan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Kaohsiung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Keelung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Hsinchu?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/HsinchuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/MiaoliCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/ChanghuaCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/NantouCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/YunlinCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/ChiayiCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Chiayi?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/PingtungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/YilanCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/HualienCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/TaitungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/KinmenCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/PenghuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/LienchiangCounty?$top=10000&$format=JSON"
+          ],
+          "cadenceSec": 21600
+        }
+      },
+      "credentials": {
+        "client_id": {
+          "title": "TDX client id",
+          "setup": {
+            "url": "https://tdx.transportdata.tw/register",
+            "urlLabel": "Register for a TDX platform account",
+            "steps": [
+              "Go to tdx.transportdata.tw/register and create a free platform member account.",
+              "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
+              "Create a Client Id / Client Secret pair (up to 3 per account).",
+              "Copy both values — the Client Secret is only shown once."
+            ],
+            "cost": "Free",
+            "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs."
+          }
+        },
+        "client_secret": {
+          "title": "TDX client secret",
+          "description": "The secret of the same Client Id / Client Secret pair."
+        }
+      },
+      "auth": {
+        "kind": "oauth2-client-credentials",
+        "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+        "clientId": "client_id",
+        "clientSecret": "client_secret"
+      },
+      "freshnessWindowSec": 43200,
+      "requestLimits": {
+        "perMinute": 5
+      },
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+      "terms": {
+        "url": "https://tdx.transportdata.tw/term",
+        "reviewedAt": "2026-10-06",
+        "note": "Data under the Open Government Data License v1.0, redistribution allowed; the source must be labelled 交通部運輸資料流通服務平臺 (TDX) or the source agency. Access itself is paid by quota: the free tier is 3 points a month (about 4,500 calls) at 5 calls a minute, which fits live states every six hours; operators on the paid Bronze tier lower the status cadence through the local catalogue layer."
+      },
+      "privacyUrl": "https://tdx.transportdata.tw/privacy",
+      "homepage": "https://tdx.transportdata.tw",
+      "id": "tw-tdx-charging",
+      "domain": "charging",
+      "region": "tw",
+      "file": "feeds/charging/tw.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "TW"
+        ]
+      },
+      "cadenceSec": 21600,
+      "country": "TW"
+    },
+    {
+      "operator": "afdc",
+      "product": "charging",
+      "name": "Alternative Fuel Stations, electric charging (AFDC)",
+      "format": "afdc",
+      "tier": "aggregator",
+      "endpoints": {
+        "main": {
+          "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1.json?fuel_type=ELEC&country=all&status=E,P&access=public&limit=all",
+          "cadenceSec": 86400
+        }
+      },
+      "credentials": {
+        "api_key": {
+          "title": "NLR developer API key",
+          "description": "A National Laboratory of the Rockies (formerly NREL) developer network key.",
+          "setup": {
+            "url": "https://developer.nlr.gov/signup/",
+            "urlLabel": "Sign up for an NREL API key",
+            "steps": [
+              "Open developer.nlr.gov/signup/.",
+              "Enter your first name, last name, and email, and accept the terms.",
+              "Submit the form; the 40-character API key is generated instantly and emailed to you."
+            ],
+            "cost": "Free, instant",
+            "notes": "This NREL / api.data.gov key powers the AFDC Alternative Fuel Stations dataset. DEMO_KEY works for testing but has very low rate limits."
+          }
+        }
+      },
+      "auth": {
+        "kind": "header-key",
+        "header": "X-Api-Key",
+        "credential": "api_key"
+      },
+      "freshnessWindowSec": 172800,
+      "license": "LicenseRef-NLR-Developer-Network-Terms",
+      "licenseUrl": "https://developer.nlr.gov/terms/",
+      "attribution": "U.S. DOE / NLR – Alternative Fuels Data Center (afdc.energy.gov/stations)",
+      "privacyUrl": "https://afdc.energy.gov/stations-privacy",
+      "homepage": "https://afdc.energy.gov/stations",
+      "coverage": {
+        "countries": [
+          "US",
+          "CA"
+        ]
+      },
+      "id": "us-afdc-charging",
+      "domain": "charging",
+      "region": "us",
+      "file": "feeds/charging/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 86400,
+      "country": "US"
+    }
+  ]
+}

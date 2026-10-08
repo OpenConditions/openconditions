@@ -169,7 +169,7 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   OPENCONDITIONS_OPERATOR_TOKEN: {
     title: "Operator token",
     description:
-      "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves no Tankerkönig (DE), E-Control (AT) or OpenStreetMap fuel station.",
+      "Bearer token granting the operator scope (restricted sources, no rate limit); at least 32 characters, or the service fails boot. Must equal OpenMapX's own OPENCONDITIONS_OPERATOR_TOKEN, which app-api and the data-manager send. Unset, OpenMapX reads in the public scope and serves none of the restricted sources, those whose licence or terms keep their records from public redistribution: Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, OpenStreetMap, BNLS (FR) and Mobidrom Park+Ride (DE) car parks, and OpenStreetMap, Open Charge Map and NAP Slovenija charge points.",
     secret: true,
   },
   SEGMENT_REGIONS: {

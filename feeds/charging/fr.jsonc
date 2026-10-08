@@ -1,0 +1,31 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "irve",
+      "product": "charging",
+      "name": "Base nationale des IRVE",
+      "tier": "aggregator",
+      "format": "irve",
+      // data.gouv.fr's daily consolidation of the static schema (one row per
+      // charge point, about 158 MB), and the national access point's dynamic
+      // consolidation, generated on request, joined by charge-point id.
+      "endpoints": {
+        "main": {
+          "url": "https://www.data.gouv.fr/api/1/datasets/r/eb76d20a-8501-400e-b336-d85724de5435",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://transport.data.gouv.fr/resources/84098/download",
+          "cadenceSec": 600,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "etalab-2.0",
+      "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "attribution": "data.gouv.fr / transport.data.gouv.fr, Base nationale des IRVE, Licence Ouverte 2.0",
+      "homepage": "https://transport.data.gouv.fr/datasets?type=charging-stations",
+      "privacyUrl": "https://www.data.gouv.fr/pages/legal/cgu",
+    },
+  ],
+}

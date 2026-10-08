@@ -1,0 +1,162 @@
+{
+  "UpdateTime": "2026-10-06T11:35:37+08:00",
+  "UpdateInterval": 14400,
+  "SrcUpdateTime": "2026-10-05T23:55:34+08:00",
+  "SrcUpdateInterval": 86400,
+  "AuthorityCode": "TPE",
+  "ChargingRates": [
+    {
+      "StationID": "33029464-STP6360001",
+      "ChargingPointID": "33029464-PTP6360001",
+      "ConnectorID": "33029464-CTP6360001",
+      "Rates": [
+        {
+          "RateType": 3,
+          "PricingType": 1,
+          "RatePrice": 10,
+          "Peak": 0,
+          "StartTime": "00:00",
+          "EndTime": "24:00"
+        }
+      ]
+    },
+    {
+      "StationID": "33029464-STP6360001",
+      "ChargingPointID": "33029464-PTP6360002",
+      "ConnectorID": "33029464-CTP6360002",
+      "Rates": [
+        {
+          "RateType": 3,
+          "PricingType": 1,
+          "RatePrice": 10,
+          "Peak": 0,
+          "StartTime": "00:00",
+          "EndTime": "24:00"
+        }
+      ]
+    },
+    {
+      "StationID": "TPE0201U03",
+      "ChargingPointID": "90807408-PCP03576",
+      "ConnectorID": "90807408-CCP03576",
+      "Rates": [
+        {
+          "RateType": 2,
+          "PricingType": 1,
+          "RatePrice": 7.8,
+          "Peak": 0,
+          "StartTime": "00:00",
+          "EndTime": "24:00"
+        }
+      ]
+    },
+    {
+      "StationID": "TPE0201U03",
+      "ChargingPointID": "90807408-PCP03577",
+      "ConnectorID": "90807408-CCP03577",
+      "Rates": [
+        {
+          "RateType": 2,
+          "PricingType": 1,
+          "RatePrice": 7.8,
+          "Peak": 0,
+          "StartTime": "00:00",
+          "EndTime": "24:00"
+        }
+      ]
+    },
+    {
+      "StationID": "TPE0201U03",
+      "ChargingPointID": "90807408-PCP03578",
+      "ConnectorID": "90807408-CCP03578",
+      "Rates": [
+        {
+          "RateType": 2,
+          "PricingType": 1,
+          "RatePrice": 7.8,
+          "Peak": 0,
+          "StartTime": "00:00",
+          "EndTime": "24:00"
+        }
+      ]
+    },
+    {
+      "StationID": "TPE0514",
+      "ChargingPointID": "90505425-P0094",
+      "ConnectorID": "90505425-C0094-1",
+      "Rates": [
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 6.5,
+          "Peak": 2,
+          "StartTime": "00:00",
+          "EndTime": "08:00"
+        },
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 6.5,
+          "Peak": 1,
+          "StartTime": "08:00",
+          "EndTime": "16:00"
+        },
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 13.5,
+          "Peak": 1,
+          "StartTime": "16:00",
+          "EndTime": "22:00"
+        },
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 6.5,
+          "Peak": 1,
+          "StartTime": "22:00",
+          "EndTime": "24:00"
+        }
+      ]
+    },
+    {
+      "StationID": "TPE0514",
+      "ChargingPointID": "90505425-P0095",
+      "ConnectorID": "90505425-C0095-1",
+      "Rates": [
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 6.5,
+          "Peak": 2,
+          "StartTime": "00:00",
+          "EndTime": "08:00"
+        },
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 6.5,
+          "Peak": 1,
+          "StartTime": "08:00",
+          "EndTime": "16:00"
+        },
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 13.5,
+          "Peak": 1,
+          "StartTime": "16:00",
+          "EndTime": "22:00"
+        },
+        {
+          "RateType": 2,
+          "PricingType": 2,
+          "RatePrice": 6.5,
+          "Peak": 1,
+          "StartTime": "22:00",
+          "EndTime": "24:00"
+        }
+      ]
+    }
+  ]
+}

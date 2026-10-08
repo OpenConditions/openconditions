@@ -46,7 +46,7 @@ export const CHARGING_SITE_STATUSES = [
   "unknown",
 ] as const;
 
-/** OCPI 2.2.1 `ConnectorType`, verbatim, plus MCS for megawatt charging. */
+/** OCPI `ConnectorType`, verbatim (2.2.1 plus 2.3's SAE_J3400), plus MCS for megawatt charging. */
 export const CONNECTOR_STANDARDS = [
   "CHADEMO",
   "CHAOJI",
@@ -88,8 +88,29 @@ export const CONNECTOR_STANDARDS = [
   "PANTOGRAPH_TOP_DOWN",
   "TESLA_R",
   "TESLA_S",
+  "SAE_J3400",
   "MCS",
   "UNKNOWN",
+] as const;
+
+/** How a connector delivers power: OCPI's `PowerType`. */
+export const CONNECTOR_POWER_TYPES = [
+  "AC_1_PHASE",
+  "AC_2_PHASE",
+  "AC_2_PHASE_SPLIT",
+  "AC_3_PHASE",
+  "DC",
+] as const;
+
+/** Where a charging site's vehicles stand: OCPI's `ParkingType` plus `other`. */
+export const CHARGING_PARKING_TYPES = [
+  "along_motorway",
+  "parking_garage",
+  "parking_lot",
+  "on_driveway",
+  "on_street",
+  "underground_garage",
+  "other",
 ] as const;
 
 export const evseStatusVocabulary = defineVocabulary({
@@ -137,6 +158,11 @@ export const CHARGING_KINDS = [
         .min(1)
         .optional(),
       directions: k.Text.optional(),
+      /**
+       * One component standing for this many identical charge points that the
+       * source does not tell apart; it has no live status.
+       */
+      quantity: z.number().int().min(2).optional(),
       /** Planned status changes the operator publishes ahead of time. */
       statusSchedule: z
         .array(
@@ -159,8 +185,10 @@ export const CHARGING_KINDS = [
     identity: { idSchemes: ["ocpi:connector"], withinParent: true },
     details: (k) => ({
       standard: k.vocab("connector_standard"),
-      format: z.enum(["socket", "cable"]),
-      powerType: z.enum(["AC_1_PHASE", "AC_2_PHASE", "AC_2_PHASE_SPLIT", "AC_3_PHASE", "DC"]),
+      format: z.enum(["socket", "cable"]).optional(),
+      powerType: z.enum(CONNECTOR_POWER_TYPES).optional(),
+      /** Whether the plug delivers AC or DC, where the source says so without naming phases. */
+      current: z.enum(["ac", "dc"]).optional(),
       maxVoltage: z.number().positive().optional(),
       maxAmperage: z.number().positive().optional(),
       maxPowerKw: z.number().positive().optional(),
@@ -182,17 +210,7 @@ export const CHARGING_KINDS = [
       "A place to charge an electric vehicle: one OCPI location, with its charge points.",
     components: ["evse", "connector"],
     details: (k) => ({
-      parkingType: z
-        .enum([
-          "along_motorway",
-          "parking_garage",
-          "parking_lot",
-          "on_driveway",
-          "on_street",
-          "underground_garage",
-          "other",
-        ])
-        .optional(),
+      parkingType: z.enum(CHARGING_PARKING_TYPES).optional(),
       energyMix: z
         .strictObject({
           isGreen: z.boolean().optional(),
@@ -213,12 +231,30 @@ export const CHARGING_KINDS = [
       hubOperatorId: z.string().min(1).optional(),
       calibrationLaw: z.string().min(1).optional(),
       dynamicInfoAvailable: z.enum(["true", "false", "auto"]).optional(),
+      /** The operator's page for the site; the kernel feature carries no URL. */
+      website: z.url().optional(),
+      /** A tariff as the publisher wrote it, where it cannot be broken into priced elements. */
+      tariffText: k.Text.optional(),
+      /** Opening hours as the publisher wrote them, where they are not OSM grammar. */
+      openingHoursText: k.Text.optional(),
+      brand: z.string().min(1).optional(),
     }),
     linking: {
-      idSchemes: ["ocpi:location", "ocm", "bnetza", "osm:node", "osm:way", "osm:relation"],
+      idSchemes: [
+        "provider",
+        "ocpi:location",
+        "ocm",
+        "bnetza",
+        "osm:node",
+        "osm:way",
+        "osm:relation",
+      ],
       alwaysMetres: 20,
       neverMetres: 150,
       attribute: { name: 0.45, operator: 0.75, address: 0.6 },
+      // A large operator runs many sites a few streets apart: its name alone
+      // is no evidence beyond the next car park.
+      attributeWithinMetres: { operator: 50 },
       pendingAttribute: { name: 0.3 },
       nameStopwords: [
         "ev",

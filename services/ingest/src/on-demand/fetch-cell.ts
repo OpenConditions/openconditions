@@ -2,6 +2,7 @@ import type {
   CatalogFeed,
   Cell,
   Env,
+  ImpersonationOptions,
   LookupFn,
   RecordDraft,
 } from "@openconditions/ingest-framework";
@@ -11,7 +12,7 @@ import { writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
 import { logRejections, stampAttribution } from "../pipeline/publish.js";
-import { dataRoles, feedFetch } from "../pipeline/run.js";
+import { dataRoles, guardedFeedFetch } from "../pipeline/run.js";
 import { openPollAttempt, upsertSourceStatus } from "../pipeline/source-status.js";
 import { claimCell, markFailed, markFresh, releaseClaim, renewClaim } from "./ledger.js";
 import { requestsPerCell, takeCellTokens } from "./limits.js";
@@ -29,6 +30,8 @@ export interface FetchCellDeps {
   env?: Env;
   /** Overrides the DNS resolver of the egress guard; tests only. */
   lookup?: LookupFn;
+  /** Replaces the impersonating client of an `impersonate` endpoint; tests only. */
+  impersonation?: ImpersonationOptions;
 }
 
 /**
@@ -199,13 +202,14 @@ async function fetchAndWrite(
     attemptId = await openPollAttempt(sql, feed.id, at);
     const ttlSec = feed.onDemand?.ttlSec;
     if (ttlSec === undefined) throw new Error("not an on-demand feed: no onDemand block");
-    const fetchFn = feedFetch(feed, { ...deps, env });
+    const baseFetch = guardedFeedFetch(deps);
     const payloads: Record<string, readonly Buffer[]> = {};
     for (const role of dataRoles(feed)) {
-      const result = await fetchEndpoint(feed, role, fetchFn, {
+      const result = await fetchEndpoint(feed, role, baseFetch, {
         resolvers: domainOf(feed).resolvers,
         env,
         cell,
+        ...(deps.impersonation ? { impersonation: deps.impersonation } : {}),
       });
       if (result.status === "no-endpoint") throw new Error(`${role}: missing configuration`);
       if (result.status === "not-modified") throw new Error(`${role}: unexpected 304`);
@@ -220,6 +224,7 @@ async function fetchAndWrite(
       fetchedAt: at,
       cadenceSec: feed.cadenceSec,
       reference: {},
+      cell,
     });
     const expiresAt = new Date(now.getTime() + ttlSec * 1000);
     const stamp = (drafts: readonly RecordDraft[]) =>

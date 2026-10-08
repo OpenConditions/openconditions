@@ -10,7 +10,7 @@
  * a fresh feed, and the feed may be what is wrong.
  */
 
-import { canonicalKeyOf, recordFromHistory } from "@openconditions/core";
+import { canonicalKeyOf, recordFromHistory, withPolledValidity } from "@openconditions/core";
 import {
   type AgreeingObservation,
   observationConfirms,
@@ -156,7 +156,13 @@ async function readingsAround(
   at: number,
   alive: number,
 ): Promise<Rec[]> {
-  const latest = series.record;
+  // A polled feed's reading holds while its source polls: one that stopped
+  // confirms nothing past that.
+  const db = {
+    execute: async <T>(query: string, params?: unknown[]) =>
+      (await sql.unsafe(query, params as never)) as T,
+  };
+  const [latest] = (await withPolledValidity(db, registry, [series.record])) as [Rec];
   const out: Rec[] = [];
   const latestStart = startOf(latest);
   if (latestStart <= alive) out.push(latest);

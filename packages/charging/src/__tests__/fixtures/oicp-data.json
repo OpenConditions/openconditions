@@ -1,0 +1,970 @@
+{
+  "EVSEData": [
+    {
+      "EVSEDataRecord": [
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Meyrin",
+            "Country": "CHE",
+            "PostalCode": "1217",
+            "Street": "SIG CERN Esplanade des Particules",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "fr",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "de",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "it",
+              "value": "SIG CERN Esplanade des Particules"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22078",
+          "GeoCoordinates": {
+            "Google": "46.23432 6.055602"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22078",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Meyrin",
+            "Country": "CHE",
+            "PostalCode": "1217",
+            "Street": "SIG CERN Esplanade des Particules",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "fr",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "de",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "it",
+              "value": "SIG CERN Esplanade des Particules"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22076",
+          "GeoCoordinates": {
+            "Google": "46.23432 6.055602"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22076",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Meyrin",
+            "Country": "CHE",
+            "PostalCode": "1217",
+            "Street": "SIG CERN Esplanade des Particules",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "fr",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "de",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "it",
+              "value": "SIG CERN Esplanade des Particules"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22079",
+          "GeoCoordinates": {
+            "Google": "46.23432 6.055602"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22079",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Meyrin",
+            "Country": "CHE",
+            "PostalCode": "1217",
+            "Street": "SIG CERN Esplanade des Particules",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "fr",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "de",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "it",
+              "value": "SIG CERN Esplanade des Particules"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22077",
+          "GeoCoordinates": {
+            "Google": "46.23432 6.055602"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22077",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Meyrin",
+            "Country": "CHE",
+            "PostalCode": "1217",
+            "Street": "SIG CERN Esplanade des Particules",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "fr",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "de",
+              "value": "SIG CERN Esplanade des Particules"
+            },
+            {
+              "lang": "it",
+              "value": "SIG CERN Esplanade des Particules"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22075",
+          "GeoCoordinates": {
+            "Google": "46.23432 6.055602"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22075",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Muri bei Bern",
+            "Country": "CHE",
+            "PostalCode": "3074",
+            "Street": "Thunstrasse 108C",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "Ladestation Thunstrasse 108C"
+            },
+            {
+              "lang": "fr",
+              "value": "Ladestation Thunstrasse 108C"
+            },
+            {
+              "lang": "de",
+              "value": "Ladestation Thunstrasse 108C"
+            },
+            {
+              "lang": "it",
+              "value": "Ladestation Thunstrasse 108C"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22896",
+          "GeoCoordinates": {
+            "Google": "46.929163 7.489256"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22896",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Fribourg",
+            "Country": "CHE",
+            "PostalCode": "1700",
+            "Street": "Rue Frédéric-Chaillet / Bd de Pérolles 25",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "MOVE - Fribourg Boulevard de Pérolles 25"
+            },
+            {
+              "lang": "fr",
+              "value": "MOVE - Fribourg Boulevard de Pérolles 25"
+            },
+            {
+              "lang": "de",
+              "value": "MOVE - Fribourg Boulevard de Pérolles 25"
+            },
+            {
+              "lang": "it",
+              "value": "MOVE - Fribourg Boulevard de Pérolles 25"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E22459",
+          "GeoCoordinates": {
+            "Google": "46.798956 7.152663"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E22459",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        },
+        {
+          "Accessibility": "Paying publicly accessible",
+          "AccessibilityLocation": "OnStreet",
+          "Address": {
+            "City": "Kriegstetten",
+            "Country": "CHE",
+            "PostalCode": "4566",
+            "Street": "Hauptstrasse 62",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "NFC RFID DESFire",
+            "Direct Payment",
+            "REMOTE"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "Amperage": "32",
+              "Voltage": "230",
+              "power": "22.0",
+              "powertype": "AC_3_PHASE"
+            }
+          ],
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "Regio Energie Solothurn - Restaurant Kreuz"
+            },
+            {
+              "lang": "fr",
+              "value": "Regio Energie Solothurn - Restaurant Kreuz"
+            },
+            {
+              "lang": "de",
+              "value": "Regio Energie Solothurn - Restaurant Kreuz"
+            },
+            {
+              "lang": "it",
+              "value": "Regio Energie Solothurn - Restaurant Kreuz"
+            }
+          ],
+          "DynamicInfoAvailable": "true",
+          "EvseID": "CH*CCI*E20277",
+          "GeoCoordinates": {
+            "Google": "47.174568 7.597467"
+          },
+          "HotlinePhoneNumber": "+41800292929",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "Plugs": ["Type 2 Outlet"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ChargingStationId": "CH*CCI*E20277",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        }
+      ],
+      "OperatorID": "CH*CCC",
+      "OperatorName": "Move"
+    },
+    {
+      "EVSEDataRecord": [
+        {
+          "EvseID": "CHFASE410051",
+          "Accessibility": "Free publicly accessible",
+          "Address": {
+            "City": "Schaffhausen",
+            "Country": "CHE",
+            "Street": "Gennersbrunnerstraße 64",
+            "HouseNum": "n/a",
+            "PostalCode": "8207",
+            "ParkingFacility": true,
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null
+          },
+          "AuthenticationModes": ["NFC RFID Classic", "REMOTE", "Direct Payment"],
+          "PaymentOptions": ["Direct", "Contract"],
+          "ChargingStationId": "51460",
+          "ChargingStationNames": [
+            {
+              "lang": "en",
+              "value": "Schaffhausen Herblingen"
+            }
+          ],
+          "DynamicInfoAvailable": "auto",
+          "GeoCoordinates": {
+            "Google": "47.717083 8.662719"
+          },
+          "HotlinePhoneNumber": "+41415391092",
+          "IsHubjectCompatible": false,
+          "IsOpen24Hours": true,
+          "Plugs": ["CCS Combo 2 Plug (Cable Attached)"],
+          "ChargingFacilities": [
+            {
+              "Voltage": 800,
+              "power": 400,
+              "powertype": "DC"
+            }
+          ],
+          "lastUpdate": "2026-06-19T08:34:19Z",
+          "ValueAddedServices": ["None"],
+          "RenewableEnergy": true,
+          "CalibrationLawDataAvailability": "Not Available",
+          "AccessibilityLocation": "OnStreet",
+          "ClearinghouseID": null,
+          "OpeningTimes": null,
+          "GeoChargingPointEntrance": {
+            "Google": "None None"
+          },
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "AdditionalInfo": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HardwareManufacturer": null,
+          "HubOperatorID": null
+        }
+      ],
+      "OperatorID": "CH*FASTNED",
+      "OperatorName": "Fastned"
+    },
+    {
+      "EVSEDataRecord": [
+        {
+          "Accessibility": "Free publicly accessible",
+          "AdditionalInfo": null,
+          "Address": {
+            "City": "Wallisellen",
+            "Country": "CHE",
+            "HouseNum": "2",
+            "PostalCode": "8304",
+            "Street": "Husacherstrasse",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "REMOTE",
+            "NFC RFID DESFire",
+            "Direct Payment"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "ChargingModes": ["Mode_4"],
+              "power": 128,
+              "powertype": "DC"
+            }
+          ],
+          "ChargingPoolId": "CH*MIG*P*321",
+          "ChargingStationId": "CH*MIG*P*11",
+          "ChargingStationNames": [
+            {
+              "lang": "de",
+              "value": "Migrol | Wallisellen 2"
+            },
+            {
+              "lang": "en",
+              "value": "Migrol | Wallisellen 2"
+            }
+          ],
+          "DynamicInfoAvailable": "auto",
+          "EvseID": "CH*MIG*E*247297",
+          "GeoChargingPointEntrance": {
+            "DecimalDegree": {
+              "Latitude": "47.408318",
+              "Longitude": "8.601811"
+            }
+          },
+          "GeoCoordinates": {
+            "Google": "47.408138 8.602153"
+          },
+          "HardwareManufacturer": "EVTEC",
+          "HotlinePhoneNumber": "+41444951616",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "OpeningTimes": [],
+          "PaymentOptions": ["Contract"],
+          "Plugs": ["CCS Combo 2 Plug (Cable Attached)"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ClearinghouseID": null,
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HubOperatorID": null,
+          "AccessibilityLocation": null
+        },
+        {
+          "Accessibility": "Free publicly accessible",
+          "AdditionalInfo": null,
+          "Address": {
+            "City": "Wallisellen",
+            "Country": "CHE",
+            "HouseNum": "2",
+            "PostalCode": "8304",
+            "Street": "Husacherstrasse",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "REMOTE",
+            "NFC RFID DESFire",
+            "Direct Payment"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "ChargingModes": ["Mode_4"],
+              "power": 128,
+              "powertype": "DC"
+            }
+          ],
+          "ChargingPoolId": "CH*MIG*P*321",
+          "ChargingStationId": "CH*MIG*P*11",
+          "ChargingStationNames": [
+            {
+              "lang": "de",
+              "value": "Migrol | Wallisellen 2"
+            },
+            {
+              "lang": "en",
+              "value": "Migrol | Wallisellen 2"
+            }
+          ],
+          "DynamicInfoAvailable": "auto",
+          "EvseID": "CH*MIG*E*247296",
+          "GeoChargingPointEntrance": {
+            "DecimalDegree": {
+              "Latitude": "47.408318",
+              "Longitude": "8.601811"
+            }
+          },
+          "GeoCoordinates": {
+            "Google": "47.408138 8.602153"
+          },
+          "HardwareManufacturer": "EVTEC",
+          "HotlinePhoneNumber": "+41444951616",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "OpeningTimes": [],
+          "PaymentOptions": ["Contract"],
+          "Plugs": ["CCS Combo 2 Plug (Cable Attached)"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ClearinghouseID": null,
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HubOperatorID": null,
+          "AccessibilityLocation": null
+        },
+        {
+          "Accessibility": "Free publicly accessible",
+          "AdditionalInfo": null,
+          "Address": {
+            "City": "Wallisellen",
+            "Country": "CHE",
+            "HouseNum": "2",
+            "PostalCode": "8304",
+            "Street": "Husacherstrasse",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "REMOTE",
+            "NFC RFID DESFire",
+            "Direct Payment"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "ChargingModes": ["Mode_4"],
+              "power": 320,
+              "powertype": "DC"
+            }
+          ],
+          "ChargingPoolId": "CH*MIG*P*321",
+          "ChargingStationId": "CH*MIG*P*12",
+          "ChargingStationNames": [
+            {
+              "lang": "de",
+              "value": "Migrol | Wallisellen 1"
+            },
+            {
+              "lang": "en",
+              "value": "Migrol | Wallisellen 1"
+            }
+          ],
+          "DynamicInfoAvailable": "auto",
+          "EvseID": "CH*MIG*E*247298",
+          "GeoChargingPointEntrance": {
+            "DecimalDegree": {
+              "Latitude": "47.408318",
+              "Longitude": "8.601811"
+            }
+          },
+          "GeoCoordinates": {
+            "Google": "47.408138 8.602153"
+          },
+          "HardwareManufacturer": "EVTEC",
+          "HotlinePhoneNumber": "+41444951616",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "OpeningTimes": [],
+          "PaymentOptions": ["Contract"],
+          "Plugs": ["CCS Combo 2 Plug (Cable Attached)"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ClearinghouseID": null,
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HubOperatorID": null,
+          "AccessibilityLocation": null
+        },
+        {
+          "Accessibility": "Free publicly accessible",
+          "AdditionalInfo": null,
+          "Address": {
+            "City": "Wallisellen",
+            "Country": "CHE",
+            "HouseNum": "2",
+            "PostalCode": "8304",
+            "Street": "Husacherstrasse",
+            "Floor": null,
+            "Region": null,
+            "ParkingSpot": null,
+            "ParkingFacility": null
+          },
+          "AuthenticationModes": [
+            "NFC RFID Classic",
+            "REMOTE",
+            "NFC RFID DESFire",
+            "Direct Payment"
+          ],
+          "CalibrationLawDataAvailability": "Not Available",
+          "ChargingFacilities": [
+            {
+              "ChargingModes": ["Mode_4"],
+              "power": 320,
+              "powertype": "DC"
+            }
+          ],
+          "ChargingPoolId": "CH*MIG*P*321",
+          "ChargingStationId": "CH*MIG*P*12",
+          "ChargingStationNames": [
+            {
+              "lang": "de",
+              "value": "Migrol | Wallisellen 1"
+            },
+            {
+              "lang": "en",
+              "value": "Migrol | Wallisellen 1"
+            }
+          ],
+          "DynamicInfoAvailable": "auto",
+          "EvseID": "CH*MIG*E*247299",
+          "GeoChargingPointEntrance": {
+            "DecimalDegree": {
+              "Latitude": "47.408318",
+              "Longitude": "8.601811"
+            }
+          },
+          "GeoCoordinates": {
+            "Google": "47.408138 8.602153"
+          },
+          "HardwareManufacturer": "EVTEC",
+          "HotlinePhoneNumber": "+41444951616",
+          "IsHubjectCompatible": true,
+          "IsOpen24Hours": true,
+          "OpeningTimes": [],
+          "PaymentOptions": ["Contract"],
+          "Plugs": ["CCS Combo 2 Plug (Cable Attached)"],
+          "RenewableEnergy": false,
+          "ValueAddedServices": ["None"],
+          "ClearinghouseID": null,
+          "ChargingStationLocationReference": null,
+          "EnergySource": null,
+          "EnvironmentalImpact": null,
+          "LocationImage": null,
+          "SuboperatorName": null,
+          "MaxCapacity": null,
+          "ChargingPoolID": null,
+          "DynamicPowerLevel": null,
+          "HubOperatorID": null,
+          "AccessibilityLocation": null
+        }
+      ],
+      "OperatorID": "CH*MIG",
+      "OperatorName": "M-Charge"
+    }
+  ]
+}

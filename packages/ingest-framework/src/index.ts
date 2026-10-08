@@ -18,6 +18,8 @@ export * from "./catalog/types.js";
 export * from "./download.js";
 export * from "./egress.js";
 export * from "./fetch.js";
+export * from "./held.js";
+export * from "./impersonate.js";
 export * from "./layouts/block.js";
 export * from "./layouts/decode.js";
 export { crsName, readFeatureCollection, reprojectGeometry } from "./layouts/geojson.js";

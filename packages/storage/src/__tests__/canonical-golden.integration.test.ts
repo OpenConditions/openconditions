@@ -1,4 +1,4 @@
-import { fusableProperties } from "@openconditions/core";
+import { fusableProperties, validWhilePolled } from "@openconditions/core";
 import { type CanonicalComponent, landClaim } from "@openconditions/model";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -23,7 +23,7 @@ const NOW = "2026-09-22T12:00:00.000Z";
 const INSTANCE = "test.local";
 const ctx: WriteContext = { registry, instanceId: INSTANCE, now: NOW, complete: true };
 const TIERS = {
-  "de-bw-ocpdb": "aggregator",
+  "de-bw-mobidata-charging": "aggregator",
   "de-bw-mobidata-parking": "aggregator",
   "nl-ndw-truck-parking": "authoritative",
   "de-autobahn-events": "operator",
@@ -121,11 +121,14 @@ describe("the canonical view of the golden facilities", () => {
     const fusable = fusableProperties(registry);
     const all = [...golden.values()].flatMap((d) => d.observations);
     expect(all.every((r) => fusable.has(r["property"] as string))).toBe(true);
-    // A reading past its validity (a car park's count, half an hour on) is in effect no more.
+    // A feed's change-only reading (a car park's count) states no validity:
+    // it holds while its source polls, so it is fused however old it is.
+    const polledReadings = all.filter((r) => validWhilePolled(registry, r));
+    expect(polledReadings.some((r) => r["property"] === "parking.available")).toBe(true);
+    expect(polledReadings.every((r) => r["validUntil"] === undefined)).toBe(true);
     const inEffect = (r: Rec) =>
       r["validUntil"] === undefined || Date.parse(r["validUntil"] as string) > Date.parse(NOW);
     const readings = all.filter(inEffect);
-    expect(readings.length).toBeLessThan(all.length);
     const rows = await fusedRows();
     expect(rows).toHaveLength(readings.length);
     for (const reading of readings) {

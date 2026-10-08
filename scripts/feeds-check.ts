@@ -167,7 +167,7 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
   const payloads: Record<string, readonly Buffer[]> = {};
   for (const role of dataRoles(feed)) {
     try {
-      const fetched = await fetchEndpoint(feed, role, fetchFn, {
+      const fetched = await fetchEndpoint(feed, role, baseFetch, {
         state: createFetchState(),
         resolvers: domainOf(feed).resolvers,
         env,
@@ -189,7 +189,9 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
 
   let records: number;
   try {
-    records = recordCount(format.parse(feed, payloads as FeedPayloads, ctx));
+    // A cell's answer is read for that cell, as the service reads it.
+    const read = cell ? { ...ctx, cell } : ctx;
+    records = recordCount(format.parse(feed, payloads as FeedPayloads, read));
   } catch (err) {
     return result("error", redact(errorText(err)));
   }

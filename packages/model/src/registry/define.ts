@@ -225,6 +225,12 @@ export interface LinkingRules {
   alwaysMetres: number;
   neverMetres: number;
   attribute: { name?: number; operator?: number; address?: number };
+  /**
+   * How far an agreeing attribute may link on its own; beyond it, another
+   * attribute must agree as well (an operator with dozens of sites per square
+   * kilometre says little at 120 m).
+   */
+  attributeWithinMetres?: { name?: number; operator?: number; address?: number };
   pendingAttribute?: { name?: number; operator?: number; address?: number };
   /** Tokens every feature of the kind shares, so they carry no evidence ("parkhaus"). */
   nameStopwords?: readonly string[];

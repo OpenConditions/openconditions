@@ -25,6 +25,7 @@ import {
   type Catalog,
   type EgressRecord,
   type Env,
+  type ImpersonationOptions,
   isPublicRecord,
   type LookupFn,
   publicRecords,
@@ -187,6 +188,8 @@ export interface OnDemandReads {
   env?: Env;
   /** Overrides the DNS resolver of the egress guard; tests only. */
   lookup?: LookupFn;
+  /** Replaces the impersonating client of an `impersonate` endpoint; tests only. */
+  impersonation?: ImpersonationOptions;
   /** Tracks each cell fetch, so shutdown waits for one a read left running. */
   inFlight?: Pick<InFlight, "track">;
 }
@@ -343,6 +346,7 @@ export function registerApiRoutes(
           instanceId: reads.instanceId,
           ...(reads.env ? { env: reads.env } : {}),
           ...(reads.lookup ? { lookup: reads.lookup } : {}),
+          ...(reads.impersonation ? { impersonation: reads.impersonation } : {}),
           ...(reads.inFlight ? { inFlight: reads.inFlight } : {}),
         },
       );
@@ -630,6 +634,7 @@ export function registerApiRoutes(
     };
     const latest = opts.expand.has("latest")
       ? await latestOfFeatures(db, {
+          registry: deps.registry,
           features,
           canonical: opts.canonical,
           scope: opts.scope,

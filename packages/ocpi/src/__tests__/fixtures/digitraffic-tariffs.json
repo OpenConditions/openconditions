@@ -1,0 +1,217 @@
+{
+  "pagination": {
+    "limit": 500
+  },
+  "modifiedAt": "2026-09-24T04:00:25.793Z",
+  "tariffs": [
+    {
+      "countryCode": "NO",
+      "partyId": "REC",
+      "id": "b0271121271a208dae4153be8ce5b12c",
+      "currency": "NOK",
+      "type": "REGULAR",
+      "tariffAltText": [
+        {
+          "text": "Free",
+          "language": "en"
+        }
+      ],
+      "taxIncluded": "NO",
+      "elements": [
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["WEDNESDAY"]
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["THURSDAY"]
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["FRIDAY"]
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["SATURDAY"]
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["SUNDAY"]
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["MONDAY"]
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "dayOfWeek": ["TUESDAY"]
+          }
+        }
+      ],
+      "lastUpdated": "2026-09-01T02:52:05Z"
+    },
+    {
+      "countryCode": "FI",
+      "partyId": "WTY",
+      "id": "FI*WTY*E13355*1-tariff",
+      "currency": "EUR",
+      "type": "AD_HOC_PAYMENT",
+      "tariffAltText": [
+        {
+          "text": "Price: 0.23 EUR + spot",
+          "language": "fi"
+        }
+      ],
+      "tariffAltUrl": "https://start.wattery.io/fi/num/FI-13355-1",
+      "taxIncluded": "NO",
+      "elements": [
+        {
+          "priceComponents": [
+            {
+              "type": "FLAT",
+              "price": 0,
+              "vat": 0,
+              "stepSize": 1
+            }
+          ]
+        }
+      ],
+      "lastUpdated": "2026-10-05T04:00:17.513Z"
+    },
+    {
+      "countryCode": "FI",
+      "partyId": "TSL",
+      "id": "e81d652e-a5c7-439c-b0ff-e12fb621e0ce",
+      "currency": "EUR",
+      "tariffAltText": [
+        {
+          "text": "Tesla charges congestion fees only when a Supercharger site is busy. The congestion fee encourages drivers to charge only as much as is needed for their trip, rather than all the way to 100%. This increases the availability of chargers so that everyone has access when they need it.",
+          "language": "en"
+        }
+      ],
+      "tariffAltUrl": "https://www.tesla.com/support/charging/supercharger/fees",
+      "taxIncluded": "NO",
+      "elements": [
+        {
+          "priceComponents": [
+            {
+              "type": "CONGESTION_TIME",
+              "price": 0,
+              "stepSize": 60
+            }
+          ],
+          "restrictions": {
+            "minDuration": 0,
+            "maxDuration": 300
+          }
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "CONGESTION_TIME",
+              "price": 30,
+              "stepSize": 60
+            }
+          ]
+        },
+        {
+          "priceComponents": [
+            {
+              "type": "ENERGY",
+              "price": 0.31,
+              "stepSize": 1
+            }
+          ]
+        }
+      ],
+      "startDateTime": "2026-09-23T21:00:00Z",
+      "lastUpdated": "2026-09-23T21:01:12Z"
+    },
+    {
+      "countryCode": "FI",
+      "partyId": "ALL",
+      "id": "45982d1ed3ce2531ab7704dca3ff2234",
+      "currency": "EUR",
+      "tariffAltText": [],
+      "tariffAltUrl": "https:///ag/oc/2.1.1/tariffs?tariff_id=1496",
+      "taxIncluded": "NO",
+      "elements": [
+        {
+          "priceComponents": [
+            {
+              "type": "ENERGY",
+              "price": 0,
+              "stepSize": 1
+            }
+          ],
+          "restrictions": {
+            "startDate": "2022-12-31"
+          }
+        }
+      ],
+      "lastUpdated": "2023-06-01T11:16:44Z"
+    }
+  ]
+}

@@ -13,6 +13,8 @@ export const layoutBlockSchema = z.strictObject({
     .strictObject({ field: z.string().min(1), order: z.enum(["lonlat", "latlon"]) })
     .optional(),
   geometryPath: z.string().min(1).optional(),
+  /** A field holding a WKT `POINT (x y)`, in `crs` when the block names one. */
+  wkt: z.string().min(1).optional(),
   crs: z
     .string()
     .regex(/^EPSG:\d{4,6}$/)

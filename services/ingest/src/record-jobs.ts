@@ -1,8 +1,10 @@
+import type { CatalogFeed } from "@openconditions/ingest-framework";
 import type { Registry } from "@openconditions/model";
 import {
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
   pruneRollups,
+  refreshFlippedFusions,
   retentionClasses,
   rollupObservations,
   rollupRetentionDaysFromEnv,
@@ -15,6 +17,8 @@ import { evictionPolicyFromEnv, evictRawPayloads } from "./raw/evict.js";
 
 /** How often expired and orphaned records are tombstoned and old tombstones purged. */
 const RECORD_SWEEP_CRON = "*/5 * * * *";
+/** Fusions are refreshed for the sources whose freshness flipped, every five minutes. */
+const FUSION_FLIP_CRON = "2-59/5 * * * *";
 /** History partitions are created ahead and dropped behind every hour. */
 const PARTITION_CRON = "5 * * * *";
 /** Hourly rollups run after the partition job; the daily ones once the night's lateness has passed. */
@@ -22,12 +26,32 @@ const HOURLY_ROLLUP_CRON = "15 * * * *";
 const DAILY_ROLLUP_CRON = "45 6 * * *";
 /** Raw payloads are evicted by their tiers and the cap every 15 minutes. */
 const RAW_EVICTION_CRON = "*/15 * * * *";
-/** A feed record outlives its source's last success by this much (as the legacy sweep). */
-const ORPHAN_MAX_AGE_SEC = 3600;
+/** A feed record outlives its source's last success by at least this much. */
+export const ORPHAN_MAX_AGE_SEC = 3600;
+
+/**
+ * How long each feed's records outlive its last success, where that is
+ * longer than the hour: twice its slowest data role's cadence. A site of a
+ * daily snapshot stays while the snapshot holds, though the five-minute
+ * status beside it fails; its readings lapse by their own `validUntil`.
+ */
+export function orphanMaxAges(feeds: readonly CatalogFeed[]): Record<string, number> {
+  const ages: Record<string, number> = {};
+  for (const feed of feeds) {
+    const cadences = Object.values(feed.endpoints)
+      .filter((e) => e.decoder === undefined)
+      .map((e) => e.cadenceSec);
+    const age = 2 * Math.max(0, ...cadences);
+    if (age > ORPHAN_MAX_AGE_SEC) ages[feed.id] = age;
+  }
+  return ages;
+}
 
 export interface RecordJobsOptions {
   registry: Registry;
   instanceId: string;
+  /** The feeds polled here, whose snapshot cadences set their records' orphan age. */
+  feeds?: readonly CatalogFeed[];
   env?: NodeJS.ProcessEnv;
   now?: () => Date;
 }
@@ -77,6 +101,28 @@ export async function maintainPartitions(
 }
 
 /**
+ * A job that hands `refresh` the windows its runs cover, one after the
+ * other: each run takes the time since the previous run (the first, the
+ * hour before it), so a freshness flip between two runs is seen once.
+ */
+export function windowedRuns(
+  refresh: (window: { from: string; to: string }) => Promise<number>,
+  now: () => Date,
+): () => Promise<number> {
+  let from: Date | undefined;
+  return async () => {
+    const to = now();
+    const window = {
+      from: (from ?? new Date(to.getTime() - 3_600_000)).toISOString(),
+      to: to.toISOString(),
+    };
+    const flipped = await refresh(window);
+    from = to;
+    return flipped;
+  };
+}
+
+/**
  * Starts the scheduled jobs that keep the record tables in shape. Returns a
  * function that stops them.
  */
@@ -114,12 +160,14 @@ export function startRecordJobs(sql: postgres.Sql, opts: RecordJobsOptions): () 
     jobs.push(new Cron(cron, { catch: true }, rollup));
   }
 
+  const orphanAges = orphanMaxAges(opts.feeds ?? []);
   const sweep = singleFlight("sweep", async () => {
     const counts = await sweepRecords(sql, {
       registry: opts.registry,
       instanceId: opts.instanceId,
       now: now().toISOString(),
       maxAgeSec: ORPHAN_MAX_AGE_SEC,
+      sourceMaxAgeSec: orphanAges,
       historyDays,
     });
     if (Object.values(counts).some((n) => n > 0)) {
@@ -127,6 +175,17 @@ export function startRecordJobs(sql: postgres.Sql, opts: RecordJobsOptions): () 
     }
   });
   jobs.push(new Cron(RECORD_SWEEP_CRON, { catch: true }, sweep));
+
+  const flips = windowedRuns(
+    (window) =>
+      refreshFlippedFusions(sql, opts.registry, { ...window, instanceId: opts.instanceId }),
+    now,
+  );
+  const fusionFlips = singleFlight("fusion freshness", async () => {
+    const flipped = await flips();
+    if (flipped > 0) console.info(`[records] refreshed the fusions of ${flipped} source(s)`);
+  });
+  jobs.push(new Cron(FUSION_FLIP_CRON, { catch: true }, fusionFlips));
 
   const { dir } = rawArchiveOptionsFromEnv(env);
   const evict = singleFlight("raw eviction", async () => {

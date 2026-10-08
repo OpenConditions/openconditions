@@ -1,3 +1,4 @@
+import { makeAuthorizedFetch } from "./auth.js";
 import type { Cell } from "./catalog/cells.js";
 import type { Env } from "./catalog/credentials.js";
 import {
@@ -6,9 +7,16 @@ import {
   catalogResolverFor,
   resolveWithSnapshot,
 } from "./catalog/resolvers.js";
-import { feedEndpoint, resolveEndpointUrls, resolveFeedTemplate } from "./catalog/templates.js";
+import {
+  feedEndpoint,
+  referencesCredential,
+  resolveEndpointUrls,
+  resolveFeedTemplate,
+} from "./catalog/templates.js";
 import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
 import { boundedGunzip, maxFeedBytes } from "./egress.js";
+import { type HeldPayload, heldBuffer, holdPayload } from "./held.js";
+import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 
@@ -24,23 +32,60 @@ const FANOUT_CONCURRENCY = 8;
  * endpoint was last fetched under. A long-lived scheduler shares one instance
  * across cycles so conditional headers accumulate; tests pass a fresh one.
  *
- * `buffer` (the last decompressed body) is retained ONLY for multi-URL
- * endpoints, where a URL that replies 304 must be re-combined with a sibling URL
- * that changed before the feed is re-parsed. Single-URL endpoints skip entirely
- * on 304 (see {@link fetchEndpoint}), so caching their bodies — often tens of MB
- * each, ~1 GB across the ~30 datex feeds — only bloats off-heap memory and is
- * omitted.
+ * `body` (the last decompressed body, gzipped in memory when large) is
+ * retained ONLY for multi-URL endpoints, where a URL that replies 304 must be
+ * re-combined with a sibling URL that changed before the feed is re-parsed.
+ * Single-URL endpoints skip entirely on 304 (see {@link fetchEndpoint}), so
+ * caching their bodies — often tens of MB each, ~1 GB across the ~30 datex
+ * feeds — only bloats off-heap memory and is omitted.
  */
 export interface FetchState {
   conditional: Map<
     string,
-    { etag?: string; lastModified?: string; buffer?: Buffer; payload?: PayloadDigest }
+    { etag?: string; lastModified?: string; body?: HeldPayload; payload?: PayloadDigest }
   >;
   sourceConfig: Map<string, string>;
+  /** Per feed id, the pacing of a feed that declares `requestLimits.perMinute`. */
+  pacers: Map<string, Pacer>;
 }
 
 export function createFetchState(): FetchState {
-  return { conditional: new Map(), sourceConfig: new Map() };
+  return { conditional: new Map(), sourceConfig: new Map(), pacers: new Map() };
+}
+
+/** When a feed's recent requests started, and the turn the next one waits for. */
+interface Pacer {
+  starts: number[];
+  turn: Promise<void>;
+}
+
+const MINUTE_MS = 60_000;
+
+/**
+ * Wraps a feed's fetch so its requests start at most `perMinute` times in any
+ * 60 s window: every request of the feed, whatever role or poll it belongs
+ * to, takes a turn in one queue and waits until the oldest start in the
+ * window has left it. Starts are spaced, not refused, so a fan-out or a
+ * page sequence finishes at the rate the publisher allows.
+ */
+function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn {
+  const wait = async (): Promise<void> => {
+    const sinceWindow = () => Date.now() - MINUTE_MS;
+    pacer.starts = pacer.starts.filter((t) => t > sinceWindow());
+    if (pacer.starts.length >= perMinute) {
+      const delay = (pacer.starts[0] ?? 0) + MINUTE_MS - Date.now();
+      // A wait of up to a minute never holds a stopping process open.
+      await new Promise((resolve) => setTimeout(resolve, Math.max(0, delay)).unref());
+      pacer.starts = pacer.starts.filter((t) => t > sinceWindow());
+    }
+    pacer.starts.push(Date.now());
+  };
+  return (async (...args: Parameters<FetchFn>) => {
+    const mine = pacer.turn.then(wait);
+    pacer.turn = mine.catch(() => {});
+    await mine;
+    return fetchFn(...args);
+  }) as FetchFn;
 }
 
 const sharedFetchState = createFetchState();
@@ -78,6 +123,8 @@ export interface FetchOptions {
   env?: Env;
   /** Fill the endpoint's cell placeholders for this cell. A cell read keeps no conditional-GET state. */
   cell?: Cell;
+  /** Replaces the impersonating client and DNS lookup (tests). */
+  impersonation?: ImpersonationOptions;
 }
 
 function isGzip(buf: Buffer): boolean {
@@ -121,10 +168,10 @@ async function fetchOne(
 
   const res = await fetchFn(url, { ...init, headers });
   // A 304 body is only consumed for a multi-URL feed's partial-304 re-parse
-  // (where `cacheBody` is true and `prior.buffer` was retained). A single-URL 304
+  // (where `cacheBody` is true and `prior.body` was retained). A single-URL 304
   // returns this empty buffer, which the caller discards on its "unchanged" path.
   if (res.status === 304 && prior) {
-    const buffer = prior.buffer ?? EMPTY_BUFFER;
+    const buffer = prior.body === undefined ? EMPTY_BUFFER : await heldBuffer(prior.body);
     return {
       changed: false,
       buffer,
@@ -147,7 +194,7 @@ async function fetchOne(
     state.conditional.set(url, {
       etag: res.headers.get("etag") ?? undefined,
       lastModified: res.headers.get("last-modified") ?? undefined,
-      buffer: cacheBody ? buffer : undefined,
+      body: cacheBody ? await holdPayload(buffer) : undefined,
       payload: cacheBody ? payload : undefined,
     });
   }
@@ -177,6 +224,23 @@ function requestInit(
       endpoint.body !== undefined ? resolveFeedTemplate(feed, endpoint.body, env, cell) : undefined,
     headers,
   };
+}
+
+/**
+ * The request init of a followed URL: a GET carrying the endpoint's headers
+ * that name no credential. A header that does (`"X-Key": "${key}"`) is dropped,
+ * so a secret never reaches the second host.
+ */
+function followedInit(
+  feed: CatalogFeed,
+  role: string,
+  env: Env,
+  cell?: Cell,
+): RequestInit | undefined {
+  const entries = Object.entries(feedEndpoint(feed, role).headers ?? {})
+    .filter(([, template]) => !referencesCredential(template))
+    .map(([name, template]) => [name, resolveFeedTemplate(feed, template, env, cell)]);
+  return entries.length > 0 ? { headers: Object.fromEntries(entries) } : undefined;
 }
 
 /**
@@ -280,24 +344,34 @@ const DEFAULT_MAX_PAGES = 100;
  * Count the records at `path` (dot-separated) in a JSON page body. Throws when
  * the body is not JSON so a corrupt page fails the whole cycle (last-good
  * preserved) rather than silently ending pagination early. The collection must
- * exist and be an array, including on the terminal empty page.
+ * exist and be an array, including on the terminal empty page, unless the
+ * JSON is converted from XML (`xmlLists`): then a lone object is a list of
+ * one, and a page after the first without the collection is an empty list.
  */
-function countJsonRecords(buffer: Buffer, path: string): number {
+function countJsonRecords(
+  buffer: Buffer,
+  path: string,
+  lists: { xml: boolean; firstPage: boolean },
+): number {
   let doc: unknown;
   try {
     doc = JSON.parse(buffer.toString("utf8"));
   } catch {
     throw new Error("pagination: page body is not valid JSON");
   }
+  const emptyAllowed = lists.xml && !lists.firstPage;
   let node: unknown = doc;
   for (const key of path.split(".")) {
     if (node == null || typeof node !== "object") {
+      if (emptyAllowed && (node === undefined || node === "")) return 0;
       throw new Error(`pagination: missing collection ${path}`);
     }
     node = (node as Record<string, unknown>)[key];
   }
-  if (!Array.isArray(node)) throw new Error(`pagination: expected array at ${path}`);
-  return node.length;
+  if (Array.isArray(node)) return node.length;
+  if (lists.xml && node !== null && typeof node === "object") return 1;
+  if (emptyAllowed && (node === undefined || node === "")) return 0;
+  throw new Error(`pagination: expected array at ${path}`);
 }
 
 /**
@@ -311,10 +385,11 @@ function withOffset(baseUrl: string, param: string, offset: number): string {
 }
 
 /**
- * Offset-paginates each base URL: fetches `$skip=0`, `$skip=pageSize`, … until a
- * page returns fewer than `pageSize` records (the last page) or `maxPages` is
- * reached, pushing each non-empty page body as its own buffer (the parser runs
- * per-buffer and `runSource` concatenates the results). A failed page fetch
+ * Paginates each base URL: fetches `$skip=0`, `$skip=pageSize`, … (or, in page
+ * mode, `pageNo=firstPage`, `firstPage+1`, …) until a page returns fewer than
+ * `pageSize` records (the last page) or `maxPages` is reached, pushing each
+ * non-empty page body as its own buffer (the parser runs per-buffer and
+ * `runSource` concatenates the results). A failed page fetch
  * throws — all-or-nothing, like the static multi-URL path — so a partial set
  * never reaches the atomic swap and prunes rows for the pages that didn't load.
  */
@@ -333,9 +408,13 @@ async function fetchPaginated(
   for (const baseUrl of baseUrls) {
     let reachedEnd = false;
     for (let page = 0; page < maxPages; page++) {
-      const url = withOffset(baseUrl, pg.skipParam, page * pg.pageSize);
+      const value = pg.mode === "page" ? (pg.firstPage ?? 1) + page : page * pg.pageSize;
+      const url = withOffset(baseUrl, pg.skipParam, value);
       const { buffer, payload } = await fetchOne(url, fetchFn, init, undefined, false, redact);
-      const count = countJsonRecords(buffer, recordsPath);
+      const count = countJsonRecords(buffer, recordsPath, {
+        xml: pg.xmlLists === true,
+        firstPage: page === 0,
+      });
       if (count > 0) {
         out.push(buffer);
         payloads.push(payload);
@@ -350,6 +429,68 @@ async function fetchPaginated(
     }
   }
   return { buffers: out, payloads };
+}
+
+/** The string at a dotted JSON path (numeric segments index arrays), or undefined. */
+function jsonPathString(buffer: Buffer, path: string): string | undefined {
+  let node: unknown;
+  try {
+    node = JSON.parse(buffer.toString("utf8"));
+  } catch {
+    return undefined;
+  }
+  for (const key of path.split(".")) {
+    if (node == null || typeof node !== "object") return undefined;
+    node = (node as Record<string, unknown>)[key];
+  }
+  return typeof node === "string" && node !== "" ? node : undefined;
+}
+
+/** The URL a `follow` endpoint's page names, resolved against the page URL. */
+function followTarget(
+  follow: NonNullable<FeedEndpoint["follow"]>,
+  page: Buffer,
+  pageUrl: string,
+): string {
+  let found: string | undefined;
+  if (follow.path !== undefined) {
+    found = jsonPathString(page, follow.path);
+  } else if (follow.pattern !== undefined) {
+    // A link in markup spells `&` as `&amp;`.
+    found = new RegExp(follow.pattern).exec(page.toString("utf8"))?.[1]?.replaceAll("&amp;", "&");
+  }
+  if (!found) throw new Error("follow: no URL found");
+  try {
+    return new URL(found, pageUrl).toString();
+  } catch {
+    throw new Error("follow: no URL found");
+  }
+}
+
+/**
+ * Fetches each URL with the feed's authorization, takes the next URL out of
+ * the response and fetches that with `baseFetch`, the guarded fetch that
+ * carries no credential, and `nextInit`, which carries none either.
+ */
+async function fetchFollowing(
+  urls: string[],
+  follow: NonNullable<FeedEndpoint["follow"]>,
+  authorizedFetch: FetchFn,
+  baseFetch: FetchFn,
+  init: RequestInit | undefined,
+  nextInit: RequestInit | undefined,
+  redact: (s: string) => string,
+): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[] }> {
+  const buffers: Buffer[] = [];
+  const payloads: PayloadDigest[] = [];
+  for (const url of urls) {
+    const page = await fetchOne(url, authorizedFetch, init, undefined, false, redact);
+    const target = followTarget(follow, page.buffer, url);
+    const followed = await fetchOne(target, baseFetch, nextInit, undefined, false, redact);
+    buffers.push(followed.buffer);
+    payloads.push(followed.payload);
+  }
+  return { buffers, payloads };
 }
 
 /** Shallow equality match of a resolved child against a catalog filter. */
@@ -397,7 +538,9 @@ function fanoutResult(fanout: Awaited<ReturnType<typeof fetchFanout>>): FetchRes
  * a {@link FetchResult}. Buffers are gunzipped transparently when the response
  * bytes start with the gzip magic bytes 0x1f 0x8b. Every request carries the
  * endpoint's `method`, `body` and `headers`, their `${field}`s filled from the
- * feed's credentials. When to call it is the caller's: see `dueRoles`.
+ * feed's credentials. When to call it is the caller's: see `dueRoles`. The
+ * caller passes the guarded fetch without credentials; the feed's authorization
+ * is applied here.
  *
  * `feed.catalog`, when present, resolves a registry into children (live, with a
  * vendored-snapshot fallback) and fans the URLs of their `role` endpoints out
@@ -417,7 +560,7 @@ function fanoutResult(fanout: Awaited<ReturnType<typeof fetchFanout>>): FetchRes
 export async function fetchEndpoint(
   feed: CatalogFeed,
   role: string,
-  fetchFn: FetchFn,
+  baseFetch: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
   const state = opts.state ?? sharedFetchState;
@@ -431,6 +574,28 @@ export async function fetchEndpoint(
   // `redactUrl` would miss (e.g. a credential duplicated into the URL path).
   const redact = (s: string) => redactSecrets(s, feedSecretValues(feed, env));
 
+  // The caller's fetch is the guarded one without credentials; the feed's
+  // authorization is added here, on top of it or of the impersonating client.
+  // The base itself is what a followed URL is fetched with.
+  if (endpoint.impersonate && feed.auth?.kind === "mtls") {
+    throw new Error("impersonate cannot be combined with mtls auth");
+  }
+  const base = endpoint.impersonate ? guardedImpersonatingFetch(opts.impersonation) : baseFetch;
+  const authorized = makeAuthorizedFetch(feed, base, env);
+  // A bulk fetch keeps to the feed's stated rate here; a cell read is paced
+  // by the on-demand request budget instead. A followed URL is not the
+  // publisher's API and goes unpaced.
+  const perMinute = feed.requestLimits?.perMinute;
+  let fetchFn = authorized;
+  if (perMinute !== undefined && !cell) {
+    let pacer = state.pacers.get(feed.id);
+    if (!pacer) {
+      pacer = { starts: [], turn: Promise.resolve() };
+      state.pacers.set(feed.id, pacer);
+    }
+    fetchFn = pacedFetch(pacer, perMinute, authorized);
+  }
+
   if (feed.catalog) {
     const resolver = catalogResolverFor(feed, opts.resolvers ?? []);
     const children = (await resolveWithSnapshot(resolver, feed, fetchFn)).filter((child) =>
@@ -442,6 +607,34 @@ export async function fetchEndpoint(
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
     return fanoutResult(fanout);
+  }
+
+  // Follow: the response names the URL of the data (a download page's CSV
+  // link, a batch call's presigned link). The data URL is fetched without the
+  // feed's credentials, and always: the page is not the payload, so no
+  // conditional request applies.
+  if (endpoint.follow) {
+    const pageUrls = resolveEndpointUrls(feed, role, env, cell);
+    if (pageUrls.length === 0) {
+      return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
+    }
+    const followed = await fetchFollowing(
+      pageUrls,
+      endpoint.follow,
+      fetchFn,
+      base,
+      requestInit(feed, role, env, cell),
+      followedInit(feed, role, env, cell),
+      redact,
+    );
+    return {
+      status: "fetched",
+      accept: () => {},
+      buffers: followed.buffers,
+      payloads: followed.payloads,
+      validatedAtNetwork: true,
+      partitions: { succeeded: pageUrls.length, failed: 0, total: pageUrls.length },
+    };
   }
 
   // Offset pagination: follow `$skip` over a single resolved URL until the last
@@ -540,6 +733,7 @@ export async function fetchEndpoint(
       }),
     ),
     sourceConfig: state.sourceConfig,
+    pacers: state.pacers,
   };
   const results = await fetchAllBounded(urls, fetchFn, init, provisional, urls.length > 1, redact);
 

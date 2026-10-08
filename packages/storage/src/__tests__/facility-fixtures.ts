@@ -8,12 +8,8 @@
  */
 import { readFileSync } from "node:fs";
 import path from "node:path";
-import {
-  buildRegistry,
-  extendVocabulary,
-  observationId,
-  type Registry,
-} from "@openconditions/model";
+import { type ChargingCatalogFeed, chargingDomain } from "@openconditions/charging";
+import { buildRegistry, extendVocabulary, type Registry } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import type postgres from "postgres";
 import { syncSources } from "../sources.js";
@@ -29,7 +25,7 @@ export const registry: Registry = buildRegistry([
     entries: [
       extendVocabulary({
         vocabulary: "source_format",
-        values: ["ocpi", "autobahn-parking", "mimit", "osm"],
+        values: ["autobahn-parking", "mimit", "osm"],
       }),
     ],
   },
@@ -124,125 +120,47 @@ const point = (lon: number, lat: number) => ({
   fuzziness: "exact",
 });
 
-interface OcpdbLocation {
-  id: string;
-  source: string;
-  original_id: string;
-  address?: string;
-  postal_code?: string;
-  city?: string;
-  coordinates: { latitude: number; longitude: number };
-  operator?: { name: string };
-  evses?: {
-    uid: string;
-    evse_id?: string;
-    status: string;
-    last_updated: string;
-    connectors: { id: string; standard: string; format: string; power_type: string }[];
-  }[];
-}
+/** How `de-bw-mobidata-charging` credits its records. */
+export const OCPDB_ATTRIBUTION =
+  "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0";
 
-/** eMI3 EVSE ids: country, operator, `E`, outlet — with or without the separators. */
-const EMI3 = /^[A-Z]{2}\*?[A-Z0-9]{3}\*?E[A-Z0-9*]{1,31}$/;
+/** `de-bw-mobidata-charging`: the fields its records take from the feed. */
+const ocpdbFeed = {
+  id: "de-bw-mobidata-charging",
+  format: "ocpi",
+  region: "de",
+  license: "DL-DE-BY-2.0",
+  licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
+  attribution: OCPDB_ATTRIBUTION,
+} as ChargingCatalogFeed;
 
 /**
- * One OCPDB location as a charging site draft and its charge points'
- * statuses, as the crowd fit check builds them: the database's row id is the
- * aggregator's own (`provider`), and the register's EVSE ids are `bnetza`
- * ids, not eMI3 ones.
+ * OCPDB locations as the charging parser writes them, each site with its
+ * charge points' status readings: the database's row id is the aggregator's
+ * own (`provider`, qualified by the row's upstream source), and the
+ * register's rows carry no live state and no eMI3 ids.
  */
-export function chargingSite(loc: OcpdbLocation, fetchedAt: string) {
-  const id = `oc:feature:de-bw-ocpdb:${loc.id}`;
-  const provenance = {
-    ...feed("de-bw-ocpdb", "ocpi", loc.id, "MobiData BW", "CC-BY-4.0"),
-    upstream: [{ publisher: loc.source, recordId: loc.original_id }],
-  };
-  const location = point(loc.coordinates.longitude, loc.coordinates.latitude);
-  const evses = loc.evses ?? [];
-  const components = evses.flatMap((evse) => [
-    {
-      key: evse.uid,
-      kind: "evse",
-      ...(evse.evse_id === undefined
-        ? {}
-        : {
-            externalIds: [
-              { scheme: EMI3.test(evse.evse_id) ? "emi3:evse" : "bnetza", id: evse.evse_id },
-            ],
-          }),
-      details: {
-        kind: "evse",
-        v: 1,
-        uid: evse.uid,
-        ...(evse.evse_id ? { evseId: evse.evse_id } : {}),
-      },
-    },
-    ...evse.connectors.map((c) => ({
-      key: c.id,
-      parentKey: evse.uid,
-      kind: "connector",
-      details: {
-        kind: "connector",
-        v: 1,
-        standard: registry.crosswalk.value("connector_standard", "ocpi", c.standard) ?? "UNKNOWN",
-        format: c.format.toLowerCase(),
-        powerType: c.power_type,
-      },
-    })),
-  ]);
-  const feature: Rec = {
-    id,
-    class: "feature",
-    kind: "charging_site",
-    temporality: "static",
-    lifecycle: "operational",
-    location,
-    externalIds: [
-      { scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" },
-      ...(loc.source === "bnetza_api" ? [{ scheme: "bnetza", id: loc.original_id }] : []),
-    ],
-    ...(loc.operator === undefined
-      ? {}
-      : { operator: { role: "operator", name: [{ lang: "de", text: loc.operator.name }] } }),
-    provenance,
-    freshness: { fetchedAt },
-    ...(components.length > 0 ? { components } : {}),
-    details: { kind: "charging_site", v: 1 },
-  };
-  const statuses = evses.map((evse) => {
-    const draft: Rec = {
-      class: "observation",
-      kind: "observation",
-      property: "charging.evse_status",
-      temporality: "live",
-      location,
-      provenance,
-      freshness: { fetchedAt },
-      subject: { kind: "feature", featureId: id, componentKey: evse.uid },
-      result: {
-        type: "category",
-        value: registry.crosswalk.value("evse_status", "ocpi", evse.status) ?? "unknown",
-        vocabulary: "evse_status",
-      },
-      phenomenonTime: { instant: evse.last_updated },
-      aggregation: "instantaneous",
-    };
-    return { id: observationId("de-bw-ocpdb", draft as never), ...draft };
-  });
-  return { feature, statuses };
+function chargingSites(file: string, fetchedAt: string): { feature: Rec; statuses: Rec[] }[] {
+  const parsed = chargingDomain.formats["ocpi"]!.parse(
+    ocpdbFeed,
+    { main: [readFileSync(path.join(MODEL_TESTS, file))] },
+    { fetchedAt, cadenceSec: 300, reference: {} },
+  );
+  return parsed.features.map((feature) => ({
+    feature,
+    statuses: parsed.observations.filter(
+      (o) => (o["subject"] as { featureId: string }).featureId === feature["id"],
+    ),
+  }));
 }
 
 /** The OCPDB charging sites of central Karlsruhe (linking fit). */
 export const karlsruheCharging = (fetchedAt: string) =>
-  (json("fixtures/facilities/ocpdb-charging-karlsruhe.json").items as OcpdbLocation[]).map((l) =>
-    chargingSite(l, fetchedAt),
-  );
+  chargingSites("fixtures/facilities/ocpdb-charging-karlsruhe.json", fetchedAt);
 
 /** The two OCPDB rows of the Luisenstraße 2F car park (crowd fit): a live feed and the register. */
 export const luisenstrasse = (fetchedAt: string) =>
-  (json("fixtures/crowd/ocpdb-luisenstrasse-2f.json").items as OcpdbLocation[]).map((l) =>
-    chargingSite(l, fetchedAt),
-  );
+  chargingSites("fixtures/crowd/ocpdb-luisenstrasse-2f.json", fetchedAt);
 
 interface OsmElement {
   type: "node" | "way" | "relation";

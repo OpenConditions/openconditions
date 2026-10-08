@@ -64,6 +64,40 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.12)(yaml@2.9.1))
 
+  packages/charging:
+    dependencies:
+      '@openconditions/datex2':
+        specifier: workspace:*
+        version: link:../datex2
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      '@openconditions/model-charging':
+        specifier: workspace:*
+        version: link:../model-charging
+      '@openconditions/ocpi':
+        specifier: workspace:*
+        version: link:../ocpi
+      zod:
+        specifier: ^4.4.3
+        version: 4.6.5
+    devDependencies:
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../model-roads
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/contrib-core:
     dependencies:
       '@openconditions/core':
@@ -233,6 +267,9 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      impit:
+        specifier: ^0.14.5
+        version: 0.14.5
       jsonc-parser:
         specifier: ^3.3.1
         version: 3.3.1
@@ -450,6 +487,9 @@ importers:
         specifier: workspace:*
         version: link:../model-weather
     devDependencies:
+      '@openconditions/charging':
+        specifier: workspace:*
+        version: link:../charging
       '@openconditions/fuel':
         specifier: workspace:*
         version: link:../fuel
@@ -515,6 +555,18 @@ importers:
       zod:
         specifier: ^4.4.3
         version: 4.6.5
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.28)(tsx@4.23.15)(typescript@5.9.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      vitest:
+        specifier: ^4.1.11
+        version: 4.1.11(@types/node@26.4.0)(@vitest/coverage-v8@4.1.11)(vite@7.3.5(@types/node@26.4.0)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/ocpi:
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -711,6 +763,9 @@ importers:
         specifier: ^3.4.9
         version: 3.4.9
     devDependencies:
+      '@openconditions/charging':
+        specifier: workspace:*
+        version: link:../charging
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../model-registry
@@ -836,6 +891,9 @@ importers:
       '@fastify/proxy-addr':
         specifier: ^5.1.0
         version: 5.1.1
+      '@openconditions/charging':
+        specifier: workspace:*
+        version: link:../../packages/charging
       '@openconditions/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -881,6 +939,9 @@ importers:
       hyparquet-writer:
         specifier: 0.16.10
         version: 0.16.10
+      impit:
+        specifier: ^0.14.5
+        version: 0.14.5
       postgres:
         specifier: ^3.4.9
         version: 3.4.9
@@ -2395,6 +2456,62 @@ packages:
 
   ieee754@1.2.1:
     resolution: {integrity: sha512-dcyqhDvX1C46lXZcVqCpK+FtMRQVdIMN6/Df5js2zouUsqG7I6sFxitIC+7KYK29KdXOLHdu9zL4sFnoVQnqaA==}
+
+  impit-darwin-arm64@0.14.5:
+    resolution: {integrity: sha512-9B2fc/GLfb14SgIB6fK1zIgMsXPjCu14Xu9hudSyrZF+ue6XaJXFF/G1BS27FtDFdPAYAeUTReFOJBrglteYKg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [darwin]
+
+  impit-darwin-x64@0.14.5:
+    resolution: {integrity: sha512-EBH6H6SSRuMpw85/n+luT0EcbNbp6vQpUaEywH4bM2bk/xy8y6JN25O/Mzxa4YGUauoytmMqXs0kDzU5lxEjaA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [darwin]
+
+  impit-linux-arm64-gnu@0.14.5:
+    resolution: {integrity: sha512-K7gB/KiekPZ+rDoFZqbBf1jROOHibZneGmM0lt/5xcn2lO+7e9GgArdPFj6sh4fvhtOckXxEc1ExpZP+lDy3Cg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [glibc]
+
+  impit-linux-arm64-musl@0.14.5:
+    resolution: {integrity: sha512-QvjBwjYu1LXP+ota94z9fThRZjH75/Bai36eHvXUTiiFyesRRsmClc72ReyyaarnNNjcsl2RActqFMDrx77DXg==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [linux]
+    libc: [musl]
+
+  impit-linux-x64-gnu@0.14.5:
+    resolution: {integrity: sha512-+8hErR5H3+4N9r4vf5Cz6cSe57n/0zh5ksHBu2H9i5pENcM/VBRJ5qU5a3YjQwN4Ohtw/ROHBLF6V99eXUzThA==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [glibc]
+
+  impit-linux-x64-musl@0.14.5:
+    resolution: {integrity: sha512-e6526hjfX8BV3XNhB1V7Xd3dJIEbLEwudZagwt4XdLqKcxHsU0iYnUyTJCogSQeEtZFepCSKUnGeg/r2lzxHow==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [linux]
+    libc: [musl]
+
+  impit-win32-arm64-msvc@0.14.5:
+    resolution: {integrity: sha512-cABSwp3T1kNNp7++nyE8OlRuq8q9Cis3bWRHJjnTncfJ+NQlY0z1z3aLrI9ii1vvinCurCEWASuTptVSor5U1g==}
+    engines: {node: '>= 10'}
+    cpu: [arm64]
+    os: [win32]
+
+  impit-win32-x64-msvc@0.14.5:
+    resolution: {integrity: sha512-JvjNkJ3mSB9nf74Ftdlr+KNxCC0EOAH6KUfEUqWRrGEnniIaUOMknxQw56Gbk7Zr1/e5eAOwxS/EBlASp6Yj4w==}
+    engines: {node: '>= 10'}
+    cpu: [x64]
+    os: [win32]
+
+  impit@0.14.5:
+    resolution: {integrity: sha512-MzoDiPBL5+QI5IEro4VDgZdm0BPY0LIf8tUykEFDjEI8NrjRL/qiiCqg4GDlIg5UbJzrKwCdvIgpRRArbbu7Dg==}
+    engines: {node: '>= 20'}
 
   import-fresh@3.3.1:
     resolution: {integrity: sha512-TR3KfrTZTYLPB6jUjfx6MF9WcWrHL9su5TObK4ZkYgBdWKPOFoSoQIdEuTuR82pmtxH2spWG9h6etwfr1pLBqQ==}
@@ -4468,6 +4585,41 @@ snapshots:
   hyparquet@1.31.1: {}
 
   ieee754@1.2.1: {}
+
+  impit-darwin-arm64@0.14.5:
+    optional: true
+
+  impit-darwin-x64@0.14.5:
+    optional: true
+
+  impit-linux-arm64-gnu@0.14.5:
+    optional: true
+
+  impit-linux-arm64-musl@0.14.5:
+    optional: true
+
+  impit-linux-x64-gnu@0.14.5:
+    optional: true
+
+  impit-linux-x64-musl@0.14.5:
+    optional: true
+
+  impit-win32-arm64-msvc@0.14.5:
+    optional: true
+
+  impit-win32-x64-msvc@0.14.5:
+    optional: true
+
+  impit@0.14.5:
+    optionalDependencies:
+      impit-darwin-arm64: 0.14.5
+      impit-darwin-x64: 0.14.5
+      impit-linux-arm64-gnu: 0.14.5
+      impit-linux-arm64-musl: 0.14.5
+      impit-linux-x64-gnu: 0.14.5
+      impit-linux-x64-musl: 0.14.5
+      impit-win32-arm64-msvc: 0.14.5
+      impit-win32-x64-msvc: 0.14.5
 
   import-fresh@3.3.1:
     dependencies:

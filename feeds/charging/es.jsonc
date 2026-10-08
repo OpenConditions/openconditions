@@ -1,0 +1,31 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "dgt",
+      "product": "charging",
+      "name": "DGT national access point charge points (MITERD)",
+      "tier": "authoritative",
+      "format": "datex2",
+      // A DATEX II v3 energy-infrastructure table, rebuilt daily (about
+      // 83 MB, 2.6 MB gzipped). No status publication and no prices.
+      "endpoints": {
+        "main": {
+          "url": "https://nap.dgt.es/datex2/v3/miterd/EnergyInfrastructureTablePublication/electrolineras.xml",
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "DGT / MITERD – Punto de Acceso Nacional (nap.dgt.es), CC BY",
+      "terms": {
+        "url": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos",
+        "reviewedAt": "2026-10-06",
+        "note": "NAP dataset licence CC BY (unversioned, CKAN cc-by); its 'condition for use' links the generic dgt.es aviso legal, which reserves website content. Dataset licence taken as governing.",
+      },
+      "homepage": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos",
+      "privacyUrl": "https://sede.dgt.gob.es/es/proteccion-datos/",
+    },
+  ],
+}

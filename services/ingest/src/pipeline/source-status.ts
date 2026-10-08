@@ -141,9 +141,11 @@ export async function upsertSourceStatus(
   const hashes = update.payloadHashes ? sql.array([...update.payloadHashes]) : null;
   if (update.attemptId !== undefined) {
     // The attempt was opened when the poll began; close it with what happened.
+    // It finishes now, not when its transaction began: a publication's
+    // readings hold from here (`withPolledValidity`).
     await sql`
       UPDATE conditions.source_poll_attempt SET
-        finished_at = now(), outcome = ${outcome}, network_validated = ${networkValidated},
+        finished_at = clock_timestamp(), outcome = ${outcome}, network_validated = ${networkValidated},
         published = ${publication != null},
         active_event_count = ${publication?.activeEvents ?? null},
         inserted = ${publication?.inserted ?? null}, updated = ${publication?.updated ?? null},
@@ -159,7 +161,7 @@ export async function upsertSourceStatus(
         active_event_count, inserted, updated, deleted, rejected, duration_ms,
         partitions_succeeded, partitions_failed, partitions_total, error, payload_hashes
       ) VALUES (
-        ${sourceId}, ${attemptedAt}, now(), ${outcome}, ${networkValidated}, ${publication != null},
+        ${sourceId}, ${attemptedAt}, clock_timestamp(), ${outcome}, ${networkValidated}, ${publication != null},
         ${publication?.activeEvents ?? null}, ${publication?.inserted ?? null},
         ${publication?.updated ?? null}, ${publication?.deleted ?? null},
         ${publication?.rejected ?? null}, ${durationMs}, ${p?.succeeded ?? null},

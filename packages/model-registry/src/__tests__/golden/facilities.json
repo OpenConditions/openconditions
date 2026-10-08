@@ -1,12 +1,16 @@
 [
   {
-    "id": "oc:feature:de-bw-ocpdb:72555",
+    "id": "oc:feature:de-bw-mobidata-charging:72555",
     "temporality": "static",
     "externalIds": [
       {
         "scheme": "provider",
         "id": "72555",
-        "authority": "de-bw-ocpdb"
+        "authority": "de-bw-mobidata-charging/bnetza_api"
+      },
+      {
+        "scheme": "bnetza",
+        "id": "1002913"
       }
     ],
     "location": {
@@ -20,6 +24,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      },
       "address": {
         "street": "Viktoriastr. 5",
         "postalCode": "44532",
@@ -29,13 +36,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
+      "sourceId": "de-bw-mobidata-charging",
       "sourceFormat": "ocpi",
       "accessMode": "bulk",
       "recordId": "72555",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
@@ -58,7 +66,7 @@
       "role": "operator",
       "name": [
         {
-          "lang": "de",
+          "lang": "und",
           "text": "Stadtwerke Lünen Infrastrukturbau GmbH"
         }
       ]
@@ -91,7 +99,7 @@
         }
       },
       {
-        "key": "260768225",
+        "key": "259994189/260768225",
         "parentKey": "259994189",
         "kind": "connector",
         "details": {
@@ -100,9 +108,13 @@
           "standard": "IEC_62196_T2",
           "format": "socket",
           "powerType": "AC_3_PHASE",
+          "current": "ac",
           "maxVoltage": 400,
           "maxAmperage": 32,
-          "maxPowerKw": 11
+          "maxPowerKw": 11,
+          "tariffRefs": [
+            "oc:offer:de-bw-mobidata-charging:72555:138586"
+          ]
         }
       },
       {
@@ -128,7 +140,7 @@
         }
       },
       {
-        "key": "260768226",
+        "key": "259994190/260768226",
         "parentKey": "259994190",
         "kind": "connector",
         "details": {
@@ -137,31 +149,38 @@
           "standard": "IEC_62196_T2",
           "format": "socket",
           "powerType": "AC_3_PHASE",
+          "current": "ac",
           "maxVoltage": 400,
           "maxAmperage": 32,
-          "maxPowerKw": 11
+          "maxPowerKw": 11,
+          "tariffRefs": [
+            "oc:offer:de-bw-mobidata-charging:72555:138587"
+          ]
         }
       }
     ],
     "details": {
       "kind": "charging_site",
-      "v": 1,
-      "publish": true
+      "v": 1
     },
-    "canonicalId": "91bdf45715a3a88cc5452578b5415a7c18a6c254dfc0e02179042e480b9e2dd9",
+    "canonicalId": "14b5881b8ce30c770e86a8bee793a85de17a25cc919f24751b75c979fbedb9f6",
     "domain": "charging",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "f3ad742979da1d9a9900113eb4d28d625a3eb2075b66966e41b7b31eb9525e41"
+    "contentHash": "d90d9624de7064140bc5fdd4776d602678fd30e30b13d470e68b96388bfc350e"
   },
   {
-    "id": "oc:feature:de-bw-ocpdb:72557",
+    "id": "oc:feature:de-bw-mobidata-charging:72557",
     "temporality": "static",
     "externalIds": [
       {
         "scheme": "provider",
         "id": "72557",
-        "authority": "de-bw-ocpdb"
+        "authority": "de-bw-mobidata-charging/bnetza_api"
+      },
+      {
+        "scheme": "bnetza",
+        "id": "1002915"
       }
     ],
     "location": {
@@ -175,6 +194,9 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "admin": {
+        "country": "DE"
+      },
       "address": {
         "street": "Stellenbachstr. 49-51",
         "postalCode": "44536",
@@ -184,13 +206,14 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
+      "sourceId": "de-bw-mobidata-charging",
       "sourceFormat": "ocpi",
       "accessMode": "bulk",
       "recordId": "72557",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
@@ -213,7 +236,7 @@
       "role": "operator",
       "name": [
         {
-          "lang": "de",
+          "lang": "und",
           "text": "Stadtwerke Lünen Infrastrukturbau GmbH"
         }
       ]
@@ -246,7 +269,7 @@
         }
       },
       {
-        "key": "260768229",
+        "key": "259994193/260768229",
         "parentKey": "259994193",
         "kind": "connector",
         "details": {
@@ -255,6 +278,7 @@
           "standard": "IEC_62196_T2",
           "format": "socket",
           "powerType": "AC_3_PHASE",
+          "current": "ac",
           "maxVoltage": 400,
           "maxAmperage": 32,
           "maxPowerKw": 11
@@ -283,7 +307,7 @@
         }
       },
       {
-        "key": "260768230",
+        "key": "259994194/260768230",
         "parentKey": "259994194",
         "kind": "connector",
         "details": {
@@ -292,6 +316,7 @@
           "standard": "IEC_62196_T2",
           "format": "socket",
           "powerType": "AC_3_PHASE",
+          "current": "ac",
           "maxVoltage": 400,
           "maxAmperage": 32,
           "maxPowerKw": 11
@@ -300,18 +325,17 @@
     ],
     "details": {
       "kind": "charging_site",
-      "v": 1,
-      "publish": true
+      "v": 1
     },
-    "canonicalId": "138c5cdb6ce645e5995afe8e4815c71cca419804a4946016610ac9ac5abe9c88",
+    "canonicalId": "e187278ee36b5998714e6f210275db38d9b9d70241dfc756d3e7ad6e5ed4a9b6",
     "domain": "charging",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "35052cd13d389db4be31e6bbe66bf4b9bf69d7ad5ee073beb0a15bbbd20a3b53"
+    "contentHash": "cc09c725c42396e503f2276d36d94abd56c13fccb63e8ee923d3af6214b4d8d9"
   },
   {
-    "id": "oc:observation:de-bw-ocpdb:14fa849993801dbc347781665a046a47483e91b6283157c6ef7a33e835123438",
-    "temporality": "live",
+    "id": "oc:offer:de-bw-mobidata-charging:72555:138586",
+    "temporality": "static",
     "location": {
       "geometry": {
         "type": "Point",
@@ -322,28 +346,22 @@
       },
       "extent": "point",
       "geometryOrigin": "source",
-      "fuzziness": "exact",
-      "address": {
-        "street": "Viktoriastr. 5",
-        "postalCode": "44532",
-        "city": "Lünen",
-        "country": "DE"
-      }
+      "fuzziness": "exact"
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
+      "sourceId": "de-bw-mobidata-charging",
       "sourceFormat": "ocpi",
       "accessMode": "bulk",
-      "recordId": "72555",
+      "recordId": "138586",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
-          "publisher": "bnetza_api",
-          "recordId": "1002913"
+          "publisher": "datex2_enbw"
         }
       ],
       "privacy": {
@@ -354,32 +372,62 @@
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z"
     },
-    "class": "observation",
-    "kind": "observation",
-    "property": "charging.evse_status",
+    "class": "offer",
+    "kind": "energy_tariff",
     "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:de-bw-ocpdb:72555",
-      "componentKey": "259994189"
+      "class": "feature",
+      "id": "oc:feature:de-bw-mobidata-charging:72555"
     },
-    "result": {
-      "type": "category",
-      "value": "unknown",
-      "vocabulary": "evse_status"
+    "currency": "EUR",
+    "tariffType": "ad_hoc",
+    "elements": [
+      {
+        "components": [
+          {
+            "type": "energy",
+            "price": {
+              "amount": "0.663866",
+              "currency": "EUR"
+            },
+            "vatPct": 19,
+            "unit": "kW.h"
+          }
+        ]
+      },
+      {
+        "components": [
+          {
+            "type": "time",
+            "price": {
+              "amount": "0.201681",
+              "currency": "EUR"
+            },
+            "vatPct": 19,
+            "unit": "h"
+          }
+        ],
+        "restrictions": {
+          "minDuration": {
+            "value": 1800,
+            "unit": "s"
+          }
+        }
+      }
+    ],
+    "priceIncludesVat": false,
+    "validity": {
+      "status": "active",
+      "start": "2026-08-03T08:26:43.619Z"
     },
-    "phenomenonTime": {
-      "instant": "2026-09-15T06:40:48Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "047a5de40fe5adce3b8908a245e728e137fc9cc0d45384d4ad84d2c8b00a08f9",
+    "canonicalId": "720447f44e635fbfbd9d566a1e9643fd1168f8353a3613d83364a5e223eea770",
     "domain": "charging",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "2e7a3d0ca70f91b764aeb69566311a0900dd2f82bf27dcbaedacf4dee42dc932"
+    "contentHash": "168910dcdbcd5a234af941b624a5536a9c3ef23d965c70773fd8c9eaf7ff930d"
   },
   {
-    "id": "oc:observation:de-bw-ocpdb:b89d1df41041b579cc7e75561a87ef7a3657fdf3d413b271b3e78304c0944769",
-    "temporality": "live",
+    "id": "oc:offer:de-bw-mobidata-charging:72555:138587",
+    "temporality": "static",
     "location": {
       "geometry": {
         "type": "Point",
@@ -390,28 +438,22 @@
       },
       "extent": "point",
       "geometryOrigin": "source",
-      "fuzziness": "exact",
-      "address": {
-        "street": "Viktoriastr. 5",
-        "postalCode": "44532",
-        "city": "Lünen",
-        "country": "DE"
-      }
+      "fuzziness": "exact"
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
+      "sourceId": "de-bw-mobidata-charging",
       "sourceFormat": "ocpi",
       "accessMode": "bulk",
-      "recordId": "72555",
+      "recordId": "138587",
       "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
+        "provider": "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+        "license": "DL-DE-BY-2.0",
+        "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
       "upstream": [
         {
-          "publisher": "bnetza_api",
-          "recordId": "1002913"
+          "publisher": "datex2_enbw"
         }
       ],
       "privacy": {
@@ -422,164 +464,58 @@
     "freshness": {
       "fetchedAt": "2026-09-22T11:10:00Z"
     },
-    "class": "observation",
-    "kind": "observation",
-    "property": "charging.evse_status",
+    "class": "offer",
+    "kind": "energy_tariff",
     "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:de-bw-ocpdb:72555",
-      "componentKey": "259994190"
+      "class": "feature",
+      "id": "oc:feature:de-bw-mobidata-charging:72555"
     },
-    "result": {
-      "type": "category",
-      "value": "unknown",
-      "vocabulary": "evse_status"
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-15T06:40:48Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "69fb28add34b7fc234bf13d355c837aeb1ea4921c8a42e3383bea1b8b2ab2741",
-    "domain": "charging",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "8c69bccc937d7ea412decd946c88d2565c15b7863b6eadc7520b2c7e92a60576"
-  },
-  {
-    "id": "oc:observation:de-bw-ocpdb:ce1b0d0bdf7fefe5113360c4009625424ae0c03a778d88b796d5a2e470b1c570",
-    "temporality": "live",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          7.459233,
-          51.606021
+    "currency": "EUR",
+    "tariffType": "ad_hoc",
+    "elements": [
+      {
+        "components": [
+          {
+            "type": "energy",
+            "price": {
+              "amount": "0.588235",
+              "currency": "EUR"
+            },
+            "vatPct": 19,
+            "unit": "kW.h"
+          }
         ]
       },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact",
-      "address": {
-        "street": "Stellenbachstr. 49-51",
-        "postalCode": "44536",
-        "city": "Lünen",
-        "country": "DE"
-      }
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
-      "sourceFormat": "ocpi",
-      "accessMode": "bulk",
-      "recordId": "72557",
-      "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
-      },
-      "upstream": [
-        {
-          "publisher": "bnetza_api",
-          "recordId": "1002915"
+      {
+        "components": [
+          {
+            "type": "time",
+            "price": {
+              "amount": "0.10084",
+              "currency": "EUR"
+            },
+            "vatPct": 19,
+            "unit": "h"
+          }
+        ],
+        "restrictions": {
+          "minDuration": {
+            "value": 7200,
+            "unit": "s"
+          }
         }
-      ],
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
+      }
+    ],
+    "priceIncludesVat": false,
+    "validity": {
+      "status": "active",
+      "start": "2026-08-03T08:26:43.020Z"
     },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "observation",
-    "kind": "observation",
-    "property": "charging.evse_status",
-    "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:de-bw-ocpdb:72557",
-      "componentKey": "259994193"
-    },
-    "result": {
-      "type": "category",
-      "value": "unknown",
-      "vocabulary": "evse_status"
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-15T06:40:48Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "943a25d5e457519e77e871a69b545c582f82f3f2b2d350b6fd22ea79d862e752",
+    "canonicalId": "43820a59963cd00af27f1e99a5f6c8db20b468c6abd2a3868e18e07ffbb0f457",
     "domain": "charging",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "402c26364fb402b91a7e9460129d4360aa9b3bee60ffb042971ee1e9074654a2"
-  },
-  {
-    "id": "oc:observation:de-bw-ocpdb:50766b882b220b2e9c4b22079a430053b9dc624a6fc121fa727aaeb8bcf3626d",
-    "temporality": "live",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          7.459233,
-          51.606021
-        ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact",
-      "address": {
-        "street": "Stellenbachstr. 49-51",
-        "postalCode": "44536",
-        "city": "Lünen",
-        "country": "DE"
-      }
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
-      "sourceFormat": "ocpi",
-      "accessMode": "bulk",
-      "recordId": "72557",
-      "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
-      },
-      "upstream": [
-        {
-          "publisher": "bnetza_api",
-          "recordId": "1002915"
-        }
-      ],
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "observation",
-    "kind": "observation",
-    "property": "charging.evse_status",
-    "subject": {
-      "kind": "feature",
-      "featureId": "oc:feature:de-bw-ocpdb:72557",
-      "componentKey": "259994194"
-    },
-    "result": {
-      "type": "category",
-      "value": "unknown",
-      "vocabulary": "evse_status"
-    },
-    "phenomenonTime": {
-      "instant": "2026-09-15T06:40:48Z"
-    },
-    "aggregation": "instantaneous",
-    "canonicalId": "f4537e58cabee4eee0613e3157087d58f2f69f299c13e75c88daf1d25ae7ac34",
-    "domain": "charging",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "ada0fcaed7710483f357dc3a635587d0c38efd1c642b3f85fa7114d69e2b3751"
+    "contentHash": "9d9b11ff41229dbc94ecfd7c349b7f6288ed92902f889888b4d46078e8e75ca5"
   },
   {
     "id": "oc:feature:de-bw-mobidata-parking:390",
@@ -899,13 +835,12 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:11:29Z"
     },
-    "validUntil": "2026-09-22T11:41:29.000Z",
     "aggregation": "instantaneous",
     "canonicalId": "c91f433fec7b8c78d4e14c3d540c845d7109448e21752f104b44da3b243e97be",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "72b1820c61bbd0ca30650818150a3a9f3184fa1d03f8ddbabd4b1fa2df53b75d"
+    "contentHash": "9207d7694325bd0b1a9404f4c6b718e6afd4ed7673a7bc286a0f312b37169154"
   },
   {
     "id": "oc:observation:de-bw-mobidata-parking:84b91c4818b03b7f6c39b307f376278bddc74fd2edde3d776651ce6c08cec07a",
@@ -955,13 +890,12 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:11:29Z"
     },
-    "validUntil": "2026-09-22T11:41:29.000Z",
     "aggregation": "instantaneous",
     "canonicalId": "6be4f4a9e01201da8076ffc63f92ccb1b1c4de51e7133c0ea2f22051eeee0088",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "83f627d701fd96aa989c246928bf777aace11576b5a5236d29d81e5e43378692"
+    "contentHash": "e3aa51cfff79950ccab190a0129cbb3301393ef10f263e2c361fa2c193d0ee85"
   },
   {
     "id": "oc:feature:nl-ndw-truck-parking:NL-12_421",
@@ -1216,13 +1150,12 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:06:57.472Z"
     },
-    "validUntil": "2026-09-22T11:36:57.472Z",
     "aggregation": "instantaneous",
     "canonicalId": "5a0d6cbc68047310a4b287b04b16ce347335df1445c96e2fb0c0c438065f78e0",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "b8672f39de389d53fdc210779010c965f58ebcc98887b7c2c1c5d1e5db6b03d2"
+    "contentHash": "46aabb907d1dfdb5fd7232776803dc156b2458dc6a461d3b1a70bf0a5cbdb0b3"
   },
   {
     "id": "oc:observation:nl-ndw-truck-parking:5810fe4cef974c48168c9126314acd7a7e6ff82a67bc86c931aafa16f6730f23",
@@ -1330,13 +1263,12 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:06:57.472Z"
     },
-    "validUntil": "2026-09-22T11:36:57.472Z",
     "aggregation": "instantaneous",
     "canonicalId": "0434a82dbd52b437b1cc71bb6a64105dcff95c6465dd0ff5bf65cd070b30c511",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "2bf335634c6b87ad0126931c7105e542657139f320e51e11c0e54dbe6fde8f90"
+    "contentHash": "c53167dc044e44d1c52a6f8de701d4a9727ac69831f763a5d8d532d9a68a004c"
   },
   {
     "id": "oc:observation:nl-ndw-truck-parking:4e61c89a43616c400954ef16db9cfa55d695c072b6f50d6c2e8f803651648bd5",
@@ -1387,13 +1319,12 @@
     "phenomenonTime": {
       "instant": "2026-09-22T11:07:00.346Z"
     },
-    "validUntil": "2026-09-22T11:37:00.346Z",
     "aggregation": "instantaneous",
     "canonicalId": "54551cd15d96aac9378f47ff6860e148e24e27d19447475d8670598a57cca81c",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "4624cfb130136be99c77e317bac42eb5f13be7d56822546e71d329b174a03fed"
+    "contentHash": "3d845126ecfdc000b5099604f54873e616dfa8f7feb2cd0919daf1950b710501"
   },
   {
     "id": "oc:offer:nl-ndw-truck-parking:NL-12_421:1",
@@ -3213,187 +3144,5 @@
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
     "contentHash": "be428b266ca8baac230c4564c477123914c218587080ec4049e861b0f59e33e3"
-  },
-  {
-    "id": "oc:offer:de-bw-ocpdb:138586",
-    "temporality": "static",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          7.522998,
-          51.608953
-        ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact"
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
-      "sourceFormat": "ocpi",
-      "accessMode": "bulk",
-      "recordId": "138586",
-      "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
-      },
-      "upstream": [
-        {
-          "publisher": "datex2_enbw"
-        }
-      ],
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "offer",
-    "kind": "energy_tariff",
-    "subject": {
-      "class": "feature",
-      "id": "oc:feature:de-bw-ocpdb:72555"
-    },
-    "currency": "EUR",
-    "elements": [
-      {
-        "components": [
-          {
-            "type": "energy",
-            "price": {
-              "amount": "0.6639",
-              "currency": "EUR"
-            },
-            "vatPct": 19
-          }
-        ]
-      },
-      {
-        "components": [
-          {
-            "type": "time",
-            "price": {
-              "amount": "0.2017",
-              "currency": "EUR"
-            },
-            "vatPct": 19
-          }
-        ],
-        "restrictions": {
-          "minDuration": {
-            "value": 1800,
-            "unit": "s"
-          },
-          "maxDuration": {
-            "value": 0,
-            "unit": "s"
-          }
-        }
-      }
-    ],
-    "priceIncludesVat": false,
-    "validity": {
-      "status": "active"
-    },
-    "canonicalId": "4bd5e5fa28a3ebd2b60ad66e4dd2c6b66357b40bc71b92936c54a88ea03f6483",
-    "domain": "charging",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "94eefae86fa061e4510a83e2fa6c614add8d90cfd25635c1300d05d62f002d98"
-  },
-  {
-    "id": "oc:offer:de-bw-ocpdb:138587",
-    "temporality": "static",
-    "location": {
-      "geometry": {
-        "type": "Point",
-        "coordinates": [
-          7.522998,
-          51.608953
-        ]
-      },
-      "extent": "point",
-      "geometryOrigin": "source",
-      "fuzziness": "exact"
-    },
-    "provenance": {
-      "origin": "feed",
-      "sourceId": "de-bw-ocpdb",
-      "sourceFormat": "ocpi",
-      "accessMode": "bulk",
-      "recordId": "138587",
-      "attribution": {
-        "provider": "MobiData BW",
-        "license": "CC-BY-4.0"
-      },
-      "upstream": [
-        {
-          "publisher": "datex2_enbw"
-        }
-      ],
-      "privacy": {
-        "class": "authoritative"
-      },
-      "instanceId": "fit.example"
-    },
-    "freshness": {
-      "fetchedAt": "2026-09-22T11:10:00Z"
-    },
-    "class": "offer",
-    "kind": "energy_tariff",
-    "subject": {
-      "class": "feature",
-      "id": "oc:feature:de-bw-ocpdb:72555"
-    },
-    "currency": "EUR",
-    "elements": [
-      {
-        "components": [
-          {
-            "type": "energy",
-            "price": {
-              "amount": "0.5882",
-              "currency": "EUR"
-            },
-            "vatPct": 19
-          }
-        ]
-      },
-      {
-        "components": [
-          {
-            "type": "time",
-            "price": {
-              "amount": "0.1008",
-              "currency": "EUR"
-            },
-            "vatPct": 19
-          }
-        ],
-        "restrictions": {
-          "minDuration": {
-            "value": 7200,
-            "unit": "s"
-          },
-          "maxDuration": {
-            "value": 0,
-            "unit": "s"
-          }
-        }
-      }
-    ],
-    "priceIncludesVat": false,
-    "validity": {
-      "status": "active"
-    },
-    "canonicalId": "97b99602dccf207447bfe5c58ab62db846230130848f460a1f4b50a95d25f25b",
-    "domain": "charging",
-    "revision": 1,
-    "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "39b18791276ef7aabfe3d92b118799629d7725dc2959245e5cc87027306b5757"
   }
 ]

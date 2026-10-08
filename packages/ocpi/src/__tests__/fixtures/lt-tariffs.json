@@ -1,0 +1,189 @@
+{
+  "timestamp": "2026-10-06T00:01:42Z",
+  "status_code": 1000,
+  "status_message": "Success",
+  "data": [
+    {
+      "country_code": "LT",
+      "party_id": "IKR",
+      "id": "4",
+      "name": null,
+      "currency": "EUR",
+      "tariff_alt_url": null,
+      "tariff_alt_text": null,
+      "min_price": null,
+      "max_price": null,
+      "elements": [
+        {
+          "price_components": [
+            {
+              "price": "0.0000",
+              "type": "FLAT",
+              "step_size": 1,
+              "vat": "21.0000"
+            }
+          ]
+        }
+      ],
+      "end_date_time": null,
+      "tax_included": null,
+      "last_updated": "2026-05-22 07:53:10"
+    },
+    {
+      "country_code": "LT",
+      "party_id": "441",
+      "id": "d37ff71c-0a3d-11f0-9a21-06a2d3719779",
+      "name": null,
+      "currency": "EUR",
+      "tariff_alt_url": null,
+      "tariff_alt_text": null,
+      "min_price": null,
+      "max_price": null,
+      "elements": [
+        {
+          "price_components": [
+            {
+              "price": "0.2900",
+              "type": "ENERGY",
+              "step_size": 1,
+              "vat": null
+            }
+          ]
+        }
+      ],
+      "end_date_time": null,
+      "tax_included": null,
+      "last_updated": "2025-03-26 12:28:30"
+    },
+    {
+      "country_code": "LT",
+      "party_id": "IGN",
+      "id": "24",
+      "name": null,
+      "currency": "EUR",
+      "tariff_alt_url": null,
+      "tariff_alt_text": null,
+      "min_price": "0.1000",
+      "max_price": null,
+      "elements": [
+        {
+          "price_components": [
+            {
+              "price": "0.2100",
+              "type": "ENERGY",
+              "step_size": 1,
+              "vat": "21.0000"
+            }
+          ]
+        }
+      ],
+      "end_date_time": null,
+      "tax_included": "NO",
+      "last_updated": "2026-09-11 12:26:21"
+    },
+    {
+      "country_code": "LT",
+      "party_id": "IGN",
+      "id": "26",
+      "name": null,
+      "currency": "EUR",
+      "tariff_alt_url": null,
+      "tariff_alt_text": null,
+      "min_price": "0.1000",
+      "max_price": null,
+      "elements": [
+        {
+          "price_components": [
+            {
+              "price": "0.0000",
+              "type": "PARKING_TIME",
+              "step_size": 1,
+              "vat": "21.0000"
+            }
+          ],
+          "restrictions": {
+            "max_duration": 120
+          }
+        },
+        {
+          "price_components": [
+            {
+              "price": "2.4800",
+              "type": "PARKING_TIME",
+              "step_size": 60,
+              "vat": "21.0000"
+            }
+          ],
+          "restrictions": {
+            "max_duration": 420
+          }
+        },
+        {
+          "price_components": [
+            {
+              "price": "0.0000",
+              "type": "PARKING_TIME",
+              "step_size": 1,
+              "vat": "21.0000"
+            }
+          ],
+          "restrictions": {
+            "min_duration": 420
+          }
+        },
+        {
+          "price_components": [
+            {
+              "price": "0.0800",
+              "type": "ENERGY",
+              "step_size": 1,
+              "vat": "21.0000"
+            }
+          ]
+        }
+      ],
+      "end_date_time": null,
+      "tax_included": "NO",
+      "last_updated": "2026-05-16 14:56:34"
+    },
+    {
+      "country_code": "LT",
+      "party_id": "441",
+      "id": "t_7c68523e2a9b42c4883e0275ab4fa805",
+      "name": null,
+      "currency": "EUR",
+      "tariff_alt_url": null,
+      "tariff_alt_text": [
+        {
+          "language": "en",
+          "text": "0.38 Eur/kWh"
+        },
+        {
+          "language": "ru",
+          "text": "0.38 Eur/kWh"
+        },
+        {
+          "language": "lt",
+          "text": "0.38 Eur/kWh"
+        }
+      ],
+      "min_price": null,
+      "max_price": null,
+      "elements": [
+        {
+          "price_components": [
+            {
+              "price": "0.3800",
+              "type": "ENERGY",
+              "step_size": 1,
+              "vat": null
+            }
+          ]
+        }
+      ],
+      "end_date_time": null,
+      "tax_included": null,
+      "last_updated": "2026-02-24 16:50:08"
+    }
+  ]
+}

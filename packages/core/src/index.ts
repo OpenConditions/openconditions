@@ -17,3 +17,4 @@ export { haversineMeters } from "./spatial.js";
 export * from "./time.js";
 export * from "./timezone.js";
 export * from "./types.js";
+export * from "./validity.js";

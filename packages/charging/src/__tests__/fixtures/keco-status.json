@@ -1,0 +1,21 @@
+{
+  "resultCode": "00",
+  "resultMsg": "NORMALSERVICE.",
+  "numOfRows": 10,
+  "pageNo": 1,
+  "totalCount": 15,
+  "items": {
+    "item": [
+      {
+        "busiId": "ME",
+        "statId": "28260005",
+        "chgerId": "02",
+        "stat": "2",
+        "statUpdDt": "20190829121020",
+        "lastTsdt": "20210801121020",
+        "lastTedt": "20210801123020",
+        "nowTsdt": "20210802131020"
+      }
+    ]
+  }
+}

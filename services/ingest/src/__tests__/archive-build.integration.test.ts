@@ -12,6 +12,7 @@ import {
   buildDailyArchive,
   pruneErasedArchives,
 } from "../pipeline/archive-build.js";
+import { writeSiteReadings } from "./helpers/flow-series.js";
 import { situationDraft, writeSituations } from "./helpers/situations.js";
 
 let sql: postgres.Sql;
@@ -127,6 +128,46 @@ describe("nightly static archive", () => {
       expect(await readIds(result!.situation.path)).toEqual([
         "oc:situation:de-autobahn-events:open",
       ]);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
+  it("archives a change-only reading only while its source still polls", async () => {
+    await sql`TRUNCATE conditions.observation_latest, conditions.observation,
+      conditions.source, conditions.source_status CASCADE`;
+    const point = { type: "Point" as const, coordinates: [4.9, 52.37] };
+    // Stated a day back and never changed since: only its source's polling dates it.
+    const at = "2026-09-06T03:00:00.000Z";
+    await writeSiteReadings(
+      sql,
+      "nl-polled",
+      [{ site: "s1", geometry: point, at, los: "heavy" }],
+      at,
+    );
+    await writeSiteReadings(
+      sql,
+      "nl-stopped",
+      [{ site: "s1", geometry: point, at, los: "heavy" }],
+      at,
+    );
+    for (const [source, lastSuccess] of [
+      ["nl-polled", "2026-09-07T03:28:00.000Z"],
+      ["nl-stopped", "2026-09-07T01:00:00.000Z"],
+    ] as const) {
+      await sql`INSERT INTO conditions.source_status (source, last_success_at, freshness_window_sec)
+        VALUES (${source}, ${lastSuccess}, 300)`;
+    }
+    const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
+    try {
+      const result = await buildDailyArchive(sql, {
+        now: () => new Date("2026-09-07T03:30:00Z"),
+        outputDir: dir,
+      });
+      const rows = (await parquetReadObjects({
+        file: await bufferOf(result!.observation.path),
+      })) as { id: string; validUntil?: string }[];
+      expect(rows.map((r) => r.id)).toEqual([expect.stringContaining("oc:observation:nl-polled:")]);
     } finally {
       await rm(dir, { recursive: true, force: true });
     }

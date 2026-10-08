@@ -202,7 +202,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/sources",
     operationId: "listSources",
     summary:
-      "The feeds this instance serves, by id: name, licence, attribution, homepage, terms (url, review date and note) and rights, for crediting and disclosing them. Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
+      "The feeds this instance serves, by id: name, licence, attribution, homepage, terms (url, review date and note), rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
     produces: ["application/json"],
   },
   {

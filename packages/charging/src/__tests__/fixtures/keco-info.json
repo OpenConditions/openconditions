@@ -1,0 +1,48 @@
+{
+  "resultCode": "00",
+  "resultMsg": "NORMALSERVICE.",
+  "numOfRows": 10,
+  "pageNo": 1,
+  "totalCount": 15,
+  "items": {
+    "item": [
+      {
+        "statNm": "기후대기관",
+        "statId": "28260005",
+        "chgerId": "02",
+        "chgerType": "03",
+        "addr": "인천광역시 서구 환경로 42",
+        "addrDetail": "지상주차장",
+        "lat": "37.569620",
+        "lng": "126.641973",
+        "useTime": "24시간 이용가능",
+        "busiId": "ME",
+        "bnm": "환경부",
+        "busiNm": "한국자동차환경협회",
+        "busiCall": "1661-9408",
+        "stat": "2",
+        "statUpdDt": "20190829121020",
+        "lastTsdt": "20210801121020",
+        "lastTedt": "20210801123020",
+        "nowTsdt": "20210802131020",
+        "powerType": "급속(100kW동시)",
+        "output": "50",
+        "method": "단독",
+        "zcode": "28",
+        "zscode": "28260",
+        "kind": "F0",
+        "kindDetail": "F002",
+        "parkingFree": "Y",
+        "note": "공사로 인해 이용 불가",
+        "limitYn": "N",
+        "limitDetail": "",
+        "delYn": "N",
+        "delDetail": "",
+        "trafficYn": "N",
+        "year": "2025",
+        "floorNum": "1",
+        "floorType": "F"
+      }
+    ]
+  }
+}

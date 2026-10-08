@@ -8,7 +8,7 @@ interface Property {
 
 interface Manifest {
   id: string;
-  container: { environment?: Record<string, string> };
+  container: { environment?: Record<string, string>; memory?: string };
   configSchema?: { type?: string; required?: string[]; properties?: Record<string, Property> };
   volumes?: { name: string; mountAt: string }[];
   exposure?: { proxy?: { enabled?: boolean } };
@@ -180,6 +180,11 @@ describe("service manifests on OpenMapX's config model", () => {
       expect([...read].filter((name) => !set.has(name)).sort()).toEqual([]);
     },
   );
+
+  test("ingest: the container gets 6g unless the operator says otherwise", () => {
+    // The national charging registers peak at 4.2 GB under a 4g limit.
+    expect(manifest("ingest").container.memory).toBe("${OPENCONDITIONS_INGEST_MEMORY:-6g}");
+  });
 
   test("ingest: what it writes lands on its one volume", () => {
     const m = manifest("ingest");

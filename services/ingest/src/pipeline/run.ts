@@ -4,9 +4,13 @@ import type {
   CatalogFeed,
   Env,
   FeedPayloads,
+  HeldPayload,
+  ImpersonationOptions,
   LookupFn,
   ParseOutput,
   RecordDraft,
+  StatusIndex,
+  StatusOutput,
 } from "@openconditions/ingest-framework";
 import {
   dueRoles,
@@ -14,6 +18,9 @@ import {
   fetchEndpoint,
   guardedFetch,
   guardOptionsFromEnv,
+  heldBuffers,
+  heldBytes,
+  holdPayload,
   makeAuthorizedFetch,
   redactSecrets,
   redactUrl,
@@ -32,12 +39,14 @@ import { loadBaselineMap } from "./baseline-store.js";
 import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
 import { streamFeed } from "./measured-data.js";
+import { type ParseGate, payloadBytes } from "./parse-gate.js";
 import {
   changedSituations,
   logRejections,
   type PollIdentity,
   publishFeatures,
   publishFlows,
+  publishReadings,
   publishSituations,
   stampAttribution,
   type WriteModel,
@@ -187,6 +196,8 @@ export interface RunDeps {
    * fixtures doesn't still require live DNS to resolve the feed host first.
    */
   lookup?: LookupFn;
+  /** Replaces the impersonating client of an `impersonate` endpoint; tests only. */
+  impersonation?: ImpersonationOptions;
   /** The registry records are sealed against and the instance id they are written as. */
   model?: Partial<WriteModel>;
   /** Where credentials are read; defaults to `process.env`. */
@@ -197,19 +208,35 @@ export interface RunDeps {
    * parses the others' latest payloads; without it, every data role is due.
    */
   roles?: RoleState;
+  /**
+   * Shared by the scheduler's feeds, so a large payload is parsed and written
+   * while no other large one is; without it, polls never wait for each other.
+   */
+  parseGate?: ParseGate;
 }
 
-/** A feed's data roles across polls: when each was last fetched, and its latest payloads. */
+/**
+ * A feed's data roles across polls: when each was last fetched, its latest
+ * payloads and, for a format that reads live states alone, where they
+ * belong. Nothing a parse produced is kept besides that index.
+ */
 export interface RoleState {
   /** Epoch ms of each role's last fetch. */
   lastFetchedAt: Record<string, number>;
   /**
    * Each role's latest payloads, kept only for a feed with more than one data
-   * role, whose roles fall due apart: a single-role poll holds them all.
+   * role, whose roles fall due apart: a single-role poll holds them all. A
+   * large one is kept gzipped and read back only when a poll parses it.
    */
-  payloads: Record<string, readonly Buffer[]>;
+  payloads: Record<string, readonly HeldPayload[]>;
   /** The roles whose last fetch failed and fell back to a held payload, so an outage warns once. */
   failing: Record<string, true>;
+  /**
+   * The status index of the last full parse that published, for a feed with
+   * a live status role: a poll that fetches only live states reads them
+   * through it, without the snapshot.
+   */
+  statusIndex?: StatusIndex;
 }
 
 export function createRoleState(): RoleState {
@@ -228,8 +255,16 @@ export function feedFetch(
   src: CatalogFeed,
   deps: { fetch: typeof fetch; lookup?: LookupFn; env?: Env },
 ): typeof fetch {
-  const guarded = guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
-  return makeAuthorizedFetch(src, guarded, deps.env ?? process.env);
+  return makeAuthorizedFetch(src, guardedFeedFetch(deps), deps.env ?? process.env);
+}
+
+/**
+ * The guarded fetch without any credential. `fetchEndpoint` takes this one and
+ * authorizes it itself, so a followed URL never receives the feed's
+ * authorization.
+ */
+export function guardedFeedFetch(deps: { fetch: typeof fetch; lookup?: LookupFn }): typeof fetch {
+  return guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
 }
 
 /** The data endpoints of a feed: those its format parses itself, not reference data. */
@@ -519,17 +554,41 @@ async function runAttempt(
 
   const ctx = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
   let acceptFetch: (() => void) | undefined;
-  let parse: ParseOutput;
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
   // Whether any data payload had bytes: a streamed body is taken to have.
   let heldPayload = true;
   let warning: string | undefined;
+  // An optional role that never answered was left out: its states are not in the parse.
+  let leftOut = false;
+  const pollContext = (): PollContext => ({
+    src,
+    deps,
+    attempt,
+    start,
+    recordStatus,
+    identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
+    ...(acceptFetch ? { acceptFetch } : {}),
+    ...(warning ? { warning } : {}),
+    statesComplete: !leftOut,
+  });
+  const finish = (parse: ParseOutput): Promise<RunResult> => {
+    const poll = pollContext();
+    if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload);
+    return format.kind === "measurements"
+      ? finishFlowPoll(poll, {
+          features: parse.features,
+          observations: parse.observations,
+          situations: parse.situations,
+        })
+      : finishEventPoll(poll, parse, snapshotInspection);
+  };
   if (format.stream) {
     // A payload too large to buffer (NDW's ~50 MB DATEX flow document): stream
     // fetch → gunzip → SAX, so it is never buffered or DOM-parsed whole. An
     // HTTP error names the URL with the feed's secrets scrubbed, path included.
     const secrets = feedSecretValues(src, env);
     const redact = (s: string) => redactSecrets(redactUrl(s), secrets);
+    let parsed: ParseOutput;
     try {
       const streamed = await streamFeed(
         src,
@@ -539,9 +598,9 @@ async function runAttempt(
         teeFor(feedCapture),
         env,
       );
-      parse = streamed.output;
       payloadHashes = [streamed.payload.sha256];
       if (deps.roles) deps.roles.lastFetchedAt["main"] = Date.parse(attemptAt);
+      parsed = streamed.output;
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
@@ -552,13 +611,15 @@ async function runAttempt(
       });
       return { count: 0, durationMs: Date.now() - start, error };
     }
+    return finish(parsed);
   } else {
     // Every due data role is fetched; a role not due this poll (or answering
     // 304) contributes the payloads of its latest fetch.
     const fresh: Record<string, readonly Buffer[]> = {};
     const accepts: (() => void)[] = [];
     const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
-    let payloads: FeedPayloads;
+    /** The data roles whose payloads changed this poll. */
+    let fetched: string[] = [];
     // A due role that failed while its latest payload is held: the poll goes on
     // with that payload, and the role stays due for the next tick.
     const warnings: string[] = [];
@@ -575,17 +636,37 @@ async function runAttempt(
         });
       }
     };
+    // The roles whose fetch failed: a role of changes failing past its
+    // window has missed some, and its snapshot falls due again.
+    const failed: string[] = [];
+    const gap = (role: string) => failed.push(role);
+    /** The roles the network answered this poll, fetched or not modified. */
+    const renewed = new Set<string>();
     try {
       for (const role of due) {
         let result: Awaited<ReturnType<typeof fetchEndpoint>>;
         try {
-          result = await fetchEndpoint(src, role, fetchFn, {
+          result = await fetchEndpoint(src, role, guardedFeedFetch(deps), {
             resolvers: domainOf(src).resolvers,
             env,
+            ...(deps.impersonation ? { impersonation: deps.impersonation } : {}),
           });
         } catch (err) {
-          if (!holdsPayload(role)) throw err;
-          fallBack(role, err instanceof Error ? err.message : String(err));
+          const reason = err instanceof Error ? err.message : String(err);
+          gap(role);
+          if (holdsPayload(role)) {
+            fallBack(role, reason);
+            continue;
+          }
+          // An optional role that never answered: the poll goes on without it,
+          // and the role stays due.
+          if (format.endpoints[role]?.required !== false) throw err;
+          leftOut = true;
+          warnings.push(`${role}: ${reason} (left out)`);
+          console.warn(`[ingest] ${src.id}: optional ${role} failed, left out: ${reason}`, {
+            feed: src.id,
+            role,
+          });
           continue;
         }
         if (result.status === "partial" && holdsPayload(role)) {
@@ -633,13 +714,57 @@ async function runAttempt(
         if (result.status === "fetched") {
           fresh[role] = result.buffers;
           accepts.push(result.accept);
-          if (keepPayloads) deps.roles!.payloads[role] = result.buffers;
         }
         answered++;
+        renewed.add(role);
         if (deps.roles) {
           deps.roles.lastFetchedAt[role] = Date.parse(attemptAt);
           delete deps.roles.failing[role];
         }
+      }
+      for (const role of failed) {
+        const spec = format.endpoints[role];
+        const since = spec?.accumulatesSince;
+        if (since === undefined || renewed.has(since)) continue;
+        // Failing within the publisher's window loses nothing: the next
+        // answer still reaches back to the last one that came, or to the
+        // snapshot, which holds every change before it.
+        const lastAnswer = deps.roles?.lastFetchedAt[role];
+        const lastSnapshot = deps.roles?.lastFetchedAt[since];
+        const last =
+          lastAnswer === undefined && lastSnapshot === undefined
+            ? undefined
+            : Math.max(lastAnswer ?? 0, lastSnapshot ?? 0);
+        const window = spec?.changesWindowSec;
+        if (
+          window === undefined ||
+          last === undefined ||
+          Date.parse(attemptAt) - last > window * 1000
+        ) {
+          delete deps.roles?.lastFetchedAt[since];
+        }
+      }
+      fetched = Object.keys(fresh);
+      if (keepPayloads) {
+        for (const [role, spec] of Object.entries(format.endpoints)) {
+          // A snapshot answered anew (or confirmed unchanged) starts its roles
+          // of changes over, failed ones included.
+          const since = spec.accumulatesSince;
+          if (since !== undefined && renewed.has(since)) {
+            deps.roles!.payloads[role] = await holdAll(fresh[role] ?? []);
+          }
+        }
+        for (const [role, buffers] of Object.entries(fresh)) {
+          // A role of changes keeps every answer since its snapshot was fetched.
+          const since = format.endpoints[role]?.accumulatesSince;
+          if (since !== undefined && renewed.has(since)) continue;
+          const held = deps.roles!.payloads[role] ?? [];
+          const kept = await holdAll(buffers);
+          deps.roles!.payloads[role] = since === undefined ? kept : [...held, ...kept];
+        }
+        // The held copies stand in from here: the fetched bodies are not kept
+        // alive while the poll waits for the gate.
+        for (const role of fetched) delete fresh[role];
       }
       if (answered === 0 && warnings.length > 0) {
         // Every due role failed and its held payload stood in: nothing was
@@ -655,7 +780,7 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
       }
-      if (Object.keys(fresh).length === 0) {
+      if (fetched.length === 0) {
         await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
@@ -666,60 +791,121 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "validated_unchanged" };
       }
-      payloads = Object.fromEntries(
-        dataRoles(src).map((role) => [role, fresh[role] ?? deps.roles?.payloads[role] ?? []]),
-      );
       acceptFetch = () => {
         for (const accept of accepts) accept();
       };
       if (warnings.length > 0) warning = warnings.join("; ");
-      snapshotInspection = inspectSnapshotCompleteness(src, payloads["main"] ?? []);
-      heldPayload = Object.values(payloads).some((buffers) => buffers.some((b) => b.length > 0));
     } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      console.error(`[ingest] fetch failed for source ${src.id}:`, err);
-      await recordStatus({
-        freshnessWindowSec: src.freshnessWindowSec,
-        outcome: "error",
-        error,
-      });
-      return { count: 0, durationMs: Date.now() - start, error };
+      return failFetch(err);
     }
-    try {
-      // A complete-snapshot source is read through its format's reporting
-      // path, which reconciles partitions by source identity and refuses a
-      // candidate it cannot fully account for.
-      parse = format.parse(src, payloads, ctx);
-    } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      console.error(`[ingest] parse failed for source ${src.id}:`, err);
-      await recordStatus({
-        freshnessWindowSec: src.freshnessWindowSec,
-        outcome: "error",
-        error,
-      });
-      return { count: 0, durationMs: Date.now() - start, error };
+
+    // A role's latest payloads: the held ones of a feed that keeps them (every
+    // answer since its snapshot, for a role of changes), else this poll's.
+    const held = (role: string) => (keepPayloads ? deps.roles!.payloads[role] : undefined);
+    const bytesOf = (roles: readonly string[]) =>
+      roles.reduce((sum, role) => {
+        const kept = held(role);
+        if (kept !== undefined) return sum + heldBytes(kept);
+        return sum + payloadBytes({ [role]: fresh[role] ?? [] });
+      }, 0);
+    const payloadOf = async (role: string): Promise<readonly Buffer[]> => {
+      const kept = held(role);
+      return kept !== undefined ? heldBuffers(kept) : (fresh[role] ?? []);
+    };
+    const payloadsOf = async (roles: readonly string[]): Promise<FeedPayloads> =>
+      Object.fromEntries(
+        await Promise.all(roles.map(async (role) => [role, await payloadOf(role)] as const)),
+      );
+
+    const live = liveRoles(src);
+    const index = deps.roles?.statusIndex;
+    // Only live states came: the snapshot the index was built from stands, so
+    // its readings are written without parsing it again.
+    if (
+      keepPayloads &&
+      index !== undefined &&
+      format.kind === "features" &&
+      format.parseStatus !== undefined &&
+      due.every((role) => live.includes(role))
+    ) {
+      const parseStatus = format.parseStatus;
+      const statusAndFinish = async (): Promise<RunResult> => {
+        let output: StatusOutput;
+        try {
+          output = parseStatus(src, await payloadsOf(fetched), ctx, index);
+        } catch (err) {
+          return failParse(err);
+        }
+        return finishStatusPoll(pollContext(), output);
+      };
+      return deps.parseGate
+        ? deps.parseGate.run(bytesOf(fetched), statusAndFinish, src.id)
+        : statusAndFinish();
     }
+
+    const roles = dataRoles(src);
+    // The payloads live through the parse only: the write needs the drafts.
+    const parseLatest = async (): Promise<{ parsed: ParseOutput } | { failed: RunResult }> => {
+      let payloads: FeedPayloads;
+      try {
+        payloads = await payloadsOf(roles);
+        snapshotInspection = inspectSnapshotCompleteness(src, payloads["main"] ?? []);
+        heldPayload = Object.values(payloads).some((buffers) => buffers.some((b) => b.length > 0));
+      } catch (err) {
+        return { failed: await failFetch(err) };
+      }
+      // The index stands for the publication this parse replaces; a poll that
+      // fails leaves none, so the next one parses in full again.
+      if (deps.roles) delete deps.roles.statusIndex;
+      try {
+        // A complete-snapshot source is read through its format's reporting
+        // path, which reconciles partitions by source identity and refuses a
+        // candidate it cannot fully account for.
+        return { parsed: format.parse(src, payloads, ctx) };
+      } catch (err) {
+        return { failed: await failParse(err) };
+      }
+    };
+    const parseAndFinish = async (): Promise<RunResult> => {
+      const latest = await parseLatest();
+      if ("failed" in latest) return latest.failed;
+      const { parsed } = latest;
+      const result = await finish(parsed);
+      if (keepPayloads && live.length > 0 && result.error === undefined && parsed.statusIndex) {
+        deps.roles!.statusIndex = parsed.statusIndex;
+      }
+      return result;
+    };
+    // The drafts of a large payload stay on the heap until their write
+    // commits, so the gate holds through the write, not just the parse.
+    return deps.parseGate
+      ? deps.parseGate.run(bytesOf(roles), parseAndFinish, src.id)
+      : parseAndFinish();
   }
 
-  const poll: PollContext = {
-    src,
-    deps,
-    attempt,
-    start,
-    recordStatus,
-    identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
-    ...(acceptFetch ? { acceptFetch } : {}),
-    ...(warning ? { warning } : {}),
-  };
-  if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload);
-  return format.kind === "measurements"
-    ? finishFlowPoll(poll, {
-        features: parse.features,
-        observations: parse.observations,
-        situations: parse.situations,
-      })
-    : finishEventPoll(poll, parse, snapshotInspection);
+  async function failFetch(err: unknown): Promise<RunResult> {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`[ingest] fetch failed for source ${src.id}:`, err);
+    await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
+    return { count: 0, durationMs: Date.now() - start, error };
+  }
+
+  async function failParse(err: unknown): Promise<RunResult> {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`[ingest] parse failed for source ${src.id}:`, err);
+    await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
+    return { count: 0, durationMs: Date.now() - start, error };
+  }
+}
+
+/** Keeps a role's payloads between polls, gzipped when large. */
+const holdAll = (buffers: readonly Buffer[]): Promise<HeldPayload[]> =>
+  Promise.all(buffers.map(holdPayload));
+
+/** The data roles of a feed its format reads as live states only. */
+function liveRoles(src: CatalogFeed): string[] {
+  const format = formatOf(src);
+  return dataRoles(src).filter((role) => format.endpoints[role]?.status === true);
 }
 
 /** What the poll's last stages share once its payloads are parsed. */
@@ -733,6 +919,8 @@ interface PollContext {
   acceptFetch?: () => void;
   /** A data role failed and its held payload stood in; shown on the attempt's status. */
   warning?: string;
+  /** Every data role's states are in the parse: none was left out. */
+  statesComplete: boolean;
 }
 
 /** Records a failure that keeps the last good publication, and the run's result for it. */
@@ -1000,6 +1188,7 @@ async function finishFeaturePoll(
       durationMs: Date.now() - poll.start,
       now: deps.now(),
       model: writeModel(deps.model),
+      statesComplete: poll.statesComplete,
       ...(poll.warning ? { warning: poll.warning } : {}),
     });
     poll.attempt.closed = true;
@@ -1015,7 +1204,7 @@ async function finishFeaturePoll(
   console.info(
     `[ingest] ${src.id}: ${output.features.length} features, ${output.observations.length} readings, ` +
       `${output.offers.length} offers (${counts.inserted} inserted, ${counts.updated} updated, ` +
-      `${counts.deleted} withdrawn) in ${durationMs}ms`,
+      `${counts.deleted} withdrawn, ${summary.observations.ended} readings ended) in ${durationMs}ms`,
   );
   return {
     count: counts.inserted + counts.updated,
@@ -1025,6 +1214,54 @@ async function finishFeaturePoll(
     inserted: counts.inserted,
     updated: counts.updated,
     deleted: counts.deleted,
+    rejected: counts.rejected,
+  };
+}
+
+/**
+ * The last stages of a poll that read live states alone: stamp the
+ * catalogue's rights on the readings and write them, the source's features
+ * and offers untouched and nothing withdrawn; the poll is a success of the
+ * source like any other.
+ */
+async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promise<RunResult> {
+  const { src, deps } = poll;
+  const observations = output.observations.map((d) => stampAttribution(d, src));
+  let published: Awaited<ReturnType<typeof publishReadings>>;
+  try {
+    published = await publishReadings(deps.sql, src, {
+      observations,
+      rejected: output.rejected,
+      poll: poll.identity,
+      durationMs: Date.now() - poll.start,
+      now: deps.now(),
+      model: writeModel(deps.model),
+      ...(poll.warning ? { warning: poll.warning } : {}),
+    });
+    poll.attempt.closed = true;
+  } catch (err) {
+    console.error(`[ingest] publish failed for source ${src.id}:`, err);
+    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+  }
+  const { summary, counts } = published;
+  logRejections(src.id, summary);
+  poll.acceptFetch?.();
+
+  const durationMs = Date.now() - poll.start;
+  const o = summary.observations;
+  console.info(
+    `[ingest] ${src.id}: status only, ${observations.length} readings ` +
+      `(latest ${o.latest}, history ${o.history}, unchanged ${o.unchanged}), ` +
+      `${output.rejected} statuses unplaced in ${durationMs}ms`,
+  );
+  return {
+    count: counts.updated,
+    durationMs,
+    outcome: "changed",
+    activeEvents: counts.activeEvents,
+    inserted: 0,
+    updated: counts.updated,
+    deleted: 0,
     rejected: counts.rejected,
   };
 }

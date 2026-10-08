@@ -1,0 +1,253 @@
+{
+  "Provider": "NOBIL.no",
+  "Rights": "Creative Commons 4.0 Unported License",
+  "apiver": "3",
+  "chargerstations": [
+    {
+      "csmd": {
+        "id": 41,
+        "name": "IKEA Slependen",
+        "url": "http://www.ladestasjoner.no/2010/06/ikea-slependen_08.html",
+        "blogpostid": "3599822862656171588",
+        "Active": true,
+        "Street": "Nesbruveien",
+        "House_number": "40",
+        "Zipcode": "1396",
+        "City": "BILLINGSTAD",
+        "Municipality_ID": "0220",
+        "Municipality": "ASKER",
+        "County_ID": "02",
+        "County": "Akershus",
+        "Description_of_location": "Tre plasser i parkeringshuset P1, rett til høyre etter innkjøring. Slependen. Det finnes også 3 ladeplasser på område L, nærmest \"utgang\" i P-kjelleren.",
+        "Owned_by": "IKEA",
+        "Number_charging_points": 6,
+        "Position": "(59.87447,10.49982)",
+        "Image": "41.jpg",
+        "Available_charging_points": 6,
+        "User_comment": "",
+        "Contact_info": "48050000 - kar fra IKEA som ringte om videre utbygging.",
+        "Created": "2010-03-24 10:24:13",
+        "Created_by": 4,
+        "Created_by_Forename": "nobilAdmin",
+        "Created_by_Surname": "nobilAdmin",
+        "Updated": "2011-04-15 12:19:20",
+        "Updated_by": 5,
+        "Updated_by_Forename": "Hans H.",
+        "Updated_by_Surname": "Kvisle",
+        "Station_status": 1,
+        "Land_code": "nor",
+        "International_id": "NOR_00041"
+      },
+      "attr": {
+        "st": {
+          "24": {
+            "attrtypeid": "24",
+            "attrname": "Open 24h",
+            "attrvalid": "1",
+            "trans": "Yes",
+            "attrval": "true"
+          },
+          "21": {
+            "attrtypeid": "21",
+            "attrname": "Real-time information",
+            "attrvalid": "2",
+            "trans": "No",
+            "attrval": ""
+          },
+          "22": {
+            "attrtypeid": "22",
+            "attrname": "Public funding",
+            "attrvalid": "4",
+            "trans": "None",
+            "attrval": ""
+          },
+          "7": {
+            "attrtypeid": "7",
+            "attrname": "Parking fee",
+            "attrvalid": "2",
+            "trans": "No",
+            "attrval": false
+          },
+          "6": {
+            "attrtypeid": "6",
+            "attrname": "Time limit",
+            "attrvalid": "2",
+            "trans": "No",
+            "attrval": ""
+          },
+          "3": {
+            "attrtypeid": "3",
+            "attrname": "Location",
+            "attrvalid": "4",
+            "trans": "Shopping center",
+            "attrval": ""
+          },
+          "2": {
+            "attrtypeid": "2",
+            "attrname": "Availability",
+            "attrvalid": "1",
+            "trans": "Public",
+            "attrval": ""
+          }
+        },
+        "conn": {
+          "1": {
+            "attrtypeid": "1",
+            "attrname": "Accessability",
+            "attrvalid": "1",
+            "trans": "Open",
+            "attrval": ""
+          },
+          "4": {
+            "attrtypeid": "4",
+            "attrname": "Connector",
+            "attrvalid": "14",
+            "trans": "Schuko CEE 7/4",
+            "attrval": ""
+          },
+          "5": {
+            "attrtypeid": "5",
+            "attrname": "Charging capacity",
+            "attrvalid": "7",
+            "trans": "230V 1-phase max 16A",
+            "attrval": ""
+          },
+          "17": {
+            "attrtypeid": "17",
+            "attrname": "Vehicle type",
+            "attrvalid": "1",
+            "trans": "All vehicles",
+            "attrval": ""
+          },
+          "20": {
+            "attrtypeid": "20",
+            "attrname": "Charge mode",
+            "attrvalid": "1",
+            "trans": "Mode 1",
+            "attrval": ""
+          },
+          "18": {
+            "attrtypeid": "18",
+            "attrname": "Reservable",
+            "attrvalid": "2",
+            "trans": "No",
+            "attrval": ""
+          },
+          "25": {
+            "attrtypeid": "25",
+            "attrname": "Fixed cable",
+            "attrvalid": "2",
+            "trans": "No",
+            "attrval": ""
+          }
+        }
+      }
+    },
+    {
+      "csmd": {
+        "id": 9001,
+        "name": "Eksempel hurtigladestasjon",
+        "Active": true,
+        "Street": "Storgata",
+        "House_number": "1",
+        "Zipcode": "0155",
+        "City": "OSLO",
+        "Municipality_ID": "0301",
+        "Municipality": "OSLO",
+        "County_ID": "03",
+        "County": "Oslo",
+        "Description_of_location": "",
+        "Owned_by": "Eksempel Lading AS",
+        "Number_charging_points": 2,
+        "Position": "(59.91273,10.74609)",
+        "User_comment": "",
+        "Contact_info": "",
+        "Created": "2024-01-10 08:00:00",
+        "Updated": "2026-08-01 09:30:00",
+        "Station_status": 1,
+        "Land_code": "nor",
+        "International_id": "NOR_09001"
+      },
+      "attr": {
+        "st": {
+          "24": {
+            "attrtypeid": "24",
+            "attrname": "Open 24h",
+            "attrvalid": "2",
+            "trans": "No",
+            "attrval": ""
+          },
+          "2": {
+            "attrtypeid": "2",
+            "attrname": "Availability",
+            "attrvalid": "2",
+            "trans": "Visitors",
+            "attrval": ""
+          }
+        },
+        "conn": {
+          "1": {
+            "1": {
+              "attrtypeid": "1",
+              "attrname": "Accessability",
+              "attrvalid": "4",
+              "trans": "RFID",
+              "attrval": ""
+            },
+            "4": {
+              "attrtypeid": "4",
+              "attrname": "Connector",
+              "attrvalid": "39",
+              "trans": "CCS/Combo",
+              "attrval": ""
+            },
+            "5": {
+              "attrtypeid": "5",
+              "attrname": "Charging capacity",
+              "attrvalid": "13",
+              "trans": "50 kW - 500VDC max 100A",
+              "attrval": ""
+            },
+            "25": {
+              "attrtypeid": "25",
+              "attrname": "Fixed cable",
+              "attrvalid": "1",
+              "trans": "Yes",
+              "attrval": ""
+            },
+            "28": {
+              "attrtypeid": "28",
+              "attrname": "EVSE ID",
+              "attrvalid": "",
+              "trans": "",
+              "attrval": "NO*EKS*E9001*1"
+            }
+          },
+          "2": {
+            "1": {
+              "attrtypeid": "1",
+              "attrname": "Accessability",
+              "attrvalid": "5",
+              "trans": "Payment",
+              "attrval": ""
+            },
+            "4": {
+              "attrtypeid": "4",
+              "attrname": "Connector",
+              "attrvalid": "50",
+              "trans": "Type 2 + Schuko",
+              "attrval": ""
+            },
+            "5": {
+              "attrtypeid": "5",
+              "attrname": "Charging capacity",
+              "attrvalid": "11",
+              "trans": "22 kW - 400V 3-phase max 32A",
+              "attrval": ""
+            }
+          }
+        }
+      }
+    }
+  ]
+}

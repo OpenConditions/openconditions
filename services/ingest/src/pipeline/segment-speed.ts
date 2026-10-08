@@ -30,6 +30,8 @@ const READING_LIFETIME_MIN = 15;
  * A site contributes its `traffic.speed` and `traffic.los` readings younger
  * than 15 minutes (`observation_latest`, site level), aged from the end of a
  * reading's period, so a 15-minute mean still counts when it is published.
+ * A level of service is written only when it changes: it is aged from its
+ * source's last successful poll, which restated it, when that is later.
  * The LOS ladder mirrors the flow parsers' `losFromSpeedRatio` exactly,
  * computed on the aggregated means so a segment's classification reflects
  * its overall condition rather than any single site. `free_flow_kph` prefers
@@ -54,17 +56,21 @@ export async function writeSensorObservations(
   // reached when there is a real mean speed, so an all-declared group never
   // misfuses free_flow to stationary.
   const rows = await sql`
-    WITH fresh AS (
+    WITH latest AS (
       SELECT l.subject_key, l.source_id, l.property, l.value_num, l.value_text,
         (l.reading #>> '{baseline,freeFlow,value}')::double precision AS free_flow,
-        COALESCE(l.effective_until, l.effective_from) AS at
+        CASE WHEN l.property = 'traffic.los'
+          THEN GREATEST(COALESCE(l.effective_until, l.effective_from), st.last_success_at)
+          ELSE COALESCE(l.effective_until, l.effective_from) END AS at
       FROM conditions.sensor_segment ss
       JOIN conditions.observation_latest l ON l.subject_key = ss.subject_key
       JOIN conditions.source s
         ON s.id = l.source_id AND s.domain = 'roads' AND s.product = 'flow'
+      LEFT JOIN conditions.source_status st ON st.source = l.source_id
       WHERE l.property IN ('traffic.speed', 'traffic.los')
-        AND COALESCE(l.effective_until, l.effective_from)
-            >= ${now()}::timestamptz - make_interval(mins => ${READING_LIFETIME_MIN})
+    ), fresh AS (
+      SELECT * FROM latest
+       WHERE at >= ${now()}::timestamptz - make_interval(mins => ${READING_LIFETIME_MIN})
     ), site AS (
       SELECT subject_key, source_id AS source,
         max(value_num) FILTER (WHERE property = 'traffic.speed') AS speed,

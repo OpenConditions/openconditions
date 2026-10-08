@@ -1,0 +1,321 @@
+<?xml version='1.0' encoding='utf-8'?>
+<d2LogicalModel xmlns="http://datex2.eu/schema/3/common" xmlns:ei="http://datex2.eu/schema/3/energyInfrastructure">
+  <payload>
+    <publicationTime>2026-10-05T23:30:53.819937+03:00</publicationTime>
+    <publicationCreator>
+      <country>CY</country>
+      <nationalIdentifier>Department of Electrical and Mechanical Services (EMS)</nationalIdentifier>
+    </publicationCreator>
+    <ei:energyInfrastructureTable>
+      <ei:energyInfrastructureTablePublication>
+        <publicationTime>2026-10-05T23:30:53.819937+03:00</publicationTime>
+        <ei:chargingPoints>
+          <ei:chargingPoint>
+            <chargingPointIdentification>Petrolina GSZ Station (150kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>Alpitronic Right CHAdeMo</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Alpitronic Right CHAdeMo</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>34.92514226471998</latitude>
+                  <longitude>33.601899147034</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>300</ei:maximumPower>
+            <ei:connectorPower>300</ei:connectorPower>
+            <ei:creationDate>2023-07-05</ei:creationDate>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>comboType2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Georgiou Christodoulidi Avenue, 6043, Larnaca</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>support@pcharge.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24h</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>OneTower 2301 (22kW)</chargingPointIdentification>
+            <ei:chargingPointOwner>D.A One Property Management Ltd.</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>D.A One Property Management Ltd.</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>unavailable</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Petrolina (Holdings) Public Ltd.</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>1</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>34.687509725511994</latitude>
+                  <longitude>33.064895896694</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <ei:creationDate>2023-07-11</ei:creationDate>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>28 October Avenue 355, 3105, Limassol</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>Technical Support</contactType>
+                <phoneNumber>+357 70071071</phoneNumber>
+              </contact>
+              <contact>
+                <contactType>email</contactType>
+                <emailAddress>elias@maximumpower.com.cy</emailAddress>
+              </contact>
+            </ei:contactInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>CY*EVP*ELCA0003</chargingPointIdentification>
+            <ei:chargingPointOwner>Nestoras Hotels Limited</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Nestoras Hotels Limited</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>EV Power</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>EV Power Ltd</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>34.985413</latitude>
+                  <longitude>34.00246580000001</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>44</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Nestor Hotel, 8, 1st October Street, Agia Napa, 5342, Cyprus, 5342, Agia Napa</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>+357 700 888 09</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24/7</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Hotel residents and guests only. The charging facilities are located within the parking area of the hotel.</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+              <vehicleType>Bus (M2)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>CY*EVP*ENIC0007</chargingPointIdentification>
+            <ei:chargingPointOwner>Leroy Merlin</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Leroy Merlin</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>EV Power</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>EV Power Ltd</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.12331919999999</latitude>
+                  <longitude>33.3737143</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>44</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <chargingMode>normalCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Leroy Merlin, Kalamon 16, Nicosia, 2032, Cyprus, 2032, Strovolos</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>+357 700 888 09</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>{'monday': [{'start': '08:00', 'end': '20:00'}], 'tuesday': [{'start': '08:00', 'end': '20:00'}], 'wednesday': [{'start': '08:00', 'end': '20:00'}], 'thursday': [{'start': '08:00', 'end': '20:00'}], 'friday': [{'start': '08:00', 'end': '20:00'}], 'saturday': [{'start': '08:00', 'end': '20:00'}], 'sunday': [{'start': '10:00', 'end': '19:00'}]}</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>EV charging for public use. The charging facilities are located in the underground parking facility.</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+              <vehicleType>Bus (M2)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>TEC-NICOSIA-ZINAS-KANTHER</chargingPointIdentification>
+            <ei:chargingPointOwner>Nicosia Municipality</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Municipality of Nicosia</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>unavailable</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>e-Point</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Troodos Electric Cables LTD</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>2</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>35.167982</latitude>
+                  <longitude>33.358465</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>44</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>type2</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Zinas Kanther, 1065, Nicosia</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>22352357</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>24/7</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Street sight base</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:numberOfAccessibleParkingSpaces>0</ei:numberOfAccessibleParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>TwoThreeWheeledVehicle (L)</vehicleType>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>ac</ei:powerType>
+          </ei:chargingPoint>
+          <ei:chargingPoint>
+            <chargingPointIdentification>LIDL-L104</chargingPointIdentification>
+            <ei:chargingPointOwner>Lidl Cyprus</ei:chargingPointOwner>
+            <ei:chargingPointOwnerLegalName>Lidl Cyprus</ei:chargingPointOwnerLegalName>
+            <chargingPointStatus>
+              <value>operational</value>
+              <lang>en</lang>
+            </chargingPointStatus>
+            <ei:chargingPointOperator>Lidl Cyprus</ei:chargingPointOperator>
+            <ei:chargingPointOperatorLegalName>Lidl Cyprus</ei:chargingPointOperatorLegalName>
+            <numberOfConnectors>3</numberOfConnectors>
+            <location>
+              <pointByCoordinates>
+                <pointCoordinates>
+                  <latitude>34.937039999999996</latitude>
+                  <longitude>33.59076</longitude>
+                </pointCoordinates>
+              </pointByCoordinates>
+            </location>
+            <ei:maximumPower>22</ei:maximumPower>
+            <ei:connectorPower>22</ei:connectorPower>
+            <chargingMode>fastCharging</chargingMode>
+            <connectorTypes>
+              <connectorType>type2</connectorType>
+              <connectorType>comboType2</connectorType>
+              <connectorType>chademo</connectorType>
+            </connectorTypes>
+            <chargingPointAddress>
+              <value>Leof. Eleftherias 7, 7102, Larnaca</value>
+              <lang>el</lang>
+            </chargingPointAddress>
+            <ei:contactInformation>
+              <contact>
+                <contactType>support</contactType>
+                <phoneNumber>80094404</phoneNumber>
+              </contact>
+            </ei:contactInformation>
+            <ei:operatingTime>
+              <value>07:00-21:00 Monday - Sunday</value>
+              <lang>en</lang>
+            </ei:operatingTime>
+            <ei:accessInformation>
+              <value>Πρόσβαση σε πελάτες και επισκέπτες</value>
+              <lang>en</lang>
+            </ei:accessInformation>
+            <ei:timeZone>UTC+02:00</ei:timeZone>
+            <ei:numberOfParkingSpaces>2</ei:numberOfParkingSpaces>
+            <ei:numberOfAccessibleParkingSpaces>2</ei:numberOfAccessibleParkingSpaces>
+            <ei:vehicleTypeCompatibility>
+              <vehicleType>TwoThreeWheeledVehicle (L)</vehicleType>
+              <vehicleType>PassengerCar (M1)</vehicleType>
+              <vehicleType>Bus (M2)</vehicleType>
+              <vehicleType>Coach (M3)</vehicleType>
+              <vehicleType>LightCommercialVehicle (N1)</vehicleType>
+              <vehicleType>HeavyDutyVehicle (N2)</vehicleType>
+              <vehicleType>HeavyDutyVehicle (N3)</vehicleType>
+            </ei:vehicleTypeCompatibility>
+            <ei:powerType>dc</ei:powerType>
+          </ei:chargingPoint>
+        </ei:chargingPoints>
+      </ei:energyInfrastructureTablePublication>
+    </ei:energyInfrastructureTable>
+  </payload>
+</d2LogicalModel>

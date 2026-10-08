@@ -1,0 +1,58 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "keco",
+      "product": "charging",
+      "name": "Korea Environment Corporation EV chargers",
+      "tier": "authoritative",
+      "format": "keco",
+      // The national charger register through the data.go.kr OpenAPI: the
+      // charger information in pages of 9,999 (the most it allows), and the
+      // chargers whose state changed in the last ten minutes (the longest
+      // window it allows), polled every five so the windows overlap. A
+      // development account may call each operation 1,000 times a day.
+      "credentials": {
+        "service_key": {
+          "title": "data.go.kr service key",
+          "description": "The general authentication key (Decoding) of a data.go.kr account approved for the KECO EV charger OpenAPI.",
+          "setup": {
+            "url": "https://www.data.go.kr/data/15076352/openapi.do",
+            "urlLabel": "Apply for the KECO EV charger OpenAPI",
+            "steps": [
+              "Register at data.go.kr.",
+              "Open https://www.data.go.kr/data/15076352/openapi.do and press 활용신청 (apply for use); approval is automatic.",
+              "Copy the 일반 인증키 (general authentication key), the Decoding form; it is sent as the serviceKey query parameter.",
+            ],
+            "cost": "Free",
+            "notes": "A development account allows 1,000 calls a day per operation; registering a use case raises it.",
+          },
+        },
+      },
+      "auth": { "kind": "query-key", "param": "serviceKey", "credential": "service_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://apis.data.go.kr/B552584/EvCharger/getChargerInfo?dataType=JSON&numOfRows=9999",
+          "pagination": {
+            "skipParam": "pageNo",
+            "pageSize": 9999,
+            "mode": "page",
+            "recordsPath": "items.item",
+            "xmlLists": true,
+          },
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://apis.data.go.kr/B552584/EvCharger/getChargerStatus?dataType=JSON&period=10&numOfRows=9999",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-KOGL-Type-1",
+      "licenseUrl": "https://www.kogl.or.kr/info/licenseType1.do",
+      "attribution": "한국환경공단 (Korea Environment Corporation), 공공누리 제1유형, https://www.data.go.kr/data/15076352/openapi.do",
+      "homepage": "https://www.data.go.kr/data/15076352/openapi.do",
+      "privacyUrl": "https://www.data.go.kr/ugs/selectPortalPolicyView.do",
+    },
+  ],
+}

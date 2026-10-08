@@ -12,7 +12,9 @@ describe("loadIngestCatalog", () => {
     expect(cat.feeds.length + cat.discovered.length + cat.disabled.length).toBeGreaterThanOrEqual(
       86,
     );
-    expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(new Set(["roads", "fuel", "parking"]));
+    expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(
+      new Set(["roads", "fuel", "parking", "charging"]),
+    );
     expect(cat.feeds.map((f) => f.id)).toEqual(
       expect.arrayContaining([
         "es-minetur-fuel",
@@ -56,7 +58,7 @@ describe("loadIngestCatalog", () => {
 
 describe("formatOf", () => {
   it("finds a feed's format in its domain", () => {
-    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads", "fuel", "parking"]);
+    expect(INGEST_DOMAINS.map((d) => d.id)).toEqual(["roads", "fuel", "parking", "charging"]);
     expect(formatOf(testFeed({ format: "datex2-measured", product: "flow" })).kind).toBe(
       "measurements",
     );

@@ -49,6 +49,11 @@ const PLACEHOLDER = new RegExp(
   "g",
 );
 
+/** Whether a request text names a credential (`${field}`), as opposed to only cell values. */
+export function referencesCredential(template: string): boolean {
+  return [...template.matchAll(PLACEHOLDER)].some((m) => m[1] !== undefined);
+}
+
 function withoutTrailingSlash(url: string): string {
   return url.replace(/\/+$/, "");
 }

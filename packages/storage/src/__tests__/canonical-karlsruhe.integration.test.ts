@@ -12,6 +12,7 @@ import { createTestDatabase } from "./database.integration.js";
 import {
   karlsruheCharging,
   luisenstrasse,
+  OCPDB_ATTRIBUTION,
   osmFeatures,
   parkapiKarlsruhe,
   polled,
@@ -21,7 +22,7 @@ import {
 
 type Rec = Record<string, unknown>;
 
-const observationIdOf = (draft: Rec) => observationId("de-bw-ocpdb", draft as never);
+const observationIdOf = (draft: Rec) => observationId("de-bw-mobidata-charging", draft as never);
 
 /**
  * Linking through the tables against real records of one city: MobiData BW's
@@ -34,9 +35,11 @@ const FETCHED = "2026-10-01T06:40:00.000Z";
 const NOW = "2026-10-01T07:00:00.000Z";
 const INSTANCE = "test.local";
 const ctx: WriteContext = { registry, instanceId: INSTANCE, now: NOW, complete: true };
-const LIVE = "oc:feature:de-bw-ocpdb:332714";
-const REGISTER = "oc:feature:de-bw-ocpdb:341736";
+const LIVE = "oc:feature:de-bw-mobidata-charging:332714";
+const REGISTER = "oc:feature:de-bw-mobidata-charging:341736";
 
+// EnBW's two charge points at Luisenstraße 6, 35 m from the car park at 2F.
+const ENBW = "oc:feature:de-bw-mobidata-charging:310181";
 const charging = karlsruheCharging(FETCHED);
 const [live, register] = luisenstrasse(FETCHED) as [
   ReturnType<typeof luisenstrasse>[number],
@@ -54,14 +57,15 @@ beforeAll(async () => {
     now: new Date(NOW),
   });
   await seedSources(sql, {
-    "de-bw-ocpdb": "aggregator",
+    "de-bw-mobidata-charging": "aggregator",
     "de-bw-parkapi": "aggregator",
     osm: "community",
   });
-  for (const source of ["de-bw-ocpdb", "de-bw-parkapi", "osm"]) await polled(sql, source, NOW);
+  for (const source of ["de-bw-mobidata-charging", "de-bw-parkapi", "osm"])
+    await polled(sql, source, NOW);
   const sites = [...charging, live, register];
   const writes: [string, Rec[], Rec[]][] = [
-    ["de-bw-ocpdb", sites.map((s) => s.feature), sites.flatMap((s) => s.statuses)],
+    ["de-bw-mobidata-charging", sites.map((s) => s.feature), sites.flatMap((s) => s.statuses)],
     ["de-bw-parkapi", parkapiKarlsruhe(FETCHED), []],
     [
       "osm",
@@ -126,11 +130,14 @@ describe("linking Karlsruhe's charge points and car parks through the tables", (
     const accepted = (await links("charging_site")).filter((l) => l.status === "accepted");
     expect(accepted.map((l) => [l.a_id, l.b_id.split(":")[2]])).toEqual(
       expect.arrayContaining([
-        ["oc:feature:de-bw-ocpdb:206019", "osm"],
-        [LIVE, "de-bw-ocpdb"],
+        ["oc:feature:de-bw-mobidata-charging:206019", "osm"],
+        [LIVE, "de-bw-mobidata-charging"],
       ]),
     );
     expect(accepted.find((l) => l.a_id === LIVE)!.b_id).toBe(REGISTER);
+    // EnBW's site shares the car park's street, not its house number.
+    expect(accepted.filter((l) => l.a_id === ENBW || l.b_id === ENBW)).toEqual([]);
+    expect((await canonicalOf(ENBW)).member_ids).toEqual([ENBW]);
   });
 
   it("links the garages both sources name alike, and not neighbours with unrelated names", async () => {
@@ -156,7 +163,7 @@ describe("linking Karlsruhe's charge points and car parks through the tables", (
     expect(canonical.survivor_id).toBe(LIVE);
     const evses = canonical.components.filter((c) => c.kind === "evse");
     expect(evses).toHaveLength(20);
-    expect(evses.filter((c) => c.key.startsWith("de-bw-ocpdb/"))).toHaveLength(10);
+    expect(evses.filter((c) => c.key.startsWith("de-bw-mobidata-charging/"))).toHaveLength(10);
   });
 
   it("gives every canonical charge point with a status one fused row, credited to the database", async () => {
@@ -164,13 +171,17 @@ describe("linking Karlsruhe's charge points and car parks through the tables", (
     const fused = (await fusedOn(canonical.canonical_feature_id)).filter(
       (r) => r.property === "charging.evse_status",
     );
-    const evses = canonical.components.filter((c) => c.kind === "evse");
-    expect(fused.map((r) => r.component_key).sort()).toEqual(evses.map((c) => c.key).sort());
+    // The register's rows have no live state; of the live feed's ten points,
+    // two last changed over 30 days before the poll and have none either.
+    expect(register.statuses).toEqual([]);
+    const read = live.statuses.map((s) => (s["subject"] as { componentKey: string }).componentKey);
+    expect(read).toHaveLength(8);
+    expect(fused.map((r) => r.component_key).sort()).toEqual(read.sort());
     for (const row of fused) {
       expect(row.fused_from).toHaveLength(1);
       expect(row.record["provenance"]).toMatchObject({
         sourceId: "@fused",
-        attribution: { provider: "MobiData BW" },
+        attribution: { provider: OCPDB_ATTRIBUTION },
       });
     }
   });
@@ -286,7 +297,7 @@ describe("a crowd reading on the canonical car park", () => {
       updateCanonicalView(
         tx,
         registry,
-        { sourceId: "de-bw-ocpdb", featureIds: [LIVE, REGISTER], observations: [] },
+        { sourceId: "de-bw-mobidata-charging", featureIds: [LIVE, REGISTER], observations: [] },
         { instanceId: INSTANCE, now: NOW },
       ),
     );
@@ -323,12 +334,12 @@ describe("a crowd reading on the canonical car park", () => {
       componentKey: registerEvse,
     });
     expect(await fusedOn(before.canonical_feature_id)).toEqual([]);
-    expect((await fusedOn(survivor.canonical_feature_id)).length).toBe(10);
+    expect((await fusedOn(survivor.canonical_feature_id)).length).toBe(live.statuses.length);
 
     // Writing the site again does not bring the link back.
     await writeSnapshot(
       sql,
-      "de-bw-ocpdb",
+      "de-bw-mobidata-charging",
       {
         features: [...charging, live, register].map((s) =>
           s.feature["id"] === REGISTER
@@ -346,13 +357,13 @@ describe("a crowd reading on the canonical car park", () => {
 
   it("shows a fresh report over a stale feed, and drops it from the fused row once it lapses", async () => {
     const survivor = await canonicalOf(LIVE);
-    await polled(sql, "de-bw-ocpdb", "2026-10-01T05:00:00.000Z");
+    await polled(sql, "de-bw-mobidata-charging", "2026-10-01T05:00:00.000Z");
     const id = await report(survivorEvse, "nonce-survivor-0002", "2026-10-01T06:59:00.000Z");
     const shown = async () =>
       (await fusedOn(survivor.canonical_feature_id)).find(
         (r) => r.component_key === survivorEvse && r.property === "charging.evse_status",
-      )!;
-    expect((await shown()).fused_from).toEqual([id]);
+      );
+    expect((await shown())?.fused_from).toEqual([id]);
 
     const lapse = "2026-10-01T23:00:00.000Z";
     const counts = await sweepRecords(sql, {
@@ -367,7 +378,8 @@ describe("a crowd reading on the canonical car park", () => {
     const [row] = await sql`
       SELECT evidence_state FROM conditions.observation_latest WHERE crowd_record_id = ${id}`;
     expect(row).toMatchObject({ evidence_state: "expired" });
-    expect((await shown()).fused_from).not.toContain(id);
+    // The lapsed report fuses no more.
+    expect((await shown())?.fused_from ?? []).not.toContain(id);
   });
 });
 
@@ -380,13 +392,20 @@ describe("federation of the canonical view", () => {
         ${sql.json({ classes: ["observation"], properties: ["charging.evse_status"] })}, now(), now())`;
     const later = "2026-10-02T07:00:00.000Z";
     const status = live.statuses[0]!;
+    // A status only enters the journal when it changes.
+    const result = status["result"] as Rec;
     await writeSnapshot(
       sql,
-      "de-bw-ocpdb",
+      "de-bw-mobidata-charging",
       {
         observations: [
-          { ...status, phenomenonTime: { instant: later }, freshness: { fetchedAt: later } },
-        ].map((d) => {
+          {
+            ...status,
+            result: { ...result, value: result["value"] === "occupied" ? "available" : "occupied" },
+            phenomenonTime: { instant: later },
+            freshness: { fetchedAt: later },
+          },
+        ].map((d: Rec) => {
           const { id: _id, ...rest } = d;
           return { ...rest, id: observationIdOf(rest) };
         }),
@@ -396,7 +415,7 @@ describe("federation of the canonical view", () => {
     const journal = await sql<{ snapshot: Rec }[]>`
       SELECT snapshot FROM conditions.federation_outbox WHERE record_class = 'observation'`;
     const sources = journal.map((j) => (j.snapshot["provenance"] as Rec)["sourceId"]);
-    expect(sources).toEqual(["de-bw-ocpdb"]);
+    expect(sources).toEqual(["de-bw-mobidata-charging"]);
 
     await sql`
       UPDATE conditions.observation_latest SET reading = jsonb_set(reading, '{freshness,fetchedAt}', to_jsonb(${later}::text))

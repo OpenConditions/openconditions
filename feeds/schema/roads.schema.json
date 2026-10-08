@@ -186,6 +186,18 @@
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
                     },
+                    "mode": {
+                      "type": "string",
+                      "enum": [
+                        "offset",
+                        "page"
+                      ]
+                    },
+                    "firstPage": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
                     "recordsPath": {
                       "type": "string"
                     },
@@ -193,6 +205,10 @@
                       "type": "integer",
                       "exclusiveMinimum": 0,
                       "maximum": 9007199254740991
+                    },
+                    "xmlLists": {
+                      "type": "boolean",
+                      "const": true
                     }
                   },
                   "required": [
@@ -200,6 +216,23 @@
                     "pageSize"
                   ],
                   "additionalProperties": false
+                },
+                "follow": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "pattern": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "impersonate": {
+                  "type": "boolean"
                 },
                 "gzip": {
                   "type": "boolean"
@@ -655,6 +688,11 @@
               "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
               "LicenseRef-opentransportdata-swiss-ToU",
               "LicenseRef-Singapore-ODL-1.0",
+              "LicenseRef-opendata-swiss-terms-by-ask",
+              "LicenseRef-NLR-Developer-Network-Terms",
+              "OGDL-Taiwan-1.0",
+              "LicenseRef-KOGL-Type-1",
+              "LicenseRef-HK-CSDI-ToU",
               "LicenseRef-HK-Gov-Open-Data",
               "LicenseRef-NYC-Open-Data",
               "LicenseRef-US-Gov-Public-Domain"

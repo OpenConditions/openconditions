@@ -1,12 +1,13 @@
 import { recordFromHistory, recordOf } from "@openconditions/core";
-import { contentHash, observationId } from "@openconditions/model";
+import { contentHash, observationId, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
+import { writeRecord } from "../write-record.js";
 import { type WriteContext, writeSnapshot, writeSnapshotIn } from "../write-records.js";
 import { createTestDatabase } from "./database.integration.js";
-import { FETCHED_AT, observationDraft } from "./drafts.js";
+import { FETCHED_AT, featureDraft, observationDraft } from "./drafts.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
@@ -63,6 +64,7 @@ describe("observation writes", () => {
       unchanged: 0,
       outsideRetention: 0,
       pastRollup: 0,
+      ended: 0,
     });
     const [latest] = await sql`
       SELECT subject_key, property, qualifier_key, source_id, subject_kind, feature_id,
@@ -114,6 +116,7 @@ describe("observation writes", () => {
       unchanged: 1,
       outsideRetention: 0,
       pastRollup: 0,
+      ended: 0,
     });
   });
 
@@ -205,23 +208,378 @@ describe("observation writes", () => {
       [7, "free_flow"],
       [7, "queuing"],
     ]);
-    await writeSnapshot(
+    const again = await writeSnapshot(
       sql,
       "nl-ndw-flow",
       { observations: [los("queuing", "2026-10-01T10:03:00Z")] },
       ctx,
     );
+    expect(again.observations).toMatchObject({ latest: 0, history: 0, unchanged: 1 });
     const [latest] =
       await sql`SELECT value_text, effective_from, since_at FROM conditions.observation_latest`;
     expect(latest).toEqual({
       value_text: "queuing",
-      effective_from: new Date("2026-10-01T10:03:00Z"),
+      effective_from: new Date("2026-10-01T10:02:00Z"),
       since_at: new Date("2026-10-01T10:02:00Z"),
     });
     expect(await history()).toHaveLength(2);
   });
 
-  it("keep no history row for a price a later poll restates at a new publication time", async () => {
+  it("leave a change-only series untouched by a reading of the result it holds", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [los("queuing", "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    const before = await sql`SELECT * FROM conditions.observation_latest`;
+    const again = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [los("queuing", "2026-10-01T10:05:00Z")] },
+      { ...ctx, now: "2026-10-01T10:05:05.000Z" },
+    );
+    expect(again.observations).toEqual({
+      latest: 0,
+      history: 0,
+      unchanged: 1,
+      outsideRetention: 0,
+      pastRollup: 0,
+      ended: 0,
+    });
+    expect(await sql`SELECT * FROM conditions.observation_latest`).toEqual(before);
+    expect(await history()).toHaveLength(1);
+    const changed = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [los("free_flow", "2026-10-01T10:10:00Z")] },
+      ctx,
+    );
+    expect(changed.observations).toMatchObject({ latest: 1, history: 1, unchanged: 0 });
+    const [latest] =
+      await sql`SELECT value_text, effective_from, since_at FROM conditions.observation_latest`;
+    expect(latest).toEqual({
+      value_text: "free_flow",
+      effective_from: new Date("2026-10-01T10:10:00Z"),
+      since_at: new Date("2026-10-01T10:10:00Z"),
+    });
+  });
+
+  it("weigh a change-only reading against the result in effect before it, in one poll too", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [los("queuing", "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    const poll = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [
+          los("free_flow", "2026-10-01T10:05:00Z"),
+          los("free_flow", "2026-10-01T10:06:00Z"),
+          los("queuing", "2026-10-01T10:07:00Z"),
+        ],
+      },
+      ctx,
+    );
+    expect(poll.observations).toMatchObject({ latest: 1, history: 2, unchanged: 1 });
+    const [latest] =
+      await sql`SELECT value_text, effective_from, since_at FROM conditions.observation_latest`;
+    expect(latest).toEqual({
+      value_text: "queuing",
+      effective_from: new Date("2026-10-01T10:07:00Z"),
+      since_at: new Date("2026-10-01T10:07:00Z"),
+    });
+    expect((await history()).map((r) => r["value_text"])).toEqual([
+      "queuing",
+      "free_flow",
+      "queuing",
+    ]);
+  });
+
+  it("write every reading of a property that keeps more than changes", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:00:00Z")] },
+      ctx,
+    );
+    const again = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [speed(87, "2026-10-01T10:01:00Z")] },
+      ctx,
+    );
+    expect(again.observations).toMatchObject({ latest: 1, history: 1, unchanged: 0 });
+    const [latest] = await sql`SELECT effective_from FROM conditions.observation_latest`;
+    expect(latest).toEqual({ effective_from: new Date("2026-10-01T10:01:00Z") });
+  });
+
+  it("store no validity of a feed's change-only reading, and keep any other's", async () => {
+    const until = "2026-10-01T10:30:00.000Z";
+    const elsewhere = observationDraft(
+      "traffic.los",
+      { type: "category", value: "queuing", vocabulary: "los" },
+      {
+        at: "2026-10-01T10:00:00Z",
+        subject: { kind: "feature", featureId: "oc:feature:nl-ndw-flow:s2" },
+      },
+    );
+    const onDemand = {
+      ...elsewhere,
+      provenance: { ...(elsewhere["provenance"] as object), accessMode: "on_demand" },
+      freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T10:15:00Z" },
+      validUntil: until,
+    };
+    const summary = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [
+          { ...los("queuing", "2026-10-01T10:00:00Z"), validUntil: until },
+          { ...speed(87, "2026-10-01T10:00:00Z"), validUntil: until },
+          onDemand,
+        ],
+      },
+      ctx,
+    );
+    expect(summary.rejected).toEqual([]);
+    const rows = await sql`
+      SELECT property, access_mode, conditions.observation_record(template, reading) ->> 'validUntil' AS valid_until
+        FROM conditions.observation_latest ORDER BY property, access_mode`;
+    expect(rows).toEqual([
+      { property: "traffic.los", access_mode: "bulk", valid_until: null },
+      { property: "traffic.los", access_mode: "on_demand", valid_until: until },
+      { property: "traffic.speed", access_mode: "bulk", valid_until: until },
+    ]);
+    const kept = await sql`SELECT valid_until FROM conditions.observation
+      WHERE value_text = 'queuing' ORDER BY valid_until NULLS FIRST`;
+    expect(kept.map((r) => r["valid_until"])).toEqual([null]);
+  });
+
+  it("move an on-demand answer's validity when it restates the result", async () => {
+    const answer = (validUntil: string, expiresAt: string) => ({
+      ...los("queuing", "2026-10-01T10:00:00Z"),
+      provenance: {
+        ...(los("queuing", "2026-10-01T10:00:00Z")["provenance"] as object),
+        accessMode: "on_demand",
+      },
+      freshness: { fetchedAt: FETCHED_AT, expiresAt },
+      validUntil,
+    });
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [answer("2026-10-01T10:30:00.000Z", "2026-10-01T10:15:00.000Z")] },
+      ctx,
+    );
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [answer("2026-10-01T11:00:00.000Z", "2026-10-01T10:45:00.000Z")] },
+      ctx,
+    );
+    const [row] = await sql`
+      SELECT conditions.observation_record(template, reading) ->> 'validUntil' AS valid_until,
+             expires_at FROM conditions.observation_latest`;
+    expect(row).toEqual({
+      valid_until: "2026-10-01T11:00:00.000Z",
+      expires_at: new Date("2026-10-01T10:45:00.000Z"),
+    });
+  });
+
+  it("write the series again when a restated change-only reading's site changed", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { features: [featureDraft("s1")], observations: [los("queuing", "2026-10-01T10:00:00Z")] },
+      { ...ctx, complete: false },
+    );
+    const location = {
+      geometry: { type: "Point", coordinates: [4.6, 52.1] },
+      extent: "point",
+      geometryOrigin: "site_table",
+      fuzziness: "exact",
+    };
+    // The full parse moves the site and its reading with it; the state is unchanged.
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        features: [featureDraft("s1", 2, { location })],
+        observations: [{ ...los("queuing", "2026-10-01T10:00:00Z"), location }],
+      },
+      { ...ctx, complete: false },
+    );
+    const [row] = await sql`
+      SELECT ST_AsText(geom) AS geom, effective_from FROM conditions.observation_latest`;
+    expect(row).toEqual({
+      geom: "POINT(4.6 52.1)",
+      effective_from: new Date("2026-10-01T10:00:00Z"),
+    });
+    expect(await history()).toHaveLength(1);
+  });
+
+  it("take no feed state older than the one in effect into a change-only series", async () => {
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [los("queuing", "2026-10-01T10:10:00Z")] },
+      ctx,
+    );
+    const late = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [los("free_flow", "2026-10-01T10:05:00Z")] },
+      ctx,
+    );
+    expect(late.observations).toMatchObject({ latest: 0, history: 0, unchanged: 1 });
+    expect((await history()).map((r) => r["value_text"])).toEqual(["queuing"]);
+  });
+
+  describe("a poll that states every change-only reading of its source", () => {
+    const at = (site: string, value: string, time: string) =>
+      observationDraft(
+        "traffic.los",
+        { type: "category", value, vocabulary: "los" },
+        { at: time, subject: { kind: "feature", featureId: `oc:feature:nl-ndw-flow:${site}` } },
+      );
+    const complete = { ...ctx, complete: false, statesComplete: true };
+    const validity = async () =>
+      Object.fromEntries(
+        (
+          await sql<{ feature_id: string; valid_until: string | null }[]>`
+            SELECT feature_id,
+                   conditions.observation_record(template, reading) ->> 'validUntil' AS valid_until
+              FROM conditions.observation_latest ORDER BY feature_id`
+        ).map((r) => [r.feature_id.split(":").at(-1), r.valid_until]),
+      );
+
+    it("ends the series it does not state, and only such a poll does", async () => {
+      await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [
+            at("s1", "queuing", "2026-10-01T09:00:00Z"),
+            at("s2", "free_flow", "2026-10-01T09:00:00Z"),
+          ],
+        },
+        complete,
+      );
+      // A partial poll stating s1 alone ends nothing.
+      await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        { observations: [at("s1", "queuing", "2026-10-01T09:30:00Z")] },
+        ctx,
+      );
+      expect(await validity()).toEqual({ s1: null, s2: null });
+      const summary = await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        { observations: [at("s1", "queuing", "2026-10-01T09:30:00Z")] },
+        complete,
+      );
+      expect(summary.observations).toMatchObject({ unchanged: 1, ended: 1 });
+      expect(await validity()).toEqual({ s1: null, s2: NOW });
+      // Stated again, with the same result: it holds again.
+      const back = await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [
+            at("s1", "queuing", "2026-10-01T09:30:00Z"),
+            at("s2", "free_flow", "2026-10-01T09:00:00Z"),
+          ],
+        },
+        complete,
+      );
+      expect(back.observations).toMatchObject({ ended: 0 });
+      expect(await validity()).toEqual({ s1: null, s2: null });
+    });
+
+    it("ends nothing when it states fewer than half of the series it held", async () => {
+      await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: ["s1", "s2", "s3"].map((s) => at(s, "queuing", "2026-10-01T09:00:00Z")),
+        },
+        complete,
+      );
+      // An empty or cut-off status answer: one state of three.
+      const cut = await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        { observations: [at("s1", "queuing", "2026-10-01T09:00:00Z")] },
+        complete,
+      );
+      expect(cut.observations.ended).toBe(0);
+      expect(await validity()).toEqual({ s1: null, s2: null, s3: null });
+    });
+
+    it("ends only this instance's polled series, and passes over a malformed draft", async () => {
+      const onDemand = {
+        ...at("s2", "queuing", "2026-10-01T09:00:00Z"),
+        provenance: {
+          ...(at("s2", "queuing", "2026-10-01T09:00:00Z")["provenance"] as object),
+          accessMode: "on_demand",
+        },
+        freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T12:00:00Z" },
+        validUntil: "2026-10-01T12:00:00.000Z",
+      };
+      await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        { observations: [at("s1", "queuing", "2026-10-01T09:00:00Z"), onDemand] },
+        complete,
+      );
+      // A peer's copy of the same source id, as the federation inbox writes it.
+      const sealed = sealRecord(registry, at("s3", "free_flow", "2026-10-01T09:00:00Z"), {
+        instanceId: "peer.example",
+        revision: 1,
+        recordedAt: FETCHED_AT,
+      });
+      if (!sealed.ok) throw new Error(JSON.stringify(sealed.issues));
+      const peer = {
+        ...sealed.value,
+        provenance: {
+          ...(sealed.value["provenance"] as object),
+          originChain: [
+            { instanceId: "peer.example", viaPeer: "peer.example", receivedAt: FETCHED_AT },
+          ],
+        },
+      };
+      const landed = await writeRecord(
+        sql,
+        { stored: peer },
+        { registry, instanceId: "test.local", now: NOW },
+      );
+      expect(landed.status).not.toBe("rejected");
+      const summary = await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [
+            at("s1", "queuing", "2026-10-01T09:00:00Z"),
+            { ...at("s9", "queuing", "2026-10-01T09:00:00Z"), subject: undefined },
+          ],
+        },
+        complete,
+      );
+      expect(summary.observations.ended).toBe(0);
+      expect(await validity()).toEqual({
+        s1: null,
+        s2: "2026-10-01T12:00:00.000Z",
+        s3: null,
+      });
+    });
+  });
+
+  it("rewrite nothing for a price a later poll restates at a new publication time", async () => {
     const product = {
       kind: "feature",
       featureId: "oc:feature:es-minetur-fuel:42",
@@ -237,11 +595,11 @@ describe("observation writes", () => {
       writeSnapshot(sql, "es-minetur-fuel", { observations: [price(amount, at)] }, ctx);
     await poll("1.649", "2026-10-01T09:00:00Z");
     const restated = await poll("1.649", "2026-10-01T09:30:00Z");
-    expect(restated.observations).toMatchObject({ latest: 1, history: 0 });
+    expect(restated.observations).toMatchObject({ latest: 0, history: 0, unchanged: 1 });
     const [latest] =
       await sql`SELECT value_text, effective_from, since_at FROM conditions.observation_latest`;
     expect(latest).toMatchObject({
-      effective_from: new Date("2026-10-01T09:30:00Z"),
+      effective_from: new Date("2026-10-01T09:00:00Z"),
       since_at: new Date("2026-10-01T09:00:00Z"),
     });
     await poll("1.659", "2026-10-01T10:00:00Z");
@@ -327,6 +685,7 @@ describe("observation writes", () => {
       unchanged: 0,
       outsideRetention: 1,
       pastRollup: 0,
+      ended: 0,
     });
   });
 

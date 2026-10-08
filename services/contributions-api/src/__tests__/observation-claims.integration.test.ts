@@ -7,12 +7,7 @@ import {
   signReport,
   signSubClaim,
 } from "@openconditions/contrib-core";
-import {
-  buildRegistry,
-  crowdLocalId,
-  extendVocabulary,
-  observationId,
-} from "@openconditions/model";
+import { buildRegistry, crowdLocalId, observationId } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import {
   ensureObservationPartitions,
@@ -36,13 +31,7 @@ type Rec = Record<string, unknown>;
  * fuel prices (MINETUR, CC BY 4.0), written as a feed would, then reported on
  * by signed claims through `POST /contrib/reports`.
  */
-const registry = buildRegistry([
-  ...productionModules,
-  {
-    name: "crowd-fit",
-    entries: [extendVocabulary({ vocabulary: "source_format", values: ["ocpi"] })],
-  },
-]);
+const registry = buildRegistry(productionModules);
 const GRANT_SECRET_VALUE = "observation-claims-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
 const ENV = {
@@ -72,10 +61,10 @@ const point = (lon: number, lat: number) => ({
 
 /** One OCPDB location as a charging site draft and its charge points' statuses. */
 function chargingSite(loc: OcpdbLocation, fetchedAt: string) {
-  const id = `oc:feature:de-bw-ocpdb:${loc.id}`;
+  const id = `oc:feature:de-bw-mobidata-charging:${loc.id}`;
   const provenance = {
     origin: "feed",
-    sourceId: "de-bw-ocpdb",
+    sourceId: "de-bw-mobidata-charging",
     sourceFormat: "ocpi",
     accessMode: "bulk",
     recordId: loc.id,
@@ -90,7 +79,9 @@ function chargingSite(loc: OcpdbLocation, fetchedAt: string) {
     temporality: "static",
     lifecycle: "operational",
     location,
-    externalIds: [{ scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" }],
+    externalIds: [
+      { scheme: "provider", id: loc.id, authority: `de-bw-mobidata-charging/${loc.source}` },
+    ],
     provenance,
     freshness: { fetchedAt },
     components: loc.evses.map((evse) => ({
@@ -100,7 +91,11 @@ function chargingSite(loc: OcpdbLocation, fetchedAt: string) {
     })),
     details: { kind: "charging_site", v: 1 },
   };
-  const statuses = loc.evses.map((evse) => {
+  // A register's `STATIC` row has no live state: no reading. A live state is
+  // read as of the fetch, as the charging parser reads it: the feed states it
+  // again on every poll, so its own change time is not the reading's.
+  const statuses = loc.evses.flatMap((evse) => {
+    if (evse.status === "STATIC") return [];
     const draft: Rec = {
       class: "observation",
       kind: "observation",
@@ -115,10 +110,10 @@ function chargingSite(loc: OcpdbLocation, fetchedAt: string) {
         value: registry.crosswalk.value("evse_status", "ocpi", evse.status) ?? "unknown",
         vocabulary: "evse_status",
       },
-      phenomenonTime: { instant: evse.last_updated },
+      phenomenonTime: { instant: fetchedAt },
       aggregation: "instantaneous",
     };
-    return { id: observationId("de-bw-ocpdb", draft as never), ...draft };
+    return [{ id: observationId("de-bw-mobidata-charging", draft as never), ...draft }];
   });
   return { feature, statuses };
 }
@@ -166,7 +161,7 @@ beforeAll(async () => {
   });
   await syncSources(
     sql,
-    ["de-bw-ocpdb", "es-minetur-fuel"].map((id) => ({
+    ["de-bw-mobidata-charging", "es-minetur-fuel"].map((id) => ({
       id,
       domain: "facilities",
       format: "test",
@@ -185,7 +180,7 @@ beforeAll(async () => {
   const sites = [live, register, lorenzSite];
   let summary = await writeSnapshot(
     sql,
-    "de-bw-ocpdb",
+    "de-bw-mobidata-charging",
     { features: sites.map((s) => s.feature), observations: sites.flatMap((s) => s.statuses) },
     { ...write, now: "2026-09-22T12:00:00.000Z" },
   );
@@ -324,7 +319,7 @@ describe("a charge point two sources describe", () => {
     );
     expect(res.statusCode).toBe(200);
     const row = await crowdRow((res.json() as { record: { id: string } }).record.id);
-    expect(row!.component_key).toBe(`de-bw-ocpdb/${uid}`);
+    expect(row!.component_key).toBe(`de-bw-mobidata-charging/${uid}`);
   }, 60_000);
 
   it("refuses a report about a charge point neither source has", async () => {
@@ -394,7 +389,7 @@ describe("a charge point two sources describe", () => {
     expect(await fused()).toEqual([feedStatus["id"]]);
     await sql`
       INSERT INTO conditions.source_status (source, last_success_at, freshness_window_sec)
-      VALUES ('de-bw-ocpdb', '2026-10-01T05:00:00Z', 900)`;
+      VALUES ('de-bw-mobidata-charging', '2026-10-01T05:00:00Z', 900)`;
     const { key, grant } = await reporter();
     const res = await post(
       await signReport(
@@ -520,8 +515,10 @@ describe("a charge point the operator reports out of order", () => {
     };
     const summary = await writeSnapshot(
       sql,
-      "de-bw-ocpdb",
-      { observations: [{ ...draft, id: observationId("de-bw-ocpdb", draft as never) }] },
+      "de-bw-mobidata-charging",
+      {
+        observations: [{ ...draft, id: observationId("de-bw-mobidata-charging", draft as never) }],
+      },
       { registry, instanceId: INSTANCE, now: "2026-09-22T12:41:00.000Z", complete: false },
     );
     expect(summary.observations.latest).toBe(1);
@@ -529,6 +526,33 @@ describe("a charge point the operator reports out of order", () => {
     const later = await sweepCrossValidateObservations(sql, registry, clock.now);
     expect(later.routed).toBe(1);
     expect((await crowdRow(id))!.evidence_state).toBe("externally_resolved");
+  }, 60_000);
+
+  it("does not resolve a driver against a feed that stopped polling hours ago", async () => {
+    const [status] = await sql<{ last_success_at: Date }[]>`
+      SELECT last_success_at FROM conditions.source_status
+       WHERE source = 'de-bw-mobidata-charging'`;
+    await sql`UPDATE conditions.source_status SET last_success_at = '2026-09-22T10:00:00Z'
+      WHERE source = 'de-bw-mobidata-charging'`;
+    try {
+      clock.now = "2026-09-22T12:51:00.000Z";
+      const { key, grant } = await reporter();
+      const res = await post(
+        await signReport(
+          registry,
+          claimOf({ subject, geometry: here, reportedAt: "2026-09-22T12:50:00.000Z" }),
+          key,
+        ),
+        grant,
+      );
+      expect(res.statusCode).toBe(200);
+      const id = (res.json() as { record: { id: string } }).record.id;
+      // The feed's out-of-order state held until half an hour after its last poll.
+      expect((await crowdRow(id))!.evidence_state).toBe("self_reported");
+    } finally {
+      await sql`UPDATE conditions.source_status SET last_success_at = ${status!.last_success_at}
+        WHERE source = 'de-bw-mobidata-charging'`;
+    }
   }, 60_000);
 });
 
@@ -796,12 +820,12 @@ describe("a crowd reading never takes a restricted source's location", () => {
   beforeAll(async () => {
     await syncSources(
       sql,
-      ["de-bw-ocpdb", "es-minetur-fuel", MIRROR].map((id) => ({
+      ["de-bw-mobidata-charging", "es-minetur-fuel", MIRROR].map((id) => ({
         id,
         domain: "facilities",
         format: "test",
         product: "facilities",
-        tier: id === "de-bw-ocpdb" ? "aggregator" : "authoritative",
+        tier: id === "de-bw-mobidata-charging" ? "aggregator" : "authoritative",
         country: "ES",
         operator: id,
         license: "CC-BY-4.0",

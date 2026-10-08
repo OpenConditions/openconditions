@@ -24,12 +24,12 @@ import {
 import type { Sql } from "./bulk.js";
 import {
   type CanonicalRow,
-  dropFused,
   type FusedScope,
   LOCK_SPACES,
   lockKeys,
   refreshFused,
 } from "./fused-rows.js";
+import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { seriesRowOf } from "./write-observations.js";
 
 type Rec = Record<string, unknown>;
@@ -138,7 +138,9 @@ export async function relinkFeatures(
     const known = new Map(own.map((f) => [f.id, f]));
     const others = [...new Set(pairs.flat())].filter((id) => !known.has(id));
     for (const f of await loadFeatures(tx, others)) known.set(f.id, f);
+    let compared = 0;
     for (const [a, b] of pairs) {
+      if (++compared % (4 * RECORDS_PER_TURN) === 0) await pause();
       const key = pairKey(a, b);
       if (proposals.has(key)) continue;
       const left = known.get(a);
@@ -565,7 +567,6 @@ export async function updateCanonicalView(
     instanceId: ctx.instanceId,
     now: ctx.now,
   });
-  await dropFused(tx, relinked.vanished);
   const fusable = fusableProperties(registry);
   const subjects = new Set<string>();
   for (const o of touch.observations) {
@@ -589,5 +590,9 @@ export async function updateCanonicalView(
       .map((featureId) => ({ featureId })),
     ...moved.map((m) => ({ featureId: m.feature_id, properties: [m.property] })),
   ];
-  await refreshFused(tx, registry, scopes, { ...ctx, freshSources: [touch.sourceId] });
+  await refreshFused(tx, registry, scopes, {
+    ...ctx,
+    freshSources: [touch.sourceId],
+    vanished: relinked.vanished,
+  });
 }

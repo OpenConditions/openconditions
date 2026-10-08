@@ -1,0 +1,104 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "subdivision": "nsw",
+      "operator": "tfnsw",
+      "product": "charging",
+      "name": "Transport for NSW EV charging locations",
+      "tier": "authoritative",
+      "format": "csv",
+      // Government-funded chargers only, updated quarterly; the resource URL
+      // without a file name always serves the current CSV. Rows carry no
+      // stable id, so a site is its point and operator. `Charger_rating` may
+      // list charger groups (`2x350kW & 2x175kW`); `Number_of_plugs` counts
+      // plugs, not chargers, so it is not read. `Upcoming` sites are being built.
+      // Some Tesla sites are listed twice, a row per charger group a few
+      // metres apart: one operator's rows within 15 m are one site.
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.transport.nsw.gov.au/data/dataset/be1c4de4-4517-4bd0-8a09-2965ddfc7179/resource/7bbb6461-e52d-4fe7-ace4-a15c30198de0/download",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Transport for NSW, CC BY 4.0",
+      "homepage": "https://opendata.transport.nsw.gov.au/dataset/ev-charging-locations",
+      "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+      "layout": { "lon": "Longitude", "lat": "Latitude" },
+      "charging": {
+        "id": ["Latitude", "Longitude", "Operator"],
+        "name": ["Station_name"],
+        "lang": "en",
+        // `Non-networked` says the charger belongs to no network, not who runs it.
+        "operator": { "field": "Operator", "pattern": "^(?!Non-networked$)(.+)$" },
+        "address": { "text": "Station_address", "postalCode": "PCODE" },
+        "lifecycle": { "field": "Charger_Type", "map": { "Upcoming": "planned" } },
+        "connectors": {
+          "list": {
+            "field": "Charger_rating",
+            "separator": "\\s*&\\s*",
+            "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?:(?<power>\\d+(?:\\.\\d+)?\\s*(?:kW)?)|AC|DC)$",
+            "current": { "field": "Charger_Type", "map": { "AC": "ac", "DC": "dc" } },
+          },
+        },
+      },
+    },
+    {
+      "subdivision": "vic",
+      "operator": "deeca",
+      "product": "charging",
+      "name": "Victoria government-funded public EV chargers",
+      "tier": "authoritative",
+      "format": "geojson",
+      // About 150 sites of the state's charging programmes, updated monthly.
+      // The layer's only id is the WFS feature id, which the records do not
+      // carry, so a site is its address. `chargers` lists the charger groups
+      // (`2 x 22kW Charger`); `plug_type` lists the plug types each charger
+      // offers, its counts being site totals. Sites still being built carry
+      // their `estimated_project_completion` (`December 2026`, `31/07/2023`).
+      "endpoints": {
+        "main": {
+          "url": "https://opendata.maps.vic.gov.au/geoserver/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=open-data-platform:dcav_site&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 604800,
+        },
+      },
+      "freshnessWindowSec": 1209600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "© State of Victoria (Department of Energy, Environment and Climate Action), CC BY 4.0",
+      "homepage": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+      "privacyUrl": "https://www.vic.gov.au/privacy-vicgovau",
+      "layout": {},
+      "charging": {
+        "id": "address",
+        "name": ["location"],
+        "lang": "en",
+        "operator": "company",
+        "address": { "text": "address" },
+        "completion": "estimated_project_completion",
+        "connectors": {
+          "list": {
+            "field": "plug_type",
+            "separator": "\\s*(?:,|\\band\\b)\\s*",
+            "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?<type>.+)$",
+            "as": "connectors",
+            "groups": {
+              "field": "chargers",
+              "separator": "\\s*(?:[,;\\n]|\\band\\b)\\s*",
+              "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?<power>\\d+(?:\\.\\d+)?\\s*kW)\\b.*$",
+            },
+            "map": {
+              "CCS2": { "standard": "IEC_62196_T2_COMBO", "current": "dc" },
+              "CCS2/SAE": { "standard": "IEC_62196_T2_COMBO", "current": "dc" },
+              "CHAdeMO": { "standard": "CHADEMO", "current": "dc" },
+              "Type 2": { "standard": "IEC_62196_T2", "current": "ac" },
+            },
+          },
+        },
+      },
+    },
+  ],
+}

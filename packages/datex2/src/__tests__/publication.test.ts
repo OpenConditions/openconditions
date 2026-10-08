@@ -71,6 +71,22 @@ describe("datexPublications", () => {
     ]);
   });
 
+  test("reads a publication that is the document's root element", () => {
+    const publications = datexPublications(parseXmlDocument(fixture("si-nap-energy.xml")));
+    expect(publications).toEqual([
+      expect.objectContaining({
+        version: 3,
+        type: "EnergyInfrastructureTablePublication",
+        publicationTime: "2025-12-04T15:12:33.7057479Z",
+      }),
+    ]);
+    expect(Object.keys(publications[0]!.body)).toContain("energyInfrastructureTable");
+    const stripped = datexPublications(
+      parseXmlDocument(fixture("si-nap-energy.xml"), { removeNSPrefix: true }),
+    );
+    expect(stripped[0]).toMatchObject({ type: "EnergyInfrastructureTablePublication" });
+  });
+
   test("a document with no DATEX publication has none", () => {
     expect(datexPublications(parseXmlDocument("<root><a>1</a></root>"))).toEqual([]);
   });

@@ -1,7 +1,8 @@
 import type { Readable } from "node:stream";
 import type { ZodRawShape } from "zod";
-import type { ParseOutput } from "../parse-output.js";
+import type { ParseOutput, StatusIndex, StatusOutput } from "../parse-output.js";
 import type { DigestTee, PayloadDigest } from "../payload.js";
+import type { Cell } from "./cells.js";
 import type { CatalogResolver } from "./resolvers.js";
 import type { CatalogFeed, FeedDefinition } from "./types.js";
 
@@ -11,8 +12,30 @@ import type { CatalogFeed, FeedDefinition } from "./types.js";
  * without is a payload the format parses itself.
  */
 export interface EndpointRole {
+  /**
+   * Whether a poll needs the role: an optional role that fails with nothing
+   * held leaves the poll to go on without it.
+   */
   required: boolean;
   decoders?: readonly string[];
+  /**
+   * A role whose answers hold only the changes since the previous one, over
+   * the snapshot the named role holds: a poll parses every answer since that
+   * role's last fetch, oldest first, and a fresh snapshot starts them anew.
+   */
+  accumulatesSince?: string;
+  /**
+   * How far back an answer of changes reaches (the publisher's window): a
+   * role failing for longer has missed changes, so its snapshot is fetched
+   * afresh. Unset, any failure is such a gap.
+   */
+  changesWindowSec?: number;
+  /**
+   * A role of live states only, of what the other data roles describe: a
+   * poll that fetches no other role reads it through the format's
+   * `parseStatus`, without the snapshot.
+   */
+  status?: boolean;
 }
 
 /** Role → the payloads of that role's latest fetch. */
@@ -24,6 +47,11 @@ export interface ParseContext {
   cadenceSec: number;
   /** Decoded reference data by role. */
   reference: Readonly<Record<string, unknown>>;
+  /**
+   * The grid cell an on-demand read fetched the payloads for: a source whose
+   * answer reaches past the cell's edges keeps only what lies inside it.
+   */
+  cell?: Cell;
 }
 
 /**
@@ -71,6 +99,18 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   endpoints: Readonly<Record<string, EndpointRole>>;
   /** One poll's payloads as record drafts; throws when a payload cannot be read. */
   parse(feed: F, payloads: FeedPayloads, ctx: ParseContext): ParseOutput;
+  /**
+   * The readings the full parse would give the status records of `payloads`
+   * (its `status` roles only), placed through the index the last full parse
+   * returned; a record the index does not name is rejected. No features, no
+   * offers.
+   */
+  parseStatus?(
+    feed: F,
+    payloads: FeedPayloads,
+    ctx: ParseContext,
+    index: StatusIndex,
+  ): StatusOutput;
   stream?: StreamingParse<F>;
 }
 

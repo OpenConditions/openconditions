@@ -1,6 +1,7 @@
 import {
   buildCrosswalk,
   defineDomain,
+  extendVocabulary,
   type RegistryModule,
   vocabularyCrosswalk,
   withFeatureCrosswalks,
@@ -20,6 +21,7 @@ import {
   OCPI_FACILITIES,
   OCPI_FACILITIES_OUT,
 } from "./crosswalk/ocpi.js";
+import { OICP_EVSE_STATUSES } from "./crosswalk/oicp.js";
 import {
   CHARGING_KINDS,
   CHARGING_PROPERTIES,
@@ -38,9 +40,31 @@ const chargingKinds = withFeatureCrosswalks(
 );
 
 /**
+ * The publisher formats the charging parsers read; the shared standards and
+ * layouts are the kernel's. Digitraffic and LTA publish charging data in the
+ * same formats as their road data, which roads already registers.
+ */
+export const CHARGING_SOURCE_FORMATS = [
+  "ocpi",
+  "oicp",
+  "bnetza",
+  "irve",
+  "afdc",
+  "nobil",
+  "eipa",
+  "cynap",
+  "chargy",
+  "evroam",
+  "keco",
+  "tdx",
+  "ocm",
+] as const;
+
+/**
  * The charging registry module: the `charging` domain, charging sites with
- * their charge points and connectors, the status properties and the energy
- * tariff offer. Definitions only.
+ * their charge points and connectors, the status properties, the energy
+ * tariff offer and the source formats of the charging publishers.
+ * Definitions only.
  */
 export const chargingModule: RegistryModule = {
   name: "charging",
@@ -49,6 +73,7 @@ export const chargingModule: RegistryModule = {
       code: "charging",
       description: "Where an electric vehicle can charge, and whether a point is free.",
     }),
+    extendVocabulary({ vocabulary: "source_format", values: CHARGING_SOURCE_FORMATS }),
     evseStatusVocabulary,
     chargingSiteStatusVocabulary,
     connectorStandardVocabulary,
@@ -58,6 +83,7 @@ export const chargingModule: RegistryModule = {
       "evse_status",
       [
         { target: "ocpi", table: OCPI_EVSE_STATUSES },
+        { target: "oicp", table: OICP_EVSE_STATUSES },
         { target: "datex2_v3", table: DATEX2_REFILL_POINT_STATUSES },
       ],
       [

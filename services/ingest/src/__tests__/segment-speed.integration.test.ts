@@ -523,6 +523,33 @@ describe("declared LoS fusion (Verkehrslage)", () => {
     expect(row.los).toBe("free_flow");
   }, 30_000);
 
+  it("a declared los stated long ago holds while its source polls, and lapses once it stops", async () => {
+    const hourAgo = "2025-12-31T23:00:00.000Z";
+    for (const [site, source, lastSuccess, segment] of [
+      ["los-e:1", "de-polled-los-flow", "2025-12-31T23:59:00.000Z", 405],
+      ["los-f:1", "de-stopped-los-flow", "2025-12-31T23:30:00.000Z", 406],
+    ] as const) {
+      await seedSegment(`${segment}:f`, segment, 100);
+      sourceOf.set(site, source);
+      await writeSiteReadings(
+        sql,
+        source,
+        [{ site, geometry: SITE, at: hourAgo, los: "heavy" }],
+        hourAgo,
+      );
+      await sql`INSERT INTO conditions.source_status (source, last_success_at, freshness_window_sec)
+        VALUES (${source}, ${lastSuccess}, 300)`;
+      await seedSensorSegment(site, `${segment}:f`);
+    }
+    await writeSensorObservations(sql, () => NOW);
+    const rows = await sql<{ segment_id: string; los: string; observed_at: Date }[]>`
+      SELECT segment_id, los, observed_at FROM conditions.segment_observation
+       WHERE segment_id IN ('405:f', '406:f')`;
+    expect(rows).toEqual([
+      { segment_id: "405:f", los: "heavy", observed_at: new Date("2025-12-31T23:59:00.000Z") },
+    ]);
+  }, 30_000);
+
   it("two declared sites in one source-group fuse worst-first (blocked over queuing)", async () => {
     await seedSegment("404:f", 404, 100);
     await seedDeclaredFlow("los-d1:1", "de-nw-autobahn-los-flow", "blocked");

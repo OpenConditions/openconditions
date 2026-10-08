@@ -29,6 +29,7 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/model": "workspace:*",
+    "impit": "^0.14.5",
     "jsonc-parser": "^3.3.1",
     "proj4": "^2.21.0",
     "undici": "^8.10.0",

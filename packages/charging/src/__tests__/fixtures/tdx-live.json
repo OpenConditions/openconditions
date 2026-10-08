@@ -1,0 +1,137 @@
+{
+  "UpdateTime": "2026-10-06T07:04:36+08:00",
+  "UpdateInterval": 60,
+  "SrcUpdateTime": "2026-10-06T07:04:00+08:00",
+  "SrcUpdateInterval": 60,
+  "AuthorityCode": "TPE",
+  "LiveStatuses": [
+    {
+      "StationID": "TPE0201U03",
+      "ChargingPointID": "90807408-PCP03576",
+      "ConnectorID": "90807408-CCP03576",
+      "ConnectorType": 5,
+      "ConnectorStatus": 2,
+      "LastUpdateTime": "2026-10-06T07:03:03+08:00"
+    },
+    {
+      "StationID": "TPE0201U03",
+      "ChargingPointID": "90807408-PCP03577",
+      "ConnectorID": "90807408-CCP03577",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T07:03:03+08:00"
+    },
+    {
+      "StationID": "TPE0201U03",
+      "ChargingPointID": "90807408-PCP03578",
+      "ConnectorID": "90807408-CCP03578",
+      "ConnectorType": 6,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T07:03:03+08:00"
+    },
+    {
+      "StationID": "TPE0514",
+      "ChargingPointID": "90505425-P0094",
+      "ConnectorID": "90505425-C0094-1",
+      "ConnectorType": 1,
+      "ConnectorStatus": 2,
+      "LastUpdateTime": "2026-10-06T07:03:47+08:00"
+    },
+    {
+      "StationID": "TPE0514",
+      "ChargingPointID": "90505425-P0094",
+      "ConnectorID": "90505425-C0094-2",
+      "ConnectorType": 1,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T07:03:47+08:00"
+    },
+    {
+      "StationID": "TPE0514",
+      "ChargingPointID": "90505425-P0095",
+      "ConnectorID": "90505425-C0095-1",
+      "ConnectorType": 2,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T07:03:47+08:00"
+    },
+    {
+      "StationID": "TPE0514",
+      "ChargingPointID": "90505425-P0095",
+      "ConnectorID": "90505425-C0095-2",
+      "ConnectorType": 2,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T07:03:47+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900001",
+      "ConnectorID": "28371994-CTP4900001",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900002",
+      "ConnectorID": "28371994-CTP4900002",
+      "ConnectorType": 5,
+      "ConnectorStatus": 2,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900003",
+      "ConnectorID": "28371994-CTP4900003",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900004",
+      "ConnectorID": "28371994-CTP4900004",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900005",
+      "ConnectorID": "28371994-CTP4900005",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900006",
+      "ConnectorID": "28371994-CTP4900006",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900007",
+      "ConnectorID": "28371994-CTP4900007",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900009",
+      "ConnectorID": "28371994-CTP4900009",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-01-05T19:41:00+08:00"
+    },
+    {
+      "StationID": "28371994-STP4900001",
+      "ChargingPointID": "28371994-PTP4900008",
+      "ConnectorID": "28371994-CTP4900008",
+      "ConnectorType": 5,
+      "ConnectorStatus": 1,
+      "LastUpdateTime": "2026-10-06T04:12:00+08:00"
+    }
+  ]
+}

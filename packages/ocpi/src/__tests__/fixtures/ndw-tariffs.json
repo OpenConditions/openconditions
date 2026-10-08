@@ -1,0 +1,224 @@
+[
+  {
+    "id": "238",
+    "country_code": "NL",
+    "party_id": "CKE",
+    "currency": "EUR",
+    "type": null,
+    "tariff_alt_text": null,
+    "tariff_alt_url": null,
+    "min_price": null,
+    "max_price": null,
+    "elements": [
+      {
+        "price_components": [
+          {
+            "type": "ENERGY",
+            "price": 0.47,
+            "vat": 21,
+            "step_size": 1
+          }
+        ],
+        "restrictions": null
+      }
+    ],
+    "energy_mix": null,
+    "start_date_time": null,
+    "end_date_time": null,
+    "last_updated": "2025-11-24T10:15:49Z"
+  },
+  {
+    "id": "238",
+    "country_code": "NL",
+    "party_id": "QWC",
+    "currency": "EUR",
+    "type": "AD_HOC_PAYMENT",
+    "tariff_alt_text": null,
+    "tariff_alt_url": null,
+    "min_price": null,
+    "max_price": null,
+    "elements": [
+      {
+        "price_components": [
+          {
+            "type": "PARKING_TIME",
+            "price": 0,
+            "vat": 0,
+            "step_size": 1
+          },
+          {
+            "type": "TIME",
+            "price": 0,
+            "vat": 0,
+            "step_size": 1
+          },
+          {
+            "type": "ENERGY",
+            "price": 0.48,
+            "vat": 0,
+            "step_size": 1
+          }
+        ],
+        "restrictions": {
+          "start_time": null,
+          "end_time": null,
+          "start_date": null,
+          "end_date": null,
+          "min_kwh": null,
+          "max_kwh": null,
+          "min_current": null,
+          "max_current": null,
+          "min_power": null,
+          "max_power": null,
+          "min_duration": null,
+          "max_duration": null,
+          "day_of_week": null,
+          "reservation": null
+        }
+      }
+    ],
+    "energy_mix": null,
+    "start_date_time": "2020-01-01T00:00:00Z",
+    "end_date_time": null,
+    "last_updated": "2025-06-02T00:00:00Z"
+  },
+  {
+    "id": "A0",
+    "country_code": "NL",
+    "party_id": "ENE",
+    "currency": "EUR",
+    "type": null,
+    "tariff_alt_text": null,
+    "tariff_alt_url": null,
+    "min_price": null,
+    "max_price": null,
+    "elements": [
+      {
+        "price_components": [
+          {
+            "type": "FLAT",
+            "price": 0,
+            "vat": 21,
+            "step_size": 0
+          }
+        ],
+        "restrictions": {
+          "start_time": null,
+          "end_time": null,
+          "start_date": "2025-11-19",
+          "end_date": null,
+          "min_kwh": null,
+          "max_kwh": null,
+          "min_current": null,
+          "max_current": null,
+          "min_power": null,
+          "max_power": null,
+          "min_duration": null,
+          "max_duration": null,
+          "day_of_week": null,
+          "reservation": null
+        }
+      }
+    ],
+    "energy_mix": null,
+    "start_date_time": null,
+    "end_date_time": null,
+    "last_updated": "2025-11-20T02:02:41Z"
+  },
+  {
+    "id": "e5588c60d6992238baaa0200a90e838d",
+    "country_code": "NL",
+    "party_id": "TNM",
+    "currency": "EUR",
+    "type": null,
+    "tariff_alt_text": [
+      {
+        "language": "en",
+        "text": "0.392EURperKWH"
+      }
+    ],
+    "tariff_alt_url": null,
+    "min_price": null,
+    "max_price": null,
+    "elements": [
+      {
+        "price_components": [
+          {
+            "type": "ENERGY",
+            "price": 0.392,
+            "vat": 21,
+            "step_size": 1
+          }
+        ],
+        "restrictions": {
+          "start_time": "00:00",
+          "end_time": "23:59",
+          "start_date": null,
+          "end_date": null,
+          "min_kwh": null,
+          "max_kwh": null,
+          "min_current": null,
+          "max_current": null,
+          "min_power": null,
+          "max_power": null,
+          "min_duration": 0,
+          "max_duration": null,
+          "day_of_week": [
+            "MONDAY",
+            "TUESDAY",
+            "WEDNESDAY",
+            "THURSDAY",
+            "FRIDAY",
+            "SATURDAY",
+            "SUNDAY"
+          ],
+          "reservation": null
+        }
+      }
+    ],
+    "energy_mix": null,
+    "start_date_time": null,
+    "end_date_time": null,
+    "last_updated": "2026-09-17T07:12:04Z"
+  },
+  {
+    "id": "t-632b0ce26f21fd46bc7446be-1",
+    "country_code": "NL",
+    "party_id": "EFL",
+    "currency": "EUR",
+    "type": null,
+    "tariff_alt_text": null,
+    "tariff_alt_url": null,
+    "min_price": null,
+    "max_price": null,
+    "elements": [
+      {
+        "price_components": [
+          {
+            "type": "FLAT",
+            "price": 0,
+            "vat": null,
+            "step_size": 1
+          },
+          {
+            "type": "TIME",
+            "price": 0,
+            "vat": null,
+            "step_size": 1
+          },
+          {
+            "type": "ENERGY",
+            "price": 0.38,
+            "vat": null,
+            "step_size": 1
+          }
+        ],
+        "restrictions": null
+      }
+    ],
+    "energy_mix": null,
+    "start_date_time": null,
+    "end_date_time": null,
+    "last_updated": "2026-09-18T14:35:20.664Z"
+  }
+]

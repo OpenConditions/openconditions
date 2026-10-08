@@ -1,4 +1,10 @@
-import { elementType, localChild, localChildren, localChildText } from "./values.js";
+import {
+  elementType,
+  localAttribute,
+  localChild,
+  localChildren,
+  localChildText,
+} from "./values.js";
 import { isXmlObject, stripXmlNamespace, type XmlObject, xmlNodeToArray } from "./xml.js";
 
 /** One payload publication in a DATEX II document, whichever wrapper carried it. */
@@ -88,6 +94,20 @@ export function datexPublications(doc: XmlObject): DatexPublication[] {
     if (name !== "payload" && name !== "D2Payload") continue;
     for (const element of xmlNodeToArray(value).filter(isXmlObject)) {
       found.push(publication(element, 3));
+    }
+  }
+  if (found.length > 0) return found;
+
+  // A document whose root element is the publication itself (Slovenia's
+  // energy infrastructure table), named for its class.
+  for (const [key, value] of Object.entries(root)) {
+    if (key.startsWith("@_")) continue;
+    const name = stripXmlNamespace(key);
+    if (!name.endsWith("Publication")) continue;
+    for (const element of xmlNodeToArray(value).filter(isXmlObject)) {
+      found.push(
+        publication(element, localAttribute(element, "modelBaseVersion") === "2" ? 2 : 3, name),
+      );
     }
   }
   return found;

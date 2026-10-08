@@ -15,6 +15,11 @@ export interface SweepOptions {
    * this long. Must comfortably exceed the slowest feed's cadence.
    */
   maxAgeSec: number;
+  /**
+   * A longer max age per source: a feed whose snapshot is fetched once a day
+   * keeps its records while that snapshot holds, however its faster roles fare.
+   */
+  sourceMaxAgeSec?: Readonly<Record<string, number>>;
   /** How long a tombstoned record and its revisions are kept for the history API. */
   historyDays: number;
 }
@@ -39,20 +44,28 @@ const EXPIRED = `r.tombstoned_at IS NULL AND r.access_mode = 'bulk' AND r.expire
 
 /**
  * A live record of this instance's feeds whose source has had no successful
- * poll for the max age. ($1 = now, $2 = instance id, $3 = max age in seconds)
+ * poll for the max age and is not polling now: a national register's first
+ * publish may run past the max age, and its source is not gone while it does.
+ * ($1 = now, $2 = instance id, $3 = max age in seconds, $4 = max age by
+ * source, a JSON object)
  */
 const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN ('feed', 'derived')
   AND NOT EXISTS (
     SELECT 1 FROM conditions.source_status ss
      WHERE ss.source = r.source_id
-       AND ss.last_success_at >= $1::timestamptz - make_interval(secs => $3))`;
+       AND ss.last_success_at >= $1::timestamptz - make_interval(
+             secs => COALESCE(($4::text::jsonb ->> r.source_id)::int, $3)))
+  AND NOT EXISTS (
+    SELECT 1 FROM conditions.source_poll_attempt pa
+     WHERE pa.source = r.source_id AND pa.outcome = 'running')`;
 
 /**
  * Ends what should no longer be served, without losing its history:
  *  - a record whose `freshness.expiresAt` has passed is tombstoned `expired`
  *    (a crowd report's lifetime, a feed's own expiry);
  *  - a feed record of this instance whose source has had no successful poll
- *    for `maxAgeSec` is tombstoned `expired` — a still-polling source ends
+ *    for `maxAgeSec` (its own `sourceMaxAgeSec` when longer), and is not
+ *    polling now, is tombstoned `expired` — a still-polling source ends
  *    its records itself, by leaving them out of its snapshot;
  *  - a record tombstoned more than `historyDays` ago is purged with its
  *    revisions, effects, components, bindings, crowd evidence and votes;
@@ -67,7 +80,12 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  */
 export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promise<SweepCounts> {
   const counts: SweepCounts = { expired: 0, orphaned: 0, purged: 0, dropped: 0, crowdExpired: 0 };
-  const params = [opts.now, opts.instanceId, opts.maxAgeSec];
+  const params = [
+    opts.now,
+    opts.instanceId,
+    opts.maxAgeSec,
+    JSON.stringify(opts.sourceMaxAgeSec ?? {}),
+  ];
   const relink = (tx: postgres.TransactionSql, sourceId: string, featureIds: string[]) =>
     updateCanonicalView(tx, opts.registry, { sourceId, featureIds, observations: [] }, opts);
   const tombstone =

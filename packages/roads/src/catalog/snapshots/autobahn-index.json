@@ -3240,6 +3240,42 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a559-warning",
+    "name": "Autobahn A559 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a559-closure",
+    "name": "Autobahn A559 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a559-roadworks",
+    "name": "Autobahn A559 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a560-warning",
     "name": "Autobahn A560 — warning",
     "endpoints": {

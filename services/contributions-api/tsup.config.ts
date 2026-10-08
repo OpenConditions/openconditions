@@ -26,7 +26,9 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   outDir: "dist",
-  external: ["postgres"],
+  // impit is a native module, imported lazily by the ingest framework's
+  // impersonating fetch; esbuild cannot bundle its per-platform binaries.
+  external: ["postgres", "impit"],
   noExternal: [/^@openconditions\//, "drizzle-orm"],
   bundle: true,
   async onSuccess() {

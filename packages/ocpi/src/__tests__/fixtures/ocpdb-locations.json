@@ -1,0 +1,430 @@
+{
+  "items": [
+    {
+      "address": "Siemensstraße 10",
+      "postal_code": "73117",
+      "city": "Wangen",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-10-05T20:41:45Z",
+      "help_phone": "+49 721 72 586 460",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "308744",
+      "publish": true,
+      "original_id": "800030182",
+      "source": "datex2_enbw",
+      "official_region_code": "081175005055",
+      "energy_mix": {
+        "is_green_energy": true,
+        "energy_sources": null,
+        "environ_impact": null,
+        "supplier_name": null,
+        "energy_product_name": null
+      },
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 48.718544,
+        "longitude": 9.611829,
+        "lat": 48.718544,
+        "lon": 9.611829
+      },
+      "operator": {
+        "name": "ENBW",
+        "emobility_uid": "EBW"
+      },
+      "evses": [
+        {
+          "uid": "262347503",
+          "evse_id": "DE*EBW*E914082*1",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T16:49:24Z",
+          "status_last_updated": "2026-10-05T16:49:24Z",
+          "original_uid": "DE*EBW*E914082*1",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 150,
+              "max_electric_power": 150000,
+              "last_updated": "2026-10-05T01:21:08Z",
+              "id": "263132795",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347502",
+          "evse_id": "DE*EBW*E914082*2",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T20:41:45Z",
+          "status_last_updated": "2026-10-05T20:41:45Z",
+          "original_uid": "DE*EBW*E914082*2",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 150,
+              "max_electric_power": 150000,
+              "last_updated": "2026-10-05T01:21:08Z",
+              "id": "263132794",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347501",
+          "evse_id": "DE*EBW*E914081*2",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T16:53:57Z",
+          "status_last_updated": "2026-10-05T16:53:57Z",
+          "original_uid": "DE*EBW*E914081*2",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 150,
+              "max_electric_power": 150000,
+              "last_updated": "2026-10-05T01:21:08Z",
+              "id": "263132793",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347500",
+          "evse_id": "DE*EBW*E914081*1",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T16:34:22Z",
+          "status_last_updated": "2026-10-05T16:34:22Z",
+          "original_uid": "DE*EBW*E914081*1",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 150,
+              "max_electric_power": 150000,
+              "last_updated": "2026-10-05T01:21:08Z",
+              "id": "263132792",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Landgrabenpark 1",
+      "postal_code": "16303",
+      "city": "Schwedt/Oder",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-10-05T17:45:19Z",
+      "help_phone": "+49 721 72 586 460",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "308745",
+      "publish": true,
+      "original_id": "800007007",
+      "source": "datex2_enbw",
+      "official_region_code": "120735051532",
+      "energy_mix": {
+        "is_green_energy": true,
+        "energy_sources": null,
+        "environ_impact": null,
+        "supplier_name": null,
+        "energy_product_name": null
+      },
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 53.065956,
+        "longitude": 14.276543,
+        "lat": 53.065956,
+        "lon": 14.276543
+      },
+      "operator": {
+        "name": "ENBW",
+        "emobility_uid": "EBW"
+      },
+      "evses": [
+        {
+          "uid": "262347504",
+          "evse_id": "DE*EBW*E909932*1",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T11:35:02Z",
+          "status_last_updated": "2026-10-05T11:35:02Z",
+          "original_uid": "DE*EBW*E909932*1",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 300,
+              "max_electric_power": 300000,
+              "last_updated": "2026-10-05T01:21:10Z",
+              "id": "263132796",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347505",
+          "evse_id": "DE*EBW*E909932*2",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T17:45:19Z",
+          "status_last_updated": "2026-10-05T17:45:19Z",
+          "original_uid": "DE*EBW*E909932*2",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 300,
+              "max_electric_power": 300000,
+              "last_updated": "2026-10-05T01:21:10Z",
+              "id": "263132797",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347508",
+          "evse_id": "DE*EBW*E909938*1",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T12:44:34Z",
+          "status_last_updated": "2026-10-05T12:44:34Z",
+          "original_uid": "DE*EBW*E909938*1",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 150,
+              "max_electric_power": 150000,
+              "last_updated": "2026-10-05T01:21:10Z",
+              "id": "263132800",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347507",
+          "evse_id": "DE*EBW*E909938*3",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T12:39:23Z",
+          "status_last_updated": "2026-10-05T12:39:23Z",
+          "original_uid": "DE*EBW*E909938*3",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 230,
+              "max_amperage": 95,
+              "max_electric_power": 22000,
+              "last_updated": "2026-10-05T01:21:10Z",
+              "id": "263132799",
+              "tariff_ids": ["14edeacd1413be434f6d54796584ff24"],
+              "original_id": "0"
+            }
+          ]
+        },
+        {
+          "uid": "262347506",
+          "evse_id": "DE*EBW*E909938*2",
+          "status": "AVAILABLE",
+          "presence": "PRESENT",
+          "last_updated": "2026-10-05T12:39:23Z",
+          "status_last_updated": "2026-10-05T12:39:23Z",
+          "original_uid": "DE*EBW*E909938*2",
+          "capabilities": [
+            "CREDIT_CARD_PAYABLE",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2_COMBO",
+              "format": "CABLE",
+              "power_type": "DC",
+              "max_voltage": 1000,
+              "max_amperage": 150,
+              "max_electric_power": 150000,
+              "last_updated": "2026-10-05T01:21:08Z",
+              "id": "263132798",
+              "tariff_ids": ["9f1fe2bb765152389c487ad0c5c33d67"],
+              "original_id": "0"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "address": "Viktoriastr. 5",
+      "postal_code": "44532",
+      "city": "Lünen",
+      "state": "Nordrhein-Westfalen",
+      "country": "DEU",
+      "time_zone": "Europe/Berlin",
+      "last_updated": "2026-09-29T10:40:32Z",
+      "has_in_person_support": false,
+      "facilities": [],
+      "facility_description": "",
+      "id": "72555",
+      "publish": true,
+      "original_id": "1002913",
+      "source": "bnetza_api",
+      "official_region_code": "059780024024",
+      "opening_times": {
+        "twentyfourseven": true
+      },
+      "coordinates": {
+        "latitude": 51.608953,
+        "longitude": 7.522998,
+        "lat": 51.608953,
+        "lon": 7.522998
+      },
+      "operator": {
+        "name": "Stadtwerke Lünen Infrastrukturbau GmbH"
+      },
+      "evses": [
+        {
+          "uid": "259994189",
+          "evse_id": "DELUEE001601",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-29T10:40:32Z",
+          "original_uid": "BNETZA*1002913*1",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-29T10:40:32Z",
+              "id": "260768225",
+              "original_id": "1"
+            }
+          ]
+        },
+        {
+          "uid": "259994190",
+          "evse_id": "DELUEE001602",
+          "status": "STATIC",
+          "presence": "PRESENT",
+          "last_updated": "2026-09-29T10:40:32Z",
+          "original_uid": "BNETZA*1002913*2",
+          "capabilities": [
+            "CONTACTLESS_CARD_SUPPORT",
+            "DEBIT_CARD_PAYABLE",
+            "REMOTE_START_STOP_CAPABLE",
+            "RFID_READER"
+          ],
+          "connectors": [
+            {
+              "standard": "IEC_62196_T2",
+              "format": "SOCKET",
+              "power_type": "AC_3_PHASE",
+              "max_voltage": 400,
+              "max_amperage": 32,
+              "max_electric_power": 11000,
+              "last_updated": "2026-09-29T10:40:32Z",
+              "id": "260768226",
+              "original_id": "1"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "total_count": 100924,
+  "next_offset": 3
+}

@@ -21,6 +21,12 @@ export interface Source {
   /** The terms page, when they were last reviewed, and what they condition beyond the licence. */
   terms?: { url?: string; reviewedAt?: string; note?: string };
   rights: EffectiveRights;
+  /**
+   * Where the feed answers: ISO 3166 codes, or the box an on-demand feed
+   * covers (a global one covers the world). Absent for a feed that names
+   * neither, such as an `eu` feed without written coverage.
+   */
+  coverage?: { countries?: string[]; bbox?: [number, number, number, number] };
 }
 
 function sourceOf(feed: CatalogFeed): Source {
@@ -47,6 +53,14 @@ function sourceOf(feed: CatalogFeed): Source {
     privacyUrl: feed.privacyUrl,
     ...(Object.keys(terms).length > 0 ? { terms } : {}),
     rights: feed.rights,
+    ...(feed.coverage.countries === undefined && feed.coverage.bbox === undefined
+      ? {}
+      : {
+          coverage: {
+            ...(feed.coverage.countries ? { countries: [...feed.coverage.countries] } : {}),
+            ...(feed.coverage.bbox ? { bbox: feed.coverage.bbox } : {}),
+          },
+        }),
   };
 }
 

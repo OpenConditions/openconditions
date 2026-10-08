@@ -1,6 +1,5 @@
 import {
   buildRegistry,
-  extendVocabulary,
   type FusableObservation,
   fuse,
   fusedObservation,
@@ -20,13 +19,7 @@ import {
   readInboundEntry,
 } from "../index.js";
 
-const registry = buildRegistry([
-  ...productionModules,
-  {
-    name: "records-test",
-    entries: [extendVocabulary({ vocabulary: "source_format", values: ["ocpi"] })],
-  },
-]);
+const registry = buildRegistry(productionModules);
 const PEER = "peer.example.net";
 const NOW = "2026-10-01T12:00:00Z";
 const KEY = "GlQczzclqGJy6D0X9dNq8pSYKRfkCqszpEp5g3ZGlwY";
@@ -232,6 +225,36 @@ describe("the subscriber filter on records", () => {
     const withReporter = entry(crowdAccident("corroborated"), 5);
     const [out] = applyRecordFilter([withReporter], undefined, NOW);
     expect(out!.record!.provenance.reporter).toBeUndefined();
+  });
+
+  it("ages a reading by when it was journalled: a state stated days ago, changed now, passes", () => {
+    const draft = {
+      class: "observation",
+      kind: "observation",
+      property: "charging.evse_status",
+      temporality: "live",
+      location,
+      provenance: {
+        origin: "feed",
+        sourceId: "de-bw-ocpdb",
+        sourceFormat: "ocpi",
+        accessMode: "bulk",
+        recordId: "x",
+        attribution: { provider: "MobiData BW", license: "CC-BY-4.0" },
+        privacy: { class: "authoritative" },
+      },
+      freshness: { fetchedAt: NOW },
+      subject: { kind: "feature", featureId: "oc:feature:de-bw-ocpdb:1", componentKey: "1" },
+      result: { type: "category", value: "available", vocabulary: "evse_status" },
+      // Unchanged for two days, first written now.
+      phenomenonTime: { instant: "2026-09-29T12:00:00Z" },
+      aggregation: "instantaneous",
+    };
+    const status = sealed({ id: observationId("de-bw-ocpdb", draft as never), ...draft });
+    const journalled = entry(status, 20);
+    expect(applyRecordFilter([journalled], { maxAgeSec: 3600 }, NOW)).toHaveLength(1);
+    const old = { ...journalled, createdAt: "2026-09-29T12:00:00Z" };
+    expect(applyRecordFilter([old], { maxAgeSec: 3600 }, NOW)).toEqual([]);
   });
 
   it("filters by age and box, and always passes a retraction", () => {

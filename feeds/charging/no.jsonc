@@ -1,0 +1,56 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "nobil",
+      "product": "charging",
+      "name": "NOBIL charging stations (Enova)",
+      "tier": "authoritative",
+      "format": "nobil",
+      // The data export of every Norwegian and Swedish station. The key is a
+      // query parameter, so the URL names a credential. Live status is a
+      // separate Enova WebSocket product, not read here.
+      "credentials": {
+        "api_key": {
+          "title": "NOBIL API key",
+          "description": "A NOBIL API v3 key, issued by email per registered website.",
+          "setup": {
+            "url": "https://info.nobil.no/api",
+            "urlLabel": "Request a NOBIL API key",
+            "steps": [
+              "Open info.nobil.no/api and review the Creative Commons (CC BY 4.0) terms.",
+              "Use the 'Ask for an API-key' section to contact NOBIL with your project details.",
+              "Accept the CC BY 4.0 terms of use.",
+              "Receive the API key by email.",
+            ],
+            "cost": "Free (Creative Commons data, attribution required)",
+            "notes": "Norway/Sweden charging data. The request is handled by email rather than an instant self-service form.",
+            "email": {
+              "to": "post@nobil.no",
+              "subject": "NOBIL API key request",
+              "body": "Hello,\n\nI would like to request a NOBIL API key (API v3) to display Norwegian/Swedish EV charging station data in a self-hosted OpenMapX map application.\n\nI have read and accept the Creative Commons Attribution 4.0 (CC BY 4.0) terms of use and will attribute NOBIL accordingly.\n\nProject: self-hosted, non-commercial mapping application.\n\nThank you.",
+            },
+          },
+        },
+      },
+      "endpoints": {
+        "main": {
+          "url": "https://nobil.no/api/server/datadump.php?apikey=${api_key}&format=json&file=false",
+          "cadenceSec": 86400,
+        },
+      },
+      "coverage": { "countries": ["NO", "SE"] },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "NOBIL by Enova, CC BY 4.0, https://nobil.no",
+      "terms": {
+        "url": "https://info.nobil.no/images/API_NOBIL_Documentation_v3_20260816.pdf",
+        "reviewedAt": "2026-10-06",
+        "note": "Data CC BY 4.0. API usage terms: no direct end-user calls; data must be processed or cached in an intermediate service; key issued per registered website and must stay private.",
+      },
+      "homepage": "https://nobil.no",
+      "privacyUrl": "https://info.nobil.no/om?catid=8%3Aom&id=246%3Anobil-privacy-policy&view=article",
+    },
+  ],
+}

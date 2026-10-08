@@ -1,0 +1,57 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "nap",
+      "product": "charging",
+      "name": "NAP Slovenija charge points (Prometej IDACS)",
+      "tier": "authoritative",
+      "format": "datex2",
+      // DATEX II v3.6 energy-infrastructure table and status publications,
+      // each a dataset that NAP grants a business account access to. The
+      // server challenges for HTTP Basic auth. The status URL is not yet
+      // confirmed by a keyed pull: while it fails, the sites are published
+      // without live status and the poll's status names the failure.
+      "credentials": {
+        "username": {
+          "title": "NAP Slovenija account email",
+          "description": "The email of the NAP business-entity account that holds access to the Prometej IDACS datasets.",
+          "setup": {
+            "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+            "urlLabel": "Register with NAP Slovenija",
+            "steps": [
+              "Create a business-entity account at nap.si (click the user icon → Registration) and confirm the email.",
+              "Log in, open your profile, and request permission for the 'Prometej IDACS Energy Infrastructure Table (DATEX II v3.6)' dataset. Accept the general terms of use.",
+              "Also request the 'Prometej IDACS Energy Infrastructure Status' dataset for live status.",
+              "Wait for NAP to grant the requests (shown as 'granted' on your profile page).",
+              "Enter the account's email here and its password in the password field; requests use HTTP Basic auth.",
+            ],
+            "cost": "Free (business-entity registration required)",
+            "notes": "The dataset licence is CC BY-SA 4.0, so the feed is served to the operator only.",
+          },
+        },
+        "password": {
+          "title": "NAP Slovenija account password",
+          "description": "The password of that NAP account.",
+        },
+      },
+      "auth": { "kind": "basic", "user": "username", "password": "password" },
+      "endpoints": {
+        "main": {
+          "url": "https://b2b.nap.si/data/b2b.prometej.energyInfrastructureTablePublication",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://b2b.nap.si/data/b2b.prometej.energyInfrastructureStatusPublication",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-SA-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "attribution": "MZIE / NAP Slovenija, CC BY-SA 4.0",
+      "homepage": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+      "privacyUrl": "https://www.nap.si/en/privacy",
+    },
+  ],
+}

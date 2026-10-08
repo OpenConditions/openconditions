@@ -1,6 +1,10 @@
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
-import { schemaVersions } from "@openconditions/model";
-import { tombstoneRecords } from "@openconditions/storage";
+import { observationId, schemaVersions } from "@openconditions/model";
+import {
+  ensureObservationPartitions,
+  retentionClasses,
+  tombstoneRecords,
+} from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { FederatedPageError, type InboxContext, ingestFederatedPage } from "../federation/inbox.js";
@@ -116,7 +120,7 @@ afterAll(async () => {
 beforeEach(async () => {
   await sql`TRUNCATE conditions.situation, conditions.situation_revision,
     conditions.report_evidence, conditions.sub_claim, conditions.federation_tombstone,
-    conditions.reporter CASCADE`;
+    conditions.reporter, conditions.federation_source_receipt CASCADE`;
 });
 
 describe("landing a peer's records", () => {
@@ -137,6 +141,81 @@ describe("landing a peer's records", () => {
       { instanceId: PEER, viaPeer: PEER, receivedAt: NOW },
     ]);
     expect((row!.record["provenance"] as Rec)["reporter"]).toBeUndefined();
+  });
+
+  it("records when this instance last received each of the peer's sources, a stale delivery too", async () => {
+    const record = peerSituation("p-receipt");
+    const source = (record["provenance"] as Rec)["sourceId"] as string;
+    await ingestFederatedPage(sql, page(change(record, 1)), ctx());
+    const receipt = async () =>
+      sql`SELECT peer_instance_id, source_id, last_received_at
+            FROM conditions.federation_source_receipt WHERE source_id = ${source}`;
+    expect(await receipt()).toEqual([
+      { peer_instance_id: PEER, source_id: source, last_received_at: new Date(NOW) },
+    ]);
+    const again = await ingestFederatedPage(sql, page(change(record, 2)), ctx(LATER));
+    expect(again.stale).toBe(1);
+    expect(await receipt()).toEqual([
+      { peer_instance_id: PEER, source_id: source, last_received_at: new Date(LATER) },
+    ]);
+  });
+
+  it("lands a peer's ended reading with the validity it states", async () => {
+    const draft = {
+      class: "observation",
+      kind: "observation",
+      property: "charging.evse_status",
+      temporality: "live",
+      location: {
+        geometry: { type: "Point", coordinates: [8.4, 49] },
+        extent: "point",
+        geometryOrigin: "source",
+        fuzziness: "exact",
+      },
+      provenance: {
+        origin: "feed",
+        sourceId: "de-bw-mobidata-charging",
+        sourceFormat: "ocpi",
+        accessMode: "bulk",
+        recordId: "309444",
+        attribution: { provider: "MobiData BW", license: "CC-BY-4.0" },
+        privacy: { class: "authoritative" },
+      },
+      freshness: { fetchedAt: "2026-07-12T07:00:00Z" },
+      subject: {
+        kind: "feature",
+        featureId: "oc:feature:de-bw-mobidata-charging:309444",
+        componentKey: "1",
+      },
+      result: { type: "category", value: "available", vocabulary: "evse_status" },
+      phenomenonTime: { instant: "2026-07-12T06:00:00Z" },
+      aggregation: "instantaneous",
+    };
+    const id = observationId("de-bw-mobidata-charging", draft as never);
+    const reading = sent(peerRecord({ id, ...draft }));
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date(NOW),
+    });
+    expect(await ingestFederatedPage(sql, page(change(reading, 1)), ctx())).toMatchObject({
+      accepted: 1,
+    });
+    // The peer's full parse no longer states the charge point: its reading ends.
+    const ended = sent(
+      peerRecord(
+        { id, ...draft, validUntil: "2026-07-12T07:30:00.000Z" },
+        1,
+        "2026-07-12T07:30:00Z",
+      ),
+    );
+    expect(await ingestFederatedPage(sql, page(change(ended, 2)), ctx(LATER))).toMatchObject({
+      accepted: 1,
+      stale: 0,
+    });
+    const [row] = await sql`
+      SELECT conditions.observation_record(template, reading) ->> 'validUntil' AS valid_until
+        FROM conditions.observation_latest WHERE source_id = 'de-bw-mobidata-charging'`;
+    expect(row).toEqual({ valid_until: "2026-07-12T07:30:00.000Z" });
   });
 
   it("counts a delivery no newer than the stored copy as stale and changes nothing", async () => {

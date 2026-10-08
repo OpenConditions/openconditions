@@ -1,4 +1,4 @@
-import { FUSED_SOURCE_IDS, isFusedSourceId } from "@openconditions/model";
+import { FUSED_SOURCE_IDS, isFusedSourceId, type Registry } from "@openconditions/model";
 import { withEvidence } from "./db/records.js";
 import {
   CROWD_SOURCE_ID,
@@ -8,6 +8,7 @@ import {
 } from "./live-rows.js";
 import type { QueryRunner } from "./query-runner.js";
 import { binder, type Scope, scopeClauses } from "./record-filters.js";
+import { withPolledValidity } from "./validity.js";
 
 type Rec = Record<string, unknown>;
 
@@ -62,6 +63,8 @@ export function canonicalKeyOf(
 }
 
 export interface LatestOfFeaturesQuery {
+  /** Which properties keep only their changes, whose feed readings hold while their source polls. */
+  registry: Pick<Registry, "property">;
   features: readonly ExpandedFeature[];
   /** Whether the features are canonical features, whose members' readings they collect. */
   canonical: boolean;
@@ -95,9 +98,12 @@ interface ReadingRow extends Rec {
  * fused reading of a canonical component, property and qualifiers, it
  * stands in for the members' readings of them; otherwise each member's
  * reading is served. A crowd reading of a canonical feature shows through
- * its fused reading, as `listLatestObservations` serves it. Two statements
- * for a page, whatever its size; one where every canonical feature carries
- * its components.
+ * its fused reading, as `listLatestObservations` serves it. A polled feed's
+ * reading of a change-only property, and a fusion of such readings, carries
+ * the validity its sources' polling gives it (`withPolledValidity`). Two
+ * statements for a page, whatever its size; one where every canonical
+ * feature carries its components; one more where a reading takes its
+ * validity from its sources' polling.
  */
 export async function latestOfFeatures(
   db: QueryRunner,
@@ -146,7 +152,9 @@ export async function latestOfFeatures(
       ORDER BY l.property, l.component_key NULLS FIRST, l.qualifier_key, l.source_id, l.feature_id`,
     params,
   );
-  const records = rows.map(withEvidence);
+  // Validity before the egress, as every reader computes it: the egress may
+  // drop a fused row's non-public contributors.
+  const records = await withPolledValidity(db, q.registry, rows.map(withEvidence));
   const rowOf = new Map(records.map((r, i) => [r["id"] as string, rows[i]!]));
   const shown = q.egress === undefined ? records : q.egress(records);
 

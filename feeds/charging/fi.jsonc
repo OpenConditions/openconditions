@@ -1,0 +1,37 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "digitraffic",
+      "product": "charging",
+      "name": "Fintraffic Digitraffic charging network",
+      "tier": "authoritative",
+      "format": "digitraffic",
+      // The AFIR API: the locations without status, every EVSE's status, and
+      // the tariffs. Digitraffic asks clients to name themselves.
+      "endpoints": {
+        "main": {
+          "url": "https://afir.digitraffic.fi/api/charging-network/v1/locations/all",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://afir.digitraffic.fi/api/charging-network/v1/locations/statuses/all",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 300,
+        },
+        "tariffs": {
+          "url": "https://afir.digitraffic.fi/api/charging-network/v1/tariffs/all",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "homepage": "https://www.digitraffic.fi/en/",
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+    },
+  ],
+}

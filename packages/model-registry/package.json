@@ -41,6 +41,7 @@
     "@openconditions/model-weather": "workspace:*"
   },
   "devDependencies": {
+    "@openconditions/charging": "workspace:*",
     "@openconditions/fuel": "workspace:*",
     "@openconditions/parking": "workspace:*",
     "fast-xml-parser": "^5.11.1",

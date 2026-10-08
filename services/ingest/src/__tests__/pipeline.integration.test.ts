@@ -165,6 +165,32 @@ describe("pipeline — payload digests", () => {
   }, 30_000);
 });
 
+describe("pipeline — parse gate", () => {
+  it("parses and writes a fetched payload inside the gate, sized by its bytes", async () => {
+    const payload = readFileSync(NDW_FIXTURE_PATH);
+    const entered: number[] = [];
+    let inside: unknown;
+    const result = await runSource(ndwFeed, {
+      sql,
+      fetch: async () => new Response(payload),
+      now: () => new Date().toISOString(),
+      lookup: fakeLookup,
+      parseGate: {
+        async run(bytes, task) {
+          entered.push(bytes);
+          inside = await task();
+          return inside as never;
+        },
+      },
+    });
+
+    expect(entered).toEqual([payload.length]);
+    expect(result).toBe(inside);
+    expect(result.error).toBeUndefined();
+    expect(await liveSituations(ndwFeed.id)).toBeGreaterThan(0);
+  }, 30_000);
+});
+
 describe("pipeline — feed downtime", () => {
   it("leaves existing rows intact when fetch throws", async () => {
     const seeded = await runSource(ndwFeed, {

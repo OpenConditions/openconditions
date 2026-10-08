@@ -19,6 +19,11 @@
  *   (`rights_revoked`) also records the peer's erasure fact, so no later
  *   delivery of the record from that peer is admitted for its lifetime.
  *
+ * - Each source whose records a page delivered (landed or no newer than the
+ *   stored copy) is noted as received from the peer now
+ *   (`federation_source_receipt`): a peer's polled readings hold while their
+ *   source keeps arriving.
+ *
  * A permanent problem with one entry skips it and is reported; a local
  * failure rejects the page so the peer retries from its cursor.
  */
@@ -102,6 +107,8 @@ export async function ingestFederatedPage(
     maxCursor: null,
   };
   let max: { txid: bigint; seq: number } | null = null;
+  /** The sources whose records this page delivered. */
+  const received = new Set<string>();
 
   for (const item of page["orderedItems"]) {
     // Advance the processed frontier over EVERY entry that carries a usable
@@ -133,9 +140,28 @@ export async function ingestFederatedPage(
     if (outcome === "accepted") result.accepted += 1;
     else if (outcome === "stale") result.stale += 1;
     else result.skipped.push({ recordId: entry.recordId, reason: outcome });
+    if (outcome === "accepted" || outcome === "stale") {
+      const provenance = (entry.record as { provenance?: { sourceId?: unknown } }).provenance;
+      if (typeof provenance?.sourceId === "string") received.add(provenance.sourceId);
+    }
   }
+  await recordReceipts(sql, ctx, [...received]);
   result.maxCursor = max === null ? null : `${max.txid}.${max.seq}`;
   return result;
+}
+
+/**
+ * Notes that `sources` arrived from the peer now: their readings hold while
+ * they keep arriving (`withPolledValidity`).
+ */
+async function recordReceipts(sql: Sql, ctx: InboxContext, sources: string[]): Promise<void> {
+  if (sources.length === 0) return;
+  await sql`
+    INSERT INTO conditions.federation_source_receipt (peer_instance_id, source_id, last_received_at)
+    SELECT ${ctx.peerInstanceId}, s, ${ctx.now}::timestamptz FROM unnest(${sources}::text[]) AS s
+    ON CONFLICT (peer_instance_id, source_id) DO UPDATE
+      SET last_received_at = GREATEST(conditions.federation_source_receipt.last_received_at,
+                                      excluded.last_received_at)`;
 }
 
 async function landRecord(

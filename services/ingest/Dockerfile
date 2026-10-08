@@ -13,7 +13,8 @@
 #
 # Runtime is a single esbuild bundle: tsup inlines @openconditions/* + drizzle-orm
 # (see services/ingest/tsup.config.ts) and copies the migrations to dist/drizzle,
-# so only fastify, postgres and croner remain as external runtime dependencies.
+# so only fastify, postgres, croner and impit (a native binary, loaded on first
+# use) remain as external runtime dependencies.
 
 FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS base
 # Read the pnpm version from the repo root package.json so lockfile resolution
@@ -22,17 +23,19 @@ COPY package.json /tmp/package.json
 RUN corepack enable && corepack prepare $(node -e "console.log(require('/tmp/package.json').packageManager)") --activate
 ENV HUSKY=0
 
-# Production runtime dependencies only (fastify, postgres, croner — everything
-# else is bundled into dist).
+# Production runtime dependencies only (fastify, postgres, croner, impit —
+# everything else is bundled into dist).
 FROM base AS prod-deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY packages/core/package.json packages/core/
 COPY packages/datex2/package.json packages/datex2/
+COPY packages/ocpi/package.json packages/ocpi/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/fuel/package.json packages/fuel/
 COPY packages/parking/package.json packages/parking/
+COPY packages/charging/package.json packages/charging/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/storage/package.json packages/storage/
@@ -58,10 +61,12 @@ WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
 COPY packages/core/package.json packages/core/
 COPY packages/datex2/package.json packages/datex2/
+COPY packages/ocpi/package.json packages/ocpi/
 COPY packages/ingest-framework/package.json packages/ingest-framework/
 COPY packages/roads/package.json packages/roads/
 COPY packages/fuel/package.json packages/fuel/
 COPY packages/parking/package.json packages/parking/
+COPY packages/charging/package.json packages/charging/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/storage/package.json packages/storage/
@@ -83,10 +88,12 @@ RUN pnpm install --filter @openconditions/ingest... --frozen-lockfile --ignore-s
 COPY tsconfig.base.json turbo.json ./
 COPY packages/core/ packages/core/
 COPY packages/datex2/ packages/datex2/
+COPY packages/ocpi/ packages/ocpi/
 COPY packages/ingest-framework/ packages/ingest-framework/
 COPY packages/roads/ packages/roads/
 COPY packages/fuel/ packages/fuel/
 COPY packages/parking/ packages/parking/
+COPY packages/charging/ packages/charging/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
 COPY packages/storage/ packages/storage/
@@ -141,13 +148,15 @@ RUN osmium --version
 ENV NODE_ENV=production
 ENV PORT=4100
 ENV HOST=0.0.0.0
-# Bounds the V8 heap. The NDW flow feed (enabled by default) processes ~18k
-# per-sensor flows plus per-flow sample-writing/enrichment every cycle on top of
-# the streamed ~373 MB site table, which needs well over 512 MB of heap; sized
-# to run under the service memory limit below. Operators can override via env.
-ENV NODE_OPTIONS="--max-old-space-size=1536 --heapsnapshot-signal=SIGUSR2"
+# Bounds the V8 old space at 75% of the container's memory limit (Node reads the
+# cgroup limit), so it follows OPENCONDITIONS_INGEST_MEMORY: 4608 MB under the
+# default 6g. The other quarter is the off-heap headroom (fetch buffers, gunzip,
+# zstd, the young generation). The national charging registers (IRVE, BNetzA,
+# NDW, OCPDB) each need several hundred MB of heap from parse to write.
+# Operators can override via env.
+ENV NODE_OPTIONS="--max-old-space-size-percentage=75 --heapsnapshot-signal=SIGUSR2"
 
-# Runtime externals (fastify, postgres, croner) resolved from the workspace
+# Runtime externals (fastify, postgres, croner, impit) resolved from the workspace
 # node_modules; everything else is inlined in dist.
 COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=prod-deps /app/services/ingest/node_modules ./services/ingest/node_modules

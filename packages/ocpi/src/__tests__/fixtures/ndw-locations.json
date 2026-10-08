@@ -1,0 +1,299 @@
+[
+  {
+    "id": "TEU_04554",
+    "city": "Boskoop",
+    "name": "TEU_04554",
+    "evses": [
+      {
+        "uid": "86aead04-febd-495d-8a21-643aecf02682",
+        "images": null,
+        "status": "CHARGING",
+        "evse_id": "NLEVTEA86AEAD04FEBD4",
+        "connectors": [
+          {
+            "id": "1",
+            "format": "SOCKET",
+            "standard": "IEC_62196_T2",
+            "power_type": "AC_3_PHASE",
+            "tariff_ids": ["721c8feb-769f-4ff5-a955-ef2e2cb24c96"],
+            "max_voltage": 230,
+            "last_updated": "2026-10-04T13:10:21Z",
+            "max_amperage": 32,
+            "max_electric_power": null,
+            "terms_and_conditions": null
+          }
+        ],
+        "directions": null,
+        "coordinates": null,
+        "floor_level": null,
+        "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER", "UNLOCK_CAPABLE"],
+        "last_updated": "2026-10-05T16:34:03Z",
+        "status_schedule": null,
+        "physical_reference": null,
+        "parking_restrictions": null
+      }
+    ],
+    "owner": null,
+    "state": null,
+    "images": null,
+    "address": "Kweepeer 48",
+    "country": "NLD",
+    "publish": false,
+    "operator": {
+      "logo": null,
+      "name": "e-VOLTT",
+      "website": "https://e-voltt.nl/"
+    },
+    "party_id": "EVT",
+    "time_zone": "Europe/Amsterdam",
+    "directions": null,
+    "energy_mix": null,
+    "facilities": null,
+    "coordinates": {
+      "latitude": "52.072796",
+      "longitude": "4.649678"
+    },
+    "postal_code": "2771NW",
+    "suboperator": null,
+    "country_code": "NL",
+    "last_updated": "2026-10-05T16:34:03Z",
+    "parking_type": null,
+    "opening_times": null,
+    "related_locations": null,
+    "publish_allowed_to": null,
+    "charging_when_closed": null
+  },
+  {
+    "id": "12084",
+    "city": "Nieuw-Weerdinge",
+    "name": "Zonnepark Emmen (PowerGo)",
+    "evses": [
+      {
+        "uid": "NL.SPI.ECO00317*1",
+        "images": null,
+        "status": "AVAILABLE",
+        "evse_id": "NL.SPI.ECO00317*1",
+        "connectors": [
+          {
+            "id": "1",
+            "format": "CABLE",
+            "standard": "IEC_62196_T2_COMBO",
+            "power_type": "DC",
+            "tariff_ids": ["f8085ad5-169c-4124-826c-57ba4a2b6712"],
+            "max_voltage": 500,
+            "last_updated": "2026-10-04T23:30:05Z",
+            "max_amperage": 120,
+            "max_electric_power": null,
+            "terms_and_conditions": null
+          }
+        ],
+        "directions": null,
+        "coordinates": null,
+        "floor_level": null,
+        "capabilities": [],
+        "last_updated": "2026-10-02T12:00:32Z",
+        "status_schedule": null,
+        "physical_reference": null,
+        "parking_restrictions": []
+      }
+    ],
+    "owner": {
+      "logo": null,
+      "name": "PowerGo",
+      "website": "https://www.powergo.nl/"
+    },
+    "state": null,
+    "images": null,
+    "address": "Hoogesloot",
+    "country": "NLD",
+    "publish": true,
+    "operator": {
+      "logo": null,
+      "name": "PowerGo",
+      "website": "https://www.powergo.nl/"
+    },
+    "party_id": "PFG",
+    "time_zone": "Europe/Amsterdam",
+    "directions": null,
+    "energy_mix": null,
+    "facilities": null,
+    "coordinates": {
+      "latitude": "52.8230362",
+      "longitude": "6.9709458"
+    },
+    "postal_code": "7381NL",
+    "suboperator": null,
+    "country_code": "NL",
+    "last_updated": "2026-10-04T23:30:05Z",
+    "parking_type": null,
+    "opening_times": null,
+    "related_locations": null,
+    "publish_allowed_to": null,
+    "charging_when_closed": true
+  },
+  {
+    "id": "5b5fad39-fc42-4cf4-b409-c8b3f073294d",
+    "city": "Lochem",
+    "name": null,
+    "evses": [
+      {
+        "uid": "38d4ceb4-5cce-44f8-9686-9f99a792ae06",
+        "images": null,
+        "status": "AVAILABLE",
+        "evse_id": "NLQWCEG5J4W11",
+        "connectors": [
+          {
+            "id": "NLQWCEG5J4W111",
+            "format": "SOCKET",
+            "standard": "IEC_62196_T2",
+            "power_type": "AC_3_PHASE",
+            "tariff_ids": ["238"],
+            "max_voltage": 230,
+            "last_updated": "2025-07-23T14:44:20Z",
+            "max_amperage": 16,
+            "max_electric_power": 11040,
+            "terms_and_conditions": null
+          }
+        ],
+        "directions": null,
+        "coordinates": null,
+        "floor_level": null,
+        "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+        "last_updated": "2026-10-05T21:04:45Z",
+        "status_schedule": null,
+        "physical_reference": "CPCWCCP1",
+        "parking_restrictions": null
+      }
+    ],
+    "owner": {
+      "logo": null,
+      "name": "Qwello",
+      "website": null
+    },
+    "state": null,
+    "images": null,
+    "address": "Hanzeweg 6",
+    "country": "NLD",
+    "publish": true,
+    "operator": {
+      "logo": null,
+      "name": "Qwello Benelux BV",
+      "website": null
+    },
+    "party_id": "QWC",
+    "time_zone": "Europe/Amsterdam",
+    "directions": null,
+    "energy_mix": null,
+    "facilities": null,
+    "coordinates": {
+      "latitude": "52.165108",
+      "longitude": "6.414443"
+    },
+    "postal_code": "7241 CR",
+    "suboperator": null,
+    "country_code": "NL",
+    "last_updated": "2026-10-05T21:04:45Z",
+    "parking_type": null,
+    "opening_times": {
+      "regular_hours": null,
+      "twentyfourseven": true,
+      "exceptional_closings": null,
+      "exceptional_openings": null
+    },
+    "related_locations": null,
+    "publish_allowed_to": null,
+    "charging_when_closed": null
+  },
+  {
+    "id": "632b114cad9f2673374358a1",
+    "city": "Franeker",
+    "name": "Zijlstra_FranekerHQ",
+    "evses": [
+      {
+        "uid": "632b10529d3c68570ab72a6c",
+        "images": null,
+        "status": "OUTOFORDER",
+        "evse_id": "NL*EFL*EV*4557355*C1",
+        "connectors": [
+          {
+            "id": "1",
+            "format": "SOCKET",
+            "standard": "IEC_62196_T2",
+            "power_type": "AC_3_PHASE",
+            "tariff_ids": ["t-632b0ce26f21fd46bc7446be-1"],
+            "max_voltage": 230,
+            "last_updated": "2026-10-05T16:12:53.335Z",
+            "max_amperage": 30,
+            "max_electric_power": 20700,
+            "terms_and_conditions": null
+          }
+        ],
+        "directions": null,
+        "coordinates": null,
+        "floor_level": null,
+        "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+        "last_updated": "2026-10-05T16:12:53.335Z",
+        "status_schedule": null,
+        "physical_reference": null,
+        "parking_restrictions": null
+      },
+      {
+        "uid": "632b10529d3c68d523b72a6d",
+        "images": null,
+        "status": "CHARGING",
+        "evse_id": "NL*EFL*EV*4557355*C2",
+        "connectors": [
+          {
+            "id": "2",
+            "format": "SOCKET",
+            "standard": "IEC_62196_T2",
+            "power_type": "AC_3_PHASE",
+            "tariff_ids": ["t-632b0ce26f21fd46bc7446be-2"],
+            "max_voltage": 230,
+            "last_updated": "2026-10-05T16:12:53.335Z",
+            "max_amperage": 30,
+            "max_electric_power": 20700,
+            "terms_and_conditions": null
+          }
+        ],
+        "directions": null,
+        "coordinates": null,
+        "floor_level": null,
+        "capabilities": ["REMOTE_START_STOP_CAPABLE", "RFID_READER"],
+        "last_updated": "2026-10-05T16:12:53.335Z",
+        "status_schedule": null,
+        "physical_reference": null,
+        "parking_restrictions": null
+      }
+    ],
+    "owner": null,
+    "state": null,
+    "images": null,
+    "address": "De Wieken 14",
+    "country": "NLD",
+    "publish": true,
+    "operator": {
+      "logo": null,
+      "name": "Moveyou",
+      "website": null
+    },
+    "party_id": "EFL",
+    "time_zone": "Europe/Amsterdam",
+    "directions": null,
+    "energy_mix": null,
+    "facilities": null,
+    "coordinates": {
+      "latitude": "53.179099",
+      "longitude": "5.524082"
+    },
+    "postal_code": "8801RA",
+    "suboperator": null,
+    "country_code": "NL",
+    "last_updated": "2026-10-05T16:12:53.342Z",
+    "parking_type": "PARKING_LOT",
+    "opening_times": null,
+    "related_locations": null,
+    "publish_allowed_to": null,
+    "charging_when_closed": false
+  }
+]

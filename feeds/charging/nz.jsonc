@@ -1,0 +1,32 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "nzta",
+      "product": "charging",
+      "name": "EVRoam charging stations (NZ Transport Agency)",
+      "tier": "authoritative",
+      "format": "evroam",
+      // The ArcGIS layer of the stations operators report to EVRoam, about
+      // 640, refreshed daily; each connector group carries a daily operative
+      // or inoperative state, not occupancy. No prices.
+      "endpoints": {
+        "main": {
+          "url": "https://services.arcgis.com/CXBb7LAjgIIdcsPt/arcgis/rest/services/EV_Roam_charging_stations/FeatureServer/0/query?where=1=1&outFields=*&f=geojson&resultRecordCount=2000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+          },
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Waka Kotahi NZ Transport Agency (EVRoam), CC BY 4.0",
+      "homepage": "https://www.nzta.govt.nz/planning-and-investment/planning/transport-planning/planning-for-electric-vehicles/evroam",
+      "privacyUrl": "https://www.nzta.govt.nz/privacy/",
+    },
+  ],
+}

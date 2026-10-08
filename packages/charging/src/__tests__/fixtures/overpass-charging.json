@@ -1,0 +1,360 @@
+{
+  "version": 0.6,
+  "generator": "Overpass API 0.7.62.11 87bfad18",
+  "osm3s": {
+    "timestamp_osm_base": "2026-10-06T02:45:34Z",
+    "copyright": "The data included in this document is from www.openstreetmap.org. The data is made available under ODbL."
+  },
+  "elements": [
+    {
+      "type": "node",
+      "id": 3194635651,
+      "lat": 49.0107658,
+      "lon": 8.389764,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:membership_card": "yes",
+        "bicycle": "no",
+        "capacity": "2",
+        "charging_station:output": "22 kW",
+        "lastcheck": "2024-08-10",
+        "man_made": "charge_point",
+        "network": "EnBW",
+        "operator": "Stadtwerke Karlsruhe",
+        "payment:enbw_mobility+": "yes",
+        "payment:intercharge": "yes",
+        "ref": "900062",
+        "ref:EU:EVSE": "DE*EBW*E904894*1;DE*EBW*E904894*2",
+        "socket:schuko": "2",
+        "socket:schuko:output": "4.6 kW",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW"
+      }
+    },
+    {
+      "type": "node",
+      "id": 3194635652,
+      "lat": 49.0120026,
+      "lon": 8.3990426,
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "amperage": "32",
+        "authentication:membership_card": "yes",
+        "authentication:nfc": "yes",
+        "bicycle": "yes",
+        "brand": "EnBW",
+        "capacity": "1",
+        "capacity:bicycle": "4",
+        "check_date": "2025-08-22",
+        "covered": "no",
+        "description": "2 Anschlüsse, aber nur 1 reservierter Parkplatz. Die Ladesäule steht hinter dem Parkplatz.",
+        "fee": "yes",
+        "man_made": "charge_point",
+        "maxstay": "4 hours",
+        "motorcar": "yes",
+        "motorcycle": "yes",
+        "network": "MeRegioMobil",
+        "opening_hours": "24/7",
+        "operator": "EnBW mobility+ AG",
+        "operator:wikidata": "Q644304",
+        "parking:fee": "no",
+        "payment:app": "yes",
+        "payment:contactless": "yes",
+        "ref": "DE*EBW*E904895",
+        "ref:EU:EVSE": "DE*EBW*E904895*1;DE*EBW*E904895*2",
+        "scooter": "yes",
+        "short_ref": "904895",
+        "socket:schuko": "2",
+        "socket:type2": "2",
+        "socket:type2:output": "22 kW",
+        "voltage": "400"
+      }
+    },
+    {
+      "type": "node",
+      "id": 4793460914,
+      "lat": 49.008399,
+      "lon": 8.4109614,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:none": "yes",
+        "bicycle": "no",
+        "capacity": "1",
+        "description": "im Parkhaus, es fallen Parkgebühren an; 2 Ladesäulen jeweils mit Typ2 und Schuko, eine davon reserviert für Stadtmobil",
+        "fee": "no",
+        "level": "0",
+        "maxstay": "4 hours",
+        "motorcar": "yes",
+        "opening_hours": "24/7",
+        "operator": "Stadtwerke Karlsruhe GmbH",
+        "parking:fee": "yes",
+        "scooter": "no",
+        "socket:schuko": "1",
+        "socket:type2": "1",
+        "truck": "no"
+      }
+    },
+    {
+      "type": "node",
+      "id": 5549850413,
+      "lat": 48.9935067,
+      "lon": 8.3853841,
+      "tags": {
+        "amenity": "charging_station",
+        "bicycle": "yes",
+        "capacity": "3",
+        "fee": "no",
+        "motorcar": "no",
+        "name": "Aldi E-Bike Ladestation",
+        "operator": "Aldi",
+        "operator:wikidata": "Q41171672",
+        "socket:schuko": "3"
+      }
+    },
+    {
+      "type": "node",
+      "id": 8715570050,
+      "lat": 49.0373281,
+      "lon": 8.3916814,
+      "tags": {
+        "access": "customers",
+        "amenity": "charging_station",
+        "authentication:none": "yes",
+        "bicycle": "no",
+        "capacity": "2",
+        "maxstay": "1 hour",
+        "motorcar": "yes",
+        "operator": "ALDI Süd",
+        "operator:wikidata": "Q41171672",
+        "socket:type2": "1",
+        "socket:type2:current": "32",
+        "socket:type2:voltage": "400",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:current": "250",
+        "socket:type2_combo:output": "150 kW",
+        "socket:type2_combo:voltage": "1000",
+        "start_date": "2021"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10237871211,
+      "lat": 49.0282187,
+      "lon": 8.4416487,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:nfc": "yes",
+        "capacity": "2",
+        "description": "Ladestation des Fraunhofer Instituts, werktags von 18:00 Uhr bis 06:00 Uhr für externe Elektrofahrzeuge freigegeben.",
+        "fee": "yes",
+        "motorcar": "yes",
+        "opening_hours": "Mo-Sa 00:00-06:00,18:00-24:00;PH off",
+        "operator": "Fraunhofer-Gesellschaft zur Förderung der angewandten Forschung e.V.",
+        "socket:type2": "2",
+        "start_date": "2022"
+      }
+    },
+    {
+      "type": "node",
+      "id": 10825071354,
+      "lat": 49.0052045,
+      "lon": 8.4393517,
+      "tags": {
+        "access": "private",
+        "amenity": "charging_station",
+        "bicycle": "yes",
+        "operator": "IKEA Deutschland GmbH & Co. KG",
+        "scooter": "yes",
+        "socket:schuko": "6"
+      }
+    },
+    {
+      "type": "node",
+      "id": 11553945999,
+      "lat": 49.0052082,
+      "lon": 8.4410834,
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:none": "yes",
+        "capacity": "4",
+        "covered": "yes",
+        "fee": "no",
+        "level": "3",
+        "maxheight": "2.1m",
+        "motorcar": "yes",
+        "motorcycle": "yes",
+        "opening_hours": "Mo-Sa 09:45-20:00",
+        "operator": "IKEA",
+        "socket:chademo": "2",
+        "socket:chademo:output": "20",
+        "socket:type2_cable": "2",
+        "socket:type2_cable:output": "20",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "20"
+      }
+    },
+    {
+      "type": "node",
+      "id": 13743952752,
+      "lat": 49.008999,
+      "lon": 8.4376299,
+      "tags": {
+        "access": "customers",
+        "amenity": "charging_station",
+        "capacity": "2",
+        "covered": "no",
+        "fee": "yes",
+        "level": "0",
+        "operator": "Lidl",
+        "operator:wikidata": "Q151954",
+        "payment:app": "yes",
+        "payment:cash": "no",
+        "payment:cheque": "no",
+        "socket:type2": "1",
+        "socket:type2:output": "11 kW",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "60 kW"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1151646807,
+      "center": {
+        "lat": 48.9847307,
+        "lon": 8.4013542
+      },
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "bicycle": "no",
+        "capacity": "2",
+        "fee": "yes",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "orientation": "perpendicular",
+        "parking:condition": "disc",
+        "parking:condition:both:maxstay": "4 h",
+        "socket:type2_combo": "2",
+        "socket:type2_combo:output": "150 kW"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1225078992,
+      "center": {
+        "lat": 49.003839,
+        "lon": 8.4475409
+      },
+      "tags": {
+        "amenity": "charging_station",
+        "authentication:app": "yes",
+        "authentication:membership_card": "yes",
+        "bicycle": "no",
+        "capacity": "12",
+        "fee": "yes",
+        "opening_hours": "24/7",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:wikidata": "Q644304",
+        "operator:wikipedia": "de:EnBW Energie Baden-Württemberg",
+        "parking:fee": "no",
+        "socket:chademo": "0",
+        "socket:type2": "0",
+        "socket:type2_combo": "12",
+        "socket:type2_combo:output": "150kW;300kW",
+        "start_date": "2020-12"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1225082333,
+      "center": {
+        "lat": 48.9990704,
+        "lon": 8.4285795
+      },
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "amperage": "312",
+        "authentication:membership_card": "yes",
+        "brand": "Tesla Supercharger",
+        "brand:website": "https://www.tesla.com/supercharger",
+        "brand:wikidata": "Q17089620",
+        "capacity": "11",
+        "contact:website": "https://www.tesla.com/findus/location/supercharger/KarlsruheGermanysupercharger",
+        "fee": "yes",
+        "frequency": "0",
+        "motorcar": "yes",
+        "name": "Karlsruhe Supercharger",
+        "network:website": "https://www.tesla.com/supercharger",
+        "network:wikidata": "Q17089620",
+        "opening_hours": "24/7",
+        "operator": "Tesla",
+        "operator:wikidata": "Q478214",
+        "ref:tesla": "KarlsruheGermanysupercharger",
+        "short_name": "Tesla",
+        "socket:tesla_supercharger_ccs": "11",
+        "socket:tesla_supercharger_ccs:output": "250 kW",
+        "socket:type2_combo": "11",
+        "socket:type2_combo:output": "250 kW",
+        "start_date": "2021-07-13",
+        "truck": "no",
+        "voltage": "480",
+        "website": "https://www.tesla.com/findus/location/supercharger/KarlsruheGermanysupercharger"
+      }
+    },
+    {
+      "type": "way",
+      "id": 1482920894,
+      "center": {
+        "lat": 48.9978882,
+        "lon": 8.3709678
+      },
+      "tags": {
+        "amenity": "charging_station",
+        "brand": "Comfortcharge",
+        "capacity": "8",
+        "check_date": "2026-02-25",
+        "contact:email": "info@comfortcharge.de",
+        "contact:phone": "0800 6660044",
+        "contact:website": "https://www.comfortcharge.de/",
+        "covered": "no",
+        "fee": "yes",
+        "motorcar": "yes",
+        "name": "Telekom Comfortcharge",
+        "opening_hours": "24/7",
+        "operator": "Deutsche Telekom",
+        "operator:wikidata": "Q9396",
+        "parking:fee": "no",
+        "payment:contactless": "yes",
+        "payment:credit_cards": "yes",
+        "payment:debit_cards": "yes",
+        "socket:type2": "6",
+        "socket:type2:output": "22 kW",
+        "socket:type2_combo": "8",
+        "socket:type2_combo:output": "200 kW"
+      }
+    },
+    {
+      "type": "relation",
+      "id": 19682362,
+      "center": {
+        "lat": 48.9922361,
+        "lon": 8.4028887
+      },
+      "tags": {
+        "access": "yes",
+        "amenity": "charging_station",
+        "capacity": "8",
+        "charging_station:output": "300 kW",
+        "contact:phone": "+49 721 72586 460",
+        "opening_hours": "24/7",
+        "operator": "EnBW Energie Baden-Württemberg AG",
+        "operator:short": "EnBW",
+        "operator:wikidata": "Q644304",
+        "operator:wikipedia": "de:EnBW Energie Baden-Württemberg",
+        "type": "multipolygon"
+      }
+    }
+  ]
+}

@@ -1,0 +1,143 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "tdx",
+      "product": "charging",
+      "name": "TDX EV charging stations",
+      "tier": "authoritative",
+      "format": "tdx",
+      // Per city, as TDX publishes no national set: the stations, their
+      // charging rates and their connectors' live states. `$top` defaults to
+      // 30, so every URL sets it. The free tier allows about 4,500 calls a
+      // month at 5 a minute, and every request is paced to that rate: the
+      // daily stations and rates (22 calls each, about 4.5 minutes per role)
+      // fit it, and so do the live states every six hours. An operator on
+      // the paid Bronze tier lowers the `status` cadence through the local
+      // catalogue layer.
+      "credentials": {
+        "client_id": {
+          "title": "TDX client id",
+          "setup": {
+            "url": "https://tdx.transportdata.tw/register",
+            "urlLabel": "Register for a TDX platform account",
+            "steps": [
+              "Go to tdx.transportdata.tw/register and create a free platform member account.",
+              "Sign in, open Member Center → 資料服務 → 服務金鑰 (API Key).",
+              "Create a Client Id / Client Secret pair (up to 3 per account).",
+              "Copy both values — the Client Secret is only shown once.",
+            ],
+            "cost": "Free",
+            "notes": "Used to obtain an OAuth2 client-credentials bearer token from tdx.transportdata.tw for the EV charging Station and ConnectorLiveStatus APIs.",
+          },
+        },
+        "client_secret": {
+          "title": "TDX client secret",
+          "description": "The secret of the same Client Id / Client Secret pair.",
+        },
+      },
+      "auth": {
+        "kind": "oauth2-client-credentials",
+        "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
+        "clientId": "client_id",
+        "clientSecret": "client_secret",
+      },
+      "endpoints": {
+        "sites": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/NewTaipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taoyuan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Taichung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Tainan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Kaohsiung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Keelung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Hsinchu?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/HsinchuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/MiaoliCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/ChanghuaCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/NantouCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/YunlinCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/ChiayiCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/Chiayi?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/PingtungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/YilanCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/HualienCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/TaitungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/KinmenCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/PenghuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/Station/City/LienchiangCounty?$top=10000&$format=JSON",
+          ],
+          "cadenceSec": 86400,
+        },
+        "tariffs": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/NewTaipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taoyuan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Taichung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Tainan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Kaohsiung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Keelung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Hsinchu?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/HsinchuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/MiaoliCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/ChanghuaCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/NantouCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/YunlinCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/ChiayiCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/Chiayi?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/PingtungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/YilanCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/HualienCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/TaitungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/KinmenCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/PenghuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ChargingRate/City/LienchiangCounty?$top=10000&$format=JSON",
+          ],
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "urls": [
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/NewTaipei?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taoyuan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Taichung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Tainan?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Kaohsiung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Keelung?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Hsinchu?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/HsinchuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/MiaoliCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/ChanghuaCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/NantouCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/YunlinCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/ChiayiCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/Chiayi?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/PingtungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/YilanCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/HualienCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/TaitungCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/KinmenCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/PenghuCounty?$top=10000&$format=JSON",
+            "https://tdx.transportdata.tw/api/basic/v1/EV/ConnectorLiveStatus/City/LienchiangCounty?$top=10000&$format=JSON",
+          ],
+          "cadenceSec": 21600,
+        },
+      },
+      // The window spans two polls of the live states.
+      "freshnessWindowSec": 43200,
+      "requestLimits": { "perMinute": 5 },
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+      "terms": {
+        "url": "https://tdx.transportdata.tw/term",
+        "reviewedAt": "2026-10-06",
+        "note": "Data under the Open Government Data License v1.0, redistribution allowed; the source must be labelled 交通部運輸資料流通服務平臺 (TDX) or the source agency. Access itself is paid by quota: the free tier is 3 points a month (about 4,500 calls) at 5 calls a minute, which fits live states every six hours; operators on the paid Bronze tier lower the status cadence through the local catalogue layer.",
+      },
+      "homepage": "https://tdx.transportdata.tw",
+      "privacyUrl": "https://tdx.transportdata.tw/privacy",
+    },
+  ],
+}

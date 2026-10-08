@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { type ChargingCatalogFeed, chargingDomain } from "@openconditions/charging";
 import {
   buildRegistry,
   canonicalClusters,
@@ -13,7 +14,6 @@ import {
   type LinkableFeature,
   landClaim,
   observationConfirms,
-  observationId,
   proposeLink,
   type RegistryModule,
   sealRecord,
@@ -30,16 +30,17 @@ import { productionModules } from "../index.js";
  * (CC BY 4.0), captured 2026-09-22 for central Karlsruhe and 2026-10-01 for
  * one car park that two of its sources describe — a live feed relayed from
  * chargecloud (CC0) and the Bundesnetzagentur register (CC BY 4.0); the fuel
- * prices are MINETUR's (CC BY 4.0), captured 2026-09-22. The fuel module
- * registers the MINETUR format; the others OpenConditions does not parse
- * yet, so they are registered by a test-only module.
+ * prices are MINETUR's (CC BY 4.0), captured 2026-09-22. The charging sites
+ * run through the charging parser, whose module registers their format, as
+ * the fuel module registers MINETUR's; the road closure's OpenConditions does
+ * not parse yet, so it is registered by a test-only module.
  */
 const fitFormats: RegistryModule = {
   name: "crowd-fit",
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["ocpi", "autobahn-closure"],
+      values: ["autobahn-closure"],
     }),
   ],
 };
@@ -305,123 +306,41 @@ describe("a closure the motorway operator publishes", () => {
   });
 });
 
-interface OcpdbConnector {
-  id: string;
-  standard: string;
-  format: string;
-  power_type: string;
-  max_voltage?: number;
-  max_amperage?: number;
-  max_electric_power?: number;
-}
-interface OcpdbEvse {
-  uid: string;
-  evse_id?: string;
-  status: string;
-  last_updated: string;
-  connectors: OcpdbConnector[];
-}
 interface OcpdbLocation {
   id: string;
-  source: string;
-  original_id: string;
-  address: string;
   coordinates: { latitude: number; longitude: number };
-  operator?: { name: string };
-  evses: OcpdbEvse[];
+  evses: { uid: string }[];
 }
 
-/** eMI3 EVSE ids: country, operator, `E`, outlet — with or without the separators. */
-const EMI3 = /^[A-Z]{2}\*?[A-Z0-9]{3}\*?E[A-Z0-9*]{1,31}$/;
+/** `de-bw-mobidata-charging`: the fields its records take from the feed. */
+const ocpdbFeed = {
+  id: "de-bw-mobidata-charging",
+  format: "ocpi",
+  region: "de",
+  license: "DL-DE-BY-2.0",
+  licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
+  attribution: "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+} as ChargingCatalogFeed;
 
 /**
- * One OCPDB location as a charging site. The register's rows carry the
- * register's own ids in the EVSE id field (`BNETZA*1031489*1`); they are
- * `bnetza` ids, not eMI3 ones, so nothing pretends they could match a live
- * feed's eMI3 ids.
+ * One OCPDB location as the charging parser writes it, sealed, with its
+ * charge points' status readings. The database's location id names its row
+ * for one upstream source, not an operator's OCPI location: it publishes one
+ * row per source of a car park, so the id is the aggregator's own
+ * (`provider`), qualified by that source. The register's rows carry the
+ * register's own ids in the EVSE id field (`BNETZA*1031489*1`), which are
+ * not eMI3 ids, so nothing pretends they could match a live feed's.
  */
-function chargingSite(loc: OcpdbLocation) {
-  const id = `oc:feature:de-bw-ocpdb:${loc.id}`;
-  const provenance = {
-    ...feed("de-bw-ocpdb", "ocpi", loc.id, "MobiData BW", "CC-BY-4.0"),
-    upstream: [{ publisher: loc.source, recordId: loc.original_id }],
+function chargingSite(loc: OcpdbLocation, fetchedAt = "2026-10-01T06:40:00Z") {
+  const parsed = chargingDomain.formats["ocpi"]!.parse(
+    ocpdbFeed,
+    { main: [Buffer.from(JSON.stringify({ items: [loc] }))] },
+    { fetchedAt, cadenceSec: 300, reference: {} },
+  );
+  return {
+    feature: sealed(parsed.features[0]!),
+    statuses: parsed.observations.map((o) => sealed(o)),
   };
-  const location = point(loc.coordinates.longitude, loc.coordinates.latitude);
-  const components = loc.evses.flatMap((evse) => [
-    {
-      key: evse.uid,
-      kind: "evse",
-      ...(evse.evse_id === undefined
-        ? {}
-        : {
-            externalIds: [
-              { scheme: EMI3.test(evse.evse_id) ? "emi3:evse" : "bnetza", id: evse.evse_id },
-            ],
-          }),
-      details: {
-        kind: "evse",
-        v: 1,
-        uid: evse.uid,
-        ...(evse.evse_id ? { evseId: evse.evse_id } : {}),
-      },
-    },
-    ...evse.connectors.map((c) => ({
-      key: c.id,
-      parentKey: evse.uid,
-      kind: "connector",
-      details: {
-        kind: "connector",
-        v: 1,
-        standard: registry.crosswalk.value("connector_standard", "ocpi", c.standard) ?? "UNKNOWN",
-        format: c.format.toLowerCase(),
-        powerType: c.power_type,
-      },
-    })),
-  ]);
-  const feature = sealed({
-    id,
-    class: "feature",
-    kind: "charging_site",
-    temporality: "static",
-    lifecycle: "operational",
-    location,
-    // The database's location id names its row for one upstream source, not
-    // an operator's OCPI location: it publishes one row per source of a car
-    // park, so the id is the aggregator's own (`provider`). The register's
-    // number is a `bnetza` id.
-    externalIds: [
-      { scheme: "provider", id: loc.id, authority: "de-bw-ocpdb" },
-      ...(loc.source === "bnetza_api" ? [{ scheme: "bnetza", id: loc.original_id }] : []),
-    ],
-    ...(loc.operator === undefined
-      ? {}
-      : { operator: { role: "operator", name: [{ lang: "de", text: loc.operator.name }] } }),
-    provenance,
-    freshness: { fetchedAt: "2026-10-01T06:40:00Z" },
-    components,
-    details: { kind: "charging_site", v: 1 },
-  });
-  const statuses = loc.evses.map((evse) => {
-    const draft = {
-      class: "observation",
-      kind: "observation",
-      property: "charging.evse_status",
-      temporality: "live",
-      location,
-      provenance,
-      freshness: { fetchedAt: "2026-10-01T06:40:00Z" },
-      subject: { kind: "feature", featureId: id, componentKey: evse.uid },
-      result: {
-        type: "category",
-        value: registry.crosswalk.value("evse_status", "ocpi", evse.status) ?? "unknown",
-        vocabulary: "evse_status",
-      },
-      phenomenonTime: { instant: evse.last_updated },
-      aggregation: "instantaneous",
-    };
-    return sealed({ id: observationId("de-bw-ocpdb", draft as never), ...draft });
-  });
-  return { feature, statuses };
 }
 
 const linkable = (f: Record<string, unknown>) => f as unknown as LinkableFeature;
@@ -429,7 +348,10 @@ const linkable = (f: Record<string, unknown>) => f as unknown as LinkableFeature
 describe("a charge point two sources describe", () => {
   const [live, register] = (
     json("crowd", "ocpdb-luisenstrasse-2f.json").items as OcpdbLocation[]
-  ).map(chargingSite) as [ReturnType<typeof chargingSite>, ReturnType<typeof chargingSite>];
+  ).map((loc) => chargingSite(loc)) as [
+    ReturnType<typeof chargingSite>,
+    ReturnType<typeof chargingSite>,
+  ];
   const rules = registry.kind("feature", "charging_site")!.linking!;
   const link = proposeLink(linkable(live.feature), linkable(register.feature), rules)!;
   const [cluster] = canonicalClusters(
@@ -468,7 +390,7 @@ describe("a charge point two sources describe", () => {
     const evses = components.filter((c) => c.kind === "evse");
     expect(evses).toHaveLength(20);
     expect(evses.every((c) => c.members.length === 1)).toBe(true);
-    expect(evses.filter((c) => c.key.startsWith("de-bw-ocpdb/"))).toHaveLength(10);
+    expect(evses.filter((c) => c.key.startsWith("de-bw-mobidata-charging/"))).toHaveLength(10);
     expect(
       components.filter((c) => c.kind === "connector").every((c) => c.parentKey !== undefined),
     ).toBe(true);
@@ -599,8 +521,11 @@ describe("a charge point two sources describe", () => {
     if (!fused.ok) return;
     expect(fused.value["provenance"]).toMatchObject({
       sourceId: "@fused",
-      attribution: { provider: "MobiData BW", license: "CC-BY-4.0" },
-      mergedSources: [{ source: "de-bw-ocpdb", recordId: feedStatus["id"] }],
+      attribution: {
+        provider: "MobiData BW (NVBW), Datenlizenz Deutschland – Namensnennung – Version 2.0",
+        license: "DL-DE-BY-2.0",
+      },
+      mergedSources: [{ source: "de-bw-mobidata-charging", recordId: feedStatus["id"] }],
     });
     expect(seal(fused.value).ok).toBe(true);
   });
@@ -610,7 +535,8 @@ describe("a charge point the operator reports out of order", () => {
   const lorenz = (
     json("facilities", "ocpdb-charging-karlsruhe.json").items as OcpdbLocation[]
   ).find((l) => l.id === "309444")!;
-  const { feature, statuses } = chargingSite(lorenz);
+  // Polled at noon on the day of the capture.
+  const { feature, statuses } = chargingSite(lorenz, "2026-09-22T12:15:00Z");
   const [status] = statuses;
 
   it("resolves a driver who says the same, within the report's lifetime", () => {
@@ -643,7 +569,9 @@ describe("a charge point the operator reports out of order", () => {
         ),
       );
     expect((status!["result"] as { value: string }).value).toBe("out_of_order");
-    expect((status!["phenomenonTime"] as { instant: string }).instant).toMatch(/^2026-09-22T/);
+    // Out of order since the operator said so two weeks before; a status holds until it changes.
+    expect((status!["phenomenonTime"] as { instant: string }).instant).toBe("2026-09-08T08:10:22Z");
+    expect(status).not.toHaveProperty("validUntil");
     const agreeing = claim("out_of_order", KEY);
     const disagreeing = claim("available", OTHER_KEY);
     expect(

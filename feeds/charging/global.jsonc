@@ -1,0 +1,102 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "ocm",
+      "product": "charging",
+      "name": "Open Charge Map",
+      "homepage": "https://openchargemap.org",
+      "tier": "aggregator",
+      "format": "ocm",
+      // Read per cell, full objects so each record names its data provider
+      // and that provider's licence. Cloudflare in front refuses ordinary
+      // clients. OCM asks callers not to repeat queries, so a cell is kept a
+      // day.
+      "credentials": {
+        "api_key": {
+          "title": "Open Charge Map API key",
+          "description": "An Open Charge Map application key.",
+          "setup": {
+            "url": "https://openchargemap.org/site/loginprovider/beginlogin",
+            "urlLabel": "Get Open Charge Map API key",
+            "steps": [
+              "Go to openchargemap.org and create an account or sign in.",
+              "Open 'My Profile' → 'My Apps'.",
+              "Click 'Register an Application' and enter a name and description.",
+              "Copy the API key issued immediately.",
+            ],
+            "cost": "Free",
+            "notes": "Required for regular use and for calls with maxresults > 250. Sent via the 'X-API-Key' header or 'key' query parameter.",
+          },
+        },
+      },
+      "auth": { "kind": "header-key", "header": "X-API-Key", "credential": "api_key" },
+      "endpoints": {
+        "main": {
+          "url": "https://api.openchargemap.io/v3/poi/?output=json&boundingbox=({south},{west}),({north},{east})&maxresults=1000&compact=false&verbose=false",
+          "impersonate": true,
+          "cadenceSec": 86400,
+        },
+      },
+      "freshnessWindowSec": 172800,
+      "accessMode": "on_demand",
+      "onDemand": {
+        "cellDeg": 0.25,
+        "ttlSec": 86400,
+        "maxCellsPerRead": 16,
+        "probe": [8.4, 49.01],
+      },
+      "requestLimits": { "perMinute": 10, "perDay": 2000 },
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "© Open Charge Map contributors (CC BY 4.0) and the listed Data Providers",
+      "terms": {
+        "url": "https://www.openchargemap.org/about/terms",
+        "reviewedAt": "2026-10-06",
+        "note": "User-contributed data is CC BY 4.0; data imported from third-party Data Providers stays under each provider's own licence (some NC-SA, some none), which every record names. The provider and its licence must be shown to the end user.",
+        "redistribution": false,
+      },
+      "privacyUrl": "https://www.openchargemap.org/about/terms",
+    },
+    {
+      "operator": "osm",
+      "product": "charging",
+      "name": "OpenStreetMap charging stations",
+      "homepage": "https://www.openstreetmap.org/copyright",
+      "tier": "authoritative",
+      "format": "overpass",
+      // Every amenity=charging_station node, way and relation in the cell,
+      // ways and relations at their centre. Charging stations are sparser
+      // than car parks, so the cells are fuel's size; there are no prices to
+      // refresh, so a cell is kept longer. The body is sent form-encoded as
+      // written, so the query must contain no `+`, `&` or `%`.
+      "endpoints": {
+        "main": {
+          "url": "${@overpass.url}/api/interpreter",
+          "method": "POST",
+          "body": "data=[out:json][timeout:25];nwr[\"amenity\"=\"charging_station\"]({south},{west},{north},{east});out center tags;",
+          "headers": {
+            "Content-Type": "application/x-www-form-urlencoded",
+            "User-Agent": "OpenConditions-OsmCharging/1.0 (+https://github.com/openconditions/openconditions)",
+          },
+          "cadenceSec": 21600,
+        },
+      },
+      "freshnessWindowSec": 86400,
+      "accessMode": "on_demand",
+      "onDemand": {
+        "cellDeg": 0.1,
+        "ttlSec": 21600,
+        "maxCellsPerRead": 16,
+        "probe": [8.4, 49.01],
+      },
+      "requestLimits": { "perMinute": 30, "perDay": 5000 },
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "ODbL-1.0",
+      "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
+      "attribution": "© OpenStreetMap contributors",
+      "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+    },
+  ],
+}

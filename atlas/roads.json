@@ -16435,6 +16435,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A559 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a559-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a559-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a559-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A559 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a559-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a559-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a559-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A559 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A559/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a559-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a559-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a559-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A560 — warning",
       "format": "autobahn",
       "tier": "authoritative",

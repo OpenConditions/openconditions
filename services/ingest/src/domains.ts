@@ -1,6 +1,7 @@
 import { existsSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { chargingDomain } from "@openconditions/charging";
 import { fuelDomain } from "@openconditions/fuel";
 import {
   type Catalog,
@@ -17,6 +18,7 @@ export const INGEST_DOMAINS: readonly IngestDomain<CatalogFeed>[] = [
   roadsDomain,
   fuelDomain,
   parkingDomain,
+  chargingDomain,
 ];
 
 /**

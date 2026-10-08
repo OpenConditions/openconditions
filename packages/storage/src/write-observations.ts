@@ -5,6 +5,7 @@ import {
   seriesKeyOf,
   templateHash,
   templateOf,
+  validWhilePolled,
 } from "@openconditions/core";
 import {
   contentHash,
@@ -15,6 +16,7 @@ import {
 } from "@openconditions/model";
 import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
 import { partitionCovers, retentionDaysOf } from "./observation-partitions.js";
+import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { expiryOf } from "./record-rows.js";
 import type { Rejection, WriteContext } from "./write-records.js";
 
@@ -25,7 +27,10 @@ export interface ObservationCounts {
   latest: number;
   /** Readings written to the history partitions. */
   history: number;
-  /** Readings identical to what their series already holds. */
+  /**
+   * Readings their series already holds: identical, or for a polled feed's
+   * change-only series a restated result or a state older than the one in effect.
+   */
   unchanged: number;
   /** Readings not kept as history because their retention window or the look-ahead does not reach them. */
   outsideRetention: number;
@@ -34,6 +39,8 @@ export interface ObservationCounts {
    * closed: they arrived after its lateness allowance and never reach it.
    */
   pastRollup: number;
+  /** Polled change-only series a poll stating all of its source's readings did not state: ended now. */
+  ended: number;
 }
 
 /** The poll an observation came from, for its raw-payload reference. */
@@ -129,6 +136,8 @@ const startOf = (o: Rec) => {
 
 const sameResult = (a: unknown, b: unknown) => jcs(a) === jcs(b);
 
+const withoutValidity = ({ validUntil: _validUntil, ...rest }: Rec): Rec => rest;
+
 /** An instant as the database compares it; `-infinity` (no issue time) as it is. */
 const instantKey = (t: unknown) => {
   const ms = Date.parse(t as string);
@@ -143,6 +152,14 @@ interface Latest {
   content_hash: string;
   template_hash: string;
   expires_at: Date | null;
+  /** The reading states a `validUntil`: for a polled series, a complete poll ended it. */
+  ended: boolean;
+}
+
+/** What a write learns from the rest of its poll. */
+export interface ObservationWriteContext extends WriteContext, PollRef {
+  /** Features this poll created or changed: a reading about one is written though its result held. */
+  changedFeatures?: ReadonlySet<string>;
 }
 
 /**
@@ -151,7 +168,12 @@ interface Latest {
  * reading, only changes (`changeOnly`), or none (`latestOnly`, on-demand
  * rows, and readings about a component of a property that keeps no
  * component history). A reading identical to its series' latest is not
- * written at all. A history reading in a period the property's rollup has
+ * written at all, nor is a reading of a change-only property whose result
+ * is the one in effect before it (its series' latest, or the poll's own
+ * earlier reading): its series keeps its row and the time its result was
+ * stated. A bulk feed's reading of a change-only property is stored without
+ * its `validUntil`: it holds while its source polls (`withPolledValidity`,
+ * when read). A history reading in a period the property's rollup has
  * already closed is counted (`pastRollup`).
  * A reading its series' retention window or the partition look-ahead does
  * not reach is counted and kept from history; it still updates the latest
@@ -162,7 +184,7 @@ export async function writeObservationsIn(
   tx: Sql,
   sourceId: string,
   drafts: readonly Rec[],
-  ctx: WriteContext & PollRef,
+  ctx: ObservationWriteContext,
   rejected: Rejection[],
   stage: "draft" | "stored" = "draft",
 ): Promise<ObservationCounts> {
@@ -172,18 +194,32 @@ export async function writeObservationsIn(
     unchanged: 0,
     outsideRetention: 0,
     pastRollup: 0,
+    ended: 0,
   };
   if (drafts.length === 0) return counts;
   const now = Date.parse(ctx.now);
 
-  const keyed: { draft: Rec; key: SeriesKey; hash: string }[] = [];
-  for (const draft of drafts) {
-    const id = typeof draft["id"] === "string" ? draft["id"] : undefined;
+  const pending = new Map<string, { key: SeriesKey; drafts: Rec[] }>();
+  let handled = 0;
+  for (const input of drafts) {
+    if (++handled % RECORDS_PER_TURN === 0) await pause();
+    const id = typeof input["id"] === "string" ? input["id"] : undefined;
     try {
-      if ((draft["provenance"] as Rec | undefined)?.["sourceId"] !== sourceId) {
+      if ((input["provenance"] as Rec | undefined)?.["sourceId"] !== sourceId) {
         throw new TypeError(`an observation draft of source ${sourceId} is expected`);
       }
-      keyed.push({ draft, key: seriesKeyOf(draft), hash: contentHash(draft) });
+      // Its source's polling, read with it, is how long such a reading holds.
+      const draft =
+        stage === "draft" &&
+        input["validUntil"] !== undefined &&
+        validWhilePolled(ctx.registry, input)
+          ? withoutValidity(input)
+          : input;
+      const key = seriesKeyOf(draft);
+      const k = keyString(key);
+      const entry = pending.get(k) ?? { key, drafts: [] };
+      entry.drafts.push(draft);
+      pending.set(k, entry);
     } catch (err) {
       rejected.push({
         class: "observation",
@@ -196,43 +232,75 @@ export async function writeObservationsIn(
   const latest = await loadLatest(
     tx,
     sourceId,
-    keyed.map((k) => k.key),
+    [...pending.values()].map((p) => p.key),
   );
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
-  const expiryMoved: { series_id: number; expires_at: unknown }[] = [];
-  for (const { draft, key, hash } of keyed) {
-    const held = latest.get(keyString(key));
-    if (held?.content_hash === hash) {
-      counts.unchanged++;
-      if (expiryOf(draft) !== (held.expires_at?.getTime() ?? null)) {
-        expiryMoved.push({
-          series_id: held.series_id,
-          expires_at: (draft["freshness"] as Rec | undefined)?.["expiresAt"] ?? null,
-        });
+  const expiryMoved = new Map<number, unknown>();
+  for (const [k, { key, drafts: series }] of pending) {
+    const held = latest.get(k);
+    // A polled feed's change-only series takes a reading only where its
+    // result changes: one restating the result in effect before it, or one
+    // older than the state in effect, is not written at all. A crowd report
+    // is a claim of its own, an on-demand answer states its own lifetime.
+    const first = series[0]!;
+    const polled = validWhilePolled(ctx.registry, first);
+    if (polled) series.sort((a, b) => startOf(a) - startOf(b));
+    // A series a complete poll ended, or whose site this poll changed (moved,
+    // credited anew), takes its reading again.
+    const subject = first["subject"] as Rec;
+    const renewed =
+      polled &&
+      held !== undefined &&
+      (held.ended || ctx.changedFeatures?.has(subject["featureId"] as string) === true);
+    let inEffect = renewed ? undefined : held?.result;
+    for (const draft of series) {
+      if (++handled % RECORDS_PER_TURN === 0) await pause();
+      const hash = contentHash(draft);
+      // A peer's record that states a validity ends its series there: a change.
+      const restated =
+        polled &&
+        inEffect !== undefined &&
+        draft["validUntil"] === undefined &&
+        sameResult(inEffect, draft["result"]);
+      const superseded =
+        polled && held !== undefined && !renewed && startOf(draft) < held.effective_from.getTime();
+      if (held?.content_hash === hash || restated || superseded) {
+        counts.unchanged++;
+        // A reading fetched again keeps its row; only the expiry its source now states moves.
+        if (
+          held !== undefined &&
+          (held.content_hash === hash || inEffect === held.result) &&
+          expiryOf(draft) !== (held.expires_at?.getTime() ?? null)
+        ) {
+          expiryMoved.set(
+            held.series_id,
+            (draft["freshness"] as Rec | undefined)?.["expiresAt"] ?? null,
+          );
+        }
+        continue;
       }
-      continue;
+      // A stored observation (a peer's) was sealed by its own instance and is kept as it is.
+      const sealed =
+        stage === "stored"
+          ? ctx.registry.validate(draft)
+          : sealRecord(ctx.registry, draft, {
+              instanceId: ctx.instanceId,
+              revision: 1,
+              recordedAt: ctx.now,
+              contentHash: hash,
+            });
+      if (!sealed.ok) {
+        rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
+        continue;
+      }
+      inEffect = draft["result"];
+      const entry = bySeries.get(k) ?? { key, records: [] };
+      entry.records.push(sealed.value);
+      bySeries.set(k, entry);
     }
-    // A stored observation (a peer's) was sealed by its own instance and is kept as it is.
-    const sealed =
-      stage === "stored"
-        ? ctx.registry.validate(draft)
-        : sealRecord(ctx.registry, draft, {
-            instanceId: ctx.instanceId,
-            revision: 1,
-            recordedAt: ctx.now,
-            contentHash: hash,
-          });
-    if (!sealed.ok) {
-      rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
-      continue;
-    }
-    const entry = bySeries.get(keyString(key)) ?? { key, records: [] };
-    entry.records.push(sealed.value);
-    bySeries.set(keyString(key), entry);
   }
 
-  // A reading fetched again keeps its row; only the expiry its source now states moves.
-  if (expiryMoved.length > 0) {
+  if (expiryMoved.size > 0) {
     await tx.unsafe(
       `UPDATE conditions.observation_latest l
           SET expires_at = n.expires_at::timestamptz,
@@ -241,7 +309,11 @@ export async function writeObservationsIn(
                 ELSE jsonb_set(l.reading, '{freshness,expiresAt}', to_jsonb(n.expires_at)) END
          FROM jsonb_to_recordset($1::text::jsonb) AS n(series_id bigint, expires_at text)
         WHERE l.series_id = n.series_id`,
-      [JSON.stringify(expiryMoved)],
+      [
+        JSON.stringify(
+          [...expiryMoved].map(([series_id, expires_at]) => ({ series_id, expires_at })),
+        ),
+      ],
     );
   }
 
@@ -463,6 +535,7 @@ const WHOLE_SOURCE_ABOVE = 1000;
 
 const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'result' AS result,
             l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at,
+            l.reading ? 'validUntil' AS ended,
             l.subject_key, l.property, l.qualifier_key, l.source_id`;
 
 async function loadLatest(
@@ -517,4 +590,104 @@ async function loadLatest(
     ],
   );
   return byKey(rows);
+}
+
+/** A polled series a complete poll ended: the subject and property whose fused rows it fed. */
+export interface EndedSeries {
+  featureId: string | null;
+  property: string;
+}
+
+/**
+ * Ends the polled change-only series of `sourceId` that a poll stating every
+ * such reading of its source (`drafts`) did not state: a charge point taken
+ * away, a site withdrawn, a point whose state is no longer published. Their
+ * reading in effect takes `validUntil` = now, so the read stops extending it
+ * by the source's polling, and fusion leaves it out. A later poll that states
+ * the series again writes its reading anew. Only this instance's own series
+ * end (a peer's copy of the source ends with the peer), and none does when
+ * the poll states fewer than half of the series in effect.
+ */
+export async function endUnstatedSeries(
+  tx: Sql,
+  sourceId: string,
+  drafts: readonly Rec[],
+  ctx: Pick<WriteContext, "registry" | "now">,
+): Promise<EndedSeries[]> {
+  const stated = new Set<string>();
+  let handled = 0;
+  for (const draft of drafts) {
+    if (++handled % RECORDS_PER_TURN === 0) await pause();
+    // A draft the writer rejected as malformed states no series.
+    let key: string;
+    try {
+      key = keyString(seriesKeyOf(draft));
+    } catch {
+      continue;
+    }
+    stated.add(key);
+  }
+  const changeOnly = ctx.registry
+    .properties()
+    .filter((p) => p.retention?.changeOnly)
+    .map((p) => p.code);
+  type Key = { series_id: string } & Record<"subject_key" | "property" | "qualifier_key", string>;
+  // This instance's own polled series: a peer's copy of the source ends with the peer.
+  const held = await tx.unsafe<Key[]>(
+    `SELECT l.series_id::text AS series_id, l.subject_key, l.property, l.qualifier_key
+       FROM conditions.observation_latest l
+      WHERE l.source_id = $1 AND l.access_mode = 'bulk' AND l.property = ANY($2::text[])
+        AND l.template #>> '{provenance,origin}' = 'feed' AND NOT (l.reading ? 'validUntil')
+        AND jsonb_array_length(COALESCE(l.template #> '{provenance,originChain}', '[]'::jsonb)) = 0`,
+    [sourceId, changeOnly],
+  );
+  const ending = held
+    .filter(
+      (r) =>
+        !stated.has(
+          keyString({
+            subjectKey: r.subject_key,
+            property: r.property,
+            qualifierKey: r.qualifier_key,
+            sourceId,
+          }),
+        ),
+    )
+    .map((r) => r.series_id);
+  if (ending.length === 0) return [];
+  // A poll stating fewer than half of the series it held is more likely an
+  // empty or cut-off answer than half its points gone: it ends none of them.
+  if (2 * (held.length - ending.length) < held.length) {
+    console.warn(
+      `[ingest] ${sourceId}: the poll states ${held.length - ending.length} of ${held.length} ` +
+        "readings in effect; none is ended",
+    );
+    return [];
+  }
+  const rows = await tx.unsafe<
+    { series_id: string; feature_id: string | null; property: string; record: Rec }[]
+  >(
+    `SELECT series_id::text AS series_id, feature_id, property,
+            conditions.observation_record(template, reading) AS record
+       FROM conditions.observation_latest WHERE series_id = ANY($1::bigint[])`,
+    [ending],
+  );
+  const ended = rows.map(({ series_id, record }) => {
+    const { contentHash: _hash, ...rest } = record;
+    const next: Rec = { ...rest, validUntil: ctx.now, recordedAt: ctx.now };
+    next["contentHash"] = contentHash(next);
+    return { series_id, reading: readingOf(next) };
+  });
+  await updateRows(
+    tx,
+    "observation_latest",
+    { name: "series_id", type: "bigint" },
+    [
+      { name: "reading", type: "jsonb" },
+      { name: "effective_until", type: "timestamptz" },
+      { name: "updated_at", type: "timestamptz" },
+    ],
+    ended.map((e) => ({ ...e, effective_until: ctx.now, updated_at: ctx.now })),
+  );
+  return rows.map((r) => ({ featureId: r.feature_id, property: r.property }));
 }

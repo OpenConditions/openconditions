@@ -1,0 +1,148 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "id": "dcav_site.1",
+      "geometry": { "type": "Point", "coordinates": [145.226061, -36.44026] },
+      "geometry_name": "geom",
+      "properties": {
+        "location": "Tatura",
+        "region": "Hume",
+        "lead_organisation": "Tatura Carwash",
+        "latitude": -36.44025958,
+        "estimated_project_completion": null,
+        "address": "104 Hogan Street, TATURA VIC 3614",
+        "plug_type": "1 x CCS2, 1 x CHAdeMO",
+        "longitude": 145.22606112,
+        "chargers": "1 x 25kW Charger",
+        "nearby_amenities_attractions": "Park, Playground, Public Toilets, Accommodation, Dining, Shopping, Museum",
+        "dcav_site": "NO",
+        "company": "Tatura Carwash",
+        "plugshare_link": "https://www.plugshare.com/location/428162",
+        "number_of_chargers": 1
+      },
+      "bbox": [145.226061, -36.44026, 145.226061, -36.44026]
+    },
+    {
+      "type": "Feature",
+      "id": "dcav_site.14",
+      "geometry": { "type": "Point", "coordinates": [144.184492, -38.409883] },
+      "geometry_name": "geom",
+      "properties": {
+        "location": "Anglesea",
+        "region": "Barwon South West",
+        "lead_organisation": "Surf Coast Shire Council",
+        "latitude": -38.409774,
+        "estimated_project_completion": " July 2025",
+        "address": "1 McMillan St, Anglesea VIC 3230",
+        "plug_type": "",
+        "longitude": 144.184861,
+        "chargers": "1 x 50kW Fast Charger",
+        "nearby_amenities_attractions": "Visitor Information Centre, Camping, Dining, Shopping, Park, Playground, Public Toilets, Supermarket, Accommodation",
+        "dcav_site": "NO",
+        "company": "Surf Coast Shire Council",
+        "plugshare_link": "https://www.plugshare.com/location/1004516",
+        "number_of_chargers": 1
+      },
+      "bbox": [144.184492, -38.409883, 144.184492, -38.409883]
+    },
+    {
+      "type": "Feature",
+      "id": "dcav_site.22",
+      "geometry": { "type": "Point", "coordinates": [147.052901, -37.41509] },
+      "geometry_name": "geom",
+      "properties": {
+        "location": null,
+        "region": null,
+        "lead_organisation": null,
+        "latitude": null,
+        "estimated_project_completion": null,
+        "address": null,
+        "plug_type": null,
+        "longitude": null,
+        "chargers": null,
+        "nearby_amenities_attractions": null,
+        "dcav_site": null,
+        "company": null,
+        "plugshare_link": null,
+        "number_of_chargers": null
+      },
+      "bbox": [147.052901, -37.41509, 147.052901, -37.41509]
+    },
+    {
+      "type": "Feature",
+      "id": "dcav_site.137",
+      "geometry": { "type": "Point", "coordinates": [145.310255, -38.123391] },
+      "geometry_name": "geom",
+      "properties": {
+        "location": "Cranbourne East",
+        "region": "Port Phillip",
+        "lead_organisation": "INTELLIHUB AUSTRALIA Pty Ltd",
+        "latitude": -38.12339,
+        "estimated_project_completion": "June 2025",
+        "address": "Melbourne City Football Club - 369 Casey Fields Blvd, Cranbourne East VIC 3977",
+        "plug_type": "Type 2",
+        "longitude": 145.310282,
+        "chargers": "2 x 22kW Charger",
+        "nearby_amenities_attractions": "Playing fields, Parks, Supermarket",
+        "dcav_site": "NO",
+        "company": null,
+        "plugshare_link": null,
+        "number_of_chargers": 2
+      },
+      "bbox": [145.310255, -38.123391, 145.310255, -38.123391]
+    },
+    {
+      "type": "Feature",
+      "id": "dcav_site.144",
+      "geometry": { "type": "Point", "coordinates": [147.631194, -37.811856] },
+      "geometry_name": "geom",
+      "properties": {
+        "location": "Eastwood Village Shopping Centre",
+        "region": "Gippsland",
+        "lead_organisation": "Intellihub Australia",
+        "latitude": -37.811845,
+        "estimated_project_completion": "November 2026",
+        "address": "30 Howitt Avenue, Eastwood, VIC 3875 ",
+        "plug_type": "CCS2",
+        "longitude": 147.63119,
+        "chargers": "2 x 60kW",
+        "nearby_amenities_attractions": "Shopping Centre, Supermarket, Playground, Park",
+        "dcav_site": "YES",
+        "company": null,
+        "plugshare_link": null,
+        "number_of_chargers": 4
+      },
+      "bbox": [147.631194, -37.811856, 147.631194, -37.811856]
+    },
+    {
+      "type": "Feature",
+      "id": "dcav_site.33",
+      "geometry": { "type": "Point", "coordinates": [143.921565, -35.734375] },
+      "geometry_name": "geom",
+      "properties": {
+        "location": "Kerang",
+        "region": "Loddon Mallee",
+        "lead_organisation": null,
+        "latitude": -35.73437546,
+        "estimated_project_completion": null,
+        "address": "Albert St (Car Park), KERANG VIC 3579",
+        "plug_type": "1 x CHAdeMO and 1 x CCS2/SAE",
+        "longitude": 143.9215653,
+        "chargers": "1 x 50kW Fast Charger",
+        "nearby_amenities_attractions": null,
+        "dcav_site": "NO",
+        "company": "Evie Networks",
+        "plugshare_link": "https://www.plugshare.com/location/310767",
+        "number_of_chargers": 1
+      },
+      "bbox": [143.921565, -35.734375, 143.921565, -35.734375]
+    }
+  ],
+  "totalFeatures": 152,
+  "numberMatched": 152,
+  "numberReturned": 6,
+  "timeStamp": "2026-10-06T02:13:51.437Z",
+  "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::4326" } }
+}

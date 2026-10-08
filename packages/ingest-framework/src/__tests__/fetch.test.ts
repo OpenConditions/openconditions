@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import type { CatalogResolver, ChildFeed } from "../catalog/resolvers.js";
 import type { CatalogFeed, FeedEndpoint } from "../catalog/types.js";
 import { createFetchState, type FetchOptions, fetchEndpoint } from "../fetch.js";
+import { heldBuffer } from "../held.js";
 import { digestPayload } from "../payload.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
 
@@ -864,7 +865,7 @@ describe("fetchEndpoint — conditional GET", () => {
     expect(res.status).toBe("fetched");
     const entry = state.conditional.get(`${feed.id}#main\0${url}`);
     expect(entry?.etag).toBe('W/"v1"'); // validators kept → conditional GET still works
-    expect(entry?.buffer).toBeUndefined(); // body NOT retained
+    expect(entry?.body).toBeUndefined(); // body NOT retained
   });
 
   it("retains bodies for a multi-url endpoint and re-parses a 304 url beside a changed sibling", async () => {
@@ -888,14 +889,46 @@ describe("fetchEndpoint — conditional GET", () => {
     const first = await fetchEndpoint(feed, "main", fetchFn, { state });
     if (first.status === "fetched") first.accept();
     expect(first.status).toBe("fetched");
-    expect(state.conditional.get(`${feed.id}#main\0${a}`)?.buffer?.toString()).toBe(`${a}-v1`); // both retained (multi-url)
-    expect(state.conditional.get(`${feed.id}#main\0${b}`)?.buffer?.toString()).toBe(`${b}-v1`);
+    const kept = async (url: string) => {
+      const body = state.conditional.get(`${feed.id}#main\0${url}`)?.body;
+      return body === undefined ? undefined : (await heldBuffer(body)).toString();
+    };
+    expect(await kept(a)).toBe(`${a}-v1`); // both retained (multi-url)
+    expect(await kept(b)).toBe(`${b}-v1`);
 
     round = 1;
     const second = await fetchEndpoint(feed, "main", fetchFn, { state });
     // A comes from cache (304), B is fresh — the full source is re-parsed, in order.
     const bodies = second.status === "fetched" ? second.buffers.map((x) => x.toString()) : [];
     expect(bodies).toEqual([`${a}-v1`, `${b}-v2`]);
+  });
+
+  it("keeps a large multi-url body gzipped until a 304 needs it again", async () => {
+    const a = "https://h.test/a.csv";
+    const b = "https://h.test/b.csv";
+    const feed = makeFeed("multi-large", { urls: [a, b] });
+    const state = createFetchState();
+    const large = "id,status\n".repeat(200_000);
+    let round = 0;
+    const fetchFn = (async (input: string | URL | Request) => {
+      const url = String(input);
+      if (round === 1 && url === a) return new Response(null, { status: 304 });
+      return new Response(url === a ? large : `${url}-v${round}`, {
+        status: 200,
+        headers: { ETag: `"${url}-v${round}"` },
+      });
+    }) as unknown as typeof fetch;
+
+    const first = await fetchEndpoint(feed, "main", fetchFn, { state });
+    if (first.status === "fetched") first.accept();
+    const body = state.conditional.get(`${feed.id}#main\0${a}`)?.body;
+    expect(body).toMatchObject({ gzipped: true, bytes: large.length });
+    expect(body!.data.length).toBeLessThan(large.length / 10);
+
+    round = 1;
+    const second = await fetchEndpoint(feed, "main", fetchFn, { state });
+    const bodies = second.status === "fetched" ? second.buffers.map((x) => x.toString()) : [];
+    expect(bodies).toEqual([large, `${b}-v1`]);
   });
 
   it("keeps each role's validators apart, even for one shared url", async () => {

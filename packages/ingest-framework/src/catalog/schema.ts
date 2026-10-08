@@ -95,11 +95,42 @@ export const endpointSchema = z
       .object({
         skipParam: z.string(),
         pageSize: z.number().int().positive(),
+        mode: z.enum(["offset", "page"]).optional(),
+        firstPage: z.number().int().nonnegative().optional(),
         recordsPath: z.string().optional(),
         maxPages: z.number().int().positive().optional(),
+        /**
+         * The JSON is converted from XML (data.go.kr): a list of one is the
+         * item itself, and an empty list is absent or `""`.
+         */
+        xmlLists: z.literal(true).optional(),
       })
       .strict()
+      .refine((p) => p.firstPage === undefined || p.mode === "page", {
+        path: ["firstPage"],
+        message: "firstPage applies to page mode only",
+      })
       .optional(),
+    follow: z
+      .object({ path: z.string().min(1).optional(), pattern: z.string().min(1).optional() })
+      .strict()
+      .refine((f) => (f.path === undefined) !== (f.pattern === undefined), {
+        message: "follow needs exactly one of path or pattern",
+      })
+      .refine(
+        (f) => {
+          if (f.pattern === undefined) return true;
+          try {
+            new RegExp(f.pattern);
+            return true;
+          } catch {
+            return false;
+          }
+        },
+        { path: ["pattern"], message: "pattern is not a valid regular expression" },
+      )
+      .optional(),
+    impersonate: z.boolean().optional(),
     gzip: z.boolean().optional(),
     decoder: z.string().min(1).optional(),
     cadenceSec: z.number().int().positive(),
@@ -118,6 +149,19 @@ export const endpointSchema = z
     }
     if (e.fanout && !e.urls && !e.expand) {
       ctx.addIssue({ code: "custom", path: ["fanout"], message: "fanout requires urls or expand" });
+    }
+    if (e.follow && e.pagination) {
+      ctx.addIssue({ code: "custom", path: ["follow"], message: "follow cannot be paginated" });
+    }
+    if (e.impersonate) {
+      const urls = e.url !== undefined ? [e.url] : (e.urls ?? []);
+      if (e.reference || urls.length === 0 || !urls.every((u) => u.startsWith("https://"))) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["impersonate"],
+          message: "impersonate requires https URLs",
+        });
+      }
     }
   });
 

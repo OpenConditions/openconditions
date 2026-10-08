@@ -80,3 +80,26 @@ describe("effective rights", () => {
     expect(() => effectiveRights("cc-by-4.0")).toThrow(/unknown licence/);
   });
 });
+
+describe("charging licences", () => {
+  it("opendata.swiss terms allow redistribution but not commercial use, and do not restrict", () => {
+    const r = effectiveRights("LicenseRef-opendata-swiss-terms-by-ask");
+    expect(isRestricted(r)).toBe(false);
+    expect(r.commercialUse).toBe(false);
+    expect(r.redistribution).toBe(true);
+    expect(r.attributionRequired).toBe(true);
+  });
+
+  it.each([
+    "LicenseRef-NLR-Developer-Network-Terms",
+    "OGDL-Taiwan-1.0",
+    "LicenseRef-KOGL-Type-1",
+    "LicenseRef-HK-CSDI-ToU",
+  ])("%s is open and unrestricted", (id) => {
+    const r = effectiveRights(id);
+    expect(isRestricted(r)).toBe(false);
+    expect(r.commercialUse).toBe(true);
+    expect(r.attributionRequired).toBe(true);
+    expect(r.shareAlike).toBe(false);
+  });
+});

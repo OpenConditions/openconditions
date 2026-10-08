@@ -1,0 +1,58 @@
+{
+  "$schema": "../schema/charging.schema.json",
+  "feeds": [
+    {
+      "operator": "eipa",
+      "product": "charging",
+      "name": "EIPA alternative-fuel infrastructure register (UDT)",
+      "tier": "authoritative",
+      "format": "eipa",
+      // The reader's six files: pools are the sites, stations and points join
+      // to them, `dynamic.json` holds each point's availability and prices.
+      // The URLs below are the file names the reader documentation gives;
+      // the real download URLs, their authorization and the hourly limits
+      // come by email after registering at
+      // https://eipa.udt.gov.pl/reader/register (free; an account without a
+      // download for 30 days is deleted).
+      "endpoints": {
+        "pools": { "url": "https://eipa.udt.gov.pl/reader/api/pool.json", "cadenceSec": 86400 },
+        "stations": {
+          "url": "https://eipa.udt.gov.pl/reader/api/station.json",
+          "cadenceSec": 86400,
+        },
+        "points": { "url": "https://eipa.udt.gov.pl/reader/api/point.json", "cadenceSec": 86400 },
+        "operators": {
+          "url": "https://eipa.udt.gov.pl/reader/api/operator.json",
+          "cadenceSec": 86400,
+        },
+        "dictionary": {
+          "url": "https://eipa.udt.gov.pl/reader/api/dictionary.json",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://eipa.udt.gov.pl/reader/api/dynamic.json",
+          "cadenceSec": 600,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "NOASSERTION",
+      "attribution": "EIPA – Urząd Dozoru Technicznego",
+      "terms": {
+        "url": "https://eipa.udt.gov.pl/faq",
+        "reviewedAt": "2026-10-06",
+        "note": "No licence stated. UDT's FAQ: downloaded data may be presented on your own site or processed otherwise, free for commercial and non-commercial use; hourly download limits; registration required.",
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": null,
+        "retention": true,
+      },
+      "homepage": "https://eipa.udt.gov.pl",
+      "privacyUrl": "https://eipa.udt.gov.pl/privacy",
+      "disabled": {
+        "reason": "download URLs and limits are issued on registration; set them in the local catalogue layer",
+        "since": "2026-10-06",
+      },
+    },
+  ],
+}

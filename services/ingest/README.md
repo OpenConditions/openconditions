@@ -1,11 +1,12 @@
 # OpenConditions Ingest
 
-Fetches open road-condition, fuel and parking feeds, parses road events into
-model situations, flow feeds into measurement sites (features) and their
-`traffic.*` readings (observations), fuel feeds into stations and their prices,
-and parking feeds into parking sites, their `parking.*` occupancy readings and
-their rates (offers), and writes them to the shared PostGIS `conditions`
-schema. Also serves the public,
+Fetches open road-condition, fuel, parking and charging feeds, parses road
+events into model situations, flow feeds into measurement sites (features) and
+their `traffic.*` readings (observations), fuel feeds into stations and their
+prices, parking feeds into parking sites, their `parking.*` occupancy readings
+and their rates (offers), and charging feeds into charging sites with their
+EVSEs and connectors, their `charging.*` status readings and their energy
+tariffs (offers), and writes them to the shared PostGIS `conditions` schema. Also serves the public,
 rate-limited record API (described at `GET /openapi.json`) and the routing
 outputs (`/segments/conditions.json`, Valhalla exclusions):
 
@@ -87,11 +88,12 @@ escapes it.
     data-manager send as their bearer token; the two are set separately.
     Without it, OpenMapX reads in the public scope and serves no Tankerkönig
     (DE), E-Control (AT) or OpenStreetMap station: its fuel layer shows France
-    and Spain only, and its parking layer no OpenStreetMap, BNLS (FR) or
-    Mobidrom Park+Ride (DE) site. Its reads also count against `RATE_LIMIT_MAX` like any
+    and Spain only, its parking layer no OpenStreetMap, BNLS (FR) or
+    Mobidrom Park+Ride (DE) site, and its charging layer no OpenStreetMap,
+    Open Charge Map or NAP Slovenija site. Its reads also count against `RATE_LIMIT_MAX` like any
     public client's, which operator scope skips. Set here but different from
     OpenMapX's, every OpenMapX read fails with 401, which stops the road
-    conditions overlay, closure avoidance, fuel and parking search and the
+    conditions overlay, closure avoidance, fuel, parking and charging search and the
     traffic cycles. So set this credential first, then OpenMapX's `.env`, and change
     both together when rotating it. After changing OpenMapX's
     `OPENCONDITIONS_OPERATOR_TOKEN`, run
@@ -115,6 +117,31 @@ Settings saved in the form are applied with **Save & Apply** on
 `SERVICE_FIELDS` in `scripts/lib/gen-credentials-lib.ts` and the feed catalogue.
 Outside OpenMapX the same variables are plain environment variables; see
 `.env.example`.
+
+### Memory
+
+`service.json` limits the container to `OPENCONDITIONS_INGEST_MEMORY` (OpenMapX's
+`.env`; default `6g`). The image caps the V8 heap at 75% of that limit
+(`NODE_OPTIONS=--max-old-space-size-percentage=75`; Node reads the cgroup
+limit), so raising or lowering the limit moves the heap with it: 4608 MB of
+heap under `6g`, 3072 MB under `4g`. The remaining quarter is for what lives outside the heap
+(fetch buffers, decompression, the raw archive's compression). An operator who
+sets `NODE_OPTIONS` replaces this default and sizes the two together.
+
+The national charging registers are the largest polls: IRVE (a 158 MB CSV),
+BNetzA (55 MB), NDW's and OCPDB's OCPI dumps. Their drafts stay on the heap
+from parse until the write commits, so the scheduler parses and writes one
+poll whose payloads reach 16 MiB at a time; smaller polls never wait for it.
+Between polls a feed keeps only its latest payloads (gzipped in memory above
+1 MiB) and, for a charging feed with a live status role, the status index of
+its last full parse: a poll that fetches only live states writes their
+readings through that index without parsing the snapshot again. A live state
+is written only when it changes (its validity follows the feed's polling,
+computed when read), so such a poll writes the one to few thousand states that
+changed (IRVE, OCPDB), not every charge point.
+With these four feeds alone the heap holds up to about 2.7 GB of live data
+and the container peaked at 4.2 GB under a `4g` limit, so `4g` is the floor
+for them; the default `6g` leaves room for the rest of the catalogue.
 
 ## Feed sources — layered delivery
 
