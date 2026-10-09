@@ -1,0 +1,173 @@
+{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [
+    {
+      "operator": "meteoalarm",
+      "product": "alerts",
+      "name": "MeteoAlarm warnings",
+      "tier": "authoritative",
+      "format": "meteoalarm",
+      // Each country's current warnings as CAP in JSON, Germany left out (DWD
+      // is taken first-hand). Areas named only by EMMA id are drawn from
+      // MeteoAlarm's geocode file; NUTS, Irish FIPS 10-4 and Czech CISORP
+      // areas from the EMMA regions its alias file gives those codes, a copy
+      // of which the hazards package carries. Both files are the ones
+      // MeteoAlarm's Redistribution Hub offers redistributors
+      // (https://meteoalarm.org/en/live/page/redistribution-hub); Croatia's
+      // areas resolve in neither and keep their codes alone.
+      // MeteoAlarm's terms allow a
+      // redistributor at most ten minutes behind its site. The budget, end to
+      // end: the warnings are polled every two minutes, a country's held
+      // answer stands in for at most two, and a warning expires three minutes
+      // after the poll that read it, so OC serves nothing more than 300 s
+      // behind; OpenMapX adds at most 60 s of route cache and clears its layer
+      // 240 s after its last successful load: 600 s in all. The geocode file
+      // is kept at any age.
+      "endpoints": {
+        "alerts": {
+          "urls": [
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-andorra",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-austria",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-belgium",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-bosnia-herzegovina",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-bulgaria",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-croatia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-czechia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-denmark",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-estonia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-finland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-france",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-greece",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-hungary",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-iceland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-ireland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-israel",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-italy",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-latvia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-lithuania",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-luxembourg",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-malta",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-moldova",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-montenegro",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-netherlands",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-norway",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-poland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-portugal",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-republic-of-north-macedonia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-romania",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-serbia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-slovakia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-slovenia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-spain",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-sweden",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-switzerland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-ukraine",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-united-kingdom",
+          ],
+          // One country's failure costs only that country: its last answer
+          // stands in for up to two minutes, then its warnings leave.
+          "fanout": "tolerant",
+          "cadenceSec": 120,
+          "maxPayloadAgeSec": 120,
+        },
+        "geocodes": {
+          "url": "https://gitlab.com/meteoalarm-pm-group/documents/-/raw/master/MeteoAlarm_Geocodes_2026_07_31.json",
+          "cadenceSec": 2592000,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 600,
+      "coverage": {
+        "countries": [
+          "AD",
+          "AT",
+          "BE",
+          "BA",
+          "BG",
+          "HR",
+          "CY",
+          "CZ",
+          "DK",
+          "EE",
+          "FI",
+          "FR",
+          "GR",
+          "HU",
+          "IS",
+          "IE",
+          "IL",
+          "IT",
+          "LV",
+          "LT",
+          "LU",
+          "MT",
+          "MD",
+          "ME",
+          "NL",
+          "NO",
+          "PL",
+          "PT",
+          "MK",
+          "RO",
+          "RS",
+          "SK",
+          "SI",
+          "ES",
+          "SE",
+          "CH",
+          "UA",
+          "GB",
+        ],
+      },
+      "license": "LicenseRef-MeteoAlarm-Terms",
+      "licenseUrl": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+      "terms": {
+        "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+        "reviewedAt": "2026-10-09",
+        "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
+        "notice": "Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org.",
+      },
+      "attribution": "EUMETNET – MeteoAlarm",
+      "homepage": "https://www.meteoalarm.org/",
+      "privacyUrl": "https://api.meteoalarm.org/privacy",
+    },
+    {
+      "operator": "effis",
+      "product": "fires",
+      "name": "EFFIS burnt areas",
+      "tier": "authoritative",
+      "format": "effis",
+      // The burnt areas of the last seven days over Europe, the Middle East
+      // and North Africa; an area leaves the weekly layer after a week.
+      "endpoints": {
+        "main": {
+          "url": "https://maps.effis.emergency.copernicus.eu/effis?service=WFS&version=1.1.0&request=GetFeature&typename=ms:modis.ba.poly.week&outputformat=geojson",
+          "cadenceSec": 3600,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 14400,
+      "extrasAllow": [
+        "class",
+        "province",
+        "broadleavedPct",
+        "coniferPct",
+        "mixedForestPct",
+        "sclerophyllousPct",
+        "transitionalPct",
+        "otherNaturalPct",
+        "agriculturalPct",
+        "artificialPct",
+        "otherLandCoverPct",
+        "natura2000Pct",
+      ],
+      "coverage": { "bbox": [-25, 25, 45, 72] },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+      "attribution": "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
+      "homepage": "https://forest-fire.emergency.copernicus.eu/",
+      "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
+    },
+  ],
+}

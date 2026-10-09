@@ -1,0 +1,40 @@
+{
+  "title": "EONET Events",
+  "description": "Natural events from EONET.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+  "events": [
+    {
+      "id": "EONET_25047",
+      "title": "Flood in Guatemala 1104213",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_25047",
+      "closed": "2026-10-04T00:00:00Z",
+      "categories": [{ "id": "floods", "title": "Floods" }],
+      "sources": [
+        { "id": "GDACS", "url": "https://www.gdacs.org/report.aspx?eventtype=FL&eventid=1104213" }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2026-10-02T20:00:00Z",
+          "type": "Polygon",
+          "coordinates": [
+            [
+              [-90.5799239, 14.4805321],
+              [-90.5761995, 14.476863],
+              [-90.5749009, 14.4781013],
+              [-90.5746106, 14.4784385],
+              [-90.5738005, 14.4795043],
+              [-90.5730013, 14.4806719],
+              [-90.5727115, 14.4809586],
+              [-90.5725399, 14.4810469],
+              [-90.5722287, 14.4810885],
+              [-90.5799239, 14.4805321]
+            ]
+          ]
+        }
+      ]
+    }
+  ]
+}

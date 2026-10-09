@@ -1,3 +1,4 @@
+import { gridCellCount, MAX_GRID_CELLS } from "@openconditions/core";
 import { z } from "zod";
 
 type BBox = [number, number, number, number];
@@ -49,8 +50,13 @@ const bbox = z
     return parsed;
   });
 
-/** Query of a situation collection: filters, the instant it is current at, and the page. */
-export const SituationListQuery = z.strictObject({
+/** The longest time window a situation read may span. */
+export const MAX_WINDOW_DAYS = 400;
+
+const DAY_MS = 86_400_000;
+
+/** The filters every situation read takes, the stream and the other collections picking from them. */
+const SituationFilters = z.strictObject({
   bbox: bbox.optional(),
   kind: list.describe("comma-separated kind codes").optional(),
   type: list.describe("comma-separated type codes").optional(),
@@ -78,10 +84,65 @@ export const SituationListQuery = z.strictObject({
     .optional(),
 });
 
+/**
+ * Query of a situation collection: filters, the instant it is current at or
+ * a time window, the geometry's detail, and the page.
+ */
+export const SituationListQuery = SituationFilters.extend({
+  subtype: list.describe("comma-separated subtype codes").optional(),
+  from: z.iso
+    .datetime({ offset: true })
+    .describe(
+      `start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most ${MAX_WINDOW_DAYS} days, not with at or horizonDays`,
+    )
+    .optional(),
+  to: z.iso
+    .datetime({ offset: true })
+    .describe("end of the time window `from` starts; default now")
+    .optional(),
+  simplify: z.coerce
+    .number()
+    .gt(0)
+    .max(1)
+    .describe(
+      "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry",
+    )
+    .optional(),
+}).superRefine((q, ctx) => {
+  if (q.from === undefined) {
+    if (q.to !== undefined) {
+      ctx.addIssue({ code: "custom", path: ["to"], message: "to needs from" });
+    }
+    return;
+  }
+  for (const other of ["at", "horizonDays"] as const) {
+    if (q[other] !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        path: [other],
+        message: `from does not combine with ${other}`,
+      });
+    }
+  }
+  // A window ending now is checked against the server's clock by the route.
+  if (q.to === undefined) return;
+  const issue = windowIssue(new Date(q.from), new Date(q.to));
+  if (issue !== undefined) ctx.addIssue({ code: "custom", path: ["from"], message: issue });
+});
+
+/** What is wrong with a situation read's time window, if anything. */
+export function windowIssue(from: Date, to: Date): string | undefined {
+  if (from > to) return "from must not be after to";
+  if (to.getTime() - from.getTime() > MAX_WINDOW_DAYS * DAY_MS) {
+    return `the window may span at most ${MAX_WINDOW_DAYS} days`;
+  }
+  return undefined;
+}
+
 export type SituationListQuery = z.output<typeof SituationListQuery>;
 
 /** Query of the live stream: the collection's filters, evaluated now, without paging. */
-export const StreamQuery = SituationListQuery.pick({
+export const StreamQuery = SituationFilters.pick({
   bbox: true,
   kind: true,
   type: true,
@@ -117,7 +178,7 @@ const expand = (what: string) =>
 
 /** Query of a feature collection: filters, the canonical view, expansions, and the page. */
 export const FeatureListQuery = z.strictObject({
-  ...SituationListQuery.pick({
+  ...SituationFilters.pick({
     bbox: true,
     kind: true,
     type: true,
@@ -149,7 +210,7 @@ export type FeatureQuery = z.output<typeof FeatureQuery>;
 
 /** Query of an offer collection: filters, the instant offers are valid at, and the page. */
 export const OfferListQuery = z.strictObject({
-  ...SituationListQuery.pick({
+  ...SituationFilters.pick({
     bbox: true,
     kind: true,
     type: true,
@@ -177,6 +238,12 @@ export const LatestObservationQuery = z.strictObject({
     .optional(),
   origin: list.describe("comma-separated origins: feed, crowd, federation, derived").optional(),
   at: at("readings"),
+  since: z.iso
+    .datetime({ offset: true })
+    .describe(
+      "only readings in effect from this instant on (their phenomenon started then or later)",
+    )
+    .optional(),
   canonical: canonical(
     "the canonical view: a feature's fused reading of each property several sources or the crowd may report (for the operator source @fused, fused from every source; in public scope fused from public sources only, source @fused when every contributor is public, else @fused-public), and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)",
   ),
@@ -189,6 +256,38 @@ export const LatestObservationQuery = z.strictObject({
 });
 
 export type LatestObservationQuery = z.output<typeof LatestObservationQuery>;
+
+/** Query of a reading grid: one property, the box, the cell size and the instant readings start from. */
+export const GridQuery = z
+  .strictObject({
+    property: z.string().min(1).describe("the property code; its numeric readings are aggregated"),
+    bbox: bbox.describe(
+      `west,south,east,north in WGS84 degrees; at most ${MAX_GRID_CELLS} cells of cellDeg`,
+    ),
+    cellDeg: z.coerce
+      .number()
+      .min(0.05)
+      .max(5)
+      .describe("the cell size in degrees; cells are aligned on its multiples from 0°"),
+    since: z.iso
+      .datetime({ offset: true })
+      .describe(
+        "only readings in effect from this instant on (their phenomenon started then or later)",
+      ),
+    source: list.describe("comma-separated source ids").optional(),
+  })
+  .superRefine((q, ctx) => {
+    if (!Array.isArray(q.bbox) || !Number.isFinite(q.cellDeg)) return;
+    if (gridCellCount(q.bbox, q.cellDeg) > MAX_GRID_CELLS) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["bbox"],
+        message: `the box holds more than ${MAX_GRID_CELLS} cells; ask for a larger cellDeg`,
+      });
+    }
+  });
+
+export type GridQuery = z.output<typeof GridQuery>;
 
 /** Query of one series: what names it, the range, the resolution and the page. */
 export const SeriesQuery = z

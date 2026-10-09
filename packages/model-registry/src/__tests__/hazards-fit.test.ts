@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
+import { type HazardsCatalogFeed, hazardsDomain } from "@openconditions/hazards";
 import {
   buildRegistry,
   extendVocabulary,
-  observationId,
   type RegistryModule,
   sealRecord,
 } from "@openconditions/model";
@@ -12,11 +12,11 @@ import { productionModules } from "../index.js";
 /**
  * Hazards fit check: real published records of fire detections, fire
  * perimeters, burnt areas, smoke, floods and earthquakes, mapped onto
- * `natural_hazard` situations and `fire.*` observations and sealed against
+ * `natural_hazard` situations and `fire.frp` observations and sealed against
  * the production registry. Captured 2026-10-01 from:
  * - NASA FIRMS active fire detections, VIIRS S-NPP and MODIS, Europe, last
  *   24 hours (public domain);
- * - NIFC WFIGS current interagency fire perimeters, the fields the mapper
+ * - NIFC WFIGS current interagency fire perimeters, the fields the parser
  *   reads (public domain);
  * - EFFIS burnt areas of the last week (Copernicus Emergency Management
  *   Service, © European Union, CC BY 4.0);
@@ -25,17 +25,13 @@ import { productionModules } from "../index.js";
  *   Government Licence v3.0);
  * - USGS earthquakes of magnitude 4.5 and above of the past week (public
  *   domain).
- * OpenConditions parses none of these formats yet, so a test-only module
- * registers them; the mappers are the specification of their parsers.
+ * Every source but the Environment Agency is read by the hazards domain's
+ * own parser; the Environment Agency's format is registered by a test-only
+ * module and mapped below.
  */
 const fitFormats: RegistryModule = {
   name: "hazards-fit",
-  entries: [
-    extendVocabulary({
-      vocabulary: "source_format",
-      values: ["firms-csv", "arcgis", "effis-wfs", "ea-flood-monitoring", "usgs-geojson"],
-    }),
-  ],
+  entries: [extendVocabulary({ vocabulary: "source_format", values: ["ea-flood-monitoring"] })],
 };
 const registry = buildRegistry([...productionModules, fitFormats]);
 const FETCHED = "2026-10-01T00:30:00Z";
@@ -43,8 +39,25 @@ const FETCHED = "2026-10-01T00:30:00Z";
 const utf8 = (name: string) =>
   readFileSync(new URL(`./fixtures/hazards/${name}`, import.meta.url), "utf8");
 const json = (name: string) => JSON.parse(utf8(name));
+const bytes = (name: string) => Buffer.from(utf8(name));
 
 type Draft = Record<string, unknown>;
+
+/**
+ * A feed as its region file writes it: the fields its records take from the
+ * feed (the loader's derived fields play no part in a parse).
+ */
+const feedOf = (id: string, format: string, license: string, attribution: string) =>
+  ({ id, format, license, attribution }) as HazardsCatalogFeed;
+
+/** One poll of `feed` over the given payloads by role, read by its format's parser. */
+function parse(feed: HazardsCatalogFeed, payloads: Record<string, string[]>) {
+  return hazardsDomain.formats[feed.format]!.parse(
+    feed,
+    Object.fromEntries(Object.entries(payloads).map(([role, files]) => [role, files.map(bytes)])),
+    { fetchedAt: FETCHED, cadenceSec: 600, reference: {} },
+  );
+}
 
 function provenance(
   sourceId: string,
@@ -67,8 +80,6 @@ function provenance(
 }
 
 const en = (text: string) => [{ lang: "en", text }];
-const epoch = (ms: number | null | undefined) =>
-  ms === null || ms === undefined ? undefined : new Date(ms).toISOString();
 
 interface Hazard {
   prov: ReturnType<typeof provenance>;
@@ -127,185 +138,43 @@ function sealAll(records: readonly Draft[]) {
   });
 }
 
-/**
- * FIRMS: one row per fire pixel, located at the pixel centre (VIIRS 375 m,
- * MODIS 1 km). VIIRS grades its confidence in words, MODIS as a percentage;
- * the satellite, day or night pass and pixel size are allow-listed extras.
- */
-function firms(name: string, sourceId: string, instrument: "VIIRS" | "MODIS"): Draft[] {
-  const [header, ...rows] = utf8(name).trim().split(/\r?\n/);
-  const columns = header!.split(",");
-  return rows.flatMap((line) => {
-    const row = Object.fromEntries(line.split(",").map((v, i) => [columns[i]!, v]));
-    const at = `${row["acq_date"]}T${row["acq_time"]!.slice(0, 2)}:${row["acq_time"]!.slice(2)}:00Z`;
-    const location = {
-      geometry: { type: "Point", coordinates: [Number(row["longitude"]), Number(row["latitude"])] },
-      extent: "point",
-      geometryOrigin: "source",
-      fuzziness: instrument === "VIIRS" ? "medium_res" : "low_res",
-    };
-    const prov = provenance(
-      sourceId,
-      "firms-csv",
-      `${row["latitude"]},${row["longitude"]},${at}`,
-      "NASA FIRMS",
-      "public-domain",
-    );
-    const quality =
-      instrument === "VIIRS"
-        ? { supplierCode: row["confidence"]! }
-        : { confidence: Number(row["confidence"]) / 100 };
-    const brightness = instrument === "VIIRS" ? row["bright_ti4"] : row["brightness"];
-    return [
-      ["fire.frp", { type: "quantity", value: Number(row["frp"]), unit: "MW" }],
-      ["fire.brightness", { type: "quantity", value: Number(brightness), unit: "K" }],
-    ].map(([property, result]) => {
-      const draft = {
-        class: "observation",
-        kind: "observation",
-        property,
-        temporality: "live",
-        location,
-        provenance: prov,
-        freshness: { fetchedAt: FETCHED },
-        subject: { kind: "location" },
-        result,
-        phenomenonTime: { instant: at },
-        aggregation: "instantaneous",
-        quality,
-        extras: {
-          satellite: row["satellite"],
-          daynight: row["daynight"],
-          scan: Number(row["scan"]),
-          track: Number(row["track"]),
-        },
-      };
-      return { id: observationId(sourceId, draft as never), ...draft };
-    });
-  });
-}
-
-const ACRE_HA = 0.40468564224;
-const round2 = (v: number) => Math.round(v * 100) / 100;
-const CAUSES: Record<string, string> = {
-  Natural: "natural",
-  Human: "human",
-  Undetermined: "undetermined",
-};
-
-/**
- * NIFC perimeters: a wildfire's latest perimeter, or a prescribed burn's
- * (planned). Acres become hectares; the incident's IRWIN id is shared with
- * every other system that reports the fire.
- */
-function nifc(): Draft[] {
-  return json("nifc-perimeters.geojson").features.map(
-    (f: { geometry: object; properties: Record<string, never> }) => {
-      const p = f.properties;
-      const prescribed = p["attr_IncidentTypeCategory"] === "RX";
-      const irwin = (p["attr_IrwinID"] as string).replace(/[{}]/g, "");
-      const cause = CAUSES[p["attr_FireCause"] as string];
-      const out = epoch(p["attr_FireOutDateTime"]);
-      return hazard({
-        prov: provenance(
-          "us-nifc",
-          "arcgis",
-          String(p["OBJECTID"]),
-          "National Interagency Fire Center",
-          "public-domain",
-          epoch(p["attr_ModifiedOnDateTime_dt"]),
-        ),
-        localId: irwin,
-        type: "wildfire",
-        subtype: prescribed ? "prescribed_burn" : "wildfire_perimeter",
-        planned: prescribed,
-        externalIds: [{ scheme: "irwin", id: irwin }],
-        location: area(f.geometry, { country: "US", subdivision: p["attr_POOState"] }),
-        validity: {
-          status: out === undefined ? "active" : "ended",
-          start: epoch(p["attr_FireDiscoveryDateTime"]),
-          ...(out === undefined ? {} : { end: out }),
-        },
-        details: {
-          name: en(p["poly_IncidentName"]),
-          areaHa: round2((p["poly_GISAcres"] as number) * ACRE_HA),
-          ...(p["attr_PercentContained"] === null
-            ? {}
-            : { containmentPct: p["attr_PercentContained"] }),
-          discoveredAt: epoch(p["attr_FireDiscoveryDateTime"]),
-          ...(cause === undefined ? {} : { ignitionCause: cause }),
-        },
-      });
-    },
-  );
-}
-
-/** EFFIS times are UTC without a zone; the land-cover shares have no model field. */
-const effisTime = (s: string) => `${s.replace(" ", "T")}Z`;
-
-function effis(): Draft[] {
-  return json("effis-burnt-areas.geojson").features.map(
-    (f: { geometry: object; properties: Record<string, string> }) => {
-      const p = f.properties;
-      return hazard({
-        prov: provenance(
-          "eu-effis",
-          "effis-wfs",
-          p["id"]!,
-          "EFFIS / Copernicus Emergency Management Service",
-          "CC-BY-4.0",
-          effisTime(p["LASTUPDATE"]!),
-        ),
-        localId: p["id"]!,
-        type: "wildfire",
-        subtype: "burned_area",
-        location: area(f.geometry, { country: p["COUNTRY"], municipality: p["COMMUNE"] }),
-        validity: { status: "unknown", start: effisTime(p["FIREDATE"]!) },
-        details: {
-          areaHa: Number(p["AREA_HA"]),
-          discoveredAt: effisTime(p["FIREDATE"]!),
-        },
-      });
-    },
-  );
-}
-
-/** HMS times are `YYYYDDD HHMM` in UTC, the day counted in the year. */
-function hmsTime(s: string): string {
-  const [date, time] = s.split(" ") as [string, string];
-  const day = new Date(Date.UTC(Number(date.slice(0, 4)), 0, Number(date.slice(4))));
-  return `${day.toISOString().slice(0, 10)}T${time.slice(0, 2)}:${time.slice(2)}:00Z`;
-}
-
-function hms(): Draft[] {
-  return json("hms-smoke.geojson").features.map(
-    (f: { geometry: object; properties: Record<string, string | number> }) => {
-      const p = f.properties;
-      const day = String(p["Start"]).split(" ")[0];
-      return hazard({
-        prov: provenance(
-          "us-noaa-hms",
-          "arcgis",
-          `${day}-${p["FID"]}`,
-          "NOAA/NESDIS Hazard Mapping System",
-          "public-domain",
-        ),
-        localId: `${day}-${p["FID"]}`,
-        type: "smoke",
-        location: area(f.geometry),
-        validity: {
-          status: "unknown",
-          start: hmsTime(String(p["Start"])),
-          end: hmsTime(String(p["End_"])),
-        },
-        details: {
-          density: String(p["Density"]).toLowerCase(),
-          detection: { satellite: String(p["Satellite"]) },
-        },
-      });
-    },
-  );
-}
+const FIRMS_LICENSE = "CC0-1.0";
+const VIIRS = feedOf(
+  "nasa-firms-viirs-fires",
+  "firms",
+  FIRMS_LICENSE,
+  "NASA FIRMS (LANCE / ESDIS)",
+);
+const MODIS = feedOf(
+  "nasa-firms-modis-fires",
+  "firms",
+  FIRMS_LICENSE,
+  "NASA FIRMS (LANCE / ESDIS)",
+);
+const NIFC = feedOf(
+  "us-nifc-fires",
+  "wfigs",
+  "LicenseRef-US-Gov-Public-Domain",
+  "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
+);
+const EFFIS = feedOf(
+  "eu-effis-fires",
+  "effis",
+  "CC-BY-4.0",
+  "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
+);
+const HMS = feedOf(
+  "us-noaa-hms-smoke",
+  "hms",
+  "CC0-1.0",
+  "NOAA/NESDIS Hazard Mapping System (HMS)",
+);
+const USGS = feedOf(
+  "usgs-quakes",
+  "usgs",
+  "LicenseRef-US-Gov-Public-Domain",
+  "U.S. Geological Survey",
+);
 
 /**
  * The Environment Agency's warning levels: flooding is possible (alert),
@@ -369,81 +238,46 @@ function ea(): Draft[] {
   });
 }
 
-/**
- * USGS: the third coordinate is the hypocentre's depth in kilometres, not
- * an altitude, so it leaves the geometry. PAGER's alert colour is the
- * declared severity; most events have none.
- */
-const PAGER: Record<string, string> = {
-  green: "minor",
-  yellow: "moderate",
-  orange: "major",
-  red: "critical",
-};
-
-function usgs(): Draft[] {
-  return json("usgs-earthquakes.geojson").features.map(
-    (f: {
-      id: string;
-      geometry: { coordinates: [number, number, number] };
-      properties: Record<string, never>;
-    }) => {
-      const p = f.properties;
-      const [lon, lat, depthKm] = f.geometry.coordinates;
-      const at = epoch(p["time"])!;
-      const pager = p["alert"] as string | null;
-      return hazard({
-        prov: provenance(
-          "us-usgs-earthquakes",
-          "usgs-geojson",
-          f.id,
-          "U.S. Geological Survey",
-          "public-domain",
-          epoch(p["updated"]),
-        ),
-        localId: f.id,
-        type: "earthquake",
-        externalIds: [{ scheme: "usgs:event", id: f.id }],
-        location: {
-          geometry: { type: "Point", coordinates: [lon, lat] },
-          extent: "point",
-          geometryOrigin: "source",
-          fuzziness: "exact",
-        },
-        severity:
-          pager === null
-            ? { label: "unknown" }
-            : { label: PAGER[pager], source: "declared", declaredRaw: pager },
-        headline: en(p["title"]),
-        validity: { status: "ended", start: at, end: at },
-        details: {
-          magnitude: { value: p["mag"], scale: p["magType"] },
-          depth: { value: Math.round(depthKm * 1000), unit: "m" },
-        },
-      });
-    },
-  );
-}
+const byName = (records: readonly Draft[], name: string) =>
+  records.find(
+    (r) => (r["details"] as { name?: { text: string }[] }).name?.[0]?.text === name,
+  ) as Draft;
 
 describe("hazards fit check", () => {
-  it("observes every FIRMS fire pixel's power and brightness where it burns", () => {
-    const records = [
-      ...firms("firms-viirs-snpp.csv", "global-firms-viirs-snpp", "VIIRS"),
-      ...firms("firms-modis.csv", "global-firms-modis", "MODIS"),
-    ];
+  it("observes every FIRMS fire pixel's power where it burns", () => {
+    const viirs = parse(VIIRS, { main: ["firms-viirs-snpp.csv"] });
+    const modis = parse(MODIS, { main: ["firms-modis.csv"] });
+    const records = [...viirs.observations, ...modis.observations];
     expect(sealAll(records)).toEqual([]);
-    expect(records).toHaveLength(14);
+    expect(records).toHaveLength(7);
+    expect(new Set(records.map((r) => r["property"]))).toEqual(new Set(["fire.frp"]));
     const [frp] = records as [Draft];
     expect(frp["result"]).toEqual({ type: "quantity", value: 15.36, unit: "MW" });
     expect(frp["phenomenonTime"]).toEqual({ instant: "2026-09-29T10:56:00Z" });
     expect(frp["quality"]).toEqual({ supplierCode: "high" });
-    expect(records[8]!["quality"]).toEqual({ confidence: 0.83 });
+    // The pixel's brightness, the pass and the pixel size travel as extras.
+    expect(frp["extras"]).toEqual({
+      instrument: "viirs",
+      satellite: "N",
+      brightnessK: 367,
+      backgroundK: 298.89,
+      daynight: "day",
+      scan: 0.6,
+      track: 0.7,
+      version: "2.0NRT",
+    });
+    expect(records[4]!["quality"]).toEqual({ confidence: 0.83 });
+    expect(records[4]!["extras"]).toMatchObject({ instrument: "modis", brightnessK: 313.83 });
   });
 
   it("maps NIFC perimeters, a prescribed burn as planned", () => {
-    const records = nifc();
+    const records = parse(NIFC, { perimeters: ["nifc-perimeters.geojson"] }).situations;
     expect(sealAll(records)).toEqual([]);
-    const [aspen, tartar, burn] = records as [Draft, Draft, Draft];
+    const aspen = byName(records, "Aspen Acres");
+    const tartar = byName(records, "Tartar");
+    const burn = byName(records, "Ranger Academy RX Burn 5");
+    // A fire is the incident its IRWIN id names, which every system reporting it shares.
+    expect(aspen["id"]).toBe("oc:situation:us-nifc-fires:1CDF5E5A-F22E-4352-A582-C2A47663B93D");
     expect(aspen["details"]).toMatchObject({
       name: en("Aspen Acres"),
       areaHa: 41279.34,
@@ -457,7 +291,10 @@ describe("hazards fit check", () => {
   });
 
   it("maps EFFIS burnt areas and HMS smoke by density", () => {
-    const records = [...effis(), ...hms()];
+    const records = [
+      ...parse(EFFIS, { main: ["effis-burnt-areas.geojson"] }).situations,
+      ...parse(HMS, { main: ["hms-smoke.geojson"] }).situations,
+    ];
     expect(sealAll(records)).toEqual([]);
     expect(records.map((r) => (r["details"] as { density?: string }).density)).toEqual([
       undefined,
@@ -466,8 +303,10 @@ describe("hazards fit check", () => {
       "medium",
       "heavy",
     ]);
-    expect(records[2]!["validity"]).toEqual({
-      status: "unknown",
+    // Smoke stays current while the day's analysis lists it; the image
+    // sequence it was seen in is a detail.
+    expect(records[2]!["validity"]).toEqual({ status: "active", start: "2026-09-30T12:00:00Z" });
+    expect((records[2]!["details"] as { detection: object }).detection).toMatchObject({
       start: "2026-09-30T12:00:00Z",
       end: "2026-09-30T15:00:00Z",
     });
@@ -495,9 +334,13 @@ describe("hazards fit check", () => {
   });
 
   it("maps USGS earthquakes with their magnitude and depth", () => {
-    const records = usgs();
+    const records = parse(USGS, {
+      recent: [],
+      window: ["usgs-earthquakes.geojson"],
+    }).situations;
     expect(sealAll(records)).toEqual([]);
-    const [costaRica, japan] = records as [Draft, Draft];
+    const costaRica = records.find((r) => r["id"] === "oc:situation:usgs-quakes:us6000tymj")!;
+    const japan = records.find((r) => r["id"] === "oc:situation:usgs-quakes:us6000tym9")!;
     expect(costaRica["details"]).toMatchObject({
       magnitude: { value: 5.6, scale: "mww" },
       depth: { value: 8000, unit: "m" },

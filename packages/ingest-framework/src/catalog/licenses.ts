@@ -201,6 +201,21 @@ export const LICENSES: readonly LicenseInfo[] = [
     name: "ODOT TripCheck data terms of use",
     url: "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
   }),
+  // Credited as "Data Source: Environment and Climate Change Canada"; a weather
+  // alert is reproduced without altering its content or intent.
+  open({
+    id: "LicenseRef-ECCC-Data-Servers-End-use",
+    name: "Environment and Climate Change Canada Data Servers End-use Licence",
+    url: "https://eccc-msc.github.io/open-data/licence/readme_en/",
+  }),
+  // CC BY 4.0-equivalent, with duties on the redistributor: the issuing service
+  // named, the issue time, a www.meteoalarm.org link, a fixed disclaimer, and
+  // at most ten minutes' delay.
+  open({
+    id: "LicenseRef-MeteoAlarm-Terms",
+    name: "MeteoAlarm Terms and Conditions",
+    url: "https://meteoalarm.org/en/live/page/terms-and-conditions",
+  }),
   open({
     id: "LicenseRef-US-Gov-Public-Domain",
     name: "U.S. Government Public Domain (17 U.S.C. §105)",

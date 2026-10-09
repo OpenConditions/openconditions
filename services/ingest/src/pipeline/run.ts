@@ -6,6 +6,7 @@ import type {
   FeedPayloads,
   HeldPayload,
   ImpersonationOptions,
+  KeptItems,
   LookupFn,
   ParseOutput,
   RecordDraft,
@@ -18,6 +19,7 @@ import {
   fetchEndpoint,
   guardedFetch,
   guardOptionsFromEnv,
+  heldBuffer,
   heldBuffers,
   heldBytes,
   holdPayload,
@@ -229,8 +231,24 @@ export interface RoleState {
    * large one is kept gzipped and read back only when a poll parses it.
    */
   payloads: Record<string, readonly HeldPayload[]>;
+  /**
+   * The URL each held payload came from, same order: where a role that walks
+   * another's listings resolves their links.
+   */
+  urls: Record<string, readonly string[]>;
+  /**
+   * A per-item role's items kept between polls, by URL: items not asked
+   * again while kept, and walked listings and files not asked again while
+   * their version stands. Replaced at each fetch by the items it named.
+   */
+  items: Record<string, KeptItems>;
   /** The roles whose last fetch failed and fell back to a held payload, so an outage warns once. */
   failing: Record<string, true>;
+  /**
+   * Each URL's latest answer of a tolerant `urls` role, by role and URL, and
+   * when it came: the stand-in for that URL while it fails.
+   */
+  answers: Record<string, Record<string, { at: number; body: HeldPayload }>>;
   /**
    * The status index of the last full parse that published, for a feed with
    * a live status role: a poll that fetches only live states reads them
@@ -240,7 +258,7 @@ export interface RoleState {
 }
 
 export function createRoleState(): RoleState {
-  return { lastFetchedAt: {}, payloads: {}, failing: {} };
+  return { lastFetchedAt: {}, payloads: {}, urls: {}, items: {}, failing: {}, answers: {} };
 }
 
 /**
@@ -637,6 +655,8 @@ async function runAttempt(
     // Every due data role is fetched; a role not due this poll (or answering
     // 304) contributes the payloads of its latest fetch.
     const fresh: Record<string, readonly Buffer[]> = {};
+    /** The URL of each fresh payload, same order. */
+    const freshUrls: Record<string, readonly string[]> = {};
     const accepts: (() => void)[] = [];
     const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
     /** The data roles whose payloads changed this poll. */
@@ -646,7 +666,73 @@ async function runAttempt(
     const warnings: string[] = [];
     /** Due roles the network answered (fetched or not modified). */
     let answered = 0;
-    const holdsPayload = (role: string) => keepPayloads && deps.roles!.payloads[role] !== undefined;
+    const polledAt = Date.parse(attemptAt);
+    // A payload older than its endpoint allows is not held at all: the role
+    // that needs it to stand in has failed with nothing to show.
+    const outlived = (role: string) => {
+      const maxAge = src.endpoints[role]?.maxPayloadAgeSec;
+      if (maxAge === undefined) return false;
+      const fetchedAt = deps.roles?.lastFetchedAt[role];
+      return fetchedAt === undefined || polledAt - fetchedAt > maxAge * 1000;
+    };
+    const holdsPayload = (role: string) => {
+      if (!keepPayloads || deps.roles!.payloads[role] === undefined) return false;
+      if (!outlived(role)) return true;
+      delete deps.roles!.payloads[role];
+      delete deps.roles!.urls[role];
+      return false;
+    };
+    /**
+     * A tolerant `urls` role is a union of independent answers (one country's
+     * warnings each): every URL's latest answer is held, and one that fails is
+     * stood in for by its held answer while that is no older than the
+     * endpoint allows. Past that the URL contributes nothing, its records
+     * leave, and the others still publish as a complete set. Returns the
+     * role's payloads with the stand-ins, or undefined for any other role.
+     */
+    const withHeldAnswers = async (
+      role: string,
+      buffers: readonly Buffer[],
+      urls: readonly string[],
+      failedUrls: readonly string[],
+    ): Promise<{ buffers: Buffer[]; urls: string[] } | undefined> => {
+      const endpoint = src.endpoints[role];
+      if (
+        deps.roles === undefined ||
+        endpoint?.fanout !== "tolerant" ||
+        endpoint.urls === undefined ||
+        endpoint.each !== undefined
+      ) {
+        return undefined;
+      }
+      const answers = deps.roles.answers[role] ?? {};
+      deps.roles.answers[role] = answers;
+      // A URL no longer asked (yesterday's date in it) leaves with its answer.
+      const asked = new Set([...urls, ...failedUrls]);
+      for (const url of Object.keys(answers)) if (!asked.has(url)) delete answers[url];
+      for (const [i, url] of urls.entries()) {
+        answers[url] = { at: polledAt, body: await holdPayload(buffers[i]!) };
+      }
+      const maxAge = endpoint.maxPayloadAgeSec;
+      const out = { buffers: [...buffers], urls: [...urls] };
+      let gone = 0;
+      for (const url of failedUrls) {
+        const held = answers[url];
+        if (held !== undefined && (maxAge === undefined || polledAt - held.at <= maxAge * 1000)) {
+          out.buffers.push(await heldBuffer(held.body));
+          out.urls.push(url);
+        } else {
+          delete answers[url];
+          gone++;
+        }
+      }
+      if (failedUrls.length > 0) {
+        const note = `${failedUrls.length}/${asked.size} URLs failed, ${failedUrls.length - gone} held answers stood in, ${gone} left out`;
+        warnings.push(`${role}: ${note}`);
+        console.warn(`[ingest] ${src.id}: ${role}: ${note}`, { feed: src.id, role });
+      }
+      return out;
+    };
     const fallBack = (role: string, reason: string) => {
       warnings.push(`${role}: ${reason} (held payload used)`);
       if (!deps.roles!.failing[role]) {
@@ -676,16 +762,41 @@ async function runAttempt(
             eachRole === undefined
               ? undefined
               : (fresh[eachRole] ?? (heldSource ? await heldBuffers(heldSource) : undefined));
+          const eachSourceUrls =
+            eachRole === undefined
+              ? undefined
+              : fresh[eachRole] !== undefined
+                ? freshUrls[eachRole]
+                : deps.roles?.urls[eachRole];
+          const kept = deps.roles?.items[role];
           result = await fetchEndpoint(src, role, guardedFeedFetch(deps), {
             resolvers: domainOf(src).resolvers,
             env,
+            at: polledAt,
             ...(eachSource ? { eachSource } : {}),
+            ...(eachSourceUrls ? { eachSourceUrls } : {}),
+            ...(kept ? { kept } : {}),
             ...(deps.impersonation ? { impersonation: deps.impersonation } : {}),
           });
         } catch (err) {
           const reason = err instanceof Error ? err.message : String(err);
           gap(role);
-          if (holdsPayload(role)) {
+          // A tolerant `urls` role whose every URL failed stands in URL by URL,
+          // each held answer judged by its own age: the role's held copy may
+          // carry answers older than the poll that kept it.
+          const byUrl = await withHeldAnswers(
+            role,
+            [],
+            [],
+            Object.keys(deps.roles?.answers[role] ?? {}),
+          );
+          if (byUrl !== undefined && byUrl.buffers.length > 0) {
+            fresh[role] = byUrl.buffers;
+            freshUrls[role] = byUrl.urls;
+            fallBack(role, reason);
+            continue;
+          }
+          if (byUrl === undefined && holdsPayload(role)) {
             fallBack(role, reason);
             continue;
           }
@@ -705,8 +816,33 @@ async function runAttempt(
         // this poll's payload, and the role is not asked again before its
         // cadence. A held copy would only be older, and a poll that ended here
         // would fetch every item again each tick and, holding nothing after a
-        // restart, publish nothing until every item answered at once.
-        const eachPartial = result.status === "partial" && src.endpoints[role]?.each !== undefined;
+        // restart, publish nothing until every item answered at once. A walk's
+        // files are no such details but the snapshot itself: a subtree it
+        // could not list is missing records, and its partial result stands
+        // like any partial snapshot.
+        const each = src.endpoints[role]?.each;
+        const eachPartial =
+          result.status === "partial" && each !== undefined && each.links === undefined;
+        // A tolerant `urls` role completed by its URLs' held answers is a
+        // complete set, published like a fetched one.
+        let completed = false;
+        if (result.status === "fetched" || result.status === "partial") {
+          const merged = await withHeldAnswers(
+            role,
+            result.buffers,
+            result.urls,
+            result.failedUrls ?? [],
+          );
+          if (merged !== undefined && result.status === "partial") {
+            result = { ...result, ...merged };
+            completed = true;
+          }
+        }
+        // The walk's kept items are renewed even when its snapshot is refused:
+        // they are the publisher's answers, and the next poll builds on them.
+        if (result.status === "partial" && deps.roles && result.kept) {
+          deps.roles.items[role] = result.kept;
+        }
         if (result.status === "partial" && eachPartial) {
           const { failed, total } = result.partitions;
           warnings.push(`${role}: ${failed}/${total} items failed (left out)`);
@@ -715,7 +851,7 @@ async function runAttempt(
             role,
           });
         }
-        if (result.status === "partial" && !eachPartial && holdsPayload(role)) {
+        if (result.status === "partial" && !eachPartial && !completed && holdsPayload(role)) {
           const { failed, total } = result.partitions;
           fallBack(role, `partial snapshot: ${failed}/${total} partitions failed`);
           continue;
@@ -723,14 +859,20 @@ async function runAttempt(
         if (result.status === "fetched" || result.status === "partial") {
           payloadHashes = [...(payloadHashes ?? []), ...result.payloads.map((p) => p.sha256)];
           if (feedCapture) {
+            // The responses as received: an archive, not its entries; an
+            // item asked this poll, not one kept from an earlier one.
+            const responses = result.responses ?? result.buffers;
             for (const [i, payload] of result.payloads.entries()) {
               await feedCapture.archive.capture(
                 { ...feedCapture.meta, url: payload.url },
-                result.buffers[i]!,
+                responses[i]!,
                 payload,
               );
             }
           }
+          // The items kept are the role's own cache of the publisher's
+          // answers, renewed whatever becomes of this poll.
+          if (deps.roles && result.kept) deps.roles.items[role] = result.kept;
         }
         if (result.status === "no-endpoint") {
           await recordStatus({
@@ -742,7 +884,7 @@ async function runAttempt(
           });
           return { count: 0, durationMs: Date.now() - start, outcome: "missing_configuration" };
         }
-        if (result.status === "partial" && !eachPartial) {
+        if (result.status === "partial" && !eachPartial && !completed) {
           const { failed, total } = result.partitions;
           const error = `partial snapshot: ${failed}/${total} partitions failed — preserving last-good publication`;
           console.warn(`[ingest] ${src.id}: ${error}`);
@@ -757,11 +899,11 @@ async function runAttempt(
           });
           return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
         }
-        if (result.status === "fetched") {
+        if (result.status === "fetched") accepts.push(result.accept);
+        if (result.status === "fetched" || result.status === "partial") {
           fresh[role] = result.buffers;
-          accepts.push(result.accept);
+          freshUrls[role] = result.urls;
         }
-        if (result.status === "partial") fresh[role] = result.buffers;
         answered++;
         renewed.add(role);
         if (deps.roles) {
@@ -799,6 +941,7 @@ async function runAttempt(
           const since = spec.accumulatesSince;
           if (since !== undefined && renewed.has(since)) {
             deps.roles!.payloads[role] = await holdAll(fresh[role] ?? []);
+            deps.roles!.urls[role] = freshUrls[role] ?? [];
           }
         }
         for (const [role, buffers] of Object.entries(fresh)) {
@@ -807,11 +950,17 @@ async function runAttempt(
           if (since !== undefined && renewed.has(since)) continue;
           const held = deps.roles!.payloads[role] ?? [];
           const kept = await holdAll(buffers);
+          const urls = freshUrls[role] ?? [];
           deps.roles!.payloads[role] = since === undefined ? kept : [...held, ...kept];
+          deps.roles!.urls[role] =
+            since === undefined ? urls : [...(deps.roles!.urls[role] ?? []), ...urls];
         }
         // The held copies stand in from here: the fetched bodies are not kept
         // alive while the poll waits for the gate.
-        for (const role of fetched) delete fresh[role];
+        for (const role of fetched) {
+          delete fresh[role];
+          delete freshUrls[role];
+        }
       }
       if (answered === 0 && warnings.length > 0) {
         // Every due role failed and its held payload stood in: nothing was
@@ -1049,6 +1198,21 @@ async function finishEventPoll(
   if (zeroResult) {
     return fail(poll, "failed", "structurally non-empty snapshot produced zero usable situations");
   }
+  // Records the parser read but could not use. An accounted snapshot that
+  // kept none of them says nothing about what is current (a publisher that
+  // changed its shape): publishing it would withdraw the last publication.
+  // Terminal records do not change that, since some feeds always carry them
+  // (a type left to another feed); what stands is bounded by its records'
+  // own expiry.
+  const parseRejected = parse.rejected ?? 0;
+  if (accounting !== undefined && accounting.accepted === 0 && parseRejected > 0) {
+    const refused = await fail(
+      poll,
+      "failed",
+      `every usable record of the snapshot was rejected (${parseRejected})`,
+    );
+    return { ...refused, rejected: parseRejected };
+  }
   const situations = resolved.map((draft) => stampAttribution(draft, src));
 
   // Shrink tripwire: a complete snapshot withdraws every situation it does not
@@ -1062,7 +1226,7 @@ async function finishEventPoll(
   }
 
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
-  const rejected = dropped + skippedNoGeometry;
+  const rejected = dropped + skippedNoGeometry + parseRejected;
   let summary: WriteSummary;
   try {
     summary = await publishSituations(deps.sql, src, {

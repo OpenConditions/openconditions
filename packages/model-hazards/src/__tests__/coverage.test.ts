@@ -9,6 +9,7 @@ import {
   CAP_CP_CLASSES,
   DWD_II_CLASSES,
   METEOALARM_CLASSES,
+  NWS_CLASSES,
   SAME_CLASSES,
   VTEC_CLASSES,
 } from "../crosswalk/cap-events.js";
@@ -18,6 +19,7 @@ import {
   CAP_CP_EVENTS,
   DWD_II_EVENTS,
   METEOALARM_AWARENESS_TYPES,
+  NWS_PRODUCTS,
   SAME_EVENTS,
   VTEC_PHENOMENA,
 } from "../vocabularies/cap-events.js";
@@ -32,7 +34,14 @@ const registry = buildRegistry([kernelModule, hazardsModule]);
 const sorted = (values: Iterable<string>) => [...new Set(values)].sort();
 const keys = (prefix: string, list: Readonly<Record<string, string>>) =>
   sorted(Object.keys(list).map((code) => `${prefix}${code}`));
-const TABLES = [DWD_II_CLASSES, CAP_CP_CLASSES, VTEC_CLASSES, METEOALARM_CLASSES, SAME_CLASSES];
+const TABLES = [
+  DWD_II_CLASSES,
+  CAP_CP_CLASSES,
+  VTEC_CLASSES,
+  METEOALARM_CLASSES,
+  NWS_CLASSES,
+  SAME_CLASSES,
+];
 
 function isRegistered(code: string): boolean {
   const c = parseSituationCode(code);
@@ -52,6 +61,7 @@ describe("CAP event list coverage", () => {
     expect(sorted(Object.keys(METEOALARM_CLASSES))).toEqual(
       keys("awareness_type:", METEOALARM_AWARENESS_TYPES),
     );
+    expect(sorted(Object.keys(NWS_CLASSES))).toEqual(keys("NWS:", NWS_PRODUCTS));
     expect(sorted(Object.keys(SAME_CLASSES))).toEqual(keys("SAME:", SAME_EVENTS));
   });
 

@@ -39,6 +39,9 @@ export function regionFileSchemaRef(domain: string): string {
 function staticFetchUrls(feed: FeedDefinition): { label: string; url: string }[] {
   const out: { label: string; url: string }[] = [];
   for (const [role, endpoint] of Object.entries(feed.endpoints)) {
+    // A walked endpoint's URL is each link found below a listing, never
+    // written: the listing's own URL is what the catalogue can check.
+    if (endpoint.each?.links !== undefined) continue;
     for (const url of endpoint.urls ?? (endpoint.url ? [endpoint.url] : [])) {
       out.push({ label: `endpoint ${role} URL`, url });
     }

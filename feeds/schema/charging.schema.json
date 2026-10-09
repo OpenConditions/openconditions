@@ -233,13 +233,43 @@
                     "field": {
                       "type": "string",
                       "minLength": 1
+                    },
+                    "pattern": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "links": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "keepSec": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
-                    "role",
-                    "records",
-                    "field"
+                    "role"
                   ],
+                  "additionalProperties": false
+                },
+                "unzip": {
+                  "type": "object",
+                  "properties": {
+                    "entries": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxEntries": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
                   "additionalProperties": false
                 },
                 "impersonate": {
@@ -254,6 +284,11 @@
                   "enum": []
                 },
                 "cadenceSec": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "maxPayloadAgeSec": {
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 9007199254740991
@@ -700,6 +735,8 @@
               "LicenseRef-TfL-Transport-Data-Service",
               "LicenseRef-Caltrans-Conditions-of-Use",
               "LicenseRef-ODOT-TripCheck",
+              "LicenseRef-ECCC-Data-Servers-End-use",
+              "LicenseRef-MeteoAlarm-Terms",
               "LicenseRef-US-Gov-Public-Domain"
             ]
           },
@@ -733,6 +770,10 @@
                 ]
               },
               "note": {
+                "type": "string",
+                "minLength": 1
+              },
+              "notice": {
                 "type": "string",
                 "minLength": 1
               },

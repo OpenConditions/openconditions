@@ -42,6 +42,15 @@ const discovered = testFeed({
   parentSourceId: parent.id,
   selectionState: "discovered",
 });
+const NOTICE = "The data shown is the publisher's; it accepts no liability for its use.";
+const noticed = testFeed({
+  operator: "warn",
+  qualifier: "severe-weather",
+  name: "Warn severe weather",
+  format: "cap",
+  attribution: "Warn",
+  terms: { notice: NOTICE, reviewedAt: "2026-10-08" },
+});
 const disabled = testFeed({
   operator: "gone",
   name: "Gone",
@@ -50,7 +59,7 @@ const disabled = testFeed({
 
 const catalog = {
   feeds: [active, flow, onDemand, child],
-  sources: [active, flow, onDemand, parent, disabled],
+  sources: [active, flow, onDemand, parent, noticed, disabled],
   discovered: [discovered],
   disabled: [disabled],
   credentials: { groups: {} },
@@ -80,8 +89,22 @@ describe("GET /sources", () => {
     const body = res.json() as Body;
     expect(Date.parse(body.generatedAt)).not.toBeNaN();
     expect(body.sources.map((s) => s["id"])).toEqual(
-      [active.id, flow.id, onDemand.id, parent.id].sort(),
+      [active.id, flow.id, onDemand.id, parent.id, noticed.id].sort(),
     );
+  });
+
+  it("serves sources' format, a qualifier where a feed has one, and the publisher's notice", async () => {
+    const body = (await app.inject({ method: "GET", url: "/sources" })).json() as Body;
+    const row = (id: string) => body.sources.find((s) => s["id"] === id);
+    expect(row(noticed.id)).toMatchObject({
+      format: "cap",
+      qualifier: "severe-weather",
+      notice: NOTICE,
+      terms: { reviewedAt: "2026-10-08" },
+    });
+    expect(row(flow.id)).toMatchObject({ format: "datex2" });
+    expect(row(flow.id)).not.toHaveProperty("qualifier");
+    expect(row(flow.id)).not.toHaveProperty("notice");
   });
 
   it("carries the credit and rights fields", async () => {

@@ -1,0 +1,8 @@
+{
+  "correlationId": "3c34ac62",
+  "title": "Zone Does Not Exist",
+  "type": "https://api.weather.gov/problems/InvalidZone",
+  "status": 404,
+  "detail": "fire zone AKZ801 does not exist",
+  "instance": "https://api.weather.gov/requests/3c34ac62"
+}

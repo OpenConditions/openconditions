@@ -151,7 +151,11 @@
         "avalanche",
         "earthquake",
         "volcanic_ash",
-        "dust_storm"
+        "dust_storm",
+        "tropical_cyclone",
+        "volcano",
+        "drought",
+        "sea_ice"
       ]
     },
     "subtype": {
@@ -357,6 +361,10 @@
         "name": {
           "$ref": "#/$defs/Text"
         },
+        "detailUrl": {
+          "type": "string",
+          "format": "uri"
+        },
         "areaHa": {
           "type": "number",
           "minimum": 0
@@ -367,6 +375,11 @@
           "maximum": 100
         },
         "discoveredAt": {
+          "type": "string",
+          "format": "date-time",
+          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+        },
+        "perimeterAt": {
           "type": "string",
           "format": "date-time",
           "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
@@ -397,6 +410,16 @@
             "confidence": {
               "type": "string",
               "minLength": 1
+            },
+            "start": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
+            "end": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
             }
           },
           "additionalProperties": false
@@ -422,8 +445,7 @@
           "type": "object",
           "properties": {
             "value": {
-              "type": "number",
-              "minimum": 0
+              "type": "number"
             },
             "unit": {
               "type": "string",
@@ -439,6 +461,49 @@
             "unit"
           ],
           "additionalProperties": false
+        },
+        "tsunamiFlag": {
+          "type": "boolean"
+        },
+        "feltReports": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+        },
+        "mmi": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 12
+        },
+        "reviewed": {
+          "type": "boolean"
+        },
+        "maxWind": {
+          "type": "object",
+          "properties": {
+            "value": {
+              "type": "number",
+              "minimum": 0
+            },
+            "unit": {
+              "type": "string",
+              "const": "km/h"
+            },
+            "accuracy": {
+              "type": "number",
+              "minimum": 0
+            }
+          },
+          "required": [
+            "value",
+            "unit"
+          ],
+          "additionalProperties": false
+        },
+        "populationAffected": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
         },
         "waterBody": {
           "type": "string",
@@ -516,7 +581,9 @@
             "netex:line",
             "netex:stop_place",
             "irwin",
-            "usgs:event"
+            "usgs:event",
+            "gdacs:event",
+            "glide"
           ]
         },
         "id": {
@@ -735,7 +802,9 @@
                       "warncellid",
                       "emma_id",
                       "sgc",
-                      "eccc_clc"
+                      "eccc_clc",
+                      "cisorp",
+                      "fips10_4"
                     ]
                   },
                   "code": {
@@ -2026,7 +2095,17 @@
             "tankerkoenig",
             "econtrol",
             "prix-carburants",
-            "minetur"
+            "minetur",
+            "cap",
+            "nws",
+            "meteoalarm",
+            "firms",
+            "wfigs",
+            "effis",
+            "hms",
+            "usgs",
+            "eonet",
+            "gdacs"
           ]
         },
         "accessMode": {
@@ -2807,7 +2886,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -3256,7 +3337,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -3770,7 +3853,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -4213,7 +4298,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -4669,7 +4756,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -5130,7 +5219,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -5597,7 +5688,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -6055,7 +6148,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -6504,7 +6599,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -6937,7 +7034,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -7374,7 +7473,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {

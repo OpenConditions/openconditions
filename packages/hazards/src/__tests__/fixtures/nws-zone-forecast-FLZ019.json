@@ -1,0 +1,83 @@
+{
+  "@context": {
+    "@version": "1.1"
+  },
+  "id": "https://api.weather.gov/zones/forecast/FLZ019",
+  "type": "Feature",
+  "geometry": {
+    "type": "Polygon",
+    "coordinates": [
+      [
+        [-83.3795, 30.6387],
+        [-83.3156, 30.6356],
+        [-83.2942, 30.6317],
+        [-83.272, 30.6244],
+        [-83.2625, 30.5998],
+        [-83.2626, 30.5823],
+        [-83.2563, 30.5593],
+        [-83.2463, 30.5351],
+        [-83.2425, 30.5163],
+        [-83.2436, 30.4843],
+        [-83.2278, 30.4687],
+        [-83.2175, 30.4473],
+        [-83.2181, 30.4196],
+        [-83.2018, 30.4152],
+        [-83.1799, 30.4087],
+        [-83.1712, 30.3854],
+        [-83.1922, 30.3657],
+        [-83.2026, 30.3507],
+        [-83.2087, 30.3335],
+        [-83.2146, 30.3063],
+        [-83.2319, 30.2833],
+        [-83.2426, 30.2603],
+        [-83.3672, 30.2604],
+        [-83.4688, 30.3042],
+        [-83.7175, 30.3035],
+        [-83.817, 30.3144],
+        [-83.795, 30.3189],
+        [-83.7933, 30.3363],
+        [-83.8071, 30.3632],
+        [-83.7954, 30.3831],
+        [-83.7819, 30.3796],
+        [-83.7576, 30.3856],
+        [-83.7499, 30.409],
+        [-83.7277, 30.4289],
+        [-83.724, 30.4616],
+        [-83.727, 30.4877],
+        [-83.7366, 30.508],
+        [-83.7037, 30.538],
+        [-83.6212, 30.5673],
+        [-83.6122, 30.6387],
+        [-83.3795, 30.6387]
+      ]
+    ]
+  },
+  "properties": {
+    "@id": "https://api.weather.gov/zones/forecast/FLZ019",
+    "@type": "wx:Zone",
+    "id": "FLZ019",
+    "type": "public",
+    "name": "Madison",
+    "effectiveDate": "2026-04-16T18:00:00+00:00",
+    "expirationDate": "2200-01-01T00:00:00+00:00",
+    "state": "FL",
+    "forecastOffice": "https://api.weather.gov/offices/TAE",
+    "gridIdentifier": "TAE",
+    "awipsLocationIdentifier": "TAE",
+    "cwa": ["TAE"],
+    "forecastOffices": ["https://api.weather.gov/offices/TAE"],
+    "timeZone": ["America/New_York"],
+    "observationStations": [
+      "https://api.weather.gov/stations/KVLD",
+      "https://api.weather.gov/stations/KAAF",
+      "https://api.weather.gov/stations/KABY",
+      "https://api.weather.gov/stations/KBGE",
+      "https://api.weather.gov/stations/KCTY",
+      "https://api.weather.gov/stations/KFPY",
+      "https://api.weather.gov/stations/KGNV",
+      "https://api.weather.gov/stations/KTLH",
+      "https://api.weather.gov/stations/KVAD"
+    ],
+    "radarStation": "VAX"
+  }
+}

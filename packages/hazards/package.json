@@ -1,0 +1,41 @@
+{
+  "name": "@openconditions/hazards",
+  "version": "0.1.0",
+  "description": "Hazard parsers for OpenConditions: CAP weather and civil-protection alerts, wildfires, smoke, earthquakes and natural events into alert and natural-hazard situations and fire-pixel readings, and the hazards ingest domain",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/model": "workspace:*",
+    "@openconditions/model-hazards": "workspace:*",
+    "fast-xml-parser": "^5.11.1"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "tsup": "^8.5.1",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.11"
+  }
+}

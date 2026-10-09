@@ -1,0 +1,186 @@
+{
+  "warnings": [
+    {
+      "alert": {
+        "identifier": "2.49.0.0.40.0.AT.-20261005084325_ATNT_803",
+        "incidents": "Update",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Dornbirn",
+                "geocode": [
+                  {
+                    "value": "AT803",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Ab sofort (05.10.2026 08:43) ist mit Gewittern zu rechnen.",
+            "effective": "2026-10-05T08:43:25+02:00",
+            "event": "Gewitterwarnung",
+            "expires": "2026-10-05T09:43:25+02:00",
+            "headline": "Gewitterwarnung",
+            "instruction": "VORSICHT bei Aktivitäten im Freien, Gewitter sind möglich. Achtung an exponierten Stellen, wie auf Bergen und freien Flächen sowie im Wald.",
+            "language": "de-DE",
+            "onset": "2026-10-05T08:43:25+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "3; Thunderstorm",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "GeoSphere Austria",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "http://warnungen.zamg.at/html/de/heute/Gewitter/at/vorarlberg/"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Dornbirn",
+                "geocode": [
+                  {
+                    "value": "AT803",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Henceforth (05.10.2026 08:43) thunderstorms are possible.",
+            "effective": "2026-10-05T08:43:25+02:00",
+            "event": "Thunderstormwarning",
+            "expires": "2026-10-05T09:43:25+02:00",
+            "headline": "Thunderstormwarning",
+            "instruction": "BE AWARE that thunderstorms may occur. Take extra care in exposed areas, like mountains, forest and open terrain. Disruption to outdoor activities is possible.",
+            "language": "en-GB",
+            "onset": "2026-10-05T08:43:25+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "3; Thunderstorm",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "GeoSphere Austria",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "http://warnungen.zamg.at/html/de/heute/Gewitter/at/vorarlberg/"
+          }
+        ],
+        "msgType": "Update",
+        "references": "cap@zamg.ac.at,2.49.0.0.40.0.AT.-20261005083327_ATNT_803,2026-10-05T08:33:27+02:00",
+        "scope": "Public",
+        "sender": "cap@zamg.ac.at",
+        "sent": "2026-10-05T08:43:25+02:00",
+        "status": "Actual"
+      },
+      "uuid": "014d0c7f-6abd-4f1b-b93b-4f5660fa9c26"
+    },
+    {
+      "alert": {
+        "identifier": "2.49.0.0.40.0.AT.-20261005084325_ATNT_804",
+        "incidents": "Update",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Feldkirch",
+                "geocode": [
+                  {
+                    "value": "AT804",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Ab sofort (05.10.2026 08:43) ist mit Gewittern zu rechnen.",
+            "effective": "2026-10-05T08:43:26+02:00",
+            "event": "Gewitterwarnung",
+            "expires": "2026-10-05T09:43:25+02:00",
+            "headline": "Gewitterwarnung",
+            "instruction": "VORSICHT bei Aktivitäten im Freien, Gewitter sind möglich. Achtung an exponierten Stellen, wie auf Bergen und freien Flächen sowie im Wald.",
+            "language": "de-DE",
+            "onset": "2026-10-05T08:43:25+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "3; Thunderstorm",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "GeoSphere Austria",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "http://warnungen.zamg.at/html/de/heute/Gewitter/at/vorarlberg/"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Feldkirch",
+                "geocode": [
+                  {
+                    "value": "AT804",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Henceforth (05.10.2026 08:43) thunderstorms are possible.",
+            "effective": "2026-10-05T08:43:26+02:00",
+            "event": "Thunderstormwarning",
+            "expires": "2026-10-05T09:43:25+02:00",
+            "headline": "Thunderstormwarning",
+            "instruction": "BE AWARE that thunderstorms may occur. Take extra care in exposed areas, like mountains, forest and open terrain. Disruption to outdoor activities is possible.",
+            "language": "en-GB",
+            "onset": "2026-10-05T08:43:25+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "3; Thunderstorm",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "GeoSphere Austria",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "http://warnungen.zamg.at/html/de/heute/Gewitter/at/vorarlberg/"
+          }
+        ],
+        "msgType": "Update",
+        "references": "cap@zamg.ac.at,2.49.0.0.40.0.AT.-20261005083327_ATNT_804,2026-10-05T08:33:27+02:00",
+        "scope": "Public",
+        "sender": "cap@zamg.ac.at",
+        "sent": "2026-10-05T08:43:25+02:00",
+        "status": "Actual"
+      },
+      "uuid": "764c1ee8-8193-4c91-96b9-5b7dfb834f13"
+    }
+  ]
+}

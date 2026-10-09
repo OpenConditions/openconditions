@@ -90,6 +90,8 @@ export interface LatestObservationQuery {
   canonical?: boolean;
   /** The instant readings are current at: not past their expiry. Default now. */
   at?: Date;
+  /** Only readings in effect from this instant on (their phenomenon started then or later). */
+  since?: Date;
   /** The series id the previous page ended at. */
   cursor?: number;
   limit: number;
@@ -154,6 +156,9 @@ export async function listLatestObservations(
   if (q.origins?.length) {
     clauses.push(`l.template #>> '{provenance,origin}' = ANY(${p([...q.origins])}::text[])`);
   }
+  if (q.since !== undefined) {
+    clauses.push(`l.effective_from >= ${p(q.since.toISOString())}::timestamptz`);
+  }
   if (q.cursor !== undefined) clauses.push(`l.series_id > ${p(q.cursor)}`);
   const rows = await db.execute<Rec[]>(
     `SELECT l.series_id::text AS series_id, ${readingColumns("l")}
@@ -167,6 +172,122 @@ export async function listLatestObservations(
   return {
     records: await withPolledValidity(db, registry, page.map(withEvidence)),
     next: rows.length > q.limit ? String(page.at(-1)!["series_id"]) : null,
+  };
+}
+
+/** The most cells a grid read may cover: past it, a coarser cell is asked for. */
+export const MAX_GRID_CELLS = 50_000;
+
+/** The cells, aligned on multiples of `cellDeg` from 0°, that `bbox` touches. */
+export function gridCellCount(bbox: readonly [number, number, number, number], cellDeg: number) {
+  const [w, s, e, n] = bbox;
+  const span = (lo: number, hi: number) => Math.floor(hi / cellDeg) - Math.floor(lo / cellDeg) + 1;
+  return span(w, e) * span(s, n);
+}
+
+/** The provenance a grid read judges a source's readings by: the licences they carry. */
+export interface GridProvenance {
+  attribution: { license: string };
+  upstream?: { license?: string }[];
+}
+
+export interface GridQuery {
+  scope: Scope;
+  property: string;
+  /** west, south, east, north. */
+  bbox: [number, number, number, number];
+  /** The cell size in degrees. */
+  cellDeg: number;
+  /** Only readings in effect from this instant on. */
+  since: Date;
+  sources?: readonly string[];
+  /** The instant readings are current at. Default now. */
+  at?: Date;
+  /** Whether readings of this provenance may be counted (the licence egress); default all. */
+  admits?: (provenance: GridProvenance) => boolean;
+}
+
+export interface Grid {
+  /** Each cell with a reading: its centre's longitude and latitude, the count, sum and maximum. */
+  cells: [number, number, number, number, number][];
+  /** The sources counted, sorted. */
+  sources: string[];
+}
+
+const round6 = (x: number) => Math.round(x * 1e6) / 1e6;
+
+/**
+ * The current numeric readings of one property in `bbox`, counted, summed
+ * and maximised per cell of `cellDeg` degrees: a world of fire pixels as a
+ * few thousand cells instead of hundreds of thousands of readings. A reading
+ * falls in the cell of its geometry's point on surface. The scope's sources
+ * and `admits` decide what is counted, as they would decide what is served.
+ */
+export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
+  const params: unknown[] = [(q.at ?? new Date()).toISOString()];
+  const p = (value: unknown) => {
+    params.push(value);
+    return `$${params.length}`;
+  };
+  const [w, s, e, n] = q.bbox;
+  const cell = `${p(q.cellDeg)}::float8`;
+  const clauses = [
+    ...currentReadingClauses("l", "$1", q.scope),
+    `l.source_id <> ALL(${p([...FUSED_SOURCE_IDS])}::text[])`,
+    `l.property = ${p(q.property)}`,
+    "l.value_num IS NOT NULL",
+    `l.effective_from >= ${p(q.since.toISOString())}::timestamptz`,
+    `l.geom && ST_MakeEnvelope(${p(w)}, ${p(s)}, ${p(e)}, ${p(n)}, 4326)`,
+  ];
+  if (q.sources?.length) clauses.push(`l.source_id = ANY(${p([...q.sources])}::text[])`);
+  const rows = await db.execute<
+    {
+      x: number;
+      y: number;
+      source_id: string;
+      provenance: GridProvenance;
+      n: number;
+      sum: number;
+      max: number;
+    }[]
+  >(
+    `SELECT floor(ST_X(pt.g) / ${cell})::int AS x, floor(ST_Y(pt.g) / ${cell})::int AS y,
+            l.source_id,
+            jsonb_build_object(
+              'attribution', l.template #> '{provenance,attribution}',
+              'upstream', COALESCE(l.template #> '{provenance,upstream}', '[]'::jsonb)
+            ) AS provenance,
+            count(*)::int AS n, sum(l.value_num)::float8 AS sum, max(l.value_num)::float8 AS max
+       FROM conditions.observation_latest l
+       CROSS JOIN LATERAL (SELECT ST_PointOnSurface(l.geom) AS g) pt
+      WHERE ${clauses.join(" AND ")}
+      GROUP BY 1, 2, 3, 4`,
+    params,
+  );
+  const cells = new Map<string, [number, number, number, number, number]>();
+  const sources = new Set<string>();
+  for (const r of rows) {
+    if (q.admits !== undefined && !q.admits(r.provenance)) continue;
+    sources.add(r.source_id);
+    const key = `${r.x},${r.y}`;
+    const held = cells.get(key);
+    if (held === undefined) {
+      cells.set(key, [
+        round6((r.x + 0.5) * q.cellDeg),
+        round6((r.y + 0.5) * q.cellDeg),
+        r.n,
+        r.sum,
+        r.max,
+      ]);
+    } else {
+      held[2] += r.n;
+      held[3] += r.sum;
+      held[4] = Math.max(held[4], r.max);
+    }
+  }
+  return {
+    cells: [...cells.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]),
+    sources: [...sources].sort(),
   };
 }
 

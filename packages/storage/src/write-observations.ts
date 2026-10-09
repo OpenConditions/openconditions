@@ -156,6 +156,12 @@ interface Latest {
   ended: boolean;
 }
 
+/** A reading of a transient property, with its property's entry. */
+interface Transient {
+  draft: Rec;
+  property: PropertyEntry;
+}
+
 /** What a write learns from the rest of its poll. */
 export interface ObservationWriteContext extends WriteContext, PollRef {
   /** Features this poll created or changed: a reading about one is written though its result held. */
@@ -179,6 +185,8 @@ export interface ObservationWriteContext extends WriteContext, PollRef {
  * not reach is counted and kept from history; it still updates the latest
  * row when it is the newest. `stage` says whether the inputs are drafts to
  * seal here or records another instance already sealed.
+ * A reading of a transient property is appended apart from the rest
+ * (`writeTransient`): its series is never compared with what is stored.
  */
 export async function writeObservationsIn(
   tx: Sql,
@@ -200,6 +208,7 @@ export async function writeObservationsIn(
   const now = Date.parse(ctx.now);
 
   const pending = new Map<string, { key: SeriesKey; drafts: Rec[] }>();
+  const transient = new Map<string, Transient>();
   let handled = 0;
   for (const input of drafts) {
     if (++handled % RECORDS_PER_TURN === 0) await pause();
@@ -217,6 +226,17 @@ export async function writeObservationsIn(
           : input;
       const key = seriesKeyOf(draft);
       const k = keyString(key);
+      const property = ctx.registry.property(key.property);
+      if (property?.transient) {
+        // One statement may not write a row twice: a poll's later reading of
+        // a series stands for its earlier ones.
+        const earlier = transient.get(k);
+        if (earlier !== undefined) counts.unchanged++;
+        if (earlier === undefined || startOf(draft) >= startOf(earlier.draft)) {
+          transient.set(k, { draft, property });
+        }
+        continue;
+      }
       const entry = pending.get(k) ?? { key, drafts: [] };
       entry.drafts.push(draft);
       pending.set(k, entry);
@@ -443,7 +463,105 @@ export async function writeObservationsIn(
     "series_id",
   );
   counts.history = stored.length;
+  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage);
   return counts;
+}
+
+/**
+ * Appends readings of transient properties: each series holds one reading
+ * of one instant (a satellite detection at a place), so nothing stored is
+ * read to compare with. A series is created with its reading and its
+ * history row; a reading its series already holds, or an older one, writes
+ * nothing; a later reading of the same series (a detection at the very same
+ * place) moves its row like any newer reading. A poll restating a day of
+ * detections thus costs one insert per reading and no read of its source's
+ * series.
+ */
+async function writeTransient(
+  tx: Sql,
+  readings: readonly Transient[],
+  ctx: ObservationWriteContext,
+  counts: ObservationCounts,
+  rejected: Rejection[],
+  stage: "draft" | "stored",
+): Promise<void> {
+  if (readings.length === 0) return;
+  const now = Date.parse(ctx.now);
+  const seriesRows: Rec[] = [];
+  const history = new Map<string, Rec>();
+  let handled = 0;
+  for (const { draft, property } of readings) {
+    if (++handled % RECORDS_PER_TURN === 0) await pause();
+    const sealed =
+      stage === "stored"
+        ? ctx.registry.validate(draft)
+        : sealRecord(ctx.registry, draft, {
+            instanceId: ctx.instanceId,
+            revision: 1,
+            recordedAt: ctx.now,
+            contentHash: contentHash(draft),
+          });
+    if (!sealed.ok) {
+      rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
+      continue;
+    }
+    const record = sealed.value as unknown as Rec;
+    const retentionDays = retentionDaysOf(property);
+    seriesRows.push(
+      seriesRowOf({ ...record, sinceAt: effectiveFrom(record) }, property, retentionDays, ctx.now),
+    );
+    if (
+      retentionDays === undefined ||
+      !historyEligible(record as unknown as Parameters<typeof historyEligible>[0])
+    ) {
+      continue;
+    }
+    if (!partitionCovers(retentionDays, startOf(record), now)) {
+      counts.outsideRetention++;
+      continue;
+    }
+    history.set(keyString(seriesKeyOf(record)), {
+      retention_days: retentionDays,
+      ...historyRowOf(record, property.result, retentionDays > 0 ? ctx : {}),
+    });
+  }
+  type Written = { series_id: number } & Record<
+    "subject_key" | "property" | "qualifier_key" | "source_id",
+    string
+  >;
+  const written = await insertRows<Written>(
+    tx,
+    "observation_latest",
+    SERIES_COLUMNS,
+    seriesRows,
+    `${upsertClause(SERIES_KEY, SERIES_COLUMNS)}
+       WHERE observation_latest.effective_from < excluded.effective_from`,
+    "series_id, subject_key, property, qualifier_key, source_id",
+  );
+  counts.latest += written.length;
+  counts.unchanged += seriesRows.length - written.length;
+  // Only a reading that wrote its series is new: one its series already
+  // held has its history row.
+  const rows = written.flatMap((w) => {
+    const row = history.get(
+      keyString({
+        subjectKey: w.subject_key,
+        property: w.property,
+        qualifierKey: w.qualifier_key,
+        sourceId: w.source_id,
+      }),
+    );
+    return row === undefined ? [] : [{ ...row, series_id: Number(w.series_id) }];
+  });
+  const stored = await insertRows(
+    tx,
+    "observation",
+    HISTORY_COLUMNS,
+    rows,
+    `ON CONFLICT (${HISTORY_KEY.join(", ")}) DO NOTHING`,
+    "series_id",
+  );
+  counts.history += stored.length;
 }
 
 /**

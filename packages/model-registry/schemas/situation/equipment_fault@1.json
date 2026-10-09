@@ -422,7 +422,9 @@
             "netex:line",
             "netex:stop_place",
             "irwin",
-            "usgs:event"
+            "usgs:event",
+            "gdacs:event",
+            "glide"
           ]
         },
         "id": {
@@ -641,7 +643,9 @@
                       "warncellid",
                       "emma_id",
                       "sgc",
-                      "eccc_clc"
+                      "eccc_clc",
+                      "cisorp",
+                      "fips10_4"
                     ]
                   },
                   "code": {
@@ -1932,7 +1936,17 @@
             "tankerkoenig",
             "econtrol",
             "prix-carburants",
-            "minetur"
+            "minetur",
+            "cap",
+            "nws",
+            "meteoalarm",
+            "firms",
+            "wfigs",
+            "effis",
+            "hms",
+            "usgs",
+            "eonet",
+            "gdacs"
           ]
         },
         "accessMode": {
@@ -2713,7 +2727,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -3162,7 +3178,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -3676,7 +3694,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -4119,7 +4139,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -4575,7 +4597,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -5036,7 +5060,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -5503,7 +5529,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -5961,7 +5989,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -6410,7 +6440,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -6843,7 +6875,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {
@@ -7280,7 +7314,9 @@
                               "warncellid",
                               "emma_id",
                               "sgc",
-                              "eccc_clc"
+                              "eccc_clc",
+                              "cisorp",
+                              "fips10_4"
                             ]
                           },
                           "code": {

@@ -103,7 +103,8 @@ describe("production registry", () => {
         .map(([kind, domain]) => `${kind}:${domain}`),
     ).toEqual(["alert:hazards", "natural_hazard:hazards"]);
     expect(registry.property("fire.frp")?.domain).toBe("hazards");
-    expect(registry.property("fire.brightness")?.domain).toBe("hazards");
+    expect(registry.property("fire.frp")?.transient).toBe(true);
+    expect(registry.property("fire.brightness")).toBeUndefined();
   });
 
   it("observes an open status on every site an operator opens and closes", () => {

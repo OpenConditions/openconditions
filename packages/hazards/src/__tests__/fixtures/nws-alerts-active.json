@@ -1,0 +1,395 @@
+{
+  "@context": [
+    "https://geojson.org/geojson-ld/geojson-context.jsonld",
+    {
+      "@version": "1.1",
+      "wx": "https://api.weather.gov/ontology#",
+      "@vocab": "https://api.weather.gov/ontology#"
+    }
+  ],
+  "type": "FeatureCollection",
+  "title": "Current watches, warnings, and advisories",
+  "updated": "2026-10-08T21:04:22+00:00",
+  "features": [
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.92a6a97344b063a5eb661929f4f0d9d23699668a.001.1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-157.88, 21.27],
+            [-157.98, 21.29],
+            [-158.1, 21.27],
+            [-158.25, 21.47],
+            [-158.25, 21.52],
+            [-158.3, 21.59],
+            [-158.12, 21.61],
+            [-158.01, 21.72],
+            [-157.82, 21.54],
+            [-157.82, 21.47],
+            [-157.76, 21.49],
+            [-157.71, 21.43],
+            [-157.71, 21.41],
+            [-157.68, 21.35],
+            [-157.63, 21.32],
+            [-157.63, 21.3],
+            [-157.68, 21.24],
+            [-157.7, 21.23],
+            [-157.75, 21.25],
+            [-157.83, 21.23],
+            [-157.88, 21.27]
+          ]
+        ]
+      },
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.92a6a97344b063a5eb661929f4f0d9d23699668a.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.92a6a97344b063a5eb661929f4f0d9d23699668a.001.1",
+        "areaDesc": "Oahu in Honolulu, HI",
+        "geocode": {
+          "SAME": ["015003"],
+          "UGC": ["HIC003"]
+        },
+        "affectedZones": ["https://api.weather.gov/zones/county/HIC003"],
+        "references": [],
+        "sent": "2026-10-08T10:21:00-10:00",
+        "effective": "2026-10-08T10:21:00-10:00",
+        "onset": "2026-10-08T10:21:00-10:00",
+        "expires": "2026-10-08T13:15:00-10:00",
+        "ends": "2026-10-08T13:15:00-10:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Severe",
+        "certainty": "Likely",
+        "urgency": "Immediate",
+        "event": "Flash Flood Warning",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Honolulu HI",
+        "headline": "Flash Flood Warning issued October 8 at 10:21AM HST until October 8 at 1:15PM HST by NWS Honolulu HI",
+        "description": "FFWHFO\n\nThe National Weather Service in Honolulu has issued a\n\n* Flash Flood Warning for...\nThe island of Oahu in Honolulu County\n\n* Until 115 PM HST.\n\n* At 1021 AM HST, emergency management reported water flowing over\nportions of Kamehameha Highway on the North Shore between Turtle\nBay and Sharks's Cove, making passage through the area dangerous.\nModerate to locally heavy rain continues to develop and move over\nthe island with the majority occurring over the western half of the\nisland. Rain rates range from 0.5 to 2 inches per hour. Flash\nflooding is ongoing or expected to begin shortly. Additional\nshowers with embedded heavier rain are expected to move over the\nisland for the next few hours, especially the western half.\n\nHAZARD...Flash flooding caused by heavy rain.\n\nSOURCE...Emergency management reported.\n\nIMPACT...Flash flooding of small creeks and streams, urban areas,\nhighways, streets and underpasses as well as other poor\ndrainage and low-lying areas.\n\n* Some locations that will experience flash flooding include...\nthe entire island of Oahu.",
+        "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nPlease report observed flooding to local emergency services or law\nenforcement and request they pass this information to the National\nWeather Service when you can do so safely.",
+        "response": "Avoid",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": ["FFWHFO"],
+          "WMOidentifier": ["WGHW50 PHFO 082021"],
+          "flashFloodDetection": ["OBSERVED"],
+          "BLOCKCHANNEL": ["EAS", "NWEM", "CMAS"],
+          "EAS-ORG": ["WXR"],
+          "VTEC": ["/O.NEW.PHFO.FF.W.0055.261008T2021Z-261008T2315Z/"],
+          "eventEndingTime": ["2026-10-08T13:15:00-10:00"]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": ["FFW"],
+          "NationalWeatherService": ["FFW"]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a3d2bee0d4bf148bc17102b75cce7c72775dab84.002.1",
+      "type": "Feature",
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [[-82.44, 28.98], [-82.48, 29.02], [-82.44, 29.09], [-82.37, 29.07], [-82.44, 28.98]]
+        ]
+      },
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a3d2bee0d4bf148bc17102b75cce7c72775dab84.002.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.a3d2bee0d4bf148bc17102b75cce7c72775dab84.002.1",
+        "areaDesc": "Citrus, FL; Levy, FL; Marion, FL",
+        "geocode": {
+          "SAME": ["012017", "012075", "012083"],
+          "UGC": ["FLC017", "FLC075", "FLC083"]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/county/FLC017",
+          "https://api.weather.gov/zones/county/FLC075",
+          "https://api.weather.gov/zones/county/FLC083"
+        ],
+        "references": [
+          {
+            "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.90d2cd9ab9db07e57853ce8f68153f65459db1bd.001.1",
+            "identifier": "urn:oid:2.49.0.1.840.0.90d2cd9ab9db07e57853ce8f68153f65459db1bd.001.1",
+            "sender": "w-nws.webmaster@noaa.gov",
+            "sent": "2026-10-07T21:34:00-04:00"
+          }
+        ],
+        "sent": "2026-10-08T11:37:00-04:00",
+        "effective": "2026-10-08T11:37:00-04:00",
+        "onset": "2026-10-08T11:37:00-04:00",
+        "expires": "2026-10-09T07:45:00-04:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Update",
+        "category": "Met",
+        "severity": "Severe",
+        "certainty": "Observed",
+        "urgency": "Immediate",
+        "event": "Flood Warning",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Tampa Bay Ruskin FL",
+        "headline": "Flood Warning issued October 8 at 11:37AM EDT by NWS Tampa Bay Ruskin FL",
+        "description": "...The Flood Warning is extended for the following rivers in\nFlorida...\n\nCypress Creek At SR 54 Worthington Gardens affecting Pasco County.\n\n...The Flood Warning continues for the following rivers in Florida...\n\nWithlacoochee At US 41 Dunnellon affecting Levy, Marion and Citrus\nCounties.\n\n.Due to recent heavy rainfall, water levels on Cypress Creek have\nrisen. With additional heavy rainfall forecast, water levels are\nexpected to continue rising, and could reach minor flood stage in the\nnext few days.\n\nElevated water levels continue on the Withlacoochee River at\nDunnellon due to a combination of excessive hydrilla growth along a\n4.5 mile stretch of river between U.S. 41 and Lake Rousseau, and\nrecent heavy rainfall. Water levels are expected to hold steady\nbefore slowly decreasing over the next several days. However, the\nriver is forecast to remain in flood stage.\n\n* WHAT...Minor flooding is occurring and minor flooding is forecast.\n\n* WHERE...Withlacoochee at US 41 Dunnellon.\n\n* WHEN...Until further notice.\n\n* IMPACTS...At 28.2 feet, Docks and boat ramps flood along the river\nin Citrus and Marion counties.\n\n* ADDITIONAL DETAILS...\n- At 10:45 AM EDT Thursday the stage was 28.5 feet.\n- Bankfull stage is 28.2 feet.\n- Recent Activity...The maximum river stage in the 24 hours ending\nat 10:45 AM EDT Thursday was 28.6 feet.\n- Forecast...The river is expected to rise to a crest of 28.5 feet\nthis afternoon.\n- Flood stage is 28.2 feet.\n- Flood History...This crest compares to a previous crest of 28.5\nfeet on 10/12/1995.\n- https://www.weather.gov/safety/flood",
+        "instruction": "Turn around, don't drown when encountering flooded roads. Most flood\ndeaths occur in vehicles.\n\nMotorists should not attempt to drive around barricades or drive cars\nthrough flooded areas.\n\nAdditional information is available at www.weather.gov.\n\nThe next statement will be issued Friday morning at 745 AM EDT.",
+        "response": "Avoid",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": ["FLSTBW"],
+          "WMOidentifier": ["WGUS82 KTBW 081537"],
+          "NWSheadline": ["FLOOD WARNING REMAINS IN EFFECT UNTIL FURTHER NOTICE"],
+          "BLOCKCHANNEL": ["EAS", "NWEM", "CMAS"],
+          "EAS-ORG": ["WXR"],
+          "VTEC": ["/O.CON.KTBW.FL.W.0009.000000T0000Z-000000T0000Z/"],
+          "expiredReferences": [
+            "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.e5b162b63db4059beac74c91ded7803d1d2b8f3d.001.1,2026-10-07T15:47:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9e30a37fe3135e733bd102cecffda4f2fb583ce3.001.1,2026-10-07T11:22:00-04:00 w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.9b23803be4c3880ba1697fe86cfc5bb9d7047a3a.001.1,2026-10-07T06:34:00-04:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": ["FLS"],
+          "NationalWeatherService": ["FLW"]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a273c7190a0a5a2d8a5c453d4cdae9049a16ae28.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.a273c7190a0a5a2d8a5c453d4cdae9049a16ae28.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.a273c7190a0a5a2d8a5c453d4cdae9049a16ae28.001.1",
+        "areaDesc": "Madison; Inland Taylor; Coastal Taylor; Turner; Tift; Ben Hill; Irwin; Cook; Brooks",
+        "geocode": {
+          "SAME": ["012079", "012123", "013287", "013277", "013017", "013155", "013075", "013027"],
+          "UGC": [
+            "FLZ019",
+            "FLZ028",
+            "FLZ128",
+            "GAZ128",
+            "GAZ129",
+            "GAZ130",
+            "GAZ131",
+            "GAZ147",
+            "GAZ159"
+          ]
+        },
+        "affectedZones": [
+          "https://api.weather.gov/zones/forecast/FLZ019",
+          "https://api.weather.gov/zones/forecast/FLZ028",
+          "https://api.weather.gov/zones/forecast/FLZ128",
+          "https://api.weather.gov/zones/forecast/GAZ128",
+          "https://api.weather.gov/zones/forecast/GAZ129",
+          "https://api.weather.gov/zones/forecast/GAZ130",
+          "https://api.weather.gov/zones/forecast/GAZ131",
+          "https://api.weather.gov/zones/forecast/GAZ147",
+          "https://api.weather.gov/zones/forecast/GAZ159"
+        ],
+        "references": [],
+        "sent": "2026-10-08T17:04:00-04:00",
+        "effective": "2026-10-08T17:04:00-04:00",
+        "onset": "2026-10-09T05:00:00-04:00",
+        "expires": "2026-10-09T05:15:00-04:00",
+        "ends": "2026-10-10T20:00:00-04:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Severe",
+        "certainty": "Possible",
+        "urgency": "Future",
+        "event": "Flood Watch",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Tallahassee FL",
+        "headline": "Flood Watch issued October 8 at 5:04PM EDT until October 10 at 8:00PM EDT by NWS Tallahassee FL",
+        "description": "* WHAT...Flooding caused by excessive rainfall continues to be\npossible.\n\n* WHERE...Portions of Big Bend Florida, including the following\nareas, Coastal Taylor, Inland Taylor and Madison and south central\nGeorgia, including the following areas, Ben Hill, Brooks, Cook,\nIrwin, Tift and Turner.\n\n* WHEN...From late tonight through Saturday evening.\n\n* IMPACTS...Excessive runoff may result in flooding of rivers,\ncreeks, streams, and other low-lying and flood-prone locations.\n\n* ADDITIONAL DETAILS...\n- Hurricane Isaias is expected to bring bands of heavy rainfall to\nthe area. Widespread totals of 4 to 8 inches are expected with\nlocalized amounts of 10 to 15 inches. Given saturated soils from\nrecent heavy rainfall, flash flooding is expected. Considerable\nflash flooding is possible where bands of heavy rain move\nrepeatedly over the same area.\n- http://www.weather.gov/safety/flood",
+        "instruction": "You should monitor later forecasts and be alert for possible Flood\nWarnings. Those living in areas prone to flooding should be prepared\nto take action should flooding develop.",
+        "response": "Prepare",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": ["FFATAE"],
+          "WMOidentifier": ["WGUS62 KTAE 082104"],
+          "NWSheadline": ["FLOOD WATCH IN EFFECT FROM LATE TONIGHT THROUGH SATURDAY EVENING"],
+          "BLOCKCHANNEL": ["EAS", "NWEM", "CMAS"],
+          "EAS-ORG": ["WXR"],
+          "VTEC": ["/O.EXB.KTAE.FA.A.0005.261009T0900Z-261011T0000Z/"],
+          "eventEndingTime": ["2026-10-10T20:00:00-04:00"]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": ["FFA"],
+          "NationalWeatherService": ["FAA"]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.58efb8d5eadaa26c8c504963d5795835caecf788.004.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.58efb8d5eadaa26c8c504963d5795835caecf788.004.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.58efb8d5eadaa26c8c504963d5795835caecf788.004.1",
+        "areaDesc": "Cape Decision to Cape Edgecumbe from 15 to 80 NM",
+        "geocode": {
+          "SAME": ["058662"],
+          "UGC": ["PKZ662"]
+        },
+        "affectedZones": ["https://api.weather.gov/zones/forecast/PKZ662"],
+        "references": [],
+        "sent": "2026-10-08T12:03:00-08:00",
+        "effective": "2026-10-08T12:03:00-08:00",
+        "onset": "2026-10-09T01:00:00-08:00",
+        "expires": "2026-10-08T20:15:00-08:00",
+        "ends": "2026-10-09T18:00:00-08:00",
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Minor",
+        "certainty": "Likely",
+        "urgency": "Expected",
+        "event": "Small Craft Advisory",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Juneau AK",
+        "headline": "Small Craft Advisory issued October 8 at 12:03PM AKDT until October 9 at 6:00PM AKDT by NWS Juneau AK",
+        "description": "* WHAT...Northwest winds 15 to 25 kt and seas 6 to 9 ft expected.\n\n* WHERE...Cape Decision to Cape Edgecumbe from 15 to 80 NM.\n\n* WHEN...From 1 AM to 6 PM AKDT Friday.\n\n* IMPACTS...Conditions will be hazardous to small craft.",
+        "instruction": "Inexperienced mariners, especially those operating smaller\nvessels, should avoid navigating in hazardous conditions.",
+        "response": "Avoid",
+        "note": null,
+        "parameters": {
+          "AWIPSidentifier": ["MWWAJK"],
+          "WMOidentifier": ["WHAK77 PAJK 082003"],
+          "NWSheadline": ["SMALL CRAFT ADVISORY REMAINS IN EFFECT FROM 1 AM TO 6 PM AKDT FRIDAY"],
+          "BLOCKCHANNEL": ["EAS", "NWEM", "CMAS"],
+          "VTEC": ["/O.CON.PAJK.SC.Y.0322.261009T0900Z-261010T0200Z/"],
+          "eventEndingTime": ["2026-10-09T18:00:00-08:00"],
+          "expiredReferences": [
+            "w-nws.webmaster@noaa.gov,urn:oid:2.49.0.1.840.0.f2495123a73bdf07f23ed1776c91a43a545b7173.004.1,2026-10-08T03:50:00-08:00"
+          ]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": ["NWS"],
+          "NationalWeatherService": ["SCY"]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8c84ea8eb3b6eabb337ba839a0526eeac1b8115b.001.1",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0.8c84ea8eb3b6eabb337ba839a0526eeac1b8115b.001.1",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0.8c84ea8eb3b6eabb337ba839a0526eeac1b8115b.001.1",
+        "areaDesc": "Maricopa, AZ",
+        "geocode": {
+          "SAME": ["004013"],
+          "UGC": ["AZC013"]
+        },
+        "affectedZones": ["https://api.weather.gov/zones/county/AZC013"],
+        "references": [],
+        "sent": "2026-10-08T08:48:00-07:00",
+        "effective": "2026-10-08T08:48:00-07:00",
+        "onset": "2026-10-08T08:48:00-07:00",
+        "expires": "2026-10-08T21:00:00-07:00",
+        "ends": null,
+        "status": "Actual",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Air Quality Alert",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS Phoenix AZ",
+        "headline": "Air Quality Alert issued October 8 at 8:48AM MST by NWS Phoenix AZ",
+        "description": "AQAPSR\n\nThe Arizona Department of Environmental Quality (ADEQ) has issued an\nOzone High Pollution Advisory for the Phoenix Metro Area today\n(Thursday).\n\nThis means that forecast weather conditions combined with existing\nozone levels are expected to result in local maximum 8-hour ozone\nconcentrations that pose a health risk. Adverse health effects\nincrease as air quality deteriorates.\n\nOzone is an air contaminant which can cause breathing difficulties\nfor children, older adults, as well as persons with respiratory\nproblems. A decrease in physical activity is recommended.\n\nYou are urged to car pool, telecommute or use mass transit.\nThe use of gasoline-powered equipment should be reduced or done late\nin the day.\n\nFor details on this High Pollution Advisory, visit the ADEQ internet\nsite at www.azdeq.gov/forecast/phoenix or call 602-771-2300.",
+        "instruction": null,
+        "response": "Monitor",
+        "note": "Non-Weather Emergency Message. Not sent to IPAWS.",
+        "parameters": {
+          "AWIPSidentifier": ["AQAPSR"],
+          "WMOidentifier": ["AEUS75 KPSR 081548"],
+          "NWSheadline": [
+            "OZONE HIGH POLLUTION ADVISORY FOR MARICOPA COUNTY INCLUDING THE PHOENIX METRO AREA TODAY"
+          ],
+          "BLOCKCHANNEL": ["EAS", "NWEM", "CMAS"]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": ["NWS"],
+          "NationalWeatherService": ["AQA"]
+        }
+      }
+    },
+    {
+      "id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPALIVE-49510",
+      "type": "Feature",
+      "geometry": null,
+      "properties": {
+        "@id": "https://api.weather.gov/alerts/urn:oid:2.49.0.1.840.0-KEEPALIVE-49510",
+        "@type": "wx:Alert",
+        "id": "urn:oid:2.49.0.1.840.0-KEEPALIVE-49510",
+        "areaDesc": "Montgomery",
+        "geocode": {
+          "SAME": ["024031"],
+          "UGC": ["MDC031"]
+        },
+        "affectedZones": ["https://api.weather.gov/zones/county/MDC031"],
+        "references": [],
+        "sent": "2026-10-08T21:03:32+00:00",
+        "effective": "2026-10-08T21:03:32+00:00",
+        "onset": null,
+        "expires": "2026-10-08T21:13:32+00:00",
+        "ends": null,
+        "status": "Test",
+        "messageType": "Alert",
+        "category": "Met",
+        "severity": "Unknown",
+        "certainty": "Unknown",
+        "urgency": "Unknown",
+        "event": "Test Message",
+        "sender": "w-nws.webmaster@noaa.gov",
+        "senderName": "NWS",
+        "headline": null,
+        "description": "Monitoring message only. Please disregard.",
+        "instruction": "Monitoring message only. Please disregard.",
+        "response": "None",
+        "note": "This is only a test for monitoring of vital dissemination systems.",
+        "parameters": {
+          "AWIPSidentifier": ["KEPWBC"],
+          "WMOidentifier": ["NZUS91 KWBC 082103"],
+          "BLOCKCHANNEL": ["CMAS", "EAS", "NWEM"]
+        },
+        "scope": "Public",
+        "code": "IPAWSv1.0",
+        "language": "en-US",
+        "web": "http://www.weather.gov",
+        "eventCode": {
+          "SAME": ["NWS"],
+          "NationalWeatherService": ["TST"]
+        }
+      }
+    }
+  ]
+}

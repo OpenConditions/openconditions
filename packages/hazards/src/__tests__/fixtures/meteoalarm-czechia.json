@@ -1,0 +1,386 @@
+{
+  "warnings": [
+    {
+      "alert": {
+        "code": ["SIVS:CHMI/111/89/2018"],
+        "identifier": "2.49.0.0.203.0.CZ.261008084252.XOCZ55_OKCB_000960",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Jihočeský kraj (Dačice, Jindřichův Hradec)",
+                "geocode": [
+                  {
+                    "value": "3104",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ03104",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "3105",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ03105",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "audience": "veřejnost, HZS, web, Meteoalarm",
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Při přechodu studené fronty nárazy severozápadního větru 15 až 20 m/s (55 až 70 km/h).      \n\nMožné komplikace v energetice, lesním hospodářství a dopravě. Možná poškození stromů a lesních porostů. Možné menší škody na energetické infrastruktuře, majetku a zejména starších budovách. Riziko úrazu uvolněnými předměty a zlomenými větvemi. Možné komplikace v dopravě.",
+            "effective": "2026-10-08T10:42:52+02:00",
+            "event": "Silný vítr",
+            "eventCode": [
+              {
+                "value": "V.1",
+                "valueName": "SIVS"
+              }
+            ],
+            "expires": "2026-10-09T01:59:59+02:00",
+            "instruction": "Zajistit okna, dveře, odstranit nebo zabezpečit volně uložené předměty, stany, skleníky apod. Dbát zvýšené opatrnosti při pohybu venku a při řízení vozidel. Na horách omezit túry a nevydávat se zejména do hřebenových partií.",
+            "language": "cs",
+            "onset": "2026-10-08T20:00:00+02:00",
+            "parameter": [
+              {
+                "value": "Během pozdějšího odpoledne a večera bude přes naše území postupovat od severozápadu studená fronta.",
+                "valueName": "situation"
+              },
+              {
+                "value": "2026-10-09T02:00:00+02:00",
+                "valueName": "eventEndingTime"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Execute", "Avoid"],
+            "senderName": "ČHMÚ, Štefan Handžák",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vystrahy-cr.chmi.cz/"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Jihočeský kraj (Dačice, Jindřichův Hradec)",
+                "geocode": [
+                  {
+                    "value": "3104",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ03104",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "3105",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ03105",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "audience": "public, FRS, website, Meteoalarm",
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Wind with gusts between 15 and 20 m/s (55 to 70 km/h).\n\nPossible complications in the energy industry, forestry, and transport. Possible damage to trees and forests. Minor damage to energy infrastructure, property (especially older buildings). Risk of injury from flying or falling objects, especially broken branches. Minor travel delays due to debris and outages.",
+            "effective": "2026-10-08T10:42:52+02:00",
+            "event": "Moderate Wind Related Impact",
+            "eventCode": [
+              {
+                "value": "V.1",
+                "valueName": "SIVS"
+              }
+            ],
+            "expires": "2026-10-09T01:59:59+02:00",
+            "instruction": "Secure windows, doors, remove or anchor loosely stored objects, tents, greenhouses, etc. Watch out for falling objects such as branches or roof tiles. When driving, watch out for strong crosswinds at exposed points such as bridges, drive slowly. In the mountains, limit hikes and avoid ridge areas in particular.",
+            "language": "en-GB",
+            "onset": "2026-10-08T20:00:00+02:00",
+            "parameter": [
+              {
+                "value": "Během pozdějšího odpoledne a večera bude přes naše území postupovat od severozápadu studená fronta.",
+                "valueName": "situation"
+              },
+              {
+                "value": "2026-10-09T02:00:00+02:00",
+                "valueName": "eventEndingTime"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Execute", "Avoid"],
+            "senderName": "CHMI, Štefan Handžák",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vystrahy-cr.chmi.cz/"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "chmi@chmi.cz",
+        "sent": "2026-10-08T10:42:52+02:00",
+        "status": "Actual"
+      },
+      "uuid": "45190de6-2cac-4172-99d4-881d3771fb11"
+    },
+    {
+      "alert": {
+        "code": ["SIVS:CHMI/111/89/2018"],
+        "identifier": "2.49.0.0.203.0.CZ.261008084252.XOCZ55_OKUL_000984",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Ústecký kraj (Bílina, Děčín, Chomutov, Kadaň, Litvínov, Most, Teplice, Ústí nad Labem)",
+                "geocode": [
+                  {
+                    "value": "4201",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04201",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4202",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04202",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4203",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04203",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4204",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04204",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4206",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04206",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4209",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04209",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4213",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04213",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4214",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04214",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "audience": "veřejnost, HZS, web, Meteoalarm",
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Při přechodu studené fronty nárazy severozápadního větru 15 až 20 m/s (55 až 70 km/h).      \n\nMožné komplikace v energetice, lesním hospodářství a dopravě. Možná poškození stromů a lesních porostů. Možné menší škody na energetické infrastruktuře, majetku a zejména starších budovách. Riziko úrazu uvolněnými předměty a zlomenými větvemi. Možné komplikace v dopravě.",
+            "effective": "2026-10-08T10:42:52+02:00",
+            "event": "Silný vítr",
+            "eventCode": [
+              {
+                "value": "V.1",
+                "valueName": "SIVS"
+              }
+            ],
+            "expires": "2026-10-09T00:59:59+02:00",
+            "instruction": "Zajistit okna, dveře, odstranit nebo zabezpečit volně uložené předměty, stany, skleníky apod. Dbát zvýšené opatrnosti při pohybu venku a při řízení vozidel. Na horách omezit túry a nevydávat se zejména do hřebenových partií.",
+            "language": "cs",
+            "onset": "2026-10-08T16:00:00+02:00",
+            "parameter": [
+              {
+                "value": "Během pozdějšího odpoledne a večera bude přes naše území postupovat od severozápadu studená fronta.",
+                "valueName": "situation"
+              },
+              {
+                "value": "2026-10-09T01:00:00+02:00",
+                "valueName": "eventEndingTime"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Execute", "Avoid"],
+            "senderName": "ČHMÚ, Štefan Handžák",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vystrahy-cr.chmi.cz/"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Ústecký kraj (Bílina, Děčín, Chomutov, Kadaň, Litvínov, Most, Teplice, Ústí nad Labem)",
+                "geocode": [
+                  {
+                    "value": "4201",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04201",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4202",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04202",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4203",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04203",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4204",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04204",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4206",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04206",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4209",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04209",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4213",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04213",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "4214",
+                    "valueName": "CISORP"
+                  },
+                  {
+                    "value": "CZ04214",
+                    "valueName": "EMMA_ID"
+                  }
+                ]
+              }
+            ],
+            "audience": "public, FRS, website, Meteoalarm",
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Wind with gusts between 15 and 20 m/s (55 to 70 km/h).\n\nPossible complications in the energy industry, forestry, and transport. Possible damage to trees and forests. Minor damage to energy infrastructure, property (especially older buildings). Risk of injury from flying or falling objects, especially broken branches. Minor travel delays due to debris and outages.",
+            "effective": "2026-10-08T10:42:52+02:00",
+            "event": "Moderate Wind Related Impact",
+            "eventCode": [
+              {
+                "value": "V.1",
+                "valueName": "SIVS"
+              }
+            ],
+            "expires": "2026-10-09T00:59:59+02:00",
+            "instruction": "Secure windows, doors, remove or anchor loosely stored objects, tents, greenhouses, etc. Watch out for falling objects such as branches or roof tiles. When driving, watch out for strong crosswinds at exposed points such as bridges, drive slowly. In the mountains, limit hikes and avoid ridge areas in particular.",
+            "language": "en-GB",
+            "onset": "2026-10-08T16:00:00+02:00",
+            "parameter": [
+              {
+                "value": "Během pozdějšího odpoledne a večera bude přes naše území postupovat od severozápadu studená fronta.",
+                "valueName": "situation"
+              },
+              {
+                "value": "2026-10-09T01:00:00+02:00",
+                "valueName": "eventEndingTime"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Execute", "Avoid"],
+            "senderName": "CHMI, Štefan Handžák",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vystrahy-cr.chmi.cz/"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "chmi@chmi.cz",
+        "sent": "2026-10-08T10:42:52+02:00",
+        "status": "Actual"
+      },
+      "uuid": "85f605c3-54bf-4365-8a04-729cfbf9e460"
+    }
+  ]
+}

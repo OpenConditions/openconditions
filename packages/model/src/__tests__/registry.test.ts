@@ -8,6 +8,7 @@ import {
   defineKind,
   defineProperty,
   extendVocabulary,
+  type Retention,
 } from "../registry/define.js";
 import {
   closure,
@@ -235,6 +236,29 @@ describe("buildRegistry", () => {
     expect(() => buildRegistry([kernelModule, { name: "bad", entries }])).toThrow(message);
   });
 
+  it.each<[string, Retention]>([
+    ["change-only", { rawDays: 1, changeOnly: true }],
+    ["latest-only", { latestOnly: true }],
+    ["rolled-up", { rawDays: 1, rollup: { period: "hourly" } }],
+  ])("rejects a %s transient property", (_label, retention) => {
+    const entries = [
+      defineDomain({ code: "hazards", description: "x" }),
+      defineProperty({
+        code: "x.power",
+        domain: "hazards",
+        version: "1.0",
+        description: "x",
+        result: { type: "quantity", unit: "MW" },
+        subjects: [{ kind: "location" }],
+        transient: true,
+        retention,
+      }),
+    ];
+    expect(() => buildRegistry([kernelModule, { name: "bad", entries }])).toThrow(
+      /transient property/,
+    );
+  });
+
   it("accepts crosswalks on a closed vocabulary but no new values", () => {
     const mapped = buildRegistry([
       kernelModule,
@@ -250,6 +274,29 @@ describe("buildRegistry", () => {
       },
     ]);
     expect(mapped.crosswalk.value("severity", "open511", "MAJOR")).toBe("major");
+  });
+
+  it("accepts a transient property that keeps its raw readings for a while", () => {
+    const built = buildRegistry([
+      kernelModule,
+      {
+        name: "transient",
+        entries: [
+          defineDomain({ code: "hazards", description: "x" }),
+          defineProperty({
+            code: "x.power",
+            domain: "hazards",
+            version: "1.0",
+            description: "x",
+            result: { type: "quantity", unit: "MW" },
+            subjects: [{ kind: "location" }],
+            transient: true,
+            retention: { rawDays: 7 },
+          }),
+        ],
+      },
+    ]);
+    expect(built.property("x.power")?.transient).toBe(true);
   });
 
   it("ships the shared infrastructure building blocks in the kernel", () => {

@@ -4,7 +4,13 @@ import { join } from "node:path";
 import { describe, expect, test } from "vitest";
 import { sharedCredentialValue } from "../catalog/credentials.js";
 import { toCatalogFeed } from "../catalog/resolve.js";
-import { resolveEndpointUrls, resolveFeedTemplate, settingUrl } from "../catalog/templates.js";
+import {
+  eachItemPath,
+  resolveEachUrl,
+  resolveEndpointUrls,
+  resolveFeedTemplate,
+  settingUrl,
+} from "../catalog/templates.js";
 import type { CatalogFeed } from "../catalog/types.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
 
@@ -270,6 +276,85 @@ describe("resolveEndpointUrls", () => {
 
     test("without a cell the placeholders stay", () => {
       expect(resolveFeedTemplate(feedWith(), "{lat}", {})).toBe("{lat}");
+    });
+  });
+
+  describe("utcDate placeholders", () => {
+    const at = Date.parse("2026-10-08T23:59:59Z");
+
+    test("fill the poll instant's UTC date, or a day before it", () => {
+      const feed = feedWith({
+        main: {
+          urls: [
+            "https://dd.test/{utcDate-1}/alerts/{utcDate-1}/",
+            "https://dd.test/{utcDate}/alerts/{utcDate}/",
+          ],
+          cadenceSec: 120,
+        },
+      });
+      expect(resolveEndpointUrls(feed, "main", {}, undefined, at)).toEqual([
+        "https://dd.test/20261007/alerts/20261007/",
+        "https://dd.test/20261008/alerts/20261008/",
+      ]);
+      expect(
+        resolveEndpointUrls(feed, "main", {}, undefined, Date.parse("2026-10-09T00:00:00Z")),
+      ).toEqual([
+        "https://dd.test/20261008/alerts/20261008/",
+        "https://dd.test/20261009/alerts/20261009/",
+      ]);
+      expect(resolveFeedTemplate(feed, "{utcDate-7}", {}, undefined, at)).toBe("20261001");
+      // Across a month and a year boundary.
+      expect(
+        resolveFeedTemplate(feed, "{utcDate-1}", {}, undefined, Date.parse("2027-01-01T00:30Z")),
+      ).toBe("20261231");
+    });
+
+    test("go in the same pass as credentials, so a credential's value is never read for one", () => {
+      const feed = feedWith({ main: { url: "https://m/{utcDate}?k=${api_key}", cadenceSec: 60 } });
+      expect(
+        resolveEndpointUrls(
+          feed,
+          "main",
+          { DE_BY_MOBILITHEK_EVENTS_API_KEY: "{utcDate}" },
+          undefined,
+          at,
+        ),
+      ).toEqual(["https://m/20261008?k={utcDate}"]);
+    });
+  });
+
+  describe("per-item urls", () => {
+    const feed = catalogFeed({
+      endpoints: {
+        alerts: { url: "https://api.test/alerts", cadenceSec: 120 },
+        zones: {
+          url: "https://api.test/zones/{item}?at={utcDate}",
+          cadenceSec: 120,
+          each: { role: "alerts", records: "features", field: "zones" },
+        },
+      },
+    });
+    const at = Date.parse("2026-10-08T12:00:00Z");
+
+    test("encode each segment and keep the slashes between them", () => {
+      expect(resolveEachUrl(feed, "zones", "forecast/WYZ001", {}, at)).toBe(
+        "https://api.test/zones/forecast/WYZ001?at=20261008",
+      );
+      expect(resolveEachUrl(feed, "zones", "a b/c&d", {}, at)).toBe(
+        "https://api.test/zones/a%20b/c%26d?at=20261008",
+      );
+      // An item never names a placeholder.
+      expect(resolveEachUrl(feed, "zones", "{utcDate}", {}, at)).toBe(
+        "https://api.test/zones/%7ButcDate%7D?at=20261008",
+      );
+    });
+
+    test("refuse an item that would leave its path", () => {
+      for (const item of ["forecast/../x", "..", "./x", "a//b", "/a", "a/", "a?b", "a#b", "a\\b"]) {
+        expect(eachItemPath(item)).toBeUndefined();
+        expect(() => resolveEachUrl(feed, "zones", item, {}, at)).toThrow(/refused/);
+      }
+      expect(eachItemPath("forecast/WYZ001")).toBe("forecast/WYZ001");
     });
   });
 

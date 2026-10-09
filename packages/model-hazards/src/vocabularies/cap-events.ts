@@ -1,7 +1,7 @@
 /**
  * The event lists CAP publishers classify their alerts by, verbatim: code →
  * name. Each list is keyed in the crosswalks by the prefix a parser reads it
- * under (`II:`, `CAP-CP:`, `VTEC:`, `awareness_type:`, `SAME:`).
+ * under (`II:`, `CAP-CP:`, `VTEC:`, `awareness_type:`, `NWS:`, `SAME:`).
  */
 
 /**
@@ -319,6 +319,50 @@ export const METEOALARM_AWARENESS_TYPES: Readonly<Record<string, string>> = {
   "13": "Rain Flood",
   "14": "Marine Hazard",
   "15": "Drought",
+};
+
+/**
+ * National Weather Service product codes (`eventCode`
+ * `NationalWeatherService`) that are no SAME code: most advisories,
+ * statements and marine products come with the generic SAME code `NWS`, and
+ * a flood watch with SAME's flash flood watch. The codes the api.weather.gov
+ * alerts of 2026-10-07/08 carried, and the Special Weather Statement, which
+ * names no hazard in either list.
+ */
+export const NWS_PRODUCTS: Readonly<Record<string, string>> = {
+  AQA: "Air Quality Alert",
+  BHS: "Beach Hazards Statement",
+  CFS: "Coastal Flood Statement",
+  CFY: "Coastal Flood Advisory",
+  DUY: "Blowing Dust Advisory",
+  ESF: "Hydrologic Outlook",
+  FAA: "Flood Watch",
+  FAY: "Flood Advisory",
+  FGY: "Dense Fog Advisory",
+  FRY: "Frost Advisory",
+  FWA: "Fire Weather Watch",
+  FWW: "Red Flag Warning",
+  FZA: "Freeze Watch",
+  GLA: "Gale Watch",
+  GLW: "Gale Warning",
+  HFW: "Hurricane Force Wind Warning",
+  HTY: "Heat Advisory",
+  LWY: "Lake Wind Advisory",
+  MAW: "Special Marine Warning",
+  MFY: "Dense Fog Advisory",
+  MWS: "Marine Weather Statement",
+  RPS: "Rip Current Statement",
+  SCY: "Small Craft Advisory",
+  SEW: "Hazardous Seas Warning",
+  SPS: "Special Weather Statement",
+  SRW: "Storm Warning",
+  SUW: "High Surf Warning",
+  SUY: "High Surf Advisory",
+  SVW: "Severe Thunderstorm Warning",
+  TST: "Test Message",
+  WIY: "Wind Advisory",
+  WWY: "Winter Weather Advisory",
+  XHW: "Extreme Heat Warning",
 };
 
 /**

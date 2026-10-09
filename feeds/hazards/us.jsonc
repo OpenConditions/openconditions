@@ -1,0 +1,124 @@
+{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [
+    {
+      "operator": "nws",
+      "product": "alerts",
+      "name": "NWS weather alerts",
+      "tier": "authoritative",
+      "format": "nws",
+      // The active alerts as GeoJSON-LD, `Test` messages left out. An alert
+      // that names only zones is drawn from the shapes of its zones: the zones
+      // are listed at every poll, and each is fetched once and kept for a
+      // month (the upstream's own max-age).
+      "endpoints": {
+        "alerts": {
+          "url": "https://api.weather.gov/alerts/active?status=actual",
+          "headers": { "Accept": "application/geo+json" },
+          "cadenceSec": 120,
+        },
+        "zones": {
+          "url": "https://api.weather.gov/zones/{item}",
+          // A zone an alert names can be dead (a fire zone answers 404): the
+          // alert keeps its geocodes and the poll goes on.
+          "fanout": "tolerant",
+          "cadenceSec": 120,
+          "each": {
+            "role": "alerts",
+            "records": "features",
+            "field": "properties.affectedZones",
+            "pattern": "^https://api\\.weather\\.gov/zones/((?:forecast|county|fire|marine|offshore)/[A-Z0-9]+)$",
+            "keepSec": 2592000,
+          },
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 600,
+      "coverage": { "countries": ["US", "PR", "GU", "AS", "VI", "MP"] },
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.weather.gov/disclaimer",
+      "attribution": "National Weather Service (NOAA)",
+      "homepage": "https://www.weather.gov/",
+      "privacyUrl": "https://www.weather.gov/privacy",
+    },
+    {
+      "operator": "nifc",
+      "product": "fires",
+      "name": "NIFC wildland fires",
+      "tier": "authoritative",
+      "format": "wfigs",
+      // The interagency perimeters and every reported incident's point, one
+      // fire per IRWIN id: a fire with no mapped perimeter is drawn at its
+      // point. Perimeters are simplified to about 10 m by the server.
+      "endpoints": {
+        "perimeters": {
+          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_FireCause,attr_FireCauseGeneral&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+            "maxPages": 5,
+          },
+          "cadenceSec": 600,
+        },
+        "incidents": {
+          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,FireCause,FireCauseGeneral&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+            "maxPages": 5,
+          },
+          "cadenceSec": 300,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 3600,
+      "coverage": { "countries": ["US"] },
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+      "terms": {
+        "reviewedAt": "2026-10-08",
+        "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty.",
+      },
+      "attribution": "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
+      "homepage": "https://www.nifc.gov/",
+      "privacyUrl": "https://www.doi.gov/privacy",
+    },
+    {
+      "operator": "noaa",
+      "qualifier": "hms",
+      "product": "smoke",
+      "name": "NOAA HMS smoke",
+      "tier": "authoritative",
+      "format": "hms",
+      // The day's smoke analysis over North America. A polygon stays current
+      // while the day's layer lists it; its image sequence goes to details.
+      "endpoints": {
+        "main": {
+          "url": "https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/NOAA_Satellite_Smoke_Detection_%28v1%29/FeatureServer/0/query?where=1%3D1&outFields=FID,Satellite,Start,End_,Density&outSR=4326&f=geojson&orderByFields=FID&resultRecordCount=1000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 1000,
+            "recordsPath": "features",
+            "maxPages": 5,
+          },
+          "cadenceSec": 600,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 3600,
+      "coverage": { "countries": ["US", "CA", "MX"], "bbox": [-170, 10, -50, 75] },
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+      "terms": {
+        "url": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+        "reviewedAt": "2026-10-08",
+        "note": "Public-domain U.S. Government information; attribution does not imply NOAA endorsement.",
+      },
+      "attribution": "NOAA/NESDIS Hazard Mapping System (HMS)",
+      "homepage": "https://www.ospo.noaa.gov/products/land/hms.html",
+      "privacyUrl": "https://www.noaa.gov/protecting-your-privacy",
+    },
+  ],
+}

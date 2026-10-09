@@ -16,9 +16,9 @@ const VTEC_PHENOMENON = /^\/[OTEX]\.[A-Z]{3}\.[A-Z]{4}\.([A-Z]{2})\.[WAYSFON]\./
 /**
  * The codes of one alert, most specific list first: a DWD event code names
  * the hazard and its strength, the Canadian profile's event and a VTEC
- * phenomenon name the hazard, a MeteoAlarm awareness type its group, and a
- * SAME code last, because NWS sends a generic one (`SVS`) on the updates of
- * a tornado warning.
+ * phenomenon name the hazard, an NWS product code the product that carries
+ * no VTEC, a MeteoAlarm awareness type its group, and a SAME code last,
+ * because NWS sends a generic one (`SVS`, `NWS`) on updates and advisories.
  */
 function capCodes(eventCodes: readonly CapPair[], parameters: readonly CapPair[]): string[] {
   const codes: string[] = [];
@@ -31,6 +31,9 @@ function capCodes(eventCodes: readonly CapPair[], parameters: readonly CapPair[]
   for (const p of parameters) {
     const m = p.valueName === "VTEC" ? VTEC_PHENOMENON.exec(p.value.trim()) : null;
     if (m !== null) codes.push(`VTEC:${m[1]}`);
+  }
+  for (const e of eventCodes) {
+    if (e.valueName === "NationalWeatherService") codes.push(`NWS:${e.value.trim()}`);
   }
   for (const p of parameters) {
     if (p.valueName === "awareness_type")

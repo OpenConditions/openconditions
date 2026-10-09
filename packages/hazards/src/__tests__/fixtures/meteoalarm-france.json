@@ -1,0 +1,278 @@
+{
+  "warnings": [
+    {
+      "alert": {
+        "identifier": "2.49.0.0.250.0.FR.20261008160042.082021",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Pyrénées-Orientales",
+                "geocode": [
+                  {
+                    "value": "FR815",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Alpes-de-Haute-Provence",
+                "geocode": [
+                  {
+                    "value": "FR821",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Corse-du-Sud",
+                "geocode": [
+                  {
+                    "value": "FR831",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Bouches-du-Rhône",
+                "geocode": [
+                  {
+                    "value": "FR824",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Haute-Corse",
+                "geocode": [
+                  {
+                    "value": "FR832",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Vaucluse",
+                "geocode": [
+                  {
+                    "value": "FR826",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "contact": "METEO-FRANCE",
+            "description": "Des phénomènes habituels dans la région mais occasionnellement et localement dangereux sont prévus (exemple : mistral, orage d'été, montée des eaux, fortes vagues submergeant le littoral).",
+            "effective": "2026-10-09T00:00:00+02:00",
+            "event": "Vigilance jaune vent-violent",
+            "expires": "2026-10-10T00:00:00+02:00",
+            "headline": "Vigilance jaune vent-violent",
+            "instruction": "Soyez attentifs si vous pratiquez des activités sensibles au risque météorologique ou à proximité d'un rivage ou d'un cours d'eau. Tenez-vous au courant de l'évolution de la situation.",
+            "language": "fr-FR",
+            "onset": "2026-10-09T00:00:00+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "METEO-FRANCE",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vigilance.meteofrance.fr/"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Pyrénées-Orientales",
+                "geocode": [
+                  {
+                    "value": "FR815",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Alpes-de-Haute-Provence",
+                "geocode": [
+                  {
+                    "value": "FR821",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Corse-du-Sud",
+                "geocode": [
+                  {
+                    "value": "FR831",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Bouches-du-Rhône",
+                "geocode": [
+                  {
+                    "value": "FR824",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Haute-Corse",
+                "geocode": [
+                  {
+                    "value": "FR832",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              },
+              {
+                "areaDesc": "Vaucluse",
+                "geocode": [
+                  {
+                    "value": "FR826",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "contact": "METEO-FRANCE",
+            "description": "Moderate damages may occur, especially in vulnerable or in exposed areas and to people who carry out weather-related activities.",
+            "effective": "2026-10-09T00:00:00+02:00",
+            "event": "Moderate wind warning",
+            "expires": "2026-10-10T00:00:00+02:00",
+            "headline": "Moderate wind warning",
+            "instruction": "Be careful, keep informed of the latest weather forecast.",
+            "language": "en-GB",
+            "onset": "2026-10-09T00:00:00+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "METEO-FRANCE",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vigilance.meteofrance.fr/"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "vigilance@meteo.fr",
+        "sent": "2026-10-08T16:00:42+02:00",
+        "status": "Actual"
+      },
+      "uuid": "d69b5026-9740-48db-b603-f17c8aacb5e6"
+    },
+    {
+      "alert": {
+        "identifier": "2.49.0.0.250.0.FR.20261008160038.442025",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Hautes Alpes",
+                "geocode": [
+                  {
+                    "value": "FR822",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "contact": "METEO-FRANCE",
+            "description": "Des phénomènes habituels dans la région mais occasionnellement et localement dangereux sont prévus (exemple : mistral, orage d'été, montée des eaux, fortes vagues submergeant le littoral).",
+            "effective": "2026-10-08T16:00:00+02:00",
+            "event": "Vigilance jaune neige-verglas",
+            "expires": "2026-10-09T00:00:00+02:00",
+            "headline": "Vigilance jaune neige-verglas",
+            "instruction": "Soyez attentifs si vous pratiquez des activités sensibles au risque météorologique ou à proximité d'un rivage ou d'un cours d'eau. Tenez-vous au courant de l'évolution de la situation.",
+            "language": "fr-FR",
+            "onset": "2026-10-08T16:00:15+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "2; snow-ice",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "METEO-FRANCE",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vigilance.meteofrance.fr/"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Hautes Alpes",
+                "geocode": [
+                  {
+                    "value": "FR822",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "contact": "METEO-FRANCE",
+            "description": "Moderate damages may occur, especially in vulnerable or in exposed areas and to people who carry out weather-related activities.",
+            "effective": "2026-10-08T16:00:00+02:00",
+            "event": "Moderate snow-ice warning",
+            "expires": "2026-10-09T00:00:00+02:00",
+            "headline": "Moderate snow-ice warning",
+            "instruction": "Be careful, keep informed of the latest weather forecast.",
+            "language": "en-GB",
+            "onset": "2026-10-08T16:00:15+02:00",
+            "parameter": [
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "2; snow-ice",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "METEO-FRANCE",
+            "severity": "Moderate",
+            "urgency": "Future",
+            "web": "https://vigilance.meteofrance.fr/"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "vigilance@meteo.fr",
+        "sent": "2026-10-08T16:00:38+02:00",
+        "status": "Actual"
+      },
+      "uuid": "079d542e-5ced-4834-b5b9-334159fad458"
+    }
+  ]
+}

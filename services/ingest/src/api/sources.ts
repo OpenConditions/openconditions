@@ -11,6 +11,10 @@ export interface Source {
   name: string;
   domain: string;
   product: string;
+  /** The source format its parser reads, such as `cap` or `firms`. */
+  format: string;
+  /** What sets the feed apart from the publisher's other feeds of the same product, such as `firms-viirs`. */
+  qualifier?: string;
   operator: string;
   region: string;
   country?: string;
@@ -28,6 +32,8 @@ export interface Source {
   privacyUrl: string;
   /** The terms page, when they were last reviewed, and what they condition beyond the licence. */
   terms?: { url?: string; reviewedAt?: string; note?: string };
+  /** A notice the publisher requires to accompany any display of its data, verbatim. */
+  notice?: string;
   rights: EffectiveRights;
   /**
    * Where the feed answers: ISO 3166 codes, or the box an on-demand feed
@@ -69,6 +75,8 @@ function sourceOf(feed: CatalogFeed): Source {
     name: feed.name,
     domain: feed.domain,
     product: feed.product,
+    format: feed.format,
+    ...(feed.qualifier ? { qualifier: feed.qualifier } : {}),
     operator: feed.operator,
     region: feed.region,
     ...(feed.country ? { country: feed.country } : {}),
@@ -82,6 +90,7 @@ function sourceOf(feed: CatalogFeed): Source {
     homepage: feed.homepage,
     privacyUrl: feed.privacyUrl,
     ...(Object.keys(terms).length > 0 ? { terms } : {}),
+    ...(feed.terms?.notice ? { notice: feed.terms.notice } : {}),
     rights: feed.rights,
     ...(feed.coverage.countries === undefined && feed.coverage.bbox === undefined
       ? {}

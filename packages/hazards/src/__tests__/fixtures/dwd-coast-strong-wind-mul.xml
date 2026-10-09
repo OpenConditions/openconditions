@@ -1,0 +1,524 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.0.276.0.DWD.PVW.1791554520000.6f657cc9-cf6e-42bc-9ebc-3a6fbc659d28.MUL</identifier>
+  <sender>opendata@dwd.de</sender>
+  <sent>2026-10-09T16:02:00+02:00</sent>
+  <status>Actual</status>
+  <msgType>Update</msgType>
+  <source>PVW</source>
+  <scope>Public</scope>
+  <code>id:2.49.0.0.276.0.DWD.PVW.1791554520000.6f657cc9-cf6e-42bc-9ebc-3a6fbc659d28</code>
+  <references>opendata@dwd.de,2.49.0.0.276.0.DWD.PVW.1791532260000.2e73ba99-7ffe-440b-8242-3592e9de4017.MUL,2026-10-09T09:51:00+02:00</references>
+  <info>
+    <language>de-DE</language>
+    <category>Met</category>
+    <event>STARKWIND</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>Amtliche Warnung des Seewetterdienstes Hamburg vor STARKWIND</headline>
+    <description>West 6, dabei Böen von 8 Beaufort, strichweise Gewitter.</description>
+    <instruction/>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>en</language>
+    <category>Met</category>
+    <event>near gale</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>Official NEAR GALE WARNING</headline>
+    <description>There is a risk of near gale.</description>
+    <instruction>NOTE: be aware that this is an automatically generated product. The manually created original text warning is only available in German. It is issued by the maritime weather service Hamburg(DWD).</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>fr</language>
+    <category>Met</category>
+    <event>vent fort (côte)</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>ALERTE officielle INTEMPÉRIES pour VENT FORT (Côte)</headline>
+    <description>Il y a un risque de vent fort (côte).</description>
+    <instruction>REMARQUE: Veuillez noter qu'il s'agit d'un produit généré automatiquement. L'avertissement de texte d'origine créé manuellement n'est disponible qu'en allemand.</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>es</language>
+    <category>Met</category>
+    <event>viento fuerte (costa)</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>AVISO oficial de VIENTO FUERTE (Costa)</headline>
+    <description>Existe el riesgo de que se produzca viento fuerte (costa)</description>
+    <instruction>NOTA: Tenga en cuenta que este es un producto generado automáticamente. La advertencia de texto original creada manualmente solo está disponible en alemán.</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>ar</language>
+    <category>Met</category>
+    <event>ريّاح قوية (الساحل)</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>تحذير رسمي من الطقس ريّاح قوية (الساحل)</headline>
+    <description>هناك خطر من حدوث ريّاح قوية (الساحل)</description>
+    <instruction>تحذير: هذا المنتوج تمّ تحضيره بصفة آلية. النص الكامل متوفّر فقط باللّغة الألمانية.</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>ru</language>
+    <category>Met</category>
+    <event>сильный ветер (побережье)</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>Официальное метеорологическое предупреждение: сильный ветер (побережье)</headline>
+    <description>Существует риск от: сильный ветер (побережье).</description>
+    <instruction>Внимание: это автоматический продукт. Полный текст существует только на немецком языке.</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>tr</language>
+    <category>Met</category>
+    <event>kıyı kesimlerinde kuvetli rüzgar</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>RÜZGARA karşı resmi UYARI</headline>
+    <description>Kıyı kesimlerinde kuvetli rüzgar bekleniyor.</description>
+    <instruction>Dikkat: Bu ürün sistem tarafından oluşturulmuştur. Tam Metin okumak icin Almanca dilini seçiniz.</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+  <info>
+    <language>pl</language>
+    <category>Met</category>
+    <event>silny wiatr (wybrzeże)</event>
+    <responseType>Prepare</responseType>
+    <urgency>Immediate</urgency>
+    <severity>Minor</severity>
+    <certainty>Likely</certainty>
+    <eventCode>
+      <valueName>PROFILE_VERSION</valueName>
+      <value>2.1.14</value>
+    </eventCode>
+    <eventCode>
+      <valueName>LICENSE</valueName>
+      <value>© GeoBasis-DE / BKG 2021 (Daten modifiziert)</value>
+    </eventCode>
+    <eventCode>
+      <valueName>II</valueName>
+      <value>11</value>
+    </eventCode>
+    <eventCode>
+      <valueName>GROUP</valueName>
+      <value>WIND</value>
+    </eventCode>
+    <eventCode>
+      <valueName>AREA_COLOR</valueName>
+      <value>255 235 59</value>
+    </eventCode>
+    <effective>2026-10-09T16:02:00+02:00</effective>
+    <onset>2026-10-09T16:02:00+02:00</onset>
+    <senderName>DWD / Seewetterdienst Hamburg</senderName>
+    <headline>Oficjalne OSTRZEŻENIE METEOROLOGICZNE (1. STOPNIA) przed SILNYM WIATREM (WYBRZEŻE)</headline>
+    <description>Istnieje ryzyko wystąpienia: silny wiatr (wybrzeże)</description>
+    <instruction>Uwaga: Ten produkt generowany jest automatycznie. Pełny opis dostępny jest tylko w języku niemieckim.</instruction>
+    <web>https://dwd.de/warnungen</web>
+    <contact>Deutscher Wetterdienst</contact>
+    <area>
+      <areaDesc>Nordfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000005</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Ostfriesische Küste</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000001</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+    <area>
+      <areaDesc>Helgoland</areaDesc>
+      <geocode>
+        <valueName>WARNCELLID</valueName>
+        <value>501000002</value>
+      </geocode>
+      <altitude>0.0</altitude>
+      <ceiling>9842.5197</ceiling>
+    </area>
+  </info>
+</alert>

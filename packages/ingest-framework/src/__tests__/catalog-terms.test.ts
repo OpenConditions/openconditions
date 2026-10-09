@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { admitsCatalogChild, effectiveRights, isRestricted } from "../catalog/terms.js";
+import { feedTermsSchema } from "../catalog/schema.js";
+import {
+  admitsCatalogChild,
+  effectiveRights,
+  type FeedTerms,
+  isRestricted,
+} from "../catalog/terms.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
 
 describe("effective rights", () => {
@@ -88,6 +94,24 @@ describe("effective rights", () => {
     );
     expect(effectiveRights("LicenseRef-TfL-Transport-Data-Service").attributionRequired).toBe(true);
     expect(effectiveRights("LicenseRef-ODOT-TripCheck").attributionRequired).toBe(true);
+  });
+
+  it("the hazard licences resolve open with attribution", () => {
+    for (const id of ["LicenseRef-ECCC-Data-Servers-End-use", "LicenseRef-MeteoAlarm-Terms"]) {
+      const rights = effectiveRights(id);
+      expect(isRestricted(rights), id).toBe(false);
+      expect(rights.attributionRequired, id).toBe(true);
+      expect(rights.commercialUse, id).toBe(true);
+    }
+  });
+
+  it("a publisher's required notice is a terms field, enough on its own", () => {
+    const notice =
+      "Time delays between this website and the www.meteoalarm.org website are possible.";
+    expect(feedTermsSchema.parse({ notice }).notice).toBe(notice);
+    expect(feedTermsSchema.safeParse({ notice: "" }).success).toBe(false);
+    const terms: FeedTerms = { url: "https://x", notice, redistribution: false };
+    expect(isRestricted(effectiveRights("LicenseRef-MeteoAlarm-Terms", terms))).toBe(true);
   });
 
   it("licence lookup is exact", () => {

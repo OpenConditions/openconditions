@@ -56,6 +56,11 @@ function placed(draft: RecordDraft, geometry: GeoJsonGeometry): RecordDraft {
  *   A transport or validation failure also counts in `failed`: the caller
  *   must keep its last good snapshot rather than publish a partial one.
  * - Without a client (`OPENLR_RESOLVER_URL` unset) such drafts are dropped.
+ * - A draft without geometry whose extent is an `area` or `none` passes
+ *   through: its publisher names the area by codes (a warning for counties
+ *   whose shapes are not published) or names no place, so there is nothing
+ *   to place. Any other draft without geometry or OpenLR (a road event that
+ *   awaits a line) is dropped.
  *
  * `unlocatable` names every dropped situation, so a complete-snapshot source
  * can tell "gone upstream" apart from "we failed to place it".
@@ -79,7 +84,9 @@ export async function resolveOpenLr(
     const openlr = location?.["openlr"];
     if (location?.["geometry"] != null) resolved.push(draft);
     else if (typeof openlr === "string" && openlr.length > 0) needsResolve.push({ draft, openlr });
-    else unlocatable.push(String(draft["id"]));
+    else if (location?.["extent"] === "area" || location?.["extent"] === "none") {
+      resolved.push(draft);
+    } else unlocatable.push(String(draft["id"]));
   }
   if (needsResolve.length > 0 && client === null) {
     console.warn(

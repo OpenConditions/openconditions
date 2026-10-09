@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { camerasDomain } from "@openconditions/cameras";
 import { chargingDomain } from "@openconditions/charging";
 import { fuelDomain } from "@openconditions/fuel";
+import { hazardsDomain } from "@openconditions/hazards";
 import {
   type Catalog,
   type CatalogFeed,
@@ -21,6 +22,7 @@ export const INGEST_DOMAINS: readonly IngestDomain<CatalogFeed>[] = [
   parkingDomain,
   chargingDomain,
   camerasDomain,
+  hazardsDomain,
 ];
 
 /**

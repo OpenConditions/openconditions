@@ -1,0 +1,58 @@
+{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [
+    {
+      "operator": "eccc",
+      "product": "alerts",
+      "name": "ECCC weather alerts",
+      "tier": "authoritative",
+      "format": "cap",
+      // The Datamart files every CAP message under the day it was issued, by
+      // office and hour. The last three days' trees are walked, so a warning
+      // last reissued the day before yesterday is still read at 00:00 UTC.
+      // An hour is listed again when its modification time changes and once
+      // more after that (the time has minute resolution), and a file is
+      // fetched once; a listing that names nothing below it is a failed
+      // listing, its last copy standing in. The messages they hold are the
+      // current set, a message ending when a later one updates or cancels it,
+      // or when it expires.
+      "endpoints": {
+        "index": {
+          "urls": [
+            "https://dd.weather.gc.ca/{utcDate-2}/WXO-DD/alerts/cap/{utcDate-2}/",
+            "https://dd.weather.gc.ca/{utcDate-1}/WXO-DD/alerts/cap/{utcDate-1}/",
+            "https://dd.weather.gc.ca/{utcDate}/WXO-DD/alerts/cap/{utcDate}/",
+          ],
+          // Today's tree does not exist until the day's first message.
+          "fanout": "tolerant",
+          "cadenceSec": 120,
+        },
+        "alerts": {
+          "url": "{item}",
+          "cadenceSec": 120,
+          "each": {
+            "role": "index",
+            "links": [
+              "href=\"([A-Z]{4}/)\"",
+              "href=\"(\\d{2}/)\"[^>]*>[^<]*</a>\\s+(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})",
+              "href=\"([^\"]+\\.cap)\"",
+            ],
+          },
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 900,
+      "coverage": { "countries": ["CA"] },
+      "license": "LicenseRef-ECCC-Data-Servers-End-use",
+      "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+      "terms": {
+        "url": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+        "reviewedAt": "2026-10-08",
+        "note": "Weather alerts must be reproduced without alteration of their content or intent: their texts are kept verbatim in every language.",
+      },
+      "attribution": "Data Source: Environment and Climate Change Canada",
+      "homepage": "https://weather.gc.ca/",
+      "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+    },
+  ],
+}

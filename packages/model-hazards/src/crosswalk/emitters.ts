@@ -40,6 +40,10 @@ export const ROAD511_HAZARD_TYPES: Readonly<Record<string, string | null>> = {
   "natural_hazard.earthquake": null,
   "natural_hazard.volcanic_ash": null,
   "natural_hazard.dust_storm": null,
+  "natural_hazard.tropical_cyclone": null,
+  "natural_hazard.volcano": null,
+  "natural_hazard.drought": null,
+  "natural_hazard.sea_ice": null,
 };
 
 /**
@@ -56,4 +60,8 @@ export const GTFS_RT_HAZARD_CAUSES: Readonly<Record<string, string | null>> = {
   "natural_hazard.earthquake": "OTHER_CAUSE",
   "natural_hazard.volcanic_ash": "OTHER_CAUSE",
   "natural_hazard.dust_storm": "WEATHER",
+  "natural_hazard.tropical_cyclone": "WEATHER",
+  "natural_hazard.volcano": "OTHER_CAUSE",
+  "natural_hazard.drought": "WEATHER",
+  "natural_hazard.sea_ice": "WEATHER",
 };

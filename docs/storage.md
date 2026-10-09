@@ -134,6 +134,7 @@ The sweep, every five minutes, takes these actions:
 | A feed record of a source with no successful poll for an hour        | Tombstoned `expired`                                          |
 | A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (90) ago | Purged with its revisions, bindings, crowd evidence and votes |
 | An on-demand row at expiry                                           | Deleted (it was a cache, with no history)                     |
+| A series of a transient property past its reading's expiry           | Deleted, bulk or on demand (nothing else ends it)             |
 
 A declared validity end is never a tombstone reason: a source that still
 publishes an ended record keeps it, and reads filter by time.
@@ -156,6 +157,7 @@ its update stays heap-only (HOT):
   of each page free (`fillfactor = 50`) for the next version of its rows.
   Category and boolean series (`value_text`) and series with an expiry
   (`expires_at`) are indexed by what they change, and change far less often.
+- `effective_from` is indexed with BRIN: a btree would stop HOT updates.
 
 The history is `observation`, compact by design: about 110 bytes a reading,
 where a sealed record is about 1.2 KB. A row holds only what varies between
@@ -183,6 +185,14 @@ A property's registry `retention` decides what is kept:
 `componentHistory: false` keeps no history of readings about a component (a
 lane or vehicle-class channel of a measurement site): they update their latest
 row only, and the site's own series carries the history.
+
+A `transient` property (`fire.frp`: one satellite detection at a place) holds
+one reading of one instant per series. Its readings skip the comparison with
+the source's stored series: each is inserted with its history row, a reading
+the series already holds (a poll restating the last day's file) writes
+nothing, a later reading at the same key (a newer detection at the same pixel
+position) updates the series to that reading, and the sweep deletes the series
+once its reading's expiry passes.
 
 History is partitioned by retention class (a property's `rawDays`, 0 for
 keep-everything), then by day (by month for keep-everything). Retention drops
@@ -251,6 +261,7 @@ share-alike record is withheld and a crowd reporter's key is stripped.
 | `/features/{id}`                           | `readRecord`, `readCanonical`                     | `feature`, `feature_canonical`                                        |
 | `/offers`, `/offers/{id}`                  | `listOffers`, `readRecord`                        | `offer`                                                               |
 | `/observations/latest`                     | `listLatestObservations`                          | `observation_latest`                                                  |
+| `/observations/grid`                       | `readGrid`                                        | `observation_latest`                                                  |
 | `/observations`                            | `readSeries`                                      | `observation_latest`, then `observation` or a rollup table            |
 | `/history/{class}/{id}`                    | `readRevisions`                                   | `situation_revision`, `feature_revision`, `offer_revision`            |
 | `/coverage`                                | `readCoverage`                                    | the class tables, `observation_latest` with `source`, `source_status` |

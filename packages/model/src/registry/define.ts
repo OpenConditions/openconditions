@@ -296,6 +296,13 @@ export interface PropertyEntry extends EntryBase {
   /** How the crowd reports this property; absent, the crowd cannot report it. */
   crowd?: PropertyCrowdRules;
   retention?: Retention;
+  /**
+   * Each series holds one reading of one instant, such as a satellite
+   * detection at a place: written once, never revised, and deleted with its
+   * reading's expiry. Such a series has no change to compare and nothing to
+   * roll up, so it is never change-only, latest-only or rolled up.
+   */
+  transient?: true;
   privacyDefault?: PrivacyClass;
   /** Fusion order for this property, highest first; defaults to FUSION_TIERS. */
   fusionTiers?: readonly FusionTier[];

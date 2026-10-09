@@ -3,6 +3,7 @@ import {
   AtQuery,
   FeatureListQuery,
   FeatureQuery,
+  GridQuery,
   LatestObservationQuery,
   OfferListQuery,
   RecordClassParam,
@@ -40,7 +41,8 @@ export const API_ROUTES: readonly ApiRoute[] = [
   {
     path: "/situations",
     operationId: "listSituations",
-    summary: "Live situations as records, one keyset page ordered by id.",
+    summary:
+      "Live situations as records, one keyset page ordered by id: those current at `at`, or with `from` (and `to`) those whose validity overlaps the window, ended ones included. `simplify` thins each returned geometry for drawing.",
     query: SituationListQuery,
     produces: ["application/json"],
   },
@@ -161,6 +163,14 @@ export const API_ROUTES: readonly ApiRoute[] = [
     produces: ["application/json"],
   },
   {
+    path: "/observations/grid",
+    operationId: "getObservationGrid",
+    summary:
+      "The current numeric readings of one property in `bbox` since an instant, aggregated per cell of `cellDeg` degrees: `{ cells: [lon, lat, count, sum, max][], sources }`, each cell at its centre, `sources` the sources counted. The public scope counts neither a restricted source's readings nor readings whose licence is not public. A box of more than 50,000 cells answers 400.",
+    query: GridQuery,
+    produces: ["application/json"],
+  },
+  {
     path: "/observations",
     operationId: "getSeries",
     summary:
@@ -202,7 +212,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/sources",
     operationId: "listSources",
     summary:
-      "The feeds this instance serves, by id: name, licence (`license`, the SPDX or `LicenseRef-` id, and `licenseName`, its readable name), attribution, homepage, terms (url, review date and note), rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. A camera feed whose stills a consumer may proxy lists their hosts in `imageHosts` (an exact host, `*.domain`, or `host/path/`). Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
+      "The feeds this instance serves, by id: name, source format (`format`) and `qualifier` where the feed has one, licence (`license`, the SPDX or `LicenseRef-` id, and `licenseName`, its readable name), attribution, homepage, terms (url, review date and note), the `notice` the publisher requires to accompany any display of its data, rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. A camera feed whose stills a consumer may proxy lists their hosts in `imageHosts` (an exact host, `*.domain`, or `host/path/`). Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
     produces: ["application/json"],
   },
   {

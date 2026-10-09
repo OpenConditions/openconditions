@@ -107,6 +107,10 @@ export const observationLatest = conditionsSchema.table(
       .on(t.valueMoney)
       .where(sql`${t.property} = 'fuel.price'`),
     index("idx_observation_latest_expires").on(t.expiresAt).where(sql`${t.expiresAt} IS NOT NULL`),
+    // Reads of readings since an instant (the last day's fire pixels). BRIN
+    // summarizes block ranges, so a reading's update stays heap-only; a btree
+    // on what every reading changes would not.
+    index("idx_observation_latest_effective_brin").using("brin", t.effectiveFrom),
     // A crowd report is found by its record id: votes, replays and re-keying
     // name it. Indexing an expression over `reading` would change with every
     // reading of every series and keep their updates from being HOT.

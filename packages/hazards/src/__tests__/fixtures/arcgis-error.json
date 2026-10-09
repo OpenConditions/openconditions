@@ -1,0 +1,7 @@
+{
+  "error": {
+    "code": 400,
+    "message": "",
+    "details": ["'Invalid field: BOGUS_FIELD' parameter is invalid"]
+  }
+}

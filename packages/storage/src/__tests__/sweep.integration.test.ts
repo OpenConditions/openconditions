@@ -6,7 +6,7 @@ import { type SweepOptions, sweepRecords } from "../sweep.js";
 import { writeRecord } from "../write-record.js";
 import { writeSnapshot } from "../write-records.js";
 import { createTestDatabase } from "./database.integration.js";
-import { FETCHED_AT, observationDraft, situationDraft } from "./drafts.js";
+import { FETCHED_AT, firePixel, observationDraft, situationDraft } from "./drafts.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
@@ -125,6 +125,7 @@ describe("sweepRecords", () => {
       purged: 0,
       dropped: 0,
       crowdExpired: 0,
+      transient: 0,
     });
   });
 
@@ -182,6 +183,47 @@ describe("sweepRecords", () => {
       { ...write, complete: true },
     );
     expect(await sweep(LATER)).toMatchObject({ dropped: 2, expired: 0 });
+  });
+
+  it("deletes a bulk transient series once its reading expired, and keeps other expired series", async () => {
+    await polled("nasa-firms-viirs-fires", LATER);
+    await polled("nl-ndw-flow", LATER);
+    await writeSnapshot(
+      sql,
+      "nasa-firms-viirs-fires",
+      {
+        observations: [
+          // Acquired three days and more before LATER: expired at 09:00.
+          firePixel(-120.5, 38.25, "2026-09-28T09:00:00Z"),
+          firePixel(-120.6, 38.3, "2026-10-01T09:00:00Z"),
+        ],
+      },
+      { ...write, complete: true },
+    );
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [
+          observationDraft(
+            "traffic.speed",
+            { type: "quantity", value: 50, unit: "km/h" },
+            {
+              at: "2026-10-01T10:00:00Z",
+              freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T10:15:00Z" },
+            },
+          ),
+        ],
+      },
+      { ...write, complete: true },
+    );
+    expect(await sweep(LATER)).toMatchObject({ transient: 1, dropped: 0 });
+    const rows = await sql`SELECT property, effective_from FROM conditions.observation_latest
+      ORDER BY property, effective_from`;
+    expect(rows).toEqual([
+      { property: "fire.frp", effective_from: new Date("2026-10-01T09:00:00Z") },
+      { property: "traffic.speed", effective_from: new Date("2026-10-01T10:00:00Z") },
+    ]);
   });
 
   it("purges a record tombstoned longer ago than the history window, with its revisions", async () => {

@@ -1,0 +1,25 @@
+{
+  "title": "EONET Events",
+  "description": "Natural events from EONET.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+  "events": [
+    {
+      "id": "EONET_19906",
+      "title": "Akan Volcano, Japan",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_19906",
+      "closed": "2026-04-12T00:00:00Z",
+      "categories": [{ "id": "volcanoes", "title": "Volcanoes" }],
+      "sources": [{ "id": "SIVolcano", "url": "https://volcano.si.edu/volcano.cfm?vn=285070" }],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2026-03-08T00:00:00Z",
+          "type": "Point",
+          "coordinates": [144.013, 43.384]
+        }
+      ]
+    }
+  ]
+}

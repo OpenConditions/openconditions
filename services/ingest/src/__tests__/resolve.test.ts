@@ -71,6 +71,35 @@ describe("resolveOpenLr", () => {
     expect(client.resolve).not.toHaveBeenCalled();
   });
 
+  it("passes through a warning its publisher places by area codes or not at all, and drops an unplaced road event", async () => {
+    const located = (local: string, extent: string, admin?: object): RecordDraft => ({
+      id: `oc:situation:us-nws-alerts:${local}`,
+      location: {
+        geometry: null,
+        extent,
+        geometryOrigin: "none",
+        fuzziness: extent === "none" ? "extent_unknown" : "exact",
+        ...(admin === undefined ? {} : { admin }),
+      },
+    });
+    const byZones = located("watch", "area", {
+      country: "US",
+      geocodes: [{ scheme: "ugc", code: "AKZ801" }],
+    });
+    const nowhere = located("all-clear", "none");
+    const road = { ...openLrDraft("tmc"), location: { ...locationOf(openLrDraft("tmc")) } };
+    delete (road["location"] as Record<string, unknown>)["openlr"];
+    const client = fakeClient(LINE_GEOM);
+    const { resolved, dropped, unlocatable } = await resolveOpenLr(
+      [byZones, nowhere, road],
+      client,
+    );
+    expect(resolved).toEqual([byZones, nowhere]);
+    expect(dropped).toBe(1);
+    expect(unlocatable).toEqual(["oc:situation:nl-ndw-events:tmc"]);
+    expect(client.resolve).not.toHaveBeenCalled();
+  });
+
   it("places an OpenLR-only situation on the decoded geometry", async () => {
     const client = fakeClient(LINE_GEOM);
     const { resolved, dropped } = await resolveOpenLr([openLrDraft("b")], client);

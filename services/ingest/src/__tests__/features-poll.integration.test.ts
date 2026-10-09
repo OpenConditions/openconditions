@@ -1136,13 +1136,22 @@ describe("status-only polls", () => {
     await h.tick(0);
     const roles = h.roles();
     expect(Object.keys(roles).sort()).toEqual([
+      "answers",
       "failing",
+      "items",
       "lastFetchedAt",
       "payloads",
       "statusIndex",
+      "urls",
     ]);
     const held = roles.payloads as Record<string, readonly HeldPayload[]>;
     expect(Object.keys(held).sort()).toEqual(["sites", "status"]);
+    // Beside each held payload its URL, and no per-item role keeps anything.
+    expect(Object.keys(roles.urls).sort()).toEqual(["sites", "status"]);
+    expect(roles.urls["sites"]).toHaveLength(1);
+    expect(roles.items).toEqual({});
+    // Neither role is a tolerant `urls` role: no answer is kept per URL.
+    expect(roles.answers).toEqual({});
     const [sites] = held["sites"]!;
     expect(sites).toMatchObject({ gzipped: true });
     expect(sites!.data).toBeInstanceOf(Buffer);

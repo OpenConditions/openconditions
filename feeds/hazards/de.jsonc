@@ -1,0 +1,40 @@
+{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [
+    {
+      "operator": "dwd",
+      "product": "alerts",
+      "name": "DWD weather warnings",
+      "tier": "authoritative",
+      "format": "cap",
+      // The status zip holds every current warning by merged commune area, a
+      // CAP message per entry in every language DWD publishes; a warning
+      // missing from the next zip has ended. Coast and lake warnings name
+      // their areas by warn cell only: DWD's warning-area layers give those
+      // cells their shapes (all eight coast cells, 23 of the 25 lake cells;
+      // the two Bavarian lake groups have none).
+      "endpoints": {
+        "alerts": {
+          "url": "https://opendata.dwd.de/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_MUL.zip",
+          "unzip": { "entries": "\\.xml$" },
+          "cadenceSec": 300,
+        },
+        "areas": {
+          "urls": [
+            "https://maps.dwd.de/geoserver/dwd/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=dwd:Warngebiete_Kueste&outputFormat=application/json",
+            "https://maps.dwd.de/geoserver/dwd/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=dwd:Warngebiete_Binnenseen&outputFormat=application/json",
+          ],
+          "cadenceSec": 2592000,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 1800,
+      "coverage": { "countries": ["DE"], "bbox": [5.5, 47.2, 15.1, 55.1] },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+      "attribution": "Deutscher Wetterdienst; Geobasisdaten © GeoBasis-DE / BKG 2021 (Daten modifiziert)",
+      "homepage": "https://www.dwd.de/",
+      "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
+    },
+  ],
+}

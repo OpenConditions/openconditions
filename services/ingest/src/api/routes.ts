@@ -11,6 +11,7 @@ import {
   offersOfFeatures,
   type QueryRunner,
   readCoverage,
+  readGrid,
   readSeries,
   type Scope,
   withoutComponents,
@@ -57,6 +58,7 @@ import {
   AtQuery,
   FeatureListQuery,
   FeatureQuery,
+  GridQuery,
   LatestObservationQuery,
   OfferListQuery,
   queryError,
@@ -64,6 +66,7 @@ import {
   SeriesQuery,
   SituationListQuery,
   StreamQuery,
+  windowIssue,
 } from "./query.js";
 import { scopeOf } from "./scope.js";
 import { sourcesOf } from "./sources.js";
@@ -127,6 +130,9 @@ function filtersOf(q: Omit<StreamQuery, "class" | "minSeverity"> & Partial<Strea
 
 /** Readings change every poll: a collection or series is cached this long. */
 const OBSERVATION_CACHE_SECONDS = 30;
+
+/** A grid of readings changes with polls an hour apart and is costly to build. */
+const GRID_CACHE_SECONDS = 60;
 
 /** Features and offers change with their source's poll. */
 function cacheRecords(reply: FastifyReply): void {
@@ -390,6 +396,21 @@ export function registerApiRoutes(
     return new Set(rows.map((r) => r.id));
   }
 
+  /**
+   * Parses a situation collection query, answering 400 for a time window
+   * that, ending now, starts after now or spans too long.
+   */
+  function parseSituations(req: FastifyRequest, reply: FastifyReply) {
+    const q = parse(SituationListQuery, req.query, reply);
+    if (!q || q.from === undefined || q.to !== undefined) return q;
+    const issue = windowIssue(new Date(q.from), now());
+    if (issue === undefined) return q;
+    void reply
+      .status(400)
+      .send({ error: "invalid query", issues: [{ path: "from", message: issue }] });
+    return undefined;
+  }
+
   /** One page of situations as the egress serves them in `scope`, and the instant they were read at. */
   async function page(q: z.output<typeof SituationListQuery>, scope: Scope) {
     const at = q.at ? new Date(q.at) : now();
@@ -398,7 +419,10 @@ export function registerApiRoutes(
       at,
       limit: q.limit,
       ...filtersOf(q),
+      ...(q.subtype ? { subtypes: q.subtype } : {}),
       ...(q.horizonDays !== undefined ? { horizonDays: q.horizonDays } : {}),
+      ...(q.from ? { from: new Date(q.from), to: q.to ? new Date(q.to) : at } : {}),
+      ...(q.simplify !== undefined ? { simplify: q.simplify } : {}),
       ...(q.cursor ? { cursor: q.cursor } : {}),
     });
     const shown = egress(read.records, scope);
@@ -434,7 +458,7 @@ export function registerApiRoutes(
   // The emitters (GeoJSON, JSON-LD, TraFF, DATEX II, the stream) are public
   // feeds: they read in the public scope whoever asks.
   app.get("/situations", async (req, reply) => {
-    const q = parse(SituationListQuery, req.query, reply);
+    const q = parseSituations(req, reply);
     if (!q) return reply;
     const { at, records, next } = await page(q, scopeOf(req));
     cacheFor(reply, records, at);
@@ -443,7 +467,7 @@ export function registerApiRoutes(
   });
 
   app.get("/situations.geojson", async (req, reply) => {
-    const q = parse(SituationListQuery, req.query, reply);
+    const q = parseSituations(req, reply);
     if (!q) return reply;
     const { at, records, next } = await page(q, "public");
     cacheFor(reply, records, at);
@@ -454,7 +478,7 @@ export function registerApiRoutes(
   });
 
   app.get("/situations.jsonld", async (req, reply) => {
-    const q = parse(SituationListQuery, req.query, reply);
+    const q = parseSituations(req, reply);
     if (!q) return reply;
     const { at, records, next } = await page(q, "public");
     cacheFor(reply, records, at);
@@ -465,7 +489,7 @@ export function registerApiRoutes(
   });
 
   app.get("/traff.xml", async (req, reply) => {
-    const q = parse(SituationListQuery, req.query, reply);
+    const q = parseSituations(req, reply);
     if (!q) return reply;
     const { at, records, next } = await page(q, "public");
     cacheFor(reply, records, at);
@@ -476,7 +500,7 @@ export function registerApiRoutes(
   });
 
   app.get("/datex2/situations.xml", async (req, reply) => {
-    const q = parse(SituationListQuery, req.query, reply);
+    const q = parseSituations(req, reply);
     if (!q) return reply;
     const { at, records, next } = await page(q, "public");
     cacheFor(reply, records, at);
@@ -883,12 +907,40 @@ export function registerApiRoutes(
       ...(q.domain ? { domain: q.domain } : {}),
       ...(q.source ? { sources: q.source } : {}),
       ...(q.origin ? { origins: q.origin } : {}),
+      ...(q.since ? { since: new Date(q.since) } : {}),
       ...(q.cursor ? { cursor: Number(q.cursor) } : {}),
     });
     const records = egress(read.records, scope);
     reply.header("Cache-Control", `public, max-age=${OBSERVATION_CACHE_SECONDS}`);
     reply.header("X-Data-License", licensesOf(records));
     return reply.send({ records, next: read.next, ...withCoverage(reply, coverage) });
+  });
+
+  // Cells stand for readings a map cannot draw one by one at a low zoom;
+  // they pass the scope and the licence egress the readings would.
+  app.get("/observations/grid", async (req, reply) => {
+    const q = parse(GridQuery, req.query, reply);
+    if (!q) return reply;
+    const scope = scopeOf(req);
+    const licenses = new Set<string>();
+    const grid = await readGrid(db, {
+      scope,
+      property: q.property,
+      bbox: q.bbox,
+      cellDeg: q.cellDeg,
+      since: new Date(q.since),
+      at: now(),
+      ...(q.source ? { sources: q.source } : {}),
+      admits: (provenance) => {
+        const shown =
+          scope === "operator" || isPublicRecord({ provenance } as unknown as EgressRecord);
+        if (shown) licenses.add(provenance.attribution.license);
+        return shown;
+      },
+    });
+    reply.header("Cache-Control", `public, max-age=${GRID_CACHE_SECONDS}`);
+    reply.header("X-Data-License", licenses.size > 0 ? [...licenses].sort().join(", ") : "none");
+    return reply.send(grid);
   });
 
   app.get("/observations", async (req, reply) => {

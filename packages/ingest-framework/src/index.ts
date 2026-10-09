@@ -32,3 +32,4 @@ export * from "./public-license.js";
 export * from "./redact.js";
 export * from "./reproject.js";
 export * from "./version.js";
+export * from "./zip.js";

@@ -35,6 +35,8 @@ export interface SweepCounts {
   dropped: number;
   /** Crowd readings whose report's lifetime ended, marked expired. */
   crowdExpired: number;
+  /** Series of transient properties deleted once their reading expired. */
+  transient: number;
 }
 
 const CLASSES: readonly RevisionedClass[] = ["situation", "feature", "offer"];
@@ -70,6 +72,10 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  *  - a record tombstoned more than `historyDays` ago is purged with its
  *    revisions, effects, components, bindings, crowd evidence and votes;
  *  - an on-demand row is deleted at expiry: it was a cache, with no history;
+ *  - a series of a transient property (one reading of one instant, such as
+ *    a fire pixel) is deleted once its reading expired, bulk or on demand:
+ *    nothing else would ever end it. Its history row stays until its
+ *    partition is dropped;
  *  - a crowd reading whose report's lifetime ended is marked `expired`, and
  *    the fused rows it fed are recomputed without it. Its series row stays:
  *    it is what the reading's history is read back through.
@@ -79,7 +85,14 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  * other write, so a poll or a confirmation in between is never undone.
  */
 export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promise<SweepCounts> {
-  const counts: SweepCounts = { expired: 0, orphaned: 0, purged: 0, dropped: 0, crowdExpired: 0 };
+  const counts: SweepCounts = {
+    expired: 0,
+    orphaned: 0,
+    purged: 0,
+    dropped: 0,
+    crowdExpired: 0,
+    transient: 0,
+  };
   const params = [
     opts.now,
     opts.instanceId,
@@ -145,6 +158,20 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
     [opts.now],
     remove("observation_latest", "series_id", "bigint"),
   );
+  const transient = opts.registry
+    .properties()
+    .filter((p) => p.transient)
+    .map((p) => p.code);
+  if (transient.length > 0) {
+    counts.transient = await perSource(
+      sql,
+      { table: "observation_latest", key: "series_id" },
+      TRANSIENT_EXPIRED,
+      [opts.now, transient],
+      remove("observation_latest", "series_id", "bigint"),
+      TRANSIENT_BATCH,
+    );
+  }
   counts.crowdExpired = await expireCrowdObservations(sql, opts);
   return counts;
 }
@@ -177,43 +204,60 @@ async function expireCrowdObservations(sql: postgres.Sql, opts: SweepOptions): P
 /** An on-demand row past its expiry. ($1 = now) */
 const ON_DEMAND_EXPIRED = `r.access_mode = 'on_demand' AND r.expires_at < $1`;
 
+/** A series of a transient property past its reading's expiry. ($1 = now, $2 = the properties) */
+const TRANSIENT_EXPIRED = `r.property = ANY($2::text[]) AND r.expires_at < $1`;
+
+/**
+ * Transient series deleted per transaction: a day of satellite detections
+ * is hundreds of thousands of rows, and one source's lock is held only for
+ * a batch at a time, so a poll of that source waits for no more than that.
+ */
+const TRANSIENT_BATCH = 5000;
+
 /** A record tombstoned longer ago than the history window. ($1 = now, $2 = history days) */
 const PURGEABLE = `r.tombstoned_at < $1::timestamptz - make_interval(days => $2)`;
 
 /**
  * Runs `act` on the rows of `table` matching `where`, one transaction per
  * source under its advisory lock, on the rows that still match once the lock
- * is held — so a poll writing in between is never undone. Returns how many
- * rows it acted on.
+ * is held — so a poll writing in between is never undone. With `batch`, a
+ * source's rows are taken at most that many per transaction, until none is
+ * left. Returns how many rows it acted on.
  */
 async function perSource(
   sql: postgres.Sql,
   { table, key }: { table: string; key: string },
   where: string,
-  params: readonly (string | number)[],
+  params: readonly (string | number | readonly string[])[],
   act: (tx: postgres.TransactionSql, ids: string[], sourceId: string) => Promise<unknown>,
+  batch?: number,
 ): Promise<number> {
   const sources = await sql.unsafe<{ source_id: string }[]>(
     `SELECT DISTINCT r.source_id FROM conditions.${table} r WHERE ${where}`,
     [...params],
   );
+  const limit = batch === undefined ? "" : `LIMIT ${batch}`;
   let n = 0;
   for (const { source_id } of sources) {
-    await sql.begin(async (tx) => {
-      await tx`SELECT pg_advisory_xact_lock(hashtext(${source_id}))`;
-      const rows = await tx.unsafe<{ id: string }[]>(
-        `SELECT r.${key} AS id FROM conditions.${table} r
-          WHERE ${where} AND r.source_id = $${params.length + 1}`,
-        [...params, source_id],
-      );
-      if (rows.length === 0) return;
-      await act(
-        tx,
-        rows.map((r) => String(r.id)),
-        source_id,
-      );
-      n += rows.length;
-    });
+    let taken: number;
+    do {
+      taken = (await sql.begin(async (tx) => {
+        await tx`SELECT pg_advisory_xact_lock(hashtext(${source_id}))`;
+        const rows = await tx.unsafe<{ id: string }[]>(
+          `SELECT r.${key} AS id FROM conditions.${table} r
+            WHERE ${where} AND r.source_id = $${params.length + 1} ${limit}`,
+          [...params, source_id],
+        );
+        if (rows.length === 0) return 0;
+        await act(
+          tx,
+          rows.map((r) => String(r.id)),
+          source_id,
+        );
+        return rows.length;
+      })) as number;
+      n += taken;
+    } while (batch !== undefined && taken === batch);
   }
   return n;
 }

@@ -271,12 +271,6 @@
   },
   {
     "class": "observation",
-    "code": "fire.brightness",
-    "version": "1.0",
-    "file": "observation/fire.brightness@1.json"
-  },
-  {
-    "class": "observation",
     "code": "fire.frp",
     "version": "1.0",
     "file": "observation/fire.frp@1.json"

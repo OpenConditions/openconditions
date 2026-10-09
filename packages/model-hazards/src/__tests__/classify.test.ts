@@ -46,6 +46,47 @@ describe("capClassification", () => {
     ).toEqual({ kind: "alert", type: "snow_ice", subtype: "black_ice" });
   });
 
+  it("reads NWS's product code after VTEC and before the generic SAME code", () => {
+    expect(
+      capClassification([
+        { valueName: "NationalWeatherService", value: "AQA" },
+        { valueName: "SAME", value: "NWS" },
+      ]),
+    ).toEqual({ kind: "alert", type: "air_quality" });
+    expect(
+      capClassification(
+        [
+          { valueName: "SAME", value: "SVS" },
+          { valueName: "NationalWeatherService", value: "SVW" },
+        ],
+        [{ valueName: "VTEC", value: "/O.CON.KICT.TO.W.0030.000000T0000Z-261001T0000Z/" }],
+      ),
+    ).toEqual({ kind: "alert", type: "thunderstorm", subtype: "tornado" });
+    expect(
+      capClassification([
+        { valueName: "SAME", value: "FFA" },
+        { valueName: "NationalWeatherService", value: "FAA" },
+      ]),
+    ).toEqual({ kind: "alert", type: "flood" });
+    expect(capClassification([{ valueName: "NationalWeatherService", value: "ESF" }])).toEqual({
+      kind: "alert",
+      type: "flood",
+      subtype: "hydrologic",
+    });
+    expect(capClassification([{ valueName: "NationalWeatherService", value: "MWS" }])).toEqual({
+      kind: "alert",
+      type: "marine",
+    });
+    expect(capClassification([{ valueName: "NationalWeatherService", value: "TST" }])).toEqual({
+      kind: "alert",
+      type: "administrative",
+      subtype: "test",
+    });
+    expect(
+      capClassification([{ valueName: "NationalWeatherService", value: "SPS" }]),
+    ).toBeUndefined();
+  });
+
   it("leaves an alert whose codes name no hazard, or no list it knows, unclassified", () => {
     expect(
       capClassification([{ valueName: "profile:CAP-CP:Event:0.4", value: "other" }]),

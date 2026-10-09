@@ -4,7 +4,7 @@ import {
   type CrowdRules,
   type Mappings,
   majorOf,
-  type Retention,
+  type PropertyEntry,
   type SchemaVersion,
   type SubjectSpec,
 } from "./define.js";
@@ -121,10 +121,11 @@ function subjectText(s: SubjectSpec): string {
   return parts.length === 0 ? "feature" : `feature (${parts.join(", ")})`;
 }
 
-function retentionText(r: Retention | undefined): string {
-  if (r === undefined) return "—";
+function retentionText(p: PropertyEntry): string {
+  const r = p.retention;
+  if (r === undefined) return p.transient ? "transient" : "—";
   if (r.latestOnly) return "latest only";
-  const parts: string[] = [];
+  const parts: string[] = p.transient ? ["transient"] : [];
   if (r.changeOnly) parts.push("change-only");
   if (r.rawDays !== undefined) parts.push(`raw ${r.rawDays} d`);
   if (r.rollup !== undefined) {
@@ -276,7 +277,7 @@ export function registryMarkdown(registry: Registry): string {
               ? `structured (${r.schema})`
               : r.type;
       out.push(
-        `| \`${p.code}\` | ${p.domain} | ${p.version} | ${result} | ${p.subjects.map(subjectText).join("; ")} | ${retentionText(p.retention)} |`,
+        `| \`${p.code}\` | ${p.domain} | ${p.version} | ${result} | ${p.subjects.map(subjectText).join("; ")} | ${retentionText(p)} |`,
       );
     }
     out.push("");

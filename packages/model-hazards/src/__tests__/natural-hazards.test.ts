@@ -1,6 +1,6 @@
 import { buildRegistry, kernelModule, observationId } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
-import { hazardsModule } from "../module.js";
+import { HAZARDS_SOURCE_FORMATS, hazardsModule } from "../module.js";
 
 const registry = buildRegistry([kernelModule, hazardsModule]);
 
@@ -57,6 +57,17 @@ const withDetails = (details: object) => ({
   details: { kind: "natural_hazard", v: 1, ...details },
 });
 
+/** A hazard of another type, without the fire's subtype and IRWIN id. */
+function hazard(type: string, details: object, rest: object = {}) {
+  const { subtype: _, externalIds: __, ...base } = withDetails(details);
+  return { ...base, type, ...rest };
+}
+const amend = (draft: { details: object }, details: object) => ({
+  ...draft,
+  details: { ...draft.details, ...details },
+});
+const valid = (draft: object) => registry.validateDraft(draft).ok;
+
 describe("natural hazards", () => {
   it("registers a fire perimeter with what the registers publish about it", () => {
     expect(registry.validateDraft(perimeter).ok).toBe(true);
@@ -105,7 +116,113 @@ describe("natural hazards", () => {
     expect(
       registry.validateDraft({ ...negative, id: observationId("us-nifc", negative as never) }).ok,
     ).toBe(false);
-    expect(registry.property("fire.brightness")?.result).toEqual({ type: "quantity", unit: "K" });
     expect(registry.property("fire.frp")?.domain).toBe("hazards");
+  });
+
+  it("keeps each fire pixel's power as a transient reading and no brightness", () => {
+    expect(registry.property("fire.frp")?.transient).toBe(true);
+    expect(registry.property("fire.frp")?.retention).toEqual({ rawDays: 7 });
+    expect(registry.property("fire.brightness")).toBeUndefined();
+  });
+
+  it("covers the hazards the event registers publish", () => {
+    const types = registry.kind("situation", "natural_hazard")?.types ?? {};
+    for (const t of ["tropical_cyclone", "volcano", "drought", "sea_ice"]) {
+      expect(types[t]).toBeDefined();
+    }
+    expect(types["tropical_cyclone"]).toEqual([
+      "tropical_depression",
+      "tropical_storm",
+      "hurricane",
+      "typhoon",
+      "cyclone",
+    ]);
+    expect(types["sea_ice"]).toEqual(["iceberg", "lake_ice"]);
+    const storm = hazard(
+      "tropical_cyclone",
+      {
+        name: [{ lang: "en", text: "Tropical Storm Simon" }],
+        maxWind: { value: 95, unit: "km/h" },
+        populationAffected: 120000,
+        detailUrl: "https://www.gdacs.org/report.aspx?eventtype=TC&eventid=1001234",
+      },
+      {
+        subtype: "tropical_storm",
+        externalIds: [
+          { scheme: "gdacs:event", id: "TC1001234" },
+          { scheme: "glide", id: "TC-2026-000123-PHL" },
+        ],
+      },
+    );
+    expect(valid(storm)).toBe(true);
+    expect(valid(amend(storm, { maxWind: { value: 26, unit: "m/s" } }))).toBe(false);
+    expect(valid(amend(storm, { populationAffected: -1 }))).toBe(false);
+  });
+
+  it("registers what USGS publishes about an earthquake, a depth above sea level included", () => {
+    const quake = hazard(
+      "earthquake",
+      {
+        magnitude: { value: 2.1, scale: "ml" },
+        depth: { value: -3370, unit: "m" },
+        tsunamiFlag: true,
+        feltReports: 4,
+        mmi: 7.654,
+        reviewed: true,
+        detailUrl: "https://earthquake.usgs.gov/earthquakes/eventpage/us6000u0xi",
+      },
+      { validity: { status: "ended", start: "2026-10-07T10:00:00Z", end: "2026-10-07T10:00:00Z" } },
+    );
+    expect(valid(quake)).toBe(true);
+    expect(valid(amend(quake, { mmi: 12.5 }))).toBe(false);
+    expect(valid(amend(quake, { feltReports: 1.5 }))).toBe(false);
+    expect(valid(amend(quake, { feltReports: -1 }))).toBe(false);
+    expect(valid(amend(quake, { depth: { value: -3.37, unit: "km" } }))).toBe(false);
+    expect(valid(amend(quake, { detailUrl: "eventpage/us6000u0xi" }))).toBe(false);
+  });
+
+  it("keeps a smoke plume current while its analysis window has closed", () => {
+    const smoke = hazard(
+      "smoke",
+      {
+        density: "light",
+        detection: {
+          satellite: "GOES-WEST",
+          start: "2026-10-08T12:00:00Z",
+          end: "2026-10-08T15:00:00Z",
+        },
+      },
+      { validity: { status: "active", start: "2026-10-08T12:00:00Z" } },
+    );
+    expect(valid(smoke)).toBe(true);
+    expect(valid(amend(smoke, { detection: { start: "2026-10-08 12:00" } }))).toBe(false);
+  });
+
+  it("records when a fire's perimeter was mapped", () => {
+    expect(valid(withDetails({ perimeterAt: "2026-07-24T18:30:00Z" }))).toBe(true);
+  });
+
+  it("registers the geocode schemes of MeteoAlarm's areas without a shape source", () => {
+    const schemes = registry.vocabulary("admin_geocode_scheme")!;
+    expect(schemes.values).toContain("cisorp");
+    expect(schemes.values).toContain("fips10_4");
+    expect(schemes.values).toContain("fips");
+  });
+
+  it("contributes the hazards source formats", () => {
+    const formats = registry.vocabulary("source_format")!;
+    for (const id of HAZARDS_SOURCE_FORMATS) expect(formats.contributedBy[id]).toBe("hazards");
+    expect([...HAZARDS_SOURCE_FORMATS]).toEqual([
+      "cap",
+      "nws",
+      "meteoalarm",
+      "firms",
+      "wfigs",
+      "effis",
+      "hms",
+      "usgs",
+      "eonet",
+      "gdacs",
+    ]);
   });
 });

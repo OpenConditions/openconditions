@@ -8,6 +8,7 @@ import {
   resolveWithSnapshot,
 } from "./catalog/resolvers.js";
 import {
+  eachItemPath,
   feedEndpoint,
   referencesCredential,
   resolveEachUrl,
@@ -21,9 +22,13 @@ import { guardedImpersonatingFetch, type ImpersonationOptions } from "./imperson
 import { getPath } from "./layouts/row.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
+import { unzipEntries } from "./zip.js";
 
 const GZIP_MAGIC_0 = 0x1f;
 const GZIP_MAGIC_1 = 0x8b;
+
+/** The entries an unzipped archive may list when its endpoint sets no bound. */
+const DEFAULT_MAX_ZIP_ENTRIES = 10_000;
 
 /** Max sub-feed fetches in flight when fanning out a resolved catalog URL set. */
 const FANOUT_CONCURRENCY = 8;
@@ -92,24 +97,65 @@ function pacedFetch(pacer: Pacer, perMinute: number, fetchFn: FetchFn): FetchFn 
 
 const sharedFetchState = createFetchState();
 
+/** A per-item role's latest response for one item, kept between polls. */
+export interface KeptItem {
+  /** The version the item's listing gave it (a walked item), when it gave one. */
+  version?: string;
+  /**
+   * Whether the item was fetched twice under this version. A version of
+   * coarse resolution (a listing's last-modified minute) can stay the same
+   * across a write that came after the item was read, so a version is
+   * trusted only once it repeats.
+   */
+  confirmed?: boolean;
+  /** Epoch ms of the poll that fetched it. */
+  at: number;
+  body: HeldPayload;
+}
+
+/**
+ * The items of a per-item role kept between polls, by URL: those its last
+ * fetch named, and only those.
+ */
+export type KeptItems = ReadonlyMap<string, KeptItem>;
+
+/** What a fetch that answered carries besides its status. */
+interface FetchedPayloads {
+  /** The payloads to parse. */
+  buffers: Buffer[];
+  /** The URL each buffer came from, same order. Never logged: it may carry a credential. */
+  urls: string[];
+  /** One digest per response this call received: the raw-payload identity of each. */
+  payloads: PayloadDigest[];
+  /**
+   * The responses `payloads` digest, same order, when they are not `buffers`
+   * one for one: the entries of an unzipped archive, or a per-item role whose
+   * kept items stand in for responses not asked again.
+   */
+  responses?: Buffer[];
+  /** A per-item role's items to keep for the next poll, replacing those it was given. */
+  kept?: KeptItems;
+  /**
+   * The URLs of a tolerant fan-out that did not answer, in request order: the
+   * caller may stand a held answer of each in. Never logged: they may carry a
+   * credential.
+   */
+  failedUrls?: string[];
+}
+
 export type FetchResult =
-  | {
+  | ({
       status: "fetched";
       /** Commit conditional validators only after the complete snapshot is published. */
       accept: () => void;
-      buffers: Buffer[];
-      /** One digest per buffer, same order: the raw-payload identity of each response. */
-      payloads: PayloadDigest[];
       validatedAtNetwork: true;
       partitions: { succeeded: number; failed: 0; total: number };
-    }
-  | {
+    } & FetchedPayloads)
+  | ({
       status: "partial";
-      buffers: Buffer[];
-      payloads: PayloadDigest[];
       validatedAtNetwork: false;
       partitions: { succeeded: number; failed: number; total: number };
-    }
+    } & FetchedPayloads)
   | { status: "not-modified"; validatedAtNetwork: true }
   | {
       status: "no-endpoint";
@@ -129,6 +175,12 @@ export interface FetchOptions {
   impersonation?: ImpersonationOptions;
   /** The payloads of the role a per-item (`each`) endpoint reads its ids from. */
   eachSource?: readonly Buffer[];
+  /** The URL of each `eachSource` payload, same order: where a walk resolves its links. */
+  eachSourceUrls?: readonly string[];
+  /** The items a per-item endpoint kept at its last fetch. */
+  kept?: KeptItems;
+  /** Epoch ms of the poll: the instant its date placeholders and kept items are read at. */
+  at?: number;
 }
 
 function isGzip(buf: Buffer): boolean {
@@ -211,13 +263,14 @@ function requestInit(
   role: string,
   env: Env,
   cell?: Cell,
+  at?: number,
 ): RequestInit | undefined {
   const endpoint = feedEndpoint(feed, role);
   const headers = endpoint.headers
     ? Object.fromEntries(
         Object.entries(endpoint.headers).map(([k, v]) => [
           k,
-          resolveFeedTemplate(feed, v, env, cell),
+          resolveFeedTemplate(feed, v, env, cell, at),
         ]),
       )
     : undefined;
@@ -225,7 +278,9 @@ function requestInit(
   return {
     method: "POST",
     body:
-      endpoint.body !== undefined ? resolveFeedTemplate(feed, endpoint.body, env, cell) : undefined,
+      endpoint.body !== undefined
+        ? resolveFeedTemplate(feed, endpoint.body, env, cell, at)
+        : undefined,
     headers,
   };
 }
@@ -240,10 +295,11 @@ function followedInit(
   role: string,
   env: Env,
   cell?: Cell,
+  at?: number,
 ): RequestInit | undefined {
   const entries = Object.entries(feedEndpoint(feed, role).headers ?? {})
     .filter(([, template]) => !referencesCredential(template))
-    .map(([name, template]) => [name, resolveFeedTemplate(feed, template, env, cell)]);
+    .map(([name, template]) => [name, resolveFeedTemplate(feed, template, env, cell, at)]);
   return entries.length > 0 ? { headers: Object.fromEntries(entries) } : undefined;
 }
 
@@ -277,9 +333,13 @@ async function fetchFanout(
   // where it has them. The static path has always sent these; the fan-out
   // dropped them, so a feed quietly lost its headers by being fanned out.
   init?: RequestInit,
-): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[]; failures: number; total: number }> {
+  // The role is a directory listing another role walks: an HTML page is its data.
+  html = false,
+): Promise<ItemsFetch> {
   const out: Buffer[] = [];
+  const answered: string[] = [];
   const payloads: PayloadDigest[] = [];
+  const failed = new Set<string>();
   let failures = 0;
   let cursor = 0;
 
@@ -288,13 +348,15 @@ async function fetchFanout(
       const url = urls[cursor++]!;
       try {
         const { buffer, payload } = await fetchOne(url, fetchFn, init, undefined, false, redact);
-        if (looksLikeHtml(buffer)) {
+        if (!html && looksLikeHtml(buffer)) {
           throw new Error("returned an HTML page, not feed data");
         }
         out.push(buffer);
+        answered.push(url);
         payloads.push(payload);
       } catch (err) {
         failures++;
+        failed.add(url);
         console.warn(
           `[ingest] sub-feed fetch failed (${redact(url)}):`,
           err instanceof Error ? err.message : err,
@@ -309,7 +371,14 @@ async function fetchFanout(
   if (urls.length > 0 && out.length === 0) {
     throw new Error(`all ${urls.length} sub-feeds failed (${failures} failures)`);
   }
-  return { buffers: out, payloads, failures, total: urls.length };
+  return {
+    buffers: out,
+    urls: answered,
+    payloads,
+    failures,
+    total: urls.length,
+    ...(failures > 0 ? { failedUrls: urls.filter((url) => failed.has(url)) } : {}),
+  };
 }
 
 /**
@@ -404,10 +473,11 @@ async function fetchPaginated(
   init: RequestInit | undefined,
   fetchFn: FetchFn,
   redact: (s: string) => string,
-): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[] }> {
+): Promise<{ buffers: Buffer[]; urls: string[]; payloads: PayloadDigest[] }> {
   const recordsPath = pg.recordsPath ?? "value";
   const maxPages = pg.maxPages ?? DEFAULT_MAX_PAGES;
   const out: Buffer[] = [];
+  const urls: string[] = [];
   const payloads: PayloadDigest[] = [];
   for (const baseUrl of baseUrls) {
     let reachedEnd = false;
@@ -421,6 +491,7 @@ async function fetchPaginated(
       });
       if (count > 0) {
         out.push(buffer);
+        urls.push(url);
         payloads.push(payload);
       }
       if (count < pg.pageSize) {
@@ -432,7 +503,7 @@ async function fetchPaginated(
       throw new Error(`pagination: ${feedId} reached maxPages=${maxPages} without a terminal page`);
     }
   }
-  return { buffers: out, payloads };
+  return { buffers: out, urls, payloads };
 }
 
 /** The string at a dotted JSON path (numeric segments index arrays), or undefined. */
@@ -484,26 +555,50 @@ async function fetchFollowing(
   init: RequestInit | undefined,
   nextInit: RequestInit | undefined,
   redact: (s: string) => string,
-): Promise<{ buffers: Buffer[]; payloads: PayloadDigest[] }> {
+): Promise<{ buffers: Buffer[]; urls: string[]; payloads: PayloadDigest[] }> {
   const buffers: Buffer[] = [];
+  const targets: string[] = [];
   const payloads: PayloadDigest[] = [];
   for (const url of urls) {
     const page = await fetchOne(url, authorizedFetch, init, undefined, false, redact);
     const target = followTarget(follow, page.buffer, url);
     const followed = await fetchOne(target, baseFetch, nextInit, undefined, false, redact);
     buffers.push(followed.buffer);
+    targets.push(target);
     payloads.push(followed.payload);
   }
-  return { buffers, payloads };
+  return { buffers, urls: targets, payloads };
 }
 
+/** What a tolerant set of requests yields: the answers, and how many of how many failed. */
+interface ItemsFetch extends FetchedPayloads {
+  failures: number;
+  total: number;
+}
+
+type EachSpec = NonNullable<FeedEndpoint["each"]>;
+
 /**
- * The ids a per-item endpoint is fetched for: `field` of every record at
- * `records` in each source payload, in order, each id once. A record without a
- * string or number there contributes nothing; an id is never made up.
+ * The items a per-item endpoint is fetched for: `field` of every record at
+ * `records` in each source payload, in order, each item once. The field is a
+ * string, a number or a list of strings; anything else contributes nothing,
+ * and an item is never made up. With `pattern`, only the values it matches
+ * count, and its first group is the item. An item that could leave the path
+ * it fills is refused and counted.
  */
-function eachItems(each: NonNullable<FeedEndpoint["each"]>, sources: readonly Buffer[]): string[] {
+function eachItems(
+  each: EachSpec,
+  sources: readonly Buffer[],
+): { items: string[]; refused: number } {
+  const pattern = each.pattern === undefined ? undefined : new RegExp(each.pattern);
   const items = new Set<string>();
+  const refused = new Set<string>();
+  const take = (value: string) => {
+    const item = pattern ? pattern.exec(value)?.[1] : value;
+    if (item === undefined || item === "") return;
+    if (eachItemPath(item) === undefined) refused.add(item);
+    else items.add(item);
+  };
   for (const source of sources) {
     let doc: unknown;
     try {
@@ -511,33 +606,42 @@ function eachItems(each: NonNullable<FeedEndpoint["each"]>, sources: readonly Bu
     } catch {
       throw new Error(`each: the ${each.role} payload is not valid JSON`);
     }
-    const records = getPath(doc, each.records);
+    const records = getPath(doc, each.records ?? "");
     if (!Array.isArray(records)) {
       throw new Error(`each: no list at ${each.records} in the ${each.role} payload`);
     }
     for (const record of records) {
-      const id = getPath(record, each.field);
-      if (typeof id === "string" && id !== "") items.add(id);
-      else if (typeof id === "number" && Number.isFinite(id)) items.add(String(id));
+      const value = getPath(record, each.field ?? "");
+      if (typeof value === "string") take(value);
+      else if (typeof value === "number" && Number.isFinite(value)) take(String(value));
+      else if (Array.isArray(value)) {
+        for (const element of value) if (typeof element === "string") take(element);
+      }
     }
   }
-  return [...items];
+  return { items: [...items], refused: refused.size };
 }
 
 /**
- * Fetches each URL, keeping order. Without `tolerant` the first failure rejects
- * the role and no further item is requested; with it a failed item is logged
- * and skipped, and the role fails only when every item did. No validator is
- * read or written: an item's response is never conditional on another's, and
- * the list of items changes with its source.
+ * Fetches each URL with bounded concurrency, each answer in its URL's slot
+ * and a failed one left empty. Without `tolerant` the first failure rejects
+ * and no further request is sent; with it a failed URL is logged and counted.
+ * `html` takes an HTML page as an answer (a directory listing) instead of a
+ * sign of an error page. No validator is read or written: an item's response
+ * is never conditional on another's, and the list of items changes with its
+ * source.
  */
-async function fetchEach(
-  urls: string[],
+async function fetchSlots(
+  urls: readonly string[],
   fetchFn: FetchFn,
   init: RequestInit | undefined,
   redact: (s: string) => string,
   tolerant: boolean,
-): Promise<Awaited<ReturnType<typeof fetchFanout>>> {
+  html = false,
+): Promise<{
+  slots: ({ buffer: Buffer; payload: PayloadDigest } | undefined)[];
+  failures: number;
+}> {
   const slots = new Array<{ buffer: Buffer; payload: PayloadDigest } | undefined>(urls.length);
   let failures = 0;
   let cursor = 0;
@@ -557,7 +661,9 @@ async function fetchEach(
           false,
           redact,
         );
-        if (looksLikeHtml(buffer)) throw new Error("returned an HTML page, not feed data");
+        if (!html && looksLikeHtml(buffer)) {
+          throw new Error("returned an HTML page, not feed data");
+        }
         slots[i] = { buffer, payload };
       } catch (err) {
         if (!tolerant) {
@@ -575,15 +681,234 @@ async function fetchEach(
   await Promise.all(
     Array.from({ length: Math.min(FANOUT_CONCURRENCY, urls.length) }, () => worker()),
   );
-  const done = slots.filter((s) => s !== undefined);
+  return { slots, failures };
+}
+
+/**
+ * Fetches each URL, keeping order. Without `tolerant` the first failure rejects
+ * the role and no further item is requested; with it a failed item is skipped,
+ * and the role fails only when every item did.
+ */
+async function fetchEach(
+  urls: string[],
+  fetchFn: FetchFn,
+  init: RequestInit | undefined,
+  redact: (s: string) => string,
+  tolerant: boolean,
+): Promise<ItemsFetch> {
+  const { slots, failures } = await fetchSlots(urls, fetchFn, init, redact, tolerant);
+  const done = slots.flatMap((s, i) => (s ? [{ ...s, url: urls[i]! }] : []));
   if (urls.length > 0 && done.length === 0) {
     throw new Error(`all ${urls.length} item requests failed`);
   }
   return {
     buffers: done.map((s) => s.buffer),
+    urls: done.map((s) => s.url),
     payloads: done.map((s) => s.payload),
     failures,
     total: urls.length,
+  };
+}
+
+/**
+ * Fetches the items not kept, and keeps every item fetched. An item is asked
+ * again once `stale` says its kept copy is, and a kept copy stands in for an
+ * item whose request failed. The items kept for the next poll are exactly the
+ * ones `urls` names. The role fails when there were requests and every one
+ * failed with no kept copy to stand in.
+ */
+async function fetchKeeping(
+  urls: readonly { url: string; version?: string }[],
+  stale: (url: string, version: string | undefined, kept: KeptItem) => boolean,
+  kept: KeptItems | undefined,
+  at: number,
+  fetchFn: FetchFn,
+  init: RequestInit | undefined,
+  redact: (s: string) => string,
+  tolerant: boolean,
+  html: boolean,
+): Promise<ItemsFetch & { kept: Map<string, KeptItem>; standIns: number }> {
+  const due = urls.filter(({ url, version }) => {
+    const prior = kept?.get(url);
+    return prior === undefined || stale(url, version, prior);
+  });
+  const { slots, failures } = await fetchSlots(
+    due.map((d) => d.url),
+    fetchFn,
+    init,
+    redact,
+    tolerant,
+    html,
+  );
+  const answers = new Map(due.map((d, i) => [d.url, slots[i]] as const));
+  if (due.length > 0 && failures === due.length && due.every((d) => !kept?.has(d.url))) {
+    throw new Error(`all ${due.length} item requests failed`);
+  }
+  const next = new Map<string, KeptItem>();
+  const buffers: Buffer[] = [];
+  const answered: string[] = [];
+  let standIns = 0;
+  for (const { url, version } of urls) {
+    const answer = answers.get(url);
+    if (answer) {
+      const repeated = version !== undefined && kept?.get(url)?.version === version;
+      next.set(url, {
+        ...(version !== undefined ? { version } : {}),
+        ...(repeated ? { confirmed: true } : {}),
+        at,
+        body: await holdPayload(answer.buffer),
+      });
+      buffers.push(answer.buffer);
+      answered.push(url);
+      continue;
+    }
+    const prior = kept?.get(url);
+    if (prior) {
+      next.set(url, prior);
+      buffers.push(await heldBuffer(prior.body));
+      answered.push(url);
+      if (answers.has(url)) standIns++;
+    }
+  }
+  const fetched = slots.filter((s) => s !== undefined);
+  return {
+    buffers,
+    urls: answered,
+    payloads: fetched.map((s) => s.payload),
+    responses: fetched.map((s) => s.buffer),
+    failures,
+    total: due.length,
+    kept: next,
+    standIns,
+  };
+}
+
+/**
+ * The links one walk level finds in its listings: group 1 of each match the
+ * href (`&amp;` read as `&`), resolved against the listing's URL, group 2 the
+ * entry's version when the pattern has one. A link is followed only when it
+ * lies below the listing's directory on the same origin: never to another
+ * host, the parent or a sibling. Each URL once, in the order found.
+ */
+function listedLinks(
+  pattern: string,
+  listings: readonly { buffer: Buffer; url: string }[],
+): { url: string; version?: string }[] {
+  const found = new Map<string, string | undefined>();
+  const re = new RegExp(pattern, "g");
+  for (const listing of listings) {
+    const base = new URL(listing.url);
+    const dir = base.pathname.slice(0, base.pathname.lastIndexOf("/") + 1);
+    for (const match of listing.buffer.toString("utf8").matchAll(re)) {
+      const href = match[1]?.replaceAll("&amp;", "&");
+      if (!href) continue;
+      let target: URL;
+      try {
+        target = new URL(href, base);
+      } catch {
+        continue;
+      }
+      target.hash = "";
+      const below =
+        target.origin === base.origin &&
+        target.pathname.startsWith(dir) &&
+        target.pathname.length > dir.length;
+      if (below && !found.has(target.href)) found.set(target.href, match[2]);
+    }
+  }
+  return [...found].map(([url, version]) => (version === undefined ? { url } : { url, version }));
+}
+
+/**
+ * Walks directory listings down from the source role's payloads, one level
+ * per `links` pattern; the last level's items are the role's payloads. A
+ * listing with a version is listed again when its version changes and once
+ * more on the next walk, skipped only after the same version was seen twice
+ * (a minute-resolution version can hide a write in the minute it was read);
+ * one without a version on every walk (only listing it shows what changed below). A last
+ * level item is fetched again only when its version changes, and without one
+ * never while it is listed. Every response is kept, so a listing or file that
+ * fails stands in from its last answer. A listing that matches no link fails
+ * too, its kept copy standing in. The walked files are the role's whole
+ * snapshot: only a failure nothing stood in for counts, and it leaves the
+ * result partial, its subtree missing.
+ */
+async function fetchWalk(
+  links: readonly string[],
+  sources: readonly { buffer: Buffer; url: string }[],
+  kept: KeptItems | undefined,
+  at: number,
+  fetchFn: FetchFn,
+  init: RequestInit | undefined,
+  redact: (s: string) => string,
+  tolerant: boolean,
+): Promise<ItemsFetch> {
+  let listings = sources;
+  const next = new Map<string, KeptItem>();
+  const payloads: PayloadDigest[] = [];
+  const responses: Buffer[] = [];
+  let failures = 0;
+  let total = 0;
+  for (const [level, pattern] of links.entries()) {
+    const last = level === links.length - 1;
+    const read: { buffer: Buffer; url: string }[] = [];
+    for (const listing of listings) {
+      if (listedLinks(pattern, [listing]).length > 0) {
+        read.push(listing);
+        // A source listing is kept here too, so it can stand in for an empty answer.
+        if (level === 0) next.set(listing.url, { at, body: await holdPayload(listing.buffer) });
+        continue;
+      }
+      // A listing that names nothing below it is not an empty level (the
+      // Datamart has none) but a page in its place: a maintenance page, a
+      // renamed tree. It fails like a request that failed.
+      const prior = kept?.get(listing.url);
+      const copy = prior && { buffer: await heldBuffer(prior.body), url: listing.url };
+      const message = `[ingest] listing matched no link (${redact(redactUrl(listing.url))})`;
+      if (prior && copy && listedLinks(pattern, [copy]).length > 0) {
+        console.warn(`${message}: its kept copy stands in`);
+        read.push(copy);
+        next.set(listing.url, prior);
+        continue;
+      }
+      next.delete(listing.url);
+      if (!tolerant)
+        throw new Error(`a listing matched no link (${redact(redactUrl(listing.url))})`);
+      console.warn(message);
+      failures++;
+      // A source listing was no request of the walk's.
+      if (level === 0) total++;
+    }
+    const found = await fetchKeeping(
+      listedLinks(pattern, read),
+      (_url, version, prior) =>
+        version === undefined
+          ? !last
+          : prior.version !== version || (!last && prior.confirmed !== true),
+      kept,
+      at,
+      fetchFn,
+      init,
+      redact,
+      tolerant,
+      !last,
+    );
+    for (const [url, item] of found.kept) next.set(url, item);
+    payloads.push(...found.payloads);
+    responses.push(...(found.responses ?? []));
+    // A failure a kept copy stood in for leaves nothing out of the snapshot.
+    failures += found.failures - found.standIns;
+    total += found.total;
+    listings = found.buffers.map((buffer, i) => ({ buffer, url: found.urls[i]! }));
+  }
+  return {
+    buffers: listings.map((l) => l.buffer),
+    urls: listings.map((l) => l.url),
+    payloads,
+    responses,
+    failures,
+    total,
+    kept: next,
   };
 }
 
@@ -602,29 +927,50 @@ function childUrls(child: ChildFeed, role: string): string[] {
   return endpoint.urls ?? (endpoint.url ? [endpoint.url] : []);
 }
 
-/** A tolerant fan-out as a result: "partial" when any sub-feed failed. */
-function fanoutResult(fanout: Awaited<ReturnType<typeof fetchFanout>>): FetchResult {
-  if (fanout.failures > 0) {
+/** A tolerant set of requests as a result: "partial" when any of them failed. */
+function fanoutResult({ failures, total, ...fetched }: ItemsFetch): FetchResult {
+  if (failures > 0) {
     return {
       status: "partial",
-      buffers: fanout.buffers,
-      payloads: fanout.payloads,
+      ...fetched,
       validatedAtNetwork: false,
-      partitions: {
-        succeeded: fanout.total - fanout.failures,
-        failed: fanout.failures,
-        total: fanout.total,
-      },
+      partitions: { succeeded: total - failures, failed: failures, total },
     };
   }
   return {
     status: "fetched",
     accept: () => {},
-    buffers: fanout.buffers,
-    payloads: fanout.payloads,
+    ...fetched,
     validatedAtNetwork: true,
-    partitions: { succeeded: fanout.total, failed: 0, total: fanout.total },
+    partitions: { succeeded: total, failed: 0, total },
   };
+}
+
+/** Whether another endpoint of the feed walks this role's payloads as directory listings. */
+function walkedRole(feed: CatalogFeed, role: string): boolean {
+  return Object.values(feed.endpoints).some(
+    (endpoint) => endpoint.each?.role === role && endpoint.each.links !== undefined,
+  );
+}
+
+/** The zip archive entries `unzip` names, as the role's payloads; the archives stay the responses. */
+function unzipped(result: FetchResult, unzip: NonNullable<FeedEndpoint["unzip"]>): FetchResult {
+  if (result.status !== "fetched" && result.status !== "partial") return result;
+  const entries = unzip.entries === undefined ? undefined : new RegExp(unzip.entries);
+  const buffers: Buffer[] = [];
+  const urls: string[] = [];
+  for (const [i, zip] of result.buffers.entries()) {
+    const found = unzipEntries(zip, {
+      ...(entries ? { entries } : {}),
+      maxEntries: unzip.maxEntries ?? DEFAULT_MAX_ZIP_ENTRIES,
+      maxBytes: MAX_DECOMPRESSED_BYTES,
+    });
+    for (const entry of found) {
+      buffers.push(entry.data);
+      urls.push(result.urls[i]!);
+    }
+  }
+  return { ...result, buffers, urls, responses: result.responses ?? result.buffers };
 }
 
 /**
@@ -650,6 +996,9 @@ function fanoutResult(fanout: Awaited<ReturnType<typeof fetchFanout>>): FetchRes
  * ETag/Last-Modified, kept per `${feed.id}#${role}`, and an endpoint whose every
  * URL replied 304 is "not-modified" so the caller preserves last-good rows
  * instead of re-swapping.
+ *
+ * An endpoint with `unzip` answers with zip archives: the entries it names
+ * are the role's payloads, whichever way the archives were fetched.
  */
 export async function fetchEndpoint(
   feed: CatalogFeed,
@@ -657,9 +1006,21 @@ export async function fetchEndpoint(
   baseFetch: FetchFn,
   opts: FetchOptions = {},
 ): Promise<FetchResult> {
+  const unzip = feedEndpoint(feed, role).unzip;
+  const result = await fetchRole(feed, role, baseFetch, opts);
+  return unzip ? unzipped(result, unzip) : result;
+}
+
+async function fetchRole(
+  feed: CatalogFeed,
+  role: string,
+  baseFetch: FetchFn,
+  opts: FetchOptions,
+): Promise<FetchResult> {
   const state = opts.state ?? sharedFetchState;
   const env = opts.env ?? process.env;
   const cell = opts.cell;
+  const at = opts.at ?? Date.now();
   const endpoint = feedEndpoint(feed, role);
 
   // Scrubs the feed's own secret values out of any string before it reaches a
@@ -696,30 +1057,58 @@ export async function fetchEndpoint(
       matchesFilter(child, feed.catalog?.filter),
     );
     const urls = children.flatMap((child) => childUrls(child, role));
-    const fanout = await fetchFanout(urls, fetchFn, redact, requestInit(feed, role, env));
+    const fanout = await fetchFanout(
+      urls,
+      fetchFn,
+      redact,
+      requestInit(feed, role, env, undefined, at),
+    );
     if (fanout.total === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
     return fanoutResult(fanout);
   }
 
-  // Each: one request per id read from another role's payload. The ids come
-  // from `opts.eachSource`, which the caller supplies from that role's latest
-  // fetch; without it there is nothing to read and the role fails.
+  // Each: one request per item read from another role's payload. The items
+  // come from `opts.eachSource`, which the caller supplies from that role's
+  // latest fetch; without it there is nothing to read and the role fails.
   if (endpoint.each) {
+    const each = endpoint.each;
     if (!opts.eachSource) {
-      throw new Error(`each: no ${endpoint.each.role} payload to read ids from`);
+      throw new Error(`each: no ${each.role} payload to read ids from`);
     }
-    const urls = eachItems(endpoint.each, opts.eachSource).map((item) =>
-      resolveEachUrl(feed, role, item, env),
-    );
+    const init = requestInit(feed, role, env, undefined, at);
+    const tolerant = endpoint.fanout === "tolerant";
+    if (each.links !== undefined) {
+      const sourceUrls = opts.eachSourceUrls;
+      if (sourceUrls === undefined || sourceUrls.length !== opts.eachSource.length) {
+        throw new Error(`each: no URLs for the ${each.role} payloads to walk from`);
+      }
+      const sources = opts.eachSource.map((buffer, i) => ({ buffer, url: sourceUrls[i]! }));
+      return fanoutResult(
+        await fetchWalk(each.links, sources, opts.kept, at, fetchFn, init, redact, tolerant),
+      );
+    }
+    const { items, refused } = eachItems(each, opts.eachSource);
+    if (refused > 0) {
+      console.warn(`[ingest] ${feed.id}: ${role}: ${refused} items refused (not a plain path)`);
+    }
+    const urls = items.map((item) => resolveEachUrl(feed, role, item, env, at));
+    if (each.keepSec === undefined) {
+      return fanoutResult(await fetchEach(urls, fetchFn, init, redact, tolerant));
+    }
+    const keepMs = each.keepSec * 1000;
     return fanoutResult(
-      await fetchEach(
-        urls,
+      await fetchKeeping(
+        urls.map((url) => ({ url })),
+        (_url, _version, prior) => at - prior.at >= keepMs,
+        opts.kept,
+        at,
         fetchFn,
-        requestInit(feed, role, env),
+        init,
         redact,
-        endpoint.fanout === "tolerant",
+        tolerant,
+        false,
       ),
     );
   }
@@ -729,7 +1118,7 @@ export async function fetchEndpoint(
   // feed's credentials, and always: the page is not the payload, so no
   // conditional request applies.
   if (endpoint.follow) {
-    const pageUrls = resolveEndpointUrls(feed, role, env, cell);
+    const pageUrls = resolveEndpointUrls(feed, role, env, cell, at);
     if (pageUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
@@ -738,15 +1127,14 @@ export async function fetchEndpoint(
       endpoint.follow,
       fetchFn,
       base,
-      requestInit(feed, role, env, cell),
-      followedInit(feed, role, env, cell),
+      requestInit(feed, role, env, cell, at),
+      followedInit(feed, role, env, cell, at),
       redact,
     );
     return {
       status: "fetched",
       accept: () => {},
-      buffers: followed.buffers,
-      payloads: followed.payloads,
+      ...followed,
       validatedAtNetwork: true,
       partitions: { succeeded: pageUrls.length, failed: 0, total: pageUrls.length },
     };
@@ -756,7 +1144,7 @@ export async function fetchEndpoint(
   // (short) page. Skips conditional-GET/`unchanged` handling (a paged resource
   // changes each cycle, so an ETag buys nothing) — like the fan-out paths above.
   if (endpoint.pagination) {
-    const baseUrls = resolveEndpointUrls(feed, role, env, cell);
+    const baseUrls = resolveEndpointUrls(feed, role, env, cell, at);
     if (baseUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
@@ -764,21 +1152,20 @@ export async function fetchEndpoint(
       baseUrls,
       feed.id,
       endpoint.pagination,
-      requestInit(feed, role, env, cell),
+      requestInit(feed, role, env, cell, at),
       fetchFn,
       redact,
     );
     return {
       status: "fetched",
       accept: () => {},
-      buffers: pages.buffers,
-      payloads: pages.payloads,
+      ...pages,
       validatedAtNetwork: true,
       partitions: { succeeded: baseUrls.length, failed: 0, total: baseUrls.length },
     };
   }
 
-  const urls = resolveEndpointUrls(feed, role, env, cell);
+  const urls = resolveEndpointUrls(feed, role, env, cell, at);
 
   // `fanout: "tolerant"` opts a large multi-URL fan-out (one URL per site or
   // region) into the same per-URL tolerant fetcher the catalog path uses,
@@ -789,7 +1176,13 @@ export async function fetchEndpoint(
   // single URL) fall through to the static path.
   if (endpoint.fanout === "tolerant" && urls.length > 1) {
     return fanoutResult(
-      await fetchFanout(urls, fetchFn, redact, requestInit(feed, role, env, cell)),
+      await fetchFanout(
+        urls,
+        fetchFn,
+        redact,
+        requestInit(feed, role, env, cell, at),
+        walkedRole(feed, role),
+      ),
     );
   }
 
@@ -802,7 +1195,7 @@ export async function fetchEndpoint(
     const results = await fetchAllBounded(
       urls,
       fetchFn,
-      requestInit(feed, role, env, cell),
+      requestInit(feed, role, env, cell, at),
       undefined,
       false,
       redact,
@@ -811,6 +1204,7 @@ export async function fetchEndpoint(
       status: "fetched",
       accept: () => {},
       buffers: results.map((r) => r.buffer),
+      urls,
       payloads: results.map((r) => r.payload),
       validatedAtNetwork: true,
       partitions: { succeeded: results.length, failed: 0, total: results.length },
@@ -834,7 +1228,7 @@ export async function fetchEndpoint(
   }
 
   const cacheKey = (url: string) => `${stateKey}\0${url}`;
-  const init = requestInit(feed, role, env);
+  const init = requestInit(feed, role, env, undefined, at);
   // Retain last bodies only for multi-URL feeds — a single-URL feed skips whole
   // on 304 (below) and never re-reads its cached body, so caching it just holds
   // tens of MB of off-heap Buffer per feed for nothing.
@@ -858,12 +1252,20 @@ export async function fetchEndpoint(
   return {
     status: "fetched",
     accept: () => {
+      // A URL the endpoint no longer names (yesterday's dated URL, a dropped
+      // expand item) is never asked again: its validators go.
+      for (const key of state.conditional.keys()) {
+        if (key.startsWith(`${stateKey}\0`) && !urls.includes(key.slice(stateKey.length + 1))) {
+          state.conditional.delete(key);
+        }
+      }
       for (const url of urls) {
         const accepted = provisional.conditional.get(url);
         if (accepted) state.conditional.set(cacheKey(url), accepted);
       }
     },
     buffers: results.map((r) => r.buffer),
+    urls,
     payloads: results.map((r) => r.payload),
     validatedAtNetwork: true,
     partitions: { succeeded: results.length, failed: 0, total: results.length },

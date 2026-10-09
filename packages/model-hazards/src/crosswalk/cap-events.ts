@@ -303,6 +303,46 @@ export const METEOALARM_CLASSES: Readonly<Record<string, string | null>> = {
   "awareness_type:15": "alert.drought",
 };
 
+/**
+ * NWS product codes → alert classification, as the VTEC phenomenon of the
+ * same product reads; a Special Weather Statement names no hazard.
+ */
+export const NWS_CLASSES: Readonly<Record<string, string | null>> = {
+  "NWS:AQA": "alert.air_quality",
+  "NWS:BHS": "alert.coastal.beach_hazard",
+  "NWS:CFS": "alert.coastal.coastal_flood",
+  "NWS:CFY": "alert.coastal.coastal_flood",
+  "NWS:DUY": "alert.dust.blowing_dust",
+  "NWS:ESF": "alert.flood.hydrologic",
+  "NWS:FAA": "alert.flood",
+  "NWS:FAY": "alert.flood",
+  "NWS:FGY": "alert.fog.dense",
+  "NWS:FRY": "alert.cold.frost",
+  "NWS:FWA": "alert.fire.fire_weather",
+  "NWS:FWW": "alert.fire.fire_weather",
+  "NWS:FZA": "alert.cold.freeze",
+  "NWS:GLA": "alert.wind.gale",
+  "NWS:GLW": "alert.wind.gale",
+  "NWS:HFW": "alert.wind.hurricane_force",
+  "NWS:HTY": "alert.heat",
+  "NWS:LWY": "alert.wind.strong_wind",
+  "NWS:MAW": "alert.marine",
+  "NWS:MFY": "alert.fog.dense",
+  "NWS:MWS": "alert.marine",
+  "NWS:RPS": "alert.coastal.rip_current",
+  "NWS:SCY": "alert.marine.small_craft",
+  "NWS:SEW": "alert.marine.hazardous_seas",
+  "NWS:SPS": null,
+  "NWS:SRW": "alert.wind.storm",
+  "NWS:SUW": "alert.coastal.high_surf",
+  "NWS:SUY": "alert.coastal.high_surf",
+  "NWS:SVW": "alert.thunderstorm.severe",
+  "NWS:TST": "alert.administrative.test",
+  "NWS:WIY": "alert.wind",
+  "NWS:WWY": "alert.snow_ice.winter_weather",
+  "NWS:XHW": "alert.heat.extreme",
+};
+
 /** SAME events → alert classification; a Special Weather Statement names no hazard. */
 export const SAME_CLASSES: Readonly<Record<string, string | null>> = {
   "SAME:EAN": "alert.administrative.emergency_action",

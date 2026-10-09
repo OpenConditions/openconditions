@@ -550,6 +550,26 @@ describe("lintCatalog", () => {
     expect(messages([file([def()], { $schema: undefined })])).toHaveLength(1);
   });
 
+  test("a walked endpoint's {item} is no static URL: its listings' URLs are checked", () => {
+    const walk = (index: string) =>
+      def({
+        endpoints: {
+          main: { url: index, cadenceSec: 120 },
+          files: {
+            url: "{item}",
+            cadenceSec: 120,
+            each: { role: "main", links: ['href="([^"]+\\.cap)"'] },
+          },
+        },
+      });
+    const urlMessages = (index: string) =>
+      messages([file([walk(index)])]).filter((m) => m.includes("is not public"));
+    expect(urlMessages("https://example.test/cap/")).toEqual([]);
+    expect(urlMessages("http://10.0.0.1/cap/")).toEqual([
+      expect.stringMatching(/endpoint main URL http:\/\/10\.0\.0\.1\/cap\/ is not public/),
+    ]);
+  });
+
   test("disabled.since may not be in the future", () => {
     expect(messages([file([def({ disabled: { reason: "gone", since: "2026-10-04" } })])])).toEqual([
       expect.stringMatching(/disabled\.since 2026-10-04 is in the future/),

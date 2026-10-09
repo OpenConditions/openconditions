@@ -1,0 +1,1 @@
+CREATE INDEX "idx_observation_latest_effective_brin" ON "conditions"."observation_latest" USING brin ("effective_from");

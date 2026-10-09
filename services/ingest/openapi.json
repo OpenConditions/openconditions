@@ -18,7 +18,7 @@
     "/situations": {
       "get": {
         "operationId": "listSituations",
-        "summary": "Live situations as records, one keyset page ordered by id.",
+        "summary": "Live situations as records, one keyset page ordered by id: those current at `at`, or with `from` (and `to`) those whose validity overlaps the window, ended ones included. `simplify` thins each returned geometry for drawing.",
         "parameters": [
           {
             "name": "bbox",
@@ -144,6 +144,52 @@
               "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+            },
+            "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "end of the time window `from` starts; default now"
+            },
+            "description": "end of the time window `from` starts; default now"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
+            },
+            "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
           }
         ],
         "security": [
@@ -306,6 +352,52 @@
               "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+            },
+            "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "end of the time window `from` starts; default now"
+            },
+            "description": "end of the time window `from` starts; default now"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
+            },
+            "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
           }
         ],
         "security": [{}],
@@ -463,6 +555,52 @@
               "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+            },
+            "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "end of the time window `from` starts; default now"
+            },
+            "description": "end of the time window `from` starts; default now"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
+            },
+            "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
           }
         ],
         "security": [{}],
@@ -620,6 +758,52 @@
               "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+            },
+            "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "end of the time window `from` starts; default now"
+            },
+            "description": "end of the time window `from` starts; default now"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
+            },
+            "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
           }
         ],
         "security": [{}],
@@ -777,6 +961,52 @@
               "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
             },
             "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+          },
+          {
+            "name": "subtype",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated subtype codes",
+              "type": "string"
+            },
+            "description": "comma-separated subtype codes"
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+            },
+            "description": "start of a time window: situations whose validity overlaps [from, to], ended ones included and cancelled ones not, instead of those current at an instant; at most 400 days, not with at or horizonDays"
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "end of the time window `from` starts; default now"
+            },
+            "description": "end of the time window `from` starts; default now"
+          },
+          {
+            "name": "simplify",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "number",
+              "exclusiveMinimum": 0,
+              "maximum": 1,
+              "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
+            },
+            "description": "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry"
           }
         ],
         "security": [{}],
@@ -1761,6 +1991,18 @@
             "description": "the instant readings are current at"
           },
           {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "only readings in effect from this instant on (their phenomenon started then or later)"
+            },
+            "description": "only readings in effect from this instant on (their phenomenon started then or later)"
+          },
+          {
             "name": "canonical",
             "in": "query",
             "required": false,
@@ -1792,6 +2034,98 @@
               "minimum": 1,
               "maximum": 5000
             }
+          }
+        ],
+        "security": [
+          {},
+          {
+            "operatorToken": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "429": {
+            "description": "The client's rate limit is spent; `Retry-After` says when to retry",
+            "content": {
+              "application/json": {}
+            }
+          }
+        }
+      }
+    },
+    "/observations/grid": {
+      "get": {
+        "operationId": "getObservationGrid",
+        "summary": "The current numeric readings of one property in `bbox` since an instant, aggregated per cell of `cellDeg` degrees: `{ cells: [lon, lat, count, sum, max][], sources }`, each cell at its centre, `sources` the sources counted. The public scope counts neither a restricted source's readings nor readings whose licence is not public. A box of more than 50,000 cells answers 400.",
+        "parameters": [
+          {
+            "name": "property",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "description": "the property code; its numeric readings are aggregated"
+            },
+            "description": "the property code; its numeric readings are aggregated"
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "description": "west,south,east,north in WGS84 degrees; at most 50000 cells of cellDeg",
+              "type": "string"
+            },
+            "description": "west,south,east,north in WGS84 degrees; at most 50000 cells of cellDeg"
+          },
+          {
+            "name": "cellDeg",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "number",
+              "minimum": 0.05,
+              "maximum": 5,
+              "description": "the cell size in degrees; cells are aligned on its multiples from 0°"
+            },
+            "description": "the cell size in degrees; cells are aligned on its multiples from 0°"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+              "description": "only readings in effect from this instant on (their phenomenon started then or later)"
+            },
+            "description": "only readings in effect from this instant on (their phenomenon started then or later)"
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated source ids",
+              "type": "string"
+            },
+            "description": "comma-separated source ids"
           }
         ],
         "security": [
@@ -2156,7 +2490,7 @@
     "/sources": {
       "get": {
         "operationId": "listSources",
-        "summary": "The feeds this instance serves, by id: name, licence (`license`, the SPDX or `LicenseRef-` id, and `licenseName`, its readable name), attribution, homepage, terms (url, review date and note), rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. A camera feed whose stills a consumer may proxy lists their hosts in `imageHosts` (an exact host, `*.domain`, or `host/path/`). Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
+        "summary": "The feeds this instance serves, by id: name, source format (`format`) and `qualifier` where the feed has one, licence (`license`, the SPDX or `LicenseRef-` id, and `licenseName`, its readable name), attribution, homepage, terms (url, review date and note), the `notice` the publisher requires to accompany any display of its data, rights, and coverage (the ISO 3166 `countries` a feed covers, or the `bbox` an on-demand feed answers for; a global one covers the world), for crediting and disclosing them and for knowing which areas a feed stands for. A camera feed whose stills a consumer may proxy lists their hosts in `imageHosts` (an exact host, `*.domain`, or `host/path/`). Catalogue children are credited through their parent; disabled feeds are left out. A restricted feed is listed and marked `restricted` (its records are withheld from the public scope, the entry is metadata). The list is the same in both scopes; `scope` (`public` or `operator`) names the scope the request was served in, so a consumer knows whether the restricted feeds' records reach it.",
         "parameters": [],
         "security": [
           {},

@@ -16,6 +16,7 @@ export interface SituationQuery {
   bbox?: [number, number, number, number];
   kinds?: readonly string[];
   types?: readonly string[];
+  subtypes?: readonly string[];
   domain?: string;
   sources?: readonly string[];
   origins?: readonly string[];
@@ -25,6 +26,14 @@ export interface SituationQuery {
   at?: Date;
   /** Only situations starting within this many days after `at`. */
   horizonDays?: number;
+  /**
+   * A time window instead of an instant: situations whose validity overlaps
+   * `[from, to]`, ended ones included. `to` defaults to `at`.
+   */
+  from?: Date;
+  to?: Date;
+  /** Each geometry simplified with this tolerance in degrees, written with 6 decimals. */
+  simplify?: number;
   /** The last id of the previous page. */
   cursor?: string;
   limit: number;
@@ -40,9 +49,12 @@ export interface SituationPage {
  * The live situations matching `q`, one keyset page ordered by id. A
  * situation is current at `at` when it is not tombstoned, its own expiry has
  * not passed, its declared validity has not ended and it is neither ended nor
- * cancelled. Each page is one statement, so a walk never returns a record
- * twice and never skips one that exists throughout it; a record changed
- * mid-walk may appear in either state.
+ * cancelled. With a window (`from`, `to`), a situation is listed when its
+ * validity overlaps the window, ended or not: an earthquake of last week,
+ * a burn scar mapped yesterday. A cancelled one never is, nor one past its
+ * own expiry at `at`. Each page is one statement, so a walk never returns a
+ * record twice and never skips one that exists throughout it; a record
+ * changed mid-walk may appear in either state.
  */
 export async function listSituations(db: QueryRunner, q: SituationQuery): Promise<SituationPage> {
   const at = (q.at ?? new Date()).toISOString();
@@ -51,10 +63,20 @@ export async function listSituations(db: QueryRunner, q: SituationQuery): Promis
   const clauses = [
     "s.tombstoned_at IS NULL",
     "(s.expires_at IS NULL OR s.expires_at > $1::timestamptz)",
-    "(s.valid_to IS NULL OR s.valid_to > $1::timestamptz)",
-    "s.validity_status NOT IN ('ended', 'cancelled')",
     ...scopeClauses("s", q.scope),
   ];
+  if (q.from !== undefined) {
+    clauses.push(
+      "s.validity_status <> 'cancelled'",
+      `(s.valid_to IS NULL OR s.valid_to >= ${p(q.from.toISOString())}::timestamptz)`,
+      `(s.valid_from IS NULL OR s.valid_from <= ${p((q.to ?? new Date(at)).toISOString())}::timestamptz)`,
+    );
+  } else {
+    clauses.push(
+      "(s.valid_to IS NULL OR s.valid_to > $1::timestamptz)",
+      "s.validity_status NOT IN ('ended', 'cancelled')",
+    );
+  }
   if (q.bbox) {
     const [w, s, e, n] = q.bbox;
     // An effect with its own place (a grouped record on another road) puts
@@ -68,6 +90,7 @@ export async function listSituations(db: QueryRunner, q: SituationQuery): Promis
   }
   if (q.kinds?.length) clauses.push(`s.kind = ANY(${p([...q.kinds])}::text[])`);
   if (q.types?.length) clauses.push(`s.type = ANY(${p([...q.types])}::text[])`);
+  if (q.subtypes?.length) clauses.push(`s.subtype = ANY(${p([...q.subtypes])}::text[])`);
   if (q.domain) clauses.push(`s.domain = ${p(q.domain)}`);
   if (q.sources?.length) clauses.push(`s.source_id = ANY(${p([...q.sources])}::text[])`);
   if (q.origins?.length) clauses.push(`s.origin = ANY(${p([...q.origins])}::text[])`);
@@ -81,8 +104,16 @@ export async function listSituations(db: QueryRunner, q: SituationQuery): Promis
     );
   }
   if (q.cursor !== undefined) clauses.push(`s.id > ${p(q.cursor)}`);
+  // A world of alert polygons is megabytes at full detail; a map drawing it
+  // asks for fewer positions. The filters above read the stored geometry.
+  const record =
+    q.simplify === undefined
+      ? "s.record"
+      : `CASE WHEN s.geom IS NULL THEN s.record ELSE jsonb_set(s.record, '{location,geometry}',
+           ST_AsGeoJSON(ST_SimplifyPreserveTopology(s.geom, ${p(q.simplify)}::float8), 6)::jsonb)
+         END AS record`;
   const rows = await db.execute<Rec[]>(
-    `SELECT s.id, s.record${EVIDENCE.situation}
+    `SELECT s.id, ${record}${EVIDENCE.situation}
        FROM conditions.situation s
       WHERE ${clauses.join(" AND ")}
       ORDER BY s.id

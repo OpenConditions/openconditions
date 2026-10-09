@@ -7,7 +7,7 @@ import { ensureObservationPartitions, retentionClasses } from "../observation-pa
 import { writeRecord } from "../write-record.js";
 import { type WriteContext, writeSnapshot, writeSnapshotIn } from "../write-records.js";
 import { createTestDatabase } from "./database.integration.js";
-import { FETCHED_AT, featureDraft, observationDraft } from "./drafts.js";
+import { FETCHED_AT, featureDraft, firePixel, observationDraft } from "./drafts.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
@@ -1000,4 +1000,89 @@ describe("observation writes", () => {
     expect(summary.rejected.map((r) => r.class)).toEqual(["observation"]);
     expect(summary.observations.latest).toBe(1);
   });
+});
+
+describe("transient readings", () => {
+  const FIRMS = "nasa-firms-viirs-fires";
+  const pixels = async () =>
+    (
+      await sql`SELECT
+        (SELECT count(*)::int FROM conditions.observation_latest) AS latest,
+        (SELECT count(*)::int FROM conditions.observation) AS history`
+    )[0];
+
+  it("write a detection a later poll restates once, as one series and one history row", async () => {
+    const pixel = firePixel(-120.5, 38.25, "2026-10-01T09:12:00Z");
+    const first = await writeSnapshot(sql, FIRMS, { observations: [pixel] }, ctx);
+    const again = await writeSnapshot(sql, FIRMS, { observations: [pixel] }, ctx);
+    expect(first.observations).toMatchObject({ latest: 1, history: 1, unchanged: 0 });
+    expect(again.observations).toMatchObject({ latest: 0, history: 0, unchanged: 1 });
+    expect(await pixels()).toEqual({ latest: 1, history: 1 });
+    const [row] = await sql`SELECT value_num, effective_from, expires_at, retention_days
+      FROM conditions.observation_latest`;
+    expect(row).toEqual({
+      value_num: 12.5,
+      effective_from: new Date("2026-10-01T09:12:00Z"),
+      expires_at: new Date("2026-10-04T09:12:00Z"),
+      retention_days: 7,
+    });
+  });
+
+  it("move a transient series to a later detection at the very same place", async () => {
+    await writeSnapshot(
+      sql,
+      FIRMS,
+      { observations: [firePixel(-120.5, 38.25, "2026-10-01T09:12:00Z", 10)] },
+      ctx,
+    );
+    const later = await writeSnapshot(
+      sql,
+      FIRMS,
+      {
+        observations: [
+          firePixel(-120.5, 38.25, "2026-09-30T21:40:00Z", 7),
+          firePixel(-120.5, 38.25, "2026-10-01T09:54:00Z", 30),
+        ],
+      },
+      ctx,
+    );
+    expect(later.observations).toMatchObject({ latest: 1, history: 1, unchanged: 1 });
+    const [row] = await sql`SELECT value_num FROM conditions.observation_latest`;
+    expect(row).toEqual({ value_num: 30 });
+    expect(await pixels()).toEqual({ latest: 1, history: 2 });
+  });
+
+  it("append 20,000 transient readings without reading the source's series", async () => {
+    await writeSnapshot(
+      sql,
+      FIRMS,
+      { observations: [firePixel(-121, 39, "2026-10-01T08:00:00Z")] },
+      ctx,
+    );
+    const drafts = Array.from({ length: 20_000 }, (_, i) =>
+      firePixel(-100 + (i % 200) * 0.01, 30 + Math.floor(i / 200) * 0.01, "2026-10-01T09:30:00Z"),
+    );
+    const queries: string[] = [];
+    const summary = await sql.begin((tx) => {
+      const spied = new Proxy(tx, {
+        get(target, prop, receiver) {
+          if (prop === "unsafe") {
+            return (query: string, params?: unknown[]) => {
+              queries.push(query);
+              return target.unsafe(query, params as never);
+            };
+          }
+          return Reflect.get(target, prop, receiver);
+        },
+      });
+      return writeSnapshotIn(spied, FIRMS, { observations: drafts }, ctx);
+    });
+    expect(summary.observations).toMatchObject({ latest: 20_000, history: 20_000, unchanged: 0 });
+    expect(summary.rejected).toEqual([]);
+    expect(queries.length).toBeGreaterThan(0);
+    expect(
+      queries.filter((q) => /SELECT[\s\S]*FROM conditions\.observation_latest/.test(q)),
+    ).toEqual([]);
+    expect(await pixels()).toEqual({ latest: 20_001, history: 20_001 });
+  }, 120_000);
 });

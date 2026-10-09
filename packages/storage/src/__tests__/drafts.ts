@@ -159,6 +159,31 @@ export function observationDraft(
   return draft;
 }
 
+/**
+ * One satellite fire detection of the FIRMS VIIRS feed at `[lon, lat]`,
+ * acquired at `at` and served for 72 hours after it.
+ */
+export function firePixel(lon: number, lat: number, at: string, frp = 12.5): Rec {
+  const expiresAt = new Date(Date.parse(at) + 72 * 3_600_000).toISOString();
+  return observationDraft(
+    "fire.frp",
+    { type: "quantity", value: frp, unit: "MW" },
+    {
+      at,
+      sourceId: "nasa-firms-viirs-fires",
+      subject: { kind: "location" },
+      location: {
+        geometry: { type: "Point", coordinates: [lon, lat] },
+        extent: "point",
+        geometryOrigin: "source",
+        fuzziness: "medium_res",
+      },
+      provenance: provenance("nasa-firms-viirs-fires", "firms", `N21:${lat},${lon}:${at}`),
+      freshness: { fetchedAt: FETCHED_AT, expiresAt },
+    },
+  );
+}
+
 /** A car park's day rate. */
 export function offerDraft(local: string, over: Rec = {}): Rec {
   return {

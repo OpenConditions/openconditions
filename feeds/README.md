@@ -33,12 +33,19 @@ feeds/
     us.jsonc
     global.jsonc
     …
+  hazards/
+    ca.jsonc
+    de.jsonc
+    eu.jsonc
+    us.jsonc
+    global.jsonc
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
     fuel.schema.json
     parking.schema.json
     charging.schema.json
     cameras.schema.json
+    hazards.schema.json
     credentials.schema.json
 ```
 
@@ -85,7 +92,7 @@ adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
 parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
 charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`;
 cameras: `layout` and `cameras`, in `packages/cameras/src/feed-schema.ts`; see
-[Generic layouts](#generic-layouts)) or none (fuel).
+[Generic layouts](#generic-layouts)) or none (fuel, hazards).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
 relay of others' data. `freshnessWindowSec` is how old the last good poll may
@@ -227,6 +234,58 @@ never to proxy. `imageRedistribution` in the same block says what the images'
 licence allows (`allowed`, `link_only`, `unknown`) where the feed's terms
 differ from its format's default (`ca-on-511-cameras`).
 
+The hazards products are:
+
+| product  | what                                                                          |
+| -------- | ----------------------------------------------------------------------------- |
+| `alerts` | warnings authorities issue as CAP messages, in every language they carry      |
+| `fires`  | wildfires: perimeters and incidents, burnt areas, and satellite fire pixels   |
+| `smoke`  | smoke plumes by density                                                       |
+| `quakes` | earthquakes                                                                   |
+| `events` | other natural events: tropical cyclones, floods, volcanoes, droughts, sea ice |
+
+Every hazards format reads its publisher's own shape, so a hazards feed has no
+mapping block. Every format but `firms` is a `situations` format whose poll is
+the publisher's complete current set (`snapshot`), so a record missing from it
+is withdrawn, and a poll with no record publishes zero: the CAP formats `cap`
+(CAP 1.2 XML, one message per payload), `nws` (the NWS alerts API's
+GeoJSON-LD) and `meteoalarm` (MeteoAlarm's CAP as JSON), and `wfigs`, `effis`,
+`hms`, `usgs`, `eonet` and `gdacs`. One poll sees every current message of a
+CAP feed, so a message that another message of the poll updates or cancels is
+left out and its successor names it. `firms` is a `measurements` format: each
+fire pixel is one `fire.frp` reading at its position, written once and swept
+72 hours after the satellite saw it. The formats are in
+`packages/hazards/src/domain.ts`.
+
+The hazards roles:
+
+- `cap` reads `alerts`, the CAP files: a zip's entries (`de-dwd-alerts`, with
+  `unzip`) or the files a walk over the `index` listings finds
+  (`ca-eccc-alerts`, whose Datamart files each message under its day, office
+  and hour). The optional `areas` role is GeoJSON layers keyed by
+  `WARNCELLID` (DWD's coast and lake warning areas): an area with no polygon
+  of its own takes the union of its warn cells' shapes.
+- `nws` reads `alerts` and `zones`, an `each` endpoint over the alerts'
+  `affectedZones` that fetches each zone's shape once and keeps it for 30
+  days. A zone-only alert is drawn as the union of its zones' shapes; a zone
+  that answers 404 adds nothing, and an alert with no zone shape keeps its
+  geocodes and no geometry.
+- `meteoalarm` reads `alerts`, one URL per country, and `geocodes`,
+  MeteoAlarm's file of the regions it names by EMMA id. NUTS, Irish FIPS 10-4,
+  Czech CISORP and DWD warn-cell codes reach those regions through a copy of
+  MeteoAlarm's alias file that the hazards package carries
+  (`scripts/gen-meteoalarm-aliases.ts` refreshes it). An area named by EMMA id
+  takes those shapes alone; an area neither resolves keeps its codes and no
+  geometry.
+- `wfigs` reads `perimeters` (optional) and `incidents`: a fire in both layers
+  is one record, named by its IRWIN id.
+- `usgs` reads `recent` (the last day) and `window` (the last month): an
+  earthquake inside the month that both leave out has been deleted.
+- `eonet` reads `open` and `closed` (optional, the events closed lately);
+  `gdacs` reads `events` and `areas` (optional, the CAP areas of the current
+  episodes).
+- `firms`, `effis` and `hms` read `main`.
+
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
 `ca-on-511-events`, `de-nw-autobahn-los-flow` beside `de-nw-autobahn-flow`.
@@ -254,13 +313,38 @@ hours (`21600`). The optional request fields are `method`, `body`, `headers`,
 `skipParam` carries a page number counted from `firstPage`, 1 by default;
 `xmlLists: true` for JSON converted from XML, where a list of one is the item
 itself and an empty last page has no list),
-`follow`, `each`, `impersonate`, `expand` (see credentials) and `fanout`, for an
+`follow`, `each`, `unzip`, `impersonate`, `expand` (see credentials) and `fanout`, for an
 endpoint of several URLs (`urls` or `expand`): `"all"`, the default, needs every
 URL to answer, so one failure fails the poll; with `"tolerant"` a failing URL
-does not fail the poll, but the set is incomplete, so a bulk feed keeps its
-last complete publication (or the role's held payload) and asks again at the
-next poll, and an on-demand cell is written without withdrawing anything.
-`"tolerant"` sends no conditional requests.
+does not fail the poll. A bulk feed's tolerant `urls` role keeps each URL's
+latest answer: a URL that fails is stood in for by its answer while that is no
+older than the endpoint's `maxPayloadAgeSec` (at any age without it); past
+that the URL contributes nothing, its records are withdrawn, and the others
+publish as a complete set (MeteoAlarm's countries are independent feeds). When
+every URL fails, each still stands in by its own answer and age, never the
+role's held payload. A tolerant `expand` role's set is incomplete, so a bulk feed keeps its last
+complete publication (or the role's held payload). Either way the failing URLs
+are asked again at the next poll, and an on-demand cell is written without
+withdrawing anything. `"tolerant"` sends no conditional requests.
+
+A URL may name the poll's UTC date as `{utcDate}` (`YYYYMMDD`) and an earlier
+day as `{utcDate-1}` to `{utcDate-7}`, for a publisher that files its data
+under the day: `https://dd.weather.gc.ca/{utcDate}/WXO-DD/alerts/cap/{utcDate}/`.
+The date is the instant the poll started, in UTC, filled in the same pass as
+credentials, so a credential's value is never read for one. Any other
+`{utcDate…}` is a schema error.
+
+`unzip` is for an endpoint that answers with a zip archive:
+`{ "entries": "\\.xml$", "maxEntries": 10000 }`, both optional. The role's
+payloads are the archive's entries whose name matches `entries` (every entry
+without it), in name order; directories are skipped. Stored and deflated entries
+are read, each checked against its CRC-32; a ZIP64 archive, an encrypted entry or
+any other compression method fails the fetch, and so does an archive that lists
+more than `maxEntries` entries (10,000 by default) or whose entries together
+inflate past the feed byte cap. The bound is per archive, not per role: each
+archive of a role with several URLs may inflate up to the cap. The archive as
+fetched is the payload's digest and what the raw archive keeps. `unzip` cannot
+be combined with `each` or `pagination`.
 
 `follow` is for a URL that answers with the address of the data rather than the
 data: a download page that links the CSV, a batch call that returns a presigned
@@ -273,25 +357,64 @@ carries the endpoint's `headers` except any whose value names a credential
 same egress checks as any request. A page without a match fails the fetch. A
 followed endpoint is fetched in full every time and cannot be paginated.
 
-`each` is for a detail endpoint that is fetched once per id found in another
-role's payload: `{ "role": "sites", "records": "features", "field": "id" }`.
-`role` is a data role of the same feed (not reference data, not itself `each`);
-`records` is the dotted path to the list in that role's JSON payload and `field`
-the path of the id within each record (numeric segments index arrays, as in
-`follow.path`). The endpoint's `url` is the only address it may have and must
-contain `{item}`, which is filled with the id, URL-encoded; it cannot be
-combined with `urls`, `expand`, `follow` or `pagination`. A record without a
-string or number at `field` is skipped, and an id that appears twice is fetched
-once. The payloads arrive in the order of the ids. The source role is fetched
-first in the same poll; when it was not due or failed, the payload it last
-delivered stands in, and with none the role fails. The requests carry the
+`each` is for a detail endpoint that is fetched once per item found in another
+role's payload. `role` is a data role of the same feed (not reference data, not
+itself `each`). The items are found in one of two ways.
+
+- **Listed in JSON:** `{ "role": "sites", "records": "features", "field": "id" }`.
+  `records` is the dotted path to the list in that role's JSON payload and
+  `field` the path of the item within each record (numeric segments index
+  arrays, as in `follow.path`): a string, a number or a list of strings. A
+  record without one is skipped. `pattern`, a regular expression with a group,
+  keeps only the values it matches and takes its first group as the item:
+  `"^https://api\\.weather\\.gov/zones/((?:forecast|county)/[A-Z0-9]+)$"` turns
+  a zone URL into `forecast/WYZ001`. The endpoint's `url` must contain `{item}`,
+  which is filled with the item, each `/`-separated segment URL-encoded and the
+  slashes kept (`forecast/WYZ001`, `C%202`). An item with an empty, `.` or `..`
+  segment, or with `?`, `#` or `\`, is refused (logged and counted, never
+  fetched). `keepSec` keeps each item's payload between polls: an item fetched
+  less than `keepSec` seconds ago is not asked again, and its kept payload
+  stands in.
+- **Walked through directory listings:**
+  `{ "role": "index", "links": ["href=\"([A-Z]{4}/)\"", "href=\"([^\"]+\\.cap)\""] }`,
+  with `url` exactly `{item}`. The source role's payloads are listings (HTML is
+  accepted there). Each pattern is one level: its first group is a link's href,
+  resolved against the listing's URL, and its optional second group the entry's
+  version (such as its modification time). A link is followed only when it lies
+  below the listing's directory on the same host, never to another host, the
+  parent or a sibling. Each level's links are fetched and read by the next
+  pattern; the last level's items are the role's payloads, in the order the
+  listings name them. A listing with a version is listed again when its version
+  changes and once more at the next poll, and skipped only once the same version
+  was seen twice (a listing's minute-resolution time can hide a file written in
+  the minute it was read); one without a version at every poll. A last-level
+  item is fetched again only when its version changes, and without one never
+  while it is listed. A listing that matches no link is a failed listing, not an
+  empty level: its kept copy stands in, and without one the walk is partial (so
+  the last publication stands) or, without `fanout: "tolerant"`, the role fails.
+
+An item that appears twice is fetched once. The payloads arrive in the order of
+the items. Kept items (with `keepSec` or a walk) live in the ingest process,
+like held payloads, and leave once the source no longer names them; a kept copy
+also stands in for an item whose request failed. The endpoint cannot be
+combined with `urls`, `expand`, `follow`, `pagination` or `unzip`. The source role
+is fetched first in the same poll; when it was not due or failed, the payload it
+last delivered stands in, and with none the role fails. The requests carry the
 feed's `auth` and the endpoint's `headers`, share the feed's
 `requestLimits.perMinute` with its other requests, and send no conditional
-requests. With `fanout: "tolerant"` a failing id costs only that id's payload:
-the ids that answered are the role's payload for the poll, which goes on and
-publishes, and the role is not asked again before its cadence; the shortfall
-is recorded on the poll. Otherwise the first failure stops the requests and
-fails the poll.
+requests. With `fanout: "tolerant"` a failing item costs only that item's
+payload (or its kept copy stands in): the items that answered are the role's
+payload for the poll, which goes on and publishes, and the role is not asked
+again before its cadence; the shortfall is recorded on the poll. Otherwise the
+first failure stops the requests and fails the poll.
+
+A role that fails while an earlier payload of it is held is parsed with that
+payload (see below). `maxPayloadAgeSec` on the endpoint bounds that: a held
+payload fetched longer ago than this is never parsed, the role counts as failed
+with nothing held, and a required role fails the poll, so the last publication
+stands. It is for a publisher whose terms allow its data to be shown only while
+recent; a role without it (a reference file refreshed monthly) keeps its held
+copy at any age.
 
 `impersonate: true` sends the request with a browser's TLS and HTTP fingerprint,
 for an upstream whose bot protection refuses ordinary clients. It needs `https`
@@ -416,9 +539,12 @@ A feed with no known licence is `NOASSERTION` and must say what is known in
 `terms`.
 
 `terms` records a feed's own terms where they differ from its licence: `url`,
-`reviewedAt`, `note`, and any of `redistribution`, `derivedRedistribution`,
-`commercialUse`, `attributionRequired`, `retention`. A key set in `terms`
-(even to `null`) overrides the licence; an absent key defers to it.
+`reviewedAt`, `note`, `notice`, and any of `redistribution`,
+`derivedRedistribution`, `commercialUse`, `attributionRequired`, `retention`.
+A key set in `terms` (even to `null`) overrides the licence; an absent key
+defers to it. `notice` is a text the publisher requires to accompany any
+display of its data, written verbatim (MeteoAlarm's disclaimer); `GET
+/sources` serves it.
 
 ## On-demand feeds
 
@@ -663,6 +789,23 @@ Camera sources considered and left out, reviewed on 2026-10-08.
 | TDX `CCTV/City/{City}`                              | The streams are web player pages with no stills.                                                                                                                                                                                                                        |
 | NSW `data.livetraffic.com/cameras/traffic-cam.json` | A keyless copy, but not a documented API. The keyed API is taken (`au-nsw-livetraffic-cameras`).                                                                                                                                                                        |
 | NFB `CCTV.xml` (`tisvcloud.freeway.gov.tw`)         | Unreachable from Europe. TDX carries the same freeway list (`tw-tdx-cameras`).                                                                                                                                                                                          |
+
+Hazard sources considered and left out, reviewed on 2026-10-08.
+
+| source                                                                            | reason                                                                                                                              |
+| --------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| FIRMS Suomi NPP VIIRS files                                                       | NASA ends their delivery on 2026-11-02; NOAA-20 and NOAA-21 replace them (`nasa-firms-viirs-fires`).                                |
+| FIRMS Landsat                                                                     | US and Canada only, with no fire radiative power or brightness, so no `fire.frp` reading.                                           |
+| FIRMS Area API                                                                    | Keyed, with the key in the URL path; the keyless global files carry the same near-real-time rows.                                   |
+| EFFIS active fire layers (`viirs.hs`, `modis.hs`, `all.hs`)                       | EFFIS's copy of the FIRMS pixels, which are taken first-hand.                                                                       |
+| NOAA HMS fire points                                                              | Mostly GOES detections and the FIRMS VIIRS pixels already taken.                                                                    |
+| EONET wildfires, earthquakes and severe storms, and EONET events taken from GDACS | First-hand sources are taken: NIFC, EFFIS and FIRMS for fires, USGS for earthquakes, GDACS for cyclones and its own events.         |
+| GDACS earthquakes and wildfires                                                   | USGS, NIFC, EFFIS and FIRMS are taken first-hand.                                                                                   |
+| MeteoAlarm EDR, MQTT and Metadata API (`api.meteoalarm.org`)                      | Token only, for MeteoAlarm's members and redistributors; the public feeds carry the same CAP.                                       |
+| MeteoAlarm legacy RSS                                                             | Sunset on 2026-01-14.                                                                                                               |
+| ECCC OGC API `weather-alerts` (`api.weather.gc.ca`)                               | Not CAP: no identifier, references, urgency, certainty or event codes. The CAP Datamart carries the same alerts (`ca-eccc-alerts`). |
+| DWD WFS `Warnungen_*` (`maps.dwd.de`)                                             | German only, no references, one layer per area type; the CAP status zip carries all of it in eight languages (`de-dwd-alerts`).     |
+| NWS Atom (`/alerts/active.atom`)                                                  | No references or event codes; the GeoJSON is complete (`us-nws-alerts`).                                                            |
 
 ## Catalogue resolvers
 

@@ -314,6 +314,96 @@ describe("feeds:check", () => {
     expect(asked).toEqual(expect.arrayContaining(["/stations/C1", "/stations/C2", "/data"]));
   });
 
+  it("walks a directory listing from where it was listed, and reports what the parse kept and left", async () => {
+    quiet();
+    const dir = mkdtempSync(join(tmpdir(), "feeds-check-"));
+    dirs.push(dir);
+    mkdirSync(join(dir, "hazards"));
+    const file = join(dir, "hazards", "ca.jsonc");
+    writeFileSync(
+      file,
+      `{
+  "$schema": "../schema/hazards.schema.json",
+  "feeds": [{
+    "operator": "eccc",
+    "product": "alerts",
+    "name": "Alerts",
+    "tier": "authoritative",
+    "format": "cap",
+    "endpoints": {
+      "index": { "url": "https://dd.example.org/cap/", "cadenceSec": 120 },
+      "alerts": {
+        "url": "{item}",
+        "cadenceSec": 120,
+        "each": { "role": "index", "links": ["href=\\"([A-Z]{4}/)\\"", "href=\\"([^\\"]+\\\\.cap)\\""] },
+      },
+    },
+    "snapshot": { "completeness": "complete" },
+    "freshnessWindowSec": 900,
+    "license": "CC0-1.0",
+    "attribution": "ECCC",
+    "privacyUrl": "https://example.org/privacy",
+  }],
+}
+`,
+    );
+    const cap = readFileSync(
+      join(
+        import.meta.dirname,
+        "../../packages/hazards/src/__tests__/fixtures/eccc-datamart/T_WHCN13_C_CWTO_202610081959_1129882422.cap",
+      ),
+    );
+    const asked: string[] = [];
+    const datamart = (async (input: string | URL | Request) => {
+      const url = input instanceof Request ? input.url : String(input);
+      asked.push(url);
+      if (url === "https://dd.example.org/cap/") return new Response('<a href="CWTO/">CWTO/</a>');
+      if (url === "https://dd.example.org/cap/CWTO/") {
+        return new Response('<a href="a.cap">a.cap</a> <a href="b.cap">b.cap</a>');
+      }
+      if (url.endsWith("/a.cap")) return new Response(cap);
+      return new Response("<rss><channel/></rss>");
+    }) as typeof fetch;
+
+    const [result] = await checkFeeds({ feedsDir: dir, files: [file], fetch: datamart, env: {} });
+    expect(asked).toContain("https://dd.example.org/cap/CWTO/b.cap");
+    // The capture expired before today's poll: it is terminal, and the other file is rejected.
+    expect(result).toMatchObject({
+      level: "warning",
+      records: 0,
+      rejected: 1,
+      terminal: 1,
+      bytes: expect.any(Number),
+      parseMs: expect.any(Number),
+    });
+    expect(result!.bytes).toBeGreaterThan(cap.length);
+  });
+
+  it("checks every region file of a domain directory, and still fails on a directory of no domain", async () => {
+    quiet();
+    const { dir } = catalogue([feed("good", "https://good.example.org/feed")]);
+    writeFileSync(
+      join(dir, "roads", "be.jsonc"),
+      `{ "$schema": "../schema/roads.schema.json", "feeds": [${feed("other", "https://other.example.org/feed")}] }`,
+    );
+    const results = await checkFeeds({
+      feedsDir: dir,
+      files: [join(dir, "roads")],
+      fetch: stubFetch,
+      env: {},
+    });
+    expect(results.map((r) => [r.feedId, r.level]).sort()).toEqual([
+      ["be-other-events", "ok"],
+      ["lu-good-events", "ok"],
+    ]);
+    // A count is printed even when the parse rejected nothing.
+    expect(results[0]?.rejected).toBe(0);
+    mkdirSync(join(dir, "nowhere"));
+    await expect(
+      checkFeeds({ feedsDir: dir, files: [join(dir, "nowhere")], fetch: stubFetch, env: {} }),
+    ).rejects.toThrow(/not a region file/);
+  });
+
   it("fails on a catalogue the schema rejects", async () => {
     quiet();
     const { dir, file } = catalogue([feed("good", "https://good.example.org/feed")]);

@@ -1,0 +1,124 @@
+{
+  "title": "EONET Events",
+  "description": "Natural events from EONET.",
+  "link": "https://eonet.gsfc.nasa.gov/api/v3/events",
+  "events": [
+    {
+      "id": "EONET_20822",
+      "title": "Iceberg D33D",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20822",
+      "closed": null,
+      "categories": [{ "id": "seaLakeIce", "title": "Sea and Lake Ice" }],
+      "sources": [{ "id": "NATICE", "url": "https://usicecenter.gov/pub/Iceberg_Tabular.csv" }],
+      "geometry": [
+        {
+          "magnitudeValue": 62.73,
+          "magnitudeUnit": "NM^2",
+          "date": "2026-06-25T00:00:00Z",
+          "type": "Point",
+          "coordinates": [-55.51, -64.35]
+        },
+        {
+          "magnitudeValue": 90.0,
+          "magnitudeUnit": "NM^2",
+          "date": "2026-07-23T00:00:00Z",
+          "type": "Point",
+          "coordinates": [-55.47, -63.78]
+        }
+      ]
+    },
+    {
+      "id": "EONET_20710",
+      "title": "Nevados del Chillan Volcano, Chile",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_20710",
+      "closed": null,
+      "categories": [{ "id": "volcanoes", "title": "Volcanoes" }],
+      "sources": [{ "id": "SIVolcano", "url": "https://volcano.si.edu/volcano.cfm?vn=357070" }],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2026-06-15T00:00:00Z",
+          "type": "Point",
+          "coordinates": [-71.378, -36.868]
+        }
+      ]
+    },
+    {
+      "id": "EONET_6288",
+      "title": "Iceberg D32",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_6288",
+      "closed": null,
+      "categories": [{ "id": "seaLakeIce", "title": "Sea and Lake Ice" }],
+      "sources": [{ "id": "NATICE", "url": "https://usicecenter.gov/pub/Iceberg_Tabular.csv" }],
+      "geometry": [
+        {
+          "magnitudeValue": 90.0,
+          "magnitudeUnit": "NM^2",
+          "date": "2022-10-21T00:00:00Z",
+          "type": "Point",
+          "coordinates": [70.68, -68.36]
+        },
+        {
+          "magnitudeValue": 90.0,
+          "magnitudeUnit": "NM^2",
+          "date": "2022-11-11T00:00:00Z",
+          "type": "Point",
+          "coordinates": [70.97, -67.87]
+        },
+        {
+          "magnitudeValue": 54.0,
+          "magnitudeUnit": "NM^2",
+          "date": "2026-09-18T00:00:00Z",
+          "type": "Point",
+          "coordinates": [-38.36, -57.62]
+        },
+        {
+          "magnitudeValue": 54.0,
+          "magnitudeUnit": "NM^2",
+          "date": "2026-10-01T00:00:00Z",
+          "type": "Point",
+          "coordinates": [-38.41, -56.49]
+        }
+      ]
+    },
+    {
+      "id": "EONET_980",
+      "title": "Fuego Volcano, Guatemala",
+      "description": null,
+      "link": "https://eonet.gsfc.nasa.gov/api/v3/events/EONET_980",
+      "closed": null,
+      "categories": [{ "id": "volcanoes", "title": "Volcanoes" }],
+      "sources": [
+        {
+          "id": "CEMS",
+          "url": "http://emergency.copernicus.eu/mapping/list-of-components/EMSR289"
+        },
+        {
+          "id": "EO",
+          "url": "https://earthobservatory.nasa.gov/NaturalHazards/event.php?id=91672"
+        },
+        { "id": "GDACS", "url": "http://www.gdacs.org/report.aspx?eventtype=VO&eventid=512" },
+        {
+          "id": "IDC",
+          "url": "https://disasterscharter.org/web/guest/-/volcano-in-guatemala-activation-576-"
+        },
+        { "id": "NASA_DISP", "url": "https://disasters.nasa.gov/mount-fuego-eruption-2018" },
+        { "id": "ReliefWeb", "url": "https://reliefweb.int/disaster/vo-2018-000066-gtm" },
+        { "id": "SIVolcano", "url": "http://volcano.si.edu/volcano.cfm?vn=342090" }
+      ],
+      "geometry": [
+        {
+          "magnitudeValue": null,
+          "magnitudeUnit": null,
+          "date": "2002-01-04T00:00:00Z",
+          "type": "Point",
+          "coordinates": [-90.88, 14.473]
+        }
+      ]
+    }
+  ]
+}

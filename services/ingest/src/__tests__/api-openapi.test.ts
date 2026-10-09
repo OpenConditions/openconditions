@@ -65,6 +65,40 @@ describe("the OpenAPI document", () => {
     expect(names("/offers/{id}")).toEqual(["id"]);
   });
 
+  it("documents the situation window, subtype and simplify, the readings since, and the grid", () => {
+    const doc = openApiDocument();
+    const names = (path: string) =>
+      (
+        doc.paths[path] as { get: { parameters: { name: string }[] } } | undefined
+      )?.get.parameters.map((p) => p.name);
+    expect(names("/situations")).toEqual(
+      expect.arrayContaining(["from", "to", "subtype", "simplify", "at", "horizonDays"]),
+    );
+    expect(names("/observations/latest")).toEqual(expect.arrayContaining(["since"]));
+    expect(names("/observations/grid")).toEqual(["property", "bbox", "cellDeg", "since", "source"]);
+    const grid = (
+      doc.paths["/observations/grid"] as {
+        get: { parameters: { name: string; required: boolean }[] };
+      }
+    ).get.parameters;
+    expect(grid.filter((p) => p.required).map((p) => p.name)).toEqual([
+      "property",
+      "bbox",
+      "cellDeg",
+      "since",
+    ]);
+    // The stream and the other collections take no window.
+    expect(names("/stream")).not.toContain("from");
+    expect(names("/features")).not.toContain("subtype");
+  });
+
+  it("names the sources fields format, qualifier and notice", () => {
+    const { summary } = (openApiDocument().paths["/sources"] as { get: { summary: string } }).get;
+    expect(summary).toMatch(/`format`/);
+    expect(summary).toMatch(/`qualifier`/);
+    expect(summary).toMatch(/`notice`/);
+  });
+
   it("names the terms fields /sources serves, the note included", () => {
     const doc = openApiDocument();
     const { summary } = (doc.paths["/sources"] as { get: { summary: string } }).get;

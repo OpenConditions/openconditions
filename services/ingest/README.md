@@ -1,13 +1,15 @@
 # OpenConditions Ingest
 
-Fetches open road-condition, fuel, parking, charging and camera feeds, parses road
+Fetches open road-condition, fuel, parking, charging, camera and hazard feeds, parses road
 events into model situations, flow feeds into measurement sites (features) and
 their `traffic.*` readings (observations), fuel feeds into stations and their
 prices, parking feeds into parking sites, their `parking.*` occupancy readings
 and their rates (offers), and charging feeds into charging sites with their
 EVSEs and connectors, their `charging.*` status readings and their energy
-tariffs (offers), and camera feeds into cameras with their views and each
-view's `camera.image` reading, and writes them to the shared PostGIS `conditions` schema. Also serves the public,
+tariffs (offers), camera feeds into cameras with their views and each
+view's `camera.image` reading, and hazard feeds into CAP alerts and natural
+hazards (situations) and satellite fire pixels (transient `fire.frp`
+readings), and writes them to the shared PostGIS `conditions` schema. Also serves the public,
 rate-limited record API (described at `GET /openapi.json`) and the routing
 outputs (`/segments/conditions.json`, Valhalla exclusions):
 
@@ -17,7 +19,8 @@ outputs (`/segments/conditions.json`, Valhalla exclusions):
   canonical view, `expand=components` for components) and `/features/{id}`;
 - offers: `/offers` and `/offers/{id}`;
 - observations: `/observations/latest` (the reading in effect of every series;
-  `canonical=1` for fused readings) and `/observations` (one series' raw readings,
+  `canonical=1` for fused readings), `/observations/grid` (one property's readings
+  since an instant, aggregated per cell) and `/observations` (one series' raw readings,
   or its hourly or daily rollups beyond the raw retention);
 - `/history/{class}/{id}`, `/taxonomy`, `/schemas/{path}`, `/coverage`.
 

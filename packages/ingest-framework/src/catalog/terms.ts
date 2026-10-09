@@ -7,6 +7,8 @@ export interface FeedTerms {
   url?: string;
   reviewedAt?: string;
   note?: string;
+  /** A notice the publisher requires to accompany any display of its data. */
+  notice?: string;
   redistribution?: boolean | null;
   derivedRedistribution?: boolean | null;
   commercialUse?: boolean | null;

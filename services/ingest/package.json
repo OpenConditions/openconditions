@@ -20,6 +20,7 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/datex2": "workspace:*",
     "@openconditions/fuel": "workspace:*",
+    "@openconditions/hazards": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",

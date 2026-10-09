@@ -233,6 +233,7 @@ const Pair = z.strictObject({ valueName: z.string().min(1), value: z.string() })
  * description, instruction, area names) become `Text`. Info blocks that
  * differ in more than language are separate situations of one `groupId`.
  * The warning is in force from `effective` (CAP's default: `sent`) until
+ * `expires`, or until NWS's `ends` where NWS keeps the alert active past
  * `expires`; the event it warns of begins at `onset`, which may lie after
  * the message expires, so it stays here. The CAP severity also sets the
  * declared label and is kept verbatim here.
@@ -276,6 +277,8 @@ export const alertKind = defineKind({
       audience: k.Text.optional(),
       effective: Iso8601.optional(),
       onset: Iso8601.optional(),
+      /** CAP's `expires`, verbatim; the validity ends later where the publisher states the hazard lasts longer (NWS `ends`). */
+      expires: Iso8601.optional(),
       /** Publisher parameters, verbatim and in order; a valueName may repeat. */
       parameters: z.array(Pair).min(1).optional(),
       web: z.url().optional(),

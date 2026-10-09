@@ -50,7 +50,18 @@ export interface FeedCheck {
   message?: string;
   /** Records the feed parsed into, when it was fetched. */
   records?: number;
+  /** Source records the parse could not use, when it counted any. */
+  rejected?: number;
+  /** Source records that end by design (superseded, expired, a type left to another feed). */
+  terminal?: number;
+  /** Bytes of the payloads the parse read. */
+  bytes?: number;
+  /** How long the parse took, in milliseconds. */
+  parseMs?: number;
 }
+
+/** What one parse kept and left, for the report line. */
+type ParseStats = Pick<FeedCheck, "rejected" | "terminal" | "bytes" | "parseMs">;
 
 export interface FeedsCheckOptions {
   feedsDir: string;
@@ -112,12 +123,18 @@ function dataRoles(feed: CatalogFeed): string[] {
 }
 
 async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promise<FeedCheck> {
-  const result = (level: FeedCheck["level"], message?: string, records?: number): FeedCheck => ({
+  const result = (
+    level: FeedCheck["level"],
+    message?: string,
+    records?: number,
+    stats: ParseStats = {},
+  ): FeedCheck => ({
     feed,
     feedId: feed.id,
     level,
     ...(message !== undefined ? { message } : {}),
     ...(records !== undefined ? { records } : {}),
+    ...stats,
   });
 
   if (feed.disabled) return result("skipped", `disabled: ${feed.disabled.reason}`);
@@ -175,9 +192,12 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
     ? cellsCovering([...feed.onDemand.probe, ...feed.onDemand.probe], feed.onDemand.cellDeg)[0]
     : undefined;
   const payloads: Record<string, readonly Buffer[]> = {};
+  // Where each payload came from: a walk resolves its listings' links against it.
+  const payloadUrls: Record<string, readonly string[]> = {};
   for (const role of dataRoles(feed)) {
     const eachRole = feed.endpoints[role]?.each?.role;
     const eachSource = eachRole === undefined ? undefined : payloads[eachRole];
+    const eachSourceUrls = eachRole === undefined ? undefined : payloadUrls[eachRole];
     try {
       const fetched = await fetchEndpoint(feed, role, baseFetch, {
         state: createFetchState(),
@@ -185,6 +205,7 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
         env,
         ...(cell ? { cell } : {}),
         ...(eachSource ? { eachSource } : {}),
+        ...(eachSourceUrls ? { eachSourceUrls } : {}),
       });
       if (fetched.status === "no-endpoint") {
         return result("skipped", `endpoint ${role} resolves to no URL (missing configuration)`);
@@ -195,16 +216,30 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
         warnings.push(`endpoint ${role}: ${failed} of ${total} URLs failed`);
       }
       payloads[role] = fetched.buffers;
+      payloadUrls[role] = fetched.urls;
     } catch (err) {
       return result("warning", redact(errorText(err)));
     }
   }
 
   let records: number;
+  let stats: ParseStats;
   try {
     // A cell's answer is read for that cell, as the service reads it.
     const read = cell ? { ...ctx, cell } : ctx;
-    records = recordCount(format.parse(feed, payloads as FeedPayloads, read));
+    const started = performance.now();
+    const output = format.parse(feed, payloads as FeedPayloads, read);
+    const parseMs = Math.round(performance.now() - started);
+    records = recordCount(output);
+    const bytes = Object.values(payloads)
+      .flat()
+      .reduce((sum, buffer) => sum + buffer.length, 0);
+    stats = {
+      rejected: output.rejected ?? 0,
+      ...(output.records !== undefined ? { terminal: output.records.terminal } : {}),
+      bytes,
+      parseMs,
+    };
   } catch (err) {
     return result("error", redact(errorText(err)));
   }
@@ -216,14 +251,14 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
     for (const buffers of Object.values(payloads)) {
       for (const buffer of buffers) {
         const why = undecodable(buffer);
-        if (why) return result("error", `parsed 0 records: ${redact(why)}`, 0);
+        if (why) return result("error", `parsed 0 records: ${redact(why)}`, 0, stats);
       }
     }
     warnings.push("parsed 0 records from a well-formed payload");
   }
   return warnings.length > 0
-    ? result("warning", warnings.join("; "), records)
-    : result("ok", undefined, records);
+    ? result("warning", warnings.join("; "), records, stats)
+    : result("ok", undefined, records, stats);
 }
 
 /** The region files of the catalogue in `feedsDir`, as absolute paths. */
@@ -249,12 +284,19 @@ function regionFiles(feedsDir: string): Set<string> {
 export async function checkFeeds(opts: FeedsCheckOptions): Promise<FeedCheck[]> {
   const env = opts.env ?? process.env;
   const known = regionFiles(opts.feedsDir);
-  const stray = (opts.files ?? []).filter((f) => !known.has(path.resolve(f)));
+  // A domain directory (`feeds/hazards`) stands for every region file in it.
+  const domainDirs = new Set(INGEST_DOMAINS.map((d) => path.resolve(opts.feedsDir, d.id)));
+  const files = opts.files?.flatMap((f) =>
+    domainDirs.has(path.resolve(f))
+      ? [...known].filter((k) => path.dirname(k) === path.resolve(f))
+      : [f],
+  );
+  const stray = (files ?? []).filter((f) => !known.has(path.resolve(f)));
   if (stray.length > 0) {
     throw new Error(`not a region file of ${opts.feedsDir}: ${stray.join(", ")}`);
   }
   const catalog = await loadCatalog(INGEST_DOMAINS, { baked: opts.feedsDir });
-  const wanted = opts.files ? new Set(opts.files.map((f) => path.resolve(f))) : undefined;
+  const wanted = files ? new Set(files.map((f) => path.resolve(f))) : undefined;
   const feeds = [...catalog.feeds, ...catalog.disabled].filter(
     (feed) => !wanted || wanted.has(path.resolve(feed.file)),
   );
@@ -266,7 +308,19 @@ export async function checkFeeds(opts: FeedsCheckOptions): Promise<FeedCheck[]> 
 
 /** One result as a line, or as a GitHub annotation on the region file. */
 function formatResult(r: FeedCheck, annotate: boolean): string {
-  const detail = r.message ?? `${r.records ?? 0} records`;
+  const counts = [
+    `${r.records ?? 0} records`,
+    ...(r.rejected !== undefined ? [`${r.rejected} rejected`] : []),
+    ...(r.terminal !== undefined ? [`${r.terminal} terminal`] : []),
+    ...(r.bytes !== undefined ? [`${r.bytes} bytes`] : []),
+    ...(r.parseMs !== undefined ? [`parsed in ${r.parseMs} ms`] : []),
+  ].join(", ");
+  const detail =
+    r.message === undefined
+      ? counts
+      : r.records === undefined
+        ? r.message
+        : `${r.message} (${counts})`;
   if (annotate && (r.level === "error" || r.level === "warning")) {
     const file = path.relative(process.cwd(), r.feed.file);
     return `::${r.level} file=${file}::${r.feedId}: ${detail}`;

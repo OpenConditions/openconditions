@@ -44,8 +44,13 @@ Road domain, v0.1:
   National Park Service, ODOT TripCheck and five IBI 511 states (US), and Windy and OpenStreetMap, the last two
   read on demand. Each feed whose records carry proxyable stills declares the hosts they come from, which
   `GET /sources` serves for a consumer's image proxy (`osm-cameras` and `us-nps-cameras` declare none), and an OpenStreetMap webcam links with the publisher's camera it stands beside.
+- **Hazards domain:** weather and civil-protection warnings as CAP alerts in every language they carry, from
+  the NWS (US), ECCC (CA), DWD (DE) and MeteoAlarm (38 more European countries); wildfire perimeters and incidents from NIFC (US) and burnt areas from EFFIS (EU); satellite
+  fire pixels from NASA FIRMS (VIIRS and MODIS, worldwide), one `fire.frp` reading each, swept 72 hours after
+  detection and counted in cells by `GET /observations/grid`; NOAA HMS smoke (North America); USGS earthquakes,
+  read by time window; and NASA EONET and GDACS natural events: 12 keyless feeds.
 - **OpenMapX integration:** ships as an installable extension (the ingest and contributions services, serving
-  the roads, fuel, parking, charging and cameras domains); OpenMapX reads them through its built-in OpenConditions integration.
+  the roads, fuel, parking, charging, cameras and hazards domains); OpenMapX reads them through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
   See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
@@ -95,7 +100,8 @@ The service applies its migrations, starts polling the enabled feeds, and serves
 Road situations, measurement sites and facilities (features), tariffs (offers) and readings
 (observations) are served as model records ([model](docs/model.md)). Collections take the same
 filters (`bbox=west,south,east,north`, `kind`, `type`, `domain`, `source`, `origin`, `at`; situations
-also `minSeverity` and `horizonDays`, readings `property`) and are paged by a keyset cursor: follow
+also `minSeverity`, `horizonDays`, `subtype`, a time window `from`/`to` that includes ended ones, and
+`simplify` for lighter geometry; readings `property` and `since`) and are paged by a keyset cursor: follow
 `next` (JSON) or the `Link: rel="next"` header (XML) until there is none. `canonical=1` serves the
 canonical view: one feature per cluster of features several sources describe, and the fused reading of
 a property several sources or the crowd report. Everything is rate-limited; `GET /openapi.json`
@@ -111,6 +117,7 @@ describes it all, and [storage](docs/storage.md#read-api) says what each route r
 | `GET /features/{id}`                 | One feature with its components and its canonical cluster (a canonical id serves the cluster)                                  |
 | `GET /offers`, `/offers/{id}`        | Tariffs as JSON records, or one                                                                                                |
 | `GET /observations/latest`           | The reading in effect of every series, paged by series                                                                         |
+| `GET /observations/grid`             | Current numeric readings of one property since an instant, counted, summed and maximised per cell                              |
 | `GET /observations`                  | One series (`subject`, `property`, `qualifiers`, `from`, `to`): raw readings, or hourly/daily rollups beyond the raw retention |
 | `GET /history/{class}/{id}`          | A record's revisions and what changed                                                                                          |
 | `GET /traff.xml`                     | TraFF (CoMaps / Navit)                                                                                                         |
@@ -133,10 +140,12 @@ pnpm openmapx ext install openconditions
 This registers both services (ingest and contributions API) at their pinned tag and starts them. It installs no
 integration code: OpenMapX's built-in `openconditions` integration reads them once `OPENCONDITIONS_URL` (and, for
 Tankerkönig (DE), E-Control (AT) and OpenStreetMap fuel stations, for the share-alike parking and charging
-feeds and for the Windy, OpenStreetMap and US 511 cameras, `OPENCONDITIONS_OPERATOR_TOKEN`) is set in OpenMapX's
-`.env`. It feeds the roads domain (conditions overlay, routing avoidance, live traffic), the fuel domain (fuel
-stations and prices), the parking domain (car parks and their occupancy), the charging domain (charging sites,
-charge-point status and tariffs) and the cameras domain (the webcam layer and its stills).
+feeds, for the Windy, OpenStreetMap and US 511 cameras and for MeteoAlarm's warnings,
+`OPENCONDITIONS_OPERATOR_TOKEN`) is set in OpenMapX's `.env`. It feeds the roads domain (conditions overlay,
+routing avoidance, live traffic), the fuel domain (fuel stations and prices), the parking domain (car parks and
+their occupancy), the charging domain (charging sites, charge-point status and tariffs), the cameras domain (the
+webcam layer and its stills) and the hazards domain (the weather alert, wildfire, earthquake and natural event
+overlays).
 
 OpenMapX passes a community service's `container.environment` to the container verbatim, so the services'
 configuration is `configSchema` fields: set the database URL (and the contributions API's grant secret and
@@ -149,9 +158,9 @@ only in the admin form, so keep all of them in one place). Settings saved in the
 [services/ingest/README.md](services/ingest/README.md#configuration-under-openmapx).
 
 See OpenMapX's _Building an external extension_ guide for the full flow. OpenMapX's built-in OpenConditions
-integration reads roads situations, routing evidence, fuel features, parking sites, charging sites and cameras
-from the ingest's API into the map overlay, routing avoidance, fuel search, the parking layer, the EV charging
-layer and the webcam layer. A request carrying `Authorization: Bearer
+integration reads roads situations, routing evidence, fuel features, parking sites, charging sites, cameras and
+hazards from the ingest's API into the map overlay, routing avoidance, fuel search, the parking layer, the EV
+charging layer, the webcam layer and the hazard overlays. A request carrying `Authorization: Bearer
 <OPENCONDITIONS_OPERATOR_TOKEN>` reads in the operator scope, which withholds nothing; without it a read is
 public-scope. Reads with a bbox fetch stale on-demand feeds first, waiting at most
 `OPENCONDITIONS_ON_DEMAND_DEADLINE_MS` (default 3000). See [services/ingest/README.md](services/ingest/README.md).

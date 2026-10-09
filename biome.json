@@ -25,6 +25,7 @@
       "!feeds/schema",
       "!atlas",
       "!packages/roads/src/tmc/snapshots",
+      "!packages/hazards/src/formats/snapshots",
       "!packages/roads/src/bind/__tests__/corpus/*/spine.json",
       "!packages/roads/src/bind/__tests__/fixtures/*/spine.json",
       "!packages/ingest-framework/src/__tests__/fixtures/catalog"

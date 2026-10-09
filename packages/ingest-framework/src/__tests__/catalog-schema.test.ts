@@ -78,6 +78,91 @@ describe("catalogue schema", () => {
     ).toBe(true);
   });
 
+  test("utcDate placeholders name today or one of the seven days before", () => {
+    const ok = (url: string) => endpointSchema.safeParse({ url, cadenceSec: 60 }).success;
+    expect(ok("https://a/{utcDate}/x/{utcDate}/")).toBe(true);
+    expect(ok("https://a/{utcDate-1}/")).toBe(true);
+    expect(ok("https://a/{utcDate-7}/")).toBe(true);
+    for (const bad of ["{utcDate-8}", "{utcDate-0}", "{utcDate+1}", "{utcDate-}", "{utcDate1}"]) {
+      expect(ok(`https://a/${bad}/`)).toBe(false);
+    }
+    expect(
+      endpointSchema.safeParse({
+        urls: ["https://a/{utcDate-1}/", "https://a/{utcDate-8}/"],
+        cadenceSec: 60,
+      }).success,
+    ).toBe(false);
+  });
+
+  test("unzip takes an entry pattern and an entry bound, and goes with a plain url", () => {
+    const parse = (over: object) =>
+      endpointSchema.safeParse({ url: "https://a/x.zip", cadenceSec: 60, ...over }).success;
+    expect(parse({ unzip: {} })).toBe(true);
+    expect(parse({ unzip: { entries: "\\.xml$", maxEntries: 500 } })).toBe(true);
+    expect(parse({ unzip: { entries: "(" } })).toBe(false);
+    expect(parse({ unzip: { maxEntries: 0 } })).toBe(false);
+    expect(parse({ unzip: { other: 1 } })).toBe(false);
+    expect(parse({ unzip: {}, pagination: { skipParam: "o", pageSize: 5 } })).toBe(false);
+    expect(
+      parse({
+        url: "https://a/{item}",
+        unzip: {},
+        each: { role: "s", records: "r", field: "f" },
+      }),
+    ).toBe(false);
+  });
+
+  test("each reads records and a field, or walks links, never both", () => {
+    const parse = (each: object, url = "https://a/{item}") =>
+      endpointSchema.safeParse({ url, cadenceSec: 60, each: { role: "s", ...each } }).success;
+    expect(parse({ records: "features", field: "id" })).toBe(true);
+    expect(
+      parse({
+        records: "features",
+        field: "properties.affectedZones",
+        pattern: "^https://x/zones/(\\w+/\\w+)$",
+        keepSec: 2_592_000,
+      }),
+    ).toBe(true);
+    expect(parse({ links: ['href="([A-Z]{4}/)"', 'href="([^"]+\\.cap)"'] }, "{item}")).toBe(true);
+    expect(
+      parse(
+        { links: ['href="(\\d{2}/)"[^>]*>[^<]*</a>\\s+(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})'] },
+        "{item}",
+      ),
+    ).toBe(true);
+
+    expect(parse({})).toBe(false);
+    expect(parse({ records: "features" })).toBe(false);
+    expect(parse({ field: "id" })).toBe(false);
+    expect(parse({ records: "features", field: "id", links: ["(x)"] }, "{item}")).toBe(false);
+    // A walk's URL is the item itself.
+    expect(parse({ links: ["(x)"] }, "https://a/{item}")).toBe(false);
+    expect(parse({ links: [] }, "{item}")).toBe(false);
+    // Every pattern needs its group.
+    expect(parse({ links: ["x"] }, "{item}")).toBe(false);
+    expect(parse({ links: ["(x"] }, "{item}")).toBe(false);
+    expect(parse({ records: "r", field: "f", pattern: "x" })).toBe(false);
+    expect(parse({ records: "r", field: "f", pattern: "(x" })).toBe(false);
+    // A pattern and a keep belong to listed records, not to a walk.
+    expect(parse({ links: ["(x)"], pattern: "(x)" }, "{item}")).toBe(false);
+    expect(parse({ links: ["(x)"], keepSec: 60 }, "{item}")).toBe(false);
+    expect(parse({ records: "r", field: "f", keepSec: 0 })).toBe(false);
+    expect(parse({ records: "r", field: "f", keepSec: 1.5 })).toBe(false);
+  });
+
+  test("maxPayloadAgeSec is an endpoint's, a whole number of seconds, at least one", () => {
+    const endpoint = (maxPayloadAgeSec: number) =>
+      endpointSchema.safeParse({ url: "https://a", cadenceSec: 180, maxPayloadAgeSec }).success;
+    expect(endpoint(300)).toBe(true);
+    expect(endpoint(1)).toBe(true);
+    expect(endpoint(0)).toBe(false);
+    expect(endpoint(1.5)).toBe(false);
+    // A feed no longer carries it: each role says how old its held answer may be.
+    const schema = z.object(feedBaseShape).strict();
+    expect(schema.safeParse({ ...feed, maxPayloadAgeSec: 300 }).success).toBe(false);
+  });
+
   test("the old feed fields are rejected", () => {
     const schema = z.object(feedBaseShape).strict();
     expect(schema.safeParse(feed).success).toBe(true);

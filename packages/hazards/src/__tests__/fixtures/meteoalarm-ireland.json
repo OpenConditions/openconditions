@@ -1,0 +1,155 @@
+{
+  "warnings": [
+    {
+      "alert": {
+        "identifier": "2.49.0.1.372.0.261005001005.223548",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Ireland",
+                "geocode": [
+                  {
+                    "value": "EI06",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI18",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI01",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI16",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI20",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI19",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI22",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI25",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI29",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI04",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI24",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI26",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI31",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI13",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI02",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI30",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI14",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI23",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI10",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI21",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI03",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI11",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI15",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI27",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI07",
+                    "valueName": "FIPS"
+                  },
+                  {
+                    "value": "EI12",
+                    "valueName": "FIPS"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "contact": "forecasts@met.ie",
+            "description": "None",
+            "effective": "2026-10-05T00:10:05+00:00",
+            "event": "Wind",
+            "expires": "2026-10-09T23:59:59+00:00",
+            "language": "en-GB",
+            "onset": "2026-10-09T00:00:00+00:00",
+            "parameter": [
+              {
+                "value": "1; green; Minor",
+                "valueName": "awareness_level"
+              },
+              {
+                "value": "1; Wind",
+                "valueName": "awareness_type"
+              }
+            ],
+            "responseType": ["None"],
+            "senderName": "Met Eireann",
+            "severity": "Minor",
+            "urgency": "Expected",
+            "web": "https://www.met.ie/warnings"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "forecasts@met.ie",
+        "sent": "2026-10-05T00:10:05+00:00",
+        "status": "Actual"
+      },
+      "uuid": "abfa6059-0d58-49f6-87d0-242ffd7b73e5"
+    }
+  ]
+}

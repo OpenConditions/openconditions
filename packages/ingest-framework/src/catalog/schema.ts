@@ -74,6 +74,74 @@ export const feedAuthSchema = z.discriminatedUnion("kind", [
     .strict(),
 ]);
 
+/** The capturing groups of a pattern, or undefined when it is no regular expression. */
+function patternGroups(pattern: string): number | undefined {
+  try {
+    // An alternative that matches the empty string reports every group.
+    return (new RegExp(`${pattern}|`).exec("")?.length ?? 1) - 1;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Every `{utcDate…}` placeholder a request text writes is `{utcDate}` or `{utcDate-1}` … `{utcDate-7}`. */
+function utcDatePlaceholdersValid(text: string): boolean {
+  return [...text.matchAll(/\{utcDate[^}]*\}/g)].every((m) => /^\{utcDate(-[1-7])?\}$/.test(m[0]));
+}
+
+/**
+ * A per-item endpoint: fetched once per item read from another role's payload.
+ * Items are listed by `records` and `field` in a JSON payload (`pattern`
+ * keeping the matching values, its group the item) or walked through
+ * directory listings by `links`, one pattern per level.
+ */
+const eachSchema = z
+  .object({
+    role: z.string().min(1),
+    records: z.string().min(1).optional(),
+    field: z.string().min(1).optional(),
+    pattern: z.string().min(1).optional(),
+    links: z.array(z.string().min(1)).nonempty().optional(),
+    keepSec: z.number().int().positive().optional(),
+  })
+  .strict()
+  .superRefine((each, ctx) => {
+    const listed = each.records !== undefined || each.field !== undefined;
+    if (listed === (each.links !== undefined)) {
+      ctx.addIssue({ code: "custom", message: "each needs exactly one of records+field or links" });
+    }
+    if (listed && (each.records === undefined || each.field === undefined)) {
+      ctx.addIssue({ code: "custom", message: "each needs both records and field" });
+    }
+    if (each.links !== undefined) {
+      for (const field of ["pattern", "keepSec"] as const) {
+        if (each[field] !== undefined) {
+          ctx.addIssue({
+            code: "custom",
+            path: [field],
+            message: `${field} applies to records, not links`,
+          });
+        }
+      }
+    }
+    if (each.pattern !== undefined && !((patternGroups(each.pattern) ?? 0) >= 1)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["pattern"],
+        message: "pattern must be a regular expression with a group",
+      });
+    }
+    for (const [i, link] of (each.links ?? []).entries()) {
+      if (!((patternGroups(link) ?? 0) >= 1)) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["links", i],
+          message: "a links pattern must be a regular expression with a group",
+        });
+      }
+    }
+  });
+
 export const endpointSchema = z
   .object({
     url: z.string().min(1).optional(),
@@ -130,16 +198,23 @@ export const endpointSchema = z
         { path: ["pattern"], message: "pattern is not a valid regular expression" },
       )
       .optional(),
+    /** Fetched once per item of another role's payload; the `url` names it as `{item}`. */
+    each: eachSchema.optional(),
     /**
-     * Fetched once per id read from another role's payload: `records` is the
-     * path to that payload's list and `field` the id within each record. The
-     * `url` names the id as `{item}`.
+     * The response is a zip archive: the role's payloads are its entries whose
+     * name matches `entries` (all without it), in name order, at most
+     * `maxEntries` of them listed.
      */
-    each: z
+    unzip: z
       .object({
-        role: z.string().min(1),
-        records: z.string().min(1),
-        field: z.string().min(1),
+        entries: z
+          .string()
+          .min(1)
+          .refine((p) => patternGroups(p) !== undefined, {
+            message: "entries is not a valid regular expression",
+          })
+          .optional(),
+        maxEntries: z.number().int().positive().optional(),
       })
       .strict()
       .optional(),
@@ -147,6 +222,13 @@ export const endpointSchema = z
     gzip: z.boolean().optional(),
     decoder: z.string().min(1).optional(),
     cadenceSec: z.number().int().positive(),
+    /**
+     * A held answer of this role (the role's, or one URL's of a tolerant
+     * `urls` role) older than this never stands in for a failed request: data
+     * the publisher allows to be shown only while recent is never published
+     * from an old copy. Unset, a held answer stands in at any age.
+     */
+    maxPayloadAgeSec: z.number().int().positive().optional(),
   })
   .strict()
   .superRefine((e, ctx) => {
@@ -158,7 +240,15 @@ export const endpointSchema = z
           message: "each needs a url that contains {item}",
         });
       }
-      for (const field of ["urls", "expand", "follow", "pagination"] as const) {
+      // A walked item is a URL found in a listing, fetched as found.
+      if (e.each.links !== undefined && e.url !== "{item}") {
+        ctx.addIssue({
+          code: "custom",
+          path: ["url"],
+          message: "each with links needs the url {item}",
+        });
+      }
+      for (const field of ["urls", "expand", "follow", "pagination", "unzip"] as const) {
         if (e[field] !== undefined) {
           ctx.addIssue({
             code: "custom",
@@ -166,6 +256,17 @@ export const endpointSchema = z
             message: `each cannot be combined with ${field}`,
           });
         }
+      }
+    }
+    if (e.unzip && e.pagination) {
+      ctx.addIssue({ code: "custom", path: ["unzip"], message: "unzip cannot be paginated" });
+    }
+    for (const url of [e.url, ...(e.urls ?? [])]) {
+      if (url !== undefined && !utcDatePlaceholdersValid(url)) {
+        ctx.addIssue({
+          code: "custom",
+          message: "a date placeholder is {utcDate} or {utcDate-1} to {utcDate-7}",
+        });
       }
     }
     const sources = [e.url, e.urls, e.reference].filter((s) => s !== undefined).length;
@@ -202,6 +303,7 @@ export const feedTermsSchema = z
     url: z.string().url().optional(),
     reviewedAt: z.union([z.iso.date(), z.iso.datetime({ offset: true })]).optional(),
     note: z.string().min(1).optional(),
+    notice: z.string().min(1).optional(),
     redistribution: z.boolean().nullable().optional(),
     derivedRedistribution: z.boolean().nullable().optional(),
     commercialUse: z.boolean().nullable().optional(),
@@ -209,8 +311,8 @@ export const feedTermsSchema = z
     retention: z.boolean().nullable().optional(),
   })
   .strict()
-  .refine((t) => t.url !== undefined || t.note !== undefined, {
-    message: "terms need a url or a note",
+  .refine((t) => t.url !== undefined || t.note !== undefined || t.notice !== undefined, {
+    message: "terms need a url, a note or a notice",
   });
 
 /**

@@ -1,0 +1,1384 @@
+{
+  "files": {
+    "hazards/ca": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "eccc",
+          "product": "alerts",
+          "name": "ECCC weather alerts",
+          "format": "cap",
+          "tier": "authoritative",
+          "endpoints": {
+            "index": {
+              "urls": [
+                "https://dd.weather.gc.ca/{utcDate-2}/WXO-DD/alerts/cap/{utcDate-2}/",
+                "https://dd.weather.gc.ca/{utcDate-1}/WXO-DD/alerts/cap/{utcDate-1}/",
+                "https://dd.weather.gc.ca/{utcDate}/WXO-DD/alerts/cap/{utcDate}/"
+              ],
+              "fanout": "tolerant",
+              "cadenceSec": 120
+            },
+            "alerts": {
+              "url": "{item}",
+              "each": {
+                "role": "index",
+                "links": [
+                  "href=\"([A-Z]{4}/)\"",
+                  "href=\"(\\d{2}/)\"[^>]*>[^<]*</a>\\s+(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})",
+                  "href=\"([^\"]+\\.cap)\""
+                ]
+              },
+              "cadenceSec": 120
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 900,
+          "license": "LicenseRef-ECCC-Data-Servers-End-use",
+          "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+          "attribution": "Data Source: Environment and Climate Change Canada",
+          "terms": {
+            "url": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+            "reviewedAt": "2026-10-08",
+            "note": "Weather alerts must be reproduced without alteration of their content or intent: their texts are kept verbatim in every language."
+          },
+          "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+          "homepage": "https://weather.gc.ca/",
+          "coverage": {
+            "countries": [
+              "CA"
+            ]
+          }
+        }
+      ]
+    },
+    "hazards/de": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "dwd",
+          "product": "alerts",
+          "name": "DWD weather warnings",
+          "format": "cap",
+          "tier": "authoritative",
+          "endpoints": {
+            "alerts": {
+              "url": "https://opendata.dwd.de/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_MUL.zip",
+              "unzip": {
+                "entries": "\\.xml$"
+              },
+              "cadenceSec": 300
+            },
+            "areas": {
+              "urls": [
+                "https://maps.dwd.de/geoserver/dwd/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=dwd:Warngebiete_Kueste&outputFormat=application/json",
+                "https://maps.dwd.de/geoserver/dwd/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=dwd:Warngebiete_Binnenseen&outputFormat=application/json"
+              ],
+              "cadenceSec": 2592000
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 1800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+          "attribution": "Deutscher Wetterdienst; Geobasisdaten © GeoBasis-DE / BKG 2021 (Daten modifiziert)",
+          "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
+          "homepage": "https://www.dwd.de/",
+          "coverage": {
+            "countries": [
+              "DE"
+            ],
+            "bbox": [
+              5.5,
+              47.2,
+              15.1,
+              55.1
+            ]
+          }
+        }
+      ]
+    },
+    "hazards/eu": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "meteoalarm",
+          "product": "alerts",
+          "name": "MeteoAlarm warnings",
+          "format": "meteoalarm",
+          "tier": "authoritative",
+          "endpoints": {
+            "alerts": {
+              "urls": [
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-andorra",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-austria",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-belgium",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-bosnia-herzegovina",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-bulgaria",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-croatia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-czechia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-denmark",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-estonia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-finland",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-france",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-greece",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-hungary",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-iceland",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-ireland",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-israel",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-italy",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-latvia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-lithuania",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-luxembourg",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-malta",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-moldova",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-montenegro",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-netherlands",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-norway",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-poland",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-portugal",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-republic-of-north-macedonia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-romania",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-serbia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-slovakia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-slovenia",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-spain",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-sweden",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-switzerland",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-ukraine",
+                "https://feeds.meteoalarm.org/api/v1/warnings/feeds-united-kingdom"
+              ],
+              "fanout": "tolerant",
+              "cadenceSec": 120,
+              "maxPayloadAgeSec": 120
+            },
+            "geocodes": {
+              "url": "https://gitlab.com/meteoalarm-pm-group/documents/-/raw/master/MeteoAlarm_Geocodes_2026_07_31.json",
+              "cadenceSec": 2592000
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 600,
+          "license": "LicenseRef-MeteoAlarm-Terms",
+          "licenseUrl": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+          "attribution": "EUMETNET – MeteoAlarm",
+          "terms": {
+            "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+            "reviewedAt": "2026-10-09",
+            "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
+            "notice": "Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org."
+          },
+          "privacyUrl": "https://api.meteoalarm.org/privacy",
+          "homepage": "https://www.meteoalarm.org/",
+          "coverage": {
+            "countries": [
+              "AD",
+              "AT",
+              "BE",
+              "BA",
+              "BG",
+              "HR",
+              "CY",
+              "CZ",
+              "DK",
+              "EE",
+              "FI",
+              "FR",
+              "GR",
+              "HU",
+              "IS",
+              "IE",
+              "IL",
+              "IT",
+              "LV",
+              "LT",
+              "LU",
+              "MT",
+              "MD",
+              "ME",
+              "NL",
+              "NO",
+              "PL",
+              "PT",
+              "MK",
+              "RO",
+              "RS",
+              "SK",
+              "SI",
+              "ES",
+              "SE",
+              "CH",
+              "UA",
+              "GB"
+            ]
+          }
+        },
+        {
+          "operator": "effis",
+          "product": "fires",
+          "name": "EFFIS burnt areas",
+          "format": "effis",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://maps.effis.emergency.copernicus.eu/effis?service=WFS&version=1.1.0&request=GetFeature&typename=ms:modis.ba.poly.week&outputformat=geojson",
+              "cadenceSec": 3600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 14400,
+          "extrasAllow": [
+            "class",
+            "province",
+            "broadleavedPct",
+            "coniferPct",
+            "mixedForestPct",
+            "sclerophyllousPct",
+            "transitionalPct",
+            "otherNaturalPct",
+            "agriculturalPct",
+            "artificialPct",
+            "otherLandCoverPct",
+            "natura2000Pct"
+          ],
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+          "attribution": "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
+          "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
+          "homepage": "https://forest-fire.emergency.copernicus.eu/",
+          "coverage": {
+            "bbox": [
+              -25,
+              25,
+              45,
+              72
+            ]
+          }
+        }
+      ]
+    },
+    "hazards/global": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "nasa",
+          "qualifier": "firms-viirs",
+          "product": "fires",
+          "name": "NASA FIRMS VIIRS active fires",
+          "format": "firms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "urls": [
+                "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv",
+                "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv"
+              ],
+              "fanout": "tolerant",
+              "cadenceSec": 3600
+            }
+          },
+          "freshnessWindowSec": 10800,
+          "extrasAllow": [
+            "instrument",
+            "satellite",
+            "brightnessK",
+            "backgroundK",
+            "daynight",
+            "scan",
+            "track",
+            "version"
+          ],
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+          "attribution": "NASA FIRMS (LANCE / ESDIS)",
+          "privacyUrl": "https://www.nasa.gov/privacy/",
+          "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        },
+        {
+          "operator": "nasa",
+          "qualifier": "firms-modis",
+          "product": "fires",
+          "name": "NASA FIRMS MODIS active fires",
+          "format": "firms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv",
+              "cadenceSec": 3600
+            }
+          },
+          "freshnessWindowSec": 10800,
+          "extrasAllow": [
+            "instrument",
+            "satellite",
+            "brightnessK",
+            "backgroundK",
+            "daynight",
+            "scan",
+            "track",
+            "version"
+          ],
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+          "attribution": "NASA FIRMS (LANCE / ESDIS)",
+          "privacyUrl": "https://www.nasa.gov/privacy/",
+          "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        },
+        {
+          "operator": "usgs",
+          "product": "quakes",
+          "name": "USGS earthquakes",
+          "format": "usgs",
+          "tier": "authoritative",
+          "endpoints": {
+            "recent": {
+              "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+              "cadenceSec": 120
+            },
+            "window": {
+              "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
+              "cadenceSec": 900
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 600,
+          "license": "LicenseRef-US-Gov-Public-Domain",
+          "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+          "attribution": "U.S. Geological Survey",
+          "privacyUrl": "https://www.doi.gov/privacy",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        },
+        {
+          "operator": "nasa",
+          "qualifier": "eonet",
+          "product": "events",
+          "name": "NASA EONET natural events",
+          "format": "eonet",
+          "tier": "authoritative",
+          "endpoints": {
+            "open": {
+              "url": "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&category=volcanoes,seaLakeIce,floods,landslides,dustHaze,drought",
+              "cadenceSec": 900
+            },
+            "closed": {
+              "url": "https://eonet.gsfc.nasa.gov/api/v3/events?status=closed&days=30&category=volcanoes,seaLakeIce,floods,landslides,dustHaze,drought",
+              "cadenceSec": 3600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+          "attribution": "NASA Earth Observatory Natural Event Tracker (EONET)",
+          "terms": {
+            "url": "https://eonet.gsfc.nasa.gov/what-is-eonet",
+            "reviewedAt": "2026-10-08",
+            "note": "Metadata for visualisation and general information, not official extents."
+          },
+          "privacyUrl": "https://www.nasa.gov/privacy/",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        },
+        {
+          "operator": "gdacs",
+          "product": "events",
+          "name": "GDACS disaster alerts",
+          "format": "gdacs",
+          "tier": "authoritative",
+          "endpoints": {
+            "events": {
+              "url": "https://www.gdacs.org/xml/rss.xml",
+              "cadenceSec": 600
+            },
+            "areas": {
+              "url": "https://www.gdacs.org/xml/gdacs_cap.xml",
+              "cadenceSec": 1800
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 1800,
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "GDACS, European Union (CC BY 4.0), modified",
+          "terms": {
+            "url": "https://www.gdacs.org/About/termofuse.aspx",
+            "reviewedAt": "2026-10-08",
+            "note": "Licence stated in the RSS and CAP feeds; GDACS alerts are automatic model estimates, not official warnings."
+          },
+          "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
+          "homepage": "https://www.gdacs.org/",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        }
+      ]
+    },
+    "hazards/us": {
+      "$schema": "../schema/hazards.schema.json",
+      "feeds": [
+        {
+          "operator": "nws",
+          "product": "alerts",
+          "name": "NWS weather alerts",
+          "format": "nws",
+          "tier": "authoritative",
+          "endpoints": {
+            "alerts": {
+              "url": "https://api.weather.gov/alerts/active?status=actual",
+              "headers": {
+                "Accept": "application/geo+json"
+              },
+              "cadenceSec": 120
+            },
+            "zones": {
+              "url": "https://api.weather.gov/zones/{item}",
+              "fanout": "tolerant",
+              "each": {
+                "role": "alerts",
+                "records": "features",
+                "field": "properties.affectedZones",
+                "pattern": "^https://api\\.weather\\.gov/zones/((?:forecast|county|fire|marine|offshore)/[A-Z0-9]+)$",
+                "keepSec": 2592000
+              },
+              "cadenceSec": 120
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 600,
+          "license": "LicenseRef-US-Gov-Public-Domain",
+          "licenseUrl": "https://www.weather.gov/disclaimer",
+          "attribution": "National Weather Service (NOAA)",
+          "privacyUrl": "https://www.weather.gov/privacy",
+          "homepage": "https://www.weather.gov/",
+          "coverage": {
+            "countries": [
+              "US",
+              "PR",
+              "GU",
+              "AS",
+              "VI",
+              "MP"
+            ]
+          }
+        },
+        {
+          "operator": "nifc",
+          "product": "fires",
+          "name": "NIFC wildland fires",
+          "format": "wfigs",
+          "tier": "authoritative",
+          "endpoints": {
+            "perimeters": {
+              "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_FireCause,attr_FireCauseGeneral&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
+              "pagination": {
+                "skipParam": "resultOffset",
+                "pageSize": 2000,
+                "recordsPath": "features",
+                "maxPages": 5
+              },
+              "cadenceSec": 600
+            },
+            "incidents": {
+              "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,FireCause,FireCauseGeneral&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
+              "pagination": {
+                "skipParam": "resultOffset",
+                "pageSize": 2000,
+                "recordsPath": "features",
+                "maxPages": 5
+              },
+              "cadenceSec": 300
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "LicenseRef-US-Gov-Public-Domain",
+          "licenseUrl": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+          "attribution": "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
+          "terms": {
+            "reviewedAt": "2026-10-08",
+            "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty."
+          },
+          "privacyUrl": "https://www.doi.gov/privacy",
+          "homepage": "https://www.nifc.gov/",
+          "coverage": {
+            "countries": [
+              "US"
+            ]
+          }
+        },
+        {
+          "operator": "noaa",
+          "qualifier": "hms",
+          "product": "smoke",
+          "name": "NOAA HMS smoke",
+          "format": "hms",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/NOAA_Satellite_Smoke_Detection_%28v1%29/FeatureServer/0/query?where=1%3D1&outFields=FID,Satellite,Start,End_,Density&outSR=4326&f=geojson&orderByFields=FID&resultRecordCount=1000",
+              "pagination": {
+                "skipParam": "resultOffset",
+                "pageSize": 1000,
+                "recordsPath": "features",
+                "maxPages": 5
+              },
+              "cadenceSec": 600
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "CC0-1.0",
+          "licenseUrl": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+          "attribution": "NOAA/NESDIS Hazard Mapping System (HMS)",
+          "terms": {
+            "url": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+            "reviewedAt": "2026-10-08",
+            "note": "Public-domain U.S. Government information; attribution does not imply NOAA endorsement."
+          },
+          "privacyUrl": "https://www.noaa.gov/protecting-your-privacy",
+          "homepage": "https://www.ospo.noaa.gov/products/land/hms.html",
+          "coverage": {
+            "countries": [
+              "US",
+              "CA",
+              "MX"
+            ],
+            "bbox": [
+              -170,
+              10,
+              -50,
+              75
+            ]
+          }
+        }
+      ]
+    }
+  },
+  "feeds": [
+    {
+      "operator": "eccc",
+      "product": "alerts",
+      "name": "ECCC weather alerts",
+      "format": "cap",
+      "tier": "authoritative",
+      "endpoints": {
+        "index": {
+          "urls": [
+            "https://dd.weather.gc.ca/{utcDate-2}/WXO-DD/alerts/cap/{utcDate-2}/",
+            "https://dd.weather.gc.ca/{utcDate-1}/WXO-DD/alerts/cap/{utcDate-1}/",
+            "https://dd.weather.gc.ca/{utcDate}/WXO-DD/alerts/cap/{utcDate}/"
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 120
+        },
+        "alerts": {
+          "url": "{item}",
+          "each": {
+            "role": "index",
+            "links": [
+              "href=\"([A-Z]{4}/)\"",
+              "href=\"(\\d{2}/)\"[^>]*>[^<]*</a>\\s+(\\d{4}-\\d{2}-\\d{2} \\d{2}:\\d{2})",
+              "href=\"([^\"]+\\.cap)\""
+            ]
+          },
+          "cadenceSec": 120
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-ECCC-Data-Servers-End-use",
+      "licenseUrl": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+      "attribution": "Data Source: Environment and Climate Change Canada",
+      "terms": {
+        "url": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+        "reviewedAt": "2026-10-08",
+        "note": "Weather alerts must be reproduced without alteration of their content or intent: their texts are kept verbatim in every language."
+      },
+      "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+      "homepage": "https://weather.gc.ca/",
+      "coverage": {
+        "countries": [
+          "CA"
+        ]
+      },
+      "id": "ca-eccc-alerts",
+      "domain": "hazards",
+      "region": "ca",
+      "file": "feeds/hazards/ca.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 120,
+      "country": "CA"
+    },
+    {
+      "operator": "dwd",
+      "product": "alerts",
+      "name": "DWD weather warnings",
+      "format": "cap",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://opendata.dwd.de/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_MUL.zip",
+          "unzip": {
+            "entries": "\\.xml$"
+          },
+          "cadenceSec": 300
+        },
+        "areas": {
+          "urls": [
+            "https://maps.dwd.de/geoserver/dwd/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=dwd:Warngebiete_Kueste&outputFormat=application/json",
+            "https://maps.dwd.de/geoserver/dwd/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=dwd:Warngebiete_Binnenseen&outputFormat=application/json"
+          ],
+          "cadenceSec": 2592000
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 1800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+      "attribution": "Deutscher Wetterdienst; Geobasisdaten © GeoBasis-DE / BKG 2021 (Daten modifiziert)",
+      "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
+      "homepage": "https://www.dwd.de/",
+      "coverage": {
+        "countries": [
+          "DE"
+        ],
+        "bbox": [
+          5.5,
+          47.2,
+          15.1,
+          55.1
+        ]
+      },
+      "id": "de-dwd-alerts",
+      "domain": "hazards",
+      "region": "de",
+      "file": "feeds/hazards/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 300,
+      "country": "DE"
+    },
+    {
+      "operator": "meteoalarm",
+      "product": "alerts",
+      "name": "MeteoAlarm warnings",
+      "format": "meteoalarm",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "urls": [
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-andorra",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-austria",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-belgium",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-bosnia-herzegovina",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-bulgaria",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-croatia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-cyprus",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-czechia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-denmark",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-estonia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-finland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-france",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-greece",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-hungary",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-iceland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-ireland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-israel",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-italy",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-latvia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-lithuania",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-luxembourg",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-malta",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-moldova",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-montenegro",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-netherlands",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-norway",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-poland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-portugal",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-republic-of-north-macedonia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-romania",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-serbia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-slovakia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-slovenia",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-spain",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-sweden",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-switzerland",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-ukraine",
+            "https://feeds.meteoalarm.org/api/v1/warnings/feeds-united-kingdom"
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 120,
+          "maxPayloadAgeSec": 120
+        },
+        "geocodes": {
+          "url": "https://gitlab.com/meteoalarm-pm-group/documents/-/raw/master/MeteoAlarm_Geocodes_2026_07_31.json",
+          "cadenceSec": 2592000
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 600,
+      "license": "LicenseRef-MeteoAlarm-Terms",
+      "licenseUrl": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+      "attribution": "EUMETNET – MeteoAlarm",
+      "terms": {
+        "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+        "reviewedAt": "2026-10-09",
+        "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
+        "notice": "Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org."
+      },
+      "privacyUrl": "https://api.meteoalarm.org/privacy",
+      "homepage": "https://www.meteoalarm.org/",
+      "coverage": {
+        "countries": [
+          "AD",
+          "AT",
+          "BE",
+          "BA",
+          "BG",
+          "HR",
+          "CY",
+          "CZ",
+          "DK",
+          "EE",
+          "FI",
+          "FR",
+          "GR",
+          "HU",
+          "IS",
+          "IE",
+          "IL",
+          "IT",
+          "LV",
+          "LT",
+          "LU",
+          "MT",
+          "MD",
+          "ME",
+          "NL",
+          "NO",
+          "PL",
+          "PT",
+          "MK",
+          "RO",
+          "RS",
+          "SK",
+          "SI",
+          "ES",
+          "SE",
+          "CH",
+          "UA",
+          "GB"
+        ]
+      },
+      "id": "eu-meteoalarm-alerts",
+      "domain": "hazards",
+      "region": "eu",
+      "file": "feeds/hazards/eu.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 120
+    },
+    {
+      "operator": "effis",
+      "product": "fires",
+      "name": "EFFIS burnt areas",
+      "format": "effis",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://maps.effis.emergency.copernicus.eu/effis?service=WFS&version=1.1.0&request=GetFeature&typename=ms:modis.ba.poly.week&outputformat=geojson",
+          "cadenceSec": 3600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 14400,
+      "extrasAllow": [
+        "class",
+        "province",
+        "broadleavedPct",
+        "coniferPct",
+        "mixedForestPct",
+        "sclerophyllousPct",
+        "transitionalPct",
+        "otherNaturalPct",
+        "agriculturalPct",
+        "artificialPct",
+        "otherLandCoverPct",
+        "natura2000Pct"
+      ],
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+      "attribution": "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
+      "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
+      "homepage": "https://forest-fire.emergency.copernicus.eu/",
+      "coverage": {
+        "bbox": [
+          -25,
+          25,
+          45,
+          72
+        ]
+      },
+      "id": "eu-effis-fires",
+      "domain": "hazards",
+      "region": "eu",
+      "file": "feeds/hazards/eu.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600
+    },
+    {
+      "operator": "nasa",
+      "qualifier": "firms-viirs",
+      "product": "fires",
+      "name": "NASA FIRMS VIIRS active fires",
+      "format": "firms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-21-viirs-c2/csv/J2_VIIRS_C2_Global_24h.csv",
+            "https://firms.modaps.eosdis.nasa.gov/data/active_fire/noaa-20-viirs-c2/csv/J1_VIIRS_C2_Global_24h.csv"
+          ],
+          "fanout": "tolerant",
+          "cadenceSec": 3600
+        }
+      },
+      "freshnessWindowSec": 10800,
+      "extrasAllow": [
+        "instrument",
+        "satellite",
+        "brightnessK",
+        "backgroundK",
+        "daynight",
+        "scan",
+        "track",
+        "version"
+      ],
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+      "attribution": "NASA FIRMS (LANCE / ESDIS)",
+      "privacyUrl": "https://www.nasa.gov/privacy/",
+      "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "nasa-firms-viirs-fires",
+      "domain": "hazards",
+      "region": "global",
+      "file": "feeds/hazards/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600
+    },
+    {
+      "operator": "nasa",
+      "qualifier": "firms-modis",
+      "product": "fires",
+      "name": "NASA FIRMS MODIS active fires",
+      "format": "firms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://firms.modaps.eosdis.nasa.gov/data/active_fire/modis-c6.1/csv/MODIS_C6_1_Global_24h.csv",
+          "cadenceSec": 3600
+        }
+      },
+      "freshnessWindowSec": 10800,
+      "extrasAllow": [
+        "instrument",
+        "satellite",
+        "brightnessK",
+        "backgroundK",
+        "daynight",
+        "scan",
+        "track",
+        "version"
+      ],
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+      "attribution": "NASA FIRMS (LANCE / ESDIS)",
+      "privacyUrl": "https://www.nasa.gov/privacy/",
+      "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "nasa-firms-modis-fires",
+      "domain": "hazards",
+      "region": "global",
+      "file": "feeds/hazards/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 3600
+    },
+    {
+      "operator": "usgs",
+      "product": "quakes",
+      "name": "USGS earthquakes",
+      "format": "usgs",
+      "tier": "authoritative",
+      "endpoints": {
+        "recent": {
+          "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_day.geojson",
+          "cadenceSec": 120
+        },
+        "window": {
+          "url": "https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/all_month.geojson",
+          "cadenceSec": 900
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 600,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+      "attribution": "U.S. Geological Survey",
+      "privacyUrl": "https://www.doi.gov/privacy",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "homepage": "https://earthquake.usgs.gov",
+      "id": "usgs-quakes",
+      "domain": "hazards",
+      "region": "global",
+      "file": "feeds/hazards/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 120
+    },
+    {
+      "operator": "nasa",
+      "qualifier": "eonet",
+      "product": "events",
+      "name": "NASA EONET natural events",
+      "format": "eonet",
+      "tier": "authoritative",
+      "endpoints": {
+        "open": {
+          "url": "https://eonet.gsfc.nasa.gov/api/v3/events?status=open&category=volcanoes,seaLakeIce,floods,landslides,dustHaze,drought",
+          "cadenceSec": 900
+        },
+        "closed": {
+          "url": "https://eonet.gsfc.nasa.gov/api/v3/events?status=closed&days=30&category=volcanoes,seaLakeIce,floods,landslides,dustHaze,drought",
+          "cadenceSec": 3600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+      "attribution": "NASA Earth Observatory Natural Event Tracker (EONET)",
+      "terms": {
+        "url": "https://eonet.gsfc.nasa.gov/what-is-eonet",
+        "reviewedAt": "2026-10-08",
+        "note": "Metadata for visualisation and general information, not official extents."
+      },
+      "privacyUrl": "https://www.nasa.gov/privacy/",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "homepage": "https://eonet.gsfc.nasa.gov",
+      "id": "nasa-eonet-events",
+      "domain": "hazards",
+      "region": "global",
+      "file": "feeds/hazards/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 900
+    },
+    {
+      "operator": "gdacs",
+      "product": "events",
+      "name": "GDACS disaster alerts",
+      "format": "gdacs",
+      "tier": "authoritative",
+      "endpoints": {
+        "events": {
+          "url": "https://www.gdacs.org/xml/rss.xml",
+          "cadenceSec": 600
+        },
+        "areas": {
+          "url": "https://www.gdacs.org/xml/gdacs_cap.xml",
+          "cadenceSec": 1800
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 1800,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "GDACS, European Union (CC BY 4.0), modified",
+      "terms": {
+        "url": "https://www.gdacs.org/About/termofuse.aspx",
+        "reviewedAt": "2026-10-08",
+        "note": "Licence stated in the RSS and CAP feeds; GDACS alerts are automatic model estimates, not official warnings."
+      },
+      "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
+      "homepage": "https://www.gdacs.org/",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "gdacs-events",
+      "domain": "hazards",
+      "region": "global",
+      "file": "feeds/hazards/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 600
+    },
+    {
+      "operator": "nws",
+      "product": "alerts",
+      "name": "NWS weather alerts",
+      "format": "nws",
+      "tier": "authoritative",
+      "endpoints": {
+        "alerts": {
+          "url": "https://api.weather.gov/alerts/active?status=actual",
+          "headers": {
+            "Accept": "application/geo+json"
+          },
+          "cadenceSec": 120
+        },
+        "zones": {
+          "url": "https://api.weather.gov/zones/{item}",
+          "fanout": "tolerant",
+          "each": {
+            "role": "alerts",
+            "records": "features",
+            "field": "properties.affectedZones",
+            "pattern": "^https://api\\.weather\\.gov/zones/((?:forecast|county|fire|marine|offshore)/[A-Z0-9]+)$",
+            "keepSec": 2592000
+          },
+          "cadenceSec": 120
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 600,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.weather.gov/disclaimer",
+      "attribution": "National Weather Service (NOAA)",
+      "privacyUrl": "https://www.weather.gov/privacy",
+      "homepage": "https://www.weather.gov/",
+      "coverage": {
+        "countries": [
+          "US",
+          "PR",
+          "GU",
+          "AS",
+          "VI",
+          "MP"
+        ]
+      },
+      "id": "us-nws-alerts",
+      "domain": "hazards",
+      "region": "us",
+      "file": "feeds/hazards/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 120,
+      "country": "US"
+    },
+    {
+      "operator": "nifc",
+      "product": "fires",
+      "name": "NIFC wildland fires",
+      "format": "wfigs",
+      "tier": "authoritative",
+      "endpoints": {
+        "perimeters": {
+          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_FireCause,attr_FireCauseGeneral&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+            "maxPages": 5
+          },
+          "cadenceSec": 600
+        },
+        "incidents": {
+          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,FireCause,FireCauseGeneral&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+            "maxPages": 5
+          },
+          "cadenceSec": 300
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+      "attribution": "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
+      "terms": {
+        "reviewedAt": "2026-10-08",
+        "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty."
+      },
+      "privacyUrl": "https://www.doi.gov/privacy",
+      "homepage": "https://www.nifc.gov/",
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "id": "us-nifc-fires",
+      "domain": "hazards",
+      "region": "us",
+      "file": "feeds/hazards/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 300,
+      "country": "US"
+    },
+    {
+      "operator": "noaa",
+      "qualifier": "hms",
+      "product": "smoke",
+      "name": "NOAA HMS smoke",
+      "format": "hms",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://services2.arcgis.com/C8EMgrsFcRFL6LrL/arcgis/rest/services/NOAA_Satellite_Smoke_Detection_%28v1%29/FeatureServer/0/query?where=1%3D1&outFields=FID,Satellite,Start,End_,Density&outSR=4326&f=geojson&orderByFields=FID&resultRecordCount=1000",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 1000,
+            "recordsPath": "features",
+            "maxPages": 5
+          },
+          "cadenceSec": 600
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+      "attribution": "NOAA/NESDIS Hazard Mapping System (HMS)",
+      "terms": {
+        "url": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+        "reviewedAt": "2026-10-08",
+        "note": "Public-domain U.S. Government information; attribution does not imply NOAA endorsement."
+      },
+      "privacyUrl": "https://www.noaa.gov/protecting-your-privacy",
+      "homepage": "https://www.ospo.noaa.gov/products/land/hms.html",
+      "coverage": {
+        "countries": [
+          "US",
+          "CA",
+          "MX"
+        ],
+        "bbox": [
+          -170,
+          10,
+          -50,
+          75
+        ]
+      },
+      "id": "us-noaa-hms-smoke",
+      "domain": "hazards",
+      "region": "us",
+      "file": "feeds/hazards/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": false,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 600,
+      "country": "US"
+    }
+  ]
+}
