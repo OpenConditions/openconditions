@@ -22,6 +22,7 @@ import {
   survivorRank,
 } from "@openconditions/model";
 import type { Sql } from "./bulk.js";
+import { clustersHolding } from "./canonical-holding.js";
 import {
   type CanonicalRow,
   type FusedScope,
@@ -193,8 +194,9 @@ export async function relinkFeatures(
       components: CanonicalComponent[];
     }[]
   >`
-    SELECT canonical_feature_id, survivor_id, member_ids, components
-      FROM conditions.feature_canonical WHERE member_ids && ${named}::text[]`;
+    WITH held AS MATERIALIZED (${clustersHolding(tx, named)})
+    SELECT c.canonical_feature_id, c.survivor_id, c.member_ids, c.components
+      FROM conditions.feature_canonical c JOIN held USING (canonical_feature_id)`;
   const seeds = new Set([...named, ...before.flatMap((r) => r.member_ids)]);
   const { members, links } = await connected(tx, [...seeds]);
   const live = members.filter((m) => !m.tombstoned);
@@ -221,9 +223,10 @@ export async function relinkFeatures(
       components: CanonicalComponent[];
     }[]
   >`
-    DELETE FROM conditions.feature_canonical
-     WHERE member_ids && ${[...seeds, ...members.map((m) => m.id)]}::text[]
-    RETURNING canonical_feature_id, survivor_id, member_ids, components`;
+    WITH held AS MATERIALIZED (${clustersHolding(tx, [...seeds, ...members.map((m) => m.id)])})
+    DELETE FROM conditions.feature_canonical c USING held
+     WHERE c.canonical_feature_id = held.canonical_feature_id
+    RETURNING c.canonical_feature_id, c.survivor_id, c.member_ids, c.components`;
   if (rows.length > 0) {
     await tx`
       INSERT INTO conditions.feature_canonical

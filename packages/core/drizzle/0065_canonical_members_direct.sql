@@ -1,0 +1,2 @@
+DROP INDEX "conditions"."idx_feature_canonical_members";--> statement-breakpoint
+CREATE INDEX "idx_feature_canonical_members" ON "conditions"."feature_canonical" USING gin ("member_ids") WITH (fastupdate=off);

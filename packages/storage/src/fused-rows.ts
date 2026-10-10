@@ -29,6 +29,7 @@ import {
 } from "@openconditions/model";
 import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
+import { clustersHolding } from "./canonical-holding.js";
 import { SERIES_COLUMNS, SERIES_KEY, seriesRowOf } from "./write-observations.js";
 
 type Rec = Record<string, unknown>;
@@ -77,10 +78,11 @@ export async function loadCanonical(
       components: CanonicalComponent[];
     }[]
   >`
-    SELECT canonical_feature_id, survivor_id, member_ids, components
-      FROM conditions.feature_canonical
-     WHERE canonical_feature_id = ANY(${featureIds as string[]})
-        OR member_ids && ${featureIds as string[]}::text[]`;
+    WITH held AS MATERIALIZED (
+      ${clustersHolding(tx, featureIds)}
+      UNION SELECT unnest(${featureIds as string[]}::text[]))
+    SELECT c.canonical_feature_id, c.survivor_id, c.member_ids, c.components
+      FROM conditions.feature_canonical c JOIN held USING (canonical_feature_id)`;
   return rows.map((r) => ({
     canonicalFeatureId: r.canonical_feature_id,
     survivorId: r.survivor_id,
@@ -676,9 +678,11 @@ export async function refreshFlippedFusions(
      WHERE l.source_id = ANY(${flipped.map((f) => f.source)}::text[])
        AND l.feature_id IS NOT NULL AND l.property = ANY(${fusable}::text[])`;
   const members = await sql<{ canonical_feature_id: string }[]>`
-    SELECT canonical_feature_id FROM conditions.feature_canonical
-     WHERE member_ids && ${features.map((f) => f.feature_id)}::text[]
-     ORDER BY canonical_feature_id`;
+    WITH held AS MATERIALIZED (${clustersHolding(
+      sql,
+      features.map((f) => f.feature_id),
+    )})
+    SELECT canonical_feature_id FROM held ORDER BY canonical_feature_id`;
   const ids = members.map((m) => m.canonical_feature_id);
   for (let i = 0; i < ids.length; i += 500) {
     const batch = ids.slice(i, i + 500);

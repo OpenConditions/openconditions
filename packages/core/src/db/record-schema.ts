@@ -282,6 +282,9 @@ export const featureLink = conditionsSchema.table(
  * included. `components` is the cluster's canonical component set
  * (`canonicalComponents`): each canonical key with the member components it
  * stands for, which crowd landing and the fused rows map subjects through.
+ * Clusters are found one member at a time (`clustersHolding`), so the member
+ * index takes entries directly: a pending list of fresh entries would be
+ * scanned whole on every lookup, quadratic over a poll's clusters.
  */
 export const featureCanonical = conditionsSchema.table(
   "feature_canonical",
@@ -293,7 +296,9 @@ export const featureCanonical = conditionsSchema.table(
     components: jsonb("components").notNull().default(sql`'[]'::jsonb`),
     computedAt: tstz("computed_at").notNull(),
   },
-  (t) => [index("idx_feature_canonical_members").using("gin", t.memberIds)],
+  (t) => [
+    index("idx_feature_canonical_members").using("gin", t.memberIds).with({ fastupdate: "off" }),
+  ],
 );
 
 /** Structured tariffs attached to a feature or component. */
