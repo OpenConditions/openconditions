@@ -181,7 +181,7 @@ describe("runSegmentRebuild", () => {
 
   it("runs the graph invalidation again when Postgres ends it as a deadlock victim", async () => {
     await seedClosureSituation();
-    await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
+    await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW, overpassUrl: OVERPASS });
     // A sequence outlives the rolled-back attempt: the first attempt deadlocks.
     await sql.unsafe(`
       CREATE SEQUENCE conditions.deadlock_probe;
