@@ -23,6 +23,7 @@ import {
 import { nodeKey, SegmentGraph } from "./graph.js";
 import { normalizeRefs, refScore } from "./refs.js";
 import { scoreCandidate } from "./score.js";
+import { SegmentGrid } from "./segment-grid.js";
 import {
   BIND_DEFAULTS,
   type BindDebug,
@@ -145,11 +146,11 @@ function candidatesFor(
   p: LngLat,
   bearing: number | null,
   input: BindInput,
-  segments: SpineSegment[],
+  grid: SegmentGrid,
   maxOffsetM: number,
 ): Candidate[] {
   const out: Candidate[] = [];
-  for (const s of segments) {
+  for (const s of grid.near(p)) {
     if (s.coords.length === 0) continue;
     const pr = projectOntoPolyline(p, s.coords);
     if (pr.offsetM > maxOffsetM) continue;
@@ -274,10 +275,10 @@ function failure(
 function bindPoint(
   point: LngLat,
   input: BindInput,
-  spine: SpineSubgraph,
+  grid: SegmentGrid,
   maxOffsetM: number,
 ): BindResult {
-  const candidates = candidatesFor(point, null, input, spine.segments, maxOffsetM);
+  const candidates = candidatesFor(point, null, input, grid, maxOffsetM);
   const samples = [{ point, candidates }];
   if (candidates.length === 0) return failure("unresolved", "no_candidates", 0, samples);
 
@@ -317,7 +318,7 @@ function bindEndpoints(
   start: LngLat,
   end: LngLat,
   input: BindInput,
-  spine: SpineSubgraph,
+  grid: SegmentGrid,
   graph: SegmentGraph,
   onRef: (s: SpineSegment) => boolean,
   maxOffsetM: number,
@@ -325,16 +326,10 @@ function bindEndpoints(
   const straightM = polylineLengthM([start, end]);
   // Coincident endpoints carry no travel direction; use the point rules,
   // including both directions on a bidirectional way.
-  if (straightM === 0) return bindPoint(start, input, spine, maxOffsetM);
+  if (straightM === 0) return bindPoint(start, input, grid, maxOffsetM);
   const cap = Math.min(MAX_ENDPOINT_PATH_M, 2.5 * straightM + 500);
-  const starts = candidatesFor(start, null, input, spine.segments, maxOffsetM).slice(
-    0,
-    ENDPOINT_CANDIDATES,
-  );
-  const ends = candidatesFor(end, null, input, spine.segments, maxOffsetM).slice(
-    0,
-    ENDPOINT_CANDIDATES,
-  );
+  const starts = candidatesFor(start, null, input, grid, maxOffsetM).slice(0, ENDPOINT_CANDIDATES);
+  const ends = candidatesFor(end, null, input, grid, maxOffsetM).slice(0, ENDPOINT_CANDIDATES);
   const samples = [
     { point: start, candidates: starts },
     { point: end, candidates: ends },
@@ -437,6 +432,7 @@ function bindLine(
   coords: LngLat[],
   input: BindInput,
   spine: SpineSubgraph,
+  grid: SegmentGrid,
   graph: SegmentGraph,
   onRef: (s: SpineSegment) => boolean,
   maxOffsetM: number,
@@ -450,7 +446,7 @@ function bindLine(
     const prev = points[Math.max(0, i - 1)]!;
     const next = points[Math.min(points.length - 1, i + 1)]!;
     const bearing = hasBearing ? bearingDeg(prev, next) : null;
-    return { point, candidates: candidatesFor(point, bearing, input, spine.segments, maxOffsetM) };
+    return { point, candidates: candidatesFor(point, bearing, input, grid, maxOffsetM) };
   });
   const candidateCount = new Set(
     samples.flatMap((s) => s.candidates.map((c) => c.segment.segmentId)),
@@ -559,14 +555,15 @@ export function bindEvent(
     return failure("unresolved", "subgraph_too_large");
 
   const graph = new SegmentGraph(spine.segments);
+  const grid = new SegmentGrid(spine.segments, maxOffsetM);
   // With a stated ref, paths may only run over segments that match it.
   const onRef = (s: SpineSegment): boolean =>
     input.refs.length === 0 || refScore(input.refs, s.ref) !== 0;
 
-  if (shape.kind === "point") return bindPoint(shape.point, input, spine, maxOffsetM);
+  if (shape.kind === "point") return bindPoint(shape.point, input, grid, maxOffsetM);
   if (shape.kind === "endpoints")
-    return bindEndpoints(shape.start, shape.end, input, spine, graph, onRef, maxOffsetM);
+    return bindEndpoints(shape.start, shape.end, input, grid, graph, onRef, maxOffsetM);
   if (shape.coords.length === 0) return failure("unresolved", "no_candidates");
-  if (shape.coords.length === 1) return bindPoint(shape.coords[0]!, input, spine, maxOffsetM);
-  return bindLine(shape.coords, input, spine, graph, onRef, maxOffsetM, spacingM);
+  if (shape.coords.length === 1) return bindPoint(shape.coords[0]!, input, grid, maxOffsetM);
+  return bindLine(shape.coords, input, spine, grid, graph, onRef, maxOffsetM, spacingM);
 }
