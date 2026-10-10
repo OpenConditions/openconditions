@@ -1000,6 +1000,37 @@ describe("observation writes", () => {
     expect(summary.rejected.map((r) => r.class)).toEqual(["observation"]);
     expect(summary.observations.latest).toBe(1);
   });
+
+  it("write a large poll a slice of series at a time, each series' readings together", async () => {
+    const sites = 2_500;
+    const at = (site: number, value: number, instant: string) =>
+      observationDraft(
+        "traffic.speed",
+        { type: "quantity", value, unit: "km/h" },
+        {
+          at: instant,
+          aggregation: "mean",
+          subject: { kind: "feature", featureId: `oc:feature:nl-ndw-flow:s${site}` },
+        },
+      );
+    // Every site's earlier reading comes first, its later one a whole slice
+    // and more after it.
+    const poll = [
+      ...Array.from({ length: sites }, (_, i) => at(i, 50, "2026-10-01T09:59:00Z")),
+      ...Array.from({ length: sites }, (_, i) => at(i, 60, "2026-10-01T10:00:00Z")),
+    ];
+    const first = await writeSnapshot(sql, "nl-ndw-flow", { observations: poll }, ctx);
+    expect(first.observations).toMatchObject({ latest: sites, history: 2 * sites, unchanged: 0 });
+    const [latest] = await sql`
+      SELECT count(*)::int AS series, count(*) FILTER (WHERE value_num = 60)::int AS newest
+        FROM conditions.observation_latest`;
+    expect(latest).toEqual({ series: sites, newest: sites });
+
+    // Sent again, the later readings are what their series hold and the earlier
+    // ones rewrite nothing.
+    const again = await writeSnapshot(sql, "nl-ndw-flow", { observations: poll }, ctx);
+    expect(again.observations).toMatchObject({ latest: 0, history: 0, unchanged: sites });
+  });
 });
 
 describe("transient readings", () => {

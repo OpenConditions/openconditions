@@ -205,9 +205,8 @@ export async function writeObservationsIn(
     ended: 0,
   };
   if (drafts.length === 0) return counts;
-  const now = Date.parse(ctx.now);
 
-  const pending = new Map<string, { key: SeriesKey; drafts: Rec[] }>();
+  const pending = new Map<string, PendingSeries>();
   const transient = new Map<string, Transient>();
   let handled = 0;
   for (const input of drafts) {
@@ -249,14 +248,56 @@ export async function writeObservationsIn(
     }
   }
 
+  const frontiers = await rollupFrontiers(tx);
+  const write = { tx, ctx, rejected, stage, frontiers, counts };
+  let slice: [string, PendingSeries][] = [];
+  for (const entry of pending) {
+    slice.push(entry);
+    if (slice.length === SERIES_PER_SLICE) {
+      await writeSeries(write, slice);
+      slice = [];
+    }
+  }
+  if (slice.length > 0) await writeSeries(write, slice);
+  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage);
+  return counts;
+}
+
+/** One series of a write and the drafts of its readings. */
+interface PendingSeries {
+  key: SeriesKey;
+  drafts: Rec[];
+}
+
+/**
+ * Series a write compares and writes at a time. A poll of a large sensor
+ * network holds hundreds of thousands of readings; sealed, compared with
+ * their series and turned into rows all at once, they outgrow the heap.
+ */
+const SERIES_PER_SLICE = 1000;
+
+/** Writes the readings of a slice of a write's series, keyed as `keyString` keys them. */
+async function writeSeries(
+  write: {
+    tx: Sql;
+    ctx: ObservationWriteContext;
+    rejected: Rejection[];
+    stage: "draft" | "stored";
+    frontiers: Map<string, number>;
+    counts: ObservationCounts;
+  },
+  slice: readonly (readonly [string, PendingSeries])[],
+): Promise<void> {
+  const { tx, ctx, rejected, stage, frontiers, counts } = write;
+  const now = Date.parse(ctx.now);
   const latest = await loadLatest(
     tx,
-    sourceId,
-    [...pending.values()].map((p) => p.key),
+    slice.map(([, p]) => p.key),
   );
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
   const expiryMoved = new Map<number, unknown>();
-  for (const [k, { key, drafts: series }] of pending) {
+  let handled = 0;
+  for (const [k, { key, drafts: series }] of slice) {
     const held = latest.get(k);
     // A polled feed's change-only series takes a reading only where its
     // result changes: one restating the result in effect before it, or one
@@ -337,7 +378,6 @@ export async function writeObservationsIn(
     );
   }
 
-  const frontiers = await rollupFrontiers(tx);
   const seriesRows: Rec[] = [];
   const readingRows: Rec[] = [];
   // The whole row of a series written by its reading alone, should its row have gone.
@@ -433,7 +473,7 @@ export async function writeObservationsIn(
     .filter((id) => !movedIds.has(id))
     .map((id) => wholeRowOf.get(id)!());
   const written = [...(await upsert([...seriesRows, ...gone])), ...moved];
-  counts.latest = written.length;
+  counts.latest += written.length;
   const ids = new Map([...latest].map(([k, l]) => [k, l.series_id]));
   for (const w of written) {
     ids.set(
@@ -462,9 +502,7 @@ export async function writeObservationsIn(
     `${upsertClause(HISTORY_KEY, HISTORY_COLUMNS)} WHERE ${HISTORY_CHANGED}`,
     "series_id",
   );
-  counts.history = stored.length;
-  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage);
-  return counts;
+  counts.history += stored.length;
 }
 
 /**
@@ -648,19 +686,12 @@ async function rollupFrontiers(tx: Sql): Promise<Map<string, number>> {
   return new Map(rows.map((r) => [r.period, r.finalized_before.getTime()]));
 }
 
-/** Readings in one write above which comparing with all of the source's series is cheaper. */
-const WHOLE_SOURCE_ABOVE = 1000;
-
 const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'result' AS result,
             l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at,
             l.reading ? 'validUntil' AS ended,
             l.subject_key, l.property, l.qualifier_key, l.source_id`;
 
-async function loadLatest(
-  tx: Sql,
-  sourceId: string,
-  keys: readonly SeriesKey[],
-): Promise<Map<string, Latest>> {
+async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<string, Latest>> {
   if (keys.length === 0) return new Map();
   type Row = Latest & {
     subject_key: string;
@@ -668,28 +699,6 @@ async function loadLatest(
     qualifier_key: string;
     source_id: string;
   };
-  const byKey = (rows: readonly Row[]) =>
-    new Map(
-      rows.map((r) => [
-        keyString({
-          subjectKey: r.subject_key,
-          property: r.property,
-          qualifierKey: r.qualifier_key,
-          sourceId: r.source_id,
-        }),
-        r,
-      ]),
-    );
-  // A poll writes most of its source's series: reading them all by source is
-  // one index scan, where matching each key costs a join over every key.
-  if (keys.length > WHOLE_SOURCE_ABOVE) {
-    return byKey(
-      await tx.unsafe<Row[]>(
-        `SELECT ${LATEST_COLUMNS} FROM conditions.observation_latest l WHERE l.source_id = $1`,
-        [sourceId],
-      ),
-    );
-  }
   const rows = await tx.unsafe<Row[]>(
     `SELECT ${LATEST_COLUMNS}
        FROM conditions.observation_latest l
@@ -707,7 +716,17 @@ async function loadLatest(
       ),
     ],
   );
-  return byKey(rows);
+  return new Map(
+    rows.map((r) => [
+      keyString({
+        subjectKey: r.subject_key,
+        property: r.property,
+        qualifierKey: r.qualifier_key,
+        sourceId: r.source_id,
+      }),
+      r,
+    ]),
+  );
 }
 
 /** A polled series a complete poll ended: the subject and property whose fused rows it fed. */
