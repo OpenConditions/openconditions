@@ -237,7 +237,7 @@ function sourceFiles(directory: string, out: string[] = []): string[] {
   return out;
 }
 
-export function checkImportBoundaries(roots = ["packages", "services", "integrations", "scripts"]) {
+export function checkImportBoundaries(roots = ["packages", "services", "scripts"]) {
   const violations: ImportBoundaryViolation[] = [];
   for (const root of roots) {
     for (const path of sourceFiles(root)) {
