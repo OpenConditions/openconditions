@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { writeFile } from "node:fs/promises";
 import { guardedFetch } from "../egress.js";
 import type { IngestDomain } from "./domain.js";
@@ -27,7 +28,7 @@ export type ChildFeed = Partial<FeedDefinition> & {
  */
 export interface CatalogResolver {
   id: string;
-  /** Absolute path to the vendored snapshot the export script writes on success. */
+  /** Absolute path to the vendored snapshot; a live success refreshes it where the file exists. */
   snapshotPath: string;
   /**
    * The vendored children, imported as a JSON module so they survive being
@@ -194,7 +195,8 @@ export function materializeCatalogChildren(
  * Resolves a catalogue live, refreshing the vendored snapshot on success and
  * falling back to it on failure (Transitland's git-submodule resilience). Never
  * throws: a dead registry with an empty snapshot degrades to no children so the
- * surrounding fan-out preserves last-good rows.
+ * surrounding fan-out preserves last-good rows. Only a checkout carries the
+ * vendored file; a bundle inlines the snapshot and has no file to refresh.
  */
 export async function resolveWithSnapshot(
   resolver: CatalogResolver,
@@ -204,7 +206,9 @@ export async function resolveWithSnapshot(
   try {
     const children = await resolver.resolve(parent, fetchFn);
     try {
-      await writeFile(resolver.snapshotPath, `${JSON.stringify(children, null, 2)}\n`);
+      if (existsSync(resolver.snapshotPath)) {
+        await writeFile(resolver.snapshotPath, `${JSON.stringify(children, null, 2)}\n`);
+      }
     } catch (writeErr) {
       console.warn(
         `[catalog] ${resolver.id}: could not refresh snapshot ${resolver.snapshotPath}:`,

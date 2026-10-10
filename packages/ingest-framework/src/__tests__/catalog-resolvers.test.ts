@@ -1,4 +1,5 @@
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
+import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
@@ -250,6 +251,7 @@ async function snapshotPath(): Promise<string> {
 describe("resolveWithSnapshot", () => {
   it("returns live children of the parent's registry and writes the snapshot on success", async () => {
     const snap = await snapshotPath();
+    await writeFile(snap, "[]\n");
     const resolve = vi.fn(async () => [child("live", true)]);
     const resolver: CatalogResolver = { id: "r", snapshotPath: snap, snapshot: [], resolve };
     const out = await resolveWithSnapshot(resolver, parent, fakeFetch);
@@ -257,6 +259,21 @@ describe("resolveWithSnapshot", () => {
     expect(out.map((f) => f.qualifier)).toEqual(["live"]);
     const written = JSON.parse(await readFile(snap, "utf8")) as ChildFeed[];
     expect(written[0]?.qualifier).toBe("live");
+  });
+
+  it("leaves a bundle without a vendored snapshot file alone", async () => {
+    const snap = await snapshotPath();
+    const resolver: CatalogResolver = {
+      id: "r",
+      snapshotPath: snap,
+      snapshot: [child("snap", true)],
+      resolve: async () => [child("live", true)],
+    };
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const out = await resolveWithSnapshot(resolver, parent, fakeFetch);
+    expect(out.map((f) => f.qualifier)).toEqual(["live"]);
+    expect(existsSync(snap)).toBe(false);
+    expect(warn).not.toHaveBeenCalled();
   });
 
   it("falls back to the vendored snapshot when the live resolve throws", async () => {
