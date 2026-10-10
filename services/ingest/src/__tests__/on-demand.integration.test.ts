@@ -372,11 +372,13 @@ describe("on-demand read-through", () => {
       app: h.app,
       // The database stays open for the other tests; what matters is what
       // the fetch wrote by the time shutdown would close it.
-      sql: {
-        end: async () => {
-          ledgerAtEnd = (await h.ledger()).map((r) => r.status);
+      databases: [
+        {
+          end: async () => {
+            ledgerAtEnd = (await h.ledger()).map((r) => r.status);
+          },
         },
-      },
+      ],
     });
     setTimeout(release, 50);
     await closing;

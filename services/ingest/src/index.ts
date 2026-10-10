@@ -9,7 +9,7 @@ import Fastify from "fastify";
 import { fetch as undiciFetch } from "undici";
 import { registerApiRoutes } from "./api/routes.js";
 import { operatorTokenFromEnv, registerScope } from "./api/scope.js";
-import { DATABASE_URL, sql } from "./db.js";
+import { apiSql, DATABASE_URL, sql } from "./db.js";
 import { loadIngestCatalog } from "./domains.js";
 import { startFederationReconcile } from "./federation-reconcile.js";
 import { FeedStatusStore } from "./feed-status.js";
@@ -63,10 +63,10 @@ async function boot() {
   await maintainPartitions(sql, model, new Date());
   const abandoned = await closeAbandonedPollAttempts(sql);
   if (abandoned > 0) console.warn(`[ingest] closed ${abandoned} poll attempt(s) left running`);
-  registerPublishRoutes(app, sql, statusStore, catalog);
+  registerPublishRoutes(app, apiSql, statusStore, catalog);
   // The on-demand cell fetches and feed polls shutdown waits for.
   const inFlight = new InFlight();
-  registerApiRoutes(app, sql, {
+  registerApiRoutes(app, apiSql, {
     registry: model,
     catalog,
     // undici's fetch, not the global: the egress guard pins its sockets.
@@ -107,7 +107,7 @@ async function boot() {
     stop: [stopScheduler, stopRecordJobs, stopMemTelemetry, () => limiter.destroy()],
     background: [fusedRefresh, federationReconcile, inFlight],
     app,
-    sql,
+    databases: [sql, apiSql],
   });
   process.on("SIGTERM", close);
   process.on("SIGINT", close);

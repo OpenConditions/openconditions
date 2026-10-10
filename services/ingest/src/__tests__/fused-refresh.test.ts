@@ -120,11 +120,13 @@ describe("shutdown", () => {
       stop: [],
       background: [fusedRefresh],
       app: { close: async () => undefined },
-      sql: {
-        end: async () => {
-          ended = true;
+      databases: [
+        {
+          end: async () => {
+            ended = true;
+          },
         },
-      },
+      ],
     });
     await fusedRefresh.done;
     expect(log.error).not.toHaveBeenCalled();
@@ -150,11 +152,13 @@ describe("shutdown", () => {
       stop: [],
       background: [fusedRefresh],
       app: { close: async () => undefined },
-      sql: {
-        end: async () => {
-          ended = true;
+      databases: [
+        {
+          end: async () => {
+            ended = true;
+          },
         },
-      },
+      ],
       budgetMs: 10,
     });
     await fusedRefresh.done;

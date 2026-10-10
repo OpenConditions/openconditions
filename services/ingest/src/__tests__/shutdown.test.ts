@@ -26,7 +26,7 @@ describe("InFlight", () => {
 });
 
 describe("shutdown", () => {
-  it("waits for in-flight work before the database closes", async () => {
+  it("waits for in-flight work before every database pool closes", async () => {
     const work = new InFlight();
     const order: string[] = [];
     void work.track(later(30).then(() => order.push("cell written")));
@@ -34,9 +34,17 @@ describe("shutdown", () => {
       stop: [],
       background: [work],
       app: { close: async () => order.push("server closed") },
-      sql: { end: async () => order.push("database closed") },
+      databases: [
+        { end: async () => order.push("writer pool closed") },
+        { end: async () => order.push("reader pool closed") },
+      ],
     });
-    expect(order).toEqual(["server closed", "cell written", "database closed"]);
+    expect(order).toEqual([
+      "server closed",
+      "cell written",
+      "writer pool closed",
+      "reader pool closed",
+    ]);
   });
 
   it("stops waiting for in-flight work at the budget", async () => {
@@ -48,7 +56,7 @@ describe("shutdown", () => {
       stop: [],
       background: [work],
       app: { close: async () => undefined },
-      sql: { end },
+      databases: [{ end }],
       budgetMs: 50,
     });
     expect(end).toHaveBeenCalledOnce();
@@ -64,11 +72,13 @@ describe("shutdown", () => {
         stop: [],
         background: [],
         app: { close },
-        sql: {
-          end: async () => {
-            throw failure;
+        databases: [
+          {
+            end: async () => {
+              throw failure;
+            },
           },
-        },
+        ],
       },
       log,
     );

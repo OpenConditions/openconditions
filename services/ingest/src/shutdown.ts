@@ -50,7 +50,8 @@ export interface ServiceParts {
   stop: readonly (() => void)[];
   background: readonly BackgroundJob[];
   app: { close(): Promise<unknown> };
-  sql: { end(): Promise<unknown> };
+  /** The connection pools, closed last. */
+  databases: readonly { end(): Promise<unknown> }[];
   /** Default {@link SHUTDOWN_BUDGET_MS}. */
   budgetMs?: number;
 }
@@ -76,7 +77,7 @@ export async function shutdown(parts: ServiceParts): Promise<void> {
   } finally {
     clearTimeout(timer);
   }
-  await parts.sql.end();
+  for (const database of parts.databases) await database.end();
 }
 
 /**

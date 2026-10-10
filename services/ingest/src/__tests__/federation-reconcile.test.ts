@@ -115,11 +115,13 @@ describe("shutdown", () => {
       stop: [],
       background: [fusedRefresh, reconcile],
       app: { close: async () => undefined },
-      sql: {
-        end: async () => {
-          ended = true;
+      databases: [
+        {
+          end: async () => {
+            ended = true;
+          },
         },
-      },
+      ],
     });
     expect(log.error).not.toHaveBeenCalled();
   });
@@ -143,11 +145,13 @@ describe("shutdown", () => {
       stop: [],
       background: [reconcile],
       app: { close: async () => undefined },
-      sql: {
-        end: async () => {
-          ended = true;
+      databases: [
+        {
+          end: async () => {
+            ended = true;
+          },
         },
-      },
+      ],
       budgetMs: 10,
     });
     await reconcile.done;
