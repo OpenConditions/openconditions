@@ -75,9 +75,14 @@ export async function downloadLargeArtifact(
   const maxBytes = deps.maxBytes ?? envInt(env, "OPENCONDITIONS_DOWNLOAD_MAX_BYTES", 8 * GB);
   const timeoutMs =
     deps.timeoutMs ?? envInt(env, "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS", 30 * 60_000);
+  // The guard's own deadline is a feed fetch's minute: an artifact gets its own.
   const fetchImpl =
     deps.fetchImpl ??
-    guardedFetch(undiciFetch as unknown as typeof fetch, { ...guardOptionsFromEnv(env), maxBytes });
+    guardedFetch(undiciFetch as unknown as typeof fetch, {
+      ...guardOptionsFromEnv(env),
+      maxBytes,
+      timeoutMs,
+    });
 
   const dir = await mkdtemp(join(deps.tmpDir ?? tmpdir(), "oc-artifact-"));
   // Preserve the URL's basename so downstream tools that infer format from the

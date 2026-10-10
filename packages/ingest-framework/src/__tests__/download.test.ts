@@ -1,6 +1,8 @@
 import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 import { describe, expect, it } from "vitest";
 import { downloadLargeArtifact } from "../download.js";
 
@@ -69,5 +71,36 @@ describe("downloadLargeArtifact", () => {
     await expect(downloadLargeArtifact("http://x/a.pbf", { fetchImpl: f })).rejects.toThrow(
       /HTTP 500/,
     );
+  });
+
+  it("gives a download its own deadline, not the shorter one of a feed fetch", async () => {
+    // A country extract streams for minutes; feed fetches are cut at one.
+    const server = createServer((req, res) => {
+      if (req.url !== "/slow.pbf") {
+        res.writeHead(404).end();
+        return;
+      }
+      res.writeHead(200);
+      res.write("a");
+      setTimeout(() => res.end("b"), 300);
+    });
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as AddressInfo;
+    try {
+      const r = await downloadLargeArtifact(`http://127.0.0.1:${port}/slow.pbf`, {
+        timeoutMs: 5_000,
+        env: {
+          OPENCONDITIONS_FETCH_TIMEOUT_MS: "100",
+          OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: "127.0.0.1",
+        },
+      });
+      try {
+        expect(readFileSync(r.path, "utf8")).toBe("ab");
+      } finally {
+        await rm(r.dir, { recursive: true, force: true });
+      }
+    } finally {
+      server.close();
+    }
   });
 });
