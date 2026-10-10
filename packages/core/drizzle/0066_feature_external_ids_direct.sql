@@ -1,0 +1,2 @@
+DROP INDEX "conditions"."idx_feature_external_ids";--> statement-breakpoint
+CREATE INDEX "idx_feature_external_ids" ON "conditions"."feature" USING gin (("record" -> 'externalIds') jsonb_path_ops) WITH (fastupdate=off);

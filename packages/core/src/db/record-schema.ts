@@ -218,11 +218,13 @@ export const feature = conditionsSchema.table(
     index("idx_feature_source").on(t.sourceId, t.id),
     index("idx_feature_canonical").on(t.canonicalId),
     index("idx_feature_kind_lifecycle").on(t.kind, t.lifecycle),
-    // Linking finds the features that share an external id with a written one.
-    index("idx_feature_external_ids").using(
-      "gin",
-      sql`(${t.record} -> 'externalIds') jsonb_path_ops`,
-    ),
+    // Linking finds the features that share an external id with a written one,
+    // one id at a time, often in the transaction that just wrote them: entries
+    // go into the index directly, as a pending list would be scanned whole on
+    // every lookup.
+    index("idx_feature_external_ids")
+      .using("gin", sql`(${t.record} -> 'externalIds') jsonb_path_ops`)
+      .with({ fastupdate: "off" }),
   ],
 );
 

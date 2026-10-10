@@ -230,9 +230,13 @@ export async function refreshFused(
   if (canonical.length === 0) return counts;
   // The properties in scope of each canonical feature: all fusable ones once any scope asks for all.
   const scopeOf = new Map<string, Set<string> | "all">();
+  // By feature, so a national poll's clusters each look up their own members
+  // rather than scanning every scope of the poll.
+  const wantedBy = new Map<string, FusedScope[]>();
+  for (const s of wanted) wantedBy.set(s.featureId, [...(wantedBy.get(s.featureId) ?? []), s]);
   for (const c of canonical) {
     const ids = new Set([c.canonicalFeatureId, ...c.memberIds]);
-    for (const s of wanted.filter((w) => ids.has(w.featureId))) {
+    for (const s of [...ids].flatMap((id) => wantedBy.get(id) ?? [])) {
       const held = scopeOf.get(c.canonicalFeatureId);
       if (held === "all" || s.properties === undefined) {
         scopeOf.set(c.canonicalFeatureId, "all");
