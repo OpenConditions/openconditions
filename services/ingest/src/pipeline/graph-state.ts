@@ -19,9 +19,33 @@ async function enqueueLiveSituations(tx: postgres.TransactionSql): Promise<void>
       updated_at = excluded.updated_at`;
 }
 
+/** Attempts of a graph-wide binding transaction that Postgres ends as a deadlock victim. */
+const DEADLOCK_ATTEMPTS = 5;
+
+/**
+ * Runs a transaction over the binding work of every live situation. Feed
+ * polls queue their own situations' work and the binder writes bindings
+ * meanwhile, each in an order of its own. Postgres breaks such a cycle by
+ * ending one of the transactions; this one is idempotent and runs again.
+ */
+async function graphWide(
+  sql: Sql,
+  work: (tx: postgres.TransactionSql) => Promise<void>,
+): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await sql.begin(work);
+      return;
+    } catch (err) {
+      if ((err as { code?: string }).code !== "40P01" || attempt === DEADLOCK_ATTEMPTS) throw err;
+      await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
+    }
+  }
+}
+
 /** Makes old bindings ineligible before any mutable graph table changes. */
 export async function beginRoadGraphRebuild(sql: Sql): Promise<void> {
-  await sql.begin(async (tx) => {
+  await graphWide(sql, async (tx) => {
     await tx`UPDATE conditions.road_graph_state SET status='rebuilding' WHERE singleton`;
     await tx`UPDATE conditions.record_binding SET status='obsolete'`;
     await enqueueLiveSituations(tx);
@@ -68,7 +92,7 @@ export async function activateRoadGraph(
   );
   const generation = deps.generation ?? randomUUID();
   const activatedAt = deps.now();
-  await sql.begin(async (tx) => {
+  await graphWide(sql, async (tx) => {
     await tx`
       INSERT INTO conditions.road_graph_state
         (singleton, generation, status, regions, highway_classes, pbf_provenance, imported_at, activated_at)

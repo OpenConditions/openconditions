@@ -2,7 +2,7 @@ import { runMigrations } from "@openconditions/core/server";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
-import { activateRoadGraph } from "../pipeline/graph-state.js";
+import { activateRoadGraph, beginRoadGraphRebuild } from "../pipeline/graph-state.js";
 import { importOsmRoads, type OsmRegion } from "../pipeline/osm-import.js";
 import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
 import { seedFlowSource, siteKey, writeSiteReadings } from "./helpers/flow-series.js";
@@ -178,6 +178,37 @@ describe("runSegmentRebuild", () => {
     expect(segRowsAgain).toHaveLength(1);
     expect(segRowsAgain[0]!.openlr).not.toBeNull();
   }, 60_000);
+
+  it("runs the graph invalidation again when Postgres ends it as a deadlock victim", async () => {
+    await seedClosureSituation();
+    await runSegmentRebuild(sql, { fetch: fetchFn, now: () => NOW });
+    // A sequence outlives the rolled-back attempt: the first attempt deadlocks.
+    await sql.unsafe(`
+      CREATE SEQUENCE conditions.deadlock_probe;
+      CREATE FUNCTION conditions.deadlock_probe() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN
+        IF nextval('conditions.deadlock_probe') = 1 THEN
+          RAISE EXCEPTION 'deadlock detected' USING ERRCODE = '40P01';
+        END IF;
+        RETURN NULL;
+      END $$;
+      CREATE TRIGGER deadlock_probe AFTER UPDATE ON conditions.road_graph_state
+        FOR EACH STATEMENT EXECUTE FUNCTION conditions.deadlock_probe();`);
+    try {
+      await beginRoadGraphRebuild(sql);
+      const [state] = await sql<{ status: string }[]>`
+        SELECT status FROM conditions.road_graph_state WHERE singleton`;
+      expect(state?.status).toBe("rebuilding");
+      const [probe] = await sql<{ attempts: string }[]>`
+        SELECT last_value::text AS attempts FROM conditions.deadlock_probe`;
+      expect(probe?.attempts).toBe("2");
+    } finally {
+      await sql.unsafe(`
+        DROP TRIGGER deadlock_probe ON conditions.road_graph_state;
+        DROP FUNCTION conditions.deadlock_probe();
+        DROP SEQUENCE conditions.deadlock_probe;`);
+    }
+  });
 
   it("continues to later stages when a middle stage throws", async () => {
     process.env["SEGMENT_REGIONS"] = ONE_REGION;
