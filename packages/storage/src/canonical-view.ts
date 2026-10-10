@@ -323,11 +323,14 @@ async function candidatePairs(
     SELECT t.id AS a, f.id AS b
       FROM conditions.feature t
      CROSS JOIN LATERAL jsonb_array_elements(COALESCE(t.record -> 'externalIds', '[]'::jsonb)) e
-      JOIN conditions.feature f
-        ON (f.record -> 'externalIds') @> jsonb_build_array(e)
-       AND f.kind = t.kind AND f.id <> t.id AND f.tombstoned_at IS NULL
+     -- The external-id index alone: OFFSET 0 keeps the kind test out of the
+     -- lookup, which would intersect every lookup with the whole kind.
+     CROSS JOIN LATERAL (
+       SELECT f.id, f.kind, f.tombstoned_at FROM conditions.feature f
+        WHERE (f.record -> 'externalIds') @> jsonb_build_array(e) OFFSET 0) f
      WHERE t.id = ANY(${ids}::text[]) AND t.kind = ${kind}
-       AND e ->> 'scheme' = ANY(${rules.idSchemes as string[]}::text[])`;
+       AND e ->> 'scheme' = ANY(${rules.idSchemes as string[]}::text[])
+       AND f.kind = t.kind AND f.id <> t.id AND f.tombstoned_at IS NULL`;
   return rows.map((r) => [r.a, r.b]);
 }
 
