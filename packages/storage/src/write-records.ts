@@ -11,7 +11,6 @@ import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
 import { updateCanonicalView } from "./canonical-view.js";
 import { capRows, maxObservationsPerPollFromEnv } from "./caps.js";
-import { refreshFused } from "./fused-rows.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
 import {
@@ -269,18 +268,10 @@ export async function writeSnapshotIn(
     { ...ctx, changedFeatures },
     summary.rejected,
   );
-  if (ctx.statesComplete) {
-    const ended = await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx);
-    summary.observations.ended = ended.length;
-    await refreshFused(
-      tx,
-      ctx.registry,
-      ended.flatMap((e) =>
-        e.featureId === null ? [] : [{ featureId: e.featureId, properties: [e.property] }],
-      ),
-      { instanceId: ctx.instanceId, now: ctx.now, freshSources: [sourceId] },
-    );
-  }
+  const ended = ctx.statesComplete
+    ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
+    : [];
+  summary.observations.ended = ended.length;
   await updateCanonicalView(
     tx,
     ctx.registry,
@@ -288,6 +279,9 @@ export async function writeSnapshotIn(
       sourceId,
       featureIds: summary.changed.filter((c) => c.class === "feature").map((c) => c.id),
       observations: drafts.observations ?? [],
+      ended: ended.flatMap((e) =>
+        e.featureId === null ? [] : [{ featureId: e.featureId, properties: [e.property] }],
+      ),
     },
     ctx,
   );

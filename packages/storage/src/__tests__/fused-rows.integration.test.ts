@@ -5,9 +5,10 @@ import {
   landClaim,
   observationId,
 } from "@openconditions/model";
-import type postgres from "postgres";
+import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import {
+  LOCK_SPACES,
   type OutdatedRefreshOptions,
   refreshFlippedFusions,
   refreshFused,
@@ -272,6 +273,43 @@ describe("a series a complete poll ends", () => {
     expect(amountOf(await full())).toBe((priceOf("e5")["result"] as Rec)["amount"]);
     await poll([twinE5, twinE10]);
     expect(amountOf(await full())).toBe("1.999");
+  });
+
+  test("locks the links before the fused rows, and the fused rows at once, like every write", async () => {
+    // Two writes taking the two in different orders, or the fused rows in two
+    // rounds, can each hold what the other waits for.
+    const locks: string[] = [];
+    const traced = postgres(db.url, {
+      max: 1,
+      onnotice: () => {},
+      debug: (_connection, query, params) => {
+        if (/pg_advisory_xact_lock\(\$1::int, b\)/.test(query)) {
+          locks.push(Number(params[0]) === LOCK_SPACES.featureLink ? "link" : "fused");
+        }
+      },
+    });
+    try {
+      const renamed = { ...twin, name: [{ lang: "es", text: "Estación de servicio del espejo" }] };
+      const summary = await writeSnapshot(
+        traced,
+        RESTRICTED,
+        { features: [renamed], observations: [twinE10] },
+        { ...ctx, complete: false, statesComplete: true },
+      );
+      expect(summary.counts.feature.updated).toBe(1);
+      expect(summary.observations.ended).toBe(1);
+      expect(locks).toEqual(["link", "fused"]);
+    } finally {
+      await traced.end();
+      await writeSnapshot(
+        sql,
+        RESTRICTED,
+        { features: [twin], observations: [twinE5, twinE10] },
+        ctx,
+      );
+    }
+    const [full] = await fusedOf("e5");
+    expect(amountOf(full!)).toBe("1.999");
   });
 });
 

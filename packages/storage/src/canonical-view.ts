@@ -551,16 +551,21 @@ export interface CanonicalTouch {
   featureIds: readonly string[];
   /** Observations written, as drafts or stored records. */
   observations: readonly Rec[];
+  /** The fused readings of the series the write ended, which their fusion now leaves out. */
+  ended?: readonly FusedScope[];
 }
 
 /**
  * Keeps the canonical view and the fused rows in step with one write, in the
  * writer's transaction: written features are relinked, the fused rows of
  * clusters that vanished are dropped, and the fused rows of every cluster
- * relinked and of every feature with a fusable reading written now are
- * recomputed. A reading only counts when it moved its series in this write
- * (`updated_at` is the write's time), so a feed re-sending unchanged prices
- * costs one indexed lookup and no fusion.
+ * relinked, of every feature with a fusable reading written now and of every
+ * series the write ended are recomputed. A reading only counts when it moved
+ * its series in this write (`updated_at` is the write's time), so a feed
+ * re-sending unchanged prices costs one indexed lookup and no fusion. The
+ * links are locked before the fused rows, and the fused rows in one round
+ * ({@link lockKeys}): a writer refreshing fused rows apart from this would
+ * take them in an order another writer can wait on in a cycle.
  */
 export async function updateCanonicalView(
   tx: Sql,
@@ -595,6 +600,7 @@ export async function updateCanonicalView(
       .filter((id) => fusableKinds.has(relinked.kindOf.get(id)!))
       .map((featureId) => ({ featureId })),
     ...moved.map((m) => ({ featureId: m.feature_id, properties: [m.property] })),
+    ...(touch.ended ?? []),
   ];
   await refreshFused(tx, registry, scopes, {
     ...ctx,
