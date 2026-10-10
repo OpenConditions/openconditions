@@ -6,8 +6,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          4.340479167927327,
-          50.839238157091614
+          4.3404792,
+          50.8392382
         ]
       },
       "extent": "point",
@@ -75,7 +75,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e4dcdef6b1aac667f12c134985baee0bb848a8415bfcd4d5f00fd6ad2ad70a12"
+    "contentHash": "09dd3204c4b0c23924a1712100b10131affc31df9199bf287034a169e5c6fe19"
   },
   {
     "id": "oc:situation:be-brussels-events:2",
@@ -84,8 +84,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          4.347453187600001,
-          50.85864867819713
+          4.3474532,
+          50.8586487
         ]
       },
       "extent": "point",
@@ -153,7 +153,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "20eb786e793884480389c209f95a9de52c60956a139943775f66911224875d86"
+    "contentHash": "0349cceb9cd893e9643a20db321d425c5c2d77ab6135c3d9f3762895ea643f1a"
   },
   {
     "id": "oc:situation:be-brussels-events:3",
@@ -162,8 +162,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          4.345789887354944,
-          50.85870766358903
+          4.3457899,
+          50.8587077
         ]
       },
       "extent": "point",
@@ -231,7 +231,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c348919ad1e3fc686d6556dce49da6b44ec27087f6a8fb01abe70d208aa2d1b5"
+    "contentHash": "eecad6c4357c9a3845cef94ff7063665fae993a57d38951c278fb2ce87f233ed"
   },
   {
     "id": "oc:situation:be-brussels-events:4",
@@ -240,8 +240,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          4.396598540902679,
-          50.87587222720885
+          4.3965985,
+          50.8758722
         ]
       },
       "extent": "point",
@@ -309,7 +309,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "65ece109647a270b541e2910a546fda710d8bd9d8b12125c0484e1c442a49e1d"
+    "contentHash": "2ad2f6bb9418cab72261d5787761fbf75a1e9ff38af17edf1a2d66d79f895f43"
   },
   {
     "id": "oc:situation:be-brussels-events:5",
@@ -318,8 +318,8 @@
       "geometry": {
         "type": "Point",
         "coordinates": [
-          4.319570833227469,
-          50.79832088091682
+          4.3195708,
+          50.7983209
         ]
       },
       "extent": "point",
@@ -387,6 +387,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "df1954344ed4a7d67566e06a084d0fc2f2da173d2b1479b2abe3b3e3c2b6e9b4"
+    "contentHash": "a109a05646e27b8f371d4adbd5b71f6c97ebf67ce827e4254049970bdab0c0db"
   }
 ]

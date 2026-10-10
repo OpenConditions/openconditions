@@ -7,8 +7,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.7071932540661376,
-            40.414462781873056
+            -3.7071933,
+            40.4144628
           ]
         },
         "extent": "point",
@@ -51,7 +51,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "2aea8d1c33e029fdd7a73148b6e4cfd9c949b2cc3cf9e3e35b68633007340250"
+      "contentHash": "5b1fc8ec840b1e5e8b36070cd147fe62e76026f4d75a9a2d5ccd725ad084b0a5"
     },
     {
       "id": "oc:feature:es-madrid-flow:9842",
@@ -60,8 +60,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.6955060668910114,
-            40.42354046684388
+            -3.6955061,
+            40.4235405
           ]
         },
         "extent": "point",
@@ -104,7 +104,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "378b77b01ec9f2243071eda581c3f52ad6476b5e283b06e6346627a0a640af18"
+      "contentHash": "0c4c7bea017e6c91cf94472170d750e8164df8f4643a9068408a68d6488a3542"
     }
   ],
   "observations": [
@@ -115,8 +115,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.7071932540661376,
-            40.414462781873056
+            -3.7071933,
+            40.4144628
           ]
         },
         "extent": "point",
@@ -162,7 +162,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "281dd4d7542a599cef0b1f6ac4f063d29dfe113d885fbf490671f074eb9d15b5"
+      "contentHash": "fc7e7c109e1454cf9833570f1fbc00cf9d9b31c6a8de1bc93c7fbf1beb149afb"
     },
     {
       "id": "oc:observation:es-madrid-flow:be7fe1b2c0214fd7d1a5d9bc6b828062260e5be178a85b29dc652d97c0eaa24f",
@@ -171,8 +171,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.7071932540661376,
-            40.414462781873056
+            -3.7071933,
+            40.4144628
           ]
         },
         "extent": "point",
@@ -218,7 +218,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "40e93fbe9c7a8a5bf8936880439c758aee4c7a90d1c0433608e4b50b8847eb22"
+      "contentHash": "5d15eff6929f2b43fcb415c2dde4afed866dd69f3b3c12c9c02b32c0727d0c11"
     },
     {
       "id": "oc:observation:es-madrid-flow:d1e3d54de6c61c131d11461be49dc42f7ae3acbff1bae04869855640911d24ba",
@@ -227,8 +227,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.7071932540661376,
-            40.414462781873056
+            -3.7071933,
+            40.4144628
           ]
         },
         "extent": "point",
@@ -274,7 +274,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "9f857b939708d604356053a1dd3feb01500259650286b4589151e9e00e7bacf6"
+      "contentHash": "0c4f61fac447a20c4d44a966a0a7ffa9eb10862a9779053d7ed6903e499346aa"
     },
     {
       "id": "oc:observation:es-madrid-flow:d9b91162c0be78298b2ca6986546ac8ec46c5dd2d78edea1d5151e5081da2990",
@@ -283,8 +283,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.6955060668910114,
-            40.42354046684388
+            -3.6955061,
+            40.4235405
           ]
         },
         "extent": "point",
@@ -330,7 +330,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "57b0001b84ed478a8f3148cd59b1b31ee3b8301fe0b66219e7961f6ad02b73b7"
+      "contentHash": "dc31d6f3e40e1ae5399b1d2fe6ec5559d64958a7e7ee57cad7b9c77e9c9f18eb"
     }
   ],
   "situations": [
@@ -341,8 +341,8 @@
         "geometry": {
           "type": "Point",
           "coordinates": [
-            -3.7071932540661376,
-            40.414462781873056
+            -3.7071933,
+            40.4144628
           ]
         },
         "extent": "point",
@@ -409,7 +409,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "8cba6492d7e1866122e3a46257e6d73d1f2305e82d0daee5cafad78be013ef33"
+      "contentHash": "57a534b14fd6bb336970c106ad30b0bbdf9980d6eee5868ef4da548b75b9ee30"
     }
   ]
 }

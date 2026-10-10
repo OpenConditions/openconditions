@@ -19,6 +19,19 @@ describe("reproject", () => {
     expect(lat).toBeLessThan(52);
   });
 
+  it("rounds a reprojected position to 1e-7 degrees, so every platform reads it alike", () => {
+    const onGrid = (v: number) => v === Math.round(v * 1e7) / 1e7;
+    for (const [crs, p] of [
+      ["EPSG:3812", [648008.25588407, 669870.036804775]],
+      ["EPSG:31370", [154002.27, 214715.4]],
+      ["EPSG:5650", [33342865.123, 5987654.321]],
+      ["EPSG:3857", [-8199872.4, 5701932.9]],
+    ] as const) {
+      const [lon, lat] = reprojectorFor(crs)!([p[0], p[1]]);
+      expect(onGrid(lon) && onGrid(lat), crs).toBe(true);
+    }
+  });
+
   it("uses the closed-form Mercator transform for EPSG:3857", () => {
     const fn = reprojectorFor("urn:ogc:def:crs:EPSG::3857")!;
     expect(fn).toBe(mercToWgs84);

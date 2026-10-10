@@ -7,16 +7,16 @@
         "type": "LineString",
         "coordinates": [
           [
-            -71.93054799999891,
-            46.6164619999984
+            -71.930548,
+            46.616462
           ],
           [
-            -71.90657200000123,
-            46.60244100000108
+            -71.906572,
+            46.602441
           ],
           [
-            -71.9049460000015,
-            46.60187300000008
+            -71.904946,
+            46.601873
           ]
         ]
       },
@@ -93,7 +93,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "761df05f77711d9b689275d5c097f1a1a938319d12ba7e4c33210b9dc608974f"
+    "contentHash": "2973084ff59cc73dc0c720b6a553747607cdc8e30f7b990775341ec0af2b4ea5"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:81387",
@@ -103,12 +103,12 @@
         "type": "LineString",
         "coordinates": [
           [
-            -75.64440800000332,
-            45.67363299999796
+            -75.644408,
+            45.673633
           ],
           [
-            -75.64394099999615,
-            45.67389599999725
+            -75.643941,
+            45.673896
           ]
         ]
       },
@@ -185,7 +185,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "69ce25aeb86e8fb0cccbe34137e43efe3f3e55db34af54b62e4e62c92059d76f"
+    "contentHash": "0571c779bb5b4c48d801eeaba152a253041bce748ba8444d7828e6ab0e0f4453"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:115026",
@@ -195,12 +195,12 @@
         "type": "LineString",
         "coordinates": [
           [
-            -73.43803799999932,
-            46.030312000002546
+            -73.438038,
+            46.030312
           ],
           [
-            -73.4369780000015,
-            46.03094800000198
+            -73.436978,
+            46.030948
           ]
         ]
       },
@@ -275,7 +275,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e754cfc8c896deb279e90a84e38460cf6b9dbd322649e536536d644dff4ce066"
+    "contentHash": "a77b1f99707ac5d4556c4f211c1ae88946a47e10a6a4afe853f136f5f00fce4f"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:125259",
@@ -285,12 +285,12 @@
         "type": "LineString",
         "coordinates": [
           [
-            -73.65311299999607,
-            45.42085700000033
+            -73.653113,
+            45.420857
           ],
           [
-            -73.65836800000397,
-            45.41054700000295
+            -73.658368,
+            45.410547
           ]
         ]
       },
@@ -366,7 +366,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "fdc28a06ec7b914de2f48e53ce759bcdd4c662156595d7b65895a853b6cb5ff8"
+    "contentHash": "83a880c61bfa58f8055d6140359d3b10afd02b4aefc97d6212c98c9df00ad437"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:111875",
@@ -376,12 +376,12 @@
         "type": "LineString",
         "coordinates": [
           [
-            -73.470835999999,
-            45.577519999997286
+            -73.470836,
+            45.57752
           ],
           [
-            -73.50746899999693,
-            45.58515199999764
+            -73.507469,
+            45.585152
           ]
         ]
       },
@@ -448,6 +448,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "bc0922c59790eae6e450ce53de7abb4c053959ee945fd2766596018091ad2b76"
+    "contentHash": "aefcb13a44ebe1de485d407fc14324d0c598386f3397c2c5d9f6f6597622897c"
   }
 ]

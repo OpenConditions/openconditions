@@ -12,11 +12,25 @@ import proj4 from "proj4";
 
 const WEB_MERCATOR_R = 6_378_137;
 
+/** Steps per degree a reprojected coordinate is rounded to: 1e-7°, about a centimetre. */
+const STEPS_PER_DEGREE = 1e7;
+
+/**
+ * A reprojected position rounded to {@link STEPS_PER_DEGREE}. The trigonometry
+ * behind a projection differs between platforms in its last bit (V8 on arm64
+ * and on x86-64), so an unrounded result would make one payload a different
+ * record, with a different content hash, on another instance.
+ */
+const rounded = ([lon, lat]: [number, number]): [number, number] => [
+  Math.round(lon * STEPS_PER_DEGREE) / STEPS_PER_DEGREE,
+  Math.round(lat * STEPS_PER_DEGREE) / STEPS_PER_DEGREE,
+];
+
 /** Web Mercator (EPSG:3857) [x,y] metres → WGS84 [lon,lat] (closed form). */
 export function mercToWgs84([x, y]: [number, number]): [number, number] {
   const lon = (x / WEB_MERCATOR_R) * (180 / Math.PI);
   const lat = (2 * Math.atan(Math.exp(y / WEB_MERCATOR_R)) - Math.PI / 2) * (180 / Math.PI);
-  return [lon, lat];
+  return rounded([lon, lat]);
 }
 
 /** proj4 definitions (with datum shifts) for the projected grids feeds use. */
@@ -79,10 +93,10 @@ export function reprojectorFor(
   if (prefixed) {
     const { zone, base } = prefixed;
     return ([x, y]: [number, number]) =>
-      proj4(base, "WGS84", [x - zone * 1_000_000, y]) as [number, number];
+      rounded(proj4(base, "WGS84", [x - zone * 1_000_000, y]) as [number, number]);
   }
   if (proj4.defs(code)) {
-    return (p: [number, number]) => proj4(code, "WGS84", p) as [number, number];
+    return (p: [number, number]) => rounded(proj4(code, "WGS84", p) as [number, number]);
   }
   return null;
 }
