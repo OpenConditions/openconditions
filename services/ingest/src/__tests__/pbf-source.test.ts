@@ -33,6 +33,19 @@ describe("pbfExtractSource", () => {
     expect(ways.map((w) => w.wayId).sort()).toEqual([1, 2, 3]);
   });
 
+  it("collects the ways of a country extract, hundreds of thousands of them", async () => {
+    const download = vi.fn(async (url: string) => ({
+      path: `/tmp/oc-pbfsrc-test-${url}/artifact`,
+      dir: `/tmp/oc-pbfsrc-test-${url}`,
+    }));
+    // Germany's motorway/trunk/primary network is some 430,000 ways.
+    const extract = vi.fn(async () => Array.from({ length: 500_000 }, (_, i) => way(i)));
+
+    const ways = await pbfExtractSource({ download, extract }).fetchRegion(region(["A"]));
+
+    expect(ways).toHaveLength(500_000);
+  });
+
   it("throws for a region that has no pbfUrls", async () => {
     await expect(pbfExtractSource({}).fetchRegion(region(undefined))).rejects.toThrow(
       /requires pbfUrls/,

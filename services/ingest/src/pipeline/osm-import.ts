@@ -249,7 +249,8 @@ export function pbfExtractSource(deps: PbfExtractSourceDeps = {}): OsmWaySource 
           deps.logger?.info?.(
             `[ingest] pbf-extract: ${region.id} ${url} → ${extracted.length} ways`,
           );
-          ways.push(...extracted);
+          // A country's ways outnumber what a spread call can pass as arguments.
+          for (const way of extracted) ways.push(way);
         } finally {
           await rm(dl.dir, { recursive: true, force: true });
         }
