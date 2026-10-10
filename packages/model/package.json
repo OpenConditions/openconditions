@@ -27,7 +27,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "canonicalize": "3.0.0",
+    "canonicalize": "5.1.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

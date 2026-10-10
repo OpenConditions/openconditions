@@ -138,8 +138,8 @@ importers:
         specifier: workspace:*
         version: link:../model
       canonicalize:
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 5.1.0
+        version: 5.1.0
     devDependencies:
       '@openconditions/model-registry':
         specifier: workspace:*
@@ -361,8 +361,8 @@ importers:
   packages/model:
     dependencies:
       canonicalize:
-        specifier: 3.0.0
-        version: 3.0.0
+        specifier: 5.1.0
+        version: 5.1.0
       zod:
         specifier: ^4.4.3
         version: 4.6.5
@@ -2129,9 +2129,9 @@ packages:
     resolution: {integrity: sha512-P8BjAsXvZS+VIDUI11hHCQEv74YT67YUi5JJFNWIqL235sBmjX4+qx9Muvls5ivyNENctx46xQLQ3aTuE7ssaQ==}
     engines: {node: '>=6'}
 
-  canonicalize@3.0.0:
-    resolution: {integrity: sha512-yYLfHyDMIXRyRqsKBRLX023riFLpXY2YOfdtqKXZRZy9qsfOJ9U+4F9YZL7MEzL5+ziN2x2nlBvY/Voi3EBljA==}
-    engines: {node: '>=18'}
+  canonicalize@5.1.0:
+    resolution: {integrity: sha512-bab9+WefZljqQ8jT0qRwVmTyzAUU63K97QIQD3agynIBrb6sa5M2eAy8Hv8K3p4V9+ONVYZKtGYl4Dg+/5Gumw==}
+    engines: {node: '>=22'}
     hasBin: true
 
   chai@6.2.2:
@@ -4321,7 +4321,7 @@ snapshots:
 
   callsites@3.1.0: {}
 
-  canonicalize@3.0.0: {}
+  canonicalize@5.1.0: {}
 
   chai@6.2.2: {}
 
