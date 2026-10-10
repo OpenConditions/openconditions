@@ -165,8 +165,8 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     }
 
     const duration = obj(r.duration);
-    const validFrom = toIsoTimestamp(duration?.start);
-    const validTo = toIsoTimestamp(duration?.end);
+    const validFrom = toIsoTimestamp(duration?.start, src.timeZone);
+    const validTo = toIsoTimestamp(duration?.end, src.timeZone);
     const recurrences = Array.isArray(duration?.recurrences) ? duration.recurrences : [];
     const schedule = recurrences
       .map((rec) =>
@@ -181,7 +181,7 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     const direction = str(impact?.direction);
     const road = str(r.roadName) ?? str(r.road);
 
-    const recordTime = toIsoTimestamp(r.lastUpdated);
+    const recordTime = toIsoTimestamp(r.lastUpdated, src.timeZone);
     const tokens = [str(r.eventSubtype), str(r.eventType), str(impact?.impactType)];
     const classification = vicClassification(...tokens);
     out.push({
@@ -209,7 +209,7 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
       validTo: validTo ?? null,
       ...(schedule.length > 0 ? { schedule } : {}),
       sourceRaw: r,
-      dataUpdatedAt: toIsoTimestamp(r.lastUpdated) ?? validFrom ?? now,
+      dataUpdatedAt: toIsoTimestamp(r.lastUpdated, src.timeZone) ?? validFrom ?? now,
     });
   }
   if (skippedNoGeometry > 0) {
@@ -242,7 +242,8 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     const direction = str(p.direction);
     const type = resolveType(eventSubType, eventType, str(p.status));
     const classification = vicClassification(eventSubType, eventType, str(p.status));
-    const recordTime = toIsoTimestamp(p.lastUpdated) ?? toIsoTimestamp(p.created);
+    const recordTime =
+      toIsoTimestamp(p.lastUpdated, src.timeZone) ?? toIsoTimestamp(p.created, src.timeZone);
 
     out.push({
       ...baseEvent(src, id, geometry, now),
@@ -260,10 +261,13 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
       roads: road ? [{ name: road, ...(direction ? { direction } : {}) }] : [],
       headline: str(p.name) ?? str(p.title) ?? str(p.description) ?? road ?? "Road disruption",
       description: str(p.description),
-      validFrom: toIsoTimestamp(p.created) ?? null,
-      validTo: toIsoTimestamp(p.endTime) ?? null,
+      validFrom: toIsoTimestamp(p.created, src.timeZone) ?? null,
+      validTo: toIsoTimestamp(p.endTime, src.timeZone) ?? null,
       sourceRaw: p,
-      dataUpdatedAt: toIsoTimestamp(p.lastUpdated) ?? toIsoTimestamp(p.created) ?? now,
+      dataUpdatedAt:
+        toIsoTimestamp(p.lastUpdated, src.timeZone) ??
+        toIsoTimestamp(p.created, src.timeZone) ??
+        now,
     });
   }
   if (skippedNoGeometry > 0) {

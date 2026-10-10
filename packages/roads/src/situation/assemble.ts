@@ -1,3 +1,4 @@
+import { toIsoTimestamp } from "@openconditions/core";
 import {
   type Effect,
   localDateInZone,
@@ -78,13 +79,19 @@ const EXTERNAL_ID_SCHEME: Record<string, string> = {
   open511: "open511",
 };
 
-/** An instant with a zone designator, or undefined when the value is not one. */
-function instant(value: string | null | undefined): string | undefined {
+/**
+ * An instant with a zone designator, or undefined when the value is not one.
+ * A value with a designator is kept as written; one without is read in the
+ * publisher's `timeZone`, else as UTC.
+ */
+function instant(value: string | null | undefined, timeZone?: string): string | undefined {
   if (!value) return undefined;
   if (/T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return value;
-  const ms = Date.parse(value);
-  return Number.isFinite(ms) ? new Date(ms).toISOString() : undefined;
+  return toIsoTimestamp(value, timeZone);
 }
+
+/** {@link instant} in epoch milliseconds; NaN when the value is not one. */
+const instantMs = (value: string, timeZone?: string) => Date.parse(instant(value, timeZone) ?? "");
 
 function localIdOf(event: SnapshotEvent): string {
   const prefix = `${event.source}:`;
@@ -113,8 +120,10 @@ function isoDuration(ms: number): string {
  * the evaluator reads a recurrence's bounds.
  */
 function kernelSchedule(s: Schedule): Schedule | undefined {
-  const start = s.startDate?.includes("T") ? Date.parse(s.startDate) : Number.NaN;
-  const end = s.endDate?.includes("T") ? Date.parse(s.endDate) : Number.NaN;
+  const start = s.startDate?.includes("T")
+    ? instantMs(s.startDate, s.scheduleTimezone)
+    : Number.NaN;
+  const end = s.endDate?.includes("T") ? instantMs(s.endDate, s.scheduleTimezone) : Number.NaN;
   if (s.startTime === undefined && Number.isFinite(start) && Number.isFinite(end)) {
     if (end <= start) return undefined;
     const day = localDateInZone(new Date(start), s.scheduleTimezone);
@@ -130,16 +139,16 @@ function kernelSchedule(s: Schedule): Schedule | undefined {
   for (const key of ["startDate", "endDate"] as const) {
     const value = s[key];
     if (value === undefined || !value.includes("T")) continue;
-    const ms = Date.parse(value);
+    const ms = instantMs(value, s.scheduleTimezone);
     if (!Number.isFinite(ms)) return undefined;
     out[key] = localDateInZone(new Date(ms), s.scheduleTimezone);
   }
   return out;
 }
 
-function validityOf(event: SnapshotEvent): Validity {
-  const start = instant(event.validFrom);
-  let end = instant(event.validTo);
+function validityOf(event: SnapshotEvent, timeZone: string | undefined): Validity {
+  const start = instant(event.validFrom, timeZone);
+  let end = instant(event.validTo, timeZone);
   // An inverted window cannot be evaluated; the declared start is kept, the
   // contradictory end is not invented away into a closed interval.
   if (start !== undefined && end !== undefined && Date.parse(end) < Date.parse(start)) {
@@ -341,13 +350,13 @@ export function situationDrafts(
       const id = `oc:situation:${source.id}:${localId}`;
       const c = nature ?? classificationOf(primary);
       const location = locationOf(primary, source);
-      const validity = validityOf(primary);
+      const validity = validityOf(primary, source.timeZone);
       const grouped = group.situationId !== undefined;
       opts.members?.set(id, [...(opts.members.get(id) ?? []), ...members.map((m) => m.id)]);
 
       const placed: PlacedEffect[] = members.flatMap((member) => {
         const own = member === primary;
-        const memberValidity = validityOf(member);
+        const memberValidity = validityOf(member, source.timeZone);
         const memberLocation = locationOf(member, source);
         const version = versions.get(member.id)?.version;
         return effectsOf(member, {
@@ -422,9 +431,9 @@ export function situationDrafts(
             : [];
       const version = versions.get(primary.id)?.version;
       const derivedFrom = derivedFromSiteOf(primary as RoadEvent);
-      const sourceUpdatedAt = instant(primary.situation?.sourceUpdatedAt);
+      const sourceUpdatedAt = instant(primary.situation?.sourceUpdatedAt, source.timeZone);
       const fetchedAt = opts.fetchedAt ?? primary.fetchedAt;
-      const expiresAt = instant(primary.expiresAt);
+      const expiresAt = instant(primary.expiresAt, source.timeZone);
 
       drafts.push({
         id,

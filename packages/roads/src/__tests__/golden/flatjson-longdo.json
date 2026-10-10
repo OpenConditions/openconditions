@@ -23,7 +23,7 @@
       "sourceFormat": "flatjson",
       "accessMode": "bulk",
       "recordId": "957414",
-      "sourceUpdatedAt": "2026-06-25T23:24:40.000Z",
+      "sourceUpdatedAt": "2026-06-25T18:24:40.000Z",
       "attribution": {
         "provider": "Longdo Traffic / iTIC Foundation",
         "license": "CC-BY-4.0",
@@ -70,7 +70,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "baef5a5c43c17a1da0a0c845350e9073046813cf436c6c92fe89ce921233fde8"
+    "contentHash": "a3db5113d00c687ce4725272af3bca4eefec34ad1b7129dd45ee4c7837a62291"
   },
   {
     "id": "oc:situation:th-longdo-events:957413",
@@ -96,7 +96,7 @@
       "sourceFormat": "flatjson",
       "accessMode": "bulk",
       "recordId": "957413",
-      "sourceUpdatedAt": "2026-06-25T23:21:48.000Z",
+      "sourceUpdatedAt": "2026-06-25T18:21:48.000Z",
       "attribution": {
         "provider": "Longdo Traffic / iTIC Foundation",
         "license": "CC-BY-4.0",
@@ -143,7 +143,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "b5d89b67275f828e04ac1bc081d115589eea5b31d77d92ed4ca69e6311eb8205"
+    "contentHash": "e0d36872eed8efc13a3c18fe3a4220a8d46aaa8c5932149160c419684093f1c4"
   },
   {
     "id": "oc:situation:th-longdo-events:957412",
@@ -169,7 +169,7 @@
       "sourceFormat": "flatjson",
       "accessMode": "bulk",
       "recordId": "957412",
-      "sourceUpdatedAt": "2026-06-25T23:20:21.000Z",
+      "sourceUpdatedAt": "2026-06-25T18:20:21.000Z",
       "attribution": {
         "provider": "Longdo Traffic / iTIC Foundation",
         "license": "CC-BY-4.0",
@@ -215,7 +215,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8a2151d3f6404ec86d3db805aa6a8035c8ae6c24bfb76c0e87c7cd697ddfaaa8"
+    "contentHash": "d55a1f79a1a9339f2de38bd53a8af9b03030101aab04f2fd973b264b4e22bd42"
   },
   {
     "id": "oc:situation:th-longdo-events:957092",
@@ -241,7 +241,7 @@
       "sourceFormat": "flatjson",
       "accessMode": "bulk",
       "recordId": "957092",
-      "sourceUpdatedAt": "2026-06-23T09:22:35.000Z",
+      "sourceUpdatedAt": "2026-06-23T04:22:35.000Z",
       "attribution": {
         "provider": "Longdo Traffic / iTIC Foundation",
         "license": "CC-BY-4.0",
@@ -287,6 +287,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a3472b839708a21ebedc2557f95f124208935d6ce672735fc05d8c989a4e7307"
+    "contentHash": "43c664279a271f2bbe6bc11f81c2f6ac93740204e88ec6ce1345eb0cdf7d2e78"
   }
 ]

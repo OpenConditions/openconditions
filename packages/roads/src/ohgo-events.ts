@@ -99,8 +99,8 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     }
 
     const category = str(field(r, "category"));
-    const validFrom = toIsoTimestamp(field(r, "startDate"));
-    const validTo = toIsoTimestamp(field(r, "endDate"));
+    const validFrom = toIsoTimestamp(field(r, "startDate"), src.timeZone);
+    const validTo = toIsoTimestamp(field(r, "endDate"), src.timeZone);
     const isWorkZone = field(r, "startDate") != null;
 
     const type: RoadEventType = isWorkZone
@@ -114,7 +114,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     const direction = str(field(r, "direction"));
     const location = str(field(r, "location"));
     const description = str(field(r, "description"));
-    const recordTime = toIsoTimestamp(field(r, "lastUpdated"));
+    const recordTime = toIsoTimestamp(field(r, "lastUpdated"), src.timeZone);
 
     out.push({
       id: `${src.id}:${id}`,
@@ -146,7 +146,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
       },
-      dataUpdatedAt: toIsoTimestamp(field(r, "lastUpdated")) ?? now,
+      dataUpdatedAt: toIsoTimestamp(field(r, "lastUpdated"), src.timeZone) ?? now,
       fetchedAt: now,
       isStale: false,
     });

@@ -7,6 +7,8 @@
       "name": "Longdo Traffic Events (Thailand)",
       "tier": "aggregator",
       "format": "flatjson",
+      // Times are written without an offset (`2026-10-11 03:53:30`), in Bangkok time.
+      "timezone": "Asia/Bangkok",
       "endpoints": {
         "main": { "url": "https://event.longdo.com/feed/json", "cadenceSec": 300 },
       },

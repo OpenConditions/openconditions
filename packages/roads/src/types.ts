@@ -63,4 +63,6 @@ export interface SourceDescriptor {
    * indistinguishable from degrees until they have already been stored.
    */
   srsName?: string;
+  /** The IANA zone the publisher writes its times without an offset in; UTC without one. */
+  timeZone?: string;
 }

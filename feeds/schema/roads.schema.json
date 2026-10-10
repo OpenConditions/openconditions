@@ -1334,6 +1334,9 @@
               "standard",
               "left_first"
             ]
+          },
+          "timezone": {
+            "type": "string"
           }
         },
         "required": [

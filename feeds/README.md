@@ -88,7 +88,7 @@ A region file is JSONC (comments and trailing commas allowed):
 to complete and check fields. `maintainers` is optional. The fields every feed
 shares are defined in `packages/ingest-framework/src/catalog/schema.ts`; a domain
 adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
-`openlrResolver`, `laneNumbering`, in `packages/roads/src/feed-schema.ts`;
+`openlrResolver`, `laneNumbering`, `timezone`, in `packages/roads/src/feed-schema.ts`;
 parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
 charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`;
 cameras: `layout` and `cameras`, in `packages/cameras/src/feed-schema.ts`; see
@@ -138,6 +138,12 @@ country's region file covers that country, and one in `eu.jsonc` or
 `global.jsonc` covers nothing in particular. `GET /sources` serves each feed's
 coverage, so a consumer can tell which areas a feed stands for (a global
 on-demand feed's box is the world).
+
+A road feed's `timezone` is the IANA zone its publisher writes times without
+an offset in (`2026-07-14T09:34:00`, `2026/02/09 06:30`, `2026-10-11 03:53:30`).
+Without it such a time is read as UTC, whatever zone the instance runs in, so
+set it for any publisher that writes local time: left out, its records start,
+end and change hours off.
 
 ## Feed ids
 

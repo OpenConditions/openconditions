@@ -156,7 +156,7 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       ev.IsFullClosure === true
         ? { kind: "closure", type: "closure", subtype: "full" }
         : ibi511Classification(ev.EventType ?? "");
-    const recordTime = toIsoTimestamp(ev.LastUpdated);
+    const recordTime = toIsoTimestamp(ev.LastUpdated, src.timeZone);
 
     out.push({
       id: `${src.id}:${localId}`,
@@ -182,14 +182,14 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       roads: road ? [{ name: road }] : [],
       headline,
       description: typeof ev.Description === "string" ? ev.Description : undefined,
-      validFrom: toIsoTimestamp(ev.StartDate) ?? null,
-      validTo: toIsoTimestamp(ev.PlannedEndDate) ?? null,
+      validFrom: toIsoTimestamp(ev.StartDate, src.timeZone) ?? null,
+      validTo: toIsoTimestamp(ev.PlannedEndDate, src.timeZone) ?? null,
       sourceRaw: ev as Record<string, unknown>,
       origin: {
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
       },
-      dataUpdatedAt: toIsoTimestamp(ev.LastUpdated) ?? new Date().toISOString(),
+      dataUpdatedAt: toIsoTimestamp(ev.LastUpdated, src.timeZone) ?? new Date().toISOString(),
       fetchedAt: new Date().toISOString(),
       isStale: false,
     });
@@ -328,7 +328,7 @@ export function parseIbi511Conditions(
     const severity = conditionSeverity(conditions);
     const closed = conditions.some((c) => CLOSED_CONDITIONS.has(c.toLowerCase()));
 
-    const recordTime = toIsoTimestamp(rec.LastUpdated);
+    const recordTime = toIsoTimestamp(rec.LastUpdated, src.timeZone);
     out.push({
       id: `${src.id}:${road ?? "seg"}-${index}`,
       source: src.id,
@@ -360,7 +360,7 @@ export function parseIbi511Conditions(
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
       },
-      dataUpdatedAt: toIsoTimestamp(rec.LastUpdated) ?? now,
+      dataUpdatedAt: toIsoTimestamp(rec.LastUpdated, src.timeZone) ?? now,
       fetchedAt: now,
       isStale: false,
     });

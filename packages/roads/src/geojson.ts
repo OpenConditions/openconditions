@@ -185,7 +185,7 @@ export function featuresToRoadEvents(
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
     const updated = str(get(props, mapping.updatedField));
-    const recordTime = toIsoTimestamp(updated);
+    const recordTime = toIsoTimestamp(updated, src.timeZone);
     const severityToken = str(get(props, mapping.severityField))?.trim();
 
     out.push({
@@ -213,10 +213,10 @@ export function featuresToRoadEvents(
       // Only projected when the mapping declares the fields, so feeds without
       // dates keep emitting no validity at all rather than an explicit null.
       ...(mapping.validFromField
-        ? { validFrom: toIsoTimestamp(get(props, mapping.validFromField)) ?? null }
+        ? { validFrom: toIsoTimestamp(get(props, mapping.validFromField), src.timeZone) ?? null }
         : {}),
       ...(mapping.validToField
-        ? { validTo: toIsoTimestamp(get(props, mapping.validToField)) ?? null }
+        ? { validTo: toIsoTimestamp(get(props, mapping.validToField), src.timeZone) ?? null }
         : {}),
       sourceRaw: props,
       origin: {

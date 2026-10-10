@@ -1,4 +1,5 @@
 import { type CatalogFeed, feedBaseShape } from "@openconditions/ingest-framework";
+import { isKnownTimeZone } from "@openconditions/model";
 import { ROADS_SITUATION_KINDS } from "@openconditions/model-roads";
 import { z } from "zod";
 import { ROAD_EVENT_TYPES } from "./model.js";
@@ -107,6 +108,12 @@ const roadsFeedExtension = {
    */
   openlrResolver: z.boolean().optional(),
   laneNumbering: z.enum(LANE_NUMBERINGS).optional(),
+  /**
+   * The IANA zone the publisher writes its times without an offset in
+   * (`2026-07-14T09:34:00`, `2026-10-11 03:53:30`). Without it such a time is
+   * read as UTC.
+   */
+  timezone: z.string().refine(isKnownTimeZone, { message: "unknown IANA time zone" }).optional(),
 } as const;
 
 /**

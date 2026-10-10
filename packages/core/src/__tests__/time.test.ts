@@ -21,6 +21,38 @@ describe("toIsoTimestamp", () => {
     expect(toIsoTimestamp("2026-06-26T13:54:00+0200")).toBe("2026-06-26T11:54:00.000Z");
   });
 
+  it("reads a time without an offset in its publisher's zone, else as UTC", () => {
+    expect(toIsoTimestamp("2026-07-14T09:34:00", "America/Toronto")).toBe(
+      "2026-07-14T13:34:00.000Z",
+    );
+    expect(toIsoTimestamp("2026-10-11 03:53:30", "Asia/Bangkok")).toBe("2026-10-10T20:53:30.000Z");
+    expect(toIsoTimestamp("2026-01-15T08:00:00.250", "Europe/Brussels")).toBe(
+      "2026-01-15T07:00:00.250Z",
+    );
+    expect(toIsoTimestamp("2026/02/09 06:30:00", "America/Toronto")).toBe(
+      "2026-02-09T11:30:00.000Z",
+    );
+    expect(toIsoTimestamp("2026/02/09", "America/Toronto")).toBe("2026-02-09T05:00:00.000Z");
+    expect(toIsoTimestamp("2026-07-14T09:34")).toBe("2026-07-14T09:34:00.000Z");
+    expect(toIsoTimestamp("2026-07-14")).toBe("2026-07-14T00:00:00.000Z");
+    expect(toIsoTimestamp("2026/07/14")).toBe("2026-07-14T00:00:00.000Z");
+    expect(toIsoTimestamp("2026-06-25T10:00:00Z", "Asia/Bangkok")).toBe("2026-06-25T10:00:00.000Z");
+  });
+
+  it("reads a time without an offset alike whatever the host's zone", () => {
+    const host = process.env["TZ"];
+    process.env["TZ"] = "Pacific/Auckland";
+    try {
+      expect(toIsoTimestamp("2026-07-14T09:34:00")).toBe("2026-07-14T09:34:00.000Z");
+      expect(toIsoTimestamp("2026-07-14 09:34:00", "Europe/Berlin")).toBe(
+        "2026-07-14T07:34:00.000Z",
+      );
+    } finally {
+      if (host === undefined) delete process.env["TZ"];
+      else process.env["TZ"] = host;
+    }
+  });
+
   it("passes through a Date", () => {
     expect(toIsoTimestamp(new Date("2026-06-25T10:00:00Z"))).toBe("2026-06-25T10:00:00.000Z");
   });

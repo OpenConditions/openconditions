@@ -70,7 +70,7 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-07-14T07:34:00.000Z"
+      "start": "2026-07-14T13:34:00.000Z"
     },
     "effects": [
       {
@@ -93,7 +93,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "15bd85e055367c61e13a534857dee2a849d82f4b0dbc7e29304cd3c47a1daa50"
+    "contentHash": "761df05f77711d9b689275d5c097f1a1a938319d12ba7e4c33210b9dc608974f"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:81387",
@@ -162,7 +162,7 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2025-07-30T09:17:00.000Z"
+      "start": "2025-07-30T15:17:00.000Z"
     },
     "effects": [
       {
@@ -185,7 +185,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c028012d86a1495388503df4c8590e4b655b00ab1857d3137c90ad895d4aa4ce"
+    "contentHash": "69ce25aeb86e8fb0cccbe34137e43efe3f3e55db34af54b62e4e62c92059d76f"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:115026",
@@ -253,7 +253,7 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2025-09-23T08:13:00.000Z"
+      "start": "2025-09-23T14:13:00.000Z"
     },
     "effects": [
       {
@@ -275,7 +275,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4ad864979cf72a768bce0a9bb739d1e1f5e7f2daae821f2076a54c473a6089dd"
+    "contentHash": "e754cfc8c896deb279e90a84e38460cf6b9dbd322649e536536d644dff4ce066"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:125259",
@@ -354,7 +354,7 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-07-15T12:37:00.000Z"
+      "start": "2026-07-15T18:37:00.000Z"
     },
     "effects": [],
     "details": {
@@ -366,7 +366,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e6546c79d96bfdab01ffb053acba3483e3ae005b165298e838cad442d75a111a"
+    "contentHash": "fdc28a06ec7b914de2f48e53ce759bcdd4c662156595d7b65895a853b6cb5ff8"
   },
   {
     "id": "oc:situation:ca-qc-mtq-warnings-events:111875",
@@ -437,7 +437,7 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-07-30T08:29:00.000Z"
+      "start": "2026-07-30T14:29:00.000Z"
     },
     "effects": [],
     "details": {
@@ -448,6 +448,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f4c5ad837fbe7584980e5be64aa51227292f5c847206ef6ba0748cf56611fe87"
+    "contentHash": "bc0922c59790eae6e450ce53de7abb4c053959ee945fd2766596018091ad2b76"
   }
 ]

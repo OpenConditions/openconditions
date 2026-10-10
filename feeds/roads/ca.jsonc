@@ -8,6 +8,8 @@
       "name": "DriveBC (British Columbia)",
       "tier": "authoritative",
       "format": "open511",
+      // Open511 schedule intervals are local time without an offset.
+      "timezone": "America/Vancouver",
       "endpoints": {
         "main": {
           "url": "https://api.open511.gov.bc.ca/events?format=json&limit=500",
@@ -101,6 +103,8 @@
       "name": "MTQ roadworks (Québec)",
       "tier": "authoritative",
       "format": "geojson",
+      // Times are written without an offset, in Québec time.
+      "timezone": "America/Toronto",
       "endpoints": {
         "main": {
           "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:chantiers_mtmdet&outputformat=geojson",
@@ -134,6 +138,8 @@
       "name": "MTQ road warnings (Québec)",
       "tier": "authoritative",
       "format": "geojson",
+      // Times are written without an offset, in Québec time.
+      "timezone": "America/Toronto",
       "endpoints": {
         "main": {
           "url": "https://ws.mapserver.transports.gouv.qc.ca/swtq?service=WFS&version=2.0.0&request=GetFeature&typename=ms:evenements&outputformat=geojson",

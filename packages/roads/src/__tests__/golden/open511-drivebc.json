@@ -90,8 +90,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-04-29T16:34:00.000Z",
-      "end": "2026-10-02T04:59:00.000Z"
+      "start": "2026-04-30T01:34:00.000Z",
+      "end": "2026-10-02T13:59:00.000Z"
     },
     "effects": [],
     "details": {
@@ -102,7 +102,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "759885db80d7660362e09b60d3be4772fcd4dda3f501f6c1ecd6d9fccb17b5b2"
+    "contentHash": "2eef17e18253a780a89ddb97ec3fb664f525f8a8b0e3caf553de262dc6c0e87a"
   },
   {
     "id": "oc:situation:ca-bc-drivebc-events:DBC-81533",
@@ -253,8 +253,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2025-09-17T05:00:00.000Z",
-      "end": "2026-11-08T06:45:00.000Z"
+      "start": "2025-09-17T14:00:00.000Z",
+      "end": "2026-11-08T14:45:00.000Z"
     },
     "effects": [],
     "details": {
@@ -265,7 +265,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "ab4a70ab688c774b3c086ab72ea4db656c6d62e24d1d2991cb26f11e19bf344b"
+    "contentHash": "f6863e20935fdc51e9c17ea6a63fc724437f3b85502160afecaeeb2be2eb75dc"
   },
   {
     "id": "oc:situation:ca-bc-drivebc-events:DBC-71712",
@@ -511,8 +511,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-08-03T01:00:00.000Z",
-      "end": "2026-08-04T04:59:00.000Z"
+      "start": "2026-08-03T10:00:00.000Z",
+      "end": "2026-08-04T13:59:00.000Z"
     },
     "effects": [],
     "details": {
@@ -523,6 +523,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "b46f15e9852abfb4748a2bc5e9f35131a1e1be5350bdc8fa58181a1ddf751e92"
+    "contentHash": "dd0bc6225c217e17af70551ae5052c474a4b012c03c8bd8c500a623e35045a2d"
   }
 ]

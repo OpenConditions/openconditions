@@ -76,7 +76,7 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
     const classification = gddkiaClassification(typ, bridge);
     const localId = hash(`${road ?? ""}|${getXmlChildText(it, "km") ?? ""}|${lat}|${lng}`);
 
-    const recordTime = toIsoTimestamp(getXmlChildText(it, "data_powstania"));
+    const recordTime = toIsoTimestamp(getXmlChildText(it, "data_powstania"), src.timeZone);
     out.push({
       id: `${src.id}:${localId}`,
       source: src.id,

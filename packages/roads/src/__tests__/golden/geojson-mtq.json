@@ -87,7 +87,7 @@
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "164507",
-      "sourceUpdatedAt": "2026-02-19T12:51:00.000Z",
+      "sourceUpdatedAt": "2026-02-19T18:51:00.000Z",
       "attribution": {
         "provider": "Ministère des Transports du Québec (MTQ)",
         "license": "CC-BY-4.0",
@@ -124,8 +124,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-02-09T05:30:00.000Z",
-      "end": "2026-09-18T15:30:00.000Z"
+      "start": "2026-02-09T11:30:00.000Z",
+      "end": "2026-09-18T21:30:00.000Z"
     },
     "effects": [],
     "details": {
@@ -136,7 +136,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "40b3dd14bfeddcdbc5da6530b88ef78797dc9d867c7f95b72a43f83aff8ce79a"
+    "contentHash": "daddd670d4a2e1dd1d6985270e4a2c7c0caf7df05674d2da001c6a716c391c64"
   },
   {
     "id": "oc:situation:ca-qc-mtq-events:135768",
@@ -370,7 +370,7 @@
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "135768",
-      "sourceUpdatedAt": "2026-04-22T15:38:00.000Z",
+      "sourceUpdatedAt": "2026-04-22T21:38:00.000Z",
       "attribution": {
         "provider": "Ministère des Transports du Québec (MTQ)",
         "license": "CC-BY-4.0",
@@ -407,8 +407,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2022-10-08T03:00:00.000Z",
-      "end": "2026-12-31T04:00:00.000Z"
+      "start": "2022-10-08T09:00:00.000Z",
+      "end": "2026-12-31T10:00:00.000Z"
     },
     "effects": [],
     "details": {
@@ -419,7 +419,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "31081c06b4c3ffd17ac4a5b98ea7ed5ca9e38f43c84b2326c6e44e517c8965e0"
+    "contentHash": "5a8fae979452d6146a3bd13b43fba7f4455685512846f82b5b5ee1ba4c39d3e0"
   },
   {
     "id": "oc:situation:ca-qc-mtq-events:143750",
@@ -677,7 +677,7 @@
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "143750",
-      "sourceUpdatedAt": "2026-06-25T10:53:00.000Z",
+      "sourceUpdatedAt": "2026-06-25T16:53:00.000Z",
       "attribution": {
         "provider": "Ministère des Transports du Québec (MTQ)",
         "license": "CC-BY-4.0",
@@ -714,8 +714,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2026-06-25T21:30:00.000Z",
-      "end": "2026-06-26T03:00:00.000Z"
+      "start": "2026-06-26T03:30:00.000Z",
+      "end": "2026-06-26T09:00:00.000Z"
     },
     "effects": [],
     "details": {
@@ -726,7 +726,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "54edbf8988d691fc3337298d847072cd1ac2094f89a65c46715184dc8673cd43"
+    "contentHash": "1c1f573777f3b6831ff6eee335a44f4a349369681f81440283d56d4dcfc2964d"
   },
   {
     "id": "oc:situation:ca-qc-mtq-events:149555",
@@ -1008,7 +1008,7 @@
       "sourceFormat": "geojson",
       "accessMode": "bulk",
       "recordId": "149555",
-      "sourceUpdatedAt": "2026-04-01T09:59:00.000Z",
+      "sourceUpdatedAt": "2026-04-01T15:59:00.000Z",
       "attribution": {
         "provider": "Ministère des Transports du Québec (MTQ)",
         "license": "CC-BY-4.0",
@@ -1045,8 +1045,8 @@
     ],
     "validity": {
       "status": "active",
-      "start": "2025-05-05T03:00:00.000Z",
-      "end": "2026-12-31T22:59:00.000Z"
+      "start": "2025-05-05T09:00:00.000Z",
+      "end": "2027-01-01T04:59:00.000Z"
     },
     "effects": [],
     "details": {
@@ -1057,6 +1057,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "72afce7e293585cc3a82ba94a046401ff6958ea656ff751d80bb2a9d1f838667"
+    "contentHash": "51409bc79b425cfc0c1dd0b09531bb1049fc39b6ef00df423100232fe4c73207"
   }
 ]

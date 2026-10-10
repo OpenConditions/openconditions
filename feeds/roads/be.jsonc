@@ -25,6 +25,8 @@
       "name": "Bruxelles Mobilité traffic events",
       "tier": "authoritative",
       "format": "geojson",
+      // Times are written without an offset, in Brussels time.
+      "timezone": "Europe/Brussels",
       "endpoints": {
         "main": {
           "url": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/items?f=json&limit=1000",

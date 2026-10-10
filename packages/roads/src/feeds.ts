@@ -16,6 +16,7 @@ export type DescribedFeed = Pick<
   | "flowMap"
   | "posListLonLat"
   | "srsName"
+  | "timezone"
 >;
 
 /**
@@ -36,5 +37,6 @@ export function feedToSourceDescriptor(feed: DescribedFeed): SourceDescriptor {
     ...(feed.flowMap ? { flowMap: feed.flowMap } : {}),
     ...(feed.posListLonLat ? { posListLonLat: true } : {}),
     ...(feed.srsName ? { srsName: feed.srsName } : {}),
+    ...(feed.timezone ? { timeZone: feed.timezone } : {}),
   };
 }
