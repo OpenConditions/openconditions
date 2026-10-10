@@ -54,8 +54,11 @@ function memberOf(draft: RecordDraft): Member | undefined {
   };
 }
 
-const byId = (a: Member, b: Member) =>
-  a.stationId.localeCompare(b.stationId, "en", { numeric: true });
+// One collator for every comparison: `localeCompare` with options sets one up
+// per call, which made sorting a national register's sites take seconds.
+const STATION_ORDER = new Intl.Collator("en", { numeric: true });
+
+const byId = (a: Member, b: Member) => STATION_ORDER.compare(a.stationId, b.stationId);
 
 /** Whether two locations may be one site: close enough, and not two house numbers. */
 const together = (a: Member, b: Member) =>
