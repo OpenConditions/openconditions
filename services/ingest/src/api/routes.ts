@@ -120,6 +120,7 @@ function filtersOf(q: Omit<StreamQuery, "class" | "minSeverity"> & Partial<Strea
   return {
     ...(q.bbox ? { bbox: q.bbox } : {}),
     ...(q.kind ? { kinds: q.kind } : {}),
+    ...(q.excludeKind ? { excludeKinds: q.excludeKind } : {}),
     ...(q.type ? { types: q.type } : {}),
     ...(q.domain ? { domain: q.domain } : {}),
     ...(q.source ? { sources: q.source } : {}),

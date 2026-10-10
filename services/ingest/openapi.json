@@ -41,6 +41,16 @@
             "description": "comma-separated kind codes"
           },
           {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
+          },
+          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -249,6 +259,16 @@
             "description": "comma-separated kind codes"
           },
           {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
+          },
+          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -450,6 +470,16 @@
               "type": "string"
             },
             "description": "comma-separated kind codes"
+          },
+          {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
           },
           {
             "name": "type",
@@ -655,6 +685,16 @@
             "description": "comma-separated kind codes"
           },
           {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
+          },
+          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -858,6 +898,16 @@
             "description": "comma-separated kind codes"
           },
           {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
+          },
+          {
             "name": "type",
             "in": "query",
             "required": false,
@@ -1059,6 +1109,16 @@
               "type": "string"
             },
             "description": "comma-separated kind codes"
+          },
+          {
+            "name": "excludeKind",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "description": "comma-separated kind codes left out",
+              "type": "string"
+            },
+            "description": "comma-separated kind codes left out"
           },
           {
             "name": "type",

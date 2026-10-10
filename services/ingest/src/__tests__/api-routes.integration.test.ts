@@ -113,7 +113,7 @@ describe("GET /situations", () => {
       expect(seen).toContain(`oc:situation:de-autobahn-events:k${i}`);
   });
 
-  it("filters by box, kind, source, severity and the instant situations are current at", async () => {
+  it("filters by box, kind, excluded kind, source, severity and the instant situations are current at", async () => {
     await writeSituations(sql, "de-autobahn-events", [
       at("near", 6.81, 51.2),
       at("far", 13.4, 52.5),
@@ -133,6 +133,8 @@ describe("GET /situations", () => {
     expect(await list("source=nl-ndw-events")).toEqual(["oc:situation:nl-ndw-events:dutch"]);
     expect(await list("minSeverity=major")).not.toContain("oc:situation:de-autobahn-events:minor");
     expect(await list("kind=incident")).toEqual([]);
+    expect(await list("excludeKind=incident,closure")).toEqual([]);
+    expect(await list("excludeKind=incident")).toContain("oc:situation:nl-ndw-events:dutch");
     expect(await list("limit=50")).not.toContain("oc:situation:de-autobahn-events:ended");
     expect(await list("horizonDays=3")).not.toContain("oc:situation:de-autobahn-events:later");
     expect(await list("horizonDays=30")).toContain("oc:situation:de-autobahn-events:later");

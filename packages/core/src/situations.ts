@@ -15,6 +15,8 @@ export interface SituationQuery {
   /** west, south, east, north. */
   bbox?: [number, number, number, number];
   kinds?: readonly string[];
+  /** Every kind but these. */
+  excludeKinds?: readonly string[];
   types?: readonly string[];
   subtypes?: readonly string[];
   domain?: string;
@@ -87,6 +89,7 @@ export async function listSituations(db: QueryRunner, q: SituationQuery): Promis
     );
   }
   if (q.kinds?.length) clauses.push(`s.kind = ANY(${p([...q.kinds])}::text[])`);
+  if (q.excludeKinds?.length) clauses.push(`s.kind <> ALL(${p([...q.excludeKinds])}::text[])`);
   if (q.types?.length) clauses.push(`s.type = ANY(${p([...q.types])}::text[])`);
   if (q.subtypes?.length) clauses.push(`s.subtype = ANY(${p([...q.subtypes])}::text[])`);
   if (q.domain) clauses.push(`s.domain = ${p(q.domain)}`);

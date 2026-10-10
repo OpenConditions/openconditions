@@ -59,6 +59,7 @@ const DAY_MS = 86_400_000;
 const SituationFilters = z.strictObject({
   bbox: bbox.optional(),
   kind: list.describe("comma-separated kind codes").optional(),
+  excludeKind: list.describe("comma-separated kind codes left out").optional(),
   type: list.describe("comma-separated type codes").optional(),
   domain: z.string().min(1).optional(),
   source: list.describe("comma-separated source ids").optional(),
@@ -145,6 +146,7 @@ export type SituationListQuery = z.output<typeof SituationListQuery>;
 export const StreamQuery = SituationFilters.pick({
   bbox: true,
   kind: true,
+  excludeKind: true,
   type: true,
   domain: true,
   source: true,
