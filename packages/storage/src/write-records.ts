@@ -525,7 +525,8 @@ export async function storeRecords(
  * Queues the graph binding of situations whose stored revision changed, in
  * the writing transaction: a revision is never visible without its binding
  * work. The binder places a live situation and its effects, and drops the
- * bindings of a tombstoned one.
+ * bindings of a tombstoned one. Queued rows are taken in key order, as the
+ * binder settles them, so the two never wait on each other in a cycle.
  */
 async function enqueueBindings(tx: Sql, refs: readonly { id: string; revision: number }[]) {
   if (refs.length === 0) return;
@@ -535,6 +536,7 @@ async function enqueueBindings(tx: Sql, refs: readonly { id: string; revision: n
        last_error, updated_at)
     SELECT 'situation', r.id, '', r.revision, 0, now(), NULL, now()
       FROM jsonb_to_recordset(${JSON.stringify(refs)}::text::jsonb) AS r(id text, revision int)
+     ORDER BY r.id
     ON CONFLICT (record_class, record_id, effect_id) DO UPDATE SET
       record_revision = excluded.record_revision, attempts = 0, next_attempt_at = now(),
       last_error = NULL, updated_at = now()`;

@@ -38,8 +38,59 @@ type Sql = postgres.Sql;
 /** Overridable deps so the run body is unit-testable without cron. */
 export interface RunFeedOnceDeps {
   runSource?: typeof defaultRunSource;
-  drainBindingQueue?: typeof defaultDrainBindingQueue;
+  /** Where a poll asks for the binding queue to be drained. */
+  bindingDrain?: Pick<BindingDrain, "request">;
   now?: () => string;
+}
+
+/** The binding queue's drain, shared by every feed's polls. */
+export interface BindingDrain {
+  /** Drains the queue now, or once more after the drain under way. */
+  request(): void;
+  /** Starts no drain after the one under way. */
+  stop(): void;
+}
+
+/**
+ * The binding queue's one drain. Every poll may queue binding work, and a
+ * drain reads the whole queue, so a poll asks for one rather than running
+ * its own: a request while a drain runs is served by one more drain after
+ * it. Two drains never bind the same work at once, and no poll waits for
+ * one. `inFlight` tracks each drain, so shutdown waits for it.
+ */
+export function createBindingDrain(
+  drain: () => Promise<unknown>,
+  inFlight?: Pick<InFlight, "track">,
+): BindingDrain {
+  let running = false;
+  let again = false;
+  let stopped = false;
+  const run = async () => {
+    do {
+      again = false;
+      try {
+        await drain();
+      } catch (err) {
+        console.warn("[scheduler] binding queue drain failed", err);
+      }
+    } while (again && !stopped);
+    running = false;
+  };
+  return {
+    request() {
+      if (stopped) return;
+      if (running) {
+        again = true;
+        return;
+      }
+      running = true;
+      const work = run();
+      void (inFlight?.track(work) ?? work);
+    },
+    stop() {
+      stopped = true;
+    },
+  };
 }
 
 /** Run one feed once and record the outcome in the status store. */
@@ -72,11 +123,7 @@ export async function runFeedOnce(
       );
     }
     // Flow feeds derive congestion situations too, so every poll may have queued work.
-    try {
-      await (o.drainBindingQueue ?? defaultDrainBindingQueue)(deps.sql, { now: deps.now });
-    } catch (err) {
-      console.warn(`[scheduler] ${src.id}: binding queue drain failed`, err);
-    }
+    o.bindingDrain?.request();
   } catch (err) {
     const message = err instanceof Error ? err.message : String(err);
     console.error(`[scheduler] ${src.id}: ${message}`);
@@ -130,6 +177,8 @@ export interface FeedJobContext {
   env?: Env;
   /** Tracks each poll, so shutdown waits for one in flight. */
   inFlight?: Pick<InFlight, "track">;
+  /** Where each poll asks for the binding queue to be drained. */
+  bindingDrain?: Pick<BindingDrain, "request">;
 }
 
 /**
@@ -175,7 +224,12 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
     }
     running = true;
     try {
-      const poll = runFeedOnce(feed, deps, statusStore);
+      const poll = runFeedOnce(
+        feed,
+        deps,
+        statusStore,
+        ctx.bindingDrain ? { bindingDrain: ctx.bindingDrain } : {},
+      );
       await (ctx.inFlight?.track(poll) ?? poll);
     } finally {
       running = false;
@@ -189,8 +243,8 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
 
 /**
  * Starts one job per scheduled feed of the catalogue, and the record and
- * segment jobs; `inFlight` tracks the feed polls. Returns a cancel function
- * that stops all scheduled jobs.
+ * segment jobs; `inFlight` tracks the feed polls and the binding queue's
+ * drain. Returns a cancel function that stops all scheduled jobs.
  */
 export function startScheduler(
   sql: Sql,
@@ -209,6 +263,10 @@ export function startScheduler(
   // One gate for all feeds: a large payload is parsed and written while no
   // other large one is, which bounds the heap two national registers need.
   const parseGate = createParseGate();
+  const bindingDrain = createBindingDrain(
+    () => defaultDrainBindingQueue(sql, { now: () => new Date().toISOString() }),
+    inFlight,
+  );
 
   for (const feed of catalog.feeds) {
     const job = scheduleFeed(feed, {
@@ -225,6 +283,7 @@ export function startScheduler(
         parseGate,
       },
       ...(inFlight ? { inFlight } : {}),
+      bindingDrain,
     });
     if (job) jobs.push(job);
   }
@@ -391,5 +450,6 @@ export function startScheduler(
     for (const job of jobs) {
       job.stop();
     }
+    bindingDrain.stop();
   };
 }

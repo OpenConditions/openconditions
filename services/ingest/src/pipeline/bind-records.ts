@@ -451,9 +451,11 @@ export async function bindRecords(
  * Settles the queued work of a pass: a record with a resolver error stays
  * queued with backoff; every other record's work is acknowledged up to the
  * revision now stored, so work queued for a newer revision meanwhile stays.
- * A record whose write failed stays as it is, to be redone.
+ * A record whose write failed stays as it is, to be redone. The rows are
+ * locked in key order, as every writer of the queue locks them: a pass and a
+ * poll settling overlapping records never wait on each other in a cycle.
  */
-async function settleQueue(
+export async function settleQueue(
   sql: Sql,
   ids: readonly string[],
   retry: ReadonlySet<string>,
@@ -463,18 +465,30 @@ async function settleQueue(
   if (done.length > 0) {
     await sql`
       DELETE FROM conditions.binding_queue q
-       WHERE q.record_class = 'situation' AND q.record_id = ANY(${done as string[]}::text[])
-         AND q.record_revision <= COALESCE(
-           (SELECT s.revision FROM conditions.situation s WHERE s.id = q.record_id),
-           q.record_revision)`;
+       USING (SELECT k.record_class, k.record_id, k.effect_id
+                FROM conditions.binding_queue k
+               WHERE k.record_class = 'situation' AND k.record_id = ANY(${done as string[]}::text[])
+                 AND k.record_revision <= COALESCE(
+                   (SELECT s.revision FROM conditions.situation s WHERE s.id = k.record_id),
+                   k.record_revision)
+               ORDER BY k.record_id, k.effect_id
+                 FOR UPDATE) acknowledged
+       WHERE (q.record_class, q.record_id, q.effect_id)
+           = (acknowledged.record_class, acknowledged.record_id, acknowledged.effect_id)`;
   }
   if (retry.size > 0) {
     await sql`
-      UPDATE conditions.binding_queue
-         SET attempts = attempts + 1, last_error = 'resolver_error', updated_at = now(),
+      UPDATE conditions.binding_queue q
+         SET attempts = q.attempts + 1, last_error = 'resolver_error', updated_at = now(),
              next_attempt_at = now() + make_interval(secs => LEAST(3600,
-               30 * power(2, LEAST(attempts, 7))::int))
-       WHERE record_class = 'situation' AND record_id = ANY(${[...retry]}::text[])`;
+               30 * power(2, LEAST(q.attempts, 7))::int))
+        FROM (SELECT k.record_class, k.record_id, k.effect_id
+                FROM conditions.binding_queue k
+               WHERE k.record_class = 'situation' AND k.record_id = ANY(${[...retry]}::text[])
+               ORDER BY k.record_id, k.effect_id
+                 FOR UPDATE) failed
+       WHERE (q.record_class, q.record_id, q.effect_id)
+           = (failed.record_class, failed.record_id, failed.effect_id)`;
   }
 }
 
