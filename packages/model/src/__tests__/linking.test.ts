@@ -226,6 +226,22 @@ describe("proposeLink", () => {
     expect([link?.aId, link?.bId]).toEqual(["oc:feature:a:1", "oc:feature:z:1"]);
   });
 
+  it("orders the pair in code point order, as the database keeps it", () => {
+    // U+1F17F after U+FF5E, though its first UTF-16 unit (0xD83C) comes before 0xFF5E.
+    const link = proposeLink(
+      site("oc:feature:a:\u{1F17F}", 8.4, 49),
+      site("oc:feature:a:\uFF5E", 8.4, 49),
+      RULES,
+    );
+    expect([link?.aId, link?.bId]).toEqual(["oc:feature:a:\uFF5E", "oc:feature:a:\u{1F17F}"]);
+    const upper = proposeLink(
+      site("oc:feature:a:parking", 8.4, 49),
+      site("oc:feature:a:PH07", 8.4, 49),
+      RULES,
+    );
+    expect([upper?.aId, upper?.bId]).toEqual(["oc:feature:a:PH07", "oc:feature:a:parking"]);
+  });
+
   describe("an id one authority issued", () => {
     const rules: LinkingRules = { ...RULES, idSchemes: ["provider"] };
     const issued = (authority: string, id: string) => ({

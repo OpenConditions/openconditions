@@ -272,7 +272,8 @@ export const featureLink = conditionsSchema.table(
   },
   (t) => [
     primaryKey({ columns: [t.aId, t.bId] }),
-    check("feature_link_ordered", sql`${t.aId} < ${t.bId}`),
+    // Code point order, as the model orders a pair, whatever the database's collation.
+    check("feature_link_ordered", sql`${t.aId} < ${t.bId} COLLATE "C"`),
     check("feature_link_method_enum", sql.raw(enumCheckSql("method", LINK_METHODS))),
     check("feature_link_status_enum", sql.raw(enumCheckSql("status", LINK_STATUSES))),
     index("idx_feature_link_b").on(t.bId),

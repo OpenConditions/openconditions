@@ -1,0 +1,2 @@
+ALTER TABLE "conditions"."feature_link" DROP CONSTRAINT "feature_link_ordered";--> statement-breakpoint
+ALTER TABLE "conditions"."feature_link" ADD CONSTRAINT "feature_link_ordered" CHECK ("conditions"."feature_link"."a_id" < "conditions"."feature_link"."b_id" COLLATE "C");

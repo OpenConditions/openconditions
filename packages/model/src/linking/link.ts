@@ -34,7 +34,7 @@ export interface LinkableFeature {
 }
 
 export interface FeatureLink {
-  /** The lower id of the pair, so one pair is one row (`CHECK (a_id < b_id)`). */
+  /** The lower id of the pair in code point order, so one pair is one row (`CHECK (a_id < b_id COLLATE "C")`). */
   aId: string;
   bId: string;
   method: LinkMethod;
@@ -193,7 +193,24 @@ function conflictingIds(a: LinkableFeature, b: LinkableFeature, schemes: readonl
   return undefined;
 }
 
-const ordered = (a: LinkableFeature, b: LinkableFeature) => (a.id < b.id ? [a, b] : [b, a]);
+/**
+ * Whether `a` comes before `b` in code point order, the order of their UTF-8
+ * bytes, in which the database keeps a link's pair (`COLLATE "C"`). `<`
+ * compares UTF-16 code units, which put a character beyond the BMP before
+ * U+E000–U+FFFF.
+ */
+function before(a: string, b: string): boolean {
+  let i = 0;
+  while (i < a.length && i < b.length) {
+    const x = a.codePointAt(i)!;
+    const y = b.codePointAt(i)!;
+    if (x !== y) return x < y;
+    i += x > 0xffff ? 2 : 1;
+  }
+  return a.length < b.length;
+}
+
+const ordered = (a: LinkableFeature, b: LinkableFeature) => (before(a.id, b.id) ? [a, b] : [b, a]);
 
 /**
  * The link two per-source features get, or undefined when they stay separate
