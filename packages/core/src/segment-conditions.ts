@@ -159,7 +159,7 @@ export async function readSegmentConditionRows(
         AND b.status IN ('exact', 'likely') AND b.resolver_version = $2
         AND (e.valid_to IS NULL OR e.valid_to > $1::timestamptz)
         AND (s.expires_at IS NULL OR s.expires_at > now())
-        ${q.bbox ? "AND e.geom && ST_MakeEnvelope($4, $5, $6, $7, 4326)" : ""}
+        ${q.bbox ? "AND ST_Intersects(e.geom, ST_MakeEnvelope($4, $5, $6, $7, 4326))" : ""}
       ORDER BY e.situation_id, e.effect_id`,
     params,
   );

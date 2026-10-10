@@ -1,7 +1,7 @@
 import type { SEVERITY_LABELS } from "@openconditions/model";
 import { EVIDENCE, withEvidence } from "./db/records.js";
 import type { QueryRunner } from "./query-runner.js";
-import { binder, type Scope, scopeClauses } from "./record-filters.js";
+import { binder, inBox, type Scope, scopeClauses } from "./record-filters.js";
 import { haversineMeters } from "./spatial.js";
 
 type Rec = Record<string, unknown>;
@@ -78,14 +78,12 @@ export async function listSituations(db: QueryRunner, q: SituationQuery): Promis
     );
   }
   if (q.bbox) {
-    const [w, s, e, n] = q.bbox;
     // An effect with its own place (a grouped record on another road) puts
     // its situation in the box too: the routing feed lists effects by their
     // own place, and a reader must find the situation each one belongs to.
-    const box = `ST_MakeEnvelope(${p(w)}, ${p(s)}, ${p(e)}, ${p(n)}, 4326)`;
     clauses.push(
-      `(s.geom && ${box} OR EXISTS (SELECT 1 FROM conditions.situation_effect e
-         WHERE e.situation_id = s.id AND e.geom && ${box}))`,
+      `(${inBox("s.geom", q.bbox, p)} OR EXISTS (SELECT 1 FROM conditions.situation_effect e
+         WHERE e.situation_id = s.id AND ${inBox("e.geom", q.bbox, p)}))`,
     );
   }
   if (q.kinds?.length) clauses.push(`s.kind = ANY(${p([...q.kinds])}::text[])`);

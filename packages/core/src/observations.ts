@@ -8,7 +8,7 @@ import { withEvidence } from "./db/records.js";
 import { CROWD_SOURCE_ID, currentReadingClauses, readingColumns } from "./live-rows.js";
 import { recordFromHistory } from "./observation-codec.js";
 import type { QueryRunner } from "./query-runner.js";
-import { type Scope, scopeClauses } from "./record-filters.js";
+import { inBox, type Scope, scopeClauses } from "./record-filters.js";
 import { validWhilePolled, withPolledValidity } from "./validity.js";
 
 type Rec = Record<string, unknown>;
@@ -139,10 +139,7 @@ export async function listLatestObservations(
   } else {
     clauses.push(`l.source_id <> ALL(${p([...FUSED_SOURCE_IDS])}::text[])`);
   }
-  if (q.bbox) {
-    const [w, s, e, n] = q.bbox;
-    clauses.push(`l.geom && ST_MakeEnvelope(${p(w)}, ${p(s)}, ${p(e)}, ${p(n)}, 4326)`);
-  }
+  if (q.bbox) clauses.push(inBox("l.geom", q.bbox, p));
   let properties = q.properties?.length ? [...q.properties] : undefined;
   if (q.domain !== undefined) {
     const inDomain = registry
@@ -229,7 +226,6 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
     params.push(value);
     return `$${params.length}`;
   };
-  const [w, s, e, n] = q.bbox;
   const cell = `${p(q.cellDeg)}::float8`;
   const clauses = [
     ...currentReadingClauses("l", "$1", q.scope),
@@ -237,7 +233,7 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
     `l.property = ${p(q.property)}`,
     "l.value_num IS NOT NULL",
     `l.effective_from >= ${p(q.since.toISOString())}::timestamptz`,
-    `l.geom && ST_MakeEnvelope(${p(w)}, ${p(s)}, ${p(e)}, ${p(n)}, 4326)`,
+    inBox("l.geom", q.bbox, p),
   ];
   if (q.sources?.length) clauses.push(`l.source_id = ANY(${p([...q.sources])}::text[])`);
   const rows = await db.execute<
