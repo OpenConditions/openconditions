@@ -28,6 +28,7 @@ ENV HUSKY=0
 FROM base AS prod-deps
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY patches/ patches/
 COPY packages/core/package.json packages/core/
 COPY packages/contrib-core/package.json packages/contrib-core/
 COPY packages/datex2/package.json packages/datex2/
@@ -64,6 +65,7 @@ RUN pnpm install --filter @openconditions/contributions-api... --frozen-lockfile
 FROM base AS builder
 WORKDIR /app
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json ./
+COPY patches/ patches/
 COPY packages/core/package.json packages/core/
 COPY packages/contrib-core/package.json packages/contrib-core/
 COPY packages/datex2/package.json packages/datex2/

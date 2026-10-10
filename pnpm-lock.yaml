@@ -8,6 +8,9 @@ overrides:
   esbuild: ^0.28.1
   sjcl: 1.0.9
 
+patchedDependencies:
+  postgres@3.4.9: a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd
+
 importers:
 
   .:
@@ -164,10 +167,10 @@ importers:
         version: link:../model
       drizzle-orm:
         specifier: ^0.45.2
-        version: 0.45.3(postgres@3.4.9)
+        version: 0.45.3(postgres@3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd))
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
       tz-lookup:
         specifier: ^6.1.25
         version: 6.1.25
@@ -232,7 +235,7 @@ importers:
         version: 1.0.6
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
       structured-headers:
         specifier: ^2.0.3
         version: 2.1.0
@@ -719,7 +722,7 @@ importers:
         version: 26.4.0
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
       testcontainers:
         specifier: ^12.1.0
         version: 12.1.0
@@ -826,7 +829,7 @@ importers:
         version: link:../model
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
     devDependencies:
       '@openconditions/charging':
         specifier: workspace:*
@@ -878,7 +881,7 @@ importers:
         version: 5.12.5
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
       undici:
         specifier: ^8.10.0
         version: 8.11.2
@@ -930,7 +933,7 @@ importers:
         version: 5.12.5
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
     devDependencies:
       '@types/node':
         specifier: ^26.4.0
@@ -1015,7 +1018,7 @@ importers:
         version: 0.14.5
       postgres:
         specifier: ^3.4.9
-        version: 3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
       undici:
         specifier: ^8.10.0
         version: 8.11.2
@@ -4456,9 +4459,9 @@ snapshots:
       esbuild: 0.28.2
       tsx: 4.23.15
 
-  drizzle-orm@0.45.3(postgres@3.4.9):
+  drizzle-orm@0.45.3(postgres@3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)):
     optionalDependencies:
-      postgres: 3.4.9
+      postgres: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
 
   eastasianwidth@0.2.0: {}
 
@@ -4936,7 +4939,7 @@ snapshots:
       picocolors: 1.1.1
       source-map-js: 1.2.1
 
-  postgres@3.4.9: {}
+  postgres@3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd): {}
 
   prettier@3.9.6: {}
 
