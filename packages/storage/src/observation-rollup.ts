@@ -110,7 +110,7 @@ export async function rollupObservations(
                ? `array_agg(b.bin ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),
                   array_agg(b.c ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),`
                : ""
-}
+           }
            min(b.mn), max(b.mx), sum(b.s) / sum(b.c)
          FROM (
            SELECT o.series_id, ${bucket} AS bucket,
