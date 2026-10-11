@@ -906,10 +906,6 @@ async function runAttempt(
         }
         answered++;
         renewed.add(role);
-        if (deps.roles) {
-          deps.roles.lastFetchedAt[role] = Date.parse(attemptAt);
-          delete deps.roles.failing[role];
-        }
       }
       for (const role of failed) {
         const spec = format.endpoints[role];
@@ -960,6 +956,15 @@ async function runAttempt(
         for (const role of fetched) {
           delete fresh[role];
           delete freshUrls[role];
+        }
+      }
+      // A role counts as fetched once its answer is held: a poll that fails
+      // before then leaves it due, or the next polls would parse nothing for it
+      // until its cadence came round again.
+      if (deps.roles) {
+        for (const role of renewed) {
+          deps.roles.lastFetchedAt[role] = polledAt;
+          delete deps.roles.failing[role];
         }
       }
       if (answered === 0 && warnings.length > 0) {
