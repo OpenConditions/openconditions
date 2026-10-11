@@ -18,6 +18,7 @@ import {
 } from "@openconditions/model";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { refreshFused } from "../fused-rows.js";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { syncSources } from "../sources.js";
 import { type WriteContext, writeSnapshot } from "../write-records.js";
@@ -348,5 +349,45 @@ describe("reader scope", () => {
       limit: 10,
     });
     expect(page.clusters).toEqual([]);
+  });
+
+  test("a property-scoped refresh preserves public and operator results and fused history exclusion", async () => {
+    const [canonical] = await sql<{ canonical_feature_id: string }[]>`
+      SELECT canonical_feature_id FROM conditions.feature_canonical
+       WHERE ${station["id"] as string} = ANY(member_ids)`;
+    const read = async (scope: Scope) =>
+      (
+        await listLatestObservations(runner, registry, {
+          scope,
+          at: AT,
+          limit: 500,
+          canonical: true,
+        })
+      ).records;
+    const beforePublic = await read("public");
+    const beforeOperator = await read("operator");
+    const counts = await sql.begin((tx) =>
+      refreshFused(
+        tx,
+        registry,
+        [
+          { featureId: station["id"] as string, properties: ["fuel.price", "fuel.price"] },
+          { featureId: twin["id"] as string, properties: ["fuel.price"] },
+          { featureId: canonical!.canonical_feature_id, properties: ["fuel.price"] },
+        ],
+        { instanceId: INSTANCE, now: LATER },
+      ),
+    );
+    expect(counts.deleted).toBe(0);
+    expect(counts.written + counts.unchanged).toBeGreaterThan(0);
+    expect(await read("public")).toEqual(beforePublic);
+    expect(await read("operator")).toEqual(beforeOperator);
+    expect(JSON.stringify(beforePublic)).not.toContain(RESTRICTED);
+    expect(JSON.stringify(beforeOperator)).toContain(RESTRICTED);
+    const [history] = await sql<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.observation o
+       JOIN conditions.observation_latest l ON l.series_id = o.series_id
+       WHERE l.source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})`;
+    expect(history!.n).toBe(0);
   });
 });

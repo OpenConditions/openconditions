@@ -6,8 +6,10 @@ import {
   observationId,
 } from "@openconditions/model";
 import postgres from "postgres";
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
+import type { Sql } from "../bulk.js";
 import {
+  type FusedScope,
   LOCK_SPACES,
   type OutdatedRefreshOptions,
   refreshFlippedFusions,
@@ -765,5 +767,357 @@ describe("where a crowd-won public fusion sits", () => {
     const counts = await refreshOutdated();
     expect(counts.sources).toEqual([PUBLIC]);
     expect(located(await fusedOf("e10"))).toEqual([[FUSED_SOURCE_ID, false, at(relay)]]);
+  });
+});
+
+/** Counts actual rows returned by the two reconstruction queries without replacing them. */
+function countFusionRows(tx: Sql) {
+  const fetched = { candidates: 0, existing: 0, candidateQueries: 0, existingQueries: 0 };
+  const measured = new Proxy(tx, {
+    apply(target, thisArg, args) {
+      const pending = Reflect.apply(target, thisArg, args);
+      const fragments = args[0] as unknown;
+      if (!Array.isArray(fragments) || !fragments.every((part) => typeof part === "string")) {
+        return pending;
+      }
+      const shape = fragments.join(" ");
+      const kind = /conditions\.observation_record/.test(shape)
+        ? /l\.evidence_state/.test(shape)
+          ? "candidates"
+          : /since_at, fused_public/.test(shape)
+            ? "existing"
+            : undefined
+        : undefined;
+      if (kind === undefined) return pending;
+      return new Proxy(pending, {
+        get(query, key) {
+          if (key === "then") {
+            return (resolve: (rows: unknown[]) => unknown, reject: (error: unknown) => unknown) =>
+              query.then((rows: unknown[]) => {
+                fetched[kind] += rows.length;
+                if (kind === "candidates") fetched.candidateQueries++;
+                else fetched.existingQueries++;
+                return resolve(rows);
+              }, reject);
+          }
+          const value = Reflect.get(query, key);
+          return typeof value === "function" ? value.bind(query) : value;
+        },
+      });
+    },
+  });
+  return { measured, fetched };
+}
+
+describe("property scopes in fusion reads", () => {
+  const stock = (sourceId: string, feature: Rec, componentKey = "e5") =>
+    priceDraft(sourceId, feature["id"] as string, componentKey, priceOf("e5"), {
+      property: "fuel.product_available",
+      result: { type: "boolean", value: sourceId === PUBLIC },
+      location: feature["location"],
+      freshness: { fetchedAt: LATER },
+    });
+  const other = minetur.features.find((f) => f["id"] !== station["id"])!;
+  const toll: Rec = {
+    id: `oc:feature:${PUBLIC}:scope-toll`,
+    class: "feature",
+    kind: "toll_point",
+    temporality: "static",
+    lifecycle: "operational",
+    location: station["location"],
+    provenance: provenanceOf(PUBLIC),
+    freshness: { fetchedAt: LATER },
+    details: { kind: "toll_point", v: 1 },
+  };
+  const tollPrice = (vehicleClass: string) => {
+    const draft: Rec = {
+      ...priceOf("e5"),
+      property: "toll.price",
+      subject: { kind: "feature", featureId: toll["id"] },
+      result: {
+        type: "money",
+        amount: vehicleClass === "car" ? "2.00" : "4.00",
+        currency: "EUR",
+        per: "1",
+      },
+      qualifiers: { vehicleClass },
+      freshness: { fetchedAt: LATER },
+    };
+    draft["id"] = observationId(PUBLIC, draft as never);
+    return draft;
+  };
+  let crowdNonce = 0;
+
+  beforeEach(async () => {
+    await syncSources(sql, [source(PUBLIC, false), source(RESTRICTED, true), source(RELAY, false)]);
+    for (const id of [PUBLIC, RESTRICTED, RELAY]) await polled(sql, id, LATER);
+    const writes: [string, Rec][] = [
+      [
+        PUBLIC,
+        {
+          features: [...minetur.features, toll],
+          observations: [
+            ...minetur.observations,
+            stock(PUBLIC, station),
+            stock(PUBLIC, other),
+            tollPrice("car"),
+            tollPrice("hgv"),
+          ],
+        },
+      ],
+      [RESTRICTED, { features: [twin], observations: [twinE5, twinE10, stock(RESTRICTED, twin)] }],
+      [RELAY, { features: [relay], observations: [relaySp98, stock(RELAY, relay, "sp98")] }],
+    ];
+    for (const [sourceId, drafts] of writes) {
+      expect((await writeSnapshot(sql, sourceId, drafts, ctx)).rejected).toEqual([]);
+    }
+    const canonical = await canonicalId();
+    await sql`DELETE FROM conditions.observation_latest WHERE source_id = 'crowd' AND feature_id = ${canonical}`;
+    const [held] = await sql<{ components: Rec[] }[]>`
+      SELECT components FROM conditions.feature_canonical WHERE canonical_feature_id = ${canonical}`;
+    const componentKey = held!.components.find((component) =>
+      (component["members"] as Rec[]).some(
+        (member) => member["featureId"] === twin["id"] && member["key"] === "e10",
+      ),
+    )!["key"] as string;
+    const claim = landClaim(
+      registry,
+      {
+        claim: {
+          claimClass: "observation",
+          subject: { featureId: canonical, componentKey },
+          property: "fuel.price",
+          result: { type: "money", amount: "1.879", currency: "EUR", per: "L" },
+          geometry: stationGeometry,
+          reportedAt: NOW,
+          nonce: `nonce-scope-price-${String(++crowdNonce).padStart(4, "0")}`,
+        },
+        keyId: "GlQczzclqGJy6D0X9dNq8pSYKRfkCqszpEp5g3ZGlwY",
+      },
+      {
+        instanceId: INSTANCE,
+        now: LATER,
+        attribution: { provider: `OpenConditions contributors at ${INSTANCE}`, license: "CC0-1.0" },
+        resolveFeature: (featureId, key) => ({
+          featureId,
+          componentKey: key,
+          location: station["location"] as never,
+        }),
+      },
+    );
+    if (!claim.ok) throw new Error(JSON.stringify(claim.issues));
+    expect(
+      (
+        await writeRecord(
+          sql,
+          { draft: claim.draft },
+          { registry, instanceId: INSTANCE, now: LATER },
+        )
+      ).status,
+    ).not.toBe("rejected");
+    await sql`UPDATE conditions.observation_latest SET evidence_state = 'self_reported', confidence_score = 0.5
+      WHERE crowd_record_id = ${claim.draft["id"] as string}`;
+    await refresh();
+  }, 60_000);
+
+  const canonicalFor = async (feature: Rec) => {
+    const [row] = await sql<{ canonical_feature_id: string }[]>`
+      SELECT canonical_feature_id FROM conditions.feature_canonical WHERE ${feature["id"] as string} = ANY(member_ids)`;
+    return row!.canonical_feature_id;
+  };
+  const fusedSnapshot = (ids: string[]) => sql`
+    SELECT series_id::text, source_id, feature_id, property, qualifier_key, template, reading,
+           since_at, fused_public, fused_from, fused_sources
+      FROM conditions.observation_latest
+     WHERE source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID}) AND feature_id = ANY(${ids}::text[])
+     ORDER BY feature_id, source_id, subject_key, property, qualifier_key`;
+  const measuredRefresh = async (
+    scopes: FusedScope[],
+    now = LATER,
+    freshSources: string[] = [],
+  ) => {
+    let fetched!: ReturnType<typeof countFusionRows>["fetched"];
+    const counts = await sql.begin(async (tx) => {
+      const observer = countFusionRows(tx);
+      fetched = observer.fetched;
+      return refreshFused(observer.measured, registry, scopes, {
+        instanceId: INSTANCE,
+        now,
+        freshSources,
+      });
+    });
+    return { counts, fetched };
+  };
+  const expectedRows = async (canonical: string, property: string) => {
+    const [row] = await sql<{ candidates: number; existing: number }[]>`
+      SELECT
+        (SELECT count(*)::int FROM conditions.observation_latest l
+          WHERE l.property = ${property} AND l.source_id NOT IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})
+            AND ((l.source_id = 'crowd' AND l.feature_id = ${canonical})
+              OR (l.source_id <> 'crowd' AND l.feature_id = ANY(
+                SELECT unnest(member_ids) FROM conditions.feature_canonical WHERE canonical_feature_id = ${canonical})))) AS candidates,
+        (SELECT count(*)::int FROM conditions.observation_latest
+          WHERE property = ${property} AND feature_id = ${canonical}
+            AND source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})) AS existing`;
+    return row!;
+  };
+
+  test("fetches only requested properties from every member and crowd, without duplicate contributors", async () => {
+    const canonical = await canonicalId();
+    const before = await fusedSnapshot([canonical]);
+    const expected = await expectedRows(canonical, "fuel.price");
+    expect(expected.candidates).toBe(9);
+    const result = await measuredRefresh([
+      { featureId: station["id"] as string, properties: ["fuel.price", "fuel.price"] },
+      { featureId: twin["id"] as string, properties: ["fuel.price"] },
+      { featureId: canonical, properties: ["fuel.price"] },
+    ]);
+    expect(await fusedSnapshot([canonical])).toEqual(before);
+    expect(result.counts.deleted).toBe(0);
+    expect(result.counts.written + result.counts.unchanged).toBe(expected.existing);
+    expect(result.fetched).toEqual({ ...expected, candidateQueries: 1, existingQueries: 1 });
+  });
+
+  test("uses different property scopes for different canonicals in one refresh", async () => {
+    const canonical = await canonicalId();
+    const second = await canonicalFor(other);
+    const before = await fusedSnapshot([canonical, second]);
+    const a = await expectedRows(canonical, "fuel.price");
+    const b = await expectedRows(second, "fuel.product_available");
+    const result = await measuredRefresh([
+      { featureId: canonical, properties: ["fuel.price"] },
+      { featureId: other["id"] as string, properties: ["fuel.product_available"] },
+    ]);
+    expect(await fusedSnapshot([canonical, second])).toEqual(before);
+    expect(result.fetched.candidates).toBe(a.candidates + b.candidates);
+    expect(result.fetched.existing).toBe(a.existing + b.existing);
+    expect(result.counts.deleted).toBe(0);
+    expect(result.counts.written + result.counts.unchanged).toBe(a.existing + b.existing);
+  });
+
+  test("an all-properties member overrides narrow scopes without broadening another canonical", async () => {
+    const canonical = await canonicalId();
+    const second = await canonicalFor(other);
+    const before = await fusedSnapshot([canonical, second]);
+    const price = await expectedRows(canonical, "fuel.price");
+    const stockRows = await expectedRows(canonical, "fuel.product_available");
+    const secondStock = await expectedRows(second, "fuel.product_available");
+    const result = await measuredRefresh([
+      { featureId: canonical, properties: ["fuel.price"] },
+      { featureId: twin["id"] as string },
+      { featureId: twin["id"] as string, properties: ["fuel.price"] },
+      { featureId: second, properties: ["fuel.product_available"] },
+    ]);
+    expect(await fusedSnapshot([canonical, second])).toEqual(before);
+    expect(result.fetched.candidates).toBe(
+      price.candidates + stockRows.candidates + secondStock.candidates,
+    );
+    expect(result.fetched.existing).toBe(
+      price.existing + stockRows.existing + secondStock.existing,
+    );
+  });
+
+  test("an unscoped refresh still reconstructs all fusable properties", async () => {
+    const canonical = await canonicalId();
+    const before = await fusedSnapshot([canonical]);
+    const price = await expectedRows(canonical, "fuel.price");
+    const stockRows = await expectedRows(canonical, "fuel.product_available");
+    const result = await measuredRefresh([{ featureId: canonical }]);
+    expect(await fusedSnapshot([canonical])).toEqual(before);
+    expect(result.fetched.candidates).toBe(price.candidates + stockRows.candidates);
+    expect(result.fetched.existing).toBe(price.existing + stockRows.existing);
+    expect(result.counts.deleted).toBe(0);
+    expect(result.counts.written + result.counts.unchanged).toBe(before.length);
+  });
+
+  test("retains every qualifier series of an in-scope property", async () => {
+    const canonical = await canonicalFor(toll);
+    const before = await fusedSnapshot([canonical]);
+    expect(before.map((row) => row.qualifier_key).sort()).toHaveLength(2);
+    const expected = await expectedRows(canonical, "toll.price");
+    const result = await measuredRefresh([
+      { featureId: toll["id"] as string, properties: ["toll.price"] },
+      { featureId: canonical, properties: ["toll.price"] },
+    ]);
+    expect(await fusedSnapshot([canonical])).toEqual(before);
+    expect(result.counts.deleted).toBe(0);
+    expect(result.counts.written + result.counts.unchanged).toBe(2);
+    expect(result.fetched.candidates).toBe(expected.candidates);
+    expect(result.fetched.existing).toBe(expected.existing);
+  });
+
+  test("ends only the in-scope rows when their contributors vanish", async () => {
+    const canonical = await canonicalId();
+    const before = await fusedSnapshot([canonical]);
+    await sql`DELETE FROM conditions.observation_latest
+      WHERE property = 'fuel.product_available' AND feature_id = ANY(
+        SELECT unnest(member_ids) FROM conditions.feature_canonical WHERE canonical_feature_id = ${canonical})`;
+    const counts = await measuredRefresh([
+      { featureId: canonical, properties: ["fuel.product_available"] },
+    ]);
+    expect(counts.counts.deleted).toBeGreaterThan(0);
+    expect(await fusedSnapshot([canonical])).toEqual(
+      before.filter((row) => row.property !== "fuel.product_available"),
+    );
+    expect(counts.fetched.candidates).toBe(0);
+    expect(counts.fetched.existing).toBe(
+      before.filter((row) => row.property === "fuel.product_available").length,
+    );
+  });
+
+  test("a narrow freshness refresh preserves unrelated fused rows and still honors freshSources", async () => {
+    const canonical = await canonicalId();
+    const before = await fusedSnapshot([canonical]);
+    await polled(sql, RESTRICTED, "2026-09-22T11:00:00.000Z");
+    const result = await measuredRefresh([{ featureId: canonical, properties: ["fuel.price"] }]);
+    expect(amountOf((await fusedOf("e5")).find((row) => row.source_id === FUSED_SOURCE_ID)!)).toBe(
+      "1.989",
+    );
+    const after = await fusedSnapshot([canonical]);
+    expect(after.filter((row) => row.property !== "fuel.price")).toEqual(
+      before.filter((row) => row.property !== "fuel.price"),
+    );
+    const expected = await expectedRows(canonical, "fuel.price");
+    expect(result.fetched.candidates).toBe(expected.candidates);
+    await measuredRefresh([{ featureId: canonical, properties: ["fuel.price"] }], LATER, [
+      RESTRICTED,
+    ]);
+    expect(amountOf((await fusedOf("e5")).find((row) => row.source_id === FUSED_SOURCE_ID)!)).toBe(
+      "1.999",
+    );
+  });
+
+  test("empty and non-fusable scopes fetch nothing and leave every fused row intact", async () => {
+    const canonical = await canonicalId();
+    const before = await fusedSnapshot([canonical]);
+    const result = await measuredRefresh([
+      { featureId: canonical, properties: [] },
+      { featureId: canonical, properties: ["traffic.speed", "not-a-property"] },
+    ]);
+    expect(result.counts).toEqual({ written: 0, unchanged: 0, deleted: 0 });
+    expect(result.fetched).toEqual({
+      candidates: 0,
+      existing: 0,
+      candidateQueries: 0,
+      existingQueries: 0,
+    });
+    expect(await fusedSnapshot([canonical])).toEqual(before);
+  });
+
+  test("vanished subjects are removed even when every supplied property scope is empty", async () => {
+    const canonical = await canonicalId();
+    const second = await canonicalFor(other);
+    const before = await fusedSnapshot([canonical, second]);
+    const counts = await sql.begin((tx) =>
+      refreshFused(tx, registry, [{ featureId: canonical, properties: [] }], {
+        instanceId: INSTANCE,
+        now: LATER,
+        vanished: [canonical],
+      }),
+    );
+    expect(counts.deleted).toBe(before.filter((row) => row.feature_id === canonical).length);
+    expect(await fusedSnapshot([canonical, second])).toEqual(
+      before.filter((row) => row.feature_id === second),
+    );
   });
 });
