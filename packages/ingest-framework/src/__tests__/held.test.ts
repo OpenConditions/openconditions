@@ -5,8 +5,11 @@ describe("held payloads", () => {
   test("a payload up to 1 MiB is kept as fetched", async () => {
     const buffer = Buffer.alloc(HOLD_GZIP_BYTES, "a");
     const held = await holdPayload(buffer);
-    expect(held).toEqual({ data: buffer, gzipped: false, bytes: HOLD_GZIP_BYTES });
+    // Compared by identity: a deep compare walks the mebibyte byte by byte,
+    // seconds on a busy CI runner.
     expect(held.data).toBe(buffer);
+    expect(held.gzipped).toBe(false);
+    expect(held.bytes).toBe(HOLD_GZIP_BYTES);
     expect(await heldBuffer(held)).toBe(buffer);
   });
 
