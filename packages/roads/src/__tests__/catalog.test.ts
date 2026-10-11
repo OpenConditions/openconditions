@@ -65,10 +65,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 86 roads feeds under their new ids", () => {
+  test("the catalogue holds the 87 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(86);
+    expect(ids).toHaveLength(87);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -104,6 +104,7 @@ describe("the roads catalogue", () => {
         "at-asfinag-events",
         "au-nsw-livetraffic-events",
         "au-sa-trafficsa-events",
+        "au-sa-trafficsa-closures-events",
         "au-qld-traffic-events",
         "au-vic-vicroads-flow",
         "au-vic-transportvic-planned-events",
@@ -721,11 +722,18 @@ describe("one feed per publisher", () => {
     expect(feed("be-flanders-events").format).toBe("datex2");
   });
 
-  test("Traffic SA polls two layers", () => {
-    const f = feed("au-sa-trafficsa-events");
+  test("Traffic SA pages its incidents layer and polls its closures layer apart", () => {
+    type Mapped = CatalogFeed & { geojson?: { idField?: string; idFields?: string[] } };
+    const f = feed("au-sa-trafficsa-events") as Mapped;
     expect(f.format).toBe("geojson");
     expect(f.license).toBe("CC-BY-4.0");
-    expect(main(f.id).urls).toHaveLength(2);
+    expect(main(f.id).pagination).toMatchObject({ skipParam: "resultOffset", pageSize: 1000 });
+    expect(main(f.id).url).toContain("/MapServer/0/");
+    expect(main(f.id).url).toContain("orderByFields=");
+    expect(f.geojson?.idFields).toContain("START_DATE");
+    const closures = feed("au-sa-trafficsa-closures-events") as Mapped;
+    expect(main(closures.id).url).toContain("/MapServer/1/");
+    expect(closures.geojson?.idField).toBe("LOCATION_ID");
   });
 
   test("Live Traffic NSW sends the shared Open Data Hub key as a header", () => {

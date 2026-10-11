@@ -14,6 +14,10 @@
         },
       },
       "geojson": {
+        // The layer has no id of its own, and its CREATIONTIME is when the
+        // layer was written out (the same on every record, new every few
+        // minutes), not when a record changed.
+        "idFields": ["ASTAND", "X", "Y", "STARTTIME"],
         "lonField": "X",
         "latField": "Y",
         "typeField": "DESCRIPTION",
@@ -28,7 +32,6 @@
         },
         "defaultType": "hazard",
         "headlineField": "DESCRIPTION",
-        "updatedField": "CREATIONTIME",
       },
       "freshnessWindowSec": 900,
       "license": "CC-BY-4.0",

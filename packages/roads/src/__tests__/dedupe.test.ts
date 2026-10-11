@@ -40,6 +40,14 @@ describe("dedupeRoadEvents", () => {
     expect(result).toHaveLength(1);
   });
 
+  it("keeps the same one of duplicates updated at once, whichever order they come in", () => {
+    const a = makeRoadEvent({ id: "src:a", lng: 4.9, lat: 52.3 });
+    const b = makeRoadEvent({ id: "src:b", lng: 4.9, lat: 52.3 });
+
+    expect(dedupeRoadEvents([a, b]).map((e) => e.id)).toEqual(["src:a"]);
+    expect(dedupeRoadEvents([b, a]).map((e) => e.id)).toEqual(["src:a"]);
+  });
+
   it("keeps two RoadEvents at the same coords with different types separate", () => {
     const a = makeRoadEvent({ lng: 4.9, lat: 52.3, type: "accident" });
     const b = makeRoadEvent({ lng: 4.9, lat: 52.3, type: "roadworks" });

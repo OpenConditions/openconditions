@@ -31,6 +31,7 @@ const severity = z.enum(["low", "medium", "high", "critical", "unknown"]);
 const geoJsonMappingSchema = z
   .object({
     idField: z.string().optional(),
+    idFields: z.array(z.string()).nonempty().optional(),
     typeField: z.string().optional(),
     // Values are a coarse type or a registered situation code: a typo like
     // "roadwroks" or "roadworks.works.knitting" fails the lint instead of
@@ -64,7 +65,11 @@ const geoJsonMappingSchema = z
     endLonField: z.string().optional(),
     endLatField: z.string().optional(),
   })
-  .strict();
+  .strict()
+  .refine((m) => m.idField === undefined || m.idFields === undefined, {
+    path: ["idFields"],
+    message: "a mapping names idField or idFields, not both",
+  });
 
 /** Declarative field mapping for the GeoJSON flow parser — mirrors GeojsonFlowMapping in types.ts. */
 const geojsonFlowMappingSchema = z

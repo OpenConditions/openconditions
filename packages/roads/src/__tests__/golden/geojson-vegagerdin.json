@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:is-vegagerdin-conditions:0",
+    "id": "oc:situation:is-vegagerdin-conditions:6c8e32c04eff1a26",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -22,8 +22,7 @@
       "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "0",
-      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "recordId": "6c8e32c04eff1a26",
       "attribution": {
         "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
         "license": "CC-BY-4.0",
@@ -64,14 +63,14 @@
         "unknown"
       ]
     },
-    "canonicalId": "d58ac8a10b5dbfb5ff9a6c2b1b570df827832dba118084e50473e27e39a3bc6f",
+    "canonicalId": "b94234dfbf7954e04bf5c7aee471f6b4e3938cbc0213981031cf98bde7b59090",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9be1303ce2465f562d636636ae6c32372c772db3a6c3cca4d21657c7d32a1113"
+    "contentHash": "ab349083275cf56142e9a4b89ad8670e5f7316aa149b78d31130de4e5b32b354"
   },
   {
-    "id": "oc:situation:is-vegagerdin-conditions:1",
+    "id": "oc:situation:is-vegagerdin-conditions:802616e0de165394",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -93,8 +92,7 @@
       "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "1",
-      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "recordId": "802616e0de165394",
       "attribution": {
         "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
         "license": "CC-BY-4.0",
@@ -135,14 +133,14 @@
         "unknown"
       ]
     },
-    "canonicalId": "9f885738a474f2c920b0961bbf74f2c661d1adfe3486ddf8dbddad345aa98102",
+    "canonicalId": "3fea48c41f3e4c202ab6c8f13a2078824b831891b40ec83348957199e43b3ae8",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "00cd8867c9910cbe1b2e4cdb9583473f18a531a718891f3ed5e38123ed2b8e18"
+    "contentHash": "5530200c314eb8cc8a170ff1d5b6e0e277075a10fab8b428360b2a6db3359c89"
   },
   {
-    "id": "oc:situation:is-vegagerdin-conditions:2",
+    "id": "oc:situation:is-vegagerdin-conditions:ea59d0c28d4407a0",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -164,8 +162,7 @@
       "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "2",
-      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "recordId": "ea59d0c28d4407a0",
       "attribution": {
         "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
         "license": "CC-BY-4.0",
@@ -206,14 +203,14 @@
         "unknown"
       ]
     },
-    "canonicalId": "f4bf9fb87489f2f8bc1966c9c2a80f3ac71988b276082fd7c2c88e08e745e887",
+    "canonicalId": "1627e305054500b1fe6d4c6af988d7394afdca65b01af45537a3eb06cc3f7c0d",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "5e2e205816790316d8c0b96b38080f93ca1d2b9cb1dc11638d0e69f2bb0cbd82"
+    "contentHash": "1ff4f4e9356324534cd39712196cf79664a9ccf1c522d7d44d6df5229cbeaf6d"
   },
   {
-    "id": "oc:situation:is-vegagerdin-conditions:3",
+    "id": "oc:situation:is-vegagerdin-conditions:8436c5def3ded924",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -235,8 +232,7 @@
       "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "3",
-      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "recordId": "8436c5def3ded924",
       "attribution": {
         "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
         "license": "CC-BY-4.0",
@@ -273,14 +269,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "8c9039189ea3853f9ed04c2ce7d8e04ec22f2e85f92baa4a1564b0e0a55cc84e",
+    "canonicalId": "d0c67e17bf78b6602cb60f1b3e711c68a11f44d10a53ec589fcd8ff8bbcdc969",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4a4678c545948221a88b3a12fc7ff1dc3608e0e58e447a46ce7ab0f371fc646b"
+    "contentHash": "07a11228597fa11f92b05fe72c9f7e51ff0959b6e91a909a4684ef01d8cae53d"
   },
   {
-    "id": "oc:situation:is-vegagerdin-conditions:4",
+    "id": "oc:situation:is-vegagerdin-conditions:c970d2eca92b8c28",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -302,8 +298,7 @@
       "sourceId": "is-vegagerdin-conditions",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "4",
-      "sourceUpdatedAt": "2026-06-25T17:51:00.000Z",
+      "recordId": "c970d2eca92b8c28",
       "attribution": {
         "provider": "Vegagerðin (Icelandic Road and Coastal Administration)",
         "license": "CC-BY-4.0",
@@ -344,10 +339,10 @@
         "unknown"
       ]
     },
-    "canonicalId": "6db215ff77ed91eee6f59abaad726f58be28f1c2f90aa7fcbf0cd89fd415cdb3",
+    "canonicalId": "9aaffc1b4c5a0f0ef1c6172d82408abe8cb411b4f04ebe70cf22aad4a6f3767c",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0b2c277ff500a6eb9a5f64e035aced8e4ea88f46551b474af5d5e417c3760efe"
+    "contentHash": "660e9c01a98026c521f240a466b8915e5c71c7afbe2a7d8011eb3808f4b77c7a"
   }
 ]

@@ -54,17 +54,35 @@
       "name": "Traffic SA (South Australia)",
       "tier": "authoritative",
       "format": "geojson",
+      // The layer holds about 1,300 records and answers at most 1,000 a query,
+      // so it is paged in an order of what the records say.
       "endpoints": {
         "main": {
-          "urls": [
-            "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&f=geojson",
-            "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",
-          ],
+          "url": "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/0/query?where=1%3D1&outFields=*&orderByFields=START_DATE,LATITUDE,LONGITUDE,REC_TYPE,ROAD_NO,LOCAL_ROAD,SUBURB,SIDE_STREET,TRAFFIC_DIR,NO_LANES_CLOSED,SPEED_LIMIT&resultRecordCount=1000&f=geojson",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 1000,
+            "recordsPath": "features",
+          },
           "cadenceSec": 300,
         },
       },
       "geojson": {
-        "idField": "ROADWORKS_AND_INCIDENTS_ID",
+        // The layer is rebuilt every few minutes and numbers every record
+        // anew (ROADWORKS_AND_INCIDENTS_ID, ESRI_OID): a record is what it says.
+        "idFields": [
+          "REC_TYPE",
+          "ROAD_NO",
+          "LOCAL_ROAD",
+          "SUBURB",
+          "SIDE_STREET",
+          "TRAFFIC_DIR",
+          "START_DATE",
+          "LATITUDE",
+          "LONGITUDE",
+          "NO_LANES_CLOSED",
+          "SPEED_LIMIT",
+        ],
         "typeField": "REC_TYPE",
         "typeMap": {
           "ROADWORKS": "roadworks",
@@ -82,6 +100,38 @@
         "defaultType": "other",
         "headlineField": "DESCRIPTION",
         "roadField": "ROAD_NO",
+      },
+      "freshnessWindowSec": 900,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+      "attribution": "Department for Infrastructure and Transport (South Australia)",
+      "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
+    },
+    {
+      "subdivision": "sa",
+      "operator": "trafficsa",
+      "qualifier": "closures",
+      "product": "events",
+      "name": "Traffic SA road closures (South Australia)",
+      "tier": "authoritative",
+      "format": "geojson",
+      // The service's closures and detours layer: lines with their own fields,
+      // and a LOCATION_ID that, unlike the incidents layer's ids, survives a rebuild.
+      "endpoints": {
+        "main": {
+          "url": "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer/1/query?where=1%3D1&outFields=*&f=geojson",
+          "cadenceSec": 300,
+        },
+      },
+      "geojson": {
+        "idField": "LOCATION_ID",
+        "typeField": "PLOT_TYPE",
+        "typeMap": {
+          "RD_CLOSURE": "road_closure",
+        },
+        "defaultType": "other",
+        "descriptionField": "PLOT_DETAILS",
+        "roadField": "LOCAL_ROAD_NAME",
       },
       "freshnessWindowSec": 900,
       "license": "CC-BY-4.0",

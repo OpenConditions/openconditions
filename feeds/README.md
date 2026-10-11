@@ -145,6 +145,15 @@ Without it such a time is read as UTC, whatever zone the instance runs in, so
 set it for any publisher that writes local time: left out, its records start,
 end and change hours off.
 
+A GeoJSON feed names the property that identifies a record in `geojson.idField`.
+A publisher that numbers its records anew whenever it rebuilds its layer (an
+ArcGIS layer whose `OBJECTID` and own ids change every few minutes) has no such
+property: `geojson.idFields` then lists the properties that together say which
+record it is, and the id is a hash of their values. Without either, a record is
+known by its position in the payload, so every record the publisher inserts or
+drops renames the ones after it. Each of these turns an unchanged record into a
+withdrawal and a new record on the next poll.
+
 ## Feed ids
 
 A feed's id is derived, never written:

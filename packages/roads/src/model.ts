@@ -22,6 +22,12 @@ import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditio
 export interface GeoJsonMapping {
   /** properties key for the feature's stable id (falls back to the feed index). */
   idField?: string;
+  /**
+   * properties keys whose values together identify a feature, for a
+   * publisher that numbers its records anew on every refresh: the id is a
+   * hash of these values. Records alike in all of them are one record.
+   */
+  idFields?: string[];
   /** properties key whose value is mapped to a RoadEventType. */
   typeField?: string;
   /**

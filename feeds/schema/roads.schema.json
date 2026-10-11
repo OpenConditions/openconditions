@@ -897,6 +897,13 @@
               "idField": {
                 "type": "string"
               },
+              "idFields": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
               "typeField": {
                 "type": "string"
               },

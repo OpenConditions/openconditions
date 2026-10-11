@@ -1,5 +1,6 @@
 import { type Severity, toIsoTimestamp } from "@openconditions/core";
 import { readFeatureCollection, reprojectGeometry } from "@openconditions/ingest-framework";
+import { jcs, sha256Hex } from "@openconditions/model";
 import { type RoadClassification, registeredClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
@@ -139,6 +140,8 @@ export function featuresToRoadEvents(
   const mapping = src.geojson ?? {};
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  // One instant for the whole payload: duplicates the dedupe folds tie on it.
+  const now = new Date().toISOString();
 
   features.forEach((feature, index) => {
     const props = (feature.properties ?? {}) as Record<string, unknown>;
@@ -180,7 +183,10 @@ export function featuresToRoadEvents(
 
     const rawType = str(get(props, mapping.typeField));
     const { type, category, isPlanned, classification } = resolveType(rawType, mapping);
-    const localId = str(get(props, mapping.idField)) ?? String(index);
+    const localId =
+      mapping.idFields !== undefined
+        ? sha256Hex(jcs(mapping.idFields.map((field) => get(props, field) ?? null))).slice(0, 16)
+        : (str(get(props, mapping.idField)) ?? String(index));
     const sourceHeadline = str(get(props, mapping.headlineField));
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
@@ -223,8 +229,8 @@ export function featuresToRoadEvents(
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
       },
-      dataUpdatedAt: updated ?? new Date().toISOString(),
-      fetchedAt: new Date().toISOString(),
+      dataUpdatedAt: updated ?? now,
+      fetchedAt: now,
       isStale: false,
     });
   });

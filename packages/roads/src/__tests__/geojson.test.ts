@@ -116,6 +116,28 @@ describe("parseGeoJson", () => {
     expect(out[0]!.type).toBe("other");
   });
 
+  it("identifies a record by its idFields when the publisher renumbers it on every refresh", () => {
+    const src = { ...SRC, geojson: { idFields: ["road", "start"], headlineField: "headline" } };
+    const record = (oid: number, road: string, headline: string) => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [138.6, -34.9] },
+      properties: { OID: oid, road, start: 1784527200000, headline },
+    });
+    const before = parseGeoJson(
+      fc([record(1, "A1", "Works"), record(2, "B2", "Closure"), record(3, "C3", "Lane shift")]),
+      src,
+    );
+    // Rebuilt: every record renumbered and listed in another order.
+    const after = parseGeoJson(
+      fc([record(9, "C3", "Lane shift"), record(7, "A1", "Works"), record(8, "B2", "Closure")]),
+      src,
+    );
+    const ids = (events: typeof before) => new Map(events.map((e) => [e.headline, e.id]));
+    expect(ids(after)).toEqual(ids(before));
+    expect(new Set(before.map((e) => e.id)).size).toBe(3);
+    expect(before[0]!.id).toMatch(/^test-gj:[0-9a-f]{16}$/);
+  });
+
   it("accepts a GeometryCollection feature (Berlin VIZ mixes Point+LineString)", () => {
     const out = parseGeoJson(
       fc([

@@ -51,6 +51,14 @@ describe("roadsFeedShape", () => {
     );
   });
 
+  it("identifies a geojson record by one id field or by several, not both", () => {
+    const { idField: _id, ...rest } = berlin.geojson;
+    const withFields = { ...berlin, geojson: { ...rest, idFields: ["street", "tstore"] } };
+    expect(roadsFeedSchema.safeParse(withFields).success).toBe(true);
+    const both = { ...berlin, geojson: { ...berlin.geojson, idFields: ["street"] } };
+    expect(roadsFeedSchema.safeParse(both).success).toBe(false);
+  });
+
   it("names reference data as an endpoint, not a site table or station registry field", () => {
     const siteTable = { url: "https://example.test/sites.xml" };
     expect(roadsFeedSchema.safeParse({ ...berlin, siteTable }).success).toBe(false);

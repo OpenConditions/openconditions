@@ -1,6 +1,6 @@
 [
   {
-    "id": "oc:situation:au-sa-trafficsa-events:3214723105",
+    "id": "oc:situation:au-sa-trafficsa-events:106c1e325a86c6c0",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -32,7 +32,7 @@
       "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "3214723105",
+      "recordId": "106c1e325a86c6c0",
       "attribution": {
         "provider": "Department for Infrastructure and Transport (South Australia)",
         "license": "CC-BY-4.0",
@@ -69,14 +69,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "17fdcb3f4893b20b4eecddc78ccd7775cd34014bf1a704192fdf95c25d48cb3a",
+    "canonicalId": "12dcadf0b6f0cccc762ece4da0d7a409bb9827c18b24a9b742be43e6e41ca8fe",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "300888b1e9d2d524e9885d19c4cacab999b3d220605e81d9fc1d666f95ea2a01"
+    "contentHash": "5c24c12ea2a75567541affed28ef6e792a7747f1563aa7f88034fe967b7d3c5d"
   },
   {
-    "id": "oc:situation:au-sa-trafficsa-events:3214723110",
+    "id": "oc:situation:au-sa-trafficsa-events:a2b9f7aa61e02e39",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -108,7 +108,7 @@
       "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "3214723110",
+      "recordId": "a2b9f7aa61e02e39",
       "attribution": {
         "provider": "Department for Infrastructure and Transport (South Australia)",
         "license": "CC-BY-4.0",
@@ -145,14 +145,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "edcdeb13e98dfbbdf56ba3db95ac6f2dfefa28b6756f5a6d43b1a77a875c79a1",
+    "canonicalId": "9d5f5bd7cc3ebf5988d94c14034560356bb9d6585c1768e2d982b574c3a0c464",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2c480d83c5edb44ea91ed81015f59dc1c9fb3a65b29946e6a12d4b43bd777676"
+    "contentHash": "f7e7b95b36c56cca5e753c27e1aa433b8632f824abfc60081d7e00d724e6a226"
   },
   {
-    "id": "oc:situation:au-sa-trafficsa-events:3214723112",
+    "id": "oc:situation:au-sa-trafficsa-events:a437e00de884afde",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -184,7 +184,7 @@
       "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "3214723112",
+      "recordId": "a437e00de884afde",
       "attribution": {
         "provider": "Department for Infrastructure and Transport (South Australia)",
         "license": "CC-BY-4.0",
@@ -221,14 +221,14 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "134b2c3381e496309c04d9eb21b926212bd2bba1426ac590b04602c557fa6655",
+    "canonicalId": "b9689f723289217ab12f478759e7ffdddfef78bc0edbb02d046da0452ed598b6",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "89f35c5eb15537f605948b02d20158a2710700250ba6796635a02dfa9668282f"
+    "contentHash": "44648d1c9306406104811edeba0cc578acd5c294e980da5f29379361f7476da8"
   },
   {
-    "id": "oc:situation:au-sa-trafficsa-events:3214723113",
+    "id": "oc:situation:au-sa-trafficsa-events:5f43c1f8285d9a5c",
     "temporality": "live",
     "location": {
       "geometry": {
@@ -260,7 +260,7 @@
       "sourceId": "au-sa-trafficsa-events",
       "sourceFormat": "geojson",
       "accessMode": "bulk",
-      "recordId": "3214723113",
+      "recordId": "5f43c1f8285d9a5c",
       "attribution": {
         "provider": "Department for Infrastructure and Transport (South Australia)",
         "license": "CC-BY-4.0",
@@ -297,10 +297,10 @@
       "kind": "roadworks",
       "v": 1
     },
-    "canonicalId": "3f82628e40a4262a30e5711f6358eddfa94a229027862e8691cdf4793d70742b",
+    "canonicalId": "b56cdd8ab655d8f39f373c82ad872ed93631c385b90d071174ff517fd9dd2700",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1e0d301a4467946f63067dd8d427ed2a7128bfd84487360e97549dcb7dcff7a0"
+    "contentHash": "97d8bd74a405764fcca8c455bb7a636e5007e5333fa5bfdaeb8969108d9bff92"
   }
 ]

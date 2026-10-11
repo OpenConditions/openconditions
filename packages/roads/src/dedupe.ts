@@ -79,12 +79,13 @@ function textsCompatible(a: RoadEvent, b: RoadEvent): boolean {
   return jaccardOverlap(la, lb) >= LABEL_JACCARD_MIN;
 }
 
+/** The event updated last; of events updated at once, the one with the lowest id, whatever their order. */
 function newestByDataUpdatedAt(cluster: RoadEvent[]): RoadEvent {
   let best = cluster[0]!;
   let bestTime = Date.parse(best.dataUpdatedAt);
   for (let i = 1; i < cluster.length; i++) {
     const t = Date.parse(cluster[i]!.dataUpdatedAt);
-    if (t > bestTime) {
+    if (t > bestTime || (t === bestTime && cluster[i]!.id < best.id)) {
       best = cluster[i]!;
       bestTime = t;
     }
@@ -96,7 +97,7 @@ function newestByDataUpdatedAt(cluster: RoadEvent[]): RoadEvent {
  * Folds the duplicates one feed publishes for one event: same type, within
  * 60 m, with compatible text. Clusters merge only when every pair across them
  * qualifies, so a chain of neighbours never collapses into one; the event
- * updated last survives.
+ * updated last survives, the same one whichever order the feed lists them in.
  */
 export function dedupeRoadEvents(events: RoadEvent[]): RoadEvent[] {
   const n = events.length;

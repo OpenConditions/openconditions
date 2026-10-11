@@ -89,7 +89,19 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     license: "CC-BY-4.0",
     licenseUrl: "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
     geojson: {
-      idField: "ROADWORKS_AND_INCIDENTS_ID",
+      idFields: [
+        "REC_TYPE",
+        "ROAD_NO",
+        "LOCAL_ROAD",
+        "SUBURB",
+        "SIDE_STREET",
+        "TRAFFIC_DIR",
+        "START_DATE",
+        "LATITUDE",
+        "LONGITUDE",
+        "NO_LANES_CLOSED",
+        "SPEED_LIMIT",
+      ],
       typeField: "REC_TYPE",
       typeMap: {
         ROADWORKS: "roadworks",
@@ -531,6 +543,7 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     licenseUrl: "https://www.vegagerdin.is/",
     geojson: {
       lonField: "X",
+      idFields: ["ASTAND", "X", "Y", "STARTTIME"],
       latField: "Y",
       typeField: "DESCRIPTION",
       typeMap: {
@@ -544,7 +557,6 @@ const TEST_FEEDS: Record<string, TestFeed> = {
       },
       defaultType: "hazard",
       headlineField: "DESCRIPTION",
-      updatedField: "CREATIONTIME",
     },
   },
   "is-vegagerdin-lines-conditions": {
