@@ -15,6 +15,8 @@ function mapVerkehrsstatus(raw: unknown): Los {
   if (s.includes("erhöht") || s.includes("erhoeht") || s.includes("dicht")) return "heavy";
   if (s.includes("zäh") || s.includes("zaeh")) return "queuing";
   if (s.includes("stock")) return "queuing";
+  // A risk of congestion, not congestion.
+  if (s.includes("staugefahr")) return "heavy";
   if (s.includes("stau") || s.includes("gestaut")) return "stationary";
   return "unknown";
 }
@@ -78,12 +80,15 @@ export function parseBonnFlow(
             ? [geometry?.coordinates]
             : [];
 
+      // A section Bonn cannot measure now says so and carries speed 0: no reading.
+      const status = props["verkehrsstatus"];
+      if (typeof status === "string" && /nicht ermittelbar/i.test(status)) continue;
       const speedRaw = props["geschwindigkeit"];
       const speedKph =
         typeof speedRaw === "number" && Number.isFinite(speedRaw) && speedRaw >= 0
           ? speedRaw
           : undefined;
-      const los = mapVerkehrsstatus(props["verkehrsstatus"]);
+      const los = mapVerkehrsstatus(status);
       // Nothing to say if we have neither a resolvable LOS nor a speed.
       if (los === "unknown" && speedKph == null) continue;
       // Bonn writes its local time and marks it `Z` (08:55:00Z at 06:57 UTC).

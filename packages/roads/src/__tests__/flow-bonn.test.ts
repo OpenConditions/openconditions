@@ -85,6 +85,29 @@ describe("Bonn traffic flow", () => {
     expect(() => flows(feed, JSON.stringify({ type: "X" }))).toThrow("hard parse failure");
   });
 
+  it("reads a section Bonn cannot measure as no reading, and a risk of congestion as heavy", () => {
+    const out = flows(
+      feed,
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          section(144, 0, "aktuell nicht ermittelbar", [
+            [7.1832, 50.6686],
+            [7.1829, 50.6688],
+          ]),
+          section(143, 31, "Staugefahr", [
+            [7.177, 50.6727],
+            [7.1773, 50.6725],
+          ]),
+        ],
+      }),
+    );
+    expect(site(out, FEED, "144")).toBeUndefined();
+    expect(out.situations).toEqual([]);
+    expect(value(out, FEED, "143", "traffic.los")).toBe("heavy");
+    expect(value(out, FEED, "143", "traffic.speed")).toBe(31);
+  });
+
   it("skips sections with neither a speed nor a resolvable status", () => {
     const noSignal = JSON.stringify({
       features: [
