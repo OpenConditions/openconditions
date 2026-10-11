@@ -21,7 +21,7 @@ import {
   sealRecord,
   survivorRank,
 } from "@openconditions/model";
-import type { Sql } from "./bulk.js";
+import { type ColumnSpec, insertRows, type Sql, updateRows } from "./bulk.js";
 import { clustersHolding } from "./canonical-holding.js";
 import {
   type CanonicalRow,
@@ -69,6 +69,38 @@ interface LinkRow {
   decided_by: string | null;
 }
 
+type HeldCanonical = {
+  canonical_feature_id: string;
+  survivor_id: string;
+  member_ids: string[];
+  merged_sources: CanonicalCluster["mergedSources"] | null;
+  components: CanonicalComponent[];
+  computed_at: Date;
+};
+
+const CANONICAL_KEY: ColumnSpec = { name: "canonical_feature_id", type: "text" };
+const CANONICAL_COLUMNS: ColumnSpec[] = [
+  { name: "survivor_id", type: "text" },
+  { name: "member_ids", type: "text[]" },
+  { name: "merged_sources", type: "jsonb" },
+  { name: "components", type: "jsonb" },
+];
+const COMPUTED_AT: ColumnSpec = { name: "computed_at", type: "timestamptz" };
+const CANONICAL_DELETE_BATCH = 1000;
+
+/** Semantic fields retain array order; computation time always advances. */
+const canonicalSemantics = (
+  row: Pick<HeldCanonical, "survivor_id" | "merged_sources" | "components"> & {
+    member_ids: readonly string[];
+  },
+) =>
+  jcs({
+    survivor_id: row.survivor_id,
+    member_ids: row.member_ids,
+    merged_sources: row.merged_sources,
+    components: row.components,
+  });
+
 const pairKey = (a: string, b: string) => (a < b ? jcs([a, b]) : jcs([b, a]));
 
 /** Linkable features one write touches above which linking refreshes the planner's statistics. */
@@ -85,9 +117,9 @@ const decided = (l: LinkRow) => l.status === "rejected" || l.decided_by !== null
  * stored link follows unless a person decided it (a `rejected` or manual
  * link stays as it is). The connected clusters the touched features belong
  * to now or did before are then recomputed with `canonicalClusters`, and
- * their `feature_canonical` rows replaced, each with its canonical component
- * set. A feature of a kind without linking rules is a cluster of one, so
- * every live feature has exactly one canonical row and a consumer resolves
+ * their `feature_canonical` rows refreshed, each with its canonical component
+ * set and computation time. A feature of a kind without linking rules is a
+ * cluster of one, so every live feature has exactly one canonical row and a consumer resolves
  * any feature to its canonical feature with one lookup. A cluster whose id
  * or whose component keys changed takes its crowd rows along (see
  * {@link rekeyCrowdSeries}); its fused rows are the caller's to recompute.
@@ -214,47 +246,60 @@ export async function relinkFeatures(
       cluster.memberIds.map((id) => byId.get(id)!.record as unknown as ComponentHolder),
     ),
   }));
-  // The clusters being replaced: every one holding a feature reconsidered now.
-  const replaced = await tx<
-    {
-      canonical_feature_id: string;
-      survivor_id: string;
-      member_ids: string[];
-      components: CanonicalComponent[];
-    }[]
-  >`
+  // Hold complete old snapshots until the new rows and crowd subjects settle.
+  const previous = await tx<HeldCanonical[]>`
     WITH held AS MATERIALIZED (${clustersHolding(tx, [...seeds, ...members.map((m) => m.id)])})
-    DELETE FROM conditions.feature_canonical c USING held
-     WHERE c.canonical_feature_id = held.canonical_feature_id
-    RETURNING c.canonical_feature_id, c.survivor_id, c.member_ids, c.components`;
-  if (rows.length > 0) {
-    await tx`
-      INSERT INTO conditions.feature_canonical
-        (canonical_feature_id, survivor_id, member_ids, merged_sources, components, computed_at)
-      SELECT canonical_feature_id, survivor_id, member_ids, merged_sources, components,
-             ${opts.now}::timestamptz
-        FROM jsonb_to_recordset(${JSON.stringify(
-          rows.map(({ cluster, components }) => ({
-            canonical_feature_id: cluster.canonicalFeatureId,
-            survivor_id: cluster.survivorId,
-            member_ids: cluster.memberIds,
-            merged_sources: cluster.mergedSources,
-            components,
-          })),
-        )}::text::jsonb)
-          AS r(canonical_feature_id text, survivor_id text, member_ids text[],
-               merged_sources jsonb, components jsonb)`;
-  }
+    SELECT c.canonical_feature_id, c.survivor_id, c.member_ids,
+           c.merged_sources, c.components, c.computed_at
+      FROM conditions.feature_canonical c JOIN held USING (canonical_feature_id)
+     ORDER BY c.canonical_feature_id
+     FOR UPDATE OF c`;
   const now = new Map(rows.map((r) => [r.cluster.canonicalFeatureId, r]));
+  const vanished = previous.filter((r) => !now.has(r.canonical_feature_id));
+  const previousById = new Map(previous.map((r) => [r.canonical_feature_id, r]));
+  const desired = rows.map(({ cluster, components }) => ({
+    canonical_feature_id: cluster.canonicalFeatureId,
+    survivor_id: cluster.survivorId,
+    member_ids: cluster.memberIds,
+    merged_sources: cluster.mergedSources,
+    components,
+    computed_at: opts.now,
+  }));
+  const created: typeof desired = [];
+  const changed: typeof desired = [];
+  const retained: { canonical_feature_id: string; computed_at: string }[] = [];
+  for (const row of desired) {
+    const old = previousById.get(row.canonical_feature_id);
+    if (old === undefined) created.push(row);
+    else if (canonicalSemantics(old) !== canonicalSemantics(row)) changed.push(row);
+    else retained.push({ canonical_feature_id: row.canonical_feature_id, computed_at: opts.now });
+  }
+  for (let i = 0; i < vanished.length; i += CANONICAL_DELETE_BATCH) {
+    await tx`DELETE FROM conditions.feature_canonical
+      WHERE canonical_feature_id = ANY(${vanished.slice(i, i + CANONICAL_DELETE_BATCH).map((r) => r.canonical_feature_id)}::text[])`;
+  }
+  await insertRows(
+    tx,
+    "feature_canonical",
+    [CANONICAL_KEY, ...CANONICAL_COLUMNS, COMPUTED_AT],
+    created,
+  );
+  await updateRows(
+    tx,
+    "feature_canonical",
+    CANONICAL_KEY,
+    [...CANONICAL_COLUMNS, COMPUTED_AT],
+    changed,
+  );
+  await updateRows(tx, "feature_canonical", CANONICAL_KEY, [COMPUTED_AT], retained);
   result.canonicalIds = [...now.keys()];
   for (const { cluster } of rows) {
     result.kindOf.set(cluster.canonicalFeatureId, byId.get(cluster.survivorId)!.kind);
   }
-  const vanished = replaced.filter((r) => !now.has(r.canonical_feature_id));
   result.vanished = vanished.map((r) => r.canonical_feature_id);
   // A cluster that stays can still re-key its components (a member's charge
   // point gains the uid that makes it the survivor's): its crowd rows follow.
-  const rekeyed = replaced.filter((r) => {
+  const rekeyed = previous.filter((r) => {
     const kept = now.get(r.canonical_feature_id);
     return kept !== undefined && jcs(kept.components) !== jcs(r.components);
   });
