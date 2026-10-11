@@ -84,11 +84,11 @@ updates:
       prefix: chore
       include: scope
     ignore:
-      # Stay on the pinned LTS base images (Node 24 / Python 3.12 == CI); bump a
+      # Stay on the pinned runtime lines (Node 24 LTS / Python 3.14 == CI); bump a
       # base-image major deliberately, not via Dependabot.
       - dependency-name: "node"
         update-types: ["version-update:semver-major"]
       - dependency-name: "python"
-        # Python 3.12→3.14 is a "minor" bump in semver terms; ignore minor too so
-        # the base stays on 3.12 (== the CI test runtime) until bumped on purpose.
+        # Python 3.14→3.15 is a "minor" bump in semver terms; ignore minor too so
+        # the base stays on 3.14 (== the CI test runtime) until bumped on purpose.
         update-types: ["version-update:semver-major", "version-update:semver-minor"]

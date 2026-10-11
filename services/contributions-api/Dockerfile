@@ -16,7 +16,7 @@
 # dist/drizzle, so only fastify, postgres and @cloudflare/privacypass-ts remain
 # as external runtime dependencies.
 
-FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS base
+FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS base
 # Read the pnpm version from the repo root package.json so lockfile resolution
 # stays reproducible across local and CI Docker builds.
 COPY package.json /tmp/package.json
@@ -132,12 +132,22 @@ COPY services/contributions-api/ services/contributions-api/
 RUN pnpm --filter @openconditions/contributions-api... build
 
 # Production image.
-FROM node:24-alpine@sha256:e67514e5d0f6c46656005e1b693b2ec9d52e80b641307de684d4a015ba7a4eaf AS runner
+FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c5b53302f905ec1c1 AS runner
 WORKDIR /app
 
-# curl backs the http healthcheck; the OpenMapX compose renderer falls back to
-# busybox wget, but curl keeps a plain `docker run` healthcheck working too.
-RUN apk add --no-cache curl
+# Apply Alpine security fixes that landed after the immutable base was published.
+# curl backs the healthcheck. Package managers are build-time tools, so omit them
+# from the production attack surface.
+RUN apk upgrade --no-cache \
+    && apk add --no-cache curl \
+    && rm -rf /usr/local/lib/node_modules/npm \
+               /usr/local/lib/node_modules/corepack \
+               /usr/local/bin/npm \
+               /usr/local/bin/npx \
+               /usr/local/bin/corepack \
+               /opt/yarn-v1.22.22 \
+               /usr/local/bin/yarn \
+               /usr/local/bin/yarnpkg
 
 ENV NODE_ENV=production
 ENV PORT=4200
