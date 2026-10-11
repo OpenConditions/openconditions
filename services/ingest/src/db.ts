@@ -11,6 +11,7 @@ export const DATABASE_URL: string = requireCredential(process.env, "DATABASE_URL
  * background work share this pool.
  */
 export const sql = postgres(DATABASE_URL, {
+  connection: { application_name: "openconditions-ingest-writer" },
   max: 5,
   idle_timeout: 30,
   connect_timeout: 10,
@@ -22,6 +23,7 @@ export const sql = postgres(DATABASE_URL, {
  * reads served from that pool then waited with them.
  */
 export const apiSql = postgres(DATABASE_URL, {
+  connection: { application_name: "openconditions-ingest-api" },
   max: 5,
   idle_timeout: 30,
   connect_timeout: 10,
