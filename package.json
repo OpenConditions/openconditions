@@ -21,6 +21,7 @@
     "feeds:lint": "pnpm build:domains && tsx scripts/feeds-lint.ts",
     "feeds:check": "pnpm build:domains && tsx scripts/feeds-check.ts",
     "export:atlas": "pnpm build:domains && tsx scripts/export-atlas.ts",
+    "audit:production": "tsx scripts/check-production-audits.ts",
     "gen:model": "pnpm --filter @openconditions/model-registry... build && tsx scripts/gen-model-artifacts.ts --write",
     "check:model": "pnpm --filter @openconditions/model-registry... build && tsx scripts/gen-model-artifacts.ts",
     "road-conditions:readiness": "pnpm --filter @openconditions/ingest exec tsx src/ops/road-conditions-readiness.ts",
