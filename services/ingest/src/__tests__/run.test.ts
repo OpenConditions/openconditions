@@ -170,6 +170,31 @@ describe("inspectSnapshotCompleteness", () => {
   });
 });
 
+describe("inspectSnapshotCompleteness — a DATEX II v3 publication at the root", () => {
+  const xml = readFileSync(
+    new URL(
+      "../../../../packages/roads/src/__tests__/fixtures/cita-lu/situations.xml",
+      import.meta.url,
+    ),
+  );
+  const cita = repoFeed("lu-cita-events");
+
+  it("counts the records of CITA's root SituationPublication", () => {
+    expect(inspectSnapshotCompleteness(cita, [xml])).toEqual({
+      complete: true,
+      inputRecords: 7,
+      completeEmpty: false,
+    });
+  });
+
+  it("still refuses a root of another publication type", () => {
+    const other = Buffer.from(
+      xml.toString("utf8").replace('xsi:type="sit:SituationPublication"', 'xsi:type="sit:Other"'),
+    );
+    expect(() => inspectSnapshotCompleteness(cita, [other])).toThrow(/SituationPublication/);
+  });
+});
+
 describe("inspectSnapshotCompleteness — the real NDW descriptor", () => {
   const xml = readFileSync(
     new URL(

@@ -391,9 +391,14 @@ export function inspectSnapshotCompleteness(
       if (roots.length === 0) {
         throw new Error(`snapshot completeness: expected XML ${contract.rootElement} element`);
       }
-      const publications = roots
-        .flatMap((root) => findXmlElements(root, contract.publicationElement!))
-        .filter((publication) => xmlPublicationType(publication) === contract.publicationType);
+      // DATEX II v3 has no wrapper: the root element is the publication.
+      const candidates =
+        contract.publicationElement === contract.rootElement
+          ? roots
+          : roots.flatMap((root) => findXmlElements(root, contract.publicationElement!));
+      const publications = candidates.filter(
+        (publication) => xmlPublicationType(publication) === contract.publicationType,
+      );
       if (publications.length === 0) {
         throw new Error(
           `snapshot completeness: expected ${contract.publicationType} ${contract.publicationElement}`,
