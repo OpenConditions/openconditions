@@ -140,13 +140,13 @@ describe("bnetza", () => {
     const out = parse({ main: [Buffer.from(`${header}\r\n${row}\r\n`)] });
     const wide = site(out, "77");
     expect(evsesOf(wide).map((e) => [e.key, e.details["quantity"]])).toEqual([
-      ["DEXMPE0001", undefined],
       ["77-2", undefined],
       ["77-3", undefined],
       ["77-4", undefined],
       ["77-5", undefined],
       ["77-6", undefined],
       ["77-more", 3],
+      ["DEXMPE0001", undefined],
     ]);
   });
 

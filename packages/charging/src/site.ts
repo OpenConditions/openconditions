@@ -235,9 +235,20 @@ const positive = (n: number | undefined) =>
 const currentOf = (c: ConnectorInput): "ac" | "dc" | undefined =>
   c.current ?? (c.powerType === undefined ? undefined : c.powerType === "DC" ? "dc" : "ac");
 
+const POINT_ORDER = new Intl.Collator("en", { numeric: true });
+
+/** Charge points by their EVSE id (else their key), so a register listing them in another order states the same site. */
+function byEvse(a: EvseInput, b: EvseInput): number {
+  const [ka, kb] = [evseKey(a.key), evseKey(b.key)];
+  return (
+    POINT_ORDER.compare(clean(a.evseId) ?? ka, clean(b.evseId) ?? kb) || POINT_ORDER.compare(ka, kb)
+  );
+}
+
 /**
  * The EVSE components and, below each, its connectors keyed
- * `<evseKey>/<connectorId>`. A repeated key keeps the first.
+ * `<evseKey>/<connectorId>`, in the order of their ids. A repeated key keeps
+ * the first.
  */
 function evseComponents(
   feed: ChargingFeed,
@@ -246,7 +257,7 @@ function evseComponents(
 ): RecordDraft[] {
   const seen = new Set<string>();
   const out: RecordDraft[] = [];
-  for (const evse of evses) {
+  for (const evse of [...evses].sort(byEvse)) {
     const key = evseKey(evse.key);
     if (key === "" || seen.has(key)) continue;
     seen.add(key);
@@ -275,7 +286,7 @@ function evseComponents(
         ...(restrictions.length === 0 ? {} : { parkingRestrictions: restrictions }),
       },
     });
-    for (const connector of evse.connectors) {
+    for (const connector of [...evse.connectors].sort((a, b) => POINT_ORDER.compare(a.id, b.id))) {
       if (connector.id.trim() === "") continue;
       const childKey = connectorKey(key, connector.id);
       if (seen.has(childKey)) continue;

@@ -134,11 +134,11 @@ describe("afdc", () => {
     });
     const stationDraft = site(out, "900");
     expect(connectorsOf(stationDraft).map((c) => c.details["standard"])).toEqual([
+      "CHADEMO",
       "IEC_62196_T1",
       "IEC_62196_T1_COMBO",
-      "CHADEMO",
-      "DOMESTIC_B",
       "SAE_J3400",
+      "DOMESTIC_B",
       "SAE_J3400",
       "UNKNOWN",
     ]);

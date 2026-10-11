@@ -97,8 +97,8 @@ describe("geojson", () => {
       maxPowerKw: 40,
     };
     expect(evses(site(out, "8c7d64a2-7496-11f1-9d05-42010aa400b8"))).toEqual([
-      { key: "112402428", connectors: [{ key: "112402428/1", ...dc }] },
       { key: "112402427", connectors: [{ key: "112402427/1", ...dc }] },
+      { key: "112402428", connectors: [{ key: "112402428/1", ...dc }] },
     ]);
     expect(site(out, "ff248c18-84d3-11f1-967e-42010aa400b8")).toMatchObject({
       access: { audience: "public" },
@@ -127,25 +127,25 @@ describe("geojson", () => {
     });
     expect(evses(yuen)).toEqual([
       {
+        key: "MEDIUM_IEC62196_no",
+        quantity: 10,
+        connectors: [{ key: "MEDIUM_IEC62196_no/1", standard: "IEC_62196_T2", current: "ac" }],
+      },
+      {
         key: "STANDARD_BS1363_no",
         connectors: [
           { key: "STANDARD_BS1363_no/1", standard: "DOMESTIC_G", format: "socket", current: "ac" },
         ],
       },
-      {
-        key: "MEDIUM_IEC62196_no",
-        quantity: 10,
-        connectors: [{ key: "MEDIUM_IEC62196_no/1", standard: "IEC_62196_T2", current: "ac" }],
-      },
     ]);
     const elements = evses(site(out, "ELEMENTS Carpark"));
     expect(elements.map((e) => [e.key, e.quantity, e.connectors[0]?.["standard"]])).toEqual([
-      ["MEDIUM_IEC62196_no", 9, "IEC_62196_T2"],
-      ["QUICK_CHAdeMO_no", 3, "CHADEMO"],
-      ["QUICK_CCS_DC_COMBO_no", 21, "IEC_62196_T2_COMBO"],
-      ["QUICK_IEC62196_no", 67, "IEC_62196_T2"],
-      ["QUICK_GB_T20234_3_DC__no", 6, "GBT_DC"],
       ["FAST_CCS_DC_COMBO_no", 6, "IEC_62196_T2_COMBO"],
+      ["MEDIUM_IEC62196_no", 9, "IEC_62196_T2"],
+      ["QUICK_CCS_DC_COMBO_no", 21, "IEC_62196_T2_COMBO"],
+      ["QUICK_CHAdeMO_no", 3, "CHADEMO"],
+      ["QUICK_GB_T20234_3_DC__no", 6, "GBT_DC"],
+      ["QUICK_IEC62196_no", 67, "IEC_62196_T2"],
     ]);
     // The tiers are ranges, so no connector claims a power.
     expect(
@@ -368,8 +368,8 @@ describe("edge records", () => {
     const out = parseLayout(walloniaFeed(), { main: [Buffer.from(csv)] }, parseContext(FETCHED));
     expect(sealFailures(out.features)).toEqual([]);
     expect(evses(site(out, "loc")).map((e) => [e.key, e.connectors[0]?.["maxPowerKw"]])).toEqual([
-      ["row-1", 11],
       ["1", 22],
+      ["row-1", 11],
     ]);
   });
 

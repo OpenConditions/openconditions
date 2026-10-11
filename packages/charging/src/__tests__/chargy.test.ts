@@ -128,12 +128,12 @@ describe("chargy", () => {
     expect(out.features).toHaveLength(6);
     expect(out.rejected).toBe(0);
     expect(components(site(out, "CP-A")).map((c) => c.key)).toEqual([
-      "CP-B",
-      "CP-B/59985",
-      "CP-B/59986",
       "CP-A",
       "CP-A/59987",
       "CP-A/59988",
+      "CP-B",
+      "CP-B/59985",
+      "CP-B/59986",
     ]);
   });
 });

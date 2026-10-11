@@ -57,6 +57,33 @@ const components = (draft: RecordDraft) => draft["components"] as Component[];
 const component = (draft: RecordDraft, key: string) => components(draft).find((c) => c.key === key);
 
 describe("siteDraft", () => {
+  test("states the same site whichever order the register lists its charge points in", () => {
+    const evses = [
+      {
+        key: "0b461a0e-d3fb-4a73-9649-4a285788543e",
+        evseId: "NL*NUO*EALF*0010583*2",
+        connectors: [
+          { id: "2", standard: "IEC_62196_T2", powerType: "AC_3_PHASE" as const },
+          { id: "1", standard: "IEC_62196_T2", powerType: "AC_3_PHASE" as const },
+        ],
+      },
+      {
+        key: "491a44e6-f8ce-4517-ac6b-686c2cd7f304",
+        evseId: "NL*NUO*EALF*0010583*1",
+        connectors: [{ id: "1", standard: "IEC_62196_T2", powerType: "AC_3_PHASE" as const }],
+      },
+    ];
+    const listed = site({ evses });
+    expect(site({ evses: [...evses].reverse() })).toEqual(listed);
+    expect(components(listed).map((c) => c.key)).toEqual([
+      "491a44e6-f8ce-4517-ac6b-686c2cd7f304",
+      "491a44e6-f8ce-4517-ac6b-686c2cd7f304/1",
+      "0b461a0e-d3fb-4a73-9649-4a285788543e",
+      "0b461a0e-d3fb-4a73-9649-4a285788543e/1",
+      "0b461a0e-d3fb-4a73-9649-4a285788543e/2",
+    ]);
+  });
+
   test("two EVSEs with connector id '1' each give two distinct connector components", () => {
     const draft = site();
     expect(components(draft).map((c) => [c.kind, c.key, c.parentKey])).toEqual([

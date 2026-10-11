@@ -78,8 +78,8 @@ describe("nobil", () => {
   test("NOBIL: a station's connectors are keyed by their index or their EVSE id, each with its plugs and kW", () => {
     const out = dump();
     const fast = site(out, "NOR_09001");
-    expect(evsesOf(fast).map((e) => e.key)).toEqual(["NO*EKS*E9001*1", "2"]);
-    expect(evsesOf(fast)[0]).toMatchObject({
+    expect(evsesOf(fast).map((e) => e.key)).toEqual(["2", "NO*EKS*E9001*1"]);
+    expect(evsesOf(fast)[1]).toMatchObject({
       externalIds: [{ scheme: "emi3:evse", id: "NOEKSE90011" }],
     });
     expect(connectorsOf(fast, "NO*EKS*E9001*1")[0]?.details).toMatchObject({

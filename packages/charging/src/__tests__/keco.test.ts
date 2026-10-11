@@ -76,8 +76,8 @@ describe("keco", () => {
         .map((c) => [c.key, c.details["standard"], c.details["current"], c.details["maxPowerKw"]]),
     ).toEqual([
       ["03/CHADEMO", "CHADEMO", "dc", 100],
-      ["03/IEC_62196_T2", "IEC_62196_T2", "ac", undefined],
       ["03/IEC_62196_T1_COMBO", "IEC_62196_T1_COMBO", "dc", 100],
+      ["03/IEC_62196_T2", "IEC_62196_T2", "ac", undefined],
     ]);
     expect(out.observations).toHaveLength(1);
     expect(out.observations[0]).toMatchObject({

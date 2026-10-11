@@ -71,8 +71,8 @@ describe("eipa", () => {
     // Pool 2 holds stations 22 and 23; the gas station's pool does not exist.
     expect(out.features).toHaveLength(2);
     const pool = site(out, "2");
-    expect(evsesOf(pool).map((e) => e.key)).toEqual(["PL*2DT*E9FX7M3CL", "PL*2DT*E2NDPOINT"]);
-    expect(evsesOf(pool)[0]).toMatchObject({
+    expect(evsesOf(pool).map((e) => e.key)).toEqual(["PL*2DT*E2NDPOINT", "PL*2DT*E9FX7M3CL"]);
+    expect(evsesOf(pool)[1]).toMatchObject({
       externalIds: [{ scheme: "emi3:evse", id: "PL2DTE9FX7M3CL" }],
       details: { evseId: "PL*2DT*E9FX7M3CL" },
     });

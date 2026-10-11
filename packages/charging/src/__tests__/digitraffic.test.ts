@@ -36,7 +36,7 @@ describe("digitraffic", () => {
       components(tesla)
         .filter((c) => c.kind === "evse")
         .map((c) => c.key),
-    ).toEqual(["FI*TSL*E5FTM6L", "FI*TSL*E5FTM6K"]);
+    ).toEqual(["FI*TSL*E5FTM6K", "FI*TSL*E5FTM6L"]);
     const reading = out.observations.find(
       (o) => (o["subject"] as { componentKey: string }).componentKey === "FI*TSL*E5FTM6L",
     );

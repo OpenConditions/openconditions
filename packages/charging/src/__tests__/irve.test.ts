@@ -52,10 +52,10 @@ describe("irve", () => {
     // same PDC is not rated by it, and a cable the source does not state is left open.
     const plugs = components(station).filter((c) => c.parentKey === "FRBFCEVDIUF2");
     expect(plugs.map((c) => c.details)).toEqual([
-      { kind: "connector", v: 1, standard: "DOMESTIC_E", format: "socket", current: "ac" },
       { kind: "connector", v: 1, standard: "IEC_62196_T2", current: "ac", maxPowerKw: 22 },
+      { kind: "connector", v: 1, standard: "DOMESTIC_E", format: "socket", current: "ac" },
     ]);
-    expect(plugs.map((c) => c.key)).toEqual(["FRBFCEVDIUF2/ef", "FRBFCEVDIUF2/2"]);
+    expect(plugs.map((c) => c.key)).toEqual(["FRBFCEVDIUF2/2", "FRBFCEVDIUF2/ef"]);
     expect(station).toMatchObject({
       name: [{ lang: "fr", text: "SICECO - SEMUR-EN-AUXOIS - Park. Rue Jean Jacques Collenot" }],
       operator: { name: [{ lang: "fr", text: "Citeos Mobilité Electrique Paris - Cogelum IDF" }] },
