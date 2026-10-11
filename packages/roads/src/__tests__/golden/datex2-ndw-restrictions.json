@@ -183,6 +183,52 @@
     },
     "effects": [
       {
+        "id": "RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA/access",
+        "sourceRecordRef": "RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA/133",
+        "applicability": {
+          "kind": "classes",
+          "include": [
+            {
+              "usage": "emergency_services"
+            }
+          ]
+        },
+        "direction": {
+          "value": "positive",
+          "basis": "alert_c",
+          "text": "aligned"
+        },
+        "validity": {
+          "status": "unknown",
+          "start": "2025-09-05T22:59:03.000Z",
+          "end": "2027-03-30T21:59:00.000Z"
+        },
+        "compliance": "advisory",
+        "normalization": "complete",
+        "actionStatus": "implemented",
+        "source": {
+          "path": "situationRecord.forVehiclesWithCharacteristicsOf[0].vehicleUsage[0]",
+          "tokens": {
+            "sourcePath": "situationRecord.forVehiclesWithCharacteristicsOf[0].vehicleUsage[0]",
+            "sourceName": "ZN-ZO [RWS Zuid-Nederland District Zuid-Oost]",
+            "vehicleUsage": "emergencyServices",
+            "locationRefs": {
+              "scheme": "alert_c",
+              "countryCode": "8",
+              "tableNumber": "6.13",
+              "tableVersion": "A",
+              "primaryLocation": "10439",
+              "secondaryLocation": "10436",
+              "directionCoded": "positive",
+              "affectedDirection": "aligned"
+            }
+          }
+        },
+        "kind": "access",
+        "v": 1,
+        "mode": "prohibited"
+      },
+      {
         "id": "RWS01_M1080891_NARROW_LANES_D2_WWA/closure",
         "sourceRecordRef": "RWS01_M1080891_NARROW_LANES_D2_WWA/133",
         "applicability": {
@@ -239,52 +285,6 @@
         "kind": "closure",
         "v": 1,
         "scope": "road"
-      },
-      {
-        "id": "RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA/access",
-        "sourceRecordRef": "RWS01_M1080891_EMERGENCY_SERVICES_D2_WWA/133",
-        "applicability": {
-          "kind": "classes",
-          "include": [
-            {
-              "usage": "emergency_services"
-            }
-          ]
-        },
-        "direction": {
-          "value": "positive",
-          "basis": "alert_c",
-          "text": "aligned"
-        },
-        "validity": {
-          "status": "unknown",
-          "start": "2025-09-05T22:59:03.000Z",
-          "end": "2027-03-30T21:59:00.000Z"
-        },
-        "compliance": "advisory",
-        "normalization": "complete",
-        "actionStatus": "implemented",
-        "source": {
-          "path": "situationRecord.forVehiclesWithCharacteristicsOf[0].vehicleUsage[0]",
-          "tokens": {
-            "sourcePath": "situationRecord.forVehiclesWithCharacteristicsOf[0].vehicleUsage[0]",
-            "sourceName": "ZN-ZO [RWS Zuid-Nederland District Zuid-Oost]",
-            "vehicleUsage": "emergencyServices",
-            "locationRefs": {
-              "scheme": "alert_c",
-              "countryCode": "8",
-              "tableNumber": "6.13",
-              "tableVersion": "A",
-              "primaryLocation": "10439",
-              "secondaryLocation": "10436",
-              "directionCoded": "positive",
-              "affectedDirection": "aligned"
-            }
-          }
-        },
-        "kind": "access",
-        "v": 1,
-        "mode": "prohibited"
       }
     ],
     "details": {
@@ -295,7 +295,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "be7b53ef9f501c3d7b24ba83de52043dcb9e11ff4d764a94e3e3ab52e1952ab4"
+    "contentHash": "7e207ac9e2d466adcb127e9464d6382c7fb6d1dc0986f1120686f3a121f77e10"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005382945",

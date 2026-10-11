@@ -514,16 +514,16 @@
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:us-wzdx-events:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
+          "id": "oc:situation:us-wzdx-events:4d151e7d-11d8-4b99-a192-51e189da0de7"
         },
-        "relation": "related_work_zone"
+        "relation": "next_occurrence"
       },
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:us-wzdx-events:4d151e7d-11d8-4b99-a192-51e189da0de7"
+          "id": "oc:situation:us-wzdx-events:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
         },
-        "relation": "next_occurrence"
+        "relation": "related_work_zone"
       }
     ],
     "provenance": {
@@ -652,6 +652,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2b44f6b0dfb3f1474d52721165a7708870416a646196a7e20a7854ae78300285"
+    "contentHash": "adb5023d2a415a85c01c9f5379625fcc0ed888cae3d008cde871e81763f86324"
   }
 ]

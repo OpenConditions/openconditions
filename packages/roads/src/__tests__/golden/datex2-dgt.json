@@ -250,6 +250,46 @@
     },
     "effects": [
       {
+        "id": "11374304/dimension_limit",
+        "sourceRecordRef": "11374304/1",
+        "applicability": {
+          "kind": "unknown",
+          "raw": [
+            "anyVehicle"
+          ]
+        },
+        "compliance": "mandatory",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "unsupported_operator",
+            "sourcePath": "restrictions[0]"
+          }
+        ],
+        "source": {
+          "path": "restrictions[0]",
+          "tokens": {
+            "type": "weight",
+            "value": 5.5,
+            "unit": "kg",
+            "operator": "greaterThan",
+            "raw": {
+              "value": "5.5",
+              "comparisonOperator": "greaterThan"
+            }
+          }
+        },
+        "kind": "dimension_limit",
+        "v": 1,
+        "dimension": "gross_weight",
+        "value": {
+          "value": 5.5,
+          "unit": "kg"
+        },
+        "operator": "lte",
+        "meaning": "maximum_permitted"
+      },
+      {
         "id": "11374305/lane_restriction",
         "sourceRecordRef": "11374305/1",
         "applicability": {
@@ -303,46 +343,6 @@
         },
         "operator": "lte",
         "meaning": "maximum_permitted"
-      },
-      {
-        "id": "11374304/dimension_limit",
-        "sourceRecordRef": "11374304/1",
-        "applicability": {
-          "kind": "unknown",
-          "raw": [
-            "anyVehicle"
-          ]
-        },
-        "compliance": "mandatory",
-        "normalization": "partial",
-        "issues": [
-          {
-            "code": "unsupported_operator",
-            "sourcePath": "restrictions[0]"
-          }
-        ],
-        "source": {
-          "path": "restrictions[0]",
-          "tokens": {
-            "type": "weight",
-            "value": 5.5,
-            "unit": "kg",
-            "operator": "greaterThan",
-            "raw": {
-              "value": "5.5",
-              "comparisonOperator": "greaterThan"
-            }
-          }
-        },
-        "kind": "dimension_limit",
-        "v": 1,
-        "dimension": "gross_weight",
-        "value": {
-          "value": 5.5,
-          "unit": "kg"
-        },
-        "operator": "lte",
-        "meaning": "maximum_permitted"
       }
     ],
     "details": {
@@ -353,7 +353,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "6fbb5e6faf1abed5d5de1c0bfc5a070f82cf0a335969f370d32c38cf31698930"
+    "contentHash": "66ee6fd88d81c56f813b6a14f52ea29fc303b0a84ac9c1225cc6ade32d93003e"
   },
   {
     "id": "oc:situation:es-dgt-events:8660292",

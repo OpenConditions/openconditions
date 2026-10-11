@@ -220,6 +220,9 @@ function severityOf(c: RoadClassification, event: RoadEvent, effects: readonly E
     : { label: "unknown", ...token };
 }
 
+/** Orders record ids as the numbers in them count, so a publisher's order of them does not show. */
+const RECORD_ORDER = new Intl.Collator("en", { numeric: true });
+
 function relationsOf(event: RoadEvent, source: SourceDescriptor, selfId: string) {
   const ref = (id: string) => ({ class: "situation", id: `oc:situation:${source.id}:${id}` });
   const typed = (event.relatedEvents ?? []).map((r) => ({
@@ -230,7 +233,9 @@ function relationsOf(event: RoadEvent, source: SourceDescriptor, selfId: string)
   const plain = (event.relatedIds ?? [])
     .map((id) => ({ ref: ref(id), relation: "related" }))
     .filter((r) => !seen.has(r.ref.id));
-  return [...typed, ...plain].filter((r) => r.ref.id !== selfId);
+  return [...typed, ...plain]
+    .filter((r) => r.ref.id !== selfId)
+    .sort((a, b) => RECORD_ORDER.compare(a.ref.id, b.ref.id));
 }
 
 /** The event a detour names as its parent (WZDx `related_road_events`), when it is in the snapshot. */
@@ -248,8 +253,11 @@ function parentOf(
 }
 
 /**
- * Events of one source situation, in document order; ungrouped events stand
- * alone, except a detour whose parent is in the snapshot, which joins it.
+ * Events of one source situation, in the order of their record ids: a
+ * publisher that lists a situation's records in another order from one
+ * snapshot to the next states the same situation, its first record giving
+ * its location and validity. Ungrouped events stand alone, except a detour
+ * whose parent is in the snapshot, which joins it.
  */
 function groupsOf(
   events: readonly SnapshotEvent[],
@@ -280,6 +288,9 @@ function groupsOf(
       out.push({ situationId: e.situationId, events: created });
     }
   }
+  for (const members of bySituation.values()) {
+    members.sort((a, b) => RECORD_ORDER.compare(localIdOf(a), localIdOf(b)));
+  }
   for (const [detour, parent] of deferred) {
     const members = ownGroup.get(parent) ?? bySituation.get(parent.situationId ?? "");
     if (members) members.push(detour);
@@ -290,6 +301,15 @@ function groupsOf(
 
 const natureCode = (c: RoadClassification) => `${c.kind}.${c.type}`;
 
+/** Effect-only kinds, the most restrictive first. */
+const RESTRICTIVENESS = ["closure", "restriction", "winter_operation", "other"];
+
+/** The record of a group of effect-only records whose kind restricts most; the first of those. */
+function mostRestrictive(events: readonly RoadEvent[]): RoadEvent {
+  const rank = (e: RoadEvent) => RESTRICTIVENESS.indexOf(classificationOf(e).kind);
+  return events.reduce((best, e) => (rank(e) < rank(best) ? e : best));
+}
+
 /**
  * One source group split into situations: records with one nature form one
  * situation; records of different natures (an accident and a fire reported
@@ -297,7 +317,8 @@ const natureCode = (c: RoadClassification) => `${c.kind}.${c.type}`;
  * say what is done about it (lane, speed, rerouting management) join the
  * first situation as its effects. When no record names a nature, the stated
  * causes decide it (NDW publishes roadworks as management records caused by
- * `roadMaintenance`); without a cause, the first record's own class stands.
+ * `roadMaintenance`); without a cause, the class of the most restrictive
+ * record stands (a lane closure before the speed limit that comes with it).
  */
 function partsOf(
   events: readonly RoadEvent[],
@@ -312,7 +333,9 @@ function partsOf(
   if (natures.size === 0) {
     const causes = [...new Set(events.flatMap((e) => classificationOf(e).causes ?? []))];
     const nature = natureFromCauses(causes);
-    return [{ primary: events[0]!, members: [...events], ...(nature ? { nature } : {}) }];
+    return [
+      { primary: mostRestrictive(events), members: [...events], ...(nature ? { nature } : {}) },
+    ];
   }
   if (natures.size === 1) {
     return [{ primary: [...natures.values()][0]![0]!, members: [...events] }];

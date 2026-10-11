@@ -4,13 +4,13 @@
   "classifications": {
     "closure.closure.bridge": 1,
     "closure.closure.carriageway": 10,
-    "closure.closure.lane": 2,
+    "closure.closure.lane": 5,
     "incident.accident": 6,
     "incident.breakdown": 101,
     "incident.breakdown.disabled_vehicle": 6,
     "incident.obstruction": 14,
     "other.other": 41,
-    "restriction.speed.temporary": 4,
+    "restriction.speed.temporary": 1,
     "roadworks.works.maintenance": 249
   },
   "effects": {
@@ -801,6 +801,32 @@
           "sourceRecordRef": "RWS01_M1148373_CLOSED_LANES_D2_WWA/16",
           "applicability": {
             "kind": "all"
+          },
+          "compliance": "mandatory",
+          "normalization": "complete",
+          "kind": "closure",
+          "v": 1,
+          "scope": "road"
+        },
+        {
+          "id": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/closure",
+          "sourceRecordRef": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/16",
+          "applicability": {
+            "kind": "all"
+          },
+          "validity": {
+            "status": "active",
+            "start": "2026-06-19T19:02:13Z",
+            "end": "2026-06-22T03:00:00Z",
+            "periods": [
+              {
+                "startDate": "2026-06-19",
+                "endDate": "2026-06-19",
+                "startTime": "21:00:00",
+                "duration": "P2DT8H",
+                "scheduleTimezone": "Europe/Amsterdam"
+              }
+            ]
           },
           "compliance": "mandatory",
           "normalization": "complete",
@@ -2076,32 +2102,6 @@
               ]
             ]
           }
-        },
-        {
-          "id": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/closure",
-          "sourceRecordRef": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/16",
-          "applicability": {
-            "kind": "all"
-          },
-          "validity": {
-            "status": "active",
-            "start": "2026-06-19T19:02:13Z",
-            "end": "2026-06-22T03:00:00Z",
-            "periods": [
-              {
-                "startDate": "2026-06-19",
-                "endDate": "2026-06-19",
-                "startTime": "21:00:00",
-                "duration": "P2DT8H",
-                "scheduleTimezone": "Europe/Amsterdam"
-              }
-            ]
-          },
-          "compliance": "mandatory",
-          "normalization": "complete",
-          "kind": "closure",
-          "v": 1,
-          "scope": "road"
         }
       ],
       "details": {
@@ -2112,7 +2112,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "31cfa3f2c0e08ee45947fb33aeacfa48f40c3fc20b9d7d113da1c48124350340"
+      "contentHash": "6b80959c6e0feb837918a1a6906392266b973f6b87735ba26596f2b763fed276"
     }
   ]
 }

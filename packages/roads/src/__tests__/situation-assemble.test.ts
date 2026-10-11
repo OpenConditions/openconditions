@@ -132,6 +132,35 @@ describe("situationDrafts — DATEX situations", () => {
     expect(d!["severity"]).toEqual({ label: "moderate", source: "derived" });
   });
 
+  it("assembles the same situation whichever order the publisher lists its records in", () => {
+    const records = [
+      event("28493712", {
+        situationId: "S9",
+        type: "lane_closure",
+        situation: cls("closure", "closure", "lane"),
+        geometry: { type: "Point", coordinates: [-5.6313, 36.5565] },
+        relatedIds: ["S9.3", "S9.1"],
+      }),
+      event("28493713", {
+        situationId: "S9",
+        type: "lane_closure",
+        situation: cls("closure", "closure", "lane"),
+        geometry: { type: "Point", coordinates: [-5.6454, 36.5381] },
+        relatedIds: ["S9.1", "S9.3"],
+      }),
+    ];
+    const listed = assemble(records);
+    expect(assemble([...records].reverse())).toEqual(listed);
+    expect(listed[0]!["location"]).toMatchObject({
+      geometry: { type: "Point", coordinates: [-5.6313, 36.5565] },
+    });
+    expect(effects(listed[0]!).map((e) => e["sourceRecordRef"])).toEqual(["28493712", "28493713"]);
+    expect((listed[0]!["relations"] as { ref: { id: string } }[]).map((r) => r.ref.id)).toEqual([
+      "oc:situation:nl-ndw-events:S9.1",
+      "oc:situation:nl-ndw-events:S9.3",
+    ]);
+  });
+
   it("splits records of different natures and links them by groupId", () => {
     const drafts = assemble([
       event("R1", { situationId: "S2", situation: cls("incident", "accident") }),
@@ -141,6 +170,29 @@ describe("situationDrafts — DATEX situations", () => {
       ["oc:situation:nl-ndw-events:R1", "accident", "S2"],
       ["oc:situation:nl-ndw-events:R2", "fire", "S2"],
     ]);
+  });
+
+  it("names a situation of management records alone by its most restrictive record", () => {
+    const records = [
+      event("M1_SPEED_MANAGEMENT", {
+        situationId: "S7",
+        type: "speed_restriction",
+        speedLimitKph: 70,
+        situation: cls("restriction", "speed", "temporary"),
+      }),
+      event("M1_CLOSED_LANES", {
+        situationId: "S7",
+        type: "lane_closure",
+        situation: cls("closure", "closure", "lane"),
+      }),
+      event("M1_DISPLACEMENT", { situationId: "S7", situation: cls("other", "other") }),
+    ];
+    for (const listed of [records, [...records].reverse()]) {
+      const [d] = assemble(listed);
+      expect(d).toMatchObject({ kind: "closure", type: "closure", subtype: "lane" });
+    }
+    const [speed] = assemble([records[2]!, records[0]!]);
+    expect(speed).toMatchObject({ kind: "restriction", type: "speed", subtype: "temporary" });
   });
 
   it("takes the nature from the stated cause when only management records exist", () => {
