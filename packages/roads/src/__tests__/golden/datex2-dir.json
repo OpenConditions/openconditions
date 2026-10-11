@@ -126,7 +126,7 @@
           "tokens": {
             "type": "weight",
             "value": 48,
-            "unit": "kg",
+            "unit": "t",
             "operator": "greaterThan",
             "raw": {
               "value": "48.0",
@@ -138,7 +138,7 @@
         "v": 1,
         "dimension": "gross_weight",
         "value": {
-          "value": 48,
+          "value": 48000,
           "unit": "kg"
         },
         "operator": "lte",
@@ -154,7 +154,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7c37c9ad6d76462e715a13c2eac9175fa07f98a8d9c8504b7033509a55e6a65f"
+    "contentHash": "c2c119ac3cc6bd3a93260f99ebd69226f408ca74b7d02fdba663ea4e11e3b25a"
   },
   {
     "id": "oc:situation:fr-dir-events:251022-000640",

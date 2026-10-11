@@ -271,7 +271,7 @@
           "tokens": {
             "type": "weight",
             "value": 5.5,
-            "unit": "kg",
+            "unit": "t",
             "operator": "greaterThan",
             "raw": {
               "value": "5.5",
@@ -283,7 +283,7 @@
         "v": 1,
         "dimension": "gross_weight",
         "value": {
-          "value": 5.5,
+          "value": 5500,
           "unit": "kg"
         },
         "operator": "lte",
@@ -353,7 +353,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "66ee6fd88d81c56f813b6a14f52ea29fc303b0a84ac9c1225cc6ade32d93003e"
+    "contentHash": "2f0572232c7fdc202b4a288b24e84fff3bab67f8cee70677a7cd33114ed46f82"
   },
   {
     "id": "oc:situation:es-dgt-events:8660292",
@@ -448,7 +448,7 @@
           "tokens": {
             "type": "weight",
             "value": 20,
-            "unit": "kg",
+            "unit": "t",
             "operator": "greaterThan",
             "raw": {
               "value": "20.0",
@@ -460,7 +460,7 @@
         "v": 1,
         "dimension": "gross_weight",
         "value": {
-          "value": 20,
+          "value": 20000,
           "unit": "kg"
         },
         "operator": "lte",
@@ -475,7 +475,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1336b0a739e028157a48309046cbf48f45c9e97a96377562e7fd8022e32620a7"
+    "contentHash": "fc00ee049b9ee569d24d735ea1f923f7bc3092c0c35314a26d9fcb793c77d1e4"
   },
   {
     "id": "oc:situation:es-dgt-events:9479421",
