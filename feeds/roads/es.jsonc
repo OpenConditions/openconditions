@@ -50,11 +50,14 @@
         "main": {
           "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download",
           "cadenceSec": 300,
+          // The portal takes 60-70 s to answer a download (measured October 2026).
+          "timeoutSec": 180,
         },
         "sites": {
           "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/0e3b6840-7dff-4731-a556-44fac28a7873/resource/c97072a3-3619-4547-84dd-f1999d2a3fec/download/transit_relacio_trams_format_long.csv",
           "decoder": "bcn-trams-csv",
           "cadenceSec": 21600,
+          "timeoutSec": 180,
         },
       },
       "freshnessWindowSec": 900,

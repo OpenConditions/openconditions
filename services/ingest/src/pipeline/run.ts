@@ -267,22 +267,32 @@ export function createRoleState(): RoleState {
  * authorized with the feed's credentials on top. The guard pins the socket to
  * the validated IP via an undici dispatcher, which only undici's fetch
  * honours, so `deps.fetch` must be undici's fetch in production. Tests inject
- * a fake fetch that serves fixtures and ignores the dispatcher.
+ * a fake fetch that serves fixtures and ignores the dispatcher. `role` names
+ * the endpoint whose `timeoutSec` applies.
  */
 export function feedFetch(
   src: CatalogFeed,
   deps: { fetch: typeof fetch; lookup?: LookupFn; env?: Env },
+  role?: string,
 ): typeof fetch {
-  return makeAuthorizedFetch(src, guardedFeedFetch(deps), deps.env ?? process.env);
+  const timeoutSec = role === undefined ? undefined : src.endpoints[role]?.timeoutSec;
+  return makeAuthorizedFetch(src, guardedFeedFetch(deps, timeoutSec), deps.env ?? process.env);
 }
 
 /**
  * The guarded fetch without any credential. `fetchEndpoint` takes this one and
  * authorizes it itself, so a followed URL never receives the feed's
- * authorization.
+ * authorization. An endpoint's `timeoutSec` lengthens the operator's
+ * `OPENCONDITIONS_FETCH_TIMEOUT_MS` for a publisher known to be slower; it
+ * never shortens it.
  */
-export function guardedFeedFetch(deps: { fetch: typeof fetch; lookup?: LookupFn }): typeof fetch {
-  return guardedFetch(deps.fetch, guardOptionsFromEnv(), {}, deps.lookup);
+export function guardedFeedFetch(
+  deps: { fetch: typeof fetch; lookup?: LookupFn },
+  timeoutSec?: number,
+): typeof fetch {
+  const opts = guardOptionsFromEnv();
+  if (timeoutSec !== undefined) opts.timeoutMs = Math.max(opts.timeoutMs, timeoutSec * 1000);
+  return guardedFetch(deps.fetch, opts, {}, deps.lookup);
 }
 
 /** The data endpoints of a feed: those its format parses itself, not reference data. */
@@ -561,9 +571,9 @@ async function runAttempt(
   const referenceCapture = capture(rawTierFor(src, "reference"));
 
   // Every egress path (feed, catalog, site-table, OAuth, mTLS) goes through
-  // one guarded, authorized fetch; the scheduler passes undici's fetch.
+  // one guarded, authorized fetch per role; the scheduler passes undici's fetch.
   const env = deps.env ?? process.env;
-  const fetchFn = feedFetch(src, { ...deps, env });
+  const fetchFor = (role: string) => feedFetch(src, { ...deps, env }, role);
   const format = formatOf(src);
   const teeFor = (c: ReturnType<typeof capture>): StreamTeeFactory =>
     c ? archivingTee(c.archive, c.meta) : digestOnlyTee;
@@ -581,7 +591,14 @@ async function runAttempt(
   const reference: Record<string, unknown> = {};
   for (const [role, endpoint] of Object.entries(src.endpoints)) {
     if (endpoint.decoder === undefined) continue;
-    const data = await loadReference(src, role, fetchFn, Date.now, teeFor(referenceCapture), env);
+    const data = await loadReference(
+      src,
+      role,
+      fetchFor(role),
+      Date.now,
+      teeFor(referenceCapture),
+      env,
+    );
     if (data !== undefined) {
       reference[role] = data;
       continue;
@@ -637,7 +654,7 @@ async function runAttempt(
       const streamed = await streamFeed(
         src,
         format.stream,
-        bodyStreamFrom(fetchFn, redact),
+        bodyStreamFrom(fetchFor("main"), redact),
         ctx,
         teeFor(feedCapture),
         env,
@@ -774,15 +791,20 @@ async function runAttempt(
                 ? freshUrls[eachRole]
                 : deps.roles?.urls[eachRole];
           const kept = deps.roles?.items[role];
-          result = await fetchEndpoint(src, role, guardedFeedFetch(deps), {
-            resolvers: domainOf(src).resolvers,
-            env,
-            at: polledAt,
-            ...(eachSource ? { eachSource } : {}),
-            ...(eachSourceUrls ? { eachSourceUrls } : {}),
-            ...(kept ? { kept } : {}),
-            ...(deps.impersonation ? { impersonation: deps.impersonation } : {}),
-          });
+          result = await fetchEndpoint(
+            src,
+            role,
+            guardedFeedFetch(deps, src.endpoints[role]?.timeoutSec),
+            {
+              resolvers: domainOf(src).resolvers,
+              env,
+              at: polledAt,
+              ...(eachSource ? { eachSource } : {}),
+              ...(eachSourceUrls ? { eachSourceUrls } : {}),
+              ...(kept ? { kept } : {}),
+              ...(deps.impersonation ? { impersonation: deps.impersonation } : {}),
+            },
+          );
         } catch (err) {
           const reason = err instanceof Error ? err.message : String(err);
           gap(role);

@@ -2,8 +2,13 @@ import { readFileSync } from "node:fs";
 import type { CatalogFeed } from "@openconditions/ingest-framework";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stampAttribution } from "../pipeline/publish.js";
-import { createOpenlrClient, inspectSnapshotCompleteness } from "../pipeline/run.js";
+import {
+  createOpenlrClient,
+  guardedFeedFetch,
+  inspectSnapshotCompleteness,
+} from "../pipeline/run.js";
 import { repoFeed, testFeed } from "./helpers/catalog.js";
+import { fakeLookup } from "./helpers/on-demand.js";
 
 type SnapshotSource = Pick<CatalogFeed, "snapshot">;
 
@@ -238,5 +243,47 @@ describe("inspectSnapshotCompleteness — the real NDW descriptor", () => {
     ],
   ])("rejects %s rather than clearing the source", (_label, body) => {
     expect(() => inspectSnapshotCompleteness(ndw, [Buffer.from(body)])).toThrow();
+  });
+});
+
+describe("guardedFeedFetch — an endpoint's own time limit", () => {
+  const slow = (async (_url: string | URL | Request, init?: RequestInit) => {
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(resolve, 300);
+      init?.signal?.addEventListener("abort", () => {
+        clearTimeout(timer);
+        reject(init.signal!.reason);
+      });
+    });
+    return new Response("late");
+  }) as typeof fetch;
+  let timeout: string | undefined;
+  beforeEach(() => {
+    timeout = process.env["OPENCONDITIONS_FETCH_TIMEOUT_MS"];
+    process.env["OPENCONDITIONS_FETCH_TIMEOUT_MS"] = "100";
+  });
+  afterEach(() => {
+    if (timeout === undefined) delete process.env["OPENCONDITIONS_FETCH_TIMEOUT_MS"];
+    else process.env["OPENCONDITIONS_FETCH_TIMEOUT_MS"] = timeout;
+  });
+
+  it("waits for a slow publisher as long as its endpoint allows", async () => {
+    const res = await guardedFeedFetch(
+      { fetch: slow, lookup: fakeLookup },
+      2,
+    )("https://slow.example.com/");
+    expect(await res.text()).toBe("late");
+  });
+
+  it("keeps the operator's limit otherwise, and an endpoint never shortens it", async () => {
+    await expect(
+      guardedFeedFetch({ fetch: slow, lookup: fakeLookup })("https://slow.example.com/"),
+    ).rejects.toThrow(/timed out after 100ms/);
+    process.env["OPENCONDITIONS_FETCH_TIMEOUT_MS"] = "2000";
+    const res = await guardedFeedFetch(
+      { fetch: slow, lookup: fakeLookup },
+      0.01,
+    )("https://slow.example.com/");
+    expect(await res.text()).toBe("late");
   });
 });
