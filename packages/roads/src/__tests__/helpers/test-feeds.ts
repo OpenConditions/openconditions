@@ -379,6 +379,7 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     attribution: "Bundesstadt Bonn",
     license: "DL-DE-ZERO-2.0",
     licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
+    timezone: "Europe/Berlin",
   },
   "de-nw-verkehr-events": {
     region: "de",
@@ -542,8 +543,8 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     license: "CC-BY-4.0",
     licenseUrl: "https://www.vegagerdin.is/",
     geojson: {
-      lonField: "X",
       idFields: ["ASTAND", "X", "Y", "STARTTIME"],
+      lonField: "X",
       latField: "Y",
       typeField: "DESCRIPTION",
       typeMap: {

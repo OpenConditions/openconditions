@@ -719,6 +719,8 @@
       "endpoints": {
         "main": { "url": "https://stadtplan.bonn.de/geojson?Thema=19584", "cadenceSec": 120 },
       },
+      // Its times are local, though written with a Z.
+      "timezone": "Europe/Berlin",
       "freshnessWindowSec": 600,
       "license": "DL-DE-ZERO-2.0",
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",

@@ -123,7 +123,7 @@
   ],
   "observations": [
     {
-      "id": "oc:observation:de-nw-bonn-flow:bc8ce0fc901e95c8e30dde8538a1219e53f4e2dccb3ff730ca594253bd8eaa18",
+      "id": "oc:observation:de-nw-bonn-flow:b74f96ba6db83260747e70e8243ab2047289f5be0201f0982348a519c74deded",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -179,17 +179,17 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-07-10T17:10:00.000Z"
+        "instant": "2026-07-10T15:10:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "6d4164789f9d77ccd9dfbcc85bb3225999b2b86da463234746d9225ff9b82f5a",
+      "canonicalId": "b695017629545c0263c71f3e470a89daf830d7ebe86a745dda15ceca4d274b23",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "a5a23e4b2b4aeb73ef6adf3d5abeb391c58fd23b58d6dad9aa30569747ed8527"
+      "contentHash": "072105b846a83f345595cdae4c836ff4a72fd5ead3fe9817bba83f703391b653"
     },
     {
-      "id": "oc:observation:de-nw-bonn-flow:9a963e73bae60b0d5d308d0067859269dbcbac0143ef17d8d9cacf7c9bd6327d",
+      "id": "oc:observation:de-nw-bonn-flow:c33617e7f9b08ceec4b7e872749e9a99054f83d52a4342ed28896e115ecae540",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -245,17 +245,17 @@
         "vocabulary": "los"
       },
       "phenomenonTime": {
-        "instant": "2026-07-10T17:10:00.000Z"
+        "instant": "2026-07-10T15:10:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "832c2ee1f2bac6723b9023b08199bb85f6871bc693d172b2e8dd73bd581904dd",
+      "canonicalId": "45460c3def9733d2b40b8771e3545b71eb293e6b9e29afcaee53164f61847a74",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "356760b233fea3829e8ec9d27ebee4a266c66ebcb11b15532a36a7f62e7a8cbf"
+      "contentHash": "29db0622764b69c656b3dd352911a979bffd9628ca57d4666e478719e0949b6c"
     },
     {
-      "id": "oc:observation:de-nw-bonn-flow:a9cd418421062007ecfd53e756edde62d4c212839855d0f94e9d875b5a52eb8a",
+      "id": "oc:observation:de-nw-bonn-flow:f313f4d76b57387216bede0004201cc6250236e5a893b1a723251dccfe84af82",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -307,17 +307,17 @@
         "unit": "km/h"
       },
       "phenomenonTime": {
-        "instant": "2026-07-10T17:10:00.000Z"
+        "instant": "2026-07-10T15:10:00.000Z"
       },
       "aggregation": "mean",
-      "canonicalId": "b443b4b8708977cb4dc632e918323f6d4986a897962d864348aeda84b8c9936c",
+      "canonicalId": "82c97f4c9b0f28a2cb50305b4313cf2655c4f32437d8b7ab83edd6dad11acc6b",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "cee3abed8a0d4a16ae743365df197dd47c3273caa79789b55ed46ba2b32aaa32"
+      "contentHash": "e2178ebb3e9eb7182b418f0dd67e60ea657bde38933c1e7155e0cbd89864b2dd"
     },
     {
-      "id": "oc:observation:de-nw-bonn-flow:6266276f9ab7acb59ddd2a70bf9eb690ecdf13f46c6981795124243164449d80",
+      "id": "oc:observation:de-nw-bonn-flow:50b48726ee96587712f4ef22310cec30b01dbc33fbf596c1c7b1487061b5e461",
       "temporality": "live",
       "location": {
         "geometry": {
@@ -369,14 +369,14 @@
         "vocabulary": "los"
       },
       "phenomenonTime": {
-        "instant": "2026-07-10T17:10:00.000Z"
+        "instant": "2026-07-10T15:10:00.000Z"
       },
       "aggregation": "instantaneous",
-      "canonicalId": "93995db5b323f6642abba17828fbdb51420f9898041bc9064f0ad86ad5fa2594",
+      "canonicalId": "7758b8d5cb7c1da40936648b1176397c1089a4c9fbd35c65d46a15c1dc08d0de",
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "f3b84751db98dbeb283f65f0efa352f58360db6b987b0aa572159ee0b9339e2b"
+      "contentHash": "d14a7efca3f4a9b1018e52a9e43f32e4c3784136fea9b92eb2dcaa11bd6877e2"
     }
   ],
   "situations": [
@@ -449,7 +449,7 @@
       },
       "validity": {
         "status": "active",
-        "start": "2026-07-10T17:10:00.000Z"
+        "start": "2026-07-10T15:10:00.000Z"
       },
       "effects": [],
       "details": {
@@ -465,7 +465,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "fb36e6fbe106133883251a993247569c7d6afd69f041183df94a40cba4f4df0d"
+      "contentHash": "c25cdc20f694c1b3613add05184dfc2075fdd0735f973ed0d5192475cd549d82"
     }
   ]
 }

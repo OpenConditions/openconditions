@@ -1,3 +1,4 @@
+import { toIsoTimestamp } from "@openconditions/core";
 import type { LineString } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import type { FlowParse, FlowReading, Los } from "./flow-reading.js";
@@ -40,13 +41,14 @@ function toLineString(ring: unknown): LineString | null {
  * Parse the City of Bonn realtime traffic GeoJSON (`stadtplan.bonn.de/geojson?
  * Thema=19584`). Each feature is a road section (`strecke_id`) with a
  * `geschwindigkeit` (current speed, km/h), a `verkehrsstatus` level-of-service
- * phrase, and an `auswertezeit` timestamp. A MultiLineString section is one
+ * phrase, and an `auswertezeit` timestamp, wall-clock time in the feed's
+ * `timezone` whatever its suffix says. A MultiLineString section is one
  * site whose member lines each carry the reading (and a derived congestion
  * situation each).
  */
 export function parseBonnFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   _sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -84,7 +86,12 @@ export function parseBonnFlow(
       const los = mapVerkehrsstatus(props["verkehrsstatus"]);
       // Nothing to say if we have neither a resolvable LOS nor a speed.
       if (los === "unknown" && speedKph == null) continue;
-      const at = typeof props["auswertezeit"] === "string" ? props["auswertezeit"] : undefined;
+      // Bonn writes its local time and marks it `Z` (08:55:00Z at 06:57 UTC).
+      const stated = props["auswertezeit"];
+      const at =
+        typeof stated === "string"
+          ? toIsoTimestamp(stated.replace(/Z$/i, ""), src.timeZone)
+          : undefined;
 
       const lines = rings.map(toLineString).filter((l): l is LineString => l != null);
       lines.forEach((line, i) => {

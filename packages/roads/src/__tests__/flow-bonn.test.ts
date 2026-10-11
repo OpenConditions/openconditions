@@ -35,8 +35,9 @@ describe("Bonn traffic flow", () => {
     const out = flows(feed, payload);
     expect(value(out, FEED, "144", "traffic.speed")).toBe(12);
     expect(value(out, FEED, "144", "traffic.los")).toBe("queuing");
+    // 17:10 in Bonn, though written with a Z, is 15:10 UTC in summer.
     expect(readings(out, FEED, "144", "traffic.speed")[0]!["phenomenonTime"]).toEqual({
-      instant: "2026-07-10T17:10:00.000Z",
+      instant: "2026-07-10T15:10:00.000Z",
     });
     expect(
       (site(out, FEED, "144")!["location"] as { geometry: { type: string } }).geometry.type,
