@@ -6,6 +6,6 @@
 #   pip-compile --generate-hashes requirements-dev.in
 -r requirements.in
 pytest==9.1.1
-httpx==0.28.1
+httpx2==2.13.1
 testcontainers==4.15.0
-ruff
+ruff==0.17.0
