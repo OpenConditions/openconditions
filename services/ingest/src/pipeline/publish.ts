@@ -176,6 +176,36 @@ export async function publishSituations(
 }
 
 /**
+ * A poll's congestion situations with the start of the ones still under way:
+ * a queue a poll derives again began when it was first derived, not at this
+ * poll's readings, so it stays one situation instead of taking a revision
+ * every poll. One that cleared (its situation withdrawn) starts anew.
+ */
+async function withOngoingOnsets(
+  tx: postgres.TransactionSql,
+  sourceId: string,
+  situations: readonly RecordDraft[],
+): Promise<RecordDraft[]> {
+  if (situations.length === 0) return [];
+  const ids = situations.map((d) => String(d["id"]));
+  const ongoing = new Map(
+    (
+      await tx<{ id: string; start: string }[]>`
+        SELECT id, record -> 'validity' ->> 'start' AS start FROM conditions.situation
+         WHERE source_id = ${sourceId} AND tombstoned_at IS NULL AND id = ANY(${ids}::text[])
+           AND record -> 'validity' ? 'start'`
+    ).map((r) => [r.id, r.start]),
+  );
+  return situations.map((draft) => {
+    const start = ongoing.get(String(draft["id"]));
+    const validity = draft["validity"] as { start?: string } | undefined;
+    if (start === undefined || validity?.start === undefined) return draft;
+    if (Date.parse(start) >= Date.parse(validity.start)) return draft;
+    return { ...draft, validity: { ...validity, start } };
+  });
+}
+
+/**
  * Writes one poll of a flow feed and closes its attempt, in one transaction
  * under the source's lock: its measurement sites, their readings and the
  * congestion situations derived from them. The poll holds every derived
@@ -211,7 +241,7 @@ export async function publishFlows(
       tx,
       src.id,
       {
-        situations: output.situations,
+        situations: await withOngoingOnsets(tx, src.id, output.situations),
         features: output.features,
         observations: output.observations,
       },

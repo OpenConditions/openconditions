@@ -479,6 +479,32 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(await liveFeatures("nl-ndw-flow")).toBe(3);
   }, 60_000);
 
+  it("keeps a congestion that persists as one situation, dated from when it was first derived", async () => {
+    await sql`
+      INSERT INTO conditions.sensor_baseline
+        (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
+      VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
+        100, 'derived', 50, now())`;
+    clearReferenceCaches();
+    const situation = async () => {
+      const [row] = await sql<{ revision: number; start: string }[]>`
+        SELECT revision, record #>> '{validity,start}' AS start FROM conditions.situation
+         WHERE source_id = 'nl-ndw-flow' AND tombstoned_at IS NULL`;
+      return row;
+    };
+    expect((await poll(fakeFetch)).activeEvents).toBe(1);
+    const first = await situation();
+    // The queue still stands a minute later.
+    const later = Buffer.from(
+      speedPayload.toString("utf8").replaceAll("2026-06-24T10:0", "2026-06-24T10:1"),
+    );
+    expect((await poll(fetchServing(later))).activeEvents).toBe(1);
+    expect(await situation()).toEqual(first);
+
+    await sql`DELETE FROM conditions.sensor_baseline`;
+    expect((await poll(fakeFetch)).deleted).toBe(1);
+  }, 60_000);
+
   it("keeps the last derived congestion when a poll cannot load the baselines", async () => {
     await sql`
       INSERT INTO conditions.sensor_baseline
