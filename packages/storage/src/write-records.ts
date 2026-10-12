@@ -346,6 +346,7 @@ async function writeClass(
   summary: WriteSummary,
 ): Promise<void> {
   const counts = summary.counts[cls];
+  if (drafts.length === 0 && !completeFor(ctx, cls)) return;
   const existing = new Map(
     (
       await tx.unsafe<(Stored & { id: string })[]>(

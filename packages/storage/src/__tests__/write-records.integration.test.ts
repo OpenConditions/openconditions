@@ -2,10 +2,17 @@ import { contentHash, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { rowOf } from "../record-rows.js";
 import { type WriteContext, writeSnapshot } from "../write-records.js";
 import { createTestDatabase } from "./database.integration.js";
-import { featureDraft, offerDraft, roadworksDraft, situationDraft } from "./drafts.js";
+import {
+  featureDraft,
+  observationDraft,
+  offerDraft,
+  roadworksDraft,
+  situationDraft,
+} from "./drafts.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
@@ -14,6 +21,10 @@ const registry = productionRegistry();
 beforeAll(async () => {
   db = await createTestDatabase();
   sql = db.sql;
+  await ensureObservationPartitions(sql, {
+    classes: retentionClasses(registry),
+    now: new Date(T1),
+  });
 }, 120_000);
 
 afterAll(async () => {
@@ -21,6 +32,8 @@ afterAll(async () => {
 }, 30_000);
 
 beforeEach(async () => {
+  await sql`TRUNCATE conditions.observation_latest CASCADE`;
+  await sql`TRUNCATE conditions.observation`;
   await sql`TRUNCATE conditions.situation, conditions.feature, conditions.offer,
     conditions.record_relation CASCADE`;
 });
@@ -45,7 +58,215 @@ async function revisions(table: "situation" | "feature", id: string) {
   );
 }
 
+async function observeClassScans<T>(run: () => Promise<T>) {
+  const scans: string[] = [];
+  const debug = sql.options.debug;
+  sql.options.debug = (_connection, query) => {
+    const match = query.match(
+      /^SELECT id, content_hash, revision,[\s\S]*FROM conditions\.(feature|situation|offer) WHERE source_id = \$1/,
+    );
+    if (match) scans.push(match[1]!);
+  };
+  try {
+    return { result: await run(), scans };
+  } finally {
+    sql.options.debug = debug;
+  }
+}
+
+async function seedMetadata() {
+  const source = "nl-ndw-flow";
+  const owned = (draft: Record<string, unknown>) => ({
+    ...draft,
+    id: String(draft["id"]).replace(/:(nl-ndw-events|de-parking):/, `:${source}:`),
+    provenance: { ...(draft["provenance"] as object), sourceId: source },
+  });
+  await writeSnapshot(
+    sql,
+    source,
+    {
+      features: [featureDraft("s1")],
+      situations: [owned(situationDraft("a"))],
+      offers: [owned(offerDraft("day"))],
+    },
+    ctx(T1),
+  );
+}
+
+async function metadataRows() {
+  return sql`SELECT 'feature' AS class, record FROM conditions.feature
+    UNION ALL SELECT 'situation', record FROM conditions.situation
+    UNION ALL SELECT 'offer', record FROM conditions.offer ORDER BY class`;
+}
+
+async function metadataHistory() {
+  return sql`SELECT 'feature' AS class, revision, change_kinds FROM conditions.feature_revision
+    UNION ALL SELECT 'situation', revision, change_kinds FROM conditions.situation_revision
+    UNION ALL SELECT 'offer', revision, change_kinds FROM conditions.offer_revision
+    ORDER BY class, revision`;
+}
+
+const zeroCounts = { created: 0, updated: 0, restored: 0, unchanged: 0, withdrawn: 0 };
+
 describe("writeSnapshot", () => {
+  it("skips metadata scans for empty incomplete classes while keeping their records and history", async () => {
+    await seedMetadata();
+    const rows = await metadataRows();
+    const history = await metadataHistory();
+    const { result, scans } = await observeClassScans(() =>
+      writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        { features: [], situations: [], offers: [] },
+        ctx(T2, false),
+      ),
+    );
+    expect(await metadataRows()).toEqual(rows);
+    expect(await metadataHistory()).toEqual(history);
+    expect(result.counts).toEqual({
+      feature: zeroCounts,
+      situation: zeroCounts,
+      offer: zeroCounts,
+    });
+    expect(result.changed).toEqual([]);
+    expect(result.rejected).toEqual([]);
+    expect(scans).toEqual([]);
+  });
+
+  it.each(["feature", "situation", "offer"] as const)(
+    "scans and withdraws only the class-specific complete empty %s",
+    async (cls) => {
+      await seedMetadata();
+      const before = await metadataRows();
+      const { result, scans } = await observeClassScans(() =>
+        writeSnapshot(sql, "nl-ndw-flow", {}, { ...ctx(T2), complete: { [cls]: true } }),
+      );
+      for (const row of await metadataRows()) {
+        if (row["class"] === cls) {
+          expect(row["record"]).toMatchObject({
+            revision: 2,
+            recordedAt: T2,
+            tombstone: { reason: "withdrawn", at: T2 },
+          });
+        } else {
+          expect(row).toEqual(before.find((r) => r["class"] === row["class"]));
+        }
+      }
+      expect(result.counts).toEqual({
+        feature: { ...zeroCounts, withdrawn: cls === "feature" ? 1 : 0 },
+        situation: { ...zeroCounts, withdrawn: cls === "situation" ? 1 : 0 },
+        offer: { ...zeroCounts, withdrawn: cls === "offer" ? 1 : 0 },
+      });
+      expect((await metadataHistory()).filter((r) => r["class"] === cls)).toEqual([
+        { class: cls, revision: 1, change_kinds: ["created"] },
+        { class: cls, revision: 2, change_kinds: ["tombstoned"] },
+      ]);
+      expect(result.changed).toHaveLength(1);
+      expect(scans).toEqual([cls]);
+    },
+  );
+
+  it("keeps complete-empty withdrawal and history for every metadata class", async () => {
+    await seedMetadata();
+    const { result, scans } = await observeClassScans(() =>
+      writeSnapshot(sql, "nl-ndw-flow", {}, ctx(T2)),
+    );
+    expect(result.counts).toEqual({
+      feature: { ...zeroCounts, withdrawn: 1 },
+      situation: { ...zeroCounts, withdrawn: 1 },
+      offer: { ...zeroCounts, withdrawn: 1 },
+    });
+    expect(result.changed).toHaveLength(3);
+    expect((await metadataRows()).map((r) => r["record"])).toEqual([
+      expect.objectContaining({ revision: 2, tombstone: { reason: "withdrawn", at: T2 } }),
+      expect.objectContaining({ revision: 2, tombstone: { reason: "withdrawn", at: T2 } }),
+      expect.objectContaining({ revision: 2, tombstone: { reason: "withdrawn", at: T2 } }),
+    ]);
+    expect(await metadataHistory()).toHaveLength(6);
+    expect(scans).toEqual(["feature", "situation", "offer"]);
+  });
+
+  it("still scans and revises a nonempty incomplete class without withdrawing missing records", async () => {
+    await seedMetadata();
+    await writeSnapshot(sql, "nl-ndw-flow", { features: [featureDraft("s2")] }, ctx(T1, false));
+    const { result, scans } = await observeClassScans(() =>
+      writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          features: [featureDraft("s1", 3)],
+        },
+        ctx(T2, false),
+      ),
+    );
+    expect(result.counts.feature).toEqual({ ...zeroCounts, updated: 1 });
+    expect(result.counts.situation).toEqual(zeroCounts);
+    expect(result.counts.offer).toEqual(zeroCounts);
+    expect(await revisions("feature", "oc:feature:nl-ndw-flow:s1")).toHaveLength(2);
+    expect(
+      await sql`SELECT id, revision FROM conditions.feature WHERE tombstoned_at IS NULL ORDER BY id`,
+    ).toEqual([
+      { id: "oc:feature:nl-ndw-flow:s1", revision: 2 },
+      { id: "oc:feature:nl-ndw-flow:s2", revision: 1 },
+    ]);
+    expect(scans).toEqual(["feature"]);
+  });
+
+  it("still ends unstated observation states and writes reading history with incomplete metadata", async () => {
+    await seedMetadata();
+    const state = (site: string, value: string, at: string) =>
+      observationDraft(
+        "traffic.los",
+        {
+          type: "category",
+          value,
+          vocabulary: "los",
+        },
+        { at, subject: { kind: "feature", featureId: `oc:feature:nl-ndw-flow:${site}` } },
+      );
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [state("s1", "queuing", T1), state("s2", "free_flow", T1)],
+      },
+      { ...ctx(T1, false), statesComplete: true },
+    );
+    const metadata = await metadataRows();
+    const { result, scans } = await observeClassScans(() =>
+      writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [state("s1", "free_flow", T2)],
+        },
+        { ...ctx(T2, false), statesComplete: true },
+      ),
+    );
+    expect(result.observations).toMatchObject({ latest: 1, history: 1, ended: 1 });
+    expect(await metadataRows()).toEqual(metadata);
+    expect(
+      await sql`SELECT feature_id, value_text,
+        conditions.observation_record(template, reading) ->> 'validUntil' AS valid_until
+        FROM conditions.observation_latest ORDER BY feature_id`,
+    ).toEqual([
+      { feature_id: "oc:feature:nl-ndw-flow:s1", value_text: "free_flow", valid_until: null },
+      {
+        feature_id: "oc:feature:nl-ndw-flow:s2",
+        value_text: "free_flow",
+        valid_until: T2,
+      },
+    ]);
+    expect(
+      await sql`SELECT value_text FROM conditions.observation ORDER BY phenomenon_start, value_text`,
+    ).toEqual([
+      { value_text: "free_flow" },
+      { value_text: "queuing" },
+      { value_text: "free_flow" },
+    ]);
+    expect(scans).toEqual([]);
+  });
+
   it("moves the expiry of unchanged content without a revision, and drops it when the source does", async () => {
     const until = (expiresAt?: string) =>
       situationDraft("a", {
