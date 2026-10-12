@@ -657,6 +657,17 @@ describe("parseDatexSituations — DGT (Spain) DATEX II v3 fixture", () => {
     // The fixture's records resolve to known road-event types (not all 'other').
     expect([...types].some((t) => t !== "other")).toBe(true);
   });
+
+  it("reads a gross vehicle weight in tonnes, as DATEX II defines it", () => {
+    const events = parseDatexSituations(readFileSync(DGT_FIXTURE_PATH), DGT_SOURCE);
+    const weights = events
+      .flatMap((ev) => ev.restrictions ?? [])
+      .filter((r) => r.type === "weight");
+    expect(weights.map((r) => [r.value, r.unit])).toEqual([
+      [5.5, "t"],
+      [20, "t"],
+    ]);
+  });
 });
 
 const DIR_FR_FIXTURE_PATH = join(import.meta.dirname, "fixtures/dir-fr/situations.xml");

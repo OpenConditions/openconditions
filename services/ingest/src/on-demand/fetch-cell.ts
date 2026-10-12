@@ -202,9 +202,9 @@ async function fetchAndWrite(
     attemptId = await openPollAttempt(sql, feed.id, at);
     const ttlSec = feed.onDemand?.ttlSec;
     if (ttlSec === undefined) throw new Error("not an on-demand feed: no onDemand block");
-    const baseFetch = guardedFeedFetch(deps);
     const payloads: Record<string, readonly Buffer[]> = {};
     for (const role of dataRoles(feed)) {
+      const baseFetch = guardedFeedFetch(deps, feed.endpoints[role]?.timeoutSec);
       const result = await fetchEndpoint(feed, role, baseFetch, {
         resolvers: domainOf(feed).resolvers,
         env,

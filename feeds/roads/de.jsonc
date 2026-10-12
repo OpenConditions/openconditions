@@ -421,9 +421,10 @@
       // Police-sourced safety incidents from the Landesmeldestelle für den
       // Verkehrswarndienst (Polizei Hamburg): Stau, Unfall, Sperrung, Baustelle,
       // Wartung — the "police" channel, distinct from the LSBG roadworks feed
-      // above. Served openly (DL-DE-BY-2.0) via the api.hamburg.de OGC API
-      // Features endpoint as WGS84 GeoJSON points; we use the deduplicated
-      // "current filtered main messages" collection. NOT the Mobilithek mirror of
+      // above. Served openly (DL-DE-BY-2.0) by Hamburg's WFS as WGS84 GeoJSON
+      // points (api.hamburg.de's OGC API copy stopped serving items in October
+      // 2026); we use the deduplicated "current filtered main messages" feature
+      // type, every feature in one response. NOT the Mobilithek mirror of
       // this dataset, which is licensed other-closed. The `art` field carries
       // DATEX II situation record class names, mapped below; a management class
       // keeps its measure as its coarse type. Severity is type-derived.
@@ -436,7 +437,7 @@
       "format": "geojson",
       "endpoints": {
         "main": {
-          "url": "https://api.hamburg.de/datasets/v1/verkehrsinformation/collections/hauptmeldungen_aktuell/items?f=json&limit=5000",
+          "url": "https://geodienste.hamburg.de/wfs_verkehrsinformation?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=de.hh.up:hauptmeldungen_aktuell&OUTPUTFORMAT=application/geo%2Bjson&SRSNAME=EPSG:4326",
           "cadenceSec": 300,
         },
       },

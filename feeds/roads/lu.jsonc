@@ -11,10 +11,11 @@
         "main": { "url": "https://cita.lu/info_trafic/datex/situationrecord36", "cadenceSec": 300 },
       },
       "freshnessWindowSec": 900,
+      // DATEX II v3.6: the root `d2:payload` is the SituationPublication.
       "snapshot": {
         "completeness": "complete",
-        "rootElement": "d2LogicalModel",
-        "publicationElement": "payloadPublication",
+        "rootElement": "payload",
+        "publicationElement": "payload",
         "publicationType": "SituationPublication",
         "recordElement": "situationRecord",
       },

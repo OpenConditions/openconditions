@@ -954,7 +954,8 @@ function dimensionRestrictionsOf(rec: XmlObject): Restriction[] | undefined {
   dim("vehicleHeight", "height", "m");
   dim("vehicleWidth", "width", "m");
   dim("vehicleLength", "length", "m");
-  dim("grossVehicleWeight", "weight", "kg");
+  // DATEX II defines grossVehicleWeight in tonnes (its `Tonnes` type).
+  dim("grossVehicleWeight", "weight", "t");
   return out.length > 0 ? out : undefined;
 }
 

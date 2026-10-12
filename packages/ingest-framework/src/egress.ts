@@ -367,7 +367,11 @@ export function guardedFetch(
         // it to the pinned addresses — no second, unchecked DNS resolution
         // happens. `autoSelectFamily` makes the socket try them in turn, so an
         // address that refuses (an unreachable IPv6, say) falls back to the next.
+        // HTTP/1.1 only: an HTTP/2 publisher resets a stream whose window stays
+        // full while a long parse blocks the event loop (DGT, FIRMS and Bison
+        // Futé did, mid-body), where HTTP/1.1 leaves the bytes waiting in TCP.
         agent = new Agent({
+          allowH2: false,
           connect: {
             autoSelectFamily: true,
             lookup: (
