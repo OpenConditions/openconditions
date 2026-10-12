@@ -73,6 +73,12 @@ ruff check .
 python -m pytest
 ```
 
+Production dependency audits (after installing both sets of development dependencies):
+
+```bash
+pnpm audit:production # pnpm audit + pip-audit, with zero findings required
+```
+
 Git hooks enforce a two-stage local gate (Husky):
 
 - **pre-commit** — fast checks only: `pnpm lint` + `pnpm typecheck`. No Docker
@@ -83,8 +89,9 @@ Git hooks enforce a two-stage local gate (Husky):
   suites use testcontainers and need Docker. Use `pnpm test:unit` for a local
   check without Docker; the push gate and CI still run the full suite.
 
-CI re-runs lint, typecheck, and the full suite (plus the Python lint/tests) on
-every push and PR, so the safety net is always present.
+CI re-runs lint, typecheck, the full suite, the Python lint/tests, and both
+production dependency audits on every push and PR. The audits also run weekly
+so newly published advisories fail without waiting for a source change.
 
 ### Testing
 

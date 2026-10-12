@@ -18,7 +18,7 @@ import pytest
 
 docker_available = True
 try:
-    from testcontainers.postgres import PostgresContainer
+    from testcontainers.community.postgres import PostgresContainer
 except Exception:  # pragma: no cover - import guard
     docker_available = False
 
