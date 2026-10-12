@@ -100,6 +100,29 @@ describe("class tables", () => {
     expect([components, revisions]).toEqual([0, 0]);
   });
 
+  it("keys components by both feature and source-stable key", async () => {
+    await insertFeature("pair-a");
+    await insertFeature("pair-b");
+    try {
+      await sql`INSERT INTO conditions.feature_component (feature_id, key, parent_key, kind, details, content_hash)
+        VALUES ('pair-a', 'same', NULL, 'sensor_channel', '{}'::jsonb, 'a'),
+          ('pair-b', 'same', NULL, 'sensor_channel', '{}'::jsonb, 'b')`;
+      expect(
+        await sql`SELECT feature_id, key, content_hash FROM conditions.feature_component
+        WHERE feature_id IN ('pair-a', 'pair-b') ORDER BY feature_id`,
+      ).toEqual([
+        { feature_id: "pair-a", key: "same", content_hash: "a" },
+        { feature_id: "pair-b", key: "same", content_hash: "b" },
+      ]);
+      await expect(sql`INSERT INTO conditions.feature_component (feature_id, key, kind, details, content_hash)
+        VALUES ('pair-a', 'same', 'sensor_channel', '{}'::jsonb, 'duplicate')`).rejects.toThrow(
+        /feature_component_feature_id_key_pk/,
+      );
+    } finally {
+      await sql`DELETE FROM conditions.feature WHERE id IN ('pair-a', 'pair-b')`;
+    }
+  });
+
   it("store each feature link once, its ids in order", async () => {
     await expect(
       sql`INSERT INTO conditions.feature_link (a_id, b_id, method, confidence, status, decided_at)

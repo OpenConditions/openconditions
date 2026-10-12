@@ -21,7 +21,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { refreshFused } from "../fused-rows.js";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { syncSources } from "../sources.js";
-import { type WriteContext, writeSnapshot } from "../write-records.js";
+import { tombstoneRecords, type WriteContext, writeSnapshot } from "../write-records.js";
 import { createTestDatabase } from "./database.integration.js";
 import { observationDraft, offerDraft, situationDraft } from "./drafts.js";
 import { goldenFacilities, polled, registry } from "./facility-fixtures.js";
@@ -389,5 +389,59 @@ describe("reader scope", () => {
        JOIN conditions.observation_latest l ON l.series_id = o.series_id
        WHERE l.source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})`;
     expect(history!.n).toBe(0);
+  });
+
+  test("parent updates preserve restricted scope and rights revocation erases component payloads", async () => {
+    const changed = { ...twin, lifecycle: "temporarily_closed" };
+    const summary = await writeSnapshot(
+      sql,
+      RESTRICTED,
+      { features: [changed] },
+      { ...ctx, now: LATER, complete: false },
+    );
+    expect(summary.rejected).toEqual([]);
+    const components = await sql`SELECT key, details, external_ids, content_hash
+      FROM conditions.feature_component WHERE feature_id = ${twin["id"] as string}`;
+    expect(components).toHaveLength(1);
+    const listed = async (scope: Scope) =>
+      (await listFeatures(runner, { scope, at: AT, limit: 100 })).records.map(
+        (record) => record["id"],
+      );
+    expect(await listed("public")).not.toContain(twin["id"]);
+    expect(await listed("operator")).toContain(twin["id"]);
+    await sql.begin((tx) =>
+      tombstoneRecords(tx, "feature", [twin["id"] as string], "rights_revoked", {
+        ...ctx,
+        now: LATER,
+      }),
+    );
+    expect(
+      await sql`SELECT key, details, external_ids FROM conditions.feature_component
+      WHERE feature_id = ${twin["id"] as string}`,
+    ).toEqual([]);
+    expect(
+      await sql`SELECT snapshot FROM conditions.feature_revision WHERE feature_id = ${twin["id"] as string}`,
+    ).toEqual([]);
+    const [{ record, geom }] =
+      await sql`SELECT record, geom FROM conditions.feature WHERE id = ${twin["id"] as string}`;
+    expect(record).not.toHaveProperty("components");
+    expect(record).not.toHaveProperty("details");
+    expect(geom).toBeNull();
+    expect(await listed("public")).not.toContain(twin["id"]);
+    expect(await listed("operator")).not.toContain(twin["id"]);
+    const restored = await writeSnapshot(
+      sql,
+      RESTRICTED,
+      { features: [changed] },
+      { ...ctx, now: LATER, complete: false },
+    );
+    expect(restored.rejected).toEqual([]);
+    expect(restored.counts.feature).toMatchObject({ restored: 1 });
+    expect(
+      await sql`SELECT key, details, external_ids, content_hash FROM conditions.feature_component
+      WHERE feature_id = ${twin["id"] as string}`,
+    ).toEqual(components);
+    expect(await listed("public")).not.toContain(twin["id"]);
+    expect(await listed("operator")).toContain(twin["id"]);
   });
 });

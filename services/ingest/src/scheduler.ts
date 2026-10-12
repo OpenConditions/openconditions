@@ -147,12 +147,31 @@ const SEGMENT_CRON = "0 4 * * 1";
 /** When the weekly segment speed-profile derivation runs (UTC) — after the nightly baseline, before the segment rebuild. */
 const SEGMENT_PROFILE_CRON = "30 3 * * 1";
 
-function cadenceToCron(cadenceSec: number): string {
+/**
+ * A feed's poll ticks, set apart from the other feeds' by a second and minute
+ * fixed by its id. Started on the same second, every feed opened its
+ * connections and parsed at once: at :00 connections to unrelated publishers
+ * timed out together, and the parses queued behind one another on the one
+ * ingest thread.
+ */
+export function feedCron(feedId: string, cadenceSec: number): string {
   const tickSec = pollTickSec(cadenceSec);
   if (tickSec < 60) return `*/${tickSec} * * * * *`;
-  if (tickSec === 3600) return "0 * * * *";
+  const offset = stableHash(feedId);
+  const second = offset % 60;
   const mins = Math.round(tickSec / 60);
-  return `*/${mins} * * * *`;
+  const minute = Math.floor(offset / 60) % mins;
+  return mins >= 60 ? `${second} ${minute} * * * *` : `${second} ${minute}-59/${mins} * * * *`;
+}
+
+/** FNV-1a: the same offset for a feed on every start and every instance. */
+function stableHash(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
 }
 
 /**
@@ -208,7 +227,7 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
     return undefined;
   }
 
-  const cronExpr = cadenceToCron(feed.cadenceSec);
+  const cronExpr = feedCron(feed.id, feed.cadenceSec);
   const deps: RunDeps = { ...ctx.deps, env, roles: createRoleState() };
   let running = false;
   const job = new Cron(cronExpr, { catch: true }, async () => {

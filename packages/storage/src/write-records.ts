@@ -346,6 +346,7 @@ async function writeClass(
   summary: WriteSummary,
 ): Promise<void> {
   const counts = summary.counts[cls];
+  if (drafts.length === 0 && !completeFor(ctx, cls)) return;
   const existing = new Map(
     (
       await tx.unsafe<(Stored & { id: string })[]>(
@@ -474,8 +475,8 @@ async function loadRecords(tx: Sql, cls: RevisionedClass, ids: readonly string[]
 }
 
 /**
- * Upserts sealed records and re-materialises their child rows: a
- * situation's effects, a feature's components, every record's relations. A
+ * Upserts sealed records, synchronises a feature's changed components and
+ * re-materialises a situation's effects and every record's relations. A
  * tombstoned record (a peer's tombstone) keeps its components for its
  * history but gets no effect or relation rows, as a local tombstone.
  */
@@ -495,7 +496,13 @@ export async function storeRecords(
     upsertClause(["id"], columns),
   );
   const ids = records.map((r) => r["id"] as string);
-  await deleteChildren(tx, cls, ids);
+  if (cls === "feature") {
+    await tx`
+      DELETE FROM conditions.record_relation
+       WHERE from_class = ${cls} AND from_id = ANY(${ids}::text[])`;
+  } else {
+    await deleteChildren(tx, cls, ids);
+  }
   const live = records.filter((r) => r["tombstone"] === undefined);
   if (cls === "situation") {
     await insertRows(
@@ -510,7 +517,7 @@ export async function storeRecords(
     );
   }
   if (cls === "feature") {
-    await insertRows(tx, "feature_component", COMPONENT_COLUMNS, records.flatMap(componentRows));
+    await syncFeatureComponents(tx, records);
   }
   await insertRows(
     tx,
@@ -519,6 +526,42 @@ export async function storeRecords(
     live.flatMap((r) => relationRows(cls, r)),
     "ON CONFLICT DO NOTHING",
   );
+}
+
+const COMPONENT_BATCH = 1000;
+
+/** Synchronises keyed components without writing rows whose full content hash is unchanged. */
+async function syncFeatureComponents(tx: Sql, records: readonly Rec[]): Promise<void> {
+  const keyOf = (featureId: unknown, key: unknown) => JSON.stringify([featureId, key]);
+  for (let offset = 0; offset < records.length; offset += COMPONENT_BATCH) {
+    const batch = records.slice(offset, offset + COMPONENT_BATCH);
+    const ids = batch.map((record) => record["id"] as string);
+    const desired = batch.flatMap(componentRows);
+    const held = await tx<{ feature_id: string; key: string; content_hash: string }[]>`
+      SELECT feature_id, key, content_hash FROM conditions.feature_component
+       WHERE feature_id = ANY(${ids}::text[])`;
+    const desiredKeys = new Set(desired.map((row) => keyOf(row["feature_id"], row["key"])));
+    const missing = held
+      .filter((row) => !desiredKeys.has(keyOf(row.feature_id, row.key)))
+      .map(({ feature_id, key }) => ({ feature_id, key }));
+    for (let start = 0; start < missing.length; start += COMPONENT_BATCH) {
+      await tx`
+        DELETE FROM conditions.feature_component c
+         USING jsonb_to_recordset(${tx.json(missing.slice(start, start + COMPONENT_BATCH))})
+               AS gone(feature_id text, key text)
+         WHERE c.feature_id = gone.feature_id AND c.key = gone.key`;
+    }
+    const current = new Map(held.map((row) => [keyOf(row.feature_id, row.key), row.content_hash]));
+    await insertRows(
+      tx,
+      "feature_component",
+      COMPONENT_COLUMNS,
+      desired.filter(
+        (row) => current.get(keyOf(row["feature_id"], row["key"])) !== row["content_hash"],
+      ),
+      upsertClause(["feature_id", "key"], COMPONENT_COLUMNS),
+    );
+  }
 }
 
 /**
