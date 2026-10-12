@@ -229,6 +229,12 @@ export const endpointSchema = z
      * from an old copy. Unset, a held answer stands in at any age.
      */
     maxPayloadAgeSec: z.number().int().positive().optional(),
+    /**
+     * Seconds a request to this endpoint may take, body included, for a
+     * publisher slower than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS`
+     * (60 s by default) allows. It lengthens that limit and never shortens it.
+     */
+    timeoutSec: z.number().int().positive().max(900).optional(),
   })
   .strict()
   .superRefine((e, ctx) => {

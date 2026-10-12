@@ -835,6 +835,27 @@ describe("features poll with a slow endpoint", () => {
     }
   }, 60_000);
 
+  it("a poll that fails after fetching a role leaves that role due, its answer not kept", async () => {
+    const h = sitesHarness("aborted");
+    const error = vi.spyOn(console, "error").mockImplementation(() => {});
+    try {
+      // The sites answer, then the status fails with nothing held: the poll
+      // fails, and the sites' answer goes with it.
+      h.answer.statusFails = true;
+      expect((await h.tick(0)).error).toMatch(/ETIMEDOUT/);
+      expect(h.roles.lastFetchedAt).toEqual({});
+
+      h.answer.statusFails = false;
+      h.requested.length = 0;
+      expect((await h.tick(300_000)).error).toBeUndefined();
+      expect(h.requested).toEqual(["sites", "status"]);
+      expect(await h.liveFeatures()).toHaveLength(2);
+      expect(await h.prices()).toEqual(["1.700"]);
+    } finally {
+      error.mockRestore();
+    }
+  }, 60_000);
+
   it("the failed role is retried on the next tick", async () => {
     const h = sitesHarness("retried");
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

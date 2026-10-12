@@ -1,5 +1,10 @@
+import { execFileSync } from "node:child_process";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { createServer } from "node:http";
+import { createSecureServer } from "node:http2";
 import type { AddressInfo } from "node:net";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { gzipSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -422,6 +427,60 @@ describe("guardedFetch", () => {
       expect(await res.text()).toBe("second address");
     } finally {
       await new Promise<void>((resolve) => server.close(() => resolve()));
+    }
+  });
+
+  it("asks for HTTP/1.1 even from a server that offers HTTP/2", async () => {
+    // An HTTP/2 publisher resets a stream whose window stays full while a
+    // long parse blocks the event loop; HTTP/1.1 leaves the bytes waiting in
+    // TCP. The server answers with the protocol it was asked over.
+    const dir = mkdtempSync(join(tmpdir(), "egress-h2-"));
+    execFileSync(
+      "openssl",
+      [
+        "req",
+        "-x509",
+        "-newkey",
+        "rsa:2048",
+        "-nodes",
+        "-days",
+        "1",
+        "-subj",
+        "/CN=h2.test",
+        "-addext",
+        "subjectAltName=DNS:h2.test",
+        "-keyout",
+        join(dir, "key.pem"),
+        "-out",
+        join(dir, "cert.pem"),
+      ],
+      { stdio: "ignore" },
+    );
+    const server = createSecureServer(
+      {
+        key: readFileSync(join(dir, "key.pem")),
+        cert: readFileSync(join(dir, "cert.pem")),
+        allowHTTP1: true,
+      },
+      (req, res) => res.end(req.httpVersion),
+    );
+    await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
+    const { port } = server.address() as AddressInfo;
+    const rejectUnauthorized = process.env["NODE_TLS_REJECT_UNAUTHORIZED"];
+    process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = "0";
+    try {
+      const res = await guardedFetch(
+        undefined,
+        { ...OPTS, timeoutMs: 5_000, allowedHosts: new Set(["h2.test"]) },
+        {},
+        pinLookup([{ address: "127.0.0.1", family: 4 }]),
+      )(`https://h2.test:${port}/`);
+      expect(await res.text()).toBe("1.1");
+    } finally {
+      if (rejectUnauthorized === undefined) delete process.env["NODE_TLS_REJECT_UNAUTHORIZED"];
+      else process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = rejectUnauthorized;
+      await new Promise<void>((resolve) => server.close(() => resolve()));
+      rmSync(dir, { recursive: true, force: true });
     }
   });
 

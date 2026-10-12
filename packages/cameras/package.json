@@ -31,12 +31,12 @@
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-roads": "workspace:*",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@openconditions/model-charging": "workspace:*",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   }
 }

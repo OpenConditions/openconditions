@@ -36,15 +36,15 @@
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
     "@types/tz-lookup": "^6.1.2",
-    "drizzle-kit": "^0.31.10",
-    "testcontainers": "^12.1.0",
+    "drizzle-kit": "^0.31.11",
+    "testcontainers": "^12.2.0",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.3",
-    "vitest": "^4.1.11"
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
   },
   "dependencies": {
     "@openconditions/model": "workspace:*",
-    "drizzle-orm": "^0.45.2",
+    "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.9",
     "tz-lookup": "^6.1.25"
   }

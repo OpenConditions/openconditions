@@ -14,6 +14,8 @@
         "main": {
           "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/a8b29664-ab16-4341-9460-33f60d048d82/resource/3ed73d45-8ea6-4cdf-8984-11a4c4cfc9e8/download",
           "cadenceSec": 604800,
+          // The portal takes 60-70 s to answer a download (measured October 2026).
+          "timeoutSec": 180,
         },
       },
       "freshnessWindowSec": 1209600,

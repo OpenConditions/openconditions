@@ -18,6 +18,8 @@
         "main": {
           "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-sites?purpose=CAR",
           "cadenceSec": 300,
+          // 22 MB (4 MB gzipped) after a 7-10 s wait; at times past 60 s (October 2026).
+          "timeoutSec": 180,
         },
         "sources": {
           "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",

@@ -853,7 +853,7 @@ describe("one feed per publisher", () => {
     expect(f.license).toBe("DL-DE-BY-2.0");
     expect(f.attribution).toBe("Freie und Hansestadt Hamburg, Polizei Hamburg");
     expect(f.auth).toBeUndefined();
-    expect(main(f.id).url).toContain("api.hamburg.de");
+    expect(main(f.id).url).toContain("geodienste.hamburg.de/wfs_verkehrsinformation");
     expect(f.geojson?.typeField).toBe("art");
   });
 
