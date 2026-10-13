@@ -1,6 +1,10 @@
 /** Structured facts about a data licence, the single source of truth for what a
  *  licence lets us do with a feed's data. `id` is the SPDX id where SPDX lists the
  *  licence, otherwise `LicenseRef-<name>`; a feed with no licence is `NOASSERTION`.
+ *  Keep registered IDs in the exact spelling from https://spdx.org/licenses/;
+ *  `name` is the full human-readable licence title, not an alternative feed ID.
+ *  Reuse custom IDs only for the same terms. Preserve publisher-supplied notices
+ *  and raw upstream labels separately rather than rewriting their wording.
  *  A right is `null` when the licence text does not say. */
 export interface LicenseInfo {
   id: string;
@@ -42,18 +46,18 @@ export const LICENSES: readonly LicenseInfo[] = [
   },
   open({
     id: "CC0-1.0",
-    name: "Creative Commons Zero 1.0",
+    name: "Creative Commons Zero v1.0 Universal",
     url: "https://creativecommons.org/publicdomain/zero/1.0/",
     attributionRequired: false,
   }),
   open({
     id: "CC-BY-4.0",
-    name: "Creative Commons Attribution 4.0",
+    name: "Creative Commons Attribution 4.0 International",
     url: "https://creativecommons.org/licenses/by/4.0/",
   }),
   open({
     id: "CC-BY-SA-4.0",
-    name: "Creative Commons Attribution-ShareAlike 4.0",
+    name: "Creative Commons Attribution-ShareAlike 4.0 International",
     url: "https://creativecommons.org/licenses/by-sa/4.0/",
     shareAlike: true,
   }),
@@ -64,19 +68,19 @@ export const LICENSES: readonly LicenseInfo[] = [
   }),
   open({
     id: "ODbL-1.0",
-    name: "Open Data Commons Open Database License 1.0",
+    name: "Open Data Commons Open Database License v1.0",
     url: "https://opendatacommons.org/licenses/odbl/1-0/",
     shareAlike: true,
   }),
   open({
     id: "DL-DE-ZERO-2.0",
-    name: "Datenlizenz Deutschland – Zero – 2.0",
+    name: "Datenlizenz Deutschland – Zero – Version 2.0",
     url: "https://www.govdata.de/dl-de/zero-2-0",
     attributionRequired: false,
   }),
   open({
     id: "DL-DE-BY-2.0",
-    name: "Datenlizenz Deutschland – Namensnennung – 2.0",
+    name: "Datenlizenz Deutschland – Namensnennung – Version 2.0",
     url: "https://www.govdata.de/dl-de/by-2-0",
   }),
   open({
@@ -91,12 +95,12 @@ export const LICENSES: readonly LicenseInfo[] = [
   }),
   open({
     id: "NLOD-2.0",
-    name: "Norwegian Licence for Open Government Data 2.0",
+    name: "Norwegian Licence for Open Government Data (NLOD) 2.0",
     url: "https://data.norge.no/nlod/en/2.0",
   }),
   open({
     id: "OGL-UK-3.0",
-    name: "Open Government Licence v3.0 (UK)",
+    name: "Open Government Licence v3.0",
     url: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
   }),
   open({
@@ -138,7 +142,7 @@ export const LICENSES: readonly LicenseInfo[] = [
   }),
   open({
     id: "LicenseRef-opentransportdata-swiss-ToU",
-    name: "opentransportdata.swiss Terms of Use",
+    name: "opentransportdata.swiss General Terms and Conditions of Use",
     url: "https://opentransportdata.swiss/en/terms-of-use/",
   }),
   open({
