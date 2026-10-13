@@ -179,6 +179,29 @@ describe("fetchEndpoint — offset pagination", () => {
     ).rejects.toThrow(/maxPages/);
     expect(calls).toHaveLength(2);
   });
+
+  it("asks every page of a role of changes for those since the instant given, else for all", async () => {
+    const feed = makeFeed(
+      "changes",
+      {
+        url: "https://datamall.test/TrafficSpeedBands?limit=500",
+        pagination: { skipParam: "$skip", pageSize: 500 },
+        changesSince: { param: "since" },
+      },
+      { format: "lta-speedbands" },
+    );
+    const since = Date.parse("2026-10-13T19:38:23.456Z");
+    const changed = pagedODataFetch([500, 20]);
+    await fetchBuffers(feed, changed.fetchFn, { since });
+    expect(changed.calls).toHaveLength(2);
+    for (const call of changed.calls) {
+      expect(new URL(call).searchParams.get("since")).toBe("2026-10-13T19:38:23Z");
+      expect(new URL(call).searchParams.get("limit")).toBe("500");
+    }
+    const all = pagedODataFetch([20]);
+    await fetchBuffers(feed, all.fetchFn);
+    expect(new URL(all.calls[0]!).searchParams.has("since")).toBe(false);
+  });
 });
 
 describe("fetchEndpoint — Open511 offset pagination", () => {

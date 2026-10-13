@@ -297,6 +297,19 @@
                   "type": "integer",
                   "exclusiveMinimum": 0,
                   "maximum": 900
+                },
+                "changesSince": {
+                  "type": "object",
+                  "properties": {
+                    "param": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "param"
+                  ],
+                  "additionalProperties": false
                 }
               },
               "required": [

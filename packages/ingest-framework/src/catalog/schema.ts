@@ -235,6 +235,16 @@ export const endpointSchema = z
      * (60 s by default) allows. It lengthens that limit and never shortens it.
      */
     timeoutSec: z.number().int().positive().max(900).optional(),
+    /**
+     * A role of changes that asks for those since its previous answer: each
+     * request adds the query parameter `param`, the ISO instant of that
+     * answer's poll (or of its snapshot's, before it has one) less a minute,
+     * so no change falls between two answers.
+     */
+    changesSince: z
+      .object({ param: z.string().min(1) })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((e, ctx) => {

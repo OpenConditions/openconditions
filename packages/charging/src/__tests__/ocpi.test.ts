@@ -318,6 +318,34 @@ describe("ocpi", () => {
     expect(status.rejected).toBe(6);
   });
 
+  test("OCPDB: the changes since the status list stand over it, the latest last, in both parses", () => {
+    const list = (items: object[]) => [Buffer.from(JSON.stringify({ items }))];
+    const payloads = {
+      ...ocpdbPayloads(),
+      status: list([
+        { uid: "259994189", status: "AVAILABLE", status_last_updated: "2026-10-06T02:30:00Z" },
+      ]),
+      changes: [
+        ...list([
+          { uid: "259994189", status: "CHARGING", status_last_updated: "2026-10-06T02:40:00Z" },
+        ]),
+        ...list([
+          { uid: "259994189", status: "OUTOFORDER", status_last_updated: "2026-10-06T02:50:00Z" },
+        ]),
+      ],
+    };
+    const { full, status } = fullAndStatus(
+      "ocpi",
+      catalogFeed("de-bw-mobidata-charging"),
+      payloads,
+      parseContext(FETCHED),
+    );
+    expect(keyed(full, "oc:feature:de-bw-mobidata-charging:72555")).toEqual([
+      ["259994189", "out_of_order"],
+    ]);
+    expect(byReadingId(status.observations)).toEqual(byReadingId(full.observations));
+  });
+
   test("status alone reads a location's own state where the role names no EVSE, on the site it merged into", () => {
     const body = json("lt-locations.json") as { data: Record<string, unknown>[] };
     const loc258 = body.data.find((l) => l["id"] === 258)!;

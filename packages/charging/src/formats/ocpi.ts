@@ -402,7 +402,7 @@ export function parseOcpiStatus(
   ctx: ParseContext,
   index: StatusIndex,
 ): StatusOutput {
-  return ocpiStatusReadings(feed, statusesOf(payloads["status"] ?? []), index, ctx);
+  return ocpiStatusReadings(feed, liveStatesOf(payloads), index, ctx);
 }
 
 /** Reads every record of the list bodies, counting those `read` refuses. */
@@ -423,6 +423,14 @@ function readAll<T>(
     }
   }
   return { records, rejected };
+}
+
+/**
+ * The live states of a poll by uid: the `status` list, then each answer of
+ * `changes` since it, oldest first, so an EVSE's latest change stands.
+ */
+function liveStatesOf(payloads: FeedPayloads): Map<string, EvseState> {
+  return statusesOf([...(payloads["status"] ?? []), ...(payloads["changes"] ?? [])]);
 }
 
 /** The bare EVSEs of a status endpoint (OCPDB's `evses`) as live states by uid. */
@@ -472,7 +480,7 @@ export function parseOcpi(
     {
       locations: locations.records,
       rejected: locations.rejected,
-      statuses: statusesOf(payloads["status"] ?? []),
+      statuses: liveStatesOf(payloads),
       tariffs: readAll(payloads["tariffs"] ?? [], normaliseTariff).records,
       ...(associations === undefined || associations.length === 0
         ? {}

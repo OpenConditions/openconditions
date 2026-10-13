@@ -87,6 +87,23 @@ export function partitionCovers(
 }
 
 /**
+ * {@link partitionCovers} at one `now`, each retention class's window worked
+ * out once: a write checks every reading it keeps.
+ */
+export function partitionCoverage(now: number): (days: number, start: number) => boolean {
+  const spans = new Map<number, readonly [number, number]>();
+  return (days, start) => {
+    let span = spans.get(days);
+    if (span === undefined) {
+      const windows = wanted(days, now, PARTITION_AHEAD_DAYS);
+      span = [windows[0]![1], windows.at(-1)![2]];
+      spans.set(days, span);
+    }
+    return start >= span[0] && start < span[1];
+  };
+}
+
+/**
  * Creates the history partitions every retention class needs: each class's
  * list partition, then its range partitions from the start of its retention
  * window to `aheadDays` ahead. Idempotent; returns the partitions it created.

@@ -28,7 +28,9 @@ function inline(feed: CatalogFeed, main: Buffer) {
   };
 }
 
-describe("the parse process", () => {
+// Each case starts a child through tsx, and one lets it outgrow its heap:
+// seconds on a shared CI runner.
+describe("the parse process", { timeout: 60_000 }, () => {
   it("is handed every catalogue feed as it is", () => {
     for (const feed of [...REPO_CATALOG.feeds, ...REPO_CATALOG.disabled]) {
       expect(structuredClone(feed)).toEqual(feed);
@@ -87,6 +89,24 @@ describe("the parse process", () => {
       ctx,
     });
     expect(again.output.features.length).toBeGreaterThan(0);
+  });
+
+  it("stops an idle child, and the next parse starts a new one", async () => {
+    const brief = createParseProcess({ idleMs: 100 });
+    try {
+      const task = {
+        feed: repoFeed("de-bnetza-charging"),
+        payloads: { main: [{ data: BNETZA, gzipped: false }] },
+        ctx,
+      };
+      await brief.parse(task);
+      expect(brief.running).toBe(true);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(brief.running).toBe(false);
+      expect((await brief.parse(task)).output.features.length).toBeGreaterThan(0);
+    } finally {
+      await brief.close();
+    }
   });
 
   it("ends alone when a parse outgrows its heap, and the next parse starts a new one", async () => {

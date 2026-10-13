@@ -61,6 +61,7 @@ test("chargingDomain registers its formats with their roles and what they produc
     ocpi: {
       main: { required: true },
       status: live,
+      changes: { ...live, accumulatesSince: "status" },
       tariffs: { required: false },
       associations: { required: false },
       sources: { required: false },

@@ -81,6 +81,8 @@ interface Site {
   id: string;
   first: FlowReading;
   lines: (Point | LineString)[];
+  /** Each of `lines` as JSON: a line another reading repeats is known by it. */
+  lineKeys: Set<string>;
   channels: Map<string, ChannelSpec>;
 }
 
@@ -249,12 +251,15 @@ export function flowOutput(
       id: r.site,
       first: r,
       lines: [],
+      lineKeys: new Set(),
       channels: new Map(),
     };
     sites.set(r.site, site);
     for (const line of linesOf(r.geometry)) {
-      if (!site.lines.some((l) => JSON.stringify(l) === JSON.stringify(line)))
-        site.lines.push(line);
+      const key = JSON.stringify(line);
+      if (site.lineKeys.has(key)) continue;
+      site.lineKeys.add(key);
+      site.lines.push(line);
     }
     for (const spec of [...(r.declaredChannels ?? []), ...(r.channels ?? [])]) {
       if (!site.channels.has(spec.key)) {

@@ -255,6 +255,12 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
     description: "Cap on the raw payload archive's stored bytes; 0 = no cap. Empty: 10 GiB.",
     default: "",
   },
+  OPENCONDITIONS_PARSE_HEAP_MB: {
+    title: "Parse process heap (MB)",
+    description:
+      "Heap ceiling of the child process that parses large payloads. Empty: half the container's memory.",
+    default: "",
+  },
   OPENCONDITIONS_HISTORY_DAYS: {
     title: "Record history (days)",
     description:

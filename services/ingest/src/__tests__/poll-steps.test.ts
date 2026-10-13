@@ -25,7 +25,16 @@ describe("PollSteps", () => {
     steps.lap("gate");
     now += 48_100;
     steps.lap("write");
-    steps.writeMs = { features: 3_000, readings: 40_200, canonical: 10 };
-    expect(steps.describe()).toBe("fetch 1.2s, write 48.1s (features 3.0s, readings 40.2s)");
+    steps.writeMs = {
+      features: 3_000,
+      "readings/lookup": 9_500,
+      "readings/rows": 20,
+      "readings/latest": 20_100,
+      readings: 40_200,
+      canonical: 10,
+    };
+    expect(steps.describe()).toBe(
+      "fetch 1.2s, write 48.1s (features 3.0s, readings 40.2s [lookup 9.5s, latest 20.1s])",
+    );
   });
 });

@@ -13,6 +13,7 @@ import { updateCanonicalView } from "./canonical-view.js";
 import { capRows, maxObservationsPerPollFromEnv } from "./caps.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
+import { stepTimer } from "./steps.js";
 import {
   endUnstatedSeries,
   type ObservationCounts,
@@ -252,12 +253,7 @@ export async function writeSnapshotIn(
     changed: [],
     stepsMs: {},
   };
-  let lapStart = Date.now();
-  const lap = (step: string) => {
-    const now = Date.now();
-    summary.stepsMs[step] = (summary.stepsMs[step] ?? 0) + now - lapStart;
-    lapStart = now;
-  };
+  const lap = stepTimer(summary.stepsMs);
   for (const cls of ["feature", "situation", "offer"] as const) {
     capRows(drafts[DRAFTS_OF[cls]] ?? [], cls, ctx.maxRowsPerClass);
   }
@@ -279,7 +275,7 @@ export async function writeSnapshotIn(
     tx,
     sourceId,
     drafts.observations ?? [],
-    { ...ctx, changedFeatures },
+    { ...ctx, changedFeatures, stepsMs: summary.stepsMs },
     summary.rejected,
   );
   lap("readings");
