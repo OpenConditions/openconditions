@@ -4,6 +4,12 @@ import type postgres from "postgres";
 /** The catalogue fields of one loaded source that SQL joins read. */
 export interface SourceEntry {
   id: string;
+  /** Metadata-only catalogue ancestors stay inactive for parser coverage. */
+  active?: boolean;
+  name?: string;
+  homepage?: string;
+  notice?: string;
+  terms?: { notice?: string };
   domain: string;
   format: string;
   /** What the source publishes, from its domain's product list (`flow`, `events`, …). */
@@ -47,6 +53,7 @@ export interface SourceEntry {
 export async function syncSources(sql: postgres.Sql, sources: readonly SourceEntry[]) {
   const rows = sources.map((s) => ({
     id: s.id,
+    active: s.active ?? true,
     domain: s.domain,
     format: s.format,
     product: s.product,
@@ -58,6 +65,9 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
     license: s.license,
     license_url: s.licenseUrl ?? null,
     attribution: s.attribution,
+    credit_name: s.name ?? null,
+    credit_url: s.homepage ?? null,
+    credit_notice: s.notice ?? s.terms?.notice ?? null,
     rights: s.rights ?? null,
     restricted: s.restricted,
     cadence_sec: s.cadenceSec,
@@ -77,7 +87,7 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
           id, domain, format, product, access_mode, tier, country, subdivision, operator,
           license, license_url, attribution, rights, restricted, restricted_since, cadence_sec,
           freshness_window_sec, raw_retention, extras_allow, extras_federate, lane_numbering,
-          parent_source_id, policy_ids, selection_state, active, updated_at
+          parent_source_id, policy_ids, selection_state, credit_name, credit_url, credit_notice, active, updated_at
         )
         SELECT r.id, r.domain, r.format, r.product, r.access_mode, r.tier, r.country,
           r.subdivision, r.operator, r.license, r.license_url, r.attribution, r.rights,
@@ -86,13 +96,13 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
           r.lane_numbering, r.parent_source_id,
           CASE WHEN r.policy_ids IS NULL THEN NULL
                ELSE ARRAY(SELECT jsonb_array_elements_text(r.policy_ids)) END,
-          r.selection_state, true, now()
+          r.selection_state, r.credit_name, r.credit_url, r.credit_notice, r.active, now()
         FROM jsonb_to_recordset(${tx.json(rows as never)}) AS r(
           id text, domain text, format text, product text, access_mode text, tier text,
           country text, subdivision text, operator text, license text, license_url text,
           attribution text, rights jsonb, restricted boolean, cadence_sec int, freshness_window_sec int,
           raw_retention text, extras_allow jsonb, extras_federate boolean, lane_numbering text,
-          parent_source_id text, policy_ids jsonb, selection_state text
+          parent_source_id text, policy_ids jsonb, selection_state text, credit_name text, credit_url text, credit_notice text, active boolean
         )
         ON CONFLICT (id) DO UPDATE SET
           domain = excluded.domain, format = excluded.format, product = excluded.product,
@@ -109,7 +119,8 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
           raw_retention = excluded.raw_retention, extras_allow = excluded.extras_allow,
           extras_federate = excluded.extras_federate, lane_numbering = excluded.lane_numbering,
           parent_source_id = excluded.parent_source_id, policy_ids = excluded.policy_ids,
-          selection_state = excluded.selection_state, active = true, updated_at = now()`;
+          selection_state = excluded.selection_state, credit_name = excluded.credit_name,
+          credit_url = excluded.credit_url, credit_notice = excluded.credit_notice, active = excluded.active, updated_at = now()`;
     }
     await tx`
       UPDATE conditions.source SET active = false, updated_at = now()

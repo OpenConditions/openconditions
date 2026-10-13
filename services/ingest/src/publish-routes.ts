@@ -443,7 +443,10 @@ export function registerPublishRoutes(
               ST_AsGeoJSON(s.geom) AS geojson,
               sp.speed_ratio AS "speedRatio", sp.los, sp.confidence,
               sp.current_kph AS "currentKph", sp.free_flow_kph AS "freeFlowKph",
-              sp.observed_at AS "observedAt"
+              sp.observed_at AS "observedAt",
+              COALESCE(sp.field_sources, jsonb_build_object('geometry', jsonb_build_array('openstreetmap'))) AS "fieldSources",
+              COALESCE(sp.field_contributors, jsonb_build_object('geometry', conditions.flow_osm_credit())) AS "fieldContributors",
+              COALESCE(sp.field_lineage_complete, jsonb_build_object('geometry',true,'speed',sp.current_kph IS NULL,'freeFlow',sp.free_flow_kph IS NULL,'ratio',sp.speed_ratio IS NULL,'los',sp.los IS NULL,'confidence',sp.confidence IS NULL)) AS "fieldLineageComplete"
        FROM conditions.road_segment s
        LEFT JOIN conditions.segment_speed sp
          ON sp.segment_id = s.segment_id AND ${speedScopeClause(scopeOf(req))}

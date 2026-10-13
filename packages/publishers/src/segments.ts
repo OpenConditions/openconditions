@@ -1,3 +1,4 @@
+import type { Contributor } from "@openconditions/core";
 import type { Feature } from "geojson";
 
 /**
@@ -26,6 +27,9 @@ export interface SegmentSpeedRow {
    * `Date` (postgres-js returns `timestamptz` as `Date`) before this row is
    * built — see the `/segments.geojson` route. */
   observedAt?: string | null;
+  fieldLineageComplete?: Record<string, boolean> | null;
+  fieldSources?: Record<string, string[]> | null;
+  fieldContributors?: Record<string, Contributor[]> | null;
 }
 
 /**
@@ -56,6 +60,12 @@ export function segmentsToGeoJSON(rows: SegmentSpeedRow[]): {
     if (row.currentKph != null) properties["current_kph"] = row.currentKph;
     if (row.freeFlowKph != null) properties["free_flow_kph"] = row.freeFlowKph;
     if (row.observedAt != null) properties["observed_at"] = row.observedAt;
+    if (row.fieldSources != null || row.fieldContributors != null)
+      properties["lineage_version"] = 1;
+    if (row.fieldLineageComplete != null)
+      properties["field_lineage_complete"] = row.fieldLineageComplete;
+    if (row.fieldSources != null) properties["field_sources"] = row.fieldSources;
+    if (row.fieldContributors != null) properties["field_contributors"] = row.fieldContributors;
     return {
       type: "Feature",
       geometry: JSON.parse(row.geojson),

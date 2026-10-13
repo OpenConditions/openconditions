@@ -320,24 +320,32 @@ describe("GET /observations/grid", () => {
     const { res, body } = await get(url);
     expect(res.statusCode).toBe(200);
     expect(res.headers["cache-control"]).toBe("public, max-age=60");
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       cells: [
         [10.5, 45.5, 3, 60, 30],
         [12.5, 47.5, 1, 5, 5],
       ],
       sources: [PIXELS],
     });
+    expect(body["cell_contributors"]).toMatchObject([
+      { longitude: 10.5, latitude: 45.5, sources: [PIXELS] },
+      { longitude: 12.5, latitude: 47.5, sources: [PIXELS] },
+    ]);
   });
 
   it("counts a restricted source's readings for the operator", async () => {
     const { body } = await get(url, OPERATOR);
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       cells: [
         [10.5, 45.5, 4, 100, 40],
         [12.5, 47.5, 1, 5, 5],
       ],
       sources: [PIXELS, RESTRICTED_PIXELS],
     });
+    expect(body["cell_contributors"]).toMatchObject([
+      { longitude: 10.5, latitude: 45.5, sources: [PIXELS, RESTRICTED_PIXELS] },
+      { longitude: 12.5, latitude: 47.5, sources: [PIXELS] },
+    ]);
   });
 
   it("refuses a box of more than 50,000 cells and a query without its required fields", async () => {

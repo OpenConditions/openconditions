@@ -31,6 +31,8 @@ export interface SnapshotDrafts {
 }
 
 export interface WriteContext extends PollRef {
+  /** An admitted fresh acquisition may attach a first receipt to an unchanged legacy row. Cache replay must omit this. */
+  captureEvidence?: "acquired";
   registry: Registry;
   /** This instance's id, stamped on every record it seals. */
   instanceId: string;

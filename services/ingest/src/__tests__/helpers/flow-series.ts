@@ -48,6 +48,13 @@ export interface SiteReading {
   los?: string;
   /** The free-flow speed the reading's baseline carries. */
   freeFlowKph?: number;
+  baselineSource?: "native" | "derived" | "osm_maxspeed";
+  attribution?: {
+    provider: string;
+    license: string;
+    parentSourceId?: string;
+    childSourceId?: string;
+  };
   /** A lane or class channel of the site. */
   componentKey?: string;
 }
@@ -78,7 +85,7 @@ function draft(source: string, r: SiteReading, property: string, result: Rec): R
       sourceFormat: "datex2",
       accessMode: "bulk",
       recordId: r.site,
-      attribution: { provider: "Test", license: "CC0-1.0" },
+      attribution: r.attribution ?? { provider: "Test", license: "CC0-1.0" },
       privacy: { class: "authoritative" },
     },
     freshness: { fetchedAt: r.at },
@@ -86,7 +93,7 @@ function draft(source: string, r: SiteReading, property: string, result: Rec): R
       ? {
           baseline: {
             freeFlow: { value: r.freeFlowKph, unit: "km/h" },
-            source: "native",
+            source: r.baselineSource ?? "native",
           },
         }
       : {}),
@@ -106,7 +113,11 @@ export async function writeSiteReadings(
   source: string,
   readings: readonly SiteReading[],
   now: string,
-  { catalogued = true, domain }: { catalogued?: boolean; domain?: string } = {},
+  {
+    catalogued = true,
+    domain,
+    captureEvidence,
+  }: { catalogued?: boolean; domain?: string; captureEvidence?: "acquired" } = {},
 ): Promise<void> {
   if (catalogued) await seedFlowSource(sql, source, domain);
   await ensureObservationPartitions(sql, {
@@ -125,7 +136,13 @@ export async function writeSiteReadings(
     sql,
     source,
     { observations },
-    { registry, instanceId: "test.local", now, complete: { situation: true } },
+    {
+      registry,
+      instanceId: "test.local",
+      now,
+      complete: { situation: true },
+      ...(captureEvidence ? { captureEvidence } : {}),
+    },
   );
   if (summary.rejected.length > 0) {
     throw new Error(`readings rejected: ${JSON.stringify(summary.rejected[0])}`);

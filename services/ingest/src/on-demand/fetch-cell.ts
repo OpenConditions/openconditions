@@ -203,6 +203,7 @@ async function fetchAndWrite(
     const ttlSec = feed.onDemand?.ttlSec;
     if (ttlSec === undefined) throw new Error("not an on-demand feed: no onDemand block");
     const payloads: Record<string, readonly Buffer[]> = {};
+    let bodiesAcquired = true;
     for (const role of dataRoles(feed)) {
       const baseFetch = guardedFeedFetch(deps, feed.endpoints[role]?.timeoutSec);
       const result = await fetchEndpoint(feed, role, baseFetch, {
@@ -217,6 +218,7 @@ async function fetchAndWrite(
         const { failed, total } = result.partitions;
         throw new Error(`${role}: ${failed}/${total} requests failed`);
       }
+      bodiesAcquired &&= result.bodyFreshness === "acquired";
       payloads[role] = result.buffers;
       payloadHashes.push(...result.payloads.map((p) => p.sha256));
     }
@@ -260,6 +262,7 @@ async function fetchAndWrite(
         now: at,
         complete: false,
         fetchId,
+        ...(bodiesAcquired ? { captureEvidence: "acquired" as const } : {}),
         ...(payloadHashes.length > 0 ? { payloadHashes } : {}),
       });
       logRejections(feed.id, summary);

@@ -392,3 +392,29 @@ place a draft — followed by the ids that changed, are new or are gone. A poll
 whose payloads were evicted is listed with the count of missing payloads and not
 compared. Replay writes nothing. It covers event feeds only; a flow feed is
 refused.
+
+### Exact fire-density cell suppliers
+
+`GET /observations/grid` preserves its `cells` numeric tuples
+`[longitude, latitude, count, sum, max]` and its native collection `sources`.
+The additive `cell_contributors` array is sorted in the same cell order and contains
+`{ longitude, latitude, native_sources, sources?, contributors?, lineage_complete }`
+for each cell. `native_sources` contains only admitted native feed IDs counted in
+that cell, for source-policy filtering. Its `sources` are
+canonical parent display IDs and `contributors` are captured display credits in
+the format documented in [speed coverage](speed-coverage.md#selected-display-contributors),
+including required notices as separate credits sharing the same source ID.
+
+The acquisition writer captures versioned content-addressed receipts outside
+canonical record bodies; an unchanged input keeps its original receipt. Grid
+aggregation joins those pointers after grouping, without recursive catalogue
+lookups per reading. Known receipts remain visible in a mixed known/unknown cell
+with `lineage_complete: false`; wholly unknown cells omit canonical `sources` and
+`contributors`. Native cell IDs and numeric tuples remain available.
+
+Counts, sums, maxima and credits come from the same grouped database snapshot.
+Only groups admitted by public scope and licence egress enter the cell's lineage.
+A consumer credits each displayed density cell's suppliers rather than every source
+counted elsewhere in the collection. Clients of an older producer can retain their
+existing numeric tuple parsing; missing cell metadata does not prove a cell's exact
+suppliers.

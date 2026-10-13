@@ -299,6 +299,104 @@ describe("observation writes", () => {
     ]);
   });
 
+  it.each([false, true])(
+    "keeps the last actual same-batch attribution change and skips its restatement (existing=%s)",
+    async (existing) => {
+      const attributed = (at: string, license: string) => {
+        const draft = los("free_flow", at);
+        return {
+          ...draft,
+          provenance: {
+            ...(draft["provenance"] as object),
+            attribution: {
+              provider: license === "CC0-1.0" ? "Earlier notice" : "Captured notice",
+              license,
+            },
+          },
+        };
+      };
+      if (existing)
+        await writeSnapshot(
+          sql,
+          "nl-ndw-flow",
+          { observations: [attributed("2026-10-01T09:59:00Z", "CC0-1.0")] },
+          ctx,
+        );
+      const written = await writeSnapshot(
+        sql,
+        "nl-ndw-flow",
+        {
+          observations: [
+            attributed("2026-10-01T10:00:00Z", "CC0-1.0"),
+            attributed("2026-10-01T10:01:00Z", "CC-BY-4.0"),
+            attributed("2026-10-01T10:02:00Z", "CC-BY-4.0"),
+          ],
+        },
+        ctx,
+      );
+      expect(written.observations.unchanged).toBe(existing ? 2 : 1);
+      const [latest] =
+        await sql`SELECT l.effective_from,r.contributors FROM conditions.observation_latest l JOIN conditions.contributor_receipt r ON r.id=l.contributor_receipt_id`;
+      expect(latest!.effective_from).toEqual(new Date("2026-10-01T10:01:00Z"));
+      expect(latest!.contributors).toContainEqual(
+        expect.objectContaining({ spdxLicense: "CC-BY-4.0", attributionText: "Captured notice" }),
+      );
+      expect(
+        latest!.contributors.some((c: { spdxLicense?: string }) => c.spdxLicense === "CC0-1.0"),
+      ).toBe(false);
+    },
+  );
+
+  it("tracks an absent then changed baseline beside the evolving same-batch result", async () => {
+    const withBaseline = (at: string) => ({
+      ...los("free_flow", at),
+      baseline: { source: "native", freeFlow: { value: 120, unit: "km/h" } },
+    });
+    const written = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [
+          los("free_flow", "2026-10-01T10:00:00Z"),
+          withBaseline("2026-10-01T10:01:00Z"),
+          withBaseline("2026-10-01T10:02:00Z"),
+        ],
+      },
+      ctx,
+    );
+    expect(written.observations).toMatchObject({ latest: 1, unchanged: 1 });
+    const [row] =
+      await sql`SELECT effective_from,reading->'baseline' AS baseline FROM conditions.observation_latest`;
+    expect(row!.effective_from).toEqual(new Date("2026-10-01T10:01:00Z"));
+    expect(row!.baseline).toEqual({ source: "native", freeFlow: { value: 120, unit: "km/h" } });
+  });
+
+  it("takes the final same-instant attribution correction even when its hash matches the original held row", async () => {
+    const attributed = (license: string) => {
+      const draft = los("free_flow", "2026-10-01T10:00:00Z");
+      return {
+        ...draft,
+        provenance: {
+          ...(draft["provenance"] as object),
+          attribution: { provider: "Required notice", license },
+        },
+      };
+    };
+    await writeSnapshot(sql, "nl-ndw-flow", { observations: [attributed("CC0-1.0")] }, ctx);
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: [attributed("CC-BY-4.0"), attributed("CC0-1.0")] },
+      ctx,
+    );
+    const [latest] =
+      await sql`SELECT l.template#>>'{provenance,attribution,license}' AS license,r.contributors FROM conditions.observation_latest l JOIN conditions.contributor_receipt r ON r.id=l.contributor_receipt_id`;
+    expect(latest!.license).toBe("CC0-1.0");
+    expect(latest!.contributors).toContainEqual(
+      expect.objectContaining({ spdxLicense: "CC0-1.0", attributionText: "Required notice" }),
+    );
+  });
+
   it("write every reading of a property that keeps more than changes", async () => {
     await writeSnapshot(
       sql,
