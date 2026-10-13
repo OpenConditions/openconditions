@@ -18,6 +18,7 @@ import { updateFintrafficNativeBaselines } from "./pipeline/fintraffic-native.js
 import { overpassInterpreterUrl } from "./pipeline/osm-import.js";
 import { resolveOsmMaxspeed } from "./pipeline/osm-maxspeed.js";
 import { createParseGate } from "./pipeline/parse-gate.js";
+import { createParseProcess } from "./pipeline/parse-process.js";
 import { rebindOnBoot } from "./pipeline/rebind.js";
 import type { RunDeps } from "./pipeline/run.js";
 import {
@@ -282,6 +283,8 @@ export function startScheduler(
   // One gate for all feeds: a large payload is parsed and written while no
   // other large one is, which bounds the heap two national registers need.
   const parseGate = createParseGate();
+  // And one child process that parses them, so the event loop stays free meanwhile.
+  const parseProcess = createParseProcess();
   const bindingDrain = createBindingDrain(
     () => defaultDrainBindingQueue(sql, { now: () => new Date().toISOString() }),
     inFlight,
@@ -300,6 +303,7 @@ export function startScheduler(
         openlrClient,
         raw,
         parseGate,
+        parseProcess,
       },
       ...(inFlight ? { inFlight } : {}),
       bindingDrain,

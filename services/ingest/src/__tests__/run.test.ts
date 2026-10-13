@@ -2,11 +2,8 @@ import { readFileSync } from "node:fs";
 import type { CatalogFeed } from "@openconditions/ingest-framework";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { stampAttribution } from "../pipeline/publish.js";
-import {
-  createOpenlrClient,
-  guardedFeedFetch,
-  inspectSnapshotCompleteness,
-} from "../pipeline/run.js";
+import { createOpenlrClient, guardedFeedFetch } from "../pipeline/run.js";
+import { inspectSnapshotCompleteness } from "../pipeline/snapshot-inspection.js";
 import { repoFeed, testFeed } from "./helpers/catalog.js";
 import { fakeLookup } from "./helpers/on-demand.js";
 

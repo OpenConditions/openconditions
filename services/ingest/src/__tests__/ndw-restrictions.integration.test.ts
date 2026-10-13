@@ -11,6 +11,7 @@ import { FeedStatusStore } from "../feed-status.js";
 import { drainBindingQueue } from "../pipeline/bind-records.js";
 import { activateRoadGraph } from "../pipeline/graph-state.js";
 import { importOsmRoads } from "../pipeline/osm-import.js";
+import { createParseProcess, type ParseProcess } from "../pipeline/parse-process.js";
 import { runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import { registerPublishRoutes } from "../publish-routes.js";
@@ -232,7 +233,7 @@ function sweep() {
 
 async function ingest(
   body = xml,
-  init: { status?: number; etag?: string; now?: string } = {},
+  init: { status?: number; etag?: string; now?: string; parseProcess?: ParseProcess } = {},
 ): Promise<Awaited<ReturnType<typeof runSource>>> {
   return runSource(ndwFeed, {
     sql,
@@ -240,6 +241,7 @@ async function ingest(
     lookup: fakeLookup,
     now: () => init.now ?? CHECKED_AT,
     model: MODEL,
+    ...(init.parseProcess ? { parseProcess: init.parseProcess } : {}),
   });
 }
 
@@ -267,6 +269,25 @@ describe("ndw record lifecycle against a real database", () => {
       SELECT freshness_window_sec FROM conditions.source_status WHERE source = ${SOURCE}`;
     // NDW's own 300 seconds, never Finland's inherited 600.
     expect(status[0]!.freshness_window_sec).toBe(300);
+  }, 180_000);
+
+  it("publishes the capture parsed in the child process as it does parsed inline", async () => {
+    const inline = await ingest(xml, { etag: 'W/"inline"' });
+    expect(inline.error).toBeUndefined();
+    const before = await stored(ROADWORKS_ID);
+    const child = createParseProcess({ minBytes: 0 });
+    try {
+      const apart = await ingest(xml, { etag: 'W/"apart"', parseProcess: child });
+      expect(apart.error).toBeUndefined();
+      // The same drafts: every situation stands as it was, none written again.
+      expect(apart).toMatchObject({ count: 0, inserted: 0, updated: 0, deleted: 0 });
+      expect(apart.snapshot).toEqual(inline.snapshot);
+      expect(apart.skippedNoGeometry).toEqual(inline.skippedNoGeometry);
+      expect(apart.rejected).toBe(inline.rejected);
+      expect(await stored(ROADWORKS_ID)).toEqual(before);
+    } finally {
+      await child.close();
+    }
   }, 180_000);
 
   it("walks update, unchanged, 304, failure, staleness and orphan cleanup", async () => {

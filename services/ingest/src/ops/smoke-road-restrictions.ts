@@ -16,7 +16,7 @@ import { parseMainPayloads } from "../pipeline/parse.js";
 import { stampAttribution, writeModel } from "../pipeline/publish.js";
 import { resolveOpenLr } from "../pipeline/resolve.js";
 import { type RestrictionTally, tallyRestrictions } from "../pipeline/restriction-tally.js";
-import { inspectSnapshotCompleteness } from "../pipeline/run.js";
+import { inspectSnapshotCompleteness } from "../pipeline/snapshot-inspection.js";
 
 /**
  * A finite, operator-run smoke check for the restriction path.

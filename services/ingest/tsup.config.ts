@@ -18,7 +18,8 @@ const repoFeeds = fileURLToPath(new URL("../../feeds", import.meta.url));
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds", import.meta.url));
 
 export default defineConfig({
-  entry: ["src/index.ts"],
+  // The parse child process runs from a file of its own, next to the entry.
+  entry: { index: "src/index.ts", "parse-child": "src/pipeline/parse-child.ts" },
   format: ["esm"],
   sourcemap: true,
   clean: true,
