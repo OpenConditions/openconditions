@@ -19,6 +19,7 @@ import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from 
 import { partitionCovers, retentionDaysOf } from "./observation-partitions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { expiryOf } from "./record-rows.js";
+import { stepTimer } from "./steps.js";
 import type { Rejection, WriteContext } from "./write-records.js";
 
 type Rec = Record<string, unknown>;
@@ -176,6 +177,8 @@ interface Transient {
 export interface ObservationWriteContext extends WriteContext, PollRef {
   /** Features this poll created or changed: a reading about one is written though its result held. */
   changedFeatures?: ReadonlySet<string>;
+  /** Where the write's stages add their wall-clock ms, as `readings/<stage>`. */
+  stepsMs?: Record<string, number>;
 }
 
 /**
@@ -216,6 +219,7 @@ export async function writeObservationsIn(
   };
   if (drafts.length === 0) return counts;
 
+  const lap = stepTimer(ctx.stepsMs);
   const pending = new Map<string, PendingSeries>();
   const transient = new Map<string, Transient>();
   let handled = 0;
@@ -259,7 +263,8 @@ export async function writeObservationsIn(
   }
 
   const frontiers = await rollupFrontiers(tx);
-  const write = { tx, ctx, rejected, stage, frontiers, counts };
+  lap("readings/group");
+  const write = { tx, ctx, rejected, stage, frontiers, counts, lap };
   let slice: [string, PendingSeries][] = [];
   for (const entry of pending) {
     slice.push(entry);
@@ -270,6 +275,7 @@ export async function writeObservationsIn(
   }
   if (slice.length > 0) await writeSeries(write, slice);
   await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage);
+  lap("readings/transient");
   return counts;
 }
 
@@ -295,15 +301,18 @@ async function writeSeries(
     stage: "draft" | "stored";
     frontiers: Map<string, number>;
     counts: ObservationCounts;
+    /** Ends the stage under way (`readings/<stage>`). */
+    lap: (stage: string) => void;
   },
   slice: readonly (readonly [string, PendingSeries])[],
 ): Promise<void> {
-  const { tx, ctx, rejected, stage, frontiers, counts } = write;
+  const { tx, ctx, rejected, stage, frontiers, counts, lap } = write;
   const now = Date.parse(ctx.now);
   const latest = await loadLatest(
     tx,
     slice.map(([, p]) => p.key),
   );
+  lap("readings/lookup");
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
   const legacyAcquisitions: { row: Rec; provenance: Rec }[] = [];
   const expiryMoved = new Map<number, unknown>();
@@ -396,6 +405,7 @@ async function writeSeries(
       bySeries.set(k, entry);
     }
   }
+  lap("readings/compare");
 
   await captureContributorReceipts(tx, legacyAcquisitions, ctx.now);
   if (legacyAcquisitions.length > 0)
@@ -422,6 +432,7 @@ async function writeSeries(
       ],
     );
   }
+  lap("readings/restated");
 
   const acquisitions: { row: Rec; provenance: Rec }[] = [];
   const seriesRows: Rec[] = [];
@@ -493,8 +504,10 @@ async function writeSeries(
       }
     }
   }
+  lap("readings/rows");
 
   await captureContributorReceipts(tx, acquisitions, ctx.now);
+  lap("readings/receipts");
 
   const returning = "series_id, subject_key, property, qualifier_key, source_id";
   type Written = { series_id: number } & Record<string, string>;
@@ -525,6 +538,7 @@ async function writeSeries(
     .map((id) => wholeRowOf.get(id)!());
   const written = [...(await upsert([...seriesRows, ...gone])), ...moved];
   counts.latest += written.length;
+  lap("readings/latest");
   const ids = new Map([...latest].map(([k, l]) => [k, l.series_id]));
   for (const w of written) {
     ids.set(
@@ -554,6 +568,7 @@ async function writeSeries(
     "series_id",
   );
   counts.history += stored.length;
+  lap("readings/history");
 }
 
 /**

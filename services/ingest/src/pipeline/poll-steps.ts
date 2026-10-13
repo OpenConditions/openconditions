@@ -23,20 +23,28 @@ export class PollSteps {
     this.lapStart = now;
   }
 
-  /** `fetch 1.2s, parse 8.0s, write 48.1s (features 3.0s, readings 40.2s)`: steps under 50 ms left out. */
+  /**
+   * `fetch 1.2s, write 48.1s (features 3.0s, readings 40.2s [lookup 9.5s, latest 20.1s])`:
+   * the write's stages in parentheses, a stage's parts (`readings/lookup`) in
+   * brackets; steps under 50 ms left out.
+   */
   describe(): string {
-    const list = (ms: Record<string, number>) =>
+    const list = (ms: Record<string, number>, parts: (step: string) => string = () => "") =>
       Object.entries(ms)
-        .filter(([, n]) => n >= 50)
-        .map(([step, n]) => `${step} ${(n / 1000).toFixed(1)}s`)
+        .filter(([step, n]) => n >= 50 && !step.includes("/"))
+        .map(([step, n]) => `${step} ${(n / 1000).toFixed(1)}s${parts(step)}`)
         .join(", ");
-    const write = list(this.writeMs);
-    return Object.entries(this.ms)
-      .filter(([, n]) => n >= 50)
-      .map(([step, n]) => {
-        const own = `${step} ${(n / 1000).toFixed(1)}s`;
-        return step === "write" && write !== "" ? `${own} (${write})` : own;
-      })
-      .join(", ");
+    const partsOf = (step: string) => {
+      const inner = list(
+        Object.fromEntries(
+          Object.entries(this.writeMs)
+            .filter(([part]) => part.startsWith(`${step}/`))
+            .map(([part, n]) => [part.slice(step.length + 1), n]),
+        ),
+      );
+      return inner === "" ? "" : ` [${inner}]`;
+    };
+    const write = list(this.writeMs, partsOf);
+    return list(this.ms, (step) => (step === "write" && write !== "" ? ` (${write})` : ""));
   }
 }
