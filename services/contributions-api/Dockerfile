@@ -136,10 +136,10 @@ FROM node:24.21.0-alpine@sha256:ebfe2f90462722a7a4de65e91990e97fe0d401c70e0e762c
 WORKDIR /app
 
 # Apply Alpine security fixes that landed after the immutable base was published.
-# curl backs the healthcheck. Package managers are build-time tools, so omit them
-# from the production attack surface.
+# curl backs the healthcheck and tini reaps it. Package managers are build-time
+# tools, so omit them from the production attack surface.
 RUN apk upgrade --no-cache \
-    && apk add --no-cache curl \
+    && apk add --no-cache curl tini \
     && rm -rf /usr/local/lib/node_modules/npm \
                /usr/local/lib/node_modules/corepack \
                /usr/local/bin/npm \
@@ -177,4 +177,7 @@ LABEL org.opencontainers.image.title="OpenConditions contributions-api" \
       org.opencontainers.image.source="https://github.com/openconditions/openconditions" \
       org.opencontainers.image.licenses="AGPL-3.0-or-later"
 
+# Docker kills a healthcheck that times out but leaves its process for PID 1
+# to reap, which node never does; tini as PID 1 reaps it and forwards signals.
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "dist/main.js"]
