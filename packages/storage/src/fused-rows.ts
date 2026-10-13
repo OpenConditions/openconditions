@@ -253,6 +253,43 @@ export async function refreshFused(
   const memberOf = new Map<string, CanonicalRow>();
   for (const c of canonical) for (const m of c.memberIds) memberOf.set(m, c);
   const byCanonical = new Map(canonical.map((c) => [c.canonicalFeatureId, c]));
+  const narrow = [...scopeOf.values()].some((scope) => scope !== "all");
+  let candidateScope = tx``;
+  let existingScope = tx``;
+  if (narrow) {
+    const scopeRows = [...scopeOf].flatMap(([canonicalId, scope]) =>
+      (scope === "all" ? [null] : [...scope]).map((property) => ({
+        canonical_id: canonicalId,
+        property,
+      })),
+    );
+    const candidateRows = [
+      ...scopeRows.map(({ canonical_id, property }) => ({
+        feature_id: canonical_id,
+        crowd: true,
+        property,
+      })),
+      ...[...memberOf].flatMap(([memberId, c]) => {
+        const scope = scopeOf.get(c.canonicalFeatureId);
+        return (scope === "all" ? [null] : [...(scope ?? [])]).map((property) => ({
+          feature_id: memberId,
+          crowd: false,
+          property,
+        }));
+      }),
+    ];
+    candidateScope = tx`AND EXISTS (
+          SELECT 1 FROM jsonb_to_recordset(${tx.json(candidateRows)})
+            AS scope(feature_id text, crowd boolean, property text)
+           WHERE scope.feature_id = l.feature_id
+             AND scope.crowd = (l.source_id = ${CROWD_SOURCE_ID})
+             AND (scope.property IS NULL OR scope.property = l.property))`;
+    existingScope = tx`AND EXISTS (
+          SELECT 1 FROM jsonb_to_recordset(${tx.json(scopeRows)})
+            AS scope(canonical_id text, property text)
+           WHERE scope.canonical_id = observation_latest.feature_id
+             AND (scope.property IS NULL OR scope.property = observation_latest.property))`;
+  }
   const fresh = ctx.freshSources ?? [];
 
   const rows = await tx<CandidateRow[]>`
@@ -270,7 +307,8 @@ export async function refreshFused(
        AND l.source_id <> ALL(${[...FUSED_SOURCE_IDS]}::text[])
        AND ((l.source_id <> ${CROWD_SOURCE_ID} AND l.feature_id = ANY(${[...memberOf.keys()]}::text[]))
          OR (l.source_id = ${CROWD_SOURCE_ID}
-             AND l.feature_id = ANY(${[...byCanonical.keys()]}::text[])))`;
+             AND l.feature_id = ANY(${[...byCanonical.keys()]}::text[])))
+       ${candidateScope}`;
 
   interface Group {
     canonical: CanonicalRow;
@@ -381,7 +419,8 @@ export async function refreshFused(
            conditions.observation_record(template, reading) AS record, since_at, fused_public
       FROM conditions.observation_latest
      WHERE source_id = ANY(${[...FUSED_SOURCE_IDS]}::text[])
-       AND feature_id = ANY(${[...byCanonical.keys()]}::text[])`;
+       AND feature_id = ANY(${[...byCanonical.keys()]}::text[])
+       ${existingScope}`;
   const heldKey = (sourceId: string, subjectKey: string, property: string, qualifierKey: string) =>
     jcs([sourceId, subjectKey, property, qualifierKey]);
   const held = new Map(
