@@ -142,8 +142,8 @@ slices: its seconds of synchronous parsing no longer stall the other polls
 or the API, and a parse that outgrows the child's heap fails that poll
 alone. The child's heap is capped at half the container's memory
 (`--max-old-space-size-percentage=50`; NDW's register needs about 1.8 GB),
-or at `OPENCONDITIONS_PARSE_HEAP_MB`; it does not inherit the service's heap
-options. A parse that reads reference data (a site table) stays inline.
+or at `OPENCONDITIONS_PARSE_HEAP_MB`; it inherits none of the service's
+`NODE_OPTIONS`. A parse that reads reference data (a site table) stays inline.
 Between polls a feed keeps only its latest payloads (gzipped in memory above
 1 MiB) and, for a charging feed with a live status role, the status index of
 its last full parse: a poll that fetches only live states writes their

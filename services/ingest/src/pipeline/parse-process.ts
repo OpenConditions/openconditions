@@ -101,9 +101,10 @@ function childEntry(): URL {
 
 /**
  * Starts the child on first use and again after one dies. Its heap has a
- * ceiling of its own (`heapMb`, else {@link parseHeapMbFromEnv}): the
- * service's heap options are left out of those it inherits, so a parse that
- * outgrows its heap ends the child alone. An idle child does not keep the
+ * ceiling of its own (`heapMb`, else {@link parseHeapMbFromEnv}), so a parse
+ * that outgrows its heap ends the child alone. It inherits none of the
+ * service's `NODE_OPTIONS`: V8 takes a heap percentage there over the
+ * child's own size, whichever comes last. An idle child does not keep the
  * service alive. A poll is parsed here from `minBytes`, by default the size
  * the parse gate serializes. `entry` replaces the child's script; tests only.
  */
@@ -121,13 +122,9 @@ export function createParseProcess(
     c.channel?.unref();
   };
   const spawn = (): ChildProcess => {
-    const inherited = (process.env["NODE_OPTIONS"] ?? "")
-      .split(/\s+/)
-      .filter((option) => option !== "" && !option.startsWith("--max-old-space-size"))
-      .join(" ");
     const c = fork(entry, {
       execArgv: [...(entry.pathname.endsWith(".ts") ? ["--import", "tsx"] : []), heap],
-      env: { ...process.env, NODE_OPTIONS: inherited },
+      env: { ...process.env, NODE_OPTIONS: "" },
       serialization: "advanced",
       stdio: ["ignore", "inherit", "inherit", "ipc"],
     });
