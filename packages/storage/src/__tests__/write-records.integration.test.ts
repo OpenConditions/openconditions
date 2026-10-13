@@ -188,6 +188,17 @@ describe("feature component synchronization", () => {
     expect(await componentDml()).toEqual([]);
   });
 
+  it("times the stages of the write that ran, in order", async () => {
+    const summary = await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { features: [featureDraft("s1", 3)] },
+      ctx(T1, false),
+    );
+    expect(Object.keys(summary.stepsMs)).toEqual(["features", "readings", "canonical"]);
+    for (const ms of Object.values(summary.stepsMs)) expect(ms).toBeGreaterThanOrEqual(0);
+  });
+
   it("refreshes parent expiry without component DML or a new revision", async () => {
     await seedComponents();
     const before = await storedComponents();

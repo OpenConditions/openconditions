@@ -42,6 +42,7 @@ import { bindRecords } from "./bind-records.js";
 import { bodyStreamFrom } from "./body-stream.js";
 import { streamFeed } from "./measured-data.js";
 import { type ParseGate, payloadBytes } from "./parse-gate.js";
+import { PollSteps } from "./poll-steps.js";
 import {
   changedSituations,
   logRejections,
@@ -546,6 +547,7 @@ async function runAttempt(
   due: readonly string[],
 ): Promise<RunResult> {
   const start = Date.now();
+  const steps = new PollSteps(start);
   const attemptAt = attempt.at;
   const attemptId = attempt.id;
   // What this attempt downloaded: set once the fetch returns, then carried on
@@ -612,6 +614,7 @@ async function runAttempt(
     await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
     return { count: 0, durationMs: Date.now() - start, error };
   }
+  steps.lap("reference");
 
   const ctx = { fetchedAt: attemptAt, cadenceSec: src.cadenceSec, reference };
   let acceptFetch: (() => void) | undefined;
@@ -627,6 +630,7 @@ async function runAttempt(
     deps,
     attempt,
     start,
+    steps,
     recordStatus,
     identity: {
       at: attemptAt,
@@ -669,6 +673,7 @@ async function runAttempt(
       if (deps.roles) deps.roles.lastFetchedAt["main"] = Date.parse(attemptAt);
       parsed = streamed.output;
       captureEvidence = true;
+      steps.lap("stream");
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
@@ -1039,6 +1044,7 @@ async function runAttempt(
     } catch (err) {
       return failFetch(err);
     }
+    steps.lap("fetch");
 
     // A role's latest payloads: the held ones of a feed that keeps them (every
     // answer since its snapshot, for a role of changes), else this poll's.
@@ -1071,12 +1077,14 @@ async function runAttempt(
     ) {
       const parseStatus = format.parseStatus;
       const statusAndFinish = async (): Promise<RunResult> => {
+        steps.lap("gate");
         let output: StatusOutput;
         try {
           output = parseStatus(src, await payloadsOf(fetched), ctx, index);
         } catch (err) {
           return failParse(err);
         }
+        steps.lap("parse");
         return finishStatusPoll(pollContext(), output);
       };
       return deps.parseGate
@@ -1108,8 +1116,10 @@ async function runAttempt(
       }
     };
     const parseAndFinish = async (): Promise<RunResult> => {
+      steps.lap("gate");
       const latest = await parseLatest();
       if ("failed" in latest) return latest.failed;
+      steps.lap("parse");
       const { parsed } = latest;
       const result = await finish(parsed);
       if (keepPayloads && live.length > 0 && result.error === undefined && parsed.statusIndex) {
@@ -1155,6 +1165,7 @@ interface PollContext {
   deps: RunDeps;
   attempt: PollAttempt;
   start: number;
+  steps: PollSteps;
   recordStatus: (update: SourceStatusUpdate) => Promise<void>;
   identity: PollIdentity;
   acceptFetch?: () => void;
@@ -1273,6 +1284,7 @@ async function finishEventPoll(
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   const rejected = dropped + skippedNoGeometry + parseRejected;
   let summary: WriteSummary;
+  poll.steps.lap("prepare");
   try {
     summary = await publishSituations(deps.sql, src, {
       situations,
@@ -1294,9 +1306,12 @@ async function finishEventPoll(
     console.error(`[ingest] publish failed for source ${src.id}:`, err);
     return fail(poll, "failed", err instanceof Error ? err.message : String(err));
   }
+  poll.steps.lap("write");
+  poll.steps.writeMs = summary.stepsMs;
   logRejections(src.id, summary);
   poll.acceptFetch?.();
   await bindChanged(poll, summary);
+  poll.steps.lap("bind");
 
   const c = summary.counts.situation;
   const durationMs = Date.now() - poll.start;
@@ -1306,7 +1321,7 @@ async function finishEventPoll(
   console.info(
     `[ingest] ${src.id}: situations created=${c.created} updated=${c.updated} ` +
       `restored=${c.restored} withdrawn=${c.withdrawn} unchanged=${c.unchanged} ` +
-      `of ${situations.length} in ${durationMs}ms${dropNote}`,
+      `of ${situations.length} in ${durationMs}ms${dropNote} (${poll.steps.describe()})`,
   );
   return {
     count: c.created + c.updated + c.restored,
@@ -1363,6 +1378,7 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
   };
   const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   let published: Awaited<ReturnType<typeof publishFlows>>;
+  poll.steps.lap("prepare");
   try {
     published = await publishFlows(deps.sql, src, {
       output: stamped,
@@ -1379,9 +1395,12 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
     return fail(poll, "failed", err instanceof Error ? err.message : String(err));
   }
   const { summary, counts } = published;
+  poll.steps.lap("write");
+  poll.steps.writeMs = summary.stepsMs;
   logRejections(src.id, summary);
   poll.acceptFetch?.();
   await bindChanged(poll, summary);
+  poll.steps.lap("bind");
 
   const { pastRollup } = summary.observations;
   if (pastRollup > 0) {
@@ -1392,7 +1411,7 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
   console.info(
     `[ingest] ${src.id}: ${stamped.features.length} sites, ${stamped.observations.length} readings ` +
       `(latest ${o.latest}, history ${o.history}, unchanged ${o.unchanged}), ` +
-      `${counts.activeEvents} congestion situations in ${durationMs}ms`,
+      `${counts.activeEvents} congestion situations in ${durationMs}ms (${poll.steps.describe()})`,
   );
   return {
     count: counts.inserted + counts.updated,
@@ -1436,6 +1455,7 @@ async function finishFeaturePoll(
     offers: stamp(parse.offers),
   };
   let published: Awaited<ReturnType<typeof publishFeatures>>;
+  poll.steps.lap("prepare");
   try {
     published = await publishFeatures(deps.sql, src, {
       output,
@@ -1453,6 +1473,8 @@ async function finishFeaturePoll(
     return fail(poll, "failed", err instanceof Error ? err.message : String(err));
   }
   const { summary, counts } = published;
+  poll.steps.lap("write");
+  poll.steps.writeMs = summary.stepsMs;
   logRejections(src.id, summary);
   poll.acceptFetch?.();
 
@@ -1460,7 +1482,8 @@ async function finishFeaturePoll(
   console.info(
     `[ingest] ${src.id}: ${output.features.length} features, ${output.observations.length} readings, ` +
       `${output.offers.length} offers (${counts.inserted} inserted, ${counts.updated} updated, ` +
-      `${counts.deleted} withdrawn, ${summary.observations.ended} readings ended) in ${durationMs}ms`,
+      `${counts.deleted} withdrawn, ${summary.observations.ended} readings ended) in ${durationMs}ms ` +
+      `(${poll.steps.describe()})`,
   );
   return {
     count: counts.inserted + counts.updated,
@@ -1484,6 +1507,7 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
   const { src, deps } = poll;
   const observations = output.observations.map((d) => stampAttribution(d, src));
   let published: Awaited<ReturnType<typeof publishReadings>>;
+  poll.steps.lap("prepare");
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
@@ -1500,6 +1524,8 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
     return fail(poll, "failed", err instanceof Error ? err.message : String(err));
   }
   const { summary, counts } = published;
+  poll.steps.lap("write");
+  poll.steps.writeMs = summary.stepsMs;
   logRejections(src.id, summary);
   poll.acceptFetch?.();
 
@@ -1508,7 +1534,7 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
   console.info(
     `[ingest] ${src.id}: status only, ${observations.length} readings ` +
       `(latest ${o.latest}, history ${o.history}, unchanged ${o.unchanged}), ` +
-      `${output.rejected} statuses unplaced in ${durationMs}ms`,
+      `${output.rejected} statuses unplaced in ${durationMs}ms (${poll.steps.describe()})`,
   );
   return {
     count: counts.updated,

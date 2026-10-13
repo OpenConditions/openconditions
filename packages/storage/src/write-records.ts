@@ -88,6 +88,8 @@ export interface WriteSummary {
   rejected: Rejection[];
   /** Records whose stored revision changed (created, updated, restored, withdrawn). */
   changed: { class: RevisionedClass; id: string; revision: number }[];
+  /** Wall-clock ms of each stage of the write that ran, in the order they ran. */
+  stepsMs: Record<string, number>;
 }
 
 const KERNEL: ColumnSpec[] = [
@@ -248,6 +250,13 @@ export async function writeSnapshotIn(
     },
     rejected: [],
     changed: [],
+    stepsMs: {},
+  };
+  let lapStart = Date.now();
+  const lap = (step: string) => {
+    const now = Date.now();
+    summary.stepsMs[step] = (summary.stepsMs[step] ?? 0) + now - lapStart;
+    lapStart = now;
   };
   for (const cls of ["feature", "situation", "offer"] as const) {
     capRows(drafts[DRAFTS_OF[cls]] ?? [], cls, ctx.maxRowsPerClass);
@@ -258,7 +267,10 @@ export async function writeSnapshotIn(
     ctx.maxObservationsPerPoll ?? maxObservationsPerPollFromEnv(),
   );
   for (const cls of ["feature", "situation", "offer"] as const) {
-    await writeClass(tx, cls, sourceId, drafts[DRAFTS_OF[cls]] ?? [], ctx, summary);
+    const classDrafts = drafts[DRAFTS_OF[cls]] ?? [];
+    if (classDrafts.length === 0 && !completeFor(ctx, cls)) continue;
+    await writeClass(tx, cls, sourceId, classDrafts, ctx, summary);
+    lap(DRAFTS_OF[cls]);
   }
   const changedFeatures = new Set(
     summary.changed.filter((c) => c.class === "feature").map((c) => c.id),
@@ -270,10 +282,12 @@ export async function writeSnapshotIn(
     { ...ctx, changedFeatures },
     summary.rejected,
   );
+  lap("readings");
   const ended = ctx.statesComplete
     ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
     : [];
   summary.observations.ended = ended.length;
+  if (ctx.statesComplete) lap("ended");
   await updateCanonicalView(
     tx,
     ctx.registry,
@@ -287,6 +301,7 @@ export async function writeSnapshotIn(
     },
     ctx,
   );
+  lap("canonical");
   return summary;
 }
 
@@ -348,7 +363,6 @@ async function writeClass(
   summary: WriteSummary,
 ): Promise<void> {
   const counts = summary.counts[cls];
-  if (drafts.length === 0 && !completeFor(ctx, cls)) return;
   const existing = new Map(
     (
       await tx.unsafe<(Stored & { id: string })[]>(
