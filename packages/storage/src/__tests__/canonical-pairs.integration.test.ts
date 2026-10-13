@@ -58,6 +58,72 @@ function nodesOf(plan: PlanNode): PlanNode[] {
   return [plan, ...(plan.Plans ?? []).flatMap(nodesOf)];
 }
 
+function externalIdIntersections(plan: PlanNode): PlanNode[] {
+  return nodesOf(plan).filter(
+    (node) =>
+      node["Node Type"] === "BitmapAnd" &&
+      nodesOf(node).some((descendant) => descendant["Index Name"] === "idx_feature_external_ids"),
+  );
+}
+
+describe("external-ID lookup plan guard", () => {
+  test("allows an unrelated kind and polled-ID intersection beside the external-ID lookup", () => {
+    const plan: PlanNode = {
+      "Node Type": "Append",
+      Plans: [
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
+        {
+          "Node Type": "BitmapAnd",
+          Plans: [
+            { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_kind_lifecycle" },
+            { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_source" },
+          ],
+        },
+      ],
+    };
+
+    expect(externalIdIntersections(plan)).toEqual([]);
+  });
+
+  test("rejects a direct intersection of the external-ID and kind indexes", () => {
+    const intersection: PlanNode = {
+      "Node Type": "BitmapAnd",
+      Plans: [
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_kind_lifecycle" },
+      ],
+    };
+
+    expect(externalIdIntersections(intersection)).toEqual([intersection]);
+  });
+
+  test("rejects every nested external-ID intersection despite another independent lookup", () => {
+    const inner: PlanNode = {
+      "Node Type": "BitmapAnd",
+      Plans: [
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_kind_lifecycle" },
+      ],
+    };
+    const outer: PlanNode = {
+      "Node Type": "BitmapAnd",
+      Plans: [
+        { "Node Type": "BitmapOr", Plans: [inner] },
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_source" },
+      ],
+    };
+    const plan: PlanNode = {
+      "Node Type": "Append",
+      Plans: [
+        { "Node Type": "Bitmap Index Scan", "Index Name": "idx_feature_external_ids" },
+        outer,
+      ],
+    };
+
+    expect(externalIdIntersections(plan)).toEqual([outer, inner]);
+  });
+});
+
 describe("the pair search of a register's poll", () => {
   test("looks each external id up in its index alone, not intersected with the whole kind", async () => {
     const polled = Array.from(
@@ -85,6 +151,6 @@ describe("the pair search of a register's poll", () => {
     )) as { "QUERY PLAN": { Plan: PlanNode }[] }[];
     const nodes = nodesOf(plans![0]!.Plan);
     expect(nodes.some((n) => n["Index Name"] === "idx_feature_external_ids")).toBe(true);
-    expect(nodes.filter((n) => n["Node Type"] === "BitmapAnd")).toEqual([]);
+    expect(externalIdIntersections(plans![0]!.Plan)).toEqual([]);
   }, 300_000);
 });
