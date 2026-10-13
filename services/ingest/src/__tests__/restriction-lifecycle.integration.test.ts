@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { readSegmentConditionRows } from "@openconditions/core";
-import type { LookupFn } from "@openconditions/ingest-framework";
+import { captureLicensing, type LookupFn } from "@openconditions/ingest-framework";
 import { segmentConditionsToJson } from "@openconditions/publishers";
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import { sweepRecords } from "@openconditions/storage";
@@ -445,6 +445,9 @@ describe("restriction record lifecycle", () => {
       attribution: Record<string, unknown>;
     };
     expect(provenance.attribution).toEqual({
+      name: feed.name,
+      ...(feed.homepage ? { url: feed.homepage } : {}),
+      licensing: captureLicensing(feed),
       provider: "Fintraffic / Digitraffic",
       license: "CC-BY-4.0",
       licenseUrl: "https://creativecommons.org/licenses/by/4.0/",

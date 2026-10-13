@@ -52,6 +52,7 @@ export interface SiteReading {
   attribution?: {
     provider: string;
     license: string;
+    licensing?: import("@openconditions/model").Licensing;
     parentSourceId?: string;
     childSourceId?: string;
   };

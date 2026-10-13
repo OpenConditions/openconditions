@@ -1,3 +1,4 @@
+import { captureLicensing } from "@openconditions/ingest-framework";
 import { syncSources } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, expect, it } from "vitest";
@@ -257,7 +258,15 @@ it("refreshes captured rights when the actual selected input provenance changes 
         at: NOW,
         speed: 40,
         freeFlowKph: 90,
-        attribution: { provider: "Test", license: "CC-BY-4.0" },
+        attribution: {
+          provider: "Test",
+          license: "CC-BY-4.0",
+          licensing: captureLicensing({
+            id: "sensor-3",
+            name: "Selected sensor measurements",
+            license: "CC-BY-4.0",
+          }),
+        },
       },
     ],
     NOW,
@@ -265,7 +274,13 @@ it("refreshes captured rights when the actual selected input provenance changes 
   await writeSensorObservations(sql, () => NOW);
   const [row] =
     await sql`SELECT field_contributors FROM conditions.segment_observation WHERE segment_id='3:f'`;
-  expect(row!.field_contributors.speed[0].spdxLicense).toBe("CC-BY-4.0");
+  expect(row!.field_contributors.speed[0].licensing).toEqual(
+    captureLicensing({
+      id: "sensor-3",
+      name: "Selected sensor measurements",
+      license: "CC-BY-4.0",
+    }),
+  );
 });
 
 it("retains native child identity for every sensor field while publishing canonical parent credits", async () => {

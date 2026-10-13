@@ -1,4 +1,5 @@
 import { recordFromHistory, recordOf } from "@openconditions/core";
+import { captureLicensing } from "@openconditions/ingest-framework";
 import { contentHash, observationId, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
@@ -311,6 +312,11 @@ describe("observation writes", () => {
             attribution: {
               provider: license === "CC0-1.0" ? "Earlier notice" : "Captured notice",
               license,
+              licensing: captureLicensing({
+                id: "nl-ndw-flow",
+                name: "Flow measurements",
+                license,
+              }),
             },
           },
         };
@@ -339,10 +345,20 @@ describe("observation writes", () => {
         await sql`SELECT l.effective_from,r.contributors FROM conditions.observation_latest l JOIN conditions.contributor_receipt r ON r.id=l.contributor_receipt_id`;
       expect(latest!.effective_from).toEqual(new Date("2026-10-01T10:01:00Z"));
       expect(latest!.contributors).toContainEqual(
-        expect.objectContaining({ spdxLicense: "CC-BY-4.0", attributionText: "Captured notice" }),
+        expect.objectContaining({
+          licensing: captureLicensing({
+            id: "nl-ndw-flow",
+            name: "Flow measurements",
+            license: "CC-BY-4.0",
+          }),
+          attributionText: "Captured notice",
+        }),
       );
       expect(
-        latest!.contributors.some((c: { spdxLicense?: string }) => c.spdxLicense === "CC0-1.0"),
+        latest!.contributors.some(
+          (c: { licensing?: { bindings: { license: { expression?: string } }[] } }) =>
+            c.licensing?.bindings[0]?.license.expression === "CC0-1.0",
+        ),
       ).toBe(false);
     },
   );
@@ -378,7 +394,11 @@ describe("observation writes", () => {
         ...draft,
         provenance: {
           ...(draft["provenance"] as object),
-          attribution: { provider: "Required notice", license },
+          attribution: {
+            provider: "Required notice",
+            license,
+            licensing: captureLicensing({ id: "nl-ndw-flow", name: "Flow measurements", license }),
+          },
         },
       };
     };
@@ -393,7 +413,14 @@ describe("observation writes", () => {
       await sql`SELECT l.template#>>'{provenance,attribution,license}' AS license,r.contributors FROM conditions.observation_latest l JOIN conditions.contributor_receipt r ON r.id=l.contributor_receipt_id`;
     expect(latest!.license).toBe("CC0-1.0");
     expect(latest!.contributors).toContainEqual(
-      expect.objectContaining({ spdxLicense: "CC0-1.0", attributionText: "Required notice" }),
+      expect.objectContaining({
+        licensing: captureLicensing({
+          id: "nl-ndw-flow",
+          name: "Flow measurements",
+          license: "CC0-1.0",
+        }),
+        attributionText: "Required notice",
+      }),
     );
   });
 
