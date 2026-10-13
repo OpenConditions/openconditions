@@ -37,7 +37,12 @@ async function boot() {
   await runMigrations(url);
   console.info("[federation-api] migrations applied");
 
-  const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
+  const sql = postgres(url, {
+    max: 5,
+    idle_timeout: 30,
+    connect_timeout: 10,
+    connection: { application_name: "openconditions-federation-api" },
+  });
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
   const app = await build({ sql });
 

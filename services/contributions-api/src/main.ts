@@ -34,7 +34,12 @@ async function boot() {
   await runMigrations(url);
   console.info("[contributions-api] migrations applied");
 
-  const sql = postgres(url, { max: 5, idle_timeout: 30, connect_timeout: 10 });
+  const sql = postgres(url, {
+    max: 5,
+    idle_timeout: 30,
+    connect_timeout: 10,
+    connection: { application_name: "openconditions-contributions-api" },
+  });
   const registry = productionRegistry();
   await assertStoredCodesRegistered(sql, registry, { sourceFormats: false });
   const app = await build({ sql, registry });
