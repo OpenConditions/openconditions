@@ -67,6 +67,8 @@ service's volume beside its raw and nightly archives.
 | LTA DataMall Traffic Incidents (Singapore) | `sg-lta-events` | `SG_LTA_API_KEY` | LicenseRef-Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | LTA DataMall Traffic Speed Bands (Singapore) | `sg-lta-flow` | `SG_LTA_API_KEY` | LicenseRef-Singapore-ODL-1.0 | [Request LTA API access](https://datamall.lta.gov.sg/content/datamall/en/request-for-api.html) |
 | NAP Slovenia (promet.si) | `si-nap-events` | `SI_NAP_EVENTS_USER`, `SI_NAP_EVENTS_PASSWORD` | CC-BY-SA-4.0 | [Register at NAP Slovenia](https://www.nap.si/en/registration) |
+| 511NY (New York) | `us-ny-511-events` | `US_NY_511_USER`, `US_NY_511_PASSWORD` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
+| 511NY winter road conditions (New York) | `us-ny-511-conditions` | `US_NY_511_USER`, `US_NY_511_PASSWORD` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
 | OHGO travel delays (Ohio) | `us-oh-ohgo-flow` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO construction (Ohio) | `us-oh-ohgo-construction-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
 | OHGO incidents (Ohio) | `us-oh-ohgo-events` | `US_OH_OHGO_API_KEY` | LicenseRef-US-Gov-Public-Domain | [OHGO developer registration](https://ohgo.com/developer) |
@@ -87,14 +89,13 @@ service's volume beside its raw and nightly archives.
 | Trafikverket traffic cameras | `se-trafikverket-cameras` | `SE_TRAFIKVERKET_API_KEY` | CC0-1.0 | [Sign up at Trafikverket](https://data.trafikverket.se/oauth2/Account/register) |
 | TDX road CCTV | `tw-tdx-cameras` | `TW_TDX_CLIENT_ID`, `TW_TDX_CLIENT_SECRET` | OGDL-Taiwan-1.0 | [Register for a TDX platform account](https://tdx.transportdata.tw/register) |
 | National Park Service webcams | `us-nps-cameras` | `US_NPS_CAMERAS_API_KEY` | LicenseRef-US-Gov-Public-Domain | [Get an NPS API key](https://www.nps.gov/subjects/developer/get-started.htm) |
+| 511NY cameras (New York) | `us-ny-511-cameras` | `US_NY_511_USER`, `US_NY_511_PASSWORD` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
 | 511GA cameras (Georgia) | `us-ga-511-cameras` | `US_GA_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://511ga.org/developers/doc) |
 | AZ511 cameras (Arizona) | `us-az-511-cameras` | `US_AZ_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://az511.com/developers/doc) |
 | Idaho 511 cameras | `us-id-511-cameras` | `US_ID_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://511.idaho.gov/developers/doc) |
 | UDOT Traffic cameras (Utah) | `us-ut-511-cameras` | `US_UT_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://udottraffic.utah.gov/developers/doc) |
 | 511LA cameras (Louisiana) | `us-la-511-cameras` | `US_LA_511_CAMERAS_API_KEY` | NOASSERTION | [Register for API access](https://www.511la.org/developers/doc) |
 | ODOT TripCheck cameras (Oregon) | `us-or-tripcheck-cameras` | `US_OR_TRIPCHECK_CAMERAS_API_KEY` | LicenseRef-ODOT-TripCheck | [ODOT API portal: TripCheck Data](https://apiportal.odot.state.or.us/product#product=tripcheck-api-data) |
-| 511NY (New York) (disabled) | `us-ny-511-events` | `US_NY_511_API_KEY` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
-| 511NY winter road conditions (New York) (disabled) | `us-ny-511-conditions` | `US_NY_511_API_KEY` | LicenseRef-511NY-DAA | [Read the 511NY data feed page and Developer Access Agreement](https://511ny.org/help/24) |
 
 ## Settings
 

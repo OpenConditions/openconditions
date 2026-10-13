@@ -11,6 +11,7 @@ import {
   camerasFeedShape,
   readMapping,
 } from "./feed-schema.js";
+import { parseCarsCctv } from "./formats/cars-cctv.js";
 import { parseDatex2Cameras } from "./formats/datex2.js";
 import { parseDigitraffic, parseDigitrafficStatus } from "./formats/digitraffic.js";
 import { parseHkTdCameras } from "./formats/hk-td.js";
@@ -85,6 +86,7 @@ const FORMATS: FeedFormat<CamerasCatalogFeed>[] = [
   cameras("tfl", parseTfl),
   cameras("nps", parseNps),
   cameras("tripcheck", parseTripcheck),
+  cameras("cars-cctv", parseCarsCctv),
 ];
 
 const LAYOUTS: ReadonlySet<string> = new Set(CAMERAS_LAYOUT_FORMATS);

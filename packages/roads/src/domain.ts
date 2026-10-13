@@ -10,14 +10,18 @@ import {
   type ParseOutput,
   type StreamingParse,
 } from "@openconditions/ingest-framework";
+import { parseCarsSigns } from "./cars-signs.js";
 import { autobahnIndexResolver, wzdxRegistryResolver } from "./catalog/index.js";
 import { type RoadFeed, roadsFeedShape } from "./feed-schema.js";
 import type { FlowContext, FlowOutput, FlowSites } from "./flow-output.js";
 import type { FlowFormatCode } from "./flow-parsers.js";
 import { measuredDataReader, parseEvents, parseFlows, type SituationFormatCode } from "./parse.js";
 
-/** What a roads feed publishes: situations, conditions, or measured traffic flow. */
-export const ROAD_PRODUCTS = ["events", "conditions", "flow"] as const;
+/**
+ * What a roads feed publishes: situations, conditions, measured traffic flow,
+ * or the message signs along the roads and what they show.
+ */
+export const ROAD_PRODUCTS = ["events", "conditions", "flow", "signs"] as const;
 
 /**
  * The decoders of roads reference data: DATEX site tables and predefined
@@ -148,6 +152,7 @@ const FORMATS: FeedFormat<RoadFeed>[] = [
   situations("open511"),
   situations("wzdx"),
   situations("geojson"),
+  situations("cars"),
   situations("ibi511"),
   situations("ibi511-conditions"),
   situations("lta"),
@@ -178,6 +183,14 @@ const FORMATS: FeedFormat<RoadFeed>[] = [
   measurements("geojson-flow"),
   measurements("bcn-trams", { required: true, decoders: ["bcn-trams-csv"] }),
   measurements("digitraffic-traffic-measurement"),
+  {
+    id: "cars-signs",
+    kind: "features",
+    products: ["signs"],
+    produces: { kinds: ["vms", "sign_face"], properties: ["vms.display"] },
+    endpoints: { main: MAIN },
+    parse: parseCarsSigns,
+  },
 ];
 
 /**

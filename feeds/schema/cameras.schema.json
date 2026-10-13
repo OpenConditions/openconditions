@@ -58,6 +58,7 @@
             "type": "string",
             "minLength": 1,
             "enum": [
+              "cars-cctv",
               "csv",
               "datex2",
               "digitraffic",

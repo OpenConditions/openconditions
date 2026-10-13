@@ -1,0 +1,564 @@
+[
+  {
+    "event-id": "TEST-1001",
+    "headline": {
+      "category": "roadwork",
+      "code": "road maintenance operations"
+    },
+    "description": "NY 7 in both directions: Road maintenance operations. between Exit 4 and Exit 5 (Sample Town). Road maintenance work is in progress. Until October 30, 2026 at about 4:00PM EDT.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 6,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "CURRENT",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "start-time": {
+          "time": 1792328400000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "end-time": {
+          "time": 1793390400000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "roadwork",
+              "code": "road maintenance operations"
+            }
+          },
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "roadwork",
+              "code": "paving operations"
+            }
+          },
+          {
+            "description-type": "AdditionalTextDescription",
+            "description": "Web Text: milling and paving between Exit 4 and Exit 5, weather permitting, Monday thru Friday, 09:00 AM thru 04:00 PM, alternating traffic"
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "BOTH_DIRECTIONS",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.8,
+                "longitude": -73.9
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "NY 7",
+            "secondary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.81,
+                "longitude": -73.88
+              },
+              "linear-reference": 13.1
+            }
+          }
+        ],
+        "recurrent-times": [
+          {
+            "period": {
+              "days-of-week": {
+                "bits": 62
+              },
+              "effective-period-qualifier": "NOT_SPECIFIED"
+            },
+            "schedule-times": [
+              {
+                "startTime": 50400000,
+                "stopTime": 75600000,
+                "startTimeLT": {
+                  "hour": 9,
+                  "minute": 0,
+                  "second": 0,
+                  "nano": 0
+                },
+                "stopTimeLT": {
+                  "hour": 16,
+                  "minute": 0,
+                  "second": 0,
+                  "nano": 0
+                }
+              }
+            ],
+            "time-zone": "GMT-04:00"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [[-73.9, 42.8], [-73.89, 42.805], [-73.88, 42.81]]
+    },
+    "counties": ["Schenectady"]
+  },
+  {
+    "event-id": "TEST-1002",
+    "headline": {
+      "category": "closure",
+      "code": "closed"
+    },
+    "description": "I-87 southbound: Road closed. between Exit 9 and Exit 8 (Sample Town). All lanes are closed. Until further notice.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 2,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "CURRENT",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "start-time": {
+          "time": 1791500000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "end-time": {
+          "time": 1792900000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -18000000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "closure",
+              "code": "closed"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "NEGATIVE_DIRECTION",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.85,
+                "longitude": -73.78
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "I-87",
+            "link-alignment": "NORTHBOUND"
+          }
+        ],
+        "lanes": [
+          {
+            "lanes-type": "THROUGH_LANES",
+            "total-affected": 3,
+            "total-original": 3,
+            "link-direction": "NEGATIVE_DIRECTION",
+            "lanes-impact-type": "CLOSED"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-73.78, 42.85]
+    },
+    "counties": ["Saratoga"]
+  },
+  {
+    "event-id": "TEST-1003",
+    "headline": {
+      "category": "incident",
+      "code": "crash"
+    },
+    "description": "I-90 eastbound: Crash. at Exit 24 (Sample City). 1 right lane of 3 lanes is closed.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 1,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "CURRENT",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "start-time": {
+          "time": 1791580000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "end-time": {
+          "time": 1791600000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "incident",
+              "code": "crash"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "POSITIVE_DIRECTION",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.7,
+                "longitude": -73.82
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "I-90"
+          }
+        ],
+        "lanes": [
+          {
+            "lanes-type": "RIGHT_LANE",
+            "total-affected": 1,
+            "total-original": 3,
+            "link-direction": "POSITIVE_DIRECTION",
+            "lanes-impact-type": "CLOSED",
+            "lanes-affected": [false, false, true]
+          },
+          {
+            "lanes-type": "OUTSIDE_SHOULDER",
+            "link-direction": "POSITIVE_DIRECTION",
+            "lanes-impact-type": "CLOSED"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-73.82, 42.7]
+    },
+    "counties": ["Albany"]
+  },
+  {
+    "event-id": "TEST-1004",
+    "headline": {
+      "category": "special-event",
+      "code": "concert"
+    },
+    "description": "Sample Arena: Concert. Expect heavy traffic near the arena.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 6,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "CURRENT",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "start-time": {
+          "time": 1791680000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "end-time": {
+          "time": 1791700000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "special-event",
+              "code": "concert"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "Landmark",
+            "description-type": "Landmark",
+            "geo-location": {
+              "location-type": "GeoLocation",
+              "latitude": 42.65,
+              "longitude": -73.75
+            },
+            "landmark-name": "Sample Arena",
+            "landmark-type": "VENUE"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-73.75, 42.65]
+    }
+  },
+  {
+    "event-id": "TEST-1005",
+    "headline": {
+      "category": "incident",
+      "code": "disabled vehicle"
+    },
+    "description": "I-87 northbound: Disabled vehicle. at Exit 6.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 3,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 2,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "ENDED",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "incident",
+              "code": "disabled vehicle"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "POSITIVE_DIRECTION",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.78,
+                "longitude": -73.79
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "I-87"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-73.79, 42.78]
+    }
+  },
+  {
+    "event-id": "TEST-1006",
+    "headline": {
+      "category": "roadwork",
+      "code": "roadwork"
+    },
+    "description": "NY 7: Roadwork. Not for public release.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 6,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "CURRENT",
+    "details": [
+      {
+        "access": "RESTRICTED",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "roadwork",
+              "code": "roadwork"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "NOT_DIRECTIONAL",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.8,
+                "longitude": -73.9
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "NY 7"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "Point",
+      "coordinates": [-73.9, 42.8]
+    }
+  },
+  {
+    "event-id": "TEST-1007",
+    "headline": {
+      "category": "incident",
+      "code": "debris on roadway"
+    },
+    "description": "NY 5: Debris on roadway.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 3,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "CURRENT",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "incident",
+              "code": "debris on roadway"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "NOT_DIRECTIONAL",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 42.7,
+                "longitude": -73.9
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "NY 5"
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "Point",
+      "coordinates": []
+    }
+  }
+]

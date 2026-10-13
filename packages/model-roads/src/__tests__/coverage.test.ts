@@ -30,6 +30,7 @@ import {
 } from "../crosswalk/open511.js";
 import {
   AUTOBAHN_SITUATIONS,
+  CARS_SITUATIONS,
   DIGITRAFFIC_SITUATIONS,
   GDDKIA_SITUATIONS,
   LTA_SITUATIONS,
@@ -145,6 +146,7 @@ describe("source crosswalk coverage", () => {
       AUTOBAHN_SITUATIONS,
       OHGO_SITUATIONS,
       VIC_SITUATIONS,
+      CARS_SITUATIONS,
     ]) {
       for (const [code, target] of Object.entries(table)) {
         if (target !== null) expect(isRegistered(target), `${code} → ${target}`).toBe(true);

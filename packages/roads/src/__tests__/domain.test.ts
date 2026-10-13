@@ -54,6 +54,7 @@ describe("roads formats", () => {
     expect(situations.map((f) => f.id).sort()).toEqual(
       [
         "autobahn",
+        "cars",
         "datex2",
         "digitraffic",
         "flatjson",

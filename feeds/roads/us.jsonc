@@ -35,27 +35,34 @@
       "product": "events",
       "name": "511NY (New York)",
       "tier": "authoritative",
-      "format": "ibi511",
-      "auth": { "kind": "query-key", "param": "key", "credential": "@us-ny-511.api_key" },
-      // The address of the retired IBI 511 API; every path on 511ny.org now serves the new
-      // web app. The feed granted under the access agreement replaces it.
+      "format": "cars",
+      "auth": { "kind": "basic", "user": "@us-ny-511.user", "password": "@us-ny-511.password" },
+      // Every current event of the 511NY events API (Castle Rock CARS) but the
+      // winter road conditions, which the conditions feed reads: incidents,
+      // closures, work zones, special events, truck restrictions and the
+      // events affecting transit. TRANSCOM relays its New Jersey and
+      // Connecticut partners' events too. The API answers the whole list
+      // without paging; NYSDOT asks for one poll every five minutes.
       "endpoints": {
-        "main": { "url": "https://511ny.org/api/v2/get/event?format=json", "cadenceSec": 300 },
+        "main": {
+          "url": "https://nysdot.carsprogram.org/carsapi_v1/api/events?eventClassifications=incidents,closures,construction,specialEvents,truckersReports,transitEvents,weatherWarningsAreaEvents",
+          "cadenceSec": 300,
+        },
       },
-      "disabled": {
-        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
-        "since": "2026-10-08",
-      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
       "freshnessWindowSec": 900,
+      "timezone": "America/New_York",
+      "coverage": { "countries": ["US-NY", "US-NJ", "US-CT"] },
       "license": "LicenseRef-511NY-DAA",
       "licenseUrl": "https://511ny.org/help/24",
       "terms": {
         "url": "https://511ny.org/help/24",
-        "reviewedAt": "2026-10-08",
+        "reviewedAt": "2026-10-14",
         "redistribution": false,
         "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
       },
       "attribution": "511NY / New York State DOT",
+      "homepage": "https://511ny.org/",
       "privacyUrl": "https://511ny.org/privacy",
     },
     {
@@ -64,33 +71,60 @@
       "product": "conditions",
       "name": "511NY winter road conditions (New York)",
       "tier": "authoritative",
-      "format": "ibi511-conditions",
-      "auth": { "kind": "query-key", "param": "key", "credential": "@us-ny-511.api_key" },
-      // The address of the retired IBI 511 API, as for the events feed above.
+      "format": "cars",
+      "auth": { "kind": "basic", "user": "@us-ny-511.user", "password": "@us-ny-511.password" },
+      // The winter driving segments of the same API, each a stretch of state
+      // highway with the condition its plow route reports. A segment that
+      // reports nothing adverse (out of season: "no active reporting") is
+      // accounted for as ended, so a snapshot of only those publishes none.
       "endpoints": {
         "main": {
-          "url": "https://511ny.org/api/v3/get/winterroads?format=json",
-          "cadenceSec": 600,
+          "url": "https://nysdot.carsprogram.org/carsapi_v1/api/events?eventClassifications=winterDriving",
+          "cadenceSec": 300,
         },
       },
-      "disabled": {
-        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
-        "since": "2026-10-08",
-      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
       "freshnessWindowSec": 1800,
+      "timezone": "America/New_York",
+      "coverage": { "countries": ["US-NY"] },
       "license": "LicenseRef-511NY-DAA",
       "licenseUrl": "https://511ny.org/help/24",
       "terms": {
         "url": "https://511ny.org/help/24",
-        "reviewedAt": "2026-10-08",
+        "reviewedAt": "2026-10-14",
         "redistribution": false,
         "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
       },
       "attribution": "511NY / New York State DOT",
+      "homepage": "https://511ny.org/",
       "privacyUrl": "https://511ny.org/privacy",
-      // Winter feed: outside the season every segment reports a nominal condition
-      // and the parser skips them all, so an empty result is the normal state.
-      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+    },
+    {
+      "subdivision": "ny",
+      "operator": "511",
+      "product": "signs",
+      "name": "511NY message signs (New York)",
+      "tier": "authoritative",
+      "format": "cars-signs",
+      // NYSDOT's dynamic message signs on state highways and what each shows,
+      // from the signs list the 511NY data feed access names. It is served
+      // without credentials.
+      "endpoints": {
+        "main": { "url": "https://nyapi.carsprogram.org/signs.json", "cadenceSec": 300 },
+      },
+      "freshnessWindowSec": 900,
+      "coverage": { "countries": ["US-NY"] },
+      "license": "LicenseRef-511NY-DAA",
+      "licenseUrl": "https://511ny.org/help/24",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-14",
+        "redistribution": false,
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+      },
+      "attribution": "511NY / New York State DOT",
+      "homepage": "https://511ny.org/",
+      "privacyUrl": "https://511ny.org/privacy",
     },
     {
       "subdivision": "nyc",

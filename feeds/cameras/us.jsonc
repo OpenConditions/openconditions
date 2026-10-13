@@ -120,6 +120,40 @@
       "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
     },
     {
+      "subdivision": "ny",
+      "operator": "511",
+      "product": "cameras",
+      "name": "511NY cameras (New York)",
+      "tier": "authoritative",
+      "format": "cars-cctv",
+      "auth": { "kind": "basic", "user": "@us-ny-511.user", "password": "@us-ny-511.password" },
+      // The camera inventory of NYSDOT's CARS hub: each camera's still and,
+      // for most, its HLS stream. The inventory also lists NYC DOT's cameras,
+      // whose stills are served from nyctmc.org, which answers no request
+      // from outside the United States; with no still on the image hosts and
+      // no stream they are left out.
+      "endpoints": {
+        "main": {
+          "url": "https://nysdot.carsprogram.org/hub/data/cctv.xml",
+          "cadenceSec": 900,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "coverage": { "countries": ["US-NY"] },
+      "license": "LicenseRef-511NY-DAA",
+      "licenseUrl": "https://511ny.org/help/24",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-14",
+        "redistribution": false,
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+      },
+      "attribution": "511NY / New York State DOT",
+      "homepage": "https://511ny.org/",
+      "privacyUrl": "https://511ny.org/privacy",
+      "cameras": { "imageHosts": ["public.carsprogram.org/cameras/NYSDOT/"] },
+    },
+    {
       "subdivision": "ga",
       "operator": "511",
       "product": "cameras",

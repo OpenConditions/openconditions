@@ -798,6 +798,47 @@
           "homepage": "https://www.nps.gov/subjects/developer/"
         },
         {
+          "subdivision": "ny",
+          "operator": "511",
+          "product": "cameras",
+          "name": "511NY cameras (New York)",
+          "format": "cars-cctv",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://nysdot.carsprogram.org/hub/data/cctv.xml",
+              "cadenceSec": 900
+            }
+          },
+          "auth": {
+            "kind": "basic",
+            "user": "@us-ny-511.user",
+            "password": "@us-ny-511.password"
+          },
+          "freshnessWindowSec": 3600,
+          "license": "LicenseRef-511NY-DAA",
+          "licenseUrl": "https://511ny.org/help/24",
+          "attribution": "511NY / New York State DOT",
+          "terms": {
+            "url": "https://511ny.org/help/24",
+            "reviewedAt": "2026-10-14",
+            "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+            "redistribution": false
+          },
+          "privacyUrl": "https://511ny.org/privacy",
+          "homepage": "https://511ny.org/",
+          "coverage": {
+            "countries": [
+              "US-NY"
+            ]
+          },
+          "cameras": {
+            "imageHosts": [
+              "public.carsprogram.org/cameras/NYSDOT/"
+            ]
+          }
+        },
+        {
           "subdivision": "ga",
           "operator": "511",
           "product": "cameras",
@@ -1270,6 +1311,37 @@
           "client_secret": {
             "title": "TDX client secret",
             "description": "The secret of the same Client Id / Client Secret pair."
+          }
+        },
+        "us-ny-511": {
+          "user": {
+            "title": "511NY data feed username (New York)",
+            "description": "The username NYSDOT grants under the 511NY Developer Access Agreement, for the events and winter road conditions API and the camera inventory (HTTP Basic authentication).",
+            "setup": {
+              "url": "https://511ny.org/help/24",
+              "urlLabel": "Read the 511NY data feed page and Developer Access Agreement",
+              "steps": [
+                "Read the Developer Access Agreement on 511ny.org/help/24 (last updated 2026-09-18). Submitting a request accepts it.",
+                "Open the request form linked on that page (\"CARS Agencies' XML Feed Request Form\", shared by several state DOTs). Fill in Name, \"Company, Agency, or Personal Use\", the company or project name, and the email the approval should go to, and tick NY under the agencies.",
+                "Reason for Access is the only free-text field, so it must cover what the agreement asks a request to describe: the intended use and the product (name the traffic events, winter road conditions and camera inventory feeds); the intended market and the benefit to travelers; any similar products you have built or plan; and every intermediate or third-party disseminator. Name OpenConditions, the self-hosted data service that fetches the feeds for your map, and, if this instance serves its public API or federates with peers, those as recipients too. Then state that you accept the agreement and its attribution and display duties.",
+                "Ready-to-adapt reason: \"I am requesting access to the NYSDOT (511NY) XML data feeds (traffic events, winter road conditions and the camera inventory) for OpenMapX, a free, non-commercial, open-source maps and navigation app. Our instance fetches the feeds through OpenConditions, our own self-hosted traffic data service, and shows live incidents, road work, closures, winter road conditions and traffic cameras on the map and in route planning, so travelers in New York can plan around them. Audience: the general public, free of charge. Similar products: none. Recipients: our app's end users through OpenConditions, operated by us; no other third parties, and we will tell NYSDOT before that changes. We will show when each report was published or last updated, keep the meaning of every report as NYSDOT published it, pass on NYSDOT's disclaimer, and credit 511NY / NYSDOT as the source. We accept the 511NY Developer Access Agreement.\"",
+                "Requests are reviewed weekly. The approval email brings a username and password, the addresses of the events API (nysdot.carsprogram.org/carsapi_v1), the XML hub and the signs list, and the documentation. Enter the username here and the password in the next field."
+              ],
+              "cost": "Free",
+              "notes": "Agreement duties: show when each report was published or last updated; keep the meaning of every report as published; use best efforts to pass on NYSDOT's disclaimer; keep NYSDOT informed of changes to your product, distribution plans and recipients. Permitted, not required: the \"powered by 511NY\" tag line with the unaltered 511NY logo and a link to 511ny.org; otherwise \"511NY\" may not be used to market or brand your product. Questions and feed problems go to the 511NY program manager named on 511ny.org/help/24. The old 511ny.org developer keys and API no longer work."
+            }
+          },
+          "password": {
+            "title": "511NY data feed password (New York)",
+            "description": "The password that comes with the same 511NY username.",
+            "setup": {
+              "url": "https://511ny.org/help/24",
+              "urlLabel": "Read the 511NY data feed page and Developer Access Agreement",
+              "steps": [
+                "Use the password from the 511NY approval email that brought the username."
+              ],
+              "cost": "Free"
+            }
           }
         }
       }
@@ -2275,6 +2347,63 @@
         ]
       },
       "cadenceSec": 86400,
+      "country": "US"
+    },
+    {
+      "subdivision": "ny",
+      "operator": "511",
+      "product": "cameras",
+      "name": "511NY cameras (New York)",
+      "format": "cars-cctv",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://nysdot.carsprogram.org/hub/data/cctv.xml",
+          "cadenceSec": 900
+        }
+      },
+      "auth": {
+        "kind": "basic",
+        "user": "@us-ny-511.user",
+        "password": "@us-ny-511.password"
+      },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-511NY-DAA",
+      "licenseUrl": "https://511ny.org/help/24",
+      "attribution": "511NY / New York State DOT",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-14",
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+        "redistribution": false
+      },
+      "privacyUrl": "https://511ny.org/privacy",
+      "homepage": "https://511ny.org/",
+      "coverage": {
+        "countries": [
+          "US-NY"
+        ]
+      },
+      "cameras": {
+        "imageHosts": [
+          "public.carsprogram.org/cameras/NYSDOT/"
+        ]
+      },
+      "id": "us-ny-511-cameras",
+      "domain": "cameras",
+      "region": "us",
+      "file": "feeds/cameras/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": true,
+        "commercialUse": null,
+        "attributionRequired": false,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 900,
       "country": "US"
     },
     {

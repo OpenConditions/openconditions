@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   autobahnClassification,
+  carsClassification,
   digitrafficClassification,
   gddkiaClassification,
   ltaClassification,
@@ -128,5 +129,22 @@ describe("provider classifications", () => {
     expect(vicClassification("Maintenance", "Roadworks")?.subtype).toBe("maintenance");
     expect(vicClassification("Incident", "Crash")).toEqual({ kind: "incident", type: "accident" });
     expect(vicClassification("Fire", undefined)).toBeUndefined();
+  });
+
+  it("CARS: the first phrase that names a nature wins, then the headline category", () => {
+    expect(
+      carsClassification(["Road maintenance operations", "paving operations"], "roadwork"),
+    ).toEqual({ kind: "roadworks", type: "works", subtype: "maintenance" });
+    expect(carsClassification(["incident", "multi vehicle crash"], "incident")).toEqual({
+      kind: "incident",
+      type: "accident",
+      subtype: "multi_vehicle",
+    });
+    expect(carsClassification(["an unlisted phrase"], "sporting-event")).toEqual({
+      kind: "public_event",
+      type: "event",
+      subtype: "sporting",
+    });
+    expect(carsClassification(["incident"], "incident")).toBeUndefined();
   });
 });

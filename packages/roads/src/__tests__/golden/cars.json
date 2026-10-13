@@ -1,0 +1,468 @@
+[
+  {
+    "id": "oc:situation:us-ny-511-events:TEST-1001",
+    "temporality": "scheduled",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -73.9,
+            42.8
+          ],
+          [
+            -73.89,
+            42.805
+          ],
+          [
+            -73.88,
+            42.81
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "NY 7"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "both",
+        "basis": "text",
+        "text": "both directions"
+      },
+      "admin": {
+        "country": "US"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Schenectady"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-ny-511-events",
+      "sourceFormat": "cars",
+      "accessMode": "bulk",
+      "recordId": "TEST-1001",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-10-09T23:53:20.000Z",
+      "attribution": {
+        "provider": "511NY / New York State DOT",
+        "license": "LicenseRef-511NY-DAA",
+        "licenseUrl": "https://511ny.org/help/24"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "roadworks",
+    "type": "works",
+    "subtype": "maintenance",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared",
+      "declaredRaw": "6"
+    },
+    "headline": [
+      {
+        "lang": "en",
+        "text": "NY 7 in both directions: Road maintenance operations"
+      }
+    ],
+    "description": [
+      {
+        "lang": "en",
+        "text": "NY 7 in both directions: Road maintenance operations. between Exit 4 and Exit 5 (Sample Town). Road maintenance work is in progress. Until October 30, 2026 at about 4:00PM EDT."
+      }
+    ],
+    "comments": [
+      {
+        "type": "public",
+        "text": [
+          {
+            "lang": "en",
+            "text": "Web Text: milling and paving between Exit 4 and Exit 5, weather permitting, Monday thru Friday, 09:00 AM thru 04:00 PM, alternating traffic"
+          }
+        ]
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-18T13:00:00.000Z",
+      "end": "2026-10-30T20:00:00.000Z",
+      "periods": [
+        {
+          "repeatFrequency": "P1W",
+          "startDate": "2026-10-18",
+          "endDate": "2026-10-30",
+          "startTime": "09:00",
+          "endTime": "16:00",
+          "duration": "PT7H",
+          "byDay": [
+            "MO",
+            "TU",
+            "WE",
+            "TH",
+            "FR"
+          ],
+          "scheduleTimezone": "America/New_York"
+        }
+      ]
+    },
+    "effects": [],
+    "details": {
+      "kind": "roadworks",
+      "v": 1
+    },
+    "canonicalId": "1df8772a2eebd07ac733bc190d983f93a4b46c6c52eb5f7669381de209614243",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "c67a2b612ca24787711a0ecd139511556d75c183a16dc7eb6bd8ef64ee1cbd4e"
+  },
+  {
+    "id": "oc:situation:us-ny-511-events:TEST-1002",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.78,
+          42.85
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-87"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "S",
+        "text": "southbound"
+      },
+      "admin": {
+        "country": "US"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Saratoga"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-ny-511-events",
+      "sourceFormat": "cars",
+      "accessMode": "bulk",
+      "recordId": "TEST-1002",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-10-09T23:53:20.000Z",
+      "attribution": {
+        "provider": "511NY / New York State DOT",
+        "license": "LicenseRef-511NY-DAA",
+        "licenseUrl": "https://511ny.org/help/24"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "closure",
+    "type": "closure",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "moderate",
+      "source": "declared",
+      "declaredRaw": "2"
+    },
+    "headline": [
+      {
+        "lang": "en",
+        "text": "I-87 southbound: Road closed"
+      }
+    ],
+    "description": [
+      {
+        "lang": "en",
+        "text": "I-87 southbound: Road closed. between Exit 9 and Exit 8 (Sample Town). All lanes are closed. Until further notice."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-08T22:53:20.000Z",
+      "end": "2026-10-25T03:46:40.000Z"
+    },
+    "effects": [
+      {
+        "id": "TEST-1002/closure",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "S",
+          "text": "southbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "closure",
+        "v": 1,
+        "scope": "road"
+      }
+    ],
+    "details": {
+      "kind": "closure",
+      "v": 1
+    },
+    "canonicalId": "e14b00de0175d33e3585420b791c50fb05b51c27a35eec6a4ff6077bbc2ecf11",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "893be62d5190b386873fc4b286968c6674cf3d8aef0e7817338aaf6b70f1c651"
+  },
+  {
+    "id": "oc:situation:us-ny-511-events:TEST-1003",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.82,
+          42.7
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "I-90"
+            }
+          ]
+        }
+      ],
+      "direction": {
+        "value": "unknown",
+        "basis": "compass",
+        "compass": "E",
+        "text": "eastbound"
+      },
+      "admin": {
+        "country": "US"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Albany"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-ny-511-events",
+      "sourceFormat": "cars",
+      "accessMode": "bulk",
+      "recordId": "TEST-1003",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-10-09T23:53:20.000Z",
+      "attribution": {
+        "provider": "511NY / New York State DOT",
+        "license": "LicenseRef-511NY-DAA",
+        "licenseUrl": "https://511ny.org/help/24"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "incident",
+    "type": "accident",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "major",
+      "source": "declared",
+      "declaredRaw": "1"
+    },
+    "headline": [
+      {
+        "lang": "en",
+        "text": "I-90 eastbound: Crash"
+      }
+    ],
+    "description": [
+      {
+        "lang": "en",
+        "text": "I-90 eastbound: Crash. at Exit 24 (Sample City). 1 right lane of 3 lanes is closed."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-09T21:06:40.000Z",
+      "end": "2026-10-10T02:40:00.000Z"
+    },
+    "effects": [
+      {
+        "id": "TEST-1003/lane_restriction",
+        "applicability": {
+          "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "compass",
+          "compass": "E",
+          "text": "eastbound"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "lane_restriction",
+        "v": 1,
+        "lanesTotal": 3,
+        "lanesClosed": 1,
+        "lanes": [
+          {
+            "index": 1,
+            "status": "open"
+          },
+          {
+            "index": 2,
+            "status": "open"
+          },
+          {
+            "index": 3,
+            "status": "closed"
+          }
+        ],
+        "vehicleImpact": "some_lanes_closed"
+      }
+    ],
+    "details": {
+      "kind": "incident",
+      "v": 1
+    },
+    "canonicalId": "6e4706bdd247f3e1b9a105c82763721ed343663cb295209fd85eedf6a7fe115c",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "7d507ec697a0c1d8f9f5bdacf2c22bb0aeba65ec836b708588cc8dafd4b279fe"
+  },
+  {
+    "id": "oc:situation:us-ny-511-events:TEST-1004",
+    "temporality": "scheduled",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -73.75,
+          42.65
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "US"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-ny-511-events",
+      "sourceFormat": "cars",
+      "accessMode": "bulk",
+      "recordId": "TEST-1004",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-10-09T23:53:20.000Z",
+      "attribution": {
+        "provider": "511NY / New York State DOT",
+        "license": "LicenseRef-511NY-DAA",
+        "licenseUrl": "https://511ny.org/help/24"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "public_event",
+    "type": "event",
+    "subtype": "concert",
+    "planned": true,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared",
+      "declaredRaw": "6"
+    },
+    "headline": [
+      {
+        "lang": "en",
+        "text": "Sample Arena: Concert"
+      }
+    ],
+    "description": [
+      {
+        "lang": "en",
+        "text": "Sample Arena: Concert. Expect heavy traffic near the arena."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-11T00:53:20.000Z",
+      "end": "2026-10-11T06:26:40.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "public_event",
+      "v": 1
+    },
+    "canonicalId": "55835177d4c6a7dab24c466fd6abe227fbf1c10846cf7b6cd1129eecd7a56bab",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "7db3c24aeae97749604560b499bdd263938e3de2050e19e8f6de252e8780b081"
+  }
+]

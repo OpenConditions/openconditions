@@ -4,6 +4,7 @@ import {
   type SnapshotAccounting,
 } from "@openconditions/ingest-framework";
 import { parseAutobahn } from "./autobahn.js";
+import { parseCars, parseCarsSnapshot } from "./cars.js";
 import { parseDatexSituations, parseDatexSnapshot } from "./datex.js";
 import { parseDigitraffic, parseDigitrafficSnapshot } from "./digitraffic.js";
 import type { RoadFeed } from "./feed-schema.js";
@@ -43,6 +44,7 @@ const SITUATION_PARSERS = {
   open511: parseOpen511,
   wzdx: parseWzdx,
   geojson: parseGeoJson,
+  cars: parseCars as SituationParser,
   ibi511: parseIbi511 as SituationParser,
   "ibi511-conditions": parseIbi511Conditions as SituationParser,
   lta: parseLtaIncidents as SituationParser,
@@ -80,6 +82,7 @@ const SNAPSHOT_REPORTERS: Record<
 > = {
   digitraffic: parseDigitrafficSnapshot,
   datex2: parseDatexSnapshot,
+  cars: parseCarsSnapshot,
 };
 
 /**

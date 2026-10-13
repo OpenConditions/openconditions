@@ -174,6 +174,12 @@ what the feed publishes. The roads products are:
 | `events`     | situations: incidents, roadworks, closures, restrictions |
 | `conditions` | road and weather conditions along road segments          |
 | `flow`       | measured traffic: speed, volume, level of service        |
+| `signs`      | message signs along the roads and what each shows        |
+
+A `signs` format is a `features` format: each sign is the model's `vms` feature
+with its `sign_face` components and a `vms.display` reading per face (the
+pages and lines it shows, or that it is blank or in fault). The one format is
+`cars-signs`, Castle Rock CARS's sign list (`us-ny-511-signs`).
 
 The fuel product is:
 
@@ -233,7 +239,8 @@ reading per view (they stay in the model's `roads` domain, so a read asks for
 layout of that name with a `layout` block and a `cameras` mapping. The
 standards and publishers' APIs have a format each: `datex2` (a DATEX II v3
 device publication), `ibi511` (the IBI 511 platform's camera list),
-`digitraffic`, `trafikverket`, `tdx`, `hk-td`, `tfl`, `nps`, `tripcheck`,
+`cars-cctv` (a Castle Rock CARS hub's camera inventory, North American Hub
+CCTV XML), `digitraffic`, `trafikverket`, `tdx`, `hk-td`, `tfl`, `nps`, `tripcheck`,
 `windy` (on demand) and `overpass` (OpenStreetMap, on demand). The formats are
 in `packages/cameras/src/domain.ts`.
 
@@ -775,6 +782,13 @@ run, and need no entry, are listed under
 
 ## Sources not taken
 
+Road sources considered and left out, reviewed on 2026-10-14.
+
+| source                                                     | reason                                                                                                                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 511NY hub FEU-t, FEU-g, FEU-m, FEU-w documents and indexes | The same NYSDOT events as the CARS events API in North American Hub XML, without the winter driving segments and the transit events; the API is taken. |
+| 511NY hub Waze CIFS document (`data/waze/cifs.xml`)        | NYSDOT's events re-shaped for Waze, with less than the events API carries.                                                                             |
+
 Parking sources considered and left out, reviewed on 2026-10-05. Taking one
 needs the change its reason names.
 
@@ -799,18 +813,18 @@ Charging sources considered and left out, reviewed on 2026-10-06.
 
 Camera sources considered and left out, reviewed on 2026-10-08.
 
-| source                                              | reason                                                                                                                                                                                                                                                                  |
-| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| FL511 (Florida DOT)                                 | "For personal purposes only", and re-use needs FDOT's written consent. There is no key programme.                                                                                                                                                                       |
-| 511PA (PennDOT)                                     | The terms forbid republishing or storing the material "in any public or private retrieval system". There is no key programme.                                                                                                                                           |
-| 511SC (SCDOT)                                       | It left the IBI platform and has no API, and the terms forbid publishing any content without written permission.                                                                                                                                                        |
-| Mass511 (MassDOT)                                   | It left the IBI platform. The only camera list is the website's internal API, scraping is forbidden, and the images are TrafficLand streams.                                                                                                                            |
-| 511NY (NYSDOT) cameras                              | The camera inventory is granted on request under the Developer Access Agreement of 2026-09-18, and its format is sent only after approval. The old API is gone. The `us-ny-511` credential guide says how to request it together with the events and winter road feeds. |
-| NPS live stills                                     | They exist only on each camera's HTML page; the API carries stock photos. `us-nps-cameras` links each camera to its page.                                                                                                                                               |
-| Windy `all-webcams.json` export                     | Paid tier, with the same redistribution terms. `windy-cameras` reads per cell.                                                                                                                                                                                          |
-| TDX `CCTV/City/{City}`                              | The streams are web player pages with no stills.                                                                                                                                                                                                                        |
-| NSW `data.livetraffic.com/cameras/traffic-cam.json` | A keyless copy, but not a documented API. The keyed API is taken (`au-nsw-livetraffic-cameras`).                                                                                                                                                                        |
-| NFB `CCTV.xml` (`tisvcloud.freeway.gov.tw`)         | Unreachable from Europe. TDX carries the same freeway list (`tw-tdx-cameras`).                                                                                                                                                                                          |
+| source                                              | reason                                                                                                                                                                             |
+| --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| FL511 (Florida DOT)                                 | "For personal purposes only", and re-use needs FDOT's written consent. There is no key programme.                                                                                  |
+| 511PA (PennDOT)                                     | The terms forbid republishing or storing the material "in any public or private retrieval system". There is no key programme.                                                      |
+| 511SC (SCDOT)                                       | It left the IBI platform and has no API, and the terms forbid publishing any content without written permission.                                                                   |
+| Mass511 (MassDOT)                                   | It left the IBI platform. The only camera list is the website's internal API, scraping is forbidden, and the images are TrafficLand streams.                                       |
+| 511NY's NYC DOT cameras (`nyctmc.org` stills)       | The CARS inventory lists them with a still on `nyctmc.org` and no stream, and `nyctmc.org` answers no request from outside the United States. `us-ny-511-cameras` leaves them out. |
+| NPS live stills                                     | They exist only on each camera's HTML page; the API carries stock photos. `us-nps-cameras` links each camera to its page.                                                          |
+| Windy `all-webcams.json` export                     | Paid tier, with the same redistribution terms. `windy-cameras` reads per cell.                                                                                                     |
+| TDX `CCTV/City/{City}`                              | The streams are web player pages with no stills.                                                                                                                                   |
+| NSW `data.livetraffic.com/cameras/traffic-cam.json` | A keyless copy, but not a documented API. The keyed API is taken (`au-nsw-livetraffic-cameras`).                                                                                   |
+| NFB `CCTV.xml` (`tisvcloud.freeway.gov.tw`)         | Unreachable from Europe. TDX carries the same freeway list (`tw-tdx-cameras`).                                                                                                     |
 
 Hazard sources considered and left out, reviewed on 2026-10-08.
 

@@ -1,0 +1,106 @@
+[
+  {
+    "id": "oc:situation:us-ny-511-conditions:NYSDOTSEG-2",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            -74.3,
+            43.7
+          ],
+          [
+            -74.25,
+            43.72
+          ],
+          [
+            -74.2,
+            43.75
+          ]
+        ]
+      },
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "NY 28"
+            }
+          ]
+        }
+      ],
+      "admin": {
+        "country": "US"
+      },
+      "areaDescription": [
+        {
+          "lang": "und",
+          "text": "Hamilton"
+        }
+      ]
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "us-ny-511-conditions",
+      "sourceFormat": "cars",
+      "accessMode": "bulk",
+      "recordId": "NYSDOTSEG-2",
+      "recordVersion": "1",
+      "sourceUpdatedAt": "2026-10-09T23:53:20.000Z",
+      "attribution": {
+        "provider": "511NY / New York State DOT",
+        "license": "LicenseRef-511NY-DAA",
+        "licenseUrl": "https://511ny.org/help/24"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "road_condition",
+    "type": "surface",
+    "subtype": "snow_covered",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "derived"
+    },
+    "headline": [
+      {
+        "lang": "en",
+        "text": "NY 28: Snow Covered"
+      }
+    ],
+    "description": [
+      {
+        "lang": "en",
+        "text": "NY 28: Snow Covered. between NY 30 and NY 8. Snow Covered."
+      }
+    ],
+    "validity": {
+      "status": "active"
+    },
+    "effects": [],
+    "details": {
+      "kind": "road_condition",
+      "v": 1,
+      "surface": [
+        "snow"
+      ]
+    },
+    "canonicalId": "830cc60b7b50674d80f3d354e79d4396dce401b0fb8a228dce8d0bd9f2621be8",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "2c3f1d30fad13038cf486d8eeb70cdd759f107cb1d97fd0256066260b541e4b7"
+  }
+]

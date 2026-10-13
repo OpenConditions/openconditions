@@ -49,7 +49,8 @@
             "enum": [
               "events",
               "conditions",
-              "flow"
+              "flow",
+              "signs"
             ]
           },
           "name": {
@@ -63,6 +64,8 @@
               "autobahn",
               "bcn-trams",
               "bonn",
+              "cars",
+              "cars-signs",
               "datex2",
               "datex2-elaborated",
               "datex2-measured",

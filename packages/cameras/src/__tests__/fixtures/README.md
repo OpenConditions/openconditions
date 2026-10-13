@@ -91,3 +91,12 @@ datex2 package's `es-dgt-cameras.xml` capture rather than a copy.
   terms of the `tripcheck-api-data` product). The values are invented, the
   image addresses follow the website's `/RoadCams/cams/<file>` shape. Device
   1101 repeats with two images.
+- `us-ny-511-cctv.xml`: **documented sample**, not a capture. It follows the
+  North American Hub CCTV schema (`schemas/CCTV.xsd` of NYSDOT's CARS hub,
+  https://nysdot.carsprogram.org/hub/index.jsf) and the layout of the live
+  `cctv.xml` read on 2026-10-14: an empty first inventory, NYSDOT's cameras
+  with an HLS stream and a still on `public.carsprogram.org`, and NYC DOT's
+  with only a still on `nyctmc.org` and the camera's name in place of its
+  route. The devices, names, addresses and stream ids are invented; the
+  511NY Developer Access Agreement does not allow publishing the feed's
+  records.

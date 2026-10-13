@@ -50,6 +50,10 @@ const GEOMETRYLESS_SAMPLE: Record<string, string> = {
 
   flatjson: JSON.stringify([{ id: "no-geo" }]),
 
+  cars: JSON.stringify([
+    { "event-id": "no-geo", headline: { category: "incident", code: "crash" }, details: [{}] },
+  ]),
+
   ibi511: JSON.stringify([{ ID: 1, EventType: "closures", RoadwayName: "x" }]),
 
   "ibi511-conditions": JSON.stringify([{ RoadwayName: "x", Condition: ["Snow Covered"] }]),

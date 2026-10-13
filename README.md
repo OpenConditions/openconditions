@@ -13,8 +13,9 @@ but the data and the libraries are designed to be reused anywhere.
 
 Road domain, v0.1:
 
-- **Live feeds:** NDW (NL), Die Autobahn (DE), Fintraffic / Digitraffic (FI), DriveBC (CA), and WZDx (US),
-  spanning DATEX II, Open511, and WZDx GeoJSON — plus government point-sensor **traffic flow** (speed,
+- **Live feeds:** NDW (NL), Die Autobahn (DE), Fintraffic / Digitraffic (FI), DriveBC (CA), WZDx (US) and
+  511NY (US-NY, with its winter road conditions and message signs, granted under NYSDOT's access agreement),
+  spanning DATEX II, Open511, WZDx GeoJSON and Castle Rock CARS — plus government point-sensor **traffic flow** (speed,
   volume, occupancy, level of service) from 24 flow feeds, among them Fintraffic (FI), WebTRIS (GB),
   NYC DOT (US-NY), NDW (NL), OHGO (US-OH, keyed) and Trafikverket (SE, keyed), as measurement sites and
   their readings. Congestion is computed from a self-derived free-flow baseline (85th
@@ -39,9 +40,9 @@ Road domain, v0.1:
   base, AFDC for the US and Canada, NOBIL for Norway and Sweden, and more), Open Charge Map and OpenStreetMap,
   the last two read on demand.
 - **Cameras domain:** traffic, weather and landscape cameras with their views and each view's latest still
-  from 20 feeds: Digitraffic (FI), Trafikverket (SE), Statens vegvesen (NO), Vegagerðin (IS), DGT (ES),
+  from 21 feeds: Digitraffic (FI), Trafikverket (SE), Statens vegvesen (NO), Vegagerðin (IS), DGT (ES),
   Ontario 511 (CA), the Transport Department (HK), Live Traffic NSW (AU), TDX (TW), TfL (GB), Caltrans, the
-  National Park Service, ODOT TripCheck and five IBI 511 states (US), and Windy and OpenStreetMap, the last two
+  National Park Service, ODOT TripCheck, 511NY and five IBI 511 states (US), and Windy and OpenStreetMap, the last two
   read on demand. Each feed whose records carry proxyable stills declares the hosts they come from, which
   `GET /sources` serves for a consumer's image proxy (`osm-cameras` and `us-nps-cameras` declare none), and an OpenStreetMap webcam links with the publisher's camera it stands beside.
 - **Hazards domain:** weather and civil-protection warnings as CAP alerts in every language they carry, from

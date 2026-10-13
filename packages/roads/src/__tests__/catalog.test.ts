@@ -65,10 +65,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 87 roads feeds under their new ids", () => {
+  test("the catalogue holds the 88 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(87);
+    expect(ids).toHaveLength(88);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -177,6 +177,7 @@ describe("the roads catalogue", () => {
         "us-wzdx-events",
         "us-ny-511-events",
         "us-ny-511-conditions",
+        "us-ny-511-signs",
         "us-nyc-dot-flow",
         "us-oh-ohgo-flow",
         "us-oh-ohgo-construction-events",
@@ -207,6 +208,7 @@ describe("the roads catalogue", () => {
     ]);
     expect(Object.keys(groups["hr-hc"]!)).toEqual(["user", "password"]);
     expect(Object.keys(groups["no-vegvesen"]!)).toEqual(["user", "password"]);
+    expect(Object.keys(groups["us-ny-511"]!)).toEqual(["user", "password"]);
     expect(Object.keys(groups["tw-tdx"]!)).toEqual(["client_id", "client_secret"]);
     for (const group of [
       "au-nsw-tfnsw",
@@ -214,7 +216,6 @@ describe("the roads catalogue", () => {
       "ca-on-511",
       "se-trafikverket",
       "sg-lta",
-      "us-ny-511",
     ]) {
       expect(Object.keys(groups[group]!), group).toEqual(["api_key"]);
     }
@@ -611,23 +612,27 @@ describe("one feed per publisher", () => {
     }
   });
 
-  test("511NY events and winter roads wait for access under the Developer Access Agreement", () => {
+  test("511NY events, winter roads and signs read the CARS API under the Developer Access Agreement", () => {
     for (const id of ["us-ny-511-events", "us-ny-511-conditions"]) {
       expect(feed(id).auth, id).toEqual({
-        kind: "query-key",
-        param: "key",
-        credential: "@us-ny-511.api_key",
+        kind: "basic",
+        user: "@us-ny-511.user",
+        password: "@us-ny-511.password",
       });
-      expect(feed(id).disabled?.reason, id).toContain("Developer Access Agreement");
+      expect(feed(id).format, id).toBe("cars");
+      expect(feed(id).snapshot?.completeness, id).toBe("complete");
+    }
+    // The sign list is served without credentials.
+    expect(feed("us-ny-511-signs")).toMatchObject({ format: "cars-signs", product: "signs" });
+    expect(feed("us-ny-511-signs").auth).toBeUndefined();
+    for (const id of ["us-ny-511-events", "us-ny-511-conditions", "us-ny-511-signs"]) {
+      expect(feed(id).disabled, id).toBeUndefined();
       // Restricted until the operator's approved request names wider recipients.
       expect(feed(id).terms?.redistribution, id).toBe(false);
     }
-    expect(feed("us-ny-511-events").format).toBe("ibi511");
-    expect(feed("us-ny-511-conditions").format).toBe("ibi511-conditions");
-    const key = repoCatalog().credentials.groups["us-ny-511"]!["api_key"]!;
-    expect(key.title).toBeTruthy();
-    expect(key.setup?.url).toBe("https://511ny.org/help/24");
-    expect(key.setup?.steps?.join(" ")).toContain("CARS Agencies' XML Feed Request Form");
+    const user = repoCatalog().credentials.groups["us-ny-511"]!["user"]!;
+    expect(user.setup?.url).toBe("https://511ny.org/help/24");
+    expect(user.setup?.steps?.join(" ")).toContain("CARS Agencies' XML Feed Request Form");
   });
 
   test("LTA incidents and speed bands share one AccountKey", () => {

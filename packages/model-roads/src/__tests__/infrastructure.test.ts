@@ -144,7 +144,7 @@ describe("roads infrastructure", () => {
     ]) {
       expect(formats.filter((f) => f === id)).toHaveLength(1);
     }
-    expect([...CAMERA_SOURCE_FORMATS]).toEqual(["windy", "tfl", "nps", "tripcheck"]);
+    expect([...CAMERA_SOURCE_FORMATS]).toEqual(["windy", "tfl", "nps", "tripcheck", "cars-cctv"]);
   });
 
   it("two cameras of one feed never link; an OSM webcam at the pole does", () => {

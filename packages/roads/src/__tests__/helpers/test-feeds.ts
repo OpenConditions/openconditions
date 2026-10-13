@@ -756,10 +756,20 @@ const TEST_FEEDS: Record<string, TestFeed> = {
   "us-ny-511-events": {
     region: "us",
     product: "events",
-    format: "ibi511",
+    format: "cars",
     attribution: "511NY / New York State DOT",
     license: "LicenseRef-511NY-DAA",
     licenseUrl: "https://511ny.org/help/24",
+    timezone: "America/New_York",
+  },
+  "us-ny-511-conditions": {
+    region: "us",
+    product: "conditions",
+    format: "cars",
+    attribution: "511NY / New York State DOT",
+    license: "LicenseRef-511NY-DAA",
+    licenseUrl: "https://511ny.org/help/24",
+    timezone: "America/New_York",
   },
   "us-nyc-dot-flow": {
     region: "us",

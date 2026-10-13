@@ -81,6 +81,7 @@ test("camerasDomain registers its formats, each producing cameras, views and ima
     tfl: main,
     nps: main,
     tripcheck: main,
+    "cars-cctv": main,
   });
   // Only Digitraffic reads its live image times alone.
   expect(

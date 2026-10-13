@@ -2,6 +2,7 @@ import { type MappingTarget, parseSituationCode, type SituationClass } from "@op
 import { CAUSE_NATURES } from "./cause-natures.js";
 import {
   AUTOBAHN_SITUATIONS,
+  CARS_SITUATIONS,
   DIGITRAFFIC_SITUATIONS,
   GDDKIA_SITUATIONS,
   LTA_SITUATIONS,
@@ -212,6 +213,21 @@ export function ohgoClassification(
     return fromTable(OHGO_SITUATIONS, [...(c ? [`construction:${c}`] : []), "construction"]);
   }
   return c ? fromTable(OHGO_SITUATIONS, [c]) : undefined;
+}
+
+/**
+ * A CARS event's classification: its phrase codes in the order the event
+ * lists them (the headline's first), then its headline category.
+ */
+export function carsClassification(
+  phrases: readonly string[],
+  category: string | undefined,
+): RoadClassification | undefined {
+  const c = category?.trim().toLowerCase();
+  return fromTable(CARS_SITUATIONS, [
+    ...phrases.map((p) => p.trim().toLowerCase()),
+    ...(c ? [`category:${c}`] : []),
+  ]);
 }
 
 /** A Victoria disruption's classification from its candidate tokens, most specific first. */

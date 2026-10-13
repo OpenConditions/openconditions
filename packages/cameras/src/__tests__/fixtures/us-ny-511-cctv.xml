@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cctv:cctvInventories xmlns:cctv='http://www.northamericanhub.org/cctv'>
+   <cctvInventory>
+      <owner>
+         <organization-id>1</organization-id>
+         <organization-name>NYSDOT</organization-name>
+      </owner>
+      <inventory>
+      </inventory>
+   </cctvInventory>
+   <cctvInventory>
+      <owner>
+         <organization-id>2</organization-id>
+         <organization-name>NYSDOT</organization-name>
+      </owner>
+      <inventory>
+         <inventory-item>
+            <device-id>90001</device-id>
+            <device-updated>
+               <date>20261013</date>
+               <time>130042</time>
+               <utc-offset>-0400</utc-offset>
+            </device-updated>
+            <device-name>I-90 MP 100.00 WB at Sample Interchange</device-name>
+            <video-url>https://s51.nysdot.skyvdn.com/rtplive/TEST_001/playlist.m3u8</video-url>
+            <still-images>
+               <still-image>
+                  <name>I-90 MP 100.00 WB at Sample Interchange</name>
+                  <url>https://public.carsprogram.org/cameras/NYSDOT/TEST_001.flv.png</url>
+               </still-image>
+            </still-images>
+            <location>
+               <geo-location>
+                  <latitude>42940992</latitude>
+                  <longitude>-78766229</longitude>
+               </geo-location>
+               <link-ownership>New York State</link-ownership>
+               <route-designator>I-90</route-designator>
+               <linear-reference>75.12460010451436</linear-reference>
+            </location>
+         </inventory-item>
+         <inventory-item>
+            <device-id>90002</device-id>
+            <device-updated>
+               <date>20261013</date>
+               <time>130042</time>
+               <utc-offset>-0400</utc-offset>
+            </device-updated>
+            <device-name>Sample Ave at Example St</device-name>
+            <still-images>
+               <still-image>
+                  <name>Sample Ave at Example St</name>
+                  <url>https://public.carsprogram.org/cameras/NYSDOT/TEST_002.flv.png</url>
+               </still-image>
+            </still-images>
+            <location>
+               <geo-location>
+                  <latitude>43164639</latitude>
+                  <longitude>-77623251</longitude>
+               </geo-location>
+               <link-ownership>New York State</link-ownership>
+               <route-designator>Sample Ave at Example St</route-designator>
+            </location>
+         </inventory-item>
+      </inventory>
+   </cctvInventory>
+   <cctvInventory>
+      <owner>
+         <organization-id>3</organization-id>
+         <organization-name>NYC DOT</organization-name>
+      </owner>
+      <inventory>
+         <inventory-item>
+            <device-id>90003</device-id>
+            <device-updated>
+               <date>20261009</date>
+               <time>192509</time>
+               <utc-offset>-0400</utc-offset>
+            </device-updated>
+            <device-name>Sample Bridge @ Example Ave</device-name>
+            <still-images>
+               <still-image>
+                  <name>Sample Bridge @ Example Ave</name>
+                  <url>https://nyctmc.org/api/cameras/00000000-0000-0000-0000-000000000000/image</url>
+               </still-image>
+            </still-images>
+            <location>
+               <geo-location>
+                  <latitude>40756810</latitude>
+                  <longitude>-73954130</longitude>
+               </geo-location>
+               <link-ownership>New York State</link-ownership>
+               <route-designator>Sample Bridge @ Example Ave</route-designator>
+            </location>
+         </inventory-item>
+      </inventory>
+   </cctvInventory>
+</cctv:cctvInventories>

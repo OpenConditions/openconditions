@@ -1,0 +1,125 @@
+[
+  {
+    "lastUpdated": 1791932537450,
+    "status": "DISPLAYING_MESSAGE",
+    "idForDisplay": "S-101",
+    "agencyName": "NY Signs - Sample Region",
+    "agencyId": "nySigns:Sample:",
+    "name": "I-87 NB VMS AT EXIT 6",
+    "location": {
+      "latitude": 42.78,
+      "longitude": -73.79,
+      "linearReference": 12.4,
+      "routeId": "I-87",
+      "perpendicularRadiansForDirectionOfTravel": 1.7,
+      "fips": 36,
+      "signFacingDirection": "N",
+      "locationDescription": "I-87 N at MP 6.1"
+    },
+    "properties": {
+      "signType": "VMS_FULL",
+      "maxSignPhases": 3,
+      "phaseDwellTime": 2500,
+      "phaseBlankTime": 0,
+      "maxLinesPerPage": 3,
+      "maxCharactersPerLine": 16,
+      "sizeKnown": false
+    },
+    "id": "nySigns:Sample:*S-101",
+    "display": {
+      "pages": [
+        {
+          "hasImage": false,
+          "justification": "CENTER",
+          "lines": ["CRASH AHEAD", "EXIT 7", ""]
+        },
+        {
+          "hasImage": false,
+          "justification": "CENTER",
+          "lines": ["RIGHT LANE", "CLOSED"]
+        }
+      ]
+    }
+  },
+  {
+    "lastUpdated": 1791932537450,
+    "status": "BLANK",
+    "idForDisplay": "S-102",
+    "agencyName": "NY Signs - Sample Region",
+    "agencyId": "nySigns:Sample:",
+    "name": "I-90 WB VMS AT EXIT 24",
+    "location": {
+      "latitude": 42.7,
+      "longitude": -73.83,
+      "linearReference": 12.4,
+      "routeId": "I-90",
+      "perpendicularRadiansForDirectionOfTravel": 1.7,
+      "fips": 36,
+      "signFacingDirection": "W"
+    },
+    "properties": {
+      "signType": "VMS_FULL",
+      "maxSignPhases": 3,
+      "phaseDwellTime": 2500,
+      "phaseBlankTime": 0,
+      "maxLinesPerPage": 3,
+      "maxCharactersPerLine": 16,
+      "sizeKnown": false
+    },
+    "id": "nySigns:Sample:*S-102"
+  },
+  {
+    "lastUpdated": 1791932537450,
+    "status": "ERROR_OR_FAILURE",
+    "idForDisplay": "S-103",
+    "agencyName": "NY Signs - Sample Region",
+    "agencyId": "nySigns:Sample:",
+    "name": "NY 7 EB VMS",
+    "location": {
+      "latitude": 42.8,
+      "longitude": -73.91,
+      "linearReference": 12.4,
+      "routeId": "NY 7",
+      "perpendicularRadiansForDirectionOfTravel": 1.7,
+      "fips": 36,
+      "signFacingDirection": "E"
+    },
+    "properties": {
+      "signType": "VMS_FULL",
+      "maxSignPhases": 3,
+      "phaseDwellTime": 2500,
+      "phaseBlankTime": 0,
+      "maxLinesPerPage": 3,
+      "maxCharactersPerLine": 16,
+      "sizeKnown": false
+    },
+    "id": "nySigns:Sample:*S-103"
+  },
+  {
+    "lastUpdated": 1791932537450,
+    "status": "BLANK",
+    "idForDisplay": "S-104",
+    "agencyName": "NY Signs - Sample Region",
+    "agencyId": "nySigns:Sample:",
+    "name": "UNPLACED VMS",
+    "location": {
+      "latitude": 0,
+      "longitude": 0,
+      "linearReference": 12.4,
+      "routeId": "I-87",
+      "perpendicularRadiansForDirectionOfTravel": 1.7,
+      "fips": 36,
+      "signFacingDirection": "S"
+    },
+    "properties": {
+      "signType": "VMS_FULL",
+      "maxSignPhases": 3,
+      "phaseDwellTime": 2500,
+      "phaseBlankTime": 0,
+      "maxLinesPerPage": 3,
+      "maxCharactersPerLine": 16,
+      "sizeKnown": false
+    },
+    "id": "nySigns:Sample:*S-104"
+  }
+]

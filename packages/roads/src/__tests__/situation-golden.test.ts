@@ -102,11 +102,13 @@ const CASES: [name: string, feed: string, fixture: string, format: string][] = [
   ],
   ["ibi511", "ca-on-511-events", "ibi511/events.json", "ibi511"],
   ["ibi511-conditions", "ca-on-511-conditions", "ibi511/conditions.json", "ibi511-conditions"],
+  ["cars", "us-ny-511-events", "cars-ny/events.json", "cars"],
+  ["cars-conditions", "us-ny-511-conditions", "cars-ny/conditions.json", "cars"],
   ["lta", "sg-lta-events", "lta/incidents.json", "lta"],
   ["trafikverket", "se-trafikverket-events", "trafikverket/situations.json", "trafikverket"],
 ];
 
-const SNAPSHOT_FORMATS = new Set(["datex2", "digitraffic"]);
+const SNAPSHOT_FORMATS = new Set(["datex2", "digitraffic", "cars"]);
 
 function sealAll(name: string, feedId: string, fixture: string, format: string) {
   const feed = feedOf(feedId, format, SNAPSHOT_FORMATS.has(format));

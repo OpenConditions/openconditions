@@ -1,0 +1,162 @@
+[
+  {
+    "event-id": "NYSDOTSEG-1",
+    "headline": {
+      "category": "nysdot-road-conditions",
+      "code": "no active reporting"
+    },
+    "description": "NY 30: No Active Reporting. between NY 8 and NY 10. No Active Reporting.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 10,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "UPDATED",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "duration": 2000000,
+        "end-time": {
+          "time": 1911589651280,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "nysdot-road-conditions",
+              "code": "no active reporting"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "NOT_DIRECTIONAL",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 43.4,
+                "longitude": -74.4
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "NY 30",
+            "secondary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 43.5,
+                "longitude": -74.38
+              },
+              "linear-reference": 13.1
+            },
+            "segment-names": ["Sample to Example"]
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [[-74.4, 43.4], [-74.39, 43.45], [-74.38, 43.5]]
+    },
+    "counties": ["Hamilton"]
+  },
+  {
+    "event-id": "NYSDOTSEG-2",
+    "headline": {
+      "category": "nysdot-road-conditions",
+      "code": "snow covered"
+    },
+    "description": "NY 28: Snow Covered. between NY 30 and NY 8. Snow Covered.",
+    "message-number": 1,
+    "message-type-version": 1,
+    "priority": 10,
+    "sender": {
+      "organization-id": "NYSDOT",
+      "center-id": "NYSDOT",
+      "organization-name": "NYSDOT"
+    },
+    "update-number": 1,
+    "update-time": {
+      "time": 1791590000000,
+      "timeZoneId": "America/New_York",
+      "utcOffset": -14400000
+    },
+    "status": "UPDATED",
+    "details": [
+      {
+        "access": "PUBLIC_DOMAIN",
+        "element-id": 1,
+        "update-time": {
+          "time": 1791590000000,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "duration": 2000000,
+        "end-time": {
+          "time": 1911589651280,
+          "timeZoneId": "America/New_York",
+          "utcOffset": -14400000
+        },
+        "descriptions": [
+          {
+            "description-type": "PhraseDescription",
+            "is-cause": false,
+            "kind": {
+              "category": "nysdot-road-conditions",
+              "code": "snow covered"
+            }
+          }
+        ],
+        "locations": [
+          {
+            "location-type": "LinkLocation",
+            "link-direction": "NOT_DIRECTIONAL",
+            "link-ownership": "New York",
+            "primary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 43.7,
+                "longitude": -74.3
+              },
+              "linear-reference": 12.5
+            },
+            "route-designator": "NY 28",
+            "secondary-location": {
+              "geo-location": {
+                "location-type": "GeoLocation",
+                "latitude": 43.75,
+                "longitude": -74.2
+              },
+              "linear-reference": 13.1
+            },
+            "segment-names": ["Indian Lake to Sample"]
+          }
+        ]
+      }
+    ],
+    "geometry": {
+      "type": "LineString",
+      "coordinates": [[-74.3, 43.7], [-74.25, 43.72], [-74.2, 43.75]]
+    },
+    "counties": ["Hamilton"]
+  }
+]

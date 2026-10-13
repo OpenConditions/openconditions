@@ -1134,7 +1134,7 @@
           "tier": "authoritative",
           "endpoints": {
             "main": {
-              "url": "https://api.hamburg.de/datasets/v1/verkehrsinformation/collections/hauptmeldungen_aktuell/items?f=json&limit=5000",
+              "url": "https://geodienste.hamburg.de/wfs_verkehrsinformation?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=de.hh.up:hauptmeldungen_aktuell&OUTPUTFORMAT=application/geo%2Bjson&SRSNAME=EPSG:4326",
               "cadenceSec": 300
             }
           },
@@ -1912,12 +1912,14 @@
           "endpoints": {
             "main": {
               "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download",
-              "cadenceSec": 300
+              "cadenceSec": 300,
+              "timeoutSec": 180
             },
             "sites": {
               "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/0e3b6840-7dff-4731-a556-44fac28a7873/resource/c97072a3-3619-4547-84dd-f1999d2a3fec/download/transit_relacio_trams_format_long.csv",
               "decoder": "bcn-trams-csv",
-              "cadenceSec": 21600
+              "cadenceSec": 21600,
+              "timeoutSec": 180
             }
           },
           "freshnessWindowSec": 900,
@@ -2368,8 +2370,8 @@
           },
           "snapshot": {
             "completeness": "complete",
-            "rootElement": "d2LogicalModel",
-            "publicationElement": "payloadPublication",
+            "rootElement": "payload",
+            "publicationElement": "payload",
             "publicationType": "SituationPublication",
             "recordElement": "situationRecord"
           },
@@ -2807,18 +2809,22 @@
           "operator": "511",
           "product": "events",
           "name": "511NY (New York)",
-          "format": "ibi511",
+          "format": "cars",
           "tier": "authoritative",
           "endpoints": {
             "main": {
-              "url": "https://511ny.org/api/v2/get/event?format=json",
+              "url": "https://nysdot.carsprogram.org/carsapi_v1/api/events?eventClassifications=incidents,closures,construction,specialEvents,truckersReports,transitEvents,weatherWarningsAreaEvents",
               "cadenceSec": 300
             }
           },
           "auth": {
-            "kind": "query-key",
-            "param": "key",
-            "credential": "@us-ny-511.api_key"
+            "kind": "basic",
+            "user": "@us-ny-511.user",
+            "password": "@us-ny-511.password"
+          },
+          "snapshot": {
+            "completeness": "complete",
+            "recordsPath": "$"
           },
           "freshnessWindowSec": 900,
           "license": "LicenseRef-511NY-DAA",
@@ -2826,33 +2832,38 @@
           "attribution": "511NY / New York State DOT",
           "terms": {
             "url": "https://511ny.org/help/24",
-            "reviewedAt": "2026-10-08",
+            "reviewedAt": "2026-10-14",
             "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
             "redistribution": false
           },
           "privacyUrl": "https://511ny.org/privacy",
-          "disabled": {
-            "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
-            "since": "2026-10-08"
-          }
+          "homepage": "https://511ny.org/",
+          "coverage": {
+            "countries": [
+              "US-NY",
+              "US-NJ",
+              "US-CT"
+            ]
+          },
+          "timezone": "America/New_York"
         },
         {
           "subdivision": "ny",
           "operator": "511",
           "product": "conditions",
           "name": "511NY winter road conditions (New York)",
-          "format": "ibi511-conditions",
+          "format": "cars",
           "tier": "authoritative",
           "endpoints": {
             "main": {
-              "url": "https://511ny.org/api/v3/get/winterroads?format=json",
-              "cadenceSec": 600
+              "url": "https://nysdot.carsprogram.org/carsapi_v1/api/events?eventClassifications=winterDriving",
+              "cadenceSec": 300
             }
           },
           "auth": {
-            "kind": "query-key",
-            "param": "key",
-            "credential": "@us-ny-511.api_key"
+            "kind": "basic",
+            "user": "@us-ny-511.user",
+            "password": "@us-ny-511.password"
           },
           "snapshot": {
             "completeness": "complete",
@@ -2864,14 +2875,48 @@
           "attribution": "511NY / New York State DOT",
           "terms": {
             "url": "https://511ny.org/help/24",
-            "reviewedAt": "2026-10-08",
+            "reviewedAt": "2026-10-14",
             "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
             "redistribution": false
           },
           "privacyUrl": "https://511ny.org/privacy",
-          "disabled": {
-            "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
-            "since": "2026-10-08"
+          "homepage": "https://511ny.org/",
+          "coverage": {
+            "countries": [
+              "US-NY"
+            ]
+          },
+          "timezone": "America/New_York"
+        },
+        {
+          "subdivision": "ny",
+          "operator": "511",
+          "product": "signs",
+          "name": "511NY message signs (New York)",
+          "format": "cars-signs",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://nyapi.carsprogram.org/signs.json",
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 900,
+          "license": "LicenseRef-511NY-DAA",
+          "licenseUrl": "https://511ny.org/help/24",
+          "attribution": "511NY / New York State DOT",
+          "terms": {
+            "url": "https://511ny.org/help/24",
+            "reviewedAt": "2026-10-14",
+            "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+            "redistribution": false
+          },
+          "privacyUrl": "https://511ny.org/privacy",
+          "homepage": "https://511ny.org/",
+          "coverage": {
+            "countries": [
+              "US-NY"
+            ]
           }
         },
         {
@@ -3112,9 +3157,9 @@
           }
         },
         "us-ny-511": {
-          "api_key": {
-            "title": "511NY data feed access (New York)",
-            "description": "The access NYSDOT grants under the 511NY Developer Access Agreement, for the events and winter road conditions feeds (and the camera inventory).",
+          "user": {
+            "title": "511NY data feed username (New York)",
+            "description": "The username NYSDOT grants under the 511NY Developer Access Agreement, for the events and winter road conditions API and the camera inventory (HTTP Basic authentication).",
             "setup": {
               "url": "https://511ny.org/help/24",
               "urlLabel": "Read the 511NY data feed page and Developer Access Agreement",
@@ -3123,10 +3168,22 @@
                 "Open the request form linked on that page (\"CARS Agencies' XML Feed Request Form\", shared by several state DOTs). Fill in Name, \"Company, Agency, or Personal Use\", the company or project name, and the email the approval should go to, and tick NY under the agencies.",
                 "Reason for Access is the only free-text field, so it must cover what the agreement asks a request to describe: the intended use and the product (name the traffic events, winter road conditions and camera inventory feeds); the intended market and the benefit to travelers; any similar products you have built or plan; and every intermediate or third-party disseminator. Name OpenConditions, the self-hosted data service that fetches the feeds for your map, and, if this instance serves its public API or federates with peers, those as recipients too. Then state that you accept the agreement and its attribution and display duties.",
                 "Ready-to-adapt reason: \"I am requesting access to the NYSDOT (511NY) XML data feeds (traffic events, winter road conditions and the camera inventory) for OpenMapX, a free, non-commercial, open-source maps and navigation app. Our instance fetches the feeds through OpenConditions, our own self-hosted traffic data service, and shows live incidents, road work, closures, winter road conditions and traffic cameras on the map and in route planning, so travelers in New York can plan around them. Audience: the general public, free of charge. Similar products: none. Recipients: our app's end users through OpenConditions, operated by us; no other third parties, and we will tell NYSDOT before that changes. We will show when each report was published or last updated, keep the meaning of every report as NYSDOT published it, pass on NYSDOT's disclaimer, and credit 511NY / NYSDOT as the source. We accept the 511NY Developer Access Agreement.\"",
-                "Requests are reviewed weekly. An approval email brings the feed addresses, the access credential and the documentation. Send those to whoever maintains this OpenConditions instance: the feeds need their new addresses, and a reader if the format differs from the retired IBI 511 API, before they can be enabled."
+                "Requests are reviewed weekly. The approval email brings a username and password, the addresses of the events API (nysdot.carsprogram.org/carsapi_v1), the XML hub and the signs list, and the documentation. Enter the username here and the password in the next field."
               ],
               "cost": "Free",
               "notes": "Agreement duties: show when each report was published or last updated; keep the meaning of every report as published; use best efforts to pass on NYSDOT's disclaimer; keep NYSDOT informed of changes to your product, distribution plans and recipients. Permitted, not required: the \"powered by 511NY\" tag line with the unaltered 511NY logo and a link to 511ny.org; otherwise \"511NY\" may not be used to market or brand your product. Questions and feed problems go to the 511NY program manager named on 511ny.org/help/24. The old 511ny.org developer keys and API no longer work."
+            }
+          },
+          "password": {
+            "title": "511NY data feed password (New York)",
+            "description": "The password that comes with the same 511NY username.",
+            "setup": {
+              "url": "https://511ny.org/help/24",
+              "urlLabel": "Read the 511NY data feed page and Developer Access Agreement",
+              "steps": [
+                "Use the password from the 511NY approval email that brought the username."
+              ],
+              "cost": "Free"
             }
           }
         },
@@ -20264,7 +20321,7 @@
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://api.hamburg.de/datasets/v1/verkehrsinformation/collections/hauptmeldungen_aktuell/items?f=json&limit=5000",
+          "url": "https://geodienste.hamburg.de/wfs_verkehrsinformation?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&TYPENAMES=de.hh.up:hauptmeldungen_aktuell&OUTPUTFORMAT=application/geo%2Bjson&SRSNAME=EPSG:4326",
           "cadenceSec": 300
         }
       },
@@ -20294,7 +20351,7 @@
         },
         "descriptionField": "description"
       },
-      "homepage": "https://api.hamburg.de",
+      "homepage": "https://geodienste.hamburg.de",
       "id": "de-hh-polizei-events",
       "domain": "roads",
       "region": "de",
@@ -21474,12 +21531,14 @@
       "endpoints": {
         "main": {
           "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/8319c2b1-4c21-4962-9acd-6db4c5ff1148/resource/2d456eb5-4ea6-4f68-9794-2f3f1a58a933/download",
-          "cadenceSec": 300
+          "cadenceSec": 300,
+          "timeoutSec": 180
         },
         "sites": {
           "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/0e3b6840-7dff-4731-a556-44fac28a7873/resource/c97072a3-3619-4547-84dd-f1999d2a3fec/download/transit_relacio_trams_format_long.csv",
           "decoder": "bcn-trams-csv",
-          "cadenceSec": 21600
+          "cadenceSec": 21600,
+          "timeoutSec": 180
         }
       },
       "freshnessWindowSec": 900,
@@ -22198,8 +22257,8 @@
       },
       "snapshot": {
         "completeness": "complete",
-        "rootElement": "d2LogicalModel",
-        "publicationElement": "payloadPublication",
+        "rootElement": "payload",
+        "publicationElement": "payload",
         "publicationType": "SituationPublication",
         "recordElement": "situationRecord"
       },
@@ -22911,8 +22970,8 @@
       "license": "NOASSERTION",
       "attribution": "Oklahoma DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -22965,8 +23024,8 @@
       "license": "NOASSERTION",
       "attribution": "Utah DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23019,8 +23078,8 @@
       "license": "NOASSERTION",
       "attribution": "Iowa DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23073,8 +23132,8 @@
       "license": "NOASSERTION",
       "attribution": "Florida DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23127,8 +23186,8 @@
       "license": "NOASSERTION",
       "attribution": "Minnesota DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23181,8 +23240,8 @@
       "license": "NOASSERTION",
       "attribution": "Maryland DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23235,8 +23294,8 @@
       "license": "NOASSERTION",
       "attribution": "Maricopa County DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23289,8 +23348,8 @@
       "license": "NOASSERTION",
       "attribution": "Missouri DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23343,8 +23402,8 @@
       "license": "NOASSERTION",
       "attribution": "Wisconsin DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23397,8 +23456,8 @@
       "license": "NOASSERTION",
       "attribution": "New Mexico DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23451,8 +23510,8 @@
       "license": "NOASSERTION",
       "attribution": "Hawaii DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23505,8 +23564,8 @@
       "license": "NOASSERTION",
       "attribution": "New York DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23559,8 +23618,8 @@
       "license": "NOASSERTION",
       "attribution": "Washington State DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23613,8 +23672,8 @@
       "license": "NOASSERTION",
       "attribution": "St. Charles County",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23667,8 +23726,8 @@
       "license": "NOASSERTION",
       "attribution": "Kentucky Transportation Cabinet",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23721,8 +23780,8 @@
       "license": "NOASSERTION",
       "attribution": "New Jersey Institute of Technology",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23775,8 +23834,8 @@
       "license": "CC0-1.0",
       "attribution": "Kansas DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "Kansas WZDx road_event_feed_info.license"
+        "note": "Kansas WZDx road_event_feed_info.license",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23806,8 +23865,8 @@
         "completeness": "complete",
         "recordsPath": "features"
       },
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "selectionState": "approved",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "parentSourceId": "us-wzdx-events",
       "policyIds": [
         "us-wzdx-events",
@@ -23830,8 +23889,8 @@
       "license": "NOASSERTION",
       "attribution": "City of Austin",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23884,8 +23943,8 @@
       "license": "NOASSERTION",
       "attribution": "Delaware DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23938,8 +23997,8 @@
       "license": "NOASSERTION",
       "attribution": "Quebec City",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23992,8 +24051,8 @@
       "license": "NOASSERTION",
       "attribution": "Louisiana DOTD",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24046,8 +24105,8 @@
       "license": "NOASSERTION",
       "attribution": "Idaho DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24100,8 +24159,8 @@
       "license": "NOASSERTION",
       "attribution": "Indiana DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24154,8 +24213,8 @@
       "license": "NOASSERTION",
       "attribution": "CivicLink",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24208,8 +24267,8 @@
       "license": "NOASSERTION",
       "attribution": "Michigan DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24262,8 +24321,8 @@
       "license": "NOASSERTION",
       "attribution": "NHDOT/VTAOT/MEDOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24316,8 +24375,8 @@
       "license": "NOASSERTION",
       "attribution": "North Carolina DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24370,8 +24429,8 @@
       "license": "NOASSERTION",
       "attribution": "Oregon DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24424,8 +24483,8 @@
       "license": "NOASSERTION",
       "attribution": "Mississippi DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24478,8 +24537,8 @@
       "license": "NOASSERTION",
       "attribution": "North Dakota DOT",
       "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
+        "note": "WZDx registry metadata (no dataset grant verified)",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24521,18 +24580,22 @@
       "operator": "511",
       "product": "events",
       "name": "511NY (New York)",
-      "format": "ibi511",
+      "format": "cars",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://511ny.org/api/v2/get/event?format=json",
+          "url": "https://nysdot.carsprogram.org/carsapi_v1/api/events?eventClassifications=incidents,closures,construction,specialEvents,truckersReports,transitEvents,weatherWarningsAreaEvents",
           "cadenceSec": 300
         }
       },
       "auth": {
-        "kind": "query-key",
-        "param": "key",
-        "credential": "@us-ny-511.api_key"
+        "kind": "basic",
+        "user": "@us-ny-511.user",
+        "password": "@us-ny-511.password"
+      },
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "$"
       },
       "freshnessWindowSec": 900,
       "license": "LicenseRef-511NY-DAA",
@@ -24540,16 +24603,20 @@
       "attribution": "511NY / New York State DOT",
       "terms": {
         "url": "https://511ny.org/help/24",
-        "reviewedAt": "2026-10-08",
+        "reviewedAt": "2026-10-14",
         "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
         "redistribution": false
       },
       "privacyUrl": "https://511ny.org/privacy",
-      "disabled": {
-        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
-        "since": "2026-10-08"
+      "homepage": "https://511ny.org/",
+      "coverage": {
+        "countries": [
+          "US-NY",
+          "US-NJ",
+          "US-CT"
+        ]
       },
-      "homepage": "https://511ny.org",
+      "timezone": "America/New_York",
       "id": "us-ny-511-events",
       "domain": "roads",
       "region": "us",
@@ -24564,11 +24631,6 @@
         "shareAlike": false
       },
       "restricted": true,
-      "coverage": {
-        "countries": [
-          "US"
-        ]
-      },
       "cadenceSec": 300,
       "country": "US"
     },
@@ -24577,18 +24639,18 @@
       "operator": "511",
       "product": "conditions",
       "name": "511NY winter road conditions (New York)",
-      "format": "ibi511-conditions",
+      "format": "cars",
       "tier": "authoritative",
       "endpoints": {
         "main": {
-          "url": "https://511ny.org/api/v3/get/winterroads?format=json",
-          "cadenceSec": 600
+          "url": "https://nysdot.carsprogram.org/carsapi_v1/api/events?eventClassifications=winterDriving",
+          "cadenceSec": 300
         }
       },
       "auth": {
-        "kind": "query-key",
-        "param": "key",
-        "credential": "@us-ny-511.api_key"
+        "kind": "basic",
+        "user": "@us-ny-511.user",
+        "password": "@us-ny-511.password"
       },
       "snapshot": {
         "completeness": "complete",
@@ -24600,16 +24662,18 @@
       "attribution": "511NY / New York State DOT",
       "terms": {
         "url": "https://511ny.org/help/24",
-        "reviewedAt": "2026-10-08",
+        "reviewedAt": "2026-10-14",
         "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
         "redistribution": false
       },
       "privacyUrl": "https://511ny.org/privacy",
-      "disabled": {
-        "reason": "511NY left the IBI 511 platform this feed read; its feeds are now granted by request under the Developer Access Agreement, and their address and format arrive only with the approval (see the us-ny-511 credential guide)",
-        "since": "2026-10-08"
+      "homepage": "https://511ny.org/",
+      "coverage": {
+        "countries": [
+          "US-NY"
+        ]
       },
-      "homepage": "https://511ny.org",
+      "timezone": "America/New_York",
       "id": "us-ny-511-conditions",
       "domain": "roads",
       "region": "us",
@@ -24624,12 +24688,54 @@
         "shareAlike": false
       },
       "restricted": true,
+      "cadenceSec": 300,
+      "country": "US"
+    },
+    {
+      "subdivision": "ny",
+      "operator": "511",
+      "product": "signs",
+      "name": "511NY message signs (New York)",
+      "format": "cars-signs",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://nyapi.carsprogram.org/signs.json",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "LicenseRef-511NY-DAA",
+      "licenseUrl": "https://511ny.org/help/24",
+      "attribution": "511NY / New York State DOT",
+      "terms": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-14",
+        "note": "The agreement allows redistribution to the disseminators named in the access request. Set redistribution to true in the local catalogue layer once the approved request names this instance's public API and federation peers. Show the publication time of every report, pass on NYSDOT's disclaimer, and keep NYSDOT informed of changes to the product or its recipients.",
+        "redistribution": false
+      },
+      "privacyUrl": "https://511ny.org/privacy",
+      "homepage": "https://511ny.org/",
       "coverage": {
         "countries": [
-          "US"
+          "US-NY"
         ]
       },
-      "cadenceSec": 600,
+      "id": "us-ny-511-signs",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": false,
+        "derivedRedistribution": true,
+        "commercialUse": null,
+        "attributionRequired": false,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "cadenceSec": 300,
       "country": "US"
     },
     {

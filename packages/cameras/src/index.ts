@@ -1,6 +1,7 @@
 export * from "./camera.js";
 export * from "./domain.js";
 export * from "./feed-schema.js";
+export * from "./formats/cars-cctv.js";
 export * from "./formats/datex2.js";
 export * from "./formats/digitraffic.js";
 export * from "./formats/hk-td.js";
