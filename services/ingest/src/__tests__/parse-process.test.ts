@@ -28,7 +28,9 @@ function inline(feed: CatalogFeed, main: Buffer) {
   };
 }
 
-describe("the parse process", () => {
+// Each case starts a child through tsx, and one lets it outgrow its heap:
+// seconds on a shared CI runner.
+describe("the parse process", { timeout: 60_000 }, () => {
   it("is handed every catalogue feed as it is", () => {
     for (const feed of [...REPO_CATALOG.feeds, ...REPO_CATALOG.disabled]) {
       expect(structuredClone(feed)).toEqual(feed);
