@@ -183,6 +183,30 @@ export interface FetchOptions {
   kept?: KeptItems;
   /** Epoch ms of the poll: the instant its date placeholders and kept items are read at. */
   at?: number;
+  /**
+   * Epoch ms a role of changes (`changesSince`) asks for the changes since.
+   * Without it, the role asks for every record, as its snapshot would.
+   */
+  since?: number;
+}
+
+/**
+ * The endpoint's URLs asking for the changes since `since` through its
+ * `changesSince` parameter, at whole seconds; as they are without either.
+ */
+export function withChangesSince(
+  urls: readonly string[],
+  endpoint: Pick<FeedEndpoint, "changesSince">,
+  since: number | undefined,
+): string[] {
+  const param = endpoint.changesSince?.param;
+  if (param === undefined || since === undefined) return [...urls];
+  const instant = new Date(Math.floor(since / 1000) * 1000).toISOString().replace(".000Z", "Z");
+  return urls.map((url) => {
+    const asked = new URL(url);
+    asked.searchParams.set(param, instant);
+    return asked.toString();
+  });
 }
 
 function isGzip(buf: Buffer): boolean {
@@ -1033,6 +1057,8 @@ async function fetchRole(
   const cell = opts.cell;
   const at = opts.at ?? Date.now();
   const endpoint = feedEndpoint(feed, role);
+  const endpointUrls = () =>
+    withChangesSince(resolveEndpointUrls(feed, role, env, cell, at), endpoint, opts.since);
 
   // Scrubs the feed's own secret values out of any string before it reaches a
   // log or `FeedStatusStore` — computed once, at the source, so every
@@ -1129,7 +1155,7 @@ async function fetchRole(
   // feed's credentials, and always: the page is not the payload, so no
   // conditional request applies.
   if (endpoint.follow) {
-    const pageUrls = resolveEndpointUrls(feed, role, env, cell, at);
+    const pageUrls = endpointUrls();
     if (pageUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
@@ -1156,7 +1182,7 @@ async function fetchRole(
   // (short) page. Skips conditional-GET/`unchanged` handling (a paged resource
   // changes each cycle, so an ETag buys nothing) — like the fan-out paths above.
   if (endpoint.pagination) {
-    const baseUrls = resolveEndpointUrls(feed, role, env, cell, at);
+    const baseUrls = endpointUrls();
     if (baseUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
@@ -1178,7 +1204,7 @@ async function fetchRole(
     };
   }
 
-  const urls = resolveEndpointUrls(feed, role, env, cell, at);
+  const urls = endpointUrls();
 
   // `fanout: "tolerant"` opts a large multi-URL fan-out (one URL per site or
   // region) into the same per-URL tolerant fetcher the catalog path uses,

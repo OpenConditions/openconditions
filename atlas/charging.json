@@ -371,7 +371,20 @@
                 "recordsPath": "items",
                 "maxPages": 300
               },
-              "cadenceSec": 300
+              "cadenceSec": 3600
+            },
+            "changes": {
+              "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
+              "pagination": {
+                "skipParam": "offset",
+                "pageSize": 1000,
+                "recordsPath": "items",
+                "maxPages": 300
+              },
+              "cadenceSec": 300,
+              "changesSince": {
+                "param": "last_updated_since"
+              }
             },
             "tariffs": {
               "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
@@ -1845,7 +1858,20 @@
             "recordsPath": "items",
             "maxPages": 300
           },
-          "cadenceSec": 300
+          "cadenceSec": 3600
+        },
+        "changes": {
+          "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
+          "pagination": {
+            "skipParam": "offset",
+            "pageSize": 1000,
+            "recordsPath": "items",
+            "maxPages": 300
+          },
+          "cadenceSec": 300,
+          "changesSince": {
+            "param": "last_updated_since"
+          }
         },
         "tariffs": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",

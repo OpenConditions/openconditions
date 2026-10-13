@@ -73,6 +73,9 @@ import {
 
 type Sql = postgres.Sql;
 
+/** How far before the last answer a role of changes asks from. */
+const CHANGES_OVERLAP_MS = 60_000;
+
 /**
  * Ratio (0-1) of an event feed's previous `source_status.last_row_count` that
  * its fresh count must exceed, or the write is skipped as a suspected
@@ -593,6 +596,21 @@ async function runAttempt(
     /** Due roles the network answered (fetched or not modified). */
     let answered = 0;
     const polledAt = Date.parse(attemptAt);
+    /**
+     * The instant a role of changes (`changesSince`) asks from: the later of
+     * its previous answer's poll and its snapshot's, else this poll's (the
+     * snapshot is fetched first), less a minute for the publisher's clock and
+     * a change it records while answering.
+     */
+    const changesSince = (role: string): number | undefined => {
+      if (src.endpoints[role]?.changesSince === undefined) return undefined;
+      const snapshot = format.endpoints[role]?.accumulatesSince;
+      const covered = [
+        deps.roles?.lastFetchedAt[role],
+        snapshot === undefined ? undefined : deps.roles?.lastFetchedAt[snapshot],
+      ].filter((at) => at !== undefined);
+      return (covered.length > 0 ? Math.max(...covered) : polledAt) - CHANGES_OVERLAP_MS;
+    };
     // A payload older than its endpoint allows is not held at all: the role
     // that needs it to stand in has failed with nothing to show.
     const outlived = (role: string) => {
@@ -695,6 +713,7 @@ async function runAttempt(
                 ? freshUrls[eachRole]
                 : deps.roles?.urls[eachRole];
           const kept = deps.roles?.items[role];
+          const since = changesSince(role);
           result = await fetchEndpoint(
             src,
             role,
@@ -703,6 +722,7 @@ async function runAttempt(
               resolvers: domainOf(src).resolvers,
               env,
               at: polledAt,
+              ...(since !== undefined ? { since } : {}),
               ...(eachSource ? { eachSource } : {}),
               ...(eachSourceUrls ? { eachSourceUrls } : {}),
               ...(kept ? { kept } : {}),
@@ -845,6 +865,9 @@ async function runAttempt(
         const spec = format.endpoints[role];
         const since = spec?.accumulatesSince;
         if (since === undefined || renewed.has(since)) continue;
+        // A role that asks for the changes since its last answer misses none
+        // however long it fails.
+        if (src.endpoints[role]?.changesSince !== undefined) continue;
         // Failing within the publisher's window loses nothing: the next
         // answer still reaches back to the last one that came, or to the
         // snapshot, which holds every change before it.

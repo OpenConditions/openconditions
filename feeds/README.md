@@ -325,7 +325,11 @@ and `cadenceSec`, how often it is fetched. Reference endpoints refresh every six
 hours (`21600`). `timeoutSec` (at most 900) gives a publisher known to be slow
 longer than the operator's `OPENCONDITIONS_FETCH_TIMEOUT_MS` (60 s by default)
 for the whole request, body included; it never shortens that limit, and a
-comment says what was measured. The optional request fields are `method`, `body`, `headers`,
+comment says what was measured. `changesSince` (`{ "param": "…" }`) makes a
+format's role of changes ask only for what changed since its previous answer:
+each request adds that query parameter with the instant of the previous
+answer's poll (or of its snapshot's) less a minute, so a failed answer loses
+nothing. The optional request fields are `method`, `body`, `headers`,
 `gzip` (the body is gzipped), `pagination` (`skipParam`, `pageSize`,
 `recordsPath`, `maxPages`; `mode`, `"offset"` by default, or `"page"` where
 `skipParam` carries a page number counted from `firstPage`, 1 by default;

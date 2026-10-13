@@ -4,6 +4,7 @@ import {
   defineIngestDomain,
   emptyParseOutput,
   type FeedDefinition,
+  type FeedEndpoint,
   type HeldPayload,
   type IngestDomain,
   type LookupFn,
@@ -332,7 +333,11 @@ function feedNamed(operator: string): CatalogFeed {
 }
 
 /** A feed with a daily `sites` endpoint and a 5-minute `status` endpoint. */
-function sitesAndStatusFeed(operator: string, format = TWO_ROLE_FORMAT): CatalogFeed {
+function sitesAndStatusFeed(
+  operator: string,
+  format = TWO_ROLE_FORMAT,
+  status: Partial<FeedEndpoint> = {},
+): CatalogFeed {
   const definition: FeedDefinition = {
     operator,
     product: "fuel",
@@ -341,7 +346,7 @@ function sitesAndStatusFeed(operator: string, format = TWO_ROLE_FORMAT): Catalog
     tier: "authoritative",
     endpoints: {
       sites: { url: `https://example.test/${operator}/sites.json`, cadenceSec: 86_400 },
-      status: { url: `https://example.test/${operator}/status.json`, cadenceSec: 300 },
+      status: { url: `https://example.test/${operator}/status.json`, cadenceSec: 300, ...status },
     },
     freshnessWindowSec: 900,
     license: "CC0-1.0",
@@ -534,8 +539,12 @@ describe("features poll with a slow endpoint", () => {
   const at = (offsetMs: number) => new Date(T0 + offsetMs).toISOString();
 
   /** A sites + status feed whose endpoints each answer, or fail, as the test sets. */
-  function sitesHarness(name: string, format = TWO_ROLE_FORMAT) {
-    const feed = sitesAndStatusFeed(name, format);
+  function sitesHarness(
+    name: string,
+    format = TWO_ROLE_FORMAT,
+    status: Partial<FeedEndpoint> = {},
+  ) {
+    const feed = sitesAndStatusFeed(name, format, status);
     const roles = createRoleState();
     const answer = {
       sitesFails: false,
@@ -550,9 +559,12 @@ describe("features poll with a slow endpoint", () => {
       notModified: 0,
     };
     const requested: string[] = [];
+    /** Each status request's URL, query included. */
+    const statusUrls: string[] = [];
     const fetch = (async (url: string | URL | Request, init?: RequestInit) => {
       const href = String(url);
       requested.push(href.endsWith("/sites.json") ? "sites" : "status");
+      if (!href.endsWith("/sites.json")) statusUrls.push(href);
       if (href.endsWith("/sites.json")) {
         if (answer.sitesFails) throw new Error("connect ECONNRESET");
         if (answer.sitesUnchanged && new Headers(init?.headers).get("if-none-match") === '"s1"') {
@@ -608,7 +620,18 @@ describe("features poll with a slow endpoint", () => {
               FROM conditions.observation_latest WHERE source_id = ${feed.id}`
         ).map((r) => [r.station, r.price]),
       );
-    return { feed, roles, answer, requested, tick, liveFeatures, prices, priceOf, lastAttempt };
+    return {
+      feed,
+      roles,
+      answer,
+      requested,
+      statusUrls,
+      tick,
+      liveFeatures,
+      prices,
+      priceOf,
+      lastAttempt,
+    };
   }
 
   it("upgrades legacy receipts only on a fully fresh acquisition, preserving unknown held-cache inputs", async () => {
@@ -771,6 +794,41 @@ describe("features poll with a slow endpoint", () => {
       warn.mockRestore();
     }
   }, 60_000);
+
+  it("a role of changes that asks since its last answer misses none however long it fails", async () => {
+    const h = sitesHarness("changes-since", CHANGES_FORMAT, {
+      changesSince: { param: "since" },
+    });
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const asked = () => new URL(h.statusUrls.at(-1)!).searchParams.get("since");
+    try {
+      // The first poll fetches the snapshot too: its changes are asked from
+      // this poll, less a minute.
+      h.answer.status = { a: "1.800" };
+      await h.tick(0);
+      expect(asked()).toBe("2026-10-03T09:59:00Z");
+      await h.tick(300_000);
+      expect(asked()).toBe("2026-10-03T09:59:00Z");
+      h.answer.status = { b: "1.900" };
+      await h.tick(600_000);
+      expect(asked()).toBe("2026-10-03T10:04:00Z");
+      expect(await h.priceOf()).toEqual({ a: "1.800", b: "1.900" });
+
+      // Failing for an hour, past the role's ten-minute window: no snapshot
+      // is fetched again, and the next answer is asked from the last one.
+      h.answer.statusFails = true;
+      h.requested.length = 0;
+      for (let t = 900_000; t <= 4_500_000; t += 300_000) await h.tick(t);
+      expect(h.requested.every((role) => role === "status")).toBe(true);
+      h.answer.statusFails = false;
+      h.answer.status = { a: "1.850" };
+      await h.tick(4_800_000);
+      expect(asked()).toBe("2026-10-03T10:09:00Z");
+      expect(await h.priceOf()).toEqual({ a: "1.850", b: "1.900" });
+    } finally {
+      warn.mockRestore();
+    }
+  }, 120_000);
 
   it("a failing sites endpoint with a held payload still publishes fresh status readings", async () => {
     const h = sitesHarness("held-sites");

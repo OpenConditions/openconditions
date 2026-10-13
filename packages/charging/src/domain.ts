@@ -65,13 +65,16 @@ const liveStatus = { required: false, status: true } as const;
 const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   ...CHARGING_LAYOUT_FORMATS.map((id) => sites(id, parseLayout)),
   // The locations, their EVSEs' live states by uid where the locations are
-  // polled slower, the tariffs, and OCPDB's tariff associations and sources.
+  // polled slower, the states changed since the last answer where the
+  // publisher lists those, the tariffs, and OCPDB's tariff associations and
+  // sources.
   sites(
     "ocpi",
     parseOcpi,
     {
       main: { required: true },
       status: liveStatus,
+      changes: { ...liveStatus, accumulatesSince: "status" },
       tariffs: optional,
       associations: optional,
       sources: optional,
