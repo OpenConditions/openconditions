@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { Licensing } from "./licensing.js";
 import { Iso8601, RecordRef, Sha256Hex } from "./scalars.js";
 import type { Vocab } from "./vocab.js";
 
@@ -98,6 +99,8 @@ export const RoutingRights = z.strictObject({
 
 export const Attribution = z.strictObject({
   provider: z.string().min(1),
+  name: z.string().min(1).optional(),
+  licensing: Licensing.optional(),
   license: z.string().min(1),
   /** The provider's page for this data. */
   url: z.url().optional(),
@@ -117,6 +120,7 @@ export const OriginHop = z.strictObject({
 /** A publisher an aggregating feed took the record from, credited with it. */
 export const UpstreamPublisher = z.strictObject({
   publisher: z.string().min(1),
+  licensing: Licensing.optional(),
   recordId: z.string().min(1).optional(),
   license: z.string().min(1).optional(),
   attribution: z.string().min(1).optional(),

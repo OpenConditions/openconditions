@@ -1,5 +1,6 @@
 import { resolveInstanceId } from "@openconditions/core/server";
 import type { CatalogFeed, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import { captureLicensing } from "@openconditions/ingest-framework";
 import type { GrantState, Registry, RoutingRights } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type { FlowOutput } from "@openconditions/roads";
@@ -74,8 +75,27 @@ export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDr
     ...draft,
     provenance: {
       ...provenance,
+      ...(Array.isArray(provenance["upstream"])
+        ? {
+            upstream: provenance["upstream"].map((raw) => {
+              if (!raw || typeof raw !== "object") return raw;
+              const upstream = raw as Record<string, unknown>;
+              return {
+                ...upstream,
+                licensing: captureLicensing({
+                  id: src.id,
+                  name: String(upstream["publisher"] ?? src.name),
+                  license: String(upstream["license"] ?? "NOASSERTION"),
+                }),
+              };
+            }),
+          }
+        : {}),
       attribution: {
         provider: src.attribution,
+        name: src.name,
+        url: src.homepage,
+        licensing: captureLicensing(src),
         license: src.license,
         ...(src.licenseUrl ? { licenseUrl: src.licenseUrl } : {}),
         ...(src.parentSourceId

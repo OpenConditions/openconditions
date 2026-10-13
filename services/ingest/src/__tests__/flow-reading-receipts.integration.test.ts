@@ -72,6 +72,57 @@ async function changedCatalogue() {
   await sql`UPDATE conditions.source SET credit_name='New publisher',credit_notice='New parent notice',attribution='New credit' WHERE id='parent-a'`;
   await sql`UPDATE conditions.source SET credit_notice='New child notice' WHERE id='child-a'`;
 }
+it("publishes captured scoped definitions independently of current catalogue policy", async () => {
+  const licensing = {
+    version: 1,
+    declarations: [{ text: "Exact supplied terms" }],
+    bindings: [
+      {
+        scope: "data",
+        subject: "Selected measurements",
+        license: {
+          kind: "custom",
+          namespace: "publisher:captured",
+          id: "LicenseRef-Captured-Terms",
+          name: "Captured measurement terms",
+          url: "https://example.test/terms",
+        },
+        notice: "Required author credit",
+        conditions: ["Keep measurement date"],
+      },
+    ],
+  };
+  const supplied = {
+    provider: "Captured publisher",
+    name: "Captured dataset",
+    licensing,
+    parentSourceId: "parent-a",
+  };
+  await sql`UPDATE conditions.source SET license='NOASSERTION',operator='New operator' WHERE id='parent-a'`;
+  const [row] =
+    await sql`SELECT conditions.flow_credit('child-a',${sql.json(supplied)}) AS credits, conditions.flow_osm_credit() AS osm`;
+  expect(row!.credits).toContainEqual(
+    expect.objectContaining({ sourceId: "parent-a", name: "Captured dataset", licensing }),
+  );
+  for (const credit of row!.credits) {
+    expect(credit).not.toHaveProperty("spdxLicense");
+    expect(credit).not.toHaveProperty("licenseUrl");
+  }
+  expect(row!.osm).toContainEqual(
+    expect.objectContaining({
+      licensing: {
+        version: 1,
+        bindings: [
+          {
+            scope: "data",
+            subject: "OpenStreetMap",
+            license: { kind: "spdx", expression: "ODbL-1.0" },
+          },
+        ],
+      },
+    }),
+  );
+});
 it("honors the captured parent and excludes unrelated current-parent notices", async () => {
   await sql`UPDATE conditions.source SET parent_source_id='parent-b',credit_notice='Other child notice' WHERE id='child-a'`;
   const [row] =

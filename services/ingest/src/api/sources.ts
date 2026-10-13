@@ -1,8 +1,8 @@
 import {
   type Catalog,
   type CatalogFeed,
+  captureLicensing,
   type EffectiveRights,
-  licenseInfo,
 } from "@openconditions/ingest-framework";
 
 /** One feed the instance serves, as a consumer credits and discloses it. */
@@ -24,9 +24,8 @@ export interface Source {
   restricted: boolean;
   /** The licence id: SPDX where SPDX lists it, else `LicenseRef-<name>`, or `NOASSERTION`. */
   license: string;
-  /** The licence's readable name, from the licence registry, for showing to people. */
-  licenseName?: string;
-  licenseUrl?: string;
+  /** Captured source-scoped display definitions; `license` remains the permission selector. */
+  licensing: import("@openconditions/model").Licensing;
   attribution: string;
   homepage: string;
   privacyUrl: string;
@@ -64,7 +63,6 @@ function imageHostsOf(feed: CatalogFeed): string[] | undefined {
 
 function sourceOf(feed: CatalogFeed): Source {
   const imageHosts = imageHostsOf(feed);
-  const licenseName = licenseInfo(feed.license)?.name;
   const terms = {
     ...(feed.terms?.url ? { url: feed.terms.url } : {}),
     ...(feed.terms?.reviewedAt ? { reviewedAt: feed.terms.reviewedAt } : {}),
@@ -84,8 +82,7 @@ function sourceOf(feed: CatalogFeed): Source {
     accessMode: feed.accessMode ?? "bulk",
     restricted: feed.restricted,
     license: feed.license,
-    ...(licenseName ? { licenseName } : {}),
-    ...(feed.licenseUrl ? { licenseUrl: feed.licenseUrl } : {}),
+    licensing: captureLicensing(feed),
     attribution: feed.attribution,
     homepage: feed.homepage,
     privacyUrl: feed.privacyUrl,

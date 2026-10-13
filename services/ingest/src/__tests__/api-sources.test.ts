@@ -121,7 +121,16 @@ describe("GET /sources", () => {
       accessMode: flow.accessMode ?? "bulk",
       restricted: true,
       license: "CC0-1.0",
-      licenseName: "Creative Commons Zero v1.0 Universal",
+      licensing: {
+        version: 1,
+        bindings: [
+          {
+            scope: "data",
+            subject: "Alpha flow",
+            license: { kind: "spdx", expression: "CC0-1.0" },
+          },
+        ],
+      },
       attribution: "Alpha",
       homepage: "https://example.test",
       privacyUrl: "https://example.test/privacy",

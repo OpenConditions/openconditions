@@ -484,6 +484,13 @@
       "when": 1791848183068,
       "tag": "0068_flow_field_lineage",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1791923904681,
+      "tag": "0069_captured_licensing",
+      "breakpoints": true
     }
   ]
 }

@@ -101,11 +101,13 @@ three maps as JSON strings in MVT attributes. Each map has independent `speed`,
 Source IDs are canonical display identities: a catalogue child credits its parent,
 and the OSM segment spine credits `openstreetmap`.
 
-Display credits have `{ sourceId, name, url?, spdxLicense?, licenseUrl?,
+Display credits have `{ sourceId, name, url?, licensing?,
 attributionText?, publisher?: { name, url? }, notes?, retrievedAt? }`. A required
 verbatim notice is an additional credit with the parent's source ID and the notice
 as its `name`. Deduplicate identical credits, rather than source IDs, so the notice
-survives. An unknown source keeps its proven ID and any available provenance;
+survives. Migration `0069_captured_licensing` carries captured scoped definitions
+through these credits and the OSM geometry credit; it changes functions only.
+See [licence metadata](licensing.md) for the display contract. An unknown source keeps its proven ID and any available provenance;
 missing catalogue metadata is never replaced with an unrelated feed's credit.
 
 The speed winner follows tier and freshness. Declared LOS uses every supplier tied

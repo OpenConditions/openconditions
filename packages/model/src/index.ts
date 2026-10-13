@@ -16,6 +16,7 @@ export * from "./kernel/effect-state.js";
 export * from "./kernel/effect-type.js";
 export * from "./kernel/identity.js";
 export * from "./kernel/infrastructure.js";
+export * from "./kernel/licensing.js";
 export * from "./kernel/location.js";
 export * from "./kernel/module.js";
 export * from "./kernel/provenance.js";
