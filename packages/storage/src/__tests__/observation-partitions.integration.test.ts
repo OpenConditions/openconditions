@@ -4,6 +4,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
+  partitionCoverage,
   partitionCovers,
   retentionClasses,
   retentionDaysOf,
@@ -47,6 +48,24 @@ describe("partitionCovers", () => {
     expect(partitionCovers(0, at("2026-09-01T00:00:00Z"), now, 1)).toBe(true);
     expect(partitionCovers(0, at("2026-08-31T23:59:59Z"), now, 1)).toBe(false);
     expect(partitionCovers(0, at("2026-10-31T23:59:59Z"), now, 1)).toBe(true);
+  });
+
+  it("answers as partitionCovers with each class's window worked out once", () => {
+    const covers = partitionCoverage(now);
+    const edges = [
+      "2026-08-31T23:59:59Z",
+      "2026-09-01T00:00:00Z",
+      "2026-09-28T23:59:59Z",
+      "2026-09-29T00:00:00Z",
+      "2026-10-17T23:59:59Z",
+      "2026-10-18T00:00:00Z",
+      "2026-11-30T23:59:59Z",
+      "2026-12-01T00:00:00Z",
+    ].map(at);
+    for (const days of [0, 2, 30, 0, 2])
+      for (const start of edges) {
+        expect(covers(days, start)).toBe(partitionCovers(days, start, now));
+      }
   });
 });
 

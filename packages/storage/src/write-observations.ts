@@ -16,7 +16,7 @@ import {
   sha256Hex,
 } from "@openconditions/model";
 import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
-import { partitionCovers, retentionDaysOf } from "./observation-partitions.js";
+import { partitionCoverage, retentionDaysOf } from "./observation-partitions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { expiryOf } from "./record-rows.js";
 import { stepTimer } from "./steps.js";
@@ -264,7 +264,8 @@ export async function writeObservationsIn(
 
   const frontiers = await rollupFrontiers(tx);
   lap("readings/group");
-  const write = { tx, ctx, rejected, stage, frontiers, counts, lap };
+  const receipts = receiptCache();
+  const write = { tx, ctx, rejected, stage, frontiers, counts, lap, receipts };
   let slice: [string, PendingSeries][] = [];
   for (const entry of pending) {
     slice.push(entry);
@@ -274,7 +275,7 @@ export async function writeObservationsIn(
     }
   }
   if (slice.length > 0) await writeSeries(write, slice);
-  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage);
+  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage, receipts);
   lap("readings/transient");
   return counts;
 }
@@ -303,11 +304,13 @@ async function writeSeries(
     counts: ObservationCounts;
     /** Ends the stage under way (`readings/<stage>`). */
     lap: (stage: string) => void;
+    receipts: ReceiptCache;
   },
   slice: readonly (readonly [string, PendingSeries])[],
 ): Promise<void> {
-  const { tx, ctx, rejected, stage, frontiers, counts, lap } = write;
+  const { tx, ctx, rejected, stage, frontiers, counts, lap, receipts } = write;
   const now = Date.parse(ctx.now);
+  const covers = partitionCoverage(now);
   const latest = await loadLatest(
     tx,
     slice.map(([, p]) => p.key),
@@ -407,7 +410,7 @@ async function writeSeries(
   }
   lap("readings/compare");
 
-  await captureContributorReceipts(tx, legacyAcquisitions, ctx.now);
+  await captureContributorReceipts(tx, legacyAcquisitions, ctx.now, receipts);
   if (legacyAcquisitions.length > 0)
     await tx.unsafe(
       `UPDATE conditions.observation_latest l SET contributor_receipt_id=r.contributor_receipt_id
@@ -471,7 +474,7 @@ async function writeSeries(
         historyEligible(record as unknown as Parameters<typeof historyEligible>[0]) &&
         (changed || !property.retention?.changeOnly)
       ) {
-        if (partitionCovers(retentionDays, startOf(record), now)) {
+        if (covers(retentionDays, startOf(record))) {
           if (frontier !== undefined && startOf(record) < frontier) counts.pastRollup++;
           history.push({
             key: k,
@@ -506,7 +509,7 @@ async function writeSeries(
   }
   lap("readings/rows");
 
-  await captureContributorReceipts(tx, acquisitions, ctx.now);
+  await captureContributorReceipts(tx, acquisitions, ctx.now, receipts);
   lap("readings/receipts");
 
   const returning = "series_id, subject_key, property, qualifier_key, source_id";
@@ -588,9 +591,11 @@ async function writeTransient(
   counts: ObservationCounts,
   rejected: Rejection[],
   stage: "draft" | "stored",
+  receipts: ReceiptCache,
 ): Promise<void> {
   if (readings.length === 0) return;
   const now = Date.parse(ctx.now);
+  const covers = partitionCoverage(now);
   const seriesRows: Rec[] = [];
   const acquisitions: { row: Rec; provenance: Rec }[] = [];
   const history = new Map<string, Rec>();
@@ -626,7 +631,7 @@ async function writeTransient(
     ) {
       continue;
     }
-    if (!partitionCovers(retentionDays, startOf(record), now)) {
+    if (!covers(retentionDays, startOf(record))) {
       counts.outsideRetention++;
       continue;
     }
@@ -635,7 +640,7 @@ async function writeTransient(
       ...historyRowOf(record, property.result, retentionDays > 0 ? ctx : {}),
     });
   }
-  await captureContributorReceipts(tx, acquisitions, ctx.now);
+  await captureContributorReceipts(tx, acquisitions, ctx.now, receipts);
   type Written = { series_id: number } & Record<
     "subject_key" | "property" | "qualifier_key" | "source_id",
     string
@@ -913,30 +918,58 @@ export async function endUnstatedSeries(
   return rows.map((r) => ({ featureId: r.feature_id, property: r.property }));
 }
 
-/** Capture once per distinct actual provenance in a bounded writer slice, outside canonical record bodies. */
+/**
+ * The contributor receipts one write has captured, by their descriptor's
+ * canonical key, and each descriptor's key by its plain JSON. A poll's
+ * readings share a few attributions: each is serialized canonically and
+ * captured once per write, not once per reading or per slice.
+ */
+interface ReceiptCache {
+  keys: Map<string, string>;
+  ids: Map<string, string>;
+}
+
+const receiptCache = (): ReceiptCache => ({ keys: new Map(), ids: new Map() });
+
+/** Capture once per distinct actual provenance in a write, outside canonical record bodies. */
 async function captureContributorReceipts(
   tx: Sql,
   acquisitions: { row: Rec; provenance: Rec }[],
   now: string,
+  cache: ReceiptCache,
 ): Promise<void> {
   if (acquisitions.length === 0) return;
   const inputs = new Map<string, { source_id: unknown; attribution: unknown }>();
-  for (const { provenance } of acquisitions) {
+  const keys = acquisitions.map(({ provenance }) => {
     const descriptor = {
       source_id: provenance["sourceId"],
       attribution: provenance["attribution"] ?? {},
     };
-    inputs.set(jcs(descriptor), descriptor);
+    const plain = JSON.stringify(descriptor);
+    let key = cache.keys.get(plain);
+    if (key === undefined) {
+      key = jcs(descriptor);
+      cache.keys.set(plain, key);
+    }
+    if (!cache.ids.has(key)) inputs.set(key, descriptor);
+    return key;
+  });
+  const assign = () =>
+    acquisitions.forEach(({ row }, i) => {
+      row["contributor_receipt_id"] = cache.ids.get(keys[i]!);
+    });
+  if (inputs.size === 0) {
+    assign();
+    return;
   }
   const captured = await tx.unsafe<{ key: string; contributors: unknown }[]>(
     `SELECT r.key, conditions.flow_credit(r.source_id, r.attribution) AS contributors
        FROM jsonb_to_recordset($1::text::jsonb) AS r(key text, source_id text, attribution jsonb)`,
     [JSON.stringify([...inputs].map(([key, input]) => ({ key, ...input })))],
   );
-  const ids = new Map<string, string>();
   const receipts = captured.map(({ key, contributors }) => {
     const id = sha256Hex(jcs({ version: 1, contributors }));
-    ids.set(key, id);
+    cache.ids.set(key, id);
     return { id, version: 1, contributors, created_at: now };
   });
   await insertRows(
@@ -952,9 +985,5 @@ async function captureContributorReceipts(
     "ON CONFLICT (id) DO NOTHING",
     "id",
   );
-  for (const { row, provenance } of acquisitions) {
-    row["contributor_receipt_id"] = ids.get(
-      jcs({ source_id: provenance["sourceId"], attribution: provenance["attribution"] ?? {} }),
-    );
-  }
+  assign();
 }
