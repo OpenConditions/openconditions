@@ -889,6 +889,7 @@ describe("fetchEndpoint — conditional GET", () => {
     const first = await fetchEndpoint(feed, "main", fetchFn, { state });
     if (first.status === "fetched") first.accept();
     expect(first.status).toBe("fetched");
+    if (first.status === "fetched") expect(first.bodyFreshness).toBe("acquired");
     const kept = async (url: string) => {
       const body = state.conditional.get(`${feed.id}#main\0${url}`)?.body;
       return body === undefined ? undefined : (await heldBuffer(body)).toString();
@@ -901,6 +902,7 @@ describe("fetchEndpoint — conditional GET", () => {
     // A comes from cache (304), B is fresh — the full source is re-parsed, in order.
     const bodies = second.status === "fetched" ? second.buffers.map((x) => x.toString()) : [];
     expect(bodies).toEqual([`${a}-v1`, `${b}-v2`]);
+    if (second.status === "fetched") expect(second.bodyFreshness).toBe("held");
   });
 
   it("keeps a large multi-url body gzipped until a 304 needs it again", async () => {

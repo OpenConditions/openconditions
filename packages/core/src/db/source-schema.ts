@@ -28,6 +28,9 @@ export const source = conditionsSchema.table(
     license: text("license").notNull(),
     licenseUrl: text("license_url"),
     attribution: text("attribution").notNull(),
+    creditName: text("credit_name"),
+    creditUrl: text("credit_url"),
+    creditNotice: text("credit_notice"),
     rights: jsonb("rights"),
     /**
      * Withheld from the public scope: share-alike, or redistribution not

@@ -46,6 +46,14 @@ import { conditionsSchema, geometry, tstz } from "./columns.js";
  * HOT. A category or boolean series (`value_text`) and one with an expiry
  * (`expires_at`) are indexed by what they change; they change far less often.
  */
+/** Immutable versioned display receipts shared by actual acquired readings. Never catalogue-backfilled. */
+export const contributorReceipt = conditionsSchema.table("contributor_receipt", {
+  id: text("id").primaryKey(),
+  version: smallint("version").notNull(),
+  contributors: jsonb("contributors").notNull(),
+  createdAt: tstz("created_at").notNull().defaultNow(),
+});
+
 export const observationLatest = conditionsSchema.table(
   "observation_latest",
   {
@@ -62,6 +70,7 @@ export const observationLatest = conditionsSchema.table(
     reading: jsonb("reading").notNull(),
     template: jsonb("template").notNull(),
     templateHash: text("template_hash").notNull(),
+    contributorReceiptId: text("contributor_receipt_id"),
     /** A crowd row's record id (null on every other row, so no feed update changes an indexed value). */
     crowdRecordId: text("crowd_record_id"),
     accessMode: text("access_mode").notNull(),

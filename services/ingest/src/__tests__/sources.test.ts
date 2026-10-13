@@ -7,7 +7,12 @@ import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
 describe("catalogueSources", () => {
   it("lists every scheduled feed once, with its domain, product and tier", () => {
     const sources = catalogueSources(REPO_CATALOG);
-    expect(sources.length).toBe(REPO_CATALOG.feeds.length);
+    expect(sources.length).toBe(
+      new Set([
+        ...REPO_CATALOG.feeds.map((feed) => feed.id),
+        ...REPO_CATALOG.feeds.flatMap((feed) => (feed.parentSourceId ? [feed.parentSourceId] : [])),
+      ]).size,
+    );
     expect(new Set(sources.map((s) => s.id)).size).toBe(sources.length);
     expect(sources.find((s) => s.id === "nl-ndw-events")).toMatchObject({
       domain: "roads",
@@ -55,5 +60,24 @@ describe("the repo catalogue's sources", () => {
     ]) {
       expect(envOf(id), id).toEqual(["CA_ON_511_API_KEY"]);
     }
+  });
+});
+
+it("persists the canonical parent credit metadata when only its child is polled", () => {
+  const base = repoFeed("nl-ndw-flow");
+  const parent = {
+    ...base,
+    id: "parent-credit",
+    name: "Parent credit",
+    homepage: "https://example.org/parent",
+    terms: { ...base.terms, notice: "Parent notice" },
+  };
+  const child = { ...base, id: "child-credit", parentSourceId: parent.id };
+  const entries = catalogueSources({ ...REPO_CATALOG, feeds: [child], sources: [parent] });
+  expect(entries.find((entry) => entry.id === parent.id)).toMatchObject({
+    active: false,
+    name: "Parent credit",
+    homepage: "https://example.org/parent",
+    terms: { notice: "Parent notice" },
   });
 });

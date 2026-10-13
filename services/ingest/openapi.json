@@ -2130,7 +2130,7 @@
     "/observations/grid": {
       "get": {
         "operationId": "getObservationGrid",
-        "summary": "The current numeric readings of one property in `bbox` since an instant, aggregated per cell of `cellDeg` degrees: `{ cells: [lon, lat, count, sum, max][], sources }`, each cell at its centre, `sources` the sources counted. The public scope counts neither a restricted source's readings nor readings whose licence is not public. A box of more than 50,000 cells answers 400.",
+        "summary": "The current numeric readings of one property in `bbox` since an instant, aggregated per cell of `cellDeg` degrees: `{ cells: [lon, lat, count, sum, max][], sources, cell_contributors: [{ longitude, latitude, native_sources, sources?, contributors?, lineage_complete }] }`, each cell at its centre. The numeric tuples and collection sources remain unchanged; cell_contributors contains exact admitted native feed IDs, known captured canonical parent credits (including mandatory notices), and a lineage_complete diagnostic for each cell, in the same sorted order. Partial cells retain known credits with lineage_complete false; wholly unknown cells omit canonical sources and contributors. The public scope counts neither a restricted source's readings nor readings whose licence is not public. A box of more than 50,000 cells answers 400.",
         "parameters": [
           {
             "name": "property",

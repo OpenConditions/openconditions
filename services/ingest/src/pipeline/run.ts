@@ -618,6 +618,7 @@ async function runAttempt(
   let snapshotInspection: ReturnType<typeof inspectSnapshotCompleteness> | undefined;
   // Whether any data payload had bytes: a streamed body is taken to have.
   let heldPayload = true;
+  let captureEvidence = false;
   let warning: string | undefined;
   // An optional role that never answered was left out: its states are not in the parse.
   let leftOut = false;
@@ -627,7 +628,12 @@ async function runAttempt(
     attempt,
     start,
     recordStatus,
-    identity: { at: attemptAt, id: attemptId, ...(payloadHashes ? { payloadHashes } : {}) },
+    identity: {
+      at: attemptAt,
+      id: attemptId,
+      ...(payloadHashes ? { payloadHashes } : {}),
+      ...(captureEvidence ? { captureEvidence: "acquired" as const } : {}),
+    },
     ...(acceptFetch ? { acceptFetch } : {}),
     ...(warning ? { warning } : {}),
     statesComplete: !leftOut,
@@ -662,6 +668,7 @@ async function runAttempt(
       payloadHashes = [streamed.payload.sha256];
       if (deps.roles) deps.roles.lastFetchedAt["main"] = Date.parse(attemptAt);
       parsed = streamed.output;
+      captureEvidence = true;
     } catch (err) {
       const error = err instanceof Error ? err.message : String(err);
       console.error(`[ingest] stream failed for source ${src.id}:`, err);
@@ -683,6 +690,7 @@ async function runAttempt(
     const keepPayloads = deps.roles !== undefined && dataRoles(src).length > 1;
     /** The data roles whose payloads changed this poll. */
     let fetched: string[] = [];
+    const acquiredRoles = new Set<string>();
     // A due role that failed while its latest payload is held: the poll goes on
     // with that payload, and the role stays due for the next tick.
     const warnings: string[] = [];
@@ -926,7 +934,10 @@ async function runAttempt(
           });
           return { count: 0, durationMs: Date.now() - start, outcome: "partial", error };
         }
-        if (result.status === "fetched") accepts.push(result.accept);
+        if (result.status === "fetched") {
+          accepts.push(result.accept);
+          if (result.bodyFreshness === "acquired") acquiredRoles.add(role);
+        }
         if (result.status === "fetched" || result.status === "partial") {
           fresh[role] = result.buffers;
           freshUrls[role] = result.urls;
@@ -1019,6 +1030,8 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "validated_unchanged" };
       }
+      captureEvidence =
+        warnings.length === 0 && dataRoles(src).every((role) => acquiredRoles.has(role));
       acceptFetch = () => {
         for (const accept of accepts) accept();
       };

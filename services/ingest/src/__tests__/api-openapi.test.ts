@@ -92,6 +92,16 @@ describe("the OpenAPI document", () => {
     expect(names("/features")).not.toContain("subtype");
   });
 
+  it("documents exact native cell IDs and known partial or absent canonical credits", () => {
+    const { summary } = (
+      openApiDocument().paths["/observations/grid"] as { get: { summary: string } }
+    ).get;
+    expect(summary).toContain("native_sources");
+    expect(summary).toContain("lineage_complete");
+    expect(summary).toContain("Partial cells retain known credits");
+    expect(summary).toContain("wholly unknown cells omit canonical sources and contributors");
+  });
+
   it("names the sources fields format, qualifier and notice", () => {
     const { summary } = (openApiDocument().paths["/sources"] as { get: { summary: string } }).get;
     expect(summary).toMatch(/`format`/);

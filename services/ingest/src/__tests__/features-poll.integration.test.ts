@@ -611,6 +611,28 @@ describe("features poll with a slow endpoint", () => {
     return { feed, roles, answer, requested, tick, liveFeatures, prices, priceOf, lastAttempt };
   }
 
+  it("upgrades legacy receipts only on a fully fresh acquisition, preserving unknown held-cache inputs", async () => {
+    const h = sitesHarness("receipt-evidence");
+    expect((await h.tick(0)).error).toBeUndefined();
+    await sql`UPDATE conditions.observation_latest SET contributor_receipt_id=NULL WHERE source_id=${h.feed.id}`;
+    expect((await h.tick(300_000)).error).toBeUndefined();
+    const [held] =
+      await sql`SELECT count(*)::int AS known FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND contributor_receipt_id IS NOT NULL`;
+    expect(held!.known).toBe(0);
+    // At the next full poll the snapshot answers 304, so it still cannot establish new receipt evidence.
+    h.answer.sitesUnchanged = true;
+    expect((await h.tick(DAY)).error).toBeUndefined();
+    const [validated] =
+      await sql`SELECT count(*)::int AS known FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND contributor_receipt_id IS NOT NULL`;
+    expect(validated!.known).toBe(0);
+    // A later full 200 acquisition admits the exact same values with current captured provenance.
+    h.answer.sitesUnchanged = false;
+    expect((await h.tick(2 * DAY)).error).toBeUndefined();
+    const [fresh] =
+      await sql`SELECT count(*)::int AS known FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND contributor_receipt_id IS NOT NULL`;
+    expect(fresh!.known).toBe(2);
+  }, 60_000);
+
   it("an optional role that fails with nothing held leaves the poll to publish without it", async () => {
     const h = sitesHarness("optional-status", CHANGES_FORMAT);
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});

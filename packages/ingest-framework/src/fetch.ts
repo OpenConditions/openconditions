@@ -121,6 +121,8 @@ export type KeptItems = ReadonlyMap<string, KeptItem>;
 
 /** What a fetch that answered carries besides its status. */
 interface FetchedPayloads {
+  /** Every parsed body (including walk dependencies) was acquired in this call; held/304 copies are not acquisition evidence. */
+  bodyFreshness: "acquired" | "held";
   /** The payloads to parse. */
   buffers: Buffer[];
   /** The URL each buffer came from, same order. Never logged: it may carry a credential. */
@@ -372,6 +374,7 @@ async function fetchFanout(
     throw new Error(`all ${urls.length} sub-feeds failed (${failures} failures)`);
   }
   return {
+    bodyFreshness: "acquired",
     buffers: out,
     urls: answered,
     payloads,
@@ -702,6 +705,7 @@ async function fetchEach(
     throw new Error(`all ${urls.length} item requests failed`);
   }
   return {
+    bodyFreshness: "acquired",
     buffers: done.map((s) => s.buffer),
     urls: done.map((s) => s.url),
     payloads: done.map((s) => s.payload),
@@ -748,6 +752,7 @@ async function fetchKeeping(
   const buffers: Buffer[] = [];
   const answered: string[] = [];
   let standIns = 0;
+  let bodyFreshness: "acquired" | "held" = "acquired";
   for (const { url, version } of urls) {
     const answer = answers.get(url);
     if (answer) {
@@ -764,6 +769,7 @@ async function fetchKeeping(
     }
     const prior = kept?.get(url);
     if (prior) {
+      bodyFreshness = "held";
       next.set(url, prior);
       buffers.push(await heldBuffer(prior.body));
       answered.push(url);
@@ -772,6 +778,7 @@ async function fetchKeeping(
   }
   const fetched = slots.filter((s) => s !== undefined);
   return {
+    bodyFreshness,
     buffers,
     urls: answered,
     payloads: fetched.map((s) => s.payload),
@@ -848,6 +855,7 @@ async function fetchWalk(
   const payloads: PayloadDigest[] = [];
   const responses: Buffer[] = [];
   let failures = 0;
+  let bodyFreshness: "acquired" | "held" = "acquired";
   let total = 0;
   for (const [level, pattern] of links.entries()) {
     const last = level === links.length - 1;
@@ -867,6 +875,7 @@ async function fetchWalk(
       const message = `[ingest] listing matched no link (${redact(redactUrl(listing.url))})`;
       if (prior && copy && listedLinks(pattern, [copy]).length > 0) {
         console.warn(`${message}: its kept copy stands in`);
+        bodyFreshness = "held";
         read.push(copy);
         next.set(listing.url, prior);
         continue;
@@ -893,6 +902,7 @@ async function fetchWalk(
       tolerant,
       !last,
     );
+    if (found.bodyFreshness === "held") bodyFreshness = "held";
     for (const [url, item] of found.kept) next.set(url, item);
     payloads.push(...found.payloads);
     responses.push(...(found.responses ?? []));
@@ -902,6 +912,7 @@ async function fetchWalk(
     listings = found.buffers.map((buffer, i) => ({ buffer, url: found.urls[i]! }));
   }
   return {
+    bodyFreshness,
     buffers: listings.map((l) => l.buffer),
     urls: listings.map((l) => l.url),
     payloads,
@@ -1135,6 +1146,7 @@ async function fetchRole(
       status: "fetched",
       accept: () => {},
       ...followed,
+      bodyFreshness: "acquired",
       validatedAtNetwork: true,
       partitions: { succeeded: pageUrls.length, failed: 0, total: pageUrls.length },
     };
@@ -1160,6 +1172,7 @@ async function fetchRole(
       status: "fetched",
       accept: () => {},
       ...pages,
+      bodyFreshness: "acquired",
       validatedAtNetwork: true,
       partitions: { succeeded: baseUrls.length, failed: 0, total: baseUrls.length },
     };
@@ -1203,6 +1216,7 @@ async function fetchRole(
     return {
       status: "fetched",
       accept: () => {},
+      bodyFreshness: "acquired",
       buffers: results.map((r) => r.buffer),
       urls,
       payloads: results.map((r) => r.payload),
@@ -1264,6 +1278,7 @@ async function fetchRole(
         if (accepted) state.conditional.set(cacheKey(url), accepted);
       }
     },
+    bodyFreshness: results.every((r) => r.changed) ? "acquired" : "held",
     buffers: results.map((r) => r.buffer),
     urls,
     payloads: results.map((r) => r.payload),

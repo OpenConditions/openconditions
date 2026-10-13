@@ -13,6 +13,7 @@ import {
   jcs,
   type PropertyEntry,
   sealRecord,
+  sha256Hex,
 } from "@openconditions/model";
 import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
 import { partitionCovers, retentionDaysOf } from "./observation-partitions.js";
@@ -62,6 +63,7 @@ export const SERIES_COLUMNS: ColumnSpec[] = [
   { name: "reading", type: "jsonb" },
   { name: "template", type: "jsonb" },
   { name: "template_hash", type: "text" },
+  { name: "contributor_receipt_id", type: "text" },
   { name: "crowd_record_id", type: "text" },
   { name: "access_mode", type: "text" },
   { name: "result_type", type: "text" },
@@ -134,6 +136,11 @@ const startOf = (o: Rec) => {
   return Date.parse((t.instant ?? t.start)!);
 };
 
+const creditProvenance = (record: Rec) => {
+  const p = record["provenance"] as Rec;
+  return { attribution: p["attribution"] ?? null, upstream: p["upstream"] ?? [] };
+};
+
 const sameResult = (a: unknown, b: unknown) => jcs(a) === jcs(b);
 
 const withoutValidity = ({ validUntil: _validUntil, ...rest }: Rec): Rec => rest;
@@ -151,6 +158,9 @@ interface Latest {
   result: unknown;
   content_hash: string;
   template_hash: string;
+  credit_provenance: unknown;
+  baseline: unknown;
+  contributor_receipt_id: string | null;
   expires_at: Date | null;
   /** The reading states a `validUntil`: for a polled series, a complete poll ended it. */
   ended: boolean;
@@ -295,6 +305,7 @@ async function writeSeries(
     slice.map(([, p]) => p.key),
   );
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
+  const legacyAcquisitions: { row: Rec; provenance: Rec }[] = [];
   const expiryMoved = new Map<number, unknown>();
   let handled = 0;
   for (const [k, { key, drafts: series }] of slice) {
@@ -314,6 +325,10 @@ async function writeSeries(
       held !== undefined &&
       (held.ended || ctx.changedFeatures?.has(subject["featureId"] as string) === true);
     let inEffect = renewed ? undefined : held?.result;
+    let inEffectHash = renewed ? undefined : held?.content_hash;
+    let inEffectAt = renewed ? -Infinity : (held?.effective_from.getTime() ?? -Infinity);
+    let inEffectProvenance = renewed ? null : (held?.credit_provenance ?? null);
+    let inEffectBaseline = renewed ? null : (held?.baseline ?? null);
     for (const draft of series) {
       if (++handled % RECORDS_PER_TURN === 0) await pause();
       const hash = contentHash(draft);
@@ -322,11 +337,24 @@ async function writeSeries(
         polled &&
         inEffect !== undefined &&
         draft["validUntil"] === undefined &&
-        sameResult(inEffect, draft["result"]);
+        sameResult(inEffect, draft["result"]) &&
+        sameResult(inEffectProvenance, creditProvenance(draft)) &&
+        sameResult(inEffectBaseline, draft["baseline"] ?? null);
       const superseded =
         polled && held !== undefined && !renewed && startOf(draft) < held.effective_from.getTime();
-      if (held?.content_hash === hash || restated || superseded) {
+      if (inEffectHash === hash || restated || superseded) {
         counts.unchanged++;
+        if (
+          ctx.captureEvidence === "acquired" &&
+          held !== undefined &&
+          held.contributor_receipt_id === null &&
+          !superseded
+        ) {
+          legacyAcquisitions.push({
+            row: { series_id: held.series_id, content_hash: held.content_hash },
+            provenance: draft["provenance"] as Rec,
+          });
+        }
         // A reading fetched again keeps its row; only the expiry its source now states moves.
         if (
           held !== undefined &&
@@ -354,12 +382,29 @@ async function writeSeries(
         rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
         continue;
       }
-      inEffect = draft["result"];
+      // An older quantity reading belongs in history but cannot replace the
+      // state in effect. Equal instants are corrections, in incoming order.
+      if (startOf(draft) >= inEffectAt) {
+        inEffect = draft["result"];
+        inEffectHash = hash;
+        inEffectAt = startOf(draft);
+        inEffectProvenance = creditProvenance(sealed.value);
+        inEffectBaseline = sealed.value["baseline"] ?? null;
+      }
       const entry = bySeries.get(k) ?? { key, records: [] };
       entry.records.push(sealed.value);
       bySeries.set(k, entry);
     }
   }
+
+  await captureContributorReceipts(tx, legacyAcquisitions, ctx.now);
+  if (legacyAcquisitions.length > 0)
+    await tx.unsafe(
+      `UPDATE conditions.observation_latest l SET contributor_receipt_id=r.contributor_receipt_id
+       FROM jsonb_to_recordset($1::text::jsonb) AS r(series_id bigint,content_hash text,contributor_receipt_id text)
+       WHERE l.series_id=r.series_id AND l.contributor_receipt_id IS NULL AND l.reading->>'contentHash'=r.content_hash`,
+      [JSON.stringify(legacyAcquisitions.map((a) => a.row))],
+    );
 
   if (expiryMoved.size > 0) {
     await tx.unsafe(
@@ -378,6 +423,7 @@ async function writeSeries(
     );
   }
 
+  const acquisitions: { row: Rec; provenance: Rec }[] = [];
   const seriesRows: Rec[] = [];
   const readingRows: Rec[] = [];
   // The whole row of a series written by its reading alone, should its row have gone.
@@ -433,17 +479,22 @@ async function writeSeries(
     }
     if (newest !== undefined) {
       const row = seriesRowOf(newest, property, retentionDays, ctx.now, prev?.template_hash);
+      acquisitions.push({ row, provenance: newest["provenance"] as Rec });
       if (row["template"] === null) {
-        readingRows.push({ ...row, series_id: prev!.series_id });
+        row["series_id"] = prev!.series_id;
+        readingRows.push(row);
         const record = newest;
-        wholeRowOf.set(Number(prev!.series_id), () =>
-          seriesRowOf(record, property, retentionDays, ctx.now),
-        );
+        wholeRowOf.set(Number(prev!.series_id), () => ({
+          ...seriesRowOf(record, property, retentionDays, ctx.now),
+          contributor_receipt_id: row["contributor_receipt_id"],
+        }));
       } else {
         seriesRows.push(row);
       }
     }
   }
+
+  await captureContributorReceipts(tx, acquisitions, ctx.now);
 
   const returning = "series_id, subject_key, property, qualifier_key, source_id";
   type Written = { series_id: number } & Record<string, string>;
@@ -526,6 +577,7 @@ async function writeTransient(
   if (readings.length === 0) return;
   const now = Date.parse(ctx.now);
   const seriesRows: Rec[] = [];
+  const acquisitions: { row: Rec; provenance: Rec }[] = [];
   const history = new Map<string, Rec>();
   let handled = 0;
   for (const { draft, property } of readings) {
@@ -545,9 +597,14 @@ async function writeTransient(
     }
     const record = sealed.value as unknown as Rec;
     const retentionDays = retentionDaysOf(property);
-    seriesRows.push(
-      seriesRowOf({ ...record, sinceAt: effectiveFrom(record) }, property, retentionDays, ctx.now),
+    const row = seriesRowOf(
+      { ...record, sinceAt: effectiveFrom(record) },
+      property,
+      retentionDays,
+      ctx.now,
     );
+    seriesRows.push(row);
+    acquisitions.push({ row, provenance: record["provenance"] as Rec });
     if (
       retentionDays === undefined ||
       !historyEligible(record as unknown as Parameters<typeof historyEligible>[0])
@@ -563,6 +620,7 @@ async function writeTransient(
       ...historyRowOf(record, property.result, retentionDays > 0 ? ctx : {}),
     });
   }
+  await captureContributorReceipts(tx, acquisitions, ctx.now);
   type Written = { series_id: number } & Record<
     "subject_key" | "property" | "qualifier_key" | "source_id",
     string
@@ -576,6 +634,14 @@ async function writeTransient(
        WHERE observation_latest.effective_from < excluded.effective_from`,
     "series_id, subject_key, property, qualifier_key, source_id",
   );
+  if (ctx.captureEvidence === "acquired" && seriesRows.length > 0)
+    await tx.unsafe(
+      `UPDATE conditions.observation_latest l SET contributor_receipt_id=r.contributor_receipt_id
+       FROM jsonb_to_recordset($1::text::jsonb) AS r(subject_key text,property text,qualifier_key text,source_id text,reading jsonb,contributor_receipt_id text)
+       WHERE l.subject_key=r.subject_key AND l.property=r.property AND l.qualifier_key=r.qualifier_key AND l.source_id=r.source_id
+         AND l.contributor_receipt_id IS NULL AND l.reading->>'contentHash'=r.reading->>'contentHash'`,
+      [JSON.stringify(seriesRows)],
+    );
   counts.latest += written.length;
   counts.unchanged += seriesRows.length - written.length;
   // Only a reading that wrote its series is new: one its series already
@@ -661,6 +727,7 @@ export function seriesRowOf(
     reading: readingOf(record),
     template: hash === storedTemplateHash ? null : template,
     template_hash: hash,
+    contributor_receipt_id: null,
     crowd_record_id: key.sourceId === "crowd" ? record["id"] : null,
     access_mode: (record["provenance"] as Rec)["accessMode"],
     result_type: property.result.type,
@@ -686,9 +753,11 @@ async function rollupFrontiers(tx: Sql): Promise<Map<string, number>> {
   return new Map(rows.map((r) => [r.period, r.finalized_before.getTime()]));
 }
 
-const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'result' AS result,
-            l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at,
+const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'result' AS result, l.reading->'baseline' AS baseline,
+            l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at, l.contributor_receipt_id,
             l.reading ? 'validUntil' AS ended,
+            jsonb_build_object('attribution', l.template #> '{provenance,attribution}',
+              'upstream', COALESCE(l.template #> '{provenance,upstream}', '[]'::jsonb)) AS credit_provenance,
             l.subject_key, l.property, l.qualifier_key, l.source_id`;
 
 async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<string, Latest>> {
@@ -827,4 +896,50 @@ export async function endUnstatedSeries(
     ended.map((e) => ({ ...e, effective_until: ctx.now, updated_at: ctx.now })),
   );
   return rows.map((r) => ({ featureId: r.feature_id, property: r.property }));
+}
+
+/** Capture once per distinct actual provenance in a bounded writer slice, outside canonical record bodies. */
+async function captureContributorReceipts(
+  tx: Sql,
+  acquisitions: { row: Rec; provenance: Rec }[],
+  now: string,
+): Promise<void> {
+  if (acquisitions.length === 0) return;
+  const inputs = new Map<string, { source_id: unknown; attribution: unknown }>();
+  for (const { provenance } of acquisitions) {
+    const descriptor = {
+      source_id: provenance["sourceId"],
+      attribution: provenance["attribution"] ?? {},
+    };
+    inputs.set(jcs(descriptor), descriptor);
+  }
+  const captured = await tx.unsafe<{ key: string; contributors: unknown }[]>(
+    `SELECT r.key, conditions.flow_credit(r.source_id, r.attribution) AS contributors
+       FROM jsonb_to_recordset($1::text::jsonb) AS r(key text, source_id text, attribution jsonb)`,
+    [JSON.stringify([...inputs].map(([key, input]) => ({ key, ...input })))],
+  );
+  const ids = new Map<string, string>();
+  const receipts = captured.map(({ key, contributors }) => {
+    const id = sha256Hex(jcs({ version: 1, contributors }));
+    ids.set(key, id);
+    return { id, version: 1, contributors, created_at: now };
+  });
+  await insertRows(
+    tx,
+    "contributor_receipt",
+    [
+      { name: "id", type: "text" },
+      { name: "version", type: "smallint" },
+      { name: "contributors", type: "jsonb" },
+      { name: "created_at", type: "timestamptz" },
+    ],
+    [...new Map(receipts.map((r) => [r.id, r])).values()],
+    "ON CONFLICT (id) DO NOTHING",
+    "id",
+  );
+  for (const { row, provenance } of acquisitions) {
+    row["contributor_receipt_id"] = ids.get(
+      jcs({ source_id: provenance["sourceId"], attribution: provenance["attribution"] ?? {} }),
+    );
+  }
 }

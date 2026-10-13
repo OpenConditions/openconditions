@@ -90,6 +90,8 @@ export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDr
 
 /** One poll's identity, as its status and its records name it. */
 export interface PollIdentity {
+  /** All data inputs were freshly acquired; held-cache replay omits this. */
+  captureEvidence?: "acquired";
   /** When the poll started. */
   at: string;
   /** The poll attempt row, closed by the publication; also the raw payloads' fetch id. */
@@ -425,6 +427,7 @@ export function writeContext(input: {
     now: input.now,
     complete: true,
     fetchId: input.poll.id,
+    ...(input.poll.captureEvidence ? { captureEvidence: input.poll.captureEvidence } : {}),
     ...(input.poll.payloadHashes ? { payloadHashes: input.poll.payloadHashes } : {}),
   };
 }

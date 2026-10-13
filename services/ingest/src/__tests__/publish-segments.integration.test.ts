@@ -204,7 +204,7 @@ describe("GET /segments.geojson", () => {
       };
       const base = body.features.find((f) => f.properties["segment_id"] === BASE_SEGMENT_ID);
       expect(base).toBeDefined();
-      expect(base!.properties).toEqual({
+      expect(base!.properties).toMatchObject({
         segment_id: BASE_SEGMENT_ID,
         dir: "f",
         highway: "primary",
@@ -286,12 +286,15 @@ describe("the speed surface's scope", () => {
         return body.features.find((f) => f.properties["segment_id"] === RESTRICTED_SEGMENT_ID)
           ?.properties;
       };
-      expect(await props({})).toEqual({
+      const publicProperties = await props({});
+      expect(publicProperties).toMatchObject({
         segment_id: RESTRICTED_SEGMENT_ID,
         dir: "f",
         highway: "motorway",
         ref: "A2",
       });
+      expect(publicProperties?.["field_sources"]).toEqual({ geometry: ["openstreetmap"] });
+      expect(publicProperties?.["current_kph"]).toBeUndefined();
       expect(await props(operator)).toMatchObject({
         segment_id: RESTRICTED_SEGMENT_ID,
         current_kph: 30,

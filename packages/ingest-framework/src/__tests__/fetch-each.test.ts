@@ -311,6 +311,7 @@ describe("fetchEndpoint each over lists and patterns", () => {
 
       const first = await poll(two, T);
       expect(up.calls).toHaveLength(2);
+      expect(first.bodyFreshness).toBe("acquired");
       expect([...first.kept!.keys()]).toEqual([zone("forecast/A1"), zone("forecast/A2")]);
 
       up.calls.length = 0;
@@ -322,6 +323,7 @@ describe("fetchEndpoint each over lists and patterns", () => {
       ]);
       // Only what this call fetched is digested.
       expect(second.payloads).toEqual([]);
+      expect(second.bodyFreshness).toBe("held");
       expect(second.urls).toEqual([zone("forecast/A1"), zone("forecast/A2")]);
 
       const third = await poll(alerts([zone("forecast/A2")]), T + 59_000, second.kept);
@@ -330,7 +332,8 @@ describe("fetchEndpoint each over lists and patterns", () => {
       expect([...third.kept!.keys()]).toEqual([zone("forecast/A2")]);
 
       // Past keepSec the item is asked again, and a returning one is new.
-      await poll(two, T + 61_000, third.kept);
+      const renewed = await poll(two, T + 61_000, third.kept);
+      expect(renewed.bodyFreshness).toBe("acquired");
       expect(up.calls.map((c) => c.url)).toEqual([zone("forecast/A1"), zone("forecast/A2")]);
     });
 
@@ -428,6 +431,7 @@ describe("fetchEndpoint each walking links", () => {
     const tree = capturedTree();
     const up = datamart(tree);
     const res = await walk(tree, up);
+    if (res.status === "fetched") expect(res.bodyFreshness).toBe("acquired");
     expect(up.calls).toEqual([
       OFFICE,
       `${OFFICE}18/`,
@@ -590,6 +594,7 @@ describe("fetchEndpoint each walking links", () => {
         const second = await walkOnce(up, first.kept);
         expect(second.status).toBe("fetched");
         if (second.status !== "fetched") return;
+        expect(second.bodyFreshness).toBe("held");
         // The hours below the kept office listing are listed once more to confirm their versions.
         expect(up.calls).toEqual([OFFICE, `${OFFICE}18/`, `${OFFICE}19/`]);
         expect(second.buffers.map(String)).toEqual(

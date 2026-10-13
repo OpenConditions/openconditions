@@ -223,6 +223,11 @@ export const segmentObservation = conditionsSchema.table(
     los: text("los").notNull(),
     confidence: doublePrecision("confidence").notNull(),
     sampleCount: integer("sample_count"),
+    /** Selected native identities and captured display receipts; rights stay in contributing. */
+    nativeFieldSources: jsonb("native_field_sources"),
+    fieldSources: jsonb("field_sources"),
+    fieldContributors: jsonb("field_contributors"),
+    fieldLineageComplete: jsonb("field_lineage_complete"),
     observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },
@@ -274,6 +279,11 @@ export const segmentSpeed = conditionsSchema.table(
     sourceTier: text("source_tier"),
     contributing: text("contributing").array(),
     isEstimated: boolean("is_estimated").notNull().default(false),
+    /** Selected native identities and captured display receipts; rights stay in contributing. */
+    nativeFieldSources: jsonb("native_field_sources"),
+    fieldSources: jsonb("field_sources"),
+    fieldContributors: jsonb("field_contributors"),
+    fieldLineageComplete: jsonb("field_lineage_complete"),
     observedAt: timestamp("observed_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },

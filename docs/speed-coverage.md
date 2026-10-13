@@ -90,3 +90,74 @@ must not silently invent geometry either.
   (QTV-DIR) resolves its CSV site table (Lambert-93 → WGS84) via
   `france-comptage-csv`; the Norway DATEX feed is credential-gated (dormant
   until credentials are set).
+
+## Selected display contributors
+
+Migration `0068_flow_field_lineage` adds version 1 field lineage to the live
+segment surface. `GET /segments.geojson` properties include `lineage_version: 1`,
+`field_sources`, `field_contributors` and `field_lineage_complete`; `conditions.segment_flow` encodes the
+three maps as JSON strings in MVT attributes. Each map has independent `speed`,
+`freeFlow`, `ratio`, `los`, `confidence` and `geometry` keys when the field's lineage is known.
+Source IDs are canonical display identities: a catalogue child credits its parent,
+and the OSM segment spine credits `openstreetmap`.
+
+Display credits have `{ sourceId, name, url?, spdxLicense?, licenseUrl?,
+attributionText?, publisher?: { name, url? }, notes?, retrievedAt? }`. A required
+verbatim notice is an additional credit with the parent's source ID and the notice
+as its `name`. Deduplicate identical credits, rather than source IDs, so the notice
+survives. An unknown source keeps its proven ID and any available provenance;
+missing catalogue metadata is never replaced with an unrelated feed's credit.
+
+The speed winner follows tier and freshness. Declared LOS uses every supplier tied
+at the worst declared rank; otherwise LOS inherits the selected speed ratio's
+suppliers. Ratio credits its actual numerator and denominator. A native or derived
+sensor baseline credits that measurement source; `osm_maxspeed` and graph fallback
+credit OpenStreetMap. A propagated speed keeps the donor's speed receipt, while its
+free-flow speed and geometry come from the target OSM segment. Producer-derived
+`measured` confidence credits the selected speed supplier when present, otherwise
+the selected worst declared LOS ties. `estimated` confidence credits the donor
+speed and the OSM geometry used to establish the estimate; it does not require a
+known free-flow denominator.
+
+The shared observation writer captures each actual input before aggregation in
+an immutable version-1 `contributor_receipt` dictionary. The nullable
+`observation_latest.contributor_receipt_id` points to the receipt; canonical record
+bodies and content hashes are unchanged. A bounded write slice captures once per
+distinct source attribution, not once per reading. Aggregation unions each selected
+input's stored receipt. If one of two sites changes, the other site's original name,
+licence and mandatory notice survive alongside the newly acquired receipt, even
+when both canonical source IDs match. Catalogue edits and LOS heartbeats never
+refresh an existing unchanged input's receipt. A changed reading, baseline or
+actual attribution acquires a new snapshot. Captured parent identity takes priority
+over later catalogue reparenting.
+
+`field_lineage_complete` reports a boolean per field, encoded as a JSON string in
+MVT. Known partial credits remain in `field_contributors` and `field_sources` when
+another dependency is historically unknown; a wholly unknown field omits those
+keys. For example, a propagated legacy speed can still credit its proven target OSM
+denominator and geometry, while `ratio` and `confidence` completeness are false.
+Missing or incomplete lineage never authorizes guessing credits from collection
+source lists. Non-sensor segment writers must capture their own field receipts and
+explicit denominator origins alongside the measurement. Native field IDs remain
+separate; `segment_speed.contributing` retains every live native rights supplier,
+including losing speed sources. Public GeoJSON and tiles withhold all measurement
+fields and their receipts when any rights contributor is restricted, retaining the
+public OSM geometry.
+
+The migration deletes no observations or valid scalar measurements and does not
+backfill historical credits from the current catalogue. A fresh admitted acquisition
+can attach the first receipt to an unchanged legacy input with the explicit writer
+option `captureEvidence: "acquired"`. Fusion, status heartbeats, 304 responses and
+held-cache replay cannot do so. The polling runner sets this evidence only when all
+data roles provide `bodyFreshness: "acquired"` certificates for every parsed body.
+Cached `each.keepSec` items, directory-walk stand-ins and mixed 200/304 bodies
+carry `bodyFreshness: "held"`, even when the role reports `fetched`; on-demand publication
+sets it after a successful fresh parse. Mixed-role replay waits for a fully acquired
+batch to upgrade unknown inputs. Existing non-null receipts stay stable on no-op
+writes. The next normal sensor/fusion sweep composes whatever input receipts have
+actually been captured.
+
+For rendering, credit geometry for a casing, `ratio` when a non-null ratio drives
+color, and `los` when color falls back to declared LOS. Opacity driven by confidence credits the separate `confidence` receipt. A popup selects the separate
+receipts of each field it displays. Unioning all fields for every rendered segment
+would credit hidden inputs.

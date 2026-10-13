@@ -8,7 +8,12 @@ import {
   type LookupFn,
   toCatalogFeed,
 } from "@openconditions/ingest-framework";
-import { buildRegistry, extendVocabulary, type Registry } from "@openconditions/model";
+import {
+  buildRegistry,
+  extendVocabulary,
+  observationId,
+  type Registry,
+} from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import { ensureObservationPartitions, retentionClasses } from "@openconditions/storage";
 import postgres from "postgres";
@@ -20,6 +25,7 @@ const FORMAT = "station-items";
 
 /** The role a test feed's stations are read from. */
 const STATION_ROLE: Record<string, string> = {};
+const WITH_READINGS = new Set<string>();
 
 /** One fuel station per payload of the feed's station role, a JSON `{ id, lon, lat }`. */
 function parseStations(feed: CatalogFeed, payloads: Readonly<Record<string, readonly Buffer[]>>) {
@@ -54,6 +60,24 @@ function parseStations(feed: CatalogFeed, payloads: Readonly<Record<string, read
       details: { kind: "fuel_station", v: 1, productsComplete: true },
     });
   }
+  if (WITH_READINGS.has(feed.id))
+    for (const feature of out.features) {
+      const price: Record<string, unknown> = {
+        class: "observation",
+        kind: "observation",
+        temporality: "live",
+        location: feature["location"],
+        provenance: feature["provenance"],
+        freshness: { fetchedAt: "2026-10-08T10:00:00Z" },
+        property: "fuel.price",
+        subject: { kind: "feature", featureId: feature["id"], componentKey: "e5" },
+        result: { type: "money", amount: "1.700", currency: "EUR", per: "L" },
+        phenomenonTime: { instant: "2026-10-08T10:00:00Z" },
+        aggregation: "instantaneous",
+      };
+      price["id"] = observationId(feed.id, price as Parameters<typeof observationId>[1]);
+      out.observations.push(price);
+    }
   return out;
 }
 
@@ -142,6 +166,7 @@ function harness(
   serve: (url: string) => Response,
   over: Partial<FeedDefinition> = {},
   stationRole = "detail",
+  withReadings = false,
 ) {
   const definition: FeedDefinition = {
     operator,
@@ -164,6 +189,7 @@ function harness(
     maintainers: [],
   });
   STATION_ROLE[feed.id] = stationRole;
+  if (withReadings) WITH_READINGS.add(feed.id);
   const roles = createRoleState();
   const requested: string[] = [];
   const fetch = (async (url: string | URL | Request) => {
@@ -290,7 +316,7 @@ describe("each keep and held payload age", () => {
       'href="([^"]+\\.cap)"',
     ];
     /** Two offices, CWTO with a.cap and CWUL with b.cap; `down` URLs answer 503. */
-    function offices(operator: string, down: Set<string>) {
+    function offices(operator: string, down: Set<string>, withReadings = false) {
       const tree = new Map<string, string>([
         [root, page([entry("CWTO/"), entry("CWUL/")])],
         [`${root}CWTO/`, page([entry("09/", "2026-10-08 09:10")])],
@@ -316,6 +342,9 @@ describe("each keep and held payload age", () => {
           const file = /\/([a-z])\.cap$/.exec(url)?.[1];
           return file ? station(file) : new Response("not found", { status: 404 });
         },
+        {},
+        "detail",
+        withReadings,
       );
     }
 
@@ -343,8 +372,9 @@ describe("each keep and held payload age", () => {
 
     it("with a kept copy, the copy stands in and the poll publishes", async () => {
       const down = new Set<string>();
-      const h = offices("walk-kept", down);
+      const h = offices("walk-kept", down, true);
       expect((await h.tick(0)).error).toBeUndefined();
+      await sql`UPDATE conditions.observation_latest SET contributor_receipt_id=NULL WHERE source_id=${h.feed.id}`;
 
       const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
       try {
@@ -355,6 +385,9 @@ describe("each keep and held payload age", () => {
         expect(result.outcome).not.toBe("partial");
         expect(h.requested).toContain(`${root}CWUL/`);
         expect(await h.liveFeatures()).toEqual(["a", "b"]);
+        const [held] =
+          await sql`SELECT count(*)::int AS known FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND contributor_receipt_id IS NOT NULL`;
+        expect(held!.known, "walk stand-ins cannot upgrade historical receipt pointers").toBe(0);
       } finally {
         warn.mockRestore();
       }
@@ -377,17 +410,24 @@ describe("each keep and held payload age", () => {
         url.endsWith("/sites.json")
           ? new Response(JSON.stringify({ stations: ids.map((id) => ({ id })) }))
           : station(url.slice(url.lastIndexOf("/") + 1)),
+      {},
+      "detail",
+      true,
     );
     const details = () => h.requested.filter((u) => u.includes("/stations/"));
 
     expect((await h.tick(0)).error).toBeUndefined();
     expect(details()).toHaveLength(2);
+    await sql`UPDATE conditions.observation_latest SET contributor_receipt_id=NULL WHERE source_id=${h.feed.id}`;
 
     h.requested.length = 0;
     const second = await h.tick(40_000);
     expect(second.error).toBeUndefined();
     expect(h.requested).toEqual(["https://example.test/each-keep/sites.json"]);
     expect(await h.liveFeatures()).toEqual(["a", "b"]);
+    const [held] =
+      await sql`SELECT count(*)::int AS known FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND contributor_receipt_id IS NOT NULL`;
+    expect(held!.known, "keepSec cache replay cannot upgrade historical receipts").toBe(0);
 
     ids = ["b"];
     h.requested.length = 0;
@@ -402,6 +442,17 @@ describe("each keep and held payload age", () => {
     h.requested.length = 0;
     await h.tick(70_000);
     expect(details()).toEqual(["https://example.test/each-keep/stations/b"]);
+    // A fresh new item alongside a still-kept one is acquired independently.
+    ids = ["b", "c"];
+    expect((await h.tick(85_000)).error).toBeUndefined();
+    const [newItem] =
+      await sql`SELECT contributor_receipt_id FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND feature_id=${`oc:feature:${h.feed.id}:c`}`;
+    expect(newItem!.contributor_receipt_id).not.toBeNull();
+    // Once both roles and both item bodies are actually acquired, legacy b can receive its first receipt.
+    expect((await h.tick(145_000)).error).toBeUndefined();
+    const [acquired] =
+      await sql`SELECT count(*)::int AS known FROM conditions.observation_latest WHERE source_id=${h.feed.id} AND contributor_receipt_id IS NOT NULL`;
+    expect(acquired!.known).toBe(2);
   }, 60_000);
 
   describe("maxPayloadAgeSec", () => {

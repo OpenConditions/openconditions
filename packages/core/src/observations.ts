@@ -204,11 +204,33 @@ export interface GridQuery {
   admits?: (provenance: GridProvenance) => boolean;
 }
 
+/** Captured display credit, intentionally distinct from the model's rights attribution. */
+export interface Contributor {
+  sourceId: string;
+  name: string;
+  url?: string;
+  spdxLicense?: string;
+  licenseUrl?: string;
+  attributionText?: string;
+  publisher?: { name: string; url?: string };
+  notes?: string;
+  retrievedAt?: string;
+}
+
 export interface Grid {
   /** Each cell with a reading: its centre's longitude and latitude, the count, sum and maximum. */
   cells: [number, number, number, number, number][];
   /** The sources counted, sorted. */
   sources: string[];
+  /** Admitted native suppliers and captured known credits, sorted in the same cell order. */
+  cell_contributors: {
+    longitude: number;
+    latitude: number;
+    native_sources: string[];
+    sources?: string[];
+    contributors?: Contributor[];
+    lineage_complete: boolean;
+  }[];
 }
 
 const round6 = (x: number) => Math.round(x * 1e6) / 1e6;
@@ -242,13 +264,14 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
       y: number;
       source_id: string;
       provenance: GridProvenance;
+      contributors: Contributor[] | null;
       n: number;
       sum: number;
       max: number;
     }[]
   >(
-    `SELECT floor(ST_X(pt.g) / ${cell})::int AS x, floor(ST_Y(pt.g) / ${cell})::int AS y,
-            l.source_id,
+    `WITH grouped AS (SELECT floor(ST_X(pt.g) / ${cell})::int AS x, floor(ST_Y(pt.g) / ${cell})::int AS y,
+            l.source_id, l.contributor_receipt_id,
             jsonb_build_object(
               'attribution', l.template #> '{provenance,attribution}',
               'upstream', COALESCE(l.template #> '{provenance,upstream}', '[]'::jsonb)
@@ -257,15 +280,31 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
        FROM conditions.observation_latest l
        CROSS JOIN LATERAL (SELECT ST_PointOnSurface(l.geom) AS g) pt
       WHERE ${clauses.join(" AND ")}
-      GROUP BY 1, 2, 3, 4`,
+      GROUP BY 1, 2, 3, 4, 5)
+      SELECT grouped.*, receipts.contributors FROM grouped
+        LEFT JOIN conditions.contributor_receipt receipts
+          ON receipts.id = grouped.contributor_receipt_id AND receipts.version = 1`,
     params,
   );
   const cells = new Map<string, [number, number, number, number, number]>();
   const sources = new Set<string>();
+  const lineage = new Map<string, Map<string, Contributor>>();
+  const nativeSources = new Map<string, Set<string>>();
+  const complete = new Map<string, boolean>();
   for (const r of rows) {
     if (q.admits !== undefined && !q.admits(r.provenance)) continue;
     sources.add(r.source_id);
     const key = `${r.x},${r.y}`;
+    const natives = nativeSources.get(key) ?? new Set<string>();
+    natives.add(r.source_id);
+    nativeSources.set(key, natives);
+    complete.set(key, (complete.get(key) ?? true) && r.contributors != null);
+    let credits = lineage.get(key);
+    if (credits === undefined) {
+      credits = new Map();
+      lineage.set(key, credits);
+    }
+    for (const credit of r.contributors ?? []) credits.set(JSON.stringify(credit), credit);
     const held = cells.get(key);
     if (held === undefined) {
       cells.set(key, [
@@ -284,6 +323,23 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
   return {
     cells: [...cells.values()].sort((a, b) => a[0] - b[0] || a[1] - b[1]),
     sources: [...sources].sort(),
+    cell_contributors: [...cells.entries()]
+      .sort(([, a], [, b]) => a[0] - b[0] || a[1] - b[1])
+      .map(([key, cell]) => {
+        const contributors = [...lineage.get(key)!.values()];
+        return {
+          longitude: cell[0],
+          latitude: cell[1],
+          native_sources: [...nativeSources.get(key)!].sort(),
+          lineage_complete: complete.get(key)!,
+          ...(contributors.length > 0
+            ? {
+                sources: [...new Set(contributors.map((credit) => credit.sourceId))].sort(),
+                contributors,
+              }
+            : {}),
+        };
+      }),
   };
 }
 
