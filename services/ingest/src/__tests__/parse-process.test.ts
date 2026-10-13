@@ -89,6 +89,24 @@ describe("the parse process", () => {
     expect(again.output.features.length).toBeGreaterThan(0);
   });
 
+  it("stops an idle child, and the next parse starts a new one", async () => {
+    const brief = createParseProcess({ idleMs: 100 });
+    try {
+      const task = {
+        feed: repoFeed("de-bnetza-charging"),
+        payloads: { main: [{ data: BNETZA, gzipped: false }] },
+        ctx,
+      };
+      await brief.parse(task);
+      expect(brief.running).toBe(true);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(brief.running).toBe(false);
+      expect((await brief.parse(task)).output.features.length).toBeGreaterThan(0);
+    } finally {
+      await brief.close();
+    }
+  });
+
   it("ends alone when a parse outgrows its heap, and the next parse starts a new one", async () => {
     const small = createParseProcess({ heapMb: 128 });
     try {

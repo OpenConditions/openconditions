@@ -33,6 +33,9 @@ export interface ParsedApart {
 /** The record classes of a parse, in the order the child sends them. */
 export const RECORD_CLASSES = ["situations", "features", "observations", "offers"] as const;
 
+/** How long an idle child stays for the next parse. */
+const IDLE_MS = 60_000;
+
 /** What the child sends back for a task: its records in slices, then how it ended. */
 export type ChildMessage =
   | { type: "records"; cls: (typeof RECORD_CLASSES)[number]; records: RecordDraft[] }
@@ -69,6 +72,8 @@ export class ParseProcessError extends Error {
 export interface ParseProcess {
   /** The bytes a poll's payloads reach for it to be parsed here; a smaller one parses inline. */
   readonly minBytes: number;
+  /** Whether a child is running: from a parse until a minute (`idleMs`) after the last. */
+  readonly running: boolean;
   parse(task: ParseTask): Promise<ParsedApart>;
   /** Stops the child; a parse under way fails. */
   close(): Promise<void>;
@@ -105,11 +110,12 @@ function childEntry(): URL {
  * that outgrows its heap ends the child alone. It inherits none of the
  * service's `NODE_OPTIONS`: V8 takes a heap percentage there over the
  * child's own size, whichever comes last. An idle child does not keep the
- * service alive. A poll is parsed here from `minBytes`, by default the size
- * the parse gate serializes. `entry` replaces the child's script; tests only.
+ * service alive, and stops `idleMs` after its last parse. A poll is parsed
+ * here from `minBytes`, by default the size the parse gate serializes.
+ * `entry` replaces the child's script; tests only.
  */
 export function createParseProcess(
-  opts: { heapMb?: number; minBytes?: number; entry?: URL } = {},
+  opts: { heapMb?: number; minBytes?: number; idleMs?: number; entry?: URL } = {},
 ): ParseProcess {
   const heap = heapOption(opts.heapMb ?? parseHeapMbFromEnv());
   const entry = opts.entry ?? childEntry();
@@ -182,15 +188,36 @@ export function createParseProcess(
     });
   };
 
+  // An idle child goes: the heap of a register's parse stays with the
+  // process, and the next large poll is minutes away.
+  const idleMs = opts.idleMs ?? IDLE_MS;
+  let pending = 0;
+  let retire: NodeJS.Timeout | undefined;
+  const retireWhenIdle = () => {
+    if (--pending > 0) return;
+    retire = setTimeout(() => {
+      const c = child;
+      child = undefined;
+      c?.kill();
+    }, idleMs);
+    retire.unref();
+  };
+
   return {
     minBytes: opts.minBytes ?? LARGE_PAYLOAD_BYTES,
+    get running() {
+      return child !== undefined;
+    },
     parse(task) {
-      const run = queue.then(() => runOne(task));
+      pending++;
+      clearTimeout(retire);
+      const run = queue.then(() => runOne(task)).finally(retireWhenIdle);
       queue = run.catch(() => undefined);
       return run;
     },
     async close() {
       closed = true;
+      clearTimeout(retire);
       const c = child;
       child = undefined;
       if (c === undefined || c.exitCode !== null || c.signalCode !== null) return;
