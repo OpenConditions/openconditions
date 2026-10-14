@@ -35,6 +35,7 @@ const TAGS: readonly { tag: string; product: ProductInput }[] = [
 ];
 
 const COUNTRY = /^[A-Z]{2}$/;
+const WIKIDATA_ITEM = /^Q[1-9][0-9]*$/;
 
 /** OSM text is in whatever language the mapper wrote it. */
 const UNDETERMINED = "und";
@@ -90,6 +91,7 @@ export function parseOverpassFuel(
       const products = productsOf(tags);
       const name = tag(tags, "name");
       const brand = tag(tags, "brand");
+      const brandWikidata = tag(tags, "brand:wikidata");
       const operator = tag(tags, "operator");
       const hours = tag(tags, "opening_hours");
       const country = tag(tags, "addr:country")?.toUpperCase();
@@ -101,6 +103,7 @@ export function parseOverpassFuel(
         externalIds: [{ scheme: `osm:${element.type}`, id: String(element.id) }],
         ...(name ? { name: { lang: UNDETERMINED, text: name } } : {}),
         ...(brand ? { brand } : {}),
+        ...(brandWikidata && WIKIDATA_ITEM.test(brandWikidata) ? { brandWikidata } : {}),
         ...(operator ? { operator: { lang: UNDETERMINED, text: operator } } : {}),
         ...(hours ? { openingHours: hours } : {}),
         ...(country && COUNTRY.test(country)

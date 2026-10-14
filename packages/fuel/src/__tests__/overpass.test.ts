@@ -112,6 +112,7 @@ describe("overpass", () => {
       kind: "fuel_station",
       v: 1,
       brand: "TotalEnergies",
+      brandWikidata: "Q154037",
       productsComplete: false,
     });
     expect(total["provenance"]).toMatchObject({
@@ -139,6 +140,17 @@ describe("overpass", () => {
     });
     // Without addr:country an address cannot be placed in a country.
     expect((total["location"] as Draft)["address"]).toBeUndefined();
+  });
+
+  test("a brand:wikidata that names no Wikidata item is left out", () => {
+    const { features } = parse(patched(669891011, { "brand:wikidata": "TotalEnergies" }));
+    const total = station(features, "node/669891011")!;
+    expect(total["details"]).toEqual({
+      kind: "fuel_station",
+      v: 1,
+      brand: "TotalEnergies",
+      productsComplete: false,
+    });
   });
 
   test("a station without fuel:* tags has no products", () => {

@@ -92,6 +92,11 @@ export const FUEL_KINDS = [
     components: ["fuel_product"],
     details: () => ({
       brand: z.string().min(1).optional(),
+      /** The brand's Wikidata item, such as `Q565734` for Aral. */
+      brandWikidata: z
+        .string()
+        .regex(/^Q[1-9][0-9]*$/)
+        .optional(),
       /**
        * Whether the source lists every grade the station sells. Only then is
        * a missing product a grade that is not sold rather than unknown.

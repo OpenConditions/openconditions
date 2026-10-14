@@ -38,6 +38,8 @@ export interface StationInput {
   fetchedAt: string;
   name?: { lang: string; text: string };
   brand?: string;
+  /** The brand's Wikidata item (`Q<digits>`). */
+  brandWikidata?: string;
   operator?: { lang: string; text: string };
   /**
    * The station's ids that linking matches on. Absent, the station carries its
@@ -172,6 +174,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
       kind: "fuel_station",
       v: 1,
       ...(input.brand === undefined ? {} : { brand: input.brand }),
+      ...(input.brandWikidata === undefined ? {} : { brandWikidata: input.brandWikidata }),
       productsComplete: input.productsComplete,
     },
   };
