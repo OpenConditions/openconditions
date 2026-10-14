@@ -289,6 +289,18 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
       "This instance's stable id, the namespace of every record it originates and its name to federation peers: lower-case letters, digits, dots and dashes, e.g. maps.example.org. Set it before federating, and to the same value as the contributions API's. Empty: local.",
     default: "",
   },
+  OPENCONDITIONS_CROWD_LICENSE: {
+    title: "Crowd licence",
+    description:
+      "The licence /sources states for this instance's crowd reports: an SPDX id or LicenseRef-<name> of the licence registry, case exact. Set it to the same value as the contributions API's. An unknown id fails boot. Empty: ODbL-1.0.",
+    default: "",
+  },
+  OPENCONDITIONS_CROWD_SOURCE_URI: {
+    title: "Crowd credit URL",
+    description:
+      "The link /sources states for this instance's crowd reports, an http(s) URL. Set it to the same value as the contributions API's. Empty: none.",
+    default: "",
+  },
   OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS: {
     title: "Archive nights kept",
     description: "Nights of dated files the nightly archive keeps; 0 keeps every night. Empty: 30.",

@@ -19,6 +19,7 @@ import {
 } from "@openconditions/contrib-core";
 import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
 import { resolveInstanceId } from "@openconditions/core/server";
+import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import {
   type Attribution,
   type LandingContext,
@@ -38,7 +39,6 @@ import {
   UNVERIFIED_ATTESTATION,
   UNVERIFIED_OSM_AUTH,
 } from "./attester/verifier.js";
-import { resolveCrowdLicense } from "./crowd.js";
 import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
 import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
 import { crossValidateObservation } from "./evidence/crossValidateObservation.js";
@@ -198,8 +198,9 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const attestationVerifier = options.attestationVerifier ?? UNVERIFIED_ATTESTATION;
   const osmAuthVerifier = options.osmAuthVerifier ?? UNVERIFIED_OSM_AUTH;
   const issuerName = env["OPENCONDITIONS_ISSUER_NAME"] || DEFAULT_ISSUER_NAME;
-  // Validated before anything starts, so a misspelt licence aborts the boot.
-  const crowdLicense = resolveCrowdLicense(env);
+  // Validated before anything starts, so a misspelt licence or link aborts the boot.
+  const instanceId = resolveInstanceId(env);
+  const crowd = resolveCrowdCredit(env, instanceId);
 
   const app = Fastify({ logger: options.logger ?? true });
 
@@ -323,12 +324,10 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   });
 
   // How this instance credits its crowd on every report it lands.
-  const instanceId = resolveInstanceId(env);
-  const crowdUrl = env["OPENCONDITIONS_CROWD_SOURCE_URI"];
   const crowdAttribution: Attribution = {
-    provider: `OpenConditions contributors at ${instanceId}`,
-    license: crowdLicense,
-    ...(crowdUrl ? { url: crowdUrl } : {}),
+    provider: crowd.name,
+    license: crowd.license,
+    ...(crowd.url ? { url: crowd.url } : {}),
   };
 
   // Per-instance police-category toggle, resolved once at boot (DEFAULT OFF).

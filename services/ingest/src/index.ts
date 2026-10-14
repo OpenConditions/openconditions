@@ -3,6 +3,7 @@ import {
   resolveInstanceId,
   runMigrations,
 } from "@openconditions/core/server";
+import { resolveCrowdCredit } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import { reconcileFederation, refreshOutdatedFusions, syncSources } from "@openconditions/storage";
 import Fastify from "fastify";
@@ -37,6 +38,7 @@ const TRUST_PROXY_CIDRS = process.env["TRUST_PROXY_CIDRS"];
 async function boot() {
   // A malformed operator token fails boot before anything else runs.
   const operatorToken = operatorTokenFromEnv();
+  const crowd = resolveCrowdCredit(process.env, resolveInstanceId());
   console.info(`[ingest] instance id ${resolveInstanceId()}`);
   console.info("[ingest] applying database migrations…");
   await runMigrations(DATABASE_URL);
@@ -69,6 +71,7 @@ async function boot() {
   registerApiRoutes(app, apiSql, {
     registry: model,
     catalog,
+    crowd,
     // undici's fetch, not the global: the egress guard pins its sockets.
     onDemand: {
       catalog,

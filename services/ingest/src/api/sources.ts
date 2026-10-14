@@ -1,8 +1,10 @@
 import {
   type Catalog,
   type CatalogFeed,
+  type CrowdCredit,
   captureLicensing,
   type EffectiveRights,
+  effectiveRights,
 } from "@openconditions/ingest-framework";
 
 /** One feed the instance serves, as a consumer credits and discloses it. */
@@ -111,4 +113,31 @@ export function sourcesOf(catalog: Pick<Catalog, "sources">): Source[] {
     .filter((feed) => feed.parentSourceId === undefined && feed.disabled === undefined)
     .map(sourceOf)
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
+/**
+ * The instance's crowd reports as a consumer credits them. They are no feed,
+ * so `sources` does not list them; a reading or record whose source is
+ * `crowd` is credited with this entry.
+ */
+export interface CrowdSource {
+  id: "crowd";
+  name: string;
+  /** The licence id, as `Source.license`. */
+  license: string;
+  licensing: import("@openconditions/model").Licensing;
+  /** The link the credit carries, when the operator configured one. */
+  url?: string;
+  rights: EffectiveRights;
+}
+
+export function crowdSourceOf(credit: CrowdCredit): CrowdSource {
+  return {
+    id: "crowd",
+    name: credit.name,
+    license: credit.license,
+    licensing: captureLicensing({ id: "crowd", name: credit.name, license: credit.license }),
+    ...(credit.url ? { url: credit.url } : {}),
+    rights: effectiveRights(credit.license),
+  };
 }

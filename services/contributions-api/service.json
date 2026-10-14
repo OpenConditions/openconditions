@@ -85,14 +85,14 @@
       "OPENCONDITIONS_CROWD_LICENSE": {
         "type": "string",
         "title": "Crowd licence",
-        "description": "The licence this instance's crowd reports are published under: an SPDX id or LicenseRef-<name> of the licence registry, case exact. An unknown id fails boot. Empty: ODbL-1.0.",
+        "description": "The licence this instance's crowd reports are published under: an SPDX id or LicenseRef-<name> of the licence registry, case exact. Set it to the same value as the ingest service's. An unknown id fails boot. Empty: ODbL-1.0.",
         "default": "",
         "x-openmapx-secret": false
       },
       "OPENCONDITIONS_CROWD_SOURCE_URI": {
         "type": "string",
         "title": "Crowd credit URL",
-        "description": "The link the crowd's credit carries on every report this instance lands. Empty: none.",
+        "description": "The link the crowd's credit carries on every report this instance lands, an http(s) URL. Set it to the same value as the ingest service's. Empty: none.",
         "default": "",
         "x-openmapx-secret": false
       },

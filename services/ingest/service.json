@@ -214,6 +214,20 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_CROWD_LICENSE": {
+        "type": "string",
+        "title": "Crowd licence",
+        "description": "The licence /sources states for this instance's crowd reports: an SPDX id or LicenseRef-<name> of the licence registry, case exact. Set it to the same value as the contributions API's. An unknown id fails boot. Empty: ODbL-1.0.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_CROWD_SOURCE_URI": {
+        "type": "string",
+        "title": "Crowd credit URL",
+        "description": "The link /sources states for this instance's crowd reports, an http(s) URL. Set it to the same value as the contributions API's. Empty: none.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_ARCHIVE_KEEP_NIGHTS": {
         "type": "string",
         "title": "Archive nights kept",

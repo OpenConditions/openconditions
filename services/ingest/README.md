@@ -104,7 +104,10 @@ escapes it.
     `OPENCONDITIONS_OPERATOR_TOKEN`, run
     `pnpm openmapx services start app-api data-manager` on the OpenMapX host;
     the admin panel never recreates `app-api`.
-- **Settings**: every other knob (`OPENCONDITIONS_INSTANCE_ID`, the rate
+- **Settings**: every other knob (`OPENCONDITIONS_INSTANCE_ID`, the crowd
+  credit `/sources` states, `OPENCONDITIONS_CROWD_LICENSE` and
+  `OPENCONDITIONS_CROWD_SOURCE_URI`, which must equal the contributions
+  API's, the rate
   limits, `TRUST_PROXY_CIDRS`, `SEGMENT_*`, `BIND_*`, `OPENLR_RESOLVER_URL`,
   the egress and download caps, the raw archive, rollup and archive retention,
   the job schedules, `OVERPASS_URL`, the remote feed bundle). Each carries its default in the

@@ -24,6 +24,7 @@ import {
 } from "@openconditions/core/server";
 import {
   type Catalog,
+  type CrowdCredit,
   type EgressRecord,
   type Env,
   type ImpersonationOptions,
@@ -69,7 +70,7 @@ import {
   windowIssue,
 } from "./query.js";
 import { scopeOf } from "./scope.js";
-import { sourcesOf } from "./sources.js";
+import { crowdSourceOf, sourcesOf } from "./sources.js";
 import { taxonomyOf } from "./taxonomy.js";
 
 type Rec = Record<string, unknown>;
@@ -309,6 +310,8 @@ export function registerApiRoutes(
     onDemand?: OnDemandReads;
     /** The catalogue `/sources` lists; absent, the list is empty. */
     catalog?: Pick<Catalog, "sources">;
+    /** The crowd credit `/sources` states; absent, it states none. */
+    crowd?: CrowdCredit;
   },
 ): void {
   const db: QueryRunner = {
@@ -1044,6 +1047,7 @@ export function registerApiRoutes(
       generatedAt: now().toISOString(),
       scope: scopeOf(req),
       sources: deps.catalog ? sourcesOf(deps.catalog) : [],
+      ...(deps.crowd ? { crowd: crowdSourceOf(deps.crowd) } : {}),
     });
   });
 

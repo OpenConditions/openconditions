@@ -59,17 +59,17 @@ operator's erasure (see `docs/federation-gdpr.md`).
 
 ## Configuration
 
-| Variable                               | Meaning                                                                                | Default                            |
-| -------------------------------------- | -------------------------------------------------------------------------------------- | ---------------------------------- |
-| `DATABASE_URL`                         | PostgreSQL/PostGIS connection URL. Required.                                           | none                               |
-| `OPENCONDITIONS_GRANT_SECRET`          | HMAC secret signing reporting grants. Required in production.                          | ephemeral outside production       |
-| `OPENCONDITIONS_REVIEWER_TOKEN`        | Bearer token of the reviewer surface. Required in production.                          | ephemeral outside production       |
-| `OPENCONDITIONS_ISSUER_NAME`           | TokenChallenge issuer name.                                                            | `contributions.openconditions.org` |
-| `OPENCONDITIONS_CROSS_VALIDATE_SWEEP`  | `off` stops the sweep that retries cross-validation of unresolved crowd reports.       | on                                 |
-| `OPENCONDITIONS_INSTANCE_ID`           | This instance's id, the namespace of the crowd records it lands; the ingest service's. | `local`                            |
-| `OPENCONDITIONS_CROWD_LICENSE`         | Licence of this instance's crowd reports (an id of the licence registry).              | `ODbL-1.0`                         |
-| `OPENCONDITIONS_CROWD_SOURCE_URI`      | Link the crowd's credit carries.                                                       | none                               |
-| `OPENCONDITIONS_ALLOW_POLICE_CATEGORY` | `true` lets crowd reports of police presence land.                                     | off                                |
+| Variable                               | Meaning                                                                                         | Default                            |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `DATABASE_URL`                         | PostgreSQL/PostGIS connection URL. Required.                                                    | none                               |
+| `OPENCONDITIONS_GRANT_SECRET`          | HMAC secret signing reporting grants. Required in production.                                   | ephemeral outside production       |
+| `OPENCONDITIONS_REVIEWER_TOKEN`        | Bearer token of the reviewer surface. Required in production.                                   | ephemeral outside production       |
+| `OPENCONDITIONS_ISSUER_NAME`           | TokenChallenge issuer name.                                                                     | `contributions.openconditions.org` |
+| `OPENCONDITIONS_CROSS_VALIDATE_SWEEP`  | `off` stops the sweep that retries cross-validation of unresolved crowd reports.                | on                                 |
+| `OPENCONDITIONS_INSTANCE_ID`           | This instance's id, the namespace of the crowd records it lands; the ingest service's.          | `local`                            |
+| `OPENCONDITIONS_CROWD_LICENSE`         | Licence of this instance's crowd reports (an id of the licence registry); the ingest service's. | `ODbL-1.0`                         |
+| `OPENCONDITIONS_CROWD_SOURCE_URI`      | Link the crowd's credit carries, an http(s) URL; the ingest service's.                          | none                               |
+| `OPENCONDITIONS_ALLOW_POLICE_CATEGORY` | `true` lets crowd reports of police presence land.                                              | off                                |
 
 Each of the three secrets may instead be a file named by `<KEY>_FILE`. Under
 OpenMapX the service is a community service whose `container.environment`

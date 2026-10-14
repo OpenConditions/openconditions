@@ -65,11 +65,21 @@ const catalog = {
   credentials: { groups: {} },
 };
 
+const crowd = {
+  name: "OpenConditions contributors at maps.example.org",
+  license: "ODbL-1.0",
+  url: "https://maps.example.org/reports",
+};
+
 const app = Fastify();
 
 beforeAll(async () => {
   registerScope(app, TOKEN);
-  registerApiRoutes(app, {} as postgres.Sql, { registry: productionRegistry(), catalog });
+  registerApiRoutes(app, {} as postgres.Sql, {
+    registry: productionRegistry(),
+    catalog,
+    crowd,
+  });
   await app.ready();
 });
 
@@ -79,6 +89,7 @@ interface Body {
   generatedAt: string;
   scope: string;
   sources: Record<string, unknown>[];
+  crowd?: Record<string, unknown>;
 }
 
 describe("GET /sources", () => {
@@ -165,6 +176,27 @@ describe("GET /sources", () => {
     expect(operator.sources).toEqual(anonymous.sources);
   });
 
+  it("credits the crowd beside the feeds, with its licence, link and rights", async () => {
+    const body = (await app.inject({ method: "GET", url: "/sources" })).json() as Body;
+    expect(body.sources.map((s) => s["id"])).not.toContain("crowd");
+    expect(body.crowd).toEqual({
+      id: "crowd",
+      name: crowd.name,
+      license: "ODbL-1.0",
+      licensing: expect.objectContaining({
+        bindings: [
+          expect.objectContaining({
+            scope: "data",
+            subject: crowd.name,
+            license: expect.objectContaining({ kind: "spdx", expression: "ODbL-1.0" }),
+          }),
+        ],
+      }),
+      url: crowd.url,
+      rights: expect.objectContaining({ shareAlike: true, attributionRequired: true }),
+    });
+  });
+
   it("names the scope it was served in, and varies on the bearer", async () => {
     const anonymous = await app.inject({ method: "GET", url: "/sources" });
     expect((anonymous.json() as Body).scope).toBe("public");
@@ -201,5 +233,10 @@ describe("GET /sources without an operator token configured", () => {
     expect(res.statusCode).toBe(200);
     expect((res.json() as Body).scope).toBe("public");
     expect(res.headers["cache-control"]).toBe("public, max-age=300");
+  });
+
+  it("states no crowd credit when none is configured", async () => {
+    const body = (await open.inject({ method: "GET", url: "/sources" })).json() as Body;
+    expect(body.crowd).toBeUndefined();
   });
 });
