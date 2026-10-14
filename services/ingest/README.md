@@ -129,12 +129,16 @@ Outside OpenMapX the same variables are plain environment variables; see
 ### Memory
 
 `service.json` limits the container to `OPENCONDITIONS_INGEST_MEMORY` (OpenMapX's
-`.env`; default `6g`). The image caps the V8 heap at 75% of that limit
-(`NODE_OPTIONS=--max-old-space-size-percentage=75`; Node reads the cgroup
-limit), so raising or lowering the limit moves the heap with it: 4608 MB of
-heap under `6g`, 3072 MB under `4g`. The remaining quarter is for what lives outside the heap
-(fetch buffers, decompression, the raw archive's compression). An operator who
-sets `NODE_OPTIONS` replaces this default and sizes the two together.
+`.env`; default `8g`). The image caps the V8 heap at 55% of that limit
+(`NODE_OPTIONS=--max-old-space-size-percentage=55`; Node reads the cgroup
+limit), so raising or lowering the limit moves the heap with it: 4505 MB of
+heap under `8g`, 3379 MB under `6g`. The parse child below takes up to 30%,
+and the remaining 15% is for what lives outside the heaps (fetch buffers,
+decompression, the raw archive's compression), so both heaps full at once
+still fit the limit. An operator who sets `NODE_OPTIONS` or
+`OPENCONDITIONS_PARSE_HEAP_MB` replaces these defaults and sizes the three
+together. A segment region (`SEGMENT_REGIONS`) adds its weekly rebuild to the
+service's heap: about 1.7 GB for Germany.
 
 The national charging registers are the largest polls: IRVE (a 158 MB CSV),
 BNetzA (55 MB), NDW's and OCPDB's OCPI dumps. Their drafts stay on the heap
@@ -143,8 +147,8 @@ poll whose payloads reach 16 MiB at a time; smaller polls never wait for it.
 Such a payload is parsed in a child process, which sends the drafts back in
 slices: its seconds of synchronous parsing no longer stall the other polls
 or the API, and a parse that outgrows the child's heap fails that poll
-alone. The child's heap is capped at half the container's memory
-(`--max-old-space-size-percentage=50`; NDW's register needs about 1.8 GB),
+alone. The child's heap is capped at 30% of the container's memory
+(`--max-old-space-size-percentage=30`; NDW's register needs about 1.8 GB),
 or at `OPENCONDITIONS_PARSE_HEAP_MB`; it inherits none of the service's
 `NODE_OPTIONS`. It stops a minute after its last parse, so the heap a register
 took is not held between polls. A parse that reads reference data (a site
@@ -157,8 +161,9 @@ is written only when it changes (its validity follows the feed's polling,
 computed when read), so such a poll writes the one to few thousand states that
 changed (IRVE, OCPDB), not every charge point.
 With these four feeds alone the heap holds up to about 2.7 GB of live data
-and the container peaked at 4.2 GB under a `4g` limit, so `4g` is the floor
-for them; the default `6g` leaves room for the rest of the catalogue.
+and the container peaked at 4.2 GB under a `4g` limit. `6g` is the floor for
+them: below it the child's 30% no longer holds NDW's parse. The default `8g`
+leaves room for the rest of the catalogue and a segment region.
 
 ## Feed sources — layered delivery
 
