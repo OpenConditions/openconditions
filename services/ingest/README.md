@@ -1,6 +1,6 @@
 # OpenConditions Ingest
 
-Fetches open road-condition, fuel, parking, charging, camera and hazard feeds, parses road
+Fetches open road-condition, fuel, parking, charging, camera, hazard and weather feeds, parses road
 events into model situations, flow feeds into measurement sites (features) and
 their `traffic.*` readings (observations), fuel feeds into stations and their
 prices, parking feeds into parking sites, their `parking.*` occupancy readings
@@ -9,7 +9,8 @@ EVSEs and connectors, their `charging.*` status readings and their energy
 tariffs (offers), camera feeds into cameras with their views and each
 view's `camera.image` reading, and hazard feeds into CAP alerts and natural
 hazards (situations) and satellite fire pixels (transient `fire.frp`
-readings), and writes them to the shared PostGIS `conditions` schema. Also serves the public,
+readings), and weather feeds into weather stations with a channel per
+road-surface sensor and their `weather.*` and `road.*` readings, and writes them to the shared PostGIS `conditions` schema. Also serves the public,
 rate-limited record API (described at `GET /openapi.json`) and the routing
 outputs (`/segments/conditions.json`, Valhalla exclusions):
 

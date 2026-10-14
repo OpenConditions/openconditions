@@ -50,8 +50,12 @@ Road domain, v0.1:
   fire pixels from NASA FIRMS (VIIRS and MODIS, worldwide), one `fire.frp` reading each, swept 72 hours after
   detection and counted in cells by `GET /observations/grid`; NOAA HMS smoke (North America); USGS earthquakes,
   read by time window; and NASA EONET and GDACS natural events: 12 keyless feeds.
+- **Weather domain:** road weather stations with their current air and road-surface measurements from Fintraffic
+  Digitraffic (FI): temperature, dew point, humidity, visibility, wind, precipitation, and per surface sensor the
+  surface state, temperatures, freezing point, water film, salt, friction, snow and ice, each sensor its own
+  channel and series.
 - **OpenMapX integration:** ships as an installable extension (the ingest and contributions services, serving
-  the roads, fuel, parking, charging, cameras and hazards domains); OpenMapX reads them through its built-in OpenConditions integration.
+  the roads, fuel, parking, charging, cameras, hazards and weather domains); OpenMapX reads all but weather through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
   See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
@@ -76,7 +80,7 @@ packages/            reusable libraries (Apache-2.0 unless noted)
   ingest-framework/  feed descriptors, credentials, guarded fetch, catalogue resolvers, licences, domain plugins
   roads/             road parsers (DATEX II / Open511 / WZDx and more), the roads domain, TMC location tables
     bind/            event → segment resolver + evaluation corpus
-  parking/ fuel/ charging/ cameras/ hazards/
+  parking/ fuel/ charging/ cameras/ hazards/ weather/
                      each domain's parsers and its ingest domain
   datex2/            DATEX II decoding shared by the domains (XML, publications, value decoders)
   ocpi/              OCPI wire types, decoders and dialects

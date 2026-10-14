@@ -1,0 +1,142 @@
+{
+  "files": {
+    "weather/fi": {
+      "$schema": "../schema/weather.schema.json",
+      "feeds": [
+        {
+          "operator": "digitraffic",
+          "product": "weather",
+          "name": "Fintraffic Digitraffic road weather stations",
+          "format": "digitraffic-weather",
+          "tier": "authoritative",
+          "endpoints": {
+            "sites": {
+              "url": "https://tie.digitraffic.fi/api/weather/v2/stations",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 86400
+            },
+            "details": {
+              "url": "https://tie.digitraffic.fi/api/weather/v2/stations/{item}",
+              "fanout": "tolerant",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "each": {
+                "role": "sites",
+                "records": "features",
+                "field": "id"
+              },
+              "cadenceSec": 86400
+            },
+            "status": {
+              "url": "https://tie.digitraffic.fi/api/weather/v2/stations/data",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 300
+            }
+          },
+          "snapshot": {
+            "completeness": "complete"
+          },
+          "freshnessWindowSec": 900,
+          "requestLimits": {
+            "perMinute": 60
+          },
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+          "terms": {
+            "url": "https://www.digitraffic.fi/en/terms-of-service/",
+            "reviewedAt": "2026-10-15"
+          },
+          "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+          "homepage": "https://www.digitraffic.fi/en/"
+        }
+      ]
+    }
+  },
+  "feeds": [
+    {
+      "operator": "digitraffic",
+      "product": "weather",
+      "name": "Fintraffic Digitraffic road weather stations",
+      "format": "digitraffic-weather",
+      "tier": "authoritative",
+      "endpoints": {
+        "sites": {
+          "url": "https://tie.digitraffic.fi/api/weather/v2/stations",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 86400
+        },
+        "details": {
+          "url": "https://tie.digitraffic.fi/api/weather/v2/stations/{item}",
+          "fanout": "tolerant",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "each": {
+            "role": "sites",
+            "records": "features",
+            "field": "id"
+          },
+          "cadenceSec": 86400
+        },
+        "status": {
+          "url": "https://tie.digitraffic.fi/api/weather/v2/stations/data",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 300
+        }
+      },
+      "snapshot": {
+        "completeness": "complete"
+      },
+      "freshnessWindowSec": 900,
+      "requestLimits": {
+        "perMinute": 60
+      },
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-15"
+      },
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+      "homepage": "https://www.digitraffic.fi/en/",
+      "id": "fi-digitraffic-weather",
+      "domain": "weather",
+      "region": "fi",
+      "file": "feeds/weather/fi.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "FI"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "FI"
+    }
+  ]
+}

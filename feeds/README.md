@@ -39,6 +39,8 @@ feeds/
     eu.jsonc
     us.jsonc
     global.jsonc
+  weather/
+    fi.jsonc
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
     fuel.schema.json
@@ -46,6 +48,7 @@ feeds/
     charging.schema.json
     cameras.schema.json
     hazards.schema.json
+    weather.schema.json
     credentials.schema.json
 ```
 
@@ -92,7 +95,7 @@ adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
 parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
 charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`;
 cameras: `layout` and `cameras`, in `packages/cameras/src/feed-schema.ts`; see
-[Generic layouts](#generic-layouts)) or none (fuel, hazards).
+[Generic layouts](#generic-layouts)) or none (fuel, hazards, weather).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
 relay of others' data. `freshnessWindowSec` is how old the last good poll may
@@ -313,6 +316,24 @@ The hazards roles:
   `gdacs` reads `events` and `areas` (optional, the CAP areas of the current
   episodes).
 - `firms`, `effis` and `hms` read `main`.
+
+The weather product is:
+
+| product   | what                                                                     |
+| --------- | ------------------------------------------------------------------------ |
+| `weather` | weather stations, their road-surface sensors, and what each measures now |
+
+Every weather format is a `features` format whose records are the weather
+model's `weather_station` features, a `sensor_channel` component per
+road-surface value stream, and the `weather.*` and `road.*` readings. Each
+format reads its publisher's own shape, so a weather feed has no mapping
+block. The one format is `digitraffic-weather` (Fintraffic Digitraffic's road
+weather API v2), in `packages/weather/src/domain.ts`. It reads the station
+list as `sites` (required), each station's details as `details` (an `each`
+endpoint over the list's ids) and every station's latest values as `status`,
+which is parsed on its own between the daily lists. A value is read only
+while its property's freshness window (an hour) holds, so a station that
+stopped reporting keeps its feature and loses its readings.
 
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
