@@ -72,7 +72,8 @@ function directionOf(view: string): DirectionRef {
  * offline. A property's `modified` is when TfL last edited the record (days
  * or weeks back), not when the still was taken, so no reading carries an
  * image time. A camera has one view. The view text hints at presets of a movable
- * camera, but it is free text, so no camera is flagged ptz from it.
+ * camera, but it is free text, so no camera is flagged ptz from it. A camera
+ * listed again, in the same or a later payload, is the first one's.
  */
 export function parseTfl(
   feed: CamerasCatalogFeed,
@@ -81,6 +82,7 @@ export function parseTfl(
 ): ParseOutput {
   const out = emptyParseOutput();
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
+  const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = jsonOf(body, "the JamCam list");
     if (!Array.isArray(doc)) throw new Error("the JamCam list is no array of places");
@@ -92,6 +94,8 @@ export function parseTfl(
         out.rejected = (out.rejected ?? 0) + 1;
         continue;
       }
+      if (seen.has(cameraId)) continue;
+      seen.add(cameraId);
       const properties = propertiesOf(place);
       const name = textOf(place["commonName"]);
       const view = properties.get("view")?.value;

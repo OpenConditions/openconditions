@@ -155,6 +155,13 @@ describe("tfl", () => {
     expect(() => parse({ main: [body({ message: "Not found" })] })).toThrow();
   });
 
+  test("a camera listed again, in the same or a later payload, is written once", () => {
+    const places = list() as Record<string, unknown>[];
+    const out = parse({ main: [body([...places, places[0]]), body([places[0]])] });
+    expect(out.features).toHaveLength(places.length);
+    expect(out.observations).toHaveLength(places.length);
+  });
+
   test("every camera and reading seals", () => {
     const out = parse({ main: [fixture("gb-eng-tfl-jamcams.json")] });
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
