@@ -4,21 +4,31 @@ This page is the honest record for `situationsToDatex`
 ([`packages/publishers/src/situation-datex.ts`](../packages/publishers/src/situation-datex.ts)),
 exposed at `GET /datex2/situations.xml`. Read it before telling anyone —
 including a NAP operator — that this export is DATEX II SRTI-conformant. It
-is not, yet.
+is not, yet. It does validate against the base DATEX II v3 schemas (see
+below).
 
 ## What the export contains
 
 The route reads road situations like the other collections (same filters, same
 keyset paging: the next page is in the `Link: <…>; rel="next"` header) and writes
-one DATEX `situation` per situation, with its id and revision as `version`:
+an Exchange 2020 `messageContainer` holding one `SituationPublication` payload
+and an `exchangeInformation` that names the exchange as a snapshot pull. The
+payload has one DATEX `situation` per situation, carrying the situation id; its
+records carry the revision as `version`:
 
 - **A record for the situation's nature.** Its class comes from `DATEX2_RECORDS`
   in `@openconditions/model-roads` (`packages/model-roads/src/crosswalk/emitters.ts`):
   the subtype's entry, else the type's. A coverage test holds that table to
   every registered type (a code or an explicit `null`), every code to the
-  DATEX II v3 schema, and every code to reading back as the same kind. The
+  DATEX II v3 vocabulary, and every code to reading back as the same kind. The
   inbound DATEX crosswalk is not used for export: several DATEX codes map to one
-  type there, and the first one is not always the right one to write.
+  type there, and the first one is not always the right one to write. A class
+  whose schema requires its discriminator (`accidentType`,
+  `roadMaintenanceType`, …) always carries one: the class's generic value
+  (`accident`, `roadworks`, `badWeather`, …) where DATEX has one, else
+  `other`. An `EquipmentOrSystemFault` also names the faulty equipment from
+  `DATEX2_FAULTY_EQUIPMENT`, or `other` when the subtype has no DATEX
+  equivalent.
 - **One record per effect** in force or scheduled at the request's `at` that
   DATEX has a management record for: closures and all-lanes closures
   (`RoadOrCarriagewayOrLaneManagement`), lane closures with their lane counts,
@@ -29,26 +39,68 @@ one DATEX `situation` per situation, with its id and revision as `version`:
 - **Record ids.** A record keeps the DATEX record id it was parsed from
   (`effect.sourceRecordRef`); the nature record carries the situation id; any
   other record is `<situation id>#<effect id>`.
-- **What describes the whole situation** — probability, severity, headline and
-  a stated delay — travels on the leading record only.
+- **Probability** is required on every record, so each one states the
+  situation's certainty. `unlikely` has no v3 value (v2's `improbable` was
+  dropped) and travels as `_extended` with `_extendedValue="improbable"`.
+- **What else describes the whole situation** — severity, headline and a
+  stated delay — travels on the leading record only.
+- **Compliance.** Network-management records (`RoadOrCarriagewayOrLaneManagement`,
+  `SpeedManagement`, `ReroutingManagement`, …) must state a `complianceOption`:
+  the effect's `mandatory` or `advisory`, else `_extended` with
+  `_extendedValue="unknown"` rather than a guess.
+- **Validity.** DATEX requires an `overallStartTime`. A situation without a
+  declared start is stated valid from its record version time, the earliest
+  moment it is known to hold.
+- **Road name and number** travel in the location's
+  `supplementaryPositionalDescription/roadInformation`, the only place v3
+  allows them on a `PointLocation`. The roads reader takes the number back
+  from there but not the name (it reads a name only directly on the location),
+  so a re-ingested export keeps its road number and loses the road name.
 
 A situation is **omitted entirely** when any of its effects is vehicle-specific
 or restriction evidence. DATEX output cannot carry an effect's vehicle
 conditions faithfully, and exporting such a closure without them would widen it
 to every vehicle. A situation with no record DATEX can write is omitted as well.
 
-## Current status: pragmatic, not conformant
+## Current status: base-schema valid, not profile-conformant
 
-The emitter produces a **pragmatic DATEX II v3 `SituationPublication`-shaped
-export**. It hand-builds XML with `fast-xml-parser` (no usable JS DATEX II
+The emitter hand-builds XML with `fast-xml-parser` (no usable JS DATEX II
 writer exists), mirroring the reader in `@openconditions/roads`, and its output
 re-ingests through our own parser as the same situations: a full closure stays a
 full closure with its validity and place, and roadworks with a lane closure and
 a speed limit stay one situation with both effects
 ([`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)).
-That proves internal consistency. It does **not** prove conformance to any
-official schema, because no official schema is checked anywhere in this
-stack.
+That proves internal consistency.
+
+### What is validated
+
+[`situation-datex-schema.test.ts`](../packages/publishers/src/__tests__/situation-datex-schema.test.ts)
+validates the export with libxml2 (the MIT-licensed
+[`xmllint-wasm`](https://github.com/noppa/xmllint-wasm) build, no system
+packages) against the official schemas:
+
+- **DATEX II v3.7**, all per-namespace XSDs from
+  <https://docs.datex2.eu/downloads/modelv37/> (`D2Payload` imports every
+  namespace, so the whole set is needed);
+- **Exchange 2020.1**, `cisxsd.zip` from
+  <https://docs.datex2.eu/exchange-2020/downloads/>, for the
+  `messageContainer` root and `exchangeInformation`.
+
+It writes one situation for every classification `DATEX2_RECORDS` has a record
+for, and a set covering every effect record, the folded and leading-effect
+cases, an effect at its own place, every certainty, unknown compliance, a
+missing start, a fault with named equipment, and `Point`, `LineString`,
+`Polygon` and `GeometryCollection` locations with and without road names.
+
+The schemas are **not vendored**: datex2.eu publishes them with no licence or
+redistribution terms (only "Copyright © DATEX II"), which does not permit
+copying them into this Apache-2.0 repository. The test helper
+([`helpers/datex-schemas.ts`](../packages/publishers/src/__tests__/helpers/datex-schemas.ts))
+downloads them into `packages/publishers/node_modules/.cache/datex2-v3.7/` and
+holds every file to a pinned SHA-256 (retrieved 2026-10-15), so an upstream
+change fails the test instead of moving the schema silently. CI (`pnpm test`)
+always runs it and fails if the schemas cannot be fetched; a local run without
+network and without a cache skips it with a message.
 
 Concretely, the export is:
 
@@ -58,15 +110,16 @@ Concretely, the export is:
   of the base DATEX II v3 schemas. We have not selected a version of that
   profile, do not vendor its schema, and do not validate against it.
 - **NOT NAP-publication-ready.** A EU National Access Point (NAP) expects a
-  feed that passes the schema/profile it registers against. Handing a NAP
-  operator this export today, unvalidated, is not something we should claim
-  supports "NAP readiness."
-- **NOT XSD-certified against the base DATEX II v3 schema either.** Known,
-  documented pragmatic deviations exist (see the module doc comment in
-  `situation-datex.ts`): a single feed-level publication-creator country where the
-  aggregate spans many; every location reduced to a representative point
-  (see below); road name/number placed directly under the location
-  reference rather than through the fuller DATEX road-reference model.
+  feed that passes the schema/profile it registers against. Base-schema
+  validity is not that, and is not something we should claim supports "NAP
+  readiness."
+- **Valid against the base schemas, with pragmatic choices that a profile may
+  reject:** a single feed-level publication-creator country where the
+  aggregate spans many (the route passes none, so it is the ISO 3166-1
+  user-assigned `zz`); every location reduced to a representative point (see
+  below); generic or `other` discriminators where the classification is no
+  more specific; and the extended `unknown` compliance and `improbable`
+  probability above.
 
 None of this is new information hidden from operators — it is stated
 directly in the `situation-datex.ts` module doc comment, which links back to
@@ -100,40 +153,37 @@ about how a point-sensor reading maps onto a required linear `polyline`.
 
 ## What full SRTI conformance actually requires
 
-This is real infrastructure work, not a labeling exercise, and it is not
-done:
+The base-schema gate exists; the profile work does not:
 
-1. **Select and version the official reference profile.** Pick a specific,
-   dated release of the DATEX II v3 SRTI Recommended Reference Profile from
-   <https://datex2.eu/> (the profile, not just the base v3 schemas) and
-   record which version we target. DATEX II profiles evolve; "SRTI" without a
-   version is not a checkable claim.
-2. **Vendor the XSD set reproducibly, with pinned provenance.** Download the
-   profile's XSD bundle, commit it (or a reproducible fetch script) with a
-   recorded source URL, retrieval date, and checksum, so the schema we
-   validate against doesn't silently drift.
-3. **Add an XSD validator to CI.** Wire a real XML Schema validator (e.g. via
-   `xmllint` or a Node XSD library) into the test/build pipeline, gated on
-   the vendored profile from step 2. This is the actual conformance gate —
-   everything before it is preparation.
-4. **Validate fixtures, and add semantic profile assertions.** Schema
-   validity alone is necessary but not sufficient — SRTI also constrains
-   _which_ elements/enumerations are expected for which situation types.
-   Add fixture-driven tests that assert both "validates against the XSD" and
-   "matches the profile's semantic expectations" for a representative
-   spread of our `SituationRecord` classes (Accident, MaintenanceWorks,
-   AbnormalTraffic, RoadOrCarriagewayOrLaneManagement, …).
-5. **Expect the emitter to need rework.** The known deviations listed above
-   (single feed-level country, representative-point-only locations, road
-   name/number placement) are very likely to fail strict profile validation
-   as-is. Budget for emitter changes once step 3 is actually running and
-   producing real validation errors, not before — guessing at conformance
-   fixes without a validator is how you end up in this same
-   labeling-vs-reality gap again.
+1. **Select and version the official reference profile.** Not done. Pick a
+   specific, dated release of the DATEX II v3 SRTI Recommended Reference
+   Profile from <https://datex2.eu/> (the profile, not just the base v3
+   schemas) and record which version we target. DATEX II profiles evolve;
+   "SRTI" without a version is not a checkable claim.
+2. **Fetch the XSD set reproducibly, with pinned provenance.** Done for the
+   base v3.7 and Exchange 2020.1 schemas (source URLs, retrieval date and
+   checksums in `helpers/datex-schemas.ts`). The profile's XSD bundle needs
+   the same treatment, and the same licence check before anything is
+   committed.
+3. **Validate in CI.** Done for the base schemas: the test runs in `pnpm test`.
+   Pointing it at the profile from step 1 is what turns it into the actual
+   conformance gate.
+4. **Add semantic profile assertions.** Not done. Schema validity alone is
+   necessary but not sufficient — SRTI also constrains _which_
+   elements/enumerations are expected for which situation types. Add tests
+   that assert "matches the profile's semantic expectations" for a
+   representative spread of our `SituationRecord` classes (Accident,
+   MaintenanceWorks, AbnormalTraffic, RoadOrCarriagewayOrLaneManagement, …).
+5. **Expect the emitter to need more rework.** Base validation already forced
+   the changes listed under "What the export contains"; the pragmatic choices
+   above (single feed-level country, representative-point-only locations,
+   generic discriminators, extended values) may still fail strict profile
+   validation. Fix them against real profile validation errors, not by
+   guessing.
 
 Only once steps 1–4 are in place and green should the module doc comment (or
-this page) describe the export as SRTI-conformant. Until then, "pragmatic
-DATEX II v3 `SituationPublication`-shaped export" is the accurate
+this page) describe the export as SRTI-conformant. Until then, "valid against
+the base DATEX II v3 schemas, not SRTI-profile-conformant" is the accurate
 description, and that's what the code says.
 
 ## NAP publication status (business-dev, not an engineering blocker)
@@ -173,8 +223,8 @@ registration attempt land.
 ## Tracked follow-up
 
 This page **is** the tracked follow-up record for DATEX II SRTI conformance.
-Full conformance (steps 1–4 above) is deferred, larger infrastructure work —
-picking and vendoring the official schema plus wiring a CI validator — and is
-explicitly not done as of this writing. Do not remove the "NOT
-SRTI-profile-conformant" language from `situation-datex.ts` or this page until that
-validator exists and passes.
+The base-schema validator exists and passes; the SRTI profile (steps 1, 2 for
+the profile, and 4 above) is deferred and explicitly not done as of this
+writing. Do not remove the "NOT SRTI-profile-conformant" language from
+`situation-datex.ts` or this page until the profile validation exists and
+passes.
