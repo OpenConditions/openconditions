@@ -181,9 +181,10 @@ describe("service manifests on OpenMapX's config model", () => {
     },
   );
 
-  test("ingest: the container gets 6g unless the operator says otherwise", () => {
-    // The national charging registers peak at 4.2 GB under a 4g limit.
-    expect(manifest("ingest").container.memory).toBe("${OPENCONDITIONS_INGEST_MEMORY:-6g}");
+  test("ingest: the container gets 8g unless the operator says otherwise", () => {
+    // The service's heap (55%) and the parse child's (30%) both fit; a segment
+    // region's weekly rebuild needs about 1.7 GB of the service's heap.
+    expect(manifest("ingest").container.memory).toBe("${OPENCONDITIONS_INGEST_MEMORY:-8g}");
   });
 
   test("ingest: what it writes lands on its one volume", () => {

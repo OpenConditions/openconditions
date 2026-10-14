@@ -24,7 +24,7 @@
       "OPENCONDITIONS_ARCHIVE_DIR": "/data/archive",
       "OPENCONDITIONS_STATE_DIR": "/data"
     },
-    "memory": "${OPENCONDITIONS_INGEST_MEMORY:-6g}",
+    "memory": "${OPENCONDITIONS_INGEST_MEMORY:-8g}",
     "restart": "unless-stopped",
     "dependsOn": [
       {
@@ -177,7 +177,7 @@
       "OPENCONDITIONS_PARSE_HEAP_MB": {
         "type": "string",
         "title": "Parse process heap (MB)",
-        "description": "Heap ceiling of the child process that parses large payloads. Empty: half the container's memory.",
+        "description": "Heap ceiling of the child process that parses large payloads. Empty: 30% of the container's memory.",
         "default": "",
         "x-openmapx-secret": false
       },

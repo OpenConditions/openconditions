@@ -258,7 +258,7 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
   OPENCONDITIONS_PARSE_HEAP_MB: {
     title: "Parse process heap (MB)",
     description:
-      "Heap ceiling of the child process that parses large payloads. Empty: half the container's memory.",
+      "Heap ceiling of the child process that parses large payloads. Empty: 30% of the container's memory.",
     default: "",
   },
   OPENCONDITIONS_HISTORY_DAYS: {

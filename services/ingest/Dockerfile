@@ -166,13 +166,14 @@ RUN osmium --version
 ENV NODE_ENV=production
 ENV PORT=4100
 ENV HOST=0.0.0.0
-# Bounds the V8 old space at 75% of the container's memory limit (Node reads the
-# cgroup limit), so it follows OPENCONDITIONS_INGEST_MEMORY: 4608 MB under the
-# default 6g. The other quarter is the off-heap headroom (fetch buffers, gunzip,
-# zstd, the young generation). The national charging registers (IRVE, BNetzA,
-# NDW, OCPDB) each need several hundred MB of heap from parse to write.
-# Operators can override via env.
-ENV NODE_OPTIONS="--max-old-space-size-percentage=75 --heapsnapshot-signal=SIGUSR2"
+# Bounds the V8 old space at 55% of the container's memory limit (Node reads the
+# cgroup limit), so it follows OPENCONDITIONS_INGEST_MEMORY: 4505 MB under the
+# default 8g. The parse child takes up to 30% beside it, and the rest is the
+# off-heap headroom (fetch buffers, gunzip, zstd, the young generation): the
+# two heaps full at once still fit the limit. The national charging registers
+# (IRVE, BNetzA, NDW, OCPDB) each need several hundred MB of heap from parse to
+# write. Operators can override via env.
+ENV NODE_OPTIONS="--max-old-space-size-percentage=55 --heapsnapshot-signal=SIGUSR2"
 
 # Runtime externals (fastify, postgres, croner, impit) resolved from the workspace
 # node_modules; everything else is inlined in dist.

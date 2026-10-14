@@ -79,7 +79,7 @@ export interface ParseProcess {
   close(): Promise<void>;
 }
 
-/** The child's heap ceiling in MB, `OPENCONDITIONS_PARSE_HEAP_MB`; unset, half the container's memory. */
+/** The child's heap ceiling in MB, `OPENCONDITIONS_PARSE_HEAP_MB`; unset, 30% of the container's memory. */
 export function parseHeapMbFromEnv(env: NodeJS.ProcessEnv = process.env): number | undefined {
   const raw = env["OPENCONDITIONS_PARSE_HEAP_MB"];
   const mb = raw === undefined || raw === "" ? Number.NaN : Number(raw);
@@ -87,13 +87,14 @@ export function parseHeapMbFromEnv(env: NodeJS.ProcessEnv = process.env): number
 }
 
 /**
- * The child's heap option. Half the memory V8 sees (the container's limit,
+ * The child's heap option. 30% of the memory V8 sees (the container's limit,
  * else the machine's) holds a national register's parse, about 1.8 GB for
- * NDW's, under the smallest container the service supports, 4 GB.
+ * NDW's, under the smallest container the service supports, 6 GB; with the
+ * service's own 55% both heaps fit the limit.
  */
 function heapOption(heapMb: number | undefined): string {
   return heapMb === undefined
-    ? "--max-old-space-size-percentage=50"
+    ? "--max-old-space-size-percentage=30"
     : `--max-old-space-size=${heapMb}`;
 }
 
