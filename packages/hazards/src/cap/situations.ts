@@ -13,10 +13,20 @@ import { freshness, type HazardsFeed, provenance, situationId, UNLOCATED } from 
 import { capToken } from "./messages.js";
 import type { CapAlert, CapArea, CapInfo } from "./types.js";
 
+/** The reference table a supplied shape was drawn from, credited on the location as a TMC table is. */
+export interface ShapeTable {
+  ref: string;
+  version: string;
+  attribution: string;
+  license: string;
+}
+
 /** A shape a format supplies for an area CAP names only by its codes (an NWS zone, a MeteoAlarm region). */
 export interface DerivedShape {
   geometry: Geometry;
   origin: "derived";
+  /** Set when the shape is a third party's rather than the alert publisher's, whose licence asks for credit. */
+  table?: ShapeTable;
 }
 
 export interface CapSituationOptions {
@@ -110,17 +120,19 @@ const optional = (key: string, value: unknown) => (value === undefined ? {} : { 
  * sends the islands and lakes a district's outline does not cover as
  * `EXCLUDE_POLYGON` geocodes, which become holes of the polygon they lie in.
  * A circle, a polygon split at the antimeridian and a shape the format
- * supplies for a code-only area are derived; an area with only codes and no
+ * supplies for a code-only area are derived, and a supplied shape from a
+ * third party's table brings that table's credit; an area with only codes and no
  * supplied shape has no geometry. Undefined when a shape CAP gives does not
  * read (a position out of range, an open ring): the record is rejected.
  */
 function capGeometry(
   areas: readonly CapArea[],
   geometryOf: CapSituationOptions["geometryOf"],
-): { geometry: Geometry | null; derived: boolean } | undefined {
+): { geometry: Geometry | null; derived: boolean; table?: ShapeTable } | undefined {
   const polygons: Position[][][] = [];
   const shapes: Geometry[] = [];
   let derived = false;
+  let table: ShapeTable | undefined;
   for (const a of areas) {
     const holes: Position[][] = [];
     for (const g of pairs(a.geocode)) {
@@ -153,6 +165,8 @@ function capGeometry(
     const supplied = geometryOf?.(a);
     if (supplied === undefined) continue;
     derived = true;
+    // A location credits one table; no format draws an area from two.
+    table ??= supplied.table;
     const g = supplied.geometry;
     if (g.type === "Polygon") polygons.push(g.coordinates);
     else if (g.type === "MultiPolygon") polygons.push(...g.coordinates);
@@ -169,7 +183,7 @@ function capGeometry(
       : all.length === 1
         ? all[0]!
         : { type: "GeometryCollection" as const, geometries: all };
-  return { geometry, derived };
+  return { geometry, derived, ...optional("table", table) };
 }
 
 function capLocation(
@@ -207,6 +221,7 @@ function capLocation(
       ? {}
       : { admin: geocodes.length > 0 ? { country, geocodes } : { country } }),
     ...optional("areaDescription", description),
+    ...optional("locationTable", shape.table),
   };
 }
 

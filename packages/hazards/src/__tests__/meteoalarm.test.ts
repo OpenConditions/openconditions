@@ -5,16 +5,20 @@ import {
   type ParseOutput,
   type RecordDraft,
 } from "@openconditions/ingest-framework";
+import type { MultiPolygon, Polygon, Position } from "geojson";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import type { CapAlert } from "../cap/types.js";
 import { hazardsDomain } from "../domain.js";
+import { HR_NUTS3, type HrCountySnapshot } from "../formats/hr-counties.js";
 import { readMeteoAlarm } from "../formats/meteoalarm.js";
 import {
   aliasIndex,
   type MeteoAlarmAliasSnapshot,
   readMeteoAlarmAliasCsv,
 } from "../formats/meteoalarm-aliases.js";
+import hrCountySnapshot from "../formats/snapshots/hr-counties.json" with { type: "json" };
 import aliasSnapshot from "../formats/snapshots/meteoalarm-aliases.json" with { type: "json" };
+import { pointInRing } from "../geometry.js";
 import { fixture, meteoalarmFeed, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
 
@@ -25,6 +29,7 @@ const parse = (payloads: FeedPayloads, at: string): ParseOutput =>
 
 /** Polls while the captures were current. */
 const AUSTRIA_AT = "2026-10-05T06:50:00Z";
+const CROATIA_AT = "2026-10-13T08:00:00Z";
 const NOW = "2026-10-08T15:00:00Z";
 const FIT_AT = "2026-09-25T22:00:00Z";
 const geocodes = () => [fixture("meteoalarm-geocodes.json")];
@@ -36,7 +41,21 @@ const locationOf = (s: RecordDraft) =>
     geometryOrigin: string;
     extent: string;
     admin?: { country: string; geocodes: { scheme: string; code: string }[] };
+    locationTable?: Record<string, unknown>;
   };
+
+/** Places in and around Zagreb, to tell the City of Zagreb from the counties about it. */
+const ZAGREB: Position = [15.977, 45.813];
+const VELIKA_GORICA: Position = [16.075, 45.712];
+const RIJEKA: Position = [14.442, 45.327];
+
+/** Whether a situation's polygon or multi-polygon holds a position (holes aside). */
+const covers = (s: RecordDraft, at: Position): boolean => {
+  const g = locationOf(s).geometry as Polygon | MultiPolygon | null;
+  if (g === null) return false;
+  const polygons = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+  return polygons.some((p) => pointInRing(at, p[0]!));
+};
 const json = (name: string) =>
   JSON.parse(fixture(name).toString("utf8")) as Record<string, unknown>;
 const buffer = (value: unknown) => Buffer.from(JSON.stringify(value));
@@ -158,6 +177,58 @@ describe("the meteoalarm format over the captured feeds", () => {
     expect(locationOf(first).geometryOrigin).toBe("derived");
     const without = parse({ alerts: [fixture("meteoalarm-czechia.json")] }, NOW);
     expect(locationOf(without.situations[0]!).geometry).toBeNull();
+  });
+
+  test("Croatia: a NUTS3 area neither MeteoAlarm file knows takes DGU's county outline, credited", () => {
+    const out = parse(
+      { alerts: [fixture("meteoalarm-croatia.json")], geocodes: geocodes() },
+      CROATIA_AT,
+    );
+    expect(sealFailures(out.situations)).toEqual([]);
+    const [county, city] = out.situations as [RecordDraft, RecordDraft];
+    const credit = {
+      ref: "DGU Upravne jedinice INSPIRE",
+      version: "2026-10-11",
+      license: "LicenseRef-OD-HR",
+      attribution: expect.stringContaining("Državna geodetska uprava"),
+    };
+    expect(locationOf(city)).toMatchObject({
+      geometryOrigin: "derived",
+      extent: "area",
+      admin: {
+        country: "HR",
+        geocodes: [
+          { scheme: "emma_id", code: "HR031" },
+          { scheme: "nuts", code: "HR050" },
+        ],
+      },
+      locationTable: credit,
+    });
+    // EMMA HR031 is Zagreb, while NUTS3 HR031 is Primorje-Gorski Kotar: the
+    // outline follows the NUTS3 code, so it holds Zagreb and not Rijeka.
+    expect(covers(city, ZAGREB)).toBe(true);
+    expect(covers(city, RIJEKA)).toBe(false);
+    expect(locationOf(county)).toMatchObject({
+      geometryOrigin: "derived",
+      admin: {
+        geocodes: [
+          { scheme: "emma_id", code: "HR011" },
+          { scheme: "nuts", code: "HR065" },
+        ],
+      },
+      locationTable: credit,
+    });
+    expect(covers(county, VELIKA_GORICA)).toBe(true);
+    expect(covers(county, ZAGREB)).toBe(false);
+  });
+
+  test("a shape from MeteoAlarm's own files carries no third-party credit", () => {
+    const out = parse(
+      { alerts: [fixture("meteoalarm-austria.json")], geocodes: geocodes() },
+      AUSTRIA_AT,
+    );
+    expect(locationOf(out.situations[0]!).geometryOrigin).toBe("derived");
+    expect(locationOf(out.situations[0]!).locationTable).toBeUndefined();
   });
 
   test("the fit capture: France, Norway and Spain, an all-clear that names no area", () => {
@@ -481,6 +552,21 @@ describe("MeteoAlarm's alias table", () => {
     expect(index.get("FIPS:EI26")).toEqual(["IE006"]);
     expect(index.get("CISORP:3104")).toEqual(["CZ03104"]);
     expect(index.get("WARNCELLID:501000005")).toEqual(["DE801"]);
+  });
+});
+
+describe("the vendored Croatian county outlines", () => {
+  test("hold each NUTS3 region once, with the Open Licence credit beside them", () => {
+    const snapshot = hrCountySnapshot as unknown as HrCountySnapshot;
+    expect(snapshot.counties.map((c) => c.nuts3)).toEqual(Object.keys(HR_NUTS3).sort());
+    for (const c of snapshot.counties) expect(c.name).toBe(HR_NUTS3[c.nuts3]);
+    expect(snapshot).toMatchObject({
+      license: "LicenseRef-OD-HR",
+      licenseUrl: "https://data.gov.hr/otvorena-dozvola",
+      dataset: "https://geoportal.dgu.hr/services/atom/au/xml",
+    });
+    expect(snapshot.attribution).toContain(snapshot.dataset);
+    expect(snapshot.attribution).toContain(snapshot.datasetUpdatedAt.slice(0, 10));
   });
 });
 

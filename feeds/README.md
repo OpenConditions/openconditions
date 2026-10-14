@@ -298,8 +298,13 @@ The hazards roles:
   Czech CISORP and DWD warn-cell codes reach those regions through a copy of
   MeteoAlarm's alias file that the hazards package carries
   (`scripts/gen-meteoalarm-aliases.ts` refreshes it). An area named by EMMA id
-  takes those shapes alone; an area neither resolves keeps its codes and no
-  geometry.
+  takes those shapes alone. Croatia's land areas resolve through neither file,
+  so their NUTS3 codes take the county outlines of the State Geodetic
+  Administration's "Upravne jedinice INSPIRE" (Croatian Open Licence,
+  `LicenseRef-OD-HR`), which the hazards package carries simplified to about
+  100 m (`scripts/gen-hr-county-shapes.ts` refreshes them); such a location
+  credits DGU, the dataset's date and link in `locationTable`. Any other area
+  neither resolves keeps its codes and no geometry.
 - `wfigs` reads `perimeters` (optional) and `incidents`: a fire in both layers
   is one record, named by its IRWIN id.
 - `usgs` reads `recent` (the last day) and `window` (the last month): an

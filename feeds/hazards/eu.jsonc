@@ -13,9 +13,13 @@
       // areas from the EMMA regions its alias file gives those codes, a copy
       // of which the hazards package carries. Both files are the ones
       // MeteoAlarm's Redistribution Hub offers redistributors
-      // (https://meteoalarm.org/en/live/page/redistribution-hub); Croatia's
-      // areas resolve in neither and keep their codes alone.
-      // MeteoAlarm's terms allow a
+      // (https://meteoalarm.org/en/live/page/redistribution-hub). Croatia's
+      // land areas resolve in neither (their EMMA ids are missing from the
+      // geocode file, their NUTS 2021 county codes from the alias file), so
+      // they take their county's outline from the State Geodetic
+      // Administration's administrative units, under the Croatian Open
+      // Licence, which the hazards package also carries; each such location
+      // credits it in `locationTable`. MeteoAlarm's terms allow a
       // redistributor at most ten minutes behind its site. The budget, end to
       // end: the warnings are polled every two minutes, a country's held
       // answer stands in for at most two, and a warning expires three minutes
@@ -125,7 +129,7 @@
       "terms": {
         "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
         "reviewedAt": "2026-10-09",
-        "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
+        "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). Croatian county shapes are DGU's (Upravne jedinice INSPIRE) under the Croatian Open Licence, credited in each location's locationTable. The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
         "notice": "Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org.",
       },
       "attribution": "EUMETNET – MeteoAlarm",

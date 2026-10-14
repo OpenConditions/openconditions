@@ -1,12 +1,14 @@
 import type { FeedPayloads, ParseContext, ParseOutput } from "@openconditions/ingest-framework";
 import type { Geometry } from "geojson";
 import { capOutput } from "../cap/accounting.js";
-import type { DerivedShape } from "../cap/situations.js";
+import type { DerivedShape, ShapeTable } from "../cap/situations.js";
 import type { CapAlert, CapArea } from "../cap/types.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
 import { DERIVED_SHAPE_TOLERANCE_DEG, derivedShape, unionPolygons } from "../geometry.js";
 import { isRecord, utcInstant } from "../records.js";
+import type { HrCountySnapshot } from "./hr-counties.js";
 import { aliasIndex, type MeteoAlarmAliasSnapshot } from "./meteoalarm-aliases.js";
+import hrCountySnapshot from "./snapshots/hr-counties.json" with { type: "json" };
 import aliasSnapshot from "./snapshots/meteoalarm-aliases.json" with { type: "json" };
 
 /**
@@ -139,14 +141,46 @@ function emmaAliases(): Map<string, string[]> {
   return aliases;
 }
 
+const hrSnapshot = hrCountySnapshot as unknown as HrCountySnapshot;
+
+/** The credit every Croatian county shape carries, as the Open Licence asks: source, date, link, changes. */
+const HR_COUNTY_TABLE: ShapeTable = {
+  ref: "DGU Upravne jedinice INSPIRE",
+  version: hrSnapshot.datasetUpdatedAt.slice(0, 10),
+  attribution: hrSnapshot.attribution,
+  license: hrSnapshot.license,
+};
+
+let hrCounties: Map<string, Geometry | null> | undefined;
+
+/**
+ * Croatia's counties keyed `NUTS3:<code>`, built on first use. MeteoAlarm's
+ * Croatian land areas carry EMMA ids its geocode file does not have and NUTS
+ * 2021 level-3 codes its alias file does not list, so they are drawn from the
+ * State Geodetic Administration's outlines the hazards package carries
+ * (`pnpm tsx scripts/gen-hr-county-shapes.ts` refreshes them). The key keeps
+ * the code's type, because Croatia's EMMA ids and NUTS codes overlap: EMMA
+ * `HR031` is Zagreb, NUTS3 `HR031` Primorje-Gorski Kotar.
+ */
+function croatianCounties(): Map<string, Geometry | null> {
+  hrCounties ??= new Map(
+    hrSnapshot.counties.map((c) => [
+      `NUTS3:${c.nuts3}`,
+      derivedShape(c.geometry, DERIVED_SHAPE_TOLERANCE_DEG),
+    ]),
+  );
+  return hrCounties;
+}
+
 /**
  * The `meteoalarm` format: the warnings of each country feed as `alert`
  * situations. An area MeteoAlarm names by its `EMMA_ID` is placed at the
  * shape the geocode file gives that region (derived, simplified once, and a
  * shape that does not read is skipped). An area named only by another code
  * (NUTS, Irish FIPS 10-4, Czech CISORP, DWD's warn cells) takes the shapes of
- * the EMMA regions MeteoAlarm's alias table gives that code; an area neither
- * resolves keeps its geocodes alone.
+ * the EMMA regions MeteoAlarm's alias table gives that code. A Croatian area
+ * neither resolves takes its county's outline from DGU, credited in the
+ * location's `locationTable`; any other area keeps its geocodes alone.
  *
  * A warning is served for at most three minutes after the poll that read it
  * (`freshness.expiresAt` is the earlier of its `expires` and that), because
@@ -186,6 +220,7 @@ export function parseMeteoAlarm(
     return shape;
   };
   const aliases = emmaAliases();
+  const counties = croatianCounties();
   const geometryOf = (area: CapArea): DerivedShape | undefined => {
     // The hub writes the JSON, but an entry that is no name and string value is skipped, not a failed parse.
     const codes = (Array.isArray(area.geocode) ? area.geocode : []).flatMap((g: unknown) =>
@@ -193,7 +228,8 @@ export function parseMeteoAlarm(
         ? [{ name: g["valueName"].trim(), value: g["value"].trim() }]
         : [],
     );
-    // The EMMA ids an area names win; its other codes count only without them.
+    // The EMMA ids an area names win; its other codes count only without them,
+    // and a Croatian county's outline only when MeteoAlarm's files know neither.
     const emma = codes.flatMap((c) => (c.name === "EMMA_ID" ? (shapeOf(c.value) ?? []) : []));
     const found =
       emma.length > 0
@@ -201,6 +237,13 @@ export function parseMeteoAlarm(
         : codes.flatMap((c) =>
             (aliases.get(`${c.name}:${c.value}`) ?? []).flatMap((id) => shapeOf(id) ?? []),
           );
+    if (found.length === 0) {
+      const county = codes.flatMap((c) => counties.get(`${c.name}:${c.value}`) ?? []);
+      const geometry = unionPolygons(county);
+      return geometry === null
+        ? undefined
+        : { geometry, origin: "derived", table: HR_COUNTY_TABLE };
+    }
     const geometry = unionPolygons(found);
     return geometry === null ? undefined : { geometry, origin: "derived" };
   };

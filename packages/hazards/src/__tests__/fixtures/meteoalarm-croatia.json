@@ -1,0 +1,192 @@
+{
+  "warnings": [
+    {
+      "alert": {
+        "identifier": "2.49.0.0.191.0.HR.261013093458_4_000_yellow_HR011",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Zagrebačka",
+                "geocode": [
+                  {
+                    "value": "HR011",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "HR065",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Vidljivost mjestimice značajno smanjena zbog guste magle.",
+            "effective": "2026-10-13T09:34:58+02:00",
+            "event": "Žuto upozorenje za maglu",
+            "expires": "2026-10-13T10:59:59+02:00",
+            "instruction": "BUDITE NA OPREZU zbog rasprostranjene, lokalno guste magle. Moguć je izraženiji utjecaj na svakodnevne vanjske aktivnosti. Moguć je prekid rada zračnih luka te kašnjenja kao i otežano prometovanje uslijed izrazito smanjenje vidljivosti zbog čega putovanja mogu potrajati dulje od uobičajenog.",
+            "language": "hr-HR",
+            "onset": "2026-10-13T09:34:54+02:00",
+            "parameter": [
+              {
+                "value": "4; Fog",
+                "valueName": "awareness_type"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "DHMZ - Državni hidrometeorološki zavod",
+            "severity": "Moderate",
+            "urgency": "Immediate"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Zagrebačka",
+                "geocode": [
+                  {
+                    "value": "HR011",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "HR065",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Significantly reduced visibility in places caused by dense fog.",
+            "effective": "2026-10-13T09:34:58+02:00",
+            "event": "Yellow fog warning",
+            "expires": "2026-10-13T10:59:59+02:00",
+            "instruction": "STAY ALERT for widespread and locally thick fog. Major impact on daily outdoor activities is possible. Airport disruptions, delays and traffic difficulties are possible due to extremely reduced visibility, which might result in travel taking longer than usual.",
+            "language": "en-GB",
+            "onset": "2026-10-13T09:34:54+02:00",
+            "parameter": [
+              {
+                "value": "4; Fog",
+                "valueName": "awareness_type"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "DHMZ - Croatian Meteorological and Hydrological Service",
+            "severity": "Moderate",
+            "urgency": "Immediate"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "https://meteo.hr",
+        "sent": "2026-10-13T09:34:58+02:00",
+        "status": "Actual"
+      },
+      "uuid": "439489f5-de6b-46bd-adf8-15733fb3cfbc"
+    },
+    {
+      "alert": {
+        "identifier": "2.49.0.0.191.0.HR.261013093458_4_007_yellow_HR031",
+        "incidents": "Alert",
+        "info": [
+          {
+            "area": [
+              {
+                "areaDesc": "Grad Zagreb",
+                "geocode": [
+                  {
+                    "value": "HR031",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "HR050",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Vidljivost mjestimice značajno smanjena zbog guste magle.",
+            "effective": "2026-10-13T09:34:58+02:00",
+            "event": "Žuto upozorenje za maglu",
+            "expires": "2026-10-13T10:59:59+02:00",
+            "instruction": "BUDITE NA OPREZU zbog rasprostranjene, lokalno guste magle. Moguć je izraženiji utjecaj na svakodnevne vanjske aktivnosti. Moguć je prekid rada zračnih luka te kašnjenja kao i otežano prometovanje uslijed izrazito smanjenje vidljivosti zbog čega putovanja mogu potrajati dulje od uobičajenog.",
+            "language": "hr-HR",
+            "onset": "2026-10-13T09:34:54+02:00",
+            "parameter": [
+              {
+                "value": "4; Fog",
+                "valueName": "awareness_type"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "DHMZ - Državni hidrometeorološki zavod",
+            "severity": "Moderate",
+            "urgency": "Immediate"
+          },
+          {
+            "area": [
+              {
+                "areaDesc": "Grad Zagreb",
+                "geocode": [
+                  {
+                    "value": "HR031",
+                    "valueName": "EMMA_ID"
+                  },
+                  {
+                    "value": "HR050",
+                    "valueName": "NUTS3"
+                  }
+                ]
+              }
+            ],
+            "category": ["Met"],
+            "certainty": "Likely",
+            "description": "Significantly reduced visibility in places caused by dense fog.",
+            "effective": "2026-10-13T09:34:58+02:00",
+            "event": "Yellow fog warning",
+            "expires": "2026-10-13T10:59:59+02:00",
+            "instruction": "STAY ALERT for widespread and locally thick fog. Major impact on daily outdoor activities is possible. Airport disruptions, delays and traffic difficulties are possible due to extremely reduced visibility, which might result in travel taking longer than usual.",
+            "language": "en-GB",
+            "onset": "2026-10-13T09:34:54+02:00",
+            "parameter": [
+              {
+                "value": "4; Fog",
+                "valueName": "awareness_type"
+              },
+              {
+                "value": "2; yellow; Moderate",
+                "valueName": "awareness_level"
+              }
+            ],
+            "responseType": ["Monitor"],
+            "senderName": "DHMZ - Croatian Meteorological and Hydrological Service",
+            "severity": "Moderate",
+            "urgency": "Immediate"
+          }
+        ],
+        "msgType": "Alert",
+        "scope": "Public",
+        "sender": "https://meteo.hr",
+        "sent": "2026-10-13T09:34:58+02:00",
+        "status": "Actual"
+      },
+      "uuid": "3303d07f-445e-44b3-8c82-bf654a57ae52"
+    }
+  ]
+}

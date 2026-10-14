@@ -102,6 +102,9 @@ warnings kept whole and unchanged, the list trimmed:
   languages.
 - `meteoalarm-france.json`: `feeds-france`, two warnings with NUTS3 areas.
 - `meteoalarm-ireland.json`: `feeds-ireland`, one warning with FIPS 10-4 regions `EI01`…
+- `meteoalarm-croatia.json`: `feeds-croatia`, captured 2026-10-15, two fog warnings of
+  2026-10-13 09:34 (+02:00) whose areas carry an EMMA_ID and a NUTS3 code: Zagrebačka
+  (`HR011`, `HR065`) and Grad Zagreb (`HR031`, `HR050`).
 - `meteoalarm-czechia.json`: `feeds-czechia`, two warnings with CISORP and EMMA_ID areas. Its event
   code was `SIVS` on the day; the WMO `OET` list is carried by Norway's warning in
   `meteoalarm-warnings.json`.
