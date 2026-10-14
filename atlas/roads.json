@@ -36,6 +36,21 @@
           "license": "LicenseRef-CC-BY-2.5-AR",
           "licenseUrl": "https://data.buenosaires.gob.ar/",
           "attribution": "Gobierno de la Ciudad de Buenos Aires",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://api-transporte.buenosaires.gob.ar/registro",
+              "https://creativecommons.org/licenses/by/2.5/ar/legalcode"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
           "geojson": {
             "defaultType": "road_closure",
@@ -165,6 +180,22 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
           "attribution": "Department for Infrastructure and Transport (South Australia)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+              "https://data.sa.gov.au/data/api/3/action/package_show?id=roadworks-and-incidents-real-time-information",
+              "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
           "geojson": {
             "idFields": [
@@ -217,6 +248,22 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
           "attribution": "Department for Infrastructure and Transport (South Australia)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+              "https://data.sa.gov.au/data/api/3/action/package_show?id=roadworks-and-incidents-real-time-information",
+              "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
           "geojson": {
             "idField": "LOCATION_ID",
@@ -464,6 +511,22 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data",
           "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.verkeerscentrum.be/algemene-voorwaarden",
+              "https://www.verkeerscentrum.be/nieuws/verkeerscentrum-breidt-open-data-service-uit-datexii-versie-3",
+              "http://miv.opendata.belfla.be/miv/verkeersdata"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
           "homepage": "https://www.verkeerscentrum.be"
         }
@@ -1818,6 +1881,21 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://nap.vd.dk/",
           "attribution": "Vejdirektoratet (Danish Road Directorate)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://du-portal-ui.dataudveksler.app.vd.dk/",
+              "https://vejdirektoratet.atlassian.net/wiki/spaces/DP/pages/3236429888/Download+and+use+of+files+via+the+web+portal"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.vejdirektoratet.dk/"
         }
       ]
@@ -1859,6 +1937,21 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://andmed.eesti.ee/information-holders/transpordiamet",
           "attribution": "Transpordiamet (Estonian Transport Administration)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://tarktee.ee/#/en/terms",
+              "https://tarktee.ee/assets/i18n/en.json"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.transpordiamet.ee/en"
         }
       ]
@@ -1882,6 +1975,23 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://nap.dgt.es",
           "attribution": "Dirección General de Tráfico (DGT)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://nap.dgt.es/dataset/incidencias-dgt-datex2-v3-7",
+              "https://nap.dgt.es/dataset/camaras-dgt-datex2-v3-7",
+              "https://nap.dgt.es/dataset/puntos-de-recarga-electrica-para-vehiculos",
+              "https://www.dgt.es/contenido/aviso-legal/"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.dgt.es/protecciondedatos/"
         },
         {
@@ -2151,6 +2261,19 @@
           "license": "OGL-UK-3.0",
           "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
           "attribution": "Contains National Highways data © Crown copyright and database right",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://developer.data.nationalhighways.co.uk/terms"
+            ],
+            "reason": "Provider-specific custom OGL2-based terms and required Powered by National Highways phrase; applicable branding/access agreement unresolved"
+          },
           "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/"
         }
       ]
@@ -2573,6 +2696,22 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://dane.gov.pl/",
           "attribution": "GDDKiA",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.gov.pl/web/gddkia/ponowne-wykorzystanie-informacji-publicznej",
+              "https://drogi.gddkia.gov.pl/informacje-drogowe/lista-utrudnien",
+              "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.gov.pl/web/gddkia"
         }
       ]
@@ -2733,6 +2872,22 @@
           "license": "CC-BY-SA-4.0",
           "licenseUrl": "https://nap.si/",
           "attribution": "DARS / DRSI (NAP Slovenia)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://nap.si/en/datasets",
+              "https://nap.si/en/documents",
+              "https://www.nap.si/en/registration"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://nap.si/"
         }
       ]
@@ -2756,6 +2911,23 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.longdo.com/",
           "attribution": "Longdo Traffic / iTIC Foundation",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://event.longdo.com/",
+              "https://event.longdo.com/feed/json",
+              "https://traffic.longdo.com/feed/api.php",
+              "https://map.longdo.com/api/terms"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://map.longdo.com/",
           "geojson": {
             "idField": "eid",
@@ -2798,6 +2970,21 @@
           "freshnessWindowSec": 900,
           "license": "NOASSERTION",
           "attribution": "WZDx publishers",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://datahub.transportation.gov/resource/69qe-yiui.json",
+              "https://github.com/usdot-jpo-ode/wzdx"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://datahub.transportation.gov/resource/69qe-yiui.json",
             "note": "Licences vary per registry child: each WZDx publisher licenses its own feed, and a child is approved only once its dataset grant has been reviewed."
@@ -2830,6 +3017,21 @@
           "license": "LicenseRef-511NY-DAA",
           "licenseUrl": "https://511ny.org/help/24",
           "attribution": "511NY / New York State DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511ny.org/help/24",
+              "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+            ],
+            "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+          },
           "terms": {
             "url": "https://511ny.org/help/24",
             "reviewedAt": "2026-10-14",
@@ -2873,6 +3075,21 @@
           "license": "LicenseRef-511NY-DAA",
           "licenseUrl": "https://511ny.org/help/24",
           "attribution": "511NY / New York State DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511ny.org/help/24",
+              "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+            ],
+            "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+          },
           "terms": {
             "url": "https://511ny.org/help/24",
             "reviewedAt": "2026-10-14",
@@ -2905,6 +3122,21 @@
           "license": "LicenseRef-511NY-DAA",
           "licenseUrl": "https://511ny.org/help/24",
           "attribution": "511NY / New York State DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511ny.org/help/24",
+              "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+            ],
+            "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+          },
           "terms": {
             "url": "https://511ny.org/help/24",
             "reviewedAt": "2026-10-14",
@@ -3238,6 +3470,21 @@
       "license": "LicenseRef-CC-BY-2.5-AR",
       "licenseUrl": "https://data.buenosaires.gob.ar/",
       "attribution": "Gobierno de la Ciudad de Buenos Aires",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://api-transporte.buenosaires.gob.ar/registro",
+          "https://creativecommons.org/licenses/by/2.5/ar/legalcode"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
       "geojson": {
         "defaultType": "road_closure",
@@ -3423,6 +3670,22 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
       "attribution": "Department for Infrastructure and Transport (South Australia)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+          "https://data.sa.gov.au/data/api/3/action/package_show?id=roadworks-and-incidents-real-time-information",
+          "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
       "geojson": {
         "idFields": [
@@ -3497,6 +3760,22 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
       "attribution": "Department for Infrastructure and Transport (South Australia)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+          "https://data.sa.gov.au/data/api/3/action/package_show?id=roadworks-and-incidents-real-time-information",
+          "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
       "geojson": {
         "idField": "LOCATION_ID",
@@ -3893,6 +4172,22 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data",
       "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.verkeerscentrum.be/algemene-voorwaarden",
+          "https://www.verkeerscentrum.be/nieuws/verkeerscentrum-breidt-open-data-service-uit-datexii-versie-3",
+          "http://miv.opendata.belfla.be/miv/verkeersdata"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
       "homepage": "https://www.verkeerscentrum.be",
       "id": "be-miv-flow",
@@ -7171,144 +7466,6 @@
       "policyIds": [
         "de-autobahn-events",
         "de-autobahn-a24-roadworks-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A26 — warning",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/warning",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a26-warning-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a26-warning",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a26-warning-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A26 — closure",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/closure",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a26-closure-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a26-closure",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a26-closure-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A26 — roadworks",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/roadworks",
-          "cadenceSec": 900
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a26-roadworks-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 900,
-      "country": "DE",
-      "qualifier": "a26-roadworks",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a26-roadworks-events"
       ]
     },
     {
@@ -13386,6 +13543,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A113 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A113/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a113-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a113-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a113-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A113 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A113/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a113-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a113-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a113-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A113 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A113/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a113-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a113-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a113-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A115 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -16146,6 +16441,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A524 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a524-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a524-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a524-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A524 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a524-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a524-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a524-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A524 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a524-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a524-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a524-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A535 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -17250,6 +17683,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A573 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a573-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a573-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a573-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A573 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a573-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a573-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a573-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A573 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a573-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a573-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a573-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A602 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -18216,6 +18787,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A650 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A650/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a650-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a650-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a650-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A650 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A650/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a650-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a650-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a650-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A650 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A650/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a650-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a650-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a650-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A656 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -19177,6 +19886,144 @@
       "policyIds": [
         "de-autobahn-events",
         "de-autobahn-a864-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A952 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a952-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a952-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a952-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A952 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a952-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a952-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a952-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A952 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a952-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a952-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a952-roadworks-events"
       ]
     },
     {
@@ -21359,6 +22206,21 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://nap.vd.dk/",
       "attribution": "Vejdirektoratet (Danish Road Directorate)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://du-portal-ui.dataudveksler.app.vd.dk/",
+          "https://vejdirektoratet.atlassian.net/wiki/spaces/DP/pages/3236429888/Download+and+use+of+files+via+the+web+portal"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.vejdirektoratet.dk/",
       "homepage": "https://data.vd-nap.dk",
       "id": "dk-vejdirektoratet-events",
@@ -21417,6 +22279,21 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://andmed.eesti.ee/information-holders/transpordiamet",
       "attribution": "Transpordiamet (Estonian Transport Administration)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://tarktee.ee/#/en/terms",
+          "https://tarktee.ee/assets/i18n/en.json"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.transpordiamet.ee/en",
       "homepage": "https://tarktee.transpordiamet.ee",
       "id": "ee-tarktee-events",
@@ -21457,6 +22334,23 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://nap.dgt.es",
       "attribution": "Dirección General de Tráfico (DGT)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://nap.dgt.es/dataset/incidencias-dgt-datex2-v3-7",
+          "https://nap.dgt.es/dataset/camaras-dgt-datex2-v3-7",
+          "https://nap.dgt.es/dataset/puntos-de-recarga-electrica-para-vehiculos",
+          "https://www.dgt.es/contenido/aviso-legal/"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.dgt.es/protecciondedatos/",
       "homepage": "https://nap.dgt.es",
       "id": "es-dgt-events",
@@ -21909,6 +22803,19 @@
       "license": "OGL-UK-3.0",
       "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
       "attribution": "Contains National Highways data © Crown copyright and database right",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://developer.data.nationalhighways.co.uk/terms"
+        ],
+        "reason": "Provider-specific custom OGL2-based terms and required Powered by National Highways phrase; applicable branding/access agreement unresolved"
+      },
       "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
       "homepage": "https://api.data.nationalhighways.co.uk",
       "id": "gb-nationalhighways-events",
@@ -22572,6 +23479,22 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://dane.gov.pl/",
       "attribution": "GDDKiA",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.gov.pl/web/gddkia/ponowne-wykorzystanie-informacji-publicznej",
+          "https://drogi.gddkia.gov.pl/informacje-drogowe/lista-utrudnien",
+          "https://www.archiwum.gddkia.gov.pl/dane/zima_html/utrdane.xml"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.gov.pl/web/gddkia",
       "homepage": "https://www.archiwum.gddkia.gov.pl",
       "id": "pl-gddkia-events",
@@ -22827,6 +23750,22 @@
       "license": "CC-BY-SA-4.0",
       "licenseUrl": "https://nap.si/",
       "attribution": "DARS / DRSI (NAP Slovenia)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://nap.si/en/datasets",
+          "https://nap.si/en/documents",
+          "https://www.nap.si/en/registration"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://nap.si/",
       "homepage": "https://b2b.ncup.si",
       "id": "si-nap-events",
@@ -22867,6 +23806,23 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://www.longdo.com/",
       "attribution": "Longdo Traffic / iTIC Foundation",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://event.longdo.com/",
+          "https://event.longdo.com/feed/json",
+          "https://traffic.longdo.com/feed/api.php",
+          "https://map.longdo.com/api/terms"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://map.longdo.com/",
       "geojson": {
         "idField": "eid",
@@ -22926,6 +23882,21 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "WZDx publishers",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://datahub.transportation.gov/resource/69qe-yiui.json",
         "note": "Licences vary per registry child: each WZDx publisher licenses its own feed, and a child is approved only once its dataset grant has been reviewed."
@@ -22969,9 +23940,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Oklahoma DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23023,9 +24009,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Utah DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23077,9 +24078,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Iowa DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23131,9 +24147,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Florida DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23185,9 +24216,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Minnesota DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23239,9 +24285,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Maryland DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23293,9 +24354,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Maricopa County DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23347,9 +24423,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Missouri DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23401,9 +24492,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Wisconsin DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23455,9 +24561,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "New Mexico DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23509,9 +24630,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Hawaii DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23563,9 +24699,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "New York DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23617,9 +24768,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Washington State DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23671,9 +24837,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "St. Charles County",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23725,9 +24906,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Kentucky Transportation Cabinet",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23779,9 +24975,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "New Jersey Institute of Technology",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23833,9 +25044,24 @@
       "freshnessWindowSec": 900,
       "license": "CC0-1.0",
       "attribution": "Kansas DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "Kansas WZDx road_event_feed_info.license",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "Kansas WZDx road_event_feed_info.license"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23865,8 +25091,8 @@
         "completeness": "complete",
         "recordsPath": "features"
       },
-      "selectionState": "approved",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "selectionState": "approved",
       "parentSourceId": "us-wzdx-events",
       "policyIds": [
         "us-wzdx-events",
@@ -23888,9 +25114,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "City of Austin",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23942,9 +25183,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Delaware DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -23996,9 +25252,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Quebec City",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24050,9 +25321,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Louisiana DOTD",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24104,9 +25390,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Idaho DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24158,9 +25459,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Indiana DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24212,9 +25528,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "CivicLink",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24266,9 +25597,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Michigan DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24320,9 +25666,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "NHDOT/VTAOT/MEDOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24374,9 +25735,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "North Carolina DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24428,9 +25804,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Oregon DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24482,9 +25873,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "Mississippi DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24536,9 +25942,24 @@
       "freshnessWindowSec": 900,
       "license": "NOASSERTION",
       "attribution": "North Dakota DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
-        "note": "WZDx registry metadata (no dataset grant verified)",
-        "reviewedAt": "2026-09-11"
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -24601,6 +26022,21 @@
       "license": "LicenseRef-511NY-DAA",
       "licenseUrl": "https://511ny.org/help/24",
       "attribution": "511NY / New York State DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+      },
       "terms": {
         "url": "https://511ny.org/help/24",
         "reviewedAt": "2026-10-14",
@@ -24660,6 +26096,21 @@
       "license": "LicenseRef-511NY-DAA",
       "licenseUrl": "https://511ny.org/help/24",
       "attribution": "511NY / New York State DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+      },
       "terms": {
         "url": "https://511ny.org/help/24",
         "reviewedAt": "2026-10-14",
@@ -24708,6 +26159,21 @@
       "license": "LicenseRef-511NY-DAA",
       "licenseUrl": "https://511ny.org/help/24",
       "attribution": "511NY / New York State DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+      },
       "terms": {
         "url": "https://511ny.org/help/24",
         "reviewedAt": "2026-10-14",

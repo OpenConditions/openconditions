@@ -756,42 +756,6 @@
     "selectionState": "approved"
   },
   {
-    "qualifier": "a26-warning",
-    "name": "Autobahn A26 — warning",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/warning",
-        "cadenceSec": 300
-      }
-    },
-    "license": "DL-DE-BY-2.0",
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a26-closure",
-    "name": "Autobahn A26 — closure",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/closure",
-        "cadenceSec": 300
-      }
-    },
-    "license": "DL-DE-BY-2.0",
-    "selectionState": "approved"
-  },
-  {
-    "qualifier": "a26-roadworks",
-    "name": "Autobahn A26 — roadworks",
-    "endpoints": {
-      "main": {
-        "url": "https://verkehr.autobahn.de/o/autobahn/A26/services/roadworks",
-        "cadenceSec": 900
-      }
-    },
-    "license": "DL-DE-BY-2.0",
-    "selectionState": "approved"
-  },
-  {
     "qualifier": "a27-warning",
     "name": "Autobahn A27 — warning",
     "endpoints": {
@@ -2376,6 +2340,42 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a113-warning",
+    "name": "Autobahn A113 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A113/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a113-closure",
+    "name": "Autobahn A113 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A113/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a113-roadworks",
+    "name": "Autobahn A113 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A113/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a115-warning",
     "name": "Autobahn A115 — warning",
     "endpoints": {
@@ -3096,6 +3096,42 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a524-warning",
+    "name": "Autobahn A524 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a524-closure",
+    "name": "Autobahn A524 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a524-roadworks",
+    "name": "Autobahn A524 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a535-warning",
     "name": "Autobahn A535 — warning",
     "endpoints": {
@@ -3384,6 +3420,42 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a573-warning",
+    "name": "Autobahn A573 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a573-closure",
+    "name": "Autobahn A573 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a573-roadworks",
+    "name": "Autobahn A573 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a602-warning",
     "name": "Autobahn A602 — warning",
     "endpoints": {
@@ -3636,6 +3708,42 @@
     "selectionState": "approved"
   },
   {
+    "qualifier": "a650-warning",
+    "name": "Autobahn A650 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A650/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a650-closure",
+    "name": "Autobahn A650 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A650/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a650-roadworks",
+    "name": "Autobahn A650 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A650/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
     "qualifier": "a656-warning",
     "name": "Autobahn A656 — warning",
     "endpoints": {
@@ -3881,6 +3989,42 @@
     "endpoints": {
       "main": {
         "url": "https://verkehr.autobahn.de/o/autobahn/A864/services/roadworks",
+        "cadenceSec": 900
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a952-warning",
+    "name": "Autobahn A952 — warning",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a952-closure",
+    "name": "Autobahn A952 — closure",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
+        "cadenceSec": 300
+      }
+    },
+    "license": "DL-DE-BY-2.0",
+    "selectionState": "approved"
+  },
+  {
+    "qualifier": "a952-roadworks",
+    "name": "Autobahn A952 — roadworks",
+    "endpoints": {
+      "main": {
+        "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
         "cadenceSec": 900
       }
     },

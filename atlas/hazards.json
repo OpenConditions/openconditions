@@ -86,6 +86,20 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
           "attribution": "Deutscher Wetterdienst; Geobasisdaten © GeoBasis-DE / BKG 2021 (Daten modifiziert)",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content"
+            ],
+            "basis": "recommendation",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.wettergefahren.de/vorlagen_quellenangabe.html"
+            ],
+            "reason": "DWD requests source notice directly at reused information; ordinary format conversion is not extensive modification",
+            "compactText": "<a href=\"https://www.dwd.de/\">DWD</a>"
+          },
           "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
           "homepage": "https://www.dwd.de/",
           "coverage": {
@@ -169,6 +183,22 @@
           "license": "LicenseRef-MeteoAlarm-Terms",
           "licenseUrl": "https://meteoalarm.org/en/live/page/terms-and-conditions",
           "attribution": "EUMETNET – MeteoAlarm",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "content",
+              "map"
+            ],
+            "basis": "provider-terms",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://meteoalarm.org/en/live/page/terms-and-conditions",
+              "https://cms-visualization.meteoalarm.org/api/v1/content-pages/terms-and-conditions?locale=en"
+            ],
+            "reason": "Always display single-country issuing service or multi-country EUMETNET – MeteoAlarm; Issue time and MeteoAlarm link required; Full disclaimer must be published; always-visible full paragraph not explicitly mandated",
+            "compactText": "<a href=\"https://www.meteoalarm.org/\">EUMETNET – MeteoAlarm</a>",
+            "includePublisher": true
+          },
           "terms": {
             "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
             "reviewedAt": "2026-10-09",
@@ -547,6 +577,22 @@
           "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
           "attribution": "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+              "https://www.arcgis.com/sharing/rest/content/items/d1c32af3212341869b3c810f1a215824?f=pjson",
+              "https://www.usa.gov/government-copyright"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "reviewedAt": "2026-10-08",
             "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty."
@@ -704,6 +750,20 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
       "attribution": "Deutscher Wetterdienst; Geobasisdaten © GeoBasis-DE / BKG 2021 (Daten modifiziert)",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content"
+        ],
+        "basis": "recommendation",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.wettergefahren.de/vorlagen_quellenangabe.html"
+        ],
+        "reason": "DWD requests source notice directly at reused information; ordinary format conversion is not extensive modification",
+        "compactText": "<a href=\"https://www.dwd.de/\">DWD</a>"
+      },
       "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
       "homepage": "https://www.dwd.de/",
       "coverage": {
@@ -798,6 +858,22 @@
       "license": "LicenseRef-MeteoAlarm-Terms",
       "licenseUrl": "https://meteoalarm.org/en/live/page/terms-and-conditions",
       "attribution": "EUMETNET – MeteoAlarm",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "content",
+          "map"
+        ],
+        "basis": "provider-terms",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://meteoalarm.org/en/live/page/terms-and-conditions",
+          "https://cms-visualization.meteoalarm.org/api/v1/content-pages/terms-and-conditions?locale=en"
+        ],
+        "reason": "Always display single-country issuing service or multi-country EUMETNET – MeteoAlarm; Issue time and MeteoAlarm link required; Full disclaimer must be published; always-visible full paragraph not explicitly mandated",
+        "compactText": "<a href=\"https://www.meteoalarm.org/\">EUMETNET – MeteoAlarm</a>",
+        "includePublisher": true
+      },
       "terms": {
         "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
         "reviewedAt": "2026-10-09",
@@ -1289,6 +1365,22 @@
       "license": "LicenseRef-US-Gov-Public-Domain",
       "licenseUrl": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
       "attribution": "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+          "https://www.arcgis.com/sharing/rest/content/items/d1c32af3212341869b3c810f1a215824?f=pjson",
+          "https://www.usa.gov/government-copyright"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "reviewedAt": "2026-10-08",
         "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty."
