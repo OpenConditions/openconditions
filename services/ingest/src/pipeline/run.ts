@@ -540,11 +540,15 @@ async function runAttempt(
     const poll = pollContext();
     if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload);
     return format.kind === "measurements"
-      ? finishFlowPoll(poll, {
-          features: parse.features,
-          observations: parse.observations,
-          situations: parse.situations,
-        })
+      ? finishFlowPoll(
+          poll,
+          {
+            features: parse.features,
+            observations: parse.observations,
+            situations: parse.situations,
+          },
+          format.mayBeEmpty === true,
+        )
       : finishEventPoll(poll, parse, snapshotInspection);
   };
   if (format.stream) {
@@ -1292,9 +1296,15 @@ async function finishEventPoll(
  * The last stages of a flow feed's poll: apply the stored free-flow
  * baselines, stamp the catalogue's rights, write the measurement sites, their
  * readings and the derived congestion situations in one transaction with the
- * poll's status, then bind what changed.
+ * poll's status, then bind what changed. A format that `mayBeEmpty` closes
+ * a poll without readings as a complete empty answer, its earlier readings
+ * left to their own expiry.
  */
-async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<RunResult> {
+async function finishFlowPoll(
+  poll: PollContext,
+  parse: FlowOutput,
+  mayBeEmpty = false,
+): Promise<RunResult> {
   const { src, deps } = poll;
   let output = parse;
   // Best-effort: a baseline-load failure must never throw away a good fetch —
@@ -1308,6 +1318,18 @@ async function finishFlowPoll(poll: PollContext, parse: FlowOutput): Promise<Run
   } catch (err) {
     baselinesLoaded = false;
     console.warn(`[ingest] ${src.id}: baseline-map load failed, skipping enrichment:`, err);
+  }
+  if (output.observations.length === 0 && mayBeEmpty) {
+    await poll.recordStatus({
+      freshnessWindowSec: src.freshnessWindowSec,
+      outcome: "complete_empty",
+      attemptAt: poll.identity.at,
+      networkValidated: true,
+      durationMs: Date.now() - poll.start,
+      ...(poll.warning ? { error: poll.warning } : {}),
+    });
+    poll.acceptFetch?.();
+    return { count: 0, durationMs: Date.now() - poll.start, outcome: "complete_empty" };
   }
   // A sensor network never legitimately vanishes to zero — this also covers a
   // 200-with-garbage body (parses to nothing) and any parse path that yields an

@@ -96,6 +96,12 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
   products: readonly string[];
   /** The feature and offer kinds and the properties the format emits, which on-demand routing reads. */
   produces?: { kinds: readonly string[]; properties: readonly string[] };
+  /**
+   * A measurements format whose publisher may rightly answer with no reading
+   * (a fleet with no vehicle out): a poll that parses to none is a complete
+   * empty answer, not a failure that keeps the last publication.
+   */
+  mayBeEmpty?: true;
   endpoints: Readonly<Record<string, EndpointRole>>;
   /** One poll's payloads as record drafts; throws when a payload cannot be read. */
   parse(feed: F, payloads: FeedPayloads, ctx: ParseContext): ParseOutput;
