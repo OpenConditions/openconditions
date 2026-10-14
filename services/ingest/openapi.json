@@ -2063,6 +2063,17 @@
             "description": "only readings in effect from this instant on (their phenomenon started then or later)"
           },
           {
+            "name": "minConfidence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["low", "nominal", "high"],
+              "description": "leave out readings whose quality states a lower confidence: a quality.confidence fraction below 0.3 is low and below 0.8 nominal (FIRMS's MODIS classes), a quality.supplierCode of low/l, nominal/n or high/h (FIRMS's VIIRS classes) is that class; a reading stating neither is kept, and low leaves out nothing"
+            },
+            "description": "leave out readings whose quality states a lower confidence: a quality.confidence fraction below 0.3 is low and below 0.8 nominal (FIRMS's MODIS classes), a quality.supplierCode of low/l, nominal/n or high/h (FIRMS's VIIRS classes) is that class; a reading stating neither is kept, and low leaves out nothing"
+          },
+          {
             "name": "canonical",
             "in": "query",
             "required": false,
@@ -2186,6 +2197,17 @@
               "type": "string"
             },
             "description": "comma-separated source ids"
+          },
+          {
+            "name": "minConfidence",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": ["low", "nominal", "high"],
+              "description": "leave out readings whose quality states a lower confidence: a quality.confidence fraction below 0.3 is low and below 0.8 nominal (FIRMS's MODIS classes), a quality.supplierCode of low/l, nominal/n or high/h (FIRMS's VIIRS classes) is that class; a reading stating neither is kept, and low leaves out nothing"
+            },
+            "description": "leave out readings whose quality states a lower confidence: a quality.confidence fraction below 0.3 is low and below 0.8 nominal (FIRMS's MODIS classes), a quality.supplierCode of low/l, nominal/n or high/h (FIRMS's VIIRS classes) is that class; a reading stating neither is kept, and low leaves out nothing"
           }
         ],
         "security": [

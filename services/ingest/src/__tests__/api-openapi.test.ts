@@ -74,8 +74,17 @@ describe("the OpenAPI document", () => {
     expect(names("/situations")).toEqual(
       expect.arrayContaining(["from", "to", "subtype", "simplify", "at", "horizonDays"]),
     );
-    expect(names("/observations/latest")).toEqual(expect.arrayContaining(["since"]));
-    expect(names("/observations/grid")).toEqual(["property", "bbox", "cellDeg", "since", "source"]);
+    expect(names("/observations/latest")).toEqual(
+      expect.arrayContaining(["since", "minConfidence"]),
+    );
+    expect(names("/observations/grid")).toEqual([
+      "property",
+      "bbox",
+      "cellDeg",
+      "since",
+      "source",
+      "minConfidence",
+    ]);
     const grid = (
       doc.paths["/observations/grid"] as {
         get: { parameters: { name: string; required: boolean }[] };

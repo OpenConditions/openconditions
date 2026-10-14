@@ -20,8 +20,10 @@ outputs (`/segments/conditions.json`, Valhalla exclusions):
 - offers: `/offers` and `/offers/{id}`;
 - observations: `/observations/latest` (the reading in effect of every series;
   `canonical=1` for fused readings), `/observations/grid` (one property's readings
-  since an instant, aggregated per cell) and `/observations` (one series' raw readings,
-  or its hourly or daily rollups beyond the raw retention);
+  since an instant, aggregated per cell; both take `minConfidence` to leave out
+  readings of lower stated confidence, such as low-confidence fire detections) and
+  `/observations` (one series' raw readings, or its hourly or daily rollups beyond
+  the raw retention);
 - `/history/{class}/{id}`, `/taxonomy`, `/schemas/{path}`, `/coverage`.
 
 Every record leaves through the request's scope. The **public scope**, the

@@ -1,4 +1,4 @@
-import { gridCellCount, MAX_GRID_CELLS } from "@openconditions/core";
+import { CONFIDENCE_LEVELS, gridCellCount, MAX_GRID_CELLS } from "@openconditions/core";
 import { z } from "zod";
 
 type BBox = [number, number, number, number];
@@ -228,6 +228,13 @@ export const OfferListQuery = z.strictObject({
 
 export type OfferListQuery = z.output<typeof OfferListQuery>;
 
+const minConfidence = z
+  .enum(CONFIDENCE_LEVELS)
+  .describe(
+    "leave out readings whose quality states a lower confidence: a quality.confidence fraction below 0.3 is low and below 0.8 nominal (FIRMS's MODIS classes), a quality.supplierCode of low/l, nominal/n or high/h (FIRMS's VIIRS classes) is that class; a reading stating neither is kept, and low leaves out nothing",
+  )
+  .optional();
+
 /** Query of the latest readings: filters, the canonical view, and the page (keyed by series). */
 export const LatestObservationQuery = z.strictObject({
   bbox: bbox.optional(),
@@ -246,6 +253,7 @@ export const LatestObservationQuery = z.strictObject({
       "only readings in effect from this instant on (their phenomenon started then or later)",
     )
     .optional(),
+  minConfidence,
   canonical: canonical(
     "the canonical view: a feature's fused reading of each property several sources or the crowd may report (for the operator source @fused, fused from every source; in public scope fused from public sources only, source @fused when every contributor is public, else @fused-public), and the per-source readings of the rest; a place's readings, crowd ones included, as they are (nothing fuses a place)",
   ),
@@ -277,6 +285,7 @@ export const GridQuery = z
         "only readings in effect from this instant on (their phenomenon started then or later)",
       ),
     source: list.describe("comma-separated source ids").optional(),
+    minConfidence,
   })
   .superRefine((q, ctx) => {
     if (!Array.isArray(q.bbox) || !Number.isFinite(q.cellDeg)) return;

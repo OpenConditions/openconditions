@@ -912,6 +912,7 @@ export function registerApiRoutes(
       ...(q.source ? { sources: q.source } : {}),
       ...(q.origin ? { origins: q.origin } : {}),
       ...(q.since ? { since: new Date(q.since) } : {}),
+      ...(q.minConfidence ? { minConfidence: q.minConfidence } : {}),
       ...(q.cursor ? { cursor: Number(q.cursor) } : {}),
     });
     const records = egress(read.records, scope);
@@ -935,6 +936,7 @@ export function registerApiRoutes(
       since: new Date(q.since),
       at: now(),
       ...(q.source ? { sources: q.source } : {}),
+      ...(q.minConfidence ? { minConfidence: q.minConfidence } : {}),
       admits: (provenance) => {
         const shown =
           scope === "operator" || isPublicRecord({ provenance } as unknown as EgressRecord);

@@ -418,3 +418,16 @@ A consumer credits each displayed density cell's suppliers rather than every sou
 counted elsewhere in the collection. Clients of an older producer can retain their
 existing numeric tuple parsing; missing cell metadata does not prove a cell's exact
 suppliers.
+
+### Readings by stated confidence
+
+`/observations/latest` and `/observations/grid` take `minConfidence` (`low`,
+`nominal` or `high`) and leave out every reading whose `quality` states a lower
+class, in the same statement, so a grid cell counts, sums and credits only the
+readings kept. A `quality.confidence` fraction is classed as FIRMS classes MODIS
+percentages: below 0.3 low, below 0.8 nominal, else high. A
+`quality.supplierCode` of `low`, `nominal` or `high` (or `l`, `n`, `h`, as VIIRS
+writes them) is its own class. A reading that states neither is kept, and `low`
+leaves out nothing. `minConfidence=nominal` drops the low-confidence fire
+detections of both instruments. An instance older than the parameter answers it
+400, as it does any query key it does not know.

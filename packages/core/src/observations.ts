@@ -70,6 +70,37 @@ export function fusableFeatureKinds(registry: Registry): Set<string> {
   );
 }
 
+/** The confidence classes a reading's quality can state, lowest first. */
+export const CONFIDENCE_LEVELS = ["low", "nominal", "high"] as const;
+
+export type ConfidenceLevel = (typeof CONFIDENCE_LEVELS)[number];
+
+/** Where a confidence fraction enters each class above the lowest: FIRMS's MODIS classes. */
+const CONFIDENCE_FLOOR: Record<Exclude<ConfidenceLevel, "low">, number> = {
+  nominal: 0.3,
+  high: 0.8,
+};
+
+/**
+ * The WHERE clause that leaves out the readings of the latest-reading table
+ * aliased `t` whose stated confidence is below `min`, or undefined when
+ * nothing is below it. A `quality.confidence` fraction is classed as FIRMS
+ * classes MODIS percentages: below 0.3 low, below 0.8 nominal, else high. A
+ * `quality.supplierCode` of low, nominal or high (VIIRS's words, or their
+ * initials) is its own class. A reading that states neither is kept.
+ */
+export function minConfidenceClause(
+  t: string,
+  min: ConfidenceLevel,
+  p: (value: unknown) => string,
+): string | undefined {
+  if (min === "low") return undefined;
+  const below = CONFIDENCE_LEVELS.slice(0, CONFIDENCE_LEVELS.indexOf(min));
+  const codes = below.flatMap((level) => [level, level.charAt(0)]);
+  return `((${t}.reading #>> '{quality,confidence}')::float8 < ${p(CONFIDENCE_FLOOR[min])}) IS NOT TRUE
+     AND (lower(${t}.reading #>> '{quality,supplierCode}') = ANY(${p(codes)}::text[])) IS NOT TRUE`;
+}
+
 export interface LatestObservationQuery {
   scope: Scope;
   /** west, south, east, north. */
@@ -92,6 +123,8 @@ export interface LatestObservationQuery {
   at?: Date;
   /** Only readings in effect from this instant on (their phenomenon started then or later). */
   since?: Date;
+  /** Leave out readings whose stated confidence is below this class ({@link minConfidenceClause}). */
+  minConfidence?: ConfidenceLevel;
   /** The series id the previous page ended at. */
   cursor?: number;
   limit: number;
@@ -156,6 +189,8 @@ export async function listLatestObservations(
   if (q.since !== undefined) {
     clauses.push(`l.effective_from >= ${p(q.since.toISOString())}::timestamptz`);
   }
+  const confident = q.minConfidence && minConfidenceClause("l", q.minConfidence, p);
+  if (confident) clauses.push(confident);
   if (q.cursor !== undefined) clauses.push(`l.series_id > ${p(q.cursor)}`);
   const rows = await db.execute<Rec[]>(
     `SELECT l.series_id::text AS series_id, ${readingColumns("l")}
@@ -198,6 +233,8 @@ export interface GridQuery {
   /** Only readings in effect from this instant on. */
   since: Date;
   sources?: readonly string[];
+  /** Count no reading whose stated confidence is below this class ({@link minConfidenceClause}). */
+  minConfidence?: ConfidenceLevel;
   /** The instant readings are current at. Default now. */
   at?: Date;
   /** Whether readings of this provenance may be counted (the licence egress); default all. */
@@ -258,6 +295,8 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
     inBox("l.geom", q.bbox, p),
   ];
   if (q.sources?.length) clauses.push(`l.source_id = ANY(${p([...q.sources])}::text[])`);
+  const confident = q.minConfidence && minConfidenceClause("l", q.minConfidence, p);
+  if (confident) clauses.push(confident);
   const rows = await db.execute<
     {
       x: number;

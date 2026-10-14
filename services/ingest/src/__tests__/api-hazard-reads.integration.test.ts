@@ -100,7 +100,14 @@ function ring(lon: number, lat: number, radius: number, n: number): number[][] {
 
 const PERIMETER = { type: "Polygon", coordinates: [ring(-120, 38, 0.2, 400)] };
 
-function pixel(source: string, lon: number, lat: number, at: string, frp: number): Rec {
+function pixel(
+  source: string,
+  lon: number,
+  lat: number,
+  at: string,
+  frp: number,
+  quality?: Rec,
+): Rec {
   const draft: Rec = {
     class: "observation",
     kind: "observation",
@@ -109,6 +116,7 @@ function pixel(source: string, lon: number, lat: number, at: string, frp: number
     result: { type: "quantity", value: frp, unit: "MW" },
     phenomenonTime: { instant: at },
     aggregation: "instantaneous",
+    ...(quality === undefined ? {} : { quality }),
     temporality: "live",
     location: {
       geometry: { type: "Point", coordinates: [lon, lat] },
@@ -200,12 +208,14 @@ beforeAll(async () => {
     );
   await write(PIXELS, [
     pixel(PIXELS, 10.3, 45.3, hoursBefore(7), 99),
-    pixel(PIXELS, 10.2, 45.3, hoursBefore(5), 10),
-    pixel(PIXELS, 10.5, 45.6, hoursBefore(4), 20),
-    pixel(PIXELS, 10.8, 45.9, hoursBefore(3), 30),
-    pixel(PIXELS, 12.1, 47.2, hoursBefore(2), 5),
+    pixel(PIXELS, 10.2, 45.3, hoursBefore(5), 10, { supplierCode: "l" }),
+    pixel(PIXELS, 10.5, 45.6, hoursBefore(4), 20, { supplierCode: "nominal" }),
+    pixel(PIXELS, 10.8, 45.9, hoursBefore(3), 30, { supplierCode: "h" }),
+    pixel(PIXELS, 12.1, 47.2, hoursBefore(2), 5, { confidence: 0.29 }),
   ]);
-  await write(RESTRICTED_PIXELS, [pixel(RESTRICTED_PIXELS, 10.4, 45.4, hoursBefore(2), 40)]);
+  await write(RESTRICTED_PIXELS, [
+    pixel(RESTRICTED_PIXELS, 10.4, 45.4, hoursBefore(2), 40, { confidence: 0.3 }),
+  ]);
   app = Fastify();
   registerScope(app, TOKEN);
   registerApiRoutes(app, sql, { registry, now: () => new Date(NOW) });
@@ -313,6 +323,28 @@ describe("GET /observations/latest since an instant", () => {
   });
 });
 
+describe("GET /observations/latest by stated confidence", () => {
+  const instants = async (query: string) =>
+    ((await get(`/observations/latest?property=fire.frp${query}`)).body["records"] as Rec[])
+      .map((r) => (r["phenomenonTime"] as Rec)["instant"] as string)
+      .sort();
+
+  it("drops a VIIRS low and a MODIS fraction below 0.3, and keeps a reading stating none", async () => {
+    expect(await instants("&minConfidence=nominal")).toEqual(
+      [hoursBefore(7), hoursBefore(4), hoursBefore(3)].sort(),
+    );
+    expect(await instants("&minConfidence=high")).toEqual([hoursBefore(7), hoursBefore(3)].sort());
+    expect(await instants("&minConfidence=low")).toEqual(await instants(""));
+  });
+
+  it("refuses a class it does not know", async () => {
+    for (const value of ["medium", "0.3", ""]) {
+      const { res } = await get(`/observations/latest?property=fire.frp&minConfidence=${value}`);
+      expect(res.statusCode, value).toBe(400);
+    }
+  });
+});
+
 describe("GET /observations/grid", () => {
   const url = `/observations/grid?property=fire.frp&bbox=-10,30,30,60&cellDeg=1&since=${SINCE}`;
 
@@ -346,6 +378,27 @@ describe("GET /observations/grid", () => {
       { longitude: 10.5, latitude: 45.5, sources: [PIXELS, RESTRICTED_PIXELS] },
       { longitude: 12.5, latitude: 47.5, sources: [PIXELS] },
     ]);
+  });
+
+  it("counts only the readings of the confidence asked for", async () => {
+    const nominal = await get(`${url}&minConfidence=nominal`);
+    expect(nominal.res.statusCode).toBe(200);
+    expect(nominal.body).toMatchObject({ cells: [[10.5, 45.5, 2, 50, 30]], sources: [PIXELS] });
+    expect(nominal.body["cell_contributors"]).toMatchObject([
+      { longitude: 10.5, latitude: 45.5, sources: [PIXELS] },
+    ]);
+    // A fraction of exactly 0.3 is nominal.
+    expect((await get(`${url}&minConfidence=nominal`, OPERATOR)).body).toMatchObject({
+      cells: [[10.5, 45.5, 3, 90, 40]],
+      sources: [PIXELS, RESTRICTED_PIXELS],
+    });
+    expect((await get(`${url}&minConfidence=high`)).body).toMatchObject({
+      cells: [[10.5, 45.5, 1, 30, 30]],
+    });
+    expect((await get(`${url}&minConfidence=low`)).body["cells"]).toEqual(
+      (await get(url)).body["cells"],
+    );
+    expect((await get(`${url}&minConfidence=medium`)).res.statusCode).toBe(400);
   });
 
   it("refuses a box of more than 50,000 cells and a query without its required fields", async () => {
