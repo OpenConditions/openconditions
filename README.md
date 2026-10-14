@@ -67,17 +67,32 @@ and hourly rollups).
 Three layers:
 
 ```
-packages/          reusable libraries (Apache-2.0)
-  core/            canonical model, severity, freshness, read helpers, DB schema/migrations (./server)
-  roads/           road-domain parsers (DATEX II / Open511 / WZDx) + feed registry + TMC location tables
-    bind/          event → segment resolver + evaluation corpus
-  publishers/      outbound emitters (GeoJSON, JSON-LD, TraFF, DATEX II, SSE, Valhalla)
-  openlr/          OpenLR binary decode + resolver client
+packages/            reusable libraries (Apache-2.0 unless noted)
+  model/             kernel types, taxonomy registry, validation, JSON Schema and docs generation
+  model-registry/    the assembled production registry and its published JSON Schemas
+  model-*/           one registry module per domain: roads, parking, fuel, charging, hazards, border,
+                     facilities, maritime, vehicles, weather
+  core/              canonical model, severity, freshness, read helpers, DB schema/migrations (./server)
+  ingest-framework/  feed descriptors, credentials, guarded fetch, catalogue resolvers, licences, domain plugins
+  roads/             road parsers (DATEX II / Open511 / WZDx and more), the roads domain, TMC location tables
+    bind/            event → segment resolver + evaluation corpus
+  parking/ fuel/ charging/ cameras/ hazards/
+                     each domain's parsers and its ingest domain
+  datex2/            DATEX II decoding shared by the domains (XML, publications, value decoders)
+  ocpi/              OCPI wire types, decoders and dialects
+  openlr/            OpenLR binary decode + resolver client
+  publishers/        outbound emitters (GeoJSON, JSON-LD, TraFF, DATEX II, SSE, Valhalla)
+  storage/           the source catalogue and the record writer (AGPL-3.0)
+  contrib-core/      the signed, portable crowd report and sub-claim format
+  federation/        instance identity: Ed25519 keys, the actor document, the pinned peers registry
+  probe-spike/       non-production feasibility spike for private probe submission (AGPL-3.0)
 
-services/          deployable services
-  ingest/          Fastify: fetch → parse → write records, bind + public record API and routing outputs; ships
-                   the OpenMapX service.json so `repos add` can install it (AGPL-3.0)
-  openlr-resolver/ Python/FastAPI OpenLR → geometry map-matcher (dormant)
+services/            deployable services (AGPL-3.0)
+  ingest/            Fastify: fetch → parse → write records, bind + public record API and routing outputs; ships
+                     the OpenMapX service.json so `repos add` can install it
+  contributions-api/ crowd report intake and evidence-state recompute
+  federation/        the instance actor document and peer discovery
+  openlr-resolver/   Python/FastAPI OpenLR → geometry map-matcher (dormant)
 ```
 
 The ingest service owns and migrates the `conditions` schema itself, idempotently, on boot.

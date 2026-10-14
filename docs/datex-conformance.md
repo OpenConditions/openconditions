@@ -90,8 +90,9 @@ location, never to fabricate one by buffering a point.
 
 The tests in
 [`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)
-round-trip `Point` locations. No test asserts that a `LineString` location is
-written as a `loc:PointLocation` without a `linearLocation` or `area` element.
+round-trip `Point` locations and assert that a `LineString` location is
+written as a `loc:PointLocation` at its first point, without a
+`linearLocation` or `area` element.
 
 `loc:PointLocation` is a valid DATEX II v3 location type for a point sensor and
 needs no linear geometry. Only CIFS (not built) has an open, undecided question

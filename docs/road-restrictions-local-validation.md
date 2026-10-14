@@ -90,7 +90,6 @@ pnpm check-types
 pnpm check-translations
 pnpm exec vitest run --project node \
   packages/core/src/api/roadConditions.test.ts \
-  packages/core/src/__tests__/roadRestrictionDetails.test.ts \
   packages/core/src/utils/__tests__/roadConditionRouting.test.ts \
   integrations/road-conditions/__tests__ \
   integrations/routing/road-condition-routing.test.ts \
