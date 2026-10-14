@@ -1,0 +1,96 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-10-14T14:32:16Z",
+  "features": [
+    {
+      "type": "Feature",
+      "id": 1001,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.596399, 60.228227, 0]
+      },
+      "properties": {
+        "id": 1001,
+        "name": "vt1_Espoo_Nupuri",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2025-10-30T07:36:31Z",
+        "state": "OK_FAULT_DOUBT_CANCELLED"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 1030,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.0327, 60.389762, 0]
+      },
+      "properties": {
+        "id": 1030,
+        "name": "st110_Lohja_Hyrsylän_mutka",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2025-05-20T03:05:07Z",
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 1071,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.166245, 60.226774, 0]
+      },
+      "properties": {
+        "id": 1071,
+        "name": "st103_Helsinki_Satamatie_etelä",
+        "collectionStatus": "REMOVED_TEMPORARILY",
+        "dataUpdatedTime": "2026-01-09T10:23:13Z",
+        "state": null
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 1174,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.848267, 60.204231, 5]
+      },
+      "properties": {
+        "id": 1174,
+        "name": "vt1_Helsinki_Tarvo_OptX2",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2026-10-07T04:40:30Z",
+        "state": "REPAIR_MAINTENANCE_DONE"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 7037,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [29.873687, 61.974388, 89]
+      },
+      "properties": {
+        "id": 7037,
+        "name": "vt6_Kitee_Kousa",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2026-08-25T13:14:17Z",
+        "state": "REPAIR_INTERRUPTED"
+      }
+    },
+    {
+      "type": "Feature",
+      "id": 8003,
+      "geometry": {
+        "type": "Point",
+        "coordinates": [27.450941, 63.303119, 90]
+      },
+      "properties": {
+        "id": 8003,
+        "name": "vt5_Lapinlahti_Mäntylahti",
+        "collectionStatus": "GATHERING",
+        "dataUpdatedTime": "2024-09-07T03:10:19Z",
+        "state": null
+      }
+    }
+  ]
+}

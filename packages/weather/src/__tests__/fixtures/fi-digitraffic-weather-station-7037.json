@@ -1,0 +1,51 @@
+{
+  "type": "Feature",
+  "id": 7037,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [29.873687, 61.974388, 89]
+  },
+  "properties": {
+    "id": 7037,
+    "name": "vt6_Kitee_Kousa",
+    "stationType": "RWS_200",
+    "master": true,
+    "sensors": [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+      30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 68, 73,
+      91, 92, 93, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 111, 112, 113, 114, 115,
+      116, 117, 118, 119, 126, 127, 128, 130, 131, 132, 133, 135, 136, 138, 140, 160, 161, 162, 163,
+      167, 168, 169, 170, 172, 174, 175, 176, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, 189,
+      190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 213, 214, 215,
+      225, 226
+    ],
+    "annualMaintenanceTime": null,
+    "collectionInterval": 300,
+    "collectionStatus": "GATHERING",
+    "country": null,
+    "dataUpdatedTime": "2026-08-25T13:14:17Z",
+    "liviId": null,
+    "municipality": "Kitee",
+    "municipalityCode": 260,
+    "names": {
+      "fi": "Tie 6 Kitee, Kousa",
+      "sv": "Väg 6 Kides, Kousa",
+      "en": "Road 6 Kitee, Kousa"
+    },
+    "province": "Pohjois-Karjala",
+    "provinceCode": 12,
+    "purpose": null,
+    "repairMaintenanceTime": null,
+    "roadAddress": {
+      "roadNumber": 6,
+      "roadSection": 334,
+      "distanceFromRoadSectionStart": 6474,
+      "carriageway": "ONE_CARRIAGEWAY",
+      "side": "RIGHT",
+      "contractArea": "Kitee",
+      "contractAreaCode": 315
+    },
+    "startTime": "2020-06-17T00:00:00Z",
+    "state": "REPAIR_INTERRUPTED"
+  }
+}

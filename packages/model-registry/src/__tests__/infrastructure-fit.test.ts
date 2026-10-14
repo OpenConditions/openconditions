@@ -7,6 +7,7 @@ import {
   type RegistryModule,
   sealRecord,
 } from "@openconditions/model";
+import { type WeatherCatalogFeed, weatherDomain } from "@openconditions/weather";
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import { productionModules } from "../index.js";
@@ -20,15 +21,16 @@ import { productionModules } from "../index.js";
  * route-information panels as DATEX II 3), WSDOT (WZDx 4.2 device feed),
  * Ontario 511 (cameras) and Iowa DOT (snowplow AVL). The weather camera and
  * the Ontario cameras run through the cameras domain's own parsers, whose
- * formats the roads module registers; only the formats OpenConditions does
- * not parse yet are registered here, by a test-only module.
+ * formats the roads module registers, and the road-weather station through
+ * the weather domain's; only the formats OpenConditions does not parse yet
+ * are registered here, by a test-only module.
  */
 const fitFormats: RegistryModule = {
   name: "infrastructure-fit",
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["digitraffic-weather", "digitraffic-variable-signs", "arcgis-avl"],
+      values: ["digitraffic-variable-signs", "arcgis-avl"],
     }),
   ],
 };
@@ -126,43 +128,16 @@ function sealAll(records: readonly Draft[]) {
   });
 }
 
-/** Digitraffic road-weather sensors → property, unit, channel number (numbered surface sensors). */
-const DIGITRAFFIC_WEATHER: Record<string, [property: string, unit: string, channel?: number]> = {
-  ILMA: ["weather.air_temperature", "Cel"],
-  KASTEPISTE: ["weather.dew_point", "Cel"],
-  ILMAN_KOSTEUS: ["weather.humidity", "%"],
-  NÄKYVYYS_M: ["weather.visibility", "m"],
-  KESKITUULI: ["weather.wind_speed", "m/s"],
-  MAKSIMITUULI: ["weather.wind_gust", "m/s"],
-  TUULENSUUNTA: ["weather.wind_direction", "deg"],
-  SADE_INTENSITEETTI: ["weather.precipitation_rate", "mm/h"],
-  TIE_1: ["road.surface_temperature", "Cel", 1],
-  TIE_2: ["road.surface_temperature", "Cel", 2],
-  MAA_1: ["road.subsurface_temperature", "Cel", 1],
-  MAA_2: ["road.subsurface_temperature", "Cel", 2],
-  JÄÄTYMISPISTE_1: ["road.freezing_point", "Cel", 1],
-  JÄÄTYMISPISTE_2: ["road.freezing_point", "Cel", 2],
-  KOSTEUDEN_MÄÄRÄ_1: ["road.water_film", "mm", 1],
-  KOSTEUDEN_MÄÄRÄ_2: ["road.water_film", "mm", 2],
-  SUOLAN_VÄKEVYYS_1: ["road.salt_concentration", "kg/m3", 1],
-  SUOLAN_VÄKEVYYS_2: ["road.salt_concentration", "kg/m3", 2],
-};
-/**
- * Digitraffic KELI (road condition) codes → surface_state, from the provider's
- * published descriptions (`/api/weather/v1/sensors`); 0 means the sensor has a
- * fault, which is an unknown result, not a surface state.
- */
-const DIGITRAFFIC_KELI: Record<number, string> = {
-  1: "dry",
-  2: "damp",
-  3: "wet",
-  4: "chemically_wet",
-  5: "frost",
-  6: "snow",
-  7: "ice",
-  8: "chemically_wet",
-  9: "slush",
-};
+/** `fi-digitraffic-weather` as `feeds/weather/fi.jsonc` writes it: the fields its records take from the feed. */
+const digitrafficWeatherFeed = {
+  id: "fi-digitraffic-weather",
+  format: "digitraffic-weather",
+  region: "fi",
+  license: "CC-BY-4.0",
+  licenseUrl: "https://creativecommons.org/licenses/by/4.0/",
+  attribution: "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+} as WeatherCatalogFeed;
+
 /** Digitraffic station `state` → device_status: fault reports and repairs in progress are errors. */
 const DIGITRAFFIC_STATE: Record<string, string> = {
   OK: "ok",
@@ -173,101 +148,38 @@ const DIGITRAFFIC_STATE: Record<string, string> = {
   REPAIR_INTERRUPTED: "error",
 };
 
+/**
+ * A Digitraffic road-weather station through the weather domain's parser:
+ * the station as the list carries it (the captured details document is the
+ * list's feature with more properties), its details, and its values as the
+ * data document lists them. The parser writes no `device.status`; the
+ * station's own state is mapped here, onto the `field_device` trait the
+ * weather station kind carries.
+ */
 function digitrafficWeatherStation() {
   const station = json("digitraffic-weather-station-1001.json");
   const data = json("digitraffic-weather-station-1001-data.json") as {
-    sensorValues: { id: number; name: string; measuredTime: string; value: number }[];
+    sensorValues: { measuredTime: string }[];
   };
-  const p = station.properties;
-  const [lon, lat] = station.geometry.coordinates;
-  const prov = provenance(
-    "fi-digitraffic-weather",
-    "digitraffic-weather",
-    String(p.id),
-    "Fintraffic / digitraffic.fi",
-    "CC-BY-4.0",
-  );
-  const values = data.sensorValues.filter((v) => v.name in DIGITRAFFIC_WEATHER);
-  const keli = data.sensorValues.filter((v) => /^KELI_[12]$/.test(v.name));
-  const channels = [...values, ...keli].filter(
-    (v) => v.name.startsWith("KELI_") || DIGITRAFFIC_WEATHER[v.name]![2] !== undefined,
-  );
-  const feature = {
-    id: `oc:feature:fi-digitraffic-weather:${p.id}`,
-    class: "feature",
-    kind: "weather_station",
-    temporality: "static",
-    lifecycle: p.collectionStatus === "GATHERING" ? "operational" : "temporarily_closed",
-    name: (["fi", "sv", "en"] as const).map((lang) => ({ lang, text: p.names[lang] })),
-    externalIds: [{ scheme: "provider", id: p.liviId, authority: "Fintraffic" }],
-    // The published position carries a zero altitude that means "unknown".
-    location: {
-      ...point(lon, lat),
-      roads: [{ ref: String(p.roadAddress.roadNumber) }],
-      linear: {
-        system: "provider",
-        ref: String(p.roadAddress.roadNumber),
-        from: p.roadAddress.roadSection,
-      },
-      admin: { country: "FI", municipality: p.municipality },
+  const out = weatherDomain.formats["digitraffic-weather"]!.parse(
+    digitrafficWeatherFeed,
+    {
+      sites: [Buffer.from(JSON.stringify({ type: "FeatureCollection", features: [station] }))],
+      details: [Buffer.from(text("digitraffic-weather-station-1001.json"))],
+      status: [Buffer.from(JSON.stringify({ stations: [data] }))],
     },
-    provenance: prov,
-    freshness: { fetchedAt: FETCHED },
-    components: channels.map((v) => ({
-      key: String(v.id),
-      kind: "sensor_channel",
-      details: {
-        kind: "sensor_channel",
-        v: 1,
-        index: Number(v.name.slice(-1)),
-        property: v.name.startsWith("KELI_")
-          ? "road.surface_state"
-          : DIGITRAFFIC_WEATHER[v.name]![0],
-      },
-    })),
-    details: {
-      kind: "weather_station",
-      v: 1,
-      equipment: [p.stationType],
-      measuredProperties: [
-        ...new Set([...values.map((v) => DIGITRAFFIC_WEATHER[v.name]![0]), "road.surface_state"]),
-      ],
-      surfaceSensorCount: 2,
-    },
-  };
-  const channelKey = (v: { id: number; name: string }) =>
-    channels.some((c) => c.id === v.id) ? String(v.id) : undefined;
+    { fetchedAt: FETCHED, cadenceSec: 300, reference: {} },
+  );
+  const feature = out.features[0] as Parameters<typeof observation>[0];
   const observations = [
-    ...values.map((v) => {
-      const [property, unit] = DIGITRAFFIC_WEATHER[v.name]!;
-      const key = channelKey(v);
-      return observation(feature, {
-        property,
-        result: quantity(v.value, unit),
-        at: { instant: v.measuredTime },
-        ...(key === undefined ? {} : { componentKey: key }),
-        aggregation:
-          v.name === "KESKITUULI" ? "mean" : v.name === "MAKSIMITUULI" ? "max" : "instantaneous",
-      });
-    }),
-    ...keli.map((v) =>
-      observation(feature, {
-        property: "road.surface_state",
-        result:
-          DIGITRAFFIC_KELI[v.value] === undefined
-            ? { type: "unknown" }
-            : category(DIGITRAFFIC_KELI[v.value]!, "surface_state"),
-        at: { instant: v.measuredTime },
-        componentKey: String(v.id),
-      }),
-    ),
+    ...out.observations,
     observation(feature, {
       property: "device.status",
-      result: category(DIGITRAFFIC_STATE[p.state] ?? "unknown", "device_status"),
+      result: category(DIGITRAFFIC_STATE[station.properties.state] ?? "unknown", "device_status"),
       at: { instant: data.sensorValues[0]!.measuredTime },
     }),
   ];
-  return { feature, observations };
+  return { feature: feature as Draft, observations };
 }
 
 type CamerasParse = ReturnType<(typeof camerasDomain.formats)[string]["parse"]>;

@@ -728,6 +728,9 @@ importers:
       '@openconditions/parking':
         specifier: workspace:*
         version: link:../parking
+      '@openconditions/weather':
+        specifier: workspace:*
+        version: link:../weather
       fast-xml-parser:
         specifier: ^5.11.2
         version: 5.11.2
@@ -1017,6 +1020,28 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(vite@7.3.5(@types/node@26.6.5)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/weather:
+    dependencies:
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      '@openconditions/model-weather':
+        specifier: workspace:*
+        version: link:../model-weather
+    devDependencies:
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(vite@7.3.5(@types/node@26.6.5)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
   services/contributions-api:
     dependencies:
       '@cloudflare/privacypass-ts':
@@ -1171,6 +1196,9 @@ importers:
       '@openconditions/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@openconditions/weather':
+        specifier: workspace:*
+        version: link:../../packages/weather
       croner:
         specifier: ^10.0.1
         version: 10.0.1

@@ -3,6 +3,7 @@ import {
   defineKind,
   defineProperty,
   defineVocabulary,
+  extendVocabulary,
   inClassPaths,
   type MappingTarget,
   type PropertyEntry,
@@ -34,6 +35,9 @@ export const PRECIPITATION_TYPES = [
   "drizzle",
   "freezing_rain",
 ] as const;
+
+/** The wire formats weather parses: Fintraffic Digitraffic's road weather station API. */
+export const WEATHER_SOURCE_FORMATS = ["digitraffic-weather"] as const;
 
 /** A weather or road-surface value measured at a site, or on one of its sensors. */
 const SITE: SubjectSpec = {
@@ -140,6 +144,7 @@ export const weatherModule: RegistryModule = {
       description:
         "Measured and forecast meteorological and road-weather data. Warnings are hazards.",
     }),
+    extendVocabulary({ vocabulary: "source_format", values: WEATHER_SOURCE_FORMATS }),
     defineVocabulary({
       code: "precipitation_type",
       values: PRECIPITATION_TYPES,

@@ -1,0 +1,39 @@
+{
+  "name": "@openconditions/weather",
+  "version": "0.1.0",
+  "description": "Weather parsers for OpenConditions: road weather station registers and their measurements into weather_station features with per-sensor channels and weather and road-surface readings, and the weather ingest domain",
+  "license": "Apache-2.0",
+  "engines": {
+    "node": ">=24"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@openconditions/ingest-framework": "workspace:*",
+    "@openconditions/model": "workspace:*",
+    "@openconditions/model-weather": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.1",
+    "typescript": "^6.0.3",
+    "vitest": "^5.0.3"
+  }
+}

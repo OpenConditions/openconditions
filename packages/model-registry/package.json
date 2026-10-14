@@ -46,6 +46,7 @@
     "@openconditions/fuel": "workspace:*",
     "@openconditions/hazards": "workspace:*",
     "@openconditions/parking": "workspace:*",
+    "@openconditions/weather": "workspace:*",
     "fast-xml-parser": "^5.11.2",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

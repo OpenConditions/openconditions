@@ -26,6 +26,10 @@ describe("weather module", () => {
     });
   });
 
+  it("contributes the wire formats the weather domain parses", () => {
+    expect(registry.vocabulary("source_format")?.values).toContain("digitraffic-weather");
+  });
+
   it("measures salt concentration as mass per volume", () => {
     expect(registry.property("road.salt_concentration")?.result).toEqual({
       type: "quantity",

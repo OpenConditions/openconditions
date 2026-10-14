@@ -1,0 +1,51 @@
+{
+  "type": "Feature",
+  "id": 1071,
+  "geometry": {
+    "type": "Point",
+    "coordinates": [25.166245, 60.226774, 0]
+  },
+  "properties": {
+    "id": 1071,
+    "name": "st103_Helsinki_Satamatie_etelä",
+    "stationType": "RWS_200",
+    "master": true,
+    "sensors": [
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+      30, 31, 32, 33, 34, 35, 36, 37, 38, 41, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 68, 73,
+      91, 92, 93, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 111, 112, 113, 114, 115,
+      116, 117, 118, 119, 126, 127, 128, 130, 131, 132, 133, 135, 136, 138, 140, 160, 161, 162, 163,
+      167, 168, 169, 170, 172, 174, 175, 176, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, 189,
+      190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 213, 214, 215,
+      225, 226
+    ],
+    "annualMaintenanceTime": null,
+    "collectionInterval": 300,
+    "collectionStatus": "REMOVED_TEMPORARILY",
+    "country": null,
+    "dataUpdatedTime": "2026-01-09T10:23:13Z",
+    "liviId": "Livi1090056",
+    "municipality": "Helsinki",
+    "municipalityCode": 91,
+    "names": {
+      "fi": "Tie 103 Helsinki, Vuosaari eteläinen",
+      "sv": "Väg 103 Helsingfors, Nordsjö söder",
+      "en": "Road 103 Helsinki, Vuosaari south"
+    },
+    "province": "Uusimaa",
+    "provinceCode": 1,
+    "purpose": null,
+    "repairMaintenanceTime": null,
+    "roadAddress": {
+      "roadNumber": 103,
+      "roadSection": 1,
+      "distanceFromRoadSectionStart": 3988,
+      "carriageway": "DUAL_CARRIAGEWAY_RIGHT_IN_INCREASING_DIRECTION",
+      "side": "LEFT",
+      "contractArea": "Jyväskylä",
+      "contractAreaCode": 301
+    },
+    "startTime": "2007-10-09T00:00:00Z",
+    "state": null
+  }
+}
