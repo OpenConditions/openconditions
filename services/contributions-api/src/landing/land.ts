@@ -13,7 +13,7 @@ import {
 } from "@openconditions/model";
 import { writeRecordIn } from "@openconditions/storage";
 import type postgres from "postgres";
-import { checkReportRate, ReportRateLimitError } from "../abuse/rate.js";
+import { checkReportRate, countRefusal, ReportRateLimitError } from "../abuse/rate.js";
 import { lockCrowd } from "../crowd.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
 
@@ -85,6 +85,9 @@ export function isGeometryError(err: unknown): boolean {
  * always has an admissible report and a late upload lives only what is left
  * of its lifetime.
  *
+ * A refused claim counts against the key's report rate as a landed one does
+ * ({@link countRefusal}); past the rate, it is refused as too fast.
+ *
  * @throws ClaimRefusedError when the claim cannot land.
  * @throws ReportRateLimitError when the key reports too fast.
  * @throws GeometryInvalidError on a residual PostGIS geometry error.
@@ -96,12 +99,16 @@ export async function landReport(
   ctx: LandingContext,
 ): Promise<LandingResult> {
   const landing = landClaim(registry, { claim: report.claim, keyId: report.keyId }, ctx);
-  if (!landing.ok) throw new ClaimRefusedError(landing.issues);
   try {
+    if (!landing.ok) throw new ClaimRefusedError(landing.issues);
     return await landWithin(sql, registry, landing.draft, report.keyId, ctx);
   } catch (err) {
-    if (isGeometryError(err)) throw new GeometryInvalidError(err);
-    throw err;
+    const failure = isGeometryError(err) ? new GeometryInvalidError(err) : err;
+    if (failure instanceof ClaimRefusedError || failure instanceof GeometryInvalidError) {
+      const [lon, lat] = centroid(report.claim.geometry as GeoJsonGeometry);
+      await countRefusal(sql, report.keyId, lon, lat, ctx.now);
+    }
+    throw failure;
   }
 }
 

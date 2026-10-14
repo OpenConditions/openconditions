@@ -25,7 +25,7 @@ import {
 } from "@openconditions/model";
 import { isPublicCandidate, loadCanonical, writeRecordIn } from "@openconditions/storage";
 import type postgres from "postgres";
-import { checkReportRate, ReportRateLimitError } from "../abuse/rate.js";
+import { checkReportRate, countRefusal, ReportRateLimitError } from "../abuse/rate.js";
 import { lockCrowd } from "../crowd.js";
 import { recomputeObservationEvidence } from "../evidence/recompute.js";
 import { ClaimRefusedError, GeometryInvalidError, isGeometryError } from "./land.js";
@@ -80,7 +80,8 @@ const refused = (path: string[], code: string, message: string) =>
  * instant confirms the stored report when the results agree and is refused
  * with {@link ConflictingReportError} when they do not. The rate limiter and
  * the kinematic check use where the reporter stood, which is never stored as
- * it is.
+ * it is. A refused claim counts against the key's report rate as a landed one
+ * does ({@link countRefusal}); past the rate, it is refused as too fast.
  *
  * @throws ClaimRefusedError when the claim cannot land.
  * @throws ConflictingReportError when another key reported another result.
@@ -167,8 +168,12 @@ export async function landObservationReport(
       };
     });
   } catch (err) {
-    if (isGeometryError(err)) throw new GeometryInvalidError(err);
-    throw err;
+    const failure = isGeometryError(err) ? new GeometryInvalidError(err) : err;
+    if (failure instanceof ClaimRefusedError || failure instanceof GeometryInvalidError) {
+      const [lon, lat] = claim.geometry.coordinates;
+      await countRefusal(sql, keyId, lon, lat, ctx.now);
+    }
+    throw failure;
   }
 }
 

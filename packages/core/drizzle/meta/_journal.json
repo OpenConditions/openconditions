@@ -491,6 +491,13 @@
       "when": 1791923904681,
       "tag": "0069_captured_licensing",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1792002866127,
+      "tag": "0070_report_refusal",
+      "breakpoints": true
     }
   ]
 }

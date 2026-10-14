@@ -213,6 +213,75 @@ describe("report rate limiting — per key per coarse cell", () => {
   }, 120_000);
 });
 
+describe("report rate limiting — refused reports count", () => {
+  /** A report the landing refuses: made a day and a half before it arrived. */
+  async function stale(key: ReporterKey, grant: string, nonce: string, lon: number, lat: number) {
+    const signed = await reportAs(
+      key,
+      situationClaim({
+        geometry: { type: "Point", coordinates: [lon, lat] },
+        reportedAt: new Date(Date.parse(currentNow) - 36 * 3_600_000).toISOString(),
+        nonce,
+      }),
+    );
+    const res = await app.inject({
+      method: "POST",
+      url: "/contrib/reports",
+      payload: { report: signed, reportingGrant: grant },
+    });
+    return { statusCode: res.statusCode, body: res.json() as Record<string, unknown> };
+  }
+
+  const refusals = async (keyId: string) =>
+    (
+      await sql<{ count: number }[]>`SELECT count(*)::int AS count
+        FROM conditions.report_refusal WHERE actor_key_id = ${keyId}`
+    )[0]?.count;
+
+  it("429s a key's reports once its refused ones fill the rate, and writes no more refusals", async () => {
+    currentNow = "2026-07-12T13:00:00.000Z";
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    for (let i = 0; i < 10; i++) {
+      const res = await stale(
+        key,
+        grant,
+        `refused-${String(i).padStart(12, "0")}`,
+        4.9 + i * 0.02,
+        52.37,
+      );
+      expect(res.statusCode).toBe(422);
+    }
+    expect(await refusals(key.keyId)).toBe(10);
+
+    const refused = await stale(key, grant, "refused-past-the-rate", 6.1, 52.37);
+    expect(refused.statusCode).toBe(429);
+    expect(refused.body["reason"]).toBe("per-key");
+    const valid = await report(key, grant, "valid-past-the-rate-1", 6.3, 52.37);
+    expect(valid.statusCode).toBe(429);
+    expect(await refusals(key.keyId)).toBe(10);
+  }, 120_000);
+
+  it("counts refusals per cell, and forgets them once the window has passed", async () => {
+    currentNow = "2026-07-12T14:00:00.000Z";
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    for (let i = 0; i < 4; i++) {
+      expect(
+        (await stale(key, grant, `cell-refused-${String(i).padStart(7, "0")}`, 4.9, 52.37))
+          .statusCode,
+      ).toBe(422);
+    }
+    const sameCell = await report(key, grant, "cell-valid-000000001", 4.9, 52.37);
+    expect(sameCell.statusCode).toBe(429);
+    expect(sameCell.body["reason"]).toBe("per-key-cell");
+
+    currentNow = "2026-07-12T14:01:01.000Z";
+    const later = await report(key, grant, "cell-valid-000000002", 4.9, 52.37);
+    expect(later.statusCode).toBe(200);
+  }, 120_000);
+});
+
 describe("checkReportRate — reusable limiter contract", () => {
   it("returns ok for a key with no recent reports and honors a custom rule", async () => {
     const idle = await checkReportRate(sql, "no-such-key", 4.9, 52.37, "2026-07-12T12:00:00.000Z");

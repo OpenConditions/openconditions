@@ -109,7 +109,8 @@ publication.
 ## Anti-abuse
 
 - **Rate limits per key and per area.** A key is capped both overall and per
-  ~1 km cell within a short window.
+  ~1 km cell within a short window. Refused reports count as well as landed
+  ones, so a key cannot retry refused reports faster than it may report.
 - **Kinematic plausibility is a post-hoc flag, not a pre-publish block.** A
   physically impossible reporter transition flags the new report for review;
   it does not censor it, because a truthful fast mover must not be silenced.

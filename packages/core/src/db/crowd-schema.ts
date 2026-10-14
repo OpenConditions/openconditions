@@ -49,6 +49,27 @@ export const subClaim = conditionsSchema.table(
 );
 
 /**
+ * A report the instance refused to land: its key, the coarse area cell it
+ * named and when it arrived. The report-rate limiter counts refusals beside
+ * landed reports, so refused reports cannot outpace the rate either. No
+ * evidence: a refusal names no record. Rows outlive the rate window only
+ * until the next refusal prunes them.
+ */
+export const reportRefusal = conditionsSchema.table(
+  "report_refusal",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    actorKeyId: text("actor_key_id").notNull(),
+    cell: text("cell").notNull(),
+    occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    index("idx_report_refusal_actor").on(t.actorKeyId, t.occurredAt),
+    index("idx_report_refusal_occurred").on(t.occurredAt),
+  ],
+);
+
+/**
  * The append-only, authoritative evidence ledger for a crowd record: one row
  * per admissible piece of evidence (report, confirm, negate, external
  * resolution). The record's evidence summary is a replayable projection of
