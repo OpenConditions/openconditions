@@ -142,3 +142,10 @@ describe("charging licences", () => {
     expect(r.shareAlike).toBe(false);
   });
 });
+
+it("keeps NH redistribution public while refusing automatic child admission without retention evidence", () => {
+  const rights = effectiveRights("LicenseRef-National-Highways-Transport-Data-Feeds");
+  expect(rights.retention).toBeNull();
+  expect(isRestricted(rights)).toBe(false);
+  expect(admitsCatalogChild(rights)).toBe(false);
+});

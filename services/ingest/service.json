@@ -694,7 +694,7 @@
             "Subscribe to the 'unlimited' product at developer.data.nationalhighways.co.uk/subscription#product=unlimited (one product grants the APIM key for all NTIS DATEX feeds, incl. Road and Lane Closures v2.0).",
             "Copy the Ocp-Apim-Subscription-Key from your profile at developer.data.nationalhighways.co.uk/profile."
           ],
-          "notes": "OGL-UK-3.0; attribution \"Contains National Highways data © Crown copyright and database right.\""
+          "notes": "National Highways Transport Data Feeds Licence (OGL v2.0 with NH amendments); acknowledgement: Powered by National Highways’ Transport Data Feeds. Paragraph 20 branding and accurate registration apply; paragraph 21e requires separate written permission for automated extraction, unverified for this operator. See https://developer.data.nationalhighways.co.uk/terms."
         }
       },
       "HR_HC_USER": {

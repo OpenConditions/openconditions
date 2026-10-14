@@ -507,9 +507,9 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     region: "gb",
     product: "events",
     format: "datex2",
-    attribution: "Contains National Highways data © Crown copyright and database right",
-    license: "OGL-UK-3.0",
-    licenseUrl: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+    attribution: "Powered by National Highways’ Transport Data Feeds",
+    license: "LicenseRef-National-Highways-Transport-Data-Feeds",
+    licenseUrl: "https://developer.data.nationalhighways.co.uk/terms",
   },
   "hk-td-flow": {
     region: "hk",

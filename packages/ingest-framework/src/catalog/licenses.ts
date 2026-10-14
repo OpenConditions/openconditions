@@ -103,6 +103,17 @@ export const LICENSES: readonly LicenseInfo[] = [
     name: "Open Government Licence v3.0",
     url: "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
   }),
+  {
+    id: "LicenseRef-National-Highways-Transport-Data-Feeds",
+    name: "National Highways Transport Data Feeds Licence (OGL v2.0 with NH amendments)",
+    url: "https://developer.data.nationalhighways.co.uk/terms",
+    redistribution: true,
+    derivedRedistribution: true,
+    commercialUse: true,
+    attributionRequired: true,
+    retention: null,
+    shareAlike: false,
+  },
   open({
     id: "LicenseRef-OGL-BC",
     name: "Open Government Licence – British Columbia",
