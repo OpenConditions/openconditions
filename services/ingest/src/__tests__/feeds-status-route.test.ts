@@ -1,5 +1,5 @@
 import Fastify from "fastify";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { FeedStatusStore } from "../feed-status.js";
 import type { BindingMetricsReader } from "../pipeline/binding-metrics.js";
 import type { SourceStatusReader } from "../pipeline/source-status.js";
@@ -112,6 +112,19 @@ describe("GET /feeds/status", () => {
       else process.env["HR_HC_USER"] = prevUser;
       if (prevPass === undefined) delete process.env["HR_HC_PASSWORD"];
       else process.env["HR_HC_PASSWORD"] = prevPass;
+    }
+  });
+
+  it("names the instance it serves", async () => {
+    vi.stubEnv("OPENCONDITIONS_INSTANCE_ID", "conditions.example.org");
+    const named = Fastify();
+    try {
+      registerFeedStatusRoute(named, store, REPO_CATALOG, async () => new Map());
+      const res = await named.inject({ method: "GET", url: "/feeds/status" });
+      expect(res.json()).toMatchObject({ instanceId: "conditions.example.org" });
+    } finally {
+      vi.unstubAllEnvs();
+      await named.close();
     }
   });
 

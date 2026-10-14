@@ -3,6 +3,7 @@ import {
   type Scope,
   type SegmentConditionRow,
 } from "@openconditions/core";
+import { resolveInstanceId } from "@openconditions/core/server";
 import {
   type Catalog,
   type EffectiveRights,
@@ -264,6 +265,7 @@ export function registerFeedStatusRoute(
   sourceStatus?: SourceStatusReader,
   graphStatus?: FeedGraphStatusReader,
 ): void {
+  const instanceId = resolveInstanceId();
   app.get("/feeds/status", async () => {
     const collectedAt = new Date().toISOString();
     let durable = new Map<string, SourceOperationalStatus>();
@@ -340,7 +342,7 @@ export function registerFeedStatusRoute(
         disabledReason: feed.disabled!.reason,
       });
     }
-    return { schemaVersion: "2.0", instanceId: "openconditions", collectedAt, graph, feeds };
+    return { schemaVersion: "2.0", instanceId, collectedAt, graph, feeds };
   });
 }
 
