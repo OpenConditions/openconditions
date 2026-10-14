@@ -37,7 +37,9 @@ captured 2026-10-09, properties unchanged, coordinates thinned to about 40 verti
 rounded to four decimals:
 
 - `dwd-areas-coast.json`: `dwd:Warngebiete_Kueste`, cells `501000005` and `501000001` of eight.
-- `dwd-areas-lakes.json`: `dwd:Warngebiete_Binnenseen`, cell `208438000` (Bodensee - Mitte) of 23.
+- `dwd-areas-lakes.json`: `dwd:Warngebiete_Binnenseen`, cell `208438000` (Bodensee - Mitte) of 23;
+  cells `209901000` (Altmühlsee/Brombachsee/Igelsbachsee), `209904000` (Starnberger See) and
+  `209913000` (Chiemsee) captured 2026-10-15, coordinates as published, rounded to four decimals.
 
 ## ECCC Datamart walk (`eccc-datamart/`)
 

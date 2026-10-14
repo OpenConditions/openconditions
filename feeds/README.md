@@ -286,7 +286,8 @@ The hazards roles:
   (`ca-eccc-alerts`, whose Datamart files each message under its day, office
   and hour). The optional `areas` role is GeoJSON layers keyed by
   `WARNCELLID` (DWD's coast and lake warning areas): an area with no polygon
-  of its own takes the union of its warn cells' shapes.
+  of its own takes the union of its warn cells' shapes, a Bavarian lake group
+  (`209000001`, `209000002`) the union of its member lakes'.
 - `nws` reads `alerts` and `zones`, an `each` endpoint over the alerts'
   `affectedZones` that fetches each zone's shape once and keeps it for 30
   days. A zone-only alert is drawn as the union of its zones' shapes; a zone

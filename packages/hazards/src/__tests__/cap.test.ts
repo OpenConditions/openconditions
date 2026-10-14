@@ -88,6 +88,37 @@ describe("the cap format: shapes for areas named only by warn cell", () => {
     });
   });
 
+  test("a Bavarian lake group takes its member lakes' shapes; a member the layer lacks adds nothing", () => {
+    // The coast warning with its first area moved to a lake group and its
+    // second to Helgoland, which, like its third, the trimmed layer lacks.
+    const lakeGroup = (cell: string) => [
+      Buffer.from(
+        fixture("dwd-coast-strong-wind-mul.xml")
+          .toString("utf8")
+          .replaceAll("<value>501000005</value>", `<value>${cell}</value>`)
+          .replaceAll("<value>501000001</value>", "<value>501000002</value>"),
+      ),
+    ];
+    const latitudes = (polygons: unknown) =>
+      (polygons as number[][][][]).flat(2).map(([, lat]) => lat!);
+    const polygonsOf = (cell: string) => {
+      const out = parse(dwdFeed(), { alerts: lakeGroup(cell), areas: areas() }, COAST_AT);
+      expect(sealFailures(out.situations)).toEqual([]);
+      const location = locationOf(out.situations[0]!);
+      expect(location).toMatchObject({ geometryOrigin: "derived" });
+      expect(location.admin!.geocodes).toContainEqual({ scheme: "warncellid", code: cell });
+      return location.geometry!.coordinates;
+    };
+    // The trimmed layer holds 209901000 (two parts) but not 209902000, Rothsee.
+    const north = polygonsOf("209000001");
+    expect(north).toHaveLength(2);
+    expect(Math.min(...latitudes(north))).toBeGreaterThan(49);
+    // Of the eleven southern members it holds 209904000 and 209913000, one part each.
+    const south = polygonsOf("209000002");
+    expect(south).toHaveLength(2);
+    expect(Math.max(...latitudes(south))).toBeLessThan(48);
+  });
+
   test("without the area layers, or with layers that do not read, the codes stand alone", () => {
     for (const payloads of [
       { alerts: coast() } as FeedPayloads,

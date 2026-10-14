@@ -12,7 +12,7 @@
       // missing from the next zip has ended. Coast and lake warnings name
       // their areas by warn cell only: DWD's warning-area layers give those
       // cells their shapes (all eight coast cells, 23 of the 25 lake cells;
-      // the two Bavarian lake groups have none).
+      // the two Bavarian lake groups take their member lakes' shapes).
       "endpoints": {
         "alerts": {
           "url": "https://opendata.dwd.de/weather/alerts/cap/COMMUNEUNION_DWD_STAT/Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_MUL.zip",
