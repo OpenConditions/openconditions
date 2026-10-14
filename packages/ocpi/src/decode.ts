@@ -282,9 +282,11 @@ function vat(component: RawRecord): number | undefined {
   const inline = num(component.vat);
   if (inline !== undefined) return inline;
   if (!Array.isArray(component.taxes)) return undefined;
-  const taxes = component.taxes.filter(isRecord);
-  const named = taxes.find((tax) => text(tax.name)?.toUpperCase() === "VAT");
-  return num((named ?? taxes[0])?.percentage);
+  // Another tax (a city levy) is no VAT, and a tax that names nothing may be either.
+  const named = component.taxes
+    .filter(isRecord)
+    .find((tax) => text(tax.name)?.toUpperCase() === "VAT");
+  return num(named?.percentage);
 }
 
 function priceComponent(raw: unknown): OcpiPriceComponent {

@@ -72,6 +72,23 @@ describe("OCPDB tariffs", () => {
     expect(night?.elements[1]?.restrictions).toEqual({ min_duration: 1800 });
   });
 
+  test("only a tax named VAT is the VAT", () => {
+    const withTaxes = (taxes: unknown[]) =>
+      normaliseTariff({
+        id: "t",
+        currency: "EUR",
+        elements: [{ price_components: [{ type: "ENERGY", price: 0.5, taxes }] }],
+      }).elements[0]?.price_components[0];
+    expect(
+      withTaxes([
+        { name: "City levy", percentage: "2" },
+        { name: "vat", percentage: "19" },
+      ]),
+    ).toMatchObject({ vat: 19 });
+    expect(withTaxes([{ name: "City levy", percentage: "2" }])).not.toHaveProperty("vat");
+    expect(withTaxes([{ percentage: "19" }])).not.toHaveProperty("vat");
+  });
+
   test("a free FLAT component keeps price zero", () => {
     const free = tariffs.find((t) => t.id === "138644");
     expect(free?.elements[0]?.price_components[0]).toEqual({ type: "FLAT", price: 0, vat: 19 });
