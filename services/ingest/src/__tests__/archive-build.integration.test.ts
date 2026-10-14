@@ -298,6 +298,34 @@ describe("nightly static archive", () => {
     }
   }, 60_000);
 
+  it("does not read a file built after an erasure's day for it", async () => {
+    await writeSituations(sql, "de-autobahn-events", [
+      situationDraft("kept"),
+      situationDraft("erased"),
+    ]);
+    const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));
+    try {
+      await buildDailyArchive(sql, { now: () => new Date("2026-09-07T03:30:00Z"), outputDir: dir });
+      await sql`
+        INSERT INTO conditions.federation_tombstone
+          (canonical_id, peer_instance_id, reason, tombstoned_at, expires_at)
+        SELECT canonical_id, '', 'rights_revoked', '2026-09-08T09:00:00Z', '2026-10-08T09:00:00Z'
+          FROM conditions.situation WHERE id = 'oc:situation:de-autobahn-events:erased'`;
+      // A later night's file the scan would choke on: it was built without the record.
+      await writeFile(path.join(dir, "archive-situation-2026-09-09.parquet"), "not parquet");
+      const failed = vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(await pruneErasedArchives(sql, dir, "2026-09-09T10:00:00Z")).toBe(1);
+      expect(failed).not.toHaveBeenCalled();
+      failed.mockRestore();
+      expect(await readIds(path.join(dir, "archive-situation-2026-09-07.parquet"))).toEqual([
+        "oc:situation:de-autobahn-events:kept",
+      ]);
+    } finally {
+      await sql`TRUNCATE conditions.federation_tombstone`;
+      await rm(dir, { recursive: true, force: true });
+    }
+  }, 60_000);
+
   it("keeps the newest nights only, and the latest names", async () => {
     await writeSituations(sql, "de-autobahn-events", [situationDraft("kept")]);
     const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-"));

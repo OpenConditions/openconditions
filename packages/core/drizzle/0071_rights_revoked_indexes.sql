@@ -1,0 +1,3 @@
+CREATE INDEX "idx_feature_rights_revoked" ON "conditions"."feature" USING btree ("id") WHERE "conditions"."feature"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
+CREATE INDEX "idx_offer_rights_revoked" ON "conditions"."offer" USING btree ("id") WHERE "conditions"."offer"."tombstone_reason" = 'rights_revoked';--> statement-breakpoint
+CREATE INDEX "idx_situation_rights_revoked" ON "conditions"."situation" USING btree ("id") WHERE "conditions"."situation"."tombstone_reason" = 'rights_revoked';

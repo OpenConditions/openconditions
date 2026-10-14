@@ -498,6 +498,13 @@
       "when": 1792002866127,
       "tag": "0070_report_refusal",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1792018481228,
+      "tag": "0071_rights_revoked_indexes",
+      "breakpoints": true
     }
   ]
 }

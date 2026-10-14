@@ -79,45 +79,51 @@ async function* polledPages(
 const DATED_ARCHIVE = /^archive-(situation|feature|offer|observation)-\d{4}-\d{2}-\d{2}\.parquet$/;
 
 /**
- * Removes erased records from every dated archive file kept in `dir`. Dated
- * files are never pruned by age, so an erasure must reach them: a record
- * tombstoned `rights_revoked` (by id) and a canonical id whose erasure fact
- * is in force (by canonical id, as the inbox refuses it) are dropped from
- * each file that holds them, which is rewritten in place — and the class's
- * stable name moved with it when it points there. Best-effort per file: a
- * file that cannot be rewritten is logged and tried again the next night.
+ * Removes erased records from the dated archive files kept in `dir`, which
+ * may predate an erasure by up to the kept nights: a record tombstoned
+ * `rights_revoked` (by id) and a canonical id whose erasure fact is in force
+ * (by canonical id, as the inbox refuses it) are dropped from each file that
+ * holds them, which is rewritten in place — and the class's stable name moved
+ * with it when it points there. A file dated after an erasure's day was built
+ * without it and is not read for it. Best-effort per file: a file that cannot
+ * be rewritten is logged and tried again the next night.
  */
 export async function pruneErasedArchives(sql: Sql, dir: string, now: string): Promise<number> {
-  const inForce = new Set<string>();
+  // Each erasure in force, with the UTC day it took effect.
+  const inForce = new Map<string, string>();
+  const dayOf = (at: Date) => at.toISOString().slice(0, 10);
   for (const cls of ["situation", "feature", "offer"] as const) {
-    const rows = await sql.unsafe<{ id: string }[]>(
-      `SELECT id FROM conditions.${cls} WHERE tombstone_reason = 'rights_revoked'`,
+    const rows = await sql.unsafe<{ id: string; tombstoned_at: Date }[]>(
+      `SELECT id, tombstoned_at FROM conditions.${cls} WHERE tombstone_reason = 'rights_revoked'`,
     );
-    for (const r of rows) inForce.add(`id:${r.id}`);
+    for (const r of rows) inForce.set(`id:${r.id}`, dayOf(r.tombstoned_at));
   }
-  for (const r of await sql<{ canonical_id: string }[]>`
-    SELECT canonical_id FROM conditions.federation_tombstone WHERE expires_at > ${now}`) {
-    inForce.add(`canonical:${r.canonical_id}`);
+  for (const r of await sql<{ canonical_id: string; tombstoned_at: Date }[]>`
+    SELECT canonical_id, max(tombstoned_at) AS tombstoned_at
+      FROM conditions.federation_tombstone WHERE expires_at > ${now}
+     GROUP BY canonical_id`) {
+    inForce.set(`canonical:${r.canonical_id}`, dayOf(r.tombstoned_at));
   }
   // Only an erasure not yet applied sends the night through the kept files:
   // each file is rewritten once per erasure, not every night it is in force.
-  // A file written after an erasure never held the erased content.
   const applied = new Set(
     (await sql<{ key: string }[]>`SELECT key FROM conditions.archive_erasure`).map((r) => r.key),
   );
   const ended = [...applied].filter((key) => !inForce.has(key));
   if (ended.length > 0) await sql`DELETE FROM conditions.archive_erasure WHERE key = ANY(${ended})`;
-  const pending = [...inForce].filter((key) => !applied.has(key));
+  const pending = [...inForce.keys()].filter((key) => !applied.has(key));
   if (pending.length === 0) return 0;
-  const erased = new Set(pending);
-  const drop = (key: ArchiveRowKey) =>
-    erased.has(`id:${key.id}`) || erased.has(`canonical:${key.canonicalId}`);
 
   let removed = 0;
   let failed = false;
   for (const name of (await readdir(dir)).sort()) {
     const match = DATED_ARCHIVE.exec(name);
     if (match === null) continue;
+    const fileDay = name.slice(-"YYYY-MM-DD.parquet".length, -".parquet".length);
+    const erased = new Set(pending.filter((key) => inForce.get(key)! >= fileDay));
+    if (erased.size === 0) continue;
+    const drop = (key: ArchiveRowKey) =>
+      erased.has(`id:${key.id}`) || erased.has(`canonical:${key.canonicalId}`);
     const cls = match[1] as RecordClass;
     const file = path.join(dir, name);
     const temp = `${file}.${randomUUID()}.tmp`;

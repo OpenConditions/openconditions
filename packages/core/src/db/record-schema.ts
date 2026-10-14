@@ -160,6 +160,10 @@ export const situation = conditionsSchema.table(
       .on(t.origin, t.evidenceState)
       .where(sql`${t.origin} = 'crowd'`),
     index("idx_situation_tombstoned").on(t.tombstonedAt).where(sql`${t.tombstonedAt} IS NOT NULL`),
+    // The nightly archive prune looks up the erased records.
+    index("idx_situation_rights_revoked")
+      .on(t.id)
+      .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
   ],
 );
 
@@ -225,6 +229,9 @@ export const feature = conditionsSchema.table(
     index("idx_feature_external_ids")
       .using("gin", sql`(${t.record} -> 'externalIds') jsonb_path_ops`)
       .with({ fastupdate: "off" }),
+    index("idx_feature_rights_revoked")
+      .on(t.id)
+      .where(sql`${t.tombstoneReason} = 'rights_revoked'`),
   ],
 );
 
@@ -326,6 +333,7 @@ export const offer = conditionsSchema.table(
     index("idx_offer_geom").using("gist", t.geom),
     index("idx_offer_source").on(t.sourceId, t.id),
     index("idx_offer_canonical").on(t.canonicalId),
+    index("idx_offer_rights_revoked").on(t.id).where(sql`${t.tombstoneReason} = 'rights_revoked'`),
   ],
 );
 

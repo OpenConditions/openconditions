@@ -119,8 +119,9 @@ in place, and moves the class's stable name along when it points at that file.
 So an erased record leaves every dated file by the next nightly build. Each
 erasure is applied once: `conditions.archive_erasure` records the erasures the
 kept files are free of (in the database, because the archive directory is
-served), so a night reads the files only for a new erasure, and an erasure
-stays pending while any file failed to be rewritten. With the
+served), so a night reads the files only for a new erasure, and only the files
+dated on or before the erasure's day: a later one was built without the
+record. An erasure stays pending while any file failed to be rewritten. With the
 job off (`ARCHIVE_CRON=off`) nothing rewrites the files: an operator who keeps
 dated files and turns the job off removes erased records from them by hand.
 
