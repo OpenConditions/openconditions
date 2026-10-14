@@ -72,14 +72,22 @@ export const vehiclesModule: RegistryModule = {
         routeName: z.string().min(1).optional(),
       }),
     }),
+    /*
+     * A vehicle the publisher names is a `service_vehicle` feature. A publisher
+     * that names none (Digitraffic re-keys its trackings every few seconds and
+     * publishes no vehicle id) gives anonymous positions, each reading its own
+     * series at its location. Either way a position holds only until its
+     * reading expires, so the series is transient.
+     */
     defineProperty({
       code: "vehicle.position",
       domain: DOMAIN,
-      version: V,
+      version: "1.1",
       description: "A service vehicle's reported position and activity.",
       result: { type: "structured", schema: "vehicle_position" },
-      subjects: [{ kind: "feature", featureKinds: ["service_vehicle"] }],
+      subjects: [{ kind: "feature", featureKinds: ["service_vehicle"] }, { kind: "location" }],
       freshnessWindowSec: 600,
+      transient: true,
       retention: { rawDays: 2 },
     }),
   ],

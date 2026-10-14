@@ -146,26 +146,43 @@
       "const": "vehicle.position"
     },
     "subject": {
-      "type": "object",
-      "properties": {
-        "kind": {
-          "type": "string",
-          "const": "feature"
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "feature"
+            },
+            "featureId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "componentKey": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "kind",
+            "featureId"
+          ],
+          "additionalProperties": false
         },
-        "featureId": {
-          "type": "string",
-          "minLength": 1
-        },
-        "componentKey": {
-          "type": "string",
-          "minLength": 1
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "location"
+            }
+          },
+          "required": [
+            "kind"
+          ],
+          "additionalProperties": false
         }
-      },
-      "required": [
-        "kind",
-        "featureId"
-      ],
-      "additionalProperties": false
+      ]
     },
     "qualifiers": {
       "not": {}

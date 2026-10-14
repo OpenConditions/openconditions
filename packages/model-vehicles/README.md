@@ -3,7 +3,9 @@
 The vehicles registry module of the OpenConditions data model: the `vehicles`
 domain, the `service_vehicle` feature kind (snowplows, spreaders, incident
 response and other fleets an authority tracks), and the `vehicle.position`
-property with its `vehicle_position@1` structured result.
+property with its `vehicle_position@1` structured result. A position is about a
+`service_vehicle` the publisher names, or about its location when the
+publisher names no vehicle; its series is transient.
 
 It holds definitions only and depends on `@openconditions/model` alone. The
 assembled registry that includes this module is

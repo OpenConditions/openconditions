@@ -434,7 +434,7 @@
   {
     "class": "observation",
     "code": "vehicle.position",
-    "version": "1.0",
+    "version": "1.1",
     "file": "observation/vehicle.position@1.json"
   },
   {

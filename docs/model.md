@@ -264,7 +264,10 @@ Three modules register the things along the road and what they measure:
 - `@openconditions/model-vehicles` registers the `vehicles` domain:
   `service_vehicle` and `vehicle.position` (`vehicle_position@1`). A vehicle
   has no fixed place, so its feature carries no geometry; each position
-  observation is located where it was reported.
+  observation is located where it was reported. A publisher that names no
+  vehicle gives anonymous positions: readings about their location, no
+  feature. The series is transient, either way, and ends when its reading
+  expires.
 
 Crosswalk tables cover DATEX II `vmsType`, sign working status, device health,
 traffic status, precipitation type and road-surface condition type, the DATEX
@@ -313,7 +316,11 @@ domain's (`packages/weather`) on their catalogue feeds. What it found:
 - Digitraffic's DATEX site table carries national-grid coordinates under WGS84
   element names; positions come from the station metadata.
 - Digitraffic's snowplow tracking has no vehicle identity, so it does not fit
-  `service_vehicle`; Iowa's AVL feed, which names its trucks, does.
+  `service_vehicle`; Iowa's AVL feed, which names its trucks, does. A
+  Digitraffic tracking id lasts seconds to minutes, and a task change or five
+  silent minutes start a tracking that does not point back, so its points are
+  `vehicle.position` readings about their location (the vehicles domain's
+  `digitraffic` format).
 
 ## Facilities
 
@@ -1001,7 +1008,7 @@ Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 | `road.ice_thickness`          | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
 | `road.salt_concentration`     | weather    | 1.0     | quantity (kg/m3)                | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
 | `road.condition_forecast`     | weather    | 1.0     | category (surface_state)        | segments; location                                                                          | raw 2 d                             |
-| `vehicle.position`            | vehicles   | 1.0     | structured (vehicle_position)   | feature (service_vehicle)                                                                   | raw 2 d                             |
+| `vehicle.position`            | vehicles   | 1.1     | structured (vehicle_position)   | feature (service_vehicle); location                                                         | transient, raw 2 d                  |
 | `parking.available`           | parking    | 1.0     | count                           | feature (parking_site, component parking_area, component parking_space)                     | change-only, hourly rollup          |
 | `parking.occupied`            | parking    | 1.0     | count                           | feature (parking_site, component parking_area, component parking_space)                     | change-only, hourly rollup          |
 | `parking.occupancy_pct`       | parking    | 1.0     | quantity (%)                    | feature (parking_site, component parking_area, component parking_space)                     | hourly rollup                       |
