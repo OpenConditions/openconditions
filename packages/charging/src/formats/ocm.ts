@@ -182,8 +182,8 @@ function maxResultsOf(feed: ChargingCatalogFeed): number | undefined {
  * qualified by it, so two providers' records may still link. The status types
  * are maintained by users: a lifecycle, never a reading; a duplicate listing
  * is left out. `UsageCost` stays the publisher's text. A cell keeps only the
- * POIs inside it; an answer as long as `maxresults` may have been cut short
- * and is logged.
+ * POIs inside it; an answer as long as `maxresults` may have been cut short,
+ * so it is logged and the output marked truncated.
  */
 export function parseOcm(
   feed: ChargingCatalogFeed,
@@ -198,6 +198,7 @@ export function parseOcm(
     const pois = (Array.isArray(doc) ? doc : []).filter(isRecord);
     const cap = maxResultsOf(feed);
     if (cap !== undefined && pois.length >= cap) {
+      out.truncated = true;
       console.warn(
         `[ocm] ${feed.id}${ctx.cell === undefined ? "" : ` cell ${ctx.cell.id}`}: ${pois.length} results, the maxresults cap; POIs past it are missing`,
       );

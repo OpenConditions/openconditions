@@ -67,6 +67,8 @@ export interface ParseOutput {
   rejected?: number;
   /** A format that reads status alone: where its status records' readings belong. */
   statusIndex?: StatusIndex;
+  /** The publisher cut its answer at a result cap: records past it are missing. */
+  truncated?: boolean;
 }
 
 /** What a status-only poll parsed into: readings, and the status records it could not place. */

@@ -161,9 +161,9 @@ describe("ocm", () => {
   test("OCM: a cell read keeps the cell's records, and a full answer warns of truncation", () => {
     const luxembourg: Cell = { id: "0.25/24/198", west: 6, south: 49.5, east: 6.25, north: 49.75 };
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(parse(luxembourg).features.map((f) => f["id"])).toEqual([
-      "oc:feature:ocm-charging:32021",
-    ]);
+    const whole = parse(luxembourg);
+    expect(whole.features.map((f) => f["id"])).toEqual(["oc:feature:ocm-charging:32021"]);
+    expect(whole.truncated).toBeUndefined();
     expect(warn).not.toHaveBeenCalled();
 
     // Five results against a cap of five: the cell may hold more.
@@ -173,7 +173,7 @@ describe("ocm", () => {
       ...main,
       url: main.url!.replace("maxresults=1000", "maxresults=5"),
     };
-    parse(luxembourg, capped);
+    expect(parse(luxembourg, capped).truncated).toBe(true);
     expect(warn).toHaveBeenCalledTimes(1);
     expect(String(warn.mock.calls[0]?.[0])).toMatch(/ocm-charging.*0\.25\/24\/198.*5/);
   });

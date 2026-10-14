@@ -274,9 +274,16 @@ async function fetchAndWrite(
       const rejectedReadings = summary.rejected.filter((r) => r.class === "observation").length;
       const readings =
         output.observations.length - summary.observations.unchanged - rejectedReadings;
+      // A cut answer is all the publisher gives for this cell, so fetching it
+      // again sooner would bring the same records: the status says so instead.
       await upsertSourceStatus(tx, feed.id, {
         freshnessWindowSec: feed.freshnessWindowSec,
-        outcome: empty ? "complete_empty" : "changed",
+        outcome: parse.truncated ? "partial" : empty ? "complete_empty" : "changed",
+        ...(parse.truncated
+          ? {
+              error: `cell ${cell.id}: the answer reached the result cap; records past it are missing`,
+            }
+          : {}),
         attemptAt: at,
         networkValidated: true,
         durationMs: Date.now() - start,

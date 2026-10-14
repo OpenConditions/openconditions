@@ -292,6 +292,18 @@ describe("on-demand read-through", () => {
     expect(status?.last_outcome).toBe("complete_empty");
   }, 60_000);
 
+  test("a cell whose answer reached the result cap is kept and its status says it is partial", async () => {
+    const h = harness("capped");
+    h.up.answerCapped(true);
+    const read = await h.features("8,49,8.1,49.1");
+    expect(read.records).toHaveLength(1);
+    expect((await h.ledger()).map((r) => r.status)).toEqual(["fresh"]);
+    const [status] = await sql<{ last_outcome: string; last_error: string | null }[]>`
+      SELECT last_outcome, last_error FROM conditions.source_status WHERE source = ${h.feed.id}`;
+    expect(status?.last_outcome).toBe("partial");
+    expect(status?.last_error).toMatch(/0\.1\/80\/490.*result cap/);
+  }, 60_000);
+
   test("a read wider than maxCellsPerRead fetches nothing and is partial", async () => {
     const h = harness("wide");
     // Six cells, the source's cap is four.

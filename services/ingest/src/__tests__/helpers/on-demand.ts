@@ -27,7 +27,10 @@ export const FORMAT = "cell-stations";
 
 export const START = new Date("2026-10-03T10:00:00.000Z");
 
-/** Parses a JSON list of `{ id, lon, lat, e5 }` stations, dated by the fetch. */
+/**
+ * Parses a JSON list of `{ id, lon, lat, e5 }` stations, dated by the fetch;
+ * a station marked `capped` stands for an answer cut at a result cap.
+ */
 function parseStations(
   feed: CatalogFeed,
   payloads: Readonly<Record<string, readonly Buffer[]>>,
@@ -40,8 +43,10 @@ function parseStations(
       lon: number;
       lat: number;
       e5: string;
+      capped?: boolean;
     }[];
     for (const s of stations) {
+      if (s.capped) out.truncated = true;
       const featureId = `oc:feature:${feed.id}:${s.id}`;
       const provenance = {
         origin: "feed",
@@ -193,6 +198,7 @@ export function upstream() {
   const calls: URL[] = [];
   let failing = false;
   let empty = false;
+  let capped = false;
   let gate: Promise<void> | undefined;
   const fetch = (async (input: string | URL | Request) => {
     const url = new URL(input instanceof Request ? input.url : String(input));
@@ -201,7 +207,13 @@ export function upstream() {
     if (failing) return new Response("upstream down", { status: 503 });
     if (empty) return new Response("[]", { headers: { "content-type": "application/json" } });
     const [w, s, e, n] = ["w", "s", "e", "n"].map((k) => Number(url.searchParams.get(k)));
-    const station = { id: stationOf(w!, s!), lon: (w! + e!) / 2, lat: (s! + n!) / 2, e5: "1.799" };
+    const station = {
+      id: stationOf(w!, s!),
+      lon: (w! + e!) / 2,
+      lat: (s! + n!) / 2,
+      e5: "1.799",
+      ...(capped ? { capped } : {}),
+    };
     return new Response(JSON.stringify([station]), {
       headers: { "content-type": "application/json" },
     });
@@ -226,6 +238,10 @@ export function upstream() {
     /** Answers no station for any cell. */
     answerEmpty(on: boolean) {
       empty = on;
+    },
+    /** Answers every cell as cut at a result cap. */
+    answerCapped(on: boolean) {
+      capped = on;
     },
   };
 }
