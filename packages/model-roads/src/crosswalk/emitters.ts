@@ -277,19 +277,21 @@ export const GTFS_RT_CAUSE_VALUES: Readonly<Record<string, string>> = {
  * many record codes read as one classification; reversing that index would
  * pick whichever code came first, so the emitter's choice lives here. Every
  * code reads back as the same kind; `null` marks a type with no record of its
- * own, which the emitter tells through its effects' records alone.
+ * own, which the emitter tells through its effects' records alone. A class
+ * whose schema requires its discriminator carries one: the class's generic
+ * value where DATEX has one, else `other`.
  */
 export const DATEX2_RECORDS: Readonly<Record<string, string | null>> = {
-  "incident.accident": "Accident",
-  "incident.breakdown": "VehicleObstruction",
-  "incident.vehicle_hazard": "VehicleObstruction",
-  "incident.obstruction": "GeneralObstruction",
-  "incident.obstruction.animal": "AnimalPresenceObstruction",
-  "incident.obstruction.infrastructure_damage": "InfrastructureDamageObstruction",
-  "incident.fire": "GeneralObstruction",
+  "incident.accident": "Accident:accident",
+  "incident.breakdown": "VehicleObstruction:brokenDownVehicle",
+  "incident.vehicle_hazard": "VehicleObstruction:other",
+  "incident.obstruction": "GeneralObstruction:obstructionOnTheRoad",
+  "incident.obstruction.animal": "AnimalPresenceObstruction:animalsOnTheRoad",
+  "incident.obstruction.infrastructure_damage": "InfrastructureDamageObstruction:other",
+  "incident.fire": "GeneralObstruction:other",
   "incident.fire.vehicle_fire": "VehicleObstruction:vehicleOnFire",
-  "roadworks.works": "MaintenanceWorks",
-  "roadworks.works.construction": "ConstructionWorks",
+  "roadworks.works": "MaintenanceWorks:roadworks",
+  "roadworks.works.construction": "ConstructionWorks:constructionWork",
   "closure.closure": "RoadOrCarriagewayOrLaneManagement:roadClosed",
   "closure.closure.carriageway": "RoadOrCarriagewayOrLaneManagement:carriagewayClosures",
   "closure.closure.lane": "RoadOrCarriagewayOrLaneManagement:laneClosures",
@@ -301,23 +303,39 @@ export const DATEX2_RECORDS: Readonly<Record<string, string | null>> = {
   "restriction.speed.variable": "SpeedManagement:activeSpeedControlInOperation",
   "restriction.speed.advisory": "SpeedManagement:reduceYourSpeed",
   "restriction.seasonal_load": null,
-  "weather_condition.weather": "PoorEnvironmentConditions",
-  "road_condition.surface": "WeatherRelatedRoadConditions",
+  "weather_condition.weather": "PoorEnvironmentConditions:badWeather",
+  "road_condition.surface": "WeatherRelatedRoadConditions:other",
   "road_condition.driving_condition": "Conditions",
   "road_hazard.hazard": null,
   "road_hazard.hazard.flooding": "EnvironmentalObstruction:flooding",
   "road_hazard.hazard.avalanche_risk": "EnvironmentalObstruction:avalanches",
   "road_hazard.hazard.smoke": "EnvironmentalObstruction:smokeOrFumes",
-  "public_event.event": "PublicEvent",
-  "authority.operation": "AuthorityOperation",
-  "equipment_fault.fault": "EquipmentOrSystemFault",
-  "security.incident": "DisturbanceActivity",
-  "winter_operation.chain_control": "WinterDrivingManagement",
+  "public_event.event": "PublicEvent:unknown",
+  "authority.operation": "AuthorityOperation:undefinedAuthorityActivity",
+  "equipment_fault.fault": "EquipmentOrSystemFault:notWorking",
+  "security.incident": "DisturbanceActivity:securityIncident",
+  "winter_operation.chain_control": "WinterDrivingManagement:other",
   "pass_status.pass": null,
   "congestion.congestion": "AbnormalTraffic",
   "congestion.congestion.queuing": "AbnormalTraffic:queuingTraffic",
   "congestion.congestion.stationary": "AbnormalTraffic:stationaryTraffic",
   "congestion.congestion.slow": "AbnormalTraffic:slowTraffic",
   "congestion.congestion.heavy": "AbnormalTraffic:heavyTraffic",
-  "other.other": "GeneralNetworkManagement",
+  "other.other": "GeneralNetworkManagement:other",
+};
+
+/**
+ * Equipment-fault classification → the DATEX II v3 `faultyEquipmentOrSystemType`
+ * an `EquipmentOrSystemFault` record must name; a fault without one names `other`.
+ */
+export const DATEX2_FAULTY_EQUIPMENT: Readonly<Record<string, string>> = {
+  "equipment_fault.fault.traffic_signal": "trafficSignals",
+  "equipment_fault.fault.vms": "variableMessageSigns",
+  "equipment_fault.fault.tunnel_system": "tunnelSafetySystem",
+  "equipment_fault.fault.camera": "cctvCameras",
+  "equipment_fault.fault.communications": "roadsideCommunicationsSystem",
+  "equipment_fault.fault.emergency_phone": "emergencyRoadsideTelephones",
+  "equipment_fault.fault.level_crossing": "levelCrossing",
+  "equipment_fault.fault.toll_system": "automatedTollSystem",
+  "equipment_fault.fault.power": "roadsidePowerSystem",
 };

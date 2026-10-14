@@ -16,6 +16,7 @@ import {
   DATEX2_SITUATIONS,
 } from "../crosswalk/datex2.js";
 import {
+  DATEX2_FAULTY_EQUIPMENT,
   DATEX2_RECORDS,
   GTFS_RT_CAUSE_VALUES,
   GTFS_RT_CAUSES,
@@ -222,8 +223,17 @@ describe("emitter crosswalk coverage", () => {
         { values: readonly string[] }
       >;
       if (value !== undefined) expect(discriminators[cls]?.values, record).toContain(value);
-      const read = DATEX2_SITUATIONS[record];
+      // A value that adds nothing to its class reads as the class.
+      const own = DATEX2_SITUATIONS[record];
+      const read = own === null ? DATEX2_SITUATIONS[cls] : own;
       expect(read && parseSituationCode(read).kind, record).toBe(parseSituationCode(code).kind);
+    }
+  });
+
+  it("names DATEX faulty equipment only for registered equipment-fault subtypes", () => {
+    for (const code of Object.keys(DATEX2_FAULTY_EQUIPMENT)) {
+      expect(isRegistered(code), code).toBe(true);
+      expect(parseSituationCode(code).kind, code).toBe("equipment_fault");
     }
   });
 

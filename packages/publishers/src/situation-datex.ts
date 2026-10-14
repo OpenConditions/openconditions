@@ -8,7 +8,11 @@ import {
   situationEffects,
   type Validity,
 } from "@openconditions/model";
-import { DATEX2_RECORDS, datexDiscriminator } from "@openconditions/model-roads";
+import {
+  DATEX2_FAULTY_EQUIPMENT,
+  DATEX2_RECORDS,
+  datexDiscriminator,
+} from "@openconditions/model-roads";
 import { XMLBuilder } from "fast-xml-parser";
 import type { FeedInfo } from "./types.js";
 
@@ -27,13 +31,15 @@ type Text = { lang: string; text: string }[];
  * limits, diversions). An effect whose record would repeat the nature record
  * is folded into it; a nature without a record of its own leads with its first
  * effect's. A record keeps the DATEX id it was read from (`sourceRecordRef`),
- * else `<situation id>#<effect id>`. Probability, severity, headline and delay
- * describe the whole situation and travel on its leading record.
+ * else `<situation id>#<effect id>`. Every record states the situation's
+ * probability; severity, headline and delay describe the whole situation and
+ * travel on its leading record.
  *
- * Honest labeling: a pragmatic SituationPublication-shaped export, NOT
- * SRTI-profile-conformant and NOT NAP-publication-ready — see
- * `docs/datex-conformance.md`. Every location is reduced to a representative
- * point; the publication creator carries one feed-level country.
+ * The output validates against the base DATEX II v3.7 schemas inside an
+ * Exchange 2020 `messageContainer`, but it is NOT SRTI-profile-conformant
+ * and NOT NAP-publication-ready — see `docs/datex-conformance.md`. Every
+ * location is reduced to a representative point; the publication creator
+ * carries one feed-level country.
  *
  * DATEX output cannot carry an effect's vehicle conditions faithfully, so a
  * situation with any vehicle-specific effect, or one that is restriction
@@ -47,16 +53,37 @@ const SEVERITY: Readonly<Record<string, string>> = {
   critical: "highest",
 };
 
-const PROBABILITY: Readonly<Record<string, string>> = {
+/** v3 dropped v2's `improbable`; it travels as an extended value. */
+const PROBABILITY: Readonly<Record<string, string | Rec>> = {
   observed: "certain",
   likely: "probable",
   possible: "riskOf",
-  unlikely: "improbable",
+  unlikely: extended("improbable"),
 };
+
+const COMPLIANCE: Readonly<Record<string, string | Rec>> = {
+  mandatory: "mandatory",
+  advisory: "advisory",
+  unknown: extended("unknown"),
+};
+
+/** Record classes deriving from `NetworkManagement`, which must state their compliance. */
+const NETWORK_MANAGEMENT = new Set([
+  "GeneralNetworkManagement",
+  "ReroutingManagement",
+  "RoadOrCarriagewayOrLaneManagement",
+  "SpeedManagement",
+  "WinterDrivingManagement",
+]);
 
 const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   carriageway: "carriagewayClosures",
 };
+
+/** A DATEX enumeration value outside the schema's list. */
+function extended(value: string): Rec {
+  return { "@__extendedValue": value, "#text": "_extended" };
+}
 
 /** The `Class:discriminator` code DATEX has for an effect, if any. */
 function effectCode(effect: Effect): string | undefined {
@@ -81,23 +108,20 @@ function effectCode(effect: Effect): string | undefined {
   }
 }
 
-/** What an effect adds to its record beyond the class: lanes, a speed, a queue. */
-function effectFields(effect: Effect): Rec {
-  switch (effect.kind) {
-    case "lane_restriction": {
-      const impact: Rec = {};
-      if (effect.lanesClosed !== undefined)
-        impact["sit:numberOfLanesRestricted"] = effect.lanesClosed;
-      if (effect.lanesTotal !== undefined && effect.lanesClosed !== undefined) {
-        impact["sit:numberOfOperationalLanes"] = effect.lanesTotal - effect.lanesClosed;
-      }
-      return Object.keys(impact).length > 0 ? { "sit:impact": impact } : {};
-    }
-    case "speed_limit":
-      return { "sit:temporarySpeedLimit": effect.limit.value };
-    default:
-      return {};
+/** What an effect says about the record's impact: its lanes. */
+function effectImpact(effect: Effect): Rec {
+  if (effect.kind !== "lane_restriction") return {};
+  const impact: Rec = {};
+  if (effect.lanesClosed !== undefined) impact["sit:numberOfLanesRestricted"] = effect.lanesClosed;
+  if (effect.lanesTotal !== undefined && effect.lanesClosed !== undefined) {
+    impact["sit:numberOfOperationalLanes"] = effect.lanesTotal - effect.lanesClosed;
   }
+  return impact;
+}
+
+/** What an effect adds after its record's discriminator: a speed. */
+function effectDetail(effect: Effect): Rec {
+  return effect.kind === "speed_limit" ? { "sit:temporarySpeedLimit": effect.limit.value } : {};
 }
 
 /** An effect DATEX cannot carry without widening or misstating it. */
@@ -123,9 +147,13 @@ function representativePoint(geometry: unknown): [number, number] | null {
 function buildLocation(location: Rec): Rec {
   const road = (location["roads"] as Rec[] | undefined)?.[0];
   const loc: Rec = { "@_xsi:type": "loc:PointLocation" };
+  const info: Rec = {};
   const name = (road?.["name"] as Text | undefined)?.[0]?.text;
-  if (name) loc["loc:roadName"] = name;
-  if (typeof road?.["ref"] === "string") loc["loc:roadNumber"] = road["ref"];
+  if (name) info["loc:roadName"] = name;
+  if (typeof road?.["ref"] === "string") info["loc:roadNumber"] = road["ref"];
+  if (Object.keys(info).length > 0) {
+    loc["loc:supplementaryPositionalDescription"] = { "loc:roadInformation": info };
+  }
   const pt = representativePoint(location["geometry"]);
   if (pt) {
     loc["loc:pointByCoordinates"] = {
@@ -135,20 +163,22 @@ function buildLocation(location: Rec): Rec {
   return loc;
 }
 
-function buildValidity(validity: Validity): Rec {
-  const out: Rec = {
-    "com:validityStatus": validity.status === "suspended" ? "suspended" : "active",
-  };
-  const spec: Rec = {};
-  if (validity.start) spec["com:overallStartTime"] = validity.start;
+/**
+ * DATEX requires a start; without a declared one, the record is valid from
+ * `since`, its version time, the earliest moment it is known to hold.
+ */
+function buildValidity(validity: Validity, since: string): Rec {
+  const spec: Rec = { "com:overallStartTime": validity.start ?? since };
   if (validity.end) spec["com:overallEndTime"] = validity.end;
-  if (Object.keys(spec).length > 0) out["com:validityTimeSpecification"] = spec;
-  return out;
+  return {
+    "com:validityStatus": validity.status === "suspended" ? "suspended" : "active",
+    "com:validityTimeSpecification": spec,
+  };
 }
 
 function comment(text: Text): Rec {
   return {
-    "com:comment": {
+    "sit:comment": {
       "com:values": {
         "com:value": text.map((t) => ({ "@_lang": t.lang, "#text": t.text })),
       },
@@ -156,32 +186,51 @@ function comment(text: Text): Rec {
   };
 }
 
+interface RecordHeader {
+  id: string;
+  version: string;
+  time: string;
+  probability: string | Rec;
+}
+
+interface RecordBody {
+  validity: Validity;
+  location: Rec;
+  /** Severity and the headline: what only the leading record carries. */
+  lead?: { severity?: string; headline?: Text };
+  impact?: Rec;
+  compliance?: string;
+  detail?: Rec;
+}
+
 /**
  * A record of `code` (`Class` or `Class:discriminator`) in schema order: the
- * header, `before` (probability and severity), validity, then `after` and
- * the discriminator.
+ * situation record's elements up to its location, then the class's own —
+ * compliance for network management, the discriminator and `detail`.
  */
-function record(
-  code: string,
-  id: string,
-  version: string,
-  time: string,
-  validity: Validity,
-  before: Rec,
-  after: Rec,
-): Rec {
+function record(code: string, header: RecordHeader, body: RecordBody): Rec {
   const [cls, value] = code.split(":") as [string, string | undefined];
   const discriminator = datexDiscriminator(cls);
+  const { lead, impact } = body;
   return {
     "@_xsi:type": `sit:${cls}`,
-    "@_id": id,
-    "@_version": version,
-    "sit:situationRecordCreationTime": time,
-    "sit:situationRecordVersionTime": time,
-    ...before,
-    "sit:validity": buildValidity(validity),
-    ...after,
+    "@_id": header.id,
+    "@_version": header.version,
+    "sit:situationRecordCreationTime": header.time,
+    "sit:situationRecordVersionTime": header.time,
+    "sit:probabilityOfOccurrence": header.probability,
+    ...(lead?.severity ? { "sit:severity": lead.severity } : {}),
+    "sit:validity": buildValidity(body.validity, header.time),
+    ...(impact && Object.keys(impact).length > 0 ? { "sit:impact": impact } : {}),
+    ...(lead?.headline?.length ? { "sit:generalPublicComment": comment(lead.headline) } : {}),
+    "sit:locationReference": body.location,
+    ...(NETWORK_MANAGEMENT.has(cls)
+      ? {
+          "sit:complianceOption": COMPLIANCE[body.compliance ?? "unknown"] ?? COMPLIANCE["unknown"],
+        }
+      : {}),
     ...(value && discriminator ? { [`sit:${discriminator}`]: value } : {}),
+    ...body.detail,
   };
 }
 
@@ -190,6 +239,13 @@ function natureRecordCode(c: SituationClass): string | undefined {
   const type = `${c.kind}.${c.type}`;
   const code = c.subtype ? DATEX2_RECORDS[`${type}.${c.subtype}`] : undefined;
   return (code ?? DATEX2_RECORDS[type]) || undefined;
+}
+
+/** What a nature record names beyond its discriminator: a fault's equipment. */
+function natureDetail(c: SituationClass, code: string): Rec {
+  if (!code.startsWith("EquipmentOrSystemFault")) return {};
+  const equipment = DATEX2_FAULTY_EQUIPMENT[`${c.kind}.${c.type}.${c.subtype}`] ?? "other";
+  return { "sit:faultyEquipmentOrSystemType": equipment };
 }
 
 /** The DATEX records of a situation at `at`; none when DATEX cannot tell it truthfully. */
@@ -204,30 +260,22 @@ export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
   const time =
     (provenance["sourceUpdatedAt"] as string | undefined) ?? (freshness["fetchedAt"] as string);
   const location = buildLocation(situation["location"] as Rec);
+  const probability = PROBABILITY[String(situation["certainty"])] ?? "certain";
 
   // What the situation says as a whole travels on its leading record.
-  const severity = SEVERITY[String((situation["severity"] as Rec | undefined)?.["label"])];
-  const headline = situation["headline"] as Text | undefined;
-  const whole: Rec = {
-    "sit:probabilityOfOccurrence": PROBABILITY[String(situation["certainty"])] ?? "certain",
-    ...(severity ? { "sit:severity": severity } : {}),
+  const lead = {
+    severity: SEVERITY[String((situation["severity"] as Rec | undefined)?.["label"])],
+    headline: situation["headline"] as Text | undefined,
   };
   const delay = effects.find((e) => e.kind === "delay");
-  const delays =
+  const delays: Rec =
     delay?.kind === "delay" && delay.delay
       ? { "sit:delays": { "sit:delayTimeValue": delay.delay.value } }
       : {};
-  const lead = (fields: Rec): Rec => {
-    const impact = { ...(fields["sit:impact"] as Rec | undefined), ...delays };
-    return {
-      ...fields,
-      ...(Object.keys(impact).length > 0 ? { "sit:impact": impact } : {}),
-      ...(headline?.length ? { "sit:generalPublicComment": comment(headline) } : {}),
-    };
-  };
 
-  const natureCode = natureRecordCode(situation as unknown as SituationClass);
-  let natureFields: Rec | undefined = natureCode ? {} : undefined;
+  const classification = situation as unknown as SituationClass;
+  const natureCode = natureRecordCode(classification);
+  const folded: Effect[] | undefined = natureCode ? [] : undefined;
   const effectRecords: Rec[] = [];
   for (const effect of effects) {
     const { state } = effectStateAt(effect, validity, at);
@@ -237,22 +285,38 @@ export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
     const place = ownPlace(situation, effect);
     // An effect folds into the nature record only where it holds at the same place.
     if (code === natureCode && place === undefined) {
-      natureFields = { ...natureFields, ...effectFields(effect) };
+      folded?.push(effect);
       continue;
     }
-    const recordId = effect.sourceRecordRef ?? `${id}#${effect.id}`;
-    const effectValid = effectValidity(effect, validity);
     const first = natureCode === undefined && effectRecords.length === 0;
-    const fields = effectFields(effect);
-    const r = first
-      ? record(code, recordId, version, time, effectValid, whole, lead(fields))
-      : record(code, recordId, version, time, effectValid, {}, fields);
-    r["sit:locationReference"] = place === undefined ? location : buildLocation(place);
-    effectRecords.push(r);
+    effectRecords.push(
+      record(
+        code,
+        { id: effect.sourceRecordRef ?? `${id}#${effect.id}`, version, time, probability },
+        {
+          validity: effectValidity(effect, validity),
+          location: place === undefined ? location : buildLocation(place),
+          ...(first ? { lead } : {}),
+          impact: { ...effectImpact(effect), ...(first ? delays : {}) },
+          compliance: effect.compliance,
+          detail: effectDetail(effect),
+        },
+      ),
+    );
   }
-  if (natureFields === undefined) return effectRecords;
-  const nature = record(natureCode!, id, version, time, validity, whole, lead(natureFields));
-  nature["sit:locationReference"] = location;
+  if (natureCode === undefined || folded === undefined) return effectRecords;
+  const nature = record(
+    natureCode,
+    { id, version, time, probability },
+    {
+      validity,
+      location,
+      lead,
+      impact: Object.assign({}, ...folded.map(effectImpact), delays),
+      compliance: folded[0]?.compliance,
+      detail: Object.assign(natureDetail(classification, natureCode), ...folded.map(effectDetail)),
+    },
+  );
   return [nature, ...effectRecords];
 }
 
@@ -274,25 +338,30 @@ const builder = new XMLBuilder({
 });
 
 /**
- * Projects situations to a DATEX II v3 `SituationPublication`, evaluated at
- * `at`. `info.timestamp` sets `publicationTime`; `info.attribution` the
+ * Projects situations to a DATEX II v3 `SituationPublication` in an Exchange
+ * 2020 snapshot-pull `messageContainer`, evaluated at `at`. `info.timestamp`
+ * sets the publication and message time (else `at`); `info.attribution` the
  * national identifier. `country` is the feed-level publication-creator
- * country code (ISO 3166-1 α-2).
+ * country code (ISO 3166-1 α-2); the default `zz` is the user-assigned code
+ * for an aggregate that spans countries.
  */
 export function situationsToDatex(
   situations: readonly Rec[],
   at: Date = new Date(),
   info: FeedInfo = {},
-  country = "other",
+  country = "zz",
 ): string {
+  const time = info.timestamp ?? at.toISOString();
+  const creator = {
+    "com:country": country,
+    "com:nationalIdentifier": info.attribution ?? "OpenConditions",
+  };
   const payload: Rec = {
     "@_xsi:type": "sit:SituationPublication",
     "@_lang": "en",
-  };
-  if (info.timestamp) payload["com:publicationTime"] = info.timestamp;
-  payload["com:publicationCreator"] = {
-    "com:country": country,
-    "com:nationalIdentifier": info.attribution ?? "OpenConditions",
+    "@_modelBaseVersion": "3",
+    "com:publicationTime": time,
+    "com:publicationCreator": creator,
   };
   payload["sit:situation"] = situations.flatMap((situation) => {
     const records = datexRecordsOf(situation, at);
@@ -300,7 +369,6 @@ export function situationsToDatex(
     return [
       {
         "@_id": situation["id"],
-        "@_version": String(situation["revision"] ?? 1),
         "sit:headerInformation": {
           "com:confidentiality": "noRestriction",
           "com:informationStatus": "real",
@@ -313,11 +381,24 @@ export function situationsToDatex(
     messageContainer: {
       "@_xmlns": "http://datex2.eu/schema/3/messageContainer",
       "@_xmlns:com": "http://datex2.eu/schema/3/common",
+      "@_xmlns:ex": "http://datex2.eu/schema/3/exchangeInformation",
       "@_xmlns:loc": "http://datex2.eu/schema/3/locationReferencing",
       "@_xmlns:sit": "http://datex2.eu/schema/3/situation",
       "@_xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
       "@_modelBaseVersion": "3",
       payload,
+      exchangeInformation: {
+        "@_modelBaseVersion": "3",
+        "ex:exchangeContext": {
+          "ex:codedExchangeProtocol": "snapshotPull",
+          "ex:exchangeSpecificationVersion": "2020.1",
+          "ex:supplierOrCisRequester": { "ex:internationalIdentifier": creator },
+        },
+        "ex:dynamicInformation": {
+          "ex:exchangeStatus": "online",
+          "ex:messageGenerationTimestamp": time,
+        },
+      },
     },
   };
   return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(doc)}`;

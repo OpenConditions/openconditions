@@ -74,7 +74,7 @@ describe("datexRecordsOf", () => {
     expect(records[2]).toMatchObject({ "sit:temporarySpeedLimit": 60 });
   });
 
-  it("puts what describes the whole situation on its leading record only, before validity", () => {
+  it("states probability on every record and the rest of the whole on the leading one", () => {
     const [lead, lanes] = datexRecordsOf(situation(), AT);
     expect(Object.keys(lead!).indexOf("sit:severity")).toBeLessThan(
       Object.keys(lead!).indexOf("sit:validity"),
@@ -85,6 +85,8 @@ describe("datexRecordsOf", () => {
       "sit:generalPublicComment": expect.anything(),
     });
     expect(lanes).not.toHaveProperty("sit:severity");
+    expect(lanes).not.toHaveProperty("sit:generalPublicComment");
+    expect(lanes).toHaveProperty("sit:probabilityOfOccurrence", "certain");
   });
 
   it("folds an effect into the nature record when both are the same DATEX record", () => {
@@ -126,7 +128,9 @@ describe("datexRecordsOf", () => {
     });
     expect(datexRecordsOf(line, AT)[0]!["sit:locationReference"]).toEqual({
       "@_xsi:type": "loc:PointLocation",
-      "loc:roadNumber": "A46",
+      "loc:supplementaryPositionalDescription": {
+        "loc:roadInformation": { "loc:roadNumber": "A46" },
+      },
       "loc:pointByCoordinates": {
         "loc:pointCoordinates": { "loc:latitude": 51.2, "loc:longitude": 6.81 },
       },
@@ -192,6 +196,7 @@ describe("DATEX II round-trip through the ingest parser", () => {
       validity: { start: "2026-09-06T08:00:00Z", end: "2026-09-07T08:00:00Z" },
       location: { geometry: { type: "Point", coordinates: [6.81, 51.2] } },
     });
+    expect((draft!["location"] as Rec)["roads"]).toMatchObject([{ ref: "A46" }]);
     expect((draft!["effects"] as Rec[]).map((e) => e["kind"])).toContain("closure");
   });
 
