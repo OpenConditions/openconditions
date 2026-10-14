@@ -19,10 +19,13 @@ import { isRecord, jsonOf, lonLat, textOf, urlOf } from "../records.js";
 interface Device {
   point: [number, number];
   names: LocalizedText[];
-  description: LocalizedText[];
   road?: RoadRef;
-  views: { key: string; imageUrl?: string }[];
+  upstream?: string;
+  views: { key: string; imageUrl?: string; text?: string }[];
 }
+
+const english = (text: string | undefined): LocalizedText[] =>
+  text === undefined ? [] : [{ lang: "en", text }];
 
 /** The image's file name, which tells a device's images apart; `0` where the address has none. */
 function fileKey(url: string | undefined): string {
@@ -41,7 +44,10 @@ function fileKey(url: string | undefined): string {
  * ODOT's TripCheck API camera inventory (`Cctv/Inventory`): a row per image,
  * so a device with several images repeats under its `device-id`. A device is
  * one camera and each of its images a view, keyed by the image's file name so
- * that the key does not depend on the order of the rows. The inventory says
+ * that the key does not depend on the order of the rows. A row's `cctv-other`
+ * says where its image looks: the camera's description when every image of
+ * the device says the same, else each image's view name. A device repeated
+ * in a later payload adds its views to the same camera. The inventory says
  * nothing of whether a camera works, and its `last-update-time` is the row's,
  * not the image's. The images are ODOT's or a partner agency's, and the
  * terms ask the republisher to credit the agency: the inventory's
@@ -54,6 +60,7 @@ export function parseTripcheck(
 ): ParseOutput {
   const out = emptyParseOutput();
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
+  const devices = new Map<string, Device>();
   for (const body of payloads["main"] ?? []) {
     const doc = jsonOf(body, "the camera inventory");
     if (!isRecord(doc) || !Array.isArray(doc["CCTVInventoryRequest"])) {
@@ -62,7 +69,6 @@ export function parseTripcheck(
     const organisation = isRecord(doc["organization-information"])
       ? textOf(doc["organization-information"]["organization-name"])
       : undefined;
-    const devices = new Map<string, Device>();
     for (const record of doc["CCTVInventoryRequest"]) {
       const row = isRecord(record) ? record : {};
       const cameraId = textOf(row["device-id"]);
@@ -73,55 +79,64 @@ export function parseTripcheck(
       }
       let device = devices.get(cameraId);
       if (device === undefined) {
-        const name = textOf(row["device-name"]);
-        const description = textOf(row["cctv-other"]);
         const route = textOf(row["route-id"]);
         device = {
           point,
-          names: name === undefined ? [] : [{ lang: "en", text: name }],
-          description: description === undefined ? [] : [{ lang: "en", text: description }],
+          names: english(textOf(row["device-name"])),
           ...(route === undefined ? {} : { road: { ref: route } }),
+          ...(organisation === undefined ? {} : { upstream: organisation }),
           views: [],
         };
         devices.set(cameraId, device);
       }
       const imageUrl = textOf(row["cctv-url"]);
+      const text = textOf(row["cctv-other"]);
       const key = fileKey(imageUrl);
       // Views are keyed as components are, so keys that differ only by `#` collide.
       const taken = device.views.find((view) => viewKey(view.key) === viewKey(key));
       if (taken === undefined) {
-        device.views.push({ key, ...(imageUrl === undefined ? {} : { imageUrl }) });
+        device.views.push({
+          key,
+          ...(imageUrl === undefined ? {} : { imageUrl }),
+          ...(text === undefined ? {} : { text }),
+        });
       } else if (taken.imageUrl !== imageUrl) {
         out.rejected = (out.rejected ?? 0) + 1;
       }
     }
-    for (const [cameraId, device] of devices) {
-      const views: ViewInput[] = device.views.map((view) => ({ key: view.key }));
-      out.features.push(
-        cameraDraft(feed, dc, {
+  }
+  for (const [cameraId, device] of devices) {
+    const texts = new Set(device.views.map((view) => view.text));
+    const shared = texts.size === 1 ? [...texts][0] : undefined;
+    const views: ViewInput[] = device.views.map((view) =>
+      texts.size === 1 || view.text === undefined
+        ? { key: view.key }
+        : { key: view.key, name: english(view.text) },
+    );
+    out.features.push(
+      cameraDraft(feed, dc, {
+        cameraId,
+        point: device.point,
+        names: device.names,
+        description: english(shared),
+        type: "traffic",
+        ...(device.road === undefined ? {} : { road: device.road }),
+        ...(device.upstream === undefined ? {} : { upstream: device.upstream }),
+        imageRedistribution: imageRedistributionOf(feed, "allowed"),
+        views,
+      }),
+    );
+    for (const view of device.views) {
+      out.observations.push(
+        imageReading(feed, dc, {
           cameraId,
+          viewKey: view.key,
+          status: "unknown",
           point: device.point,
-          names: device.names,
-          description: device.description,
-          type: "traffic",
-          ...(device.road === undefined ? {} : { road: device.road }),
-          ...(organisation === undefined ? {} : { upstream: organisation }),
-          imageRedistribution: imageRedistributionOf(feed, "allowed"),
-          views,
+          ...(view.imageUrl === undefined ? {} : { imageUrl: view.imageUrl }),
+          ...(device.upstream === undefined ? {} : { upstream: device.upstream }),
         }),
       );
-      for (const view of device.views) {
-        out.observations.push(
-          imageReading(feed, dc, {
-            cameraId,
-            viewKey: view.key,
-            status: "unknown",
-            point: device.point,
-            ...(view.imageUrl === undefined ? {} : { imageUrl: view.imageUrl }),
-            ...(organisation === undefined ? {} : { upstream: organisation }),
-          }),
-        );
-      }
     }
   }
   return out;

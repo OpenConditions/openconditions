@@ -55,11 +55,39 @@ describe("tripcheck", () => {
       },
       details: { kind: "camera", v: 1, imageRedistribution: "allowed" },
     });
-    expect(camera(out, "1101")).toMatchObject({
-      description: [{ lang: "en", text: "Looking south toward the Columbia Slough" }],
-    });
     // An empty description is no description.
     expect(camera(out, "2240")).not.toHaveProperty("description");
+  });
+
+  test("each image's own text names its view; a text all images share describes the camera", () => {
+    const out = parse({ main: [fixture("us-or-tripcheck-cctv-inventory.json")] });
+    expect(camera(out, "1101")).not.toHaveProperty("description");
+    expect(views(out, "1101")).toMatchObject([
+      { name: [{ lang: "en", text: "Looking south toward the Columbia Slough" }] },
+      { name: [{ lang: "en", text: "Looking north toward the Columbia River" }] },
+    ]);
+
+    const d = doc();
+    d["CCTVInventoryRequest"][1]["cctv-other"] = d["CCTVInventoryRequest"][0]["cctv-other"];
+    const shared = parse({ main: [body(d)] });
+    expect(camera(shared, "1101")).toMatchObject({
+      description: [{ lang: "en", text: "Looking south toward the Columbia Slough" }],
+    });
+    for (const view of views(shared, "1101")) expect(view).not.toHaveProperty("name");
+  });
+
+  test("a device repeated in a later payload adds its views to one camera", () => {
+    const d = doc();
+    const rows = d["CCTVInventoryRequest"] as unknown[];
+    const first = { ...d, CCTVInventoryRequest: rows.filter((_, i) => i !== 1) };
+    const second = { ...d, CCTVInventoryRequest: [rows[1]] };
+    const out = parse({ main: [body(first), body(second)] });
+    expect(out.features.map((f) => f["id"])).toEqual([`${ID}1101`, `${ID}2240`]);
+    expect(views(out, "1101").map((v) => v.key)).toEqual([
+      "I5_DeltaPark_pid1101.jpg",
+      "I5_DeltaPark_pid1102.jpg",
+    ]);
+    expect(readings(out, "1101")).toHaveLength(2);
   });
 
   test("a duplicate device-id becomes two views of one camera", () => {
