@@ -1,5 +1,5 @@
 {
-  "statusAccuracy": 0.95,
+  "statusAccuracy": 0.98,
   "segmentPrecision": 0.96,
   "segmentRecall": 0.97,
   "wrongDirectionRate": 0.02

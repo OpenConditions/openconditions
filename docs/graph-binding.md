@@ -149,6 +149,11 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
    - _Line or ordered points:_ take the best candidate per sample, walk the
      samples in order, and bridge consecutive samples that landed on different
      segments with a bounded Dijkstra. Path cap `1.5 × event length + 200 m`.
+     A best candidate the path cannot reach (a mainline beside the ramp the
+     line follows) gives way to the segment the path is on while that is still
+     a candidate, then to the best reachable candidate. A path near fewer than
+     half of the samples leaves the line `unresolved` (`low_coverage`): it
+     follows a road the spine lacks.
    - _Endpoint pair:_ Dijkstra between the two projections, restricted to
      segments whose ref matches when the event states one, cap
      `2.5 × straight-line + 500 m` and a hard maximum of 30 km. The top 3 start

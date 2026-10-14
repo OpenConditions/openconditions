@@ -243,6 +243,9 @@ const EXACT_MAX_AMBIGUITY = 0.8;
  */
 const LIKELY_MAX_AMBIGUITY = 0.9;
 
+/** Share of a line's samples its path must lie near for the line to be bound at all. */
+const MIN_LINE_COVERAGE = 0.5;
+
 function statusOf(confidence: number, ambiguity: number): BindingStatus {
   if (confidence >= 0.9 && ambiguity < EXACT_MAX_AMBIGUITY) return "exact";
   if (confidence >= 0.7 && ambiguity < LIKELY_MAX_AMBIGUITY) return "likely";
@@ -462,6 +465,9 @@ function bindLine(
     path.push(s);
     onPath.add(s.segmentId);
   };
+  // A sample's best candidate that the path cannot reach (a mainline beside
+  // the ramp the line follows) gives way to the segment the path is on while
+  // that still explains the sample, then to the best reachable candidate.
   for (const sample of matched) {
     const best = sample.candidates[0]!.segment;
     const last = path[path.length - 1];
@@ -471,7 +477,17 @@ function bindLine(
     }
     if (last.segmentId === best.segmentId) continue;
     const bridge = graph.shortestPath(last.segmentId, best.segmentId, cap, onRef);
-    if (bridge) for (const s of bridge.slice(1)) push(s);
+    if (bridge) {
+      for (const s of bridge.slice(1)) push(s);
+      continue;
+    }
+    if (sample.candidates.some((c) => c.segment.segmentId === last.segmentId)) continue;
+    let reached: SpineSegment[] | null = null;
+    for (const c of sample.candidates.slice(1)) {
+      reached = graph.shortestPath(last.segmentId, c.segment.segmentId, cap, onRef);
+      if (reached) break;
+    }
+    if (reached) for (const s of reached.slice(1)) push(s);
     else push(best);
   }
 
@@ -496,6 +512,11 @@ function bindLine(
   }
 
   const { coverage, meanOffsetM } = pathFit(path, points, maxOffsetM);
+  // A path near only a sliver of the line follows some other road (one the
+  // spine lacks, such as a road under construction), not this one.
+  if (coverage < MIN_LINE_COVERAGE) {
+    return failure("unresolved", "low_coverage", candidateCount, samples);
+  }
   const rs = path.reduce((m, p) => Math.min(m, refScore(input.refs, p.ref)), 1);
   const twins = new Map<string, SpineSegment>();
   if (!hasBearing) {
