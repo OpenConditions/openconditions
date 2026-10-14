@@ -18,6 +18,19 @@
       "licenseUrl": "https://nap.dgt.es",
       "attribution": "Dirección General de Tráfico (DGT)",
       "privacyUrl": "https://www.dgt.es/protecciondedatos/",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://nap.dgt.es/dataset/incidencias-dgt-datex2-v3-7",
+          "https://nap.dgt.es/dataset/camaras-dgt-datex2-v3-7",
+          "https://nap.dgt.es/dataset/puntos-de-recarga-electrica-para-vehiculos",
+          "https://www.dgt.es/contenido/aviso-legal/",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "operator": "madrid",

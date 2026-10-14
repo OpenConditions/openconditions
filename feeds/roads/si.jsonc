@@ -40,6 +40,18 @@
       "licenseUrl": "https://nap.si/",
       "attribution": "DARS / DRSI (NAP Slovenia)",
       "privacyUrl": "https://nap.si/",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://nap.si/en/datasets",
+          "https://nap.si/en/documents",
+          "https://www.nap.si/en/registration",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
   ],
 }

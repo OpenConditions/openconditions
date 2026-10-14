@@ -1,4 +1,5 @@
 import type { CatalogFeed } from "@openconditions/ingest-framework";
+import { Attribution } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import { stampAttribution } from "../pipeline/publish.js";
 
@@ -73,4 +74,49 @@ it("captures every configured and disabled feed's reviewed metadata without losi
     if (feed.terms?.note)
       expect(captured.bindings[0].conditions, feed.id).toEqual([feed.terms.note]);
   }
+});
+
+it("captures the actual national issuer of a MeteoAlarm warning without changing its grant", () => {
+  const stamped = stampAttribution(
+    {
+      provenance: {},
+      details: {
+        cap: { senderName: [{ lang: "de", text: "Actual NMHS" }], web: "https://warning.test/" },
+      },
+    },
+    { ...source, format: "meteoalarm" },
+  );
+  expect(
+    Attribution.parse((stamped.provenance as { attribution: unknown }).attribution).publisher?.name,
+  ).toBe("Actual NMHS");
+  expect(stamped).toMatchObject({
+    provenance: {
+      attribution: { publisher: { name: "Actual NMHS", url: "https://warning.test/" } },
+    },
+  });
+});
+
+it("does not emit an invalid publisher or truncate the CAP originator when localized names exceed the bound", () => {
+  const draft = {
+    provenance: {},
+    details: {
+      cap: {
+        senderName: [
+          { lang: "en", text: "x".repeat(1001) },
+          { lang: "de", text: "Actual NMHS" },
+        ],
+        web: "https://warning.test/?api_key=secret",
+      },
+    },
+  };
+  const stamped = stampAttribution(draft, { ...source, format: "meteoalarm" });
+  const attr = Attribution.parse((stamped.provenance as { attribution: unknown }).attribution);
+  expect(attr.publisher).toEqual({ name: "Actual NMHS" });
+  const invalidOnly = stampAttribution(
+    { ...draft, details: { cap: { senderName: "x".repeat(1001) } } },
+    { ...source, format: "meteoalarm" },
+  );
+  expect(
+    Attribution.parse((invalidOnly.provenance as { attribution: unknown }).attribution).publisher,
+  ).toBeUndefined();
 });

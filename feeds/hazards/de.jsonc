@@ -35,6 +35,15 @@
       "attribution": "Deutscher Wetterdienst; Geobasisdaten © GeoBasis-DE / BKG 2021 (Daten modifiziert)",
       "homepage": "https://www.dwd.de/",
       "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content"],
+        "basis": "recommendation",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://www.wettergefahren.de/vorlagen_quellenangabe.html"],
+        "reason": "DWD requests source notice directly at reused information; ordinary format conversion is not extensive modification",
+        "compactText": "<a href=\"https://www.dwd.de/\">DWD</a>",
+      },
     },
   ],
 }

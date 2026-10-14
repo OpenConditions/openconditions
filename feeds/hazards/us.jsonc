@@ -84,6 +84,18 @@
       "attribution": "National Interagency Fire Center (NIFC) / WFIGS and contributing agencies — dynamic data, not legal documents.",
       "homepage": "https://www.nifc.gov/",
       "privacyUrl": "https://www.doi.gov/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+          "https://www.arcgis.com/sharing/rest/content/items/d1c32af3212341869b3c810f1a215824?f=pjson",
+          "https://www.usa.gov/government-copyright",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "operator": "noaa",

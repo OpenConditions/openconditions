@@ -31,6 +31,17 @@
       "licenseUrl": "https://nap.vd.dk/",
       "attribution": "Vejdirektoratet (Danish Road Directorate)",
       "privacyUrl": "https://www.vejdirektoratet.dk/",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://du-portal-ui.dataudveksler.app.vd.dk/",
+          "https://vejdirektoratet.atlassian.net/wiki/spaces/DP/pages/3236429888/Download+and+use+of+files+via+the+web+portal",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
   ],
 }

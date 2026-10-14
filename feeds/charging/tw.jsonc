@@ -118,6 +118,18 @@
       },
       "homepage": "https://tdx.transportdata.tw",
       "privacyUrl": "https://tdx.transportdata.tw/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content"],
+        "basis": "provider-terms",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://motc-ptx.gitbook.io/tdx-xin-shou-zhi-yin/api-shi-yong-shuo-ming/zi-liao-shi-yong-chang-jian-wen-ti",
+        ],
+        "reason": "TDX API usage requires the prescribed source phrase and logo; camera metadata grant does not clear separate CCTV pixels",
+        "compactText": "資料介接「<a href=\"https://tdx.transportdata.tw/\">交通部TDX平臺</a>」",
+        "logo": "tdx",
+      },
     },
   ],
 }

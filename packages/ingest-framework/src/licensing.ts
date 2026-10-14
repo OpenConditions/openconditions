@@ -1,5 +1,6 @@
 import { type LicenseDescriptor, Licensing } from "@openconditions/model";
 import { licenseInfo } from "./catalog/licenses.js";
+import { reviewedAttributionPolicy } from "./reviewed-attribution-policies.js";
 
 /** Capture reviewed source metadata before storage; custom definitions are self-contained. */
 export function captureLicensing(source: {
@@ -8,8 +9,10 @@ export function captureLicensing(source: {
   license: string;
   licenseUrl?: string;
   terms?: { notice?: string; note?: string };
+  attributionPolicy?: unknown;
 }): Licensing {
   const info = licenseInfo(source.license);
+  const attribution = source.attributionPolicy ?? reviewedAttributionPolicy(source.license);
   const url = source.licenseUrl ?? info?.url;
   const link = url ? { url } : {};
   const license: LicenseDescriptor =
@@ -34,6 +37,7 @@ export function captureLicensing(source: {
         scope: "data",
         subject: source.name ?? source.id,
         license,
+        ...(attribution ? { attribution } : {}),
         ...(source.terms?.notice ? { notice: source.terms.notice } : {}),
         ...(source.terms?.note ? { conditions: [source.terms.note] } : {}),
       },

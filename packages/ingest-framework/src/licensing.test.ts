@@ -2,6 +2,7 @@ import { Licensing } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import { LICENSES } from "./catalog/licenses.js";
 import { captureLicensing } from "./licensing.js";
+import { reviewedAttributionPolicy } from "./reviewed-attribution-policies.js";
 
 describe("captured licence bindings", () => {
   it("captures every curated licence without changing semantic policy IDs", () => {
@@ -60,4 +61,25 @@ it("rejects credential-bearing attribution URLs at the portable boundary", () =>
       ],
     }).success,
   ).toBe(true);
+});
+
+it("captures a feed's reviewed placement without changing its policy licence", () => {
+  const attributionPolicy = {
+    placement: "visible",
+    surfaces: ["map", "image"],
+    basis: "provider-terms",
+    reviewedAt: "2026-10-14",
+    evidenceUrls: ["https://example.test/terms"],
+    reason: "Retain linked provider credit",
+    compactText: '<a href="https://example.test/">Provider</a>',
+  } as const;
+  const captured = captureLicensing({ id: "example", license: "CC-BY-4.0", attributionPolicy });
+  expect(captured.bindings[0].attribution).toEqual(attributionPolicy);
+  expect(captured.bindings[0].attribution).not.toBe(attributionPolicy);
+  expect(captured.bindings[0].license).toMatchObject({ kind: "spdx", expression: "CC-BY-4.0" });
+});
+
+it("does not treat prototype names as reviewed custom licences", () => {
+  for (const id of ["__proto__", "constructor", "toString"])
+    expect(reviewedAttributionPolicy(id)).toBeUndefined();
 });

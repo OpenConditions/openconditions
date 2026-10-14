@@ -32,6 +32,14 @@
       "licenseUrl": "https://andmed.eesti.ee/information-holders/transpordiamet",
       "attribution": "Transpordiamet (Estonian Transport Administration)",
       "privacyUrl": "https://www.transpordiamet.ee/en",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://tarktee.ee/#/en/terms", "https://tarktee.ee/assets/i18n/en.json"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
   ],
 }

@@ -131,6 +131,19 @@
       "attribution": "EUMETNET – MeteoAlarm",
       "homepage": "https://www.meteoalarm.org/",
       "privacyUrl": "https://api.meteoalarm.org/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["content", "map"],
+        "basis": "provider-terms",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://meteoalarm.org/en/live/page/terms-and-conditions",
+          "https://cms-visualization.meteoalarm.org/api/v1/content-pages/terms-and-conditions?locale=en",
+        ],
+        "reason": "Always display single-country issuing service or multi-country EUMETNET – MeteoAlarm; Issue time and MeteoAlarm link required; Full disclaimer must be published; always-visible full paragraph not explicitly mandated",
+        "compactText": "<a href=\"https://www.meteoalarm.org/\">EUMETNET – MeteoAlarm</a>",
+        "includePublisher": true,
+      },
     },
     {
       "operator": "effis",

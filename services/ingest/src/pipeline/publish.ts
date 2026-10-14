@@ -1,7 +1,12 @@
 import { resolveInstanceId } from "@openconditions/core/server";
 import type { CatalogFeed, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
 import { captureLicensing } from "@openconditions/ingest-framework";
-import type { GrantState, Registry, RoutingRights } from "@openconditions/model";
+import {
+  AttributionPublisher,
+  type GrantState,
+  type Registry,
+  type RoutingRights,
+} from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type { FlowOutput } from "@openconditions/roads";
 import { type WriteContext, type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
@@ -66,9 +71,46 @@ export function routingRightsOf(
  * selected under, and the grants of its rights. A payload never states its
  * own rights; they come from the configuration.
  */
+/** MeteoAlarm requires the real national issuing service beside a single-country warning. */
+function warningPublisher(
+  draft: RecordDraft,
+  src: CatalogFeed,
+): { name: string; url?: string } | undefined {
+  if (src.format !== "meteoalarm") return undefined;
+  const cap = (draft["details"] as { cap?: { senderName?: unknown; web?: unknown } } | undefined)
+    ?.cap;
+  const names =
+    typeof cap?.senderName === "string"
+      ? [cap.senderName]
+      : Array.isArray(cap?.senderName)
+        ? cap.senderName.flatMap((entry) => (typeof entry?.text === "string" ? [entry.text] : []))
+        : [];
+  const actualNames = [...new Set(names.map((value) => value.trim()).filter(Boolean))];
+  const joined = AttributionPublisher.safeParse({ name: actualNames.join(" / ") });
+  const single = actualNames
+    .map((name) => AttributionPublisher.safeParse({ name }))
+    .find((value) => value.success);
+  // Keep an actual complete localized name, never truncate/invent an issuer.
+  // If none fits the portable receipt, the original CAP remains unchanged.
+  const publisher = joined.success ? joined.data : single?.success ? single.data : undefined;
+  if (!publisher) return undefined;
+  const web = typeof cap?.web === "string" ? cap.web : undefined;
+  const link =
+    web &&
+    URL.canParse(web) &&
+    ["https:", "http:"].includes(new URL(web).protocol) &&
+    !new URL(web).username &&
+    !new URL(web).password
+      ? web
+      : undefined;
+  const parsed = AttributionPublisher.safeParse({ ...publisher, ...(link ? { url: link } : {}) });
+  return parsed.success ? parsed.data : publisher;
+}
+
 export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDraft {
   const provenance = draft["provenance"] as Record<string, unknown> | undefined;
   if (provenance === undefined) return draft;
+  const publisher = warningPublisher(draft, src);
   const policyIds =
     src.policyIds ?? (src.parentSourceId ? [src.parentSourceId, src.id] : undefined);
   return {
@@ -93,6 +135,7 @@ export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDr
         : {}),
       attribution: {
         provider: src.attribution,
+        ...(publisher ? { publisher } : {}),
         name: src.name,
         url: src.homepage,
         licensing: captureLicensing(src),

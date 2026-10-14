@@ -118,6 +118,14 @@
       "attribution": "National Park Service",
       "homepage": "https://www.nps.gov/subjects/developer/",
       "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://www.nps.gov/aboutus/disclaimer.htm"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "ny",
@@ -151,7 +159,20 @@
       "attribution": "511NY / New York State DOT",
       "homepage": "https://511ny.org/",
       "privacyUrl": "https://511ny.org/privacy",
-      "cameras": { "imageHosts": ["public.carsprogram.org/cameras/NYSDOT/"] },
+      "cameras": {
+        "imageHosts": ["public.carsprogram.org/cameras/NYSDOT/"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24",
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance",
+      },
     },
     {
       "subdivision": "ga",
@@ -197,7 +218,17 @@
       "attribution": "511GA / Georgia DOT",
       "homepage": "https://511ga.org/",
       "privacyUrl": "https://511ga.org/privacy",
-      "cameras": { "imageHosts": ["511ga.org"] },
+      "cameras": {
+        "imageHosts": ["511ga.org"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://511ga.org/developers/doc", "https://511ga.org/privacy"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "az",
@@ -241,7 +272,17 @@
       "attribution": "AZ511 / Arizona DOT",
       "homepage": "https://az511.com/",
       "privacyUrl": "https://az511.com/about/privacy",
-      "cameras": { "imageHosts": ["az511.com"] },
+      "cameras": {
+        "imageHosts": ["az511.com"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://az511.com/developers/doc", "https://az511.com/about/disclaimer"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "id",
@@ -289,7 +330,17 @@
       "attribution": "Idaho 511 / Idaho Transportation Department",
       "homepage": "https://511.idaho.gov/",
       "privacyUrl": "https://511.idaho.gov/about/privacy",
-      "cameras": { "imageHosts": ["511.idaho.gov"] },
+      "cameras": {
+        "imageHosts": ["511.idaho.gov"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://511.idaho.gov/about/privacy"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "ut",
@@ -339,7 +390,17 @@
       "attribution": "UDOT Traffic / Utah DOT",
       "homepage": "https://www.udottraffic.utah.gov/",
       "privacyUrl": "https://www.utah.gov/support/privacypolicy.html",
-      "cameras": { "imageHosts": ["www.udottraffic.utah.gov", "prod-ut.ibi511.com"] },
+      "cameras": {
+        "imageHosts": ["www.udottraffic.utah.gov", "prod-ut.ibi511.com"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://www.utah.gov/support/disclaimer.html"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "la",
@@ -385,7 +446,17 @@
       "attribution": "511LA / Louisiana DOTD",
       "homepage": "https://511la.org/",
       "privacyUrl": "https://511la.org/about/privacy",
-      "cameras": { "imageHosts": ["511la.org"] },
+      "cameras": {
+        "imageHosts": ["511la.org"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://511la.org/developers/doc", "https://511la.org/about/disclaimer"],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "or",

@@ -40,6 +40,17 @@
       "licenseUrl": "https://data.buenosaires.gob.ar/",
       "attribution": "Gobierno de la Ciudad de Buenos Aires",
       "privacyUrl": "https://www.buenosaires.gob.ar/politicas-de-privacidad",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://api-transporte.buenosaires.gob.ar/registro",
+          "https://creativecommons.org/licenses/by/2.5/ar/legalcode",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
   ],
 }

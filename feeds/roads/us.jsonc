@@ -28,6 +28,17 @@
       },
       "attribution": "WZDx publishers",
       "privacyUrl": "https://www.transportation.gov/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "ny",
@@ -64,6 +75,17 @@
       "attribution": "511NY / New York State DOT",
       "homepage": "https://511ny.org/",
       "privacyUrl": "https://511ny.org/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24",
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance",
+      },
     },
     {
       "subdivision": "ny",
@@ -98,6 +120,17 @@
       "attribution": "511NY / New York State DOT",
       "homepage": "https://511ny.org/",
       "privacyUrl": "https://511ny.org/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24",
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance",
+      },
     },
     {
       "subdivision": "ny",
@@ -125,6 +158,17 @@
       "attribution": "511NY / New York State DOT",
       "homepage": "https://511ny.org/",
       "privacyUrl": "https://511ny.org/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24",
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance",
+      },
     },
     {
       "subdivision": "nyc",

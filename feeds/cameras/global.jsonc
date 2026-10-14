@@ -63,9 +63,24 @@
         "retention": false,
         "attributionRequired": true,
       },
-      "attribution": "Webcams provided by windy.com",
+      "attribution": "Webcams provided by <a href=\"https://www.windy.com/\">windy.com</a> — <a href=\"https://www.windy.com/webcams/add\">add new webcam</a>",
       "privacyUrl": "https://www.windy.com/privacy",
-      "cameras": { "imageHosts": ["images-webcams.windy.com"] },
+      "cameras": {
+        "imageHosts": ["images-webcams.windy.com"],
+      },
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "provider-terms",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+          "https://api.windy.com/webcams/terms",
+        ],
+        "reason": "Normal site text size/color; Every image links own API-supplied webcam page or player; No arbitrary redistribution",
+        "compactText": "Webcams provided by <a href=\"https://www.windy.com/\">windy.com</a> — <a href=\"https://www.windy.com/webcams/add\">add new webcam</a>",
+        "prominence": "normal",
+      },
     },
     {
       "operator": "osm",

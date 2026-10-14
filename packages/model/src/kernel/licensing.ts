@@ -30,6 +30,8 @@ const url = z
       ![...parsed.searchParams.keys()].some((key) => credentialParameters.has(key.toLowerCase()))
     );
   });
+/** Actual credited originator, with the same bounded safe URL contract. */
+export const AttributionPublisher = z.strictObject({ name: text, url: url.optional() });
 const expression = text.refine((value) => {
   if ((value.match(/\(/g)?.length ?? 0) > 32) return false;
   try {
@@ -62,6 +64,36 @@ export const LicenseDescriptor = z.discriminatedUnion("kind", [
   z.strictObject({ kind: z.literal("public-domain"), name: text, url: url.optional() }),
   z.strictObject({ kind: z.literal("status"), id: z.literal("CC-PDM-1.0"), url: url.optional() }),
 ]);
+/** Portable producer-reviewed presentation metadata; not permission policy. */
+export const AttributionPolicy = z
+  .strictObject({
+    placement: z.enum(["visible", "details"]),
+    surfaces: z
+      .array(z.enum(["map", "content", "image"]))
+      .min(1)
+      .max(3)
+      .refine((items) => new Set(items).size === items.length),
+    basis: z.enum(["licence", "provider-terms", "recommendation", "unresolved"]),
+    reviewedAt: z.iso.date(),
+    evidenceUrls: z.array(url).min(1).max(8),
+    reason: z.string().min(1).max(2_000),
+    compactText: z.string().min(1).max(2_000).optional(),
+    logo: z.enum(["openweather", "mapillary", "maptiler", "tdx"]).optional(),
+    prominence: z.literal("normal").optional(),
+    includePublisher: z.literal(true).optional(),
+  })
+  .refine(
+    (value) =>
+      (value.basis !== "unresolved" || value.compactText === undefined) &&
+      (value.placement !== "details" ||
+        (value.basis !== "unresolved" &&
+          value.compactText === undefined &&
+          value.logo === undefined &&
+          value.prominence === undefined &&
+          value.includePublisher === undefined)),
+  );
+export type AttributionPolicy = z.infer<typeof AttributionPolicy>;
+
 export const Licensing = z.strictObject({
   version: z.literal(1),
   declarations: z
@@ -80,6 +112,7 @@ export const Licensing = z.strictObject({
         license: LicenseDescriptor,
         notice: z.string().min(1).max(16_000).optional(),
         conditions: z.array(text).max(32).optional(),
+        attribution: AttributionPolicy.optional(),
       }),
     )
     .max(64),

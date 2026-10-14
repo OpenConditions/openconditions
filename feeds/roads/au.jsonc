@@ -106,6 +106,18 @@
       "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
       "attribution": "Department for Infrastructure and Transport (South Australia)",
       "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+          "https://data.sa.gov.au/data/api/3/action/package_show?id=roadworks-and-incidents-real-time-information",
+          "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       "subdivision": "sa",
@@ -138,6 +150,18 @@
       "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
       "attribution": "Department for Infrastructure and Transport (South Australia)",
       "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+          "https://data.sa.gov.au/data/api/3/action/package_show?id=roadworks-and-incidents-real-time-information",
+          "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
     {
       // The /v1/events endpoint is used deliberately: each feature's geometry is a

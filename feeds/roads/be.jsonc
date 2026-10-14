@@ -81,6 +81,18 @@
       "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data",
       "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
       "privacyUrl": "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.verkeerscentrum.be/algemene-voorwaarden",
+          "https://www.verkeerscentrum.be/nieuws/verkeerscentrum-breidt-open-data-service-uit-datexii-versie-3",
+          "http://miv.opendata.belfla.be/miv/verkeersdata",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
   ],
 }

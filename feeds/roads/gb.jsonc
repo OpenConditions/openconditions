@@ -39,6 +39,14 @@
       "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
       "attribution": "Contains National Highways data © Crown copyright and database right",
       "privacyUrl": "https://nationalhighways.co.uk/privacy-notice/",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": ["https://developer.data.nationalhighways.co.uk/terms"],
+        "reason": "Provider-specific custom OGL2-based terms and required Powered by National Highways phrase; applicable branding/access agreement unresolved",
+      },
     },
   ],
 }

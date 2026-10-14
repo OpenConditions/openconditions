@@ -26,6 +26,18 @@
       "attribution": "Bundesamt für Energie BFE / ich-tanke-strom.ch",
       "homepage": "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos",
       "privacyUrl": "https://www.geo.admin.ch/en/legal-framework",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": ["map", "content", "image"],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://opendata.swiss/en/terms-of-use",
+          "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos",
+          "https://github.com/SFOE/ichtankestrom_Documentation",
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
     },
   ],
 }

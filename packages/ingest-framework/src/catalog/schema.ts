@@ -1,4 +1,4 @@
-import { ACCESS_MODES, SOURCE_TIERS } from "@openconditions/model";
+import { ACCESS_MODES, AttributionPolicy, SOURCE_TIERS } from "@openconditions/model";
 import { type ZodRawShape, z } from "zod";
 import { FEED_QUALIFIER, FEED_TOKEN } from "./ids.js";
 
@@ -426,6 +426,7 @@ export const feedBaseShape = {
   license: z.string().min(1),
   licenseUrl: z.string().url().optional(),
   attribution: z.string().min(1),
+  attributionPolicy: AttributionPolicy.optional(),
   terms: feedTermsSchema.optional(),
   privacyUrl: z.string().url(),
   /**
