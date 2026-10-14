@@ -150,6 +150,23 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Dirección General de Tráfico (DGT), CC BY",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://nap.dgt.es/dataset/incidencias-dgt-datex2-v3-7",
+              "https://nap.dgt.es/dataset/camaras-dgt-datex2-v3-7",
+              "https://nap.dgt.es/dataset/puntos-de-recarga-electrica-para-vehiculos",
+              "https://www.dgt.es/contenido/aviso-legal/"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
             "reviewedAt": "2026-10-08",
@@ -337,7 +354,24 @@
             ]
           },
           "license": "NOASSERTION",
-          "attribution": "Webcams provided by windy.com",
+          "attribution": "Webcams provided by <a href=\"https://www.windy.com/\">windy.com</a> — <a href=\"https://www.windy.com/webcams/add\">add new webcam</a>",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "provider-terms",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+              "https://api.windy.com/webcams/terms"
+            ],
+            "reason": "Normal site text size/color; Every image links own API-supplied webcam page or player; No arbitrary redistribution",
+            "compactText": "Webcams provided by <a href=\"https://www.windy.com/\">windy.com</a> — <a href=\"https://www.windy.com/webcams/add\">add new webcam</a>",
+            "prominence": "normal"
+          },
           "terms": {
             "url": "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
             "reviewedAt": "2026-10-08",
@@ -641,6 +675,22 @@
           "license": "OGDL-Taiwan-1.0",
           "licenseUrl": "https://data.gov.tw/license",
           "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "provider-terms",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://motc-ptx.gitbook.io/tdx-xin-shou-zhi-yin/api-shi-yong-shuo-ming/zi-liao-shi-yong-chang-jian-wen-ti"
+            ],
+            "reason": "TDX API usage requires the prescribed source phrase and logo; camera metadata grant does not clear separate CCTV pixels",
+            "compactText": "資料介接「<a href=\"https://tdx.transportdata.tw/\">交通部TDX平臺</a>」",
+            "logo": "tdx"
+          },
           "terms": {
             "url": "https://tdx.transportdata.tw/term",
             "reviewedAt": "2026-10-08",
@@ -794,6 +844,20 @@
           "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.nps.gov/aboutus/disclaimer.htm",
           "attribution": "National Park Service",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.nps.gov/aboutus/disclaimer.htm"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
           "homepage": "https://www.nps.gov/subjects/developer/"
         },
@@ -819,6 +883,21 @@
           "license": "LicenseRef-511NY-DAA",
           "licenseUrl": "https://511ny.org/help/24",
           "attribution": "511NY / New York State DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511ny.org/help/24",
+              "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+            ],
+            "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+          },
           "terms": {
             "url": "https://511ny.org/help/24",
             "reviewedAt": "2026-10-14",
@@ -885,6 +964,21 @@
           },
           "license": "NOASSERTION",
           "attribution": "511GA / Georgia DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511ga.org/developers/doc",
+              "https://511ga.org/privacy"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://511ga.org/developers/doc",
             "reviewedAt": "2026-10-08",
@@ -950,6 +1044,21 @@
           },
           "license": "NOASSERTION",
           "attribution": "AZ511 / Arizona DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://az511.com/developers/doc",
+              "https://az511.com/about/disclaimer"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://az511.com/developers/doc",
             "reviewedAt": "2026-10-08",
@@ -1015,6 +1124,20 @@
           },
           "license": "NOASSERTION",
           "attribution": "Idaho 511 / Idaho Transportation Department",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511.idaho.gov/about/privacy"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://511.idaho.gov/about/privacy",
             "reviewedAt": "2026-10-08",
@@ -1080,6 +1203,20 @@
           },
           "license": "NOASSERTION",
           "attribution": "UDOT Traffic / Utah DOT",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.utah.gov/support/disclaimer.html"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://www.utah.gov/support/disclaimer.html",
             "reviewedAt": "2026-10-08",
@@ -1146,6 +1283,21 @@
           },
           "license": "NOASSERTION",
           "attribution": "511LA / Louisiana DOTD",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://511la.org/developers/doc",
+              "https://511la.org/about/disclaimer"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://511la.org/developers/doc",
             "reviewedAt": "2026-10-08",
@@ -1517,6 +1669,23 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Dirección General de Tráfico (DGT), CC BY",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://nap.dgt.es/dataset/incidencias-dgt-datex2-v3-7",
+          "https://nap.dgt.es/dataset/camaras-dgt-datex2-v3-7",
+          "https://nap.dgt.es/dataset/puntos-de-recarga-electrica-para-vehiculos",
+          "https://www.dgt.es/contenido/aviso-legal/"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
         "reviewedAt": "2026-10-08",
@@ -1747,7 +1916,24 @@
         ]
       },
       "license": "NOASSERTION",
-      "attribution": "Webcams provided by windy.com",
+      "attribution": "Webcams provided by <a href=\"https://www.windy.com/\">windy.com</a> — <a href=\"https://www.windy.com/webcams/add\">add new webcam</a>",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "provider-terms",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+          "https://api.windy.com/webcams/terms"
+        ],
+        "reason": "Normal site text size/color; Every image links own API-supplied webcam page or player; No arbitrary redistribution",
+        "compactText": "Webcams provided by <a href=\"https://www.windy.com/\">windy.com</a> — <a href=\"https://www.windy.com/webcams/add\">add new webcam</a>",
+        "prominence": "normal"
+      },
       "terms": {
         "url": "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
         "reviewedAt": "2026-10-08",
@@ -2140,6 +2326,22 @@
       "license": "OGDL-Taiwan-1.0",
       "licenseUrl": "https://data.gov.tw/license",
       "attribution": "資料介接「交通部TDX平臺」(Ministry of Transportation and Communications TDX), 政府資料開放授權條款-第1版",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "provider-terms",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://motc-ptx.gitbook.io/tdx-xin-shou-zhi-yin/api-shi-yong-shuo-ming/zi-liao-shi-yong-chang-jian-wen-ti"
+        ],
+        "reason": "TDX API usage requires the prescribed source phrase and logo; camera metadata grant does not clear separate CCTV pixels",
+        "compactText": "資料介接「<a href=\"https://tdx.transportdata.tw/\">交通部TDX平臺</a>」",
+        "logo": "tdx"
+      },
       "terms": {
         "url": "https://tdx.transportdata.tw/term",
         "reviewedAt": "2026-10-08",
@@ -2325,6 +2527,20 @@
       "license": "LicenseRef-US-Gov-Public-Domain",
       "licenseUrl": "https://www.nps.gov/aboutus/disclaimer.htm",
       "attribution": "National Park Service",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.nps.gov/aboutus/disclaimer.htm"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
       "homepage": "https://www.nps.gov/subjects/developer/",
       "id": "us-nps-cameras",
@@ -2371,6 +2587,21 @@
       "license": "LicenseRef-511NY-DAA",
       "licenseUrl": "https://511ny.org/help/24",
       "attribution": "511NY / New York State DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ny.org/help/24",
+          "https://api-511x-nysdot.carsprogram.org/cms/helpPages/24"
+        ],
+        "reason": "Plain source text and expanded disclaimer details conditional; Logo+powered by 511NY is permitted trademark pattern, not universal mandatory duty; Named disseminators and actual approved access scope unresolved; Pass on disclaimer using best efforts; preserve report substance"
+      },
       "terms": {
         "url": "https://511ny.org/help/24",
         "reviewedAt": "2026-10-14",
@@ -2453,6 +2684,21 @@
       },
       "license": "NOASSERTION",
       "attribution": "511GA / Georgia DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511ga.org/developers/doc",
+          "https://511ga.org/privacy"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://511ga.org/developers/doc",
         "reviewedAt": "2026-10-08",
@@ -2534,6 +2780,21 @@
       },
       "license": "NOASSERTION",
       "attribution": "AZ511 / Arizona DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://az511.com/developers/doc",
+          "https://az511.com/about/disclaimer"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://az511.com/developers/doc",
         "reviewedAt": "2026-10-08",
@@ -2615,6 +2876,20 @@
       },
       "license": "NOASSERTION",
       "attribution": "Idaho 511 / Idaho Transportation Department",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511.idaho.gov/about/privacy"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://511.idaho.gov/about/privacy",
         "reviewedAt": "2026-10-08",
@@ -2696,6 +2971,20 @@
       },
       "license": "NOASSERTION",
       "attribution": "UDOT Traffic / Utah DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.utah.gov/support/disclaimer.html"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://www.utah.gov/support/disclaimer.html",
         "reviewedAt": "2026-10-08",
@@ -2778,6 +3067,21 @@
       },
       "license": "NOASSERTION",
       "attribution": "511LA / Louisiana DOTD",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://511la.org/developers/doc",
+          "https://511la.org/about/disclaimer"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://511la.org/developers/doc",
         "reviewedAt": "2026-10-08",

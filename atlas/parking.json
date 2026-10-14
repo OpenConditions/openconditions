@@ -383,7 +383,8 @@
           "endpoints": {
             "main": {
               "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-sites?purpose=CAR",
-              "cadenceSec": 300
+              "cadenceSec": 300,
+              "timeoutSec": 180
             },
             "sources": {
               "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
@@ -531,6 +532,20 @@
           "freshnessWindowSec": 3600,
           "license": "NOASSERTION",
           "attribution": "Stadt Braunschweig",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.braunschweig.de/impressum.php"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://www.braunschweig.de/impressum.php",
             "reviewedAt": "2026-10-05",
@@ -590,6 +605,20 @@
           "freshnessWindowSec": 3600,
           "license": "NOASSERTION",
           "attribution": "Verkehrsmanagementzentrale Bremen",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://vmz.bremen.de/impressum/"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://vmz.bremen.de/impressum/",
             "reviewedAt": "2026-10-05",
@@ -651,6 +680,20 @@
           "freshnessWindowSec": 3600,
           "license": "NOASSERTION",
           "attribution": "APAG Aachener Parkhaus GmbH",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.apag.de/de/impressum"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://www.apag.de/de/impressum",
             "reviewedAt": "2026-10-05",
@@ -731,6 +774,20 @@
           "freshnessWindowSec": 3600,
           "license": "NOASSERTION",
           "attribution": "Stadtwerke Potsdam GmbH",
+          "attributionPolicy": {
+            "placement": "visible",
+            "surfaces": [
+              "map",
+              "content",
+              "image"
+            ],
+            "basis": "unresolved",
+            "reviewedAt": "2026-10-14",
+            "evidenceUrls": [
+              "https://www.swp-potsdam.de/impressum/"
+            ],
+            "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
           "terms": {
             "url": "https://www.swp-potsdam.de/impressum/",
             "reviewedAt": "2026-10-05",
@@ -849,7 +906,8 @@
           "endpoints": {
             "main": {
               "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/a8b29664-ab16-4341-9460-33f60d048d82/resource/3ed73d45-8ea6-4cdf-8984-11a4c4cfc9e8/download",
-              "cadenceSec": 604800
+              "cadenceSec": 604800,
+              "timeoutSec": 180
             }
           },
           "freshnessWindowSec": 1209600,
@@ -1931,7 +1989,8 @@
       "endpoints": {
         "main": {
           "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-sites?purpose=CAR",
-          "cadenceSec": 300
+          "cadenceSec": 300,
+          "timeoutSec": 180
         },
         "sources": {
           "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
@@ -2160,6 +2219,20 @@
       "freshnessWindowSec": 3600,
       "license": "NOASSERTION",
       "attribution": "Stadt Braunschweig",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.braunschweig.de/impressum.php"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://www.braunschweig.de/impressum.php",
         "reviewedAt": "2026-10-05",
@@ -2241,6 +2314,20 @@
       "freshnessWindowSec": 3600,
       "license": "NOASSERTION",
       "attribution": "Verkehrsmanagementzentrale Bremen",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://vmz.bremen.de/impressum/"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://vmz.bremen.de/impressum/",
         "reviewedAt": "2026-10-05",
@@ -2324,6 +2411,20 @@
       "freshnessWindowSec": 3600,
       "license": "NOASSERTION",
       "attribution": "APAG Aachener Parkhaus GmbH",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.apag.de/de/impressum"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://www.apag.de/de/impressum",
         "reviewedAt": "2026-10-05",
@@ -2426,6 +2527,20 @@
       "freshnessWindowSec": 3600,
       "license": "NOASSERTION",
       "attribution": "Stadtwerke Potsdam GmbH",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://www.swp-potsdam.de/impressum/"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
       "terms": {
         "url": "https://www.swp-potsdam.de/impressum/",
         "reviewedAt": "2026-10-05",
@@ -2576,7 +2691,8 @@
       "endpoints": {
         "main": {
           "url": "https://opendata-ajuntament.barcelona.cat/data/dataset/a8b29664-ab16-4341-9460-33f60d048d82/resource/3ed73d45-8ea6-4cdf-8984-11a4c4cfc9e8/download",
-          "cadenceSec": 604800
+          "cadenceSec": 604800,
+          "timeoutSec": 180
         }
       },
       "freshnessWindowSec": 1209600,
