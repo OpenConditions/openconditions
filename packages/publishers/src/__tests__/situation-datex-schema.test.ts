@@ -143,7 +143,7 @@ const variants = [
           ],
         ],
       },
-      roads: [{ name: [{ lang: "de", text: "Hauptstraße" }] }],
+      roads: [{ name: [{ lang: "de", text: "Hauptstraße" }] }, ROAD],
     },
   }),
   situation("collection", {

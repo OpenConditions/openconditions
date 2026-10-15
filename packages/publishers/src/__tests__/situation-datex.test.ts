@@ -129,7 +129,7 @@ describe("datexRecordsOf", () => {
     expect(datexRecordsOf(line, AT)[0]!["sit:locationReference"]).toEqual({
       "@_xsi:type": "loc:PointLocation",
       "loc:supplementaryPositionalDescription": {
-        "loc:roadInformation": { "loc:roadNumber": "A46" },
+        "loc:roadInformation": [{ "loc:roadNumber": "A46" }],
       },
       "loc:pointByCoordinates": {
         "loc:pointCoordinates": { "loc:latitude": 51.2, "loc:longitude": 6.81 },
@@ -165,6 +165,71 @@ describe("datexRecordsOf", () => {
       applicability: { kind: "classes", include: [{ class: "hgv" }] },
     });
     expect(datexRecordsOf(situation({ effects: [hgv] }), AT)).toEqual([]);
+  });
+
+  it("names every road, each by its first name", () => {
+    const junction = situation({
+      location: {
+        geometry: { type: "Point", coordinates: [4.36, 50.85] },
+        roads: [
+          {
+            name: [
+              { lang: "fr", text: "Boulevard du Jardin Botanique" },
+              { lang: "nl", text: "Kruidtuinlaan" },
+            ],
+          },
+          { ref: "R20", name: [{ lang: "fr", text: "Petite ceinture" }] },
+          { class: "primary" },
+        ],
+      },
+    });
+    expect(datexRecordsOf(junction, AT)[0]!["sit:locationReference"]).toMatchObject({
+      "loc:supplementaryPositionalDescription": {
+        "loc:roadInformation": [
+          { "loc:roadName": "Boulevard du Jardin Botanique" },
+          { "loc:roadName": "Petite ceinture", "loc:roadNumber": "R20" },
+        ],
+      },
+    });
+  });
+});
+
+describe("situationsToDatex — publication language", () => {
+  const langOf = (situations: Rec[]) =>
+    parser.parse(situationsToDatex(situations, AT)).messageContainer.payload["@_lang"];
+
+  it("is the one language every headline and road name is in", () => {
+    expect(langOf([situation()])).toBe("de");
+  });
+
+  it("is `mul` when the text is in several languages", () => {
+    const bilingual = situation({
+      headline: [
+        { lang: "de", text: "Bauarbeiten A 46" },
+        { lang: "en", text: "Roadworks A 46" },
+      ],
+    });
+    expect(langOf([bilingual])).toBe("mul");
+    const undetermined = situation({
+      location: {
+        geometry: { type: "Point", coordinates: [6.81, 51.2] },
+        roads: [{ name: [{ lang: "und", text: "A46" }] }],
+      },
+    });
+    expect(langOf([situation(), undetermined])).toBe("mul");
+  });
+
+  it("is `und` with no text, and ignores situations left out", () => {
+    expect(langOf([])).toBe("und");
+    const hgv = effect("x", "closure", {
+      scope: "road",
+      applicability: { kind: "classes", include: [{ class: "hgv" }] },
+    });
+    const english = situation({
+      headline: [{ lang: "en", text: "Closed to lorries" }],
+      effects: [hgv],
+    });
+    expect(langOf([situation(), english])).toBe("de");
   });
 });
 

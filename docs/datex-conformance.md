@@ -53,11 +53,17 @@ records carry the revision as `version`:
   moment it is known to hold.
 - **Road name and number** travel in the location's
   `supplementaryPositionalDescription/roadInformation`, the only place v3
-  allows them on a `PointLocation`. The roads reader takes both back from
-  there, as it does for DGT and CITA, which name their roads in the same
-  place. `roadName` is a plain string there, not a multilingual one, so a
+  allows them on a `PointLocation`, one `roadInformation` per road. The roads
+  reader takes the first back from there, as it does for DGT and CITA, which
+  name their roads in the same place. `roadName` is a plain string there, not
+  a multilingual one, so the export writes a road's first name only, and a
   re-ingested export keeps the name's text but not its language (it comes back
-  as `und`).
+  as `und`). A multilingual road name the reader meets elsewhere (a v2 name, a
+  v3 `linearElement`) keeps every language it carries.
+- **Publication language.** The payload's required `lang` is the default
+  language of its text: the one language every exported headline and road
+  name is in, `mul` when they differ, `und` when there is none. Every headline
+  value also states its own language.
 
 A situation is **omitted entirely** when any of its effects is vehicle-specific
 or restriction evidence. DATEX output cannot carry an effect's vehicle

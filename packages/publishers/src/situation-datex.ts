@@ -144,15 +144,20 @@ function representativePoint(geometry: unknown): [number, number] | null {
     : null;
 }
 
+/** A road's name, plain in `roadInformation`, so only its first language. */
+const roadName = (road: Rec) => (road["name"] as Text | undefined)?.[0];
+
 function buildLocation(location: Rec): Rec {
-  const road = (location["roads"] as Rec[] | undefined)?.[0];
   const loc: Rec = { "@_xsi:type": "loc:PointLocation" };
-  const info: Rec = {};
-  const name = (road?.["name"] as Text | undefined)?.[0]?.text;
-  if (name) info["loc:roadName"] = name;
-  if (typeof road?.["ref"] === "string") info["loc:roadNumber"] = road["ref"];
-  if (Object.keys(info).length > 0) {
-    loc["loc:supplementaryPositionalDescription"] = { "loc:roadInformation": info };
+  const roads = ((location["roads"] as Rec[] | undefined) ?? []).flatMap((road) => {
+    const info: Rec = {};
+    const name = roadName(road)?.text;
+    if (name) info["loc:roadName"] = name;
+    if (typeof road["ref"] === "string") info["loc:roadNumber"] = road["ref"];
+    return Object.keys(info).length > 0 ? [info] : [];
+  });
+  if (roads.length > 0) {
+    loc["loc:supplementaryPositionalDescription"] = { "loc:roadInformation": roads };
   }
   const pt = representativePoint(location["geometry"]);
   if (pt) {
@@ -330,6 +335,28 @@ function ownPlace(situation: Rec, effect: Effect): Rec | undefined {
   return { ...(situation["location"] as Rec), ...own };
 }
 
+/**
+ * The payload's `lang`, the default language of its text: the one language of
+ * every headline and road name written, `mul` when they differ, `und` when
+ * there is none. Each headline value still states its own.
+ */
+function publicationLang(situations: readonly Rec[]): string {
+  const langs = new Set<string>();
+  for (const situation of situations) {
+    for (const t of (situation["headline"] as Text | undefined) ?? []) langs.add(t.lang);
+    const places = [situation["location"], ...situationEffects(situation).map((e) => e.location)];
+    for (const place of places as (Rec | undefined)[]) {
+      for (const road of (place?.["roads"] as Rec[] | undefined) ?? []) {
+        const name = roadName(road);
+        if (name) langs.add(name.lang);
+      }
+    }
+  }
+  const [only, ...more] = langs;
+  if (only === undefined) return "und";
+  return more.length > 0 ? "mul" : only;
+}
+
 const builder = new XMLBuilder({
   ignoreAttributes: false,
   attributeNamePrefix: "@_",
@@ -356,27 +383,25 @@ export function situationsToDatex(
     "com:country": country,
     "com:nationalIdentifier": info.attribution ?? "OpenConditions",
   };
+  const exported = situations.flatMap((situation) => {
+    const records = datexRecordsOf(situation, at);
+    return records.length > 0 ? [{ situation, records }] : [];
+  });
   const payload: Rec = {
     "@_xsi:type": "sit:SituationPublication",
-    "@_lang": "en",
+    "@_lang": publicationLang(exported.map((e) => e.situation)),
     "@_modelBaseVersion": "3",
     "com:publicationTime": time,
     "com:publicationCreator": creator,
   };
-  payload["sit:situation"] = situations.flatMap((situation) => {
-    const records = datexRecordsOf(situation, at);
-    if (records.length === 0) return [];
-    return [
-      {
-        "@_id": situation["id"],
-        "sit:headerInformation": {
-          "com:confidentiality": "noRestriction",
-          "com:informationStatus": "real",
-        },
-        "sit:situationRecord": records,
-      },
-    ];
-  });
+  payload["sit:situation"] = exported.map(({ situation, records }) => ({
+    "@_id": situation["id"],
+    "sit:headerInformation": {
+      "com:confidentiality": "noRestriction",
+      "com:informationStatus": "real",
+    },
+    "sit:situationRecord": records,
+  }));
   const doc = {
     messageContainer: {
       "@_xmlns": "http://datex2.eu/schema/3/messageContainer",
