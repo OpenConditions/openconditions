@@ -1093,7 +1093,7 @@ Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 | ------------------ | ------- | ------------------------------------------------------------- |
 | `vms_display`      | 1.0     | What a sign face shows: text pages, pictograms, lane signals. |
 | `camera_image`     | 1.0     | A camera's current image or stream, per view.                 |
-| `vehicle_position` | 1.0     | Where a vehicle is and what it is doing.                      |
+| `vehicle_position` | 1.1     | Where a vehicle is and what it is doing.                      |
 | `border_wait`      | 1.0     | How long one border queue is, and whether it moves.           |
 
 ### Change kinds

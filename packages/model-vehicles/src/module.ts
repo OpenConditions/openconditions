@@ -13,6 +13,7 @@ const V = "1.0";
 export const VEHICLE_ACTIVITIES = [
   "plowing",
   "salting",
+  "sanding",
   "deadheading",
   "idle",
   "responding",
@@ -58,7 +59,7 @@ export const vehiclesModule: RegistryModule = {
     }),
     defineResultSchema({
       code: "vehicle_position",
-      version: V,
+      version: "1.1",
       description: "Where a vehicle is and what it is doing.",
       shape: (k) => ({
         point: k.PointGeometry,

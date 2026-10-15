@@ -91,6 +91,7 @@
       "enum": [
         "plowing",
         "salting",
+        "sanding",
         "deadheading",
         "idle",
         "responding",

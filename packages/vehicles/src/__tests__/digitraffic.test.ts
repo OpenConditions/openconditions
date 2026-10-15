@@ -93,10 +93,11 @@ describe("the digitraffic format over the live capture", () => {
     expect(value(tracking(out, "202634992"))).toMatchObject({ bearingDeg: 288 });
   });
 
-  test("sanding turns the spreader on without claiming salting", () => {
+  test("sanding is its own activity and turns the spreader on without claiming salting", () => {
     expect(value(tracking(out, "202635025"))).toEqual({
       v: 1,
       point: { type: "Point", coordinates: [27.119327, 68.100155] },
+      activity: "sanding",
       spreaderOn: true,
     });
   });
@@ -155,7 +156,7 @@ describe("the digitraffic format over edited trackings", () => {
     expect(sealFailures(out.observations)).toEqual([]);
   });
 
-  test("ploughing with spot sanding: the plough is down and the spreader on", () => {
+  test("ploughing with spot sanding: ploughing is the activity, the plough down and the spreader on", () => {
     expect(value(tracking(out, "900000001"))).toMatchObject({
       activity: "plowing",
       plowUp: false,

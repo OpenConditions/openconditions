@@ -50,13 +50,13 @@ const TASKS: Readonly<Record<string, TaskReading>> = {
   PLOUGHING_OF_SLUSH_DITCH: { activity: "plowing", plow: true },
   LOWERING_OF_SNOWBANKS: { activity: "plowing", plow: true },
   SALTING: { activity: "salting", spreader: true },
-  LINE_SANDING: { spreader: true },
-  SPOT_SANDING: { spreader: true },
+  LINE_SANDING: { activity: "sanding", spreader: true },
+  SPOT_SANDING: { activity: "sanding", spreader: true },
   UNKNOWN: { activity: "unknown" },
 };
 
 /** Which activity a tracking of several tasks reports: the first of these its tasks give. */
-const ACTIVITY_ORDER: readonly Activity[] = ["plowing", "salting", "unknown"];
+const ACTIVITY_ORDER: readonly Activity[] = ["plowing", "salting", "sanding", "unknown"];
 
 /** The task codes of a tracking, trimmed; anything but a list of strings is no task. */
 function tasksOf(value: unknown): string[] {
