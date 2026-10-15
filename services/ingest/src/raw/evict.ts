@@ -14,7 +14,7 @@ export interface HeldPayload {
   /** When it was last fetched: the time windows are measured against. */
   lastSeenAt: number;
   bytesStored: number;
-  /** Pinned, referenced by a live record, or the base of a delta patch still held. */
+  /** Pinned, read by its source's latest publication, or the base of a delta patch still held. */
   protected: boolean;
 }
 
@@ -213,25 +213,6 @@ export async function evictRawPayloads(
   sql: postgres.Sql,
   opts: { dir: string; policy: EvictionPolicy; historyDays: number; dryRun?: boolean },
 ): Promise<EvictionResult> {
-  // The payloads what is live now was read from: records not tombstoned, and
-  // each series' reading in effect (its history names its poll instead) —
-  // as long as they moved within the longest thinned window. A site
-  // unchanged for weeks, or a sensor that stopped reporting, would otherwise
-  // keep its payload forever and the archive could never reach its cap.
-  const since = new Date(
-    opts.policy.now -
-      Math.max(opts.policy.thinDays.situation, opts.policy.thinDays.observation) * DAY_MS,
-  ).toISOString();
-  const referenced = await sql<{ hash: string | null }[]>`
-    SELECT record #>> '{provenance,rawRef,hash}' AS hash
-      FROM conditions.situation WHERE tombstoned_at IS NULL AND recorded_at > ${since}
-    UNION SELECT record #>> '{provenance,rawRef,hash}'
-      FROM conditions.feature WHERE tombstoned_at IS NULL AND recorded_at > ${since}
-    UNION SELECT record #>> '{provenance,rawRef,hash}'
-      FROM conditions.offer WHERE tombstoned_at IS NULL AND recorded_at > ${since}
-    UNION SELECT reading #>> '{provenance,rawRef,hash}'
-      FROM conditions.observation_latest WHERE updated_at > ${since}`;
-  const live = new Set(referenced.flatMap((r) => (r.hash === null ? [] : [r.hash])));
   const rows = await sql<
     {
       source_id: string;
@@ -250,13 +231,26 @@ export async function evictRawPayloads(
                       AND d.evicted_at IS NULL) AS is_base
       FROM conditions.raw_payload p
      WHERE p.evicted_at IS NULL`;
+  // The payloads what is live now was read from: those of each source's
+  // latest published poll. A history row names its poll's payload too, but
+  // history is what the tiers' windows thin; only the live state is kept
+  // whatever its age.
+  const sources = [...new Set(rows.map((r) => r.source_id))];
+  const published = await sql<{ source: string; hash: string }[]>`
+    SELECT s.source, unnest(a.payload_hashes) AS hash
+      FROM unnest(${sources}::text[]) AS s(source)
+     CROSS JOIN LATERAL (
+       SELECT payload_hashes FROM conditions.source_poll_attempt
+        WHERE source = s.source AND published AND payload_hashes IS NOT NULL
+        ORDER BY attempted_at DESC LIMIT 1) a`;
+  const live = new Set(published.map((r) => `${r.source}\n${r.hash}`));
   const held = rows.map((r) => ({
     sourceId: r.source_id,
     hash: r.hash,
     tier: r.tier,
     lastSeenAt: r.last_seen_at.getTime(),
     bytesStored: Number(r.bytes_stored),
-    protected: r.pinned || r.is_base || live.has(r.hash),
+    protected: r.pinned || r.is_base || live.has(`${r.source_id}\n${r.hash}`),
   }));
   const plan = planEviction(held, opts.policy);
   if (opts.dryRun) return { ...plan, purged: 0 };

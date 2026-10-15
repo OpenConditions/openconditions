@@ -10,8 +10,6 @@ import { evictRawPayloads } from "../raw/evict.js";
 
 const HOUR = 3_600_000;
 const NOW = Date.parse("2026-10-20T12:00:00Z");
-/** When a record or reading that is still moving last changed. */
-const RECENT = new Date(NOW - 60 * 60 * 1000).toISOString();
 
 let db: TestDatabase;
 let sql: postgres.Sql;
@@ -28,8 +26,8 @@ afterAll(async () => {
 
 beforeEach(async () => {
   dir = mkdtempSync(path.join(tmpdir(), "oc-raw-"));
-  await sql`TRUNCATE conditions.raw_payload, conditions.situation, conditions.feature,
-    conditions.offer, conditions.observation_latest, conditions.source_status CASCADE`;
+  await sql`TRUNCATE conditions.raw_payload, conditions.source_poll_attempt,
+    conditions.source_status CASCADE`;
   return () => rmSync(dir, { recursive: true, force: true });
 });
 
@@ -57,6 +55,21 @@ async function archive(
   return hashes;
 }
 
+/** Records a finished poll of a source `hoursAgo`, published or not, that received `hashes`. */
+async function poll(
+  source: string,
+  hoursAgo: number,
+  published: boolean,
+  hashes: readonly string[] | null,
+) {
+  const at = new Date(NOW - hoursAgo * HOUR);
+  await sql`
+    INSERT INTO conditions.source_poll_attempt (source, attempted_at, finished_at, outcome,
+      network_validated, published, payload_hashes)
+    VALUES (${source}, ${at}, ${at}, ${published ? "changed" : "failed"}, ${published},
+      ${published}, ${hashes ? sql.array([...hashes]) : null}::text[])`;
+}
+
 const policy = (over: { maxBytes?: number } = {}) => ({
   now: NOW,
   hotHours: 48,
@@ -79,64 +92,25 @@ describe("evictRawPayloads", () => {
     for (const r of rows) expect(existsSync(path.join(dir, r.storage_key))).toBe(!r.evicted);
   });
 
-  it("keeps a payload a live situation was read from", async () => {
-    const hashes = await archive("nl-ndw-events", "situation", 1, 20 * 24);
-    await archive("nl-ndw-events", "situation", 3);
-    await sql`
-      INSERT INTO conditions.situation (id, record, canonical_id, kind, domain, temporality,
-        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
-        recorded_at, content_hash, fetched_at, severity, certainty, planned, validity_status)
-      VALUES ('oc:situation:nl-ndw-events:a', ${sql.json({ provenance: { rawRef: { hash: hashes[0] } } })},
-        'c', 'incident', 'roads', 'live', 'nl-ndw-events', 'a', 'feed', 'bulk', 'authoritative',
-        'local', 1, ${RECENT}, 'h', ${RECENT}, 'unknown', 'unknown', false, 'active')`;
+  it("keeps the payloads a source's latest publication was read from, and only those", async () => {
+    const [superseded] = await archive("nl-ndw-events", "situation", 1, 21 * 24);
+    const live = await archive("nl-ndw-events", "situation", 2, 20 * 24);
+    // Fetched since, by polls that published nothing.
+    const unpublished = await archive("nl-ndw-events", "situation", 3);
+    await poll("nl-ndw-events", 21 * 24, true, [superseded!]);
+    await poll("nl-ndw-events", 20 * 24, true, live);
+    await poll("nl-ndw-events", 1, false, unpublished);
+    await poll("nl-ndw-events", 0, false, null);
     const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
-    expect(result.evict.map((r) => r.hash)).not.toContain(hashes[0]);
+    expect(result.evict.map((r) => r.hash)).toEqual([superseded]);
   });
 
-  it("keeps a payload a live feature or a series' reading in effect was read from", async () => {
-    const [site] = await archive("nl-ndw-flow", "reference", 1, 20 * 24);
-    const [reading] = await archive("nl-ndw-flow", "observation", 1, 19 * 24);
+  it("keeps a source's latest publication by its own source, not another's", async () => {
+    const [other] = await archive("nl-ndw-flow", "observation", 1, 20 * 24);
     await archive("nl-ndw-flow", "observation", 3);
-    await sql`
-      INSERT INTO conditions.feature (id, record, canonical_id, kind, domain, temporality,
-        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
-        recorded_at, content_hash, fetched_at, lifecycle)
-      VALUES ('oc:feature:nl-ndw-flow:s1', ${sql.json({ provenance: { rawRef: { hash: site } } })},
-        'c', 'measurement_site', 'roads', 'static', 'nl-ndw-flow', 's1', 'feed', 'bulk',
-        'authoritative', 'local', 1, ${RECENT}, 'h', ${RECENT}, 'operational')`;
-    await sql`
-      INSERT INTO conditions.observation_latest (subject_key, property, source_id, subject_kind,
-        reading, template, template_hash, access_mode, result_type, effective_from, since_at,
-        updated_at)
-      VALUES ('feature:oc:feature:nl-ndw-flow:s1', 'traffic.speed', 'nl-ndw-flow', 'feature',
-        ${sql.json({ provenance: { rawRef: { hash: reading } } })}, '{}'::jsonb, '', 'bulk',
-        'quantity', ${RECENT}, ${RECENT}, ${RECENT})`;
+    await poll("nl-ndw-events", 20 * 24, true, [other!]);
     const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
-    expect(result.evict.map((r) => r.hash)).not.toContain(site);
-    expect(result.evict.map((r) => r.hash)).not.toContain(reading);
-  });
-
-  it("stops keeping a payload for a site or a reading that has not moved for weeks", async () => {
-    const [site] = await archive("de-bw-ocpdb", "observation", 1, 30 * 24);
-    const [reading] = await archive("de-bw-ocpdb", "observation", 1, 29 * 24);
-    await archive("de-bw-ocpdb", "observation", 3);
-    const weeksAgo = new Date(NOW - 28 * 24 * HOUR).toISOString();
-    await sql`
-      INSERT INTO conditions.feature (id, record, canonical_id, kind, domain, temporality,
-        source_id, source_record_id, origin, access_mode, privacy_class, instance_id, revision,
-        recorded_at, content_hash, fetched_at, lifecycle)
-      VALUES ('oc:feature:de-bw-ocpdb:old', ${sql.json({ provenance: { rawRef: { hash: site } } })},
-        'c2', 'charging_site', 'charging', 'static', 'de-bw-ocpdb', 'old', 'feed', 'bulk',
-        'authoritative', 'local', 1, ${weeksAgo}, 'h', ${weeksAgo}, 'operational')`;
-    await sql`
-      INSERT INTO conditions.observation_latest (subject_key, property, source_id, subject_kind,
-        reading, template, template_hash, access_mode, result_type, effective_from, since_at,
-        updated_at)
-      VALUES ('feature:oc:feature:de-bw-ocpdb:old', 'charging.evse_status', 'de-bw-ocpdb',
-        'feature', ${sql.json({ provenance: { rawRef: { hash: reading } } })}, '{}'::jsonb, '',
-        'bulk', 'category', ${weeksAgo}, ${weeksAgo}, ${weeksAgo})`;
-    const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
-    expect(result.evict.map((r) => r.hash)).toEqual(expect.arrayContaining([site, reading]));
+    expect(result.evict.map((r) => r.hash)).toEqual([other]);
   });
 
   it("over the cap, warns on the sources that lost hot-window payloads", async () => {

@@ -359,13 +359,14 @@ A source's `rights.retention` decides how long:
 
 The tiers:
 
-| Tier                            | Every payload for | Then one an hour for | Always kept                                                  |
-| ------------------------------- | ----------------- | -------------------- | ------------------------------------------------------------ |
-| Situation feeds                 | 48 h              | 14 days              | Newest 3 per source; payloads live situations were read from |
-| Flow feeds                      | 48 h              | 7 days               | Newest 3 per source                                          |
-| Site tables, station registries | —                 | —                    | Newest 3 per source                                          |
+| Tier                            | Every payload for | Then one an hour for | Always kept         |
+| ------------------------------- | ----------------- | -------------------- | ------------------- |
+| Situation feeds                 | 48 h              | 14 days              | Newest 3 per source |
+| Flow feeds                      | 48 h              | 7 days               | Newest 3 per source |
+| Site tables, station registries | —                 | —                    | Newest 3 per source |
 
-Pinned payloads are never evicted.
+Pinned payloads, and the payloads of each source's latest published poll (what
+is live now was read from), are never evicted.
 
 Over `OPENCONDITIONS_RAW_MAX_BYTES` (10 GiB), eviction climbs a ladder, each rung
 only while still over the cap:
