@@ -114,3 +114,14 @@ describe("registry-driven public licences", () => {
     expect(kept.map((r) => r.provenance.attribution.license)).toEqual(["DL-DE-ZERO-2.0"]);
   });
 });
+
+test("nested captured upstream source permissions cannot be hidden by a public flat label", () => {
+  expect(
+    isPublicRecord({
+      provenance: {
+        attribution: { license: "CC0-1.0" },
+        upstream: [{ license: "CC0-1.0", source: { attribution: { license: "ODbL-1.0" } } }],
+      },
+    } as EgressRecord),
+  ).toBe(false);
+});

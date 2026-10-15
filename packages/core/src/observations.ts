@@ -5,6 +5,7 @@ import {
   qualifierKey,
   type Registry,
 } from "@openconditions/model";
+import { CONTRIBUTOR_RECEIPT_VERSION } from "./contributor-receipts.js";
 import { withEvidence } from "./db/records.js";
 import { CROWD_SOURCE_ID, currentReadingClauses, readingColumns } from "./live-rows.js";
 import { recordFromHistory } from "./observation-codec.js";
@@ -14,8 +15,7 @@ import { validWhilePolled, withPolledValidity } from "./validity.js";
 
 type Rec = Record<string, unknown>;
 
-/** v2 captures upstream and never borrows mutable catalogue metadata; prior receipts are incomplete. */
-export const CONTRIBUTOR_RECEIPT_VERSION = 2;
+export { CONTRIBUTOR_RECEIPT_VERSION } from "./contributor-receipts.js";
 
 /**
  * The properties that get a fused row: those a feature of a linkable kind
@@ -251,7 +251,6 @@ export interface Contributor {
   name: string;
   url?: string;
   licensing?: Licensing;
-  licenseUrl?: string;
   attributionText?: string;
   publisher?: { name: string; url?: string };
   notes?: string;
@@ -443,6 +442,9 @@ export interface SeriesRollup {
   mean: number;
   unit?: string;
   histogram?: { binWidth: number; bins: number[]; counts: number[] };
+  /** Exact captured publisher/rights snapshots of the samples summarized here. */
+  provenance: Rec[];
+  lineageComplete: boolean;
 }
 
 export interface SeriesFound {
@@ -452,8 +454,6 @@ export interface SeriesFound {
     property: string;
     qualifierKey: string;
     sourceId: string;
-    /** The series' provenance (without what varies per reading), for licence egress. */
-    provenance: Rec;
   };
   resolution: SeriesResolution;
   /** Raw readings, oldest first, rebuilt as the records they were written from. */
@@ -529,7 +529,6 @@ export async function readSeries(
       property: entry.code,
       qualifierKey: qualifiers,
       sourceId: series.source_id,
-      provenance: series.template["provenance"] as Rec,
     },
     resolution,
     next: null,
@@ -543,13 +542,15 @@ export async function readSeries(
     const rows = await db.execute<
       (Rec & { payload_hashes: string[] | null; superseded_at: Date | string | null })[]
     >(
-      `SELECT o.*, a.payload_hashes,
+      `SELECT o.*, a.payload_hashes, receipt.provenance AS captured_provenance,
               (SELECT min(n.phenomenon_start) FROM conditions.observation n
                 WHERE n.series_id = o.series_id AND n.retention_days = o.retention_days
                   AND n.phenomenon_start > o.phenomenon_start)
                 AS superseded_at
          FROM conditions.observation o
          LEFT JOIN conditions.source_poll_attempt a ON a.id = o.fetch_id
+         LEFT JOIN conditions.contributor_receipt receipt
+           ON receipt.id = o.extra #>> '{provenance,creditReceiptId}' AND receipt.version = ${CONTRIBUTOR_RECEIPT_VERSION}
         WHERE o.series_id = $1 AND o.phenomenon_start >= $2 AND o.phenomenon_start < $3
           AND ($4::text IS NULL
             OR (o.phenomenon_start, o.issued_at) > ($4::text::timestamptz, $5::text::timestamptz))
@@ -581,12 +582,12 @@ export async function readSeries(
   const hourly = resolution === "hourly";
   const rows = await db.execute<Rec[]>(
     hourly
-      ? `SELECT hour_utc AS start, sample_count, bins, counts, min, max, mean
+      ? `SELECT hour_utc AS start, sample_count, bins, counts, min, max, mean, contributor_receipt_ids, lineage_complete
            FROM conditions.observation_rollup_hourly
           WHERE series_id = $1 AND hour_utc >= $2 AND hour_utc < $3
             AND ($4::timestamptz IS NULL OR hour_utc > $4)
           ORDER BY hour_utc LIMIT $5`
-      : `SELECT day_utc::text AS start, sample_count, min, max, mean
+      : `SELECT day_utc::text AS start, sample_count, min, max, mean, contributor_receipt_ids, lineage_complete
            FROM conditions.observation_rollup_daily
           WHERE series_id = $1 AND day_utc >= $2::timestamptz::date AND day_utc < $3::timestamptz::date
             AND ($4::timestamptz IS NULL OR day_utc > $4::timestamptz::date)
@@ -594,6 +595,17 @@ export async function readSeries(
     [series.series_id, from, to, q.cursor ?? null, q.limit + 1],
   );
   const page = rows.slice(0, q.limit);
+  const ids = [
+    ...new Set(page.flatMap((r) => (r["contributor_receipt_ids"] as string[] | null) ?? [])),
+  ];
+  const receipts =
+    ids.length === 0
+      ? []
+      : await db.execute<{ id: string; provenance: Rec }[]>(
+          `SELECT id, provenance FROM conditions.contributor_receipt WHERE id = ANY($1::text[]) AND version = $2 AND provenance IS NOT NULL`,
+          [ids, CONTRIBUTOR_RECEIPT_VERSION],
+        );
+  const captured = new Map(receipts.map((r) => [r.id, r.provenance]));
   const period = hourly ? 3_600_000 : DAY_MS;
   const unit = entry.result.type === "quantity" ? entry.result.unit : undefined;
   const histogram = entry.retention?.rollup;
@@ -604,6 +616,14 @@ export async function readSeries(
       start: start.toISOString(),
       end: new Date(start.getTime() + period).toISOString(),
       sampleCount: Number(r["sample_count"]),
+      provenance: ((r["contributor_receipt_ids"] as string[] | null) ?? []).flatMap((id) =>
+        captured.has(id) ? [captured.get(id)!] : [],
+      ),
+      lineageComplete:
+        r["lineage_complete"] === true &&
+        Array.isArray(r["contributor_receipt_ids"]) &&
+        (r["contributor_receipt_ids"] as string[]).length > 0 &&
+        (r["contributor_receipt_ids"] as string[]).every((id) => captured.has(id)),
       min: Number(r["min"]),
       max: Number(r["max"]),
       mean: Number(r["mean"]),

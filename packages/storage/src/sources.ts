@@ -1,4 +1,4 @@
-import type { EffectiveRights } from "@openconditions/ingest-framework";
+import { type EffectiveRights, isPublicLicense, LICENSES } from "@openconditions/ingest-framework";
 import type postgres from "postgres";
 
 /** The catalogue fields of one loaded source that SQL joins read. */
@@ -81,6 +81,14 @@ export async function syncSources(sql: postgres.Sql, sources: readonly SourceEnt
     selection_state: s.selectionState ?? null,
   }));
   await sql.begin(async (tx) => {
+    // SQL tile publication uses the same current classifier as JSON egress.
+    // Keep permission facts separate from mutable source/display metadata.
+    const publicLicenses = LICENSES.filter((license) => isPublicLicense(license.id)).map(
+      (license) => license.id,
+    );
+    await tx`DELETE FROM conditions.public_license_policy WHERE NOT (license = ANY(${publicLicenses}::text[]))`;
+    await tx`INSERT INTO conditions.public_license_policy(license)
+      SELECT unnest(${publicLicenses}::text[]) ON CONFLICT DO NOTHING`;
     if (rows.length > 0) {
       await tx`
         INSERT INTO conditions.source (

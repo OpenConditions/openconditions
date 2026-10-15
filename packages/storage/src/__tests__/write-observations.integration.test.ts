@@ -943,7 +943,9 @@ describe("observation writes", () => {
     );
     const [series] = await sql`SELECT template,
       conditions.observation_record(template, reading) AS record FROM conditions.observation_latest`;
-    const [row] = await sql`SELECT * FROM conditions.observation`;
+    const [row] = await sql`SELECT o.*, r.provenance AS captured_provenance
+      FROM conditions.observation o LEFT JOIN conditions.contributor_receipt r
+        ON r.id = o.extra #>> '{provenance,creditReceiptId}'`;
     const { sinceAt: _since, ...stored } = series!["record"] as Record<string, unknown>;
     const back = recordFromHistory(registry, series!["template"], row!);
     // The id treats two spellings of one instant as one point; the history keeps the instant.

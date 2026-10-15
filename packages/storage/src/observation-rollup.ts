@@ -102,21 +102,12 @@ export async function rollupObservations(
     const to = Math.min(from + Math.max(BATCH_HOURS * HOUR_MS, step), cutoff);
     rows += await sql.begin(async (tx) => {
       const result = await tx.unsafe(
-        `INSERT INTO conditions.${table} (series_id, ${column}, sample_count,
-           ${histogram ? "bins, counts, " : ""}min, max, mean)
-         SELECT b.series_id, b.bucket, sum(b.c)::int,
-           ${
-             histogram
-               ? `array_agg(b.bin ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),
-                  array_agg(b.c ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),`
-               : ""
-           }
-           min(b.mn), max(b.mx), sum(b.s) / sum(b.c)
-         FROM (
+        `WITH grouped AS MATERIALIZED (
            SELECT o.series_id, ${bucket} AS bucket,
+             count(*) AS c, min(x.v) AS mn, max(x.v) AS mx, sum(x.v) AS s,
              CASE WHEN w.bin_width IS NULL THEN NULL
                   ELSE LEAST(32767, GREATEST(0, floor(x.v / w.bin_width)))::smallint END AS bin,
-             count(*) AS c, min(x.v) AS mn, max(x.v) AS mx, sum(x.v) AS s
+             o.extra #>> '{provenance,creditReceiptId}' AS receipt_id
            FROM conditions.observation o
            JOIN conditions.observation_latest l ON l.series_id = o.series_id
            JOIN jsonb_to_recordset($1::text::jsonb) AS w(property text, bin_width double precision)
@@ -125,13 +116,34 @@ export async function rollupObservations(
              SELECT COALESCE(o.value_num, o.value_money::double precision) AS v) x
            WHERE o.phenomenon_start >= $2 AND o.phenomenon_start < $3 AND x.v IS NOT NULL
              AND o.issued_at = '-infinity'
-           GROUP BY 1, 2, 3
-         ) b
-         GROUP BY b.series_id, b.bucket
+           GROUP BY o.series_id, bucket, bin, receipt_id
+         ), credits AS (
+           SELECT series_id, bucket, array_agg(DISTINCT receipt_id ORDER BY receipt_id)
+             FILTER (WHERE receipt_id IS NOT NULL) AS receipt_ids,
+             bool_and(receipt_id IS NOT NULL) AS complete
+           FROM grouped GROUP BY series_id, bucket
+         ), bins AS (
+           SELECT series_id, bucket, bin, sum(c) AS c, min(mn) AS mn, max(mx) AS mx, sum(s) AS s
+           FROM grouped GROUP BY series_id, bucket, bin
+         )
+         INSERT INTO conditions.${table} (series_id, ${column}, sample_count,
+           ${histogram ? "bins, counts, " : ""}min, max, mean, contributor_receipt_ids, lineage_complete)
+         SELECT b.series_id, b.bucket, sum(b.c)::int,
+           ${
+             histogram
+               ? `array_agg(b.bin ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),
+                array_agg(b.c ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),`
+               : ""
+           }
+           min(b.mn), max(b.mx), sum(b.s) / sum(b.c), c.receipt_ids, c.complete
+         FROM bins b JOIN credits c ON c.series_id = b.series_id AND c.bucket = b.bucket
+         GROUP BY b.series_id, b.bucket, c.receipt_ids, c.complete
          ON CONFLICT (series_id, ${column}) DO UPDATE SET
            sample_count = excluded.sample_count,
            ${histogram ? "bins = excluded.bins, counts = excluded.counts," : ""}
-           min = excluded.min, max = excluded.max, mean = excluded.mean`,
+           min = excluded.min, max = excluded.max, mean = excluded.mean,
+           contributor_receipt_ids = excluded.contributor_receipt_ids,
+           lineage_complete = excluded.lineage_complete`,
         [JSON.stringify(properties), new Date(from).toISOString(), new Date(to).toISOString()],
       );
       await tx`

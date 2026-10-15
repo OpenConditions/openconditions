@@ -33,6 +33,7 @@ export function enrichDrafts(
   );
   const prefix = `oc:feature:${source.id}:`;
   const congestion: Parameters<typeof congestionDrafts>[0][number][] = [];
+  const derivedUpstream = new Map<string, FlowBaseline["upstream"]>();
   let changed = false;
   const observations = output.observations.map((o) => {
     const subject = o["subject"] as Subject;
@@ -52,9 +53,18 @@ export function enrichDrafts(
     const ratio = result.value / baseline.freeFlowKph;
     const los = losFromSpeedRatio(ratio);
     changed = true;
+    const provenance = o["provenance"] as Draft;
+    const upstream = [
+      ...((provenance["upstream"] as NonNullable<FlowBaseline["upstream"]>) ?? []),
+      ...(baseline.upstream ?? []),
+    ];
     if (QUEUING_LOS.has(los) && subject.featureId.startsWith(prefix)) {
       const time = o["phenomenonTime"] as { instant?: string; end?: string };
       const location = o["location"] as { geometry: FlowGeometry; direction?: DirectionRef };
+      derivedUpstream.set(
+        `oc:situation:${source.id}:${subject.featureId.slice(prefix.length)}:congestion`,
+        upstream,
+      );
       congestion.push({
         site: subject.featureId.slice(prefix.length),
         geometry: location.geometry,
@@ -67,6 +77,7 @@ export function enrichDrafts(
     }
     return {
       ...o,
+      ...(upstream.length ? { provenance: { ...provenance, upstream } } : {}),
       baseline: {
         freeFlow: { value: baseline.freeFlowKph, unit: "km/h" },
         source: baseline.method,
@@ -76,7 +87,12 @@ export function enrichDrafts(
     } as Draft;
   });
   if (!changed) return output;
-  const derived = congestionDrafts(congestion, opts);
+  const derived = congestionDrafts(congestion, opts).map((draft) => {
+    const upstream = derivedUpstream.get(String(draft["id"]));
+    return upstream?.length
+      ? { ...draft, provenance: { ...(draft["provenance"] as Draft), upstream } }
+      : draft;
+  });
   const ids = new Set(derived.map((d) => d["id"]));
   return {
     features: output.features,

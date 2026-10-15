@@ -120,3 +120,32 @@ export const Licensing = z.strictObject({
 export type Licensing = z.infer<typeof Licensing>;
 
 export type LicenseDescriptor = z.infer<typeof LicenseDescriptor>;
+
+/** Preserve an independently captured terms link as evidence without inventing a grant. */
+export function creditLicensingOf(captured: {
+  licensing?: Licensing;
+  license?: string;
+  licenseUrl?: string;
+}): Licensing | undefined {
+  const { licensing, license, licenseUrl } = captured;
+  if (
+    !licenseUrl ||
+    licensing?.declarations?.some((d) => d.url === licenseUrl) ||
+    licensing?.bindings.some((b) => b.license.url === licenseUrl)
+  )
+    return licensing;
+  const declarations = [...(licensing?.declarations ?? [])];
+  const matched =
+    license === undefined
+      ? -1
+      : declarations.findIndex((d) => d.text === license && d.url === undefined);
+  if (matched >= 0) declarations[matched] = { ...declarations[matched], url: licenseUrl };
+  else {
+    if (license !== undefined && license.length > 1000)
+      throw new RangeError("captured licence declaration exceeds portable text capacity");
+    declarations.push({ ...(license === undefined ? {} : { text: license }), url: licenseUrl });
+  }
+  if (declarations.length > 64)
+    throw new RangeError("captured licence URL exceeds portable declaration capacity");
+  return { ...(licensing ?? { version: 1 as const, bindings: [] }), declarations };
+}

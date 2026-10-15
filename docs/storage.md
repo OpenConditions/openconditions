@@ -502,10 +502,10 @@ A fused reading retains every contributing publisher's upstream chain.
 not historical licensing evidence.
 
 Numeric dictionary receipts likewise capture the selected observation's attribution
-and complete upstream chain. Receipt format v2 is internal; public grid/flow
+and complete upstream chain. Receipt format v3 is internal; public grid/flow
 lineage wire versions are unchanged. Earlier lossy dictionary versions are treated
 as unknown rather than complete, retaining numeric values without inventing credits.
-New receipt identity includes upstream changes, and credit
+New receipt identity includes complete captured attribution and upstream changes, and credit
 projection does not borrow current catalogue names, URLs, publishers or notices.
 Notices captured in scoped `licensing` travel with their original receipt. Existing
 receipt rows are immutable; this change does not reconstruct missing old lineage.
@@ -522,3 +522,27 @@ writes them) is its own class. A reading that states neither is kept, and `low`
 leaves out nothing. `minConfidence=nominal` drops the low-confidence fire
 detections of both instruments. An instance older than the parameter answers it
 400, as it does any query key it does not know.
+
+### Historical attribution
+
+A series template identifies the series; its latest publisher terms are not
+historical evidence. Every newly acquired history row references an immutable
+`contributor_receipt` through `extra.provenance.creditReceiptId`. Receipt version
+3 hashes the captured source, attribution and upstream/merged publisher snapshots
+as well as the display projection. Complete licensing objects are interned once
+per distinct receipt rather than repeated for every high-frequency sample.
+Raw history readers resolve the sample's receipt when reconstructing its record.
+Missing evidence remains unknown and cannot borrow the latest series' terms.
+
+Hourly and daily rollups retain the distinct receipt IDs of all summarized
+samples, plus completeness. Numeric histogram bins are merged independently of
+receipt identity, so a publisher change does not duplicate bins or alter counts.
+`GET /observations` returns each rollup's captured `provenance` snapshots and
+`lineageComplete`. Public responses withhold a whole bucket when evidence is
+incomplete or any sample's captured own/upstream licence is not public; operator
+responses retain the bucket and state incompleteness. Public publisher traces use
+the same egress filtering as raw records. `X-Data-License` describes the actual
+returned page, including stated upstream and served merged-source licences.
+
+These are structural capture changes, without attribution backfilling. Existing
+samples or aggregates without immutable evidence remain explicitly incomplete.

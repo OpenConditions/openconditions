@@ -2,12 +2,14 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
+import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
 import type { CatalogFeed, FeedEndpoint, LookupFn } from "@openconditions/ingest-framework";
 import { encodeOpenlrLine } from "@openconditions/openlr";
 import { recordSkippedNoGeometry } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
+  syncSources,
   writeSnapshotIn,
 } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
@@ -17,7 +19,8 @@ import { formatOf } from "../domains.js";
 import { clearReferenceCaches } from "../pipeline/reference.js";
 import { clearResolveCache } from "../pipeline/resolve.js";
 import { createRoleState, runSource } from "../pipeline/run.js";
-import { repoFeed } from "./helpers/catalog.js";
+import { catalogueSources } from "../sources.js";
+import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
 import { bindSituation, registry, situationDraft, writeSituations } from "./helpers/situations.js";
 
 const NDW_FIXTURE_PATH = path.resolve(
@@ -343,6 +346,39 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   const poll = (fetchFn: typeof fakeFetch, now = () => new Date().toISOString()) =>
     runSource(ndwFlowFeed, { sql, fetch: fetchFn as typeof fetch, now, lookup: fakeLookup });
 
+  /** Synthetic historical samples explicitly use an actual sealed test acquisition's terms. */
+  async function seedDerivedBaseline(): Promise<void> {
+    const subjectKey = "feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00";
+    await syncSources(
+      sql,
+      catalogueSources(REPO_CATALOG).filter((source) => source.id === ndwFlowFeed.id),
+    );
+    await sql`DELETE FROM conditions.sensor_baseline WHERE subject_key=${subjectKey} AND method='derived'`;
+    clearReferenceCaches();
+    expect((await poll(fakeFetch)).error).toBeUndefined();
+    const [acquired] = await sql<
+      {
+        receipt_id: string;
+        source_id: string;
+        permission_licenses: string[] | null;
+        public: boolean;
+      }[]
+    >`
+      SELECT r.id AS receipt_id,l.source_id,
+        conditions.flow_receipt_permissions(ARRAY[r.id],true,${CONTRIBUTOR_RECEIPT_VERSION}) AS permission_licenses,
+        conditions.flow_public_licenses(conditions.flow_receipt_permissions(ARRAY[r.id],true,${CONTRIBUTOR_RECEIPT_VERSION})) AS public
+      FROM conditions.observation_latest l JOIN conditions.contributor_receipt r
+        ON r.id=l.contributor_receipt_id AND r.version=${CONTRIBUTOR_RECEIPT_VERSION}
+      WHERE l.subject_key=${subjectKey} AND l.source_id=${ndwFlowFeed.id} AND l.property='traffic.speed'`;
+    if (!acquired || acquired.permission_licenses === null || !acquired.public)
+      throw new Error(
+        "baseline fixture requires a sealed, currently public NDW acquisition receipt",
+      );
+    await sql`INSERT INTO conditions.sensor_baseline
+      (subject_key,source,dow_bucket,tod_bucket,free_flow_kph,method,sample_count,computed_at,contributor_receipt_ids,lineage_complete,permission_licenses,contributing)
+      VALUES(${subjectKey},${acquired.source_id},-1,-1,100,'derived',50,now(),ARRAY[${acquired.receipt_id}],true,${acquired.permission_licenses}::text[],ARRAY[${acquired.source_id}])`;
+  }
+
   it("runSource joins the site table and writes measurement sites and their readings", async () => {
     clearReferenceCaches();
     const result = await poll(fakeFetch);
@@ -437,11 +473,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   }, 60_000);
 
   it("derives congestion from a stored baseline, and withdraws it once the queue clears", async () => {
-    await sql`
-      INSERT INTO conditions.sensor_baseline
-        (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
-      VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
-        100, 'derived', 50, now())`;
+    await seedDerivedBaseline();
     clearReferenceCaches();
     const congested = await poll(fakeFetch);
     expect(congested.error).toBeUndefined();
@@ -462,11 +494,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   }, 60_000);
 
   it("keeps a congestion that persists as one situation, dated from when it was first derived", async () => {
-    await sql`
-      INSERT INTO conditions.sensor_baseline
-        (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
-      VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
-        100, 'derived', 50, now())`;
+    await seedDerivedBaseline();
     clearReferenceCaches();
     const situation = async () => {
       const [row] = await sql<{ revision: number; start: string }[]>`
@@ -488,11 +516,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
   }, 60_000);
 
   it("keeps the last derived congestion when a poll cannot load the baselines", async () => {
-    await sql`
-      INSERT INTO conditions.sensor_baseline
-        (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
-      VALUES ('feature:oc:feature:nl-ndw-flow:PZH01_MST_STANDSTILL_00', 'nl-ndw-flow', -1, -1,
-        100, 'derived', 50, now())`;
+    await seedDerivedBaseline();
     clearReferenceCaches();
     expect((await poll(fakeFetch)).activeEvents).toBe(1);
     await sql`ALTER TABLE conditions.sensor_baseline RENAME TO sensor_baseline_away`;

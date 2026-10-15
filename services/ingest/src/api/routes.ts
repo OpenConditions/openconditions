@@ -10,8 +10,10 @@ import {
   listSituations,
   offersOfFeatures,
   type QueryRunner,
+  type ReadingProvenance,
   readCoverage,
   readGrid,
+  readingProvenanceOf,
   readSeries,
   type Scope,
   withoutComponents,
@@ -97,10 +99,24 @@ const FEED_INFO: FeedInfo = {
 };
 
 /** The distinct licences of `records`, for `X-Data-License`. */
-function licensesOf(records: readonly Rec[]): string {
-  const licenses = new Set(
-    records.map((r) => (r as unknown as EgressRecord).provenance.attribution.license),
-  );
+type LicensedProvenance = {
+  attribution: { license: string };
+  upstream?: readonly { license?: string; source?: LicensedProvenance }[];
+  mergedSources?: readonly LicensedProvenance[];
+};
+
+function addLicenses(licenses: Set<string>, p: LicensedProvenance): void {
+  licenses.add(p.attribution.license);
+  for (const upstream of p.upstream ?? []) {
+    if (upstream.license) licenses.add(upstream.license);
+    if (upstream.source) addLicenses(licenses, upstream.source);
+  }
+  for (const merged of p.mergedSources ?? []) addLicenses(licenses, merged);
+}
+
+function licensesOf(records: readonly Rec[], incomplete = false): string {
+  const licenses = new Set<string>(incomplete ? ["NOASSERTION"] : []);
+  for (const r of records) addLicenses(licenses, r["provenance"] as LicensedProvenance);
   return licenses.size > 0 ? [...licenses].sort().join(", ") : "none";
 }
 
@@ -971,7 +987,7 @@ export function registerApiRoutes(
       admits: (provenance) => {
         const shown =
           scope === "operator" || isPublicRecord({ provenance } as unknown as EgressRecord);
-        if (shown) licenses.add(provenance.attribution.license);
+        if (shown) addLicenses(licenses, provenance);
         return shown;
       },
     });
@@ -1025,26 +1041,50 @@ export function registerApiRoutes(
     if (read.status === "no_rollup") {
       return reply.status(400).send({ error: `${read.property} keeps no ${q.resolution} rollup` });
     }
-    // The reader withholds a restricted source's series from the public;
-    // the licence gate is the egress's.
-    const egressSeries =
-      read.status === "found" &&
-      (scope === "operator" ||
-        isPublicRecord({ provenance: read.series.provenance } as unknown as EgressRecord));
-    if (read.status === "none" || !egressSeries) {
+    // Native source restrictions are checked by the reader. Historical rights
+    // belong to each reading/bucket, never the current series template.
+    if (read.status === "none") {
       return reply.status(404).send({ error: "no such series" });
     }
-    const { provenance: _provenance, ...series } = read.series;
-    const license = (read.series.provenance["attribution"] as Rec)["license"] as string;
+    const records = read.records === undefined ? undefined : egress(read.records, scope);
+    const rollups = read.rollups
+      ?.filter(
+        (r) =>
+          scope === "operator" ||
+          (r.lineageComplete &&
+            r.provenance.length > 0 &&
+            r.provenance.every((provenance) =>
+              isPublicRecord({ provenance } as unknown as EgressRecord),
+            )),
+      )
+      .map((r) => ({
+        ...r,
+        provenance: egress(
+          r.provenance.map((provenance) => ({ provenance })),
+          scope,
+        ).map((record) =>
+          readingProvenanceOf(record["provenance"] as unknown as ReadingProvenance),
+        ),
+      }));
+    const served = [
+      ...(records ?? []),
+      ...(rollups ?? []).flatMap((r) => r.provenance.map((provenance) => ({ provenance }))),
+    ];
     reply.header("Cache-Control", `public, max-age=${OBSERVATION_CACHE_SECONDS}`);
-    reply.header("X-Data-License", license);
+    reply.header(
+      "X-Data-License",
+      licensesOf(
+        served,
+        rollups?.some((r) => !r.lineageComplete),
+      ),
+    );
     return reply.send({
-      series,
+      series: read.series,
       resolution: read.resolution,
       from: from.toISOString(),
       to: to.toISOString(),
-      ...(read.records !== undefined ? { records: egress(read.records, scope) } : {}),
-      ...(read.rollups !== undefined ? { rollups: read.rollups } : {}),
+      ...(records !== undefined ? { records } : {}),
+      ...(rollups !== undefined ? { rollups } : {}),
       next: read.next,
     });
   });

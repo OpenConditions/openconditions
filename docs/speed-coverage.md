@@ -113,7 +113,8 @@ missing catalogue metadata is never replaced with an unrelated feed's credit.
 The speed winner follows tier and freshness. Declared LOS uses every supplier tied
 at the worst declared rank; otherwise LOS inherits the selected speed ratio's
 suppliers. Ratio credits its actual numerator and denominator. A native or derived
-sensor baseline credits that measurement source; `osm_maxspeed` and graph fallback
+sensor baseline credits its captured measurement suppliers; a historical derived
+baseline also retains the original upstream terms through enrichment. `osm_maxspeed` and graph fallback
 credit OpenStreetMap. A propagated speed keeps the donor's speed receipt, while its
 free-flow speed and geometry come from the target OSM segment. Producer-derived
 `measured` confidence credits the selected speed supplier when present, otherwise
@@ -122,10 +123,11 @@ speed and the OSM geometry used to establish the estimate; it does not require a
 known free-flow denominator.
 
 The shared observation writer captures each actual input before aggregation in
-an immutable version-1 `contributor_receipt` dictionary. The nullable
+an immutable version-3 `contributor_receipt` dictionary (the public lineage wire
+version remains 1). The nullable
 `observation_latest.contributor_receipt_id` points to the receipt; canonical record
 bodies and content hashes are unchanged. A bounded write slice captures once per
-distinct source attribution, not once per reading. Aggregation unions each selected
+distinct complete source attribution and upstream snapshot, not once per reading. Aggregation unions each selected
 input's stored receipt. If one of two sites changes, the other site's original name,
 licence and mandatory notice survive alongside the newly acquired receipt, even
 when both canonical source IDs match. Catalogue edits and LOS heartbeats never
@@ -163,3 +165,16 @@ For rendering, credit geometry for a casing, `ratio` when a non-null ratio drive
 color, and `los` when color falls back to declared LOS. Opacity driven by confidence credits the separate `confidence` receipt. A popup selects the separate
 receipts of each field it displays. Unioning all fields for every rendered segment
 would credit hidden inputs.
+
+Public live GeoJSON, routing CSV and MVT additionally require affirmative current
+permission for each participating capture's own and explicit upstream licence IDs.
+Permission evidence is independent of display metadata. Missing evidence remains
+internal; catalogue names or licence labels never fill it. Historical profile
+buckets retain the exact hourly receipt union, and the public profile export
+withholds a whole segment if any bucket is unsafe or unknown. It includes captured
+contributors, native source IDs and lineage completeness. Derived sensor
+baselines likewise retain hourly evidence; enrichment uses only complete,
+currently public history of the same native source and preserves its suppliers
+on both new observations and derived congestion situations. An independent native
+or OSM baseline can still supply the denominator when a historical derived one
+is unavailable. See [licence metadata](licensing.md) for policy synchronization.

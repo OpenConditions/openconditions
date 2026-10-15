@@ -47,6 +47,47 @@ namespaces and notices; a source ID alone is not a complete credit identity.
 An absent receipt does not prove a supplier, and malformed captured metadata must
 never authorize fallback to a different current licence.
 
+Live segment flow keeps captured permission IDs separately from those display
+receipts. Sensor aggregation reads the exact measurement receipt's own and stated
+upstream licence IDs; fusion unions every live contributor's IDs and propagation
+carries the donor's IDs. Missing evidence withholds public measurements while the
+operator can still inspect them. Public GeoJSON, routing CSV and vector tiles use
+the same SQL predicate against `public_license_policy`, synchronized atomically
+from the reviewed licence registry at catalogue boot. A changed classification
+therefore applies to held measurements without inventing new credits or waiting
+for reacquisition. Native source restrictions remain an additional gate; OSM
+geometry and baseline credits do not substitute for measurement permission.
+
+Historical weekly profiles retain each contributing hour's exact receipt IDs,
+permission IDs and completeness. Public profile JSON exposes the captured
+contributor union and native source IDs; one unsafe or unknown bucket withholds
+the whole profile. Historical p85 denominators likewise retain their evidence.
+Enrichment accepts a derived denominator only from complete currently public
+history of the same native source; its captured suppliers and original upstream
+terms accompany both the enriched reading and any derived congestion situation.
+An unavailable derived denominator can fall back to an independent native/OSM
+baseline. Internal historical numeric values remain inspectable.
+
+An upstream publisher can additionally carry `source: { sourceId, attribution }`
+when its complete original source snapshot is known. `PublicAttribution` explicitly
+whitelists credit fields, retaining the original dataset link, issuing publisher
+and link, licence link, parent/child identity, notices and scoped definitions;
+private rights evidence and future unrecognized fields are excluded. The flat
+upstream permission selector must match the captured source's selector. Public
+admission also checks the nested selector independently. SQL receipts and
+consumers project this immutable source snapshot directly; a plain upstream
+publisher with no captured source link receives no invented link to its relay's
+current dataset page.
+
+Canonical contributor credits expose licence links through `licensing`, with no
+raw `licenseUrl` alias. `creditLicensingOf` preserves existing grants and notices,
+reuses an already captured binding/declaration link, or adds the original terms
+URL as declaration evidence. It can augment a matching raw declaration without
+increasing its count. This does not create a grant or placement permission. Root
+and captured-source attribution use the same bounded, credential-free HTTP(S)
+link rules and reject a combination that could not fit the portable declaration
+limit; valid captures cannot emit a 65th declaration and invalidate a credit.
+
 ## Captured attribution placement
 
 Display placement is separate from the reviewed redistribution/retention/usage

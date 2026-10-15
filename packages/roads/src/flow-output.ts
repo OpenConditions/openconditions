@@ -58,4 +58,6 @@ export interface FlowOutput {
 export interface FlowBaseline {
   freeFlowKph: number;
   method: "native" | "derived" | "osm_maxspeed";
+  /** Exact captured suppliers of an admitted historical-derived denominator. */
+  upstream?: import("@openconditions/model").MergedSource["upstream"];
 }

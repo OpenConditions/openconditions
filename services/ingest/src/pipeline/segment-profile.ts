@@ -1,3 +1,4 @@
+import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
 import { histogramPercentileKph, rollupRetentionDaysFromEnv } from "@openconditions/storage";
 import type postgres from "postgres";
 import { loadOsmRegions, type OsmRegion } from "./osm-import.js";
@@ -71,11 +72,12 @@ export async function deriveSegmentProfiles(
   const median = histogramPercentileKph(sql, 0.5);
 
   const rows = await sql<{ segment_id: string }[]>`
-    WITH win AS (
-      SELECT ss.segment_id, l.source_id,
+    WITH hours AS (
+      SELECT ss.segment_id, l.source_id, h.bins, h.counts, h.contributor_receipt_ids,
+             conditions.flow_receipt_permissions(h.contributor_receipt_ids,h.lineage_complete,${CONTRIBUTOR_RECEIPT_VERSION}) AS permission_licenses,
              extract(dow  from h.hour_utc AT TIME ZONE tzmap.tz)::smallint AS local_dow,
              extract(hour from h.hour_utc AT TIME ZONE tzmap.tz)::smallint AS local_hour,
-             u.bin, u.cnt
+             h.lineage_complete
       FROM conditions.observation_rollup_hourly h
       JOIN conditions.observation_latest l ON l.series_id = h.series_id
         AND l.property = 'traffic.speed' AND l.component_key IS NULL
@@ -83,9 +85,16 @@ export async function deriveSegmentProfiles(
       JOIN conditions.road_segment rs ON rs.segment_id = ss.segment_id
       JOIN conditions.osm_road r ON r.way_id = rs.way_id
       CROSS JOIN LATERAL (SELECT CASE r.region${tzCase} END AS tz) tzmap
-      CROSS JOIN LATERAL unnest(h.bins, h.counts) AS u(bin, cnt)
       WHERE h.hour_utc >= now() - make_interval(days => ${windowDays})
         AND tzmap.tz IS NOT NULL
+    ), lineage AS (
+      SELECT segment_id, local_dow, local_hour,
+        conditions.flow_permission_union(jsonb_agg(to_jsonb(permission_licenses))) AS permission_licenses,
+        bool_and(lineage_complete AND permission_licenses IS NOT NULL) AS complete,
+        ARRAY(SELECT DISTINCT id FROM jsonb_array_elements_text(jsonb_path_query_array(jsonb_agg(contributor_receipt_ids),'$[*][*]')) id ORDER BY id) AS receipt_ids
+      FROM hours GROUP BY segment_id,local_dow,local_hour
+    ), win AS (
+      SELECT hours.*,u.bin,u.cnt FROM hours CROSS JOIN LATERAL unnest(bins,counts) u(bin,cnt)
     ),
     binned AS (
       SELECT segment_id, local_dow, local_hour, bin, sum(cnt)::bigint AS c,
@@ -98,20 +107,23 @@ export async function deriveSegmentProfiles(
                           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) AS cum_c,
              sum(c) OVER (PARTITION BY segment_id, local_dow, local_hour) AS total
       FROM binned
-    )
-    INSERT INTO conditions.segment_profile
-      (segment_id, dow, tod_hour, speed_kph, sample_count, contributing, computed_at)
-    SELECT segment_id, local_dow, local_hour, ${median}, max(total)::int,
+    ), medians AS (
+    SELECT segment_id, local_dow, local_hour, ${median} AS speed_kph, max(total)::int AS sample_count,
            (SELECT array_agg(DISTINCT s ORDER BY s)
               FROM jsonb_array_elements_text(
-                     jsonb_path_query_array(jsonb_agg(srcs), '$[*][*]')) s),
-           ${now()}
+                     jsonb_path_query_array(jsonb_agg(srcs), '$[*][*]')) s) AS contributing
     FROM cum
     GROUP BY segment_id, local_dow, local_hour
     HAVING max(total) >= ${minSamples}
+    )
+    INSERT INTO conditions.segment_profile
+      (segment_id, dow, tod_hour, speed_kph, sample_count, contributing, computed_at, contributor_receipt_ids,lineage_complete,permission_licenses)
+    SELECT m.segment_id,m.local_dow,m.local_hour,m.speed_kph,m.sample_count,m.contributing,${now()},l.receipt_ids,l.complete,l.permission_licenses
+    FROM medians m JOIN lineage l USING(segment_id,local_dow,local_hour)
     ON CONFLICT (segment_id, dow, tod_hour) DO UPDATE SET
       speed_kph = EXCLUDED.speed_kph, sample_count = EXCLUDED.sample_count,
-      contributing = EXCLUDED.contributing, computed_at = EXCLUDED.computed_at
+      contributing = EXCLUDED.contributing, computed_at = EXCLUDED.computed_at,
+      contributor_receipt_ids=EXCLUDED.contributor_receipt_ids,lineage_complete=EXCLUDED.lineage_complete,permission_licenses=EXCLUDED.permission_licenses
     RETURNING segment_id`;
 
   return { upserted: rows.length };

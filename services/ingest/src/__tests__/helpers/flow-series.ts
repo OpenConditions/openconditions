@@ -238,16 +238,22 @@ export async function seedHourly(
   bins: readonly number[],
   counts: readonly number[],
 ): Promise<void> {
+  // Simulated samples are explicitly attributed to the acquisition held when this
+  // test fixture writes them; this is not production/history reconstruction.
+  const [acquired] =
+    await sql`SELECT contributor_receipt_id FROM conditions.observation_latest WHERE series_id=${seriesId}`;
+  const receiptIds = acquired?.contributor_receipt_id ? [acquired.contributor_receipt_id] : null;
   const total = counts.reduce((a, b) => a + b, 0);
   const mean = bins.reduce((a, b, i) => a + (b * 2 + 1) * counts[i]!, 0) / Math.max(1, total);
   await sql`
     INSERT INTO conditions.observation_rollup_hourly
-      (series_id, hour_utc, sample_count, bins, counts, min, max, mean)
+      (series_id, hour_utc, sample_count, bins, counts, min, max, mean, contributor_receipt_ids, lineage_complete)
     VALUES (${seriesId}, ${hour instanceof Date ? hour.toISOString() : hour}, ${total},
       ${sql.array(bins as number[])}::smallint[], ${sql.array(counts as number[])}::int[],
-      ${Math.min(...bins) * 2}, ${Math.max(...bins) * 2 + 2}, ${mean})
+      ${Math.min(...bins) * 2}, ${Math.max(...bins) * 2 + 2}, ${mean}, ${receiptIds}::text[], ${receiptIds !== null})
     ON CONFLICT (series_id, hour_utc) DO UPDATE SET
-      sample_count = excluded.sample_count, bins = excluded.bins, counts = excluded.counts`;
+      sample_count = excluded.sample_count, bins = excluded.bins, counts = excluded.counts,
+      contributor_receipt_ids=excluded.contributor_receipt_ids,lineage_complete=excluded.lineage_complete`;
 }
 
 /**

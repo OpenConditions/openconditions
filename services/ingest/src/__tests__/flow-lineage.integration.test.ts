@@ -23,7 +23,8 @@ async function captureWrittenScalars(segmentId: string, source: string) {
   await sql`
     UPDATE conditions.segment_observation o SET field_contributors = captured.fields,
       field_sources = conditions.flow_field_sources(captured.fields),
-      native_field_sources = conditions.flow_native_field_sources(captured.fields, o.source)
+      native_field_sources = conditions.flow_native_field_sources(captured.fields, o.source),
+      permission_licenses=ARRAY[${attribution.license}]
     FROM (SELECT segment_id, source, jsonb_build_object(
       'speed', CASE WHEN current_kph IS NOT NULL THEN ${sql.json(credit)} ELSE '[]'::jsonb END,
       'freeFlow', CASE WHEN free_flow_kph IS NOT NULL THEN ${sql.json(credit)} ELSE '[]'::jsonb END,

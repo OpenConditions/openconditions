@@ -1,3 +1,4 @@
+import { syncSources } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -35,6 +36,7 @@ const NOSPEED_Y = 368;
 beforeAll(async () => {
   db = await createTestDatabase({ pool: { max: 3 } });
   sql = db.sql;
+  await syncSources(sql, []);
 
   await sql`
     INSERT INTO conditions.road_segment
@@ -46,6 +48,7 @@ beforeAll(async () => {
     INSERT INTO conditions.segment_speed
       (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at)
     VALUES (${SEGMENT_ID}, 50, 100, 0.5, 'heavy', 'measured', 'sensor', ARRAY['test-source'], false, ${NOW}, ${NOW})`;
+  await sql`UPDATE conditions.segment_speed SET permission_licenses=ARRAY['CC0-1.0']`;
 });
 
 afterAll(async () => {

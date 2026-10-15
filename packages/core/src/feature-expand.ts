@@ -3,6 +3,8 @@ import {
   FUSED_SOURCE_IDS,
   isFusedSourceId,
   type MergedSource,
+  type PublicAttribution,
+  publicAttributionOf,
   type Registry,
 } from "@openconditions/model";
 import { withEvidence } from "./db/records.js";
@@ -19,7 +21,7 @@ import { withPolledValidity } from "./validity.js";
 type Rec = Record<string, unknown>;
 
 /** Captured credit only: no reporter, raw payload, origin chain or private evidence. */
-type ReadingAttribution = Omit<Attribution, "rights">;
+type ReadingAttribution = PublicAttribution;
 
 export interface ReadingProvenance {
   sourceId: string;
@@ -210,21 +212,26 @@ export async function latestOfFeatures(
 
 /** Only fields that describe the public credit, never internal permission evidence. */
 function readingAttribution(captured: Attribution): ReadingAttribution {
-  const keys = [
-    "provider",
-    "name",
-    "licensing",
-    "publisher",
-    "license",
-    "url",
-    "licenseUrl",
-    "parentSourceId",
-    "childSourceId",
-    "policyIds",
-  ] as const;
-  return Object.fromEntries(
-    keys.flatMap((key) => (captured[key] === undefined ? [] : [[key, captured[key]]])),
-  ) as ReadingAttribution;
+  return publicAttributionOf(captured);
+}
+
+/** Public credit projection shared by expanded readings and historical aggregates. */
+export function readingProvenanceOf(captured: ReadingProvenance): ReadingProvenance {
+  return structuredClone({
+    sourceId: captured.sourceId,
+    attribution: readingAttribution(captured.attribution),
+    ...(captured.upstream === undefined ? {} : { upstream: captured.upstream }),
+    ...(captured.mergedSources === undefined
+      ? {}
+      : {
+          mergedSources: captured.mergedSources.map((m) => ({
+            source: m.source,
+            recordId: m.recordId,
+            attribution: readingAttribution(m.attribution),
+            ...(m.upstream === undefined ? {} : { upstream: m.upstream }),
+          })),
+        }),
+  });
 }
 
 /**
@@ -240,21 +247,7 @@ function readingOf(
   const qualifiers = record["qualifiers"] as Record<string, unknown> | undefined;
   const validUntil = record["validUntil"] as string | undefined;
   const captured = record["provenance"] as unknown as ReadingProvenance;
-  const provenance: ReadingProvenance = structuredClone({
-    sourceId: captured.sourceId,
-    attribution: readingAttribution(captured.attribution),
-    ...(captured.upstream === undefined ? {} : { upstream: captured.upstream }),
-    ...(captured.mergedSources === undefined
-      ? {}
-      : {
-          mergedSources: captured.mergedSources.map((m) => ({
-            source: m.source,
-            recordId: m.recordId,
-            attribution: readingAttribution(m.attribution),
-            ...(m.upstream === undefined ? {} : { upstream: m.upstream }),
-          })),
-        }),
-  });
+  const provenance = readingProvenanceOf(captured);
   return {
     property: record["property"] as string,
     ...(componentKey !== undefined ? { componentKey } : {}),

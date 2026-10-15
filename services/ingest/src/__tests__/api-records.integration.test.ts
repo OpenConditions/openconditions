@@ -1003,6 +1003,14 @@ describe("GET /observations (one series)", () => {
         mean: expect.any(Number),
         unit: "km/h",
         histogram: { binWidth: 2, bins: [30, 40], counts: [3, 1] },
+        lineageComplete: true,
+        provenance: [
+          {
+            sourceId: "nl-ndw-flow",
+            attribution: { provider: "Test", license: "CC0-1.0" },
+            upstream: [],
+          },
+        ],
       },
       expect.objectContaining({ start: "2026-09-10T09:00:00.000Z", sampleCount: 2 }),
     ]);

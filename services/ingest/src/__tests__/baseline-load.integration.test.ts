@@ -1,4 +1,6 @@
+import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
 import { enrichReadings, type FlowOutput, type RoadFeed } from "@openconditions/roads";
+import { syncSources } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -48,11 +50,29 @@ async function seedBaseline(
     INSERT INTO conditions.sensor_baseline
       (subject_key, source, dow_bucket, tod_bucket, free_flow_kph, method, sample_count, computed_at)
     VALUES (${subjectKey}, 'src', ${dowB}, ${todB}, ${ff}, ${method}, 50, now())`;
+  await sql`UPDATE conditions.sensor_baseline SET contributor_receipt_ids=ARRAY['test-baseline-acquisition'],permission_licenses=ARRAY['CC0-1.0'],lineage_complete=true,contributing=ARRAY['src'] WHERE subject_key=${subjectKey}`;
 }
 
 beforeAll(async () => {
   db = await createTestDatabase({ pool: { max: 3 } });
   sql = db.sql;
+  await syncSources(sql, [
+    {
+      id: "src",
+      domain: "roads",
+      format: "native",
+      product: "flow",
+      tier: "authoritative",
+      operator: "Test baseline supplier",
+      license: "CC0-1.0",
+      attribution: "Test baseline supplier",
+      restricted: false,
+      cadenceSec: 60,
+      freshnessWindowSec: 900,
+    },
+  ]);
+  await sql`INSERT INTO conditions.contributor_receipt(id,version,contributors,provenance)
+    VALUES ('test-baseline-acquisition',${CONTRIBUTOR_RECEIPT_VERSION},'[]'::jsonb,'{"sourceId":"src","attribution":{"provider":"Test baseline supplier","license":"CC0-1.0"},"upstream":[]}'::jsonb)`;
 });
 
 afterAll(async () => {
@@ -83,7 +103,7 @@ describe("loadBaselineMap", () => {
 
     const map = await loadBaselineMap(sql, "src");
     expect(map.get(key("a"))).toEqual({ freeFlowKph: 100, method: "native" });
-    expect(map.get(key("b"))).toEqual({ freeFlowKph: 70, method: "derived" });
+    expect(map.get(key("b"))).toMatchObject({ freeFlowKph: 70, method: "derived" });
     expect(map.has(key("c"))).toBe(false);
   }, 30_000);
 
@@ -96,7 +116,7 @@ describe("loadBaselineMap", () => {
 
     const map = await loadBaselineMap(sql, "src");
     expect(map.has("feature:oc:feature:other-src:x")).toBe(false);
-    expect(map.get(key("only"))).toEqual({ freeFlowKph: 42, method: "derived" });
+    expect(map.get(key("only"))).toMatchObject({ freeFlowKph: 42, method: "derived" });
   }, 30_000);
 
   it("fixes the recurring-congestion regression: a rush-hour flow at the congested speed is NOT classified free_flow against the resolved (overall) baseline", async () => {

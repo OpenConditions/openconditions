@@ -51,6 +51,8 @@ export const contributorReceipt = conditionsSchema.table("contributor_receipt", 
   id: text("id").primaryKey(),
   version: smallint("version").notNull(),
   contributors: jsonb("contributors").notNull(),
+  /** Captured rights and publisher evidence; never reconstructed from the latest series. */
+  provenance: jsonb("provenance"),
   createdAt: tstz("created_at").notNull().defaultNow(),
 });
 
@@ -136,6 +138,9 @@ export const observationRollupHourly = conditionsSchema.table(
     seriesId: bigint("series_id", { mode: "number" }).notNull(),
     hourUtc: tstz("hour_utc").notNull(),
     sampleCount: integer("sample_count").notNull(),
+    /** Distinct immutable receipt IDs of every sample in this bucket. */
+    contributorReceiptIds: text("contributor_receipt_ids").array(),
+    lineageComplete: boolean("lineage_complete").notNull().default(false),
     bins: smallint("bins").array(),
     counts: integer("counts").array(),
     min: doublePrecision("min").notNull(),
@@ -160,6 +165,9 @@ export const observationRollupDaily = conditionsSchema.table(
     seriesId: bigint("series_id", { mode: "number" }).notNull(),
     dayUtc: date("day_utc").notNull(),
     sampleCount: integer("sample_count").notNull(),
+    /** Distinct immutable receipt IDs of every sample in this bucket. */
+    contributorReceiptIds: text("contributor_receipt_ids").array(),
+    lineageComplete: boolean("lineage_complete").notNull().default(false),
     min: doublePrecision("min").notNull(),
     max: doublePrecision("max").notNull(),
     mean: doublePrecision("mean").notNull(),

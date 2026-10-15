@@ -122,13 +122,18 @@ export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDr
             upstream: provenance["upstream"].map((raw) => {
               if (!raw || typeof raw !== "object") return raw;
               const upstream = raw as Record<string, unknown>;
+              // A source snapshot is already acquired evidence, including an
+              // explicit absence of scoped terms. Never fill it from today's registry.
+              if (upstream["source"] !== undefined) return upstream;
               return {
                 ...upstream,
-                licensing: captureLicensing({
-                  id: src.id,
-                  name: String(upstream["publisher"] ?? src.name),
-                  license: String(upstream["license"] ?? "NOASSERTION"),
-                }),
+                licensing:
+                  upstream["licensing"] ??
+                  captureLicensing({
+                    id: src.id,
+                    name: String(upstream["publisher"] ?? src.name),
+                    license: String(upstream["license"] ?? "NOASSERTION"),
+                  }),
               };
             }),
           }

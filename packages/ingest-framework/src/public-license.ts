@@ -33,7 +33,7 @@ export function publicLicenseClassification(
 export interface EgressRecord {
   provenance: {
     attribution: { license: string };
-    upstream?: readonly { license?: string }[];
+    upstream?: readonly { license?: string; source?: { attribution: { license: string } } }[];
     mergedSources?: readonly { attribution: { license: string } }[];
     reporter?: unknown;
   };
@@ -50,7 +50,11 @@ export function isPublicRecord(record: EgressRecord): boolean {
   const { attribution, upstream } = record.provenance;
   return (
     isPublicLicense(attribution.license) &&
-    (upstream ?? []).every((u) => u.license === undefined || isPublicLicense(u.license))
+    (upstream ?? []).every(
+      (u) =>
+        (u.license === undefined || isPublicLicense(u.license)) &&
+        (u.source === undefined || isPublicLicense(u.source.attribution.license)),
+    )
   );
 }
 

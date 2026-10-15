@@ -150,7 +150,11 @@ const startOf = (o: Rec) => {
 
 const creditProvenance = (record: Rec) => {
   const p = record["provenance"] as Rec;
-  return { attribution: p["attribution"] ?? null, upstream: p["upstream"] ?? [] };
+  return {
+    attribution: p["attribution"] ?? null,
+    upstream: p["upstream"] ?? [],
+    mergedSources: p["mergedSources"] ?? [],
+  };
 };
 
 const sameResult = (a: unknown, b: unknown) => jcs(a) === jcs(b);
@@ -448,7 +452,7 @@ async function writeSeries(
   }
   lap("readings/restated");
 
-  const acquisitions: { row: Rec; provenance: Rec }[] = [];
+  const acquisitions: { row: Rec; provenance: Rec; history?: boolean }[] = [];
   const seriesRows: Rec[] = [];
   const readingRows: Rec[] = [];
   // The whole row of a series written by its reading alone, should its row have gone.
@@ -459,6 +463,7 @@ async function writeSeries(
     const property = ctx.registry.property(records[0]!["property"] as string)!;
     const prev = latest.get(k);
     let result = prev?.result;
+    let resultProvenance = prev?.credit_provenance;
     let since = prev?.since_at.toISOString();
     let newest: Rec | undefined;
     // A lane's or a vehicle class's readings of a property that keeps no
@@ -473,6 +478,7 @@ async function writeSeries(
     const frontier = rollupPeriod === undefined ? undefined : frontiers.get(rollupPeriod);
     for (const record of records) {
       const changed = result === undefined || !sameResult(result, record["result"]);
+      const creditChanged = !sameResult(resultProvenance ?? null, creditProvenance(record));
       const effective = effectiveFrom(record);
       if (changed) since = effective;
       // A changed reading of the instant in effect is a correction of it (a
@@ -483,24 +489,24 @@ async function writeSeries(
       if (
         retentionDays !== undefined &&
         historyEligible(record as unknown as Parameters<typeof historyEligible>[0]) &&
-        (changed || !property.retention?.changeOnly)
+        (changed || creditChanged || !property.retention?.changeOnly)
       ) {
         if (covers(retentionDays, startOf(record))) {
           if (frontier !== undefined && startOf(record) < frontier) counts.pastRollup++;
-          history.push({
-            key: k,
-            row: {
-              retention_days: retentionDays,
-              // Poll attempts outlive finite history only; a keep-everything row
-              // keeps its payload hash itself.
-              ...historyRowOf(record, property.result, retentionDays > 0 ? ctx : {}),
-            },
-          });
+          const row = {
+            retention_days: retentionDays,
+            // Poll attempts outlive finite history only; a keep-everything row
+            // keeps its payload hash itself.
+            ...historyRowOf(record, property.result, retentionDays > 0 ? ctx : {}),
+          };
+          history.push({ key: k, row });
+          acquisitions.push({ row, provenance: record["provenance"] as Rec, history: true });
         } else {
           counts.outsideRetention++;
         }
       }
       result = record["result"];
+      resultProvenance = creditProvenance(record);
     }
     if (newest !== undefined) {
       const row = seriesRowOf(newest, property, retentionDays, ctx.now, prev?.template_hash);
@@ -608,7 +614,7 @@ async function writeTransient(
   const now = Date.parse(ctx.now);
   const covers = partitionCoverage(now);
   const seriesRows: Rec[] = [];
-  const acquisitions: { row: Rec; provenance: Rec }[] = [];
+  const acquisitions: { row: Rec; provenance: Rec; history?: boolean }[] = [];
   const history = new Map<string, Rec>();
   let handled = 0;
   for (const { draft, property } of readings) {
@@ -646,10 +652,12 @@ async function writeTransient(
       counts.outsideRetention++;
       continue;
     }
-    history.set(keyString(seriesKeyOf(record)), {
+    const historyRow = {
       retention_days: retentionDays,
       ...historyRowOf(record, property.result, retentionDays > 0 ? ctx : {}),
-    });
+    };
+    history.set(keyString(seriesKeyOf(record)), historyRow);
+    acquisitions.push({ row: historyRow, provenance: record["provenance"] as Rec, history: true });
   }
   await captureContributorReceipts(tx, acquisitions, ctx.now, receipts);
   type Written = { series_id: number } & Record<
@@ -788,7 +796,8 @@ const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'r
             l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at, l.contributor_receipt_id,
             l.reading ? 'validUntil' AS ended,
             jsonb_build_object('attribution', l.template #> '{provenance,attribution}',
-              'upstream', COALESCE(l.template #> '{provenance,upstream}', '[]'::jsonb)) AS credit_provenance,
+              'upstream', COALESCE(l.template #> '{provenance,upstream}', '[]'::jsonb),
+              'mergedSources', COALESCE(l.template #> '{provenance,mergedSources}', '[]'::jsonb)) AS credit_provenance,
             l.subject_key, l.property, l.qualifier_key, l.source_id`;
 
 async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<string, Latest>> {
@@ -1029,17 +1038,28 @@ const receiptCache = (): ReceiptCache => ({ keys: new Map(), ids: new Map() });
 /** Capture once per distinct actual provenance in a write, outside canonical record bodies. */
 async function captureContributorReceipts(
   tx: Sql,
-  acquisitions: { row: Rec; provenance: Rec }[],
+  acquisitions: { row: Rec; provenance: Rec; history?: boolean }[],
   now: string,
   cache: ReceiptCache,
 ): Promise<void> {
   if (acquisitions.length === 0) return;
-  const inputs = new Map<string, { source_id: unknown; attribution: unknown; upstream: unknown }>();
+  const inputs = new Map<
+    string,
+    { source_id: unknown; attribution: unknown; upstream: unknown; mergedSources?: unknown }
+  >();
+  // The newest sample also writes the latest row. Its two owners share a
+  // sealed provenance object; serialize/hash that object only once.
+  const provenanceKeys = new WeakMap<Rec, string>();
   const keys = acquisitions.map(({ provenance }) => {
+    const existing = provenanceKeys.get(provenance);
+    if (existing !== undefined) return existing;
     const descriptor = {
       source_id: provenance["sourceId"],
       attribution: provenance["attribution"] ?? {},
       upstream: provenance["upstream"] ?? [],
+      ...(provenance["mergedSources"] !== undefined
+        ? { mergedSources: provenance["mergedSources"] }
+        : {}),
     };
     const plain = JSON.stringify(descriptor);
     let key = cache.keys.get(plain);
@@ -1048,11 +1068,24 @@ async function captureContributorReceipts(
       cache.keys.set(plain, key);
     }
     if (!cache.ids.has(key)) inputs.set(key, descriptor);
+    provenanceKeys.set(provenance, key);
     return key;
   });
   const assign = () =>
-    acquisitions.forEach(({ row }, i) => {
-      row["contributor_receipt_id"] = cache.ids.get(keys[i]!);
+    acquisitions.forEach(({ row, history }, i) => {
+      const id = cache.ids.get(keys[i]!)!;
+      if (!history) {
+        row["contributor_receipt_id"] = id;
+        return;
+      }
+      const extra = (row["extra"] as Rec | null) ?? {};
+      const {
+        attribution: _attribution,
+        upstream: _upstream,
+        mergedSources: _merged,
+        ...varying
+      } = (extra["provenance"] as Rec | undefined) ?? {};
+      row["extra"] = { ...extra, provenance: { ...varying, creditReceiptId: id } };
     });
   if (inputs.size === 0) {
     assign();
@@ -1064,9 +1097,16 @@ async function captureContributorReceipts(
     [JSON.stringify([...inputs].map(([key, input]) => ({ key, ...input })))],
   );
   const receipts = captured.map(({ key, contributors }) => {
-    const id = sha256Hex(jcs({ version: CONTRIBUTOR_RECEIPT_VERSION, contributors }));
+    const input = inputs.get(key)!;
+    const provenance = {
+      sourceId: input.source_id,
+      attribution: input.attribution,
+      upstream: input.upstream,
+      ...(input.mergedSources !== undefined ? { mergedSources: input.mergedSources } : {}),
+    };
+    const id = sha256Hex(jcs({ version: CONTRIBUTOR_RECEIPT_VERSION, contributors, provenance }));
     cache.ids.set(key, id);
-    return { id, version: CONTRIBUTOR_RECEIPT_VERSION, contributors, created_at: now };
+    return { id, version: CONTRIBUTOR_RECEIPT_VERSION, contributors, provenance, created_at: now };
   });
   await insertRows(
     tx,
@@ -1075,6 +1115,7 @@ async function captureContributorReceipts(
       { name: "id", type: "text" },
       { name: "version", type: "smallint" },
       { name: "contributors", type: "jsonb" },
+      { name: "provenance", type: "jsonb" },
       { name: "created_at", type: "timestamptz" },
     ],
     [...new Map(receipts.map((r) => [r.id, r])).values()],

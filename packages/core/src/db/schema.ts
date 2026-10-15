@@ -139,6 +139,10 @@ export const sensorBaseline = conditionsSchema.table(
     todBucket: smallint("tod_bucket").notNull(),
     freeFlowKph: doublePrecision("free_flow_kph").notNull(),
     method: text("method").notNull(),
+    contributorReceiptIds: text("contributor_receipt_ids").array(),
+    lineageComplete: boolean("lineage_complete").notNull().default(false),
+    permissionLicenses: text("permission_licenses").array(),
+    contributing: text("contributing").array(),
     sampleCount: integer("sample_count").notNull(),
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
   },
@@ -233,6 +237,11 @@ export const roadGraphState = conditionsSchema.table(
   (t) => [check("road_graph_state_singleton", sql`${t.singleton} IS TRUE`)],
 );
 
+/** Current reviewed public licence policy, refreshed atomically with the source catalogue. */
+export const publicLicensePolicy = conditionsSchema.table("public_license_policy", {
+  license: text("license").primaryKey(),
+});
+
 /**
  * The multi-source/crowd/federation fusion seam: one row per (segment,
  * source), each source free to report on its own tier and cadence. A
@@ -258,6 +267,8 @@ export const segmentObservation = conditionsSchema.table(
     fieldSources: jsonb("field_sources"),
     fieldContributors: jsonb("field_contributors"),
     fieldLineageComplete: jsonb("field_lineage_complete"),
+    /** Exact captured permission IDs; null means missing evidence and is never public. */
+    permissionLicenses: text("permission_licenses").array(),
     observedAt: timestamp("observed_at", { withTimezone: true }).notNull(),
     expiresAt: timestamp("expires_at", { withTimezone: true }),
   },
@@ -281,6 +292,9 @@ export const segmentProfile = conditionsSchema.table(
     todHour: smallint("tod_hour").notNull(),
     speedKph: doublePrecision("speed_kph").notNull(),
     sampleCount: integer("sample_count").notNull(),
+    contributorReceiptIds: text("contributor_receipt_ids").array(),
+    lineageComplete: boolean("lineage_complete").notNull().default(false),
+    permissionLicenses: text("permission_licenses").array(),
     /** The sources whose readings built this bucket's median. */
     contributing: text("contributing").array().notNull().default(sql`'{}'::text[]`),
     computedAt: timestamp("computed_at", { withTimezone: true }).notNull(),
@@ -314,6 +328,8 @@ export const segmentSpeed = conditionsSchema.table(
     fieldSources: jsonb("field_sources"),
     fieldContributors: jsonb("field_contributors"),
     fieldLineageComplete: jsonb("field_lineage_complete"),
+    /** Exact captured permission IDs; null means missing evidence and is never public. */
+    permissionLicenses: text("permission_licenses").array(),
     observedAt: timestamp("observed_at", { withTimezone: true }),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
   },
