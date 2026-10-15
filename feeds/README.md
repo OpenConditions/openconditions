@@ -435,7 +435,11 @@ day as `{utcDate-1}` to `{utcDate-7}`, for a publisher that files its data
 under the day: `https://dd.weather.gc.ca/{utcDate}/WXO-DD/alerts/cap/{utcDate}/`.
 The date is the instant the poll started, in UTC, filled in the same pass as
 credentials, so a credential's value is never read for one. Any other
-`{utcDate…}` is a schema error.
+`{utcDate…}` is a schema error. Likewise `{utcMinute}` is the poll's UTC
+minute (`YYYY-MM-DDTHH:MM:00Z`) and `{utcMinute-1}` to `{utcMinute-1440}` a
+minute up to a day before it, for a publisher that answers a window ending
+now: `…/tracking/routes?endFrom={utcMinute-10}`. Whole minutes keep the URL
+of every poll within one minute the same for the publisher's cache.
 
 `unzip` is for an endpoint that answers with a zip archive:
 `{ "entries": "\\.xml$", "maxEntries": 10000 }`, both optional. The role's

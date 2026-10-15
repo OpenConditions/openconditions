@@ -1,6 +1,7 @@
 import { ACCESS_MODES, AttributionPolicy, SOURCE_TIERS } from "@openconditions/model";
 import { type ZodRawShape, z } from "zod";
 import { FEED_QUALIFIER, FEED_TOKEN } from "./ids.js";
+import { MAX_UTC_MINUTES_BACK } from "./templates.js";
 
 const RAW_RETENTION_CLASSES = ["situation", "observation", "reference"] as const;
 
@@ -87,6 +88,14 @@ function patternGroups(pattern: string): number | undefined {
 /** Every `{utcDate…}` placeholder a request text writes is `{utcDate}` or `{utcDate-1}` … `{utcDate-7}`. */
 function utcDatePlaceholdersValid(text: string): boolean {
   return [...text.matchAll(/\{utcDate[^}]*\}/g)].every((m) => /^\{utcDate(-[1-7])?\}$/.test(m[0]));
+}
+
+/** Every `{utcMinute…}` placeholder a request text writes is `{utcMinute}` or `{utcMinute-1}` … `{utcMinute-1440}`. */
+function utcMinutePlaceholdersValid(text: string): boolean {
+  return [...text.matchAll(/\{utcMinute[^}]*\}/g)].every((m) => {
+    const back = /^\{utcMinute(?:-([1-9]\d{0,3}))?\}$/.exec(m[0]);
+    return back !== null && Number(back[1] ?? 0) <= MAX_UTC_MINUTES_BACK;
+  });
 }
 
 /**
@@ -282,6 +291,12 @@ export const endpointSchema = z
         ctx.addIssue({
           code: "custom",
           message: "a date placeholder is {utcDate} or {utcDate-1} to {utcDate-7}",
+        });
+      }
+      if (url !== undefined && !utcMinutePlaceholdersValid(url)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `a minute placeholder is {utcMinute} or {utcMinute-1} to {utcMinute-${MAX_UTC_MINUTES_BACK}}`,
         });
       }
     }

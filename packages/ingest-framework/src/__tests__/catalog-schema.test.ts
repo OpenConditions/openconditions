@@ -94,6 +94,22 @@ describe("catalogue schema", () => {
     ).toBe(false);
   });
 
+  test("utcMinute placeholders name the poll's minute or one up to a day before", () => {
+    const ok = (url: string) => endpointSchema.safeParse({ url, cadenceSec: 60 }).success;
+    expect(ok("https://a/routes?endFrom={utcMinute-10}")).toBe(true);
+    expect(ok("https://a/routes?from={utcMinute-1440}&to={utcMinute}")).toBe(true);
+    for (const bad of [
+      "{utcMinute-1441}",
+      "{utcMinute-0}",
+      "{utcMinute-010}",
+      "{utcMinute+5}",
+      "{utcMinute-}",
+      "{utcMinute10}",
+    ]) {
+      expect(ok(`https://a/routes?endFrom=${bad}`), bad).toBe(false);
+    }
+  });
+
   test("unzip takes an entry pattern and an entry bound, and goes with a plain url", () => {
     const parse = (over: object) =>
       endpointSchema.safeParse({ url: "https://a/x.zip", cadenceSec: 60, ...over }).success;

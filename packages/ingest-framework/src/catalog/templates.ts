@@ -40,21 +40,35 @@ function credentialValue(name: FeedCredentialName, env: Env): string | undefined
 
 /**
  * One pass over every placeholder kind: `${field}` is a credential, `{west}` a
- * cell value and `{utcDate}` or `{utcDate-<n>}` the poll's UTC date, or the
- * date n days before it. A single pass means a credential's value is never
- * scanned for the others, and `${west}` stays a credential. A brace that is
- * none of them is left as written.
+ * cell value, `{utcDate}` or `{utcDate-<n>}` the poll's UTC date, or the
+ * date n days before it, and `{utcMinute}` or `{utcMinute-<n>}` the poll's
+ * UTC minute, or the minute n minutes before it. A single pass means a
+ * credential's value is never scanned for the others, and `${west}` stays a
+ * credential. A brace that is none of them is left as written.
  */
 const PLACEHOLDER = new RegExp(
-  `${CREDENTIAL_PLACEHOLDER.source}|\\{(${CELL_PLACEHOLDER_NAMES.join("|")})\\}|\\{utcDate(?:-([1-7]))?\\}`,
+  `${CREDENTIAL_PLACEHOLDER.source}|\\{(${CELL_PLACEHOLDER_NAMES.join("|")})\\}|\\{utcDate(?:-([1-7]))?\\}|\\{utcMinute(?:-([1-9]\\d{0,3}))?\\}`,
   "g",
 );
 
 const DAY_MS = 86_400_000;
+const MINUTE_MS = 60_000;
+
+/** The most minutes back a `{utcMinute-<n>}` may name: a day. */
+export const MAX_UTC_MINUTES_BACK = 1440;
 
 /** `YYYYMMDD` of the UTC day `daysBack` days before the instant. */
 function utcDate(at: number, daysBack: number): string {
   return new Date(at - daysBack * DAY_MS).toISOString().slice(0, 10).replaceAll("-", "");
+}
+
+/**
+ * `YYYY-MM-DDTHH:MM:00Z` of the UTC minute `minutesBack` minutes before the
+ * instant, whole minutes so every poll within one minute asks the same URL
+ * of a publisher's cache.
+ */
+function utcMinute(at: number, minutesBack: number): string {
+  return `${new Date(at - minutesBack * MINUTE_MS).toISOString().slice(0, 16)}:00Z`;
 }
 
 /** Whether a request text names a credential (`${field}`), as opposed to only cell values. */
@@ -105,7 +119,7 @@ function literalPathAt(template: string, from: number): string {
  * Fills a template's placeholders. A feed's credential is filled verbatim. A
  * setting is a base URL (see {@link settingUrl}): its trailing slashes are
  * dropped, and so is a path it already ends with that the template appends.
- * A date is the poll's, `at` (epoch ms), now when unsaid.
+ * A date or minute is the poll's, `at` (epoch ms), now when unsaid.
  */
 function fill(
   feed: CatalogFeed,
@@ -118,8 +132,16 @@ function fill(
 ): string {
   const cellFill = cell ? cellValues(cell) : undefined;
   return template.replace(PLACEHOLDER, (match, ref: string | undefined, cellName, ...rest) => {
-    const [daysBack, offset] = rest as [string | undefined, number];
+    const [daysBack, minutesBack, offset] = rest as [
+      string | undefined,
+      string | undefined,
+      number,
+    ];
     if (ref === undefined && cellName === undefined) {
+      if (match.startsWith("{utcMinute")) {
+        const back = Number(minutesBack ?? 0);
+        return back > MAX_UTC_MINUTES_BACK ? match : utcMinute(at ?? Date.now(), back);
+      }
       return utcDate(at ?? Date.now(), Number(daysBack ?? 0));
     }
     if (ref === undefined) {

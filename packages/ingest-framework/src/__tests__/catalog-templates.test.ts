@@ -323,6 +323,50 @@ describe("resolveEndpointUrls", () => {
     });
   });
 
+  describe("utcMinute placeholders", () => {
+    test("fill the poll instant's UTC minute, or one some minutes before it", () => {
+      const feed = feedWith({
+        main: { url: "https://r.test/routes?endFrom={utcMinute-10}&x=1", cadenceSec: 60 },
+      });
+      const at = Date.parse("2026-10-15T06:34:59.900Z");
+      expect(resolveEndpointUrls(feed, "main", {}, undefined, at)).toEqual([
+        "https://r.test/routes?endFrom=2026-10-15T06:24:00Z&x=1",
+      ]);
+      expect(resolveFeedTemplate(feed, "{utcMinute}", {}, undefined, at)).toBe(
+        "2026-10-15T06:34:00Z",
+      );
+      // Across midnight and a year.
+      expect(
+        resolveFeedTemplate(
+          feed,
+          "{utcMinute-1440}",
+          {},
+          undefined,
+          Date.parse("2027-01-01T00:05Z"),
+        ),
+      ).toBe("2026-12-31T00:05:00Z");
+      // Further back than a day is no placeholder, as the schema says.
+      expect(resolveFeedTemplate(feed, "{utcMinute-1441}", {}, undefined, at)).toBe(
+        "{utcMinute-1441}",
+      );
+    });
+
+    test("go in the same pass as credentials and dates", () => {
+      const feed = feedWith({
+        main: { url: "https://m/{utcDate}/{utcMinute-5}?k=${api_key}", cadenceSec: 60 },
+      });
+      expect(
+        resolveEndpointUrls(
+          feed,
+          "main",
+          { DE_BY_MOBILITHEK_EVENTS_API_KEY: "{utcMinute}" },
+          undefined,
+          Date.parse("2026-10-08T23:59:59Z"),
+        ),
+      ).toEqual(["https://m/20261008/2026-10-08T23:54:00Z?k={utcMinute}"]);
+    });
+  });
+
   describe("per-item urls", () => {
     const feed = catalogFeed({
       endpoints: {
