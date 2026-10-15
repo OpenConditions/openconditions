@@ -129,6 +129,21 @@ export function cbpOpeningHours(
   return { osm: `${open}-${close}`, timezone: zone };
 }
 
+/** Whether a port states no queue: every queue it lists is N/A or pending an update. */
+function statesNoQueue(port: CbpPort): boolean {
+  return MODES.every(([field]) => {
+    const group = port[field];
+    if (typeof group !== "object" || group === null) return true;
+    return Object.keys(PROGRAMS).every((name) => {
+      const lane = (group as Record<string, unknown>)[name];
+      if (typeof lane !== "object" || lane === null) return true;
+      const said = text((lane as CbpLane).operational_status)?.toLowerCase();
+      if (said === undefined || !Object.hasOwn(STATES, said)) return false;
+      return STATES[said] === null || STATES[said] === "unknown";
+    });
+  });
+}
+
 /**
  * The instant most ports' page clocks name, to within a minute: when CBP
  * wrote the page (its ports' clocks differ by a second or so).
@@ -156,7 +171,11 @@ interface Located {
  * crossing, with the U.S.-bound queues it inspects. Each port is one
  * `border_crossing`, placed at its crossing of the vendored table (neither
  * coordinates nor an id beyond the port number are published); a port the
- * table lacks is rejected rather than guessed.
+ * table lacks is rejected rather than guessed, unless it states no queue
+ * (every queue N/A or pending): then it carries nothing to place and is
+ * left out. CBP's El Paso record 240221, the port as a whole with no
+ * crossing named, has been all pending since it appeared in 2026; it
+ * stands for none of El Paso's four bridges, which report on their own.
  *
  * A queue is a `lane_group` keyed `mode/programme`: commercial, passenger and
  * pedestrian lanes, each standard, FAST, NEXUS/SENTRI or Ready Lane. A queue
@@ -188,7 +207,8 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
       const portNumber = text(port.port_number);
       const crossing = portNumber === undefined ? undefined : crossingOfCbpPort(portNumber);
       if (portNumber === undefined || crossing === undefined) {
-        rejected++;
+        // A port the table lacks that states no queue has nothing to place.
+        if (portNumber === undefined || !statesNoQueue(port)) rejected++;
         continue;
       }
       const page = pageClock(port);

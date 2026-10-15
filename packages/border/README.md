@@ -26,7 +26,9 @@ publications into the `border_crossing` features, `lane_group` components and
   crossing lies far from the point the Bureau of Transportation Statistics
   publishes for its CBP port (public domain), and with `--feeds` lists the
   ports and offices the live feeds name that the table lacks. A port the
-  table lacks is rejected, not guessed. Both agencies' features of one crossing
+  table lacks is rejected, not guessed, unless it states no queue (CBP's
+  El Paso record 240221, the port without a crossing, every queue pending):
+  it has nothing to place and is left out. Both agencies' features of one crossing
   share its place and its Wikidata id, so they link.
 
 The domain builds on the kernel and the border model module, never on the

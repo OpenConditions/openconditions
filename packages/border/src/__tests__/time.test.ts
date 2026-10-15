@@ -6,6 +6,9 @@ describe("zonedInstant", () => {
     expect(zonedInstant("2026-10-14", "16:00", "America/Phoenix").toISOString()).toBe(
       "2026-10-14T23:00:00.000Z",
     );
+    expect(zonedInstant("2026-12-14", "16:00", "America/Phoenix").toISOString()).toBe(
+      "2026-12-14T23:00:00.000Z",
+    );
     expect(zonedInstant("2026-12-14", "16:00", "America/Denver").toISOString()).toBe(
       "2026-12-14T23:00:00.000Z",
     );
@@ -24,6 +27,18 @@ describe("zonedInstant", () => {
     expect(zonedInstant("2026-03-08", "03:30", "America/Chicago").toISOString()).toBe(
       "2026-03-08T08:30:00.000Z",
     );
+  });
+
+  it("keeps Phoenix at UTC-7 through the days the rest of the country changes its clocks", () => {
+    for (const date of ["2026-03-08", "2026-03-09", "2026-11-01", "2026-11-02", "2027-01-15"]) {
+      expect(zonedInstant(date, "02:30", "America/Phoenix").toISOString(), date).toBe(
+        `${date}T09:30:00.000Z`,
+      );
+    }
+    expect(wallClock(new Date("2027-01-15T23:33:33Z"), "America/Phoenix")).toEqual({
+      date: "2027-01-15",
+      time: "16:33:33",
+    });
   });
 });
 

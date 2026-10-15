@@ -71,12 +71,37 @@ function port(
 }
 
 describe("parseCbp", () => {
-  it("seals every port it places, and rejects the one the crossing table lacks", () => {
+  it("seals every port it places, and leaves out El Paso without a crossing, which states no queue", () => {
     const out = live();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
     expect(out.features).toHaveLength(10);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected).toBe(0);
     expect(out.features.some((f) => (f["id"] as string).endsWith(":240221"))).toBe(false);
+  });
+
+  it("rejects a port the crossing table lacks once it states a queue", () => {
+    const pending = { operational_status: "Update Pending" };
+    const unknownPort = (lanes: Record<string, Record<string, unknown>>) =>
+      port({ port_number: "240221", port_name: "El Paso", crossing_name: "" }, lanes);
+    const out = parse(
+      JSON.stringify([
+        unknownPort({ "commercial.standard_lanes": pending, "passenger.standard_lanes": pending }),
+        unknownPort({
+          "passenger.standard_lanes": {
+            operational_status: "delay",
+            update_time: "At 4:00 pm MDT",
+            delay_minutes: "25",
+            lanes_open: "6",
+          },
+        }),
+        unknownPort({
+          "passenger.standard_lanes": { operational_status: "Temporarily suspended" },
+        }),
+      ]),
+    );
+    expect(out.features).toEqual([]);
+    expect(out.observations).toEqual([]);
+    expect(out.rejected).toBe(2);
   });
 
   it("places a port at its crossing, with the port number and the crossing's Wikidata item", () => {
@@ -186,6 +211,45 @@ describe("parseCbp", () => {
     expect(readings(live().observations, "260402")["commercial/standard"]?.at).toBe(
       "2026-10-14T22:00:00Z",
     );
+  });
+
+  it("dates Arizona's queues in winter, when Phoenix keeps MST and the Pacific clock falls an hour behind", () => {
+    // 2027-01-15 23:33:33Z: 18:33:33 EST, 16:33:33 MST in Phoenix, 15:33:33 PST.
+    const wait = (at: string) => ({
+      operational_status: "delay",
+      update_time: at,
+      delay_minutes: "15",
+      lanes_open: "4",
+    });
+    const out = parse(
+      JSON.stringify([
+        port({ date: "1/15/2027", time: "18:33:33" }),
+        port(
+          { port_number: "260101", port_name: "Douglas", date: "1/15/2027", time: "16:33:33" },
+          { "passenger.standard_lanes": wait("At 4:00 pm PST") },
+        ),
+        port(
+          { port_number: "260401", port_name: "Nogales", date: "1/15/2027", time: "16:33:33" },
+          { "passenger.standard_lanes": wait("At 4:00 pm MST") },
+        ),
+        port(
+          { port_number: "260802", port_name: "San Luis", date: "1/15/2027", time: "15:33:33" },
+          { "passenger.standard_lanes": wait("At 3:00 pm PST") },
+        ),
+      ]),
+      "2027-01-15T23:38:05Z",
+    );
+    expect(readings(out.observations, "260101")["passenger/standard"]?.at).toBe(
+      "2027-01-15T23:00:00Z",
+    );
+    expect(readings(out.observations, "260401")["passenger/standard"]?.at).toBe(
+      "2027-01-15T23:00:00Z",
+    );
+    // A port on the Pacific clock is an hour behind Phoenix in winter: 3 pm there is 23:00Z.
+    expect(readings(out.observations, "260802")["passenger/standard"]?.at).toBe(
+      "2027-01-15T23:00:00Z",
+    );
+    expect(readings(out.observations, "260101")["open"]?.at).toBe("2027-01-15T23:33:33Z");
   });
 
   it("reads a queue time later than the fetch as yesterday's", () => {

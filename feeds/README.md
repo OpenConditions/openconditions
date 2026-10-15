@@ -376,8 +376,9 @@ crossings (`packages/border/src/snapshots/crossings.json`): which Wikidata item
 each CBP port number and CBSA office name is, the zone its clocks keep, and the
 item's label and coordinates (CC0), refreshed with
 `pnpm tsx scripts/gen-border-crossings.ts` (`--feeds` lists the ports the live
-feeds name that it lacks). A port the table lacks is rejected, not guessed.
-The formats are in `packages/border/src/domain.ts`.
+feeds name that it lacks). A port the table lacks is rejected, not guessed,
+unless it states no queue (every queue N/A or pending), which leaves nothing
+to place. The formats are in `packages/border/src/domain.ts`.
 
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
