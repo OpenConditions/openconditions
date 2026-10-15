@@ -53,21 +53,54 @@ function mainOptions(service: string) {
   return options;
 }
 const pool = { max: 5, idle_timeout: 30, connect_timeout: 10 };
+const serviceTimeouts = {
+  statement_timeout: 30_000,
+  lock_timeout: 10_000,
+  idle_in_transaction_session_timeout: 60_000,
+};
 describe("database client attribution", () => {
-  it("keeps separate writer and HTTP pools with bounded static startup names", async () => {
-    const { sql, apiSql } = await import("../db.js");
-    expect(sql).not.toBe(apiSql);
-    expect(postgres).toHaveBeenCalledTimes(2);
+  it("keeps separate writer, HTTP and maintenance pools with bounded static startup names", async () => {
+    const { sql, apiSql, maintenanceSql } = await import("../db.js");
+    expect(new Set([sql, apiSql, maintenanceSql]).size).toBe(3);
+    expect(postgres).toHaveBeenCalledTimes(3);
     expect(postgres.mock.calls.map((call) => call[1])).toEqual([
-      { ...pool, connection: { application_name: "openconditions-ingest-writer" } },
-      { ...pool, connection: { application_name: "openconditions-ingest-api" } },
+      {
+        ...pool,
+        connection: {
+          application_name: "openconditions-ingest-writer",
+          statement_timeout: 300_000,
+          lock_timeout: 60_000,
+          idle_in_transaction_session_timeout: 600_000,
+        },
+      },
+      {
+        ...pool,
+        connection: {
+          application_name: "openconditions-ingest-api",
+          statement_timeout: 20_000,
+          lock_timeout: 5_000,
+          idle_in_transaction_session_timeout: 60_000,
+        },
+      },
+      {
+        ...pool,
+        max: 2,
+        connection: {
+          application_name: "openconditions-ingest-maintenance",
+          statement_timeout: 3_600_000,
+          lock_timeout: 5_000,
+          idle_in_transaction_session_timeout: 900_000,
+        },
+      },
     ]);
   });
   it.each([
     ["contributions-api", "openconditions-contributions-api"],
     ["federation", "openconditions-federation-api"],
   ])("keeps %s startup options static without booting the service", (service, name) => {
-    expect(mainOptions(service!)).toEqual([{ ...pool, connection: { application_name: name } }]);
+    expect(mainOptions(service!)).toEqual([
+      { ...pool, connection: { application_name: name, ...serviceTimeouts } },
+    ]);
   });
   it.skipIf(process.env["OPENCONDITIONS_RUN_ATTRIBUTION_TEST"] !== "1")(
     "exposes all configured names on an owned PostgreSQL 18 instance",
@@ -103,7 +136,7 @@ describe("database client attribution", () => {
           const [row] =
             await client`SELECT application_name FROM pg_stat_activity WHERE pid = pg_backend_pid()`;
           observed.push(String(row!["application_name"]));
-          expect(client.options.max).toBe(5);
+          expect(client.options.max).toBe((option as { max: number }).max);
           expect(client.options.idle_timeout).toBe(30);
           expect(client.options.connect_timeout).toBe(10);
         }
@@ -111,6 +144,7 @@ describe("database client attribution", () => {
           [
             "openconditions-ingest-writer",
             "openconditions-ingest-api",
+            "openconditions-ingest-maintenance",
             "openconditions-contributions-api",
             "openconditions-federation-api",
           ].sort(),

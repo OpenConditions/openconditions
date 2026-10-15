@@ -34,11 +34,19 @@ async function boot() {
   await runMigrations(url);
   console.info("[contributions-api] migrations applied");
 
+  // Requests and short sweeps only: a statement past 30 s or a lock wait past
+  // 10 s fails rather than holding one of the five connections. Startup
+  // parameters, as the database and role may be shared with another application.
   const sql = postgres(url, {
     max: 5,
     idle_timeout: 30,
     connect_timeout: 10,
-    connection: { application_name: "openconditions-contributions-api" },
+    connection: {
+      application_name: "openconditions-contributions-api",
+      statement_timeout: 30_000,
+      lock_timeout: 10_000,
+      idle_in_transaction_session_timeout: 60_000,
+    },
   });
   const registry = productionRegistry();
   await assertStoredCodesRegistered(sql, registry, { sourceFormats: false });

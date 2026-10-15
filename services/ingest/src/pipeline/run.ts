@@ -35,7 +35,7 @@ import {
   enrichReadings,
   recordSkippedNoGeometry,
 } from "@openconditions/roads";
-import type { WriteSummary } from "@openconditions/storage";
+import { isDbTimeout, type WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
 import type { RawArchive } from "../raw/archive.js";
@@ -1150,6 +1150,18 @@ async function fail(
 }
 
 /**
+ * Records a publication that failed, its transaction rolled back. One the
+ * database ended for running or waiting too long is marked `db_timeout`, so a
+ * feed that times out on every poll stands out in its status; the next tick
+ * fetches and publishes again.
+ */
+function failPublish(poll: PollContext, err: unknown): Promise<RunResult> {
+  console.error(`[ingest] publish failed for source ${poll.src.id}:`, err);
+  const message = err instanceof Error ? err.message : String(err);
+  return fail(poll, "failed", isDbTimeout(err) ? `db_timeout: ${message}` : message);
+}
+
+/**
  * Binds the situations a poll changed. Graph binding is derived and
  * best-effort: it runs after the publication committed so a slow resolve never
  * holds the source's lock, and a failure here never fails the poll — the
@@ -1255,8 +1267,7 @@ async function finishEventPoll(
     // The publication's transaction closed the attempt with the poll's success.
     poll.attempt.closed = true;
   } catch (err) {
-    console.error(`[ingest] publish failed for source ${src.id}:`, err);
-    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+    return failPublish(poll, err);
   }
   poll.steps.lap("write");
   poll.steps.writeMs = summary.stepsMs;
@@ -1364,8 +1375,7 @@ async function finishFlowPoll(
     });
     poll.attempt.closed = true;
   } catch (err) {
-    console.error(`[ingest] publish failed for source ${src.id}:`, err);
-    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+    return failPublish(poll, err);
   }
   const { summary, counts } = published;
   poll.steps.lap("write");
@@ -1442,8 +1452,7 @@ async function finishFeaturePoll(
     });
     poll.attempt.closed = true;
   } catch (err) {
-    console.error(`[ingest] publish failed for source ${src.id}:`, err);
-    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+    return failPublish(poll, err);
   }
   const { summary, counts } = published;
   poll.steps.lap("write");
@@ -1493,8 +1502,7 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
     });
     poll.attempt.closed = true;
   } catch (err) {
-    console.error(`[ingest] publish failed for source ${src.id}:`, err);
-    return fail(poll, "failed", err instanceof Error ? err.message : String(err));
+    return failPublish(poll, err);
   }
   const { summary, counts } = published;
   poll.steps.lap("write");

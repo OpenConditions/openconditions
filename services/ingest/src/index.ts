@@ -10,7 +10,7 @@ import Fastify from "fastify";
 import { fetch as undiciFetch } from "undici";
 import { registerApiRoutes } from "./api/routes.js";
 import { operatorTokenFromEnv, registerScope } from "./api/scope.js";
-import { apiSql, DATABASE_URL, sql } from "./db.js";
+import { apiSql, DATABASE_URL, maintenanceSql, sql } from "./db.js";
 import { loadIngestCatalog } from "./domains.js";
 import { startFederationReconcile } from "./federation-reconcile.js";
 import { FeedStatusStore } from "./feed-status.js";
@@ -20,7 +20,7 @@ import { onDemandDeadlineMsFromEnv } from "./on-demand/read-through.js";
 import { closeAbandonedPollAttempts } from "./pipeline/source-status.js";
 import { registerPublishRoutes } from "./publish-routes.js";
 import { RateLimiter, registerRateLimit } from "./rate-limit.js";
-import { maintainPartitions, startRecordJobs } from "./record-jobs.js";
+import { maintainPartitionsAtBoot, startRecordJobs } from "./record-jobs.js";
 import { startScheduler } from "./scheduler.js";
 import { InFlight, onceShutdown } from "./shutdown.js";
 import { catalogueSources } from "./sources.js";
@@ -62,7 +62,7 @@ async function boot() {
   });
 
   const statusStore = new FeedStatusStore();
-  await maintainPartitions(sql, model, new Date());
+  await maintainPartitionsAtBoot(maintenanceSql, model, () => new Date());
   const abandoned = await closeAbandonedPollAttempts(sql);
   if (abandoned > 0) console.warn(`[ingest] closed ${abandoned} poll attempt(s) left running`);
   registerPublishRoutes(app, apiSql, statusStore, catalog);
@@ -82,8 +82,8 @@ async function boot() {
     },
   });
 
-  const stopScheduler = startScheduler(sql, statusStore, catalog, inFlight);
-  const stopRecordJobs = startRecordJobs(sql, {
+  const stopScheduler = startScheduler(sql, maintenanceSql, statusStore, catalog, inFlight);
+  const stopRecordJobs = startRecordJobs(sql, maintenanceSql, {
     registry: model,
     instanceId: resolveInstanceId(),
     feeds: catalog.feeds,
@@ -110,7 +110,7 @@ async function boot() {
     stop: [stopScheduler, stopRecordJobs, stopMemTelemetry, () => limiter.destroy()],
     background: [fusedRefresh, federationReconcile, inFlight],
     app,
-    databases: [sql, apiSql],
+    databases: [sql, apiSql, maintenanceSql],
   });
   process.on("SIGTERM", close);
   process.on("SIGINT", close);

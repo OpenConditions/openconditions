@@ -264,10 +264,13 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
 /**
  * Starts one job per scheduled feed of the catalogue, and the record and
  * segment jobs; `inFlight` tracks the feed polls and the binding queue's
- * drain. Returns a cancel function that stops all scheduled jobs.
+ * drain. The polls, the drain and the segment-speed refresh write through
+ * `sql`; the poll-history pruning and the nightly and weekly jobs through
+ * `maintenanceSql`. Returns a cancel function that stops all scheduled jobs.
  */
 export function startScheduler(
   sql: Sql,
+  maintenanceSql: Sql,
   statusStore: FeedStatusStore,
   catalog: Catalog,
   inFlight?: Pick<InFlight, "track">,
@@ -335,7 +338,7 @@ export function startScheduler(
     if (pruningPollHistory) return;
     pruningPollHistory = true;
     try {
-      const { deleted } = await pruneSourcePollAttempts(sql);
+      const { deleted } = await pruneSourcePollAttempts(maintenanceSql);
       if (deleted > 0) console.info(`[scheduler] pruned ${deleted} old source-poll attempt(s)`);
     } catch (err) {
       console.error("[scheduler] source-poll retention failed", err);
@@ -352,19 +355,19 @@ export function startScheduler(
     try {
       for (const feed of catalog.feeds) {
         if (feed.format !== "fintraffic-tms" || !hasCredentials(feed)) continue;
-        const { updated } = await updateFintrafficNativeBaselines(sql, feed, {
+        const { updated } = await updateFintrafficNativeBaselines(maintenanceSql, feed, {
           fetch: guarded,
           now: () => new Date(),
           batchCap: 200,
         });
         console.info(`[scheduler] fintraffic native baselines: ${updated} updated`);
       }
-      const { upserted } = await deriveBaselines(sql);
+      const { upserted } = await deriveBaselines(maintenanceSql);
       console.info(`[scheduler] baselines: upserted ${upserted}`);
 
       // Fills sensors that still lack any baseline (native/derived always win —
       // this only runs after both, so it never clobbers a better method).
-      const osm = await resolveOsmMaxspeed(sql, {
+      const osm = await resolveOsmMaxspeed(maintenanceSql, {
         fetch: guarded,
         now: () => new Date().toISOString(),
         batchCap: 200,
@@ -389,7 +392,7 @@ export function startScheduler(
       try {
         // buildDailyArchive is itself best-effort (swallows an unwritable dir);
         // this guard covers a read/serialize failure so it never crashes cron.
-        await buildDailyArchive(sql);
+        await buildDailyArchive(maintenanceSql);
       } catch (err) {
         console.error("[scheduler] archive build failed", err);
       } finally {
@@ -413,7 +416,9 @@ export function startScheduler(
       if (derivingProfiles) return;
       derivingProfiles = true;
       try {
-        const { upserted } = await deriveSegmentProfiles(sql, () => new Date().toISOString());
+        const { upserted } = await deriveSegmentProfiles(maintenanceSql, () =>
+          new Date().toISOString(),
+        );
         console.info(`[scheduler] segment profiles: upserted ${upserted}`);
       } catch (err) {
         console.error("[scheduler] segment profile derivation failed", err);
@@ -438,7 +443,7 @@ export function startScheduler(
       if (rebuildingSegments) return;
       rebuildingSegments = true;
       try {
-        const counts = await runSegmentRebuild(sql, {
+        const counts = await runSegmentRebuild(maintenanceSql, {
           fetch: guarded,
           now: () => new Date().toISOString(),
           overpassUrl,

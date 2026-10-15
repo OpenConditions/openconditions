@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { isLockTimeout } from "@openconditions/storage";
 import type postgres from "postgres";
 import { loadHighwayClasses } from "./highway-classes.js";
 import { loadOsmRegions, osmRegionImportFingerprint } from "./osm-import.js";
@@ -19,14 +20,18 @@ async function enqueueLiveSituations(tx: postgres.TransactionSql): Promise<void>
       updated_at = excluded.updated_at`;
 }
 
-/** Attempts of a graph-wide binding transaction that Postgres ends as a deadlock victim. */
-const DEADLOCK_ATTEMPTS = 5;
+/**
+ * Attempts of a graph-wide binding transaction that Postgres ends as a
+ * deadlock victim, or that waits past lock_timeout for a binding being written.
+ */
+const GRAPH_WIDE_ATTEMPTS = 5;
 
 /**
  * Runs a transaction over the binding work of every live situation. Feed
  * polls queue their own situations' work and the binder writes bindings
  * meanwhile, each in an order of its own. Postgres breaks such a cycle by
- * ending one of the transactions; this one is idempotent and runs again.
+ * ending one of the transactions, and the maintenance pool ends a long wait
+ * on one of their rows; this one is idempotent and runs again.
  */
 async function graphWide(
   sql: Sql,
@@ -37,7 +42,8 @@ async function graphWide(
       await sql.begin(work);
       return;
     } catch (err) {
-      if ((err as { code?: string }).code !== "40P01" || attempt === DEADLOCK_ATTEMPTS) throw err;
+      const again = (err as { code?: string }).code === "40P01" || isLockTimeout(err);
+      if (!again || attempt === GRAPH_WIDE_ATTEMPTS) throw err;
       await new Promise((resolve) => setTimeout(resolve, 200 * attempt));
     }
   }

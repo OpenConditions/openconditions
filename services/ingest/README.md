@@ -171,6 +171,26 @@ and the container peaked at 4.2 GB under a `4g` limit. `6g` is the floor for
 them: below it the child's 30% no longer holds NDW's parse. The default `8g`
 leaves room for the rest of the catalogue and a segment region.
 
+### Database connections
+
+The service keeps three connection pools, each with its own timeouts, set as
+connection startup parameters rather than on the database or role (which
+OpenMapX shares):
+
+| Pool (`application_name`)           | Serves                                                                                                           | Statement | Lock wait | Idle in transaction |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- | --------- | --------- | ------------------- |
+| `openconditions-ingest-writer`      | Feed polls, the binding drain, the segment-speed and fusion refreshes                                            | 5 min     | 1 min     | 10 min              |
+| `openconditions-ingest-api`         | HTTP reads and on-demand cell writes                                                                             | 20 s      | 5 s       | 1 min               |
+| `openconditions-ingest-maintenance` | Partitions, rollups, the sweep, raw eviction, poll-history pruning, baselines, the archive and the segment spine | 1 h       | 5 s       | 15 min              |
+
+A poll that runs or waits past them fails with an error starting
+`db_timeout:`, keeps the last publication and is tried again on its next tick.
+A maintenance job that meets a held lock leaves the work to its next run: the
+sweep skips the busy source (`busy` in its log line), and the hourly partition
+run tries again an hour later, as partitions exist 16 days ahead. At boot the
+partitions are tried a few times before the service gives up. Migrations run
+without a statement or lock timeout.
+
 ## Feed sources — layered delivery
 
 The feed set is **operational data**, loaded at boot from three layers and

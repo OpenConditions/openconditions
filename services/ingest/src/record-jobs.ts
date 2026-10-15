@@ -3,6 +3,7 @@ import type { Registry } from "@openconditions/model";
 import {
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
+  isLockTimeout,
   pruneRollups,
   refreshFlippedFusions,
   retentionClasses,
@@ -100,6 +101,53 @@ export async function maintainPartitions(
   return { created, dropped };
 }
 
+/** How often boot tries the partitions while a lock they need is held. */
+const BOOT_PARTITION_ATTEMPTS = 5;
+
+/**
+ * {@link maintainPartitions} at boot, which must succeed. Partition DDL needs
+ * a lock every write to the history holds, and the maintenance pool waits
+ * only seconds for it, so a write still running (another service's) is
+ * waited out a few times, a little longer each time.
+ */
+export async function maintainPartitionsAtBoot(
+  sql: postgres.Sql,
+  registry: Registry,
+  now: () => Date,
+  pause: (ms: number) => Promise<void> = (ms) => new Promise((r) => setTimeout(r, ms)),
+): Promise<void> {
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await maintainPartitions(sql, registry, now());
+      return;
+    } catch (err) {
+      if (!isLockTimeout(err) || attempt === BOOT_PARTITION_ATTEMPTS) throw err;
+      console.warn(`[records] partitions: a lock is held, trying again (${attempt})`);
+      await pause(2_000 * attempt);
+    }
+  }
+}
+
+/**
+ * The hourly partition run. A lock held past the pool's lock_timeout leaves
+ * the work to the next run: partitions exist days ahead of any write.
+ */
+export async function maintainPartitionsHourly(
+  sql: postgres.Sql,
+  registry: Registry,
+  now: Date,
+): Promise<void> {
+  try {
+    const { created, dropped } = await maintainPartitions(sql, registry, now);
+    if (created.length + dropped.length > 0) {
+      console.info(`[records] partitions +${created.length} -${dropped.length}`);
+    }
+  } catch (err) {
+    if (!isLockTimeout(err)) throw err;
+    console.warn("[records] partitions: a lock is held, left to the next run");
+  }
+}
+
 /**
  * A job that hands `refresh` the windows its runs cover, one after the
  * other: each run takes the time since the previous run (the first, the
@@ -123,22 +171,24 @@ export function windowedRuns(
 }
 
 /**
- * Starts the scheduled jobs that keep the record tables in shape. Returns a
- * function that stops them.
+ * Starts the scheduled jobs that keep the record tables in shape: the
+ * fusion refresh on the writers' pool `sql`, the rest on `maintenanceSql`.
+ * Returns a function that stops them.
  */
-export function startRecordJobs(sql: postgres.Sql, opts: RecordJobsOptions): () => void {
+export function startRecordJobs(
+  sql: postgres.Sql,
+  maintenanceSql: postgres.Sql,
+  opts: RecordJobsOptions,
+): () => void {
   const env = opts.env ?? process.env;
   const now = opts.now ?? (() => new Date());
   const historyDays = historyDaysFromEnv(env);
   const rollupDays = rollupRetentionDaysFromEnv(env);
   const jobs: Cron[] = [];
 
-  const partitions = singleFlight("partitions", async () => {
-    const { created, dropped } = await maintainPartitions(sql, opts.registry, now());
-    if (created.length + dropped.length > 0) {
-      console.info(`[records] partitions +${created.length} -${dropped.length}`);
-    }
-  });
+  const partitions = singleFlight("partitions", () =>
+    maintainPartitionsHourly(maintenanceSql, opts.registry, now()),
+  );
   jobs.push(new Cron(PARTITION_CRON, { catch: true }, partitions));
 
   for (const [period, cron] of [
@@ -147,10 +197,14 @@ export function startRecordJobs(sql: postgres.Sql, opts: RecordJobsOptions): () 
   ] as const) {
     const rollup = singleFlight(`${period} rollup`, async () => {
       const at = now();
-      const { rows } = await rollupObservations(sql, { registry: opts.registry, period, now: at });
+      const { rows } = await rollupObservations(maintenanceSql, {
+        registry: opts.registry,
+        period,
+        now: at,
+      });
       if (rows > 0) console.info(`[records] ${period} rollup wrote ${rows} row(s)`);
       if (period === "daily") {
-        await pruneRollups(sql, {
+        await pruneRollups(maintenanceSql, {
           now: at,
           hourlyDays: rollupDays.hourly,
           dailyDays: rollupDays.daily,
@@ -162,7 +216,7 @@ export function startRecordJobs(sql: postgres.Sql, opts: RecordJobsOptions): () 
 
   const orphanAges = orphanMaxAges(opts.feeds ?? []);
   const sweep = singleFlight("sweep", async () => {
-    const counts = await sweepRecords(sql, {
+    const counts = await sweepRecords(maintenanceSql, {
       registry: opts.registry,
       instanceId: opts.instanceId,
       now: now().toISOString(),
@@ -189,7 +243,7 @@ export function startRecordJobs(sql: postgres.Sql, opts: RecordJobsOptions): () 
 
   const { dir } = rawArchiveOptionsFromEnv(env);
   const evict = singleFlight("raw eviction", async () => {
-    const result = await evictRawPayloads(sql, {
+    const result = await evictRawPayloads(maintenanceSql, {
       dir,
       policy: evictionPolicyFromEnv(now(), env),
       historyDays,

@@ -43,7 +43,12 @@ function resolveMigrationsFolder(): string {
  */
 export async function runMigrations(connectionString: string): Promise<void> {
   const migrationsFolder = resolveMigrationsFolder();
-  const client = postgres(connectionString, { max: 1 });
+  // A migration may rewrite a large table, and waits for the locks it needs
+  // however long: no timeout the database or role sets applies to it.
+  const client = postgres(connectionString, {
+    max: 1,
+    connection: { statement_timeout: 0, lock_timeout: 0 },
+  });
   let locked = false;
   try {
     // One session owns all bootstrap DDL and the migration-history read. Each

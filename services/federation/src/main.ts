@@ -37,11 +37,19 @@ async function boot() {
   await runMigrations(url);
   console.info("[federation-api] migrations applied");
 
+  // Requests and batched crons only: a statement past 30 s or a lock wait past
+  // 10 s fails rather than holding one of the five connections. Startup
+  // parameters, as the database and role may be shared with another application.
   const sql = postgres(url, {
     max: 5,
     idle_timeout: 30,
     connect_timeout: 10,
-    connection: { application_name: "openconditions-federation-api" },
+    connection: {
+      application_name: "openconditions-federation-api",
+      statement_timeout: 30_000,
+      lock_timeout: 10_000,
+      idle_in_transaction_session_timeout: 60_000,
+    },
   });
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
   const app = await build({ sql });
