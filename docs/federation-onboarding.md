@@ -320,6 +320,20 @@ instance it pinned, and this instance's inbox accepts a push only from one.
 Removing `subscribe` leaves the subscription at the peer; the peer's operator,
 or a signed `DELETE /peer/subscriptions/<id>`, ends it.
 
+A peer record with `pull` (`"pull": { "filter": { … } }`) has the service read
+the peer's journal itself, every 30 seconds, with its own cursor
+(`conditions.federation_peer_cursor`): complete whatever the push carries, so
+a `"priorityOnly": true` push for closures and incidents can sit beside a pull
+for the rest. The service keeps a `pull` subscription with that filter at the
+peer, since a peer journals only what some subscription wants. Each page is
+a signed request, served the peer's window for this instance's tier, and must
+carry the peer's signature under a pinned key. A cursor still catching up
+reads `/peer/backfill`, the live tail `/peer/outbox`. A page lands through
+the same inbox as a pushed one, and advances the cursor only once it landed;
+what both the push and the pull deliver lands once (the second delivery is
+`stale`). History before the window lives in the peer's archive, which the
+service does not read.
+
 ### Deploying it
 
 The image is `ghcr.io/openconditions/federation`, built from

@@ -68,7 +68,11 @@ export interface InboxDeps {
 export interface InboxResult {
   /** Records created, changed or restored here. */
   accepted: number;
-  /** Deliveries that changed nothing: no newer than the stored copy. */
+  /**
+   * Deliveries that changed nothing: no newer than the stored copy, or a
+   * retraction of a copy already ended or never held. A page that arrives
+   * by push and by pull lands once.
+   */
   stale: number;
   tombstoned: number;
   /** Liveness entries noted. */
@@ -150,6 +154,7 @@ export async function ingestFederatedPage(
     if (entry.operation === "delete") {
       const applied = await applyRetraction(sql, entry, ctx);
       if (applied === "tombstoned") result.tombstoned += 1;
+      else if (applied === "stale") result.stale += 1;
       else result.skipped.push({ recordId: entry.recordId, reason: applied });
       continue;
     }
@@ -312,15 +317,16 @@ async function runCrowdHooks(
 
 /**
  * A peer retracts one of its records: the local copy is tombstoned with the
- * peer's reason when the peer owns it. A copy another instance wrote, or one
- * already ended, is left alone and reported. An erasure records its fact
- * whether or not a copy is held, so the record cannot arrive later.
+ * peer's reason when the peer owns it. A copy another instance wrote is left
+ * alone and reported; one already ended, or none held, is a retraction that
+ * changes nothing (`stale`). An erasure records its fact whether or not a copy
+ * is held, so the record cannot arrive later.
  */
 async function applyRetraction(
   sql: Sql,
   entry: { recordClass: string; recordId: string; canonicalId: string | null; reason: string },
   ctx: InboxContext,
-): Promise<"tombstoned" | string> {
+): Promise<"tombstoned" | "stale" | string> {
   return sql.begin(async (tx) => {
     await lockRecord(tx, entry.recordClass, entry.recordId);
     if (entry.reason === ERASURE_REASON) {
@@ -331,18 +337,21 @@ async function applyRetraction(
     }
     const cls = entry.recordClass as RevisionedClass;
     const [row] = await tx.unsafe<
-      { source_id: string; instance_id: string; tombstoned: boolean }[]
-    >(
-      `SELECT source_id, instance_id, tombstoned_at IS NOT NULL AS tombstoned
-         FROM conditions.${cls} WHERE id = $1`,
-      [entry.recordId],
-    );
-    if (row === undefined) return "no copy of the record is held here";
+      { source_id: string; instance_id: string; tombstone_reason: string | null }[]
+    >(`SELECT source_id, instance_id, tombstone_reason FROM conditions.${cls} WHERE id = $1`, [
+      entry.recordId,
+    ]);
+    // Nothing to end: the record never reached this instance (a filter kept
+    // it out), or the retraction arrives a second time, by push and by pull.
+    if (row === undefined) return "stale";
     if (row.instance_id !== ctx.peerInstanceId) return "the record is not the peer's";
     // An erasure still applies to a copy that ended here: ending it kept its
     // content, and the rights to that content are gone.
-    if (row.tombstoned && entry.reason !== ERASURE_REASON) {
-      return "the record has already ended here";
+    if (
+      row.tombstone_reason !== null &&
+      (entry.reason !== ERASURE_REASON || row.tombstone_reason === ERASURE_REASON)
+    ) {
+      return "stale";
     }
     await tx`SELECT pg_advisory_xact_lock(hashtext(${row.source_id}))`;
     await tombstoneRecords(tx, cls, [entry.recordId], entry.reason, {

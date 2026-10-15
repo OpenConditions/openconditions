@@ -526,6 +526,13 @@
       "when": 1792098298272,
       "tag": "0074_source_shrink",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1792098322063,
+      "tag": "0075_federation_peer_cursor",
+      "breakpoints": true
     }
   ]
 }

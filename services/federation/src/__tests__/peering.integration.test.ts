@@ -7,8 +7,10 @@
 import { runMigrations } from "@openconditions/core/server";
 import {
   ensureInstanceKey,
+  InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
+  type RecordFilter,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import {
@@ -23,21 +25,28 @@ import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type FederationSettings, resolveFederationSettings } from "../config.js";
 import { refreshPeers } from "../peering.js";
+import { pullPeer } from "../puller.js";
 import { build } from "../server.js";
 import { registry } from "./record-fixtures.js";
 
 const A = "a.example.org";
 const B = "b.example.org";
+/** Pushed only A's priority entries, and pulling A for the rest. */
+const C = "c.example.org";
 const SOURCE = "nl-ndw-events";
 
 let containerStop: () => Promise<unknown>;
 let sqlA: postgres.Sql;
 let sqlB: postgres.Sql;
+let sqlC: postgres.Sql;
 let keyA: InstanceKey;
+let keyC: InstanceKey;
 let appA: FastifyInstance;
 let appB: FastifyInstance;
+let appC: FastifyInstance;
 let settingsA: FederationSettings;
 let settingsB: FederationSettings;
+let settingsC: FederationSettings;
 
 const actor = (instanceId: string) => ({
   instanceId,
@@ -76,6 +85,14 @@ const SUBSCRIBE = {
   priorityOnly: false,
 };
 
+const PULL_FILTER: RecordFilter = {
+  classes: ["situation", "observation"],
+  domains: ["roads"],
+  kinds: ["incident", "roadworks"],
+  properties: ["traffic.los"],
+  sourceLiveness: true,
+};
+
 /** Carries a request to the app serving its host, as the network would. */
 function network(apps: Record<string, () => FastifyInstance>): typeof fetch {
   return (async (input: string | URL | Request, init?: RequestInit) => {
@@ -101,23 +118,23 @@ function network(apps: Record<string, () => FastifyInstance>): typeof fetch {
   }) as typeof fetch;
 }
 
-const fetchImpl = network({ [A]: () => appA, [B]: () => appB });
+const fetchImpl = network({ [A]: () => appA, [B]: () => appB, [C]: () => appC });
 
-/** One of A's own feed situations, as its poll drafts it. */
-function situationDraft(local: string) {
+/** One of A's own feed situations, as its poll drafts it: an incident is a priority entry. */
+function situationDraft(local: string, kind: "incident" | "roadworks" = "incident") {
   return {
     id: `oc:situation:${SOURCE}:${local}`,
     class: "situation",
-    kind: "incident",
-    type: "obstruction",
+    kind,
+    type: kind === "incident" ? "obstruction" : "works",
     temporality: "live",
-    planned: false,
+    planned: kind === "roadworks",
     certainty: "observed",
     severity: { label: "moderate", source: "derived" },
     headline: [{ lang: "en", text: local }],
     validity: { status: "active", start: "2026-07-13T09:00:00Z" },
     effects: [],
-    details: { kind: "incident", v: 1 },
+    details: { kind, v: 1 },
     location: {
       geometry: { type: "Point", coordinates: [5.1, 52.1] },
       extent: "point",
@@ -148,24 +165,42 @@ beforeAll(async () => {
   const server = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}`;
   const admin = postgres(`${server}/a`, { max: 1 });
   await admin.unsafe("CREATE DATABASE b");
+  await admin.unsafe("CREATE DATABASE c");
   await admin.end();
   await runMigrations(`${server}/a`);
   await runMigrations(`${server}/b`);
+  await runMigrations(`${server}/c`);
   sqlA = postgres(`${server}/a`, { max: 4, onnotice: () => {} });
   sqlB = postgres(`${server}/b`, { max: 4, onnotice: () => {} });
+  sqlC = postgres(`${server}/c`, { max: 4, onnotice: () => {} });
 
   const now = new Date().toISOString();
   await ensureInstanceKey(sqlA, now);
   await ensureInstanceKey(sqlB, now);
+  await ensureInstanceKey(sqlC, now);
   [keyA] = (await loadActiveKeys(sqlA, now)) as [InstanceKey];
   const [keyB] = (await loadActiveKeys(sqlB, now)) as [InstanceKey];
+  [keyC] = (await loadActiveKeys(sqlC, now)) as [InstanceKey];
 
   const envA = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
     OPENCONDITIONS_INSTANCE_ID: A,
     OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(A)),
-    OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(B, keyB)]),
+    OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([peer(B, keyB), peer(C, keyC)]),
   };
+  const envC = {
+    OPENCONDITIONS_FEDERATION_ENABLED: "true",
+    OPENCONDITIONS_INSTANCE_ID: C,
+    OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(actor(C)),
+    OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([
+      peer(A, keyA, {
+        subscribe: { filter: PULL_FILTER, priorityOnly: true },
+        pull: { filter: PULL_FILTER },
+      }),
+    ]),
+  };
+  settingsC = resolveFederationSettings(envC);
+  appC = await build({ sql: sqlC, env: envC, logger: false });
   const envB = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
     OPENCONDITIONS_INSTANCE_ID: B,
@@ -205,8 +240,10 @@ beforeAll(async () => {
 afterAll(async () => {
   await appA?.close();
   await appB?.close();
+  await appC?.close();
   await sqlA?.end();
   await sqlB?.end();
+  await sqlC?.end();
   await containerStop?.();
 }, 30_000);
 
@@ -302,4 +339,104 @@ describe("two peered instances", () => {
     const res = await appB.inject({ method: "GET", url: "/.well-known/openconditions/peers.json" });
     expect(res.json().peers[0]).not.toHaveProperty("subscribe");
   });
+});
+
+describe("a peer that pulls", () => {
+  const pullCtx = () => ({
+    registry,
+    localInstanceId: C,
+    signingKey: keyC,
+    fetchImpl,
+    nonceStore: new InMemoryNonceStore(),
+    now: () => new Date().toISOString(),
+  });
+  const pullA = () =>
+    pullPeer(sqlC, { ...settingsC.peers[0]!, pull: { filter: PULL_FILTER } }, pullCtx());
+  const situationsAtC = async () =>
+    (
+      await sqlC<{ id: string }[]>`
+        SELECT id FROM conditions.situation WHERE tombstoned_at IS NULL ORDER BY id`
+    ).map((r) => r.id.slice(r.id.lastIndexOf(":") + 1));
+
+  it("keeps a priority push and a pull subscription at A from its config", async () => {
+    const [upkeep] = await refreshPeers(sqlC, settingsC, {
+      fetchImpl,
+      now: new Date().toISOString(),
+    });
+    expect(upkeep).toMatchObject({
+      subscription: { ok: true, status: "created" },
+      pullSubscription: { ok: true, status: "created" },
+    });
+    expect(
+      await sqlA`SELECT delivery_mode, priority_only FROM conditions.federation_subscription
+                  WHERE peer_id = ${C} ORDER BY delivery_mode`,
+    ).toEqual([
+      { delivery_mode: "pull", priority_only: false },
+      { delivery_mode: "webhook", priority_only: true },
+    ]);
+  }, 60_000);
+
+  it("gets by pull what the priority push leaves out, landing what both carry once", async () => {
+    await writeSnapshot(
+      sqlA,
+      SOURCE,
+      {
+        situations: [
+          situationDraft("before-1"),
+          situationDraft("e2e-1"),
+          situationDraft("pull-incident"),
+          situationDraft("pull-works", "roadworks"),
+        ],
+      },
+      { registry, instanceId: A, now: new Date().toISOString(), complete: true },
+    );
+    await sqlA`
+      UPDATE conditions.federation_outbox SET created_at = now() - interval '11 minutes'
+       WHERE operation = 'liveness'`;
+    await sqlA.begin((tx) => journalSourceLiveness(tx, SOURCE));
+    await runWebhookDeliveryCycle(sqlA, {
+      signingKey: keyA,
+      fetchImpl,
+      partOf: `https://${A}/peer/outbox`,
+    });
+    // The push carried the incidents, not the roadworks.
+    expect(await situationsAtC()).toEqual(["before-1", "e2e-1", "pull-incident"]);
+
+    const pulled = await pullA();
+    // From the start of A's journal: both of A's liveness entries.
+    expect(pulled).toMatchObject({ skipped: 0, liveness: 2 });
+    expect(pulled.error).toBeUndefined();
+    expect(pulled.accepted).toBe(1);
+    expect(pulled.stale).toBeGreaterThanOrEqual(3);
+    expect(await situationsAtC()).toEqual(["before-1", "e2e-1", "pull-incident", "pull-works"]);
+    const [stored] = await sqlC<{ cursor: string }[]>`
+      SELECT cursor FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${A}`;
+    expect(stored!.cursor).toBe(pulled.cursor);
+    const [{ n }] = await sqlC`
+      SELECT count(*)::int AS n FROM conditions.federation_source_receipt
+       WHERE peer_instance_id = ${A} AND source_id = ${SOURCE}`;
+    expect(n).toBe(1);
+
+    // Nothing new: the next pull reads from its cursor and lands nothing.
+    const again = await pullA();
+    expect(again).toMatchObject({ pages: 1, accepted: 0, stale: 0, cursor: pulled.cursor });
+  }, 60_000);
+
+  it("refuses a page the peer did not sign", async () => {
+    const unsigned = (async (input: string | URL | Request, init?: RequestInit) => {
+      const res = await fetchImpl(input, init);
+      const headers = new Headers(res.headers);
+      headers.delete("signature");
+      return new Response(await res.arrayBuffer(), { status: res.status, headers });
+    }) as typeof fetch;
+    const result = await pullPeer(
+      sqlC,
+      { ...settingsC.peers[0]!, pull: { filter: PULL_FILTER } },
+      { ...pullCtx(), fetchImpl: unsigned },
+    );
+    expect(result).toMatchObject({
+      pages: 0,
+      error: "the page does not carry the peer's signature",
+    });
+  }, 60_000);
 });

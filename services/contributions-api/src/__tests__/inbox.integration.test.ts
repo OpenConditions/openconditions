@@ -474,6 +474,26 @@ describe("a peer's crowd report", () => {
 });
 
 describe("a peer's retractions", () => {
+  it("counts a page that arrives twice, by push and by pull, as stale the second time", async () => {
+    const own = peerSituation("r-twice");
+    const twice = page(change(own, 1), retraction(own, "cancelled", 2));
+    expect(await ingestFederatedPage(sql, twice, ctx())).toMatchObject({
+      accepted: 1,
+      tombstoned: 1,
+      skipped: [],
+    });
+    expect(await ingestFederatedPage(sql, twice, ctx(LATER))).toMatchObject({
+      accepted: 0,
+      stale: 2,
+      tombstoned: 0,
+      skipped: [],
+    });
+    expect(await rowOf(own["id"] as string)).toMatchObject({
+      revision: 2,
+      tombstone_reason: "cancelled",
+    });
+  });
+
   it("tombstones the peer's copy with its reason and leaves another instance's copy alone", async () => {
     const own = peerSituation("r-1");
     await ingestFederatedPage(sql, page(change(own, 1)), ctx());
@@ -531,9 +551,7 @@ describe("a peer's retractions", () => {
   it("an erasure that arrives before the record still refuses it", async () => {
     const own = peerSituation("e-2");
     const early = await ingestFederatedPage(sql, page(retraction(own, "rights_revoked", 1)), ctx());
-    expect(early.skipped).toEqual([
-      { recordId: own["id"], reason: "no copy of the record is held here" },
-    ]);
+    expect(early).toMatchObject({ stale: 1, skipped: [] });
     expect(await erasureFacts(own["canonicalId"] as string)).toHaveLength(1);
     const late = await ingestFederatedPage(sql, page(change(own, 2)), ctx(LATER));
     expect(late.skipped).toEqual([{ recordId: own["id"], reason: "the record was erased" }]);

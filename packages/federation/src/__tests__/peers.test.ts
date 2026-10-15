@@ -132,6 +132,22 @@ describe("loadPeers", () => {
       expect(() => loadPeers([{ ...valid, subscribe: bad }])).toThrow(TypeError);
     }
   });
+
+  it("parses what this instance pulls, any filter a pull accepts", async () => {
+    const key = await generateInstanceKey(NOW);
+    const valid = {
+      instanceId: "a",
+      actorUrl: ACTOR_URL,
+      trustTier: 1 as const,
+      pinnedKeys: [key.publicKeyMultibase],
+    };
+    expect(loadPeers([{ ...valid, pull: {} }])[0]!.pull).toEqual({ filter: {} });
+    const pull = { filter: { classes: ["situation"], sourceLiveness: true } };
+    expect(loadPeers([{ ...valid, pull }])[0]!.pull).toEqual(pull);
+    for (const bad of ["all", { filter: { classes: ["observation"] } }]) {
+      expect(() => loadPeers([{ ...valid, pull: bad }])).toThrow(TypeError);
+    }
+  });
 });
 
 describe("verifyActorAgainstPin", () => {

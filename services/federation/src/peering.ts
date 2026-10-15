@@ -1,8 +1,10 @@
 /**
  * The periodic upkeep of each pinned peer: what its actor document
  * advertises, verified against its pin and negotiated (its records are
- * admitted against it), and, for a peer this instance subscribes to, the
- * subscription that has the peer push its outbox to this inbox.
+ * admitted against it), and the subscriptions this instance keeps there: a
+ * webhook pushing to this inbox for a peer it subscribes to, a pull
+ * subscription for a peer it pulls (a peer journals only what some
+ * subscription wants).
  */
 import {
   type EnsureSubscriptionOutcome,
@@ -19,7 +21,10 @@ import type { FederationSettings } from "./config.js";
 export interface PeerUpkeep {
   peer: string;
   capabilities: PeerVersions;
+  /** The webhook subscription, for a peer this instance subscribes to. */
   subscription?: EnsureSubscriptionOutcome;
+  /** The pull subscription, for a peer this instance pulls. */
+  pullSubscription?: EnsureSubscriptionOutcome;
 }
 
 /** Refreshes every pinned peer once; one peer's failure never stops the others. */
@@ -39,15 +44,31 @@ export async function refreshPeers(
       now: opts.now,
     }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
     const result: PeerUpkeep = { peer: peer.instanceId, capabilities };
-    if (peer.subscribe !== undefined) {
+    if (peer.subscribe !== undefined || peer.pull !== undefined) {
       const [signingKey] = await loadActiveKeys(sql, opts.now);
-      result.subscription =
+      const keep = (want: Parameters<typeof ensurePeerSubscription>[1]) =>
         signingKey === undefined
-          ? { ok: false, reason: "this instance has no active signing key" }
-          : await ensurePeerSubscription(
-              { ...peer, subscribe: peer.subscribe },
-              { inboxUrl, signingKey, fetchImpl: opts.fetchImpl },
-            );
+          ? Promise.resolve({
+              ok: false as const,
+              reason: "this instance has no active signing key",
+            })
+          : ensurePeerSubscription(peer, want, { signingKey, fetchImpl: opts.fetchImpl });
+      if (peer.subscribe !== undefined) {
+        result.subscription = await keep({
+          deliveryMode: "webhook",
+          filter: peer.subscribe.filter,
+          priorityOnly: peer.subscribe.priorityOnly ?? false,
+          inboxUrl,
+        });
+      }
+      if (peer.pull !== undefined) {
+        result.pullSubscription = await keep({
+          deliveryMode: "pull",
+          filter: peer.pull.filter,
+          priorityOnly: false,
+          inboxUrl: null,
+        });
+      }
     }
     results.push(result);
   }

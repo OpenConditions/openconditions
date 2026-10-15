@@ -11,7 +11,7 @@
  */
 import type { ActorCoverage, ActorDocument } from "./actor.js";
 import { rawEd25519FromMultibase } from "./multibase.js";
-import type { PeerSubscribe } from "./peer-subscribe.js";
+import type { PeerPull, PeerSubscribe } from "./peer-subscribe.js";
 import type { RecordFilter } from "./record-filter.js";
 import { validateSubscriptionShape } from "./subscriptions.js";
 
@@ -42,6 +42,13 @@ export interface PeerRecord {
    * peers document.
    */
   subscribe?: PeerSubscribe;
+  /**
+   * What this instance reads of the peer's outbox by pull, following it with
+   * its own cursor: complete whatever the push carries (a `priorityOnly` push
+   * carries only priority entries). Absent: no pull. Never served in the
+   * public peers document.
+   */
+  pull?: PeerPull;
 }
 
 export interface PinVerification {
@@ -178,6 +185,24 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
         filter: filter as RecordFilter,
         ...(priorityOnly === undefined ? {} : { priorityOnly }),
       };
+    }
+    if (record["pull"] !== undefined) {
+      const pull = record["pull"];
+      if (pull === null || typeof pull !== "object" || Array.isArray(pull)) {
+        fail(index, "pull must be an object");
+      }
+      const { filter = {} } = pull as Record<string, unknown>;
+      try {
+        validateSubscriptionShape({
+          filter: filter as RecordFilter,
+          deliveryMode: "pull",
+          inboxUrl: null,
+          priorityOnly: false,
+        });
+      } catch (err) {
+        fail(index, `pull.filter: ${(err as Error).message}`);
+      }
+      result.pull = { filter: filter as RecordFilter };
     }
     return result;
   });

@@ -6,6 +6,7 @@
 
 import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
 import {
+  InMemoryNonceStore,
   loadActiveKeys,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
@@ -18,6 +19,7 @@ import postgres from "postgres";
 import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
 import { refreshPeers } from "./peering.js";
+import { pullPeer } from "./puller.js";
 import { build } from "./server.js";
 
 const PORT = parseInt(process.env["PORT"] || "4300", 10);
@@ -32,8 +34,11 @@ const PRUNE_CYCLE_MS = OUTBOX_PRUNE_INTERVAL_HOURS * 60 * 60 * 1000;
 /** How long a journal seed waits before it retries the sources that were busy polling. */
 const SEED_RETRY_MS = 5 * 60 * 1000;
 
-/** How often each pinned peer's capabilities are re-verified and its subscription mended. */
+/** How often each pinned peer's capabilities are re-verified and its subscriptions mended. */
 const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
+
+/** How often the peers this instance pulls are read. */
+const PULL_CYCLE_MS = 30_000;
 
 async function boot() {
   const url = requireCredential(process.env, "DATABASE_URL");
@@ -172,18 +177,21 @@ async function boot() {
           fetchImpl: egress,
           now: new Date().toISOString(),
         });
-        for (const { peer, capabilities, subscription } of results) {
+        for (const { peer, capabilities, subscription, pullSubscription } of results) {
           if (!capabilities.ok) {
             console.warn(
               `[federation-api] capabilities of ${peer} not refreshed: ${capabilities.reason}`,
             );
           }
-          if (subscription !== undefined && !subscription.ok) {
-            console.warn(
-              `[federation-api] subscription at ${peer} not kept: ${subscription.reason}`,
-            );
-          } else if (subscription?.ok && subscription.status !== "unchanged") {
-            console.info(`[federation-api] subscription at ${peer} ${subscription.status}`);
+          for (const [what, outcome] of [
+            ["subscription", subscription],
+            ["pull subscription", pullSubscription],
+          ] as const) {
+            if (outcome !== undefined && !outcome.ok) {
+              console.warn(`[federation-api] ${what} at ${peer} not kept: ${outcome.reason}`);
+            } else if (outcome?.ok && outcome.status !== "unchanged") {
+              console.info(`[federation-api] ${what} at ${peer} ${outcome.status}`);
+            }
           }
         }
       } catch (err) {
@@ -196,9 +204,49 @@ async function boot() {
     capabilitiesTimer = setInterval(() => void refreshAll(), CAPABILITIES_CYCLE_MS);
   }
 
+  // Pull: each peer this instance pulls is read from its own cursor, so what
+  // arrives is complete whatever the push carries. Single-flight.
+  let pullTimer: NodeJS.Timeout | undefined;
+  const pulled = settings.peers.filter((peer) => peer.pull !== undefined);
+  if (settings.enabled && pulled.length > 0) {
+    const egress = guardedFetch();
+    const nonceStore = new InMemoryNonceStore();
+    const registry = productionRegistry();
+    let pullRunning = false;
+    const pullAll = async () => {
+      if (pullRunning) return;
+      pullRunning = true;
+      try {
+        const [signingKey] = await loadActiveKeys(sql, new Date().toISOString());
+        if (!signingKey) return;
+        for (const peer of pulled) {
+          const result = await pullPeer(
+            sql,
+            { ...peer, pull: peer.pull! },
+            {
+              registry,
+              localInstanceId: settings.actor!.instanceId,
+              signingKey,
+              fetchImpl: egress,
+              nonceStore,
+              now: () => new Date().toISOString(),
+            },
+          ).catch((err: unknown) => ({ error: String(err) }) as const);
+          if (result.error !== undefined) {
+            console.warn(`[federation-api] pull of ${peer.instanceId}: ${result.error}`);
+          }
+        }
+      } finally {
+        pullRunning = false;
+      }
+    };
+    pullTimer = setInterval(() => void pullAll(), PULL_CYCLE_MS);
+  }
+
   const close = async () => {
     if (webhookTimer) clearInterval(webhookTimer);
     if (capabilitiesTimer) clearInterval(capabilitiesTimer);
+    if (pullTimer) clearInterval(pullTimer);
     clearInterval(pruneTimer);
     await app.close();
     await sql.end();

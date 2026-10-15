@@ -632,6 +632,18 @@ export const federationPeerCapabilities = conditionsSchema.table("federation_pee
 });
 
 /**
+ * How far this instance has read each peer's journal by pull: the composite
+ * `(txid, seq)` cursor (wire form) of the last page it landed, advanced only
+ * once that page's entries were landed, so a failed page is read again. Only
+ * a peer whose record asks for pulling has a row.
+ */
+export const federationPeerCursor = conditionsSchema.table("federation_peer_cursor", {
+  peerInstanceId: text("peer_instance_id").primaryKey(),
+  cursor: text("cursor").notNull().default("0.0"),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+});
+
+/**
  * Operator-controlled federation block list: one row per peer this operator has
  * blocked. A blocked peer's inbox/backfill/outbox/subscribe requests are
  * refused with 403. Blocking is a PER-OPERATOR transport decision — it is NEVER

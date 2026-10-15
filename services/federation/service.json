@@ -73,7 +73,7 @@
       "OPENCONDITIONS_FEDERATION_PEERS": {
         "type": "string",
         "title": "Peers config",
-        "description": "The pinned peers as an inline JSON array or a path to a JSON file: each with instanceId, actorUrl, trustTier and pinnedKeys, and optionally subscribe (what to receive by push). Empty: no peers.",
+        "description": "The pinned peers as an inline JSON array or a path to a JSON file: each with instanceId, actorUrl, trustTier and pinnedKeys, and optionally subscribe (what to receive by push) and pull (what to read of its outbox with this instance's own cursor). Empty: no peers.",
         "default": "",
         "x-openmapx-secret": false
       },
