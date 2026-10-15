@@ -21,6 +21,12 @@ export default defineConfig({
   external: ["postgres", "impit"],
   noExternal: [/^@openconditions\//, "drizzle-orm"],
   bundle: true,
+  // The inlined CommonJS dependencies (undici, http-message-signatures, the
+  // TUF client) require Node's built-ins, which an ESM bundle has no
+  // `require` for: give every output file one.
+  banner: {
+    js: 'import { createRequire as __createRequire } from "node:module"; const require = __createRequire(import.meta.url);',
+  },
   async onSuccess() {
     await rm(bundledDrizzle, { recursive: true, force: true });
     await cp(coreDrizzle, bundledDrizzle, { recursive: true });
