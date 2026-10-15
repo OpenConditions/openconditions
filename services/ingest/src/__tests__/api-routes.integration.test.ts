@@ -194,6 +194,125 @@ describe("GET /situations", () => {
     ]);
   });
 
+  it("keeps opposite directions separate when dedupe is requested", async () => {
+    const a = at("a", 6.81, 51.2);
+    const b = at("b", 6.8102, 51.2001, {}, "de-other");
+    (a["location"] as Rec)["direction"] = { value: "positive", basis: "road_reference" };
+    (b["location"] as Rec)["direction"] = { value: "negative", basis: "road_reference" };
+    await writeSituations(sql, "de-autobahn-events", [a]);
+    await writeSituations(sql, "de-other", [b]);
+    expect(ids((await get(`/situations?${AT}&dedupe=1`)).body)).toEqual([a["id"], b["id"]]);
+  });
+
+  it("retains different speed restrictions in every deduplicated projection", async () => {
+    const a = at("a", 6.81, 51.2);
+    const b = at("b", 6.8102, 51.2001, {}, "de-other");
+    for (const [draft, value] of [
+      [a, 30],
+      [b, 80],
+    ] as const) {
+      (draft["effects"] as Rec[]).push({
+        id: `${draft["id"]}/speed`,
+        kind: "speed_limit",
+        v: 1,
+        applicability: { kind: "all" },
+        compliance: "mandatory",
+        normalization: "complete",
+        limit: { value, unit: "km/h" },
+      });
+    }
+    await writeSituations(sql, "de-autobahn-events", [a]);
+    await writeSituations(sql, "de-other", [b]);
+    expect(ids((await get(`/situations?${AT}&dedupe=1`)).body)).toEqual([a["id"], b["id"]]);
+    for (const path of ["/situations.geojson", "/situations.jsonld"]) {
+      const { res, body } = await get(`${path}?${AT}&dedupe=1`);
+      expect(res.statusCode).toBe(200);
+      expect((body["features"] as Rec[]).map((r) => r["id"])).toEqual([a["id"], b["id"]]);
+    }
+    for (const path of ["/traff.xml", "/datex2/situations.xml"]) {
+      const response = await app.inject(`${path}?${AT}&dedupe=1`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toContain(`id="${a["id"]}"`);
+      expect(response.body).toContain(`id="${b["id"]}"`);
+    }
+  });
+
+  it("retains distinct validity windows in a deduplicated historical query", async () => {
+    await writeSituations(sql, "de-autobahn-events", [
+      at("a", 6.81, 51.2, {
+        validity: { status: "active", start: "2026-09-05T08:00:00Z", end: "2026-09-05T12:00:00Z" },
+      }),
+    ]);
+    await writeSituations(sql, "de-other", [
+      at(
+        "b",
+        6.8102,
+        51.2001,
+        {
+          validity: {
+            status: "active",
+            start: "2026-09-06T08:00:00Z",
+            end: "2026-09-06T12:00:00Z",
+          },
+        },
+        "de-other",
+      ),
+    ]);
+    const { res, body } = await get(
+      `/situations?from=2026-09-05T00:00:00Z&to=2026-09-07T00:00:00Z&dedupe=1`,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(ids(body)).toEqual(["oc:situation:de-autobahn-events:a", "oc:situation:de-other:b"]);
+  });
+
+  it("does not fold distinct extents after response simplification erased their difference", async () => {
+    const a = at("a", 6.81, 51.2);
+    const b = at("b", 6.81, 51.2, {}, "de-other");
+    for (const [draft, bend] of [
+      [a, 51.2001],
+      [b, 51.1999],
+    ] as const) {
+      Object.assign(draft["location"] as Rec, {
+        extent: "linear",
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [6.8, 51.2],
+            [6.81, bend],
+            [6.82, 51.2],
+          ],
+        },
+      });
+    }
+    await writeSituations(sql, "de-autobahn-events", [a]);
+    await writeSituations(sql, "de-other", [b]);
+    const { res, body } = await get(`/situations?${AT}&simplify=0.001&dedupe=1`);
+    expect(res.statusCode).toBe(200);
+    expect(ids(body)).toEqual([a["id"], b["id"]]);
+    expect((body["records"] as Rec[]).map((r) => (r["location"] as Rec)["geometry"])).toEqual([
+      {
+        type: "LineString",
+        coordinates: [
+          [6.8, 51.2],
+          [6.82, 51.2],
+        ],
+      },
+      {
+        type: "LineString",
+        coordinates: [
+          [6.8, 51.2],
+          [6.82, 51.2],
+        ],
+      },
+    ]);
+    for (const path of ["/traff.xml", "/datex2/situations.xml"]) {
+      const response = await app.inject(`${path}?${AT}&simplify=0.001&dedupe=1`);
+      expect(response.statusCode).toBe(200);
+      expect(response.body).toContain(`id="${a["id"]}"`);
+      expect(response.body).toContain(`id="${b["id"]}"`);
+    }
+  });
+
   it("refuses a malformed query", async () => {
     for (const query of ["limit=0", "limit=5001", "bbox=1,2,3", "minSeverity=low", "nope=1"]) {
       expect((await get(`/situations?${query}`)).res.statusCode, query).toBe(400);

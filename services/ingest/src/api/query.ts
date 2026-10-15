@@ -78,9 +78,9 @@ const SituationFilters = z.strictObject({
   dedupe: z
     .enum(["0", "1"])
     .describe(
-      "1 folds one phenomenon reported by several sources into one situation, within one page " +
+      "1 conservatively folds reports with compatible typed effects, direction, location and validity from different sources, within one page " +
         "only: the page is ordered by id, so reports of one phenomenon on different pages are " +
-        "each returned. Request every record in one page (a large enough limit) for a complete fold",
+        "each returned. Unknown or incomplete reports remain separate. Folding is disabled when simplify is requested. Request every record in one page (a large enough limit) for a complete fold",
     )
     .optional(),
 });
@@ -143,7 +143,9 @@ export const TraffQuery = SituationListBase.omit({ cursor: true, limit: true })
   .extend({
     dedupe: z
       .enum(["0", "1"])
-      .describe("1 folds matching situations across the complete feed")
+      .describe(
+        "1 conservatively folds compatible reports across the complete feed; unknown or incomplete reports remain separate; folding is disabled when simplify is requested",
+      )
       .optional(),
   })
   .superRefine(checkSituationWindow);

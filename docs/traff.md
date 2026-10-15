@@ -9,7 +9,9 @@ included.
 Use `bbox=west,south,east,north`, `source`, `kind`, `type`, `subtype`, `domain`,
 `origin`, `minSeverity`, `at`, `horizonDays`, `from`/`to`, `simplify` and `dedupe`
 like the situation API. The same window validation applies. `dedupe=1` folds
-across this complete selection. Neither `limit` nor `cursor` is accepted (400).
+across this complete selection, subject to the conservative
+[compatibility rules](situation-deduplication.md). Reports remain unfolded when
+`simplify` is requested. Neither `limit` nor `cursor` is accepted (400).
 Clients previously following TraFF Link headers must remove their page controls.
 The JSON, GeoJSON, JSON-LD and DATEX II endpoints retain their paged contracts.
 

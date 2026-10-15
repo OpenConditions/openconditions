@@ -2,6 +2,7 @@ import type { SEVERITY_LABELS } from "@openconditions/model";
 import { EVIDENCE, withEvidence } from "./db/records.js";
 import type { QueryRunner } from "./query-runner.js";
 import { binder, inBox, type Scope, scopeClauses } from "./record-filters.js";
+import { situationCompatibilityKey } from "./situation-compatibility.js";
 import { haversineMeters } from "./spatial.js";
 
 type Rec = Record<string, unknown>;
@@ -128,9 +129,9 @@ export async function listSituations(db: QueryRunner, q: SituationQuery): Promis
   };
 }
 
-/** Within this distance, two situations of one kind and type from different sources are one. */
+/** Spatial candidate thresholds; equivalence of traffic meaning is checked separately. */
 const SAME_PLACE_M = 75;
-/** Within this distance they are one when they also name a road in common. */
+/** The wider spatial gate requires a common road reference. */
 const SAME_ROAD_M = 250;
 
 /** A geometry's representative point: the mean of its vertices. */
@@ -163,8 +164,10 @@ function roadRefs(record: Rec): Set<string> {
 
 /**
  * Folds situations that describe one phenomenon from several sources: same
- * kind and type, different sources, within 75 m, or within 250 m on a road
- * both name. The first in order survives and lists the others in
+ * traffic meaning, precise compatible locations and different sources. Every
+ * pair must be within 75 m, or within 250 m on a road both name. Unknown or
+ * incomplete restrictions remain separate. The first in order survives and lists
+ * the others in
  * `provenance.mergedSources`, so no source's attribution is dropped.
  *
  * It folds the records it is given, one keyset page: a fold across pages is
@@ -173,29 +176,42 @@ function roadRefs(record: Rec): Set<string> {
  * reading those would turn each page into a scan of the walk so far.
  */
 export function dedupeSituations(records: readonly Rec[]): Rec[] {
-  const out: { record: Rec; point?: [number, number]; roads: Set<string> }[] = [];
+  type Member = { source: unknown; point: [number, number]; roads: Set<string> };
+  type Group = { record: Rec; members: Member[] };
+  const out: Group[] = [];
+  const byMeaning = new Map<string, Group[]>();
   for (const record of records) {
     const provenance = record["provenance"] as Rec;
     const point = pointOf((record["location"] as Rec | undefined)?.["geometry"]);
     const roads = roadRefs(record);
+    const meaning = situationCompatibilityKey(record);
     const survivor =
-      point === undefined
+      point === undefined || meaning === undefined
         ? undefined
-        : out.find((o) => {
-            const p = o.record["provenance"] as Rec;
-            if (o.point === undefined || p["sourceId"] === provenance["sourceId"]) return false;
-            if (o.record["kind"] !== record["kind"] || o.record["type"] !== record["type"]) {
-              return false;
-            }
-            const d = haversineMeters(o.point, point);
-            return (
-              d <= SAME_PLACE_M || (d <= SAME_ROAD_M && [...roads].some((r) => o.roads.has(r)))
-            );
+        : byMeaning.get(meaning)?.find((o) => {
+            return o.members.every((member) => {
+              if (member.source === provenance["sourceId"]) return false;
+              const distance = haversineMeters(member.point, point);
+              return (
+                distance <= SAME_PLACE_M ||
+                (distance <= SAME_ROAD_M && [...roads].some((ref) => member.roads.has(ref)))
+              );
+            });
           });
     if (survivor === undefined) {
-      out.push({ record, ...(point ? { point } : {}), roads });
+      const group: Group = {
+        record,
+        members: point ? [{ source: provenance["sourceId"], point, roads }] : [],
+      };
+      out.push(group);
+      if (meaning !== undefined && point !== undefined) {
+        const groups = byMeaning.get(meaning) ?? [];
+        groups.push(group);
+        byMeaning.set(meaning, groups);
+      }
       continue;
     }
+    if (point) survivor.members.push({ source: provenance["sourceId"], point, roads });
     const kept = survivor.record["provenance"] as Rec;
     const merged = (kept["mergedSources"] as Rec[] | undefined) ?? [];
     survivor.record = {
@@ -208,6 +224,7 @@ export function dedupeSituations(records: readonly Rec[]): Rec[] {
             source: provenance["sourceId"],
             recordId: provenance["recordId"],
             attribution: provenance["attribution"],
+            ...(provenance["upstream"] !== undefined ? { upstream: provenance["upstream"] } : {}),
             link: "same_phenomenon",
           },
         ],
