@@ -103,6 +103,8 @@ async function boot() {
       const tier = tiers.get(peerId);
       return tier === undefined ? null : backfillFloorIso(tier, new Date().toISOString());
     };
+    // An inbox that asked to retry later is left alone that long.
+    const backoff = new Map<string, number>();
     // Single-flight: skip a tick while the previous cycle is still running, so a
     // slow cycle can never overlap itself and regress a subscription's cursor or
     // failure counter.
@@ -113,7 +115,13 @@ async function boot() {
       try {
         const [signingKey] = await loadActiveKeys(sql, new Date().toISOString());
         if (!signingKey) return;
-        await runWebhookDeliveryCycle(sql, { signingKey, fetchImpl: egress, partOf, floorFor });
+        await runWebhookDeliveryCycle(sql, {
+          signingKey,
+          fetchImpl: egress,
+          partOf,
+          floorFor,
+          backoff,
+        });
       } catch (err) {
         console.error("[federation-api] webhook cycle failed:", err);
       } finally {

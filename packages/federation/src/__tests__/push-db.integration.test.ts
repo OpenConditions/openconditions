@@ -598,4 +598,37 @@ describe("runWebhookDeliveryCycle — who is pushed what", () => {
     });
     expect(pinned.captured.flatMap((push) => push.items.map(localOf))).toEqual(["window-new"]);
   });
+
+  it("waits out an inbox that asks it to retry later, counting no failure", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    const sub = await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    await insertEvent("throttled");
+    const answers = [
+      new Response(null, { status: 429, headers: { "retry-after": "30" } }),
+      new Response(null, { status: 503, headers: { "retry-after": "30" } }),
+      new Response(null, { status: 200 }),
+    ];
+    const fetchImpl = (async () => answers.shift()!) as unknown as typeof fetch;
+    const backoff = new Map<string, number>();
+    const at = (sec: number) => new Date(Date.parse(NOW) + sec * 1000).toISOString();
+    const cycle = (sec: number) =>
+      runWebhookDeliveryCycle(sql, {
+        signingKey,
+        fetchImpl,
+        partOf: PARTOF,
+        now: at(sec),
+        backoff,
+      });
+
+    expect(await cycle(0)).toMatchObject({ attempted: 1, delivered: 0, failed: 0, deferred: 1 });
+    expect(await cycle(10)).toMatchObject({ attempted: 0 });
+    expect(await cycle(31)).toMatchObject({ attempted: 1, deferred: 1 });
+    expect(await getSubscription(sql, sub.id)).toMatchObject({
+      pushFailures: 0,
+      status: "active",
+      cursor: sub.cursor,
+    });
+    expect(await cycle(62)).toMatchObject({ attempted: 1, delivered: 1 });
+    expect(answers).toEqual([]);
+  });
 });

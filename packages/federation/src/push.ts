@@ -39,6 +39,9 @@ const ACTIVITY_JSON = "application/activity+json";
 /** Consecutive push failures that flip a subscription to `push_disabled`. */
 export const PUSH_FAILURE_THRESHOLD = 5;
 
+/** How long a push waits when its inbox asks to retry later without saying how long. */
+const DEFAULT_RETRY_AFTER_SEC = 60;
+
 export interface DeliverWebhookOptions {
   /** The instance signing key (the pushed page is RFC-9421 signed with it). */
   signingKey: InstanceKey;
@@ -65,12 +68,19 @@ export interface WebhookCycleOptions extends Omit<DeliverWebhookOptions, "minCre
    * which is pushed nothing. Absent: every subscriber is pushed unfloored.
    */
   floorFor?: (peerId: string) => string | null;
+  /**
+   * When each subscription may be pushed again (epoch ms) after its inbox
+   * asked to retry later; kept by the caller across cycles. Absent: none is
+   * waited out.
+   */
+  backoff?: Map<string, number>;
 }
 
 export type DeliverWebhookOutcome =
   | { status: "obsolete" }
   | { status: "delivered"; delivered: number; advancedTo: string; httpStatus: number }
   | { status: "empty"; delivered: 0; advancedTo: string }
+  | { status: "deferred"; retryAfterSec: number; httpStatus: number }
   | { status: "failed"; pushFailures: number; httpStatus?: number }
   | { status: "disabled"; pushFailures: number; httpStatus?: number };
 
@@ -83,6 +93,8 @@ export type DeliverWebhookOutcome =
  * completeness for it is the peer's pull). Then:
  *  - on 2xx: advances the cursor to the priority-channel frontier, resets the
  *    failure counter;
+ *  - on 429, or 503 with a Retry-After (the inbox paces this instance, or has
+ *    not yet verified it): `deferred`, nothing counted, the cursor untouched;
  *  - on failure: increments the counter (disabling push at the threshold) and
  *    LEAVES the cursor untouched, so the same priority events re-push and the
  *    peer's pull catch-up is gap-free;
@@ -142,6 +154,7 @@ export async function deliverWebhook(
   const body = Buffer.from(JSON.stringify(payload));
 
   let httpStatus: number | undefined;
+  let retryAfter: string | null = null;
   try {
     const signed = await signMessage({
       method: "POST",
@@ -157,8 +170,20 @@ export async function deliverWebhook(
       body,
     });
     httpStatus = res.status;
+    retryAfter = res.headers.get("retry-after");
   } catch {
     httpStatus = undefined;
+  }
+
+  // An inbox over its rate, or not yet sure of this instance, asks to come
+  // back later: that is pacing, not a failure, and the cursor stays.
+  if (httpStatus === 429 || (httpStatus === 503 && retryAfter !== null)) {
+    const sec = Number(retryAfter);
+    return {
+      status: "deferred",
+      retryAfterSec: Number.isFinite(sec) && sec > 0 ? sec : DEFAULT_RETRY_AFTER_SEC,
+      httpStatus,
+    };
   }
 
   if (httpStatus !== undefined && httpStatus >= 200 && httpStatus < 300) {
@@ -196,6 +221,8 @@ export interface WebhookCycleResult {
   delivered: number;
   failed: number;
   disabled: number;
+  /** Subscriptions whose inbox asked to retry later. */
+  deferred: number;
 }
 
 /**
@@ -203,20 +230,29 @@ export interface WebhookCycleResult {
  * A `push_disabled` row is skipped — that peer is on pull now — and so is the
  * row of a peer blocked or no longer pinned here: transport to a peer this
  * instance stopped trusting stops with it, its cursor kept. Each subscriber is
- * pushed only its tier's window ({@link WebhookCycleOptions.floorFor}). Each
- * subscription is loaded fresh so its current cursor/failure counter is honoured.
+ * pushed only its tier's window ({@link WebhookCycleOptions.floorFor}), and a
+ * subscription whose inbox asked to retry later waits as long as it asked
+ * ({@link WebhookCycleOptions.backoff}). Each subscription is loaded fresh so
+ * its current cursor/failure counter is honoured.
  */
 export async function runWebhookDeliveryCycle(
   sql: postgres.Sql,
   opts: WebhookCycleOptions,
 ): Promise<WebhookCycleResult> {
-  const { floorFor, ...deliver } = opts;
+  const { floorFor, backoff, ...deliver } = opts;
+  const nowMs = Date.parse(opts.now ?? new Date().toISOString());
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM conditions.federation_subscription
     WHERE delivery_mode = 'webhook' AND status = 'active'
     ORDER BY created_at ASC`;
 
-  const result: WebhookCycleResult = { attempted: 0, delivered: 0, failed: 0, disabled: 0 };
+  const result: WebhookCycleResult = {
+    attempted: 0,
+    delivered: 0,
+    failed: 0,
+    disabled: 0,
+    deferred: 0,
+  };
   for (const { id } of rows) {
     const [row] = await sql<
       {
@@ -235,6 +271,7 @@ export async function runWebhookDeliveryCycle(
       }[]
     >`SELECT * FROM conditions.federation_subscription WHERE id = ${id}`;
     if (!row || row.delivery_mode !== "webhook" || row.status !== "active") continue;
+    if ((backoff?.get(row.id) ?? 0) > nowMs) continue;
     const floor = floorFor?.(row.peer_id);
     if (floor === null || (await isPeerBlocked(sql, row.peer_id))) continue;
     const subscription: FederationSubscription = {
@@ -256,6 +293,12 @@ export async function runWebhookDeliveryCycle(
       ...deliver,
       ...(floor === undefined ? {} : { minCreatedAt: floor }),
     });
+    if (outcome.status === "deferred") {
+      backoff?.set(row.id, nowMs + outcome.retryAfterSec * 1000);
+      result.deferred += 1;
+      continue;
+    }
+    backoff?.delete(row.id);
     if (outcome.status === "delivered") result.delivered += 1;
     else if (outcome.status === "failed") result.failed += 1;
     else if (outcome.status === "disabled") result.disabled += 1;
