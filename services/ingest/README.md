@@ -272,10 +272,17 @@ OpenMapX names `openconditions-ingest-heavy` there, enable it, with the list
 
 Started before the primary has been recreated, the feeds process stops at
 boot (the primary still polls its feeds) and its restart policy retries once
-the primary has. To undo, disable the service, then clear the primary's
-`OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and start it again. Nothing evicts the
-payloads left on the feeds process's volume once it no longer runs: removing
-the volume deletes them, but their index rows stay unevicted.
+the primary has. To undo:
+
+1. Disable `openconditions-ingest-heavy`, clear the primary's
+   `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and start the primary again.
+2. Remove the feeds process's volume (`openmapx-openconditions-ingest-heavy-data`),
+   which deletes the payloads it archived; nothing else would evict them.
+3. In the primary's container, run `raw forget-missing` to count the index rows
+   whose blob went with the volume, then `raw forget-missing --apply` to mark
+   them evicted. Name feeds (`raw forget-missing nl-ndw-flow --apply`) to limit
+   it to them. It refuses to run in a feeds process, and leaves any feed a live
+   feeds process still polls, as that one's blobs lie in its own archive.
 
 Outside OpenMapX, run a second container of the image beside the first, with
 its own volume:
@@ -366,6 +373,10 @@ commands against `DATABASE_URL`:
   eviction would do (a golden fixture, a disputed record); `raw unpin <hash>`
   hands it back.
 - `raw gc [--dry-run]` runs eviction now, or only reports what it would evict.
+- `raw forget-missing [<source>...] [--apply]`, in the primary, counts the held
+  payloads whose blob is not in its archive (those of a retired
+  [second ingest process](#a-second-ingest-process)), and with `--apply` marks
+  them evicted.
 - `raw replay <source> --from <time> [--to <time>]` re-parses each archived
   published poll of an event feed with the current parser and lists, per poll,
   the situations that read the same, changed, new or gone against what that poll

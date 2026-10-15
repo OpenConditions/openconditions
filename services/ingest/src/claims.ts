@@ -34,3 +34,38 @@ export async function claimIngestWork(
     );
   }
 }
+
+/**
+ * Within the transaction `tx`, takes until it ends the claim of each feed of
+ * `ids` no live ingest process holds, so none starts polling it meanwhile,
+ * and sorts the feeds claimed already by their holder: the primary, or
+ * another process.
+ */
+export async function claimFeedsFor(
+  tx: postgres.TransactionSql,
+  ids: readonly string[],
+): Promise<{ free: string[]; primary: string[]; other: string[] }> {
+  // pg_locks shows each key of a two-key advisory lock as an oid.
+  const rows = await tx<{ id: string; free: boolean; by_primary: boolean }[]>`
+    WITH k AS (
+      SELECT (SELECT oid FROM pg_database WHERE datname = current_database()) AS db,
+             (hashtext('openconditions-feed')::bigint & 4294967295)::text::oid AS feed,
+             (hashtext('openconditions')::bigint & 4294967295)::text::oid AS role,
+             (hashtext('ingest-primary')::bigint & 4294967295)::text::oid AS primary_role)
+    SELECT s.id,
+           pg_try_advisory_xact_lock(hashtext('openconditions-feed'), hashtext(s.id)) AS free,
+           EXISTS (
+             SELECT 1 FROM pg_locks f JOIN pg_locks p ON p.pid = f.pid
+              WHERE f.locktype = 'advisory' AND f.granted AND f.objsubid = 2
+                AND f.database = k.db AND f.classid = k.feed
+                AND f.objid = (hashtext(s.id)::bigint & 4294967295)::text::oid
+                AND p.locktype = 'advisory' AND p.granted AND p.objsubid = 2
+                AND p.database = k.db AND p.classid = k.role AND p.objid = k.primary_role
+           ) AS by_primary
+      FROM unnest(${[...ids]}::text[]) AS s(id), k`;
+  return {
+    free: rows.filter((r) => r.free).map((r) => r.id),
+    primary: rows.filter((r) => !r.free && r.by_primary).map((r) => r.id),
+    other: rows.filter((r) => !r.free && !r.by_primary).map((r) => r.id),
+  };
+}

@@ -1,15 +1,17 @@
 import { requireCredential } from "@openconditions/ingest-framework";
 import postgres from "postgres";
 import { loadIngestCatalog } from "../domains.js";
+import { ingestRoleFromEnv } from "../ingest-role.js";
 import { createOpenlrClient } from "../pipeline/run.js";
 import { rawArchiveOptionsFromEnv } from "../raw/archive.js";
-import { evictionPolicyFromEnv, evictRawPayloads } from "../raw/evict.js";
+import { evictionPolicyFromEnv, evictRawPayloads, forgetMissingPayloads } from "../raw/evict.js";
 import { historyDaysFromEnv } from "../record-jobs.js";
 import { replayRaw } from "./raw-replay.js";
 
 const USAGE = `usage: raw pin <hash> [--fixture <name>] [--source <id>]
        raw unpin <hash> [--source <id>]
        raw gc [--dry-run]
+       raw forget-missing [<source>...] [--apply]
        raw replay <source> --from <time> [--to <time>]`;
 
 /** The value after `--flag` in `args`, if any. */
@@ -24,6 +26,9 @@ function flag(args: readonly string[], name: string): string | undefined {
  *    fixture (`--fixture <name>`) or a payload under dispute;
  *  - `unpin <hash>` hands it back to eviction;
  *  - `gc` runs eviction now; `--dry-run` only reports what it would evict;
+ *  - `forget-missing [<source>...]`, in the primary, counts the held payloads
+ *    whose blob is not in its archive (a retired feeds process's), and with
+ *    `--apply` marks them evicted;
  *  - `replay <source> --from <time>` re-parses the source's archived polls
  *    with the current parser and lists what reads differently from what each
  *    poll stored.
@@ -85,6 +90,35 @@ export async function runRawCommand(
     }
     if (result.hotEvicted.length > 0) out(`  hot window cut for: ${result.hotEvicted.join(", ")}`);
     if (!dryRun) out(`purged ${result.purged} index row(s) of long-evicted payloads`);
+    return 0;
+  }
+  if (command === "forget-missing") {
+    if (ingestRoleFromEnv(env) !== "primary") {
+      out(
+        "run forget-missing in the primary: it forgets what is not in its own archive, which a feeds process's is not",
+      );
+      return 2;
+    }
+    const apply = args.includes("--apply");
+    const result = await forgetMissingPayloads(sql, {
+      dir: rawArchiveOptionsFromEnv(env).dir,
+      sources: args.slice(1).filter((a) => !a.startsWith("--")),
+      apply,
+      now,
+    });
+    const total = [...result.forgotten.values()].reduce((a, b) => a + b, 0);
+    out(
+      `${apply ? "forgot" : "would forget"} ${total} payload(s) whose blob is not in this archive`,
+    );
+    for (const [source, n] of [...result.forgotten].sort(([a], [b]) => a.localeCompare(b))) {
+      out(`  ${source}: ${n}`);
+    }
+    for (const source of result.left) {
+      out(
+        `  ${source}: left, another ingest process polls it (its blobs lie in that one's archive)`,
+      );
+    }
+    if (!apply) out("run with --apply to mark them evicted");
     return 0;
   }
   if (command === "replay" && hash !== undefined && !hash.startsWith("--")) {

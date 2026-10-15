@@ -2,6 +2,7 @@ import { access, readdir, rm } from "node:fs/promises";
 import { join, sep } from "node:path";
 import type { RawTier } from "@openconditions/core/server";
 import type postgres from "postgres";
+import { claimFeedsFor } from "../claims.js";
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
@@ -332,6 +333,56 @@ export async function evictRawPayloads(
     DELETE FROM conditions.raw_payload
      WHERE evicted_at < ${new Date(opts.policy.now - opts.historyDays * DAY_MS)}`;
   return { ...plan, evict: evicted, purged: purged.count };
+}
+
+export interface ForgetResult {
+  /** The payloads marked evicted (or, on a dry run, to be), by source. */
+  forgotten: Map<string, number>;
+  /** The sources left, as another live ingest process polls them. */
+  left: string[];
+}
+
+/**
+ * Marks evicted the held payloads whose blob is not in `dir`, of `sources`
+ * (all with none): the hand-over of an archive no process holds any more,
+ * a retired feeds process's removed volume. Run in the primary, with its own
+ * directory. A source another live process polls is left, as its blobs lie
+ * in that process's archive; each other source's claim is taken for the
+ * transaction, so no feeds process starts polling it meanwhile. Each row is
+ * locked and its blob looked for once more before it is marked, so one a
+ * poll archived here since the listing stays. `apply` false only counts.
+ */
+export async function forgetMissingPayloads(
+  sql: postgres.Sql,
+  opts: { dir: string; sources?: readonly string[]; apply: boolean; now: Date },
+): Promise<ForgetResult> {
+  const here = await heldBlobs(opts.dir);
+  const only = opts.sources && opts.sources.length > 0 ? [...opts.sources] : undefined;
+  const rows = await sql<{ source_id: string; hash: string; storage_key: string }[]>`
+    SELECT source_id, hash, storage_key FROM conditions.raw_payload
+     WHERE evicted_at IS NULL
+       ${only ? sql`AND source_id = ANY(${only}::text[])` : sql``}`;
+  const missing = rows.filter((r) => !here.has(r.storage_key));
+  return sql.begin(async (tx) => {
+    const claims = await claimFeedsFor(tx, [...new Set(missing.map((r) => r.source_id))]);
+    const left = new Set(claims.other);
+    const forgotten = new Map<string, number>();
+    for (const r of missing) {
+      if (left.has(r.source_id)) continue;
+      const [row] = await tx<{ storage_key: string }[]>`
+        SELECT storage_key FROM conditions.raw_payload
+         WHERE source_id = ${r.source_id} AND hash = ${r.hash} AND evicted_at IS NULL
+           FOR UPDATE`;
+      if (!row || (await exists(join(opts.dir, row.storage_key)))) continue;
+      if (opts.apply) {
+        await tx`
+          UPDATE conditions.raw_payload SET evicted_at = ${opts.now}
+           WHERE source_id = ${r.source_id} AND hash = ${r.hash}`;
+      }
+      forgotten.set(r.source_id, (forgotten.get(r.source_id) ?? 0) + 1);
+    }
+    return { forgotten, left: [...left].sort() };
+  });
 }
 
 /** The storage keys of the blobs under `dir`; none when it does not exist yet. */
