@@ -10,6 +10,7 @@ import {
   SeriesQuery,
   SituationListQuery,
   StreamQuery,
+  TraffQuery,
 } from "./query.js";
 
 /** One public route as the OpenAPI document describes it. */
@@ -28,6 +29,8 @@ export interface ApiRoute {
   alwaysPublic?: boolean;
   /** When the route answers 503. */
   unavailable?: string;
+  /** A complete feed must be narrowed when either resource bound is exceeded. */
+  tooLarge?: string;
 }
 
 const RecordId = z.string().min(1).describe("the record id, URL-encoded");
@@ -66,8 +69,10 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/traff.xml",
     operationId: "listSituationsTraff",
     summary:
-      'Live situations as a TraFF 0.8 feed, one keyset page; `Link: rel="next"` names the next. Situations TraFF cannot tell without widening a vehicle condition are left out.',
-    query: SituationListQuery,
+      "A complete public TraFF 0.8 feed from one database snapshot, not paged. No cursor or limit parameters. At most 20,000 candidate situations and 32 MiB of UTF-8 XML; narrow bbox, source or time filters on 413. Vehicle-specific, incomplete and explicitly directional situations without representable travel order are withheld. Missing direction uses TraFF's bidirectional default; times have whole-second UTC precision.",
+    query: TraffQuery,
+    tooLarge:
+      "More than 20,000 candidate situations or 32 MiB of XML; narrow bbox, source or time filters",
     produces: ["application/xml"],
     alwaysPublic: true,
   },
@@ -280,6 +285,9 @@ export function openApiDocument() {
             content: { "application/json": {} },
           },
           ...(route.notFound ? { "404": { description: "No such record, series or schema" } } : {}),
+          ...(route.tooLarge
+            ? { "413": { description: route.tooLarge, content: { "application/json": {} } } }
+            : {}),
           // Every route but the health probe is rate-limited, the operator exempt.
           "429": {
             description: "The client's rate limit is spent; `Retry-After` says when to retry",
@@ -298,7 +306,7 @@ export function openApiDocument() {
       title: "OpenConditions",
       version: API_VERSION,
       description:
-        "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope.",
+        "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. TraFF is instead one complete bounded feed, or 413 when filters must be narrowed. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope.",
     },
     components: {
       securitySchemes: {

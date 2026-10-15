@@ -161,10 +161,99 @@ describe("situationsToTraff", () => {
         "@_road_ref": "A 46",
         "@_road_name": "Autobahn 46",
         "@_road_class": "MOTORWAY",
-        "@_directionality": "ONE_DIRECTION",
+        "@_directionality": "BOTH_DIRECTIONS",
         from: "+51.2 +6.805",
         to: "+51.2 +6.818",
       },
     });
   });
+});
+
+describe("TraFF direction and reader compatibility", () => {
+  it.each(["LineString", "Point"])(
+    "keeps a bidirectional %s bidirectional without compass prose",
+    (type) => {
+      const xml = situationsToTraff(
+        registry,
+        [
+          situation({
+            location: {
+              geometry: {
+                type,
+                coordinates:
+                  type === "Point"
+                    ? [6.8, 51.2]
+                    : [
+                        [6.8, 51.2],
+                        [6.9, 51.2],
+                      ],
+              },
+              direction: { value: "both", basis: "text", text: "BOTH", compass: "E" },
+            },
+          }),
+        ],
+        AT,
+      );
+      expect(parser.parse(xml).feed.message.location).toMatchObject({
+        "@_directionality": "BOTH_DIRECTIONS",
+      });
+      expect(parser.parse(xml).feed.message.location["@_direction"]).toBeUndefined();
+    },
+  );
+
+  it.each([
+    { value: "unknown", basis: "text", text: "towards the city centre" },
+    { value: "unknown", basis: "compass", compass: "W" },
+    { value: "unknown", basis: "bearing", bearingDeg: 270 },
+    { value: "positive", basis: "road_reference" },
+    { value: "negative", basis: "alert_c" },
+    { value: "negative", basis: "openlr" },
+  ])("does not invent travel order for $basis/$value", (direction) => {
+    const record = situation();
+    record["location"] = { ...(record["location"] as Rec), direction };
+    expect(parser.parse(situationsToTraff(registry, [record], AT)).feed.message).toBeUndefined();
+  });
+
+  it("does not widen an effect's explicit unknown direction", () => {
+    const record = situation({
+      effects: [
+        effect("x/closure", "closure", {
+          scope: "road",
+          direction: { value: "unknown", basis: "text", text: "west carriageway" },
+        }),
+      ],
+    });
+    expect(parser.parse(situationsToTraff(registry, [record], AT)).feed.message).toBeUndefined();
+  });
+
+  it("serializes fractional and offset timestamps for second-resolution TraFF readers", () => {
+    const record = situation({
+      provenance: { sourceUpdatedAt: "2026-09-06T11:00:00.123+02:00" },
+      freshness: { fetchedAt: "2026-09-06T09:30:00.000Z", expiresAt: "2026-09-07T08:00:00.987Z" },
+      validity: {
+        status: "active",
+        start: "2026-09-06T10:00:00.456+02:00",
+        end: "2026-09-07T08:00:00.789Z",
+      },
+    });
+    expect(parser.parse(situationsToTraff(registry, [record], AT)).feed.message).toMatchObject({
+      "@_receive_time": "2026-09-06T09:30:00Z",
+      "@_update_time": "2026-09-06T09:00:00Z",
+      "@_expiration_time": "2026-09-07T08:00:00Z",
+      "@_start_time": "2026-09-06T08:00:00Z",
+      "@_end_time": "2026-09-07T08:00:00Z",
+    });
+  });
+});
+
+it("does not widen a direction declared only in an effect's partial location", () => {
+  const record = situation({
+    effects: [
+      effect("x/closure", "closure", {
+        scope: "road",
+        location: { direction: { value: "negative", basis: "alert_c" } },
+      }),
+    ],
+  });
+  expect(parser.parse(situationsToTraff(registry, [record], AT)).feed.message).toBeUndefined();
 });

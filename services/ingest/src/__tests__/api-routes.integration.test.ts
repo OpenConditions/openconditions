@@ -228,7 +228,7 @@ describe("GET /situations.geojson and .jsonld", () => {
 });
 
 describe("GET /traff.xml and /datex2/situations.xml", () => {
-  it("emit the page's tellable situations, withhold share-alike ones and link the next page", async () => {
+  it("emit public tellable situations, with TraFF complete and DATEX paged", async () => {
     await writeSituations(sql, "de-autobahn-events", [at("t1", 6.81, 51.2), at("t2", 6.82, 51.2)]);
     const shareAlike = at("sa", 6.81, 51.2, {}, "de-sa");
     await writeSituations(sql, "de-sa", [
@@ -240,14 +240,16 @@ describe("GET /traff.xml and /datex2/situations.xml", () => {
         },
       },
     ]);
-    const traff = await app.inject({ method: "GET", url: `/traff.xml?${AT}&limit=1` });
+    const traff = await app.inject({ method: "GET", url: `/traff.xml?${AT}` });
     expect(traff.statusCode).toBe(200);
     expect(traff.headers["content-type"]).toContain("application/xml");
     expect(traff.body).toContain('id="oc:situation:de-autobahn-events:t1"');
     expect(traff.body).toContain('type="RESTRICTION_CLOSED"');
-    expect(traff.headers["link"]).toBe(
-      `</traff.xml?${AT}&limit=1&cursor=${encodeURIComponent("oc:situation:de-autobahn-events:t1")}>; rel="next"`,
-    );
+    expect(traff.body).toContain('id="oc:situation:de-autobahn-events:t2"');
+    expect(traff.body).not.toContain("de-sa");
+    expect(traff.headers["link"]).toBeUndefined();
+    const datexPage = await app.inject(`/datex2/situations.xml?${AT}&limit=1`);
+    expect(datexPage.headers["link"]).toContain('rel="next"');
     const datex = await app.inject({ method: "GET", url: `/datex2/situations.xml?${AT}` });
     expect(datex.body).toContain('id="oc:situation:de-autobahn-events:t2"');
     expect(datex.body).toContain("roadClosed");

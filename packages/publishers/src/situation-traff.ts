@@ -24,7 +24,8 @@ type Rec = Record<string, unknown>;
  * TraFF cannot say which vehicles an event applies to, so a situation with
  * any vehicle-specific effect is left out rather than published as applying
  * to everyone. Ended effects are left out; an effect whose window could not
- * be read is too.
+ * be read is too. Explicit directions without representable travel order are
+ * withheld; absent direction metadata uses TraFF's bidirectional default.
  */
 
 export interface TraffEvent {
@@ -42,7 +43,11 @@ const event = (type: string, quantifiers?: Record<string, number>): TraffEvent =
 });
 
 /** An effect TraFF cannot carry without widening or misstating it. */
-const untellable = (effect: Effect) => isVehicleSpecific(effect) || isRestrictionEvidence(effect);
+const untellable = (effect: Effect) =>
+  isVehicleSpecific(effect) ||
+  isRestrictionEvidence(effect) ||
+  (effect.direction !== undefined && effect.direction.value !== "both") ||
+  (effect.location?.direction !== undefined && effect.location.direction.value !== "both");
 
 const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   carriageway: "RESTRICTION_CARRIAGEWAY_CLOSED",
@@ -115,7 +120,7 @@ function positions(geometry: unknown): [number, number][] {
 /** The first text of a localised Text. */
 const firstText = (text: unknown) => (text as { text: string }[] | undefined)?.[0]?.text;
 
-function buildLocation(situation: Rec): Record<string, unknown> {
+function buildLocation(situation: Rec): Record<string, unknown> | undefined {
   const location = situation["location"] as Rec;
   const road = (location["roads"] as Rec[] | undefined)?.[0];
   const loc: Record<string, unknown> = {};
@@ -125,13 +130,13 @@ function buildLocation(situation: Rec): Record<string, unknown> {
   const roadClass = ROAD_CLASSES[String(road?.["class"])];
   if (roadClass) loc["@_road_class"] = roadClass;
   const direction = location["direction"] as Rec | undefined;
-  const directionText = direction?.["text"] ?? direction?.["compass"];
-  if (typeof directionText === "string") loc["@_direction"] = directionText;
+  // A source-axis direction is not GeoJSON coordinate order. TraFF has no
+  // unknown direction, and omitting directionality would assert both directions.
+  if (direction !== undefined && direction["value"] !== "both") return undefined;
+  loc["@_directionality"] = "BOTH_DIRECTIONS";
   const geometry = location["geometry"] as { type?: string } | null;
   const pts = positions(geometry);
   if (geometry?.type === "LineString" && pts.length >= 2) {
-    // An ordered line from start to end implies one direction.
-    loc["@_directionality"] = "ONE_DIRECTION";
     const from: Record<string, unknown> = { "#text": coordText(pts[0]!) };
     if (typeof road?.["from"] === "string") from["@_junction_name"] = road["from"];
     const to: Record<string, unknown> = { "#text": coordText(pts.at(-1)!) };
@@ -140,7 +145,7 @@ function buildLocation(situation: Rec): Record<string, unknown> {
     loc["to"] = to;
   } else if (pts.length > 0) {
     loc["at"] = coordText(pts[0]!);
-  }
+  } else return undefined;
   return loc;
 }
 
@@ -188,27 +193,32 @@ export function traffEventsOf(registry: Registry, situation: Rec, at: Date): Tra
 function messagesOf(registry: Registry, situation: Rec, at: Date): Record<string, unknown>[] {
   if (situationEffects(situation).some(untellable)) return [];
   const events = traffEventsOf(registry, situation, at);
-  const out = events.length > 0 ? [buildMessage(situation, events)] : [];
+  const main = events.length > 0 ? buildMessage(situation, events) : undefined;
+  const out = main === undefined ? [] : [main];
   const validity = situation["validity"] as Validity;
   for (const effect of situationEffects(situation).filter(hasOwnPlace)) {
     const own = effectEvents([effect], validity, at, []);
     if (own.length === 0) continue;
-    out.push(
-      buildMessage(
-        {
-          ...situation,
-          id: `${String(situation["id"])}#${effect.id}`,
-          validity: effectValidity(effect, validity),
-          location: { ...(situation["location"] as Rec), ...(effect.location as Rec) },
-        },
-        own,
-      ),
+    const message = buildMessage(
+      {
+        ...situation,
+        id: `${String(situation["id"])}#${effect.id}`,
+        validity: effectValidity(effect, validity),
+        location: { ...(situation["location"] as Rec), ...(effect.location as Rec) },
+      },
+      own,
     );
+    if (message !== undefined) out.push(message);
   }
   return out;
 }
 
-function buildMessage(situation: Rec, events: TraffEvent[]): Record<string, unknown> {
+/** The Java TraFF reader accepts second-resolution ISO timestamps only. */
+const wireTime = (value: string) => new Date(value).toISOString().replace(/\.\d{3}Z$/, "Z");
+
+function buildMessage(situation: Rec, events: TraffEvent[]): Record<string, unknown> | undefined {
+  const location = buildLocation(situation);
+  if (location === undefined) return undefined;
   const validity = situation["validity"] as Validity;
   const provenance = situation["provenance"] as Rec;
   const freshness = situation["freshness"] as Rec;
@@ -217,12 +227,12 @@ function buildMessage(situation: Rec, events: TraffEvent[]): Record<string, unkn
   const expiration = (freshness["expiresAt"] as string | undefined) ?? validity.end;
   return {
     "@_id": situation["id"],
-    "@_receive_time": freshness["fetchedAt"],
-    "@_update_time": updated,
+    "@_receive_time": wireTime(freshness["fetchedAt"] as string),
+    "@_update_time": wireTime(updated),
     "@_urgency": urgencyOf(situation["severity"]),
-    ...(expiration ? { "@_expiration_time": expiration } : {}),
-    ...(validity.start ? { "@_start_time": validity.start } : {}),
-    ...(validity.end ? { "@_end_time": validity.end } : {}),
+    ...(expiration ? { "@_expiration_time": wireTime(expiration) } : {}),
+    ...(validity.start ? { "@_start_time": wireTime(validity.start) } : {}),
+    ...(validity.end ? { "@_end_time": wireTime(validity.end) } : {}),
     ...(situation["temporality"] === "forecast" ? { "@_forecast": "true" } : {}),
     events: {
       event: events.map((e) => ({
@@ -241,7 +251,7 @@ function buildMessage(situation: Rec, events: TraffEvent[]): Record<string, unkn
           : {}),
       })),
     },
-    location: buildLocation(situation),
+    location,
   };
 }
 
@@ -255,7 +265,8 @@ const builder = new XMLBuilder({
 /**
  * Projects situations to a TraFF v0.8 `<feed>` document, evaluated at `at`.
  * A situation with no event TraFF can carry, or with a vehicle-specific
- * effect, is left out. TraFF carries no feed-level attribution element;
+ * effect, is left out. Locations whose explicit direction cannot be represented
+ * without guessing travel order are withheld too. TraFF carries no feed-level attribution element;
  * credit travels via HTTP headers and each source's licence.
  */
 export function situationsToTraff(
