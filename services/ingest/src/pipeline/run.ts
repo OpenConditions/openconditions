@@ -1507,7 +1507,9 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
   console.info(
     `[ingest] ${src.id}: status only, ${observations.length} readings ` +
       `(latest ${o.latest}, history ${o.history}, unchanged ${o.unchanged}), ` +
-      `${output.rejected} statuses unplaced in ${durationMs}ms (${poll.steps.describe()})`,
+      `${output.rejected} rejected` +
+      `${output.unplaced === undefined ? "" : ` (${output.unplaced} unplaced)`} ` +
+      `in ${durationMs}ms (${poll.steps.describe()})`,
   );
   return {
     count: counts.updated,

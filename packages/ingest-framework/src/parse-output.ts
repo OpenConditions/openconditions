@@ -71,10 +71,13 @@ export interface ParseOutput {
   truncated?: boolean;
 }
 
-/** What a status-only poll parsed into: readings, and the status records it could not place. */
+/** What a status-only poll parsed into: readings, and the status records it could not use. */
 export interface StatusOutput {
   observations: RecordDraft[];
+  /** Status records not used: unplaced, or holding a value the format cannot read. */
   rejected: number;
+  /** Of `rejected`, those the index does not place, where the format tells the two apart. */
+  unplaced?: number;
 }
 
 /** An empty parse output, to fill per class. */

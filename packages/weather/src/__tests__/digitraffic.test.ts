@@ -302,6 +302,7 @@ describe("digitraffic-weather", () => {
     );
     expect(status.observations).toEqual(measured(full.observations));
     expect(status.rejected).toBe(1);
+    expect(status.unplaced).toBe(1);
   });
 
   test("a malformed data document fails a status-only parse but not a full one", () => {
@@ -347,6 +348,7 @@ describe("digitraffic-weather", () => {
       expect(out.observations).toEqual([]);
       // The derivative is a sensor not read, which is no rejection.
       expect(out.rejected).toBe(3);
+      expect(out.unplaced).toBe(0);
     });
 
     test("a publisher's fixed window is the reading's window; a later time is held to the fetch", () => {
@@ -412,7 +414,7 @@ describe("digitraffic-weather", () => {
 
     test("a channel the station's feature lacks is not read", () => {
       // 1001 reports no third surface sensor, so its feature has no channel 101.
-      expect(read([value(101, 9.1)])).toEqual({ observations: [], rejected: 0 });
+      expect(read([value(101, 9.1)])).toEqual({ observations: [], rejected: 0, unplaced: 0 });
     });
   });
 });

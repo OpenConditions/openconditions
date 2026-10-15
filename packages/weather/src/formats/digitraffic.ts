@@ -376,8 +376,8 @@ function readingOf(
 
 /**
  * The readings of every station the data document names, placed through the
- * index; a station with values that the index does not hold is counted as
- * rejected.
+ * index, and the number of stations with values that the index does not
+ * hold, for the caller to count as rejected.
  */
 function readingsOf(
   feed: WeatherCatalogFeed,
@@ -385,13 +385,14 @@ function readingsOf(
   index: StatusIndex,
   samples: ReadonlyMap<string, readonly Sample[]>,
   out: Pick<ParseOutput, "rejected">,
-): RecordDraft[] {
+): { readings: RecordDraft[]; unplaced: number } {
   const readings: RecordDraft[] = [];
+  let unplaced = 0;
   for (const [stationId, values] of samples) {
     if (values.length === 0) continue;
     const subject = index.get(stationId)?.find(isStationSubject);
     if (subject === undefined) {
-      out.rejected = (out.rejected ?? 0) + 1;
+      unplaced++;
       continue;
     }
     const dry = drySensors(values);
@@ -400,7 +401,7 @@ function readingsOf(
       if (draft !== undefined) readings.push(draft);
     }
   }
-  return readings;
+  return { readings, unplaced };
 }
 
 /**
@@ -503,7 +504,9 @@ export function parseDigitrafficWeather(
       );
     }
   }
-  out.observations.push(...readingsOf(feed, ctx.fetchedAt, index, samples, out));
+  const { readings, unplaced } = readingsOf(feed, ctx.fetchedAt, index, samples, out);
+  out.observations.push(...readings);
+  if (unplaced > 0) out.rejected = (out.rejected ?? 0) + unplaced;
   out.statusIndex = index;
   return out;
 }
@@ -516,12 +519,12 @@ export function parseDigitrafficWeatherStatus(
   index: StatusIndex,
 ): StatusOutput {
   const out = { rejected: 0 };
-  const observations = readingsOf(
+  const { readings, unplaced } = readingsOf(
     feed,
     ctx.fetchedAt,
     index,
     samplesOf(payloads["status"] ?? []),
     out,
   );
-  return { observations, rejected: out.rejected };
+  return { observations: readings, rejected: out.rejected + unplaced, unplaced };
 }
