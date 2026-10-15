@@ -78,7 +78,9 @@ export async function writeRecord(
  * the next revision. A stored record is validated as it is and written only
  * when its revision is newer than the stored one, so a peer's late or
  * repeated delivery changes nothing but the expiry, and never over a record
- * another instance wrote, nor over a copy rejected or superseded here. An
+ * another instance wrote, nor over a copy rejected or superseded here. A
+ * copy that expired here kept the peer's revision, so a delivery at that
+ * revision with a lifetime the peer moved, and not yet over, restores it. An
  * observation goes to its series.
  */
 export async function writeRecordIn(
@@ -149,13 +151,23 @@ export async function writeRecordIn(
       return { status: "stale", class: cls, id: id!, revision: existing.revision };
     }
     if (existing && existing.revision >= (sealed["revision"] as number)) {
-      if (
-        existing.revision === sealed["revision"] &&
-        !existing.tombstoned &&
-        expiryOf(sealed) !== expiryOf(existing.record)
-      ) {
-        await refreshExpiries(tx, cls, [sealed]);
-        return { status: "refreshed", class: cls, id: id!, revision: existing.revision };
+      const expiry = expiryOf(sealed);
+      if (existing.revision === sealed["revision"] && expiry !== expiryOf(existing.record)) {
+        if (!existing.tombstoned) {
+          await refreshExpiries(tx, cls, [sealed]);
+          return { status: "refreshed", class: cls, id: id!, revision: existing.revision };
+        }
+        // A copy that expired here, at the revision the peer has since moved
+        // the lifetime of, is live again; its revision already has its row.
+        if (
+          existing.tombstone_reason === "expired" &&
+          sealed["tombstone"] === undefined &&
+          (expiry === null || expiry > Date.parse(ctx.now))
+        ) {
+          await storeRecords(tx, cls, [sealed], ctx.registry);
+          await relinkFeature(tx, cls, sealed, ctx);
+          return { status: "restored", class: cls, id: id!, revision: existing.revision };
+        }
       }
       return { status: "stale", class: cls, id: id!, revision: existing.revision };
     }
@@ -170,19 +182,28 @@ export async function writeRecordIn(
       revisionRow(cls, sealed, changeKinds),
     ]);
   }
-  if (cls === "feature") {
-    await updateCanonicalView(
-      tx,
-      ctx.registry,
-      {
-        sourceId: (sealed["provenance"] as Rec)["sourceId"] as string,
-        featureIds: [id!],
-        observations: [],
-      },
-      ctx,
-    );
-  }
+  await relinkFeature(tx, cls, sealed, ctx);
   return { status, class: cls, id: id!, revision: sealed["revision"] as number };
+}
+
+/** A written feature takes its place in the canonical view. */
+async function relinkFeature(
+  tx: Sql,
+  cls: RevisionedClass,
+  sealed: Rec,
+  ctx: Omit<WriteContext, "complete">,
+): Promise<void> {
+  if (cls !== "feature") return;
+  await updateCanonicalView(
+    tx,
+    ctx.registry,
+    {
+      sourceId: (sealed["provenance"] as Rec)["sourceId"] as string,
+      featureIds: [sealed["id"] as string],
+      observations: [],
+    },
+    ctx,
+  );
 }
 
 async function writeObservation(

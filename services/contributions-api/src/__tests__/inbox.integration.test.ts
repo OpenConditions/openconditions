@@ -657,6 +657,56 @@ describe("a peer's copy this instance ended", () => {
     expect(await rowOf(id)).toMatchObject({ revision: 4, tombstone_reason: null });
   });
 
+  it("brings an expired copy back when the peer moves its lifetime at the same revision", async () => {
+    const report = peerCrowdReport("c-expired");
+    const id = report["id"] as string;
+    await ingestFederatedPage(sql, page(change(report, 1)), ctx());
+    await endHere(id, "expired");
+    expect(await rowOf(id)).toMatchObject({ revision: 1, tombstone_reason: "expired" });
+    const lifetime = (expiresAt: string) => ({
+      ...report,
+      freshness: { ...(report["freshness"] as Rec), expiresAt },
+    });
+
+    // A lifetime already over leaves it ended.
+    const over = await ingestFederatedPage(
+      sql,
+      page(change(lifetime("2026-07-12T13:00:00.000Z"), 2)),
+      ctx("2026-07-12T13:30:00.000Z"),
+    );
+    expect(over).toMatchObject({ accepted: 0, stale: 1 });
+    expect(await rowOf(id)).toMatchObject({ tombstone_reason: "expired" });
+
+    const back = await ingestFederatedPage(
+      sql,
+      page(change(lifetime("2026-07-12T14:00:00.000Z"), 3)),
+      ctx(LATER),
+    );
+    expect(back).toMatchObject({ accepted: 1, stale: 0 });
+    expect(await rowOf(id)).toMatchObject({ revision: 1, tombstone_reason: null });
+    expect((await evidenceOf(sql, id)).expires_at?.toISOString()).toBe("2026-07-12T14:00:00.000Z");
+    const [{ n }] = await sql`
+      SELECT count(*)::int AS n FROM conditions.situation_revision WHERE situation_id = ${id}`;
+    expect(n).toBe(1);
+    expect(await evidenceRows(id)).toHaveLength(1);
+  });
+
+  it("keeps a copy ended here for another reason ended at the same revision", async () => {
+    const report = peerCrowdReport("c-rejected");
+    const id = report["id"] as string;
+    await ingestFederatedPage(sql, page(change(report, 1)), ctx());
+    await endHere(id, "rejected");
+    const extended = {
+      ...report,
+      freshness: { ...(report["freshness"] as Rec), expiresAt: "2026-07-12T14:00:00.000Z" },
+    };
+    expect(await ingestFederatedPage(sql, page(change(extended, 2)), ctx(LATER))).toMatchObject({
+      accepted: 0,
+      stale: 1,
+    });
+    expect(await rowOf(id)).toMatchObject({ revision: 1, tombstone_reason: "rejected" });
+  });
+
   it("lets a copy a poll here withdrew come back at the peer's next change", async () => {
     const id = peerSituation("t-2")["id"] as string;
     await ingestFederatedPage(sql, page(change(peerSituation("t-2", 2), 1)), ctx());

@@ -79,7 +79,10 @@ A peer's copy ended here — expired by the sweep, withdrawn by a poll, rejected
 by a reviewer, superseded by a merge, erased — keeps the peer's revision and
 takes no history row, so the peer's next revision is never mistaken for a stale
 one: it restores an expired or withdrawn copy, while a rejected or superseded
-copy stays ended. The peer's own retraction is the peer's next revision.
+copy stays ended. An expired copy also comes back when the peer moves its
+lifetime at the same revision (a crowd report's new evidence) to one not yet
+over; that revision keeps its one history row. The peer's own retraction is
+the peer's next revision.
 
 A crowd situation's evidence summary lives in its own columns
 (`evidence_state`, `confidence_score`, `routing_eligible`, `corroborations`,

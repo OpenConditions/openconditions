@@ -1,3 +1,4 @@
+import { sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
@@ -81,6 +82,41 @@ describe("sweepRecords", () => {
     const [revision] = await sql`SELECT change_kinds FROM conditions.situation_revision
       WHERE situation_id = 'oc:situation:nl-ndw-events:exp' AND revision = 2`;
     expect(revision).toEqual({ change_kinds: ["tombstoned"] });
+  });
+
+  it("expires a peer's copy at the peer's revision, writing it no history", async () => {
+    const draft = situationDraft("peer-exp", {
+      freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T11:00:00Z" },
+    });
+    const sealed = sealRecord(registry, draft, {
+      instanceId: "peer.example",
+      revision: 4,
+      recordedAt: FETCHED_AT,
+    });
+    if (!sealed.ok) throw new Error(JSON.stringify(sealed.issues));
+    const copy = {
+      ...sealed.value,
+      provenance: {
+        ...(sealed.value["provenance"] as object),
+        originChain: [
+          { instanceId: "peer.example", viaPeer: "peer.example", receivedAt: FETCHED_AT },
+        ],
+      },
+    };
+    expect((await writeRecord(sql, { stored: copy }, write)).status).toBe("created");
+    expect(await sweep(LATER)).toMatchObject({ expired: 1 });
+    const [row] = await sql`
+      SELECT tombstone_reason, revision, recorded_at, record ->> 'revision' AS stated
+        FROM conditions.situation WHERE id = ${draft["id"] as string}`;
+    expect(row).toEqual({
+      tombstone_reason: "expired",
+      revision: 4,
+      recorded_at: new Date(FETCHED_AT),
+      stated: "4",
+    });
+    const history = await sql`SELECT revision FROM conditions.situation_revision
+      WHERE situation_id = ${draft["id"] as string}`;
+    expect(history).toEqual([{ revision: 4 }]);
   });
 
   it("tombstones the feed records of a source that stopped polling, not crowd or peer records", async () => {
