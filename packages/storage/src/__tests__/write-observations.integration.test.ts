@@ -2,12 +2,12 @@ import { recordFromHistory, recordOf } from "@openconditions/core";
 import { captureLicensing } from "@openconditions/ingest-framework";
 import { contentHash, observationId, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { writeRecord } from "../write-record.js";
 import { type WriteContext, writeSnapshot, writeSnapshotIn } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { FETCHED_AT, featureDraft, firePixel, observationDraft } from "./drafts.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;

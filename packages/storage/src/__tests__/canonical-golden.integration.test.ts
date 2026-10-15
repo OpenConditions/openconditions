@@ -1,5 +1,6 @@
 import { fusableProperties, validWhilePolled } from "@openconditions/core";
 import { type CanonicalComponent, landClaim } from "@openconditions/model";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { rekeyCrowdSeries } from "../canonical-view.js";
@@ -7,7 +8,6 @@ import { ensureObservationPartitions, retentionClasses } from "../observation-pa
 import { sweepRecords } from "../sweep.js";
 import { writeRecord } from "../write-record.js";
 import { type WriteContext, writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { goldenFacilities, polled, registry, seedSources } from "./facility-fixtures.js";
 
 type Rec = Record<string, unknown>;
@@ -378,7 +378,8 @@ describe("moving crowd rows", () => {
           async () =>
             (
               await sql`SELECT 1 FROM pg_locks WHERE locktype = 'advisory' AND NOT granted
-                AND objid = (hashtext('crowd') & x'ffffffff'::bigint)::oid`
+                AND objid = (hashtext('crowd') & x'ffffffff'::bigint)::oid
+                AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`
             ).length,
           { timeout: 3000 },
         )

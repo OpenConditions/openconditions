@@ -1,4 +1,3 @@
-import { runMigrations } from "@openconditions/core/server";
 import {
   type CatalogFeed,
   defineIngestDomain,
@@ -16,8 +15,8 @@ import {
 } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import { ensureObservationPartitions, retentionClasses } from "@openconditions/storage";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { createRoleState, runSource } from "../pipeline/run.js";
 
@@ -128,32 +127,20 @@ const registry: Registry = buildRegistry([
 
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(registry),
     now: new Date("2026-10-08T10:00:00Z"),
   });
-}, 120_000);
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 const T0 = Date.parse("2026-10-08T10:00:00.000Z");

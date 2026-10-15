@@ -16,7 +16,7 @@ import {
   tombstoneRecords,
   writeSnapshotIn,
 } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
+import { createDedicatedTestDatabase } from "./database.integration.js";
 import { featureDraft } from "./drafts.js";
 import { goldenFacilities, registry } from "./facility-fixtures.js";
 
@@ -41,7 +41,7 @@ const EXPECTED_IMAGE =
     ? "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8"
     : "postgis/postgis:16-3.4";
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: Awaited<ReturnType<typeof createDedicatedTestDatabase>>;
 let sql: postgres.Sql;
 let version: unknown;
 let originalReloptions: unknown;
@@ -53,7 +53,7 @@ let nextArm = 0;
 let nextMetric = 0;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createDedicatedTestDatabase();
   sql = db.sql;
   version = (await sql`SELECT version() AS version`)[0]?.["version"];
   originalReloptions = (
@@ -426,10 +426,10 @@ describe("external-ID generated representation experiment", () => {
 
   it("rejects an unsupported profile before creating a disposable database", async () => {
     vi.stubEnv("OC_TEST_POSTGIS_PROFILE", "unsupported");
-    let unexpected: Awaited<ReturnType<typeof createTestDatabase>> | undefined;
+    let unexpected: Awaited<ReturnType<typeof createDedicatedTestDatabase>> | undefined;
     let failure: unknown;
     try {
-      unexpected = await createTestDatabase();
+      unexpected = await createDedicatedTestDatabase();
     } catch (error) {
       failure = error;
     } finally {

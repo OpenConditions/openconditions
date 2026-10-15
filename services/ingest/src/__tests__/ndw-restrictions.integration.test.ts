@@ -3,6 +3,7 @@ import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
 import { sweepRecords } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -16,7 +17,6 @@ import { runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG, repoFeed, testFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry, writeSituations } from "./helpers/situations.js";
 
 /**
@@ -149,7 +149,7 @@ function serveXml(body: string, init: { status?: number; etag?: string } = {}): 
     })) as unknown as typeof fetch;
 }
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const savedEnv: Record<string, string | undefined> = {};
 
@@ -161,7 +161,7 @@ beforeAll(async () => {
     savedEnv[key] = process.env[key];
     process.env[key] = ENV[key as keyof typeof ENV];
   }
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await importOsmRoads(sql, {
     source: { fetchRegion: async () => spineToWays(spine) },

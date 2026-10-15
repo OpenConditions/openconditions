@@ -4,12 +4,12 @@ import { seriesKeyOf } from "@openconditions/core";
 import { readLatestObservation, readRecord } from "@openconditions/core/server";
 import { buildRegistry, extendVocabulary } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { rowOf } from "../record-rows.js";
 import { type SnapshotDrafts, type WriteContext, writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 
 type Rec = Record<string, unknown>;
 

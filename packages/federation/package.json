@@ -46,6 +46,7 @@
     "@openconditions/core": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
     "@openconditions/storage": "workspace:*",
+    "@openconditions/test-database": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "testcontainers": "^12.2.0",
     "tsup": "^8.5.1",

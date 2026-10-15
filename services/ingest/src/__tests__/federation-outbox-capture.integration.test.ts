@@ -5,16 +5,16 @@ import {
   syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishSituations, writeModel } from "../pipeline/publish.js";
 import { openPollAttempt } from "../pipeline/source-status.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry, situationDraft } from "./helpers/situations.js";
 
 type Rec = Record<string, unknown>;
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 const SOURCE = "de-autobahn-events";
@@ -157,7 +157,7 @@ async function flowReading(speed: number, at: string): Promise<void> {
 }
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(registry),

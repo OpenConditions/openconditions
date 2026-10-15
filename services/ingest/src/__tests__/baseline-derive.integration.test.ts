@@ -1,13 +1,12 @@
-import { runMigrations } from "@openconditions/core/server";
 import { SPEED_BIN_WIDTH_KPH } from "@openconditions/storage";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { deriveBaselines } from "../pipeline/baseline-derive.js";
 import { seedSpeedHour } from "./helpers/flow-series.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 // Pin base to the top of the hour so the +i-second offsets never spill into an
 // adjacent hour/day bucket, and derive the expected dow/tod buckets from it.
@@ -27,24 +26,12 @@ async function seed(site: string, speeds: number[], base: Date): Promise<string>
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("deriveBaselines", () => {

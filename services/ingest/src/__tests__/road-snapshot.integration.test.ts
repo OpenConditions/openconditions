@@ -1,11 +1,11 @@
 import { readFileSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runSource } from "../pipeline/run.js";
 import { repoFeed, testFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
  * Complete-snapshot acceptance against a real disposable PostGIS. The point of
@@ -72,11 +72,11 @@ function serve(payloadForRoadworks: unknown): typeof fetch {
   }) as unknown as typeof fetch;
 }
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120_000);
 

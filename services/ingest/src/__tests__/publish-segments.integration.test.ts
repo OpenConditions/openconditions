@@ -1,16 +1,15 @@
-import { runMigrations } from "@openconditions/core/server";
 import { syncSources } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerScope } from "../api/scope.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG } from "./helpers/catalog.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-01-01T00:00:00.000Z";
 
@@ -45,19 +44,8 @@ const NIGHT_ONLY_SEGMENT_ID = "800:f";
 const NIGHT_ONLY_WKT = "LINESTRING(5.16 52.16, 5.17 52.16)";
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
 
   await sql`
     INSERT INTO conditions.road_segment
@@ -140,11 +128,10 @@ beforeAll(async () => {
   await sql`
     INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at, contributing)
     VALUES (${NIGHT_ONLY_SEGMENT_ID}, 0, 2, 60, 30, ${NOW}, ARRAY['test-source'])`;
-}, 120_000);
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("GET /segments.geojson", () => {

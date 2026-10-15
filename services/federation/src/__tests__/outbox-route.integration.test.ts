@@ -73,6 +73,8 @@ function headerStrings(headers: Record<string, unknown>): Record<string, string>
 }
 
 beforeAll(async () => {
+  // A server of its own: the outbox fence reads the server-wide xmin horizon,
+  // which another suite's open transaction on a shared server would hold back.
   const container = await new GenericContainer("postgis/postgis:16-3.4")
     .withEnvironment({
       POSTGRES_DB: "conditions_test",

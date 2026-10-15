@@ -11,9 +11,8 @@ import {
   redemptionContext,
   TokenVerifier,
 } from "@openconditions/contributions-api/contrib";
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   acceptProbeReport,
@@ -38,25 +37,14 @@ const REGION: RegionSpec = {
   speedBucketCount: 8,
 };
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 let verifier: TokenVerifier;
 let redeem: TokenRedeemer;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 10 });
-  await runMigrations(url);
+  db = await createTestDatabase({ pool: { max: 10 } });
+  sql = db.sql;
   await ensureBatchSchema(sql);
   await generateIssuerKey(sql, NOW);
   verifier = new TokenVerifier({ issuerName: DEFAULT_ISSUER_NAME, log: noopLog });
@@ -64,8 +52,7 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 async function enroll(): Promise<ReporterKey> {

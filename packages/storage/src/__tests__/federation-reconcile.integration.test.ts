@@ -1,4 +1,5 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 import { type FederationReconcileOptions, reconcileFederation } from "../federation-reconcile.js";
@@ -6,7 +7,6 @@ import { ensureObservationPartitions, retentionClasses } from "../observation-pa
 import { type SourceEntry, syncSources } from "../sources.js";
 import { writeRecord } from "../write-record.js";
 import { tombstoneRecords } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { featureDraft, observationDraft, offerDraft, situationDraft } from "./drafts.js";
 
 type Rec = Record<string, unknown>;

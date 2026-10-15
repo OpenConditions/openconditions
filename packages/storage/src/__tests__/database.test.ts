@@ -51,7 +51,7 @@ vi.mock("testcontainers", () => ({
 }));
 const GenericContainer = state.GenericContainer;
 
-import { createTestDatabase } from "./database.integration.js";
+import { createDedicatedTestDatabase } from "./database.integration.js";
 import {
   captureDatabaseStart,
   cleanupProfileDatabase,
@@ -84,7 +84,7 @@ beforeEach(() => {
 describe("disposable storage database profiles and cleanup", () => {
   it.each([undefined, "pg16"])("preserves the PG16 default for %s", async (profile) => {
     if (profile !== undefined) vi.stubEnv("OC_TEST_POSTGIS_PROFILE", profile);
-    const db = await createTestDatabase();
+    const db = await createDedicatedTestDatabase();
     expect(state.construct).toHaveBeenCalledWith("postgis/postgis:16-3.4");
     expect(state.postgres).toHaveBeenCalledWith(expect.any(String), {
       max: 4,
@@ -99,11 +99,11 @@ describe("disposable storage database profiles and cleanup", () => {
   });
 
   it("selects pinned PG18 and reads the profile on each call", async () => {
-    const first = await createTestDatabase();
+    const first = await createDedicatedTestDatabase();
     await first.close();
     vi.stubEnv("OC_TEST_POSTGIS_PROFILE", "pg18");
     state.query.mockResolvedValue([{ server_version_num: "180006" }]);
-    const second = await createTestDatabase();
+    const second = await createDedicatedTestDatabase();
     expect(state.construct).toHaveBeenLastCalledWith(
       "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
     );
@@ -114,7 +114,7 @@ describe("disposable storage database profiles and cleanup", () => {
     "rejects unsupported profile %s before starting any container",
     async (profile) => {
       vi.stubEnv("OC_TEST_POSTGIS_PROFILE", profile);
-      await expect(createTestDatabase()).rejects.toThrow(
+      await expect(createDedicatedTestDatabase()).rejects.toThrow(
         `Unsupported OC_TEST_POSTGIS_PROFILE: ${profile}`,
       );
       expect(state.construct).not.toHaveBeenCalled();
@@ -127,7 +127,7 @@ describe("disposable storage database profiles and cleanup", () => {
     "rejects mismatched or malformed actual server version %s and cleans up",
     async (version) => {
       state.query.mockResolvedValue([{ server_version_num: version }]);
-      await expect(createTestDatabase()).rejects.toThrow("Unexpected PostgreSQL version");
+      await expect(createDedicatedTestDatabase()).rejects.toThrow("Unexpected PostgreSQL version");
       expect(state.migrations).not.toHaveBeenCalled();
       expect(state.end).toHaveBeenCalledOnce();
       expect(state.stop).toHaveBeenCalledOnce();
@@ -139,7 +139,7 @@ describe("disposable storage database profiles and cleanup", () => {
     state.host.mockImplementation(() => {
       throw failure;
     });
-    await expect(createTestDatabase()).rejects.toBe(failure);
+    await expect(createDedicatedTestDatabase()).rejects.toBe(failure);
     expect(state.end).not.toHaveBeenCalled();
     expect(state.stop).toHaveBeenCalledOnce();
   });
@@ -149,7 +149,7 @@ describe("disposable storage database profiles and cleanup", () => {
     state.postgres.mockImplementation(() => {
       throw failure;
     });
-    await expect(createTestDatabase()).rejects.toBe(failure);
+    await expect(createDedicatedTestDatabase()).rejects.toBe(failure);
     expect(state.end).not.toHaveBeenCalled();
     expect(state.stop).toHaveBeenCalledOnce();
   });
@@ -163,7 +163,7 @@ describe("disposable storage database profiles and cleanup", () => {
       state[stage].mockRejectedValue(original);
       state.end.mockRejectedValue(pool);
       state.stop.mockRejectedValue(stop);
-      const failure = await createTestDatabase().catch((error: unknown) => error);
+      const failure = await createDedicatedTestDatabase().catch((error: unknown) => error);
       expect(failure).toBeInstanceOf(AggregateError);
       expect((failure as AggregateError).errors).toEqual([original, pool, stop]);
       expect(state.end).toHaveBeenCalledOnce();
@@ -174,13 +174,13 @@ describe("disposable storage database profiles and cleanup", () => {
   it("returns the original migration error when cleanup succeeds", async () => {
     const failure = new Error("migration failed");
     state.migrations.mockRejectedValue(failure);
-    await expect(createTestDatabase()).rejects.toBe(failure);
+    await expect(createDedicatedTestDatabase()).rejects.toBe(failure);
     expect(state.end).toHaveBeenCalledOnce();
     expect(state.stop).toHaveBeenCalledOnce();
   });
 
   it("stops even when a returned fixture's pool close fails", async () => {
-    const db = await createTestDatabase();
+    const db = await createDedicatedTestDatabase();
     const failure = new Error("pool close failed");
     state.end.mockRejectedValue(failure);
     await expect(db.close()).rejects.toBe(failure);
@@ -188,7 +188,7 @@ describe("disposable storage database profiles and cleanup", () => {
   });
 
   it("preserves both returned fixture cleanup failures", async () => {
-    const db = await createTestDatabase();
+    const db = await createDedicatedTestDatabase();
     const pool = new Error("pool close failed");
     const stop = new Error("container stop failed");
     state.end.mockRejectedValue(pool);
@@ -345,7 +345,9 @@ it("restores the interception if profile rejection occurs before any start", asy
   const restore = captureDatabaseStart(owned);
   vi.stubEnv("OC_TEST_POSTGIS_PROFILE", "unsupported");
   try {
-    await expect(createTestDatabase()).rejects.toThrow("Unsupported OC_TEST_POSTGIS_PROFILE");
+    await expect(createDedicatedTestDatabase()).rejects.toThrow(
+      "Unsupported OC_TEST_POSTGIS_PROFILE",
+    );
   } finally {
     restore();
   }

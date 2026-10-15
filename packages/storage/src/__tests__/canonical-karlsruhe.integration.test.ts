@@ -1,6 +1,7 @@
 import { seriesKeyOf } from "@openconditions/core";
 import { readCanonical, readLatestObservation } from "@openconditions/core/server";
 import { type CanonicalComponent, landClaim, observationId } from "@openconditions/model";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { updateCanonicalView } from "../canonical-view.js";
@@ -8,7 +9,6 @@ import { ensureObservationPartitions, retentionClasses } from "../observation-pa
 import { sweepRecords } from "../sweep.js";
 import { writeRecord } from "../write-record.js";
 import { type WriteContext, writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import {
   karlsruheCharging,
   luisenstrasse,

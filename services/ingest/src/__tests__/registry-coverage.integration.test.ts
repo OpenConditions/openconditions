@@ -1,12 +1,8 @@
-import {
-  assertStoredCodesRegistered,
-  runMigrations,
-  storedRegistryCodes,
-} from "@openconditions/core/server";
+import { assertStoredCodesRegistered, storedRegistryCodes } from "@openconditions/core/server";
 import { PRIVACY_CLASSES, RegistryCoverageError } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 /**
@@ -14,28 +10,16 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
  * fails a service whose database holds a code the production registry does
  * not register (domain-contributed columns carry no CHECK).
  */
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 async function insertSource(id: string, format: string) {

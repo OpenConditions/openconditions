@@ -5,12 +5,12 @@ import {
   retentionClasses,
   tombstoneRecords,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { FederatedPageError, type InboxContext, ingestFederatedPage } from "../federation/inbox.js";
 import { eraseRecord } from "../federation/tombstone.js";
 import {
-  createTestDatabase,
   enrollDirect,
   evidenceOf,
   feedSituationDraft,
@@ -27,7 +27,7 @@ type Rec = Record<string, unknown>;
 const NOW = "2026-07-12T08:00:00.000Z";
 const LATER = "2026-07-12T08:05:00.000Z";
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let alice: ReporterKey;
 
@@ -108,10 +108,10 @@ async function erasureFacts(canonicalId: string) {
 }
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   alice = await generateReporterKey();
-}, 180_000);
+});
 
 afterAll(async () => {
   await db?.close();
@@ -560,7 +560,8 @@ describe("a peer's retractions", () => {
       await expect
         .poll(async () => {
           const rows = await sql`SELECT 1 FROM pg_locks WHERE locktype = 'advisory'
-            AND objid = 729001 AND NOT granted`;
+            AND objid = 729001 AND NOT granted
+            AND database = (SELECT oid FROM pg_database WHERE datname = current_database())`;
           return rows.length;
         })
         .toBe(1);

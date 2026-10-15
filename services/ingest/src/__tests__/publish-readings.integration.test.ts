@@ -1,4 +1,3 @@
-import { runMigrations } from "@openconditions/core/server";
 import type { RecordDraft } from "@openconditions/ingest-framework";
 import { observationId } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -7,68 +6,47 @@ import {
   retentionClasses,
   writeSnapshot,
 } from "@openconditions/storage";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishReadings } from "../pipeline/publish.js";
 import { openPollAttempt, upsertSourceStatus } from "../pipeline/source-status.js";
-
-const databaseProfile = process.env.OC_TEST_POSTGIS_PROFILE ?? "pg16";
-const databaseImage =
-  databaseProfile === "pg16"
-    ? "postgis/postgis:16-3.4"
-    : databaseProfile === "pg18"
-      ? "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8"
-      : undefined;
-if (!databaseImage) throw new Error("Unsupported disposable PostGIS test profile");
 
 const source = { id: "nl-ndw-flow", freshnessWindowSec: 300 };
 const model = { registry: productionRegistry(), instanceId: "test.local" };
 const T1 = "2026-10-01T10:00:05.000Z";
 const T2 = "2026-10-01T10:01:05.000Z";
 const T3 = "2026-10-01T10:02:05.000Z";
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: (() => Promise<unknown>) | undefined;
 const classScans: string[] = [];
 let liveCounts = 0;
 let observing = false;
 
 beforeAll(async () => {
-  const container = await new GenericContainer(databaseImage)
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, {
-    max: 3,
-    onnotice: () => {},
-    debug: (_connection, query) => {
-      if (!observing) return;
-      const match = query.match(
-        /^SELECT id, content_hash, revision,[\s\S]*FROM conditions\.(feature|situation|offer) WHERE source_id = \$1/,
-      );
-      if (match) classScans.push(match[1]!);
-      if (/SELECT count\(\*\)::int AS live FROM conditions\.feature/.test(query)) liveCounts++;
+  db = await createTestDatabase({
+    pool: {
+      max: 3,
+      onnotice: () => {},
+      debug: (_connection, query) => {
+        if (!observing) return;
+        const match = query.match(
+          /^SELECT id, content_hash, revision,[\s\S]*FROM conditions\.(feature|situation|offer) WHERE source_id = \$1/,
+        );
+        if (match) classScans.push(match[1]!);
+        if (/SELECT count\(\*\)::int AS live FROM conditions\.feature/.test(query)) liveCounts++;
+      },
     },
   });
-  const [{ version }] = await sql`SELECT current_setting('server_version_num')::int AS version`;
-  expect(Math.floor(Number(version) / 10_000)).toBe(databaseProfile === "pg18" ? 18 : 16);
-  await runMigrations(url);
+  sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(model.registry),
     now: new Date(T1),
   });
-}, 120_000);
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 beforeEach(async () => {

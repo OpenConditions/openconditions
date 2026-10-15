@@ -3,15 +3,11 @@ import path from "node:path";
 import { buildRegistry } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
 import { writeSnapshot } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ERASURE_REASON, eraseRecord, isErased } from "../federation/tombstone.js";
-import {
-  createTestDatabase,
-  INSTANCE,
-  registry,
-  seedFeedSituation,
-} from "./crowd-fixtures.integration.js";
+import { INSTANCE, registry, seedFeedSituation } from "./crowd-fixtures.integration.js";
 
 type Rec = Record<string, unknown>;
 
@@ -46,7 +42,7 @@ const T1 = "2026-07-12T07:30:00.000Z";
 const ERASED_AT = "2026-07-12T08:00:00.000Z";
 const LATER = "2026-07-12T09:00:00.000Z";
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 interface JournalRow {
@@ -85,14 +81,14 @@ async function stored(id: string) {
 }
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   // The outbox journals only for a subscriber; this one wants every class.
   await sql`
     INSERT INTO conditions.federation_subscription
       (id, peer_id, delivery_mode, created_at, updated_at)
     VALUES ('sub-erase', 'peer-erase', 'pull', now(), now())`;
-}, 120_000);
+});
 
 afterAll(async () => {
   await db?.close();

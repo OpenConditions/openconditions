@@ -4,6 +4,7 @@ import {
   retentionClasses,
   sweepRecords,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
@@ -17,7 +18,6 @@ import {
   stationOf,
   upstream,
 } from "./helpers/on-demand.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 vi.mock("../domains.js", async (importOriginal) => {
   const original = await importOriginal<typeof import("../domains.js")>();
@@ -34,11 +34,11 @@ vi.mock("../domains.js", async (importOriginal) => {
 
 type Rec = Record<string, unknown>;
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, { classes: retentionClasses(registry), now: START });
   // The capture journals only for a subscriber: this one wants every class

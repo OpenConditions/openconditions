@@ -1,10 +1,10 @@
 import type { ReporterKey } from "@openconditions/contrib-core";
 import { tombstoneRecords } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
 import {
-  createTestDatabase,
   enrolledKey,
   evidenceOf,
   landAs,
@@ -18,13 +18,13 @@ const M_PER_DEG = 111_320;
 const LON = 8.4;
 const LAT = 49;
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
-}, 180_000);
+});
 
 afterAll(async () => {
   await db?.close();

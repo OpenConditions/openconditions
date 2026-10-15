@@ -1,4 +1,5 @@
 import { fileURLToPath } from "node:url";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -6,10 +7,9 @@ import { registerApiRoutes } from "../api/routes.js";
 import { loadIngestCatalog } from "../domains.js";
 import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, registry, situationDraft, writeSituations } from "./helpers/situations.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: ReturnType<typeof Fastify>;
 
@@ -18,7 +18,7 @@ const AT = "at=2026-09-06T10:00:00Z";
 type Rec = Record<string, unknown>;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   app = Fastify();
   registerApiRoutes(app, sql, { registry });

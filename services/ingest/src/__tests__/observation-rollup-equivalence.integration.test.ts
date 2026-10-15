@@ -8,12 +8,12 @@ import {
   retentionClasses,
   rollupObservations,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { clearReferenceCaches } from "../pipeline/reference.js";
 import { runSource } from "../pipeline/run.js";
 import { repoFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
  * The hourly rollup of `traffic.speed`, written through the flow poll, gives
@@ -27,7 +27,7 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
  *    writer kept the first only).
  * Speeds at or above 250 km/h are rejected by the parsers, as before.
  */
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const registry = productionRegistry();
 const HOUR = "2026-10-01T08:00:00.000Z";
@@ -93,7 +93,7 @@ function document(at: string, speed: number): Buffer {
 }
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(registry),

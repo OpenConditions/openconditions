@@ -1,4 +1,3 @@
-import { runMigrations } from "@openconditions/core/server";
 import {
   generateInstanceKey,
   type InstanceKey,
@@ -7,15 +6,15 @@ import {
   storePeerVersions,
 } from "@openconditions/federation";
 import { schemaVersions } from "@openconditions/model";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type { FastifyRequest } from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 import { pageOf, peerSituation, registry } from "./record-fixtures.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 let mtlsPeer: InstanceKey;
 let plainPeer: InstanceKey;
 
@@ -76,19 +75,8 @@ async function signed(
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 4 });
-  await runMigrations(url);
+  db = await createTestDatabase({ pool: { max: 4 } });
+  sql = db.sql;
 
   const now = new Date().toISOString();
   mtlsPeer = await generateInstanceKey(now);
@@ -117,11 +105,10 @@ beforeAll(async () => {
       },
     ]),
   };
-}, 120_000);
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("POST /peer/inbox — the optional mTLS gate under RFC 9421 signing", () => {

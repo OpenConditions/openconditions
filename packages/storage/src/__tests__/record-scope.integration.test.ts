@@ -16,13 +16,13 @@ import {
   isFusedSourceId,
   observationId,
 } from "@openconditions/model";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { refreshFused } from "../fused-rows.js";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { syncSources } from "../sources.js";
 import { tombstoneRecords, type WriteContext, writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { observationDraft, offerDraft, situationDraft } from "./drafts.js";
 import { goldenFacilities, polled, registry } from "./facility-fixtures.js";
 

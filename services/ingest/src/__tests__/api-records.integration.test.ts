@@ -1,6 +1,7 @@
 import { listCanonicalFeatures } from "@openconditions/core";
 import { observationId } from "@openconditions/model";
 import { refreshFused, writeSnapshot } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -19,7 +20,6 @@ import {
   writeFacilities,
 } from "./helpers/facilities.js";
 import { seedHourly, siteKey, speedSeriesId, writeSiteReadings } from "./helpers/flow-series.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { situationDraft, writeSituations } from "./helpers/situations.js";
 
 /**
@@ -28,7 +28,7 @@ import { situationDraft, writeSituations } from "./helpers/situations.js";
  * fused price), crowd reports on a charging site, and flow readings of
  * measurement sites.
  */
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: ReturnType<typeof Fastify>;
 let golden: Map<string, SourceDrafts>;
@@ -42,7 +42,7 @@ type Rec = Record<string, unknown>;
 const READ_AT = "2026-09-22T11:20:00.000Z";
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   app = Fastify();
   registerApiRoutes(app, sql, { registry: facilitiesRegistry, now: () => new Date(READ_AT) });

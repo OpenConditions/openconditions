@@ -1,4 +1,5 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
@@ -9,7 +10,6 @@ import {
   retentionClasses,
   retentionDaysOf,
 } from "../observation-partitions.js";
-import { createTestDatabase } from "./database.integration.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;

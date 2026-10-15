@@ -5,6 +5,7 @@ import {
   landClaim,
   observationId,
 } from "@openconditions/model";
+import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from "vitest";
 import type { Sql } from "../bulk.js";
@@ -20,7 +21,6 @@ import { ensureObservationPartitions, retentionClasses } from "../observation-pa
 import { type SourceEntry, syncSources } from "../sources.js";
 import { writeRecord } from "../write-record.js";
 import { type WriteContext, writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { goldenFacilities, polled, registry } from "./facility-fixtures.js";
 
 type Rec = Record<string, unknown>;

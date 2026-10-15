@@ -182,6 +182,9 @@ importers:
       '@commitlint/config-conventional':
         specifier: ^21.2.3
         version: 21.2.3
+      '@openconditions/core':
+        specifier: workspace:*
+        version: link:packages/core
       '@openconditions/datex2':
         specifier: workspace:*
         version: link:packages/datex2
@@ -197,6 +200,9 @@ importers:
       '@openconditions/roads':
         specifier: workspace:*
         version: link:packages/roads
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:packages/test-database
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -206,9 +212,15 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
       prettier:
         specifier: ^3.9.10
         version: 3.9.10
+      testcontainers:
+        specifier: ^12.2.0
+        version: 12.2.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -358,6 +370,9 @@ importers:
         specifier: ^6.1.25
         version: 6.1.25
     devDependencies:
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:../test-database
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -367,9 +382,6 @@ importers:
       drizzle-kit:
         specifier: ^0.31.11
         version: 0.31.11
-      testcontainers:
-        specifier: ^12.2.0
-        version: 12.2.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -438,6 +450,9 @@ importers:
       '@openconditions/storage':
         specifier: workspace:*
         version: link:../storage
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:../test-database
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -909,18 +924,15 @@ importers:
       '@openconditions/contributions-api':
         specifier: workspace:*
         version: link:../../services/contributions-api
-      '@openconditions/core':
+      '@openconditions/test-database':
         specifier: workspace:*
-        version: link:../core
+        version: link:../test-database
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
       postgres:
         specifier: ^3.4.9
         version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
-      testcontainers:
-        specifier: ^12.2.0
-        version: 12.2.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -1035,9 +1047,31 @@ importers:
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../model-registry
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:../test-database
       testcontainers:
         specifier: ^12.2.0
         version: 12.2.0
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(vite@7.3.5(@types/node@26.6.5)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
+  packages/test-database:
+    dependencies:
+      postgres:
+        specifier: ^3.4.9
+        version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
+    devDependencies:
+      '@types/node':
+        specifier: ^26.6.5
+        version: 26.6.5
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -1137,12 +1171,12 @@ importers:
       '@openconditions/publishers':
         specifier: workspace:*
         version: link:../../packages/publishers
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:../../packages/test-database
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
-      testcontainers:
-        specifier: ^12.2.0
-        version: 12.2.0
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -1183,6 +1217,9 @@ importers:
         specifier: ^3.4.9
         version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
     devDependencies:
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:../../packages/test-database
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
@@ -1283,6 +1320,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.5
     devDependencies:
+      '@openconditions/test-database':
+        specifier: workspace:*
+        version: link:../../packages/test-database
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5

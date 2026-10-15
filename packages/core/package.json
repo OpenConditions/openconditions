@@ -34,10 +34,10 @@
     "db:generate": "pnpm --filter @openconditions/model build && drizzle-kit generate"
   },
   "devDependencies": {
+    "@openconditions/test-database": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "@types/tz-lookup": "^6.1.2",
     "drizzle-kit": "^0.31.11",
-    "testcontainers": "^12.2.0",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"

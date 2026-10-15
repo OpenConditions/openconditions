@@ -1,6 +1,5 @@
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { blockPeer, isPeerBlocked, listBlockedPeers, unblockPeer } from "../peer-blocklist.js";
 import {
@@ -11,30 +10,18 @@ import {
   setEffectiveTierUntil,
 } from "../peer-health.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-07-14T00:00:00.000Z";
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("federation_peer_health storage", () => {

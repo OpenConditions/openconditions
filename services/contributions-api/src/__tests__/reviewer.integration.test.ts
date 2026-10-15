@@ -6,12 +6,12 @@ import {
   type SubClaimType,
   signSubClaim,
 } from "@openconditions/contrib-core";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 import {
-  createTestDatabase,
   evidenceOf,
   feedSituationDraft,
   INSTANCE,
@@ -30,14 +30,14 @@ const ENV = {
   OPENCONDITIONS_INSTANCE_ID: INSTANCE,
 };
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 let ipCounter = 0;
 let nowValue = NOW;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   app = await build({ sql, env: ENV, logger: false, now: () => nowValue });
 }, 180_000);

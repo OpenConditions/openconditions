@@ -1,8 +1,7 @@
-import { runMigrations } from "@openconditions/core/server";
 import { schemaVersions } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
   type ActorConfig,
@@ -15,8 +14,8 @@ import {
   refreshPeerCapabilities,
 } from "../index.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-10-02T10:00:00.000Z";
 const LATER = "2026-10-02T11:00:00.000Z";
@@ -53,25 +52,13 @@ const serving = (document: unknown): typeof fetch =>
   (async () => new Response(JSON.stringify(document), { status: 200 })) as typeof fetch;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  await runMigrations(url);
-  sql = postgres(url, { max: 4 });
+  db = await createTestDatabase({ pool: { max: 4 } });
+  sql = db.sql;
   key = await generateInstanceKey(NOW);
-}, 180_000);
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("a peer's capabilities", () => {

@@ -1,31 +1,26 @@
 import { readFileSync } from "node:fs";
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { crowdLocalId } from "@openconditions/model";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { coReportingClusters } from "../abuse/coreporting.js";
 import { checkReportRate, type RateRule } from "../abuse/rate.js";
 import { build } from "../server.js";
-import {
-  createTestDatabase,
-  evidenceOf,
-  INSTANCE,
-  reportAs,
-  situationClaim,
-} from "./crowd-fixtures.integration.js";
+import { evidenceOf, INSTANCE, reportAs, situationClaim } from "./crowd-fixtures.integration.js";
 
 const BASE_NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "abuse-route-test-secret";
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 let currentNow = BASE_NOW;
 let ipCounter = 0;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   app = await build({
     sql,

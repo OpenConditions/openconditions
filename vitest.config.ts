@@ -39,6 +39,8 @@ export default defineConfig({
           maxWorkers: 2,
           testTimeout: 30_000,
           hookTimeout: 60_000,
+          // One PostGIS server per run, whose migrated template each suite clones.
+          globalSetup: ["scripts/postgis-global-setup.integration.ts"],
           include: [
             "packages/**/*.integration.test.ts",
             "services/**/*.integration.test.ts",

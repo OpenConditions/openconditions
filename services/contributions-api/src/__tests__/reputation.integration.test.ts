@@ -1,11 +1,11 @@
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { enrollReporter } from "../attester/enroll.js";
 import { recomputeEvidence } from "../evidence/recompute.js";
 import { applyExternalResolution } from "../reputation/resolve.js";
 import {
-  createTestDatabase,
   enrolledKey,
   evidenceOf,
   landAs,
@@ -18,13 +18,13 @@ const T_REPORT = "2026-07-12T08:00:00.000Z";
 const T_CONFIRM = "2026-07-12T08:05:00.000Z";
 const T_RESOLVE = "2026-07-12T08:10:00.000Z";
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
-}, 180_000);
+});
 
 afterAll(async () => {
   await db?.close();

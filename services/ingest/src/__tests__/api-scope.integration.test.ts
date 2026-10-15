@@ -1,6 +1,7 @@
 import type { Catalog } from "@openconditions/ingest-framework";
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import { syncSources } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
@@ -10,7 +11,6 @@ import { FeedStatusStore } from "../feed-status.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG, testFeed } from "./helpers/catalog.js";
 import { facilitiesRegistry, STATION, TWIN, writeFacilities } from "./helpers/facilities.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, situationDraft, writeSituations } from "./helpers/situations.js";
 
 /**
@@ -20,7 +20,7 @@ import { bindSituation, situationDraft, writeSituations } from "./helpers/situat
  * restricted source; and bound closures of a public and a restricted feed
  * on one segment for the routing outputs.
  */
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 type Rec = Record<string, unknown>;
@@ -115,7 +115,7 @@ const source = (id: string, restricted: boolean) => ({
 });
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   // The situation sources first: the facilities seed then marks them
   // inactive, which must not change what each scope reads.

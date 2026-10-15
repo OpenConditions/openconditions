@@ -1,11 +1,11 @@
 import { captureLicensing } from "@openconditions/ingest-framework";
 import { syncSources } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { fuseSegmentSpeed, propagateSegmentSpeed } from "../pipeline/segment-speed.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const NOW = "2026-01-01T00:00:00Z";
 /** This fixture writer explicitly supplies each scalar's own source and captures at write.
@@ -25,7 +25,7 @@ async function captureWrittenScalars(segmentId: string, source: string) {
     WHERE o.segment_id = captured.segment_id AND o.source = captured.source`;
 }
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await syncSources(
     sql,

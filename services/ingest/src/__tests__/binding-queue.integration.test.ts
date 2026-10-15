@@ -1,7 +1,7 @@
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { settleQueue } from "../pipeline/bind-records.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
  * Settling the binding queue while another writer holds one of its rows. The
@@ -9,10 +9,10 @@ import { createRestrictionDatabase } from "./helpers/restriction-database.integr
  * finds them may lock them in either order; settled in key order, two
  * writers settling overlapping records never wait on each other in a cycle.
  */
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
 }, 120_000);
 
 afterAll(async () => {

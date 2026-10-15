@@ -6,9 +6,9 @@ import {
   TEMPORALITIES,
   TOMBSTONE_REASONS,
 } from "@openconditions/model";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createTestDatabase } from "./database.integration.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;

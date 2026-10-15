@@ -10,13 +10,13 @@ import {
 } from "@openconditions/contrib-core";
 import { crowdLocalId } from "@openconditions/model";
 import { tombstoneRecords } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
 import {
-  createTestDatabase,
   feedSituationDraft,
   INSTANCE,
   registry,
@@ -29,14 +29,14 @@ const NOW = "2026-07-12T08:00:00.000Z";
 const GRANT_SECRET_VALUE = "subclaims-route-test-secret";
 const GRANT_SECRET = new TextEncoder().encode(GRANT_SECRET_VALUE);
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 let ipCounter = 0;
 let nowValue = NOW;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   app = await build({
     sql,

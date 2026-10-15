@@ -1,6 +1,5 @@
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, type StartedTestContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { listCanonicalFeatures } from "../features.js";
 import type { QueryRunner } from "../query-runner.js";
@@ -14,24 +13,14 @@ const COLUMNS = 300;
 const ROWS = 200;
 const BOX: [number, number, number, number] = [6.0, 48.0, 6.2, 48.1];
 
-let container: StartedTestContainer;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const statements: { query: string; params: unknown[] }[] = [];
 let runner: QueryRunner;
 
 beforeAll(async () => {
-  container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  await runMigrations(url);
-  sql = postgres(url, { max: 2, onnotice: () => {} });
+  db = await createTestDatabase({ pool: { max: 2, onnotice: () => {} } });
+  sql = db.sql;
   runner = {
     execute: async <T>(query: string, params: unknown[] = []) => {
       statements.push({ query, params });
@@ -60,8 +49,7 @@ beforeAll(async () => {
 }, 180_000);
 
 afterAll(async () => {
-  await sql?.end();
-  await container?.stop();
+  await db?.close();
 });
 
 /** Every plan node of an `EXPLAIN (FORMAT JSON)` plan. */

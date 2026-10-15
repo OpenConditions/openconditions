@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { LookupFn } from "@openconditions/ingest-framework";
 import type { OsmWay, SpineSubgraph } from "@openconditions/roads";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -13,7 +14,6 @@ import { runSource } from "../pipeline/run.js";
 import { buildSegments } from "../pipeline/segment-build.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG, testFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry as model, situationDraft, writeSituations } from "./helpers/situations.js";
 
 /**
@@ -125,11 +125,11 @@ const feed = testFeed({
 
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   // Polls only publish here; each case binds explicitly against the test region.
   process.env["BIND_ENABLED"] = "false";

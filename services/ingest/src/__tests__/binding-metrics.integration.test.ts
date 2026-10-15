@@ -1,4 +1,5 @@
 import { RESOLVER_VERSION } from "@openconditions/roads";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -6,10 +7,9 @@ import { FeedStatusStore } from "../feed-status.js";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
 import { registerPublishRoutes } from "../publish-routes.js";
 import { REPO_CATALOG } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, situationDraft, writeSituations } from "./helpers/situations.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 const id = (source: string, local: string) => `oc:situation:${source}:${local}`;
@@ -34,7 +34,7 @@ async function insertBinding(
 }
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await sql`
     INSERT INTO conditions.road_graph_state

@@ -13,13 +13,13 @@ import {
   type RegistryModule,
 } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createReportingGrant } from "../attester/grant.js";
 import { build } from "../server.js";
 import {
-  createTestDatabase,
   evidenceOf,
   feedSituationDraft,
   INSTANCE,
@@ -62,7 +62,7 @@ const policeRegistry = buildRegistry(
   ),
 );
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 /** An instance whose registry lets the crowd report police presence; the category stays off. */
@@ -72,7 +72,7 @@ let appPoliceEnabled: FastifyInstance;
 let ipCounter = 0;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   app = await build({ sql, env: ENV, logger: false, now: () => NOW });
   appPoliceRegistry = await build({

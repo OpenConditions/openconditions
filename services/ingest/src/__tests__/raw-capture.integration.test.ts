@@ -3,13 +3,13 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { gzipSync, zstdDecompressSync } from "node:zlib";
 import type { CatalogFeed, LookupFn } from "@openconditions/ingest-framework";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { clearReferenceCaches } from "../pipeline/reference.js";
 import { runSource } from "../pipeline/run.js";
 import { createRawArchive, type RawArchive } from "../raw/archive.js";
 import { repoFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 const FIXTURES = path.resolve(
   import.meta.dirname,
@@ -34,13 +34,13 @@ const affirmed = {
   shareAlike: false,
 };
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let dir: string;
 let raw: RawArchive;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120_000);
 

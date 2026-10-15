@@ -4,12 +4,12 @@ import { captureLicensing, type LookupFn } from "@openconditions/ingest-framewor
 import { segmentConditionsToJson } from "@openconditions/publishers";
 import { RESOLVER_VERSION } from "@openconditions/roads";
 import { sweepRecords } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createBindingMetricsReader } from "../pipeline/binding-metrics.js";
 import { runSource } from "../pipeline/run.js";
 import { testFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { bindSituation, registry } from "./helpers/situations.js";
 
 /**
@@ -107,11 +107,11 @@ function serve(payload: unknown, opts: { etag?: string } = {}): typeof fetch {
   }) as unknown as typeof fetch;
 }
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120_000);
 

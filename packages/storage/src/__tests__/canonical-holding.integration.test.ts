@@ -1,7 +1,7 @@
+import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { loadCanonical } from "../fused-rows.js";
-import { createTestDatabase } from "./database.integration.js";
 
 /**
  * A feed's worth of single-member clusters, and a poll naming ten thousand

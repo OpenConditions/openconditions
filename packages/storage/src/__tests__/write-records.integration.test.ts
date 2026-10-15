@@ -1,11 +1,11 @@
 import { contentHash, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { componentRows, rowOf } from "../record-rows.js";
 import { tombstoneRecords, type WriteContext, writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import {
   featureDraft,
   observationDraft,

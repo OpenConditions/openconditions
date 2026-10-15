@@ -38,6 +38,8 @@ export async function startDatabase(): Promise<{
   sql: postgres.Sql;
   close(): Promise<void>;
 }> {
+  // A server of its own: the outbox fence reads the server-wide xmin horizon,
+  // which another suite's open transaction on a shared server would hold back.
   const container = await new GenericContainer("postgis/postgis:16-3.4")
     .withEnvironment({
       POSTGRES_DB: "conditions_test",

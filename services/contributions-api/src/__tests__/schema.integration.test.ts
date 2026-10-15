@@ -1,14 +1,15 @@
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { createTestDatabase, seedFeedSituation } from "./crowd-fixtures.integration.js";
+import { seedFeedSituation } from "./crowd-fixtures.integration.js";
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
-}, 120_000);
+});
 
 afterAll(async () => {
   await db?.close();

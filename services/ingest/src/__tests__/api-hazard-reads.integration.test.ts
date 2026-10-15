@@ -5,12 +5,12 @@ import {
   syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry, writeSituations } from "./helpers/situations.js";
 
 /**
@@ -18,7 +18,7 @@ import { registry, writeSituations } from "./helpers/situations.js";
  * window, fire perimeters by subtype and simplified for drawing, the last
  * hours' fire pixels and their density cells, in public and operator scope.
  */
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: ReturnType<typeof Fastify>;
 
@@ -138,7 +138,7 @@ function pixel(
 const SINCE = hoursBefore(6);
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(registry),

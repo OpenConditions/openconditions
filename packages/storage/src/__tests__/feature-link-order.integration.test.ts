@@ -1,7 +1,7 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { relinkFeatures } from "../canonical-view.js";
-import { createTestDatabase } from "./database.integration.js";
 
 /**
  * Two car parks of one source on one spot, named as Mobidrom names them. In

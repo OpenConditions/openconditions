@@ -7,6 +7,7 @@ import {
   sweepRecords,
   syncSources,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -14,7 +15,6 @@ import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { createRoleState, type RunResult, runSource } from "../pipeline/run.js";
 import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry } from "./helpers/situations.js";
 
 /**
@@ -37,12 +37,12 @@ const CAPTURED = "2026-10-14T23:24:56.000Z";
 const fakeLookup: LookupFn = async () => [{ address: "93.184.216.34", family: 4 }];
 
 let clock = CAPTURED;
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(registry),

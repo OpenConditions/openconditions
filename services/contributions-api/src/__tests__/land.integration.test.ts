@@ -1,12 +1,12 @@
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
 import { crowdRulesFor } from "@openconditions/model";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { autoCorroborateOnLanding } from "../evidence/autoCorroborate.js";
 import { resolveSurvivors } from "../evidence/corroborate.js";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import {
-  createTestDatabase,
   enrollDirect,
   evidenceOf,
   feedSituationDraft,
@@ -20,18 +20,18 @@ import {
 
 const NOW = "2026-07-12T08:00:00.000Z";
 const LATER = "2026-07-12T08:02:00.000Z";
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let alice: ReporterKey;
 let bob: ReporterKey;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   [alice, bob] = await Promise.all([generateReporterKey(), generateReporterKey()]);
   await enrollDirect(sql, alice, NOW);
   await enrollDirect(sql, bob, NOW);
-}, 180_000);
+});
 
 afterAll(async () => {
   await db?.close();

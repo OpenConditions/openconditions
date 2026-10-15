@@ -1,11 +1,11 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { type SweepOptions, sweepRecords } from "../sweep.js";
 import { writeRecord } from "../write-record.js";
 import { writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { FETCHED_AT, firePixel, observationDraft, situationDraft } from "./drafts.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;

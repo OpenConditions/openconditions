@@ -37,8 +37,8 @@
   },
   "devDependencies": {
     "@openconditions/publishers": "workspace:*",
+    "@openconditions/test-database": "workspace:*",
     "@types/node": "^26.6.5",
-    "testcontainers": "^12.2.0",
     "tsup": "^8.5.1",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",

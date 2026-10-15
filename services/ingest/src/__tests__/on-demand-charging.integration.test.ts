@@ -9,6 +9,7 @@ import {
   syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -16,7 +17,6 @@ import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { repoFeed } from "./helpers/catalog.js";
 import { fakeLookup } from "./helpers/on-demand.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
  * OpenStreetMap's and Open Charge Map's charging stations read through on
@@ -50,7 +50,7 @@ const ocpdb = repoFeed("de-bw-mobidata-charging");
 /** NDW's OCPI locations. */
 const ndw = repoFeed("nl-ndw-charging");
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 const asked: { url: string; method: string; body: string }[] = [];
@@ -68,7 +68,7 @@ const upstream = (async (input: string | URL | Request, init?: RequestInit) => {
 }) as typeof fetch;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(productionRegistry()),

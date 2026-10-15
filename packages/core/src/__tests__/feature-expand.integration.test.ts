@@ -1,7 +1,6 @@
-import { runMigrations } from "@openconditions/core/server";
 import { FUSED_PUBLIC_SOURCE_ID, FUSED_SOURCE_ID, isFusedSourceId } from "@openconditions/model";
-import postgres from "postgres";
-import { GenericContainer, type StartedTestContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { type LatestReading, latestOfFeatures, offersOfFeatures } from "../feature-expand.js";
 import type { QueryRunner } from "../query-runner.js";
@@ -24,7 +23,7 @@ const TWIN = `oc:feature:${RESTRICTED}:1`;
 const LONE = `oc:feature:${PUBLIC}:2`;
 const CANONICAL = "oc:feature:test.local:c1";
 
-let container: StartedTestContainer;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let calls = 0;
 let runner: QueryRunner;
@@ -124,18 +123,8 @@ const STATION_E5 = `oc:observation:${PUBLIC}:e5`;
 const TWIN_E5 = `oc:observation:${RESTRICTED}:e5`;
 
 beforeAll(async () => {
-  container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  await runMigrations(url);
-  sql = postgres(url, { max: 2, onnotice: () => {} });
+  db = await createTestDatabase({ pool: { max: 2, onnotice: () => {} } });
+  sql = db.sql;
   runner = {
     execute: async <T>(query: string, params?: unknown[]) => {
       calls++;
@@ -240,11 +229,10 @@ beforeAll(async () => {
     subjectId: LONE,
     validTo: "2026-09-22T10:00:00.000Z",
   });
-}, 120_000);
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await container?.stop();
+  await db?.close();
 }, 30_000);
 
 const byKey = (readings: readonly LatestReading[] | undefined) =>

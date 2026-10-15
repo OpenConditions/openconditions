@@ -1,6 +1,6 @@
+import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
-import { createTestDatabase } from "./database.integration.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 

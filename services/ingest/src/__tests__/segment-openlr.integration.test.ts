@@ -1,36 +1,23 @@
-import { runMigrations } from "@openconditions/core/server";
 import { decodeOpenLrBinary } from "@openconditions/openlr";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { encodeSegmentOpenlr } from "../pipeline/segment-openlr.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-01-01T00:00:00.000Z";
 const MOTORWAY_WKT = "LINESTRING(4.895 52.37, 4.9 52.371, 4.905 52.372)";
 const PRIMARY_WKT = "LINESTRING(5.0 52.0, 5.02 52.02, 5.04 52.04)";
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 async function seed(): Promise<void> {

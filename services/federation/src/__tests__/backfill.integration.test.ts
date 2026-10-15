@@ -57,6 +57,8 @@ async function seed(local: string, msAgo?: number): Promise<void> {
 const ids = (page: OutboxPage) => page.orderedItems.map((e) => e.recordId);
 
 beforeAll(async () => {
+  // A server of its own: the backfill fence reads the server-wide xmin horizon,
+  // which another suite's open transaction on a shared server would hold back.
   const container = await new GenericContainer("postgis/postgis:16-3.4")
     .withEnvironment({
       POSTGRES_DB: "conditions_test",

@@ -1,10 +1,10 @@
 import type { ReporterKey } from "@openconditions/contrib-core";
 import { writeRecord } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
 import {
-  createTestDatabase,
   enrolledKey,
   evidenceOf,
   feedSituationDraft,
@@ -25,13 +25,13 @@ const LAT = 49;
 
 type Rec = Record<string, unknown>;
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
-}, 180_000);
+});
 
 afterAll(async () => {
   await db?.close();

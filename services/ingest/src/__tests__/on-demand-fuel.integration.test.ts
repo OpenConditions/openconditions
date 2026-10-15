@@ -7,6 +7,7 @@ import {
   retentionClasses,
   syncSources,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -14,7 +15,6 @@ import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { repoFeed } from "./helpers/catalog.js";
 import { fakeLookup } from "./helpers/on-demand.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
  * The repo catalogue's on-demand fuel sources read through: Tankerkönig and
@@ -34,7 +34,7 @@ const FIXTURES = join(import.meta.dirname, "../../../../packages/fuel/src/__test
 const BBOX = "13.438,52.528,13.443,52.533";
 const READ = `/features?bbox=${BBOX}&kind=fuel_station&canonical=1&expand=components,latest`;
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 const asked: { url: string; method: string; body: string }[] = [];
@@ -59,7 +59,7 @@ const upstream = (async (input: string | URL | Request, init?: RequestInit) => {
 let feeds: CatalogFeed[];
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(productionRegistry()),

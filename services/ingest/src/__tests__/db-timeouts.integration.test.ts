@@ -1,4 +1,5 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import {
@@ -6,15 +7,14 @@ import {
   maintainPartitionsAtBoot,
   maintainPartitionsHourly,
 } from "../record-jobs.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let pools: typeof import("../db.js");
 const registry = productionRegistry();
 const NOW = new Date("2026-10-10T12:00:00Z");
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   vi.stubEnv("DATABASE_URL", db.url);
   pools = await import("../db.js");
 }, 180_000);

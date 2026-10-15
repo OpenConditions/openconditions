@@ -1,5 +1,6 @@
 import { readGrid, recordOf } from "@openconditions/core";
 import { type SourceEntry, syncSources } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, expect, it } from "vitest";
 import {
@@ -8,9 +9,8 @@ import {
   writeSensorObservations,
 } from "../pipeline/segment-speed.js";
 import { siteKey, writeSiteReadings } from "./helpers/flow-series.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const NOW = "2026-01-01T00:00:00Z";
 const LATER = "2026-01-01T00:01:00Z";
@@ -36,7 +36,7 @@ const source = (
   freshnessWindowSec: 900,
 });
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120000);
 afterAll(async () => {

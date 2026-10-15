@@ -1,15 +1,15 @@
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { relinkFeatures } from "../canonical-view.js";
 import { writeSnapshot } from "../write-records.js";
-import { createTestDatabase } from "./database.integration.js";
 import { FETCHED_AT } from "./drafts.js";
 import { registry } from "./facility-fixtures.js";
 
 /** Above the features one write touches from which linking analyses `feature` first. */
 const SITES = 1_200;
 
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let traced: postgres.Sql;
 const statements: string[] = [];
 const ids = Array.from({ length: SITES }, (_, i) => `oc:feature:osm:node-${i + 1}`);

@@ -1,7 +1,7 @@
 /**
- * Shared fixtures for the crowd suites: a disposable database, situation
- * claims, landing a signed report straight through the landing seam, and
- * seeding the feed and peer situations crowd reports are matched against.
+ * Shared fixtures for the crowd suites: situation claims, landing a signed
+ * report straight through the landing seam, and seeding the feed and peer
+ * situations crowd reports are matched against.
  * Test-only: no runtime module imports this file.
  */
 import {
@@ -11,12 +11,10 @@ import {
   type SituationClaim,
   signReport,
 } from "@openconditions/contrib-core";
-import { runMigrations } from "@openconditions/core/server";
 import { type Attribution, type EvidenceState, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import { writeRecord } from "@openconditions/storage";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { recomputeEvidence } from "../evidence/recompute.js";
 import { type LandingResult, landReport } from "../landing/land.js";
 
@@ -29,37 +27,6 @@ export const CROWD_ATTRIBUTION: Attribution = {
   provider: `OpenConditions contributors at ${INSTANCE}`,
   license: "ODbL-1.0",
 };
-
-/** A disposable PostGIS database with every migration applied. */
-export async function createTestDatabase(): Promise<{
-  sql: postgres.Sql;
-  url: string;
-  close(): Promise<void>;
-}> {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  await runMigrations(url);
-  const sql = postgres(url, { max: 10, onnotice: () => {} });
-  return {
-    sql,
-    url,
-    async close() {
-      try {
-        await sql.end();
-      } finally {
-        await container.stop();
-      }
-    },
-  };
-}
 
 /** A crowd report of an obstruction (debris on the road) at a point. */
 export function situationClaim(over: Partial<SituationClaim> = {}): SituationClaim {

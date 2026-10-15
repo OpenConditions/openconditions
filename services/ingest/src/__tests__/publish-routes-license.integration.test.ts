@@ -1,7 +1,6 @@
-import { runMigrations } from "@openconditions/core/server";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
@@ -13,33 +12,16 @@ import { registry as model, situationDraft, writeSituations } from "./helpers/si
 const BBOX = "13,52,14,53";
 const TOKEN = "operator-token-of-the-licence-suite-0123456789";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-
-  containerStop = () => container.stop();
-
-  const host = container.getHost();
-  const port = container.getMappedPort(5432);
-  const url = `postgres://oc:oc@${host}:${port}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 describe("license enforcement on the redistributable export routes", () => {

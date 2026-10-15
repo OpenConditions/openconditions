@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, expect, it } from "vitest";
-import { createTestDatabase } from "./database.integration.js";
+import { createDedicatedTestDatabase } from "./database.integration.js";
 import {
   captureDatabaseStart,
   cleanupProfileDatabase,
@@ -7,12 +7,12 @@ import {
 } from "./database-profile-audit.integration.js";
 
 const owned: OwnedDatabase[] = [];
-let db: Awaited<ReturnType<typeof createTestDatabase>> | undefined;
+let db: Awaited<ReturnType<typeof createDedicatedTestDatabase>> | undefined;
 
 beforeAll(async () => {
   const restore = captureDatabaseStart(owned);
   try {
-    db = await createTestDatabase();
+    db = await createDedicatedTestDatabase();
   } finally {
     restore();
   }

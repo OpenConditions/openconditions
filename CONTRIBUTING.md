@@ -96,8 +96,11 @@ so newly published advisories fail without waiting for a source change.
 ### Testing
 
 Tests run from one root `vitest.config.ts`, with `unit` and `integration`
-projects covering packages, services, integrations, and scripts. Integration
-suites use disposable PostGIS containers. Run from the repo root:
+projects covering packages, services, integrations, and scripts. The
+integration project runs after the unit project, two files at a time, against
+one PostGIS container its global setup starts and migrates as a template
+(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Run
+from the repo root:
 
 ```bash
 pnpm test                                  # build, then both projects
@@ -112,11 +115,16 @@ Conventions:
 - **Co-locate** tests as `*.test.ts` next to the code (or a sibling `__tests__/`).
 - **Keep parsers/emitters pure** and test them table-driven against captured
   fixtures — most of `roads` and `publishers` is tested this way.
-- **Database-backed suites** use `*.integration.test.ts` and spin up disposable
-  PostGIS containers; keep them deterministic and independently seeded.
+- **Database-backed suites** use `*.integration.test.ts` and take a fresh
+  database cloned from the migrated template with `createTestDatabase()` from
+  `@openconditions/test-database`; keep them deterministic and independently
+  seeded. Only suites that observe the server as a whole (its version and WAL,
+  or the transaction horizon the federation outbox fence reads) start a
+  container of their own.
 - The scripts build dependencies first because workspace exports resolve to
-  `dist`. Direct `vitest` invocations assume an up-to-date build. Default runs
-  use four workers; use `--maxWorkers` to adjust for the available memory.
+  `dist`. Direct `vitest` invocations assume an up-to-date build. Unit runs use
+  four workers and integration runs two; use `--maxWorkers` to adjust for the
+  available memory.
 
 ### Code style
 

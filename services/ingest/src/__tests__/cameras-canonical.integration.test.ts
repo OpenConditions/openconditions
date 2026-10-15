@@ -8,13 +8,13 @@ import {
   syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { repoFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 /**
  * Cameras linked across sources in the canonical view: a Digitraffic weather
@@ -41,7 +41,7 @@ const OSM_NODE = "oc:feature:osm-cameras:node_701";
 const WINDY_WEBCAM = "oc:feature:windy-cameras:1179853135";
 const WINDY_PAGE = "https://www.windy.com/webcams/1179853135";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 
@@ -79,7 +79,7 @@ function osmCameras(nodes: { id: number; at: [number, number]; webcam: string }[
 }
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, {
     classes: retentionClasses(productionRegistry()),

@@ -2,23 +2,23 @@ import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { digestPayload } from "@openconditions/ingest-framework";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { createRawArchive } from "../raw/archive.js";
 import { evictRawPayloads } from "../raw/evict.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 const HOUR = 3_600_000;
 const NOW = Date.parse("2026-10-20T12:00:00Z");
 /** When a record or reading that is still moving last changed. */
 const RECENT = new Date(NOW - 60 * 60 * 1000).toISOString();
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let dir: string;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120_000);
 

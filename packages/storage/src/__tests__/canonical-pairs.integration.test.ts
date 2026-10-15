@@ -1,8 +1,8 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { relinkFeatures } from "../canonical-view.js";
-import { createTestDatabase } from "./database.integration.js";
 
 /**
  * A charging register beside a parking one, as a national poll meets them:

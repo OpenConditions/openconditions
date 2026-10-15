@@ -1,18 +1,18 @@
 import { RESOLVER_VERSION } from "@openconditions/roads";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { rebindAll, rebindOnBoot } from "../pipeline/rebind.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { situationDraft, writeSituations } from "./helpers/situations.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const NOW = "2026-09-06T10:00:00.000Z";
 const now = () => NOW;
 const id = (local: string) => `oc:situation:de-autobahn-events:${local}`;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   process.env["SEGMENT_REGIONS"] = JSON.stringify([
     { id: "de-nw", bbox: [5.8, 50.3, 9.5, 52.6], tz: "Europe/Berlin" },

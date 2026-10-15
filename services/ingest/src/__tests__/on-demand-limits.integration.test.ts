@@ -1,10 +1,10 @@
 import { ensureObservationPartitions, retentionClasses } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test, vi } from "vitest";
 import { takeCellTokens } from "../on-demand/limits.js";
 import { readThrough } from "../on-demand/read-through.js";
 import { fakeLookup, onDemandFeed, registry, START, upstream } from "./helpers/on-demand.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 vi.mock("../domains.js", async (importOriginal) => {
   const original = await importOriginal<typeof import("../domains.js")>();
@@ -19,11 +19,11 @@ vi.mock("../domains.js", async (importOriginal) => {
   };
 });
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   await ensureObservationPartitions(sql, { classes: retentionClasses(registry), now: START });
 }, 120_000);

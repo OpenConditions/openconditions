@@ -2,6 +2,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import type { LookupFn } from "@openconditions/ingest-framework";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { runRawCommand } from "../ops/raw.js";
@@ -9,7 +10,6 @@ import { replayRaw } from "../ops/raw-replay.js";
 import { runSource } from "../pipeline/run.js";
 import { createRawArchive } from "../raw/archive.js";
 import { repoFeed } from "./helpers/catalog.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 
 const NDW = readFileSync(
   path.resolve(
@@ -28,12 +28,12 @@ async function live(): Promise<number> {
   return n;
 }
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let dir: string;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120_000);
 

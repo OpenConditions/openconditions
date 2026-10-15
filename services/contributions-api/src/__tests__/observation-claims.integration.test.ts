@@ -15,13 +15,14 @@ import {
   syncSources,
   writeSnapshot,
 } from "@openconditions/storage";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { createReportingGrant } from "../attester/grant.js";
 import { sweepCrossValidateObservations } from "../evidence/crossValidateSweep.js";
 import { build } from "../server.js";
-import { createTestDatabase, enrolledKey, INSTANCE } from "./crowd-fixtures.integration.js";
+import { enrolledKey, INSTANCE } from "./crowd-fixtures.integration.js";
 
 type Rec = Record<string, unknown>;
 
@@ -133,7 +134,7 @@ function draftOf(sealed: Rec): Rec {
 }
 
 const clock = { now: "2026-10-01T07:00:00.000Z" };
-let db: Awaited<ReturnType<typeof createTestDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 
@@ -152,7 +153,7 @@ const golden = (json("golden/facilities.json") as Rec[]).filter(
 );
 
 beforeAll(async () => {
-  db = await createTestDatabase();
+  db = await createTestDatabase({ pool: { max: 10 } });
   sql = db.sql;
   app = await build({ sql, registry, env: ENV, logger: false, now: () => clock.now });
   await ensureObservationPartitions(sql, {

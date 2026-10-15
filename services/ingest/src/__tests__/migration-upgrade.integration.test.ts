@@ -3,33 +3,23 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, beforeAll, expect, it } from "vitest";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
 let url: string;
-let stop: () => Promise<unknown>;
 const folder = fileURLToPath(new URL("../../../../packages/core/drizzle/", import.meta.url));
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  stop = () => container.stop();
-  url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-}, 120_000);
+  db = await createTestDatabase({ empty: true, pool: { max: 3 } });
+  sql = db.sql;
+  url = db.url;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await stop?.();
+  await db?.close();
 });
 
 it("upgrades a populated previous schema concurrently and never reapplies versioned function SQL", async () => {
@@ -98,17 +88,14 @@ it("upgrades a populated previous schema concurrently and never reapplies versio
 }, 120_000);
 
 it("serializes bootstrap and migrations on a fresh database", async () => {
-  await sql`CREATE DATABASE conditions_fresh`;
-  const freshUrl = new URL(url);
-  freshUrl.pathname = "/conditions_fresh";
-  await Promise.all(Array.from({ length: 3 }, () => runMigrations(freshUrl.toString())));
-  const fresh = postgres(freshUrl.toString(), { max: 1 });
+  const fresh = await createTestDatabase({ empty: true, pool: { max: 1 } });
   try {
+    await Promise.all(Array.from({ length: 3 }, () => runMigrations(fresh.url)));
     const journal = JSON.parse(await readFile(path.join(folder, "meta/_journal.json"), "utf8"));
     const [count] =
-      await fresh`SELECT count(*)::int AS n, count(DISTINCT created_at)::int AS distinct_n FROM drizzle.__drizzle_migrations_oc`;
+      await fresh.sql`SELECT count(*)::int AS n, count(DISTINCT created_at)::int AS distinct_n FROM drizzle.__drizzle_migrations_oc`;
     expect(count).toEqual({ n: journal.entries.length, distinct_n: journal.entries.length });
   } finally {
-    await fresh.end();
+    await fresh.close();
   }
 }, 120_000);

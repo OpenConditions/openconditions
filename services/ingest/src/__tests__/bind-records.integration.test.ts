@@ -1,16 +1,16 @@
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { bindRecords } from "../pipeline/bind-records.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { situationDraft, writeSituations } from "./helpers/situations.js";
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 const NOW = "2026-09-06T10:00:00.000Z";
 const now = () => NOW;
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
   // The fixture is on the German A 46; the test pins its own region.
   process.env["SEGMENT_REGIONS"] = JSON.stringify([

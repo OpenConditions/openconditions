@@ -1,6 +1,5 @@
-import { runMigrations } from "@openconditions/core/server";
-import postgres from "postgres";
-import { GenericContainer, Wait } from "testcontainers";
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
+import type postgres from "postgres";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { activateRoadGraph, beginRoadGraphRebuild } from "../pipeline/graph-state.js";
 import { importOsmRoads, type OsmRegion } from "../pipeline/osm-import.js";
@@ -8,8 +7,8 @@ import { runSegmentRebuild } from "../pipeline/segment-rebuild.js";
 import { seedFlowSource, siteKey, writeSiteReadings } from "./helpers/flow-series.js";
 import { situationDraft, writeSituations } from "./helpers/situations.js";
 
+let db: TestDatabase;
 let sql: postgres.Sql;
-let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-01-01T00:00:00.000Z";
 /** Where the rebuild's Overpass answers; the stub fetch ignores it. */
@@ -80,24 +79,12 @@ beforeEach(() => {
 });
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
-    .withEnvironment({
-      POSTGRES_DB: "conditions_test",
-      POSTGRES_USER: "oc",
-      POSTGRES_PASSWORD: "oc",
-    })
-    .withExposedPorts(5432)
-    .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
-    .start();
-  containerStop = () => container.stop();
-  const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  sql = postgres(url, { max: 3 });
-  await runMigrations(url);
-}, 120_000);
+  db = await createTestDatabase({ pool: { max: 3 } });
+  sql = db.sql;
+});
 
 afterAll(async () => {
-  await sql?.end();
-  await containerStop?.();
+  await db?.close();
 }, 30_000);
 
 afterEach(async () => {

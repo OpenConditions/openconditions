@@ -1,20 +1,20 @@
+import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { publishSituations, UnlocatableRetainedError, writeModel } from "../pipeline/publish.js";
 import { openPollAttempt } from "../pipeline/source-status.js";
-import { createRestrictionDatabase } from "./helpers/restriction-database.integration.js";
 import { registry, situationDraft, writeSituations } from "./helpers/situations.js";
 
 type Rec = Record<string, unknown>;
 
-let db: Awaited<ReturnType<typeof createRestrictionDatabase>>;
+let db: TestDatabase;
 let sql: postgres.Sql;
 
 const src = { id: "nl-ndw-events", freshnessWindowSec: 900 };
 const NOW = "2026-09-06T10:05:00.000Z";
 
 beforeAll(async () => {
-  db = await createRestrictionDatabase();
+  db = await createTestDatabase();
   sql = db.sql;
 }, 120_000);
 
