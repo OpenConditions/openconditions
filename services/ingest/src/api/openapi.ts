@@ -89,7 +89,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/stream",
     operationId: "streamSituations",
     summary:
-      "Server-sent events: every live matching situation, then each one that changes (`event: situation`) or goes (`event: remove`), polled every 15 s.",
+      "Server-sent events: up to 20,000 live matching public situations, then changes (`event: situation`) and removals (`event: remove`). Polls run 15 s after the preceding read/write cycle. Each connection starts a new replacement view; clients must clear that subscription on every successful open, including reconnects. Last-Event-ID is ignored; event IDs identify records, not replay cursors. No initial-completion marker or durable replay; the cap can truncate large results.",
     query: StreamQuery,
     produces: ["text/event-stream"],
     alwaysPublic: true,

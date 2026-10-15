@@ -414,6 +414,126 @@ describe("GET /stream", () => {
     }
   });
 
+  it.each(["connected", "reconnected"] as const)(
+    "reconciles cancellation, bbox exit, rights withdrawal and expiry when %s",
+    async (mode) => {
+      const initial = ["cancel", "exit", "rights", "expire", "stay"].map((id) =>
+        at(id, 6.81, 51.2),
+      );
+      await writeSituations(sql, "de-autobahn-events", initial);
+      const streaming = Fastify();
+      registerApiRoutes(streaming, sql, { registry, streamPollMs: 50 });
+      const address = await streaming.listen({ host: "127.0.0.1", port: 0 });
+      const abort = new AbortController();
+      const deadline = setTimeout(() => abort.abort(), 15_000);
+      const view = new Map<string, Rec>();
+      const events: string[] = [];
+      let reader: ReadableStreamDefaultReader<Uint8Array> | undefined;
+      let buffered = "";
+      const open = async (lastEventId?: string) => {
+        const response = await fetch(`${address}/stream?bbox=6.7,51.1,6.9,51.3`, {
+          signal: abort.signal,
+          ...(lastEventId ? { headers: { "Last-Event-ID": lastEventId } } : {}),
+        });
+        expect(response.status).toBe(200);
+        reader = response.body!.getReader();
+        buffered = "";
+        // Consumer contract: a successful new connection starts a replacement
+        // view. SSE record IDs are identities, not durable replay positions.
+        view.clear();
+      };
+      const until = async (ready: () => boolean) => {
+        const decoder = new TextDecoder();
+        while (!ready()) {
+          const chunk = await reader!.read();
+          if (chunk.done) throw new Error("stream ended before reconciliation");
+          buffered += decoder.decode(chunk.value, { stream: true });
+          const frames = buffered.split("\n\n");
+          buffered = frames.pop() ?? "";
+          for (const frame of frames) {
+            const event = /^event: (.*)$/m.exec(frame)?.[1];
+            const json = /^data: (.*)$/m.exec(frame)?.[1];
+            if (!json || !event) continue;
+            events.push(event);
+            const record = JSON.parse(json) as Rec;
+            if (event === "remove") view.delete(String(record["id"]));
+            else if (event === "situation") view.set(String(record["id"]), record);
+          }
+        }
+      };
+      try {
+        await open();
+        await until(() => view.size === 5);
+        if (mode === "reconnected") await reader!.cancel();
+        const provenance = initial[2]!["provenance"] as Rec;
+        await writeSituations(sql, "de-autobahn-events", [
+          at("cancel", 6.81, 51.2, { validity: { status: "cancelled" } }),
+          at("exit", 13, 52),
+          at("rights", 6.81, 51.2, {
+            provenance: {
+              ...provenance,
+              attribution: { provider: "Autobahn GmbH", license: "NOASSERTION" },
+            },
+          }),
+          at("expire", 6.81, 51.2, {
+            freshness: { fetchedAt: NOW, expiresAt: new Date(Date.now() - 1000).toISOString() },
+          }),
+          at("stay", 6.81, 51.2),
+          at("new", 6.81, 51.2),
+        ]);
+        events.length = 0;
+        if (mode === "reconnected") await open("oc:situation:de-autobahn-events:stay");
+        const expected = ["new", "stay"].map((id) => `oc:situation:de-autobahn-events:${id}`);
+        await until(() => view.size === 2 && expected.every((id) => view.has(id)));
+        expect([...view.keys()].sort()).toEqual(expected);
+        if (mode === "connected") expect(events.filter((e) => e === "remove")).toHaveLength(4);
+        else expect(events).toEqual(["situation", "situation"]);
+      } finally {
+        clearTimeout(deadline);
+        abort.abort();
+        await streaming.close();
+      }
+    },
+  );
+
+  it("reconnects to an empty replacement without inventing offline removals", async () => {
+    await writeSituations(sql, "de-autobahn-events", [at("gone-offline", 6.81, 51.2)]);
+    const streaming = Fastify();
+    registerApiRoutes(streaming, sql, { registry, streamPollMs: 50 });
+    const address = await streaming.listen({ host: "127.0.0.1", port: 0 });
+    const abort = new AbortController();
+    const deadline = setTimeout(() => abort.abort(), 15_000);
+    const firstFrame = async (lastEventId?: string) => {
+      const response = await fetch(`${address}/stream`, {
+        signal: abort.signal,
+        ...(lastEventId ? { headers: { "Last-Event-ID": lastEventId } } : {}),
+      });
+      expect(response.status).toBe(200);
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let text = "";
+      try {
+        while (!text.includes("\n\n")) {
+          const chunk = await reader.read();
+          if (chunk.done) throw new Error("stream closed before a frame");
+          text += decoder.decode(chunk.value, { stream: true });
+        }
+        return text.split("\n\n")[0];
+      } finally {
+        await reader.cancel();
+      }
+    };
+    try {
+      expect(await firstFrame()).toContain('"id":"oc:situation:de-autobahn-events:gone-offline"');
+      await writeSituations(sql, "de-autobahn-events", []);
+      expect(await firstFrame("oc:situation:de-autobahn-events:gone-offline")).toBe(": ping");
+    } finally {
+      clearTimeout(deadline);
+      abort.abort();
+      await streaming.close();
+    }
+  });
+
   it("refuses a connection beyond its cap, and takes one again once a client leaves", async () => {
     const streaming = Fastify();
     registerApiRoutes(streaming, sql, { registry, streamPollMs: 50, streamMaxConnections: 1 });
