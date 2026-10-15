@@ -813,6 +813,12 @@
         "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
+      "upstream": [
+        {
+          "publisher": "Parkraumgesellschaft Baden-Württemberg",
+          "recordId": "110"
+        }
+      ],
       "privacy": {
         "class": "authoritative"
       },
@@ -840,7 +846,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "9207d7694325bd0b1a9404f4c6b718e6afd4ed7673a7bc286a0f312b37169154"
+    "contentHash": "c8eb55e5de4a55991bb99d3bba583f3f4eaf8a02ed21a012e8afecff93268e5a"
   },
   {
     "id": "oc:observation:de-bw-mobidata-parking:84b91c4818b03b7f6c39b307f376278bddc74fd2edde3d776651ce6c08cec07a",
@@ -868,6 +874,12 @@
         "license": "DL-DE-BY-2.0",
         "licenseUrl": "https://www.govdata.de/dl-de/by-2-0"
       },
+      "upstream": [
+        {
+          "publisher": "Parkraumgesellschaft Baden-Württemberg",
+          "recordId": "111"
+        }
+      ],
       "privacy": {
         "class": "authoritative"
       },
@@ -895,7 +907,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "e3aa51cfff79950ccab190a0129cbb3301393ef10f263e2c361fa2c193d0ee85"
+    "contentHash": "dfb9313e6c98c701a7b71a8a75be84e1454ea42faef13d6f259f2c8b801ffb24"
   },
   {
     "id": "oc:feature:nl-ndw-truck-parking:NL-12_421",
