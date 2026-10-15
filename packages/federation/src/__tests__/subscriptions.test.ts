@@ -240,6 +240,17 @@ describe("validateSubscriptionShape: filter values (all delivery modes)", () => 
     reject({ maxAgeSec: Number.POSITIVE_INFINITY });
   });
 
+  it("rejects a sourceLiveness that is not a boolean", () => {
+    reject({ sourceLiveness: "yes" } as unknown as RecordFilter);
+    expect(() =>
+      validateSubscriptionShape(
+        shape({
+          filter: { classes: ["observation"], properties: ["speed"], sourceLiveness: true },
+        }),
+      ),
+    ).not.toThrow();
+  });
+
   it("rejects a non-object filter (a string, array or null)", () => {
     reject("abc" as unknown as RecordFilter);
     reject([1, 2] as unknown as RecordFilter);

@@ -116,7 +116,13 @@ export {
   RATE_WINDOW_MS,
   ratePolicyForTier,
 } from "./rate.js";
-export type { FederatedRecord, RecordFilter, RecordOutboxEntry } from "./record-filter.js";
+export type {
+  FederatedRecord,
+  OutboxEntry,
+  RecordFilter,
+  RecordOutboxEntry,
+  SourceLivenessEntry,
+} from "./record-filter.js";
 export {
   applyRecordFilter,
   DEFAULT_MIN_EVIDENCE_TIER,

@@ -1,6 +1,6 @@
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { readOutbox } from "../outbox.js";
+import { type OutboxPage, readOutbox } from "../outbox.js";
 import {
   DEFAULT_OUTBOX_RETENTION_SEC,
   OUTBOX_RETENTION_TIER1_FLOOR_SEC,
@@ -16,6 +16,10 @@ import {
 
 let db: Awaited<ReturnType<typeof startDatabase>>;
 let sql: postgres.Sql;
+
+/** The ids of a page's records. */
+const recordIds = (page: OutboxPage) =>
+  page.orderedItems.flatMap((e) => (e.operation === "liveness" ? [] : [e.recordId]));
 
 /** A fixed evaluation instant so every age is deterministic. */
 const NOW = "2026-07-15T00:00:00.000Z";
@@ -206,10 +210,7 @@ describe("pruneOutbox — the composite-cursor serve path is unaffected", () => 
     // The live pull from the start cursor delivers the surviving entries in
     // (txid, seq) order; the pruned old row is simply gone.
     const page = await readOutbox(sql, { after: base, limit: 500 });
-    expect(page.orderedItems.map((e) => e.recordId)).toEqual([
-      situationId("keep-a"),
-      situationId("keep-b"),
-    ]);
+    expect(recordIds(page)).toEqual([situationId("keep-a"), situationId("keep-b")]);
   }, 30_000);
 
   it("a peer whose cursor already advanced past the pruned range keeps reading forward", async () => {
@@ -218,13 +219,13 @@ describe("pruneOutbox — the composite-cursor serve path is unaffected", () => 
     await writeSituation("fwd-b");
 
     const first = await readOutbox(sql, { after: base, limit: 1 });
-    expect(first.orderedItems.map((e) => e.recordId)).toEqual([situationId("fwd-a")]);
+    expect(recordIds(first)).toEqual([situationId("fwd-a")]);
 
     // Prune old history (nothing here is old, but the prune must not disturb the
     // reader's advanced cursor); then continue from the advanced high-water mark.
     await pruneOutbox(sql, { now: NOW });
     const second = await readOutbox(sql, { after: first.highWaterMark, limit: 500 });
-    expect(second.orderedItems.map((e) => e.recordId)).toEqual([situationId("fwd-b")]);
+    expect(recordIds(second)).toEqual([situationId("fwd-b")]);
   }, 30_000);
 
   it("deletes a backlog larger than one batch across multiple chunks", async () => {

@@ -9,7 +9,7 @@ import { createTestDatabase, type TestDatabase } from "@openconditions/test-data
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { publishSituations, writeModel } from "../pipeline/publish.js";
-import { openPollAttempt } from "../pipeline/source-status.js";
+import { openPollAttempt, upsertSourceStatus } from "../pipeline/source-status.js";
 import { registry, situationDraft } from "./helpers/situations.js";
 
 type Rec = Record<string, unknown>;
@@ -306,5 +306,63 @@ describe("federation outbox capture through the ingest situation path", () => {
     ]);
     // ...and the restricted one none.
     expect(await journalOf(restricted)).toEqual([]);
+  }, 30_000);
+});
+
+describe("source liveness through the ingest poll status", () => {
+  const LIVE = "xx-live-events";
+
+  it("journals a successful poll after its changes, for a subscriber asking for it", async () => {
+    await syncSources(sql, [
+      {
+        id: LIVE,
+        domain: "roads",
+        format: "datex2",
+        product: "events",
+        tier: "authoritative",
+        operator: "Test",
+        license: "CC0-1.0",
+        attribution: "Test",
+        restricted: false,
+        cadenceSec: 60,
+        freshnessWindowSec: 600,
+      },
+    ]);
+    const entries = () =>
+      sql<{ operation: string; record_id: string; txid: string }[]>`
+        SELECT operation, record_id, txid::text AS txid FROM conditions.federation_outbox
+         WHERE record_id = ${LIVE} OR record_id LIKE ${`%:${LIVE}:%`} ORDER BY txid, seq`;
+    const at = "2026-09-06T11:00:00.000Z";
+    await upsertSourceStatus(sql, LIVE, { freshnessWindowSec: 600, outcome: "success" });
+    expect(await entries()).toEqual([]);
+
+    await sql`
+      INSERT INTO conditions.federation_subscription
+        (id, peer_id, delivery_mode, filter, created_at, updated_at)
+      VALUES ('sub-live', 'peer-live', 'pull',
+        ${sql.json({ classes: ["observation", "situation"], properties: ["traffic.speed"], sourceLiveness: true })},
+        now(), now())`;
+    await upsertSourceStatus(sql, LIVE, { freshnessWindowSec: 600, outcome: "error", error: "x" });
+    expect(await entries()).toEqual([]);
+
+    const id = await openPollAttempt(sql, LIVE, at);
+    await publishSituations(
+      sql,
+      { id: LIVE, freshnessWindowSec: 600 },
+      {
+        situations: [situationDraft("L1", {}, LIVE)],
+        rejected: 0,
+        poll: { at, id },
+        durationMs: 1,
+        now: at,
+        model: writeModel({ registry, instanceId: INSTANCE }),
+      },
+    );
+    const journalled = await entries();
+    expect(journalled.map((e) => [e.operation, e.record_id])).toEqual([
+      ["create", `oc:situation:${LIVE}:L1`],
+      ["liveness", LIVE],
+    ]);
+    expect(journalled[1]!.txid).toBe(journalled[0]!.txid);
   }, 30_000);
 });

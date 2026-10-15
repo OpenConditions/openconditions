@@ -372,4 +372,33 @@ describe("reading a peer's outbox entry", () => {
     });
     expect(readInboundEntry("x")).toEqual({ ok: false, reason: "malformed entry" });
   });
+
+  it("reads a source's liveness, and refuses one without a source or a time", () => {
+    const liveness = {
+      seq: 8,
+      txid: "813",
+      operation: "liveness",
+      sourceId: "nl-ndw-flow",
+      domain: "roads",
+      polledAt: "2026-10-01T10:00:00+02:00",
+      createdAt: "2026-10-01T08:00:01.000Z",
+    };
+    expect(readInboundEntry(liveness)).toEqual({
+      ok: true,
+      entry: {
+        seq: 8,
+        txid: "813",
+        operation: "liveness",
+        sourceId: "nl-ndw-flow",
+        polledAt: "2026-10-01T08:00:00.000Z",
+      },
+    });
+    for (const broken of [
+      { ...liveness, sourceId: "" },
+      { ...liveness, polledAt: "yesterday" },
+      { ...liveness, seq: "8" },
+    ]) {
+      expect(readInboundEntry(broken)).toEqual({ ok: false, reason: "malformed liveness entry" });
+    }
+  });
 });

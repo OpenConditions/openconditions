@@ -22,7 +22,9 @@
  * - Each source whose records a page delivered (landed or no newer than the
  *   stored copy) is noted as received from the peer now
  *   (`federation_source_receipt`): a peer's polled readings hold while their
- *   source keeps arriving.
+ *   source keeps arriving. A liveness entry (the peer polled the source
+ *   successfully) notes it as received when the peer polled it, never later
+ *   than now: a quiet source sends no reading, yet its readings still hold.
  *
  * A permanent problem with one entry skips it and is reported; a local
  * failure rejects the page so the peer retries from its cursor.
@@ -69,6 +71,8 @@ export interface InboxResult {
   /** Deliveries that changed nothing: no newer than the stored copy. */
   stale: number;
   tombstoned: number;
+  /** Liveness entries noted. */
+  liveness: number;
   skipped: { recordId?: string; reason: string }[];
   /** The page's highest `<txid>.<seq>` cursor processed, skipped entries included. */
   maxCursor: string | null;
@@ -103,12 +107,17 @@ export async function ingestFederatedPage(
     accepted: 0,
     stale: 0,
     tombstoned: 0,
+    liveness: 0,
     skipped: [],
     maxCursor: null,
   };
   let max: { txid: bigint; seq: number } | null = null;
-  /** The sources whose records this page delivered. */
-  const received = new Set<string>();
+  /** The sources this page delivered, each with when it was received. */
+  const received = new Map<string, string>();
+  const receive = (sourceId: string, at: string) => {
+    const held = received.get(sourceId);
+    if (held === undefined || Date.parse(at) > Date.parse(held)) received.set(sourceId, at);
+  };
 
   for (const item of page["orderedItems"]) {
     // Advance the processed frontier over EVERY entry that carries a usable
@@ -130,6 +139,14 @@ export async function ingestFederatedPage(
       continue;
     }
     const entry = read.entry;
+    if (entry.operation === "liveness") {
+      receive(
+        entry.sourceId,
+        Date.parse(entry.polledAt) < Date.parse(ctx.now) ? entry.polledAt : ctx.now,
+      );
+      result.liveness += 1;
+      continue;
+    }
     if (entry.operation === "delete") {
       const applied = await applyRetraction(sql, entry, ctx);
       if (applied === "tombstoned") result.tombstoned += 1;
@@ -142,23 +159,28 @@ export async function ingestFederatedPage(
     else result.skipped.push({ recordId: entry.recordId, reason: outcome });
     if (outcome === "accepted" || outcome === "stale") {
       const provenance = (entry.record as { provenance?: { sourceId?: unknown } }).provenance;
-      if (typeof provenance?.sourceId === "string") received.add(provenance.sourceId);
+      if (typeof provenance?.sourceId === "string") receive(provenance.sourceId, ctx.now);
     }
   }
-  await recordReceipts(sql, ctx, [...received]);
+  await recordReceipts(sql, ctx, received);
   result.maxCursor = max === null ? null : `${max.txid}.${max.seq}`;
   return result;
 }
 
 /**
- * Notes that `sources` arrived from the peer now: their readings hold while
- * they keep arriving (`withPolledValidity`).
+ * Notes when each source arrived from the peer: its readings hold while it
+ * keeps arriving (`withPolledValidity`). A receipt never moves back.
  */
-async function recordReceipts(sql: Sql, ctx: InboxContext, sources: string[]): Promise<void> {
-  if (sources.length === 0) return;
+async function recordReceipts(
+  sql: Sql,
+  ctx: InboxContext,
+  sources: ReadonlyMap<string, string>,
+): Promise<void> {
+  if (sources.size === 0) return;
   await sql`
     INSERT INTO conditions.federation_source_receipt (peer_instance_id, source_id, last_received_at)
-    SELECT ${ctx.peerInstanceId}, s, ${ctx.now}::timestamptz FROM unnest(${sources}::text[]) AS s
+    SELECT ${ctx.peerInstanceId}, s, at
+      FROM unnest(${[...sources.keys()]}::text[], ${[...sources.values()]}::timestamptz[]) AS r(s, at)
     ON CONFLICT (peer_instance_id, source_id) DO UPDATE
       SET last_received_at = GREATEST(conditions.federation_source_receipt.last_received_at,
                                       excluded.last_received_at)`;

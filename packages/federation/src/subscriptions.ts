@@ -186,6 +186,14 @@ function validateFilterValues(filter: RecordFilter): void {
       );
     }
   }
+
+  const sourceLiveness: unknown = filter.sourceLiveness;
+  if (sourceLiveness !== undefined && typeof sourceLiveness !== "boolean") {
+    throw new SubscriptionValidationError(
+      "invalid-filter",
+      "filter.sourceLiveness must be true or false",
+    );
+  }
 }
 
 /**

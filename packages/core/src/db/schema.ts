@@ -379,7 +379,12 @@ export const blockList = conditionsSchema.table("block_list", {
  * journalled atomically. The columns say what an entry is without reading it
  * (class, id, kind, domain, property, priority); `snapshot` is the stored
  * record with its evidence summary, the reporter stripped at read. A
- * tombstone appends a `delete` entry with its reason and no snapshot. `seq`
+ * tombstone appends a `delete` entry with its reason and no snapshot. A
+ * successful poll of a public source appends a `liveness` entry (class
+ * `observation`, the source's id as `record_id`, `{ sourceId, polledAt }` as
+ * snapshot), at most one per source per ten minutes and only while a
+ * subscription asks for them, so a peer keeps the source's unchanged readings
+ * current (`journalSourceLiveness`). `seq`
  * (bigserial) is the strictly monotonic peer cursor; entries are never
  * updated by the application, except that an erasure scrubs the earlier
  * snapshots of the erased record.
@@ -417,7 +422,10 @@ export const federationOutbox = conditionsSchema.table(
     // The daily retention prune deletes on `created_at < floor`; this btree
     // keeps that a range scan instead of a full seq-scan as the journal grows.
     index("idx_federation_outbox_created_at").on(t.createdAt),
-    check("federation_outbox_operation_enum", sql`${t.operation} IN ('create','update','delete')`),
+    check(
+      "federation_outbox_operation_enum",
+      sql`${t.operation} IN ('create','update','delete','liveness')`,
+    ),
     check(
       "federation_outbox_record_class_enum",
       sql.raw(enumCheckSql("record_class", RECORD_CLASSES)),
@@ -457,9 +465,11 @@ export const federationTombstone = conditionsSchema.table(
 /**
  * When this instance last received each source from each peer: any record
  * of the source a delivery from that peer carried, landed or no newer than
- * the stored copy. A peer sends a polled change-only reading only when it
- * changes, and states no `validUntil` for it; the reading holds while its
- * source keeps arriving from that peer (`withPolledValidity`). Kept apart
+ * the stored copy, or the peer's liveness entry of the source (when the peer
+ * polled it, never later than its delivery). A peer sends a polled
+ * change-only reading only when it changes, and states no `validUntil` for
+ * it; the reading holds while its source keeps arriving from that peer
+ * (`withPolledValidity`). Kept apart
  * from `source_status`, which is this instance's own polling.
  */
 export const federationSourceReceipt = conditionsSchema.table(

@@ -5,7 +5,7 @@ import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
 import { ensureInstanceKey, type InstanceKey, loadActiveKeys } from "../keys.js";
 import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
 import { deliverWebhook, PUSH_FAILURE_THRESHOLD } from "../push.js";
-import type { RecordOutboxEntry } from "../record-filter.js";
+import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
 import {
   createSubscription,
   type FederationSubscription,
@@ -102,8 +102,10 @@ async function cursorOfObject(local: string): Promise<string> {
 }
 
 /** The local part of an entry's record id, the name a test wrote it under. */
-const localOf = (entry: RecordOutboxEntry) =>
-  entry.recordId.slice(entry.recordId.lastIndexOf(":") + 1);
+const localOf = (entry: OutboxEntry) => {
+  const id = entry.operation === "liveness" ? entry.sourceId : entry.recordId;
+  return id.slice(id.lastIndexOf(":") + 1);
+};
 
 /**
  * Writes this instance's own situation: an incident (a priority entry) by

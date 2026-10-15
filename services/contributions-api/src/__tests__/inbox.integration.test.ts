@@ -131,6 +131,7 @@ describe("landing a peer's records", () => {
       accepted: 1,
       stale: 0,
       tombstoned: 0,
+      liveness: 0,
       skipped: [],
       maxCursor: "10.1",
     });
@@ -158,6 +159,52 @@ describe("landing a peer's records", () => {
     expect(await receipt()).toEqual([
       { peer_instance_id: PEER, source_id: source, last_received_at: new Date(LATER) },
     ]);
+  });
+
+  it("keeps a quiet source's readings current while the peer says it polls it", async () => {
+    const record = peerSituation("p-live");
+    const source = (record["provenance"] as Rec)["sourceId"] as string;
+    const liveness = (polledAt: string, seq: number) => ({
+      seq,
+      txid: "40",
+      operation: "liveness",
+      sourceId: source,
+      domain: "roads",
+      polledAt,
+      createdAt: polledAt,
+    });
+    const receipt = async () => {
+      const [row] = await sql<{ last_received_at: Date }[]>`
+        SELECT last_received_at FROM conditions.federation_source_receipt
+         WHERE peer_instance_id = ${PEER} AND source_id = ${source}`;
+      return row?.last_received_at.toISOString();
+    };
+    await ingestFederatedPage(sql, page(change(record, 1)), ctx());
+    expect(await receipt()).toBe(NOW);
+
+    const polled = "2026-07-12T08:40:00.000Z";
+    const result = await ingestFederatedPage(
+      sql,
+      page(liveness(polled, 2)),
+      ctx("2026-07-12T08:41:00.000Z"),
+    );
+    expect(result).toMatchObject({ accepted: 0, liveness: 1, skipped: [], maxCursor: "40.2" });
+    expect(await receipt()).toBe(polled);
+
+    // A poll stated later than its delivery counts as of the delivery, and a
+    // receipt never moves back.
+    await ingestFederatedPage(sql, page(liveness("2026-07-12T10:00:00.000Z", 3)), ctx(LATER));
+    expect(await receipt()).toBe(polled);
+    await ingestFederatedPage(
+      sql,
+      page(liveness("2026-07-12T10:00:00.000Z", 4)),
+      ctx("2026-07-12T09:00:00.000Z"),
+    );
+    expect(await receipt()).toBe("2026-07-12T09:00:00.000Z");
+
+    expect(
+      await ingestFederatedPage(sql, page({ ...liveness(polled, 5), polledAt: "soon" }), ctx()),
+    ).toMatchObject({ liveness: 0, skipped: [{ reason: "malformed liveness entry" }] });
   });
 
   it("lands a peer's ended reading with the validity it states", async () => {

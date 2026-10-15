@@ -12,7 +12,9 @@
  * (`federatedSnapshot`: the reporter stripped, extras only from a source that
  * federates them; nothing of a source now restricted) and only what the
  * subscriber's filter keeps (`applyRecordFilter`). Delete entries carry the
- * reason and no record.
+ * reason and no record. A liveness entry says a source was polled
+ * successfully (`journalSourceLiveness`); only a subscriber that asks for
+ * them is served these, and none of a source now restricted.
  *
  * WHY A COMPOSITE CURSOR (the gap-free ordering authority). `seq` (bigserial)
  * advances PER ROW, but `txid` (`pg_current_xact_id()`) is assigned at a
@@ -34,8 +36,8 @@ import {
   applyRecordFilter,
   type FederatedRecord,
   federatedSnapshot,
+  type OutboxEntry,
   type RecordFilter,
-  type RecordOutboxEntry,
 } from "./record-filter.js";
 
 export type OutboxOperation = "create" | "update" | "delete";
@@ -140,7 +142,7 @@ export interface OutboxPage {
    */
   priorityRestricted?: boolean;
   /** Surviving entries in `(txid, seq)` order; filtered-out entries leave gaps. */
-  orderedItems: RecordOutboxEntry[];
+  orderedItems: OutboxEntry[];
 }
 
 export const OUTBOX_DEFAULT_LIMIT = 100;
@@ -149,14 +151,14 @@ export const OUTBOX_MAX_LIMIT = 500;
 interface JournalRow {
   seq: string;
   txid: string;
-  operation: OutboxOperation;
+  operation: OutboxOperation | "liveness";
   record_class: RecordClass;
   record_id: string;
   canonical_id: string | null;
   kind: string;
   domain: string;
   property: string | null;
-  snapshot: FederatedRecord | null;
+  snapshot: FederatedRecord | { sourceId: string; polledAt: string } | null;
   tombstone_reason: string | null;
   created_at: Date;
   extras_federate: boolean | null;
@@ -166,9 +168,24 @@ interface JournalRow {
 /**
  * The wire entry of a journal row; undefined for a record the outbox never
  * carries. A change of a source restricted since it was journalled is
- * withheld; its delete still goes out, so a subscriber ends its copy.
+ * withheld, as is its liveness; its delete still goes out, so a subscriber
+ * ends its copy.
  */
-function rowToEntry(row: JournalRow): RecordOutboxEntry | undefined {
+function rowToEntry(row: JournalRow): OutboxEntry | undefined {
+  if (row.operation === "liveness") {
+    const stated = row.snapshot as { sourceId: string; polledAt: string };
+    return row.restricted === false
+      ? {
+          seq: Number(row.seq),
+          txid: row.txid,
+          operation: "liveness",
+          sourceId: row.record_id,
+          domain: row.domain,
+          polledAt: new Date(stated.polledAt).toISOString(),
+          createdAt: row.created_at.toISOString(),
+        }
+      : undefined;
+  }
   const base = {
     seq: Number(row.seq),
     txid: row.txid,
@@ -191,7 +208,9 @@ function rowToEntry(row: JournalRow): RecordOutboxEntry | undefined {
   const record =
     row.snapshot === null || row.restricted === true
       ? undefined
-      : federatedSnapshot(row.snapshot, { federateExtras: row.extras_federate === true });
+      : federatedSnapshot(row.snapshot as FederatedRecord, {
+          federateExtras: row.extras_federate === true,
+        });
   return record === undefined ? undefined : { ...base, operation: row.operation, record };
 }
 
@@ -236,7 +255,8 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
            o.canonical_id, o.kind, o.domain, o.property, o.snapshot, o.tombstone_reason,
            o.created_at, src.extras_federate, src.restricted
     FROM conditions.federation_outbox o
-    LEFT JOIN conditions.source src ON src.id = o.snapshot #>> '{provenance,sourceId}'
+    LEFT JOIN conditions.source src ON src.id = CASE o.operation
+      WHEN 'liveness' THEN o.record_id ELSE o.snapshot #>> '{provenance,sourceId}' END
     WHERE (o.txid > ${after.txid}::xid8
            OR (o.txid = ${after.txid}::xid8 AND o.seq > ${after.seq}))
       AND o.txid < pg_snapshot_xmin(pg_current_snapshot())
@@ -248,7 +268,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
   const last = rows.length > 0 ? rows[rows.length - 1]! : undefined;
   const frontier: OutboxCursor = last ? { txid: last.txid, seq: Number(last.seq) } : after;
   const highWaterMark = encodeOutboxCursor(frontier);
-  const entries = rows.map(rowToEntry).filter((e): e is RecordOutboxEntry => e !== undefined);
+  const entries = rows.map(rowToEntry).filter((e): e is OutboxEntry => e !== undefined);
   const orderedItems = applyRecordFilter(entries, q.filter, now);
 
   const page: OutboxPage = { type: "OrderedCollectionPage", partOf, highWaterMark, orderedItems };

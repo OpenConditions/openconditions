@@ -1,5 +1,9 @@
 import { runMigrations } from "@openconditions/core/server";
-import type { InstanceKey, OutboxPage, RecordOutboxEntry } from "@openconditions/federation";
+import type {
+  InstanceKey,
+  RecordOutboxEntry,
+  OutboxPage as WireOutboxPage,
+} from "@openconditions/federation";
 import {
   encodeOutboxCursor,
   generateInstanceKey,
@@ -27,6 +31,9 @@ let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-07-13T12:00:00.000Z";
 const OUTBOX_URL = "https://conditions.example.org/peer/outbox";
+
+/** A served page of records: these tests ask for no source's liveness. */
+type OutboxPage = Omit<WireOutboxPage, "orderedItems"> & { orderedItems: RecordOutboxEntry[] };
 
 /** The wire-encoded composite cursor of a served entry. */
 function cursorOf(entry: RecordOutboxEntry): string {
@@ -161,6 +168,11 @@ describe("GET /peer/outbox", () => {
       expect(ids(firstPage)).toEqual([situationId("route-a")]);
       expect(firstPage.next).toContain(`after=${firstPage.highWaterMark}`);
       expect(firstPage.next).toContain("limit=1");
+      const live = await app.inject({
+        method: "GET",
+        url: "/peer/outbox?limit=1&sourceLiveness=true",
+      });
+      expect((live.json() as OutboxPage).next).toContain("sourceLiveness=true");
 
       const second = await app.inject({
         method: "GET",
@@ -356,6 +368,7 @@ describe("GET /peer/outbox", () => {
         "/peer/outbox?kinds=",
         "/peer/outbox?minEvidenceTier=bogus",
         "/peer/outbox?maxAgeSec=-5",
+        "/peer/outbox?sourceLiveness=yes",
         "/peer/outbox?limit=0",
       ]) {
         const res = await app.inject({ method: "GET", url });

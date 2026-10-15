@@ -216,6 +216,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
         accepted: 2,
         stale: 0,
         tombstoned: 0,
+        liveness: 0,
         skipped: [],
         maxCursor: "201.9",
       });
@@ -267,6 +268,7 @@ describe("POST /peer/inbox — the trust boundary", () => {
           accepted: 1,
           stale: 1,
           tombstoned: 0,
+          liveness: 0,
           skipped: [],
           maxCursor: "290.2",
         });

@@ -89,6 +89,21 @@ wants the class (observations: only for a subscription naming the property). A
 peer's record (it carries an origin chain), an on-demand answer, a fused row
 and a record of a restricted source are never journalled.
 
+A change-only reading is journalled only when it changes, so a peer holding a
+quiet source's readings cannot tell a source still polled from one gone. A
+successful poll of a public bulk source therefore journals a `liveness` entry
+(`journalSourceLiveness`, from the poll status write, in the publication's
+transaction after its changes), at most one per source every ten minutes, while
+a subscription admitting observations sets `sourceLiveness: true` in its
+filter (a pull asks with `sourceLiveness=true`). Only such a subscriber is
+served them, of the domains its filter names; a source turned restricted has
+its liveness withheld. A receiving inbox notes the source as received from the
+peer when the peer polled it, never later than now, so the peer's readings of
+it hold by the same window as the peer's own (see
+[validity](model.md#registry)). An instance that predates the entry type
+ignores the filter field and the query parameter, and its subscribers never
+ask for it: neither side is served an entry it does not read.
+
 `conditions.source` also records the `restricted` flag the outbox last
 reflected for each source (`federation_restricted`). When a boot's catalogue
 sync flips it, the ingest service reconciles the outbox in the background, a

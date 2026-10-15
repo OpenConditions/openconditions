@@ -227,7 +227,8 @@ export function registerSubscriptionRoutes(
         },
         formatEntry: (entry) => {
           const id = encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
-          return `event: record\nid: ${id}\ndata: ${JSON.stringify({ cursor: id, entry })}\n\n`;
+          const event = entry.operation === "liveness" ? "liveness" : "record";
+          return `event: ${event}\nid: ${id}\ndata: ${JSON.stringify({ cursor: id, entry })}\n\n`;
         },
         onError: (err) => req.log.error(err, "[peer/stream] poll failed"),
       },

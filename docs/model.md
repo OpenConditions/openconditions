@@ -132,7 +132,9 @@ max(30 min, 2 × the source's shortest data cadence)` (`withPolledValidity`).
 A feed that keeps polling keeps its unchanged readings current, one that
 stops goes stale. A reading a peer sent holds from when this instance last
 received its source from that peer (`federation_source_receipt`) by the same
-window. A fused reading of a change-only property is valid as long as the
+window: any record of the source the peer delivered, or the peer's liveness
+entry saying it polled the source (for a subscription that asks for them), so
+a quiet source the peer still polls stays current here too. A fused reading of a change-only property is valid as long as the
 latest of its contributing feeds, and the fusions of a source whose freshness
 flips are refreshed by a scheduled job; in a series' history a reading holds
 until the next change. A full poll that states every reading of its source

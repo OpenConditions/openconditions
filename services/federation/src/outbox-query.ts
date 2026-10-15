@@ -96,6 +96,17 @@ export function parseOutboxQuery(query: Record<string, unknown>): ParsedOutboxQu
     next.set("maxAgeSec", maxAgeSec);
   }
 
+  const sourceLiveness = single(query, "sourceLiveness");
+  if (sourceLiveness !== undefined) {
+    if (sourceLiveness !== "true" && sourceLiveness !== "false") {
+      throw new OutboxQueryError("sourceLiveness must be true or false");
+    }
+    if (sourceLiveness === "true") {
+      filter.sourceLiveness = true;
+      next.set("sourceLiveness", "true");
+    }
+  }
+
   const afterRaw = single(query, "after");
   let after = OUTBOX_CURSOR_START;
   if (afterRaw !== undefined) {

@@ -54,7 +54,8 @@ async function seed(local: string, msAgo?: number): Promise<void> {
   if (msAgo !== undefined) await setOutboxAge(sql, situationId(local), msAgo, NOW);
 }
 
-const ids = (page: OutboxPage) => page.orderedItems.map((e) => e.recordId);
+const ids = (page: OutboxPage) =>
+  page.orderedItems.map((e) => (e.operation === "liveness" ? e.sourceId : e.recordId));
 
 beforeAll(async () => {
   // A server of its own: the backfill fence reads the server-wide xmin horizon,

@@ -1,5 +1,7 @@
 import {
+  journalSourceLiveness,
   reconcileFederation,
+  SOURCE_LIVENESS_INTERVAL_SEC,
   syncSources,
   tombstoneRecords,
   writeRecord,
@@ -7,14 +9,15 @@ import {
   writeSnapshot,
 } from "@openconditions/storage";
 import type postgres from "postgres";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import {
   decodeOutboxCursor,
   encodeOutboxCursor,
   type OutboxCursor,
+  type OutboxPage,
   readOutbox,
 } from "../outbox.js";
-import type { RecordOutboxEntry } from "../record-filter.js";
+import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
 import {
   crowdReportDraft,
   featureDraft,
@@ -81,10 +84,15 @@ async function frontier(): Promise<OutboxCursor> {
   return row ? { txid: row.txid, seq: Number(row.seq) } : { txid: "0", seq: 0 };
 }
 
-const cursorOf = (entry: RecordOutboxEntry) =>
-  encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
+const cursorOf = (entry: OutboxEntry) => encodeOutboxCursor({ txid: entry.txid, seq: entry.seq });
 
-const ids = (entries: readonly RecordOutboxEntry[]) => entries.map((e) => e.recordId);
+/** What each entry is about: a record's id, or the source of a liveness entry. */
+const ids = (entries: readonly OutboxEntry[]) =>
+  entries.map((e) => (e.operation === "liveness" ? e.sourceId : e.recordId));
+
+/** A page's record entries. */
+const records = (page: OutboxPage) =>
+  page.orderedItems.filter((e): e is RecordOutboxEntry => e.operation !== "liveness");
 
 /** A tombstone of stored records, in its own transaction, as the sweep or an erasure writes it. */
 async function tombstone(cls: "situation" | "feature" | "offer", id: string, reason: string) {
@@ -406,7 +414,7 @@ describe("readOutbox maps journal rows to record entries", () => {
     await tombstone("situation", id, "withdrawn");
 
     const page = await readOutbox(sql, { after: base, now: NOW });
-    const [change, del] = page.orderedItems;
+    const [change, del] = records(page);
     const [stored] = await sql<{ canonical_id: string; domain: string }[]>`
       SELECT canonical_id, domain FROM conditions.situation WHERE id = ${id}`;
     expect(change).toMatchObject({
@@ -461,18 +469,18 @@ describe("readOutbox maps journal rows to record entries", () => {
     await setEvidence(id, "corroborated", 1);
 
     const byDefault = await readOutbox(sql, { after: base, now: NOW });
-    expect(byDefault.orderedItems.map((e) => e.record?.evidence?.state)).toEqual(["corroborated"]);
+    expect(records(byDefault).map((e) => e.record?.evidence?.state)).toEqual(["corroborated"]);
     const asked = await readOutbox(sql, {
       after: base,
       now: NOW,
       filter: { minEvidenceTier: "self_reported" },
     });
-    expect(asked.orderedItems.map((e) => e.record?.evidence?.state)).toEqual([
+    expect(records(asked).map((e) => e.record?.evidence?.state)).toEqual([
       "self_reported",
       "corroborated",
     ]);
     expect(JSON.stringify([byDefault, asked])).not.toContain(REPORTER_KEY);
-    for (const entry of asked.orderedItems) {
+    for (const entry of records(asked)) {
       expect(entry.record!.provenance).not.toHaveProperty("reporter");
     }
     expect(byDefault.highWaterMark).toBe(asked.highWaterMark);
@@ -502,7 +510,7 @@ describe("readOutbox maps journal rows to record entries", () => {
     await writeOwn(sql, incidentDraft("shared", { ...extras, sourceId: "nl-rws" }));
 
     const page = await readOutbox(sql, { after: base, now: NOW });
-    const byId = new Map(page.orderedItems.map((e) => [e.recordId, e.record]));
+    const byId = new Map(records(page).map((e) => [e.recordId, e.record]));
     expect(byId.get(situationId("kept-home"))).not.toHaveProperty("extras");
     expect(byId.get(situationId("shared", "nl-rws"))!.extras).toEqual({
       situationRecordExtension: "x",
@@ -541,7 +549,7 @@ describe("readOutbox maps journal rows to record entries", () => {
     try {
       await sync(true);
       const page = await readOutbox(sql, { after: base, now: NOW });
-      expect(page.orderedItems.map((e) => [e.operation, e.recordId])).toEqual([
+      expect(records(page).map((e) => [e.operation, e.recordId])).toEqual([
         ["create", situationId("public", "nl-rws")],
         ["delete", situationId("ended-before")],
       ]);
@@ -592,7 +600,7 @@ describe("readOutbox maps journal rows to record entries", () => {
       await reconcileFederation(sql);
 
       const page = await readOutbox(sql, { now: NOW });
-      const served = page.orderedItems.filter((e) => e.recordId === id);
+      const served = records(page).filter((e) => e.recordId === id);
       expect(served.map((e) => [e.operation, e.reason])).toEqual([
         ["delete", "withdrawn"],
         ["delete", "rights_revoked"],
@@ -719,7 +727,7 @@ describe("readOutbox: the composite (txid, seq) cursor page", () => {
     await tombstone("situation", situationId("pri-works"), "withdrawn");
 
     const page = await readOutbox(sql, { after: base, now: NOW, priorityOnly: true });
-    expect(page.orderedItems.map((e) => [e.recordId, e.operation])).toEqual([
+    expect(records(page).map((e) => [e.recordId, e.operation])).toEqual([
       [situationId("pri-incident"), "create"],
       [situationId("pri-works"), "delete"],
     ]);
@@ -774,7 +782,7 @@ describe("readOutbox: the xmin fence (no permanent skip)", () => {
     const after = await readOutbox(sql, { after: base, limit: 500, now: NOW });
     expect(ids(after.orderedItems)).toContain(situationId("fence-slow"));
     expect(ids(after.orderedItems)).toContain(situationId("fence-fast"));
-    const slowEntry = after.orderedItems.find((e) => e.recordId === situationId("fence-slow"))!;
+    const slowEntry = records(after).find((e) => e.recordId === situationId("fence-slow"))!;
     expect(slowEntry.seq).toBe(slowSeq);
   });
 });
@@ -854,6 +862,127 @@ describe("readOutbox: the composite cursor closes the interleaving skip", () => 
       r1.release();
       r2.release();
     }
+  });
+});
+
+describe("source liveness", () => {
+  const FLOW = "nl-ndw-flow";
+  const source = (id: string, over: { restricted?: boolean; accessMode?: "on_demand" } = {}) => ({
+    id,
+    domain: "roads",
+    format: "datex2",
+    product: "flow",
+    tier: "authoritative",
+    country: "NL",
+    operator: "Test",
+    license: "CC0-1.0",
+    attribution: "Test",
+    restricted: over.restricted ?? false,
+    ...(over.accessMode ? { accessMode: over.accessMode } : {}),
+    cadenceSec: 60,
+    freshnessWindowSec: 600,
+  });
+  const LIVE = {
+    classes: ["observation" as const],
+    properties: ["traffic.speed"],
+    sourceLiveness: true,
+  };
+  const journalled = async (sourceId: string) =>
+    sql.begin((tx) => journalSourceLiveness(tx, sourceId)) as Promise<boolean>;
+
+  beforeEach(async () => {
+    await syncSources(sql, [
+      source(FLOW),
+      source("nl-restricted-flow", { restricted: true }),
+      source("nl-on-demand", { accessMode: "on_demand" }),
+    ]);
+  });
+
+  afterEach(async () => {
+    await syncSources(sql, [source(FLOW)]);
+  });
+
+  it("journals a poll of a public bulk source only for a subscription asking for it", async () => {
+    expect(await journalled(FLOW)).toBe(false);
+    await subscribe(sql, "situations-live", { classes: ["situation"], sourceLiveness: true });
+    expect(await journalled(FLOW)).toBe(false);
+
+    await subscribe(sql, "live", LIVE);
+    expect(await journalled(FLOW)).toBe(true);
+    expect(await journalled("nl-restricted-flow")).toBe(false);
+    expect(await journalled("nl-on-demand")).toBe(false);
+    expect(await journalled("not-in-the-catalogue")).toBe(false);
+    const [row] = await journalFor(FLOW);
+    expect(row).toMatchObject({
+      operation: "liveness",
+      record_class: "observation",
+      record_id: FLOW,
+      kind: "liveness",
+      domain: "roads",
+      property: null,
+      tombstone_reason: null,
+      snapshot: { sourceId: FLOW, polledAt: expect.any(String) },
+    });
+  });
+
+  it("journals at most one entry of a source per interval", async () => {
+    await subscribe(sql, "live", LIVE);
+    expect(await journalled(FLOW)).toBe(true);
+    expect(await journalled(FLOW)).toBe(false);
+    await sql`
+      UPDATE conditions.federation_outbox
+         SET created_at = now() - make_interval(secs => ${SOURCE_LIVENESS_INTERVAL_SEC + 1})
+       WHERE operation = 'liveness'`;
+    expect(await journalled(FLOW)).toBe(true);
+    expect((await journalFor(FLOW)).map((r) => r.operation)).toEqual(["liveness", "liveness"]);
+  });
+
+  it("serves it after the poll's readings, only to a subscriber asking for it", async () => {
+    await subscribe(sql, "live", LIVE);
+    const base = await frontier();
+    const reading = speedReading(77, "2026-10-01T10:05:00Z");
+    await sql.begin(async (tx) => {
+      await writeRecordIn(tx, { draft: reading }, writeCtx());
+      await journalSourceLiveness(tx, FLOW);
+    });
+
+    const plain = await readOutbox(sql, { after: base, now: NOW });
+    expect(ids(plain.orderedItems)).toEqual([reading["id"]]);
+    const asked = await readOutbox(sql, { after: base, now: NOW, filter: LIVE });
+    expect(ids(asked.orderedItems)).toEqual([reading["id"], FLOW]);
+    expect(asked.orderedItems[1]).toEqual({
+      seq: expect.any(Number),
+      txid: asked.orderedItems[0]!.txid,
+      operation: "liveness",
+      sourceId: FLOW,
+      domain: "roads",
+      polledAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/),
+      createdAt: expect.any(String),
+    });
+    expect(plain.highWaterMark).toBe(asked.highWaterMark);
+
+    const otherDomain = await readOutbox(sql, {
+      after: base,
+      now: NOW,
+      filter: { ...LIVE, domains: ["weather"] },
+    });
+    expect(ids(otherDomain.orderedItems)).toEqual([]);
+    const situations = await readOutbox(sql, {
+      after: base,
+      now: NOW,
+      filter: { classes: ["situation"], sourceLiveness: true },
+    });
+    expect(ids(situations.orderedItems)).toEqual([]);
+  });
+
+  it("withholds the liveness of a source turned restricted", async () => {
+    await subscribe(sql, "live", LIVE);
+    const base = await frontier();
+    expect(await journalled(FLOW)).toBe(true);
+    await syncSources(sql, [source(FLOW, { restricted: true })]);
+    const page = await readOutbox(sql, { after: base, now: NOW, filter: LIVE });
+    expect(page.orderedItems).toEqual([]);
+    expect(page.highWaterMark).not.toBe(encodeOutboxCursor(base));
   });
 });
 

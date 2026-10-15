@@ -512,6 +512,13 @@
       "when": 1792086616184,
       "tag": "0072_observation_upstream_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1792098279985,
+      "tag": "0073_federation_source_liveness",
+      "breakpoints": true
     }
   ]
 }

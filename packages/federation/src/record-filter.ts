@@ -63,6 +63,27 @@ export interface RecordOutboxEntry<R extends FederatedRecord = FederatedRecord> 
   reason?: string;
 }
 
+/**
+ * One outbox entry saying that this instance polled a source successfully
+ * (`polledAt`): the peer's unchanged readings of the source still hold. Only
+ * a subscriber that asks for them (`sourceLiveness`) is served these.
+ */
+export interface SourceLivenessEntry {
+  seq: number;
+  txid: string;
+  operation: "liveness";
+  sourceId: string;
+  /** The source's domain. */
+  domain: string;
+  polledAt: string;
+  createdAt: string;
+}
+
+/** One entry of an outbox page. */
+export type OutboxEntry<R extends FederatedRecord = FederatedRecord> =
+  | RecordOutboxEntry<R>
+  | SourceLivenessEntry;
+
 export interface RecordFilter {
   /** [west, south, east, north]; kept when the geometry's bbox intersects. */
   bbox?: [number, number, number, number];
@@ -80,6 +101,12 @@ export interface RecordFilter {
   minEvidenceTier?: string;
   /** Drop records last stated (a reading: stated or journalled) more than this many seconds ago. */
   maxAgeSec?: number;
+  /**
+   * Also serve the liveness of the sources whose readings the filter admits
+   * (of its domains, when it names them). An instance that predates these
+   * entries ignores the field, and its subscribers never ask for it.
+   */
+  sourceLiveness?: boolean;
 }
 
 /**
@@ -121,25 +148,43 @@ const isCrowd = (record: FederatedRecord) =>
   record.provenance.origin === "crowd" || record.provenance.privacy.class === "crowd_pseudonym";
 
 /**
- * Applies a subscriber's filter to a page of record entries. Classes, kinds,
- * domains and properties are read from the journal columns; a record that
- * fails any constraint is dropped and leaves a gap in the sequence.
+ * Whether a subscriber is served a source's liveness: it asked for it, and
+ * would be served the source's readings by class and domain.
  */
-export function applyRecordFilter<R extends FederatedRecord>(
-  entries: readonly RecordOutboxEntry<R>[],
+function wantsLiveness(entry: SourceLivenessEntry, filter: RecordFilter | undefined): boolean {
+  return (
+    filter?.sourceLiveness === true &&
+    (filter.classes === undefined || filter.classes.includes("observation")) &&
+    (filter.domains === undefined || filter.domains.includes(entry.domain))
+  );
+}
+
+/**
+ * Applies a subscriber's filter to a page of entries. Classes, kinds,
+ * domains and properties are read from the journal columns; a record that
+ * fails any constraint is dropped and leaves a gap in the sequence, as does
+ * a source's liveness nobody asked for.
+ */
+export function applyRecordFilter<E extends OutboxEntry>(
+  entries: readonly E[],
   filter: RecordFilter | undefined,
   now: string,
-): RecordOutboxEntry<R>[] {
+): E[] {
   const minRank =
     TIER_RANK.get(filter?.minEvidenceTier ?? DEFAULT_MIN_EVIDENCE_TIER) ??
     TIER_RANK.get(DEFAULT_MIN_EVIDENCE_TIER)!;
   const nowMs = Date.parse(now);
   const named = filter?.kinds !== undefined || filter?.properties !== undefined;
-  const out: RecordOutboxEntry<R>[] = [];
-  for (const entry of entries) {
+  const out: E[] = [];
+  for (const item of entries) {
+    const entry = item as OutboxEntry;
+    if (entry.operation === "liveness") {
+      if (wantsLiveness(entry, filter)) out.push(item);
+      continue;
+    }
     const record = entry.record;
     if (entry.operation === "delete" || record === undefined) {
-      out.push(entry);
+      out.push(item);
       continue;
     }
     if (filter?.classes !== undefined && !filter.classes.includes(entry.recordClass)) continue;
@@ -161,7 +206,7 @@ export function applyRecordFilter<R extends FederatedRecord>(
         operation: "delete",
         tombstone: true,
         reason: record.evidence?.state === "expired" ? "expired" : "withdrawn",
-      });
+      } as E);
       continue;
     }
     if (isCrowd(record)) {
@@ -191,7 +236,7 @@ export function applyRecordFilter<R extends FederatedRecord>(
     // Federation is always public scope: no subscriber can ask for more.
     const [exported] = publicRecords([record]);
     if (exported === undefined) continue;
-    out.push({ ...entry, record: exported });
+    out.push({ ...entry, record: exported } as E);
   }
   return out;
 }

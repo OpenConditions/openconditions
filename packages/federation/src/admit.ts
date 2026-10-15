@@ -16,16 +16,18 @@ import {
 } from "@openconditions/model";
 
 /** What one entry of a peer's outbox page says, once its shape is checked. */
-export type InboundEntry = {
-  seq: number;
-  txid: string;
-  recordClass: RecordClass;
-  recordId: string;
-  canonicalId: string | null;
-} & (
-  | { operation: "create" | "update"; record: unknown }
-  | { operation: "delete"; reason: (typeof TOMBSTONE_REASONS)[number] }
-);
+export type InboundEntry =
+  | ({
+      seq: number;
+      txid: string;
+      recordClass: RecordClass;
+      recordId: string;
+      canonicalId: string | null;
+    } & (
+      | { operation: "create" | "update"; record: unknown }
+      | { operation: "delete"; reason: (typeof TOMBSTONE_REASONS)[number] }
+    ))
+  | { seq: number; txid: string; operation: "liveness"; sourceId: string; polledAt: string };
 
 const isString = (v: unknown): v is string => typeof v === "string" && v.length > 0;
 
@@ -34,7 +36,8 @@ const isString = (v: unknown): v is string => typeof v === "string" && v.length 
  * retraction carries a reason and never a record — a delete that also
  * carries one says two things at once and is refused. A retraction's reason
  * outside the model's vocabulary reads as `withdrawn`. The record itself is
- * checked on admission ({@link admitFederatedRecord}).
+ * checked on admission ({@link admitFederatedRecord}). A liveness entry
+ * names a source and when the peer polled it.
  */
 export function readInboundEntry(
   wire: unknown,
@@ -43,6 +46,27 @@ export function readInboundEntry(
     return { ok: false, reason: "malformed entry" };
   }
   const e = wire as Record<string, unknown>;
+  if (e["operation"] === "liveness") {
+    const polledAt = isString(e["polledAt"]) ? Date.parse(e["polledAt"]) : Number.NaN;
+    if (
+      !isString(e["sourceId"]) ||
+      !Number.isFinite(polledAt) ||
+      !isString(e["txid"]) ||
+      typeof e["seq"] !== "number"
+    ) {
+      return { ok: false, reason: "malformed liveness entry" };
+    }
+    return {
+      ok: true,
+      entry: {
+        seq: e["seq"],
+        txid: e["txid"],
+        operation: "liveness",
+        sourceId: e["sourceId"],
+        polledAt: new Date(polledAt).toISOString(),
+      },
+    };
+  }
   const recordId = isString(e["recordId"]) ? e["recordId"] : undefined;
   if (
     recordId === undefined ||
