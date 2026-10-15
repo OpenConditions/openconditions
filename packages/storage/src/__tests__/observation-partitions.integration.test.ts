@@ -150,15 +150,25 @@ describe("partition maintenance an hour away from a write", () => {
   const HOUR = 3_600_000;
   const inserted = new Set<string>();
 
-  /** Inserts a reading at every hour the writer counts as covered at `writerAt`. */
+  /**
+   * Inserts a reading at every hour the writer counts as covered at `writerAt`,
+   * in one statement: it fails as a whole if any of those hours has no partition.
+   */
   async function writeEverythingCovered(days: number, writerAt: string) {
     const at = Date.parse(writerAt);
+    const starts: string[] = [];
     for (let t = at - (days + 2) * 24 * HOUR; t < at + 20 * 24 * HOUR; t += HOUR) {
       const start = new Date(t).toISOString();
       if (!partitionCovers(days, t, at) || inserted.has(`${days}${start}`)) continue;
       inserted.add(`${days}${start}`);
-      await insertReading(days, start);
+      starts.push(start);
     }
+    expect(starts.length).toBeGreaterThan(0);
+    await sql`
+      INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
+        fetched_at, recorded_at, temporality, aggregation, value_num)
+      SELECT 1, ${days}, start, now(), now(), 'live', 'mean', 42
+        FROM unnest(${starts}::timestamptz[]) AS start`;
   }
 
   async function maintain(days: number, at: string) {
