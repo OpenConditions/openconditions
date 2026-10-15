@@ -10,11 +10,13 @@ import {
 } from "@openconditions/core";
 import {
   contentHash,
+  contentHasher,
   historyEligible,
   jcs,
+  observationSealer,
   type PropertyEntry,
-  sealRecord,
   sha256Hex,
+  type ValidationResult,
 } from "@openconditions/model";
 import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
 import { partitionCoverage, retentionDaysOf } from "./observation-partitions.js";
@@ -280,7 +282,17 @@ export async function writeObservationsIn(
   const frontiers = await rollupFrontiers(tx);
   lap("readings/group");
   const receipts = receiptCache();
-  const write = { tx, ctx, rejected, stage, frontiers, counts, lap, receipts };
+  // A stored observation (a peer's) was sealed by its own instance and is kept as it is.
+  const seal: Seal =
+    stage === "stored"
+      ? (draft) => ctx.registry.validate(draft)
+      : observationSealer(ctx.registry, {
+          instanceId: ctx.instanceId,
+          revision: 1,
+          recordedAt: ctx.now,
+        });
+  const hash = contentHasher();
+  const write = { tx, ctx, rejected, seal, hash, frontiers, counts, lap, receipts };
   let slice: [string, PendingSeries][] = [];
   for (const entry of pending) {
     slice.push(entry);
@@ -290,10 +302,18 @@ export async function writeObservationsIn(
     }
   }
   if (slice.length > 0) await writeSeries(write, slice);
-  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, stage, receipts);
+  await writeTransient(tx, [...transient.values()], ctx, counts, rejected, seal, receipts);
   lap("readings/transient");
   return counts;
 }
+
+/**
+ * Seals a write's draft, with its content hash when the caller has it, or
+ * validates a record another instance sealed. One per write: the drafts of
+ * a write share their site's location and their feed's attribution,
+ * validated once.
+ */
+type Seal = (draft: Rec, contentHash?: string) => ValidationResult;
 
 /** One series of a write and the drafts of its readings. */
 interface PendingSeries {
@@ -314,7 +334,9 @@ async function writeSeries(
     tx: Sql;
     ctx: ObservationWriteContext;
     rejected: Rejection[];
-    stage: "draft" | "stored";
+    seal: Seal;
+    /** The write's `contentHash`, hashing what its drafts share once. */
+    hash: (draft: Rec) => string;
     frontiers: Map<string, number>;
     counts: ObservationCounts;
     /** Ends the stage under way (`readings/<stage>`). */
@@ -323,7 +345,7 @@ async function writeSeries(
   },
   slice: readonly (readonly [string, PendingSeries])[],
 ): Promise<void> {
-  const { tx, ctx, rejected, stage, frontiers, counts, lap, receipts } = write;
+  const { tx, ctx, rejected, seal, hash: hashOf, frontiers, counts, lap, receipts } = write;
   const now = Date.parse(ctx.now);
   const covers = partitionCoverage(now);
   const latest = await loadLatest(
@@ -358,7 +380,7 @@ async function writeSeries(
     let inEffectBaseline = renewed ? null : (held?.baseline ?? null);
     for (const draft of series) {
       if (++handled % RECORDS_PER_TURN === 0) await pause();
-      const hash = contentHash(draft);
+      const hash = hashOf(draft);
       // A peer's record that states a validity ends its series there: a change.
       const restated =
         polled &&
@@ -395,16 +417,7 @@ async function writeSeries(
         }
         continue;
       }
-      // A stored observation (a peer's) was sealed by its own instance and is kept as it is.
-      const sealed =
-        stage === "stored"
-          ? ctx.registry.validate(draft)
-          : sealRecord(ctx.registry, draft, {
-              instanceId: ctx.instanceId,
-              revision: 1,
-              recordedAt: ctx.now,
-              contentHash: hash,
-            });
+      const sealed = seal(draft, hash);
       if (!sealed.ok) {
         rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
         continue;
@@ -607,7 +620,7 @@ async function writeTransient(
   ctx: ObservationWriteContext,
   counts: ObservationCounts,
   rejected: Rejection[],
-  stage: "draft" | "stored",
+  seal: Seal,
   receipts: ReceiptCache,
 ): Promise<void> {
   if (readings.length === 0) return;
@@ -619,15 +632,7 @@ async function writeTransient(
   let handled = 0;
   for (const { draft, property } of readings) {
     if (++handled % RECORDS_PER_TURN === 0) await pause();
-    const sealed =
-      stage === "stored"
-        ? ctx.registry.validate(draft)
-        : sealRecord(ctx.registry, draft, {
-            instanceId: ctx.instanceId,
-            revision: 1,
-            recordedAt: ctx.now,
-            contentHash: contentHash(draft),
-          });
+    const sealed = seal(draft);
     if (!sealed.ok) {
       rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
       continue;

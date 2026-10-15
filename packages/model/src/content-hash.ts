@@ -1,3 +1,4 @@
+import canonicalize from "canonicalize";
 import type { z } from "zod";
 import type { featureSchema } from "./classes/feature.js";
 import type { observationSchema } from "./classes/observation.js";
@@ -181,4 +182,48 @@ export function contentOf(record: Record<string, unknown>): Record<string, unkno
 /** sha256 of the RFC 8785 JCS of `contentOf(record)`. A feature's hash covers its components. */
 export function contentHash(record: Record<string, unknown>): string {
   return sha256Hex(jcs(contentOf(record)));
+}
+
+/**
+ * {@link contentHash} for the records of one write, hashing each to the same
+ * hash (or throwing as it throws). The canonical text of a location or an
+ * attribution object several records share (a site's location, a feed's
+ * attribution, most of a reading's text) is made once. The records must not
+ * change while it is in use.
+ */
+export function contentHasher(): (record: Record<string, unknown>) => string {
+  const texts = new WeakMap<object, string | undefined>();
+  const shared = (value: unknown) => {
+    if (typeof value !== "object" || value === null) return canonicalize(value);
+    if (!texts.has(value)) texts.set(value, canonicalize(value));
+    return texts.get(value);
+  };
+  // JCS of an object, its members in JCS order, each member's text as
+  // `member` makes it; a member without one is left out.
+  const object = (
+    value: Record<string, unknown>,
+    member: (key: string, v: unknown) => string | undefined,
+  ) => {
+    const members: string[] = [];
+    for (const key of Object.keys(value).sort()) {
+      const text = member(key, value[key]);
+      if (text !== undefined) members.push(`${JSON.stringify(key)}:${text}`);
+    }
+    return `{${members.join(",")}}`;
+  };
+  return (record) => {
+    const content = contentOf(record);
+    const provenance = record["provenance"];
+    const text = object(content, (key, value) => {
+      if (key === "location") return shared(value);
+      // contentOf picks the provenance anew when it is an object.
+      if (key === "provenance" && value !== provenance && typeof provenance === "object") {
+        return object(value as Record<string, unknown>, (k, v) =>
+          k === "attribution" ? shared(v) : canonicalize(v),
+        );
+      }
+      return canonicalize(value);
+    });
+    return sha256Hex(text);
+  };
 }

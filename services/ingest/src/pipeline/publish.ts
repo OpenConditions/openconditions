@@ -108,51 +108,63 @@ function warningPublisher(
 }
 
 export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDraft {
-  const provenance = draft["provenance"] as Record<string, unknown> | undefined;
-  if (provenance === undefined) return draft;
-  const publisher = warningPublisher(draft, src);
+  return attributionStamp(src)(draft);
+}
+
+/**
+ * {@link stampAttribution} for the drafts of one poll. Drafts that credit
+ * the feed alone share one attribution object, so the write validates it
+ * once (`Registry.observationDraftValidator`).
+ */
+export function attributionStamp(src: CatalogFeed): (draft: RecordDraft) => RecordDraft {
   const policyIds =
     src.policyIds ?? (src.parentSourceId ? [src.parentSourceId, src.id] : undefined);
-  return {
-    ...draft,
-    provenance: {
-      ...provenance,
-      ...(Array.isArray(provenance["upstream"])
-        ? {
-            upstream: provenance["upstream"].map((raw) => {
-              if (!raw || typeof raw !== "object") return raw;
-              const upstream = raw as Record<string, unknown>;
-              // A source snapshot is already acquired evidence, including an
-              // explicit absence of scoped terms. Never fill it from today's registry.
-              if (upstream["source"] !== undefined) return upstream;
-              return {
-                ...upstream,
-                licensing:
-                  upstream["licensing"] ??
-                  captureLicensing({
-                    id: src.id,
-                    name: String(upstream["publisher"] ?? src.name),
-                    license: String(upstream["license"] ?? "NOASSERTION"),
-                  }),
-              };
-            }),
-          }
-        : {}),
-      attribution: {
-        provider: src.attribution,
-        ...(publisher ? { publisher } : {}),
-        name: src.name,
-        url: src.homepage,
-        licensing: captureLicensing(src),
-        license: src.license,
-        ...(src.licenseUrl ? { licenseUrl: src.licenseUrl } : {}),
-        ...(src.parentSourceId
-          ? { parentSourceId: src.parentSourceId, childSourceId: src.id }
+  const attributionOf = (publisher: { name: string; url?: string } | undefined) => ({
+    provider: src.attribution,
+    ...(publisher ? { publisher } : {}),
+    name: src.name,
+    url: src.homepage,
+    licensing: captureLicensing(src),
+    license: src.license,
+    ...(src.licenseUrl ? { licenseUrl: src.licenseUrl } : {}),
+    ...(src.parentSourceId ? { parentSourceId: src.parentSourceId, childSourceId: src.id } : {}),
+    ...(policyIds && policyIds.length > 0 ? { policyIds } : {}),
+    rights: routingRightsOf(src),
+  });
+  let feedAttribution: ReturnType<typeof attributionOf> | undefined;
+  return (draft) => {
+    const provenance = draft["provenance"] as Record<string, unknown> | undefined;
+    if (provenance === undefined) return draft;
+    const publisher = warningPublisher(draft, src);
+    if (publisher === undefined) feedAttribution ??= attributionOf(undefined);
+    return {
+      ...draft,
+      provenance: {
+        ...provenance,
+        ...(Array.isArray(provenance["upstream"])
+          ? {
+              upstream: provenance["upstream"].map((raw) => {
+                if (!raw || typeof raw !== "object") return raw;
+                const upstream = raw as Record<string, unknown>;
+                // A source snapshot is already acquired evidence, including an
+                // explicit absence of scoped terms. Never fill it from today's registry.
+                if (upstream["source"] !== undefined) return upstream;
+                return {
+                  ...upstream,
+                  licensing:
+                    upstream["licensing"] ??
+                    captureLicensing({
+                      id: src.id,
+                      name: String(upstream["publisher"] ?? src.name),
+                      license: String(upstream["license"] ?? "NOASSERTION"),
+                    }),
+                };
+              }),
+            }
           : {}),
-        ...(policyIds && policyIds.length > 0 ? { policyIds } : {}),
-        rights: routingRightsOf(src),
+        attribution: publisher ? attributionOf(publisher) : feedAttribution,
       },
-    },
+    };
   };
 }
 

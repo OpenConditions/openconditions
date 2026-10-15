@@ -215,8 +215,16 @@ export const EvidenceSummary = z.strictObject({
 
 export const Tombstone = z.strictObject({ reason: z.enum(TOMBSTONE_REASONS), at: Iso8601 });
 
-/** Stored provenance carries the writing instance; a parser draft never asserts it. */
-export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
+/**
+ * Stored provenance carries the writing instance; a parser draft never
+ * asserts it. `attribution` stands in for {@link Attribution} where the
+ * caller has validated it already.
+ */
+export function provenanceSchema<A extends z.ZodType = typeof Attribution>(
+  vocab: Vocab,
+  stage: "draft" | "stored",
+  attribution: A = Attribution as z.ZodType as A,
+) {
   return z
     .strictObject({
       origin: z.enum(ORIGINS),
@@ -230,7 +238,7 @@ export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
       sourceUri: z.url().optional(),
       /** Publisher's record time; absent when the publisher gives none — never defaulted. */
       sourceUpdatedAt: Iso8601.optional(),
-      attribution: Attribution,
+      attribution,
       upstream: z.array(UpstreamPublisher).min(1).optional(),
       rawRef: z
         .strictObject({

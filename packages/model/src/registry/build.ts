@@ -6,7 +6,7 @@ import { situationSchema } from "../classes/situation.js";
 import { buildKernelBase } from "../kernel/build.js";
 import type { Effect, Kernel } from "../kernel/effect-type.js";
 import { KERNEL_VERSION } from "../kernel/module.js";
-import { FUSION_TIERS } from "../kernel/provenance.js";
+import { Attribution, FUSION_TIERS, provenanceSchema } from "../kernel/provenance.js";
 import type { Stage } from "../kernel/record-base.js";
 import { RECORD_CLASSES, type RecordClass } from "../kernel/scalars.js";
 import { enumOf } from "../kernel/vocab.js";
@@ -83,11 +83,32 @@ export interface Registry {
   validate(record: unknown): ValidationResult;
   /** Hard validation of parser output (derived fields must be absent). */
   validateDraft(record: unknown): ValidationResult;
+  /**
+   * `validateDraft` for the observation drafts of one write, with the same
+   * outcome, value and issues for every draft. A location or an attribution
+   * object several drafts share (a site's location, a feed's attribution,
+   * the costliest parts to validate) is validated once. The drafts must not
+   * change while it is in use.
+   */
+  observationDraftValidator(): (record: unknown) => ValidationResult;
 }
 
 export class RegistryError extends Error {}
 
 const kindKey = (cls: KindClass, code: string) => `${cls}:${code}`;
+
+/**
+ * An object as a parser builds it: Object's prototype or none, and every own
+ * field enumerable, so a copy of it holds every field validation reads.
+ */
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  if (typeof value !== "object" || value === null) return false;
+  const proto = Object.getPrototypeOf(value);
+  return (
+    (proto === Object.prototype || proto === null) &&
+    Object.getOwnPropertyNames(value).length === Object.keys(value).length
+  );
+}
 
 const ROLLUP_RESULTS = new Set(["quantity", "count", "vector", "money"]);
 
@@ -557,6 +578,18 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
       if (k.class !== "component") recordSchema(k.class, k.code, stage);
     for (const p of properties.values()) recordSchema("observation", p.code, stage);
   }
+  // A draft observation whose location and attribution are validated apart:
+  // they pass through as given, already in the form their own schemas give.
+  const validatedParts = {
+    location: z.any(),
+    provenance: provenanceSchema(kernel.vocab, "draft", z.any()),
+  };
+  const observationReadings = new Map(
+    [...properties.values()].map((p) => [
+      p.code,
+      observationSchema(kernel, p, observationParts.get(p.code)!, "draft", validatedParts),
+    ]),
+  );
 
   const validateAt =
     (stage: Stage) =>
@@ -620,6 +653,47 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
         })),
       };
     };
+  const validateDraft = validateAt("draft");
+
+  /**
+   * A draft is valid exactly when its location, its attribution and the rest
+   * of it are: zod validates an object's fields apart, and its value depends
+   * on nothing but the object itself. So each shared part is validated once,
+   * by identity, and its validated value stands in for it; the rest is
+   * validated with the record's own refinements over those values, so the
+   * result is the one `validateDraft` gives. Whatever does not pass is
+   * validated again by `validateDraft`, for its issues exactly as reported.
+   * Only plain objects take this way: a draft that inherits a field, or
+   * whose provenance is not one, is left to `validateDraft`.
+   */
+  const observationDraftValidator = () => {
+    const locations = new WeakMap<object, unknown>();
+    const attributions = new WeakMap<object, unknown>();
+    const validatedPart = (memo: WeakMap<object, unknown>, schema: z.ZodType, part: unknown) => {
+      if (typeof part !== "object" || part === null) return undefined;
+      if (memo.has(part)) return memo.get(part);
+      const parsed = schema.safeParse(part);
+      const value = parsed.success ? parsed.data : undefined;
+      memo.set(part, value);
+      return value;
+    };
+    return (input: unknown): ValidationResult => {
+      if (!isPlainObject(input) || input["class"] !== "observation") return validateDraft(input);
+      const schema = observationReadings.get(input["property"] as string);
+      const provenance = input["provenance"];
+      if (schema === undefined || !isPlainObject(provenance)) return validateDraft(input);
+      const location = validatedPart(locations, kernel.LocationRef, input["location"]);
+      const attribution = validatedPart(attributions, Attribution, provenance["attribution"]);
+      if (location === undefined || attribution === undefined) return validateDraft(input);
+      const parsed = schema.safeParse({
+        ...input,
+        location,
+        provenance: { ...provenance, attribution },
+      });
+      if (!parsed.success) return validateDraft(input);
+      return { ok: true, value: parsed.data as Record<string, unknown> };
+    };
+  };
 
   return {
     kernelVersion: KERNEL_VERSION,
@@ -646,6 +720,7 @@ export function buildRegistry(modules: readonly RegistryModule[]): Registry {
     },
     recordSchema,
     validate: validateAt("stored"),
-    validateDraft: validateAt("draft"),
+    validateDraft,
+    observationDraftValidator,
   };
 }
