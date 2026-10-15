@@ -1,2 +1,13 @@
 # Build and run both test projects before pushing. Docker is required.
-pnpm test
+#
+# Concurrent pushes from other worktrees or repositories (OpenMapX's hook takes
+# the same lock file) would starve each other's timing-sensitive tests, so one
+# pre-push runs at a time on this machine.
+lock="${TMPDIR:-/tmp}/pre-push.lock"
+if command -v flock >/dev/null 2>&1; then
+  flock "$lock" pnpm test
+elif [ -x /usr/bin/lockf ]; then
+  /usr/bin/lockf -k "$lock" pnpm test
+else
+  pnpm test
+fi

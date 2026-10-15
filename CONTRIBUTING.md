@@ -87,7 +87,9 @@ Git hooks enforce a two-stage local gate (Husky):
   (commitlint).
 - **pre-push** — the full test suite (`pnpm test`). The ingest's pipeline/sweep
   suites use testcontainers and need Docker. Use `pnpm test:unit` for a local
-  check without Docker; the push gate and CI still run the full suite.
+  check without Docker; the push gate and CI still run the full suite. Pushes
+  on one machine take turns on `${TMPDIR:-/tmp}/pre-push.lock`, so parallel
+  pushes from several worktrees do not run their suites at once.
 
 CI re-runs lint, typecheck, the full suite, the Python lint/tests, and both
 production dependency audits on every push and PR. The audits also run weekly
