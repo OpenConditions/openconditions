@@ -328,7 +328,12 @@ for the rest. The service keeps a `pull` subscription with that filter at the
 peer, since a peer journals only what some subscription wants. Each page is
 a signed request, served the peer's window for this instance's tier, and must
 carry the peer's signature under a pinned key. A cursor still catching up
-reads `/peer/backfill`, the live tail `/peer/outbox`. A page lands through
+reads `/peer/backfill`, the live tail `/peer/outbox`. A pulled page costs no
+more than a pushed one may: nothing is asked of a blocked peer, a page holds at
+most 100 entries and 1 MiB, arrives within 60 seconds, and counts against the
+peer's per-minute budget for its tier, shared with its pushes; its entries
+must lie after the cursor asked for and up to its own high-water mark, and a
+page that moves the cursor nowhere ends the pull. A page lands through
 the same inbox as a pushed one, and advances the cursor only once it landed;
 what both the push and the pull deliver lands once (the second delivery is
 `stale`). History before the window lives in the peer's archive, which the

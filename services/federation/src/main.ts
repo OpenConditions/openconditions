@@ -6,6 +6,7 @@
 
 import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core/server";
 import {
+  createInMemoryRateLimiter,
   InMemoryNonceStore,
   loadActiveKeys,
   OUTBOX_PRUNE_INTERVAL_HOURS,
@@ -91,7 +92,10 @@ async function boot() {
       seedRunning = false;
     }
   };
-  const app = await build({ sql, onSubscribed: () => void seed() });
+  // One per-peer limiter for what a peer may send: its pushes to the inbox
+  // and the pages this instance pulls from it.
+  const rateLimiter = createInMemoryRateLimiter();
+  const app = await build({ sql, rateLimiter, onSubscribed: () => void seed() });
   if (settings.enabled) void seed();
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded
@@ -229,6 +233,7 @@ async function boot() {
               signingKey,
               fetchImpl: egress,
               nonceStore,
+              rateLimiter,
               now: () => new Date().toISOString(),
             },
           ).catch((err: unknown) => ({ error: String(err) }) as const);

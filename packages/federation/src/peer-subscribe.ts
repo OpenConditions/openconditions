@@ -84,6 +84,7 @@ export async function signedPeerRequest(
   method: string,
   url: string,
   body?: unknown,
+  signal?: AbortSignal,
 ): Promise<Response> {
   const payload = body === undefined ? undefined : Buffer.from(JSON.stringify(body));
   const signed = await signMessage({
@@ -98,6 +99,7 @@ export async function signedPeerRequest(
     method,
     headers: signed.headers,
     ...(payload === undefined ? {} : { body: payload }),
+    ...(signal === undefined ? {} : { signal }),
   });
 }
 

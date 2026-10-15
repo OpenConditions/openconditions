@@ -21,12 +21,14 @@ import { ingestFederatedPage } from "@openconditions/contributions-api/federatio
 import {
   decodeOutboxCursor,
   type InstanceKey,
+  isPeerBlocked,
   loadPeerVersions,
   type NonceStore,
   OUTBOX_CURSOR_START,
-  OUTBOX_MAX_LIMIT,
+  OUTBOX_DEFAULT_LIMIT,
   type PeerRecord,
   peerRouteUrl,
+  type RateLimiter,
   type RecordFilter,
   recordAvailability,
   recordPeerFailure,
@@ -46,9 +48,13 @@ export interface PullContext {
   fetchImpl: typeof fetch;
   /** Replay cache of the peers' response signatures. */
   nonceStore: NonceStore;
+  /** The per-peer limiter the inbox meters pushed pages with. */
+  rateLimiter: RateLimiter;
   now: () => string;
   /** Pages read at most; default {@link PULL_MAX_PAGES}. */
   maxPages?: number;
+  /** How long a page may take; default {@link PULL_PAGE_TIMEOUT_MS}. */
+  pageTimeoutMs?: number;
 }
 
 export interface PullResult {
@@ -109,7 +115,55 @@ function after(a: string, b: string): boolean {
   return ty > tx || (ty === tx && y.seq > x.seq);
 }
 
-/** Reads and lands what is new in `peer`'s journal; never throws for the peer's answers. */
+/** A page larger than this many bytes is refused, as the inbox refuses a pushed one. */
+export const PULL_MAX_PAGE_BYTES = 1_048_576;
+
+/** The most entries a pull asks for in one page: what a push sends in one. */
+export const PULL_PAGE_LIMIT = OUTBOX_DEFAULT_LIMIT;
+
+/** How long a page may take to arrive, its body included. */
+export const PULL_PAGE_TIMEOUT_MS = 60_000;
+
+class PageTooLarge extends Error {}
+
+/** Reads a body of at most `max` bytes, cancelling the stream past it. */
+async function readCapped(res: Response, max: number): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = res.body?.getReader();
+  if (reader === undefined) return new Uint8Array();
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > max) {
+      await reader.cancel().catch(() => {});
+      throw new PageTooLarge(`the page is larger than ${max} bytes`);
+    }
+    chunks.push(value);
+  }
+  return new Uint8Array(Buffer.concat(chunks));
+}
+
+/** The `(txid, seq)` cursor of an entry, or null for one without a usable one. */
+function entryCursor(item: unknown): string | null {
+  if (item === null || typeof item !== "object") return null;
+  const { txid, seq } = item as { txid?: unknown; seq?: unknown };
+  if (typeof txid !== "string" || typeof seq !== "number") return null;
+  const cursor = `${txid}.${seq}`;
+  return decodeOutboxCursor(cursor) === null ? null : cursor;
+}
+
+/**
+ * Reads and lands what is new in `peer`'s journal; never throws for the
+ * peer's answers. A page passes what a pushed page passes: the peer is not
+ * blocked here, the page carries the peer's signature under a pinned key,
+ * its size and entry count stay within a push's, its rate within the peer's
+ * tier (the limiter the inbox shares), and each record is admitted by the
+ * same inbox. Its entries must lie after the cursor asked for and up to the
+ * page's own high-water mark, so a replayed or forged page cannot move the
+ * cursor anywhere else; a page that moves it nowhere ends the pull.
+ */
 export async function pullPeer(
   sql: postgres.Sql,
   peer: PeerRecord & { pull: { filter: RecordFilter } },
@@ -124,22 +178,31 @@ export async function pullPeer(
     skipped: 0,
     cursor: await readCursor(sql, peer.instanceId),
   };
+  if (await isPeerBlocked(sql, peer.instanceId)) {
+    return { ...result, error: "the peer is blocked here" };
+  }
   const peerVersions = await loadPeerVersions(sql, peer.instanceId);
   if (peerVersions === undefined) {
     return { ...result, error: "the peer's capabilities are not yet verified" };
   }
+  const refuse = async (failure: "signature" | "schema", error: string) => {
+    await recordPeerFailure(sql, peer.instanceId, failure, ctx.now());
+    return { ...result, error };
+  };
   const query = filterQuery(peer.pull.filter);
-  query.set("limit", String(OUTBOX_MAX_LIMIT));
+  query.set("limit", String(PULL_PAGE_LIMIT));
   let catchingUp = result.cursor === "0.0";
   for (let i = 0; i < (ctx.maxPages ?? PULL_MAX_PAGES); i++) {
     query.set("after", result.cursor);
     const url = `${peerRouteUrl(peer, catchingUp ? "/peer/backfill" : "/peer/outbox")}?${query}`;
+    const signal = AbortSignal.timeout(ctx.pageTimeoutMs ?? PULL_PAGE_TIMEOUT_MS);
     let res: Response;
     let body: Uint8Array;
     try {
-      res = await signedPeerRequest(ctx.fetchImpl, ctx.signingKey, "GET", url);
-      body = new Uint8Array(await res.arrayBuffer());
+      res = await signedPeerRequest(ctx.fetchImpl, ctx.signingKey, "GET", url, undefined, signal);
+      body = await readCapped(res, PULL_MAX_PAGE_BYTES);
     } catch (err) {
+      if (err instanceof PageTooLarge) return refuse("schema", err.message);
       await recordAvailability(sql, peer.instanceId, false, ctx.now());
       return { ...result, error: `the peer could not be reached: ${String(err)}` };
     }
@@ -152,20 +215,43 @@ export async function pullPeer(
     }
     const signed = { status: 200, headers: res.headers, url, body };
     if (!(await verifyPeerResponse(peer, signed, ctx.nonceStore))) {
-      await recordPeerFailure(sql, peer.instanceId, "signature", ctx.now());
-      return { ...result, error: "the page does not carry the peer's signature" };
+      return refuse("signature", "the page does not carry the peer's signature");
     }
-    let page: { highWaterMark?: unknown; next?: unknown; beyondWindow?: unknown };
+    let page: {
+      highWaterMark?: unknown;
+      next?: unknown;
+      beyondWindow?: unknown;
+      orderedItems?: unknown;
+    };
     try {
       page = JSON.parse(Buffer.from(body).toString("utf8")) as typeof page;
     } catch {
-      await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now());
-      return { ...result, error: "the page is not JSON" };
+      return refuse("schema", "the page is not JSON");
     }
     const frontier = typeof page.highWaterMark === "string" ? page.highWaterMark : "";
-    if (decodeOutboxCursor(frontier) === null) {
-      await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now());
-      return { ...result, error: "the page carries no cursor" };
+    if (decodeOutboxCursor(frontier) === null || !Array.isArray(page.orderedItems)) {
+      return refuse("schema", "the page carries no cursor or no entries");
+    }
+    const items = page.orderedItems as unknown[];
+    if (items.length > PULL_PAGE_LIMIT) {
+      return refuse("schema", `the page holds more than ${PULL_PAGE_LIMIT} entries`);
+    }
+    const inWindow = (item: unknown) => {
+      const at = entryCursor(item);
+      return at !== null && after(result.cursor, at) && !after(frontier, at);
+    };
+    if (after(frontier, result.cursor) || !items.every(inWindow)) {
+      return refuse("schema", "the page's entries lie outside the cursor it was asked for");
+    }
+    const rate = ctx.rateLimiter.check(
+      peer.instanceId,
+      "inbox",
+      peer.trustTier,
+      items.length,
+      Date.parse(ctx.now()),
+    );
+    if (!rate.ok) {
+      return { ...result, error: "the peer's pages exceed the rate its tier is admitted" };
     }
     const landed = await ingestFederatedPage(sql, page, {
       registry: ctx.registry,
@@ -184,10 +270,9 @@ export async function pullPeer(
       await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now(), landed.skipped.length);
     }
     if (page.beyondWindow === true) result.beyondWindow = true;
-    if (after(result.cursor, frontier)) {
-      await storeCursor(sql, peer.instanceId, frontier, ctx.now());
-      result.cursor = frontier;
-    }
+    if (!after(result.cursor, frontier)) break;
+    await storeCursor(sql, peer.instanceId, frontier, ctx.now());
+    result.cursor = frontier;
     if (page.next === undefined) break;
     catchingUp = true;
   }

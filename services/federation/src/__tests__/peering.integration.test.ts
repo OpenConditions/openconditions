@@ -6,6 +6,7 @@
  */
 import { runMigrations } from "@openconditions/core/server";
 import {
+  createInMemoryRateLimiter,
   ensureInstanceKey,
   InMemoryNonceStore,
   type InstanceKey,
@@ -348,6 +349,7 @@ describe("a peer that pulls", () => {
     signingKey: keyC,
     fetchImpl,
     nonceStore: new InMemoryNonceStore(),
+    rateLimiter: createInMemoryRateLimiter(),
     now: () => new Date().toISOString(),
   });
   const pullA = () =>
