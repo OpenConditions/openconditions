@@ -6,6 +6,7 @@ export * from "./federation-lapse.js";
 export * from "./federation-liveness.js";
 export * from "./federation-reconcile.js";
 export * from "./fused-rows.js";
+export * from "./latest-cache.js";
 export * from "./observation-partitions.js";
 export * from "./observation-rollup.js";
 export * from "./record-rows.js";

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import {
   CONTRIBUTOR_RECEIPT_VERSION,
   historyRowOf,
@@ -19,6 +20,7 @@ import {
   type ValidationResult,
 } from "@openconditions/model";
 import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
+import type { LatestCacheWrite, LatestEntry } from "./latest-cache.js";
 import { partitionCoverage, retentionDaysOf } from "./observation-partitions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { expiryOf } from "./record-rows.js";
@@ -217,6 +219,9 @@ export interface ObservationWriteContext extends WriteContext, PollRef {
  * seal here or records another instance already sealed.
  * A reading of a transient property is appended apart from the rest
  * (`writeTransient`): its series is never compared with what is stored.
+ * With a latest cache (`ctx.latestCache`), a series whose reading the cache
+ * shows unchanged is checked against its row rather than read back
+ * (`cachedUnchanged`), and the cache learns what the write leaves.
  */
 export async function writeObservationsIn(
   tx: Sql,
@@ -292,7 +297,22 @@ export async function writeObservationsIn(
           recordedAt: ctx.now,
         });
   const hash = contentHasher();
-  const write = { tx, ctx, rejected, seal, hash, frontiers, counts, lap, receipts };
+  // A peer's records are compared with their rows as they come.
+  const cache = stage === "draft" ? ctx.latestCache : undefined;
+  const restates = restatesDigest();
+  const write = {
+    tx,
+    ctx,
+    rejected,
+    seal,
+    hash,
+    cache,
+    restates,
+    frontiers,
+    counts,
+    lap,
+    receipts,
+  };
   let slice: [string, PendingSeries][] = [];
   for (const entry of pending) {
     slice.push(entry);
@@ -328,36 +348,50 @@ interface PendingSeries {
  */
 const SERIES_PER_SLICE = 1000;
 
+/** What one write of a source's series uses throughout. */
+interface SeriesWrite {
+  tx: Sql;
+  ctx: ObservationWriteContext;
+  rejected: Rejection[];
+  seal: Seal;
+  /** The write's `contentHash`, hashing what its drafts share once. */
+  hash: (draft: Rec) => string;
+  /** What earlier polls left in the series' rows, when the write keeps such a cache. */
+  cache: LatestCacheWrite | undefined;
+  restates: RestatesDigest;
+  frontiers: Map<string, number>;
+  counts: ObservationCounts;
+  /** Ends the stage under way (`readings/<stage>`). */
+  lap: (stage: string) => void;
+  receipts: ReceiptCache;
+}
+
 /** Writes the readings of a slice of a write's series, keyed as `keyString` keys them. */
 async function writeSeries(
-  write: {
-    tx: Sql;
-    ctx: ObservationWriteContext;
-    rejected: Rejection[];
-    seal: Seal;
-    /** The write's `contentHash`, hashing what its drafts share once. */
-    hash: (draft: Rec) => string;
-    frontiers: Map<string, number>;
-    counts: ObservationCounts;
-    /** Ends the stage under way (`readings/<stage>`). */
-    lap: (stage: string) => void;
-    receipts: ReceiptCache;
-  },
+  write: SeriesWrite,
   slice: readonly (readonly [string, PendingSeries])[],
 ): Promise<void> {
-  const { tx, ctx, rejected, seal, hash: hashOf, frontiers, counts, lap, receipts } = write;
+  const { tx, ctx, rejected, seal, hash: hashOf, cache, frontiers, counts, lap, receipts } = write;
   const now = Date.parse(ctx.now);
   const covers = partitionCoverage(now);
+  const hashes = new Map<Rec, string>();
+  let cached = new Set<string>();
+  if (cache !== undefined) {
+    cached = await cachedUnchanged(write, slice, hashes);
+    counts.unchanged += cached.size;
+    lap("readings/cached");
+  }
+  const looked = cached.size === 0 ? slice : slice.filter(([k]) => !cached.has(k));
   const latest = await loadLatest(
     tx,
-    slice.map(([, p]) => p.key),
+    looked.map(([, p]) => p.key),
   );
   lap("readings/lookup");
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
   const legacyAcquisitions: { row: Rec; provenance: Rec }[] = [];
   const expiryMoved = new Map<number, unknown>();
   let handled = 0;
-  for (const [k, { key, drafts: series }] of slice) {
+  for (const [k, { key, drafts: series }] of looked) {
     const held = latest.get(k);
     // A polled feed's change-only series takes a reading only where its
     // result changes: one restating the result in effect before it, or one
@@ -380,7 +414,7 @@ async function writeSeries(
     let inEffectBaseline = renewed ? null : (held?.baseline ?? null);
     for (const draft of series) {
       if (++handled % RECORDS_PER_TURN === 0) await pause();
-      const hash = hashOf(draft);
+      const hash = hashes.get(draft) ?? hashOf(draft);
       // A peer's record that states a validity ends its series there: a change.
       const restated =
         polled &&
@@ -471,6 +505,8 @@ async function writeSeries(
   // The whole row of a series written by its reading alone, should its row have gone.
   const wholeRowOf = new Map<number, () => Rec>();
   const history: { key: string; row: Rec }[] = [];
+  // The reading each series' latest row takes.
+  const newestOf = new Map<string, Rec>();
   for (const [k, { records }] of bySeries) {
     records.sort((a, b) => startOf(a) - startOf(b));
     const property = ctx.registry.property(records[0]!["property"] as string)!;
@@ -522,6 +558,7 @@ async function writeSeries(
       resultProvenance = creditProvenance(record);
     }
     if (newest !== undefined) {
+      newestOf.set(k, newest);
       const row = seriesRowOf(newest, property, retentionDays, ctx.now, prev?.template_hash);
       acquisitions.push({ row, provenance: newest["provenance"] as Rec });
       if (row["template"] === null) {
@@ -573,16 +610,16 @@ async function writeSeries(
   counts.latest += written.length;
   lap("readings/latest");
   const ids = new Map([...latest].map(([k, l]) => [k, l.series_id]));
+  const writtenIds = new Map<string, number>();
   for (const w of written) {
-    ids.set(
-      keyString({
-        subjectKey: w["subject_key"]!,
-        property: w["property"]!,
-        qualifierKey: w["qualifier_key"]!,
-        sourceId: w["source_id"]!,
-      }),
-      Number(w.series_id),
-    );
+    const k = keyString({
+      subjectKey: w["subject_key"]!,
+      property: w["property"]!,
+      qualifierKey: w["qualifier_key"]!,
+      sourceId: w["source_id"]!,
+    });
+    ids.set(k, Number(w.series_id));
+    writtenIds.set(k, Number(w.series_id));
   }
   // One statement may not touch a row twice: a reading repeated in one poll
   // keeps its last copy, however its source spelled the instants.
@@ -602,6 +639,163 @@ async function writeSeries(
   );
   counts.history += stored.length;
   lap("readings/history");
+  if (cache === undefined) return;
+  for (const k of cached) cache.seen(k);
+  // A polled series' reading mostly holds, so its entry is kept from its
+  // first write; any other series' from a poll that found it unchanged.
+  for (const [k, { drafts: series }] of looked) {
+    const polled = validWhilePolled(ctx.registry, series[0]!);
+    const newest = newestOf.get(k);
+    const held = latest.get(k);
+    const id = writtenIds.get(k);
+    if (newest !== undefined && id !== undefined) {
+      if (polled || cache.get(k) !== undefined) {
+        cache.set(k, {
+          seriesId: id,
+          contentHash: newest["contentHash"] as string,
+          ...(polled
+            ? {
+                restates: write.restates(
+                  newest["result"],
+                  creditProvenance(newest),
+                  newest["baseline"] ?? null,
+                ),
+              }
+            : {}),
+          effectiveFrom: startOf(newest),
+          expiresAt: expiryOf(newest),
+          ended: newest["validUntil"] !== undefined,
+        });
+      }
+    } else if (newest === undefined && held !== undefined) {
+      const movedTo = expiryMoved.get(held.series_id);
+      cache.set(k, {
+        seriesId: Number(held.series_id),
+        contentHash: held.content_hash,
+        ...(polled
+          ? { restates: write.restates(held.result, held.credit_provenance, held.baseline ?? null) }
+          : {}),
+        effectiveFrom: held.effective_from.getTime(),
+        expiresAt:
+          movedTo === undefined
+            ? (held.expires_at?.getTime() ?? null)
+            : movedTo === null
+              ? null
+              : Date.parse(movedTo as string),
+        ended: held.ended,
+      });
+    } else if (cache.get(k) !== undefined) {
+      cache.delete(k);
+    }
+  }
+}
+
+/**
+ * The series of a slice whose one reading this poll its cache entry shows
+ * the series already holds, as the comparison in `writeSeries` would find
+ * it: the same content, or for a polled series a restatement of the reading
+ * in effect or an older state, with no expiry to move. An entry is only what
+ * this process last saw of a row, so each is checked against its row, in
+ * one query: it stands while the row still holds the reading it describes
+ * (its content hash covers the result, credit, baseline, times and validity
+ * the comparison reads, and every writer of a row's reading writes its hash
+ * anew), its expiry, and for a freshly acquired poll a receipt. A row any
+ * other writer changed since (a complete poll ending its series, an expiry
+ * moved, a peer's copy of the source, the sweep, an operator), or a write
+ * that rolled back, fails the check, and its series is compared as without
+ * the cache. What passes would have been counted unchanged and written
+ * nothing, so it is not read back at all.
+ */
+async function cachedUnchanged(
+  write: SeriesWrite,
+  slice: readonly (readonly [string, PendingSeries])[],
+  hashes: Map<Rec, string>,
+): Promise<Set<string>> {
+  const { tx, ctx, cache } = write;
+  const candidates: { key: string; entry: LatestEntry }[] = [];
+  let handled = 0;
+  for (const [k, { drafts }] of slice) {
+    if (++handled % RECORDS_PER_TURN === 0) await pause();
+    const entry = cache!.get(k);
+    if (entry === undefined || drafts.length !== 1) continue;
+    const draft = drafts[0]!;
+    // A draft the comparison cannot weigh is left to it, to fail there as it does.
+    try {
+      const hash = write.hash(draft);
+      hashes.set(draft, hash);
+      if (expiryOf(draft) !== entry.expiresAt) continue;
+      if (validWhilePolled(ctx.registry, draft)) {
+        const featureId = (draft["subject"] as Rec)["featureId"] as string;
+        if (entry.ended || entry.restates === undefined || ctx.changedFeatures?.has(featureId)) {
+          continue;
+        }
+        const holds =
+          hash === entry.contentHash ||
+          startOf(draft) < entry.effectiveFrom ||
+          (draft["validUntil"] === undefined &&
+            write.restates(draft["result"], creditProvenance(draft), draft["baseline"] ?? null) ===
+              entry.restates);
+        if (!holds) continue;
+      } else if (hash !== entry.contentHash) {
+        continue;
+      }
+    } catch {
+      continue;
+    }
+    candidates.push({ key: k, entry });
+  }
+  if (candidates.length === 0) return new Set();
+  const stale = await tx.unsafe<{ i: number }[]>(
+    `SELECT c.i
+       FROM jsonb_to_recordset($1::text::jsonb)
+         AS c(i int, series_id bigint, content_hash text, expires_at bigint)
+       LEFT JOIN conditions.observation_latest l ON l.series_id = c.series_id
+      WHERE l.series_id IS NULL
+         OR l.reading->>'contentHash' IS DISTINCT FROM c.content_hash
+         OR floor(extract(epoch FROM l.expires_at) * 1000)::bigint IS DISTINCT FROM c.expires_at
+         OR ($2::boolean AND l.contributor_receipt_id IS NULL)`,
+    [
+      JSON.stringify(
+        candidates.map(({ entry }, i) => ({
+          i,
+          series_id: entry.seriesId,
+          content_hash: entry.contentHash,
+          expires_at: entry.expiresAt,
+        })),
+      ),
+      ctx.captureEvidence === "acquired",
+    ],
+  );
+  const failed = new Set(stale.map((r) => r.i));
+  return new Set(candidates.filter((_, i) => !failed.has(i)).map((c) => c.key));
+}
+
+/** The digest of what a reading restating a polled series' reading in effect has the same. */
+type RestatesDigest = (result: unknown, credit: unknown, baseline: unknown) => string;
+
+/**
+ * Digests the result, credit and baseline the comparison in `writeSeries`
+ * weighs a restatement by (`sameResult` of each): two digests are equal
+ * exactly when all three are, as the canonical text of the three is. A
+ * write's readings share their feed's attribution: its text is made once.
+ */
+function restatesDigest(): RestatesDigest {
+  const texts = new WeakMap<object, string>();
+  const canonical = (value: unknown) => {
+    if (typeof value !== "object" || value === null) return jcs(value);
+    let text = texts.get(value);
+    if (text === undefined) {
+      text = jcs(value);
+      texts.set(value, text);
+    }
+    return text;
+  };
+  return (result, credit, baseline) => {
+    const { attribution, upstream } = credit as Rec;
+    // The canonical text of [result, credit, baseline], credit's keys in order.
+    const text = `[${jcs(result)},{"attribution":${canonical(attribution)},"upstream":${jcs(upstream)}},${jcs(baseline)}]`;
+    return createHash("sha256").update(text).digest("base64");
+  };
 }
 
 /**

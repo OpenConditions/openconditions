@@ -11,6 +11,7 @@ import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
 import { updateCanonicalView } from "./canonical-view.js";
 import { capRows, maxObservationsPerPollFromEnv } from "./caps.js";
+import type { LatestCacheWrite } from "./latest-cache.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
 import { stepTimer } from "./steps.js";
@@ -68,6 +69,12 @@ export interface WriteContext extends PollRef {
    * `OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL`, else `MAX_OBSERVATIONS_PER_POLL`).
    */
   maxObservationsPerPoll?: number;
+  /**
+   * What earlier polls of this process left in the source's latest rows: a
+   * reading it shows unchanged is not read back (see `writeObservationsIn`).
+   * The caller commits or discards it with the transaction.
+   */
+  latestCache?: LatestCacheWrite;
 }
 
 /** Whether a write holds every record of a class its source publishes. */

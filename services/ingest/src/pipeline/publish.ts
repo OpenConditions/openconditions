@@ -9,7 +9,13 @@ import {
 } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type { FlowOutput } from "@openconditions/roads";
-import { type WriteContext, type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
+import {
+  LatestCache,
+  type LatestCacheWrite,
+  type WriteContext,
+  type WriteSummary,
+  writeSnapshotIn,
+} from "@openconditions/storage";
 import type postgres from "postgres";
 import { upsertSourceStatus } from "./source-status.js";
 
@@ -319,7 +325,8 @@ export async function publishFlows(
     model: WriteModel;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  return sql.begin(async (tx) => {
+  const cache = latestCache.begin();
+  const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
     const summary = await writeSnapshotIn(
@@ -334,6 +341,7 @@ export async function publishFlows(
         ...writeContext(input),
         complete: { situation: input.situationsComplete ?? true },
         restatesTransient: input.restatesTransient === true,
+        latestCache: cache,
       },
     );
     const [live] = await tx<{ features: number; situations: number }[]>`
@@ -365,6 +373,7 @@ export async function publishFlows(
     });
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+  return withCache(cache, published);
 }
 
 /**
@@ -392,7 +401,8 @@ export async function publishFeatures(
     statesComplete?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  return sql.begin(async (tx) => {
+  const cache = latestCache.begin();
+  const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
     const summary = await writeSnapshotIn(
@@ -403,6 +413,7 @@ export async function publishFeatures(
         ...writeContext(input),
         complete: { feature: true, offer: true },
         statesComplete: input.statesComplete === true,
+        latestCache: cache,
       },
     );
     const [{ live }] = await tx<{ live: number }[]>`
@@ -433,6 +444,7 @@ export async function publishFeatures(
     });
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+  return withCache(cache, published);
 }
 
 /**
@@ -456,13 +468,14 @@ export async function publishReadings(
     warning?: string;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  return sql.begin(async (tx) => {
+  const cache = latestCache.begin();
+  const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const summary = await writeSnapshotIn(
       tx,
       src.id,
       { observations: input.observations },
-      { ...writeContext(input), complete: false },
+      { ...writeContext(input), complete: false, latestCache: cache },
     );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
@@ -490,6 +503,28 @@ export async function publishReadings(
     });
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+  return withCache(cache, published);
+}
+
+/**
+ * What this process's polls left in their sources' latest rows: a poll
+ * reads no reading back that it shows unchanged. A feed polls in one
+ * process; a restart starts it empty.
+ */
+const latestCache = new LatestCache();
+
+/** A poll's transaction, the cache taking what it wrote when it commits and forgetting it when not. */
+function withCache<T>(cache: LatestCacheWrite, transaction: Promise<T>): Promise<T> {
+  return transaction.then(
+    (done) => {
+      cache.commit();
+      return done;
+    },
+    (err: unknown) => {
+      cache.discard();
+      throw err;
+    },
+  );
 }
 
 /** What a poll's publication reports on its source's status. */
