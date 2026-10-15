@@ -6,6 +6,7 @@
  * closed rather than serving a half-formed identity.
  */
 import { readFileSync } from "node:fs";
+import { resolveInstanceId } from "@openconditions/core/server";
 import {
   type ActorConfig,
   loadPeers,
@@ -46,18 +47,33 @@ export function resolveFederationSettings(
     );
   }
   const actor = parseActorConfig(readJsonSource(actorSource));
+  // The records this instance publishes carry the id its ingest stamps; a
+  // peer refuses a record whose instance is not the one it pinned.
+  const instanceId = resolveInstanceId(env as NodeJS.ProcessEnv);
+  if (actor.instanceId !== instanceId) {
+    throw new Error(
+      `the federation actor is instance "${actor.instanceId}", but this instance's records ` +
+        `carry OPENCONDITIONS_INSTANCE_ID "${instanceId}": set both to the same id`,
+    );
+  }
 
   const peersSource = env["OPENCONDITIONS_FEDERATION_PEERS"];
   const peers =
     peersSource === undefined || peersSource.length === 0
       ? []
       : loadPeers(readJsonSource(peersSource));
+  if (peers.some((peer) => peer.instanceId === actor.instanceId)) {
+    throw new Error(`invalid peers config: instance "${actor.instanceId}" is this instance`);
+  }
 
   const archiveOverride = env["OPENCONDITIONS_FEDERATION_ARCHIVE_URL"]?.trim();
   const archiveUrl =
     archiveOverride && archiveOverride.length > 0
       ? archiveOverride
       : `${actor.baseUrl.replace(/\/$/, "")}/archive`;
+  if (!URL.canParse(archiveUrl) || !/^https?:$/.test(new URL(archiveUrl).protocol)) {
+    throw new Error("OPENCONDITIONS_FEDERATION_ARCHIVE_URL must be an http(s) URL");
+  }
 
   return { enabled: true, actor, peers, archiveUrl };
 }

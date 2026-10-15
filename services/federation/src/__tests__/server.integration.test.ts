@@ -36,6 +36,7 @@ const PEER = {
 
 const ENABLED_ENV = {
   OPENCONDITIONS_FEDERATION_ENABLED: "true",
+  OPENCONDITIONS_INSTANCE_ID: ACTOR_CONFIG.instanceId,
   OPENCONDITIONS_FEDERATION_ACTOR: JSON.stringify(ACTOR_CONFIG),
   OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([PEER]),
 };
@@ -96,6 +97,25 @@ describe("federation enabled", () => {
       }),
     };
     await expect(build({ sql, env, logger: false })).rejects.toThrow(/supportedTypes/);
+  }, 30_000);
+
+  it("fails the boot closed when the actor is not the instance its records carry", async () => {
+    for (const instance of [{}, { OPENCONDITIONS_INSTANCE_ID: "oc-other" }]) {
+      const { OPENCONDITIONS_INSTANCE_ID: _id, ...env } = ENABLED_ENV;
+      await expect(build({ sql, env: { ...env, ...instance }, logger: false })).rejects.toThrow(
+        /OPENCONDITIONS_INSTANCE_ID/,
+      );
+    }
+  }, 30_000);
+
+  it("fails the boot closed on a peer that is this instance, or an archive that is no URL", async () => {
+    const self = {
+      ...ENABLED_ENV,
+      OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify([{ ...PEER, instanceId: "oc-test" }]),
+    };
+    await expect(build({ sql, env: self, logger: false })).rejects.toThrow(/is this instance/);
+    const archive = { ...ENABLED_ENV, OPENCONDITIONS_FEDERATION_ARCHIVE_URL: "/srv/archive" };
+    await expect(build({ sql, env: archive, logger: false })).rejects.toThrow(/ARCHIVE_URL/);
   }, 30_000);
 
   it("bootstraps an instance key and serves the actor document as activity+json", async () => {
