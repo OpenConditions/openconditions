@@ -440,3 +440,12 @@ OSM maxspeed fallback) and the weekly segment profiles read the hourly rollup;
 both key measurement sites by the subject key of their speed series
 (`feature:<featureId>`). Free-flow baselines ignore readings below 2 km/h
 (bin 0), so a standing queue does not drag a site's free flow down.
+
+## Public stream reconnects
+
+The public `/stream` starts a replacement view on every connection. Clear that
+subscription's previous IDs on each successful `open`, including reconnects;
+`Last-Event-ID` does not resume missed events. The stream has no initial snapshot
+completion marker and can truncate at 20,000 situations. See the
+[reconnect investigation and consumer contract](../../docs/public-stream-reconnect.md)
+for lifecycle tests, measured costs and the decision to defer durable public replay.
