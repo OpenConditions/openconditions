@@ -366,7 +366,10 @@ The tiers:
 | Site tables, station registries | —                 | —                    | Newest 3 per source |
 
 Pinned payloads, and the payloads of each source's latest published poll (what
-is live now was read from), are never evicted.
+is live now was read from), are never evicted. Nor is the newest payload of
+each URL a source fetched, which a poll may still read from what it holds: a
+site table's however old, a feed's within its tier's thinned window. A source
+kept for 48 hours only keeps nothing longer for this.
 
 Over `OPENCONDITIONS_RAW_MAX_BYTES` (10 GiB), eviction climbs a ladder, each rung
 only while still over the cap:

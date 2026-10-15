@@ -217,6 +217,7 @@ export async function evictRawPayloads(
     {
       source_id: string;
       hash: string;
+      url_key: string;
       tier: RawTier;
       last_seen_at: Date;
       bytes_stored: string;
@@ -224,7 +225,7 @@ export async function evictRawPayloads(
       is_base: boolean;
     }[]
   >`
-    SELECT p.source_id, p.hash, p.tier, p.last_seen_at, p.bytes_stored,
+    SELECT p.source_id, p.hash, p.url_key, p.tier, p.last_seen_at, p.bytes_stored,
            p.pinned_reason IS NOT NULL AS pinned,
            EXISTS (SELECT 1 FROM conditions.raw_payload d
                     WHERE d.source_id = p.source_id AND d.base_hash = p.hash
@@ -244,6 +245,28 @@ export async function evictRawPayloads(
         WHERE source = s.source AND published AND payload_hashes IS NOT NULL
         ORDER BY attempted_at DESC LIMIT 1) a`;
   const live = new Set(published.map((r) => `${r.source}\n${r.hash}`));
+  // A poll also reads what it holds from earlier ones: a site table, a role
+  // not due, a URL that failed. That is the newest payload of each URL a
+  // source fetched: a site table's however long ago, since it may answer
+  // unchanged for weeks; a feed's while within its tier's thinned window, so
+  // a URL no longer asked (a date in its path) lets its payload go. A `hot`
+  // payload is not kept past its window for this.
+  const newestOfUrl = new Map<string, (typeof rows)[number]>();
+  for (const r of rows) {
+    const key = `${r.source_id}\n${r.url_key}`;
+    const newest = newestOfUrl.get(key);
+    if (!newest || r.last_seen_at > newest.last_seen_at) newestOfUrl.set(key, r);
+  }
+  for (const r of newestOfUrl.values()) {
+    const age = opts.policy.now - r.last_seen_at.getTime();
+    if (
+      r.tier === "reference" ||
+      ((r.tier === "situation" || r.tier === "observation") &&
+        age <= opts.policy.thinDays[r.tier] * DAY_MS)
+    ) {
+      live.add(`${r.source_id}\n${r.hash}`);
+    }
+  }
   const held = rows.map((r) => ({
     sourceId: r.source_id,
     hash: r.hash,

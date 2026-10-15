@@ -31,20 +31,25 @@ beforeEach(async () => {
   return () => rmSync(dir, { recursive: true, force: true });
 });
 
-/** Archives `count` distinct payloads of a source, one an hour, the newest `newestHoursAgo` ago. */
+/**
+ * Archives `count` distinct payloads of a source fetched from `path`, one an
+ * hour, the newest `newestHoursAgo` ago.
+ */
 async function archive(
   sourceId: string,
   tier: "situation" | "hot" | "observation" | "reference",
   count: number,
   newestHoursAgo = 0,
+  path = "/feed",
 ) {
   const raw = createRawArchive(sql, { dir });
   const hashes: string[] = [];
   for (let i = 0; i < count; i++) {
     const at = new Date(NOW - (newestHoursAgo + i) * HOUR);
-    // Named by its age, so payloads archived by separate calls stay distinct.
-    const body = Buffer.from(`${sourceId} payload ${newestHoursAgo + i} ${"x".repeat(200)}`);
-    const digest = digestPayload(`https://${sourceId}.example/feed`, body);
+    // Named by its URL and age, so payloads archived by separate calls stay distinct.
+    const name = path === "/feed" ? sourceId : `${sourceId}${path}`;
+    const body = Buffer.from(`${name} payload ${newestHoursAgo + i} ${"x".repeat(200)}`);
+    const digest = digestPayload(`https://${sourceId}.example${path}`, body);
     await raw.capture(
       { sourceId, fetchId: i + 1, fetchedAt: at, tier, url: digest.url },
       body,
@@ -111,6 +116,37 @@ describe("evictRawPayloads", () => {
     await poll("nl-ndw-events", 20 * 24, true, [other!]);
     const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
     expect(result.evict.map((r) => r.hash)).toEqual([other]);
+  });
+
+  it("keeps the newest site table a source fetched, however long ago", async () => {
+    const [older, newest] = await archive("nl-ndw-flow", "reference", 2, 60 * 24, "/sites").then(
+      (h) => h.reverse(),
+    );
+    await archive("nl-ndw-flow", "observation", 3);
+    const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
+    expect(result.evict.map((r) => r.hash)).toEqual([older]);
+    expect(result.evict.map((r) => r.hash)).not.toContain(newest);
+  });
+
+  it("keeps the newest payload of each URL a source fetched within its thinned window", async () => {
+    const [held, superseded] = await archive("nl-ndw-events", "situation", 2, 5 * 24, "/b");
+    const [gone] = await archive("nl-ndw-events", "situation", 1, 20 * 24, "/c");
+    await archive("nl-ndw-events", "situation", 3);
+    const result = await evictRawPayloads(sql, {
+      dir,
+      policy: policy({ maxBytes: 1 }),
+      historyDays: 90,
+    });
+    const evicted = result.evict.map((r) => r.hash);
+    expect(evicted).not.toContain(held);
+    expect(evicted).toEqual(expect.arrayContaining([superseded, gone]));
+  });
+
+  it("does not keep a payload past the hot window for a source whose terms do not affirm retention", async () => {
+    const [stale] = await archive("ca-bc-drivebc-events", "hot", 1, 5 * 24, "/b");
+    await archive("ca-bc-drivebc-events", "hot", 3);
+    const result = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
+    expect(result.evict.map((r) => r.hash)).toEqual([stale]);
   });
 
   it("over the cap, warns on the sources that lost hot-window payloads", async () => {
