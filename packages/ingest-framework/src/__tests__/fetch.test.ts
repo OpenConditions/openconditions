@@ -1,8 +1,9 @@
+import { gzipSync } from "node:zlib";
 import { describe, expect, it, vi } from "vitest";
 import type { CatalogResolver, ChildFeed } from "../catalog/resolvers.js";
 import type { CatalogFeed, FeedEndpoint } from "../catalog/types.js";
 import { createFetchState, type FetchOptions, fetchEndpoint } from "../fetch.js";
-import { heldBuffer } from "../held.js";
+import { heldBuffer, holdPayload } from "../held.js";
 import { digestPayload } from "../payload.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
 
@@ -954,6 +955,23 @@ describe("fetchEndpoint — conditional GET", () => {
     const second = await fetchEndpoint(feed, "main", fetchFn, { state });
     const bodies = second.status === "fetched" ? second.buffers.map((x) => x.toString()) : [];
     expect(bodies).toEqual([large, `${b}-v1`]);
+  });
+
+  it("holds a large body that came gzipped as the bytes it came in", async () => {
+    const large = Buffer.from("id,status\n".repeat(200_000));
+    const received = gzipSync(large);
+    const feed = makeFeed("gzipped-large", { url: "https://h.test/a.csv.gz" });
+    const fetchFn = (async () =>
+      new Response(new Uint8Array(received), { status: 200 })) as unknown as typeof fetch;
+
+    const result = await fetchEndpoint(feed, "main", fetchFn, { state: createFetchState() });
+    expect(result.status).toBe("fetched");
+    if (result.status !== "fetched") return;
+    expect(result.payloads[0]).toEqual(digestPayload("https://h.test/a.csv.gz", large));
+    const held = await holdPayload(result.buffers[0]!);
+    expect(held).toMatchObject({ gzipped: true, bytes: large.length });
+    expect(held.data.equals(received)).toBe(true);
+    expect((await heldBuffer(held)).equals(large)).toBe(true);
   });
 
   it("keeps each role's validators apart, even for one shared url", async () => {

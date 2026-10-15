@@ -17,7 +17,7 @@ import {
 } from "./catalog/templates.js";
 import type { CatalogFeed, FeedEndpoint, FetchFn } from "./catalog/types.js";
 import { boundedGunzip, maxFeedBytes } from "./egress.js";
-import { type HeldPayload, heldBuffer, holdPayload } from "./held.js";
+import { decodedFromGzip, type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { getPath } from "./layouts/row.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
@@ -268,7 +268,9 @@ async function fetchOne(
   }
   const arrayBuf = await res.arrayBuffer();
   const raw = Buffer.from(arrayBuf);
-  const buffer = isGzip(raw) ? await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES) : raw;
+  const buffer = isGzip(raw)
+    ? decodedFromGzip(await boundedGunzip(raw, MAX_DECOMPRESSED_BYTES), raw)
+    : raw;
   // The digest travels further than this function (poll records, raw index):
   // it carries the URL with credentials scrubbed, never the live one.
   const payload = digestPayload(redact(redactUrl(url)), buffer);

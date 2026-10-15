@@ -8,6 +8,7 @@
 import { lookup as dnsLookup } from "node:dns/promises";
 import { createGunzip } from "node:zlib";
 import { Agent, fetch as undiciFetch } from "undici";
+import { GUNZIP_CHUNK_BYTES } from "./held.js";
 
 const PRIVATE_HOST_RANGES: RegExp[] = [
   /^127\./,
@@ -504,7 +505,7 @@ export function guardOptionsFromEnv(env: NodeJS.ProcessEnv = process.env): Fetch
  * highly-compressed "gzip bomb" cannot expand into an OOM.
  */
 export async function boundedGunzip(raw: Buffer, maxBytes: number): Promise<Buffer> {
-  const gunzip = createGunzip();
+  const gunzip = createGunzip({ chunkSize: GUNZIP_CHUNK_BYTES });
   gunzip.end(raw); // write the whole compressed buffer, close the writable side
   const chunks: Buffer[] = [];
   let total = 0;
