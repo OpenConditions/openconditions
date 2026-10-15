@@ -23,6 +23,7 @@ export default defineConfig({
           name: "unit",
           environment: "node",
           globals: true,
+          testTimeout: 15_000,
           include: ["packages/**/*.test.ts", "services/**/*.test.ts", "scripts/**/*.test.ts"],
           exclude: ["**/node_modules/**", "**/*.integration.test.ts"],
         },
@@ -32,6 +33,12 @@ export default defineConfig({
           name: "integration",
           environment: "node",
           globals: true,
+          // After the unit project and two files at a time: the database
+          // suites are the heavy ones.
+          sequence: { groupOrder: 1 },
+          maxWorkers: 2,
+          testTimeout: 30_000,
+          hookTimeout: 60_000,
           include: [
             "packages/**/*.integration.test.ts",
             "services/**/*.integration.test.ts",
