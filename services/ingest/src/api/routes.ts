@@ -432,7 +432,9 @@ export function registerApiRoutes(
       ...(q.cursor ? { cursor: q.cursor } : {}),
     });
     const shown = egress(read.records, scope);
-    const records = q.dedupe === "1" ? dedupeSituations(shown) : shown;
+    // SQL simplification has already discarded the original extent. Preserve
+    // separate reports rather than establish equivalence from that lossy shape.
+    const records = q.dedupe === "1" && q.simplify === undefined ? dedupeSituations(shown) : shown;
     return { at, records, next: read.next };
   }
 
@@ -516,7 +518,9 @@ export function registerApiRoutes(
         ...(q.simplify !== undefined ? { simplify: q.simplify } : {}),
       });
       const shown = egress(read, "public");
-      const records = q.dedupe === "1" ? dedupeSituations(shown) : shown;
+      // The snapshot reader applies the same lossy simplification as pages.
+      const records =
+        q.dedupe === "1" && q.simplify === undefined ? dedupeSituations(shown) : shown;
       const xml = situationsToTraff(deps.registry, records, at);
       if (Buffer.byteLength(xml, "utf8") > MAX_TRAFF_BYTES) throw new TraffFeedTooLargeError();
       cacheFor(reply, records, at);

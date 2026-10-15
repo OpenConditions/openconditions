@@ -281,6 +281,12 @@ candidate-situation or 32 MiB XML bound is exceeded. No successful response is
 truncated, and cursor/limit are rejected. Other collection and DATEX II routes
 retain their paging contracts.
 
+**Situation deduplication.** `dedupe=1` is a conservative display fold of
+compatible reports from different source IDs. It preserves distinct directions,
+restrictions, extents and validity; uncertain reports remain separate. It does
+not fold after requested geometry simplification. See the
+[matching contract](situation-deduplication.md) for eligibility and page limits.
+
 **Canonical view.** `canonical=1` on `/features` serves one feature per cluster
 of `feature_canonical`, a lone feature's cluster included. The record is the
 survivor's under the cluster's canonical id (the id fused and crowd readings
