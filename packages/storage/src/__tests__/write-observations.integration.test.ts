@@ -1,4 +1,4 @@
-import { recordFromHistory, recordOf } from "@openconditions/core";
+import { readGrid, recordFromHistory, recordOf } from "@openconditions/core";
 import { captureLicensing } from "@openconditions/ingest-framework";
 import { contentHash, observationId, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
@@ -52,6 +52,98 @@ async function history() {
 }
 
 describe("observation writes", () => {
+  it("persists distinct upstream-only receipts without borrowing changed catalogue metadata, through grid reads", async () => {
+    await sql`INSERT INTO conditions.source(id, domain, format, product, access_mode, tier, operator, license, attribution, credit_name, credit_url, credit_notice, cadence_sec, freshness_window_sec)
+      VALUES ('nl-ndw-flow','roads','datex2-measured','flow','bulk','authoritative','Later operator','CC0-1.0','Later notice','Later name','https://later.test/','Later required notice',60,300)
+      ON CONFLICT(id) DO UPDATE SET operator=excluded.operator,credit_url=excluded.credit_url,credit_notice=excluded.credit_notice`;
+    const attributed = (at: string, publisher: string) => {
+      const d = speed(87, at);
+      d["subject"] = {
+        ...(d["subject"] as object),
+        featureId: `oc:feature:nl-ndw-flow:${publisher === "Publisher A" ? "s1" : "s2"}`,
+      };
+      d["id"] = observationIdOf(d);
+      return {
+        ...d,
+        provenance: {
+          ...(d["provenance"] as object),
+          attribution: {
+            provider: "Captured notice",
+            name: "Captured dataset",
+            license: "CC0-1.0",
+            url: "https://captured.test/",
+            publisher: { name: "Captured author" },
+          },
+          upstream: [
+            {
+              publisher,
+              recordId: "original-record",
+              license: "CC-BY-4.0",
+              attribution: "Original required wording",
+              licensing: captureLicensing({
+                id: "upstream",
+                name: publisher,
+                license: "CC-BY-4.0",
+              }),
+            },
+          ],
+        },
+      };
+    };
+    await writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      {
+        observations: [
+          attributed("2026-10-01T10:00:00Z", "Publisher A"),
+          attributed("2026-10-01T10:01:00Z", "Publisher B"),
+        ],
+      },
+      ctx,
+    );
+    const rows =
+      await sql`SELECT contributors FROM conditions.contributor_receipt WHERE contributors @> '[{"name":"Captured dataset"}]'::jsonb ORDER BY contributors::text`;
+    expect(rows).toHaveLength(2);
+    for (const [i, row] of rows.entries()) {
+      expect(row!.contributors).toContainEqual(
+        expect.objectContaining({
+          sourceId: "nl-ndw-flow",
+          name: "Captured dataset",
+          url: "https://captured.test/",
+          publisher: { name: "Captured author" },
+        }),
+      );
+      expect(row!.contributors).toContainEqual(
+        expect.objectContaining({
+          sourceId: "nl-ndw-flow",
+          publisher: { name: i === 0 ? "Publisher A" : "Publisher B" },
+          attributionText: "Original required wording",
+          licensing: expect.any(Object),
+        }),
+      );
+      expect(JSON.stringify(row!.contributors)).not.toMatch(/Later/);
+    }
+    const grid = await readGrid(
+      {
+        async execute<T>(query: string, params?: unknown[]) {
+          return (await sql.unsafe(query, params as never[])) as T;
+        },
+      },
+      {
+        scope: "operator",
+        property: "traffic.speed",
+        bbox: [4, 51, 6, 53],
+        cellDeg: 1,
+        since: new Date("2026-10-01T09:00:00Z"),
+        at: new Date(NOW),
+      },
+    );
+    for (const row of rows)
+      for (const credit of row!.contributors)
+        expect(grid.cell_contributors[0]!.contributors).toContainEqual(credit);
+    expect(grid.cell_contributors[0]!.lineage_complete).toBe(true);
+  });
+
   it("start a series with its latest reading and keep the reading as history", async () => {
     const summary = await writeSnapshot(
       sql,

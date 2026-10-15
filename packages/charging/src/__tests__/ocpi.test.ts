@@ -1,4 +1,10 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  type EgressRecord,
+  type FeedPayloads,
+  isPublicRecord,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
@@ -84,6 +90,44 @@ describe("ocpi", () => {
     });
     expect(reading).not.toHaveProperty("validUntil");
   });
+
+  test.each(["CC BY 4.0", "ODbL-1.0"])(
+    "captures %s upstream for full and status-only readings",
+    (license) => {
+      const payloads = { ...ocpdbPayloads() };
+      const sources = JSON.parse(ocpiFixture("ocpdb-sources.json").toString("utf8"));
+      for (const source of sources.items)
+        if (source.uid === "datex2_enbw") source.attribution_license = license;
+      payloads["sources"] = [Buffer.from(JSON.stringify(sources))];
+      const feed = catalogFeed("de-bw-mobidata-charging");
+      const full = parse(feed, payloads);
+      const feature = byId(full.features, "oc:feature:de-bw-mobidata-charging:308744")!;
+      const statuses = chargingDomain.formats["ocpi"]!.parseStatus!(
+        feed,
+        {
+          status: [
+            Buffer.from(
+              JSON.stringify({
+                items: [{ uid: "262347503", status: "CHARGING", last_updated: FETCHED }],
+              }),
+            ),
+          ],
+        },
+        parseContext(FETCHED),
+        full.statusIndex!,
+      );
+      for (const out of [full, statuses]) {
+        const readings = readingsOf(out as ParseOutput, feature["id"] as string);
+        expect(readings.length).toBeGreaterThan(0);
+        for (const reading of readings) {
+          expect((reading["provenance"] as Record<string, unknown>)["upstream"]).toEqual(
+            (feature["provenance"] as Record<string, unknown>)["upstream"],
+          );
+          expect(isPublicRecord(reading as unknown as EgressRecord)).toBe(license !== "ODbL-1.0");
+        }
+      }
+    },
+  );
 
   test("OCPDB: tariff associations put the tariff offer ids on the right connectors", () => {
     const out = ocpdb();

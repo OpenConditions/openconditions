@@ -326,6 +326,14 @@ describe("GET /features with expand=latest and offers", () => {
       // A price is kept as its changes: it holds 30 minutes past its source's last poll.
       validUntil: new Date(Date.parse(NOW) + 1800_000).toISOString(),
       source: "es-minetur-fuel",
+      provenance: {
+        sourceId: "es-minetur-fuel",
+        attribution: Object.fromEntries(
+          Object.entries((e5["provenance"] as Rec)["attribution"] as Rec).filter(
+            ([key]) => key !== "rights",
+          ),
+        ),
+      },
     });
     const both = await get("/features?source=es-minetur-fuel&expand=components,latest");
     expect((both.body["records"] as Rec[])[0]!["components"]).toBeDefined();
@@ -511,6 +519,21 @@ describe("GET /features with expand=latest and offers", () => {
       "sp98",
     ]);
     expect(new Set(readings.map((r) => r["source"]))).toEqual(new Set(["es-minetur-fuel"]));
+    const [stored] =
+      await sql`SELECT template->'provenance' AS provenance FROM conditions.observation_latest WHERE feature_id=${STATION} AND source_id='es-minetur-fuel' LIMIT 1`;
+    for (const reading of readings) {
+      expect(reading["provenance"]).toMatchObject({
+        sourceId: "es-minetur-fuel",
+        attribution: Object.fromEntries(
+          Object.entries(stored!.provenance.attribution).filter(([key]) => key !== "rights"),
+        ),
+      });
+      expect(
+        Object.keys(reading["provenance"] as Rec).every((k) =>
+          ["sourceId", "attribution", "upstream", "mergedSources"].includes(k),
+        ),
+      ).toBe(true);
+    }
     const canonicalId = (body["canonical"] as Rec)["canonicalFeatureId"] as string;
     const cluster = await get(`/features/${enc(canonicalId)}?expand=latest,offers`);
     expect(new Set((cluster.body["latest"] as Rec[]).map((r) => r["source"]))).toEqual(

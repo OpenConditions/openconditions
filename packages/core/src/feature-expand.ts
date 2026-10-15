@@ -1,4 +1,10 @@
-import { FUSED_SOURCE_IDS, isFusedSourceId, type Registry } from "@openconditions/model";
+import {
+  type Attribution,
+  FUSED_SOURCE_IDS,
+  isFusedSourceId,
+  type MergedSource,
+  type Registry,
+} from "@openconditions/model";
 import { withEvidence } from "./db/records.js";
 import {
   CROWD_SOURCE_ID,
@@ -11,6 +17,18 @@ import { binder, type Scope, scopeClauses } from "./record-filters.js";
 import { withPolledValidity } from "./validity.js";
 
 type Rec = Record<string, unknown>;
+
+/** Captured credit only: no reporter, raw payload, origin chain or private evidence. */
+type ReadingAttribution = Omit<Attribution, "rights">;
+
+export interface ReadingProvenance {
+  sourceId: string;
+  attribution: ReadingAttribution;
+  upstream?: MergedSource["upstream"];
+  mergedSources?: (Omit<MergedSource, "link" | "attribution"> & {
+    attribution: ReadingAttribution;
+  })[];
+}
 
 /** A feature's reading in effect as a feature collection carries it. */
 export interface LatestReading {
@@ -27,6 +45,8 @@ export interface LatestReading {
    * contributors, where the full fusion used one that is not).
    */
   source: string;
+  /** Immutable captured credit of the selected reading, independent of feature/catalogue refreshes. */
+  provenance: ReadingProvenance;
   /**
    * A fused reading only: the distinct sources whose readings it was fused
    * from (`crowd` for a crowd report), in the order of its contributors (the
@@ -188,6 +208,25 @@ export async function latestOfFeatures(
   return out;
 }
 
+/** Only fields that describe the public credit, never internal permission evidence. */
+function readingAttribution(captured: Attribution): ReadingAttribution {
+  const keys = [
+    "provider",
+    "name",
+    "licensing",
+    "publisher",
+    "license",
+    "url",
+    "licenseUrl",
+    "parentSourceId",
+    "childSourceId",
+    "policyIds",
+  ] as const;
+  return Object.fromEntries(
+    keys.flatMap((key) => (captured[key] === undefined ? [] : [[key, captured[key]]])),
+  ) as ReadingAttribution;
+}
+
 /**
  * A reading's record as a feature collection carries it; a fused one with
  * `contributors`, the sources of its contributing rows (`fused_sources`,
@@ -200,6 +239,22 @@ function readingOf(
 ): LatestReading {
   const qualifiers = record["qualifiers"] as Record<string, unknown> | undefined;
   const validUntil = record["validUntil"] as string | undefined;
+  const captured = record["provenance"] as unknown as ReadingProvenance;
+  const provenance: ReadingProvenance = structuredClone({
+    sourceId: captured.sourceId,
+    attribution: readingAttribution(captured.attribution),
+    ...(captured.upstream === undefined ? {} : { upstream: captured.upstream }),
+    ...(captured.mergedSources === undefined
+      ? {}
+      : {
+          mergedSources: captured.mergedSources.map((m) => ({
+            source: m.source,
+            recordId: m.recordId,
+            attribution: readingAttribution(m.attribution),
+            ...(m.upstream === undefined ? {} : { upstream: m.upstream }),
+          })),
+        }),
+  });
   return {
     property: record["property"] as string,
     ...(componentKey !== undefined ? { componentKey } : {}),
@@ -207,7 +262,8 @@ function readingOf(
     result: record["result"],
     phenomenonTime: record["phenomenonTime"],
     ...(validUntil !== undefined ? { validUntil } : {}),
-    source: (record["provenance"] as Rec)["sourceId"] as string,
+    source: provenance.sourceId,
+    provenance,
     ...(contributors !== undefined ? { contributors: [...contributors] } : {}),
   };
 }

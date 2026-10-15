@@ -161,6 +161,41 @@ describe("fusion", () => {
     expect(mostRestrictiveRights([{ provider: "c", license: "x" }])).toBeUndefined();
   });
 
+  it("keeps every fused contributor's exact upstream receipt", () => {
+    const a = feed("free_flow", NOW);
+    const b = feed("free_flow", NOW);
+    b.observation = { ...b.observation, id: "oc:observation:other:1" };
+    const upstream = [
+      {
+        publisher: "Original camera operator",
+        recordId: "camera-1",
+        license: "CC-BY-4.0",
+        attribution: "Original notice",
+      },
+    ];
+    Object.assign(a.observation.provenance, { upstream });
+    Object.assign(b.observation.provenance, {
+      upstream: [{ publisher: "Second operator", license: "CC0-1.0" }],
+    });
+    const fusion = fuse(crowdRegistry, "charging.evse_status", [a, b], NOW)!;
+    const fused = fusedObservation(crowdRegistry, fusion, {
+      subject: { kind: "feature", featureId: "oc:feature:oc.example.org:c1" },
+      location: { geometry: null, extent: "none", geometryOrigin: "none", fuzziness: "exact" },
+      instanceId: "oc.example.org",
+      now: NOW,
+    });
+    expect(fused.ok).toBe(true);
+    if (!fused.ok) return;
+    const merged = (fused.value as { provenance: { mergedSources: { upstream?: unknown }[] } })
+      .provenance.mergedSources;
+    expect(merged.map((m) => m.upstream)).toEqual([
+      upstream,
+      [{ publisher: "Second operator", license: "CC0-1.0" }],
+    ]);
+    upstream[0]!.publisher = "Mutated later";
+    expect(JSON.stringify(merged)).not.toContain("Mutated later");
+  });
+
   it("writes the fused row on the canonical subject, credited and derived from its contributors", () => {
     const fusion = fuse(
       crowdRegistry,

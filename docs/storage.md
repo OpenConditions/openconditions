@@ -411,7 +411,8 @@ for each cell. `native_sources` contains only admitted native feed IDs counted i
 that cell, for source-policy filtering. Its `sources` are
 canonical parent display IDs and `contributors` are captured display credits in
 the format documented in [speed coverage](speed-coverage.md#selected-display-contributors),
-including required notices as separate credits sharing the same source ID.
+including required notices in the captured scoped licensing. Distinct captured
+credits may share a source ID.
 
 The acquisition writer captures versioned content-addressed receipts outside
 canonical record bodies; an unchanged input keeps its original receipt. Grid
@@ -426,6 +427,27 @@ A consumer credits each displayed density cell's suppliers rather than every sou
 counted elsewhere in the collection. Clients of an older producer can retain their
 existing numeric tuple parsing; missing cell metadata does not prove a cell's exact
 suppliers.
+
+### Captured credits on expanded readings
+
+Every reading in `expand=latest` includes `provenance`, a captured credit snapshot
+with `sourceId`, `attribution`, optional `upstream`, and optional `mergedSources`.
+Each merged source contains only `source`, `recordId`, `attribution` and optional
+`upstream`. The snapshot is copied from the selected observation after public
+egress, independently of the feature's own credits or current catalogue metadata.
+It contains no reporter, raw reference, origin chain, private evidence or payload.
+A fused reading retains every contributing publisher's upstream chain.
+`contributors: string[]` continues to identify native sources for selection; it is
+not historical licensing evidence.
+
+Numeric dictionary receipts likewise capture the selected observation's attribution
+and complete upstream chain. Receipt format v2 is internal; public grid/flow
+lineage wire versions are unchanged. Earlier lossy dictionary versions are treated
+as unknown rather than complete, retaining numeric values without inventing credits.
+New receipt identity includes upstream changes, and credit
+projection does not borrow current catalogue names, URLs, publishers or notices.
+Notices captured in scoped `licensing` travel with their original receipt. Existing
+receipt rows are immutable; this change does not reconstruct missing old lineage.
 
 ### Readings by stated confidence
 

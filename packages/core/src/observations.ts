@@ -1,5 +1,6 @@
 import {
   FUSED_SOURCE_IDS,
+  type Licensing,
   type PropertyEntry,
   qualifierKey,
   type Registry,
@@ -12,6 +13,9 @@ import { inBox, type Scope, scopeClauses } from "./record-filters.js";
 import { validWhilePolled, withPolledValidity } from "./validity.js";
 
 type Rec = Record<string, unknown>;
+
+/** v2 captures upstream and never borrows mutable catalogue metadata; prior receipts are incomplete. */
+export const CONTRIBUTOR_RECEIPT_VERSION = 2;
 
 /**
  * The properties that get a fused row: those a feature of a linkable kind
@@ -246,7 +250,7 @@ export interface Contributor {
   sourceId: string;
   name: string;
   url?: string;
-  spdxLicense?: string;
+  licensing?: Licensing;
   licenseUrl?: string;
   attributionText?: string;
   publisher?: { name: string; url?: string };
@@ -322,7 +326,7 @@ export async function readGrid(db: QueryRunner, q: GridQuery): Promise<Grid> {
       GROUP BY 1, 2, 3, 4, 5)
       SELECT grouped.*, receipts.contributors FROM grouped
         LEFT JOIN conditions.contributor_receipt receipts
-          ON receipts.id = grouped.contributor_receipt_id AND receipts.version = 1`,
+          ON receipts.id = grouped.contributor_receipt_id AND receipts.version = ${CONTRIBUTOR_RECEIPT_VERSION}`,
     params,
   );
   const cells = new Map<string, [number, number, number, number, number]>();

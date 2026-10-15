@@ -221,11 +221,17 @@ function readingsOf(
   stationId: string,
   point: [number, number],
   ctx: ParseContext,
+  upstream: SiteInput["upstream"],
 ): RecordDraft[] {
   if (site.has_realtime_data === false) return [];
   const updated = site.realtime_data_updated_at;
   if (updated === undefined || !Number.isFinite(Date.parse(updated))) return [];
-  const reading: ReadingInput = { stationId, at: utcInstant(new Date(updated)), point };
+  const reading: ReadingInput = {
+    stationId,
+    at: utcInstant(new Date(updated)),
+    point,
+    ...(upstream === undefined ? {} : { upstream }),
+  };
   const out: (RecordDraft | undefined)[] = occupancyDrafts(
     feed,
     reading,
@@ -289,10 +295,9 @@ export function parseParkApiV3(
       const source =
         (site.source_id === undefined ? undefined : byId.get(site.source_id)) ??
         (site.source_uid === undefined ? undefined : byUid.get(site.source_uid));
-      out.features.push(
-        siteDraft(feed, siteInput(feed, site, stationId, point, source), ctx.fetchedAt),
-      );
-      out.observations.push(...readingsOf(feed, site, stationId, point, ctx));
+      const input = siteInput(feed, site, stationId, point, source);
+      out.features.push(siteDraft(feed, input, ctx.fetchedAt));
+      out.observations.push(...readingsOf(feed, site, stationId, point, ctx, input.upstream));
     }
   }
   out.rejected = rejected;

@@ -1,3 +1,4 @@
+import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
 import type postgres from "postgres";
 
 type Sql = postgres.Sql;
@@ -69,7 +70,7 @@ export async function writeSensorObservations(
       JOIN conditions.observation_latest l ON l.subject_key = ss.subject_key
       JOIN conditions.source s
         ON s.id = l.source_id AND s.domain = 'roads' AND s.product = 'flow'
-      LEFT JOIN conditions.contributor_receipt receipt ON receipt.id = l.contributor_receipt_id AND receipt.version = 1
+      LEFT JOIN conditions.contributor_receipt receipt ON receipt.id = l.contributor_receipt_id AND receipt.version = ${CONTRIBUTOR_RECEIPT_VERSION}
       LEFT JOIN conditions.source_status st ON st.source = l.source_id
       WHERE l.property IN ('traffic.speed', 'traffic.los')
     ), fresh AS (

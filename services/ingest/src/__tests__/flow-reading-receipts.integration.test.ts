@@ -8,7 +8,12 @@ import {
   propagateSegmentSpeed,
   writeSensorObservations,
 } from "../pipeline/segment-speed.js";
-import { siteKey, writeSiteReadings } from "./helpers/flow-series.js";
+import {
+  captureFlowAttribution,
+  type SiteReading,
+  siteKey,
+  writeSiteReadings,
+} from "./helpers/flow-series.js";
 
 let db: TestDatabase;
 let sql: postgres.Sql;
@@ -43,6 +48,7 @@ afterAll(async () => {
   await db?.close();
 }, 30000);
 beforeEach(async () => {
+  heldAcquisitions.clear();
   await sql`TRUNCATE conditions.segment_speed,conditions.segment_observation,conditions.sensor_segment,conditions.road_segment,conditions.observation_latest,conditions.source,conditions.source_status CASCADE`;
   await syncSources(sql, [
     source("parent-a", "Old publisher", "Old parent notice"),
@@ -53,11 +59,22 @@ beforeEach(async () => {
     VALUES ('21:f',21,'f',ST_GeomFromText('LINESTRING(5.1 52.1,5.11 52.1)',4326),'motorway','receipts',1000,5,100,${NOW}),
     ('22:f',22,'f',ST_GeomFromText('LINESTRING(5.11 52.1,5.12 52.1)',4326),'motorway','receipts',1000,5,120,${NOW})`;
 });
+const heldAcquisitions = new Map<string, SiteReading["attribution"]>();
 async function acquire(readings: { site: string; speed: number; at: string }[]) {
+  const acquired = [];
+  for (const reading of readings) {
+    const key = JSON.stringify(reading);
+    let attribution = heldAcquisitions.get(key);
+    if (!attribution) {
+      attribution = await captureFlowAttribution(sql, "child-a");
+      heldAcquisitions.set(key, attribution);
+    }
+    acquired.push({ ...reading, attribution });
+  }
   await writeSiteReadings(
     sql,
     "child-a",
-    readings.map((r) => ({
+    acquired.map((r) => ({
       ...r,
       freeFlowKph: 100,
       geometry: { type: "Point" as const, coordinates: [5.1, 52.1] },
@@ -72,6 +89,82 @@ async function changedCatalogue() {
   await sql`UPDATE conditions.source SET credit_name='New publisher',credit_notice='New parent notice',attribution='New credit' WHERE id='parent-a'`;
   await sql`UPDATE conditions.source SET credit_notice='New child notice' WHERE id='child-a'`;
 }
+it("treats prior lossy dictionary receipts as unknown without rewriting captured history", async () => {
+  await acquire([{ site: "a", speed: 40, at: NOW }]);
+  await sql`INSERT INTO conditions.contributor_receipt(id,version,contributors) SELECT 'legacy-lossy-v1',1,contributors FROM conditions.contributor_receipt WHERE id=(SELECT contributor_receipt_id FROM conditions.observation_latest LIMIT 1)`;
+  await sql`UPDATE conditions.observation_latest SET contributor_receipt_id='legacy-lossy-v1'`;
+  const grid = await readGrid(
+    { execute: (q, p) => sql.unsafe(q, p as never) as never },
+    {
+      scope: "public",
+      property: "traffic.speed",
+      bbox: [5, 52, 5.2, 52.2],
+      cellDeg: 1,
+      since: new Date(NOW),
+      at: new Date(LATER),
+    },
+  );
+  expect(grid.cells).toEqual([[5.5, 52.5, 1, 40, 40]]);
+  expect(grid.cell_contributors).toEqual([
+    { longitude: 5.5, latitude: 52.5, native_sources: ["child-a"], lineage_complete: false },
+  ]);
+  await writeSensorObservations(sql, () => LATER);
+  const [flow] =
+    await sql`SELECT current_kph,field_lineage_complete FROM conditions.segment_observation WHERE segment_id='21:f'`;
+  expect(flow!.current_kph).toBe(40);
+  expect(flow!.field_lineage_complete.speed).toBe(false);
+  const [original] =
+    await sql`SELECT version FROM conditions.contributor_receipt WHERE id='legacy-lossy-v1'`;
+  expect(original!.version).toBe(1);
+});
+
+it("keeps numeric upstream receipts through flow selection and propagation after catalogue drift", async () => {
+  const attribution = await captureFlowAttribution(sql, "child-a");
+  const upstream = [
+    {
+      publisher: "Original road authority",
+      recordId: "measurement-1",
+      attribution: "Required upstream wording",
+      license: "CC-BY-4.0",
+    },
+  ];
+  await writeSiteReadings(
+    sql,
+    "child-a",
+    [
+      {
+        site: "a",
+        speed: 40,
+        freeFlowKph: 100,
+        at: NOW,
+        geometry: { type: "Point", coordinates: [5.1, 52.1] },
+        attribution,
+        upstream,
+      },
+    ],
+    NOW,
+  );
+  await sql`INSERT INTO conditions.sensor_segment(subject_key,segment_id,fraction,offset_m,matched_at) VALUES (${siteKey("child-a", "a")},'21:f',0.5,0,${NOW})`;
+  await changedCatalogue();
+  await writeSensorObservations(sql, () => LATER);
+  await fuseSegmentSpeed(sql, () => LATER);
+  await propagateSegmentSpeed(sql, () => LATER);
+  const rows =
+    await sql`SELECT segment_id,field_contributors,field_lineage_complete FROM conditions.segment_speed WHERE segment_id IN ('21:f','22:f') ORDER BY segment_id`;
+  expect(rows).toHaveLength(2);
+  for (const row of rows) {
+    expect(row.field_contributors.speed).toContainEqual(
+      expect.objectContaining({
+        sourceId: "parent-a",
+        publisher: { name: "Original road authority" },
+        attributionText: "Required upstream wording",
+      }),
+    );
+    expect(JSON.stringify(row.field_contributors.speed)).not.toContain("New publisher");
+    expect(row.field_lineage_complete.speed).toBe(true);
+  }
+});
+
 it("publishes captured scoped definitions independently of current catalogue policy", async () => {
   const licensing = {
     version: 1,
@@ -128,9 +221,9 @@ it("honors the captured parent and excludes unrelated current-parent notices", a
   const [row] =
     await sql`SELECT conditions.flow_credit('child-a','{"provider":"Captured publisher","license":"CC0-1.0","parentSourceId":"parent-a"}'::jsonb) AS credits`;
   expect(row!.credits).toContainEqual(
-    expect.objectContaining({ sourceId: "parent-a", name: "Old publisher" }),
+    expect.objectContaining({ sourceId: "parent-a", name: "Captured publisher" }),
   );
-  expect(row!.credits).toContainEqual({ sourceId: "parent-a", name: "Old parent notice" });
+  expect(JSON.stringify(row!.credits)).not.toContain("Old parent notice");
   expect(row!.credits.every((credit: { sourceId: string }) => credit.sourceId === "parent-a")).toBe(
     true,
   );
@@ -157,18 +250,18 @@ it("retains each acquired input receipt when only one of two sensor readings cha
   expect(measured!.contributing).toEqual(["child-a"]);
   expect(measured!.field_lineage_complete.speed).toBe(true);
   expect(measured!.field_lineage_complete.ratio).toBe(true);
-  for (const name of [
-    "Old publisher",
-    "New publisher",
-    "Old parent notice",
-    "New parent notice",
-    "Old child notice",
-    "New child notice",
-  ]) {
+  for (const name of ["Old publisher", "New publisher"]) {
     expect(measured!.field_contributors.speed).toContainEqual(
       expect.objectContaining({ sourceId: "parent-a", name }),
     );
   }
+  for (const notice of [
+    "Old parent notice",
+    "New parent notice",
+    "Old child notice",
+    "New child notice",
+  ])
+    expect(JSON.stringify(measured!.field_contributors.speed)).toContain(notice);
   const [estimated] =
     await sql`SELECT field_contributors FROM conditions.segment_speed WHERE segment_id='22:f'`;
   expect(estimated!.field_contributors.speed).toEqual(measured!.field_contributors.speed);
@@ -219,10 +312,7 @@ it("grid reads preserve acquired old credits after catalogue reparenting", async
   expect(grid.cell_contributors[0]!.contributors).toContainEqual(
     expect.objectContaining({ sourceId: "parent-a", name: "Old publisher" }),
   );
-  expect(grid.cell_contributors[0]!.contributors).toContainEqual({
-    sourceId: "parent-a",
-    name: "Old parent notice",
-  });
+  expect(JSON.stringify(grid.cell_contributors[0]!.contributors)).toContain("Old parent notice");
 });
 
 it("keeps acquired pointers and legacy nulls stable through identical polls and catalogue-only changes", async () => {
@@ -289,7 +379,15 @@ it("keeps exact native children separate even when their canonical parent is the
   await writeSiteReadings(
     sql,
     "child-b",
-    [{ site: "b", speed: 80, at: NOW, geometry: { type: "Point", coordinates: [6.1, 52.1] } }],
+    [
+      {
+        site: "b",
+        speed: 80,
+        at: NOW,
+        geometry: { type: "Point", coordinates: [6.1, 52.1] },
+        attribution: await captureFlowAttribution(sql, "child-b"),
+      },
+    ],
     NOW,
   );
   const grid = await readGrid(
@@ -331,6 +429,7 @@ it("captures a first legacy receipt only when the writer receives explicit fresh
         freeFlowKph: 100,
         at: NOW,
         geometry: { type: "Point", coordinates: [5.1, 52.1] },
+        attribution: await captureFlowAttribution(sql, "child-a"),
       },
     ],
     LATER,
@@ -350,8 +449,20 @@ it("retains known worst-LOS tie receipts and confidence when another selected LO
     sql,
     "child-a",
     [
-      { site: "a", los: "blocked", at: NOW, geometry: { type: "Point", coordinates: [5.1, 52.1] } },
-      { site: "b", los: "blocked", at: NOW, geometry: { type: "Point", coordinates: [5.1, 52.1] } },
+      {
+        site: "a",
+        los: "blocked",
+        at: NOW,
+        geometry: { type: "Point", coordinates: [5.1, 52.1] },
+        attribution: await captureFlowAttribution(sql, "child-a"),
+      },
+      {
+        site: "b",
+        los: "blocked",
+        at: NOW,
+        geometry: { type: "Point", coordinates: [5.1, 52.1] },
+        attribution: await captureFlowAttribution(sql, "child-a"),
+      },
     ],
     NOW,
   );
@@ -365,10 +476,7 @@ it("retains known worst-LOS tie receipts and confidence when another selected LO
   expect(row!.los).toBe("blocked");
   expect(row!.confidence).toBe("measured");
   expect(row!.field_sources.los).toEqual(["parent-a"]);
-  expect(row!.field_contributors.los).toContainEqual({
-    sourceId: "parent-a",
-    name: "Old child notice",
-  });
+  expect(JSON.stringify(row!.field_contributors.los)).toContain("Old child notice");
   expect(row!.field_contributors.confidence).toEqual(row!.field_contributors.los);
   expect(row!.field_lineage_complete.los).toBe(false);
   expect(row!.field_lineage_complete.confidence).toBe(false);

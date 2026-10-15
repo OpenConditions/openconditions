@@ -95,11 +95,13 @@ export interface SiteInput {
   securityFeatures?: string[];
   supervision?: "remote" | "on_site" | "control_centre" | "patrol" | "none" | "unknown";
   /** The upstream publishers an aggregator took the site from. */
-  upstream?: { publisher: string; recordId?: string; license?: string }[];
+  upstream?: import("@openconditions/model").MergedSource["upstream"];
 }
 
 /** A reading of a site, or of one of its areas. */
 export interface ReadingInput {
+  /** The upstream publishers that supplied this reading. */
+  upstream?: SiteInput["upstream"];
   stationId: string;
   area?: { vehicleType: ParkingVehicleType; userGroup: ParkingUserGroup };
   /** When the source measured it (ISO instant). */
@@ -199,7 +201,7 @@ function provenance(
     },
     ...(upstream === undefined || upstream.length === 0
       ? {}
-      : { upstream: upstream.map((u) => ({ ...u })) }),
+      : { upstream: structuredClone(upstream) }),
     privacy: { class: "authoritative" },
   };
 }
@@ -392,7 +394,7 @@ function readingDraft(
     property,
     temporality: "live",
     location: r.point === undefined ? { ...UNLOCATED } : pointLocation(r.point),
-    provenance: provenance(feed, r.stationId),
+    provenance: provenance(feed, r.stationId, r.upstream),
     freshness: freshness(feed, ctx.fetchedAt),
     subject: {
       kind: "feature",

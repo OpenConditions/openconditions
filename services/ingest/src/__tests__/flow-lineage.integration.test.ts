@@ -4,6 +4,7 @@ import { createTestDatabase, type TestDatabase } from "@openconditions/test-data
 import type postgres from "postgres";
 import { afterAll, beforeAll, expect, it } from "vitest";
 import { fuseSegmentSpeed, propagateSegmentSpeed } from "../pipeline/segment-speed.js";
+import { captureFlowAttribution } from "./helpers/flow-series.js";
 
 let db: TestDatabase;
 let sql: postgres.Sql;
@@ -11,15 +12,23 @@ const NOW = "2026-01-01T00:00:00Z";
 /** This fixture writer explicitly supplies each scalar's own source and captures at write.
  * Legacy inputs have no such assertion and deliberately never call this helper. */
 async function captureWrittenScalars(segmentId: string, source: string) {
+  const attribution = await captureFlowAttribution(sql, source);
+  const notices =
+    attribution.licensing?.bindings.flatMap((b) =>
+      b.notice ? [{ sourceId: attribution.parentSourceId ?? source, name: b.notice }] : [],
+    ) ?? [];
+  const [captured] =
+    await sql`SELECT conditions.flow_credit(${source},${sql.json(attribution)}) || ${sql.json(notices)} AS credits`;
+  const credit = captured!.credits;
   await sql`
     UPDATE conditions.segment_observation o SET field_contributors = captured.fields,
       field_sources = conditions.flow_field_sources(captured.fields),
       native_field_sources = conditions.flow_native_field_sources(captured.fields, o.source)
     FROM (SELECT segment_id, source, jsonb_build_object(
-      'speed', CASE WHEN current_kph IS NOT NULL THEN conditions.flow_credit(source) ELSE '[]'::jsonb END,
-      'freeFlow', CASE WHEN free_flow_kph IS NOT NULL THEN conditions.flow_credit(source) ELSE '[]'::jsonb END,
-      'ratio', CASE WHEN speed_ratio IS NOT NULL THEN conditions.flow_credit(source) ELSE '[]'::jsonb END,
-      'los', CASE WHEN los <> 'unknown' THEN conditions.flow_credit(source) ELSE '[]'::jsonb END,
+      'speed', CASE WHEN current_kph IS NOT NULL THEN ${sql.json(credit)} ELSE '[]'::jsonb END,
+      'freeFlow', CASE WHEN free_flow_kph IS NOT NULL THEN ${sql.json(credit)} ELSE '[]'::jsonb END,
+      'ratio', CASE WHEN speed_ratio IS NOT NULL THEN ${sql.json(credit)} ELSE '[]'::jsonb END,
+      'los', CASE WHEN los <> 'unknown' THEN ${sql.json(credit)} ELSE '[]'::jsonb END,
       'geometry', conditions.flow_osm_credit()) AS fields
       FROM conditions.segment_observation WHERE segment_id = ${segmentId} AND source = ${source}) captured
     WHERE o.segment_id = captured.segment_id AND o.source = captured.source`;
@@ -117,7 +126,9 @@ it("fallback LOS follows the speed snapshot and an unknown crowd source keeps it
   const [crowd] =
     await sql`SELECT field_sources,field_contributors FROM conditions.segment_speed WHERE segment_id='2:f'`;
   expect(crowd!.field_sources.speed).toEqual(["crowd"]);
-  expect(crowd!.field_contributors.speed).toEqual([{ sourceId: "crowd", name: "crowd" }]);
+  expect(crowd!.field_contributors.speed).toEqual([
+    { sourceId: "crowd", name: "crowd", attributionText: "crowd" },
+  ]);
 });
 
 it("tracks native, OSM-enriched and graph-fallback sensor denominators from stored reading inputs", async () => {
@@ -295,6 +306,7 @@ it("retains native child identity for every sensor field while publishing canoni
     [
       {
         site: "parent-sensor",
+        attribution: await captureFlowAttribution(sql, "child-a"),
         geometry: { type: "Point", coordinates: [5.1, 52.1] },
         at: NOW,
         speed: 50,
@@ -316,10 +328,7 @@ it("retains native child identity for every sensor field while publishing canoni
     geometry: ["openstreetmap"],
   });
   expect(row!.field_sources.speed).toEqual(["parent-a"]);
-  expect(row!.field_contributors.speed).toContainEqual({
-    sourceId: "parent-a",
-    name: "Verbatim notice",
-  });
+  expect(JSON.stringify(row!.field_contributors.speed)).toContain("Verbatim notice");
 });
 
 it("uses a new direct writer snapshot when that selected measurement changes", async () => {
@@ -393,6 +402,7 @@ it("keeps an unchanged speed receipt when a LOS heartbeat or independent LOS val
     [
       {
         site: "parent-sensor",
+        attribution: await captureFlowAttribution(sql, "child-a"),
         geometry: { type: "Point", coordinates: [5.1, 52.1] },
         at: NOW,
         los: "heavy",
@@ -417,6 +427,7 @@ it("keeps an unchanged speed receipt when a LOS heartbeat or independent LOS val
     [
       {
         site: "parent-sensor",
+        attribution: await captureFlowAttribution(sql, "child-a"),
         geometry: { type: "Point", coordinates: [5.1, 52.1] },
         at: "2026-01-01T00:02:00Z",
         los: "blocked",

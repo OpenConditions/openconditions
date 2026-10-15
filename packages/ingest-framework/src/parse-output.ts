@@ -30,6 +30,8 @@ export interface SnapshotAccounting {
 export interface StatusSubject {
   /** The station's own id: the reading's record id. */
   stationId: string;
+  /** Captured upstream publishers retained by the full parse for status-only polls. */
+  upstream?: import("@openconditions/model").MergedSource["upstream"];
   evseKey?: string;
   connectorId?: string;
   /** The station's `[lon, lat]`, which the reading is located at. */

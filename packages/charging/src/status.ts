@@ -54,6 +54,7 @@ export function statusReader(feed: ChargingFeed, ctx: ReadingContext): StatusRea
         stationId: subject.stationId,
         evseKey: subject.evseKey ?? "",
         status,
+        ...(subject.upstream === undefined ? {} : { upstream: subject.upstream }),
         ...(at === undefined ? {} : { at }),
         ...(subject.point === undefined ? {} : { point: subject.point as [number, number] }),
       };

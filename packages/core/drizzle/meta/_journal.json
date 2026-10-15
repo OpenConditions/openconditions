@@ -505,6 +505,13 @@
       "when": 1792018481228,
       "tag": "0071_rights_revoked_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1792086616184,
+      "tag": "0072_observation_upstream_receipts",
+      "breakpoints": true
     }
   ]
 }

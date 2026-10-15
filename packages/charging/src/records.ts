@@ -7,7 +7,7 @@ export type ChargingFeed = Pick<
 >;
 
 /** The upstream publishers an aggregator took a record from. */
-export type Upstream = { publisher: string; recordId?: string; license?: string }[];
+export type Upstream = NonNullable<import("@openconditions/model").MergedSource["upstream"]>;
 
 /** An instant in UTC at second precision, as the drafts carry it. */
 export function utcInstant(at: Date): string {
@@ -48,7 +48,7 @@ export function provenance(
     },
     ...(upstream === undefined || upstream.length === 0
       ? {}
-      : { upstream: upstream.map((u) => ({ ...u })) }),
+      : { upstream: structuredClone(upstream) }),
     privacy: { class: "authoritative" },
   };
 }

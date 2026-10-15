@@ -1,4 +1,8 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
+import {
+  type EgressRecord,
+  isPublicRecord,
+  type ParseOutput,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { parseParkApiV3 } from "../formats/parkapi-v3.js";
 import { fixture, mobidataFeed, parseContext } from "./helpers/parking-feed.js";
@@ -92,6 +96,27 @@ describe("parkapi-v3", () => {
       "parking.status": "closed",
     });
   });
+
+  test.each(["CC BY 4.0", "ODbL-1.0"])(
+    "captures %s upstream on every live reading and enforces public admission",
+    (license) => {
+      const doc = JSON.parse(fixture("parkapi-v3-sources.json").toString("utf8"));
+      for (const source of doc.items)
+        if (source.uid === "karlsruhe") source.attribution_license = license;
+      const out = parse(fixture("parkapi-v3-sites.json"), Buffer.from(JSON.stringify(doc)));
+      const feature = site(out, "19780")!;
+      const selected = out.observations.filter(
+        (o) => (o["subject"] as { featureId: string }).featureId === feature["id"],
+      );
+      expect(selected.length).toBeGreaterThan(0);
+      for (const reading of selected) {
+        expect((reading["provenance"] as Record<string, unknown>)["upstream"]).toEqual(
+          (feature["provenance"] as Record<string, unknown>)["upstream"],
+        );
+        expect(isPublicRecord(reading as unknown as EgressRecord)).toBe(license !== "ODbL-1.0");
+      }
+    },
+  );
 
   test("ParkAPI v3: a source without a contributor is credited by its name and licence text", () => {
     const out = both();

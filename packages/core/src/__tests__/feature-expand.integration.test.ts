@@ -70,7 +70,13 @@ async function insertReading(r: Reading): Promise<void> {
       attribution: { provider: r.source, license: r.license ?? "CC-BY-4.0" },
       ...(r.mergedSources === undefined
         ? {}
-        : { mergedSources: r.mergedSources.map((source) => ({ source })) }),
+        : {
+            mergedSources: r.mergedSources.map((source) => ({
+              source,
+              recordId: `${r.id}:${source}`,
+              attribution: { provider: source, license: r.license ?? "CC-BY-4.0" },
+            })),
+          }),
     },
   };
   const reading = {
@@ -258,6 +264,7 @@ describe("latestOfFeatures", () => {
       phenomenonTime: { instant: "2026-09-22T11:00:00.000Z" },
       validUntil: "2026-09-22T18:00:00.000Z",
       source: PUBLIC,
+      provenance: { sourceId: PUBLIC, attribution: { provider: PUBLIC, license: "CC-BY-4.0" } },
     });
     expect(latest.get(TWIN)).toEqual([expect.objectContaining({ source: RESTRICTED })]);
     expect(latest.get(LONE)).toEqual([
@@ -327,6 +334,10 @@ describe("latestOfFeatures", () => {
         result: price("1.700"),
         phenomenonTime: { instant: "2026-09-22T11:00:00.000Z" },
         source: FUSED_PUBLIC_SOURCE_ID,
+        provenance: {
+          sourceId: FUSED_PUBLIC_SOURCE_ID,
+          attribution: { provider: FUSED_PUBLIC_SOURCE_ID, license: "CC-BY-4.0" },
+        },
         contributors: [PUBLIC],
       },
     ]);

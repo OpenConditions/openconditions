@@ -208,6 +208,8 @@ export function mapOcpi(
     const zone = PUBLISHER_ZONES[feed.region] ?? loc.time_zone ?? "UTC";
     const point: [number, number] = [loc.coordinates.longitude, loc.coordinates.latitude];
 
+    const upstream =
+      loc.source === undefined ? undefined : upstreamOf(loc.source, input.sources, loc.original_id);
     const evses: (OcpiEvse & { state?: EvseState })[] = [];
     for (const evse of loc.evses) {
       const own = ownState(evse);
@@ -222,6 +224,7 @@ export function mapOcpi(
         evseKey: evse.uid,
         point,
         timeZone: zone,
+        ...(upstream === undefined ? {} : { upstream: structuredClone(upstream) }),
         ...(read === undefined
           ? {}
           : {
@@ -260,8 +263,6 @@ export function mapOcpi(
       connectors: evse.connectors.map((c) => connectorOf(c, named(evse, c))),
     }));
 
-    const upstream =
-      loc.source === undefined ? undefined : upstreamOf(loc.source, input.sources, loc.original_id);
     const keys = tariffKeys(tariffs.keys());
     const offered = new Set<string>();
     for (const tariff of tariffs.values()) {

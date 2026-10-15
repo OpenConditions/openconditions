@@ -8,6 +8,7 @@ import {
   type FusedSourceId,
   type FusionTier,
   type GrantState,
+  type MergedSource,
   type RoutingRights,
   type SourceTier,
 } from "../kernel/provenance.js";
@@ -33,6 +34,7 @@ export interface FusableObservation {
     sourceId: string;
     accessMode: string;
     attribution: Attribution;
+    upstream?: MergedSource["upstream"];
     privacy: { class: string };
   };
   freshness: { expiresAt?: string };
@@ -226,7 +228,10 @@ export function fusedObservation(
       mergedSources: contributors.map((o) => ({
         source: o.provenance.sourceId,
         recordId: o.id,
-        attribution: o.provenance.attribution,
+        attribution: structuredClone(o.provenance.attribution),
+        ...(o.provenance.upstream === undefined
+          ? {}
+          : { upstream: structuredClone(o.provenance.upstream) }),
       })),
       derivedFrom: {
         records: contributors.map((o) => ({ class: "observation", id: o.id })),

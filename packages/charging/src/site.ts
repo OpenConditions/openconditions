@@ -428,7 +428,13 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
  */
 function statusReading(
   feed: ChargingFeed,
-  r: { stationId: string; status: EvseStatus; at?: string; point?: [number, number] },
+  r: {
+    stationId: string;
+    status: EvseStatus;
+    at?: string;
+    point?: [number, number];
+    upstream?: Upstream;
+  },
   property: string,
   key: string,
   ctx: ReadingContext,
@@ -442,7 +448,7 @@ function statusReading(
     property,
     temporality: "live",
     location: r.point === undefined ? { ...UNLOCATED } : pointLocation(r.point),
-    provenance: provenance(feed, r.stationId),
+    provenance: provenance(feed, r.stationId, r.upstream),
     freshness: freshness(feed, ctx.fetchedAt),
     subject: {
       kind: "feature",
@@ -463,6 +469,7 @@ export function evseStatusDraft(
     stationId: string;
     evseKey: string;
     status: EvseStatus;
+    upstream?: Upstream;
     /** When the source last changed the status, a UTC instant; the fetch without it. */
     at?: string;
     /** The site's `[lon, lat]`; unlocated without it. */
@@ -485,6 +492,7 @@ export function connectorStatusDraft(
     evseKey: string;
     connectorId: string;
     status: EvseStatus;
+    upstream?: Upstream;
     at?: string;
     point?: [number, number];
   },

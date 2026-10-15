@@ -1,4 +1,5 @@
 import {
+  CONTRIBUTOR_RECEIPT_VERSION,
   historyRowOf,
   readingOf,
   type SeriesKey,
@@ -1006,11 +1007,12 @@ async function captureContributorReceipts(
   cache: ReceiptCache,
 ): Promise<void> {
   if (acquisitions.length === 0) return;
-  const inputs = new Map<string, { source_id: unknown; attribution: unknown }>();
+  const inputs = new Map<string, { source_id: unknown; attribution: unknown; upstream: unknown }>();
   const keys = acquisitions.map(({ provenance }) => {
     const descriptor = {
       source_id: provenance["sourceId"],
       attribution: provenance["attribution"] ?? {},
+      upstream: provenance["upstream"] ?? [],
     };
     const plain = JSON.stringify(descriptor);
     let key = cache.keys.get(plain);
@@ -1030,14 +1032,14 @@ async function captureContributorReceipts(
     return;
   }
   const captured = await tx.unsafe<{ key: string; contributors: unknown }[]>(
-    `SELECT r.key, conditions.flow_credit(r.source_id, r.attribution) AS contributors
-       FROM jsonb_to_recordset($1::text::jsonb) AS r(key text, source_id text, attribution jsonb)`,
+    `SELECT r.key, conditions.flow_credit(r.source_id, r.attribution, r.upstream) AS contributors
+       FROM jsonb_to_recordset($1::text::jsonb) AS r(key text, source_id text, attribution jsonb, upstream jsonb)`,
     [JSON.stringify([...inputs].map(([key, input]) => ({ key, ...input })))],
   );
   const receipts = captured.map(({ key, contributors }) => {
-    const id = sha256Hex(jcs({ version: 1, contributors }));
+    const id = sha256Hex(jcs({ version: CONTRIBUTOR_RECEIPT_VERSION, contributors }));
     cache.ids.set(key, id);
-    return { id, version: 1, contributors, created_at: now };
+    return { id, version: CONTRIBUTOR_RECEIPT_VERSION, contributors, created_at: now };
   });
   await insertRows(
     tx,

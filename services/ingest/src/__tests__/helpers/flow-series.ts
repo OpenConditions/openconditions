@@ -2,7 +2,8 @@
  * Readings of measurement sites for the speed-pipeline suites, written the way a
  * flow poll writes them, and the rollup rows the nightly derivations read.
  */
-import { observationId } from "@openconditions/model";
+import { captureLicensing } from "@openconditions/ingest-framework";
+import { type Attribution, observationId } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import {
   ensureObservationPartitions,
@@ -49,13 +50,8 @@ export interface SiteReading {
   /** The free-flow speed the reading's baseline carries. */
   freeFlowKph?: number;
   baselineSource?: "native" | "derived" | "osm_maxspeed";
-  attribution?: {
-    provider: string;
-    license: string;
-    licensing?: import("@openconditions/model").Licensing;
-    parentSourceId?: string;
-    childSourceId?: string;
-  };
+  attribution?: Attribution;
+  upstream?: import("@openconditions/model").MergedSource["upstream"];
   /** A lane or class channel of the site. */
   componentKey?: string;
 }
@@ -87,6 +83,7 @@ function draft(source: string, r: SiteReading, property: string, result: Rec): R
       accessMode: "bulk",
       recordId: r.site,
       attribution: r.attribution ?? { provider: "Test", license: "CC0-1.0" },
+      ...(r.upstream ? { upstream: r.upstream } : {}),
       privacy: { class: "authoritative" },
     },
     freshness: { fetchedAt: r.at },
@@ -101,6 +98,34 @@ function draft(source: string, r: SiteReading, property: string, result: Rec): R
   };
   d["id"] = observationId(source, d as Parameters<typeof observationId>[1]);
   return d;
+}
+
+/** Simulates the acquisition stamp explicitly; the production credit projection has no catalogue access. */
+export async function captureFlowAttribution(
+  sql: postgres.Sql,
+  source: string,
+): Promise<Attribution> {
+  const rows = await sql`WITH RECURSIVE ancestry AS (
+    SELECT s.*,ARRAY[s.id] AS path FROM conditions.source s WHERE s.id=${source}
+    UNION ALL SELECT p.*,a.path || p.id FROM ancestry a JOIN conditions.source p ON p.id=a.parent_source_id WHERE NOT p.id=ANY(a.path)
+  ) SELECT * FROM ancestry ORDER BY cardinality(path) DESC`;
+  const parent = rows[0];
+  const own = rows.at(-1);
+  if (!parent || !own) return { provider: source, license: "CC0-1.0" };
+  const name = parent.credit_name ?? parent.operator ?? source;
+  const licensing = captureLicensing({ id: parent.id, name, license: own.license });
+  for (const row of rows)
+    if (row.credit_notice)
+      licensing.bindings.push({ ...licensing.bindings[0]!, notice: row.credit_notice });
+  return {
+    provider: parent.attribution,
+    name,
+    license: own.license,
+    licensing,
+    ...(parent.credit_url ? { url: parent.credit_url } : {}),
+    ...(parent.id !== source ? { parentSourceId: parent.id, childSourceId: source } : {}),
+    publisher: { name: parent.operator },
+  };
 }
 
 /**
