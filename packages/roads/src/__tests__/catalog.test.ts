@@ -65,10 +65,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 88 roads feeds under their new ids", () => {
+  test("the catalogue holds the 89 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(88);
+    expect(ids).toHaveLength(89);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -169,6 +169,7 @@ describe("the roads catalogue", () => {
         "nz-nzta-events",
         "pl-gddkia-events",
         "se-trafikverket-events",
+        "se-trafikverket-situations-events",
         "se-trafikverket-flow",
         "sg-lta-events",
         "sg-lta-flow",
@@ -794,6 +795,36 @@ describe("one feed per publisher", () => {
     });
     expect(main(f.id).urls![0]).toContain("/datex2/3.1/roadworks/sit:situation");
     expect(f.posListLonLat).toBe(true);
+  });
+
+  test("Trafikverket's object-API situations leave accidents and roadworks to the DATEX feed", () => {
+    const f = feed("se-trafikverket-situations-events") as CatalogFeed & {
+      excludeMessageTypes?: string[];
+      timezone?: string;
+    };
+    expect(f.format).toBe("trafikverket");
+    expect(f.auth).toBeUndefined();
+    const m = main(f.id);
+    expect(m.method).toBe("POST");
+    expect(m.url).toBe("https://api.trafikinfo.trafikverket.se/v2/data.json");
+    expect(m.body).toContain('authenticationkey="${@se-trafikverket.api_key}"');
+    expect(m.body).toContain(
+      'objecttype="Situation" namespace="road.trafficinfo" schemaversion="1.6"',
+    );
+    const wanted = /<IN name="Deviation\.MessageType" value="([^"]+)"\/>/.exec(m.body!)![1]!;
+    expect(wanted.split(",").map((t) => t.replace("&#228;", "ä"))).toEqual([
+      "Färjor",
+      "Hinder",
+      "Restriktion",
+      "Trafikmeddelande",
+      "Viktig trafikinformation",
+    ]);
+    expect(f.excludeMessageTypes).toEqual(["Olycka", "Vägarbete"]);
+    expect(main("se-trafikverket-events").urls!.map((u) => u.split("/")[6])).toEqual([
+      "roadworks",
+      "accident",
+    ]);
+    expect(f.timezone).toBe("Europe/Stockholm");
   });
 
   test("Trafikverket flow sends the shared key in its POST body", () => {

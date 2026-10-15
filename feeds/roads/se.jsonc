@@ -2,12 +2,13 @@
   "$schema": "../schema/roads.schema.json",
   "feeds": [
     {
-      // Trafikverket's road incident/roadworks data is NOT in the object API — it's
-      // the dedicated DATEX II URL endpoint /v2/datex2/{schemaversion}/{namespace}/
-      // sit:situation (plain GET, DATEX II v3). The Situation data is split into
-      // namespaces; we pull the two coordinate-bearing road ones: roadworks
-      // (roadworks + closures, the bulk) and accident. Auth = the key as
-      // ?authenticationkey=. Trafikverket publishes posList in lon-lat order.
+      // Trafikverket's roadworks and accidents, from the dedicated DATEX II URL
+      // endpoint /v2/datex2/{schemaversion}/{namespace}/sit:situation (plain GET,
+      // DATEX II v3). The Situation data is split into namespaces; this feed pulls
+      // roadworks (roadworks + closures, the bulk) and accident, and the
+      // situations feed below takes the other message types from the object API.
+      // Auth = the key as ?authenticationkey=. Trafikverket publishes posList in
+      // lon-lat order.
       "operator": "trafikverket",
       "product": "events",
       "name": "Trafikverket (Sweden)",
@@ -28,6 +29,46 @@
         },
       },
       "posListLonLat": true,
+      "freshnessWindowSec": 900,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://data.trafikverket.se/",
+      "attribution": "Trafikverket",
+      "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+    },
+    {
+      // The rest of Trafikverket's situations, from the object API's Situation
+      // (schema 1.6 in namespace road.trafficinfo; Trafikverket switched off the
+      // older versions on 4 March 2026). The DATEX feed above already carries
+      // the accident and roadworks datasets, whose deviations are the
+      // MessageTypes "Olycka" and "Vägarbete", so this feed takes the other
+      // five: ferries (Färjor), obstacles (Hinder), restrictions (Restriktion),
+      // traffic messages (Trafikmeddelande) and important traffic information
+      // (Viktig trafikinformation). Situations from two feeds are never merged,
+      // so the split is what keeps an event from being counted twice. The
+      // query's IN filter returns a situation when any of its deviations
+      // matches, with all its deviations, so excludeMessageTypes drops the two
+      // the DATEX feed carries. The key travels in the POST body; "F&#228;rjor"
+      // is "Färjor", written as an XML character reference to keep the body
+      // ASCII.
+      "operator": "trafikverket",
+      "qualifier": "situations",
+      "product": "events",
+      "name": "Trafikverket situations: ferries, obstacles, restrictions and traffic messages (Sweden)",
+      "tier": "authoritative",
+      "format": "trafikverket",
+      "endpoints": {
+        "main": {
+          "url": "https://api.trafikinfo.trafikverket.se/v2/data.json",
+          "method": "POST",
+          "headers": { "Content-Type": "text/xml" },
+          "body": "<REQUEST><LOGIN authenticationkey=\"${@se-trafikverket.api_key}\"/><QUERY objecttype=\"Situation\" namespace=\"road.trafficinfo\" schemaversion=\"1.6\"><FILTER><IN name=\"Deviation.MessageType\" value=\"F&#228;rjor,Hinder,Restriktion,Trafikmeddelande,Viktig trafikinformation\"/></FILTER></QUERY></REQUEST>",
+          "cadenceSec": 300,
+        },
+      },
+      "excludeMessageTypes": ["Olycka", "Vägarbete"],
+      // Times other than ModifiedTime are Swedish local time, documented as
+      // carrying no offset unless stated.
+      "timezone": "Europe/Stockholm",
       "freshnessWindowSec": 900,
       "license": "CC0-1.0",
       "licenseUrl": "https://data.trafikverket.se/",
