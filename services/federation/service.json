@@ -1,0 +1,110 @@
+{
+  "id": "openconditions-federation",
+  "name": "OpenConditions Federation",
+  "version": "0.1.0",
+  "description": "Exchanges road and traffic conditions with pinned peer instances: serves this instance's actor document and signed outbox, takes peers' subscriptions and pushes to their inboxes, lands their records through the same admission as crowd reports, and keeps this instance subscribed to the peers it follows — all over the shared PostGIS `conditions` schema. Off until OPENCONDITIONS_FEDERATION_ENABLED is true; peers reach it only through a public route the operator provides (see docs/federation-onboarding.md).",
+  "author": "OpenConditions",
+  "license": "AGPL-3.0-or-later",
+  "homepage": "https://openconditions.org",
+  "documentation": "https://github.com/openconditions/openconditions/blob/main/docs/federation-onboarding.md",
+  "quality": "community-verified",
+  "container": {
+    "image": "ghcr.io/openconditions/federation",
+    "tag": "latest",
+    "expose": [4300],
+    "networkAliases": ["openconditions-federation"],
+    "environment": {
+      "PORT": "4300",
+      "HOST": "0.0.0.0"
+    },
+    "memory": "${OPENCONDITIONS_FEDERATION_MEMORY:-512m}",
+    "restart": "unless-stopped",
+    "dependsOn": [
+      {
+        "service": "postgis",
+        "condition": "service_healthy"
+      }
+    ],
+    "healthcheck": {
+      "type": "http",
+      "path": "/status",
+      "port": 4300,
+      "interval": "30s",
+      "timeout": "5s",
+      "retries": 5,
+      "startPeriod": "30s"
+    }
+  },
+  "provides": ["openconditions/federation"],
+  "ownsSchema": "conditions",
+  "ui": {
+    "category": "data"
+  },
+  "configSchema": {
+    "type": "object",
+    "properties": {
+      "DATABASE_URL": {
+        "type": "string",
+        "title": "Database URL",
+        "description": "Required. PostgreSQL/PostGIS connection URL of the shared database the ingest service writes, e.g. postgresql://postgres:<POSTGRES_PASSWORD>@postgis:5432/openmapx. The service refuses to start without it.",
+        "x-openmapx-secret": true
+      },
+      "OPENCONDITIONS_FEDERATION_ENABLED": {
+        "type": "string",
+        "title": "Federation enabled",
+        "description": "\"true\" turns federation on. Empty: off, and the federation routes answer 404.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_INSTANCE_ID": {
+        "type": "string",
+        "title": "Instance id",
+        "description": "This instance's stable id, the same value as the ingest and contributions services': the actor's instanceId must equal it, or the service refuses to start. Empty: local.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FEDERATION_ACTOR": {
+        "type": "string",
+        "title": "Actor config",
+        "description": "Required when enabled. This instance's actor config as inline JSON or a path to a JSON file: instanceId, baseUrl (the public origin peers reach the service at), operator, jurisdiction, coverage, licence, trust tier and capabilities.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FEDERATION_PEERS": {
+        "type": "string",
+        "title": "Peers config",
+        "description": "The pinned peers as an inline JSON array or a path to a JSON file: each with instanceId, actorUrl, trustTier and pinnedKeys, and optionally subscribe (what to receive by push). Empty: no peers.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FEDERATION_ARCHIVE_URL": {
+        "type": "string",
+        "title": "Archive URL",
+        "description": "Where peers fetch the static archive of history beyond their live window, an http(s) URL the operator serves the ingest's archive directory at. Empty: <baseUrl>/archive.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FETCH_TIMEOUT_MS": {
+        "type": "string",
+        "title": "Peer request timeout (ms)",
+        "description": "How long a request to a peer (its actor document, outbox, subscriptions or inbox) may take before it is abandoned. Empty: 60000.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_MAX_REDIRECTS": {
+        "type": "string",
+        "title": "Peer request redirects",
+        "description": "How many redirects a request to a peer follows. Empty: 5.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_EGRESS_ALLOWED_HOSTS": {
+        "type": "string",
+        "title": "Egress allowed private hosts",
+        "description": "Comma-separated hostnames the egress guard lets the service reach although they resolve to private addresses, e.g. a peer on the same private network. Empty: none.",
+        "default": "",
+        "x-openmapx-secret": false
+      }
+    }
+  }
+}

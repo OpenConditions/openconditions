@@ -319,3 +319,80 @@ Both operators must pin each other: a peer accepts a subscription only from an
 instance it pinned, and this instance's inbox accepts a push only from one.
 Removing `subscribe` leaves the subscription at the peer; the peer's operator,
 or a signed `DELETE /peer/subscriptions/<id>`, ends it.
+
+### Deploying it
+
+The image is `ghcr.io/openconditions/federation`, built from
+`services/federation/Dockerfile` and published with every release. It is not
+part of the OpenMapX extension (`extension.json`): OpenMapX would start it on
+every install, and gives a community service no public route, so it could
+reach no peer and no peer could reach it. An operator who federates runs it
+beside the extension's services, on the same database, and routes three
+public paths of the actor's `baseUrl` to it and to the archive:
+
+| Public path                    | Served by                                                                                |
+| ------------------------------ | ---------------------------------------------------------------------------------------- |
+| `/.well-known/openconditions/` | the federation service, port 4300: the actor document and the declared peers             |
+| `/peer/`                       | the federation service: outbox, backfill, subscriptions, stream and inbox                |
+| `/archive/`                    | the files of the ingest service's archive directory (`/data/archive` on its data volume) |
+
+The service signs and verifies against its configured `baseUrl`, not the
+request's host, so the proxy may rewrite the host but not the path. The
+stream (`/peer/stream`) is server-sent events: the proxy must not buffer it.
+With an OpenMapX install, a compose file beside it adds the service to the
+same network:
+
+```yaml
+services:
+  openconditions-federation:
+    image: ghcr.io/openconditions/federation:latest
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgis:5432/openmapx
+      OPENCONDITIONS_INSTANCE_ID: maps.example.org
+      OPENCONDITIONS_FEDERATION_ENABLED: "true"
+      OPENCONDITIONS_FEDERATION_ACTOR: /config/actor.json
+      OPENCONDITIONS_FEDERATION_PEERS: /config/peers.json
+    volumes:
+      - ./federation:/config:ro
+    networks: [openmapx]
+
+  openconditions-archive:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    command: caddy file-server --root /data/archive --listen :8080
+    volumes:
+      - openmapx-openconditions-ingest-data:/data:ro
+    networks: [openmapx]
+
+networks:
+  openmapx:
+    external: true
+
+volumes:
+  openmapx-openconditions-ingest-data:
+    external: true
+```
+
+and the public reverse proxy routes the paths, for example with Caddy:
+
+```text
+maps.example.org {
+	handle /.well-known/openconditions/* {
+		reverse_proxy openconditions-federation:4300
+	}
+	handle /peer/* {
+		reverse_proxy openconditions-federation:4300 {
+			flush_interval -1
+		}
+	}
+	handle_path /archive/* {
+		reverse_proxy openconditions-archive:8080
+	}
+}
+```
+
+Use the network and volume names of the install (`docker network ls`,
+`docker volume ls`), and set the same `OPENCONDITIONS_INSTANCE_ID` on the
+ingest and contributions services. The service writes nothing to disk: its
+signing keys live in the database.

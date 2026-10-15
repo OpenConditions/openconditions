@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 
 interface Property {
@@ -49,7 +49,23 @@ function defaults(manifest: Manifest, keys: string[]): Record<string, unknown> {
 
 const repo = new URL("../../", import.meta.url);
 
-/** A service's directory and those of the workspace packages it depends on. */
+/** Each workspace service's directory, by its package name. */
+const serviceDirs = new Map(
+  readdirSync(servicesDir, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .flatMap((entry) => {
+      const file = new URL(`${entry.name}/package.json`, servicesDir);
+      if (!existsSync(file)) return [];
+      const { name } = JSON.parse(readFileSync(file, "utf8")) as { name: string };
+      return [[name, `services/${entry.name}`] as const];
+    }),
+);
+
+/**
+ * A service's directory and those of the workspace packages it depends on;
+ * a service it bundles (the federation service's contributions API) is read
+ * from its own directory.
+ */
 function sourceRoots(dir: string): string[] {
   const { dependencies } = JSON.parse(
     readFileSync(new URL(`services/${dir}/package.json`, repo), "utf8"),
@@ -58,7 +74,7 @@ function sourceRoots(dir: string): string[] {
     `services/${dir}`,
     ...Object.keys(dependencies)
       .filter((name) => name.startsWith("@openconditions/"))
-      .map((name) => `packages/${name.slice("@openconditions/".length)}`),
+      .map((name) => serviceDirs.get(name) ?? `packages/${name.slice("@openconditions/".length)}`),
   ];
 }
 
@@ -150,7 +166,9 @@ describe("service manifests on OpenMapX's config model", () => {
    * What a shared package reads on a path the service never takes. The
    * contributions API fetches nothing through the egress guard or the
    * downloader, writes single records rather than a feed's poll, and runs no
-   * rollups.
+   * rollups. The federation service bundles the contributions API for its
+   * inbox only: it issues no grants, serves no reviewer, lands no crowd
+   * report of its own and runs no sweep, and downloads no feed.
    */
   const unreached: Record<string, readonly string[]> = {
     ingest: [],
@@ -165,9 +183,24 @@ describe("service manifests on OpenMapX's config model", () => {
       "OPENCONDITIONS_ROLLUP_DAILY_DAYS",
       "OPENCONDITIONS_ROLLUP_HOURLY_DAYS",
     ],
+    federation: [
+      "OPENCONDITIONS_ALLOW_POLICE_CATEGORY",
+      "OPENCONDITIONS_CROSS_VALIDATE_SWEEP",
+      "OPENCONDITIONS_CROWD_LICENSE",
+      "OPENCONDITIONS_CROWD_SOURCE_URI",
+      "OPENCONDITIONS_DOWNLOAD_MAX_BYTES",
+      "OPENCONDITIONS_DOWNLOAD_TIMEOUT_MS",
+      "OPENCONDITIONS_GRANT_SECRET",
+      "OPENCONDITIONS_ISSUER_NAME",
+      "OPENCONDITIONS_MAX_FEED_BYTES",
+      "OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL",
+      "OPENCONDITIONS_REVIEWER_TOKEN",
+      "OPENCONDITIONS_ROLLUP_DAILY_DAYS",
+      "OPENCONDITIONS_ROLLUP_HOURLY_DAYS",
+    ],
   };
 
-  test.each(["ingest", "contributions-api"])(
+  test.each(["ingest", "contributions-api", "federation"])(
     "%s: every variable its code reads is a config field or set in its environment",
     (dir) => {
       const m = manifest(dir);
@@ -281,5 +314,19 @@ describe("service manifests on OpenMapX's config model", () => {
       OPENCONDITIONS_ALLOW_POLICE_CATEGORY: "",
     };
     expect(defaults(m, Object.keys(expected))).toEqual(expected);
+  });
+
+  test("federation: off by default, its database URL the only secret", () => {
+    const m = manifest("federation");
+    expect(m.container.environment).toEqual({ PORT: "4300", HOST: "0.0.0.0" });
+    expect(secrets(m)).toEqual(["DATABASE_URL"]);
+    expect(properties(m)["OPENCONDITIONS_FEDERATION_ENABLED"]?.default).toBe("");
+  });
+
+  test("federation: not in the extension, which would start it on every install unreachable", () => {
+    const extension = JSON.parse(readFileSync(new URL("extension.json", repo), "utf8")) as {
+      services: { service: string }[];
+    };
+    expect(extension.services.map((s) => s.service)).not.toContain(manifest("federation").id);
   });
 });
