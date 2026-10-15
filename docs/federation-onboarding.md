@@ -267,3 +267,55 @@ technical machinery:
   an actual peer operator.
 - Only then: configure the peer, enable live exchange, and schedule the daily
   registry sync against the production registry.
+
+## 7. Running the federation service
+
+The federation service (`services/federation`, port 4300) is off until
+`OPENCONDITIONS_FEDERATION_ENABLED=true`. Enabled, it fails its boot on any of
+these not being right:
+
+| Variable                                | Meaning                                                                                                                                                                                |
+| --------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENCONDITIONS_INSTANCE_ID`            | This instance's id, the one the ingest and contributions services stamp on every record. It must equal the actor's `instanceId`: a peer admits only records of the instance it pinned. |
+| `OPENCONDITIONS_FEDERATION_ACTOR`       | The actor config (inline JSON or a path): `instanceId`, `baseUrl` (the public origin peers reach the service at), operator, coverage, licence, tier and capabilities.                  |
+| `OPENCONDITIONS_FEDERATION_PEERS`       | The peers config (inline JSON array or a path): one record per peer with its `instanceId`, `actorUrl`, `trustTier` and `pinnedKeys` (§3), and none naming this instance.               |
+| `OPENCONDITIONS_FEDERATION_ARCHIVE_URL` | Where peers fetch the static archive (default `<baseUrl>/archive`, which the operator serves; see [archive.md](./archive.md)).                                                         |
+
+A peer record with `subscribe` makes this instance a subscriber of that peer:
+
+```json
+{
+  "instanceId": "openmapx-de",
+  "actorUrl": "https://de.example.org/.well-known/openconditions/actor.json",
+  "trustTier": 1,
+  "pinnedKeys": ["z6Mk…"],
+  "subscribe": {
+    "filter": {
+      "classes": ["situation", "observation"],
+      "kinds": ["closure", "incident", "roadworks"],
+      "properties": ["traffic.los", "charging.evse_status"],
+      "bbox": [5.8, 47.2, 15.1, 55.1],
+      "sourceLiveness": true
+    },
+    "priorityOnly": false
+  }
+}
+```
+
+At boot and hourly after, the service verifies each peer's actor document
+against its pin, keeps what schemas it runs, and makes sure each peer it
+subscribes to holds a webhook subscription pushing to this instance's
+`<baseUrl>/peer/inbox` with that filter: it creates one, patches one whose
+filter differs, and re-enables one the peer disabled after failed deliveries.
+The peer advances its cursor only over pages this inbox accepted, so a push
+resumes where it stalled. The filter must be one a peer pushes: bounded (a
+bbox, kinds, domains, properties, privacy classes or a maximum age), naming
+the properties of any observations, and, with `properties`, naming the kinds
+of the situations, features and offers it wants. `sourceLiveness` asks for the
+liveness of the peer's sources, so their unchanged readings stay current
+here. The subscription is not served in the public peers document.
+
+Both operators must pin each other: a peer accepts a subscription only from an
+instance it pinned, and this instance's inbox accepts a push only from one.
+Removing `subscribe` leaves the subscription at the peer; the peer's operator,
+or a signed `DELETE /peer/subscriptions/<id>`, ends it.

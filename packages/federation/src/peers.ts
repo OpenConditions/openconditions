@@ -11,6 +11,9 @@
  */
 import type { ActorCoverage, ActorDocument } from "./actor.js";
 import { rawEd25519FromMultibase } from "./multibase.js";
+import type { PeerSubscribe } from "./peer-subscribe.js";
+import type { RecordFilter } from "./record-filter.js";
+import { validateSubscriptionShape } from "./subscriptions.js";
 
 export interface PeerRecord {
   instanceId: string;
@@ -32,6 +35,13 @@ export interface PeerRecord {
    * absent (or empty) means CA-trust only.
    */
   mtlsFingerprints?: string[];
+  /**
+   * What this instance asks the peer to push to its inbox, kept subscribed
+   * by the federation service ({@link ensurePeerSubscription}). Absent: this
+   * instance does not subscribe to the peer. Never served in the public
+   * peers document.
+   */
+  subscribe?: PeerSubscribe;
 }
 
 export interface PinVerification {
@@ -143,6 +153,31 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
         }
       }
       result.mtlsFingerprints = fingerprints as string[];
+    }
+    if (record["subscribe"] !== undefined) {
+      const subscribe = record["subscribe"];
+      if (subscribe === null || typeof subscribe !== "object" || Array.isArray(subscribe)) {
+        fail(index, "subscribe must be an object");
+      }
+      const { filter = {}, priorityOnly } = subscribe as Record<string, unknown>;
+      if (priorityOnly !== undefined && typeof priorityOnly !== "boolean") {
+        fail(index, "subscribe.priorityOnly must be a boolean");
+      }
+      // What the peer will accept of a pushed subscription.
+      try {
+        validateSubscriptionShape({
+          filter: filter as RecordFilter,
+          deliveryMode: "sse",
+          inboxUrl: null,
+          priorityOnly: priorityOnly ?? false,
+        });
+      } catch (err) {
+        fail(index, `subscribe.filter: ${(err as Error).message}`);
+      }
+      result.subscribe = {
+        filter: filter as RecordFilter,
+        ...(priorityOnly === undefined ? {} : { priorityOnly }),
+      };
     }
     return result;
   });

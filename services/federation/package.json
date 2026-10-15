@@ -23,6 +23,7 @@
     "postgres": "^3.4.9"
   },
   "devDependencies": {
+    "@openconditions/storage": "workspace:*",
     "@openconditions/test-database": "workspace:*",
     "@types/node": "^26.6.5",
     "testcontainers": "^12.2.0",

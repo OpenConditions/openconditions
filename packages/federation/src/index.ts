@@ -103,6 +103,8 @@ export {
   recordPeerFailure,
   setEffectiveTierUntil,
 } from "./peer-health.js";
+export type { EnsureSubscriptionOutcome, PeerSubscribe } from "./peer-subscribe.js";
+export { ensurePeerSubscription, peerRouteUrl } from "./peer-subscribe.js";
 export type { PeerRecord, PinVerification } from "./peers.js";
 export { loadPeers, verifyActorAgainstPin } from "./peers.js";
 export type { DeliverWebhookOptions, DeliverWebhookOutcome, WebhookCycleResult } from "./push.js";

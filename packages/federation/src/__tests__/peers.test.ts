@@ -111,6 +111,27 @@ describe("loadPeers", () => {
     expect(() => loadPeers([{ ...valid, mtlsFingerprints: "AA:BB" }])).toThrow(TypeError);
     expect(() => loadPeers([{ ...valid, mtlsFingerprints: [""] }])).toThrow(TypeError);
   });
+
+  it("parses what this instance subscribes to, refusing what a peer would not push", async () => {
+    const key = await generateInstanceKey(NOW);
+    const valid = {
+      instanceId: "a",
+      actorUrl: ACTOR_URL,
+      trustTier: 1 as const,
+      pinnedKeys: [key.publicKeyMultibase],
+    };
+    const subscribe = { filter: { kinds: ["closure"], sourceLiveness: true }, priorityOnly: true };
+    expect(loadPeers([{ ...valid, subscribe }])[0]!.subscribe).toEqual(subscribe);
+    expect(loadPeers([valid])[0]!.subscribe).toBeUndefined();
+    for (const bad of [
+      "all",
+      { filter: {} },
+      { filter: { classes: ["observation"] } },
+      { filter: { kinds: ["closure"] }, priorityOnly: "no" },
+    ]) {
+      expect(() => loadPeers([{ ...valid, subscribe: bad }])).toThrow(TypeError);
+    }
+  });
 });
 
 describe("verifyActorAgainstPin", () => {

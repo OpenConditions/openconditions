@@ -9,14 +9,13 @@ import {
   loadActiveKeys,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
-  refreshPeerCapabilities,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import { guardedFetch, requireCredential } from "@openconditions/ingest-framework";
-import { schemaVersions } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
 import { resolveFederationSettings } from "./config.js";
+import { refreshPeers } from "./peering.js";
 import { build } from "./server.js";
 
 const PORT = parseInt(process.env["PORT"] || "4300", 10);
@@ -28,7 +27,7 @@ const WEBHOOK_CYCLE_MS = 5_000;
 /** How often the retention cron trims the append-only outbox journal. */
 const PRUNE_CYCLE_MS = OUTBOX_PRUNE_INTERVAL_HOURS * 60 * 60 * 1000;
 
-/** How often each pinned peer's capabilities are re-verified. */
+/** How often each pinned peer's capabilities are re-verified and its subscription mended. */
 const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
 
 async function boot() {
@@ -106,30 +105,41 @@ async function boot() {
   };
   const pruneTimer = setInterval(() => void runPrune(), PRUNE_CYCLE_MS);
 
-  // Peer capabilities: what each pinned peer's actor document advertises,
-  // verified against its pin and negotiated, at boot and hourly after. Its
-  // records are admitted against them; a peer not yet verified is asked to
-  // retry its inbox delivery.
+  // Peer upkeep: what each pinned peer's actor document advertises, verified
+  // against its pin and negotiated, at boot and hourly after. Its records are
+  // admitted against them; a peer not yet verified is asked to retry its
+  // inbox delivery. A peer this instance subscribes to is kept pushing to its
+  // inbox: a subscription missing, changed or disabled there is mended.
   let capabilitiesTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
-    const actor = settings.actor!;
-    const local = {
-      ...actor.capabilities,
-      schemaVersions: schemaVersions(productionRegistry()),
-    };
     const egress = guardedFetch();
+    let upkeepRunning = false;
     const refreshAll = async () => {
-      for (const peer of settings.peers) {
-        const result = await refreshPeerCapabilities(sql, peer, {
-          local,
+      if (upkeepRunning) return;
+      upkeepRunning = true;
+      try {
+        const results = await refreshPeers(sql, settings, {
           fetchImpl: egress,
           now: new Date().toISOString(),
-        }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
-        if (!result.ok) {
-          console.warn(
-            `[federation-api] capabilities of ${peer.instanceId} not refreshed: ${result.reason}`,
-          );
+        });
+        for (const { peer, capabilities, subscription } of results) {
+          if (!capabilities.ok) {
+            console.warn(
+              `[federation-api] capabilities of ${peer} not refreshed: ${capabilities.reason}`,
+            );
+          }
+          if (subscription !== undefined && !subscription.ok) {
+            console.warn(
+              `[federation-api] subscription at ${peer} not kept: ${subscription.reason}`,
+            );
+          } else if (subscription?.ok && subscription.status !== "unchanged") {
+            console.info(`[federation-api] subscription at ${peer} ${subscription.status}`);
+          }
         }
+      } catch (err) {
+        console.error("[federation-api] peer upkeep failed:", err);
+      } finally {
+        upkeepRunning = false;
       }
     };
     void refreshAll();

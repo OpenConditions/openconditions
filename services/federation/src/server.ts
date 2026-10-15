@@ -143,8 +143,10 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     return reply.type(ACTIVITY_JSON).send(JSON.stringify(doc));
   });
 
+  // What this instance subscribes to at a peer is its own business.
+  const publicPeers = settings.peers.map(({ subscribe: _subscribe, ...peer }) => peer);
   app.get(PEERS_WELL_KNOWN_PATH, async (_req, reply) => {
-    return reply.send({ peers: settings.peers });
+    return reply.send({ peers: publicPeers });
   });
 
   // One NonceStore guards replay across every signed peer request (the
