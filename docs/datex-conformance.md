@@ -112,11 +112,11 @@ network and without a cache skips it with a message.
 
 Concretely, the export is:
 
-- **NOT SRTI-profile-conformant.** DATEX II SRTI (the "Safety-Related Traffic
-  Information" profile — <https://datex2.eu/user-domains/srti/>) is a
-  specific, versioned reference profile with its own XSD constraints on top
-  of the base DATEX II v3 schemas. We have not selected a version of that
-  profile, do not vendor its schema, and do not validate against it.
+- **NOT SRTI-profile-conformant.** DATEX II SRTI (Safety-Related Traffic
+  Information — <https://datex2.eu/user-domains/srti/>) has its own
+  recommended reference profiles, subsets of the base DATEX II v3 schemas for
+  a feed of safety-related messages. This export is not such a feed, and we
+  generate no profile schema and do not validate against one (see below).
 - **NOT NAP-publication-ready.** A EU National Access Point (NAP) expects a
   feed that passes the schema/profile it registers against. Base-schema
   validity is not that, and is not something we should claim supports "NAP
@@ -163,11 +163,26 @@ about how a point-sensor reading maps onto a required linear `polyline`.
 
 The base-schema gate exists; the profile work does not:
 
-1. **Select and version the official reference profile.** Not done. Pick a
-   specific, dated release of the DATEX II v3 SRTI Recommended Reference
-   Profile from <https://datex2.eu/> (the profile, not just the base v3
-   schemas) and record which version we target. DATEX II profiles evolve;
-   "SRTI" without a version is not a checkable claim.
+1. **Publish a dedicated SRTI feed against the reference profiles.** Not
+   done. The v3 SRTI recommended reference profiles
+   (<https://docs.datex2.eu/recommended-profiles/rrp/srti/>) are eight
+   category profiles, (a) temporary slippery road to (h) exceptional weather
+   conditions, each a subset of the v3 Situation model, documented and
+   generated in the DATEX II webtool. They describe a feed of safety-related
+   messages only, not a general situation export: `/datex2/situations.xml`
+   publishes every road situation and stays "valid against the base v3.7
+   schemas, not SRTI-profile-conformant". An SRTI feed would need its own
+   route, and with it:
+   - a marker in the situation model for what is safety-related, set by
+     parsers from their source (DATEX `safetyRelatedMessage`, an operator's
+     own flag), never inferred from the type alone;
+   - a mapping from situation type and subtype to the SRTI category (a–h), so
+     each situation lands in exactly one profile or is left out;
+   - `safetyRelatedMessage` set to `true` on every record it writes;
+   - the profile schemas generated in the webtool, pinned like the base set
+     (step 2), with the release recorded: "SRTI" without a version is not a
+     checkable claim;
+   - the payload's `profileName` (and `profileVersion`) naming that profile.
 2. **Fetch the XSD set reproducibly, with pinned provenance.** Done for the
    base v3.7 and Exchange 2020.1 schemas (source URLs, retrieval date and
    checksums in `helpers/datex-schemas.ts`). The profile's XSD bundle needs
@@ -189,10 +204,11 @@ The base-schema gate exists; the profile work does not:
    validation. Fix them against real profile validation errors, not by
    guessing.
 
-Only once steps 1–4 are in place and green should the module doc comment (or
-this page) describe the export as SRTI-conformant. Until then, "valid against
-the base DATEX II v3 schemas, not SRTI-profile-conformant" is the accurate
-description, and that's what the code says.
+Only once steps 1–4 are in place and green should anything describe the
+SRTI feed as SRTI-conformant; the general export stays outside the profiles
+either way. Until then, "valid against the base DATEX II v3 schemas, not
+SRTI-profile-conformant" is the accurate description, and that's what the
+code says.
 
 ## NAP publication status (business-dev, not an engineering blocker)
 
