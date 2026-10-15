@@ -184,6 +184,29 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
   it.for<[string, Rec[]]>([
     ["every classification DATEX has a record for", everyNature],
     ["every effect record and location shape", variants],
+    [
+      "separate same-type management records",
+      [
+        situation("repeated", {
+          kind: "closure",
+          type: "closure",
+          subtype: "lane",
+          effects: [
+            effect("a", "lane_restriction", {
+              vehicleImpact: "some_lanes_closed",
+              lanesTotal: 3,
+              lanesClosed: 1,
+            }),
+            effect("b", "lane_restriction", {
+              vehicleImpact: "some_lanes_closed",
+              lanesClosed: 2,
+              compliance: "advisory",
+              validity: { status: "active", start: "2026-09-06T09:00:00Z" },
+            }),
+          ],
+        }),
+      ],
+    ],
   ])("validates %s", { timeout: 60_000 }, async ([, situations], { skip }) => {
     if (unavailable) skip(unavailable);
     const xml = situationsToDatex(situations, AT, INFO, "de");

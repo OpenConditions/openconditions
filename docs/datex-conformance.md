@@ -34,7 +34,10 @@ records carry the revision as `version`:
   (`RoadOrCarriagewayOrLaneManagement`), lane closures with their lane counts,
   contraflow, speed limits (`SpeedManagement` with the limit) and diversions
   (`ReroutingManagement`). Ended effects and effects of unknown state are left
-  out. An effect whose record would repeat the nature record is folded into it.
+  out. Only the first effect whose record repeats the nature at the same place is
+  folded into it, retaining that effect's validity, compliance and fields. Further
+  matching effects remain independent records; fields are never combined across
+  effects to synthesize a restriction.
   A nature without a record of its own leads with its first effect's record.
 - **Record ids.** A record keeps the DATEX record id it was parsed from
   (`effect.sourceRecordRef`); the nature record carries the situation id; any

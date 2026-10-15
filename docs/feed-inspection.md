@@ -148,6 +148,7 @@ public-eligible preview. It includes:
 | `unsupported_nature`, `unsupported_effect` | The current registry/emitter has no event/management-record mapping for this classification or effect. Other messages/records can survive.                          |
 | `field_not_exported`                       | A specifically instrumented field is omitted, including delay durations that cannot be represented at TraFF whole-minute precision (queue length can still travel). |
 | `field_precision_reduced`                  | TraFF rounded delay seconds to whole minutes. See [delay durations](traff.md#delay-durations).                                                                      |
+| `conflicting_effects`                      | TraFF withheld a message because same-type restrictions differ in value or context. Independently located messages can remain.                                      |
 
 ```bash
 jq '.records[] | {id: .draft.id,

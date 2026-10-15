@@ -99,6 +99,60 @@ describe("datexRecordsOf", () => {
     });
   });
 
+  it("preserves matching-nature effects separately with their own validity and compliance", () => {
+    const records = datexRecordsOf(
+      closure({
+        effects: [
+          effect("first", "closure", {
+            scope: "road",
+            compliance: "advisory",
+            validity: { status: "active", start: "2026-09-06T09:00:00Z" },
+          }),
+          effect("second", "closure", {
+            scope: "road",
+            compliance: "mandatory",
+            validity: { status: "active", start: "2026-09-06T09:30:00Z" },
+          }),
+        ],
+      }),
+      AT,
+    );
+    expect(records).toHaveLength(2);
+    expect(records[0]).toMatchObject({
+      "sit:complianceOption": "advisory",
+      "sit:validity": {
+        "com:validityTimeSpecification": { "com:overallStartTime": "2026-09-06T09:00:00Z" },
+      },
+    });
+    expect(records[1]).toMatchObject({
+      "@_id": "oc:situation:de-autobahn-events:a46#second",
+      "sit:complianceOption": "mandatory",
+      "sit:validity": {
+        "com:validityTimeSpecification": { "com:overallStartTime": "2026-09-06T09:30:00Z" },
+      },
+    });
+  });
+
+  it.each([false, true])("never borrows lane counts across same-type records (%s)", (reverse) => {
+    const effects = [
+      effect("a", "lane_restriction", {
+        vehicleImpact: "some_lanes_closed",
+        lanesTotal: 3,
+        lanesClosed: 1,
+      }),
+      effect("b", "lane_restriction", { vehicleImpact: "some_lanes_closed", lanesClosed: 2 }),
+    ];
+    if (reverse) effects.reverse();
+    const records = datexRecordsOf(closure({ subtype: "lane", effects }), AT);
+    expect(records).toHaveLength(2);
+    const impacts = records.map((r) => r["sit:impact"]);
+    expect(impacts).toContainEqual({
+      "sit:numberOfLanesRestricted": 1,
+      "sit:numberOfOperationalLanes": 2,
+    });
+    expect(impacts).toContainEqual({ "sit:numberOfLanesRestricted": 2 });
+  });
+
   it("leads with the first effect's record when the nature has no record of its own", () => {
     const records = datexRecordsOf(
       closure({ kind: "road_hazard", type: "hazard", subtype: undefined }),

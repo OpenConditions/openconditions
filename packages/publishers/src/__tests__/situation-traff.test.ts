@@ -62,6 +62,85 @@ describe("traffEventsOf", () => {
     ).toEqual(["CONSTRUCTION_ROADWORKS", "RESTRICTION_LANE_CLOSED", "RESTRICTION_SPEED_LIMIT"]);
   });
 
+  it.each([false, true])(
+    "withholds conflicting speed limits independently of order (%s)",
+    (reverse) => {
+      const effects = [60, 80].map((value) =>
+        effect(`speed-${value}`, "speed_limit", { limit: { value, unit: "km/h" } }),
+      );
+      if (reverse) effects.reverse();
+      const diagnostics: { code: string; effectId?: string }[] = [];
+      const s = situation({ effects });
+      expect(traffEventsOf(registry, s, AT, (d) => diagnostics.push(d))).toEqual([]);
+      expect(traffEventsOf(registry, s, AT)).toEqual([]);
+      expect(diagnostics.filter((d) => d.code === "conflicting_effects")).toHaveLength(2);
+    },
+  );
+
+  it("deduplicates equivalent restrictions but refuses different lane scope or windows", () => {
+    const speed = effect("a", "speed_limit", { limit: { value: 60, unit: "km/h" } });
+    expect(
+      types(
+        situation({
+          effects: [
+            speed,
+            {
+              ...speed,
+              id: "b",
+              sourceRecordRef: "upstream-b",
+              source: { path: "/other" },
+              validity: situation()["validity"],
+              limit: { unit: "km/h", value: 60 },
+            },
+          ],
+        }),
+      ),
+    ).toEqual(["CONSTRUCTION_ROADWORKS", "RESTRICTION_SPEED_LIMIT"]);
+    for (const fields of [
+      { compliance: "advisory" },
+      { laneScope: [{ index: 1 }] },
+      { validity: { status: "active", start: "2026-09-06T09:00:00Z" } },
+    ]) {
+      expect(types(situation({ effects: [speed, { ...speed, id: "b", ...fields }] }))).toEqual([]);
+    }
+  });
+
+  it("reports phase conflicts at their canonical paths and ignores ended duplicates", () => {
+    const speed = effect("a", "speed_limit", { limit: { value: 60, unit: "km/h" } });
+    const other = effect("phase-speed", "speed_limit", { limit: { value: 80, unit: "km/h" } });
+    const diagnostics: { code: string; path: string; scope: string; disposition: string }[] = [];
+    const s = situation({ effects: [speed], details: { phases: [{ effects: [other] }] } });
+    expect(traffEventsOf(registry, s, AT, (d) => diagnostics.push(d))).toEqual([]);
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "conflicting_effects",
+        path: "/details/phases/0/effects/0",
+        scope: "message",
+        disposition: "withheld",
+      }),
+    );
+    const ended = { ...other, validity: { status: "ended", end: "2026-09-06T09:00:00Z" } };
+    expect(types(situation({ effects: [speed, ended] }))).toContain("RESTRICTION_SPEED_LIMIT");
+  });
+
+  it("retains independently located effects when the main message conflicts", () => {
+    const s = situation({
+      effects: [
+        effect("a", "speed_limit", { limit: { value: 60, unit: "km/h" } }),
+        effect("b", "speed_limit", { limit: { value: 80, unit: "km/h" } }),
+        effect("elsewhere", "speed_limit", {
+          limit: { value: 40, unit: "km/h" },
+          location: { geometry: { type: "Point", coordinates: [7, 52] } },
+        }),
+      ],
+    });
+    const xml = situationsToTraff(registry, [s], AT);
+    expect(xml).toContain("#elsewhere");
+    expect(xml).toContain('speed="40"');
+    expect(xml).not.toContain('speed="60"');
+    expect(xml).not.toContain('speed="80"');
+  });
+
   it("carries a speed limit and a queue length as quantifiers, and a detour as a diversion", () => {
     const events = traffEventsOf(
       registry,

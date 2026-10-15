@@ -19,6 +19,7 @@ export interface ExportDiagnostic {
     | "missing_geometry"
     | "unsupported_nature"
     | "unsupported_effect"
+    | "conflicting_effects"
     | "effect_ended"
     | "effect_time_unknown"
     | "field_not_exported"

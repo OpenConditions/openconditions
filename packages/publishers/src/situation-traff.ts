@@ -225,6 +225,24 @@ function buildLocation(
 const hasOwnPlace = (effect: Effect) =>
   (effect.location as { geometry?: unknown } | undefined)?.geometry != null;
 
+/** Stable comparison of canonical semantics, excluding record identity/provenance.
+ * Keep unprojected fields: equal wire events can still describe different restrictions.
+ */
+function effectSemantics(effect: Effect, validity: Validity): string {
+  const { id: _id, sourceRecordRef: _ref, source: _source, ...fields } = effect;
+  const canonical = (value: unknown): unknown => {
+    if (Array.isArray(value)) return value.map(canonical);
+    if (value !== null && typeof value === "object")
+      return Object.fromEntries(
+        Object.entries(value)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([key, item]) => [key, canonical(item)]),
+      );
+    return value;
+  };
+  return JSON.stringify(canonical({ ...fields, validity: effectValidity(effect, validity) }));
+}
+
 /** The events of `effects` in force or scheduled at `at`, appended to `out`. */
 function effectEvents(
   effects: Effect[],
@@ -234,6 +252,7 @@ function effectEvents(
   diagnostics: ProjectionDiagnostics,
 ) {
   let diversion = false;
+  const byType = new Map<string, { effect: Effect; semantics: string }[]>();
   for (const effect of effects) {
     const { state } = effectStateAt(effect, validity, at);
     const path = diagnostics.effectPath(effect);
@@ -259,19 +278,29 @@ function effectEvents(
         "This effect has no TraFF event mapping in the current emitter.",
         effect,
       );
-    // Equal types alone do not make delay statements interchangeable. Preserve
-    // different duration/queue pairs; neither sum them nor borrow fields across effects.
-    if (
-      e &&
-      !out.some(
-        (o) =>
-          o.type === e.type &&
-          (e.type !== "DELAY_DELAY" ||
-            JSON.stringify(o.quantifiers) === JSON.stringify(e.quantifiers)),
-      )
-    )
-      out.push(e);
+    if (!e) continue;
+    const prior = byType.get(e.type) ?? [];
+    const semantics = effectSemantics(effect, validity);
+    prior.push({ effect, semantics });
+    byType.set(e.type, prior);
+    // Delay pairs remain independent observations (not competing restrictions).
+    if (!out.some((o) => JSON.stringify(o) === JSON.stringify(e))) out.push(e);
   }
+  let conflict = false;
+  for (const [type, entries] of byType) {
+    if (type === "DELAY_DELAY" || new Set(entries.map((e) => e.semantics)).size < 2) continue;
+    conflict = true;
+    for (const { effect } of entries)
+      diagnostics.emit(
+        "conflicting_effects",
+        "message",
+        "withheld",
+        diagnostics.effectPath(effect),
+        "This message is withheld: same-type restrictions differ in value or context and cannot be safely collapsed into one TraFF event.",
+        effect,
+      );
+  }
+  if (conflict) return [];
   if (diversion && out[0]) out[0] = { ...out[0], diversion: true };
   return out;
 }
