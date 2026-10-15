@@ -34,6 +34,10 @@ const readings = (out: { observations: RecordDraft[] }, id: number, property?: s
       (property === undefined || o["property"] === property),
   );
 
+/** The readings of measured values: all but the stations' statuses, which the list states. */
+const measured = (rs: readonly RecordDraft[]) =>
+  rs.filter((r) => r["property"] !== "device.status");
+
 /** A data document of one station's values, as the API writes them. */
 const dataOf = (values: Record<string, unknown>[], id = 1001): Buffer =>
   Buffer.from(
@@ -107,10 +111,14 @@ describe("digitraffic-weather", () => {
     const keys = (id: number) =>
       ((station(out, id)!["components"] as { key: string }[] | undefined) ?? []).map((c) => c.key);
     expect(keys(1001)).not.toContain("101");
-    // 1071 collects nothing now: its details stand in, and its lifecycle says so.
+    // Nor does it have them: KELI_3 and KELI_4 at 0 there are no sensor, not a fault.
+    expect(keys(1001)).not.toContain("105");
+    expect(keys(1001)).not.toContain("115");
+    expect(station(out, 1001)!["details"]).toMatchObject({ surfaceSensorCount: 4 });
+    // 1071 collects nothing now: its details stand in, and its lifecycle and status say so.
     expect(station(out, 1071)).toMatchObject({ lifecycle: "temporarily_closed" });
     expect(keys(1071)).toContain("101");
-    expect(readings(out, 1071)).toEqual([]);
+    expect(readings(out, 1071).map((r) => r["property"])).toEqual(["device.status"]);
     // 1174 has optical sensors only: channels, and no air values.
     expect(keys(1174)).toEqual(["176", "177", "178", "179", "186", "187", "188", "189"]);
     expect(
@@ -168,7 +176,7 @@ describe("digitraffic-weather", () => {
     ).toMatchObject({ result: { type: "quantity", value: 7.3, unit: "kg/m3" } });
   });
 
-  test("a surface state is read through the KELI table; a sensor fault is unknown", () => {
+  test("a surface state is read through the KELI table; the 0 of a sensor the station lacks is none", () => {
     const out = parse();
     const state = (id: number, key: string) =>
       readings(out, id, "road.surface_state").find((r) => subjectOf(r).componentKey === key)?.[
@@ -184,8 +192,74 @@ describe("digitraffic-weather", () => {
       value: "chemically_wet",
       vocabulary: "surface_state",
     });
-    expect(state(1030, "27")).toEqual({ type: "unknown" });
+    // 1030 reports nothing of a first sensor but its KELI_1 of 0.
+    expect(state(1030, "27")).toBeUndefined();
+    expect(
+      (station(out, 1030)!["components"] as { key: string }[]).map((c) => c.key),
+    ).not.toContain("27");
     expect(state(1030, "28")).toMatchObject({ value: "wet" });
+  });
+
+  test("salt concentration and freezing point are read only where the sensor measures a water film", () => {
+    const out = parse();
+    const keys = (id: number, property: string) =>
+      readings(out, id, property).map((r) => subjectOf(r).componentKey);
+    // 1001's sensors measure no water: their 0 g/l and 0 °C are of no solution.
+    expect(keys(1001, "road.water_film")).toEqual(["50", "51", "177", "187"]);
+    expect(keys(1001, "road.salt_concentration")).toEqual([]);
+    expect(keys(1001, "road.freezing_point")).toEqual([]);
+    // 8003's are wet and salty.
+    expect(keys(8003, "road.salt_concentration")).toEqual(["54", "55"]);
+    expect(keys(8003, "road.freezing_point")).toEqual(["10", "11"]);
+  });
+
+  test("a station's maintenance state is its device status, dated by the list's change of it", () => {
+    const out = parse();
+    const status = (id: number) => readings(out, id, "device.status");
+    expect(status(1001)).toEqual([
+      expect.objectContaining({
+        subject: { kind: "feature", featureId: featureId(1001) },
+        result: { type: "category", value: "ok", vocabulary: "device_status" },
+        phenomenonTime: { instant: "2025-10-30T07:36:31Z" },
+        aggregation: "instantaneous",
+      }),
+    ]);
+    const value = (id: number) => (status(id)[0]?.["result"] as { value?: string })?.value;
+    expect(value(1174)).toBe("ok");
+    // A repair begun and interrupted; the station still reports, under a doubt.
+    expect(value(7037)).toBe("warning");
+    // Collection removed for now.
+    expect(value(1071)).toBe("offline");
+    // No state stated: no status.
+    expect(status(1030)).toEqual([]);
+    expect(status(8003)).toEqual([]);
+  });
+
+  test("every maintenance state maps to a device status", () => {
+    const states = [
+      ["OK", "ok"],
+      ["OK_FAULT_DOUBT_CANCELLED", "ok"],
+      ["REPAIR_MAINTENANCE_DONE", "ok"],
+      ["FAULT_DOUBT", "warning"],
+      ["REPAIR_INTERRUPTED", "warning"],
+      ["FAULT_CONFIRMED", "error"],
+      ["FAULT_CONFIRMED_NOT_FIXED_IN_NEAR_FUTURE", "error"],
+      ["REPAIR_REQUEST_POSTED", "error"],
+    ] as const;
+    const list = JSON.parse(fixture("fi-digitraffic-weather-stations.json").toString("utf8")) as {
+      features: { properties: Record<string, unknown> }[];
+    };
+    const nupuri = list.features.find((f) => f.properties["id"] === 1001)!;
+    for (const [state, expected] of states) {
+      nupuri.properties["state"] = state;
+      const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(list))] });
+      expect(readings(out, 1001, "device.status")[0]?.["result"], state).toMatchObject({
+        value: expected,
+      });
+    }
+    nupuri.properties["state"] = "SOMETHING_NEW";
+    const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(list))] });
+    expect(readings(out, 1001, "device.status")).toEqual([]);
   });
 
   test("numbered surface sensors stay separate series", () => {
@@ -196,11 +270,11 @@ describe("digitraffic-weather", () => {
 
   test("values older than their property's freshness window are not read", () => {
     const out = parse();
-    // Kousa's values are eight hours old: its station stands, without readings.
+    // Kousa's values are eight hours old: its station stands, with its status alone.
     expect(station(out, 7037)).toBeDefined();
-    expect(readings(out, 7037)).toEqual([]);
+    expect(measured(readings(out, 7037))).toEqual([]);
     // An hour later the whole capture is stale.
-    expect(parse(payloads(), "2026-10-15T00:25:00Z").observations).toEqual([]);
+    expect(measured(parse(payloads(), "2026-10-15T00:25:00Z").observations)).toEqual([]);
   });
 
   test("a station the list does not name is counted as rejected", () => {
@@ -226,7 +300,7 @@ describe("digitraffic-weather", () => {
       parseContext(FETCHED),
       full.statusIndex!,
     );
-    expect(status.observations).toEqual(full.observations);
+    expect(status.observations).toEqual(measured(full.observations));
     expect(status.rejected).toBe(1);
   });
 
@@ -239,7 +313,7 @@ describe("digitraffic-weather", () => {
     const out = parse({ ...payloads(), ...broken });
     // 8003 has neither details nor values, so nothing says what it measures.
     expect(out.features.map((f) => f["id"])).toEqual([1001, 1030, 1071, 1174, 7037].map(featureId));
-    expect(out.observations).toEqual([]);
+    expect(measured(out.observations)).toEqual([]);
     expect(out.rejected).toBe(2);
   });
 
@@ -308,6 +382,32 @@ describe("digitraffic-weather", () => {
       ]);
       // Very light rain whose form the sensor cannot tell.
       expect(read([value(25, 8)]).observations[0]!["result"]).toEqual({ type: "unknown" });
+    });
+
+    test("a KELI of 0 is a fault where the sensor reports other values, and nothing where it reports none", () => {
+      const faulty = read([value(3, 1.2), value(27, 0)]).observations;
+      expect(faulty.map((o) => o["result"])).toEqual([
+        { type: "quantity", value: 1.2, unit: "Cel" },
+        { type: "unknown" },
+      ]);
+      expect(read([value(27, 0), value(5, 1.1)]).observations.map((o) => o["property"])).toEqual([
+        "road.surface_temperature",
+      ]);
+    });
+
+    test("a wet sensor's salt and freezing point are read; a dry one's are not", () => {
+      const wet = read([value(50, 0.12), value(54, 30.5), value(10, -1.9)]).observations;
+      expect(wet.map((o) => o["property"])).toEqual([
+        "road.water_film",
+        "road.salt_concentration",
+        "road.freezing_point",
+      ]);
+      const dry = read([value(50, 0), value(54, 359.8), value(10, 0), value(55, 12)]).observations;
+      // Only the first sensor is dry: the second states no water film, so its salt stands.
+      expect(dry.map((o) => [o["property"], subjectOf(o).componentKey])).toEqual([
+        ["road.water_film", "50"],
+        ["road.salt_concentration", "55"],
+      ]);
     });
 
     test("a channel the station's feature lacks is not read", () => {

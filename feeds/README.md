@@ -340,7 +340,9 @@ list as `sites` (required), each station's details as `details` (an `each`
 endpoint over the list's ids) and every station's latest values as `status`,
 which is parsed on its own between the daily lists. A value is read only
 while its property's freshness window (an hour) holds, so a station that
-stopped reporting keeps its feature and loses its readings.
+stopped reporting keeps its feature and loses its readings. The list's
+maintenance state of a station (fault doubted or confirmed, repair requested,
+interrupted or done) is its `device.status`, written with each list.
 
 The vehicles product is:
 

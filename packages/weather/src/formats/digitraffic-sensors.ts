@@ -29,12 +29,21 @@ export interface DigitrafficSensor {
    * and its number where the publisher numbers it.
    */
   channel?: { sensor: string; index?: number };
+  /**
+   * A value of the solution on the surface (its salt concentration, its
+   * freezing point), which a sensor measuring no water film does not have.
+   */
+  ofSolution?: true;
 }
 
 /**
  * KELI (road condition the station infers from a surface sensor): the
  * publisher's descriptions are dry, moist, wet, wet and salty, frost, snow,
  * ice, probably moist and salty, slushy; 0 says the sensor has a fault.
+ * KELI_3 and KELI_4 carry no descriptions of their own; their values follow
+ * KELI_1's where the station has the sensor. A station also states 0 for a
+ * numbered sensor it does not have (it reports nothing else of it): that is
+ * no sensor, not a fault.
  */
 const KELI: Readonly<Record<number, string | null>> = {
   0: null,
@@ -97,6 +106,7 @@ const surface = (
   unit: string,
   modelUnit: string | undefined,
   channel: { sensor: string; index?: number },
+  ofSolution?: true,
 ): DigitrafficSensor => ({
   id,
   name,
@@ -105,15 +115,24 @@ const surface = (
   ...(modelUnit === undefined ? { codes: KELI, vocabulary: "surface_state" } : { modelUnit }),
   aggregation: "instantaneous",
   channel,
+  ...(ofSolution ? { ofSolution } : {}),
 });
 
-/** The conductive surface sensors 1 to 4 and their values, by the publisher's id of each. */
+/**
+ * The conductive surface sensors 1 to 4 and their values, by the publisher's
+ * id of each. A sensor on a surface without water states a salt concentration
+ * and a freezing point of no solution: in the answer of 2026-10-15, readings
+ * with no water film gave a freezing point of 0.0 °C beside concentrations up
+ * to 570 g/l (saturated salt water freezes near -21 °C), while on wet sensors
+ * the two agreed (20 to 50 g/l, -4 °C).
+ */
 const NUMBERED: readonly {
   name: string;
   ids: readonly [number, number, number, number];
   property: string;
   unit: string;
   modelUnit?: string;
+  ofSolution?: true;
 }[] = [
   {
     name: "TIE",
@@ -136,6 +155,7 @@ const NUMBERED: readonly {
     property: "road.freezing_point",
     unit: "°C",
     modelUnit: "Cel",
+    ofSolution: true,
   },
   {
     name: "KOSTEUDEN_MÄÄRÄ",
@@ -151,6 +171,7 @@ const NUMBERED: readonly {
     property: "road.salt_concentration",
     unit: "g/l",
     modelUnit: "kg/m3",
+    ofSolution: true,
   },
   { name: "KELI", ids: [27, 28, 105, 115], property: "road.surface_state", unit: "***" },
 ];
@@ -241,10 +262,15 @@ export const DIGITRAFFIC_SENSORS: readonly DigitrafficSensor[] = [
   }),
   ...NUMBERED.flatMap((family) =>
     family.ids.map((id, i) =>
-      surface(id, `${family.name}_${i + 1}`, family.property, family.unit, family.modelUnit, {
-        sensor: `surface-${i + 1}`,
-        index: i + 1,
-      }),
+      surface(
+        id,
+        `${family.name}_${i + 1}`,
+        family.property,
+        family.unit,
+        family.modelUnit,
+        { sensor: `surface-${i + 1}`, index: i + 1 },
+        family.ofSolution,
+      ),
     ),
   ),
   ...OPTICAL.flatMap((family) =>

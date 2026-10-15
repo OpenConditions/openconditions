@@ -35,6 +35,37 @@ const LIFECYCLE: Readonly<Record<string, (typeof LIFECYCLES)[number]>> = {
 };
 const RETIRED = "REMOVED_PERMANENTLY";
 
+/**
+ * A station's maintenance state (Digitraffic's `state`, the Finnish
+ * maintenance system's station state) as its `device.status`. A doubted
+ * fault, and a repair begun and interrupted, leave the station reporting
+ * under a doubt; a confirmed fault, or one a repair is requested for, is an
+ * error until the repair is done or the doubt cancelled. A station that
+ * states no state gets no reading.
+ */
+const DEVICE_STATUS: Readonly<Record<string, string>> = {
+  OK: "ok",
+  OK_FAULT_DOUBT_CANCELLED: "ok",
+  REPAIR_MAINTENANCE_DONE: "ok",
+  FAULT_DOUBT: "warning",
+  REPAIR_INTERRUPTED: "warning",
+  FAULT_CONFIRMED: "error",
+  FAULT_CONFIRMED_NOT_FIXED_IN_NEAR_FUTURE: "error",
+  REPAIR_REQUEST_POSTED: "error",
+};
+
+/** A station whose collection is removed for now delivers nothing, whatever its maintenance state. */
+const OFFLINE = "REMOVED_TEMPORARILY";
+
+/** The `device.status` a station's list entry states, if any. */
+function deviceStatusOf(station: Station): string | undefined {
+  if (station.collectionStatus === OFFLINE) return "offline";
+  const state = station.state;
+  return state !== undefined && Object.hasOwn(DEVICE_STATUS, state)
+    ? DEVICE_STATUS[state]
+    : undefined;
+}
+
 /** How long after its measurement each property's value is still current: the model's freshness window. */
 const MAX_AGE_SEC: ReadonlyMap<string, number> = new Map(
   WEATHER_PROPERTIES.flatMap((p) =>
@@ -60,6 +91,9 @@ interface Station {
   point: [number, number];
   name?: string;
   collectionStatus?: string;
+  state?: string;
+  /** When the publisher last changed the station's metadata, its state among them. */
+  updatedAt?: string;
 }
 
 interface StationDetails {
@@ -101,12 +135,16 @@ function stationsOf(body: Buffer, out: Pick<ParseOutput, "rejected">): Station[]
     }
     const name = textOf(props["name"]);
     const collectionStatus = textOf(props["collectionStatus"]);
+    const state = textOf(props["state"]);
+    const updatedAt = textOf(props["dataUpdatedTime"]);
     return [
       {
         id,
         point,
         ...(name === undefined ? {} : { name }),
         ...(collectionStatus === undefined ? {} : { collectionStatus }),
+        ...(state === undefined ? {} : { state }),
+        ...(isInstant(updatedAt) ? { updatedAt } : {}),
       },
     ];
   });
@@ -216,7 +254,47 @@ function samplesOf(
       samples.set(id, [...(samples.get(id) ?? []), ...values]);
     }
   }
+  for (const [id, values] of samples) samples.set(id, withoutEmptySlots(values));
   return samples;
+}
+
+/**
+ * A station's values without the fault code it states for a numbered sensor
+ * it does not have: a sensor that reports nothing else is no sensor.
+ */
+function withoutEmptySlots(values: readonly Sample[]): Sample[] {
+  const reporting = new Set(
+    values.flatMap((s) => {
+      const sensor = sensorOf(s);
+      return sensor?.channel === undefined || isFault(sensor, s.value)
+        ? []
+        : [sensor.channel.sensor];
+    }),
+  );
+  return values.filter((s) => {
+    const sensor = sensorOf(s);
+    return (
+      sensor?.channel === undefined ||
+      !isFault(sensor, s.value) ||
+      reporting.has(sensor.channel.sensor)
+    );
+  });
+}
+
+/** Whether a value is the code its sensor states for a fault. */
+const isFault = (sensor: DigitrafficSensor, value: number): boolean =>
+  sensor.codes !== undefined && Object.hasOwn(sensor.codes, value) && sensor.codes[value] === null;
+
+/** The surface sensors of a station's values that measure no water film, so carry no solution. */
+function drySensors(values: readonly Sample[]): Set<string> {
+  return new Set(
+    values.flatMap((s) => {
+      const sensor = sensorOf(s);
+      return sensor?.property === "road.water_film" && sensor.channel !== undefined && s.value === 0
+        ? [sensor.channel.sensor]
+        : [];
+    }),
+  );
 }
 
 /** The sensor a value is of, when it is one read here and carries the sensor's own name. */
@@ -242,15 +320,17 @@ function resultOf(sensor: DigitrafficSensor, value: number): Record<string, unkn
 /**
  * The reading of one value, or undefined for a value not read: of a sensor
  * read here only, stated in its sensor's unit, not marked faulty, measured
- * within its property's freshness window of the fetch, and of a channel the
- * station's feature carries. A value whose code or name the publisher's
- * tables do not hold is counted as rejected.
+ * within its property's freshness window of the fetch, of a channel the
+ * station's feature carries, and, for a value of the surface's solution, of
+ * a sensor measuring a water film (not among `dry`). A value whose code or
+ * name the publisher's tables do not hold is counted as rejected.
  */
 function readingOf(
   feed: WeatherCatalogFeed,
   fetchedAt: string,
   subject: StationSubject,
   sample: Sample,
+  dry: ReadonlySet<string>,
   out: Pick<ParseOutput, "rejected">,
 ): RecordDraft | undefined {
   const known = DIGITRAFFIC_SENSOR_BY_ID.get(sample.sensorId);
@@ -262,6 +342,9 @@ function readingOf(
     return undefined;
   }
   if (sample.reliability === "FAULTY") return undefined;
+  if (sensor.ofSolution && sensor.channel !== undefined && dry.has(sensor.channel.sensor)) {
+    return undefined;
+  }
   if (sample.unit !== undefined && sample.unit !== sensor.unit) {
     out.rejected = (out.rejected ?? 0) + 1;
     return undefined;
@@ -310,8 +393,9 @@ function readingsOf(
       out.rejected = (out.rejected ?? 0) + 1;
       continue;
     }
+    const dry = drySensors(values);
     for (const sample of values) {
-      const draft = readingOf(feed, fetchedAt, subject, sample, out);
+      const draft = readingOf(feed, fetchedAt, subject, sample, dry, out);
       if (draft !== undefined) readings.push(draft);
     }
   }
@@ -344,7 +428,10 @@ function sensorsOf(
  * without details keeps the list's technical name. A station's channels are
  * the sensors its values name, or, without values, those its details list;
  * a station whose sensors are unknown has nothing to report and is counted
- * as rejected.
+ * as rejected. The list's maintenance state of a station, or its collection
+ * removed for now, is the station's `device.status`, dated by the list's
+ * last change of the station; the status-only parse leaves it to the next
+ * list.
  */
 export function parseDigitrafficWeather(
   feed: WeatherCatalogFeed,
@@ -401,6 +488,19 @@ export function parseDigitrafficWeather(
     index.set(station.id, [
       { stationId: station.id, point: station.point, channels: channels.map((c) => c.key) },
     ]);
+    const status = deviceStatusOf(station);
+    if (status !== undefined) {
+      out.observations.push(
+        reading(feed, ctx.fetchedAt, {
+          stationId: station.id,
+          point: station.point,
+          property: "device.status",
+          result: { type: "category", value: status, vocabulary: "device_status" },
+          measuredAt: station.updatedAt ?? ctx.fetchedAt,
+          aggregation: "instantaneous",
+        }),
+      );
+    }
   }
   out.observations.push(...readingsOf(feed, ctx.fetchedAt, index, samples, out));
   out.statusIndex = index;

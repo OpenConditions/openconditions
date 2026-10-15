@@ -53,7 +53,7 @@ Road domain, v0.1:
 - **Weather domain:** road weather stations with their current air and road-surface measurements from Fintraffic
   Digitraffic (FI): temperature, dew point, humidity, visibility, wind, precipitation, and per surface sensor the
   surface state, temperatures, freezing point, water film, salt, friction, snow and ice, each sensor its own
-  channel and series.
+  channel and series; each station's maintenance state as its `device.status`.
 - **Vehicles domain:** where Finland's state road maintenance vehicles are and what they do, from
   Digitraffic's maintenance tracking each minute: anonymous `vehicle.position` readings (the publisher names no
   vehicle) with the bearing, the plough and spreader the tasks imply and the task codes, one per vehicle: each

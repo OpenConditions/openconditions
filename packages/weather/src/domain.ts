@@ -17,7 +17,7 @@ const FORMATS: FeedFormat<WeatherCatalogFeed>[] = [
     products: WEATHER_PRODUCTS,
     produces: {
       kinds: ["weather_station", "sensor_channel"],
-      properties: [...new Set(DIGITRAFFIC_SENSORS.map((s) => s.property))],
+      properties: [...new Set(DIGITRAFFIC_SENSORS.map((s) => s.property)), "device.status"],
     },
     // The station list, each station's details, and every station's latest
     // values, which poll on their own between the daily lists.

@@ -41,8 +41,11 @@ test("every format is a source format the weather model contributes, producing t
     expect(WEATHER_SOURCE_FORMATS).toContain(id);
     expect(format.produces?.kinds).toEqual(["weather_station", "sensor_channel"]);
     for (const property of format.produces?.properties ?? []) {
+      // A station's own operating state is the field-device property every device kind shares.
+      if (property === "device.status") continue;
       expect(registry.property(property)?.domain, property).toBe("weather");
     }
+    expect(format.produces?.properties).toContain("device.status");
   }
 });
 

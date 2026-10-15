@@ -1,11 +1,16 @@
 import { buildRegistry, kernelModule, type Registry, sealRecord } from "@openconditions/model";
+import { roadsModule } from "@openconditions/model-roads";
 import { weatherModule } from "@openconditions/model-weather";
 
 let registry: Registry | undefined;
 
-/** The kernel and the weather module, which holds the station model and its source formats. */
+/**
+ * The kernel, the weather module, which holds the station model and its
+ * source formats, and the roads module, which holds `device.status`, the
+ * operating state of every field device a station is.
+ */
 export function weatherRegistry(): Registry {
-  registry ??= buildRegistry([kernelModule, weatherModule]);
+  registry ??= buildRegistry([kernelModule, weatherModule, roadsModule]);
   return registry;
 }
 
