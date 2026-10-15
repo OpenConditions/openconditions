@@ -20,7 +20,9 @@ function num(raw: unknown): number | undefined {
  * Parse the Turin 5T real-time traffic-flow feed (`opendata.5t.torino.it/get_fdt`).
  * Each `<FDT_data>` is a detector carrying inline WGS84 `lat`/`lng`, an
  * `accuracy` confidence in percent, its averaging `period` in minutes, and a
- * child `<speedflow speed=.. flow=..>` (km/h, vehicles per hour). The period
+ * child `<speedflow speed=.. flow=..>` (km/h, vehicles per hour). `lcd1` is the
+ * TMC location the detector sits on, which two detectors can share; its
+ * `offset` along that location tells them apart. The period
  * is taken to end at the document's generation time. Detectors with no
  * confidence (`accuracy=0`, published with a placeholder `speed=0`) or no
  * coordinate are skipped. The level of service is left to the baseline
@@ -49,8 +51,10 @@ export function parseTurinFlow(
   const readings: FlowReading[] = [];
   for (const fdt of getXmlChildren(root, "FDT_data")) {
     try {
-      const id = xmlText(fdt["@_lcd1"]);
-      if (!id) continue;
+      const lcd = xmlText(fdt["@_lcd1"]);
+      if (!lcd) continue;
+      const offset = xmlText(fdt["@_offset"]);
+      const id = offset ? `${lcd}-${offset}` : lcd;
       const accuracy = num(xmlText(fdt["@_accuracy"]));
       if (accuracy == null || accuracy <= 0) continue; // no confident measurement this cycle
       const lon = num(xmlText(fdt["@_lng"]));
