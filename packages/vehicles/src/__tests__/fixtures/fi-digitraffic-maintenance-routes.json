@@ -1,0 +1,210 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-10-15T07:04:48Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202662198,
+        "previousId": 202661727,
+        "sendingTime": "2026-10-15T06:51:06Z",
+        "startTime": "2026-10-15T06:51:04Z",
+        "endTime": "2026-10-15T06:54:04Z",
+        "created": "2026-10-15T06:53:34Z",
+        "tasks": ["MAINTENANCE_OF_GUIDE_SIGNS_AND_REFLECTOR_POSTS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [22.67222, 60.421212, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202662627,
+        "previousId": 202662164,
+        "sendingTime": "2026-10-15T06:53:58Z",
+        "startTime": "2026-10-15T06:53:57Z",
+        "endTime": "2026-10-15T06:56:57Z",
+        "created": "2026-10-15T06:56:37Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [26.803067, 61.386519, 0.0],
+          [26.802662, 61.386244, 0.0],
+          [26.800866, 61.385386, 0.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202662666,
+        "previousId": 202662198,
+        "sendingTime": "2026-10-15T06:54:06Z",
+        "startTime": "2026-10-15T06:54:04Z",
+        "endTime": "2026-10-15T06:57:04Z",
+        "created": "2026-10-15T06:56:37Z",
+        "tasks": ["MAINTENANCE_OF_GUIDE_SIGNS_AND_REFLECTOR_POSTS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [22.67222, 60.421212, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202662880,
+        "previousId": null,
+        "sendingTime": "2026-10-15T06:58:00Z",
+        "startTime": "2026-10-15T06:55:01Z",
+        "endTime": "2026-10-15T06:55:01Z",
+        "created": "2026-10-15T06:58:39Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": 0.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [20.874699, 69.018812, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663117,
+        "previousId": 202662627,
+        "sendingTime": "2026-10-15T06:56:58Z",
+        "startTime": "2026-10-15T06:56:57Z",
+        "endTime": "2026-10-15T06:59:57Z",
+        "created": "2026-10-15T06:59:41Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[26.800866, 61.385386, 0.0], [26.799587, 61.384773, 0.0]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663152,
+        "previousId": 202662666,
+        "sendingTime": "2026-10-15T06:57:06Z",
+        "startTime": "2026-10-15T06:57:04Z",
+        "endTime": "2026-10-15T07:00:04Z",
+        "created": "2026-10-15T06:59:41Z",
+        "tasks": ["MAINTENANCE_OF_GUIDE_SIGNS_AND_REFLECTOR_POSTS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [22.67222, 60.421212, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663611,
+        "previousId": 202663117,
+        "sendingTime": "2026-10-15T06:59:58Z",
+        "startTime": "2026-10-15T06:59:57Z",
+        "endTime": "2026-10-15T06:59:57Z",
+        "created": "2026-10-15T07:02:45Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [26.799587, 61.384773, 0.0],
+          [26.79815, 61.38408, 0.0],
+          [26.797545, 61.383693, 0.0]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663648,
+        "previousId": 202663152,
+        "sendingTime": "2026-10-15T07:00:06Z",
+        "startTime": "2026-10-15T07:00:04Z",
+        "endTime": "2026-10-15T07:00:04Z",
+        "created": "2026-10-15T07:02:45Z",
+        "tasks": ["MAINTENANCE_OF_GUIDE_SIGNS_AND_REFLECTOR_POSTS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [22.67222, 60.421212, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663765,
+        "previousId": null,
+        "sendingTime": "2026-10-15T07:00:58Z",
+        "startTime": "2026-10-15T07:00:57Z",
+        "endTime": "2026-10-15T07:00:57Z",
+        "created": "2026-10-15T07:03:46Z",
+        "tasks": ["PLOUGHING_AND_SLUSH_REMOVAL"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [28.046236, 63.244064, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663819,
+        "previousId": null,
+        "sendingTime": "2026-10-15T07:01:10Z",
+        "startTime": "2026-10-15T07:01:08Z",
+        "endTime": "2026-10-15T07:01:08Z",
+        "created": "2026-10-15T07:03:46Z",
+        "tasks": ["PATCHING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [26.798765, 61.25858, 0.0],
+          [26.79778, 61.25851, 0.0],
+          [26.796147, 61.258702, 0.0],
+          [26.793828, 61.258813, 0.0],
+          [26.791253, 61.258507, 0.0]
+        ]
+      }
+    }
+  ]
+}

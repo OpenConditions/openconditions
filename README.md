@@ -56,8 +56,8 @@ Road domain, v0.1:
   channel and series; each station's maintenance state as its `device.status`.
 - **Vehicles domain:** where Finland's state road maintenance vehicles are and what they do, from
   Digitraffic's maintenance tracking each minute: anonymous `vehicle.position` readings (the publisher names no
-  vehicle) with the bearing, the plough and spreader the tasks imply and the task codes, one per vehicle: each
-  stands until the vehicle moves on, or ten minutes from its report.
+  vehicle) with the bearing, the plough and spreader the tasks imply, the task codes and a trail of the last ten
+  minutes, one per vehicle: each stands until the vehicle moves on, or ten minutes from its report.
 - **Border domain:** land border crossings and the wait in each inspection queue, from CBP (every U.S. port on
   the Canadian and Mexican borders, by lane type and programme) and CBSA (the Canada-bound waits at the 30
   busiest crossings). Neither publishes coordinates: a vendored table places each port at its crossing's

@@ -1,0 +1,86 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-10-15T07:04:48Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202662880,
+        "time": "2026-10-15T06:55:01Z",
+        "created": "2026-10-15T06:58:39Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": 0.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [20.874699, 69.018812, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663611,
+        "time": "2026-10-15T06:59:57Z",
+        "created": "2026-10-15T07:02:45Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [26.797545, 61.383693, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663648,
+        "time": "2026-10-15T07:00:04Z",
+        "created": "2026-10-15T07:02:45Z",
+        "tasks": ["MAINTENANCE_OF_GUIDE_SIGNS_AND_REFLECTOR_POSTS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [22.67222, 60.421212, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663765,
+        "time": "2026-10-15T07:00:57Z",
+        "created": "2026-10-15T07:03:46Z",
+        "tasks": ["PLOUGHING_AND_SLUSH_REMOVAL"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [28.046236, 63.244064, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202663819,
+        "time": "2026-10-15T07:01:08Z",
+        "created": "2026-10-15T07:03:46Z",
+        "tasks": ["PATCHING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [26.791253, 61.258507, 0.0]
+      }
+    }
+  ]
+}

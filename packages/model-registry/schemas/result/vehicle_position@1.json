@@ -107,6 +107,67 @@
     "routeName": {
       "type": "string",
       "minLength": 1
+    },
+    "trail": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "const": "LineString"
+        },
+        "coordinates": {
+          "minItems": 2,
+          "type": "array",
+          "items": {
+            "anyOf": [
+              {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  }
+                ],
+                "items": false,
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "number",
+                    "minimum": -180,
+                    "maximum": 180
+                  },
+                  {
+                    "type": "number",
+                    "minimum": -90,
+                    "maximum": 90
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "items": false,
+                "minItems": 3,
+                "maxItems": 3
+              }
+            ]
+          }
+        }
+      },
+      "required": [
+        "type",
+        "coordinates"
+      ],
+      "additionalProperties": false
     }
   },
   "required": [

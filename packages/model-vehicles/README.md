@@ -5,7 +5,8 @@ domain, the `service_vehicle` feature kind (snowplows, spreaders, incident
 response and other fleets an authority tracks), and the `vehicle.position`
 property with its `vehicle_position@1` structured result. A position is about a
 `service_vehicle` the publisher names, or about its location when the
-publisher names no vehicle; its series is transient.
+publisher names no vehicle; its series is transient. A position may carry the
+vehicle's `trail`, the line of where it has just been, ending at its point.
 
 It holds definitions only and depends on `@openconditions/model` alone. The
 assembled registry that includes this module is

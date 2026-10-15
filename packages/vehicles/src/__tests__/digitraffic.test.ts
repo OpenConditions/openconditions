@@ -201,6 +201,98 @@ describe("the digitraffic format over edited trackings", () => {
   });
 });
 
+describe("the digitraffic format's trails over a paired capture", () => {
+  /** The fetch of both captures; routes since 06:54:00. */
+  const PAIRED = "2026-10-15T07:04:51Z";
+  const routesDoc = () =>
+    JSON.parse(fixture("fi-digitraffic-maintenance-routes.json").toString("utf8")) as {
+      features: { properties: Record<string, unknown> }[];
+    };
+  const parsePaired = (
+    routes: (Buffer | string)[] = [fixture("fi-digitraffic-maintenance-routes.json")],
+  ) =>
+    format.parse(
+      feed,
+      {
+        main: [fixture("fi-digitraffic-maintenance-latest-paired.json")],
+        routes: routes.map((b) => Buffer.from(b)),
+      },
+      parseContext(PAIRED),
+    );
+  const trail = (out: ParseOutput, id: string) =>
+    (value(tracking(out, id))["trail"] as { coordinates: number[][] } | undefined)?.coordinates;
+
+  test("a position's trail joins its tracking and those before it, oldest first, ending at the point", () => {
+    const out = parsePaired();
+    expect(recordIds(out)).toEqual([
+      "202662880",
+      "202663611",
+      "202663648",
+      "202663765",
+      "202663819",
+    ]);
+    // Three trackings of one vehicle setting snow poles, the first two lines.
+    expect(trail(out, "202663611")).toEqual([
+      [26.803067, 61.386519],
+      [26.802662, 61.386244],
+      [26.800866, 61.385386],
+      [26.799587, 61.384773],
+      [26.79815, 61.38408],
+      [26.797545, 61.383693],
+    ]);
+    expect(value(tracking(out, "202663611"))["point"]).toEqual({
+      type: "Point",
+      coordinates: [26.797545, 61.383693],
+    });
+    // One tracking, a line of five positions, that names none before it.
+    expect(trail(out, "202663819")).toHaveLength(5);
+    expect(sealFailures(out.observations)).toEqual([]);
+    expect(out.rejected).toBeUndefined();
+  });
+
+  test("a vehicle that stood still has no trail; a ploughing one still reads as ploughing", () => {
+    const out = parsePaired();
+    // Four trackings at one place.
+    expect(trail(out, "202663648")).toBeUndefined();
+    expect(trail(out, "202662880")).toBeUndefined();
+    expect(value(tracking(out, "202663765"))).toEqual({
+      v: 1,
+      point: { type: "Point", coordinates: [28.046236, 63.244064] },
+      activity: "plowing",
+      plowUp: false,
+    });
+  });
+
+  test("a trail reaches back ten minutes from the position and no further", () => {
+    const doc = routesDoc();
+    // The vehicle's first tracking ended 10 minutes and a second before its position.
+    doc.features.find((f) => f.properties["id"] === 202662627)!.properties["endTime"] =
+      "2026-10-15T06:49:56Z";
+    expect(trail(parsePaired([JSON.stringify(doc)]), "202663611")).toEqual([
+      [26.800866, 61.385386],
+      [26.799587, 61.384773],
+      [26.79815, 61.38408],
+      [26.797545, 61.383693],
+    ]);
+  });
+
+  test("trackings that name each other in a circle end the trail", () => {
+    const doc = routesDoc();
+    doc.features.find((f) => f.properties["id"] === 202662627)!.properties["previousId"] =
+      202663611;
+    expect(trail(parsePaired([JSON.stringify(doc)]), "202663611")).toHaveLength(6);
+  });
+
+  test("without routes, or with routes that cannot be read, the positions stand without trails", () => {
+    const bare = parsePaired([]);
+    expect(recordIds(bare)).toHaveLength(5);
+    expect(bare.observations.every((o) => !("trail" in value(o)))).toBe(true);
+    const broken = parsePaired(["<html>busy</html>", JSON.stringify({ status: 500 })]);
+    expect(broken.observations.map((o) => o["id"])).toEqual(bare.observations.map((o) => o["id"]));
+    expect(broken.rejected).toBe(2);
+  });
+});
+
 describe("the digitraffic format's edges", () => {
   test("an empty collection is no vehicle out", () => {
     const out = parse([JSON.stringify({ type: "FeatureCollection", features: [] })]);

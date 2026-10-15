@@ -17,6 +17,14 @@
                 "Accept-Encoding": "gzip"
               },
               "cadenceSec": 60
+            },
+            "routes": {
+              "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes?endFrom={utcMinute-10}&domain=state-roads",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 60
             }
           },
           "freshnessWindowSec": 600,
@@ -46,6 +54,14 @@
       "endpoints": {
         "main": {
           "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes/latest?domain=state-roads",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 60
+        },
+        "routes": {
+          "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes?endFrom={utcMinute-10}&domain=state-roads",
           "headers": {
             "Digitraffic-User": "OpenConditions/1.0",
             "Accept-Encoding": "gzip"

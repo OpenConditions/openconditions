@@ -20,6 +20,14 @@
           "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
           "cadenceSec": 60,
         },
+        // The trackings that ended in the last ten minutes, with the line
+        // each joined and the tracking before it, for each position's trail
+        // (endFrom unsaid is the last 24 hours). About 80 kB compressed.
+        "routes": {
+          "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes?endFrom={utcMinute-10}&domain=state-roads",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 60,
+        },
       },
       "freshnessWindowSec": 600,
       // The publisher's task codes, of which the position's activity and tool

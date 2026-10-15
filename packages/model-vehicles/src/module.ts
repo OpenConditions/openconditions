@@ -3,6 +3,7 @@ import {
   defineKind,
   defineProperty,
   defineResultSchema,
+  LineStringGeometry,
   type RegistryModule,
 } from "@openconditions/model";
 import { z } from "zod";
@@ -71,6 +72,12 @@ export const vehiclesModule: RegistryModule = {
         plowUp: z.boolean().optional(),
         spreaderOn: z.boolean().optional(),
         routeName: z.string().min(1).optional(),
+        /**
+         * Where the vehicle has just been, oldest first and ending at `point`:
+         * the positions it reported, joined as the publisher joins them,
+         * not matched to the road.
+         */
+        trail: LineStringGeometry.optional(),
       }),
     }),
     /*

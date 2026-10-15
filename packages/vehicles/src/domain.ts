@@ -18,7 +18,8 @@ const FORMATS: FeedFormat<VehiclesCatalogFeed>[] = [
     mayBeEmpty: true,
     // Each poll states every vehicle's latest position, so the place a vehicle left is no longer one.
     restatesTransient: true,
-    endpoints: { main: { required: true } },
+    // The latest positions; the routes behind them, for trails, are optional.
+    endpoints: { main: { required: true }, routes: { required: false } },
     parse: parseDigitrafficMaintenance,
   },
 ];

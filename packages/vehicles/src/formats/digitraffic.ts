@@ -105,6 +105,111 @@ function positionOf(geometry: unknown): [number, number] | undefined {
   }
 }
 
+/** How far back a trail reaches: the trackings that ended within this of the vehicle's latest position. */
+export const TRAIL_SEC = 600;
+
+/** The most positions a trail keeps, its newest: a vehicle reporting every second for ten minutes stays bounded. */
+const MAX_TRAIL_POSITIONS = 200;
+
+/** One tracking of the `routes` document: the one before it, when it ended and the positions it joined. */
+interface Route {
+  previousId?: string;
+  endAt: number;
+  positions: [number, number][];
+}
+
+/** A geometry's usable positions, in order, without the height Digitraffic appends. */
+function positionsOf(geometry: unknown): [number, number][] {
+  if (!isRecord(geometry) || !Array.isArray(geometry["coordinates"])) return [];
+  const coordinates = geometry["coordinates"] as unknown[];
+  switch (geometry["type"]) {
+    case "Point": {
+      const p = lonLat(coordinates);
+      return p === undefined ? [] : [p];
+    }
+    case "LineString":
+    case "MultiPoint":
+      return coordinates.flatMap((c) => {
+        const p = lonLat(c);
+        return p === undefined ? [] : [p];
+      });
+    default:
+      return [];
+  }
+}
+
+const idOf = (value: unknown): string | undefined =>
+  (typeof value === "number" || typeof value === "string") && String(value).trim() !== ""
+    ? String(value).trim()
+    : undefined;
+
+/**
+ * The trackings of the `routes` documents by id. Trails are the reading's
+ * extra: a body that cannot be read gives none and is counted as rejected,
+ * and the positions stand without trails.
+ */
+function routesOf(bodies: readonly Buffer[], out: Pick<ParseOutput, "rejected">) {
+  const routes = new Map<string, Route>();
+  for (const body of bodies) {
+    let doc: unknown;
+    try {
+      doc = jsonOf(body, "the maintenance routes document");
+    } catch {
+      out.rejected = (out.rejected ?? 0) + 1;
+      continue;
+    }
+    if (!isRecord(doc) || !Array.isArray(doc["features"])) {
+      out.rejected = (out.rejected ?? 0) + 1;
+      continue;
+    }
+    for (const feature of doc["features"]) {
+      const props = isRecord(feature) ? feature["properties"] : undefined;
+      if (!isRecord(props) || !isRecord(feature)) continue;
+      const id = idOf(props["id"]);
+      const endAt = Date.parse(typeof props["endTime"] === "string" ? props["endTime"] : "");
+      const positions = positionsOf(feature["geometry"]);
+      if (id === undefined || !Number.isFinite(endAt) || positions.length === 0) continue;
+      const previousId = idOf(props["previousId"]);
+      routes.set(id, { endAt, positions, ...(previousId === undefined ? {} : { previousId }) });
+    }
+  }
+  return routes;
+}
+
+/**
+ * Where a vehicle has just been: the positions of its latest tracking and of
+ * the trackings before it that each names (`previousId`), back to the first
+ * that ended more than `TRAIL_SEC` before `at`, oldest first and ending at
+ * `point`. Digitraffic links a tracking to the one before only while the
+ * task stays the same and the vehicle keeps reporting, so a trail starts
+ * at the last task change or silence. A tracking the routes do not hold
+ * has no trail, nor has one that stood still.
+ */
+function trailOf(
+  routes: ReadonlyMap<string, Route>,
+  trackingId: string,
+  at: number,
+  point: [number, number],
+): Record<string, unknown> | undefined {
+  const parts: [number, number][][] = [];
+  const seen = new Set<string>();
+  for (let id: string | undefined = trackingId; id !== undefined && !seen.has(id); ) {
+    seen.add(id);
+    const route = routes.get(id);
+    if (route === undefined || at - route.endAt > TRAIL_SEC * 1000) break;
+    parts.unshift(route.positions);
+    id = route.previousId;
+  }
+  if (parts.length === 0) return undefined;
+  const positions: [number, number][] = [];
+  for (const p of [...parts.flat(), point]) {
+    const last = positions.at(-1);
+    if (last === undefined || last[0] !== p[0] || last[1] !== p[1]) positions.push(p);
+  }
+  const kept = positions.slice(-MAX_TRAIL_POSITIONS);
+  return kept.length < 2 ? undefined : { type: "LineString", coordinates: kept };
+}
+
 /** One latest tracking point as an anonymous `vehicle.position` reading at its place. */
 function positionReading(
   feed: VehiclesCatalogFeed,
@@ -116,6 +221,7 @@ function positionReading(
     tasks: string[];
     bearing?: number;
     source?: string;
+    trail?: Record<string, unknown>;
   },
 ): RecordDraft {
   const geometry = { type: "Point", coordinates: [input.point[0], input.point[1]] };
@@ -140,6 +246,7 @@ function positionReading(
         point: geometry,
         ...(input.bearing === undefined ? {} : { bearingDeg: input.bearing }),
         ...readTasks(input.tasks),
+        ...(input.trail === undefined ? {} : { trail: input.trail }),
       },
     },
     phenomenonTime: { instant: utcInstant(new Date(input.at)) },
@@ -164,6 +271,10 @@ function positionReading(
  * is a vehicle that stopped reporting and is left out. A point without an
  * id, a time or a usable position is rejected and counted; a body that is no
  * feature collection fails the parse.
+ *
+ * The optional `routes` role (`/api/maintenance/v1/tracking/routes` over the
+ * last ten minutes) gives each position its trail: where the vehicle has
+ * just been, as `trailOf` joins it.
  */
 export function parseDigitrafficMaintenance(
   feed: VehiclesCatalogFeed,
@@ -172,6 +283,7 @@ export function parseDigitrafficMaintenance(
 ): ParseOutput {
   const out = emptyParseOutput();
   const fetched = Date.parse(ctx.fetchedAt);
+  const routes = routesOf(payloads["routes"] ?? [], out);
   for (const body of payloads["main"] ?? []) {
     const doc = jsonOf(body, "the maintenance tracking document");
     if (!isRecord(doc) || !Array.isArray(doc["features"])) {
@@ -198,14 +310,17 @@ export function parseDigitrafficMaintenance(
       if (fetched - at > MAX_POSITION_AGE_SEC * 1000) continue;
       const bearing = bearingOf(props["direction"]);
       const source = typeof props["source"] === "string" ? props["source"].trim() : "";
+      const trackingId = String(id).trim();
+      const trail = trailOf(routes, trackingId, at, point);
       out.observations.push(
         positionReading(feed, ctx, {
-          trackingId: String(id).trim(),
+          trackingId,
           at,
           point,
           tasks: tasksOf(props["tasks"]),
           ...(bearing === undefined ? {} : { bearing }),
           ...(source === "" ? {} : { source }),
+          ...(trail === undefined ? {} : { trail }),
         }),
       );
     }

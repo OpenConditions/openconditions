@@ -65,9 +65,15 @@ afterAll(async () => {
 
 describe("fi-digitraffic-maintenance through the pipeline", () => {
   let body = LATEST;
+  const asked: string[] = [];
   const feed = repoFeed(SOURCE) as CatalogFeed;
   const roles = createRoleState();
-  const fetch = (async () => new Response(body)) as unknown as typeof globalThis.fetch;
+  // The routes behind the positions answer none here: trails are the parser's to test.
+  const fetch = (async (input: string | URL | Request) => {
+    const url = input instanceof Request ? input.url : String(input);
+    asked.push(url);
+    return new Response(url.includes("/tracking/routes?") ? EMPTY : body);
+  }) as unknown as typeof globalThis.fetch;
   const poll = (at: string): Promise<RunResult> => {
     clock = at;
     return runSource(feed, {
@@ -96,6 +102,10 @@ describe("fi-digitraffic-maintenance through the pipeline", () => {
   it("writes each current tracking as an anonymous position, once per series", async () => {
     const first = await poll(CAPTURED);
     expect(first.error).toBeUndefined();
+    // The routes are asked for the ten minutes before the poll's minute.
+    expect(asked).toContain(
+      "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes?endFrom=2026-10-14T23:14:00Z&domain=state-roads",
+    );
     const written = await series();
     expect(written).toHaveLength(8);
     expect(written.every((s) => s.subject_kind === "location" && s.feature_id === null)).toBe(true);
