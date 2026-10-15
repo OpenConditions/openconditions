@@ -1,0 +1,132 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-10-14T23:23:58Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000001,
+        "time": "2026-10-14T23:21:00Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["PLOUGHING_AND_SLUSH_REMOVAL", "SPOT_SANDING"],
+        "direction": 359.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.507827, 65.017175, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000002,
+        "time": "2026-10-14T23:21:10Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["SALTING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.94, 60.17, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000003,
+        "time": "2026-10-14T23:21:20Z",
+        "created": "2026-10-14T23:23:58Z",
+        "direction": 12.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.95, 60.18, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000004,
+        "time": "2026-10-14T23:21:30Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["SNOW_MELTING_WITH_LASERS"],
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.96, 60.19, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000005,
+        "time": "2026-10-14T23:21:40Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["UNKNOWN"],
+        "direction": 360.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.97, 60.2, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000006,
+        "time": "2026-10-14T23:21:50Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["BRUSHING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [[24.9, 60.1, 0.0], [24.91, 60.11, 0.0]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000007,
+        "time": "2026-10-14T23:22:00Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["SALTING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [0.0, 0.0, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 900000008,
+        "time": "not a time",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["SALTING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.98, 60.21, 0.0]
+      }
+    }
+  ]
+}

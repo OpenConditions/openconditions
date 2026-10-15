@@ -40,6 +40,7 @@ feeds/
     us.jsonc
     global.jsonc
   weather/
+  vehicles/
     fi.jsonc
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
@@ -49,6 +50,7 @@ feeds/
     cameras.schema.json
     hazards.schema.json
     weather.schema.json
+    vehicles.schema.json
     credentials.schema.json
 ```
 
@@ -95,7 +97,7 @@ adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
 parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
 charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`;
 cameras: `layout` and `cameras`, in `packages/cameras/src/feed-schema.ts`; see
-[Generic layouts](#generic-layouts)) or none (fuel, hazards, weather).
+[Generic layouts](#generic-layouts)) or none (fuel, hazards, weather, vehicles).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
 relay of others' data. `freshnessWindowSec` is how old the last good poll may
@@ -334,6 +336,20 @@ endpoint over the list's ids) and every station's latest values as `status`,
 which is parsed on its own between the daily lists. A value is read only
 while its property's freshness window (an hour) holds, so a station that
 stopped reporting keeps its feature and loses its readings.
+
+The vehicles product is:
+
+| product       | what                                                      |
+| ------------- | --------------------------------------------------------- |
+| `maintenance` | where road maintenance vehicles are, and the work they do |
+
+Every vehicles format reads its publisher's own shape from `main`, so a
+vehicles feed has no mapping block. `digitraffic` (Fintraffic's maintenance
+tracking, the latest point of each tracking) is a `measurements` format whose
+answer may hold no vehicle, which is a complete empty poll, not a failure.
+Digitraffic names no vehicle, so each point is an anonymous
+`vehicle.position` reading at its location, transient and standing ten
+minutes from its report. The formats are in `packages/vehicles/src/domain.ts`.
 
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside

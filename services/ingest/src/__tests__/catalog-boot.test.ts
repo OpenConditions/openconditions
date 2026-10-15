@@ -13,7 +13,16 @@ describe("loadIngestCatalog", () => {
       86,
     );
     expect(new Set(cat.feeds.map((f) => f.domain))).toEqual(
-      new Set(["roads", "fuel", "parking", "charging", "cameras", "hazards", "weather"]),
+      new Set([
+        "roads",
+        "fuel",
+        "parking",
+        "charging",
+        "cameras",
+        "hazards",
+        "weather",
+        "vehicles",
+      ]),
     );
     expect(cat.feeds.map((f) => f.id)).toEqual(
       expect.arrayContaining([
@@ -26,6 +35,7 @@ describe("loadIngestCatalog", () => {
         "us-nws-alerts",
         "nasa-firms-viirs-fires",
         "fi-digitraffic-weather",
+        "fi-digitraffic-maintenance",
       ]),
     );
     expect(cat.disabled.map((f) => f.id)).toEqual(
@@ -71,6 +81,7 @@ describe("formatOf", () => {
       "cameras",
       "hazards",
       "weather",
+      "vehicles",
     ]);
     expect(formatOf(testFeed({ format: "datex2-measured", product: "flow" })).kind).toBe(
       "measurements",
@@ -92,6 +103,10 @@ describe("formatOf", () => {
       formatOf(testFeed({ domain: "weather", format: "digitraffic-weather", product: "weather" }))
         .kind,
     ).toBe("features");
+    expect(
+      formatOf(testFeed({ domain: "vehicles", format: "digitraffic", product: "maintenance" }))
+        .kind,
+    ).toBe("measurements");
   });
 
   it("throws for an unknown domain or format", () => {

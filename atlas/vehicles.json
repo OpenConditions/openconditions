@@ -1,0 +1,92 @@
+{
+  "files": {
+    "vehicles/fi": {
+      "$schema": "../schema/vehicles.schema.json",
+      "feeds": [
+        {
+          "operator": "digitraffic",
+          "product": "maintenance",
+          "name": "Fintraffic Digitraffic road maintenance tracking",
+          "format": "digitraffic",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes/latest?domain=state-roads",
+              "headers": {
+                "Digitraffic-User": "OpenConditions/1.0",
+                "Accept-Encoding": "gzip"
+              },
+              "cadenceSec": 60
+            }
+          },
+          "freshnessWindowSec": 600,
+          "extrasAllow": [
+            "tasks"
+          ],
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+          "terms": {
+            "url": "https://www.digitraffic.fi/en/terms-of-service/",
+            "reviewedAt": "2026-10-15"
+          },
+          "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+          "homepage": "https://www.digitraffic.fi/en/road-traffic/"
+        }
+      ]
+    }
+  },
+  "feeds": [
+    {
+      "operator": "digitraffic",
+      "product": "maintenance",
+      "name": "Fintraffic Digitraffic road maintenance tracking",
+      "format": "digitraffic",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes/latest?domain=state-roads",
+          "headers": {
+            "Digitraffic-User": "OpenConditions/1.0",
+            "Accept-Encoding": "gzip"
+          },
+          "cadenceSec": 60
+        }
+      },
+      "freshnessWindowSec": 600,
+      "extrasAllow": [
+        "tasks"
+      ],
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-15"
+      },
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+      "homepage": "https://www.digitraffic.fi/en/road-traffic/",
+      "id": "fi-digitraffic-maintenance",
+      "domain": "vehicles",
+      "region": "fi",
+      "file": "feeds/vehicles/fi.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "FI"
+        ]
+      },
+      "cadenceSec": 60,
+      "country": "FI"
+    }
+  ]
+}

@@ -43,6 +43,7 @@ COPY packages/charging/package.json packages/charging/
 COPY packages/cameras/package.json packages/cameras/
 COPY packages/hazards/package.json packages/hazards/
 COPY packages/weather/package.json packages/weather/
+COPY packages/vehicles/package.json packages/vehicles/
 COPY packages/federation/package.json packages/federation/
 COPY packages/storage/package.json packages/storage/
 COPY packages/model/package.json packages/model/
@@ -81,6 +82,7 @@ COPY packages/charging/package.json packages/charging/
 COPY packages/cameras/package.json packages/cameras/
 COPY packages/hazards/package.json packages/hazards/
 COPY packages/weather/package.json packages/weather/
+COPY packages/vehicles/package.json packages/vehicles/
 COPY packages/federation/package.json packages/federation/
 COPY packages/storage/package.json packages/storage/
 COPY packages/model/package.json packages/model/
@@ -114,6 +116,7 @@ COPY packages/charging/ packages/charging/
 COPY packages/cameras/ packages/cameras/
 COPY packages/hazards/ packages/hazards/
 COPY packages/weather/ packages/weather/
+COPY packages/vehicles/ packages/vehicles/
 COPY packages/federation/ packages/federation/
 COPY packages/storage/ packages/storage/
 COPY packages/model/ packages/model/

@@ -103,6 +103,7 @@ const BELOW_ASSEMBLY = [
   "packages/cameras/",
   "packages/hazards/",
   "packages/weather/",
+  "packages/vehicles/",
 ];
 
 /** Files whose conclusions must not depend on federation transport health. */

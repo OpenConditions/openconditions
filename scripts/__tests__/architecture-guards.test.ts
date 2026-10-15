@@ -124,6 +124,7 @@ describe("AST architecture boundaries", () => {
     "packages/cameras/src/domain.ts",
     "packages/hazards/src/domain.ts",
     "packages/hazards/src/cap/situations.ts",
+    "packages/vehicles/src/domain.ts",
   ])("keeps the assembled registry out of storage and domain packages: %s", async (path) => {
     expect(
       await violations(
@@ -240,7 +241,8 @@ describe("workspace dependency declarations", () => {
               manifest.name === "@openconditions/parking" ||
               manifest.name === "@openconditions/charging" ||
               manifest.name === "@openconditions/cameras" ||
-              manifest.name === "@openconditions/hazards") &&
+              manifest.name === "@openconditions/hazards" ||
+              manifest.name === "@openconditions/vehicles") &&
             dependency === "@openconditions/model-registry"
           ) {
             offenders.push(`${manifest.name} -> ${dependency}`);

@@ -1,0 +1,41 @@
+{
+  "$schema": "../schema/vehicles.schema.json",
+  "feeds": [
+    {
+      "operator": "digitraffic",
+      "product": "maintenance",
+      "name": "Fintraffic Digitraffic road maintenance tracking",
+      "tier": "authoritative",
+      "format": "digitraffic",
+      // The latest point of every maintenance vehicle tracking that ended in
+      // the last hour, from the contractors' systems through the Finnish
+      // Transport Infrastructure Agency's Harja. The data is renewed about
+      // every minute and cached for 60 seconds. Only the state roads domain:
+      // the municipal domains have published nothing since 2022. Without
+      // accepted compression the API answers 406, and the user header raises
+      // its per-IP limit.
+      "endpoints": {
+        "main": {
+          "url": "https://tie.digitraffic.fi/api/maintenance/v1/tracking/routes/latest?domain=state-roads",
+          "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
+          "cadenceSec": 60,
+        },
+      },
+      "freshnessWindowSec": 600,
+      // The publisher's task codes, of which the position's activity and tool
+      // flags take only the winter ones.
+      "extrasAllow": ["tasks"],
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      // The tracking is Fintraffic open data of the same API, so the review
+      // records evidence and overrides nothing.
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-15",
+      },
+      "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "homepage": "https://www.digitraffic.fi/en/road-traffic/",
+      "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+    },
+  ],
+}

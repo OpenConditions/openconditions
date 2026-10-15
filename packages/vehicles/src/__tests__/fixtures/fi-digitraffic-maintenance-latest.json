@@ -1,0 +1,182 @@
+{
+  "type": "FeatureCollection",
+  "dataUpdatedTime": "2026-10-14T23:23:58Z",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202634237,
+        "time": "2026-10-14T22:37:54Z",
+        "created": "2026-10-14T22:41:53Z",
+        "tasks": ["LINE_SANDING"],
+        "direction": 54.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [26.568425, 67.412968, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202634372,
+        "time": "2026-10-14T22:45:20Z",
+        "created": "2026-10-14T22:48:54Z",
+        "tasks": ["OTHER"],
+        "direction": 0.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [27.046047, 63.556147, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202634841,
+        "time": "2026-10-14T23:09:58Z",
+        "created": "2026-10-14T23:12:57Z",
+        "tasks": ["ROAD_STATE_CHECKING"],
+        "direction": 0.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [23.976351, 61.481002, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202634992,
+        "time": "2026-10-14T23:18:21Z",
+        "created": "2026-10-14T23:21:58Z",
+        "tasks": ["LEVELLING_OF_ROAD_SHOULDERS"],
+        "direction": 288.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [22.046154, 60.541165, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635001,
+        "time": "2026-10-14T23:19:22Z",
+        "created": "2026-10-14T23:21:58Z",
+        "tasks": ["LEVELLING_OF_ROAD_SHOULDERS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.912245, 60.16504, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635025,
+        "time": "2026-10-14T23:20:45Z",
+        "created": "2026-10-14T23:22:58Z",
+        "tasks": ["SPOT_SANDING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [27.119327, 68.100155, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635027,
+        "time": "2026-10-14T23:20:51Z",
+        "created": "2026-10-14T23:22:58Z",
+        "tasks": ["BRUSHING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.881037, 60.164677, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635031,
+        "time": "2026-10-14T23:20:57Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES"],
+        "direction": 5.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [25.507827, 65.017175, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635032,
+        "time": "2026-10-14T23:20:59Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["LEVELLING_GRAVEL_ROAD_SURFACE"],
+        "direction": 75.0,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.18017, 60.85501, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635037,
+        "time": "2026-10-14T23:21:16Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["BRUSH_CLEARING"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [24.852819, 60.164005, 0.0]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "id": 202635043,
+        "time": "2026-10-14T23:21:54.200Z",
+        "created": "2026-10-14T23:23:58Z",
+        "tasks": ["OTHER_OPERATIONS_OF_LIGHTING_CONTRACTS"],
+        "direction": null,
+        "domain": "state-roads",
+        "source": "Harja/Väylävirasto"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [23.626365, 61.453097, 0.0]
+      }
+    }
+  ]
+}

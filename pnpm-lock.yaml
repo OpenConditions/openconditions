@@ -1020,6 +1020,31 @@ importers:
         specifier: ^5.0.3
         version: 5.0.3(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(vite@7.3.5(@types/node@26.6.5)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
 
+  packages/vehicles:
+    dependencies:
+      '@openconditions/ingest-framework':
+        specifier: workspace:*
+        version: link:../ingest-framework
+      '@openconditions/model':
+        specifier: workspace:*
+        version: link:../model
+      '@openconditions/model-vehicles':
+        specifier: workspace:*
+        version: link:../model-vehicles
+    devDependencies:
+      '@openconditions/model-roads':
+        specifier: workspace:*
+        version: link:../model-roads
+      tsup:
+        specifier: ^8.5.1
+        version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+      vitest:
+        specifier: ^5.0.3
+        version: 5.0.3(@types/node@26.6.5)(@vitest/coverage-v8@5.0.3)(vite@7.3.5(@types/node@26.6.5)(jiti@2.6.1)(tsx@4.23.15)(yaml@2.9.1))
+
   packages/weather:
     dependencies:
       '@openconditions/ingest-framework':
@@ -1196,6 +1221,9 @@ importers:
       '@openconditions/storage':
         specifier: workspace:*
         version: link:../../packages/storage
+      '@openconditions/vehicles':
+        specifier: workspace:*
+        version: link:../../packages/vehicles
       '@openconditions/weather':
         specifier: workspace:*
         version: link:../../packages/weather

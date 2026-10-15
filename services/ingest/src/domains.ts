@@ -14,6 +14,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { parkingDomain } from "@openconditions/parking";
 import { roadsDomain } from "@openconditions/roads";
+import { vehiclesDomain } from "@openconditions/vehicles";
 import { weatherDomain } from "@openconditions/weather";
 
 /** The domains this service ingests. */
@@ -25,6 +26,7 @@ export const INGEST_DOMAINS: readonly IngestDomain<CatalogFeed>[] = [
   camerasDomain,
   hazardsDomain,
   weatherDomain,
+  vehiclesDomain,
 ];
 
 /**
