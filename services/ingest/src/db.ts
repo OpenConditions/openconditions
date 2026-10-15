@@ -66,3 +66,16 @@ export const maintenanceSql = postgres(DATABASE_URL, {
   idle_timeout: 30,
   connect_timeout: 10,
 });
+
+/**
+ * The one connection that holds the process's claims (`claimIngestWork`)
+ * for its life: it never idles out and never reaches a lifetime, as either
+ * would end the session and its advisory locks with it.
+ */
+export const claimsSql = postgres(DATABASE_URL, {
+  connection: { application_name: "openconditions-ingest-claims" },
+  max: 1,
+  idle_timeout: 0,
+  max_lifetime: 0,
+  connect_timeout: 10,
+});

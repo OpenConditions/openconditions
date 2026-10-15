@@ -1,6 +1,7 @@
 import { requireCredential } from "@openconditions/ingest-framework";
 import postgres from "postgres";
 import { loadIngestCatalog } from "../domains.js";
+import { planIngest } from "../ingest-role.js";
 import { createOpenlrClient } from "../pipeline/run.js";
 import { rawArchiveOptionsFromEnv } from "../raw/archive.js";
 import { evictionPolicyFromEnv, evictRawPayloads } from "../raw/evict.js";
@@ -64,11 +65,14 @@ export async function runRawCommand(
   }
   if (command === "gc") {
     const dryRun = args.includes("--dry-run");
+    // The payloads in this process's archive: another ingest process's feeds lie on its own volume.
+    const { scope } = planIngest(await loadIngestCatalog(env), env, { warn: out, info: () => {} });
     const result = await evictRawPayloads(sql, {
       dir: rawArchiveOptionsFromEnv(env).dir,
       policy: evictionPolicyFromEnv(now, env),
       historyDays: historyDaysFromEnv(env),
       dryRun,
+      scope,
     });
     const bySource = new Map<string, { payloads: number; bytes: number }>();
     for (const p of result.evict) {

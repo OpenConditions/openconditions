@@ -20,6 +20,7 @@
     "environment": {
       "PORT": "4100",
       "HOST": "0.0.0.0",
+      "OPENCONDITIONS_INGEST_ROLE": "primary",
       "OPENCONDITIONS_RAW_DIR": "/data/raw",
       "OPENCONDITIONS_ARCHIVE_DIR": "/data/archive",
       "OPENCONDITIONS_STATE_DIR": "/data"
@@ -205,6 +206,20 @@
         "type": "string",
         "title": "Enable remote feed-pull",
         "description": "Set to \"true\" to opt the instance into remote-pull (default off). The bundle is checked like the baked catalogue and every URL is egress-guarded; a snapshot is kept on the service's volume so the instance survives the remote being down.",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_INGEST_FEEDS": {
+        "type": "string",
+        "title": "Feeds this process polls",
+        "description": "Comma-separated feed ids this process polls, \"*\" matching any run of characters (nl-ndw-*). Required on openconditions-ingest-heavy, where it names the slow feeds; set the same list as Feeds left to another process on openconditions-ingest. A name matching no feed fails boot. Empty: every feed.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_INGEST_FEEDS_EXCLUDE": {
+        "type": "string",
+        "title": "Feeds left to another process",
+        "description": "Comma-separated feed ids (or \"*\" patterns) this process does not poll, as another ingest process does: on openconditions-ingest, the list Feeds this process polls names on openconditions-ingest-heavy. Empty: none.",
+        "default": "",
         "x-openmapx-secret": false
       },
       "OPENCONDITIONS_INSTANCE_ID": {

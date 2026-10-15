@@ -2,6 +2,7 @@ import { rm } from "node:fs/promises";
 import { join } from "node:path";
 import type { RawTier } from "@openconditions/core/server";
 import type postgres from "postgres";
+import { inScope, type SourceScope } from "../ingest-role.js";
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
@@ -208,10 +209,20 @@ export interface EvictionResult extends EvictionPlan {
  * lost hot-window payloads, and removes the index rows of payloads evicted
  * more than `historyDays` ago. A payload fetched again since the plan was
  * made is kept; `evict` lists what was evicted. `dryRun` only plans.
+ *
+ * `scope` limits all of it, the cap included, to the sources whose payloads
+ * lie in `dir`: those of the feeds this process polls, when another ingest
+ * process archives its feeds' payloads on its own volume.
  */
 export async function evictRawPayloads(
   sql: postgres.Sql,
-  opts: { dir: string; policy: EvictionPolicy; historyDays: number; dryRun?: boolean },
+  opts: {
+    dir: string;
+    policy: EvictionPolicy;
+    historyDays: number;
+    dryRun?: boolean;
+    scope?: SourceScope;
+  },
 ): Promise<EvictionResult> {
   const rows = await sql<
     {
@@ -231,7 +242,7 @@ export async function evictRawPayloads(
                     WHERE d.source_id = p.source_id AND d.base_hash = p.hash
                       AND d.evicted_at IS NULL) AS is_base
       FROM conditions.raw_payload p
-     WHERE p.evicted_at IS NULL`;
+     WHERE p.evicted_at IS NULL AND ${inScope(sql, "p.source_id", opts.scope)}`;
   // The payloads what is live now was read from: those of each source's
   // latest published poll. A history row names its poll's payload too, but
   // history is what the tiers' windows thin; only the live state is kept
@@ -309,6 +320,7 @@ export async function evictRawPayloads(
   }
   const purged = await sql`
     DELETE FROM conditions.raw_payload
-     WHERE evicted_at < ${new Date(opts.policy.now - opts.historyDays * DAY_MS)}`;
+     WHERE evicted_at < ${new Date(opts.policy.now - opts.historyDays * DAY_MS)}
+       AND ${inScope(sql, "source_id", opts.scope)}`;
   return { ...plan, evict: evicted, purged: purged.count };
 }

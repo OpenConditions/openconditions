@@ -22,6 +22,7 @@
       "!packages/roads/src/__tests__/golden",
       "!services/openlr-resolver",
       "!services/ingest/service.json",
+      "!services/ingest-heavy/service.json",
       "!feeds/schema",
       "!atlas",
       "!packages/roads/src/tmc/snapshots",

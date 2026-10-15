@@ -84,6 +84,13 @@ describe("raw command", () => {
     ]);
   });
 
+  it("on gc in a process that leaves a feed to another, leaves that feed's payloads", async () => {
+    await archive(60);
+    const leaving = { OPENCONDITIONS_RAW_DIR: dir, OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: "ca-bc-*" };
+    expect(await runRawCommand(sql, ["gc"], (l) => lines.push(l), leaving, NOW)).toBe(0);
+    expect(lines[0]).toBe("evicted 0 payload(s); cap rung 0");
+  });
+
   it("refuses an unknown hash or command", async () => {
     expect(await run("pin", "f".repeat(64))).toBe(1);
     expect(await run("pin", "not-a-hash")).toBe(2);

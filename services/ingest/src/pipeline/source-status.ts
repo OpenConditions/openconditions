@@ -1,5 +1,6 @@
 import { redactSecrets, redactUrl } from "@openconditions/ingest-framework";
 import type postgres from "postgres";
+import { inScope, type SourceScope } from "../ingest-role.js";
 
 type Sql = postgres.Sql | postgres.TransactionSql;
 
@@ -57,17 +58,18 @@ export async function openPollAttempt(
 }
 
 /**
- * Closes, as failed, every attempt still marked running. Called at boot,
- * before the scheduler starts: no poll of this service can be running then,
- * so such an attempt belongs to a poll the stopped service never finished.
- * Returns how many it closed.
+ * Closes, as failed, every attempt still marked running of the sources
+ * `scope` gives the booting process. Called at boot, before the scheduler
+ * starts: no poll of this process can be running then, so such an attempt
+ * belongs to a poll the stopped process never finished; another ingest
+ * process's polls are left running. Returns how many it closed.
  */
-export async function closeAbandonedPollAttempts(sql: Sql): Promise<number> {
+export async function closeAbandonedPollAttempts(sql: Sql, scope?: SourceScope): Promise<number> {
   const rows = await sql`
     UPDATE conditions.source_poll_attempt
        SET outcome = 'failed', finished_at = now(),
            error = 'abandoned: the ingest service stopped during the poll'
-     WHERE outcome = 'running'
+     WHERE outcome = 'running' AND ${inScope(sql, "source", scope)}
     RETURNING id`;
   return rows.length;
 }

@@ -13,6 +13,7 @@ import {
 } from "@openconditions/storage";
 import { Cron } from "croner";
 import type postgres from "postgres";
+import type { SourceScope } from "./ingest-role.js";
 import { rawArchiveOptionsFromEnv } from "./raw/archive.js";
 import { evictionPolicyFromEnv, evictRawPayloads } from "./raw/evict.js";
 
@@ -51,8 +52,19 @@ export function orphanMaxAges(feeds: readonly CatalogFeed[]): Record<string, num
 export interface RecordJobsOptions {
   registry: Registry;
   instanceId: string;
-  /** The feeds polled here, whose snapshot cadences set their records' orphan age. */
+  /**
+   * The catalogue's feeds, whichever process polls them: their snapshot
+   * cadences set their records' orphan age.
+   */
   feeds?: readonly CatalogFeed[];
+  /**
+   * Whether this process runs the jobs one process of a deployment runs
+   * (default true): partitions, rollups, the sweep and the fusion refresh.
+   * Every process evicts its own raw payloads.
+   */
+  primary?: boolean;
+  /** The sources whose raw payloads lie on this process's volume; default all. */
+  scope?: SourceScope;
   env?: NodeJS.ProcessEnv;
   now?: () => Date;
 }
@@ -172,8 +184,9 @@ export function windowedRuns(
 
 /**
  * Starts the scheduled jobs that keep the record tables in shape: the
- * fusion refresh on the writers' pool `sql`, the rest on `maintenanceSql`.
- * Returns a function that stops them.
+ * fusion refresh on the writers' pool `sql`, the rest on `maintenanceSql`;
+ * a process that is not the primary starts only the raw eviction. Returns a
+ * function that stops them.
  */
 export function startRecordJobs(
   sql: postgres.Sql,
@@ -183,9 +196,29 @@ export function startRecordJobs(
   const env = opts.env ?? process.env;
   const now = opts.now ?? (() => new Date());
   const historyDays = historyDaysFromEnv(env);
-  const rollupDays = rollupRetentionDaysFromEnv(env);
   const jobs: Cron[] = [];
 
+  const { dir } = rawArchiveOptionsFromEnv(env);
+  const evict = singleFlight("raw eviction", async () => {
+    const result = await evictRawPayloads(maintenanceSql, {
+      dir,
+      policy: evictionPolicyFromEnv(now(), env),
+      historyDays,
+      ...(opts.scope ? { scope: opts.scope } : {}),
+    });
+    if (result.evict.length + result.purged > 0) {
+      console.info(
+        `[records] raw eviction: ${result.evict.length} evicted, ${result.purged} purged (rung ${result.rung})`,
+      );
+    }
+  });
+  jobs.push(new Cron(RAW_EVICTION_CRON, { catch: true }, evict));
+  const stop = () => {
+    for (const job of jobs) job.stop();
+  };
+  if (opts.primary === false) return stop;
+
+  const rollupDays = rollupRetentionDaysFromEnv(env);
   const partitions = singleFlight("partitions", () =>
     maintainPartitionsHourly(maintenanceSql, opts.registry, now()),
   );
@@ -241,22 +274,5 @@ export function startRecordJobs(
   });
   jobs.push(new Cron(FUSION_FLIP_CRON, { catch: true }, fusionFlips));
 
-  const { dir } = rawArchiveOptionsFromEnv(env);
-  const evict = singleFlight("raw eviction", async () => {
-    const result = await evictRawPayloads(maintenanceSql, {
-      dir,
-      policy: evictionPolicyFromEnv(now(), env),
-      historyDays,
-    });
-    if (result.evict.length + result.purged > 0) {
-      console.info(
-        `[records] raw eviction: ${result.evict.length} evicted, ${result.purged} purged (rung ${result.rung})`,
-      );
-    }
-  });
-  jobs.push(new Cron(RAW_EVICTION_CRON, { catch: true }, evict));
-
-  return () => {
-    for (const job of jobs) job.stop();
-  };
+  return stop;
 }

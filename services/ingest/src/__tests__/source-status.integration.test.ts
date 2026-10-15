@@ -237,6 +237,26 @@ describe("durable source operational status", () => {
       { id: String(finished), outcome: "changed", finished: true },
     ]);
   });
+
+  it("closes only the attempts of the sources the booting process owns", async () => {
+    const at = "2026-10-01T10:00:00.000Z";
+    const events = await openPollAttempt(sql, "nl-ndw-events", at);
+    const flow = await openPollAttempt(sql, "nl-ndw-flow", at);
+    const running = async () =>
+      (
+        await sql<{ id: string }[]>`
+          SELECT id FROM conditions.source_poll_attempt WHERE outcome = 'running' ORDER BY id`
+      ).map((r) => Number(r.id));
+
+    // The primary, booting while another process polls nl-ndw-flow.
+    expect(await closeAbandonedPollAttempts(sql, { except: ["nl-ndw-flow"] })).toBe(1);
+    expect(await running()).toEqual([flow]);
+    const again = await openPollAttempt(sql, "nl-ndw-events", at);
+    // The feeds process, booting while the primary polls nl-ndw-events.
+    expect(await closeAbandonedPollAttempts(sql, { only: ["nl-ndw-flow"] })).toBe(1);
+    expect(await running()).toEqual([again]);
+    expect(events).not.toBe(again);
+  });
 });
 describe("upsertSourceStatus — the unchanged/304 write path", () => {
   it("advances last_success_at and clears last_error on an unchanged (304) success", async () => {

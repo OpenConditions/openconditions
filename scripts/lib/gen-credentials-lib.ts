@@ -283,6 +283,18 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
     description:
       'Set to "true" to opt the instance into remote-pull (default off). The bundle is checked like the baked catalogue and every URL is egress-guarded; a snapshot is kept on the service\'s volume so the instance survives the remote being down.',
   },
+  OPENCONDITIONS_INGEST_FEEDS: {
+    title: "Feeds this process polls",
+    description:
+      'Comma-separated feed ids this process polls, "*" matching any run of characters (nl-ndw-*). Required on openconditions-ingest-heavy, where it names the slow feeds; set the same list as Feeds left to another process on openconditions-ingest. A name matching no feed fails boot. Empty: every feed.',
+    default: "",
+  },
+  OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: {
+    title: "Feeds left to another process",
+    description:
+      'Comma-separated feed ids (or "*" patterns) this process does not poll, as another ingest process does: on openconditions-ingest, the list Feeds this process polls names on openconditions-ingest-heavy. Empty: none.',
+    default: "",
+  },
   OPENCONDITIONS_INSTANCE_ID: {
     title: "Instance id",
     description:

@@ -110,6 +110,52 @@ describe("evictRawPayloads", () => {
     expect(result.evict.map((r) => r.hash)).toEqual([superseded]);
   });
 
+  it("evicts only the payloads of the sources the process owns", async () => {
+    await archive("nl-ndw-flow", "hot", 60);
+    await archive("nl-ndw-events", "hot", 60);
+    const evicted = async () =>
+      sql<{ source_id: string; n: number }[]>`
+        SELECT source_id, count(*)::int AS n FROM conditions.raw_payload
+         WHERE evicted_at IS NOT NULL GROUP BY source_id ORDER BY source_id`;
+
+    const heavy = await evictRawPayloads(sql, {
+      dir,
+      policy: policy(),
+      historyDays: 90,
+      scope: { only: ["nl-ndw-flow"] },
+    });
+    expect(new Set(heavy.evict.map((r) => r.sourceId))).toEqual(new Set(["nl-ndw-flow"]));
+    expect(await evicted()).toEqual([{ source_id: "nl-ndw-flow", n: 11 }]);
+
+    const primary = await evictRawPayloads(sql, {
+      dir,
+      policy: policy(),
+      historyDays: 90,
+      scope: { except: ["nl-ndw-flow"] },
+    });
+    expect(new Set(primary.evict.map((r) => r.sourceId))).toEqual(new Set(["nl-ndw-events"]));
+    expect(await evicted()).toEqual([
+      { source_id: "nl-ndw-events", n: 11 },
+      { source_id: "nl-ndw-flow", n: 11 },
+    ]);
+  });
+
+  it("caps only the payloads of the sources the process owns", async () => {
+    await archive("nl-ndw-flow", "hot", 10);
+    await archive("nl-ndw-events", "hot", 10);
+    const [events] = await sql<{ bytes: number }[]>`
+      SELECT sum(bytes_stored)::int AS bytes FROM conditions.raw_payload
+       WHERE source_id = 'nl-ndw-events'`;
+    // The events' own archive fits; the flow's bytes, another process's, do not count.
+    const result = await evictRawPayloads(sql, {
+      dir,
+      policy: policy({ maxBytes: events!.bytes }),
+      historyDays: 90,
+      scope: { except: ["nl-ndw-flow"] },
+    });
+    expect(result.evict).toEqual([]);
+  });
+
   it("keeps a source's latest publication by its own source, not another's", async () => {
     const [other] = await archive("nl-ndw-flow", "observation", 1, 20 * 24);
     await archive("nl-ndw-flow", "observation", 3);

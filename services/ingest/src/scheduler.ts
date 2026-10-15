@@ -261,39 +261,51 @@ export function scheduleFeed(feed: CatalogFeed, ctx: FeedJobContext): Cron | und
   return job;
 }
 
+export interface SchedulerOptions {
+  /** The feeds this process polls. */
+  feeds: readonly CatalogFeed[];
+  /**
+   * Whether this process runs the work one process of a deployment runs: the
+   * binding queue's drain, the segment-speed refresh, poll-history pruning,
+   * the nightly and weekly jobs and the boot rebind. A feeds process's polls
+   * leave their binding work queued for the primary's next drain.
+   */
+  primary: boolean;
+  /** Tracks the feed polls and the binding queue's drain, so shutdown waits for them. */
+  inFlight?: Pick<InFlight, "track">;
+}
+
 /**
- * Starts one job per scheduled feed of the catalogue, and the record and
- * segment jobs; `inFlight` tracks the feed polls and the binding queue's
- * drain. The polls, the drain and the segment-speed refresh write through
- * `sql`; the poll-history pruning and the nightly and weekly jobs through
- * `maintenanceSql`. Returns a cancel function that stops all scheduled jobs.
+ * Starts one job per feed this process polls and, on the primary, the
+ * segment, history and nightly and weekly jobs. The polls, the drain and the
+ * segment-speed refresh write through `sql`; the poll-history pruning and the
+ * nightly and weekly jobs through `maintenanceSql`. Returns a cancel function
+ * that stops all scheduled jobs.
  */
 export function startScheduler(
   sql: Sql,
   maintenanceSql: Sql,
   statusStore: FeedStatusStore,
   catalog: Catalog,
-  inFlight?: Pick<InFlight, "track">,
+  opts: SchedulerOptions,
 ): () => void {
+  const { inFlight } = opts;
   const jobs: Cron[] = [];
   const openlrClient = createOpenlrClient();
   const raw = createRawArchive(sql, rawArchiveOptionsFromEnv());
-  // Same egress-guarded dispatcher the per-feed jobs use, reused for the
-  // low-frequency Fintraffic native-baseline refresh below.
-  const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
-  // The Overpass the OpenStreetMap feeds query, read from the same setting.
-  const overpassUrl = overpassInterpreterUrl(catalog.credentials);
   // One gate for all feeds: a large payload is parsed and written while no
   // other large one is, which bounds the heap two national registers need.
   const parseGate = createParseGate();
   // And one child process that parses them, so the event loop stays free meanwhile.
   const parseProcess = createParseProcess();
-  const bindingDrain = createBindingDrain(
-    () => defaultDrainBindingQueue(sql, { now: () => new Date().toISOString() }),
-    inFlight,
-  );
+  const bindingDrain = opts.primary
+    ? createBindingDrain(
+        () => defaultDrainBindingQueue(sql, { now: () => new Date().toISOString() }),
+        inFlight,
+      )
+    : undefined;
 
-  for (const feed of catalog.feeds) {
+  for (const feed of opts.feeds) {
     const job = scheduleFeed(feed, {
       sql,
       statusStore,
@@ -309,10 +321,23 @@ export function startScheduler(
         parseProcess,
       },
       ...(inFlight ? { inFlight } : {}),
-      bindingDrain,
+      ...(bindingDrain ? { bindingDrain } : {}),
     });
     if (job) jobs.push(job);
   }
+  const stop = () => {
+    for (const job of jobs) {
+      job.stop();
+    }
+    bindingDrain?.stop();
+  };
+  if (!opts.primary) return stop;
+
+  // Same egress-guarded dispatcher the per-feed jobs use, reused for the
+  // low-frequency Fintraffic native-baseline refresh below.
+  const guarded = guardedFetch(undiciFetch as unknown as typeof fetch, guardOptionsFromEnv());
+  // The Overpass the OpenStreetMap feeds query, read from the same setting.
+  const overpassUrl = overpassInterpreterUrl(catalog.credentials);
 
   // Fuses the latest site readings onto the segment spine. Expired and
   // orphaned records are swept by the record jobs.
@@ -474,10 +499,5 @@ export function startScheduler(
     })
     .catch((err: unknown) => console.warn("[scheduler] startup rebind failed", err));
 
-  return () => {
-    for (const job of jobs) {
-      job.stop();
-    }
-    bindingDrain.stop();
-  };
+  return stop;
 }

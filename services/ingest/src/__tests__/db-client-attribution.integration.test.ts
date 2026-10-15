@@ -59,10 +59,10 @@ const serviceTimeouts = {
   idle_in_transaction_session_timeout: 60_000,
 };
 describe("database client attribution", () => {
-  it("keeps separate writer, HTTP and maintenance pools with bounded static startup names", async () => {
-    const { sql, apiSql, maintenanceSql } = await import("../db.js");
-    expect(new Set([sql, apiSql, maintenanceSql]).size).toBe(3);
-    expect(postgres).toHaveBeenCalledTimes(3);
+  it("keeps separate writer, HTTP, maintenance and claims pools with bounded static startup names", async () => {
+    const { sql, apiSql, maintenanceSql, claimsSql } = await import("../db.js");
+    expect(new Set([sql, apiSql, maintenanceSql, claimsSql]).size).toBe(4);
+    expect(postgres).toHaveBeenCalledTimes(4);
     expect(postgres.mock.calls.map((call) => call[1])).toEqual([
       {
         ...pool,
@@ -91,6 +91,13 @@ describe("database client attribution", () => {
           lock_timeout: 5_000,
           idle_in_transaction_session_timeout: 900_000,
         },
+      },
+      {
+        max: 1,
+        idle_timeout: 0,
+        max_lifetime: 0,
+        connect_timeout: 10,
+        connection: { application_name: "openconditions-ingest-claims" },
       },
     ]);
   });
@@ -136,8 +143,9 @@ describe("database client attribution", () => {
           const [row] =
             await client`SELECT application_name FROM pg_stat_activity WHERE pid = pg_backend_pid()`;
           observed.push(String(row!["application_name"]));
-          expect(client.options.max).toBe((option as { max: number }).max);
-          expect(client.options.idle_timeout).toBe(30);
+          const { max, idle_timeout } = option as { max: number; idle_timeout: number };
+          expect(client.options.max).toBe(max);
+          expect(client.options.idle_timeout).toBe(idle_timeout);
           expect(client.options.connect_timeout).toBe(10);
         }
         expect(observed.sort()).toEqual(
@@ -145,6 +153,7 @@ describe("database client attribution", () => {
             "openconditions-ingest-writer",
             "openconditions-ingest-api",
             "openconditions-ingest-maintenance",
+            "openconditions-ingest-claims",
             "openconditions-contributions-api",
             "openconditions-federation-api",
           ].sort(),

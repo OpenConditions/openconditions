@@ -12,6 +12,8 @@ import {
 export interface GenPaths {
   envExample: string;
   serviceJson: string;
+  /** The feeds-only ingest manifest, whose fields are the ingest service's. */
+  feedsServiceJson?: string;
   doc: string;
 }
 
@@ -124,6 +126,17 @@ OPENCONDITIONS_FEEDS_REMOTE_URL=
 # being down.
 OPENCONDITIONS_FEEDS_REMOTE_ENABLED=
 
+# A second ingest process for slow feeds (optional; see services/ingest/README.md,
+# "A second ingest process"). "primary" (default) serves the API and runs the
+# maintenance; "feeds" only polls the feeds OPENCONDITIONS_INGEST_FEEDS names.
+OPENCONDITIONS_INGEST_ROLE=
+# Comma-separated feed ids ("*" matches any run of characters) this process
+# polls. Unset = every feed; required with the "feeds" role.
+OPENCONDITIONS_INGEST_FEEDS=
+# Comma-separated feed ids this process leaves to another one: on the primary,
+# the list the feeds process polls (e.g. nl-ndw-flow,nl-ndw-charging).
+OPENCONDITIONS_INGEST_FEEDS_EXCLUDE=
+
 ${ENV_MARKER}`;
 
 /** Splice the generated credential blocks below the marker into `.env.example`, preserving the hand-authored preamble above it (or seeding the default preamble if the marker is missing). */
@@ -149,6 +162,10 @@ export function applyOrCheck(
     [paths.serviceJson, nextServiceJson(svc, catalog)],
     [paths.doc, credentialsDocFor(catalog, svc.id)],
   ];
+  if (paths.feedsServiceJson) {
+    const feeds = JSON.parse(readFileSync(paths.feedsServiceJson, "utf8")) as ServiceJson;
+    targets.push([paths.feedsServiceJson, nextServiceJson(feeds, catalog)]);
+  }
   const drift: string[] = [];
   for (const [file, next] of targets) {
     const before = safeRead(file);
@@ -176,6 +193,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const paths: GenPaths = {
     envExample: fileURLToPath(new URL("../.env.example", import.meta.url)),
     serviceJson: fileURLToPath(new URL("../services/ingest/service.json", import.meta.url)),
+    feedsServiceJson: fileURLToPath(
+      new URL("../services/ingest-heavy/service.json", import.meta.url),
+    ),
     doc: fileURLToPath(new URL("../docs/feed-credentials.md", import.meta.url)),
   };
   const write = process.argv.includes("--write");

@@ -8,7 +8,12 @@ interface Property {
 
 interface Manifest {
   id: string;
-  container: { environment?: Record<string, string>; memory?: string };
+  container: {
+    image: string;
+    environment?: Record<string, string>;
+    memory?: string;
+    dependsOn?: { service: string; condition?: string }[];
+  };
   configSchema?: { type?: string; required?: string[]; properties?: Record<string, Property> };
   volumes?: { name: string; mountAt: string }[];
   exposure?: { proxy?: { enabled?: boolean } };
@@ -193,6 +198,7 @@ describe("service manifests on OpenMapX's config model", () => {
     expect(m.container.environment).toEqual({
       PORT: "4100",
       HOST: "0.0.0.0",
+      OPENCONDITIONS_INGEST_ROLE: "primary",
       OPENCONDITIONS_RAW_DIR: "/data/raw",
       OPENCONDITIONS_ARCHIVE_DIR: "/data/archive",
       OPENCONDITIONS_STATE_DIR: "/data",
@@ -200,6 +206,32 @@ describe("service manifests on OpenMapX's config model", () => {
     // OpenMapX mounts no directory of the operator's: a custom catalogue comes
     // through the remote feed bundle.
     expect(properties(m)).not.toHaveProperty("OPENCONDITIONS_FEEDS_DIR");
+  });
+
+  test("ingest-heavy: the same image polling only its feeds, with the ingest service's fields", () => {
+    const ingest = manifest("ingest");
+    const m = manifest("ingest-heavy");
+    expect(m.id).toBe("openconditions-ingest-heavy");
+    expect(m.container.image).toBe(ingest.container.image);
+    expect(m.container.environment).toEqual({
+      PORT: "4100",
+      HOST: "0.0.0.0",
+      OPENCONDITIONS_INGEST_ROLE: "feeds",
+      OPENCONDITIONS_RAW_DIR: "/data/raw",
+      OPENCONDITIONS_STATE_DIR: "/data",
+    });
+    // Its raw payloads lie on its own volume, which its own eviction keeps.
+    expect(m.volumes?.map((v) => v.mountAt)).toEqual(["/data"]);
+    expect(m.container.memory).toBe("${OPENCONDITIONS_INGEST_HEAVY_MEMORY:-6g}");
+    // The primary migrates, syncs the catalogue and creates the partitions it writes into.
+    expect(m.container.dependsOn).toContainEqual({
+      service: "openconditions-ingest",
+      condition: "service_healthy",
+    });
+    expect(m.configSchema).toEqual(ingest.configSchema);
+    expect(
+      defaults(m, ["OPENCONDITIONS_INGEST_FEEDS", "OPENCONDITIONS_INGEST_FEEDS_EXCLUDE"]),
+    ).toEqual({ OPENCONDITIONS_INGEST_FEEDS: "", OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: "" });
   });
 
   test("ingest: every setting is a config field with the default it had as a passthrough", () => {
