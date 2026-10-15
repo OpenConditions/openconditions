@@ -278,7 +278,7 @@ importers:
         version: link:../model-roads
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@openconditions/model-charging':
         specifier: workspace:*
@@ -312,7 +312,7 @@ importers:
         version: link:../ocpi
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@openconditions/model-roads':
         specifier: workspace:*
@@ -541,7 +541,7 @@ importers:
         version: 8.11.2
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@types/geojson':
         specifier: ^7946.0.16
@@ -569,7 +569,7 @@ importers:
         version: 6.12.0
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@types/spdx-expression-parse':
         specifier: 4.0.0
@@ -591,7 +591,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -610,7 +610,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -629,7 +629,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -648,7 +648,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -667,7 +667,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -686,7 +686,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -705,7 +705,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -794,7 +794,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -813,7 +813,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -832,7 +832,7 @@ importers:
         version: link:../model
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -894,7 +894,7 @@ importers:
         version: link:../model-parking
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       tsup:
         specifier: ^8.5.1
@@ -1011,7 +1011,7 @@ importers:
         version: 6.0.0
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@types/geojson':
         specifier: ^7946.0.16
@@ -1318,7 +1318,7 @@ importers:
         version: 8.11.2
       zod:
         specifier: ^4.6.5
-        version: 4.6.5
+        version: 4.6.6
     devDependencies:
       '@openconditions/test-database':
         specifier: workspace:*
@@ -3521,8 +3521,8 @@ packages:
     resolution: {integrity: sha512-zK7YHHz4ZXpW89AHXUPbQVGKI7uvkd3hzusTdotCg1UxyaVtg0zFJSTfW/Dq5f7OBBVnq6cZIaC8Ti4hb6dtCA==}
     engines: {node: '>= 14'}
 
-  zod@4.6.5:
-    resolution: {integrity: sha512-v5l/aFXZQeai4awLbOpSoHecE9UiMrnfx75tEXLjNonXVARxQ5mOeipTjROUchszUNCqnE+hqAMujRsRHsut2Q==}
+  zod@4.6.6:
+    resolution: {integrity: sha512-4UmzQUF5fxvfcYHlbjBmejU+w+hbDnWFx4aS8kBx7nPBHcO2SqPbpAG8snbdg+Xse4pRefR98hgjFgIMCI/UhA==}
 
 snapshots:
 
@@ -5470,4 +5470,4 @@ snapshots:
       compress-commons: 6.0.2
       readable-stream: 4.8.0
 
-  zod@4.6.5: {}
+  zod@4.6.6: {}
