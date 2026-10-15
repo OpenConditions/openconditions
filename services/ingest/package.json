@@ -11,7 +11,8 @@
     "test": "vitest run",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "raw": "tsx src/ops/raw.ts"
+    "raw": "tsx src/ops/raw.ts",
+    "inspect-feed": "tsx src/ops/feed-inspect-command.ts"
   },
   "dependencies": {
     "@fastify/proxy-addr": "^5.1.2",
