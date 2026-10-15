@@ -32,7 +32,9 @@ fetch time for a reproducible captured-poll investigation. Source timestamps
 remain source timestamps. Repeating the same command with unchanged catalogue,
 parser and input bytes produces the same report, including synthetic stamps.
 Record the checkout's `git rev-parse HEAD` beside a saved report when comparing
-parser versions. `schemaVersion` versions the report shape, not the parser.
+parser versions. `schemaVersion` versions the report shape, not the parser. Preview reports now
+use version `2` (structured XML diagnostics and more precise summary reasons);
+the unchanged index report remains version `1`.
 
 For a real investigation, supply the already decoded payload bytes that the
 parser receives. Archive blobs are zstd-compressed decoded responses: find the
@@ -100,16 +102,71 @@ inspected without enabling them or supplying acquisition credentials.
   upstream-licence filtering. The actual GeoJSON/XML use the resulting public
   records, including reporter stripping. A source/rights refusal is separate
   from `projection.traff` or `.datex` refusing a mapping. XML counts come from the
-  actual publisher; a situation can produce multiple messages/records. Common
-  whole-record refusals name vehicle-specific effects or restriction evidence;
-  `no_representable_message` is deliberately general. It is not an exhaustive
-  field-by-field loss explanation.
+  actual publisher; a situation can produce multiple messages/records.
+  `reason` is a summary: source/rights refusal first, otherwise the first
+  exporter withholding code if nothing was emitted, or `no_representable_message`
+  when no representable event remains. It is `null` if anything was emitted,
+  even when some fields or effects were lost. Read `diagnostics` in both cases.
 - `exports` holds the real emitter output for the **selected** public-eligible
   previews. Compare it with canonical geometry, applicability and effect states.
   DATEX reduces locations to representative points and is not an SRTI/NAP
   publication; see [DATEX conformance](datex-conformance.md). TraFF may also omit
   unsupported events or location detail. A successful emission is not a claim
   of lossless conversion or acceptance by a navigation client.
+
+### Explain XML losses
+
+Each `projection.traff.diagnostics` and `projection.datex.diagnostics` entry
+comes from the actual exporter decision path, evaluated against the
+public-eligible preview. It includes:
+
+- `code`: a stable machine-readable decision code; use this rather than matching
+  the explanatory `message` text.
+- `scope`: `situation` for an entire-situation gate, `message` for an individual
+  TraFF message, `effect` for a skipped effect, or `field` for an omitted/reduced
+  field. Withholding the parent TraFF message can still leave an own-location
+  effect message in the output.
+- `disposition`: `withheld`, `omitted` or `reduced`.
+- `path`: an RFC 6901 JSON pointer into `canonicalPreview`, including indexed
+  phase paths such as `/details/phases/0/effects/0/location/fuzziness`.
+  An inherited direction points to `/location/direction`, rather than a field
+  absent from the effect. A gate can point to a required field missing from a
+  legacy draft caller; the inspector itself projects sealed records.
+- `situationId`, plus `effectId` when the decision concerns an effect.
+
+| Code                                       | What it explains                                                                                                                                               |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coarse_location`                          | A root or effect location has non-exact precision, including coarse VILD recovery. Both XML exporters withhold the whole situation; GeoJSON can retain it.     |
+| `vehicle_specific_effect`                  | Vehicle applicability or an intrinsically vehicle-specific effect kind cannot be represented faithfully; the whole situation is withheld.                      |
+| `restriction_evidence`                     | Incomplete normalization or unknown applicability blocks the whole situation. Multiple applicable blockers are reported.                                       |
+| `unrepresentable_direction`                | TraFF cannot infer travel order from an explicit direction. An effect direction blocks the situation; a root/inherited location direction blocks that message. |
+| `direction_not_exported`                   | This DATEX emitter omits direction while still emitting records. This describes the current emitter, not a limitation of the DATEX standard.                   |
+| `geometry_to_point`                        | An emitted non-point geometry becomes its first coordinate.                                                                                                    |
+| `geometry_to_endpoints`                    | TraFF emits only the endpoints of a line with intermediate coordinates.                                                                                        |
+| `missing_geometry`                         | A TraFF message has no usable coordinate and is withheld.                                                                                                      |
+| `effect_ended`, `effect_time_unknown`      | The XML effect projection was skipped at the fixed evaluation instant. Scheduled effects remain eligible.                                                      |
+| `unsupported_nature`, `unsupported_effect` | The current registry/emitter has no event/management-record mapping for this classification or effect. Other messages/records can survive.                     |
+| `field_not_exported`                       | A specifically instrumented field is omitted, currently TraFF delay duration (queue length can still travel).                                                  |
+
+```bash
+jq '.records[] | {id: .draft.id,
+  traff: .projection.traff, datex: .projection.datex}' /tmp/feed-inspection.json
+jq '.records[].projection | .traff.diagnostics[], .datex.diagnostics[]
+  | select(.disposition == "reduced")' /tmp/feed-inspection.json
+```
+
+Invalid drafts and records withheld by source/rights policy have empty XML
+diagnostic arrays; their earlier refusal is in `reason`. Export diagnostics do
+not override validation or public filtering. Geometry reductions are reported
+only for emitted locations, not every geometry stored on the situation.
+
+This is a **non-exhaustive explanation of instrumented exporter decisions**.
+An empty array does not certify a lossless conversion: other canonical metadata,
+quantifiers, text, validity detail or duplicated events may not travel. Inspect
+`exports` for the authoritative result. DATEX delay duration is a leading-record
+supplement, selected independently of management-effect time filtering; its
+presence is not evidence that the delay effect is active. Diagnostics deliberately
+do not label that entire effect withheld merely because its window ended.
 
 An empty parse is **not** proof of an empty source. Some legacy parsers return
 nothing for malformed/unsupported input and do not report every rejection. The

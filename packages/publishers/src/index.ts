@@ -1,3 +1,4 @@
+export type { ExportDiagnostic, ExportDiagnosticSink } from "./export-diagnostics.js";
 export * from "./feature-geojson.js";
 export * from "./record-archive.js";
 export * from "./segment-conditions.js";
