@@ -16,6 +16,8 @@ const FORMATS: FeedFormat<VehiclesCatalogFeed>[] = [
     products: ["maintenance"],
     // Off season and at night no vehicle may be out.
     mayBeEmpty: true,
+    // Each poll states every vehicle's latest position, so the place a vehicle left is no longer one.
+    restatesTransient: true,
     endpoints: { main: { required: true } },
     parse: parseDigitrafficMaintenance,
   },

@@ -278,7 +278,8 @@ async function withOngoingOnsets(
  * false (the poll could not derive any), which keeps the stored ones. It
  * holds only the sites that reported, so a site is never withdrawn for
  * missing one poll (the sweep retires the sites of a source that stopped
- * polling).
+ * polling). A poll that `restatesTransient` ends the transient series it no
+ * longer restates.
  *
  * The publication counts keep their meaning, records written: a new or
  * restored site or situation is inserted, a changed one or a new reading is
@@ -292,6 +293,8 @@ export async function publishFlows(
     output: FlowOutput;
     /** Whether the poll could derive congestion at all; default true. */
     situationsComplete?: boolean;
+    /** The poll restates every transient reading in effect: one it does not restate has ended. */
+    restatesTransient?: boolean;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -310,7 +313,11 @@ export async function publishFlows(
         features: output.features,
         observations: output.observations,
       },
-      { ...writeContext(input), complete: { situation: input.situationsComplete ?? true } },
+      {
+        ...writeContext(input),
+        complete: { situation: input.situationsComplete ?? true },
+        restatesTransient: input.restatesTransient === true,
+      },
     );
     const [live] = await tx<{ features: number; situations: number }[]>`
       SELECT (SELECT count(*)::int FROM conditions.feature

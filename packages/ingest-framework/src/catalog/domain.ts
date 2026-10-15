@@ -102,6 +102,13 @@ export interface FeedFormat<F extends CatalogFeed = CatalogFeed> {
    * empty answer, not a failure that keeps the last publication.
    */
   mayBeEmpty?: true;
+  /**
+   * A measurements format whose every poll restates each transient reading
+   * still in effect (the latest position of every vehicle out): a transient
+   * series of its source that a poll with readings does not restate has
+   * ended, such as the place a vehicle has since moved on from.
+   */
+  restatesTransient?: true;
   endpoints: Readonly<Record<string, EndpointRole>>;
   /** One poll's payloads as record drafts; throws when a payload cannot be read. */
   parse(feed: F, payloads: FeedPayloads, ctx: ParseContext): ParseOutput;

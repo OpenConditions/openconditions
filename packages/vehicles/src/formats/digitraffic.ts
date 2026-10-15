@@ -22,9 +22,9 @@ type Activity = (typeof VEHICLE_ACTIVITIES)[number];
 /**
  * How long a position stands, from the time the vehicle reported it. Digitraffic
  * starts a new tracking after five minutes without a message and publishes a
- * message up to four minutes after the vehicle sent it, so a tracking whose
- * latest point is older than this has ended: its vehicle stopped reporting, or
- * reports under a new tracking. It is `vehicle.position`'s freshness window.
+ * message up to four minutes after the vehicle sent it, so a vehicle whose
+ * latest point is older than this has stopped reporting. It is
+ * `vehicle.position`'s freshness window.
  */
 export const MAX_POSITION_AGE_SEC = 600;
 
@@ -149,19 +149,21 @@ function positionReading(
 }
 
 /**
- * Fintraffic's road maintenance tracking: the latest point of every tracking
- * (`/api/maintenance/v1/tracking/routes/latest`), each a `vehicle.position`
- * reading at its location with the bearing of its last observation and what
- * its tasks say the vehicle is doing.
+ * Fintraffic's road maintenance tracking: the latest point of every work
+ * machine (`/api/maintenance/v1/tracking/routes/latest`, the newest tracking
+ * of each machine), each a `vehicle.position` reading at its location with
+ * the bearing of its last observation and what its tasks say the vehicle is
+ * doing.
  *
- * Digitraffic names no vehicle: a tracking id lives from a few seconds to a
- * few minutes, and a vehicle that changes task or falls silent for five
- * minutes starts a tracking that does not point back. So no reading claims a
- * vehicle; each is an anonymous position, transient, standing until
- * `MAX_POSITION_AGE_SEC` after the vehicle reported it. A point already older
- * than that at the fetch is an ended tracking and is left out. A point
- * without an id, a time or a usable position is rejected and counted; a body
- * that is no feature collection fails the parse.
+ * Digitraffic groups the points by machine but publishes no machine id, and
+ * the tracking id it does publish lives from a few seconds to a few minutes.
+ * So no reading claims a vehicle; each is an anonymous position, transient,
+ * standing until `MAX_POSITION_AGE_SEC` after the vehicle reported it, or
+ * until a poll no longer restates it because the vehicle has moved on (the
+ * format `restatesTransient`). A point already older than that at the fetch
+ * is a vehicle that stopped reporting and is left out. A point without an
+ * id, a time or a usable position is rejected and counted; a body that is no
+ * feature collection fails the parse.
  */
 export function parseDigitrafficMaintenance(
   feed: VehiclesCatalogFeed,

@@ -2,6 +2,7 @@ import type { RawTier } from "@openconditions/core/server";
 import type {
   CatalogFeed,
   Env,
+  FeedFormat,
   FeedPayloads,
   HeldPayload,
   ImpersonationOptions,
@@ -547,7 +548,7 @@ async function runAttempt(
             observations: parse.observations,
             situations: parse.situations,
           },
-          format.mayBeEmpty === true,
+          format,
         )
       : finishEventPoll(poll, parse, snapshotInspection);
   };
@@ -1298,13 +1299,15 @@ async function finishEventPoll(
  * readings and the derived congestion situations in one transaction with the
  * poll's status, then bind what changed. A format that `mayBeEmpty` closes
  * a poll without readings as a complete empty answer, its earlier readings
- * left to their own expiry.
+ * left to their own expiry. A format that `restatesTransient` ends, with a
+ * complete poll that has readings, the transient series it no longer restates.
  */
 async function finishFlowPoll(
   poll: PollContext,
   parse: FlowOutput,
-  mayBeEmpty = false,
+  format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient">,
 ): Promise<RunResult> {
+  const mayBeEmpty = format.mayBeEmpty === true;
   const { src, deps } = poll;
   let output = parse;
   // Best-effort: a baseline-load failure must never throw away a good fetch —
@@ -1352,6 +1355,7 @@ async function finishFlowPoll(
     published = await publishFlows(deps.sql, src, {
       output: stamped,
       situationsComplete: baselinesLoaded,
+      restatesTransient: format.restatesTransient === true && poll.statesComplete,
       rejected: skippedNoGeometry,
       poll: poll.identity,
       durationMs: Date.now() - poll.start,

@@ -7,8 +7,8 @@
       "name": "Fintraffic Digitraffic road maintenance tracking",
       "tier": "authoritative",
       "format": "digitraffic",
-      // The latest point of every maintenance vehicle tracking that ended in
-      // the last hour, from the contractors' systems through the Finnish
+      // The latest point of every maintenance work machine that reported in
+      // the last hour (the newest tracking per machine, the machine unnamed), from the contractors' systems through the Finnish
       // Transport Infrastructure Agency's Harja. The data is renewed about
       // every minute and cached for 60 seconds. Only the state roads domain:
       // the municipal domains have published nothing since 2022. Without

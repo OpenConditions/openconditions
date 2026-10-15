@@ -41,7 +41,10 @@ export interface ObservationCounts {
    * closed: they arrived after its lateness allowance and never reach it.
    */
   pastRollup: number;
-  /** Polled change-only series a poll stating all of its source's readings did not state: ended now. */
+  /**
+   * Polled series a poll stating all of its source's readings did not state,
+   * change-only ones and, from a source restating them, transient ones: ended now.
+   */
   ended: number;
 }
 
@@ -840,19 +843,7 @@ export async function endUnstatedSeries(
   drafts: readonly Rec[],
   ctx: Pick<WriteContext, "registry" | "now">,
 ): Promise<EndedSeries[]> {
-  const stated = new Set<string>();
-  let handled = 0;
-  for (const draft of drafts) {
-    if (++handled % RECORDS_PER_TURN === 0) await pause();
-    // A draft the writer rejected as malformed states no series.
-    let key: string;
-    try {
-      key = keyString(seriesKeyOf(draft));
-    } catch {
-      continue;
-    }
-    stated.add(key);
-  }
+  const stated = await statedSeries(drafts);
   const changeOnly = ctx.registry
     .properties()
     .filter((p) => p.retention?.changeOnly)
@@ -916,6 +907,82 @@ export async function endUnstatedSeries(
     ended.map((e) => ({ ...e, effective_until: ctx.now, updated_at: ctx.now })),
   );
   return rows.map((r) => ({ featureId: r.feature_id, property: r.property }));
+}
+
+/**
+ * Ends the transient series of `sourceId` that a poll restating every
+ * transient reading of its source still in effect (`drafts`) did not
+ * restate. An anonymous vehicle's position is a series keyed by where the
+ * vehicle stood, so each move starts a new series; the one it left is over,
+ * not a second vehicle until its reading expires. Its reading expires now,
+ * so reads leave it out and the sweep deletes it. Only this instance's own
+ * polled series end.
+ */
+export async function endUnrestatedTransient(
+  tx: Sql,
+  sourceId: string,
+  drafts: readonly Rec[],
+  ctx: Pick<WriteContext, "registry" | "now">,
+): Promise<EndedSeries[]> {
+  const stated = await statedSeries(drafts);
+  const transient = ctx.registry
+    .properties()
+    .filter((p) => p.transient)
+    .map((p) => p.code);
+  type Key = { series_id: string; feature_id: string | null } & Record<
+    "subject_key" | "property" | "qualifier_key",
+    string
+  >;
+  const held = await tx.unsafe<Key[]>(
+    `SELECT l.series_id::text AS series_id, l.feature_id, l.subject_key, l.property, l.qualifier_key
+       FROM conditions.observation_latest l
+      WHERE l.source_id = $1 AND l.access_mode = 'bulk' AND l.property = ANY($2::text[])
+        AND (l.expires_at IS NULL OR l.expires_at > $3::timestamptz)
+        AND l.template #>> '{provenance,origin}' = 'feed'
+        AND jsonb_array_length(COALESCE(l.template #> '{provenance,originChain}', '[]'::jsonb)) = 0`,
+    [sourceId, transient, ctx.now],
+  );
+  const ending = held.filter(
+    (r) =>
+      !stated.has(
+        keyString({
+          subjectKey: r.subject_key,
+          property: r.property,
+          qualifierKey: r.qualifier_key,
+          sourceId,
+        }),
+      ),
+  );
+  if (ending.length === 0) return [];
+  await updateRows(
+    tx,
+    "observation_latest",
+    { name: "series_id", type: "bigint" },
+    [
+      { name: "expires_at", type: "timestamptz" },
+      { name: "updated_at", type: "timestamptz" },
+    ],
+    ending.map((r) => ({ series_id: r.series_id, expires_at: ctx.now, updated_at: ctx.now })),
+  );
+  return ending.map((r) => ({ featureId: r.feature_id, property: r.property }));
+}
+
+/** The series a poll's drafts state, keyed as `keyString` keys them. */
+async function statedSeries(drafts: readonly Rec[]): Promise<Set<string>> {
+  const stated = new Set<string>();
+  let handled = 0;
+  for (const draft of drafts) {
+    if (++handled % RECORDS_PER_TURN === 0) await pause();
+    // A draft the writer rejected as malformed states no series.
+    let key: string;
+    try {
+      key = keyString(seriesKeyOf(draft));
+    } catch {
+      continue;
+    }
+    stated.add(key);
+  }
+  return stated;
 }
 
 /**

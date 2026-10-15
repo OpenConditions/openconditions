@@ -350,11 +350,13 @@ The vehicles product is:
 
 Every vehicles format reads its publisher's own shape from `main`, so a
 vehicles feed has no mapping block. `digitraffic` (Fintraffic's maintenance
-tracking, the latest point of each tracking) is a `measurements` format whose
-answer may hold no vehicle, which is a complete empty poll, not a failure.
-Digitraffic names no vehicle, so each point is an anonymous
+tracking, the latest point of each work machine) is a `measurements` format
+whose answer may hold no vehicle, which is a complete empty poll, not a
+failure. Digitraffic names no vehicle, so each point is an anonymous
 `vehicle.position` reading at its location, transient and standing ten
-minutes from its report. The formats are in `packages/vehicles/src/domain.ts`.
+minutes from its report. Each poll restates every vehicle's latest point
+(`restatesTransient`), so the position a vehicle has moved on from ends with
+the poll that no longer states it. The formats are in `packages/vehicles/src/domain.ts`.
 
 The border product is:
 

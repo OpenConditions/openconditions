@@ -20,8 +20,9 @@ import { registry } from "./helpers/situations.js";
 /**
  * Digitraffic's maintenance tracking polled through the pipeline over a stub
  * upstream serving the vehicles package's capture, and read back through the
- * API: anonymous positions that stand ten minutes from their report, a poll
- * with no vehicle out that is no failure, and a sweep that ends the series.
+ * API: anonymous positions that stand ten minutes from their report or until
+ * the vehicle moves on, a poll with no vehicle out that is no failure, and a
+ * sweep that ends the series.
  */
 
 type Rec = Record<string, unknown>;
@@ -114,6 +115,29 @@ describe("fi-digitraffic-maintenance through the pipeline", () => {
     expect(await positions("2026-10-14T23:31:30.000Z")).toHaveLength(1);
   }, 60_000);
 
+  it("ends the position a vehicle moved on from with the poll that no longer states it", async () => {
+    // Digitraffic's next answer holds the vehicle of 202635031 under a new tracking, further north.
+    const doc = JSON.parse(LATEST) as { features: { properties: Rec; geometry: Rec }[] };
+    const moved = doc.features.find((f) => f.properties["id"] === 202635031)!;
+    moved.properties["id"] = 202635100;
+    moved.properties["time"] = "2026-10-14T23:26:10Z";
+    moved.geometry["coordinates"] = [25.508, 65.019, 0];
+    body = JSON.stringify(doc);
+    const result = await poll("2026-10-14T23:26:30.000Z");
+    expect(result.error).toBeUndefined();
+
+    const written = await series();
+    expect(written).toHaveLength(9);
+    expect(
+      written.filter((s) => s.expires_at.toISOString() === "2026-10-14T23:26:30.000Z"),
+    ).toHaveLength(1);
+    const read = await positions("2026-10-14T23:26:31.000Z");
+    expect(read).toHaveLength(8);
+    const ids = read.map((r) => (r["provenance"] as Rec)["recordId"]);
+    expect(ids).toContain("202635100");
+    expect(ids).not.toContain("202635031");
+  }, 60_000);
+
   it("closes a poll with no vehicle out as a complete empty answer, keeping the earlier positions", async () => {
     body = EMPTY;
     const result = await poll("2026-10-14T23:27:00.000Z");
@@ -122,7 +146,8 @@ describe("fi-digitraffic-maintenance through the pipeline", () => {
     const [status] = await sql<{ last_error: string | null }[]>`
       SELECT last_error FROM conditions.source_status WHERE source = ${SOURCE}`;
     expect(status!.last_error).toBeNull();
-    expect(await series()).toHaveLength(8);
+    expect(await series()).toHaveLength(9);
+    expect(await positions("2026-10-14T23:27:01.000Z")).toHaveLength(8);
   }, 60_000);
 
   it("the sweep ends every position once it has expired", async () => {
@@ -133,7 +158,7 @@ describe("fi-digitraffic-maintenance through the pipeline", () => {
       maxAgeSec: 3600,
       historyDays: 90,
     });
-    expect(swept.transient).toBe(8);
+    expect(swept.transient).toBe(9);
     expect(await series()).toEqual([]);
   }, 60_000);
 });

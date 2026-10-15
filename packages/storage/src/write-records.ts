@@ -15,6 +15,7 @@ import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { componentRows, effectRows, expiryOf, relationRows, rowOf } from "./record-rows.js";
 import { stepTimer } from "./steps.js";
 import {
+  endUnrestatedTransient,
   endUnstatedSeries,
   type ObservationCounts,
   type PollRef,
@@ -54,6 +55,12 @@ export interface WriteContext extends PollRef {
    * does not state has ended, and its reading stops holding.
    */
   statesComplete?: boolean;
+  /**
+   * The snapshot restates every transient reading of its source still in
+   * effect (each vehicle's latest position): a transient series it does not
+   * restate has ended.
+   */
+  restatesTransient?: boolean;
   /** The most records of one class a poll may hold (default `MAX_ROWS_PER_SOURCE`). */
   maxRowsPerClass?: number;
   /**
@@ -279,11 +286,16 @@ export async function writeSnapshotIn(
     summary.rejected,
   );
   lap("readings");
-  const ended = ctx.statesComplete
-    ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
-    : [];
+  const ended = [
+    ...(ctx.statesComplete
+      ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
+      : []),
+    ...(ctx.restatesTransient
+      ? await endUnrestatedTransient(tx, sourceId, drafts.observations ?? [], ctx)
+      : []),
+  ];
   summary.observations.ended = ended.length;
-  if (ctx.statesComplete) lap("ended");
+  if (ctx.statesComplete || ctx.restatesTransient) lap("ended");
   await updateCanonicalView(
     tx,
     ctx.registry,

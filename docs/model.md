@@ -320,7 +320,9 @@ domain's (`packages/weather`) on their catalogue feeds. What it found:
   Digitraffic tracking id lasts seconds to minutes, and a task change or five
   silent minutes start a tracking that does not point back, so its points are
   `vehicle.position` readings about their location (the vehicles domain's
-  `digitraffic` format).
+  `digitraffic` format). Its latest-points endpoint gives each work machine's
+  newest point without the machine's id; a poll restates them all, so the
+  series a vehicle moved on from ends with the poll that no longer states it.
 
 ## Facilities
 

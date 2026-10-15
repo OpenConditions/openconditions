@@ -25,6 +25,7 @@ test("vehiclesDomain registers the Digitraffic maintenance tracking, which may a
     kind: "measurements",
     products: ["maintenance"],
     mayBeEmpty: true,
+    restatesTransient: true,
     endpoints: { main: { required: true } },
   });
 });
