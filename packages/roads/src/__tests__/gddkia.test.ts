@@ -61,3 +61,48 @@ describe("parseGddkia", () => {
     expect(parseGddkia("", SRC)).toEqual([]);
   });
 });
+
+describe("GDDKiA native kilometre references", () => {
+  const sample = (km: string, dl: string, road = "S7x") =>
+    `<utrudnienia><utr><nr_drogi>${road}</nr_drogi><km>${km}</km><dl>${dl}</dl><geo_lat>52.2</geo_lat><geo_long>21</geo_long></utr></utrudnienia>`;
+
+  it("preserves suffix sections, zero chainage and reported length without guessing an endpoint", async () => {
+    const { locationOf } = await import("../situation/location.js");
+    const event = parseGddkia(sample("0", "2,750"), SRC)[0]!;
+    const location = locationOf(event, SRC);
+    expect(location["linear"]).toEqual({
+      system: "kilometre_post",
+      ref: "S7x",
+      from: 0,
+      reportedLengthM: 2750,
+      authority: "GDDKiA",
+    });
+    expect(location["geometry"]).toEqual({ type: "Point", coordinates: [21, 52.2] });
+    expect(location["linear"]).not.toHaveProperty("to");
+    expect(event.id).toBe(parseGddkia(sample("0", "40"), SRC)[0]!.id);
+  });
+
+  it.each(["", "-1", "NaN", "Infinity", "1.2junk"])(
+    "does not invent a starting kilometre from %j",
+    async (km) => {
+      const { locationOf } = await import("../situation/location.js");
+      expect(locationOf(parseGddkia(sample(km, "2"), SRC)[0]!, SRC)["linear"]).toBeUndefined();
+    },
+  );
+
+  it("keeps a valid start when length is absent or invalid, including explicit zero length", async () => {
+    const { locationOf } = await import("../situation/location.js");
+    for (const dl of ["", "-1", "1km"]) {
+      expect(locationOf(parseGddkia(sample("123.5", dl), SRC)[0]!, SRC)["linear"]).toEqual({
+        system: "kilometre_post",
+        ref: "S7x",
+        from: 123.5,
+        authority: "GDDKiA",
+      });
+    }
+    expect(locationOf(parseGddkia(sample("123.5", "0"), SRC)[0]!, SRC)["linear"]).toMatchObject({
+      reportedLengthM: 0,
+    });
+    expect(locationOf(parseGddkia(sample("1", "2", ""), SRC)[0]!, SRC)["linear"]).toBeUndefined();
+  });
+});

@@ -393,17 +393,15 @@ export function situationDrafts(
               }
             : {}),
           ...(!own && !sameJson(memberValidity, validity) ? { validity: memberValidity } : {}),
-          ...(!own && !sameJson(memberLocation["geometry"], location["geometry"])
+          ...(!own && !sameJson(memberLocation, location)
             ? {
-                location: {
-                  geometry: memberLocation["geometry"],
-                  extent: memberLocation["extent"],
-                  geometryOrigin: memberLocation["geometryOrigin"],
-                },
+                // Precision and reference provenance are as load-bearing as
+                // coordinates, including when two records share a point.
+                location: memberLocation,
               }
             : {}),
-          ...(location["direction"] !== undefined
-            ? { direction: location["direction"] as Effect["direction"] }
+          ...(memberLocation["direction"] !== undefined
+            ? { direction: memberLocation["direction"] as Effect["direction"] }
             : {}),
           closureNature: c.kind === "closure" && member === primary,
           laneClosureNature: situationCode(classificationOf(member)) === "closure.closure.lane",

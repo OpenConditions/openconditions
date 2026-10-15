@@ -52,7 +52,8 @@ import {
   type RoadSnapshotReport,
   snapshotFingerprint,
 } from "./snapshot.js";
-import { type AlertCReference, resolveAlertC, tmcTables } from "./tmc/index.js";
+import { resolveAlertC, tmcTables } from "./tmc/index.js";
+import { resolveVild, type VildReference } from "./tmc/vild.js";
 import type { SourceDescriptor } from "./types.js";
 
 type ValidityStatus = "active" | "inactive" | "archived" | "cancelled";
@@ -1025,13 +1026,23 @@ function collectOpenLr(rec: XmlObject): string | undefined {
 }
 
 /** The location code under a primary/secondary point-location wrapper. */
-function specificLocationOf(wrapper: XmlObject | undefined): number | undefined {
+function specificLocationOf(wrapper: XmlObject | undefined, strict = false): number | undefined {
   const raw = getXmlChildText(getXmlChild(wrapper, "alertCLocation"), "specificLocation");
-  if (!raw) return undefined;
+  if (!raw || (strict && !/^\d+$/.test(raw))) return undefined;
   const code = parseInt(raw, 10);
   // 0 is the format's "no location" placeholder — some publishers emit an
   // otherwise-empty Alert-C block rather than omitting it.
-  return Number.isFinite(code) && code > 0 ? code : undefined;
+  return Number.isSafeInteger(code) && code > 0 ? code : undefined;
+}
+
+/** Presence, including empty/malformed elements, matters for VILD refusal. */
+function hasElement(node: unknown, name: string): boolean {
+  if (Array.isArray(node)) return node.some((child) => hasElement(child, name));
+  if (!isXmlObject(node)) return false;
+  return Object.entries(node).some(
+    ([key, child]) =>
+      !key.startsWith("@_") && (stripXmlNamespace(key) === name || hasElement(child, name)),
+  );
 }
 
 /**
@@ -1041,7 +1052,7 @@ function specificLocationOf(wrapper: XmlObject | undefined): number | undefined 
  * `groupOfLocations` while v3 uses `locationReference`; both are searched
  * because the German feeds are precisely the ones this exists to resolve.
  */
-function alertCRefOf(rec: XmlObject): AlertCReference | undefined {
+function alertCRefOf(rec: XmlObject): VildReference | undefined {
   const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return undefined;
 
@@ -1059,17 +1070,26 @@ function alertCRefOf(rec: XmlObject): AlertCReference | undefined {
   // rather than bailing here: "the record has no Alert-C block at all" and "it
   // has one but names no location" call for different fixes, and collapsing
   // them into one silent absence is what hid this loss in the first place.
+  const country = getXmlChildText(alertC, "alertCLocationCountryCode");
+  const strict = country?.trim() === "8";
   const primary = specificLocationOf(
     findFirst(alertC, "alertCMethod4PrimaryPointLocation") ??
       findFirst(alertC, "alertCMethod2PrimaryPointLocation"),
+    strict,
   );
 
   const secondary = specificLocationOf(
     findFirst(alertC, "alertCMethod4SecondaryPointLocation") ??
       findFirst(alertC, "alertCMethod2SecondaryPointLocation"),
+    strict,
   );
 
   return {
+    type: stripXmlNamespace(getXmlAttribute(alertC, "type") ?? ""),
+    hasOffsets: hasElement(alertC, "offsetDistance"),
+    hasSecondary:
+      hasElement(alertC, "alertCMethod2SecondaryPointLocation") ||
+      hasElement(alertC, "alertCMethod4SecondaryPointLocation"),
     ...(getXmlChildText(alertC, "alertCLocationCountryCode")
       ? { country: getXmlChildText(alertC, "alertCLocationCountryCode") }
       : {}),
@@ -1147,7 +1167,13 @@ function locationShapeOf(rec: XmlObject): string {
 function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | undefined {
   const ref = alertCRefOf(rec);
   if (!ref?.country || !ref.table || ref.primary === undefined) return undefined;
-  return { country: ref.country, table: parseFloat(ref.table), code: ref.primary };
+  if (!/^\d+(?:\.\d+)?$/.test(ref.table)) return undefined;
+  const table = Number(ref.table);
+  if (!Number.isFinite(table)) return undefined;
+  const version = Number.isInteger(table)
+    ? ref.version
+    : [ref.table, ref.version].filter(Boolean).join(".");
+  return { country: ref.country, table, ...(version ? { version } : {}), code: ref.primary };
 }
 
 /** Provider external location code (NDW's `externalReferencing`, e.g. RIS-index). */
@@ -1381,27 +1407,35 @@ function parseDatexInternal(
       // The road the record itself names, so a code from another table edition
       // can be checked against it rather than trusted.
       const road = roads[0];
-      const resolution = ref
-        ? resolveAlertC(
-            { ...ref, ...(road?.ref || road?.name ? { road: road.ref ?? road.name } : {}) },
-            tmcTables(),
-          )
-        : // Not an Alert-C record at all — it locates itself some other way (or
-          // not at all). Counted like any other reason so no dropped record is
-          // left in a silent bucket that reads as "nothing to explain".
-          ({ ok: false, reason: "no-alertc" } as const);
+      const resolution =
+        ref?.country?.trim() === "8"
+          ? resolveVild(ref)
+          : ref
+            ? resolveAlertC(
+                { ...ref, ...(road?.ref || road?.name ? { road: road.ref ?? road.name } : {}) },
+                tmcTables(),
+              )
+            : // Not an Alert-C record at all — it locates itself some other way (or
+              // not at all). Counted like any other reason so no dropped record is
+              // left in a silent bucket that reads as "nothing to explain".
+              ({ ok: false, reason: "no-alertc" } as const);
 
       if (resolution.ok) {
         geometry = resolution.geometry;
-        locationTable = {
-          ref: `TMC ${resolution.table.cid}/${resolution.table.tabcd}`,
-          version: resolution.table.version,
-          // Records placed from another edition are marked, because their codes
-          // were vouched for by a road match rather than by the edition itself.
-          ...(resolution.viaRoadMatch ? { viaRoadMatch: true } : {}),
-          ...(resolution.table.attribution ? { attribution: resolution.table.attribution } : {}),
-          ...(resolution.table.license ? { license: resolution.table.license } : {}),
-        };
+        locationTable =
+          "locationTable" in resolution
+            ? resolution.locationTable
+            : {
+                ref: `TMC ${resolution.table.cid}/${resolution.table.tabcd}`,
+                version: resolution.table.version,
+                // Records placed from another edition are marked, because their codes
+                // were vouched for by a road match rather than by the edition itself.
+                ...(resolution.viaRoadMatch ? { viaRoadMatch: true } : {}),
+                ...(resolution.table.attribution
+                  ? { attribution: resolution.table.attribution }
+                  : {}),
+                ...(resolution.table.license ? { license: resolution.table.license } : {}),
+              };
         resolvedFromTmc++;
       } else {
         unresolvedReasons.set(
@@ -1601,6 +1635,7 @@ function parseDatexInternal(
           schedule: withTimezone(scheduleOf(timeSpec), scheduleTimezoneForGeometry(geometry)),
           externalRefs: externalRefsOf(rec),
           ...(locationTable ? { locationTable } : {}),
+          ...(locationTable?.ref === "VILD" ? { fuzziness: "low_res" as const } : {}),
         }
       : {
           ...shared,

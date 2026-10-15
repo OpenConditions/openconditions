@@ -58,7 +58,7 @@ the vendored snapshot is not expected to go stale.
 - Vendored at `packages/roads/src/tmc/snapshots/lcl-de.json` (38 387 coded points)
 - Regenerate with `pnpm tsx scripts/gen-tmc-table.ts`
 
-Every event placed from the table carries `attributes.locationTable`, so the
+Every event placed from the table carries `location.locationTable`, so the
 attribution travels with the data and consumers can tell table-derived geometry
 apart from a coordinate the publisher actually sent. Only tables whose licence
 permits redistribution are vendored; a feed referencing a country we hold no
@@ -139,3 +139,25 @@ Two known remainders:
   record. Treating that as a location would pile every such record onto one
   arbitrary point, so it is explicitly rejected; those records carry real
   coordinates anyway.
+
+## Dutch VILD point fallback
+
+The separate VILD resolver vendors the official **6.13.A** distribution (9,844
+points, Rijkswaterstaat / NDW, CC0). It accepts only wire country `8`, table
+`6.13`, version `A`, and only Method2 points without secondary locations or
+offsets. VILD is not Dutch RDS-TMC/LCL; synthetic TraFF country/table numbers
+and the German cross-edition road-match policy do not apply.
+
+Supplied geometry always wins. Table fallback points carry `fuzziness: low_res`
+and `location.locationTable` provenance. They remain available in GeoJSON, but
+cannot create routing restrictions or appear in DATEX/TraFF XML exports that
+cannot preserve their uncertainty. Grouped records retain member precision.
+
+6.13.A became active on 22 October 2025. 6.14.A was published but does not become
+active until 4 November 2026. The importer pins the archive hash and validates
+its version, WGS84 point distribution and joins; it never follows “latest”.
+
+See [the research and reproduction instructions](location-reference-research.md)
+for measured gains, licensing evidence, limitations and the Polish kilometre
+reference decision. Unsupported VILD reference forms report
+`unsupported-reference`; unknown or missing editions remain unresolved.

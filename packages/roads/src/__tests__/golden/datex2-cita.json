@@ -315,7 +315,21 @@
             ]
           },
           "extent": "linear",
-          "geometryOrigin": "source"
+          "geometryOrigin": "source",
+          "fuzziness": "exact",
+          "roads": [
+            {
+              "name": [
+                {
+                  "lang": "und",
+                  "text": "A13"
+                }
+              ]
+            }
+          ],
+          "admin": {
+            "country": "LU"
+          }
         },
         "applicability": {
           "kind": "all"
@@ -337,7 +351,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "be8445b0723b0135e3d6d8d3cb91d089c523974bccd4dd12a3121381c30b16e1"
+    "contentHash": "ab2618aba9c7c9f6328b3f6c8c5b44389c1a51e4bb504707995ebfaad5da87cc"
   },
   {
     "id": "oc:situation:lu-cita-events:234859",
@@ -1035,7 +1049,21 @@
             ]
           },
           "extent": "linear",
-          "geometryOrigin": "source"
+          "geometryOrigin": "source",
+          "fuzziness": "exact",
+          "roads": [
+            {
+              "name": [
+                {
+                  "lang": "und",
+                  "text": "A7"
+                }
+              ]
+            }
+          ],
+          "admin": {
+            "country": "LU"
+          }
         },
         "applicability": {
           "kind": "all"
@@ -1057,6 +1085,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "aed70789766cec0e79c0c6920c92ecefc162e8220a11151188f373ab9eee647c"
+    "contentHash": "09048908cc282ee0d954f08c23460fc3cc9672c54f379e1eee0b7ef779600cbd"
   }
 ]

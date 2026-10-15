@@ -40,6 +40,14 @@ function hash(s: string): string {
   return h.toString(36);
 }
 
+/** Polish source decimals may use either separator; blank is not km zero. */
+function kilometre(value: string | undefined): number | undefined {
+  const text = value?.trim();
+  if (!text || !/^\d+(?:[.,]\d+)?$/.test(text)) return undefined;
+  const number = Number(text.replace(",", "."));
+  return Number.isFinite(number) ? number : undefined;
+}
+
 export function parseGddkia(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   let doc: ReturnType<typeof parseXmlDocument>;
   try {
@@ -76,6 +84,22 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
     const classification = gddkiaClassification(typ, bridge);
     const localId = hash(`${road ?? ""}|${getXmlChildText(it, "km") ?? ""}|${lat}|${lng}`);
 
+    const startKm = kilometre(getXmlChildText(it, "km"));
+    const lengthKm = kilometre(getXmlChildText(it, "dl"));
+    // Preserve the reported distance, not a guessed end chainage: bypasses and
+    // suffix sections can reset numbering within the reported affected stretch.
+    const linear =
+      road?.trim() && startKm !== undefined
+        ? {
+            system: "kilometre_post" as const,
+            ref: road.trim(),
+            from: startKm,
+            ...(lengthKm !== undefined && Number.isFinite(lengthKm * 1000)
+              ? { reportedLengthM: lengthKm * 1000 }
+              : {}),
+            authority: "GDDKiA",
+          }
+        : undefined;
     const recordTime = toIsoTimestamp(getXmlChildText(it, "data_powstania"), src.timeZone);
     out.push({
       id: `${src.id}:${localId}`,
@@ -96,6 +120,7 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
       severitySource: "derived",
       status: "active",
       geometry: { type: "Point", coordinates: [lng, lat] },
+      ...(linear ? { linear } : {}),
       direction: getXmlChildText(it, "kierunek") || undefined,
       roads: road ? [{ name: road, ref: road }] : [],
       headline: text || section || road || "Utrudnienie",

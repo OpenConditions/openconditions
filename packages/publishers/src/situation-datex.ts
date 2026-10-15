@@ -14,6 +14,7 @@ import {
   datexDiscriminator,
 } from "@openconditions/model-roads";
 import { XMLBuilder } from "fast-xml-parser";
+import { hasCoarseLocation } from "./situation-precision.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -256,7 +257,7 @@ function natureDetail(c: SituationClass, code: string): Rec {
 /** The DATEX records of a situation at `at`; none when DATEX cannot tell it truthfully. */
 export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
   const effects = situationEffects(situation);
-  if (effects.some(untellable)) return [];
+  if (hasCoarseLocation(situation) || effects.some(untellable)) return [];
   const id = situation["id"] as string;
   const version = String(situation["revision"] ?? 1);
   const validity = situation["validity"] as Validity;

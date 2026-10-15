@@ -531,6 +531,10 @@
             "from": {
               "type": "number"
             },
+            "reportedLengthM": {
+              "type": "number",
+              "minimum": 0
+            },
             "to": {
               "type": "number"
             },
@@ -3625,6 +3629,10 @@
                     "from": {
                       "type": "number"
                     },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
+                    },
                     "to": {
                       "type": "number"
                     },
@@ -4075,6 +4083,10 @@
                     },
                     "from": {
                       "type": "number"
+                    },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
                     },
                     "to": {
                       "type": "number"
@@ -4592,6 +4604,10 @@
                     "from": {
                       "type": "number"
                     },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
+                    },
                     "to": {
                       "type": "number"
                     },
@@ -5036,6 +5052,10 @@
                     },
                     "from": {
                       "type": "number"
+                    },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
                     },
                     "to": {
                       "type": "number"
@@ -5494,6 +5514,10 @@
                     },
                     "from": {
                       "type": "number"
+                    },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
                     },
                     "to": {
                       "type": "number"
@@ -5957,6 +5981,10 @@
                     },
                     "from": {
                       "type": "number"
+                    },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
                     },
                     "to": {
                       "type": "number"
@@ -6427,6 +6455,10 @@
                     "from": {
                       "type": "number"
                     },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
+                    },
                     "to": {
                       "type": "number"
                     },
@@ -6887,6 +6919,10 @@
                     "from": {
                       "type": "number"
                     },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
+                    },
                     "to": {
                       "type": "number"
                     },
@@ -7338,6 +7374,10 @@
                     "from": {
                       "type": "number"
                     },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
+                    },
                     "to": {
                       "type": "number"
                     },
@@ -7772,6 +7812,10 @@
                     },
                     "from": {
                       "type": "number"
+                    },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
                     },
                     "to": {
                       "type": "number"
@@ -8211,6 +8255,10 @@
                     },
                     "from": {
                       "type": "number"
+                    },
+                    "reportedLengthM": {
+                      "type": "number",
+                      "minimum": 0
                     },
                     "to": {
                       "type": "number"

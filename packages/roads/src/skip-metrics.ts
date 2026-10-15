@@ -2,7 +2,7 @@
  * Per-source counters for records a parser deliberately dropped.
  *
  * DATEX providers publish a share of their records with Alert-C/TMC location
- * references and no coordinates. Those are skipped (there is no resolver yet),
+ * references and no coordinates. References unsupported by the resolver are skipped,
  * which was previously visible only as one `console.debug` line — so a source
  * losing, say, its every closure to TMC-only encoding looked like a healthy,
  * quiet feed. Recording per source makes the loss measurable in

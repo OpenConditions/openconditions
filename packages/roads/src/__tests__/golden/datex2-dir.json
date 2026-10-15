@@ -27,6 +27,7 @@
       "tmc": {
         "country": "F",
         "table": 32,
+        "version": "11.0",
         "code": 17389
       },
       "admin": {
@@ -148,7 +149,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "38aa8fe4198fd187cfb9bf8f28e7536618e718e4686b10c7a7fb9417b0408b51"
+    "contentHash": "cf0731f285df26facb15fcbb5113fb63e69f0c11134ebe19fa2a436607a15f6f"
   },
   {
     "id": "oc:situation:fr-dir-events:251022-000640",
@@ -184,6 +185,7 @@
       "tmc": {
         "country": "F",
         "table": 32,
+        "version": "11.0",
         "code": 47221
       },
       "admin": {
@@ -292,7 +294,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1341b98c9986fa4d1efc845cd512f34ec91c691a942542a7209c98dd1f04cb7f"
+    "contentHash": "93455f2e6d3fbbc4fc6b61413a811f9cacdca950ab00d7b324d3a851413ef6f5"
   },
   {
     "id": "oc:situation:fr-dir-events:251023-001144",
@@ -317,6 +319,7 @@
       "tmc": {
         "country": "F",
         "table": 32,
+        "version": "11.0",
         "code": 33202
       },
       "admin": {
@@ -397,7 +400,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "463ee27ea3f707e92a0db5de3910869562948e32f100f9eba0969bda8fc136d3"
+    "contentHash": "e3e9ccb75c250fa9ead5c074515be221a3712531b50a43ae3df0d848043b4269"
   },
   {
     "id": "oc:situation:fr-dir-events:241125-001455",
@@ -433,6 +436,7 @@
       "tmc": {
         "country": "F",
         "table": 32,
+        "version": "11.0",
         "code": 27203
       },
       "admin": {
@@ -509,7 +513,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9edb395e9eff35a7336c03173acd961af7bb135716975ab278572f777b63b0ea"
+    "contentHash": "6a20db0c6eee01568018c9e5ba936423edd085759b08271572a96fe95f9d21a9"
   },
   {
     "id": "oc:situation:fr-dir-events:251209-001171",
@@ -545,6 +549,7 @@
       "tmc": {
         "country": "F",
         "table": 32,
+        "version": "11.0",
         "code": 63443
       },
       "admin": {
@@ -652,7 +657,22 @@
             ]
           },
           "extent": "linear",
-          "geometryOrigin": "source"
+          "geometryOrigin": "source",
+          "fuzziness": "exact",
+          "roads": [
+            {
+              "ref": "N0164"
+            }
+          ],
+          "tmc": {
+            "country": "F",
+            "table": 32,
+            "version": "11.0",
+            "code": 47622
+          },
+          "admin": {
+            "country": "FR"
+          }
         },
         "applicability": {
           "kind": "all"
@@ -682,7 +702,22 @@
             ]
           },
           "extent": "linear",
-          "geometryOrigin": "source"
+          "geometryOrigin": "source",
+          "fuzziness": "exact",
+          "roads": [
+            {
+              "ref": "N0164"
+            }
+          ],
+          "tmc": {
+            "country": "F",
+            "table": 32,
+            "version": "11.0",
+            "code": 47621
+          },
+          "admin": {
+            "country": "FR"
+          }
         },
         "applicability": {
           "kind": "all"
@@ -703,6 +738,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7cce46d7eba5338e4f85115bd218334db543e7f94ba7af106534ac4c20dc211d"
+    "contentHash": "ac83bcd24c0056d7344348daa06eb69b41537c408e1bc8bd42c33a0561948520"
   }
 ]

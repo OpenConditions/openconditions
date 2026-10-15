@@ -964,30 +964,49 @@ describe("parseDatexSituations — Hrvatske ceste events publication (DATEX II v
 });
 
 describe("parseDatexSituations — per-source skip metrics", () => {
+  // An intentionally unsupported namespace keeps counter coverage independent
+  // of which national location tables are currently installed.
+  const unsupported = v3Record(`<locationReference xsi:type="PointLocation">
+    <alertCPoint xsi:type="AlertCMethod2Point">
+      <alertCLocationCountryCode>TEST-UNSUPPORTED</alertCLocationCountryCode>
+      <alertCLocationTableNumber>1</alertCLocationTableNumber>
+      <alertCLocationTableVersion>1</alertCLocationTableVersion>
+      <alertCMethod2PrimaryPointLocation><alertCLocation>
+        <specificLocation>1</specificLocation>
+      </alertCLocation></alertCMethod2PrimaryPointLocation>
+    </alertCPoint></locationReference>`);
+
   beforeEach(() => __resetSkipMetrics());
 
-  it("counts Alert-C-only records per source so the loss is measurable", () => {
-    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
-    // Every TMC-only record in the NDW capture, including an active
-    // carriageway closure, is dropped for want of coordinates.
-    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(11);
+  it("counts unresolved Alert-C-only records per source so the loss is measurable", () => {
+    expect(parseDatexSituations(unsupported, NDW_SOURCE)).toEqual([]);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(1);
+  });
+
+  it("does not count recovered VILD points as skipped geometry", () => {
+    const events = parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    expect(events.filter((event) => event.locationTable?.ref === "VILD")).toHaveLength(11);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(0);
   });
 
   it("drains the counter, so a later clean run reports zero", () => {
-    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
-    expect(drainSkippedNoGeometry("nl-ndw-events")).toBeGreaterThan(0);
+    parseDatexSituations(unsupported, NDW_SOURCE);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(1);
+    parseDatexSituations(v3Record(POINT_LOC), NDW_SOURCE);
     expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(0);
   });
 
   it("accumulates across the buffers of one multi-URL run", () => {
-    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
-    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
-    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(22);
+    parseDatexSituations(unsupported, NDW_SOURCE);
+    parseDatexSituations(unsupported, NDW_SOURCE);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(2);
   });
 
   it("keeps counts separate per source", () => {
-    parseDatexSituations(readFileSync(NDW_FIXTURE_PATH), NDW_SOURCE);
+    parseDatexSituations(unsupported, NDW_SOURCE);
+    parseDatexSituations(unsupported, { ...NDW_SOURCE, id: "another-feed" });
     expect(drainSkippedNoGeometry("some-other-feed")).toBe(0);
-    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(11);
+    expect(drainSkippedNoGeometry("nl-ndw-events")).toBe(1);
+    expect(drainSkippedNoGeometry("another-feed")).toBe(1);
   });
 });

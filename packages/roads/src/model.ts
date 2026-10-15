@@ -7,7 +7,7 @@ import type {
   MultiLineStringGeometry,
   Severity,
 } from "@openconditions/core";
-import type { Schedule, Text, Validity } from "@openconditions/model";
+import type { LinearRef, Schedule, Text, Validity } from "@openconditions/model";
 import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
@@ -311,11 +311,14 @@ export interface RoadEvent {
   relatedEvents?: { id: string; type?: string }[];
   /** Stable identity of the enclosing DATEX situation; not a record or lineage id. */
   situationId?: string;
+  /** Native linear reference, separate from any resolved geographic geometry. */
+  linear?: LinearRef;
   externalRefs?: {
     openlr?: string;
     tmc?: {
       country: string;
       table: number;
+      version?: string;
       code: number;
       direction?: number;
       extent?: number;

@@ -148,6 +148,7 @@ export function locationOf(
     geometryOrigin: geometry === null ? "none" : event.locationTable ? "tmc_table" : "source",
     fuzziness: event.fuzziness ?? "exact",
     ...(roads.length > 0 ? { roads } : {}),
+    ...(event.linear ? { linear: event.linear } : {}),
     ...(direction ? { direction } : {}),
     ...(tmc
       ? {
@@ -156,7 +157,11 @@ export function locationOf(
             // A table number some publishers write with its edition ("6.13", NDW)
             // is table 6; the edition is kept as the version.
             table: Math.trunc(tmc.table),
-            ...(Number.isInteger(tmc.table) ? {} : { version: String(tmc.table) }),
+            ...(tmc.version
+              ? { version: tmc.version }
+              : Number.isInteger(tmc.table)
+                ? {}
+                : { version: String(tmc.table) }),
             code: tmc.code,
             ...(tmc.direction === 0 || tmc.direction === 1 ? { direction: tmc.direction } : {}),
             ...(tmc.extent !== undefined ? { extent: tmc.extent } : {}),

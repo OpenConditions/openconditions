@@ -108,6 +108,28 @@ describe("bindRecords", () => {
     expect(await spans(id("works"), "works/closure")).toEqual(["20:f"]);
   });
 
+  it("uses an effect's own road references instead of the parent's", async () => {
+    await sql`INSERT INTO conditions.road_segment (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, computed_at)
+      VALUES ('30:f', 30, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(6.80 51.2, 6.82 51.2)'),4326), 'motorway', 'B 57', 1400, 5, ${NOW})`;
+    try {
+      const draft = situationDraft("own-road");
+      const effect = (draft["effects"] as Record<string, unknown>[])[0]!;
+      await writeSituations(sql, "de-autobahn-events", [
+        {
+          ...draft,
+          effects: [
+            { ...effect, location: { ...(draft["location"] as object), roads: [{ ref: "B 57" }] } },
+          ],
+        },
+      ]);
+      await bindRecords(sql, [id("own-road")], { now });
+      expect(await spans(id("own-road"))).toEqual(["10:f", "11:f"]);
+      expect(await spans(id("own-road"), "own-road/closure")).toEqual(["30:f"]);
+    } finally {
+      await sql`DELETE FROM conditions.road_segment WHERE segment_id = '30:f'`;
+    }
+  });
+
   it("skips an unchanged situation and rebinds a new revision", async () => {
     await writeSituations(sql, "de-autobahn-events", [situationDraft("line")]);
     await bindRecords(sql, [id("line")], { now });
@@ -135,6 +157,93 @@ describe("bindRecords", () => {
     expect(again.attempted).toBe(1);
     expect(await spans(id("line"))).toEqual(["20:f"]);
   });
+
+  it("clears exact routing spans when a location becomes coarse", async () => {
+    const draft = situationDraft("precision");
+    await writeSituations(sql, "de-autobahn-events", [draft]);
+    await bindRecords(sql, [id("precision")], { now });
+    expect(await spans(id("precision"))).toEqual(["10:f", "11:f"]);
+    await writeSituations(
+      sql,
+      "de-autobahn-events",
+      [
+        {
+          ...draft,
+          location: {
+            ...(draft["location"] as object),
+            fuzziness: "low_res",
+            geometryOrigin: "tmc_table",
+            locationTable: { ref: "VILD", version: "6.13.A" },
+          },
+        },
+      ],
+      "2026-09-06T10:05:00.000Z",
+    );
+    await bindRecords(sql, [id("precision")], { now });
+    expect(await spans(id("precision"))).toEqual([]);
+    expect(await bindings()).toEqual([
+      expect.objectContaining({
+        record_id: id("precision"),
+        status: "unresolved",
+        reason: "location_not_exact",
+      }),
+    ]);
+  });
+
+  it.each([
+    {
+      parent: "exact",
+      effect: "low_res",
+      own: false,
+      rootSpans: ["10:f", "11:f"],
+      effectSpans: [],
+    },
+    { parent: "exact", effect: "low_res", own: true, rootSpans: ["10:f", "11:f"], effectSpans: [] },
+    { parent: "low_res", effect: "exact", own: true, rootSpans: [], effectSpans: ["20:f"] },
+    {
+      parent: "low_res",
+      effect: "exact",
+      own: false,
+      rootSpans: [],
+      effectSpans: ["10:f", "11:f"],
+    },
+    { parent: "low_res", effect: undefined, own: true, rootSpans: [], effectSpans: [] },
+  ])(
+    "uses effective precision for effect locations: %j",
+    async ({ parent, effect, own, rootSpans, effectSpans }) => {
+      const draft = situationDraft("effect-precision");
+      const closure = (draft["effects"] as Record<string, unknown>[])[0]!;
+      const location = { ...(draft["location"] as object), fuzziness: parent };
+      const effectLocation = {
+        ...(effect ? { fuzziness: effect } : {}),
+        ...(own
+          ? {
+              geometry: {
+                type: "LineString",
+                coordinates: [
+                  [6.818, 51.2002],
+                  [6.805, 51.2002],
+                ],
+              },
+            }
+          : {}),
+      };
+      await writeSituations(sql, "de-autobahn-events", [
+        { ...draft, location, effects: [{ ...closure, location: effectLocation }] },
+      ]);
+      await bindRecords(sql, [id("effect-precision")], { now });
+      expect(await spans(id("effect-precision"))).toEqual(rootSpans);
+      expect(await spans(id("effect-precision"), "effect-precision/closure")).toEqual(effectSpans);
+      if (effectSpans.length === 0)
+        expect(await bindings()).toContainEqual(
+          expect.objectContaining({
+            effect_id: "effect-precision/closure",
+            status: "unresolved",
+            reason: "location_not_exact",
+          }),
+        );
+    },
+  );
 
   it("drops the binding of a situation its source withdrew", async () => {
     await writeSituations(sql, "de-autobahn-events", [situationDraft("line")]);

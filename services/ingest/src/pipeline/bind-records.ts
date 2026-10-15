@@ -150,6 +150,7 @@ interface Target {
   revision: number;
   input: BindInput;
   hash: string;
+  precise: boolean;
 }
 
 interface SituationRow {
@@ -159,7 +160,7 @@ interface SituationRow {
   geojson: string | null;
   location: Rec | null;
   effect_kinds: string[];
-  overrides: { effectId: string; geojson: GeoJsonGeometry }[];
+  overrides: { effectId: string; geojson: GeoJsonGeometry; location: Rec }[];
 }
 
 interface ExistingRow {
@@ -214,9 +215,10 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
 
 /** A situation's binding targets: its own location, then each effect that names its own geometry. */
 function targetsOf(row: SituationRow): Target[] {
-  const roads = roadsOf(row.location);
-  const direction = directionOf(row.location);
-  const target = (effectId: string, geometry: GeoJsonGeometry): Target => {
+  const target = (effectId: string, geometry: GeoJsonGeometry, location: Rec | null): Target => {
+    const roads = roadsOf(location);
+    const direction = directionOf(location);
+    const precise = location?.["fuzziness"] === undefined || location["fuzziness"] === "exact";
     const input = toBindInput({
       id: effectId === "" ? row.id : `${row.id}#${effectId}`,
       geometry,
@@ -229,11 +231,20 @@ function targetsOf(row: SituationRow): Target[] {
       effectId,
       revision: row.revision,
       input,
-      hash: inputHash(input, row.effect_kinds),
+      // Precision is a binding input too: unchanged geometry must not retain
+      // exact spans when only the location evidence becomes coarse.
+      hash: `${inputHash(input, row.effect_kinds)}:${precise ? "exact" : "coarse"}`,
+      precise,
     };
   };
-  const own = row.geojson === null ? [] : [target("", JSON.parse(row.geojson) as GeoJsonGeometry)];
-  return [...own, ...row.overrides.map((o) => target(o.effectId, o.geojson))];
+  const own =
+    row.geojson === null
+      ? []
+      : [target("", JSON.parse(row.geojson) as GeoJsonGeometry, row.location)];
+  return [
+    ...own,
+    ...row.overrides.map((o) => target(o.effectId, o.geojson, { ...row.location, ...o.location })),
+  ];
 }
 
 const key = (recordId: string, effectId: string) => `${recordId}\u0000${effectId}`;
@@ -371,11 +382,13 @@ export async function bindRecords(
            COALESCE((SELECT jsonb_agg(e.kind) FROM conditions.situation_effect e
                       WHERE e.situation_id = s.id), '[]'::jsonb) AS effect_kinds,
            COALESCE((SELECT jsonb_agg(jsonb_build_object(
-                              'effectId', e.effect_id, 'geojson', ST_AsGeoJSON(e.geom)::jsonb)
+                              'effectId', e.effect_id, 'geojson', ST_AsGeoJSON(e.geom)::jsonb,
+                              'location', e.value -> 'location')
                             ORDER BY e.effect_id)
                        FROM conditions.situation_effect e
                       WHERE e.situation_id = s.id AND e.geom IS NOT NULL
-                        AND jsonb_typeof(e.value #> '{location,geometry}') = 'object'),
+                        AND (jsonb_typeof(e.value #> '{location,geometry}') = 'object'
+                          OR e.value -> 'location' ? 'fuzziness')),
                     '[]'::jsonb) AS overrides
       FROM conditions.situation s
      WHERE s.id = ANY(${ids as string[]}::text[]) AND s.tombstoned_at IS NULL
@@ -415,7 +428,9 @@ export async function bindRecords(
       result.attempted++;
       let r: BindResult;
       try {
-        r = await resolveBinding(sql, t.input, regions, opts.maxOffsetM);
+        r = t.precise
+          ? await resolveBinding(sql, t.input, regions, opts.maxOffsetM)
+          : failure("unresolved", "location_not_exact");
       } catch (err) {
         console.warn(`[bind] ${t.input.id}: resolver error`, err);
         r = failure("unresolved", "resolver_error");
