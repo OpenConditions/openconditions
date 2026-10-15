@@ -262,6 +262,16 @@ commands against `DATABASE_URL`:
   stored. It writes nothing; see
   [`docs/storage.md`](../../docs/storage.md#replay).
 
+## Offline feed inspection
+
+`pnpm --silent --filter @openconditions/ingest inspect-feed <source> --at <time> --payload <file>`
+connects a captured situation payload to its parser drafts, canonical validation,
+effect states and actual GeoJSON/TraFF/DATEX output. It makes no network requests
+and requires no database or acquisition credentials. See the
+[feed-inspection guide](../../docs/feed-inspection.md) for reproducible samples,
+rights/omission diagnostics and the path into raw replay, histories and binding
+readiness. Canonical previews are synthetic; this does not simulate ingestion.
+
 ## Record history
 
 `OPENCONDITIONS_HISTORY_DAYS` (default 90) is how long a tombstoned record and
