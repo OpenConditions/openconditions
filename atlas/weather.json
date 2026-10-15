@@ -16,7 +16,7 @@
                 "Digitraffic-User": "OpenConditions/1.0",
                 "Accept-Encoding": "gzip"
               },
-              "cadenceSec": 86400
+              "cadenceSec": 3600
             },
             "details": {
               "url": "https://tie.digitraffic.fi/api/weather/v2/stations/{item}",
@@ -75,7 +75,7 @@
             "Digitraffic-User": "OpenConditions/1.0",
             "Accept-Encoding": "gzip"
           },
-          "cadenceSec": 86400
+          "cadenceSec": 3600
         },
         "details": {
           "url": "https://tie.digitraffic.fi/api/weather/v2/stations/{item}",

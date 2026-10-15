@@ -12,12 +12,14 @@
       // latest sensor values. v1 is deprecated and announced for removal
       // after 2027-04-13. Stations collect every five minutes and the API
       // caches answers for a minute. Without accepted compression the API
-      // answers 406, and the user header raises its per-IP limit.
+      // answers 406, and the user header raises its per-IP limit. The list
+      // carries each station's maintenance state, so it is read hourly: about
+      // 21 kB, or a 304 when nothing changed. The details stay daily.
       "endpoints": {
         "sites": {
           "url": "https://tie.digitraffic.fi/api/weather/v2/stations",
           "headers": { "Digitraffic-User": "OpenConditions/1.0", "Accept-Encoding": "gzip" },
-          "cadenceSec": 86400,
+          "cadenceSec": 3600,
         },
         "details": {
           "url": "https://tie.digitraffic.fi/api/weather/v2/stations/{item}",

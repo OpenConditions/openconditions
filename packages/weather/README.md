@@ -10,9 +10,9 @@ the `weather_station` features and the `weather.*` and `road.*` readings of
   the station or one of its channels, dated by the publisher's measurement
   time and stating the window a mean or maximum covers.
 - `digitraffic-weather` (`src/formats/digitraffic.ts`): Fintraffic
-  Digitraffic's road weather API (v2). It reads the station list (`sites`),
-  each station's details (`details`) and every station's latest values
-  (`status`), which it also reads alone between the daily lists.
+  Digitraffic's road weather API (v2). It reads the station list (`sites`)
+  hourly, each station's details (`details`) daily and every station's
+  latest values (`status`) every five minutes.
   `src/formats/digitraffic-sensors.ts` is the table of the publisher's
   sensors it reads, with their units, windows and code tables, and says which
   it leaves out and why. Air values are the station's own readings; each

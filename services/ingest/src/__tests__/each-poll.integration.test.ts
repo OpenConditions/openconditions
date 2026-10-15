@@ -132,7 +132,10 @@ const at = (offsetMs: number) => new Date(T0 + offsetMs).toISOString();
  * the sites payload. `detail` is written first so that only the poll's own
  * ordering, not the feed's, can put the sites request ahead of it.
  */
-function harness(operator: string, opts: { tolerant?: boolean; status?: boolean } = {}) {
+function harness(
+  operator: string,
+  opts: { tolerant?: boolean; status?: boolean; sitesSec?: number; detailSec?: number } = {},
+) {
   const definition: FeedDefinition = {
     operator,
     product: "fuel",
@@ -142,11 +145,14 @@ function harness(operator: string, opts: { tolerant?: boolean; status?: boolean 
     endpoints: {
       detail: {
         url: `https://example.test/${operator}/stations/{item}`,
-        cadenceSec: 300,
+        cadenceSec: opts.detailSec ?? 300,
         each: { role: "sites", records: "stations", field: "id" },
         ...(opts.tolerant ? { fanout: "tolerant" as const } : {}),
       },
-      sites: { url: `https://example.test/${operator}/sites.json`, cadenceSec: DAY / 1000 },
+      sites: {
+        url: `https://example.test/${operator}/sites.json`,
+        cadenceSec: opts.sitesSec ?? DAY / 1000,
+      },
       ...(opts.status
         ? { status: { url: `https://example.test/${operator}/status.json`, cadenceSec: 300 } }
         : {}),
@@ -239,6 +245,18 @@ describe("poll of a feed with a per-item role", () => {
     const result = await h.tick(300_000);
     expect(result.error).toBeUndefined();
     expect(h.requested).toEqual(["detail:a", "detail:b"]);
+  }, 60_000);
+
+  it("reads a source more often than its per-item role without sweeping the items again", async () => {
+    // Digitraffic's weather station list is read hourly for its maintenance
+    // states, while the ~530 station details stay daily.
+    const h = harness("each-source-often", { sitesSec: 3600, detailSec: DAY / 1000 });
+    await h.tick(0);
+    h.requested.length = 0;
+    const result = await h.tick(3_600_000);
+    expect(result.error).toBeUndefined();
+    expect(h.requested).toEqual(["sites"]);
+    expect(await h.liveFeatures()).toEqual(["a", "b"]);
   }, 60_000);
 
   it("uses the held sites payload when the source fails", async () => {
