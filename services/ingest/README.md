@@ -72,7 +72,7 @@ requests' timeout.
 
 OpenMapX runs this service as a community service. It passes the
 `container.environment` of `service.json` to the container verbatim, so that
-block holds literal values only (`PORT`, `HOST`, and `OPENCONDITIONS_RAW_DIR`,
+block holds literal values only (`PORT`, `HOST`, `OPENCONDITIONS_INGEST_ROLE`, and `OPENCONDITIONS_RAW_DIR`,
 `OPENCONDITIONS_ARCHIVE_DIR` and `OPENCONDITIONS_STATE_DIR`, which put what the
 service writes on its volume). Everything an operator sets is a field of the
 service's `configSchema`. A guard test (`scripts/__tests__/service-manifests.test.ts`)
@@ -183,6 +183,13 @@ OpenMapX shares):
 | `openconditions-ingest-api`         | HTTP reads and on-demand cell writes                                                                             | 20 s      | 5 s       | 1 min               |
 | `openconditions-ingest-maintenance` | Partitions, rollups, the sweep, raw eviction, poll-history pruning, baselines, the archive and the segment spine | 1 h       | 5 s       | 15 min              |
 
+They hold at most 5, 5 and 2 connections, and each closes a connection idle
+for 30 s. One more connection, `openconditions-ingest-claims`, stays open for
+the life of the process and holds its claims (see
+[A second ingest process](#a-second-ingest-process)); migrations open their own
+while they run. A process with the `feeds` role never opens the API pool and
+uses the maintenance pool for its raw eviction only, so it holds at most 8.
+
 A poll that runs or waits past them fails with an error starting
 `db_timeout:`, keeps the last publication and is tried again on its next tick.
 A maintenance job that meets a held lock leaves the work to its next run: the
@@ -190,6 +197,103 @@ sweep skips the busy source (`busy` in its log line), and the hourly partition
 run tries again an hour later, as partitions exist 16 days ahead. At boot the
 partitions are tried a few times before the service gives up. Migrations run
 without a statement or lock timeout.
+
+## A second ingest process
+
+All feeds share one Node process, and a feed's parse and its records'
+validation run on its main thread. A feed that takes longer than its cadence
+(NDW's `nl-ndw-flow`, about 174 000 readings every 60 s) skips its own ticks
+and delays every other feed's poll behind it. Such feeds can run in a second
+process of the same image, with its own thread, heap and parse child:
+
+| Env var                               | Meaning                                                                                                 | Default            |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------ |
+| `OPENCONDITIONS_INGEST_ROLE`          | `primary`, or `feeds` for a process that only polls the feeds `OPENCONDITIONS_INGEST_FEEDS` names.      | `primary`          |
+| `OPENCONDITIONS_INGEST_FEEDS`         | Comma-separated feed ids this process polls; `*` matches any run of characters (`nl-ndw-*`).            | unset (every feed) |
+| `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` | Comma-separated feed ids (or patterns) this process leaves to another process. Applied after the above. | unset (none)       |
+
+The **primary** serves the HTTP API (on-demand feeds included) and runs what
+one process of a deployment must run: the catalogue sync, partitions, rollups,
+the record sweep, the fusion and federation refreshes, the binding queue's
+drain, the segment, baseline and archive jobs, poll-history pruning and the
+boot rebind. A **feeds** process runs none of it: it migrates the database
+(under the migrations' advisory lock, so two processes never migrate at
+once), polls its feeds and answers `GET /status` for its health check. Each
+process closes, at boot, the poll attempts its own stopped polls left running,
+archives its feeds' raw payloads under its own `OPENCONDITIONS_RAW_DIR` and
+evicts only those; the raw cap (`OPENCONDITIONS_RAW_MAX_BYTES`) applies to each
+process's archive separately. A feeds process's polls leave their road-graph
+binding work queued for the primary's next drain.
+
+To split, give both processes the same list, the primary as
+`OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and the feeds process as
+`OPENCONDITIONS_INGEST_FEEDS`; every polled feed then falls to exactly one of
+them. Each process claims, at boot, every feed it polls (and the primary its
+role) with a PostgreSQL session advisory lock held for its life, and stops
+with an error naming a feed another live process already polls, or saying a
+primary already runs. A name in `OPENCONDITIONS_INGEST_FEEDS` that matches no
+feed of the catalogue stops boot, as does a feeds process left with no feed to
+poll; one in `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` only warns, so the primary
+keeps serving when a release drops a feed it was told to leave.
+
+The feeds process needs the settings its polls read, set to the primary's
+values: `DATABASE_URL`, `OPENCONDITIONS_INSTANCE_ID` (its records' namespace),
+the credentials of its feeds, `OPENLR_RESOLVER_URL`, the egress, fetch and raw
+archive settings. `GET /feeds/status` on the primary lists every feed with its
+durable status, whichever process polls it. Commands that read the raw archive
+(`raw replay`, `raw gc`) run in the process that archives the feed.
+
+Under OpenMapX the second process is the optional service
+`openconditions-ingest-heavy` (`services/ingest-heavy/service.json`): the same
+image with `OPENCONDITIONS_INGEST_ROLE=feeds`, its own volume, a memory limit of
+`OPENCONDITIONS_INGEST_HEAVY_MEMORY` (default `6g`, the floor for NDW's
+charging register) and the ingest service's fields. It is not part of the
+extension's default install: OpenMapX enables every service an extension
+lists, and connects a community service to its database only when its
+`postgis` service names it in `communityNetworkAccess`, which names
+`openconditions-ingest` and `openconditions-contributions-api` only. Once
+OpenMapX names `openconditions-ingest-heavy` there, enable it, with the list
+`nl-ndw-flow,nl-ndw-charging`:
+
+1. On `openconditions-ingest-heavy`, set `DATABASE_URL`, the instance id and
+   any credential its feeds need to the primary's values, and
+   `OPENCONDITIONS_INGEST_FEEDS` to the list
+   (`SERVICE_OPENCONDITIONS_INGEST_HEAVY_OPENCONDITIONS_INGEST_FEEDS` in
+   OpenMapX's `.env`).
+2. On `openconditions-ingest`, set `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` to the
+   same list.
+3. `pnpm openmapx services enable openconditions-ingest-heavy`, then
+   `pnpm openmapx services start openconditions-ingest openconditions-ingest-heavy`.
+
+Started before the primary has been recreated, the feeds process stops at
+boot (the primary still polls its feeds) and its restart policy retries once
+the primary has. To undo, disable the service, then clear the primary's
+`OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and start it again; the payloads on the
+feeds process's volume are no longer evicted, so remove the volume.
+
+Outside OpenMapX, run a second container of the image beside the first, with
+its own volume:
+
+```yaml
+ingest-heavy:
+  image: ghcr.io/openconditions/ingest:latest
+  restart: unless-stopped
+  mem_limit: 6g
+  env_file: .env # DATABASE_URL, OPENCONDITIONS_INSTANCE_ID, the credentials
+  environment:
+    OPENCONDITIONS_INGEST_ROLE: feeds
+    OPENCONDITIONS_INGEST_FEEDS: nl-ndw-flow,nl-ndw-charging
+    OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: ""
+    OPENCONDITIONS_RAW_DIR: /data/raw
+    OPENCONDITIONS_STATE_DIR: /data
+  volumes:
+    - ingest-heavy-data:/data
+  depends_on:
+    ingest:
+      condition: service_healthy
+```
+
+and give the primary `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: nl-ndw-flow,nl-ndw-charging`.
 
 ## Feed sources — layered delivery
 
