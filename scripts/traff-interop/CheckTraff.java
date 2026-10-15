@@ -2,6 +2,10 @@ import java.io.FileInputStream;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.HashSet;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 import org.traffxml.traff.TraffFeed;
 import org.traffxml.traff.TraffLocation;
 import org.traffxml.traff.TraffMessage;
@@ -34,5 +38,31 @@ public class CheckTraff {
                 System.out.println(names[i] + ": " + counts[i] + " messages accepted");
             }
         }
+        Path delays = Path.of(args[0], "delays.xml");
+        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+        factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+        factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+        NodeList events = factory.newDocumentBuilder().parse(delays.toFile()).getElementsByTagName("event");
+        if (events.getLength() != 3) throw new AssertionError("distinct delays lost");
+        Element shortDelay = (Element) events.item(1);
+        Element longDelay = (Element) events.item(2);
+        if (!shortDelay.getAttribute("q_duration").equals("0:10")
+                || !shortDelay.getAttribute("length").equals("2400")
+                || !longDelay.getAttribute("q_duration").equals("1:30")
+                || longDelay.hasAttribute("length"))
+            throw new AssertionError("delay duration/queue wire values changed");
+        try (FileInputStream input = new FileInputStream(delays.toFile())) {
+            TraffFeed feed = TraffFeed.read(input);
+            if (feed.getMessages().size() != 1) throw new AssertionError("delay message lost");
+            TraffMessage message = feed.getMessages().get(0);
+            if (message.events.length != 3 || message.events[1].length != 2400)
+                throw new AssertionError("reader lost delay events or queue length");
+            // The pinned reader's constructor has TODO qDuration. It accepts the
+            // attribute but drops it: DOM assertions above verify the wire value.
+            if (message.events[1].getDurationQuantifier() != null
+                    || message.events[2].getDurationQuantifier() != null)
+                throw new AssertionError("reader duration support changed; update the compatibility contract");
+        }
+        System.out.println("delays: wire values verified; pinned reader accepts but discards q_duration");
     }
 }

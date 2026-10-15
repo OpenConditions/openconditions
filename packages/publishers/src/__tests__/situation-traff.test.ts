@@ -81,6 +81,129 @@ describe("traffEventsOf", () => {
     ]);
   });
 
+  it.each([
+    [0, "0:00"],
+    [60, "0:01"],
+    [5400, "1:30"],
+    [86340, "23:59"],
+    [86400, "24:00"],
+    [89, "0:01"],
+    [90, "0:02"],
+  ])("exports %s delay seconds as q_duration=%s", (seconds, duration) => {
+    const s = situation({
+      effects: [effect("x/delay", "delay", { delay: { value: seconds, unit: "s" } })],
+    });
+    expect(traffEventsOf(registry, s, AT)).toContainEqual({
+      cls: "DELAY",
+      type: "DELAY_DELAY",
+      quantifiers: { q_duration: duration },
+    });
+    const xml = situationsToTraff(registry, [s], AT);
+    expect(xml).toContain(`q_duration="${duration}"`);
+  });
+
+  it("preserves queue length and distinct delay durations without summing them", () => {
+    const s = situation({
+      effects: [
+        effect("a", "delay", {
+          delay: { value: 600, unit: "s" },
+          queueLength: { value: 2400, unit: "m" },
+        }),
+        effect("b", "delay", { delay: { value: 1200, unit: "s" } }),
+        effect("duplicate", "delay", { delay: { value: 1200, unit: "s" } }),
+      ],
+    });
+    expect(traffEventsOf(registry, s, AT).filter((e) => e.type === "DELAY_DELAY")).toEqual([
+      { cls: "DELAY", type: "DELAY_DELAY", quantifiers: { length: 2400, q_duration: "0:10" } },
+      { cls: "DELAY", type: "DELAY_DELAY", quantifiers: { q_duration: "0:20" } },
+    ]);
+  });
+
+  it.each([0.1, 29, -1, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_VALUE])(
+    "withholds unrepresentable duration %s and explains the loss",
+    (seconds) => {
+      const diagnostics: { code: string; path: string; disposition: string }[] = [];
+      const xml = situationsToTraff(
+        registry,
+        [
+          situation({
+            effects: [
+              effect("delay", "delay", {
+                delay: { value: seconds, unit: "s" },
+                queueLength: { value: 400, unit: "m" },
+              }),
+            ],
+          }),
+        ],
+        AT,
+        (d) => diagnostics.push(d),
+      );
+      expect(xml).not.toContain("q_duration=");
+      expect(xml).toContain('length="400"');
+      expect(diagnostics).toContainEqual(
+        expect.objectContaining({
+          code: "field_not_exported",
+          path: "/effects/0/delay",
+          disposition: "omitted",
+        }),
+      );
+    },
+  );
+
+  it("reports whole-minute precision loss, but no loss for an exact duration", () => {
+    for (const [seconds, reduced] of [
+      [90, true],
+      [120, false],
+    ] as const) {
+      const diagnostics: { code: string; path: string; disposition: string }[] = [];
+      situationsToTraff(
+        registry,
+        [
+          situation({
+            effects: [effect("delay", "delay", { delay: { value: seconds, unit: "s" } })],
+          }),
+        ],
+        AT,
+        (d) => diagnostics.push(d),
+      );
+      expect(diagnostics.some((d) => d.code === "field_not_exported")).toBe(false);
+      expect(
+        diagnostics.some(
+          (d) =>
+            d.code === "field_precision_reduced" &&
+            d.path === "/effects/0/delay" &&
+            d.disposition === "reduced",
+        ),
+      ).toBe(reduced);
+    }
+  });
+
+  it("keeps durations on their effect's own message and observes effect validity", () => {
+    const xml = situationsToTraff(
+      registry,
+      [
+        situation({
+          effects: [
+            effect("ended", "delay", {
+              delay: { value: 600, unit: "s" },
+              validity: { status: "active", end: "2026-09-06T09:00:00Z" },
+            }),
+            effect("ramp", "delay", {
+              delay: { value: 1200, unit: "s" },
+              location: { geometry: { type: "Point", coordinates: [6.9, 51.3] } },
+            }),
+          ],
+        }),
+      ],
+      AT,
+    );
+    const messages = parser.parse(xml).feed.message as Rec[];
+    expect(messages).toHaveLength(2);
+    expect(JSON.stringify(messages[0])).not.toContain("q_duration");
+    expect(JSON.stringify(messages[1])).toContain('"@_q_duration":"0:20"');
+    expect(xml).not.toContain('q_duration="0:10"');
+  });
+
   it("leaves out an effect that has ended", () => {
     const ended = effect("x/closure", "closure", {
       scope: "road",

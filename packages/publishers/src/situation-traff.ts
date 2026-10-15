@@ -30,12 +30,12 @@ type Rec = Record<string, unknown>;
 export interface TraffEvent {
   cls: string;
   type: string;
-  quantifiers?: Record<string, number>;
+  quantifiers?: Record<string, number | string>;
   /** A diversion is in operation (a detour effect), as supplementary info. */
   diversion?: true;
 }
 
-const event = (type: string, quantifiers?: Record<string, number>): TraffEvent => ({
+const event = (type: string, quantifiers?: Record<string, number | string>): TraffEvent => ({
   cls: type.slice(0, type.indexOf("_")),
   type,
   ...(quantifiers && Object.keys(quantifiers).length > 0 ? { quantifiers } : {}),
@@ -48,8 +48,43 @@ const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   tunnel: "RESTRICTION_TUNNEL_CLOSED",
 };
 
+/** TraFF 0.8 q_duration is whole minutes, written as hours:minutes. */
+function delayDuration(effect: Effect, diagnostics: ProjectionDiagnostics): string | undefined {
+  if (effect.kind !== "delay" || !effect.delay) return undefined;
+  const seconds = effect.delay.value;
+  const minutes = Math.round(seconds / 60);
+  const path = `${diagnostics.effectPath(effect)}/delay`;
+  if (
+    effect.delay.unit !== "s" ||
+    !Number.isFinite(seconds) ||
+    seconds < 0 ||
+    !Number.isSafeInteger(minutes) ||
+    (seconds > 0 && minutes === 0)
+  ) {
+    diagnostics.emit(
+      "field_not_exported",
+      "field",
+      "omitted",
+      path,
+      "This delay duration cannot be represented in TraFF's whole-minute precision; queue length can still be exported.",
+      effect,
+    );
+    return undefined;
+  }
+  if (seconds !== minutes * 60)
+    diagnostics.emit(
+      "field_precision_reduced",
+      "field",
+      "reduced",
+      path,
+      "TraFF rounds this delay duration to the nearest whole minute.",
+      effect,
+    );
+  return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
+}
+
 /** The TraFF event an effect states, if it restricts traffic. */
-function effectEvent(effect: Effect): TraffEvent | undefined {
+function effectEvent(effect: Effect, diagnostics: ProjectionDiagnostics): TraffEvent | undefined {
   switch (effect.kind) {
     case "closure":
       return event(CLOSURE_BY_SCOPE[effect.scope] ?? "RESTRICTION_CLOSED");
@@ -61,11 +96,13 @@ function effectEvent(effect: Effect): TraffEvent | undefined {
       return event("RESTRICTION_CONTRAFLOW");
     case "speed_limit":
       return event("RESTRICTION_SPEED_LIMIT", { speed: Math.round(effect.limit.value) });
-    case "delay":
-      return event(
-        "DELAY_DELAY",
-        effect.queueLength ? { length: Math.round(effect.queueLength.value) } : undefined,
-      );
+    case "delay": {
+      const duration = delayDuration(effect, diagnostics);
+      return event("DELAY_DELAY", {
+        ...(effect.queueLength ? { length: Math.round(effect.queueLength.value) } : {}),
+        ...(duration !== undefined ? { q_duration: duration } : {}),
+      });
+    }
     default:
       return undefined;
   }
@@ -212,7 +249,7 @@ function effectEvents(
       continue;
     }
     if (effect.kind === "detour") diversion = true;
-    const e = effectEvent(effect);
+    const e = effectEvent(effect, diagnostics);
     if (!e && effect.kind !== "detour")
       diagnostics.emit(
         "unsupported_effect",
@@ -222,16 +259,18 @@ function effectEvents(
         "This effect has no TraFF event mapping in the current emitter.",
         effect,
       );
-    if (effect.kind === "delay" && effect.delay)
-      diagnostics.emit(
-        "field_not_exported",
-        "field",
-        "omitted",
-        `${path}/delay`,
-        "TraFF exports queue length when available, but not this delay duration.",
-        effect,
-      );
-    if (e && !out.some((o) => o.type === e.type)) out.push(e);
+    // Equal types alone do not make delay statements interchangeable. Preserve
+    // different duration/queue pairs; neither sum them nor borrow fields across effects.
+    if (
+      e &&
+      !out.some(
+        (o) =>
+          o.type === e.type &&
+          (e.type !== "DELAY_DELAY" ||
+            JSON.stringify(o.quantifiers) === JSON.stringify(e.quantifiers)),
+      )
+    )
+      out.push(e);
   }
   if (diversion && out[0]) out[0] = { ...out[0], diversion: true };
   return out;

@@ -54,6 +54,26 @@ const feeds = {
       },
     },
   ],
+  delays: [
+    {
+      ...record,
+      effects: [
+        {
+          ...record.effects[0],
+          id: "short-delay",
+          kind: "delay",
+          delay: { value: 600, unit: "s" },
+          queueLength: { value: 2400, unit: "m" },
+        },
+        {
+          ...record.effects[0],
+          id: "long-delay",
+          kind: "delay",
+          delay: { value: 5400, unit: "s" },
+        },
+      ],
+    },
+  ],
   empty: [],
   withheld: [
     {

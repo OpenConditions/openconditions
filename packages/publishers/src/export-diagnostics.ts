@@ -21,7 +21,8 @@ export interface ExportDiagnostic {
     | "unsupported_effect"
     | "effect_ended"
     | "effect_time_unknown"
-    | "field_not_exported";
+    | "field_not_exported"
+    | "field_precision_reduced";
   /** Scope of the decision: entire situation, individual message, effect or field. */
   scope: "situation" | "message" | "effect" | "field";
   disposition: "withheld" | "omitted" | "reduced";
