@@ -19,11 +19,11 @@
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
+    "@openconditions/storage": "workspace:*",
     "fastify": "^5.12.5",
     "postgres": "^3.4.9"
   },
   "devDependencies": {
-    "@openconditions/storage": "workspace:*",
     "@openconditions/test-database": "workspace:*",
     "@types/node": "^26.6.5",
     "testcontainers": "^12.2.0",

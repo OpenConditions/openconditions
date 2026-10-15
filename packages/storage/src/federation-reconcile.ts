@@ -1,6 +1,7 @@
 import type { RevisionedClass } from "@openconditions/core/server";
 import type postgres from "postgres";
 import type { Sql } from "./bulk.js";
+import { isLockTimeout } from "./db-timeouts.js";
 
 export interface FederationReconcileOptions {
   /** Records (or series) scanned per transaction; default 500. */
@@ -239,4 +240,89 @@ export async function reconcileFederation(
     }
   }
   return done();
+}
+
+export interface FederationSeedOptions {
+  /** Records (or series) scanned per transaction; default 500. */
+  batchSize?: number;
+  /** Stops the seed before its next batch. */
+  signal?: AbortSignal;
+}
+
+/**
+ * Journals what a subscriber would otherwise never be sent: the capture
+ * journals a change only while a subscription wants it, so a record (or a
+ * series' current reading) stored before the first such subscription, or
+ * whose entries were pruned, is in the journal only once it next changes —
+ * a long-lived feature or a quiet reading perhaps never. Each live record and
+ * current reading the outbox may carry and a subscription wants, whose latest
+ * entry is not a change, is journalled as a create, exactly as the capture
+ * writes it (the same rule as a source turned public). Idempotent: a second
+ * run journals nothing new. Pages of one source's records, one transaction
+ * each under the source's advisory lock, as the reconcile; a source whose
+ * lock stays held past `lock_timeout` (a long poll) is passed over and named
+ * in `busy`, for a later run.
+ */
+export async function seedFederation(
+  sql: postgres.Sql,
+  opts: FederationSeedOptions = {},
+): Promise<{ journalled: number; busy: string[] }> {
+  const sources = await sql<{ source_id: string }[]>`
+    SELECT source_id FROM conditions.situation
+    UNION SELECT source_id FROM conditions.feature
+    UNION SELECT source_id FROM conditions.offer
+    UNION SELECT source_id FROM conditions.observation_latest
+     WHERE source_id NOT IN ('@fused', '@fused-public', 'crowd')
+    ORDER BY source_id`;
+  const size = opts.batchSize ?? 500;
+  const result = { journalled: 0, busy: [] as string[] };
+  for (const { source_id: source } of sources) {
+    try {
+      result.journalled += await seedSource(sql, source, size, opts.signal);
+    } catch (err) {
+      if (!isLockTimeout(err)) throw err;
+      result.busy.push(source);
+    }
+    if (opts.signal?.aborted === true) break;
+  }
+  return result;
+}
+
+/** Seeds one source's records and readings; see {@link seedFederation}. */
+async function seedSource(
+  sql: postgres.Sql,
+  source: string,
+  size: number,
+  signal: AbortSignal | undefined,
+): Promise<number> {
+  let journalled = 0;
+  for (const unit of [...RECORD_CLASSES, "observation" as const]) {
+    let after: string | number | undefined;
+    for (;;) {
+      if (signal?.aborted === true) return journalled;
+      const page = (await sql.begin(async (tx) => {
+        await tx`SELECT pg_advisory_xact_lock(hashtext(${source}))`;
+        if (unit === "observation") {
+          const series = await tx<{ series_id: string }[]>`
+              SELECT series_id FROM conditions.observation_latest
+               WHERE source_id = ${source} AND series_id > ${after ?? 0}
+               ORDER BY series_id LIMIT ${size}`;
+          const ids = series.map((s) => Number(s.series_id));
+          return { ids, journalled: await publishReadings(tx, ids) };
+        }
+        const records = await tx.unsafe<{ id: string }[]>(
+          `SELECT id FROM conditions.${unit}
+              WHERE source_id = $1 AND id > $2 AND tombstoned_at IS NULL
+              ORDER BY id LIMIT $3`,
+          [source, after ?? "", size],
+        );
+        const ids = records.map((r) => r.id);
+        return { ids, journalled: await publish(tx, unit, ids) };
+      })) as { ids: (string | number)[]; journalled: number };
+      journalled += page.journalled;
+      if (page.ids.length < size) break;
+      after = page.ids.at(-1);
+    }
+  }
+  return journalled;
 }

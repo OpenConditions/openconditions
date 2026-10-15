@@ -112,6 +112,16 @@ it hold by the same window as the peer's own (see
 ignores the filter field and the query parameter, and its subscribers never
 ask for it: neither side is served an entry it does not read.
 
+Since the capture journals only while a subscription wants a record, a record
+stored before that (or whose entries were pruned) would reach a subscriber
+only once it next changed: a long-lived feature perhaps never. The federation
+service therefore seeds the journal (`seedFederation`) at boot and whenever a
+peer creates or changes a subscription: each live record and series' current
+reading the outbox may carry and a subscription wants, whose latest entry is
+not a change, is journalled as a create, as for a source turned public. A
+second run journals nothing; a source whose lock a long poll holds is retried
+later.
+
 `conditions.source` also records the `restricted` flag the outbox last
 reflected for each source (`federation_restricted`). When a boot's catalogue
 sync flips it, the ingest service reconciles the outbox in the background, a

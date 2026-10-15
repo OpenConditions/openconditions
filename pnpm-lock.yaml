@@ -1210,6 +1210,9 @@ importers:
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../../packages/model-registry
+      '@openconditions/storage':
+        specifier: workspace:*
+        version: link:../../packages/storage
       fastify:
         specifier: ^5.12.5
         version: 5.12.5
@@ -1217,9 +1220,6 @@ importers:
         specifier: ^3.4.9
         version: 3.4.9(patch_hash=a4b60f9c9c3a33583275140af84fa27968deb99105cbf9184178b7d8daf16dcd)
     devDependencies:
-      '@openconditions/storage':
-        specifier: workspace:*
-        version: link:../../packages/storage
       '@openconditions/test-database':
         specifier: workspace:*
         version: link:../../packages/test-database

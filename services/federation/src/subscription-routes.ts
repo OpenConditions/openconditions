@@ -61,6 +61,8 @@ export interface SubscriptionRouteContext {
   now: () => string;
   /** Tier-2 window override in seconds (see backfillWindowForTier). */
   governanceWindowSec?: number;
+  /** Called once a subscription was created or changed: what it wants may need journalling. */
+  onSubscribed?: () => void;
 }
 
 /** Parses the request's buffered body as JSON, or 400s. Returns undefined on failure. */
@@ -99,6 +101,7 @@ export function registerSubscriptionRoutes(
         parsed as CreateSubscriptionInput,
         ctx.now(),
       );
+      ctx.onSubscribed?.();
       return reply.status(201).send(subscription);
     } catch (err) {
       if (err instanceof SubscriptionValidationError) {
@@ -146,6 +149,7 @@ export function registerSubscriptionRoutes(
         parsed as UpdateSubscriptionInput,
         ctx.now(),
       );
+      ctx.onSubscribed?.();
       return reply.send(updated);
     } catch (err) {
       if (err instanceof SubscriptionValidationError) {

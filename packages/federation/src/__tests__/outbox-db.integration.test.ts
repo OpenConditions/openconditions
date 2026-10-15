@@ -3,6 +3,7 @@ import {
   journalSourceLiveness,
   reconcileFederation,
   SOURCE_LIVENESS_INTERVAL_SEC,
+  seedFederation,
   syncSources,
   tombstoneRecords,
   writeRecord,
@@ -984,6 +985,33 @@ describe("source liveness", () => {
     const page = await readOutbox(sql, { after: base, now: NOW, filter: LIVE });
     expect(page.orderedItems).toEqual([]);
     expect(page.highWaterMark).not.toBe(encodeOutboxCursor(base));
+  });
+});
+
+describe("seedFederation", () => {
+  it("journals what was stored before any subscription wanted it, once", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    const reading = speedReading(70, "2026-10-01T10:00:00Z");
+    await writeOwn(sql, incidentDraft("seed-live"));
+    await writeOwn(sql, incidentDraft("seed-ended"));
+    await tombstone("situation", situationId("seed-ended"), "cancelled");
+    await writeOwn(sql, featureDraft("seed-site"));
+    await writeOwn(sql, reading);
+    await writeRecord(sql, { stored: peerSituation("seed-peer") }, writeCtx());
+    expect(await journalSize()).toBe(0);
+
+    await subscribe(sql, "all");
+    await subscribe(sql, "speed", { classes: ["observation"], properties: ["traffic.speed"] });
+    expect(await seedFederation(sql, { batchSize: 1 })).toEqual({ journalled: 3, busy: [] });
+    for (const id of [situationId("seed-live"), featureId("seed-site"), reading["id"] as string]) {
+      expect(
+        (await journalFor(id)).map((r) => r.operation),
+        id,
+      ).toEqual(["create"]);
+    }
+    expect(await journalFor(situationId("seed-ended"))).toEqual([]);
+    expect(await seedFederation(sql)).toEqual({ journalled: 0, busy: [] });
+    expect(await journalSize()).toBe(3);
   });
 });
 

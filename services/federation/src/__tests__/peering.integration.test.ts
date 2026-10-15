@@ -11,7 +11,12 @@ import {
   loadActiveKeys,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
-import { journalSourceLiveness, syncSources, writeSnapshot } from "@openconditions/storage";
+import {
+  journalSourceLiveness,
+  seedFederation,
+  syncSources,
+  writeSnapshot,
+} from "@openconditions/storage";
 import type { FastifyInstance } from "fastify";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -188,6 +193,13 @@ beforeAll(async () => {
       freshnessWindowSec: 600,
     },
   ]);
+  // Stored while nobody subscribed: nothing of it is journalled.
+  await writeSnapshot(
+    sqlA,
+    SOURCE,
+    { situations: [situationDraft("before-1")] },
+    { registry, instanceId: A, now, complete: true },
+  );
 }, 180_000);
 
 afterAll(async () => {
@@ -234,12 +246,14 @@ describe("two peered instances", () => {
     expect(fromA).toEqual({ peer: B, capabilities: expect.objectContaining({ ok: true }) });
   }, 60_000);
 
-  it("lands at B what A publishes, and A's liveness of the source", async () => {
+  it("lands at B what A held before, what A publishes, and A's liveness of the source", async () => {
+    // What A's service does once a peer subscribed.
+    expect(await seedFederation(sqlA)).toEqual({ journalled: 1, busy: [] });
     const now = new Date().toISOString();
     await writeSnapshot(
       sqlA,
       SOURCE,
-      { situations: [situationDraft("e2e-1")] },
+      { situations: [situationDraft("before-1"), situationDraft("e2e-1")] },
       { registry, instanceId: A, now, complete: true },
     );
     await sqlA.begin((tx) => journalSourceLiveness(tx, SOURCE));
@@ -251,10 +265,15 @@ describe("two peered instances", () => {
     });
     expect(pushed).toMatchObject({ attempted: 1, delivered: 1, failed: 0 });
 
-    const [landed] = await sqlB<{ instance_id: string; revision: number }[]>`
-      SELECT instance_id, revision FROM conditions.situation
-       WHERE id = ${`oc:situation:${SOURCE}:e2e-1`}`;
-    expect(landed).toEqual({ instance_id: A, revision: 1 });
+    const landed = await sqlB<{ id: string; instance_id: string; revision: number }[]>`
+      SELECT id, instance_id, revision FROM conditions.situation ORDER BY id`;
+    expect(landed).toEqual(
+      ["before-1", "e2e-1"].map((local) => ({
+        id: `oc:situation:${SOURCE}:${local}`,
+        instance_id: A,
+        revision: 1,
+      })),
+    );
     const receipts = await sqlB<{ peer_instance_id: string; source_id: string }[]>`
       SELECT peer_instance_id, source_id FROM conditions.federation_source_receipt`;
     expect(receipts).toEqual([{ peer_instance_id: A, source_id: SOURCE }]);

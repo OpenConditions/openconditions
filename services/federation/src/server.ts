@@ -73,6 +73,8 @@ export interface BuildOptions {
    * fronting TLS at a proxy inject one that reads the proxy's cert headers.
    */
   mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
+  /** Called once a peer created or changed a subscription (main seeds the journal). */
+  onSubscribed?: () => void;
 }
 
 export async function build(options: BuildOptions): Promise<FastifyInstance> {
@@ -264,6 +266,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     baseUrl: actorConfig.baseUrl,
     nonceStore,
     ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
+    ...(options.onSubscribed !== undefined ? { onSubscribed: options.onSubscribed } : {}),
     now,
   });
 

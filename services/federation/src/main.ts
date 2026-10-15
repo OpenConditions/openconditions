@@ -13,6 +13,7 @@ import {
 } from "@openconditions/federation";
 import { guardedFetch, requireCredential } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
+import { seedFederation } from "@openconditions/storage";
 import postgres from "postgres";
 import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
@@ -27,6 +28,9 @@ const WEBHOOK_CYCLE_MS = 5_000;
 
 /** How often the retention cron trims the append-only outbox journal. */
 const PRUNE_CYCLE_MS = OUTBOX_PRUNE_INTERVAL_HOURS * 60 * 60 * 1000;
+
+/** How long a journal seed waits before it retries the sources that were busy polling. */
+const SEED_RETRY_MS = 5 * 60 * 1000;
 
 /** How often each pinned peer's capabilities are re-verified and its subscription mended. */
 const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
@@ -52,12 +56,42 @@ async function boot() {
     },
   });
   await assertStoredCodesRegistered(sql, productionRegistry(), { sourceFormats: false });
-  const app = await build({ sql });
+  const settings = resolveFederationSettings(process.env);
+
+  // Journal seed: what a subscription wants of the records stored before it
+  // (the capture journals only while one wants them), at boot and whenever a
+  // peer subscribes or changes its filter. Single-flight; a request during a
+  // run, or a source busy polling, has it run again.
+  let seedRunning = false;
+  let seedAgain = false;
+  const seed = async (): Promise<void> => {
+    if (seedRunning) {
+      seedAgain = true;
+      return;
+    }
+    seedRunning = true;
+    try {
+      do {
+        seedAgain = false;
+        const { journalled, busy } = await seedFederation(sql);
+        if (journalled > 0) console.info(`[federation-api] journal seed: ${journalled} entries`);
+        if (busy.length > 0) {
+          console.info(`[federation-api] journal seed: ${busy.join(", ")} busy, retried later`);
+          setTimeout(() => void seed(), SEED_RETRY_MS).unref();
+        }
+      } while (seedAgain);
+    } catch (err) {
+      console.error("[federation-api] journal seed failed:", err);
+    } finally {
+      seedRunning = false;
+    }
+  };
+  const app = await build({ sql, onSubscribed: () => void seed() });
+  if (settings.enabled) void seed();
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded
   // (guardedFetch), and a run only advances a subscription's cursor on a 2xx —
   // so a dropped push leaves the peer's pull catch-up gap-free.
-  const settings = resolveFederationSettings(process.env);
   let webhookTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
     const partOf = `${settings.actor!.baseUrl}/peer/outbox`;
