@@ -213,3 +213,20 @@ describe("the OpenAPI document", () => {
     expect(summary("/coverage")).toMatch(/restricted/);
   });
 });
+
+describe("complete TraFF API contract", () => {
+  it("offers filters without page controls and documents explicit oversized errors", () => {
+    const op = (
+      openApiDocument().paths["/traff.xml"] as {
+        get: {
+          parameters: { name: string }[];
+          responses: Record<string, unknown>;
+        };
+      }
+    ).get;
+    expect(op.parameters.map((p) => p.name)).toContain("bbox");
+    expect(op.parameters.map((p) => p.name)).not.toContain("cursor");
+    expect(op.parameters.map((p) => p.name)).not.toContain("limit");
+    expect(op.responses["413"]).toBeDefined();
+  });
+});

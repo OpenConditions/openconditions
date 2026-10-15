@@ -67,11 +67,13 @@ import {
   SeriesQuery,
   SituationListQuery,
   StreamQuery,
+  TraffQuery,
   windowIssue,
 } from "./query.js";
 import { scopeOf } from "./scope.js";
 import { crowdSourceOf, sourcesOf } from "./sources.js";
 import { taxonomyOf } from "./taxonomy.js";
+import { MAX_TRAFF_BYTES, readTraffSnapshot, TraffFeedTooLargeError } from "./traff.js";
 
 type Rec = Record<string, unknown>;
 
@@ -493,14 +495,39 @@ export function registerApiRoutes(
   });
 
   app.get("/traff.xml", async (req, reply) => {
-    const q = parseSituations(req, reply);
+    const q = parse(TraffQuery, req.query, reply);
     if (!q) return reply;
-    const { at, records, next } = await page(q, "public");
-    cacheFor(reply, records, at);
-    linkNext(reply, req.url, next);
-    reply.header("Content-Type", "application/xml; charset=utf-8");
-    reply.header("X-Data-License", licensesOf(records));
-    return reply.send(situationsToTraff(deps.registry, records, at));
+    const at = q.at ? new Date(q.at) : now();
+    if (q.from !== undefined && q.to === undefined) {
+      const issue = windowIssue(new Date(q.from), at);
+      if (issue !== undefined)
+        return reply.status(400).send({
+          error: "invalid query",
+          issues: [{ path: "from", message: issue }],
+        });
+    }
+    try {
+      const read = await readTraffSnapshot(sql, {
+        at,
+        ...filtersOf(q),
+        ...(q.subtype ? { subtypes: q.subtype } : {}),
+        ...(q.horizonDays !== undefined ? { horizonDays: q.horizonDays } : {}),
+        ...(q.from ? { from: new Date(q.from), to: q.to ? new Date(q.to) : at } : {}),
+        ...(q.simplify !== undefined ? { simplify: q.simplify } : {}),
+      });
+      const shown = egress(read, "public");
+      const records = q.dedupe === "1" ? dedupeSituations(shown) : shown;
+      const xml = situationsToTraff(deps.registry, records, at);
+      if (Buffer.byteLength(xml, "utf8") > MAX_TRAFF_BYTES) throw new TraffFeedTooLargeError();
+      cacheFor(reply, records, at);
+      reply.header("Content-Type", "application/xml; charset=utf-8");
+      reply.header("X-Data-License", licensesOf(records));
+      return reply.send(xml);
+    } catch (error) {
+      if (!(error instanceof TraffFeedTooLargeError)) throw error;
+      reply.header("Cache-Control", "no-store");
+      return reply.status(413).send({ error: error.message });
+    }
   });
 
   app.get("/datex2/situations.xml", async (req, reply) => {

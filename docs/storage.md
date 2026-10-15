@@ -275,6 +275,12 @@ record id) moves on with every poll, so a walk over latest readings never
 returns a series twice and never skips one that exists throughout it. A record
 or reading that changes mid-walk may appear in either state.
 
+The [TraFF export](traff.md) instead walks its internal pages in one read-only
+repeatable-read transaction and returns a complete feed, or 413 if its 20,000
+candidate-situation or 32 MiB XML bound is exceeded. No successful response is
+truncated, and cursor/limit are rejected. Other collection and DATEX II routes
+retain their paging contracts.
+
 **Canonical view.** `canonical=1` on `/features` serves one feature per cluster
 of `feature_canonical`, a lone feature's cluster included. The record is the
 survivor's under the cluster's canonical id (the id fused and crowd readings

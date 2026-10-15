@@ -89,7 +89,7 @@ const SituationFilters = z.strictObject({
  * Query of a situation collection: filters, the instant it is current at or
  * a time window, the geometry's detail, and the page.
  */
-export const SituationListQuery = SituationFilters.extend({
+const SituationListBase = SituationFilters.extend({
   subtype: list.describe("comma-separated subtype codes").optional(),
   from: z.iso
     .datetime({ offset: true })
@@ -109,7 +109,12 @@ export const SituationListQuery = SituationFilters.extend({
       "simplify each returned geometry with this tolerance in degrees (topology preserved), written with 6 decimals; the bbox filter reads the stored geometry",
     )
     .optional(),
-}).superRefine((q, ctx) => {
+});
+
+function checkSituationWindow(
+  q: Pick<z.output<typeof SituationListBase>, "from" | "to" | "at" | "horizonDays">,
+  ctx: z.RefinementCtx,
+) {
   if (q.from === undefined) {
     if (q.to !== undefined) {
       ctx.addIssue({ code: "custom", path: ["to"], message: "to needs from" });
@@ -129,7 +134,19 @@ export const SituationListQuery = SituationFilters.extend({
   if (q.to === undefined) return;
   const issue = windowIssue(new Date(q.from), new Date(q.to));
   if (issue !== undefined) ctx.addIssue({ code: "custom", path: ["from"], message: issue });
-});
+}
+
+export const SituationListQuery = SituationListBase.superRefine(checkSituationWindow);
+
+/** A complete TraFF feed has the same filters, but no externally visible page. */
+export const TraffQuery = SituationListBase.omit({ cursor: true, limit: true })
+  .extend({
+    dedupe: z
+      .enum(["0", "1"])
+      .describe("1 folds matching situations across the complete feed")
+      .optional(),
+  })
+  .superRefine(checkSituationWindow);
 
 /** What is wrong with a situation read's time window, if anything. */
 export function windowIssue(from: Date, to: Date): string | undefined {

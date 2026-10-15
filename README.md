@@ -130,7 +130,8 @@ Road situations, measurement sites and facilities (features), tariffs (offers) a
 filters (`bbox=west,south,east,north`, `kind`, `type`, `domain`, `source`, `origin`, `at`; situations
 also `minSeverity`, `horizonDays`, `subtype`, a time window `from`/`to` that includes ended ones, and
 `simplify` for lighter geometry; readings `property` and `since`) and are paged by a keyset cursor: follow
-`next` (JSON) or the `Link: rel="next"` header (XML) until there is none. `canonical=1` serves the
+`next` (JSON) or the `Link: rel="next"` header (DATEX II) until there is none.
+TraFF is a [complete bounded feed](docs/traff.md), with no page controls or continuation header. `canonical=1` serves the
 canonical view: one feature per cluster of features several sources describe, and the fused reading of
 a property several sources or the crowd report. Everything is rate-limited; `GET /openapi.json`
 describes it all, and [storage](docs/storage.md#read-api) says what each route reads.
@@ -148,7 +149,7 @@ describes it all, and [storage](docs/storage.md#read-api) says what each route r
 | `GET /observations/grid`             | Current numeric readings of one property since an instant, counted, summed and maximised per cell                              |
 | `GET /observations`                  | One series (`subject`, `property`, `qualifiers`, `from`, `to`): raw readings, or hourly/daily rollups beyond the raw retention |
 | `GET /history/{class}/{id}`          | A record's revisions and what changed                                                                                          |
-| `GET /traff.xml`                     | TraFF (CoMaps / Navit)                                                                                                         |
+| `GET /traff.xml`                     | [Complete TraFF 0.8 feed](docs/traff.md) (up to 20,000 candidate situations / 32 MiB; narrow filters on 413)                   |
 | `GET /datex2/situations.xml`         | DATEX II v3 SituationPublication, one record per effect ([status](docs/datex-conformance.md))                                  |
 | `GET /stream`                        | Server-Sent Events: live situations, then each change and removal                                                              |
 | `GET /valhalla/exclusions.json`      | Valhalla `exclude_locations` / `exclude_polygons` and speed caps                                                               |

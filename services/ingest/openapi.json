@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenConditions",
     "version": "1.0.0",
-    "description": "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope."
+    "description": "Road conditions as model records. Collections are paginated by a keyset cursor: a walk is complete when `next` is null. TraFF is instead one complete bounded feed, or 413 when filters must be narrowed. A request without a bearer token reads in the public scope, which withholds restricted sources and licences that are not public; the operator token reads in the operator scope, which withholds nothing. The emitters always read in the public scope."
   },
   "components": {
     "securitySchemes": {
@@ -662,7 +662,7 @@
     "/traff.xml": {
       "get": {
         "operationId": "listSituationsTraff",
-        "summary": "Live situations as a TraFF 0.8 feed, one keyset page; `Link: rel=\"next\"` names the next. Situations TraFF cannot tell without widening a vehicle condition are left out.",
+        "summary": "A complete public TraFF 0.8 feed from one database snapshot, not paged. No cursor or limit parameters. At most 20,000 candidate situations and 32 MiB of UTF-8 XML; narrow bbox, source or time filters on 413. Vehicle-specific, incomplete and explicitly directional situations without representable travel order are withheld. Missing direction uses TraFF's bidirectional default; times have whole-second UTC precision.",
         "parameters": [
           {
             "name": "bbox",
@@ -767,37 +767,15 @@
             "description": "only situations starting within this many days after `at`"
           },
           {
-            "name": "cursor",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string",
-              "minLength": 1,
-              "description": "the `next` of the previous page"
-            },
-            "description": "the `next` of the previous page"
-          },
-          {
-            "name": "limit",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "default": 500,
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 5000
-            }
-          },
-          {
             "name": "dedupe",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string",
               "enum": ["0", "1"],
-              "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+              "description": "1 folds matching situations across the complete feed"
             },
-            "description": "1 folds one phenomenon reported by several sources into one situation, within one page only: the page is ordered by id, so reports of one phenomenon on different pages are each returned. Request every record in one page (a large enough limit) for a complete fold"
+            "description": "1 folds matching situations across the complete feed"
           },
           {
             "name": "subtype",
@@ -859,6 +837,12 @@
           },
           "401": {
             "description": "A bearer token other than the configured operator token (with none configured, a bearer token reads in public scope)",
+            "content": {
+              "application/json": {}
+            }
+          },
+          "413": {
+            "description": "More than 20,000 candidate situations or 32 MiB of XML; narrow bbox, source or time filters",
             "content": {
               "application/json": {}
             }
