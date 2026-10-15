@@ -173,6 +173,40 @@ presented as freshly validated data.
 | Durable public replay journal             | Survives process restart and can deliver missed transitions within retention             | New complete capture, membership history/time events, visibility/erasure, ordering/barriers, retention and client state machinery | No-go with current demand evidence                           |
 | Authenticated federation subscription     | Existing cursor/backfill/retraction foundation for approved replication peers            | Different scope, capture, filters, tier and privacy contract                                                                      | Use for its intended peer replication purpose                |
 
+## What to adopt from TraFF subscriptions
+
+The local TraFF server clone was re-read at
+`a521c419956d2e4b380ccec7d8c4ec031a8dcfec`, the same pinned revision as the original
+comparison. Its
+[message-cache poll](https://gitlab.com/traffxml/traff-server/-/blob/a521c419956d2e4b380ccec7d8c4ec031a8dcfec/MessageCache/src/main/java/org/traffxml/traffserver/core/messagecache/MessageCache.java#L407-470)
+keeps subscription/filter/feed positions in the database. This is a useful product
+lesson: intermittent clients can poll deltas without maintaining a live socket.
+SSE itself is not required to obtain that benefit.
+
+Its delivery mechanics should not be copied. `poll` advances and commits
+`lastFeed` before the
+[servlet writes the response](https://gitlab.com/traffxml/traff-server/-/blob/a521c419956d2e4b380ccec7d8c4ec031a8dcfec/SubscriptionManager/src/main/java/org/traffxml/traffserver/core/subscriptionmanager/SubscriptionManager.java#L183-210).
+A failed response can consequently leave a client without changes already
+counted as delivered. An empty poll initializes the next position to zero and
+writes that value, allowing later repeat delivery. Those are source observations,
+not failures reproduced by running the Java server. They reinforce two design
+rules: preserve monotonic acknowledged positions, and advance client recovery
+state only after the complete batch has been applied. Duplicate delivery must
+remain safe; silent skipped delivery must not be disguised as resumability.
+
+The public-replay implementation families differ even if they share a journal:
+
+| Family                           | State and acknowledgement                                                                                          | Why defer it here                                                                                                                                                                                                                          |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Anonymous, query-bound cursor    | Client retains an opaque position only after applying a complete batch; retries can repeat an unacknowledged batch | Still requires complete capture, before/after membership, retention/epoch/reset rules and idempotent clients; a record ID is insufficient                                                                                                  |
+| Persistent consumer subscription | Database holds a consumer's filters, membership/acknowledged position and expiry                                   | Adds per-consumer storage, allocation limits, cleanup and a subscription lifecycle; no identified public consumer needs it now                                                                                                             |
+| TraFF subscription adapter       | Exposes TraFF subscribe/change/poll/heartbeat semantics to compatible clients                                      | Also needs a faithful TraFF projection lifecycle: one canonical situation can yield several effect messages, or cease to be XML-representable. Retract old exported message IDs rather than merely dropping the new unrepresentable record |
+
+A long replay can also transfer more than a current snapshot when many changes
+are already obsolete. A consumer that only needs current conditions should have
+a reset/snapshot fallback rather than replaying every intervening closure and
+cancellation. This is a design consideration, not a measured crossover point.
+
 ## Concrete snapshot design spike: future protocol 2
 
 This section intentionally specifies a bounded **replacement-snapshot** protocol,
