@@ -226,8 +226,8 @@ describe("digitraffic-weather", () => {
     ]);
     const value = (id: number) => (status(id)[0]?.["result"] as { value?: string })?.value;
     expect(value(1174)).toBe("ok");
-    // A repair begun and interrupted; the station still reports, under a doubt.
-    expect(value(7037)).toBe("warning");
+    // A repair begun and interrupted names no fault; the station reports as usual.
+    expect(value(7037)).toBe("ok");
     // Collection removed for now.
     expect(value(1071)).toBe("offline");
     // No state stated: no status.
@@ -240,8 +240,8 @@ describe("digitraffic-weather", () => {
       ["OK", "ok"],
       ["OK_FAULT_DOUBT_CANCELLED", "ok"],
       ["REPAIR_MAINTENANCE_DONE", "ok"],
+      ["REPAIR_INTERRUPTED", "ok"],
       ["FAULT_DOUBT", "warning"],
-      ["REPAIR_INTERRUPTED", "warning"],
       ["FAULT_CONFIRMED", "error"],
       ["FAULT_CONFIRMED_NOT_FIXED_IN_NEAR_FUTURE", "error"],
       ["REPAIR_REQUEST_POSTED", "error"],

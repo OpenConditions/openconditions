@@ -38,17 +38,18 @@ const RETIRED = "REMOVED_PERMANENTLY";
 /**
  * A station's maintenance state (Digitraffic's `state`, the Finnish
  * maintenance system's station state) as its `device.status`. A doubted
- * fault, and a repair begun and interrupted, leave the station reporting
- * under a doubt; a confirmed fault, or one a repair is requested for, is an
- * error until the repair is done or the doubt cancelled. A station that
- * states no state gets no reading.
+ * fault leaves the station reporting under a doubt; a confirmed fault, or
+ * one a repair is requested for, is an error until the repair is done or the
+ * doubt cancelled. A repair begun and interrupted names no fault: a sixth of
+ * the network has stood in that state for weeks while reporting normally. A
+ * station that states no state gets no reading.
  */
 const DEVICE_STATUS: Readonly<Record<string, string>> = {
   OK: "ok",
   OK_FAULT_DOUBT_CANCELLED: "ok",
   REPAIR_MAINTENANCE_DONE: "ok",
+  REPAIR_INTERRUPTED: "ok",
   FAULT_DOUBT: "warning",
-  REPAIR_INTERRUPTED: "warning",
   FAULT_CONFIRMED: "error",
   FAULT_CONFIRMED_NOT_FIXED_IN_NEAR_FUTURE: "error",
   REPAIR_REQUEST_POSTED: "error",
@@ -203,7 +204,7 @@ const isInstant = (value: string | undefined): value is string =>
 /**
  * Each station's values from the `status` data document, by station id. A
  * value without a sensor id or a numeric value is not one. A malformed
- * document fails the read, unless `rejected` is given: the daily full parse
+ * document fails the read, unless `rejected` is given: the hourly full parse
  * still has its stations to write, so there it is counted as rejected and
  * the stations are read without values.
  */
