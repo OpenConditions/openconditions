@@ -29,6 +29,7 @@ import type postgres from "postgres";
 import { signMessage } from "./http-signature.js";
 import type { InstanceKey } from "./keys.js";
 import { type OutboxPage, readOutbox } from "./outbox.js";
+import { isPeerBlocked } from "./peer-blocklist.js";
 import type { RecordFilter } from "./record-filter.js";
 import type { FederationSubscription } from "./subscriptions.js";
 
@@ -51,6 +52,19 @@ export interface DeliverWebhookOptions {
   failureThreshold?: number;
   /** Outbox page size per delivery. */
   limit?: number;
+  /**
+   * The oldest entry the subscriber may be pushed (ISO 8601): its trust
+   * tier's window, the ceiling every other channel of the journal applies.
+   */
+  minCreatedAt?: string;
+}
+
+export interface WebhookCycleOptions extends Omit<DeliverWebhookOptions, "minCreatedAt"> {
+  /**
+   * The window floor of a subscriber, or null for one no longer pinned here,
+   * which is pushed nothing. Absent: every subscriber is pushed unfloored.
+   */
+  floorFor?: (peerId: string) => string | null;
 }
 
 export type DeliverWebhookOutcome =
@@ -92,6 +106,7 @@ export async function deliverWebhook(
     filter: subscription.filter,
     ...(subscription.priorityOnly ? { priorityOnly: true } : {}),
     ...(opts.limit !== undefined ? { limit: opts.limit } : {}),
+    ...(opts.minCreatedAt !== undefined ? { minCreatedAt: opts.minCreatedAt } : {}),
     partOf: opts.partOf,
     now,
   });
@@ -185,13 +200,17 @@ export interface WebhookCycleResult {
 
 /**
  * Runs one delivery pass over every active webhook subscription (the cron body).
- * A `push_disabled` row is skipped — that peer is on pull now. Each subscription
- * is loaded fresh so its current cursor/failure counter is honoured.
+ * A `push_disabled` row is skipped — that peer is on pull now — and so is the
+ * row of a peer blocked or no longer pinned here: transport to a peer this
+ * instance stopped trusting stops with it, its cursor kept. Each subscriber is
+ * pushed only its tier's window ({@link WebhookCycleOptions.floorFor}). Each
+ * subscription is loaded fresh so its current cursor/failure counter is honoured.
  */
 export async function runWebhookDeliveryCycle(
   sql: postgres.Sql,
-  opts: DeliverWebhookOptions,
+  opts: WebhookCycleOptions,
 ): Promise<WebhookCycleResult> {
+  const { floorFor, ...deliver } = opts;
   const rows = await sql<{ id: string }[]>`
     SELECT id FROM conditions.federation_subscription
     WHERE delivery_mode = 'webhook' AND status = 'active'
@@ -216,6 +235,8 @@ export async function runWebhookDeliveryCycle(
       }[]
     >`SELECT * FROM conditions.federation_subscription WHERE id = ${id}`;
     if (!row || row.delivery_mode !== "webhook" || row.status !== "active") continue;
+    const floor = floorFor?.(row.peer_id);
+    if (floor === null || (await isPeerBlocked(sql, row.peer_id))) continue;
     const subscription: FederationSubscription = {
       id: row.id,
       peerId: row.peer_id,
@@ -231,7 +252,10 @@ export async function runWebhookDeliveryCycle(
       updatedAt: row.updated_at.toISOString(),
     };
     result.attempted += 1;
-    const outcome = await deliverWebhook(sql, subscription, opts);
+    const outcome = await deliverWebhook(sql, subscription, {
+      ...deliver,
+      ...(floor === undefined ? {} : { minCreatedAt: floor }),
+    });
     if (outcome.status === "delivered") result.delivered += 1;
     else if (outcome.status === "failed") result.failed += 1;
     else if (outcome.status === "disabled") result.disabled += 1;

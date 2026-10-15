@@ -4,7 +4,8 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
 import { ensureInstanceKey, type InstanceKey, loadActiveKeys } from "../keys.js";
 import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
-import { deliverWebhook, PUSH_FAILURE_THRESHOLD } from "../push.js";
+import { blockPeer, unblockPeer } from "../peer-blocklist.js";
+import { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "../push.js";
 import type { OutboxEntry, RecordOutboxEntry } from "../record-filter.js";
 import {
   createSubscription,
@@ -553,5 +554,48 @@ describe("subscription edits during delivery", () => {
     });
     expect(outcome.status).toBe("obsolete");
     expect(await getSubscription(sql, sub.id)).toEqual(current);
+  });
+});
+
+describe("runWebhookDeliveryCycle — who is pushed what", () => {
+  const options = (fetchImpl: typeof fetch, floorFor: (peerId: string) => string | null) => ({
+    signingKey,
+    fetchImpl,
+    partOf: PARTOF,
+    now: NOW,
+    floorFor,
+  });
+
+  it("pushes a subscriber nothing older than its window, and nothing once unpinned or blocked", async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+    await webhookSubFromNow({ priorityOnly: false, bbox: [4, 50, 6, 54] });
+    await insertEvent("window-old");
+    await sql`
+      UPDATE conditions.federation_outbox SET created_at = now() - interval '3 days'
+       WHERE record_id = ${situationId("window-old")}`;
+    await insertEvent("window-new");
+    const dayAgo = () => new Date(Date.now() - 86_400_000).toISOString();
+
+    const unpinned = mockInbox([200]);
+    expect(
+      await runWebhookDeliveryCycle(
+        sql,
+        options(unpinned.fetchImpl, () => null),
+      ),
+    ).toMatchObject({ attempted: 0 });
+    await blockPeer(sql, { peerId: PEER_ID, createdBy: "test", now: NOW });
+    const blocked = mockInbox([200]);
+    expect(await runWebhookDeliveryCycle(sql, options(blocked.fetchImpl, dayAgo))).toMatchObject({
+      attempted: 0,
+    });
+    expect([...unpinned.captured, ...blocked.captured]).toEqual([]);
+
+    await unblockPeer(sql, PEER_ID);
+    const pinned = mockInbox([200]);
+    expect(await runWebhookDeliveryCycle(sql, options(pinned.fetchImpl, dayAgo))).toMatchObject({
+      attempted: 1,
+      delivered: 1,
+    });
+    expect(pinned.captured.flatMap((push) => push.items.map(localOf))).toEqual(["window-new"]);
   });
 });

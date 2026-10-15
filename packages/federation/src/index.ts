@@ -107,7 +107,12 @@ export type { EnsureSubscriptionOutcome, PeerSubscribe } from "./peer-subscribe.
 export { ensurePeerSubscription, peerRouteUrl } from "./peer-subscribe.js";
 export type { PeerRecord, PinVerification } from "./peers.js";
 export { loadPeers, verifyActorAgainstPin } from "./peers.js";
-export type { DeliverWebhookOptions, DeliverWebhookOutcome, WebhookCycleResult } from "./push.js";
+export type {
+  DeliverWebhookOptions,
+  DeliverWebhookOutcome,
+  WebhookCycleOptions,
+  WebhookCycleResult,
+} from "./push.js";
 export { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "./push.js";
 export type { PeerRatePolicy, RateCheckResult, RateLimiter, RateLimiterOptions } from "./rate.js";
 export {

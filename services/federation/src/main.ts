@@ -14,6 +14,7 @@ import {
 import { guardedFetch, requireCredential } from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import postgres from "postgres";
+import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
 import { refreshPeers } from "./peering.js";
 import { build } from "./server.js";
@@ -61,6 +62,13 @@ async function boot() {
   if (settings.enabled) {
     const partOf = `${settings.actor!.baseUrl}/peer/outbox`;
     const egress = guardedFetch();
+    // A subscriber is pushed its pinned tier's window, as it is served
+    // everywhere else, and nothing once it is no longer pinned.
+    const tiers = new Map(settings.peers.map((peer) => [peer.instanceId, peer.trustTier]));
+    const floorFor = (peerId: string) => {
+      const tier = tiers.get(peerId);
+      return tier === undefined ? null : backfillFloorIso(tier, new Date().toISOString());
+    };
     // Single-flight: skip a tick while the previous cycle is still running, so a
     // slow cycle can never overlap itself and regress a subscription's cursor or
     // failure counter.
@@ -71,7 +79,7 @@ async function boot() {
       try {
         const [signingKey] = await loadActiveKeys(sql, new Date().toISOString());
         if (!signingKey) return;
-        await runWebhookDeliveryCycle(sql, { signingKey, fetchImpl: egress, partOf });
+        await runWebhookDeliveryCycle(sql, { signingKey, fetchImpl: egress, partOf, floorFor });
       } catch (err) {
         console.error("[federation-api] webhook cycle failed:", err);
       } finally {
