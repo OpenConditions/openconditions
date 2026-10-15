@@ -851,6 +851,40 @@ describe("pipeline — shrink tripwire (event feed)", () => {
     `;
     expect(parseInt(withdrawn[0]!.count, 10)).toBe(seededCount);
   }, 30_000);
+
+  it("publishes a shrink once complete polls have kept stating it for ten minutes", async () => {
+    const feed = { ...shrinkFeed, id: "shrink-confirm-src" };
+    const start = Date.now();
+    const at = (minutes: number) => () => new Date(start + minutes * 60_000).toISOString();
+    const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
+    const fullFetch = (async () => new Response(jsonPayload, { status: 200 })) as typeof fetch;
+    const run = (fetchImpl: typeof fetch, minutes: number) =>
+      runSource(feed, { sql, fetch: fetchImpl, now: at(minutes), lookup: fakeLookup });
+    const pending = async () =>
+      sql<{ polls: number }[]>`
+        SELECT polls FROM conditions.source_shrink WHERE source_id = ${feed.id}`;
+
+    const seeded = await run(fullFetch, 0);
+    expect(seeded.count).toBeGreaterThan(0);
+    for (const minutes of [2, 4, 6]) {
+      const guarded = await run(emptyEventsFetch as typeof fetch, minutes);
+      expect(guarded.error).toMatch(/shrank/i);
+    }
+    expect(await liveSituations(feed.id)).toBe(seeded.count);
+    expect(await pending()).toEqual([{ polls: 3 }]);
+
+    // A full answer in between is a new baseline: the count starts over.
+    expect((await run(fullFetch, 8)).error).toBeUndefined();
+    expect(await pending()).toEqual([]);
+    for (const minutes of [10, 14]) {
+      expect((await run(emptyEventsFetch as typeof fetch, minutes)).error).toMatch(/shrank/i);
+    }
+    const confirmed = await run(emptyEventsFetch as typeof fetch, 20);
+    expect(confirmed.error).toBeUndefined();
+    expect(confirmed.deleted).toBe(seeded.count);
+    expect(await liveSituations(feed.id)).toBe(0);
+    expect(await pending()).toEqual([]);
+  }, 30_000);
 });
 
 describe("pipeline — partition-complete fan-out reconciliation", () => {

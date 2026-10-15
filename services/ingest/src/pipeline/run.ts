@@ -35,7 +35,7 @@ import {
   enrichReadings,
   recordSkippedNoGeometry,
 } from "@openconditions/roads";
-import { isDbTimeout, type WriteSummary } from "@openconditions/storage";
+import { isDbTimeout, noteShrink, type WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
 import type { RawArchive } from "../raw/archive.js";
@@ -80,7 +80,8 @@ const CHANGES_OVERLAP_MS = 60_000;
 /**
  * Ratio (0-1) of an event feed's previous `source_status.last_row_count` that
  * its fresh count must exceed, or the write is skipped as a suspected
- * partial-failure wipe rather than applied (see the shrink tripwire below).
+ * partial-failure wipe rather than applied, until consecutive complete polls
+ * have kept stating the shrink for long enough (see the shrink tripwire below).
  * Default 0: conservative, only guards the unambiguous drop-to-zero case (a
  * fresh count of exactly 0 while the previous cycle had rows) — a feed whose
  * count merely shrinks while staying above zero is written as-is, since a
@@ -99,21 +100,36 @@ function shrinkTripwireRatioFromEnv(env: NodeJS.ProcessEnv = process.env): numbe
   return Number.isFinite(n) && n >= 0 ? n : 0;
 }
 
+interface Shrunk {
+  previous: number;
+  ratio: number;
+  /** Consecutive complete polls that stated the shrink, this one included. */
+  polls: number;
+}
+
 /**
- * The shrink tripwire: the previous count and the ratio when a fresh count of
- * a complete snapshot does not exceed that share of the source's last
- * published row count, else undefined.
+ * The shrink tripwire: the previous count, the ratio and how many complete
+ * polls in a row stated the shrink when a fresh count of a complete snapshot
+ * does not exceed that share of the source's last published row count, else
+ * undefined. A shrink the source's complete polls keep stating takes effect
+ * ({@link noteShrink}): the poll that confirms it publishes.
  */
 async function shrinkTripped(
   sql: Sql,
   sourceId: string,
   fresh: number,
-): Promise<{ previous: number; ratio: number } | undefined> {
+  now: string,
+): Promise<Shrunk | undefined> {
   const ratio = shrinkTripwireRatioFromEnv();
   const previous = await getLastRowCount(sql, sourceId);
-  return previous != null && previous > 0 && fresh <= previous * ratio
-    ? { previous, ratio }
-    : undefined;
+  if (previous == null || previous <= 0 || fresh > previous * ratio) return undefined;
+  const shrink = await noteShrink(sql, sourceId, "records", { stated: fresh, held: previous, now });
+  if (!shrink.confirmed) return { previous, ratio, polls: shrink.polls };
+  console.warn(
+    `[ingest] ${sourceId}: ${shrink.polls} complete polls since ${shrink.since} state ` +
+      `${fresh} of ${previous} records; publishing the shrink`,
+  );
+  return undefined;
 }
 
 /** Fails a poll the shrink tripwire stopped, keeping the last good publication. */
@@ -122,11 +138,12 @@ function failShrunk(
   what: string,
   unit: string,
   fresh: number,
-  { previous, ratio }: { previous: number; ratio: number },
+  { previous, ratio, polls }: Shrunk,
 ): Promise<RunResult> {
   const error =
     `${what} feed shrank from ${previous} to ${fresh} ${unit} ` +
-    `(tripwire ratio ${ratio}) — skipping the write to avoid a suspected partial-failure wipe`;
+    `(tripwire ratio ${ratio}, ${polls} poll(s) in a row) — skipping the write to avoid a ` +
+    "suspected partial-failure wipe";
   console.warn(`[ingest] ${poll.src.id}: ${error}`);
   return fail(poll, "error", error);
 }
@@ -1241,7 +1258,7 @@ async function finishEventPoll(
   // explicit disposition, and the unlocatable check inside the publication
   // transaction protects a still-published record.
   if (accounting === undefined && !inspection?.completeEmpty) {
-    const shrunk = await shrinkTripped(deps.sql, src.id, situations.length);
+    const shrunk = await shrinkTripped(deps.sql, src.id, situations.length, deps.now());
     if (shrunk) return failShrunk(poll, "event", "situations", situations.length, shrunk);
   }
 
@@ -1428,7 +1445,7 @@ async function finishFeaturePoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "failed", error);
   }
-  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length);
+  const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampAttribution(d, src));
@@ -1458,7 +1475,10 @@ async function finishFeaturePoll(
   poll.steps.lap("write");
   poll.steps.writeMs = summary.stepsMs;
   logRejections(src.id, summary);
-  poll.acceptFetch?.();
+  // While a shrink of the series is unconfirmed, the next poll fetches anew
+  // rather than conditionally: a not-modified answer would state nothing, and
+  // so never confirm it. One then means the last answer that did not shrink.
+  if (summary.observations.withheld === undefined) poll.acceptFetch?.();
 
   const durationMs = Date.now() - poll.start;
   console.info(

@@ -20,6 +20,7 @@ import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from 
 import { partitionCoverage, retentionDaysOf } from "./observation-partitions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
 import { expiryOf } from "./record-rows.js";
+import { clearShrink, noteShrink } from "./shrink.js";
 import { stepTimer } from "./steps.js";
 import type { Rejection, WriteContext } from "./write-records.js";
 
@@ -47,6 +48,12 @@ export interface ObservationCounts {
    * change-only ones and, from a source restating them, transient ones: ended now.
    */
   ended: number;
+  /**
+   * Polled change-only series such a poll did not state that stay in effect,
+   * because the shrink it states is not yet confirmed ({@link noteShrink}).
+   * Absent when none.
+   */
+  withheld?: number;
 }
 
 /** The poll an observation came from, for its raw-payload reference. */
@@ -835,15 +842,17 @@ export interface EndedSeries {
  * reading in effect takes `validUntil` = now, so the read stops extending it
  * by the source's polling, and fusion leaves it out. A later poll that states
  * the series again writes its reading anew. Only this instance's own series
- * end (a peer's copy of the source ends with the peer), and none does when
- * the poll states fewer than half of the series in effect.
+ * end (a peer's copy of the source ends when the peer's ended reading
+ * arrives). None does when the poll states fewer than half of the series in
+ * effect, until consecutive complete polls have kept stating that shrink
+ * for long enough ({@link noteShrink}): those it withholds are counted.
  */
 export async function endUnstatedSeries(
   tx: Sql,
   sourceId: string,
   drafts: readonly Rec[],
   ctx: Pick<WriteContext, "registry" | "now">,
-): Promise<EndedSeries[]> {
+): Promise<{ ended: EndedSeries[]; withheld: number }> {
   const stated = await statedSeries(drafts);
   const changeOnly = ctx.registry
     .properties()
@@ -872,15 +881,30 @@ export async function endUnstatedSeries(
         ),
     )
     .map((r) => r.series_id);
-  if (ending.length === 0) return [];
   // A poll stating fewer than half of the series it held is more likely an
-  // empty or cut-off answer than half its points gone: it ends none of them.
-  if (2 * (held.length - ending.length) < held.length) {
+  // empty or cut-off answer than half its points gone: it ends none of them
+  // until consecutive complete polls have kept stating the smaller set.
+  const stating = held.length - ending.length;
+  if (ending.length === 0 || 2 * stating >= held.length) {
+    await clearShrink(tx, sourceId, "series");
+    if (ending.length === 0) return { ended: [], withheld: 0 };
+  } else {
+    const shrink = await noteShrink(tx, sourceId, "series", {
+      stated: stating,
+      held: held.length,
+      now: ctx.now,
+    });
+    if (!shrink.confirmed) {
+      console.warn(
+        `[ingest] ${sourceId}: the poll states ${stating} of ${held.length} readings in effect; ` +
+          `none is ended (${shrink.polls} such poll(s) since ${shrink.since})`,
+      );
+      return { ended: [], withheld: ending.length };
+    }
     console.warn(
-      `[ingest] ${sourceId}: the poll states ${held.length - ending.length} of ${held.length} ` +
-        "readings in effect; none is ended",
+      `[ingest] ${sourceId}: ${shrink.polls} complete polls since ${shrink.since} state ` +
+        `${stating} of ${held.length} readings in effect; the other ${ending.length} end`,
     );
-    return [];
   }
   const rows = await tx.unsafe<
     { series_id: string; feature_id: string | null; property: string; record: Rec }[]
@@ -907,7 +931,10 @@ export async function endUnstatedSeries(
     ],
     ended.map((e) => ({ ...e, effective_until: ctx.now, updated_at: ctx.now })),
   );
-  return rows.map((r) => ({ featureId: r.feature_id, property: r.property }));
+  return {
+    ended: rows.map((r) => ({ featureId: r.feature_id, property: r.property })),
+    withheld: 0,
+  };
 }
 
 /**

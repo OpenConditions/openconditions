@@ -519,6 +519,13 @@
       "when": 1792098279985,
       "tag": "0073_federation_source_liveness",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1792098298272,
+      "tag": "0074_source_shrink",
+      "breakpoints": true
     }
   ]
 }

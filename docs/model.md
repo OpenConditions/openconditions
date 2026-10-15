@@ -140,7 +140,12 @@ flips are refreshed by a scheduled job; in a series' history a reading holds
 until the next change. A full poll that states every reading of its source
 ends the series it no longer states (a charge point removed, a site
 withdrawn): their reading takes `validUntil` = that poll, until a later poll
-states them again. Crowd readings keep their own lifetimes, on-demand answers
+states them again. A poll stating fewer than half of the series in effect is
+more likely a cut-off answer: it ends none of them until three consecutive
+such polls, ten minutes or more apart from first to last, have stated the
+smaller set (`source_shrink`); a poll stating the series again starts the
+count over. The ended readings reach subscribing peers like any other change.
+Crowd readings keep their own lifetimes, on-demand answers
 their expiry, and other properties the `validUntil` their source states.
 Readings carry the publisher's time where it gives one; where it gives none,
 the fetch that first saw the result. A state older than the one in effect,

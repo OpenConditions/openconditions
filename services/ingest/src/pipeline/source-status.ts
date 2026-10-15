@@ -1,5 +1,5 @@
 import { redactSecrets, redactUrl } from "@openconditions/ingest-framework";
-import { journalSourceLiveness } from "@openconditions/storage";
+import { clearShrink, journalSourceLiveness } from "@openconditions/storage";
 import type postgres from "postgres";
 import { inScope, type SourceScope } from "../ingest-role.js";
 
@@ -257,6 +257,13 @@ export async function upsertSourceStatus(
         ELSE conditions.source_status.last_error_at END,
       updated_at = now()
   `;
+  // A publication is the shrink tripwire's new baseline: a shrink pending
+  // against the last one no longer stands. A not-modified answer restates
+  // the last accepted one, which a poll stating a shrink never is.
+  if (publication || outcome === "validated_unchanged") {
+    await clearShrink(sql, sourceId, "records");
+  }
+  if (outcome === "validated_unchanged") await clearShrink(sql, sourceId, "series");
   // After the poll's changes, in its transaction when it published: a peer
   // takes the source as polled only once it has what the poll wrote.
   if (networkValidated) await journalSourceLiveness(sql, sourceId);

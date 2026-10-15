@@ -286,15 +286,17 @@ export async function writeSnapshotIn(
     summary.rejected,
   );
   lap("readings");
+  const unstated = ctx.statesComplete
+    ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
+    : { ended: [], withheld: 0 };
   const ended = [
-    ...(ctx.statesComplete
-      ? await endUnstatedSeries(tx, sourceId, drafts.observations ?? [], ctx)
-      : []),
+    ...unstated.ended,
     ...(ctx.restatesTransient
       ? await endUnrestatedTransient(tx, sourceId, drafts.observations ?? [], ctx)
       : []),
   ];
   summary.observations.ended = ended.length;
+  if (unstated.withheld > 0) summary.observations.withheld = unstated.withheld;
   if (ctx.statesComplete || ctx.restatesTransient) lap("ended");
   await updateCanonicalView(
     tx,

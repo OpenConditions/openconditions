@@ -31,7 +31,7 @@ afterAll(async () => {
 
 beforeEach(async () => {
   await sql`TRUNCATE conditions.observation_latest CASCADE`;
-  await sql`TRUNCATE conditions.observation`;
+  await sql`TRUNCATE conditions.observation, conditions.source_shrink`;
 });
 
 const speed = (value: number, at: string) =>
@@ -736,6 +736,50 @@ describe("observation writes", () => {
       );
       expect(cut.observations.ended).toBe(0);
       expect(await validity()).toEqual({ s1: null, s2: null, s3: null });
+    });
+
+    describe("a shrink complete polls keep stating", () => {
+      const all = ["s1", "s2", "s3"].map((s) => at(s, "queuing", "2026-10-01T09:00:00Z"));
+      const one = [at("s1", "queuing", "2026-10-01T09:00:00Z")];
+      const pollAt = (observations: Record<string, unknown>[], minutes: number) => {
+        const now = new Date(Date.parse(NOW) + minutes * 60_000).toISOString();
+        return writeSnapshot(sql, "nl-ndw-flow", { observations }, { ...complete, now });
+      };
+
+      it("takes effect after three polls over ten minutes, and ends the series then", async () => {
+        await pollAt(all, 0);
+        for (const minutes of [1, 2, 9]) {
+          expect((await pollAt(one, minutes)).observations.ended).toBe(0);
+        }
+        expect(await validity()).toEqual({ s1: null, s2: null, s3: null });
+        const confirmed = await pollAt(one, 11);
+        expect(confirmed.observations.ended).toBe(2);
+        const endedAt = new Date(Date.parse(NOW) + 11 * 60_000).toISOString();
+        expect(await validity()).toEqual({ s1: null, s2: endedAt, s3: endedAt });
+        const [{ n }] = await sql`SELECT count(*)::int AS n FROM conditions.source_shrink`;
+        expect(n).toBe(0);
+      });
+
+      it("starts over when a complete poll states the series again", async () => {
+        await pollAt(all, 0);
+        await pollAt(one, 1);
+        await pollAt(one, 5);
+        await pollAt(all, 8);
+        await pollAt(one, 12);
+        expect((await pollAt(one, 16)).observations.ended).toBe(0);
+        expect(await validity()).toEqual({ s1: null, s2: null, s3: null });
+        expect((await pollAt(one, 23)).observations.ended).toBe(2);
+      });
+
+      it("is not counted by a poll that does not state every reading", async () => {
+        await pollAt(all, 0);
+        await pollAt(one, 1);
+        await pollAt(one, 5);
+        const now = new Date(Date.parse(NOW) + 12 * 60_000).toISOString();
+        await writeSnapshot(sql, "nl-ndw-flow", { observations: one }, { ...ctx, now });
+        expect(await validity()).toEqual({ s1: null, s2: null, s3: null });
+        expect((await pollAt(one, 13)).observations.ended).toBe(2);
+      });
     });
 
     it("ends only this instance's polled series, and passes over a malformed draft", async () => {

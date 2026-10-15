@@ -53,7 +53,12 @@ ends up in one of these states:
   the source publishes again; it gets `created`.
 - **Withdrawn.** A record a complete snapshot no longer holds is tombstoned
   `withdrawn`: a new revision carrying the tombstone. Its effects and relations
-  are removed.
+  are removed. A snapshot the shrink tripwire
+  (`OPENCONDITIONS_SHRINK_TRIPWIRE_RATIO`, by default only a drop to nothing)
+  calls suspect is not published, until three consecutive complete polls, ten
+  minutes or more apart from first to last, have stated the smaller set
+  (`source_shrink`); a publication or a not-modified answer starts the count
+  over.
 - **Rejected.** A draft that fails validation is counted and logged. The poll
   goes on, and the stored version stays.
 

@@ -61,6 +61,36 @@ export const sourceStatus = conditionsSchema.table("source_status", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/**
+ * A shrink of a source that its complete polls state and that has not yet
+ * taken effect: a poll stating far fewer of what the source had in effect
+ * (`series`: fewer than half its polled change-only series; `records`: a
+ * record count at or under the shrink tripwire) is more likely an empty or
+ * cut-off answer than a real loss, so it ends nothing. The shrink takes
+ * effect once consecutive complete polls have kept stating it for long
+ * enough; a complete poll that does not shrink, or a publication, clears it.
+ * Kept in the database, so a restart does not forget it, and written by the
+ * one process that polls the source.
+ */
+export const sourceShrink = conditionsSchema.table(
+  "source_shrink",
+  {
+    sourceId: text("source_id").notNull(),
+    scope: text("scope").notNull(),
+    /** The first poll of the run that stated the shrink. */
+    since: timestamp("since", { withTimezone: true }).notNull(),
+    /** Consecutive complete polls that stated it. */
+    polls: integer("polls").notNull(),
+    /** What the latest of them stated, of what was in effect. */
+    stated: integer("stated").notNull(),
+    held: integer("held").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.sourceId, t.scope] }),
+    check("source_shrink_scope_enum", sql`${t.scope} IN ('series','records')`),
+  ],
+);
+
 /** Bounded operational audit trail. A separate scheduled task prunes old rows;
  * source_status remains the current authority used by routing. */
 export const sourcePollAttempt = conditionsSchema.table(

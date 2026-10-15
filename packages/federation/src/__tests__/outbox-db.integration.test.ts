@@ -1,3 +1,4 @@
+import { observationId } from "@openconditions/model";
 import {
   journalSourceLiveness,
   reconcileFederation,
@@ -983,6 +984,51 @@ describe("source liveness", () => {
     const page = await readOutbox(sql, { after: base, now: NOW, filter: LIVE });
     expect(page.orderedItems).toEqual([]);
     expect(page.highWaterMark).not.toBe(encodeOutboxCursor(base));
+  });
+});
+
+describe("a shrink of a source's series", () => {
+  /** A site's level of service, a change-only property, as a full status parse states it. */
+  const los = (site: string) => {
+    const draft: Record<string, unknown> = {
+      ...speedReading(0, "2026-10-01T09:00:00Z"),
+      property: "traffic.los",
+      result: { type: "category", value: "queuing", vocabulary: "los" },
+      subject: { kind: "feature", featureId: featureId(site) },
+    };
+    draft["id"] = observationId("nl-ndw-flow", draft as Parameters<typeof observationId>[1]);
+    return draft;
+  };
+  const pollAt = (sites: string[], minutes: number) =>
+    writeSnapshot(
+      sql,
+      "nl-ndw-flow",
+      { observations: sites.map(los) },
+      {
+        ...writeCtx(new Date(Date.parse(WRITTEN_AT) + minutes * 60_000).toISOString()),
+        complete: false,
+        statesComplete: true,
+      },
+    );
+
+  it("reaches subscribers as the ended readings once it is confirmed", async () => {
+    await sql`DELETE FROM conditions.source_shrink`;
+    await subscribe(sql, "los", { classes: ["observation"], properties: ["traffic.los"] });
+    await pollAt(["s1", "s2", "s3"], 0);
+    const base = await frontier();
+    await pollAt(["s1"], 1);
+    await pollAt(["s1"], 5);
+    expect((await readOutbox(sql, { after: base, now: NOW })).orderedItems).toEqual([]);
+
+    expect((await pollAt(["s1"], 11)).observations.ended).toBe(2);
+    const endedAt = new Date(Date.parse(WRITTEN_AT) + 11 * 60_000).toISOString();
+    const page = await readOutbox(sql, { after: base, now: NOW });
+    const validUntil = (e: RecordOutboxEntry) =>
+      (e.record as Record<string, unknown> | undefined)?.["validUntil"];
+    expect(records(page).map((e) => [e.operation, e.recordId, validUntil(e)])).toEqual([
+      ["update", los("s2")["id"], endedAt],
+      ["update", los("s3")["id"], endedAt],
+    ]);
   });
 });
 
