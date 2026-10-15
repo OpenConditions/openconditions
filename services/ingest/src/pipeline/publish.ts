@@ -325,7 +325,7 @@ export async function publishFlows(
     model: WriteModel;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  const cache = latestCache.begin();
+  const cache = latestCache.begin(src.id);
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
@@ -401,7 +401,7 @@ export async function publishFeatures(
     statesComplete?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  const cache = latestCache.begin();
+  const cache = latestCache.begin(src.id);
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
@@ -468,7 +468,7 @@ export async function publishReadings(
     warning?: string;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  const cache = latestCache.begin();
+  const cache = latestCache.begin(src.id);
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const summary = await writeSnapshotIn(
@@ -509,7 +509,8 @@ export async function publishReadings(
 /**
  * What this process's polls left in their sources' latest rows: a poll
  * reads no reading back that it shows unchanged. A feed polls in one
- * process; a restart starts it empty.
+ * process; a restart starts it empty. Its budget is a share of this
+ * process's heap limit, or `OPENCONDITIONS_LATEST_CACHE_MB`.
  */
 const latestCache = new LatestCache();
 

@@ -400,7 +400,12 @@ its revisions stay for the history API. Hourly rollups are kept
 `OPENCONDITIONS_ROLLUP_HOURLY_DAYS` (35), daily ones
 `OPENCONDITIONS_ROLLUP_DAILY_DAYS` (400). A poll holding more than
 `OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL` readings (1 000 000) or 100 000
-records of one class is refused whole.
+records of one class is refused whole. A process remembers what each polled
+series holds, so a reading a poll restates unchanged is checked against its
+row instead of read back; `OPENCONDITIONS_LATEST_CACHE_MB` bounds that memory
+(default 8% of the heap limit, `0` off). A source is cached whole or not at
+all: one that does not fit the remaining budget is logged once and read back
+every poll.
 
 ## Credentials
 

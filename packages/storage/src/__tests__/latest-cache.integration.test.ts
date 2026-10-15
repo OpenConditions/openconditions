@@ -62,6 +62,8 @@ interface Step {
   meanwhile?: () => Promise<unknown>;
   /** The poll's transaction rolls back after the write. */
   rollsBack?: boolean;
+  /** The source polled, when not `SOURCE`. */
+  source?: string;
 }
 
 class RolledBack extends Error {}
@@ -101,15 +103,16 @@ async function run(
   const lookups: number[] = [];
   for (const [i, step] of steps.entries()) {
     await step.meanwhile?.();
-    const write = cacheAt(i)?.begin();
+    const source = step.source ?? SOURCE;
+    const write = cacheAt(i)?.begin(source);
     const asked: number[] = [];
     let observations: unknown;
     try {
       await sql.begin(async (tx) => {
-        await tx`SELECT pg_advisory_xact_lock(hashtext(${SOURCE}))`;
+        await tx`SELECT pg_advisory_xact_lock(hashtext(${source}))`;
         const summary = await writeSnapshotIn(
           counting(tx, asked),
-          SOURCE,
+          source,
           { observations: step.drafts, ...(step.features ? { features: step.features } : {}) },
           { ...ctx, ...step.ctx, ...(write ? { latestCache: write } : {}) },
         );
@@ -128,7 +131,7 @@ async function run(
         SELECT subject_key, property, qualifier_key, source_id, reading, template, template_hash,
                contributor_receipt_id, value_num, value_text, effective_from, effective_until,
                since_at, expires_at, updated_at
-          FROM conditions.observation_latest ORDER BY subject_key, property`,
+          FROM conditions.observation_latest ORDER BY source_id, subject_key, property`,
       history: await sql`
         SELECT phenomenon_start, issued_at, value_num, value_text, valid_until, recorded_at
           FROM conditions.observation ORDER BY phenomenon_start, value_text, value_num`,
@@ -213,8 +216,8 @@ describe("a latest cache in front of the readings write", () => {
     const cache = new LatestCache();
     // A poll that rolled back, its cache entries committed all the same.
     const careless = {
-      begin: () => {
-        const write = cache.begin();
+      begin: (source: string) => {
+        const write = cache.begin(source);
         return Object.assign(write, { discard: () => write.commit() });
       },
     } as unknown as LatestCache;
@@ -335,12 +338,36 @@ describe("a latest cache in front of the readings write", () => {
     ]);
   });
 
-  it("stays within its capacity and still writes as before", async () => {
-    const cache = new LatestCache(2);
-    await sameAsUncached(
-      [{ drafts: statuses(T0) }, { drafts: statuses(T1) }, { drafts: statuses(T2, "queuing") }],
+  it("leaves a source that does not fit its budget uncached and correct, and the others cached whole", async () => {
+    const OTHER = "be-test-flow";
+    const other = (at: string, s3 = "free_flow") =>
+      statuses(at, s3).map((d) => {
+        const { id: _id, ...draft } = d;
+        return observationDraft("traffic.los", draft["result"] as Rec, {
+          ...draft,
+          at,
+          sourceId: OTHER,
+          provenance: { ...(draft["provenance"] as Rec), sourceId: OTHER },
+        });
+      });
+    const logged: string[] = [];
+    const cache = new LatestCache(4, { log: (m) => logged.push(m) });
+    const lookups = await sameAsUncached(
+      [
+        { drafts: statuses(T0) },
+        { drafts: other(T0), source: OTHER },
+        { drafts: statuses(T1) },
+        { drafts: other(T1), source: OTHER },
+        { drafts: statuses(T2, "queuing") },
+        { drafts: other(T2, "queuing"), source: OTHER },
+        { drafts: statuses(T3, "queuing") },
+        { drafts: other(T3, "queuing"), source: OTHER },
+      ],
       () => cache,
     );
-    expect(cache.size).toBeLessThanOrEqual(2);
+    expect(lookups).toEqual([3, 3, 0, 3, 1, 3, 0, 3]);
+    expect(cache.sizeOf(SOURCE)).toBe(3);
+    expect(cache.sizeOf(OTHER)).toBe(0);
+    expect(logged).toEqual([expect.stringMatching(/be-test-flow: 3 series/)]);
   });
 });
