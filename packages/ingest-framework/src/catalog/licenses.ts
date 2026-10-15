@@ -115,6 +115,11 @@ export const LICENSES: readonly LicenseInfo[] = [
     shareAlike: false,
   },
   open({
+    id: "OGL-Canada-2.0",
+    name: "Open Government Licence – Canada",
+    url: "https://open.canada.ca/en/open-government-licence-canada",
+  }),
+  open({
     id: "LicenseRef-OGL-BC",
     name: "Open Government Licence – British Columbia",
     url: "https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc",
