@@ -158,6 +158,7 @@ describe("sweepRecords", () => {
     expect(await sweep(LATER)).toEqual({
       expired: 0,
       orphaned: 0,
+      lapsed: 0,
       purged: 0,
       dropped: 0,
       crowdExpired: 0,

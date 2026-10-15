@@ -3,6 +3,7 @@ import type { Registry } from "@openconditions/model";
 import type postgres from "postgres";
 import { updateCanonicalView } from "./canonical-view.js";
 import { isLockTimeout } from "./db-timeouts.js";
+import { PEER_LAPSED, PEER_LIVENESS_LAPSE_SEC, recordLapsedCopies } from "./federation-lapse.js";
 import { refreshFused } from "./fused-rows.js";
 import { tombstoneRecords } from "./write-records.js";
 
@@ -23,6 +24,11 @@ export interface SweepOptions {
   sourceMaxAgeSec?: Readonly<Record<string, number>>;
   /** How long a tombstoned record and its revisions are kept for the history API. */
   historyDays: number;
+  /**
+   * How long a peer that sends liveness may stay silent about a source before
+   * its copies of the source end (default {@link PEER_LIVENESS_LAPSE_SEC}).
+   */
+  peerLapseSec?: number;
 }
 
 export interface SweepCounts {
@@ -30,6 +36,8 @@ export interface SweepCounts {
   expired: number;
   /** Feed records tombstoned because their source stopped polling. */
   orphaned: number;
+  /** Peers' copies tombstoned because the peer fell silent about their source. */
+  lapsed: number;
   /** Tombstoned records purged, with their revisions. */
   purged: number;
   /** On-demand rows (records and series) deleted at expiry. */
@@ -72,6 +80,10 @@ const ORPHANED = `r.tombstoned_at IS NULL AND r.instance_id = $2 AND r.origin IN
  *    for `maxAgeSec` (its own `sourceMaxAgeSec` when longer), and is not
  *    polling now, is tombstoned `expired` — a still-polling source ends
  *    its records itself, by leaving them out of its snapshot;
+ *  - a peer's copy without an expiry, of a peer that sends liveness of its
+ *    source but has been silent about it past the lapse window, is
+ *    tombstoned `expired` at the peer's revision and noted, so the peer's
+ *    returning liveness brings it back ({@link restoreLapsedCopies});
  *  - a record tombstoned more than `historyDays` ago is purged with its
  *    revisions, effects, components, bindings, crowd evidence and votes;
  *  - an on-demand row is deleted at expiry: it was a cache, with no history;
@@ -91,6 +103,7 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
   const counts: SweepCounts = {
     expired: 0,
     orphaned: 0,
+    lapsed: 0,
     purged: 0,
     dropped: 0,
     crowdExpired: 0,
@@ -125,6 +138,7 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
         "record_binding",
         "binding_queue",
         "report_evidence",
+        "federation_lapsed_copy",
       ]) {
         await tx.unsafe(
           `DELETE FROM conditions.${table} WHERE record_class = $1 AND record_id = ANY($2::text[])`,
@@ -155,6 +169,17 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
     );
     counts.expired += await perSource(sql, busy, rows, EXPIRED, [opts.now], tombstone(cls));
     counts.orphaned += await perSource(sql, busy, rows, ORPHANED, params, tombstone(cls));
+    counts.lapsed += await perSource(
+      sql,
+      busy,
+      rows,
+      PEER_LAPSED,
+      [opts.now, opts.instanceId, opts.peerLapseSec ?? PEER_LIVENESS_LAPSE_SEC],
+      async (tx, ids, sourceId) => {
+        await tombstone(cls)(tx, ids, sourceId);
+        await recordLapsedCopies(tx, cls, ids, opts.now);
+      },
+    );
     counts.purged += await perSource(
       sql,
       busy,

@@ -3,6 +3,7 @@ import { observationId, schemaVersions } from "@openconditions/model";
 import {
   ensureObservationPartitions,
   retentionClasses,
+  sweepRecords,
   tombstoneRecords,
 } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
@@ -814,5 +815,84 @@ describe("a peer's copy this instance ended", () => {
       revision: 4,
       tombstone_reason: null,
     });
+  });
+});
+
+describe("a peer that falls silent about a source", () => {
+  const HOUR = 3_600_000;
+  const at = (hours: number) => new Date(Date.parse(NOW) + hours * HOUR).toISOString();
+  const liveness = (source: string, polledAt: string, seq: number) => ({
+    seq,
+    txid: "90",
+    operation: "liveness",
+    sourceId: source,
+    domain: "roads",
+    polledAt,
+    createdAt: polledAt,
+  });
+  const sweep = (now: string) =>
+    sweepRecords(sql, {
+      registry,
+      instanceId: INSTANCE,
+      now,
+      maxAgeSec: 3600,
+      historyDays: 90,
+    });
+  const sourceOf = (record: Rec) => (record["provenance"] as Rec)["sourceId"] as string;
+
+  beforeEach(async () => {
+    await sql`TRUNCATE conditions.federation_lapsed_copy`;
+  });
+
+  it("ends its copies once its liveness lapsed, and brings them back when it returns", async () => {
+    const quiet = peerSituation("lapse-1", 2);
+    const id = quiet["id"] as string;
+    await ingestFederatedPage(
+      sql,
+      page(change(quiet, 1), liveness(sourceOf(quiet), NOW, 2)),
+      ctx(),
+    );
+    expect(await sweep(at(1))).toMatchObject({ lapsed: 0 });
+    expect((await rowOf(id))!.tombstone_reason).toBeNull();
+
+    expect(await sweep(at(3))).toMatchObject({ lapsed: 1 });
+    expect(await rowOf(id)).toMatchObject({ revision: 2, tombstone_reason: "expired" });
+
+    // Back: its liveness of the source arrives again, the quiet record does not.
+    const back = await ingestFederatedPage(
+      sql,
+      page(liveness(sourceOf(quiet), at(4), 3)),
+      ctx(at(4)),
+    );
+    expect(back).toMatchObject({ liveness: 1, skipped: [] });
+    expect(await rowOf(id)).toMatchObject({ revision: 2, tombstone_reason: null });
+    expect(await sweep(at(5))).toMatchObject({ lapsed: 0 });
+    const [{ n }] = await sql`SELECT count(*)::int AS n FROM conditions.federation_lapsed_copy`;
+    expect(n).toBe(0);
+  });
+
+  it("keeps ended what the peer retracted while it was silent to this instance", async () => {
+    const quiet = peerSituation("lapse-2", 2);
+    const id = quiet["id"] as string;
+    await ingestFederatedPage(
+      sql,
+      page(change(quiet, 1), liveness(sourceOf(quiet), NOW, 2)),
+      ctx(),
+    );
+    await sweep(at(3));
+    const back = await ingestFederatedPage(
+      sql,
+      page(retraction(quiet, "cancelled", 3), liveness(sourceOf(quiet), at(4), 4)),
+      ctx(at(4)),
+    );
+    expect(back).toMatchObject({ tombstoned: 1, skipped: [] });
+    expect(await rowOf(id)).toMatchObject({ revision: 3, tombstone_reason: "cancelled" });
+  });
+
+  it("never ends the copies of a peer that sends no liveness", async () => {
+    const quiet = peerSituation("lapse-3", 1);
+    await ingestFederatedPage(sql, page(change(quiet, 1)), ctx());
+    expect(await sweep(at(30))).toMatchObject({ lapsed: 0 });
+    expect((await rowOf(quiet["id"] as string))!.tombstone_reason).toBeNull();
   });
 });

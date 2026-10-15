@@ -533,6 +533,13 @@
       "when": 1792098322063,
       "tag": "0075_federation_peer_cursor",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1792098332372,
+      "tag": "0076_federation_peer_lapse",
+      "breakpoints": true
     }
   ]
 }

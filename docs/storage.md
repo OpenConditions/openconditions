@@ -165,9 +165,23 @@ The sweep, every five minutes, takes these actions:
 | -------------------------------------------------------------------- | ------------------------------------------------------------- |
 | A record whose `freshness.expiresAt` has passed                      | Tombstoned `expired`                                          |
 | A feed record of a source with no successful poll for an hour        | Tombstoned `expired`                                          |
+| A peer's copy without expiry, its peer silent about its source       | Tombstoned `expired`, back when the peer's liveness returns   |
 | A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (90) ago | Purged with its revisions, bindings, crowd evidence and votes |
 | An on-demand row at expiry                                           | Deleted (it was a cache, with no history)                     |
 | A series of a transient property past its reading's expiry           | Deleted, bulk or on demand (nothing else ends it)             |
+
+A peer's copy without an expiry of its own lives as long as its peer says so,
+so a peer that goes dark would leave it live here for good. Only for a peer
+that sends liveness of the source (`federation_source_receipt.liveness_at`)
+can silence be told from a quiet source: once nothing of the source, record or
+liveness, arrived from it for two hours (or four of the source's cadences,
+when longer), the sweep ends its copies of the source `expired`, at the peer's
+revision, and notes them (`federation_lapsed_copy`). When the peer's liveness
+of the source arrives again, a noted copy still at that revision is live
+again, since a quiet record is never re-sent; one the peer changed meanwhile
+comes back with its change, and one it retracted meanwhile takes the
+retraction (which a copy ended here would otherwise ignore) and stays ended.
+A peer that sends no liveness keeps its copies until it retracts them.
 
 A declared validity end is never a tombstone reason: a source that still
 publishes an ended record keeps it, and reads filter by time. A source whose

@@ -508,8 +508,38 @@ export const federationSourceReceipt = conditionsSchema.table(
     peerInstanceId: text("peer_instance_id").notNull(),
     sourceId: text("source_id").notNull(),
     lastReceivedAt: timestamp("last_received_at", { withTimezone: true }).notNull(),
+    /**
+     * When the peer last said it polled the source (a liveness entry); null
+     * for a peer that never did. Only such a peer's copies of the source end
+     * once it falls silent (`federation_lapsed_copy`).
+     */
+    livenessAt: timestamp("liveness_at", { withTimezone: true }),
   },
   (t) => [primaryKey({ columns: [t.peerInstanceId, t.sourceId] })],
+);
+
+/**
+ * A peer's copy the sweep ended because the peer fell silent about its
+ * source: the peer sends liveness, yet nothing of the source arrived from it
+ * for the lapse window. The copy kept the peer's revision; when the peer's
+ * liveness of the source arrives again, a copy still at that revision and
+ * ended so is live again (a quiet record is never re-sent). A copy the peer
+ * changed or retracted since is no longer this row's to restore.
+ */
+export const federationLapsedCopy = conditionsSchema.table(
+  "federation_lapsed_copy",
+  {
+    recordClass: text("record_class").notNull(),
+    recordId: text("record_id").notNull(),
+    peerInstanceId: text("peer_instance_id").notNull(),
+    sourceId: text("source_id").notNull(),
+    revision: integer("revision").notNull(),
+    lapsedAt: timestamp("lapsed_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.recordClass, t.recordId] }),
+    index("idx_federation_lapsed_copy_source").on(t.peerInstanceId, t.sourceId),
+  ],
 );
 
 /**

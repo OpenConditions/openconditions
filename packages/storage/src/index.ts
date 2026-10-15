@@ -2,6 +2,7 @@ export * from "./bulk.js";
 export * from "./canonical-view.js";
 export * from "./caps.js";
 export * from "./db-timeouts.js";
+export * from "./federation-lapse.js";
 export * from "./federation-liveness.js";
 export * from "./federation-reconcile.js";
 export * from "./fused-rows.js";

@@ -35,7 +35,12 @@ import type { GeoJsonGeometry } from "@openconditions/core";
 import type { RevisionedClass } from "@openconditions/core/server";
 import { admitFederatedRecord, readInboundEntry } from "@openconditions/federation/admit";
 import type { Registry } from "@openconditions/model";
-import { tombstoneRecords, writeRecordIn } from "@openconditions/storage";
+import {
+  isLapsedCopy,
+  restoreLapsedCopies,
+  tombstoneRecords,
+  writeRecordIn,
+} from "@openconditions/storage";
 import type postgres from "postgres";
 import { actorOf, lockCrowd } from "../crowd.js";
 import { crossValidateAgainstFeeds } from "../evidence/crossValidate.js";
@@ -122,6 +127,8 @@ export async function ingestFederatedPage(
     const held = received.get(sourceId);
     if (held === undefined || Date.parse(at) > Date.parse(held)) received.set(sourceId, at);
   };
+  /** The sources whose liveness this page carried. */
+  const alive = new Set<string>();
 
   for (const item of page["orderedItems"]) {
     // Advance the processed frontier over EVERY entry that carries a usable
@@ -148,6 +155,7 @@ export async function ingestFederatedPage(
         entry.sourceId,
         Date.parse(entry.polledAt) < Date.parse(ctx.now) ? entry.polledAt : ctx.now,
       );
+      alive.add(entry.sourceId);
       result.liveness += 1;
       continue;
     }
@@ -167,28 +175,46 @@ export async function ingestFederatedPage(
       if (typeof provenance?.sourceId === "string") receive(provenance.sourceId, ctx.now);
     }
   }
-  await recordReceipts(sql, ctx, received);
+  await recordReceipts(sql, ctx, received, alive);
+  // The peer polls these sources again: what the sweep ended of them for
+  // the peer's silence is live again, after this page's own retractions.
+  for (const sourceId of alive) {
+    await sql.begin(async (tx) => {
+      await tx`SELECT pg_advisory_xact_lock(hashtext(${sourceId}))`;
+      await restoreLapsedCopies(tx, ctx.registry, ctx.peerInstanceId, sourceId, {
+        instanceId: ctx.localInstanceId,
+        now: ctx.now,
+      });
+    });
+  }
   result.maxCursor = max === null ? null : `${max.txid}.${max.seq}`;
   return result;
 }
 
 /**
  * Notes when each source arrived from the peer: its readings hold while it
- * keeps arriving (`withPolledValidity`). A receipt never moves back.
+ * keeps arriving (`withPolledValidity`). A receipt never moves back. A source
+ * whose liveness arrived is noted as one the peer says it polls: its copies
+ * end should the peer fall silent about it.
  */
 async function recordReceipts(
   sql: Sql,
   ctx: InboxContext,
   sources: ReadonlyMap<string, string>,
+  alive: ReadonlySet<string>,
 ): Promise<void> {
   if (sources.size === 0) return;
+  const keys = [...sources.keys()];
   await sql`
-    INSERT INTO conditions.federation_source_receipt (peer_instance_id, source_id, last_received_at)
-    SELECT ${ctx.peerInstanceId}, s, at
-      FROM unnest(${[...sources.keys()]}::text[], ${[...sources.values()]}::timestamptz[]) AS r(s, at)
+    INSERT INTO conditions.federation_source_receipt
+      (peer_instance_id, source_id, last_received_at, liveness_at)
+    SELECT ${ctx.peerInstanceId}, s, at, CASE WHEN s = ANY(${[...alive]}::text[]) THEN at END
+      FROM unnest(${keys}::text[], ${[...sources.values()]}::timestamptz[]) AS r(s, at)
     ON CONFLICT (peer_instance_id, source_id) DO UPDATE
       SET last_received_at = GREATEST(conditions.federation_source_receipt.last_received_at,
-                                      excluded.last_received_at)`;
+                                      excluded.last_received_at),
+          liveness_at = GREATEST(conditions.federation_source_receipt.liveness_at,
+                                 excluded.liveness_at)`;
 }
 
 async function landRecord(
@@ -347,9 +373,12 @@ async function applyRetraction(
     if (row.instance_id !== ctx.peerInstanceId) return "the record is not the peer's";
     // An erasure still applies to a copy that ended here: ending it kept its
     // content, and the rights to that content are gone.
+    // A copy the sweep ended for the peer's silence is still the peer's to
+    // retract: left as it is, the peer's returning liveness would bring it back.
     if (
       row.tombstone_reason !== null &&
-      (entry.reason !== ERASURE_REASON || row.tombstone_reason === ERASURE_REASON)
+      (entry.reason !== ERASURE_REASON || row.tombstone_reason === ERASURE_REASON) &&
+      !(await isLapsedCopy(tx, cls, entry.recordId))
     ) {
       return "stale";
     }
