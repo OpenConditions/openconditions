@@ -24,6 +24,13 @@
           "ref": "A1"
         }
       ],
+      "linear": {
+        "system": "kilometre_post",
+        "ref": "A1",
+        "from": 113.9,
+        "reportedLengthM": 6100,
+        "authority": "GDDKiA"
+      },
       "admin": {
         "country": "PL"
       }
@@ -83,7 +90,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "877dc488436d98a9a85d2f36035eea67852ba8448d842e8ac50bf71564d23cd9"
+    "contentHash": "395c2069946b660409312da0f51016fb7e52149caba5ea16a59c1fa8897ec1ec"
   },
   {
     "id": "oc:situation:pl-gddkia-events:jnlp52",
@@ -110,6 +117,13 @@
           "ref": "A1"
         }
       ],
+      "linear": {
+        "system": "kilometre_post",
+        "ref": "A1",
+        "from": 144.312,
+        "reportedLengthM": 7588,
+        "authority": "GDDKiA"
+      },
       "admin": {
         "country": "PL"
       }
@@ -169,7 +183,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2fa25d7dc85dabb9c22cce17d1f39e8ae63292fe8c916014df59dd659cd66e9a"
+    "contentHash": "bf380b59379bae32d86fb7fb8284063f26ad9c1417f460ec4a90808cd6e8a434"
   },
   {
     "id": "oc:situation:pl-gddkia-events:16kn89p",
@@ -196,6 +210,13 @@
           "ref": "A1"
         }
       ],
+      "linear": {
+        "system": "kilometre_post",
+        "ref": "A1",
+        "from": 262,
+        "reportedLengthM": 2970,
+        "authority": "GDDKiA"
+      },
       "admin": {
         "country": "PL"
       }
@@ -255,7 +276,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "86b6146b9d7328ab8d2501526dff9b3173589c4715503cc3526c8c166f18218c"
+    "contentHash": "336d932a7ce0177e663b69042ee5cc39f5777fe9087df2929885f19963bacbf2"
   },
   {
     "id": "oc:situation:pl-gddkia-events:1lxs2sf",
@@ -282,6 +303,13 @@
           "ref": "A1"
         }
       ],
+      "linear": {
+        "system": "kilometre_post",
+        "ref": "A1",
+        "from": 416,
+        "reportedLengthM": 6000,
+        "authority": "GDDKiA"
+      },
       "admin": {
         "country": "PL"
       }
@@ -341,7 +369,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4bbaf3cf73704497db4f73b5ef2cacf7eb10c75a87573627b0e0be66467caa0f"
+    "contentHash": "19bfcb19ff2d4fbe6a2a02a62819a9bc95ec6dbe174a90a498e470cab3c06b6f"
   },
   {
     "id": "oc:situation:pl-gddkia-events:1d9gp2x",
@@ -368,6 +396,13 @@
           "ref": "A1a"
         }
       ],
+      "linear": {
+        "system": "kilometre_post",
+        "ref": "A1a",
+        "from": 30.2,
+        "reportedLengthM": 6800,
+        "authority": "GDDKiA"
+      },
       "admin": {
         "country": "PL"
       }
@@ -427,7 +462,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "03f09b77cda9b424d2ac3c4ab022f27e76693cfbb97c4e904dc669981a08c740"
+    "contentHash": "fee8792e38d17a94c84707497594fe80feeaba9dfe2dc16227e3f5c4b7e06e31"
   },
   {
     "id": "oc:situation:pl-gddkia-events:4tca7f",
@@ -454,6 +489,13 @@
           "ref": "A1c"
         }
       ],
+      "linear": {
+        "system": "kilometre_post",
+        "ref": "A1c",
+        "from": 2.3,
+        "reportedLengthM": 200,
+        "authority": "GDDKiA"
+      },
       "admin": {
         "country": "PL"
       }
@@ -513,6 +555,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "3c134ecf29fb76f90c234d00e22114b0bddd7cde877c6028306fc53416ddd09b"
+    "contentHash": "24ba7655b8854b61ec4ef0e7daa12a21d69c950429ff5f72350ae0756718622d"
   }
 ]

@@ -122,6 +122,8 @@ export const LinearRef = z.strictObject({
   system: z.enum(LINEAR_SYSTEMS),
   ref: z.string().min(1),
   from: z.number(),
+  /** Source-reported distance; it does not establish an end chainage or road geometry. */
+  reportedLengthM: z.number().nonnegative().optional(),
   to: z.number().optional(),
   authority: z.string().min(1).optional(),
 });

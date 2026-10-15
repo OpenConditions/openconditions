@@ -10,6 +10,7 @@ import {
   type Validity,
 } from "@openconditions/model";
 import { XMLBuilder } from "fast-xml-parser";
+import { hasCoarseLocation } from "./situation-precision.js";
 
 type Rec = Record<string, unknown>;
 
@@ -174,7 +175,7 @@ function effectEvents(effects: Effect[], validity: Validity, at: Date, out: Traf
  */
 export function traffEventsOf(registry: Registry, situation: Rec, at: Date): TraffEvent[] {
   const effects = situationEffects(situation);
-  if (effects.some(untellable)) return [];
+  if (hasCoarseLocation(situation) || effects.some(untellable)) return [];
   const out: TraffEvent[] = [];
   const nature = registry.crosswalk.situationTargetCode(
     "traff",
@@ -191,7 +192,7 @@ export function traffEventsOf(registry: Registry, situation: Rec, at: Date): Tra
  * place, so a consumer never closes the wrong road.
  */
 function messagesOf(registry: Registry, situation: Rec, at: Date): Record<string, unknown>[] {
-  if (situationEffects(situation).some(untellable)) return [];
+  if (hasCoarseLocation(situation) || situationEffects(situation).some(untellable)) return [];
   const events = traffEventsOf(registry, situation, at);
   const main = events.length > 0 ? buildMessage(situation, events) : undefined;
   const out = main === undefined ? [] : [main];

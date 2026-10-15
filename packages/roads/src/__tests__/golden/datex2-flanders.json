@@ -540,6 +540,7 @@
       "tmc": {
         "country": "BE",
         "table": 601,
+        "version": "3.8",
         "code": 11104
       },
       "admin": {
@@ -607,7 +608,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "cd149f529af2138e36f29806fe48d23406c7fb1d7eda832e233fa13ee012ed30"
+    "contentHash": "67899b9755640f9961e129a2c19955a796ac7d7fd9805c3e614d189bfa2a8e14"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290721",
@@ -874,6 +875,7 @@
       "tmc": {
         "country": "BE",
         "table": 601,
+        "version": "3.8",
         "code": 13424
       },
       "admin": {
@@ -926,7 +928,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "19d27eb3cec3ddf4fbd83332c59c996e1f4dfc25293d1081ab1502a50d26feba"
+    "contentHash": "f4d3498335b22a09b50a6ffbed82acbfd56f749f9a209906cc8e2ef2ce1c3b0b"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290752",
@@ -1001,6 +1003,7 @@
       "tmc": {
         "country": "BE",
         "table": 601,
+        "version": "3.8",
         "code": 29634
       },
       "admin": {
@@ -1065,7 +1068,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "49c993e21f17d31e61a5c1f86c73e17c4c3919e54eeaf02eb1e532fc3da5f954"
+    "contentHash": "f521ccadc6ef264e3fc7b4e04d56b2e4e0d4d85615a546f7cbf1535fedbb7556"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290563",
@@ -1420,6 +1423,7 @@
       "tmc": {
         "country": "BE",
         "table": 601,
+        "version": "3.8",
         "code": 23005
       },
       "admin": {
@@ -1470,6 +1474,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0e46fee861935d146640b3ba3ee25cceb019b74ab0ead83fb0af510379817076"
+    "contentHash": "f0bc57d93d298633ad29b415c4acda0727970b4d8eb4083746a2573cd24ea1e3"
   }
 ]

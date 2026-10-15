@@ -202,6 +202,47 @@ async function withStoredRights(fn: () => Promise<void>) {
 }
 
 describe("GET /segments/conditions.json", () => {
+  it("publishes an exact precision-only effect override of a coarse parent", async () => {
+    const [stored] = await sql<
+      { record: postgres.JSONValue }[]
+    >`SELECT record FROM conditions.situation WHERE id = ${id("a1")}`;
+    const [effect] = await sql<
+      { value: postgres.JSONValue }[]
+    >`SELECT value FROM conditions.situation_effect WHERE situation_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+    try {
+      await sql`UPDATE conditions.situation SET record = jsonb_set(record, '{location,fuzziness}', '"low_res"'::jsonb) WHERE id = ${id("a1")}`;
+      await sql`UPDATE conditions.situation_effect SET value = jsonb_set(value, '{location}', '{"fuzziness":"exact"}'::jsonb) WHERE situation_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+      await bindSituation(sql, id("a1"), {
+        effectId: "a1/closure",
+        status: "exact",
+        confidence: 0.9,
+        generation: GENERATION,
+        resolverVersion: RESOLVER_VERSION,
+        spans: [{ segmentId: SEGMENT_ID, wayId: 10, start: SPAN_START, end: 1 }],
+      });
+      await withApp(async (app) => {
+        expect(await conditionIds(app)).toContain(conditionId("a1"));
+      });
+    } finally {
+      await sql`UPDATE conditions.situation SET record = ${sql.json(stored!.record)} WHERE id = ${id("a1")}`;
+      await sql`UPDATE conditions.situation_effect SET value = ${sql.json(effect!.value)} WHERE situation_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+      await sql`DELETE FROM conditions.record_segment WHERE record_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+      await sql`DELETE FROM conditions.record_binding WHERE record_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+    }
+  });
+
+  it("withholds coarse locations even when an older exact binding is still stored", async () => {
+    await withApp(async (app) => {
+      expect(await conditionIds(app)).toContain(conditionId("a1"));
+      await sql`UPDATE conditions.situation SET record = jsonb_set(record, '{location,fuzziness}', '"low_res"'::jsonb) WHERE id = ${id("a1")}`;
+      try {
+        expect(await conditionIds(app)).not.toContain(conditionId("a1"));
+      } finally {
+        await sql`UPDATE conditions.situation SET record = jsonb_set(record, '{location,fuzziness}', '"exact"'::jsonb) WHERE id = ${id("a1")}`;
+      }
+    });
+  });
+
   it("withdraws retained routing evidence when a catalogue child is no longer scheduled", async () => {
     await withStoredRights(() =>
       withApp(async (app, catalog) => {

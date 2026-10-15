@@ -82,3 +82,32 @@ describe("location", () => {
     expect(datexLaneToIndex(lane, opts)).toBe(index);
   });
 });
+
+describe("reported linear-reference length", () => {
+  const location = {
+    geometry: { type: "Point", coordinates: [21, 52.2] },
+    extent: "point",
+    geometryOrigin: "source",
+    fuzziness: "exact",
+  };
+  it("carries reported metres separately from an unestablished end chainage", () => {
+    expect(
+      ok(LocationRef, {
+        ...location,
+        linear: {
+          system: "kilometre_post",
+          ref: "S7x",
+          from: 0,
+          reportedLengthM: 2750,
+          authority: "GDDKiA",
+        },
+      }),
+    ).toBe(true);
+    expect(
+      ok(LocationRef, {
+        ...location,
+        linear: { system: "kilometre_post", ref: "S7x", from: 0, reportedLengthM: -1 },
+      }),
+    ).toBe(false);
+  });
+});

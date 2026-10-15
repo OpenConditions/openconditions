@@ -12,6 +12,7 @@ import lclDe from "./snapshots/lcl-de.json" with { type: "json" };
 
 export * from "./lcl.js";
 export * from "./resolve.js";
+export * from "./vild.js";
 
 let cached: TmcLocationTable[] | undefined;
 

@@ -1,6 +1,6 @@
 {
-  "events": 842,
-  "situations": 434,
+  "events": 853,
+  "situations": 435,
   "classifications": {
     "closure.closure.bridge": 1,
     "closure.closure.carriageway": 10,
@@ -11,13 +11,13 @@
     "incident.obstruction": 14,
     "other.other": 41,
     "restriction.speed.temporary": 1,
-    "roadworks.works.maintenance": 249
+    "roadworks.works.maintenance": 250
   },
   "effects": {
     "access": 24,
-    "closure": 138,
+    "closure": 147,
     "detour": 112,
-    "lane_restriction": 125,
+    "lane_restriction": 126,
     "speed_limit": 97,
     "unsupported": 10
   },
@@ -50,7 +50,7 @@
         "tmc": {
           "country": "8",
           "table": 6,
-          "version": "6.13",
+          "version": "6.13.A",
           "code": 7995
         },
         "admin": {
@@ -115,7 +115,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "a047d0742a97789eefee426f37ad66ef258f13cd13baad9c1bed857e49dfe3b9"
+      "contentHash": "847eb6e0ec5a50ee5e4eb4235e327a6653e85bd333e8d2f84a75b27b3423be57"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1146779_D2_WWA",
@@ -170,7 +170,7 @@
         "tmc": {
           "country": "8",
           "table": 6,
-          "version": "6.13",
+          "version": "6.13.A",
           "code": 7324
         },
         "admin": {
@@ -252,7 +252,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "4349d90c0bc5511d59e4c903c1bd9ccda78c4881ddcbfd485b88a9e676be3380"
+      "contentHash": "9a2050cdc648a3090947fe8259e5f5114c9f627e7e951309c3209400840a1e6e"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS10_OBS0000038442",
@@ -371,7 +371,7 @@
         "tmc": {
           "country": "8",
           "table": 6,
-          "version": "6.13",
+          "version": "6.13.A",
           "code": 7201
         },
         "admin": {
@@ -422,7 +422,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "b095d5f9fa24717ae935ded436c30af8a06cc55cd4fa9baff4fe01be3ae37b41"
+      "contentHash": "40cc1ee223d811026d38265585355d94da83ac10dd643aef660c67ad52fa70c0"
     },
     {
       "id": "oc:situation:nl-ndw-events:NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
@@ -452,7 +452,7 @@
         "tmc": {
           "country": "8",
           "table": 6,
-          "version": "6.13",
+          "version": "6.13.A",
           "code": 29033
         },
         "admin": {
@@ -502,7 +502,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "d57a9555a4fd8deab01a689f0238aa680ba5112774aeb84654021b4a3c79d3f5"
+      "contentHash": "84c84d9fbfbee48a9132e17c3f5bc308e5bd1aa16ddcd469e98e1a2cf7979982"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1148373_D2_WWA",
@@ -737,7 +737,7 @@
         "tmc": {
           "country": "8",
           "table": 6,
-          "version": "6.13",
+          "version": "6.13.A",
           "code": 7272
         },
         "admin": {
@@ -846,10 +846,30 @@
               ]
             },
             "extent": "point",
-            "geometryOrigin": "source"
+            "geometryOrigin": "source",
+            "fuzziness": "exact",
+            "direction": {
+              "value": "unknown",
+              "basis": "bearing",
+              "bearingDeg": 317
+            },
+            "tmc": {
+              "country": "8",
+              "table": 6,
+              "version": "6.13.A",
+              "code": 7258
+            },
+            "admin": {
+              "country": "NL"
+            }
           },
           "applicability": {
             "kind": "all"
+          },
+          "direction": {
+            "value": "unknown",
+            "basis": "bearing",
+            "bearingDeg": 317
           },
           "compliance": "advisory",
           "normalization": "complete",
@@ -2112,7 +2132,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "6b80959c6e0feb837918a1a6906392266b973f6b87735ba26596f2b763fed276"
+      "contentHash": "80416ee891cd0c8418e993ab6135726dd0c8124d6ad8fb47c20252be407d63f0"
     }
   ]
 }

@@ -27,7 +27,7 @@
       "tmc": {
         "country": "8",
         "table": 6,
-        "version": "6.13",
+        "version": "6.13.A",
         "code": 21321
       },
       "admin": {
@@ -92,7 +92,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1c8331e38398102aab5a12ab213a854a0f434acf4c27dcd9b784b4c7e290bdef"
+    "contentHash": "30da335336b9d0e8567a5a359f56cbceabce2d6420816a3b69365cb73d06f4f7"
   },
   {
     "id": "oc:situation:nl-ndw-events:RWS01_SM1080891_D2_WWA",
@@ -123,7 +123,7 @@
       "tmc": {
         "country": "8",
         "table": 6,
-        "version": "6.13",
+        "version": "6.13.A",
         "code": 10439
       },
       "admin": {
@@ -295,7 +295,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7e207ac9e2d466adcb127e9464d6382c7fb6d1dc0986f1120686f3a121f77e10"
+    "contentHash": "d2da30d9878b17ebb3e4a270ffab03ed663da38c323eb2251ec8016d6b0c506d"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005382945",
@@ -358,7 +358,7 @@
       "tmc": {
         "country": "8",
         "table": 6,
-        "version": "6.13",
+        "version": "6.13.A",
         "code": 8318
       },
       "admin": {
@@ -480,7 +480,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "babd058614a13c0a012af9b6650d118b88dc2b01cca8d89b0feaebd7b1afbcf6"
+    "contentHash": "735cbaf87458aa0656cf64fa6244757afb8677783b141901075f6f0301ff59f5"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005406494",
@@ -551,7 +551,7 @@
       "tmc": {
         "country": "8",
         "table": 6,
-        "version": "6.13",
+        "version": "6.13.A",
         "code": 8316
       },
       "admin": {
@@ -673,6 +673,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2515ec689aee2a06900206a5f9ca667c5c787d9e09d6e469a6bd644334387747"
+    "contentHash": "d50f79e53410ed2c65e1e3688aa0554246fa21f503dd55346745644953c08549"
   }
 ]

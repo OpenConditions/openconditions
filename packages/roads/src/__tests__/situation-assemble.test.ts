@@ -465,3 +465,35 @@ describe("situationDrafts — access mode", () => {
     expect((onDemand["provenance"] as { accessMode: string }).accessMode).toBe("on_demand");
   });
 });
+
+describe("grouped location precision", () => {
+  it.each([true, false])(
+    "preserves coarse member precision/provenance even when geometry is the same: %s",
+    (sameGeometry) => {
+      const geometry = { type: "Point" as const, coordinates: [4.9, 52.37] };
+      const drafts = assemble([
+        event("nature", {
+          situationId: "precision",
+          type: "roadworks",
+          situation: cls("roadworks", "works", "maintenance"),
+          geometry,
+        }),
+        event("coarse", {
+          situationId: "precision",
+          type: "road_closure",
+          roadState: "closed",
+          situation: cls("closure", "closure", "full"),
+          geometry: sameGeometry ? geometry : { type: "Point", coordinates: [5.7, 50.8] },
+          fuzziness: "low_res",
+          locationTable: { ref: "VILD", version: "6.13.A", license: "CC0-1.0" },
+        }),
+      ]);
+      const closure = effects(drafts[0]!).find((e) => e["kind"] === "closure")!;
+      expect(closure["location"]).toMatchObject({
+        fuzziness: "low_res",
+        geometryOrigin: "tmc_table",
+        locationTable: { ref: "VILD", version: "6.13.A" },
+      });
+    },
+  );
+});

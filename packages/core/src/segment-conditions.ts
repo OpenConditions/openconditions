@@ -128,6 +128,7 @@ export async function readSegmentConditionRows(
        JOIN conditions.situation s ON s.id = e.situation_id
        JOIN conditions.record_binding b ON b.record_class = 'situation' AND b.record_id = s.id
         AND b.effect_id = CASE WHEN jsonb_typeof(e.value #> '{location,geometry}') = 'object'
+                                 OR e.value -> 'location' ? 'fuzziness'
                                THEN e.effect_id
                                WHEN e.value -> 'location' IS NULL THEN '' END
        JOIN conditions.road_graph_state graph ON graph.singleton AND graph.status = 'ready'
@@ -157,6 +158,8 @@ export async function readSegmentConditionRows(
         AND (e.kind = ANY($3::text[]) OR e.applicability_kind = 'unknown'
              OR e.normalization <> 'complete')
         AND b.status IN ('exact', 'likely') AND b.resolver_version = $2
+        AND COALESCE(e.value #>> '{location,fuzziness}',
+                     s.record #>> '{location,fuzziness}', 'exact') = 'exact'
         AND (e.valid_to IS NULL OR e.valid_to > $1::timestamptz)
         AND (s.expires_at IS NULL OR s.expires_at > now())
         ${q.bbox ? "AND ST_Intersects(e.geom, ST_MakeEnvelope($4, $5, $6, $7, 4326))" : ""}

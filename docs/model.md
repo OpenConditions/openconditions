@@ -2443,3 +2443,13 @@ Kernel version `1.0`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 | `vms_working_status`   | `out_of_service`          | datex2_v3 | covered                                                                                                                                                                                                                                                                      |
 
 <!-- generated:registry:end -->
+
+## Reported linear distances
+
+`location.linear.reportedLengthM` optionally retains a finite, nonnegative
+source-reported affected length in metres, independently of `from` and `to`.
+It does not create geometry or assert an ending chainage. For GDDKiA,
+`system: kilometre_post` and `from` retain the starting kilometre, the full road
+reference remains in `ref`, and `authority` is `GDDKiA`. Road-section breaks and
+kilometre resets must be calibrated before deriving an endpoint. See the
+[location-reference research](location-reference-research.md).

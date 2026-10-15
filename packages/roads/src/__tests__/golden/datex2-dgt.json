@@ -716,7 +716,21 @@
             ]
           },
           "extent": "linear",
-          "geometryOrigin": "source"
+          "geometryOrigin": "source",
+          "fuzziness": "exact",
+          "roads": [
+            {
+              "name": [
+                {
+                  "lang": "und",
+                  "text": "TF-5"
+                }
+              ]
+            }
+          ],
+          "admin": {
+            "country": "ES"
+          }
         },
         "applicability": {
           "kind": "unknown",
@@ -765,6 +779,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f8da102ab7de7f642b5acdff7789a3ab34c01ce61ff208000310fd8cc42562a1"
+    "contentHash": "1085f9c98eee351a4542d50fce8f3ca9c0ab8a1eec1e7ad245845f0db7306325"
   }
 ]

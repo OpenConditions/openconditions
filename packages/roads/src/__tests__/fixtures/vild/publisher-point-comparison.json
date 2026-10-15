@@ -1,0 +1,137 @@
+[
+  {
+    "recordId": "RWS01_M1181857_REROUTING_1_D2_WWA",
+    "code": 9298,
+    "tablePoint": [4.575050271806, 52.227651248429],
+    "independentPoint": [4.575665, 52.227585],
+    "distanceM": 42.51,
+    "road": "A44",
+    "name": "Kaag-Dorp"
+  },
+  {
+    "recordId": "RWS01_M1181857_REROUTING_2_D2_WWA",
+    "code": 9298,
+    "tablePoint": [4.575050271806, 52.227651248429],
+    "independentPoint": [4.575665, 52.227585],
+    "distanceM": 42.51,
+    "road": "A44",
+    "name": "Kaag-Dorp"
+  },
+  {
+    "recordId": "RWS01_M1098079_REROUTING_4_D2_WWA",
+    "code": 16752,
+    "tablePoint": [3.824561637251, 51.734790590047],
+    "independentPoint": [3.8130305, 51.711246],
+    "distanceM": 2735.87,
+    "road": "N57",
+    "name": "Ellemeet"
+  },
+  {
+    "recordId": "RWS01_M1140266_REROUTING_1_D2_WWA",
+    "code": 10573,
+    "tablePoint": [4.856353457022, 52.301479896717],
+    "independentPoint": [4.8558707, 52.300194],
+    "distanceM": 146.7,
+    "road": "A9",
+    "name": "Amstelveen-Stadshart"
+  },
+  {
+    "recordId": "RWS01_M1180829_REROUTING_1_D2_WWA",
+    "code": 7423,
+    "tablePoint": [4.113899160989, 51.940430927345],
+    "independentPoint": [4.113783, 51.94081],
+    "distanceM": 42.9,
+    "road": "A15",
+    "name": "Havens 6200-7000"
+  },
+  {
+    "recordId": "RWS01_M1189438_REROUTING_1_D2_WWA",
+    "code": 7866,
+    "tablePoint": [5.784907470405, 50.990554755972],
+    "independentPoint": [5.7859, 50.993393],
+    "distanceM": 323.15,
+    "road": "A2",
+    "name": "Urmond"
+  },
+  {
+    "recordId": "RWS01_M1185337_REROUTING_1_D2_WWA",
+    "code": 7866,
+    "tablePoint": [5.784907470405, 50.990554755972],
+    "independentPoint": [5.78313, 50.986797],
+    "distanceM": 435.97,
+    "road": "A2",
+    "name": "Urmond"
+  },
+  {
+    "recordId": "RWS01_M1155225_REROUTING_1_D2_WWA",
+    "code": 9625,
+    "tablePoint": [4.886054066972, 51.558805723563],
+    "independentPoint": [4.8547807, 51.55656],
+    "distanceM": 2176.39,
+    "road": "A58",
+    "name": "Lage Aard"
+  },
+  {
+    "recordId": "RWS01_M1101613_REROUTING_1_D2_WWA",
+    "code": 10128,
+    "tablePoint": [5.035409960751, 52.929205296929],
+    "independentPoint": [5.0349984, 52.926872],
+    "distanceM": 260.91,
+    "road": "A7",
+    "name": "Den Helder"
+  },
+  {
+    "recordId": "RWS01_M1095309_REROUTING_4_D2_WWA",
+    "code": 16750,
+    "tablePoint": [3.808641732072, 51.700195558286],
+    "independentPoint": [3.809626, 51.701958],
+    "distanceM": 207.38,
+    "road": "N57",
+    "name": "Zierikzee"
+  },
+  {
+    "recordId": "RWS01_M1101623_REROUTING_1_D2_WWA",
+    "code": 22477,
+    "tablePoint": [5.108154001302, 52.968862984395],
+    "independentPoint": [5.0702133, 52.948925],
+    "distanceM": 3372.48,
+    "road": "A7",
+    "name": "Monument-Links"
+  },
+  {
+    "recordId": "RWS01_M1120672_REROUTING_1_D2_WWA",
+    "code": 12957,
+    "tablePoint": [4.706631588381, 51.831131590767],
+    "independentPoint": [4.708414, 51.833492],
+    "distanceM": 289.64,
+    "road": "N3",
+    "name": "Papendrecht"
+  },
+  {
+    "recordId": "RWS01_M1120672_REROUTING_2_D2_WWA",
+    "code": 12957,
+    "tablePoint": [4.706631588381, 51.831131590767],
+    "independentPoint": [4.708414, 51.833492],
+    "distanceM": 289.64,
+    "road": "N3",
+    "name": "Papendrecht"
+  },
+  {
+    "recordId": "RWS01_M1120672_REROUTING_3_D2_WWA",
+    "code": 12957,
+    "tablePoint": [4.706631588381, 51.831131590767],
+    "independentPoint": [4.708414, 51.833492],
+    "distanceM": 289.64,
+    "road": "N3",
+    "name": "Papendrecht"
+  },
+  {
+    "recordId": "RWS01_M1120672_REROUTING_4_D2_WWA",
+    "code": 12957,
+    "tablePoint": [4.706631588381, 51.831131590767],
+    "independentPoint": [4.708414, 51.833492],
+    "distanceM": 289.64,
+    "road": "N3",
+    "name": "Papendrecht"
+  }
+]

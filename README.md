@@ -66,7 +66,9 @@ Road domain, v0.1:
   the roads, fuel, parking, charging, cameras, hazards, weather, vehicles and border domains); OpenMapX reads all but weather, vehicles and border through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
-  See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
+  Dutch VILD 6.13.A adds a separate coarse point fallback, excluded from routing and XML exports.
+  See [docs/tmc-location-tables.md](docs/tmc-location-tables.md) and the
+  [Polish/Dutch location research](docs/location-reference-research.md).
 - **OpenLR resolver:** built and tested, but **dormant** — no open feed currently carries OpenLR (the open
   feeds use coordinates or Alert-C/TMC). It activates when an OpenLR-bearing source is configured.
 
