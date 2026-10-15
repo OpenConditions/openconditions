@@ -1,0 +1,36 @@
+{
+  "$schema": "../schema/border.schema.json",
+  "feeds": [
+    {
+      "operator": "cbsa",
+      "product": "waits",
+      "name": "CBSA border wait times",
+      "tier": "authoritative",
+      "format": "cbsa-bwt",
+      // The Canada-bound commercial and traveller waits at the 30 busiest
+      // land crossings, one row per customs office, updated by each office
+      // as it sees fit (often hourly). The English CSV is read: the JSON
+      // carries no date and names offices differently. The places are the
+      // border package's crossing table (Wikidata, CC0): an office it lacks
+      // is rejected.
+      "endpoints": {
+        "main": {
+          "url": "https://www.cbsa-asfc.gc.ca/bwt-taf/bwt-eng.csv",
+          "cadenceSec": 600,
+        },
+      },
+      "snapshot": { "completeness": "complete" },
+      "freshnessWindowSec": 3600,
+      "license": "OGL-Canada-2.0",
+      "licenseUrl": "https://open.canada.ca/en/open-government-licence-canada",
+      "terms": {
+        "url": "https://open.canada.ca/data/en/dataset/d4a716f5-a2fc-4c3c-88ed-451fe05900e4",
+        "reviewedAt": "2026-10-14",
+        "note": "The Open Government Portal publishes this CSV as the \"Current Border Wait Times\" dataset under the Open Government Licence – Canada, which overrides the CBSA website's terms on commercial reproduction. CBSA names no attribution statement, so the licence's own is used.",
+      },
+      "attribution": "Canada Border Services Agency. Contains information licensed under the Open Government Licence – Canada.",
+      "homepage": "https://www.cbsa-asfc.gc.ca/bwt-taf/menu-eng.html",
+      "privacyUrl": "https://www.canada.ca/en/transparency/privacy.html",
+    },
+  ],
+}

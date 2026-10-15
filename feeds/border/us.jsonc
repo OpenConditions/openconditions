@@ -1,0 +1,36 @@
+{
+  "$schema": "../schema/border.schema.json",
+  "feeds": [
+    {
+      "operator": "cbp",
+      "product": "waits",
+      "name": "CBP border wait times",
+      "tier": "authoritative",
+      "format": "cbp-bwt",
+      // Every land port of entry on the Canadian and Mexican borders, with the
+      // U.S.-bound waits per lane type. Ports report about hourly; the page
+      // CBP serves is rebuilt every few minutes. The places are the
+      // border package's crossing table (Wikidata, CC0): a port it lacks is
+      // rejected.
+      "endpoints": {
+        "main": {
+          "url": "https://bwt.cbp.gov/api/bwtnew",
+          "headers": { "Accept": "application/json", "Accept-Language": "en-US" },
+          "cadenceSec": 900,
+        },
+      },
+      "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "freshnessWindowSec": 3600,
+      "license": "LicenseRef-US-Gov-Public-Domain",
+      "licenseUrl": "https://www.cbp.gov/site-policy-notices/copyright-notice",
+      "terms": {
+        "url": "https://www.cbp.gov/site-policy-notices/copyright-notice",
+        "reviewedAt": "2026-10-14",
+        "note": "Information on the CBP website is in the public domain unless a copyright is indicated; CBP asks to be cited as the source.",
+      },
+      "attribution": "U.S. Customs and Border Protection",
+      "homepage": "https://bwt.cbp.gov/",
+      "privacyUrl": "https://www.cbp.gov/site-policy-notices/privacy-policy",
+    },
+  ],
+}

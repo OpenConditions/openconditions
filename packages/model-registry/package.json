@@ -41,6 +41,7 @@
     "@openconditions/model-weather": "workspace:*"
   },
   "devDependencies": {
+    "@openconditions/border": "workspace:*",
     "@openconditions/cameras": "workspace:*",
     "@openconditions/charging": "workspace:*",
     "@openconditions/fuel": "workspace:*",

@@ -42,6 +42,9 @@ feeds/
   weather/
   vehicles/
     fi.jsonc
+  border/
+    ca.jsonc
+    us.jsonc
   schema/                  generated JSON Schemas (do not edit)
     roads.schema.json
     fuel.schema.json
@@ -51,6 +54,7 @@ feeds/
     hazards.schema.json
     weather.schema.json
     vehicles.schema.json
+    border.schema.json
     credentials.schema.json
 ```
 
@@ -97,7 +101,8 @@ adds its own (roads: `geojson`, `flowMap`, `posListLonLat`, `srsName`, `bbox`,
 parking: `layout` and `parking`, in `packages/parking/src/feed-schema.ts`;
 charging: `layout` and `charging`, in `packages/charging/src/feed-schema.ts`;
 cameras: `layout` and `cameras`, in `packages/cameras/src/feed-schema.ts`; see
-[Generic layouts](#generic-layouts)) or none (fuel, hazards, weather, vehicles).
+[Generic layouts](#generic-layouts)) or none (fuel, hazards, weather, vehicles,
+border).
 
 `tier` is `authoritative` for the publishing authority and `aggregator` for a
 relay of others' data. `freshnessWindowSec` is how old the last good poll may
@@ -350,6 +355,27 @@ answer may hold no vehicle, which is a complete empty poll, not a failure.
 Digitraffic names no vehicle, so each point is an anonymous
 `vehicle.position` reading at its location, transient and standing ten
 minutes from its report. The formats are in `packages/vehicles/src/domain.ts`.
+
+The border product is:
+
+| product | what                                                                    |
+| ------- | ----------------------------------------------------------------------- |
+| `waits` | land border crossings, their inspection queues and the wait in each one |
+
+A border format is a `features` format reading its agency's own publication
+from `main`, so a border feed has no mapping block: `cbp-bwt` (CBP's Border
+Wait Times API, every U.S. port on the Canadian and Mexican borders, the
+U.S.-bound queues by mode and programme) and `cbsa-bwt` (CBSA's CSV, the
+Canada-bound commercial and traveller waits at its busiest offices). Each port
+is a `border_crossing` with a `lane_group` per queue and a `border.wait`
+reading per queue; CBP's port status is the crossing's `facility.open_status`.
+Neither agency publishes coordinates, so the border package carries a table of
+crossings (`packages/border/src/snapshots/crossings.json`): which Wikidata item
+each CBP port number and CBSA office name is, the zone its clocks keep, and the
+item's label and coordinates (CC0), refreshed with
+`pnpm tsx scripts/gen-border-crossings.ts` (`--feeds` lists the ports the live
+feeds name that it lacks). A port the table lacks is rejected, not guessed.
+The formats are in `packages/border/src/domain.ts`.
 
 `qualifier` (one or more dash-joined tokens) tells apart two feeds that would
 otherwise share an id: `ca-on-511-construction-events` beside
@@ -885,6 +911,15 @@ Hazard sources considered and left out, reviewed on 2026-10-08.
 | ECCC OGC API `weather-alerts` (`api.weather.gc.ca`)                               | Not CAP: no identifier, references, urgency, certainty or event codes. The CAP Datamart carries the same alerts (`ca-eccc-alerts`). |
 | DWD WFS `Warnungen_*` (`maps.dwd.de`)                                             | German only, no references, one layer per area type; the CAP status zip carries all of it in eight languages (`de-dwd-alerts`).     |
 | NWS Atom (`/alerts/active.atom`)                                                  | No references or event codes; the GeoJSON is complete (`us-nws-alerts`).                                                            |
+
+Border sources considered and left out, reviewed on 2026-10-14.
+
+| source                                                    | reason                                                                                                         |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| CBP `xml/bwt.xml`, `api/waittimes`, RSS                   | The same ports and queues as `api/bwtnew` (`us-cbp-waits`), with fewer fields.                                 |
+| CBSA `bwt-eng.json` and `bwt-fra.csv`                     | The JSON carries no date and names some offices differently; the French CSV holds the same rows.               |
+| OpenStreetMap `barrier=border_control` for the places     | ODbL would make every crossing share-alike and keep it out of the public scope; Wikidata's places are CC0.     |
+| BTS Border Crossing Entry Data coordinates for the places | One point per port, not per crossing (Buffalo's four bridges share one); the crossing table checks against it. |
 
 ## Catalogue resolvers
 

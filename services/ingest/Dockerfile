@@ -41,6 +41,7 @@ COPY packages/cameras/package.json packages/cameras/
 COPY packages/hazards/package.json packages/hazards/
 COPY packages/weather/package.json packages/weather/
 COPY packages/vehicles/package.json packages/vehicles/
+COPY packages/border/package.json packages/border/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/storage/package.json packages/storage/
@@ -77,6 +78,7 @@ COPY packages/cameras/package.json packages/cameras/
 COPY packages/hazards/package.json packages/hazards/
 COPY packages/weather/package.json packages/weather/
 COPY packages/vehicles/package.json packages/vehicles/
+COPY packages/border/package.json packages/border/
 COPY packages/publishers/package.json packages/publishers/
 COPY packages/openlr/package.json packages/openlr/
 COPY packages/storage/package.json packages/storage/
@@ -108,6 +110,7 @@ COPY packages/cameras/ packages/cameras/
 COPY packages/hazards/ packages/hazards/
 COPY packages/weather/ packages/weather/
 COPY packages/vehicles/ packages/vehicles/
+COPY packages/border/ packages/border/
 COPY packages/publishers/ packages/publishers/
 COPY packages/openlr/ packages/openlr/
 COPY packages/storage/ packages/storage/

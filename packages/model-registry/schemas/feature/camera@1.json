@@ -2272,6 +2272,8 @@
             "econtrol",
             "prix-carburants",
             "minetur",
+            "cbp-bwt",
+            "cbsa-bwt",
             "cap",
             "nws",
             "meteoalarm",

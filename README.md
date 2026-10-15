@@ -58,8 +58,12 @@ Road domain, v0.1:
   Digitraffic's maintenance tracking each minute: anonymous `vehicle.position` readings (the publisher names no
   vehicle) with the bearing, the plough and spreader the tasks imply and the task codes, each standing ten
   minutes from its report.
+- **Border domain:** land border crossings and the wait in each inspection queue, from CBP (every U.S. port on
+  the Canadian and Mexican borders, by lane type and programme) and CBSA (the Canada-bound waits at the 30
+  busiest crossings). Neither publishes coordinates: a vendored table places each port at its crossing's
+  Wikidata item (CC0), so the two agencies' features of one crossing share a place.
 - **OpenMapX integration:** ships as an installable extension (the ingest and contributions services, serving
-  the roads, fuel, parking, charging, cameras, hazards, weather and vehicles domains); OpenMapX reads all but weather and vehicles through its built-in OpenConditions integration.
+  the roads, fuel, parking, charging, cameras, hazards, weather, vehicles and border domains); OpenMapX reads all but weather, vehicles and border through its built-in OpenConditions integration.
 - **TMC location tables:** publishers that send Alert-C location codes instead of coordinates are placed
   against the published national table (Germany's LCL 22.0, CC BY 4.0), behind a strict table-version guard.
   See [docs/tmc-location-tables.md](docs/tmc-location-tables.md).
@@ -84,7 +88,7 @@ packages/            reusable libraries (Apache-2.0 unless noted)
   ingest-framework/  feed descriptors, credentials, guarded fetch, catalogue resolvers, licences, domain plugins
   roads/             road parsers (DATEX II / Open511 / WZDx and more), the roads domain, TMC location tables
     bind/            event → segment resolver + evaluation corpus
-  parking/ fuel/ charging/ cameras/ hazards/ weather/ vehicles/
+  parking/ fuel/ charging/ cameras/ hazards/ weather/ vehicles/ border/
                      each domain's parsers and its ingest domain
   datex2/            DATEX II decoding shared by the domains (XML, publications, value decoders)
   ocpi/              OCPI wire types, decoders and dialects

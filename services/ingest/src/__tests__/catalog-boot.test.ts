@@ -22,6 +22,7 @@ describe("loadIngestCatalog", () => {
         "hazards",
         "weather",
         "vehicles",
+        "border",
       ]),
     );
     expect(cat.feeds.map((f) => f.id)).toEqual(
@@ -36,6 +37,8 @@ describe("loadIngestCatalog", () => {
         "nasa-firms-viirs-fires",
         "fi-digitraffic-weather",
         "fi-digitraffic-maintenance",
+        "us-cbp-waits",
+        "ca-cbsa-waits",
       ]),
     );
     expect(cat.disabled.map((f) => f.id)).toEqual(
@@ -82,6 +85,7 @@ describe("formatOf", () => {
       "hazards",
       "weather",
       "vehicles",
+      "border",
     ]);
     expect(formatOf(testFeed({ format: "datex2-measured", product: "flow" })).kind).toBe(
       "measurements",
@@ -107,6 +111,9 @@ describe("formatOf", () => {
       formatOf(testFeed({ domain: "vehicles", format: "digitraffic", product: "maintenance" }))
         .kind,
     ).toBe("measurements");
+    expect(formatOf(testFeed({ domain: "border", format: "cbp-bwt", product: "waits" })).kind).toBe(
+      "features",
+    );
   });
 
   it("throws for an unknown domain or format", () => {

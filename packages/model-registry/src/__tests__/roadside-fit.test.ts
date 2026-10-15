@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { parseCbp, parseCbsa } from "@openconditions/border";
 import {
   buildRegistry,
   extendVocabulary,
@@ -25,15 +26,15 @@ import { productionModules } from "../index.js";
  * - Iowa DOT weigh scales (CC BY 4.0);
  * - Washington State Ferries terminal sailing space (WSDOT Traveler
  *   Information API).
- * OpenConditions parses none of these formats yet, so a test-only module
- * registers them.
+ * The border waits run through the border domain's own parsers; the other
+ * formats have no parser yet, so a test-only module registers them.
  */
 const fitFormats: RegistryModule = {
   name: "roadside-fit",
   entries: [
     extendVocabulary({
       vocabulary: "source_format",
-      values: ["cbp-bwt", "cbsa-bwt", "nvdb", "ibi511-web", "arcgis", "wsf"],
+      values: ["nvdb", "ibi511-web", "arcgis", "wsf"],
     }),
   ],
 };
@@ -131,12 +132,6 @@ function observation(
 }
 
 const category = (value: string, vocabulary: string) => ({ type: "category", value, vocabulary });
-const wait = (value: object) => ({
-  type: "structured",
-  schema: "border_wait",
-  v: 1,
-  value: { v: 1, ...value },
-});
 
 function sealAll(records: readonly Draft[]) {
   return records.flatMap((r) => {
@@ -171,254 +166,45 @@ function zoned(date: string, time: string, zone: string): string {
   const offset = `${offsetMin < 0 ? "-" : "+"}${String(Math.floor(abs / 60)).padStart(2, "0")}:${String(abs % 60).padStart(2, "0")}`;
   return `${date}T${time}${offset}`;
 }
-const addDays = (date: string, days: number) =>
-  new Date(Date.parse(`${date}T00:00:00Z`) + days * 86400000).toISOString().slice(0, 10);
 /** `h:mm am|pm` → `HH:MM:00`. */
 const clock = (h: string, mm: string, half: string) =>
   `${String((Number(h) % 12) + (half.toLowerCase() === "pm" ? 12 : 0)).padStart(2, "0")}:${mm}:00`;
 
-/**
- * CBP's zone labels are not reliable (a Michigan port says EST in
- * September, an Arizona port PST), so the port's own zone decides; a time
- * that would lie after the capture is yesterday's.
- */
-const CBP_PORT_ZONES: Record<string, string> = {
-  "070801": "America/New_York",
-  "300403": "America/Los_Angeles",
-  "090101": "America/New_York",
-  "011502": "America/New_York",
-  L01901: "America/New_York",
-  "380201": "America/Detroit",
-  "240215": "America/Denver",
-  "535502": "America/Chicago",
-  "260101": "America/Phoenix",
-  l24501: "America/Denver",
-  "230404": "America/Chicago",
-  "250401": "America/Los_Angeles",
-};
-const CBP_MODES = {
-  commercial_vehicle_lanes: "commercial",
-  passenger_vehicle_lanes: "passenger",
-  pedestrian_lanes: "pedestrian",
-} as const;
-const CBP_PROGRAMS: Record<string, string> = {
-  standard_lanes: "standard",
-  FAST_lanes: "fast",
-  NEXUS_SENTRI_lanes: "trusted_traveller",
-  ready_lanes: "ready_lane",
-};
-
-/** "24 hrs/day", "8 am-4 pm", "6 am-Midnight" → OSM opening hours; anything else stays unparsed. */
-function cbpHours(hours: string, zone: string) {
-  if (hours === "24 hrs/day") return { osm: "24/7", twentyFourSeven: true, timezone: zone };
-  const m = /^(\d{1,2}) (am|pm)-(?:(\d{1,2}) (am|pm)|Midnight)$/.exec(hours);
-  if (m === null) return undefined;
-  const open = clock(m[1]!, "00", m[2]!).slice(0, 5);
-  const close = m[3] === undefined ? "24:00" : clock(m[3], "00", m[4]!).slice(0, 5);
-  return { osm: `${open}-${close}`, timezone: zone };
-}
-
-interface CbpLane {
-  operational_status: string;
-  delay_minutes: string;
-  lanes_open: string;
-  update_time: string;
-}
-type CbpPort = Record<string, unknown> & {
-  port_number: string;
-  port_name: string;
-  crossing_name: string;
-  border: string;
-  port_status: string;
-  date: string;
-  time: string;
-  hours: string;
-};
+/** A border feed as the border parsers read it, and its poll. */
+const borderFeed = (id: string, format: string, attribution: string, license: string) => ({
+  id,
+  format,
+  attribution,
+  license,
+});
+const borderPoll = (name: string) =>
+  [
+    { main: [Buffer.from(utf8(name))] },
+    { fetchedAt: FETCHED, cadenceSec: 900, reference: {} },
+  ] as const;
 
 /**
- * One CBP port is one crossing feature, located by country alone: neither
- * border feed publishes coordinates. A queue CBP marks N/A does not exist at
- * that port, so it gets no lane group; "Update Pending" is a queue whose
- * state is unknown; "no delay" may still come with a few minutes.
+ * CBP's ports through the border domain's own parser: each is one crossing,
+ * placed at its crossing of the border package's table (neither border feed
+ * publishes coordinates).
  */
-function cbpCrossings() {
-  const features: (Draft & Feature)[] = [];
-  const observations: Draft[] = [];
-  for (const p of json("cbp-bwt.json") as CbpPort[]) {
-    const zone = CBP_PORT_ZONES[p.port_number]!;
-    const [month, day, year] = p.date.split("/");
-    const date = `${year}-${month!.padStart(2, "0")}-${day!.padStart(2, "0")}`;
-    const pageTime = zoned(date, p.time, zone);
-    const from = p.border === "Canadian Border" ? "CA" : "MX";
-    const components: object[] = [];
-    const waits: { key: string; lane: CbpLane }[] = [];
-    for (const [field, mode] of Object.entries(CBP_MODES)) {
-      for (const [program, lane] of Object.entries(p[field] as Record<string, CbpLane | string>)) {
-        if (typeof lane === "string" || lane.operational_status === "N/A") continue;
-        const key = `${mode}/${CBP_PROGRAMS[program]}`;
-        components.push({
-          key,
-          kind: "lane_group",
-          details: {
-            kind: "lane_group",
-            v: 1,
-            mode,
-            program: CBP_PROGRAMS[program],
-            direction: { from, to: "US" },
-          },
-        });
-        waits.push({ key, lane });
-      }
-    }
-    const hours = cbpHours(p.hours, zone);
-    const crossing = feature(
-      provenance(
-        "us-cbp-bwt",
-        "cbp-bwt",
-        p.port_number,
-        "U.S. Customs and Border Protection",
-        "public-domain",
-      ),
-      "border_crossing",
-      { ...at(null), admin: { country: "US" } },
-      {
-        name: en(
-          p.crossing_name.trim() ? `${p.port_name}: ${p.crossing_name.trim()}` : p.port_name,
-        ),
-        externalIds: [{ scheme: "cbp:port", id: p.port_number, authority: "CBP" }],
-        ...(hours === undefined ? {} : { openingHours: hours }),
-        ...(components.length > 0 ? { components } : {}),
-        details: {
-          kind: "border_crossing",
-          v: 1,
-          countries: [from, "US"],
-          ports: [
-            {
-              country: "US",
-              name: en(p.port_name),
-              externalIds: [{ scheme: "cbp:port", id: p.port_number }],
-            },
-          ],
-          modes:
-            [...new Set(components.map((c) => (c as { details: { mode: string } }).details.mode))]
-              .length > 0
-              ? [
-                  ...new Set(
-                    components.map((c) => (c as { details: { mode: string } }).details.mode),
-                  ),
-                ]
-              : ["passenger"],
-        },
-      },
-    );
-    features.push(crossing);
-    observations.push(
-      observation(crossing, {
-        property: "facility.open_status",
-        result: category(p.port_status === "Open" ? "open" : "closed", "facility_open_status"),
-        at: pageTime,
-      }),
-    );
-    for (const { key, lane } of waits) {
-      const status = lane.operational_status;
-      const time = /At (\d{1,2}):(\d{2}) (am|pm)/.exec(lane.update_time);
-      let instant = pageTime;
-      if (time !== null) {
-        instant = zoned(date, clock(time[1]!, time[2]!, time[3]!), zone);
-        if (Date.parse(instant) > Date.parse(FETCHED)) {
-          instant = zoned(addDays(date, -1), clock(time[1]!, time[2]!, time[3]!), zone);
-        }
-      }
-      const minutes = lane.delay_minutes === "" ? {} : { waitMinutes: Number(lane.delay_minutes) };
-      const lanesOpen = lane.lanes_open === "" ? {} : { lanesOpen: Number(lane.lanes_open) };
-      const result =
-        status === "Update Pending"
-          ? { type: "unknown" }
-          : status === "Lanes Closed"
-            ? wait({ status: "closed" })
-            : wait({ status: status === "delay" ? "delay" : "no_delay", ...minutes, ...lanesOpen });
-      observations.push(
-        observation(crossing, { property: "border.wait", result, at: instant, componentKey: key }),
-      );
-    }
-  }
-  return { features, observations };
-}
+const cbpCrossings = () =>
+  parseCbp(
+    borderFeed(
+      "us-cbp-waits",
+      "cbp-bwt",
+      "U.S. Customs and Border Protection",
+      "LicenseRef-US-Gov-Public-Domain",
+    ),
+    ...borderPoll("cbp-bwt.json"),
+  );
 
-/** CBSA's labels are right: Saskatchewan's CST is its time all year. */
-const CBSA_ZONE_OFFSETS: Record<string, string> = {
-  NDT: "-02:30",
-  NST: "-03:30",
-  ADT: "-03:00",
-  AST: "-04:00",
-  EDT: "-04:00",
-  EST: "-05:00",
-  CDT: "-05:00",
-  CST: "-06:00",
-  MDT: "-06:00",
-  MST: "-07:00",
-  PDT: "-07:00",
-  PST: "-08:00",
-};
-
-/**
- * CBSA publishes one row per customs office with the Canada-bound waits
- * only (the U.S.-bound columns are "--"), and no id: office names even
- * differ between its CSV and JSON editions, so the name is the key.
- */
-function cbsaCrossings() {
-  const [header, ...rows] = utf8("cbsa-bwt.csv").replace(/^﻿/, "").trim().split(/\r?\n/);
-  const keys = header!.split(";;").map((k) => k.trim());
-  const features: (Draft & Feature)[] = [];
-  const observations: Draft[] = [];
-  for (const row of rows) {
-    const r = Object.fromEntries(row.split(";;").map((v, i) => [keys[i]!, v.trim()]));
-    const office = r["Customs Office"]!;
-    const [d, t, label] = r["Last updated"]!.split(" ");
-    const instant = `${d}T${t}:00${CBSA_ZONE_OFFSETS[label!]}`;
-    const queues = [
-      ["commercial", r["Commercial Flow - Canada bound"]!],
-      ["passenger", r["Travellers Flow - Canada bound"]!],
-    ].filter(([, v]) => v !== "Not Applicable" && v !== "--");
-    const crossing = feature(
-      provenance("ca-cbsa-bwt", "cbsa-bwt", office, "Canada Border Services Agency", "OGL-CA"),
-      "border_crossing",
-      { ...at(null), admin: { country: "CA" }, areaDescription: en(r["Location"]!) },
-      {
-        name: en(office),
-        components: queues.map(([mode]) => ({
-          key: `${mode}/standard`,
-          kind: "lane_group",
-          details: { kind: "lane_group", v: 1, mode, direction: { from: "US", to: "CA" } },
-        })),
-        details: {
-          kind: "border_crossing",
-          v: 1,
-          countries: ["CA", "US"],
-          ports: [{ country: "CA", name: en(office) }],
-          modes: queues.map(([mode]) => mode),
-        },
-      },
-    );
-    features.push(crossing);
-    for (const [mode, value] of queues) {
-      const minutes = /^(\d+) minutes?$/.exec(value!);
-      observations.push(
-        observation(crossing, {
-          property: "border.wait",
-          result: wait(
-            minutes === null
-              ? { status: "no_delay" }
-              : { status: "delay", waitMinutes: Number(minutes[1]) },
-          ),
-          at: instant,
-          componentKey: `${mode}/standard`,
-        }),
-      );
-    }
-  }
-  return { features, observations };
-}
+/** CBSA's offices through the border domain's own parser, keyed by office name. */
+const cbsaCrossings = () =>
+  parseCbsa(
+    borderFeed("ca-cbsa-waits", "cbsa-bwt", "Canada Border Services Agency", "OGL-Canada-2.0"),
+    ...borderPoll("cbsa-bwt.csv"),
+  );
 
 interface NvdbObject {
   id: number;
@@ -911,7 +697,9 @@ describe("roadside fit", () => {
   });
 
   it("gives a queue CBP marks N/A no lane group at all", () => {
-    const alexandria = cbpCrossings().features.find((f) => f.provenance.recordId === "070801")!;
+    const alexandria = cbpCrossings().features.find(
+      (f) => f["id"] === "oc:feature:us-cbp-waits:070801",
+    )!;
     expect((alexandria["components"] as { key: string }[]).map((c) => c.key)).toEqual([
       "commercial/standard",
       "passenger/standard",
@@ -929,7 +717,7 @@ describe("roadside fit", () => {
     expect(
       waits.some((r) => r.value?.status === "no_delay" && (r.value.waitMinutes ?? 0) > 0),
     ).toBe(true);
-    expect(waits.filter((r) => r.type === "unknown")).toHaveLength(14);
+    expect(waits.filter((r) => r.value?.status === "unknown")).toHaveLength(14);
   });
 
   it("dates an Arizona queue by the port's zone, not by the label it prints", () => {
@@ -942,7 +730,7 @@ describe("roadside fit", () => {
         ) &&
         (o["subject"] as { componentKey: string }).componentKey === "commercial/standard",
     )!;
-    expect(douglas["phenomenonTime"]).toEqual({ instant: "2026-09-29T14:00:00-07:00" });
+    expect(douglas["phenomenonTime"]).toEqual({ instant: "2026-09-29T21:00:00Z" });
   });
 
   it("seals CBSA's Canada-bound queues, keyed by office name", () => {

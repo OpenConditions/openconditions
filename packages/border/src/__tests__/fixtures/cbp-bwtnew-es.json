@@ -1,0 +1,242 @@
+[
+  {
+    "port_number": "070801",
+    "border": "Frontera canadiense",
+    "port_name": "Alexandria Bay",
+    "crossing_name": "Thousand Islands Bridge",
+    "hours": "24 Hrs/Día",
+    "date": "6/26/2026",
+    "time": "17:01:46",
+    "port_status": "Abierto",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "5",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 11:00 pm EDT",
+        "operational_status": "Sin demora",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "8",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 11:00 pm EDT",
+        "operational_status": "Sin demora",
+        "delay_minutes": "0",
+        "lanes_open": "1"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "",
+        "operational_status": "Carriles cerrados",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "N/A",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "260101",
+    "border": "Frontera mexicana",
+    "port_name": "Douglas (Raul Hector Castro)",
+    "crossing_name": "",
+    "hours": "24 Hrs/Día",
+    "date": "6/26/2026",
+    "time": "14:01:47",
+    "port_status": "Abierto",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "2",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 2:00 pm PST",
+        "operational_status": "Sin demora",
+        "delay_minutes": "1",
+        "lanes_open": "1"
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "7",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 2:00 pm PST",
+        "operational_status": "demora",
+        "delay_minutes": "120",
+        "lanes_open": "3"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "En 2:00 pm PST",
+        "operational_status": "Sin demora",
+        "delay_minutes": "1",
+        "lanes_open": "1"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Carriles cerrados",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "3",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 2:00 pm PST",
+        "operational_status": "Sin demora",
+        "delay_minutes": "1",
+        "lanes_open": "2"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "Carriles cerrados",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "",
+    "automation": "0",
+    "automation_enabled": "0"
+  },
+  {
+    "port_number": "260401",
+    "border": "Frontera mexicana",
+    "port_name": "Nogales",
+    "crossing_name": "Deconcini",
+    "hours": "24 Hrs/Día",
+    "date": "6/26/2026",
+    "time": "15:01:47",
+    "port_status": "Abierto",
+    "commercial_vehicle_lanes": {
+      "maximum_lanes": "N/A",
+      "cv_automation_type": "Manual",
+      "cv_segment_from": "",
+      "cv_segment_to": "",
+      "cv_standard_tolerance": "",
+      "cv_fast_tolerance": "",
+      "standard_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      },
+      "FAST_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "passenger_vehicle_lanes": {
+      "maximum_lanes": "8",
+      "pv_automation_type": "Manual",
+      "pv_segment_from": "",
+      "pv_segment_to": "",
+      "pv_standard_tolerance": "",
+      "pv_nexus_sentri_tolerance": "",
+      "pv_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 2:00 pm MST",
+        "operational_status": "demora",
+        "delay_minutes": "45",
+        "lanes_open": "3"
+      },
+      "NEXUS_SENTRI_lanes": {
+        "update_time": "En 2:00 pm MST",
+        "operational_status": "demora",
+        "delay_minutes": "50",
+        "lanes_open": "2"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "pedestrian_lanes": {
+      "maximum_lanes": "6",
+      "ped_automation_type": "Manual",
+      "ped_segment_from": "",
+      "ped_segment_to": "",
+      "ped_standard_tolerance": "",
+      "ped_ready_tolerance": "",
+      "standard_lanes": {
+        "update_time": "En 2:00 pm MST",
+        "operational_status": "demora",
+        "delay_minutes": "60",
+        "lanes_open": "2"
+      },
+      "ready_lanes": {
+        "update_time": "",
+        "operational_status": "N/A",
+        "delay_minutes": "",
+        "lanes_open": ""
+      }
+    },
+    "construction_notice": "Ready Lane is open from 6AM - 10PM seven days a week.  Ready Lane is on the left side as you approach the port.\r\nGo to www.GetYouHome.gov for more information.",
+    "automation": "0",
+    "automation_enabled": "0"
+  }
+]
