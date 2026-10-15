@@ -41,8 +41,9 @@ async function archive(
   count: number,
   newestHoursAgo = 0,
   path = "/feed",
+  into = dir,
 ) {
-  const raw = createRawArchive(sql, { dir });
+  const raw = createRawArchive(sql, { dir: into });
   const hashes: string[] = [];
   for (let i = 0; i < count; i++) {
     const at = new Date(NOW - (newestHoursAgo + i) * HOUR);
@@ -110,50 +111,80 @@ describe("evictRawPayloads", () => {
     expect(result.evict.map((r) => r.hash)).toEqual([superseded]);
   });
 
-  it("evicts only the payloads of the sources the process owns", async () => {
-    await archive("nl-ndw-flow", "hot", 60);
-    await archive("nl-ndw-events", "hot", 60);
-    const evicted = async () =>
-      sql<{ source_id: string; n: number }[]>`
-        SELECT source_id, count(*)::int AS n FROM conditions.raw_payload
-         WHERE evicted_at IS NOT NULL GROUP BY source_id ORDER BY source_id`;
-
-    const heavy = await evictRawPayloads(sql, {
-      dir,
-      policy: policy(),
-      historyDays: 90,
-      scope: { only: ["nl-ndw-flow"] },
+  describe("with a second ingest process archiving into its own directory", () => {
+    let heavyDir: string;
+    beforeEach(() => {
+      heavyDir = mkdtempSync(path.join(tmpdir(), "oc-raw-heavy-"));
+      return () => rmSync(heavyDir, { recursive: true, force: true });
     });
-    expect(new Set(heavy.evict.map((r) => r.sourceId))).toEqual(new Set(["nl-ndw-flow"]));
-    expect(await evicted()).toEqual([{ source_id: "nl-ndw-flow", n: 11 }]);
 
-    const primary = await evictRawPayloads(sql, {
-      dir,
-      policy: policy(),
-      historyDays: 90,
-      scope: { except: ["nl-ndw-flow"] },
-    });
-    expect(new Set(primary.evict.map((r) => r.sourceId))).toEqual(new Set(["nl-ndw-events"]));
-    expect(await evicted()).toEqual([
-      { source_id: "nl-ndw-events", n: 11 },
-      { source_id: "nl-ndw-flow", n: 11 },
-    ]);
-  });
+    /** Each held payload of nl-ndw-flow, by the directory its blob lies in. */
+    async function flowBlobs() {
+      const rows = await sql<{ storage_key: string; evicted: boolean }[]>`
+        SELECT storage_key, evicted_at IS NOT NULL AS evicted FROM conditions.raw_payload
+         WHERE source_id = 'nl-ndw-flow'`;
+      const where = (key: string) =>
+        existsSync(path.join(dir, key))
+          ? "primary"
+          : existsSync(path.join(heavyDir, key))
+            ? "heavy"
+            : "gone";
+      const count: Record<string, number> = {};
+      for (const r of rows) {
+        const k = `${r.evicted ? "evicted" : "held"}:${where(r.storage_key)}`;
+        count[k] = (count[k] ?? 0) + 1;
+      }
+      return count;
+    }
 
-  it("caps only the payloads of the sources the process owns", async () => {
-    await archive("nl-ndw-flow", "hot", 10);
-    await archive("nl-ndw-events", "hot", 10);
-    const [events] = await sql<{ bytes: number }[]>`
-      SELECT sum(bytes_stored)::int AS bytes FROM conditions.raw_payload
-       WHERE source_id = 'nl-ndw-events'`;
-    // The events' own archive fits; the flow's bytes, another process's, do not count.
-    const result = await evictRawPayloads(sql, {
-      dir,
-      policy: policy({ maxBytes: events!.bytes }),
-      historyDays: 90,
-      scope: { except: ["nl-ndw-flow"] },
+    it("evicts a moved feed's earlier payloads from the old process's directory on the normal schedule", async () => {
+      // Polled by the primary until ten hours ago, by the feeds process since.
+      await archive("nl-ndw-flow", "hot", 60, 10);
+      await archive("nl-ndw-flow", "hot", 10, 0, "/feed", heavyDir);
+
+      const heavy = await evictRawPayloads(sql, {
+        dir: heavyDir,
+        policy: policy(),
+        historyDays: 90,
+      });
+      expect(heavy.evict).toEqual([]);
+      // The 48-hour window lets go of what is 49 hours old and older: 21 payloads.
+      const primary = await evictRawPayloads(sql, { dir, policy: policy(), historyDays: 90 });
+      expect(primary.evict).toHaveLength(21);
+      expect(await flowBlobs()).toEqual({
+        "evicted:gone": 21,
+        "held:primary": 39,
+        "held:heavy": 10,
+      });
+
+      // Once past the window, every one goes: the source's newest are the feeds process's.
+      const later = { ...policy(), now: NOW + 60 * HOUR };
+      await evictRawPayloads(sql, { dir, policy: later, historyDays: 90 });
+      expect(await flowBlobs()).toEqual({ "evicted:gone": 60, "held:heavy": 10 });
     });
-    expect(result.evict).toEqual([]);
+
+    it("never evicts a payload whose blob lies in another process's directory", async () => {
+      await archive("nl-ndw-flow", "hot", 60, 10);
+      const later = { ...policy(), now: NOW + 60 * HOUR };
+      const heavy = await evictRawPayloads(sql, { dir: heavyDir, policy: later, historyDays: 90 });
+      expect(heavy.evict).toEqual([]);
+      expect(await flowBlobs()).toEqual({ "held:primary": 60 });
+    });
+
+    it("caps the bytes in its own directory only", async () => {
+      await archive("nl-ndw-flow", "hot", 10, 0, "/feed", heavyDir);
+      await archive("nl-ndw-events", "hot", 10);
+      const [events] = await sql<{ bytes: number }[]>`
+        SELECT sum(bytes_stored)::int AS bytes FROM conditions.raw_payload
+         WHERE source_id = 'nl-ndw-events'`;
+      const capped = { ...policy({ maxBytes: events!.bytes }) };
+      expect((await evictRawPayloads(sql, { dir, policy: capped, historyDays: 90 })).evict).toEqual(
+        [],
+      );
+      const halved = { ...policy({ maxBytes: Math.floor(events!.bytes / 2) }) };
+      const result = await evictRawPayloads(sql, { dir, policy: halved, historyDays: 90 });
+      expect(new Set(result.evict.map((r) => r.sourceId))).toEqual(new Set(["nl-ndw-events"]));
+    });
   });
 
   it("keeps a source's latest publication by its own source, not another's", async () => {

@@ -383,7 +383,8 @@ Only rung 3 warns: it sets `source_status.raw_hot_evicted_at`. Eviction deletes
 the blob and keeps the index row, so a raw reference still names its payload.
 Index rows evicted longer ago than the history window are removed. Where a
 second ingest process polls some feeds, each process archives its feeds'
-payloads under its own directory and evicts, and caps, only those
+payloads under its own directory and evicts, and caps, the blobs in that
+directory, weighing each source's payloads together wherever they lie
 ([A second ingest process](../services/ingest/README.md#a-second-ingest-process)).
 Settings and the `raw` command are in the [ingest README](../services/ingest/README.md#raw-payloads).
 

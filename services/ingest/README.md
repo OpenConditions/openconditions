@@ -220,10 +220,14 @@ boot rebind. A **feeds** process runs none of it: it migrates the database
 (under the migrations' advisory lock, so two processes never migrate at
 once), polls its feeds and answers `GET /status` for its health check. Each
 process closes, at boot, the poll attempts its own stopped polls left running,
-archives its feeds' raw payloads under its own `OPENCONDITIONS_RAW_DIR` and
-evicts only those; the raw cap (`OPENCONDITIONS_RAW_MAX_BYTES`) applies to each
-process's archive separately. A feeds process's polls leave their road-graph
-binding work queued for the primary's next drain.
+and archives its feeds' raw payloads under its own `OPENCONDITIONS_RAW_DIR`.
+Each evicts the blobs in its own directory, whichever feed they are of, by the
+same rules as one archive (a source's payloads are weighed together wherever
+they lie); the raw cap (`OPENCONDITIONS_RAW_MAX_BYTES`) applies to each
+directory separately. A feed moved from one process to the other has the
+payloads it already archived evicted on their normal schedule by the process
+that holds them. A feeds process's polls leave their road-graph binding work
+queued for the primary's next drain.
 
 To split, give both processes the same list, the primary as
 `OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and the feeds process as
@@ -240,8 +244,9 @@ The feeds process needs the settings its polls read, set to the primary's
 values: `DATABASE_URL`, `OPENCONDITIONS_INSTANCE_ID` (its records' namespace),
 the credentials of its feeds, `OPENLR_RESOLVER_URL`, the egress, fetch and raw
 archive settings. `GET /feeds/status` on the primary lists every feed with its
-durable status, whichever process polls it. Commands that read the raw archive
-(`raw replay`, `raw gc`) run in the process that archives the feed.
+durable status, whichever process polls it. `raw replay` reads the blobs in
+its process's directory, and `raw gc` evicts those, so run them in the process
+that archived the payloads.
 
 Under OpenMapX the second process is the optional service
 `openconditions-ingest-heavy` (`services/ingest-heavy/service.json`): the same
@@ -268,8 +273,9 @@ OpenMapX names `openconditions-ingest-heavy` there, enable it, with the list
 Started before the primary has been recreated, the feeds process stops at
 boot (the primary still polls its feeds) and its restart policy retries once
 the primary has. To undo, disable the service, then clear the primary's
-`OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and start it again; the payloads on the
-feeds process's volume are no longer evicted, so remove the volume.
+`OPENCONDITIONS_INGEST_FEEDS_EXCLUDE` and start it again. Nothing evicts the
+payloads left on the feeds process's volume once it no longer runs: removing
+the volume deletes them, but their index rows stay unevicted.
 
 Outside OpenMapX, run a second container of the image beside the first, with
 its own volume:

@@ -13,7 +13,6 @@ import {
 } from "@openconditions/storage";
 import { Cron } from "croner";
 import type postgres from "postgres";
-import type { SourceScope } from "./ingest-role.js";
 import { rawArchiveOptionsFromEnv } from "./raw/archive.js";
 import { evictionPolicyFromEnv, evictRawPayloads } from "./raw/evict.js";
 
@@ -60,11 +59,9 @@ export interface RecordJobsOptions {
   /**
    * Whether this process runs the jobs one process of a deployment runs
    * (default true): partitions, rollups, the sweep and the fusion refresh.
-   * Every process evicts its own raw payloads.
+   * Every process evicts the raw payloads in its own archive directory.
    */
   primary?: boolean;
-  /** The sources whose raw payloads lie on this process's volume; default all. */
-  scope?: SourceScope;
   env?: NodeJS.ProcessEnv;
   now?: () => Date;
 }
@@ -204,7 +201,6 @@ export function startRecordJobs(
       dir,
       policy: evictionPolicyFromEnv(now(), env),
       historyDays,
-      ...(opts.scope ? { scope: opts.scope } : {}),
     });
     if (result.evict.length + result.purged > 0) {
       console.info(

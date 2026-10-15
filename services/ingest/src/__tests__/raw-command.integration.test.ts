@@ -84,10 +84,10 @@ describe("raw command", () => {
     ]);
   });
 
-  it("on gc in a process that leaves a feed to another, leaves that feed's payloads", async () => {
+  it("on gc, evicts only what lies in its own archive directory", async () => {
     await archive(60);
-    const leaving = { OPENCONDITIONS_RAW_DIR: dir, OPENCONDITIONS_INGEST_FEEDS_EXCLUDE: "ca-bc-*" };
-    expect(await runRawCommand(sql, ["gc"], (l) => lines.push(l), leaving, NOW)).toBe(0);
+    const elsewhere = { OPENCONDITIONS_RAW_DIR: path.join(dir, "elsewhere") };
+    expect(await runRawCommand(sql, ["gc"], (l) => lines.push(l), elsewhere, NOW)).toBe(0);
     expect(lines[0]).toBe("evicted 0 payload(s); cap rung 0");
   });
 

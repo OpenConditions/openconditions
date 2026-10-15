@@ -1,8 +1,7 @@
-import { rm } from "node:fs/promises";
-import { join } from "node:path";
+import { access, readdir, rm } from "node:fs/promises";
+import { join, sep } from "node:path";
 import type { RawTier } from "@openconditions/core/server";
 import type postgres from "postgres";
-import { inScope, type SourceScope } from "../ingest-role.js";
 
 const HOUR_MS = 3_600_000;
 const DAY_MS = 86_400_000;
@@ -17,6 +16,12 @@ export interface HeldPayload {
   bytesStored: number;
   /** Pinned, read by its source's latest publication, or the base of a delta patch still held. */
   protected: boolean;
+  /**
+   * False when its blob lies in another ingest process's archive: it still
+   * counts among its source's payloads, but neither against this archive's
+   * cap nor as one to evict here. Default true.
+   */
+  local?: boolean;
 }
 
 export interface EvictionPolicy {
@@ -121,8 +126,9 @@ const bytes = (rows: Iterable<HeldPayload>) => {
 export function planEviction(rows: readonly HeldPayload[], policy: EvictionPolicy): EvictionPlan {
   const rules: Rules = { thinDays: { ...policy.thinDays }, bucketMs: HOUR_MS };
   const bySource = newestFirstBySource(rows);
+  const local = (r: HeldPayload) => r.local !== false;
   let keep = keepByTiers(bySource, policy, rules);
-  const over = () => policy.maxBytes > 0 && bytes(keep) > policy.maxBytes;
+  const over = () => policy.maxBytes > 0 && bytes([...keep].filter(local)) > policy.maxBytes;
   let rung: EvictionPlan["rung"] = 0;
 
   // The thinned windows count from now, like the hot window: the shortest keeps
@@ -151,14 +157,14 @@ export function planEviction(rows: readonly HeldPayload[], policy: EvictionPolic
     const order = { observation: 0, hot: 1, situation: 2, reference: 3 };
     // What the thinned windows still keep goes first, then the hot windows.
     const candidates = [...keep]
-      .filter((r) => !r.protected && !untouchable.has(r))
+      .filter((r) => local(r) && !r.protected && !untouchable.has(r))
       .sort(
         (a, b) =>
           Number(inHot(a)) - Number(inHot(b)) ||
           order[a.tier] - order[b.tier] ||
           a.lastSeenAt - b.lastSeenAt,
       );
-    let total = bytes(keep);
+    let total = bytes([...keep].filter(local));
     for (const r of candidates) {
       if (total <= policy.maxBytes) break;
       keep.delete(r);
@@ -170,7 +176,7 @@ export function planEviction(rows: readonly HeldPayload[], policy: EvictionPolic
     }
   }
   return {
-    evict: rows.filter((r) => !keep.has(r)),
+    evict: rows.filter((r) => local(r) && !keep.has(r)),
     rung,
     hotEvicted: [...hotEvicted].sort(),
   };
@@ -210,20 +216,21 @@ export interface EvictionResult extends EvictionPlan {
  * more than `historyDays` ago. A payload fetched again since the plan was
  * made is kept; `evict` lists what was evicted. `dryRun` only plans.
  *
- * `scope` limits all of it, the cap included, to the sources whose payloads
- * lie in `dir`: those of the feeds this process polls, when another ingest
- * process archives its feeds' payloads on its own volume.
+ * Only the blobs in `dir` are evicted, and only their bytes count against
+ * the cap, whichever source they are of: where a second ingest process
+ * archives its feeds' payloads in its own directory, each evicts what lies
+ * in its own, so a feed moved from one to the other has the payloads it left
+ * behind evicted by the process that holds them. Every source's payloads are
+ * planned together wherever they lie, so its newest stay its newest and the
+ * windows fall where they would in one archive. A row is evicted only while
+ * its blob, under the row's lock, is in `dir`: two processes never evict one
+ * payload, nor one whose blob is another's.
  */
 export async function evictRawPayloads(
   sql: postgres.Sql,
-  opts: {
-    dir: string;
-    policy: EvictionPolicy;
-    historyDays: number;
-    dryRun?: boolean;
-    scope?: SourceScope;
-  },
+  opts: { dir: string; policy: EvictionPolicy; historyDays: number; dryRun?: boolean },
 ): Promise<EvictionResult> {
+  const here = await heldBlobs(opts.dir);
   const rows = await sql<
     {
       source_id: string;
@@ -232,17 +239,18 @@ export async function evictRawPayloads(
       tier: RawTier;
       last_seen_at: Date;
       bytes_stored: string;
+      storage_key: string;
       pinned: boolean;
       is_base: boolean;
     }[]
   >`
-    SELECT p.source_id, p.hash, p.url_key, p.tier, p.last_seen_at, p.bytes_stored,
+    SELECT p.source_id, p.hash, p.url_key, p.tier, p.last_seen_at, p.bytes_stored, p.storage_key,
            p.pinned_reason IS NOT NULL AS pinned,
            EXISTS (SELECT 1 FROM conditions.raw_payload d
                     WHERE d.source_id = p.source_id AND d.base_hash = p.hash
                       AND d.evicted_at IS NULL) AS is_base
       FROM conditions.raw_payload p
-     WHERE p.evicted_at IS NULL AND ${inScope(sql, "p.source_id", opts.scope)}`;
+     WHERE p.evicted_at IS NULL`;
   // The payloads what is live now was read from: those of each source's
   // latest published poll. A history row names its poll's payload too, but
   // history is what the tiers' windows thin; only the live state is kept
@@ -285,6 +293,7 @@ export async function evictRawPayloads(
     lastSeenAt: r.last_seen_at.getTime(),
     bytesStored: Number(r.bytes_stored),
     protected: r.pinned || r.is_base || live.has(`${r.source_id}\n${r.hash}`),
+    local: here.has(r.storage_key),
   }));
   const plan = planEviction(held, opts.policy);
   if (opts.dryRun) return { ...plan, purged: 0 };
@@ -301,7 +310,8 @@ export async function evictRawPayloads(
          WHERE source_id = ${r.sourceId} AND hash = ${r.hash} AND evicted_at IS NULL
            AND date_trunc('milliseconds', last_seen_at) <= ${new Date(r.lastSeenAt)}
            FOR UPDATE`;
-      if (!row) return false;
+      // Archived afresh by another process since the listing, its blob is that one's.
+      if (!row || !(await exists(join(opts.dir, row.storage_key)))) return false;
       await tx`
         UPDATE conditions.raw_payload SET evicted_at = ${at}
          WHERE source_id = ${r.sourceId} AND hash = ${r.hash}`;
@@ -320,7 +330,26 @@ export async function evictRawPayloads(
   }
   const purged = await sql`
     DELETE FROM conditions.raw_payload
-     WHERE evicted_at < ${new Date(opts.policy.now - opts.historyDays * DAY_MS)}
-       AND ${inScope(sql, "source_id", opts.scope)}`;
+     WHERE evicted_at < ${new Date(opts.policy.now - opts.historyDays * DAY_MS)}`;
   return { ...plan, evict: evicted, purged: purged.count };
+}
+
+/** The storage keys of the blobs under `dir`; none when it does not exist yet. */
+async function heldBlobs(dir: string): Promise<Set<string>> {
+  try {
+    const files = await readdir(dir, { recursive: true });
+    return new Set(files.filter((f) => f.endsWith(".zst")).map((f) => f.split(sep).join("/")));
+  } catch (err) {
+    if ((err as NodeJS.ErrnoException).code === "ENOENT") return new Set();
+    throw err;
+  }
+}
+
+async function exists(file: string): Promise<boolean> {
+  try {
+    await access(file);
+    return true;
+  } catch {
+    return false;
+  }
 }

@@ -106,7 +106,6 @@ async function boot() {
     instanceId: resolveInstanceId(),
     feeds: catalog.feeds,
     primary,
-    scope: plan.scope,
   });
   const stopMemTelemetry = startMemTelemetry();
   const background: BackgroundJob[] = [inFlight];

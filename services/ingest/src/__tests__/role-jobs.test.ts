@@ -54,28 +54,23 @@ async function anHourOf(start: () => () => void): Promise<void> {
 }
 
 describe("the record jobs", () => {
-  const options = { registry: productionRegistry(), instanceId: "local", env: {} };
+  const env = { OPENCONDITIONS_RAW_DIR: "/data/raw" };
+  const options = { registry: productionRegistry(), instanceId: "local", env };
 
-  it("all run on the primary, which evicts every source's raw payloads but those it leaves", async () => {
-    const scope = { except: ["nl-ndw-flow"] };
-    await anHourOf(() =>
-      startRecordJobs(sql, maintenanceSql, { ...options, primary: true, scope }),
-    );
+  it("all run on the primary, raw eviction of its own archive included", async () => {
+    await anHourOf(() => startRecordJobs(sql, maintenanceSql, { ...options, primary: true }));
     expect(storage.ensureObservationPartitions).toHaveBeenCalled();
     expect(storage.rollupObservations).toHaveBeenCalled();
     expect(storage.sweepRecords).toHaveBeenCalled();
     expect(storage.refreshFlippedFusions).toHaveBeenCalled();
     expect(evictRawPayloads).toHaveBeenCalledWith(
       maintenanceSql,
-      expect.objectContaining({ scope }),
+      expect.objectContaining({ dir: "/data/raw" }),
     );
   });
 
-  it("leave a feeds process only the eviction of its own raw payloads", async () => {
-    const scope = { only: ["nl-ndw-flow"] };
-    await anHourOf(() =>
-      startRecordJobs(sql, maintenanceSql, { ...options, primary: false, scope }),
-    );
+  it("leave a feeds process only the eviction of its own archive", async () => {
+    await anHourOf(() => startRecordJobs(sql, maintenanceSql, { ...options, primary: false }));
     expect(storage.ensureObservationPartitions).not.toHaveBeenCalled();
     expect(storage.dropExpiredObservationPartitions).not.toHaveBeenCalled();
     expect(storage.rollupObservations).not.toHaveBeenCalled();
@@ -83,7 +78,7 @@ describe("the record jobs", () => {
     expect(storage.refreshFlippedFusions).not.toHaveBeenCalled();
     expect(evictRawPayloads).toHaveBeenCalledWith(
       maintenanceSql,
-      expect.objectContaining({ scope }),
+      expect.objectContaining({ dir: "/data/raw" }),
     );
   });
 });
