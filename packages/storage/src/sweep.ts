@@ -2,6 +2,7 @@ import type { RevisionedClass } from "@openconditions/core/server";
 import type { Registry } from "@openconditions/model";
 import type postgres from "postgres";
 import { updateCanonicalView } from "./canonical-view.js";
+import { isLockTimeout } from "./db-timeouts.js";
 import { refreshFused } from "./fused-rows.js";
 import { tombstoneRecords } from "./write-records.js";
 
@@ -37,6 +38,8 @@ export interface SweepCounts {
   crowdExpired: number;
   /** Series of transient properties deleted once their reading expired. */
   transient: number;
+  /** Passes over a source left to the next sweep: its lock was held past `lock_timeout`. */
+  busy: number;
 }
 
 const CLASSES: readonly RevisionedClass[] = ["situation", "feature", "offer"];
@@ -92,7 +95,9 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
     dropped: 0,
     crowdExpired: 0,
     transient: 0,
+    busy: 0,
   };
+  const busy = () => counts.busy++;
   const params = [
     opts.now,
     opts.instanceId,
@@ -140,11 +145,19 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
     };
   for (const cls of CLASSES) {
     const rows = { table: cls, key: "id" };
-    counts.dropped += await perSource(sql, rows, ON_DEMAND_EXPIRED, [opts.now], dropOnDemand(cls));
-    counts.expired += await perSource(sql, rows, EXPIRED, [opts.now], tombstone(cls));
-    counts.orphaned += await perSource(sql, rows, ORPHANED, params, tombstone(cls));
+    counts.dropped += await perSource(
+      sql,
+      busy,
+      rows,
+      ON_DEMAND_EXPIRED,
+      [opts.now],
+      dropOnDemand(cls),
+    );
+    counts.expired += await perSource(sql, busy, rows, EXPIRED, [opts.now], tombstone(cls));
+    counts.orphaned += await perSource(sql, busy, rows, ORPHANED, params, tombstone(cls));
     counts.purged += await perSource(
       sql,
+      busy,
       rows,
       PURGEABLE,
       [opts.now, opts.historyDays],
@@ -153,6 +166,7 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
   }
   counts.dropped += await perSource(
     sql,
+    busy,
     { table: "observation_latest", key: "series_id" },
     ON_DEMAND_EXPIRED,
     [opts.now],
@@ -165,6 +179,7 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
   if (transient.length > 0) {
     counts.transient = await perSource(
       sql,
+      busy,
       { table: "observation_latest", key: "series_id" },
       TRANSIENT_EXPIRED,
       [opts.now, transient],
@@ -172,7 +187,12 @@ export async function sweepRecords(sql: postgres.Sql, opts: SweepOptions): Promi
       TRANSIENT_BATCH,
     );
   }
-  counts.crowdExpired = await expireCrowdObservations(sql, opts);
+  try {
+    counts.crowdExpired = await expireCrowdObservations(sql, opts);
+  } catch (err) {
+    if (!isLockTimeout(err)) throw err;
+    busy();
+  }
   return counts;
 }
 
@@ -222,10 +242,13 @@ const PURGEABLE = `r.tombstoned_at < $1::timestamptz - make_interval(days => $2)
  * source under its advisory lock, on the rows that still match once the lock
  * is held — so a poll writing in between is never undone. With `batch`, a
  * source's rows are taken at most that many per transaction, until none is
- * left. Returns how many rows it acted on.
+ * left. A source whose lock is held past `lock_timeout` (a long publication)
+ * is left to the next sweep and counted by `busy`. Returns how many rows it
+ * acted on.
  */
 async function perSource(
   sql: postgres.Sql,
+  busy: () => void,
   { table, key }: { table: string; key: string },
   where: string,
   params: readonly (string | number | readonly string[])[],
@@ -241,21 +264,27 @@ async function perSource(
   for (const { source_id } of sources) {
     let taken: number;
     do {
-      taken = (await sql.begin(async (tx) => {
-        await tx`SELECT pg_advisory_xact_lock(hashtext(${source_id}))`;
-        const rows = await tx.unsafe<{ id: string }[]>(
-          `SELECT r.${key} AS id FROM conditions.${table} r
-            WHERE ${where} AND r.source_id = $${params.length + 1} ${limit}`,
-          [...params, source_id],
-        );
-        if (rows.length === 0) return 0;
-        await act(
-          tx,
-          rows.map((r) => String(r.id)),
-          source_id,
-        );
-        return rows.length;
-      })) as number;
+      try {
+        taken = (await sql.begin(async (tx) => {
+          await tx`SELECT pg_advisory_xact_lock(hashtext(${source_id}))`;
+          const rows = await tx.unsafe<{ id: string }[]>(
+            `SELECT r.${key} AS id FROM conditions.${table} r
+              WHERE ${where} AND r.source_id = $${params.length + 1} ${limit}`,
+            [...params, source_id],
+          );
+          if (rows.length === 0) return 0;
+          await act(
+            tx,
+            rows.map((r) => String(r.id)),
+            source_id,
+          );
+          return rows.length;
+        })) as number;
+      } catch (err) {
+        if (!isLockTimeout(err)) throw err;
+        busy();
+        break;
+      }
       n += taken;
     } while (batch !== undefined && taken === batch);
   }

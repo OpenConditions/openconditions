@@ -23,6 +23,7 @@ import {
 } from "@openconditions/model";
 import type { Sql } from "./bulk.js";
 import { clustersHolding } from "./canonical-holding.js";
+import { isLockTimeout } from "./db-timeouts.js";
 import {
   type CanonicalRow,
   type FusedScope,
@@ -73,6 +74,34 @@ const pairKey = (a: string, b: string) => (a < b ? jcs([a, b]) : jcs([b, a]));
 
 /** Linkable features one write touches above which linking refreshes the planner's statistics. */
 const ANALYZE_ABOVE = 1000;
+
+/** How long linking waits for the lock ANALYZE takes before it goes on without. */
+const ANALYZE_LOCK_TIMEOUT = "2s";
+
+/**
+ * ANALYZE holds its lock on `feature` until the transaction commits, so a
+ * second large write's ANALYZE would wait out the first's whole publication,
+ * holding its connection and its source's lock. It waits briefly instead,
+ * and the write goes on with the statistics there are.
+ */
+async function analyzeFeatures(tx: Sql): Promise<void> {
+  // Outside a transaction its lock ends with the statement.
+  if (!("savepoint" in tx)) {
+    await tx`ANALYZE conditions.feature`;
+    return;
+  }
+  try {
+    // A setting made in a savepoint outlives its release: the connection's
+    // own lock_timeout (its default) is put back for the rest of the transaction.
+    await tx.savepoint(async (sp) => {
+      await sp`SELECT set_config('lock_timeout', ${ANALYZE_LOCK_TIMEOUT}, true)`;
+      await sp`ANALYZE conditions.feature`;
+      await sp`SET LOCAL lock_timeout TO DEFAULT`;
+    });
+  } catch (err) {
+    if (!isLockTimeout(err)) throw err;
+  }
+}
 
 /** A link a human or a reviewer decided, which recomputation never overwrites. */
 const decided = (l: LinkRow) => l.status === "rejected" || l.decided_by !== null;
@@ -131,7 +160,7 @@ export async function relinkFeatures(
   // transaction, unseen by the planner's statistics: it would plan the pair
   // search as if the table were empty and compare every pair (minutes, not
   // a second). Analysing first lets it walk the spatial index.
-  if (linkable.length >= ANALYZE_ABOVE) await tx`ANALYZE conditions.feature`;
+  if (linkable.length >= ANALYZE_ABOVE) await analyzeFeatures(tx);
   for (const kind of new Set(linkable.map((f) => f.kind))) {
     const rules = registry.kind("feature", kind)!.linking!;
     const own = linkable.filter((f) => f.kind === kind);

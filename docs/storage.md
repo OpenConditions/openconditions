@@ -137,7 +137,9 @@ The sweep, every five minutes, takes these actions:
 | A series of a transient property past its reading's expiry           | Deleted, bulk or on demand (nothing else ends it)             |
 
 A declared validity end is never a tombstone reason: a source that still
-publishes an ended record keeps it, and reads filter by time.
+publishes an ended record keeps it, and reads filter by time. A source whose
+lock stays held past the sweep's `lock_timeout` (a long publication) is left
+to the next sweep and counted as `busy`.
 
 ## Observations
 

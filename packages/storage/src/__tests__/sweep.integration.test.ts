@@ -1,5 +1,5 @@
 import { productionRegistry } from "@openconditions/model-registry";
-import type postgres from "postgres";
+import postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { type SweepOptions, sweepRecords } from "../sweep.js";
@@ -126,6 +126,7 @@ describe("sweepRecords", () => {
       dropped: 0,
       crowdExpired: 0,
       transient: 0,
+      busy: 0,
     });
   });
 
@@ -321,5 +322,45 @@ describe("sweepRecords", () => {
     await poll`SELECT pg_advisory_unlock(hashtext('nl-ndw-events'))`;
     poll.release();
     expect(await swept).toMatchObject({ purged: 1, dropped: 1 });
+  });
+
+  it("leaves a source whose lock is held past lock_timeout to the next sweep", async () => {
+    await polled("nl-ndw-events", LATER);
+    await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      {
+        situations: [
+          situationDraft("exp", {
+            freshness: { fetchedAt: FETCHED_AT, expiresAt: "2026-10-01T11:00:00Z" },
+          }),
+        ],
+      },
+      { ...write, complete: true },
+    );
+    const maintenance = postgres(db.url, {
+      max: 1,
+      onnotice: () => {},
+      connection: { lock_timeout: 200 },
+    });
+    const poll = await sql.reserve();
+    try {
+      await poll`SELECT pg_advisory_lock(hashtext('nl-ndw-events'))`;
+      const busy = await sweepRecords(maintenance, {
+        ...write,
+        now: LATER,
+        maxAgeSec: 3600,
+        historyDays: 90,
+      });
+      expect(busy).toMatchObject({ expired: 0, busy: 1 });
+      expect(await state("oc:situation:nl-ndw-events:exp")).toMatchObject({
+        tombstone_reason: null,
+      });
+      await poll`SELECT pg_advisory_unlock(hashtext('nl-ndw-events'))`;
+      expect(await sweep(LATER)).toMatchObject({ expired: 1, busy: 0 });
+    } finally {
+      poll.release();
+      await maintenance.end();
+    }
   });
 });
