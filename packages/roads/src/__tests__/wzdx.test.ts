@@ -150,7 +150,7 @@ describe("parseWzdx — WZDx v4.2 fixture", () => {
     const withRoads = events.find((ev) => ev.roads.length > 0);
     expect(withRoads).toBeDefined();
     expect(withRoads!.roads[0]!.name).toBeDefined();
-    expect(withRoads!.roads[0]!.name.length).toBeGreaterThan(0);
+    expect(withRoads!.roads[0]!.name!.length).toBeGreaterThan(0);
   });
 
   it("extracts validFrom and validTo from start_date / end_date", () => {

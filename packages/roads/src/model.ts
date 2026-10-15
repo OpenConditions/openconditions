@@ -144,7 +144,12 @@ export function isRoadEventType(value: unknown): value is RoadEventType {
 }
 
 export interface RoadRef {
-  name: string;
+  /** Absent when the source gives the road only a number. */
+  name?: string;
+  /** BCP 47 language of `name`, when the source states it. */
+  nameLang?: string;
+  /** The name in every language the source gave it in, `name` first, when it gave more than one. */
+  names?: Text;
   ref?: string;
   roadClass?: string;
   direction?: string;

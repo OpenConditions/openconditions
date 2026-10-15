@@ -43,6 +43,7 @@ import {
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
+import { UNDETERMINED } from "./situation/location.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   canonicalSnapshotValue,
@@ -685,27 +686,41 @@ function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
   // names a road only in supplementaryPositionalDescription/roadInformation (a
   // plain string, where DGT and CITA put it, and where our own export writes it)
   // or on a linearElement (multilingual); a name there outranks a direction.
-  const roadName =
-    getXmlChildText(locRef, "roadName") ??
-    multilingual(getXmlChild(locRef, "roadName"), "en") ??
-    getXmlChildText(pointLoc, "roadName") ??
-    descendantsNamed(locRef, "roadInformation")
-      .map((info) => getXmlChildText(info, "roadName"))
-      .find((name) => name !== undefined) ??
+  // Only a multilingual name says which language it is in; it keeps every one.
+  const names =
+    plainName(getXmlChildText(locRef, "roadName")) ??
+    multilingualText(getXmlChild(locRef, "roadName")) ??
+    plainName(getXmlChildText(pointLoc, "roadName")) ??
+    plainName(
+      descendantsNamed(locRef, "roadInformation")
+        .map((info) => getXmlChildText(info, "roadName"))
+        .find((name) => name !== undefined),
+    ) ??
     descendantsNamed(locRef, "linearElement")
-      .map((element) => multilingual(getXmlChild(element, "roadName"), "en"))
+      .map((element) => multilingualText(getXmlChild(element, "roadName")))
       .find((name) => name !== undefined) ??
-    multilingual(findFirst(locRef, "roadDirection"), "en");
+    multilingualText(findFirst(locRef, "roadDirection"));
   const roadRef =
     getXmlChildText(locRef, "roadNumber") ??
     getXmlChildText(pointLoc, "roadNumber") ??
     collectLeaf(locRef, "roadNumber")[0];
 
-  if (roadName || roadRef) {
-    return [{ name: roadName ?? roadRef ?? "", ref: roadRef }];
-  }
+  const [primary] = names ?? [];
+  if (!primary && !roadRef) return [];
+  return [
+    {
+      ...(primary ? { name: primary.text } : {}),
+      ...(primary && primary.lang !== UNDETERMINED ? { nameLang: primary.lang } : {}),
+      ...(names && names.length > 1 ? { names } : {}),
+      ref: roadRef,
+    },
+  ];
+}
 
-  return [];
+/** A road name given as a plain string, in no stated language. */
+function plainName(name: string | undefined): Text | undefined {
+  const trimmed = name?.trim();
+  return trimmed ? [{ lang: UNDETERMINED, text: trimmed }] : undefined;
 }
 
 function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
@@ -1354,6 +1369,7 @@ function parseDatexInternal(
       }
     }
 
+    const roads = roadsOf(rec);
     let geometry = resolveGeometry(rec, reproject, lonFirst);
     let locationTable: RoadEvent["locationTable"];
 
@@ -1364,7 +1380,7 @@ function parseDatexInternal(
       const ref = alertCRefOf(rec);
       // The road the record itself names, so a code from another table edition
       // can be checked against it rather than trusted.
-      const road = roadsOf(rec)[0];
+      const road = roads[0];
       const resolution = ref
         ? resolveAlertC(
             { ...ref, ...(road?.ref || road?.name ? { road: road.ref ?? road.name } : {}) },
@@ -1494,7 +1510,7 @@ function parseDatexInternal(
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
       validTo: text(timeSpec?.["overallEndTime"]) ?? null,
       direction: sourceDirection.direction,
-      locationDescription: roadsOf(rec)[0]?.name ?? null,
+      locationDescription: roads[0]?.name ?? roads[0]?.ref ?? null,
       sourceLocationRefs: sourceDirection.sourceLocationRefs,
       ...(restrictionSchedule ? { schedule: restrictionSchedule } : {}),
       issues: [
@@ -1539,7 +1555,7 @@ function parseDatexInternal(
       confidence: confidenceOf(rec),
       status,
       direction: directionOf(rec),
-      roads: roadsOf(rec),
+      roads,
       roadState: roadStateOf(rec),
       lanesAffected: lanesOf(rec),
       speedLimitKph: speedLimitOf(rec),

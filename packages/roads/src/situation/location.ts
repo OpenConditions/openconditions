@@ -114,8 +114,10 @@ function extentOf(geometry: Geometry | null): string {
 
 function roadRefOf(road: RoadRef): Record<string, unknown> | undefined {
   const out: Record<string, unknown> = {};
-  const name = text(road.name);
-  if (name) out["name"] = name;
+  const trimmed = road.name?.trim();
+  const name =
+    road.names ?? (trimmed ? [{ lang: road.nameLang ?? UNDETERMINED, text: trimmed }] : []);
+  if (name.length > 0) out["name"] = name;
   if (road.ref) out["ref"] = road.ref;
   const cls = road.roadClass ? ROAD_CLASSES[road.roadClass.toLowerCase()] : undefined;
   if (cls) out["class"] = cls;

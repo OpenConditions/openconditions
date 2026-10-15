@@ -313,6 +313,29 @@ describe("situationDrafts — fields", () => {
     expect((d!["provenance"] as Record<string, unknown>)["sourceUpdatedAt"]).toBeUndefined();
   });
 
+  it("names a road in the language its source states, or every one it gave", () => {
+    const names = [
+      { lang: "fr", text: "Boulevard du Jardin Botanique" },
+      { lang: "nl", text: "Kruidtuinlaan" },
+    ];
+    const [d] = assemble([
+      event("R1", {
+        roads: [
+          { name: "Hauptstraße", nameLang: "de", ref: "B1" },
+          { name: "A2" },
+          { name: names[0]!.text, nameLang: "fr", names },
+          { ref: "N1" },
+        ],
+      }),
+    ]);
+    expect((d!["location"] as Record<string, unknown>)["roads"]).toEqual([
+      { name: [{ lang: "de", text: "Hauptstraße" }], ref: "B1" },
+      { name: [{ lang: "und", text: "A2" }] },
+      { name: names },
+      { ref: "N1" },
+    ]);
+  });
+
   it("lets the restriction contract decide the vehicles of a closure", () => {
     const [d] = situationDrafts([{ ...restrictionEvent(), roadState: "closed" }], {
       source: { ...SRC, id: "fi-digitraffic-events", country: "FI" },

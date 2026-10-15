@@ -21,12 +21,6 @@
       "fuzziness": "exact",
       "roads": [
         {
-          "name": [
-            {
-              "lang": "und",
-              "text": "N0020"
-            }
-          ],
           "ref": "N0020"
         }
       ],
@@ -154,7 +148,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c2c119ac3cc6bd3a93260f99ebd69226f408ca74b7d02fdba663ea4e11e3b25a"
+    "contentHash": "38aa8fe4198fd187cfb9bf8f28e7536618e718e4686b10c7a7fb9417b0408b51"
   },
   {
     "id": "oc:situation:fr-dir-events:251022-000640",
@@ -184,12 +178,6 @@
       "fuzziness": "exact",
       "roads": [
         {
-          "name": [
-            {
-              "lang": "und",
-              "text": "N0024"
-            }
-          ],
           "ref": "N0024"
         }
       ],
@@ -304,7 +292,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "7557686b3c479ff1978550569a90b2da3eba7d2ee692d58fe815fefcec89c9bd"
+    "contentHash": "1341b98c9986fa4d1efc845cd512f34ec91c691a942542a7209c98dd1f04cb7f"
   },
   {
     "id": "oc:situation:fr-dir-events:251023-001144",
@@ -439,12 +427,6 @@
       "fuzziness": "exact",
       "roads": [
         {
-          "name": [
-            {
-              "lang": "und",
-              "text": "N0002"
-            }
-          ],
           "ref": "N0002"
         }
       ],
@@ -527,7 +509,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "97352014edf4168a100b0d5b31a9f09ab31cfb2071f9423ea3333d1a67eb582c"
+    "contentHash": "9edb395e9eff35a7336c03173acd961af7bb135716975ab278572f777b63b0ea"
   },
   {
     "id": "oc:situation:fr-dir-events:251209-001171",
@@ -557,12 +539,6 @@
       "fuzziness": "exact",
       "roads": [
         {
-          "name": [
-            {
-              "lang": "und",
-              "text": "N0164"
-            }
-          ],
           "ref": "N0164"
         }
       ],
@@ -727,6 +703,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "43e899e2cbf1eaff64272745c259f0df7aa8e90f68a8f35794f4985f4470e568"
+    "contentHash": "7cce46d7eba5338e4f85115bd218334db543e7f94ba7af106534ac4c20dc211d"
   }
 ]

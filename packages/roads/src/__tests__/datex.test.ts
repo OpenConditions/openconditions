@@ -877,18 +877,49 @@ describe("parseDatexSituations — DATEX II v3 road names", () => {
     `<loc:pointAlongLinearElement><loc:linearElement xsi:type="loc:LinearElement">
             <loc:roadName><com:values><com:value lang="de">Ringstraße</com:value></com:values></loc:roadName>
           </loc:linearElement></loc:pointAlongLinearElement>`,
+  )}${record(
+    "BILINGUAL",
+    `<loc:pointAlongLinearElement><loc:linearElement xsi:type="loc:LinearElement">
+            <loc:roadName><com:values>
+              <com:value lang="fr">Boulevard du Jardin Botanique</com:value>
+              <com:value lang="nl">Kruidtuinlaan</com:value>
+            </com:values></loc:roadName>
+          </loc:linearElement></loc:pointAlongLinearElement>`,
+  )}${record(
+    "NUMBER",
+    `<loc:supplementaryPositionalDescription><loc:roadInformation>
+            <loc:roadNumber>B1</loc:roadNumber>
+          </loc:roadInformation></loc:supplementaryPositionalDescription>`,
   )}
   </sit:situation>
 </d2:payload>`;
+  const roadsOf = (id: string) =>
+    parseDatexSituations(xml, SRC).find((e) => e.id === `xx-v3-events:${id}`)!.roads;
 
   it("reads the name from roadInformation, alongside its number", () => {
-    const ev = parseDatexSituations(xml, SRC).find((e) => e.id === "xx-v3-events:INFO");
-    expect(ev!.roads).toEqual([{ name: "Hauptstraße", ref: "B1" }]);
+    expect(roadsOf("INFO")).toEqual([{ name: "Hauptstraße", ref: "B1" }]);
   });
 
-  it("reads the multilingual name of a linear element", () => {
-    const ev = parseDatexSituations(xml, SRC).find((e) => e.id === "xx-v3-events:LINEAR");
-    expect(ev!.roads).toEqual([{ name: "Ringstraße", ref: undefined }]);
+  it("reads the multilingual name of a linear element with its language", () => {
+    expect(roadsOf("LINEAR")).toEqual([{ name: "Ringstraße", nameLang: "de", ref: undefined }]);
+  });
+
+  it("keeps every language of a multilingual name, the first as the name", () => {
+    expect(roadsOf("BILINGUAL")).toEqual([
+      {
+        name: "Boulevard du Jardin Botanique",
+        nameLang: "fr",
+        names: [
+          { lang: "fr", text: "Boulevard du Jardin Botanique" },
+          { lang: "nl", text: "Kruidtuinlaan" },
+        ],
+        ref: undefined,
+      },
+    ]);
+  });
+
+  it("leaves a road with only a number unnamed", () => {
+    expect(roadsOf("NUMBER")).toEqual([{ ref: "B1" }]);
   });
 });
 
