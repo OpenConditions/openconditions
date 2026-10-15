@@ -53,9 +53,11 @@ records carry the revision as `version`:
   moment it is known to hold.
 - **Road name and number** travel in the location's
   `supplementaryPositionalDescription/roadInformation`, the only place v3
-  allows them on a `PointLocation`. The roads reader takes the number back
-  from there but not the name (it reads a name only directly on the location),
-  so a re-ingested export keeps its road number and loses the road name.
+  allows them on a `PointLocation`. The roads reader takes both back from
+  there, as it does for DGT and CITA, which name their roads in the same
+  place. `roadName` is a plain string there, not a multilingual one, so a
+  re-ingested export keeps the name's text but not its language (it comes back
+  as `und`).
 
 A situation is **omitted entirely** when any of its effects is vehicle-specific
 or restriction evidence. DATEX output cannot carry an effect's vehicle

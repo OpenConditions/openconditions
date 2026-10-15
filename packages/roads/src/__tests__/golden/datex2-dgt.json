@@ -25,6 +25,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "N-400"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "ES"
       }
@@ -78,7 +88,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "9f4ce2172cfdc9ff324fc666448434be04da08d04a7067750e301053b17a858d"
+    "contentHash": "03bbb42b9a5d9b7a94f02f5c44a96d46b978573b8b47040f0c6686e960513b7c"
   },
   {
     "id": "oc:situation:es-dgt-events:3343801",
@@ -106,6 +116,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A-8005"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "ES"
       }
@@ -176,7 +196,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "50993cb73637c70d81547440804bb732e83233c0d375515a62879357c0bfca4b"
+    "contentHash": "e1bfd0b0e6a40977622d184b205e69d3382db6580d710ded3dfb939954159c39"
   },
   {
     "id": "oc:situation:es-dgt-events:8212884",
@@ -204,6 +224,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "LZ-10"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "ES"
       }
@@ -353,7 +383,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2f0572232c7fdc202b4a288b24e84fff3bab67f8cee70677a7cd33114ed46f82"
+    "contentHash": "bc75697a978a63392cd7ee31f85d18fa164a0138442ab1287129e9103d589026"
   },
   {
     "id": "oc:situation:es-dgt-events:8660292",
@@ -381,6 +411,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "SE-30"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "ES"
       }
@@ -475,7 +515,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "fc00ee049b9ee569d24d735ea1f923f7bc3092c0c35314a26d9fcb793c77d1e4"
+    "contentHash": "4619c7c33ee09a0831c535e950a2010b122bc4dde24f04a4162c39e59b2dd8e9"
   },
   {
     "id": "oc:situation:es-dgt-events:9479421",
@@ -503,6 +543,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "LR-115"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "ES"
       }
@@ -556,7 +606,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "716f0d7d259eb4b4104973446fa5bfa1b61359652437db08c1855da2c77d810a"
+    "contentHash": "f2e83f91fa87b417caeb0e6b87ced580d59c471c05b02e03e691b4da6e20193e"
   },
   {
     "id": "oc:situation:es-dgt-events:10852398",
@@ -584,6 +634,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "TF-5"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "ES"
       }
@@ -705,6 +765,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f450dcb6692b1e0b45954a59bc49de9cb208ecd7116e7831ec6412ca9dc4d4d3"
+    "contentHash": "f8da102ab7de7f642b5acdff7789a3ab34c01ce61ff208000310fd8cc42562a1"
   }
 ]

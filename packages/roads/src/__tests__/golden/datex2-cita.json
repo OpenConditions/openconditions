@@ -125,6 +125,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A13"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "LU"
       }
@@ -327,7 +337,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f168e8b3f256d0aa084b7dcd5642d177e559f2831cff8815e6b262635b13fa79"
+    "contentHash": "be8445b0723b0135e3d6d8d3cb91d089c523974bccd4dd12a3121381c30b16e1"
   },
   {
     "id": "oc:situation:lu-cita-events:234859",
@@ -591,6 +601,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A7"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "LU"
       }
@@ -654,7 +674,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2bb670a6b73e1a14b9141617c019fd1cfe30869c611b0d4cfdf421329d6e412f"
+    "contentHash": "93958837c0852c15aa83258c88b4c0aae18ab0e7557ca79bd49e2a5f82ecf9ab"
   },
   {
     "id": "oc:situation:lu-cita-events:234858",
@@ -734,6 +754,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A7"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "LU"
       }
@@ -797,7 +827,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0319043c4927e7e9524b439490b9343f9f985324b45cf8afc2d9c177947f5d58"
+    "contentHash": "0fbbb08615908624e6ce218175b82ea146e8ebd34621522f20c78466ac69ab60"
   },
   {
     "id": "oc:situation:lu-cita-events:234857",
@@ -825,6 +855,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A3"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "LU"
       }
@@ -887,7 +927,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "99750629e6cd2866fe01f6d199c3395e5b8a79dd629e6076c492b2d373d54a6d"
+    "contentHash": "f3f081cd544928993e647bb1e436511e5c4c25768411a8fee9995882d4e7dc27"
   },
   {
     "id": "oc:situation:lu-cita-events:234810",
@@ -915,6 +955,16 @@
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "A7"
+            }
+          ]
+        }
+      ],
       "admin": {
         "country": "LU"
       }
@@ -1007,6 +1057,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "03b71f1e2b31bf2e85c24647dfc772f03807072163dd9cbacd069a4a9c13b39a"
+    "contentHash": "aed70789766cec0e79c0c6920c92ecefc162e8220a11151188f373ab9eee647c"
   }
 ]

@@ -196,8 +196,25 @@ describe("DATEX II round-trip through the ingest parser", () => {
       validity: { start: "2026-09-06T08:00:00Z", end: "2026-09-07T08:00:00Z" },
       location: { geometry: { type: "Point", coordinates: [6.81, 51.2] } },
     });
-    expect((draft!["location"] as Rec)["roads"]).toMatchObject([{ ref: "A46" }]);
+    // roadInformation/roadName is a plain string in DATEX v3, so the name comes
+    // back with an undetermined language.
+    expect((draft!["location"] as Rec)["roads"]).toEqual([
+      { ref: "A46", name: [{ lang: "und", text: "Autobahn 46" }] },
+    ]);
     expect((draft!["effects"] as Rec[]).map((e) => e["kind"])).toContain("closure");
+  });
+
+  it("re-ingests a road that has a name but no number", () => {
+    const named = closure({
+      location: {
+        geometry: { type: "Point", coordinates: [6.81, 51.2] },
+        roads: [{ name: [{ lang: "de", text: "Hauptstraße" }] }],
+      },
+    });
+    const [draft] = parseEvents(feed, [Buffer.from(situationsToDatex([named], AT))]).situations;
+    expect((draft!["location"] as Rec)["roads"]).toEqual([
+      { name: [{ lang: "und", text: "Hauptstraße" }] },
+    ]);
   });
 
   it("re-ingests roadworks with a lane closure and a speed limit as one situation with both effects", () => {

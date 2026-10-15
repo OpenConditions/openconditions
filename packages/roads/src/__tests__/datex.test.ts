@@ -847,6 +847,51 @@ describe("parseDatexSituations — Straßen.NRW typed comments (commentType2) + 
   });
 });
 
+describe("parseDatexSituations — DATEX II v3 road names", () => {
+  const SRC: SourceDescriptor = {
+    id: "xx-v3-events",
+    attribution: "Test",
+    country: "DE",
+    license: "CC0-1.0",
+  };
+  const record = (id: string, location: string) => `
+      <sit:situationRecord xsi:type="sit:MaintenanceWorks" id="${id}" version="1">
+        <sit:situationRecordVersionTime>2026-06-30T00:00:00Z</sit:situationRecordVersionTime>
+        <sit:locationReference xsi:type="loc:PointLocation">${location}
+          <loc:pointByCoordinates><loc:pointCoordinates>
+            <loc:latitude>51.2</loc:latitude><loc:longitude>6.81</loc:longitude>
+          </loc:pointCoordinates></loc:pointByCoordinates>
+        </sit:locationReference>
+      </sit:situationRecord>`;
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<d2:payload xmlns:d2="http://datex2.eu/schema/3/d2Payload" xmlns:sit="http://datex2.eu/schema/3/situation" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:com="http://datex2.eu/schema/3/common" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="sit:SituationPublication" modelBaseVersion="3">
+  <sit:situation id="S">${record(
+    "INFO",
+    `<loc:supplementaryPositionalDescription><loc:roadInformation>
+            <loc:roadDestination>Köln</loc:roadDestination>
+            <loc:roadName>Hauptstraße</loc:roadName>
+            <loc:roadNumber>B1</loc:roadNumber>
+          </loc:roadInformation></loc:supplementaryPositionalDescription>`,
+  )}${record(
+    "LINEAR",
+    `<loc:pointAlongLinearElement><loc:linearElement xsi:type="loc:LinearElement">
+            <loc:roadName><com:values><com:value lang="de">Ringstraße</com:value></com:values></loc:roadName>
+          </loc:linearElement></loc:pointAlongLinearElement>`,
+  )}
+  </sit:situation>
+</d2:payload>`;
+
+  it("reads the name from roadInformation, alongside its number", () => {
+    const ev = parseDatexSituations(xml, SRC).find((e) => e.id === "xx-v3-events:INFO");
+    expect(ev!.roads).toEqual([{ name: "Hauptstraße", ref: "B1" }]);
+  });
+
+  it("reads the multilingual name of a linear element", () => {
+    const ev = parseDatexSituations(xml, SRC).find((e) => e.id === "xx-v3-events:LINEAR");
+    expect(ev!.roads).toEqual([{ name: "Ringstraße", ref: undefined }]);
+  });
+});
+
 describe("parseDatexSituations — Hrvatske ceste events publication (DATEX II v3)", () => {
   const HC: SourceDescriptor = {
     id: "hr-hc-events",

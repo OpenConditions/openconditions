@@ -681,11 +681,20 @@ function roadsOf(rec: XmlObject): import("./model.js").RoadRef[] {
   const pointLoc = getXmlChild(locRef, "pointLocation");
 
   // roadName/roadNumber may be a plain leaf or a multilingual object, and may sit
-  // a few levels down (roadInformation > roadNumber / roadDirection).
+  // a few levels down (roadInformation > roadNumber / roadDirection). DATEX v3
+  // names a road only in supplementaryPositionalDescription/roadInformation (a
+  // plain string, where DGT and CITA put it, and where our own export writes it)
+  // or on a linearElement (multilingual); a name there outranks a direction.
   const roadName =
     getXmlChildText(locRef, "roadName") ??
     multilingual(getXmlChild(locRef, "roadName"), "en") ??
     getXmlChildText(pointLoc, "roadName") ??
+    descendantsNamed(locRef, "roadInformation")
+      .map((info) => getXmlChildText(info, "roadName"))
+      .find((name) => name !== undefined) ??
+    descendantsNamed(locRef, "linearElement")
+      .map((element) => multilingual(getXmlChild(element, "roadName"), "en"))
+      .find((name) => name !== undefined) ??
     multilingual(findFirst(locRef, "roadDirection"), "en");
   const roadRef =
     getXmlChildText(locRef, "roadNumber") ??
@@ -849,6 +858,23 @@ function findFirst(node: unknown, localName: string): XmlObject | undefined {
     if (f) return f;
   }
   return undefined;
+}
+
+/** All descendant elements (anywhere in the subtree) with the given local name, in document order. */
+function descendantsNamed(node: unknown, localName: string, out: XmlObject[] = []): XmlObject[] {
+  if (Array.isArray(node)) {
+    for (const x of node) descendantsNamed(x, localName, out);
+    return out;
+  }
+  if (!isXmlObject(node)) return out;
+  for (const [key, value] of Object.entries(node)) {
+    if (key.startsWith("@_")) continue;
+    if (stripXmlNamespace(key) === localName) {
+      out.push(...xmlNodeToArray(value).filter(isXmlObject));
+    }
+    descendantsNamed(value, localName, out);
+  }
+  return out;
 }
 
 /** All leaf text values (anywhere in the subtree) of elements with the given local name. */
