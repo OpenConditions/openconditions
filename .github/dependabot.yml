@@ -32,6 +32,11 @@ updates:
           - "vitest"
           - "@vitest/*"
           - "testcontainers"
+    ignore:
+      # TypeScript 7 drops the compiler API that tsup's declaration build and
+      # the import-boundary check use; move compiler majors as one migration.
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
   - package-ecosystem: github-actions
     directory: "/"
