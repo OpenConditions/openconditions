@@ -2,15 +2,13 @@ import {
   type Effect,
   effectStateAt,
   effectValidity,
-  isRestrictionEvidence,
-  isVehicleSpecific,
   type Registry,
   type SituationClass,
   situationEffects,
   type Validity,
 } from "@openconditions/model";
 import { XMLBuilder } from "fast-xml-parser";
-import { hasCoarseLocation } from "./situation-precision.js";
+import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 
 type Rec = Record<string, unknown>;
 
@@ -42,13 +40,6 @@ const event = (type: string, quantifiers?: Record<string, number>): TraffEvent =
   type,
   ...(quantifiers && Object.keys(quantifiers).length > 0 ? { quantifiers } : {}),
 });
-
-/** An effect TraFF cannot carry without widening or misstating it. */
-const untellable = (effect: Effect) =>
-  isVehicleSpecific(effect) ||
-  isRestrictionEvidence(effect) ||
-  (effect.direction !== undefined && effect.direction.value !== "both") ||
-  (effect.location?.direction !== undefined && effect.location.direction.value !== "both");
 
 const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   carriageway: "RESTRICTION_CARRIAGEWAY_CLOSED",
@@ -121,7 +112,12 @@ function positions(geometry: unknown): [number, number][] {
 /** The first text of a localised Text. */
 const firstText = (text: unknown) => (text as { text: string }[] | undefined)?.[0]?.text;
 
-function buildLocation(situation: Rec): Record<string, unknown> | undefined {
+function buildLocation(
+  situation: Rec,
+  diagnostics: ProjectionDiagnostics,
+  path: string,
+  effect?: Effect,
+): Record<string, unknown> | undefined {
   const location = situation["location"] as Rec;
   const road = (location["roads"] as Rec[] | undefined)?.[0];
   const loc: Record<string, unknown> = {};
@@ -133,7 +129,17 @@ function buildLocation(situation: Rec): Record<string, unknown> | undefined {
   const direction = location["direction"] as Rec | undefined;
   // A source-axis direction is not GeoJSON coordinate order. TraFF has no
   // unknown direction, and omitting directionality would assert both directions.
-  if (direction !== undefined && direction["value"] !== "both") return undefined;
+  if (direction !== undefined && direction["value"] !== "both") {
+    diagnostics.emit(
+      "unrepresentable_direction",
+      "message",
+      "withheld",
+      `${effect && effect.location?.direction === undefined ? "/location" : path}/direction`,
+      "This message is withheld: TraFF travel order cannot be inferred from this direction.",
+      effect,
+    );
+    return undefined;
+  }
   loc["@_directionality"] = "BOTH_DIRECTIONS";
   const geometry = location["geometry"] as { type?: string } | null;
   const pts = positions(geometry);
@@ -142,11 +148,39 @@ function buildLocation(situation: Rec): Record<string, unknown> | undefined {
     if (typeof road?.["from"] === "string") from["@_junction_name"] = road["from"];
     const to: Record<string, unknown> = { "#text": coordText(pts.at(-1)!) };
     if (typeof road?.["to"] === "string") to["@_junction_name"] = road["to"];
+    if (pts.length > 2)
+      diagnostics.emit(
+        "geometry_to_endpoints",
+        "field",
+        "reduced",
+        `${path}/geometry`,
+        "Only the first and last line coordinates are exported; intermediate geometry is omitted.",
+        effect,
+      );
     loc["from"] = from;
     loc["to"] = to;
   } else if (pts.length > 0) {
+    if (geometry?.type !== "Point")
+      diagnostics.emit(
+        "geometry_to_point",
+        "field",
+        "reduced",
+        `${path}/geometry`,
+        "This geometry is exported as its first coordinate only.",
+        effect,
+      );
     loc["at"] = coordText(pts[0]!);
-  } else return undefined;
+  } else {
+    diagnostics.emit(
+      "missing_geometry",
+      "message",
+      "withheld",
+      `${path}/geometry`,
+      "This message is withheld: no usable coordinate is available.",
+      effect,
+    );
+    return undefined;
+  }
   return loc;
 }
 
@@ -155,13 +189,48 @@ const hasOwnPlace = (effect: Effect) =>
   (effect.location as { geometry?: unknown } | undefined)?.geometry != null;
 
 /** The events of `effects` in force or scheduled at `at`, appended to `out`. */
-function effectEvents(effects: Effect[], validity: Validity, at: Date, out: TraffEvent[]) {
+function effectEvents(
+  effects: Effect[],
+  validity: Validity,
+  at: Date,
+  out: TraffEvent[],
+  diagnostics: ProjectionDiagnostics,
+) {
   let diversion = false;
   for (const effect of effects) {
     const { state } = effectStateAt(effect, validity, at);
-    if (state === "ended" || state === "unknown") continue;
+    const path = diagnostics.effectPath(effect);
+    if (state === "ended" || state === "unknown") {
+      diagnostics.emit(
+        state === "ended" ? "effect_ended" : "effect_time_unknown",
+        "effect",
+        "omitted",
+        state === "unknown" ? `${path}/issues` : effect.validity ? `${path}/validity` : "/validity",
+        `This effect is not exported at the evaluation instant: ${state}.`,
+        effect,
+      );
+      continue;
+    }
     if (effect.kind === "detour") diversion = true;
     const e = effectEvent(effect);
+    if (!e && effect.kind !== "detour")
+      diagnostics.emit(
+        "unsupported_effect",
+        "effect",
+        "omitted",
+        `${path}/kind`,
+        "This effect has no TraFF event mapping in the current emitter.",
+        effect,
+      );
+    if (effect.kind === "delay" && effect.delay)
+      diagnostics.emit(
+        "field_not_exported",
+        "field",
+        "omitted",
+        `${path}/delay`,
+        "TraFF exports queue length when available, but not this delay duration.",
+        effect,
+      );
     if (e && !out.some((o) => o.type === e.type)) out.push(e);
   }
   if (diversion && out[0]) out[0] = { ...out[0], diversion: true };
@@ -173,17 +242,31 @@ function effectEvents(effects: Effect[], validity: Validity, at: Date, out: Traf
  * then those of its effects in force or scheduled that hold there. None when
  * TraFF cannot tell the situation truthfully.
  */
-export function traffEventsOf(registry: Registry, situation: Rec, at: Date): TraffEvent[] {
+export function traffEventsOf(
+  registry: Registry,
+  situation: Rec,
+  at: Date,
+  report?: ExportDiagnosticSink,
+): TraffEvent[] {
   const effects = situationEffects(situation);
-  if (hasCoarseLocation(situation) || effects.some(untellable)) return [];
+  const diagnostics = new ProjectionDiagnostics(situation, report);
+  if (diagnostics.blocked("traff")) return [];
   const out: TraffEvent[] = [];
   const nature = registry.crosswalk.situationTargetCode(
     "traff",
     situation as unknown as SituationClass,
   );
   if (nature) out.push(event(nature));
+  else
+    diagnostics.emit(
+      "unsupported_nature",
+      "field",
+      "omitted",
+      "/type",
+      "This situation classification has no TraFF nature mapping in the current registry.",
+    );
   const here = effects.filter((e) => !hasOwnPlace(e));
-  return effectEvents(here, situation["validity"] as Validity, at, out);
+  return effectEvents(here, situation["validity"] as Validity, at, out, diagnostics);
 }
 
 /**
@@ -191,14 +274,21 @@ export function traffEventsOf(registry: Registry, situation: Rec, at: Date): Tra
  * holding at a place of its own (a grouped record on another road), at that
  * place, so a consumer never closes the wrong road.
  */
-function messagesOf(registry: Registry, situation: Rec, at: Date): Record<string, unknown>[] {
-  if (hasCoarseLocation(situation) || situationEffects(situation).some(untellable)) return [];
-  const events = traffEventsOf(registry, situation, at);
-  const main = events.length > 0 ? buildMessage(situation, events) : undefined;
+function messagesOf(
+  registry: Registry,
+  situation: Rec,
+  at: Date,
+  report?: ExportDiagnosticSink,
+): Record<string, unknown>[] {
+  const diagnostics = new ProjectionDiagnostics(situation, report);
+  if (diagnostics.blocked("traff")) return [];
+  const events = traffEventsOf(registry, situation, at, report);
+  const main =
+    events.length > 0 ? buildMessage(situation, events, diagnostics, "/location") : undefined;
   const out = main === undefined ? [] : [main];
   const validity = situation["validity"] as Validity;
   for (const effect of situationEffects(situation).filter(hasOwnPlace)) {
-    const own = effectEvents([effect], validity, at, []);
+    const own = effectEvents([effect], validity, at, [], diagnostics);
     if (own.length === 0) continue;
     const message = buildMessage(
       {
@@ -208,6 +298,9 @@ function messagesOf(registry: Registry, situation: Rec, at: Date): Record<string
         location: { ...(situation["location"] as Rec), ...(effect.location as Rec) },
       },
       own,
+      diagnostics,
+      `${diagnostics.effectPath(effect)}/location`,
+      effect,
     );
     if (message !== undefined) out.push(message);
   }
@@ -217,8 +310,14 @@ function messagesOf(registry: Registry, situation: Rec, at: Date): Record<string
 /** The Java TraFF reader accepts second-resolution ISO timestamps only. */
 const wireTime = (value: string) => new Date(value).toISOString().replace(/\.\d{3}Z$/, "Z");
 
-function buildMessage(situation: Rec, events: TraffEvent[]): Record<string, unknown> | undefined {
-  const location = buildLocation(situation);
+function buildMessage(
+  situation: Rec,
+  events: TraffEvent[],
+  diagnostics: ProjectionDiagnostics,
+  path: string,
+  effect?: Effect,
+): Record<string, unknown> | undefined {
+  const location = buildLocation(situation, diagnostics, path, effect);
   if (location === undefined) return undefined;
   const validity = situation["validity"] as Validity;
   const provenance = situation["provenance"] as Rec;
@@ -274,7 +373,8 @@ export function situationsToTraff(
   registry: Registry,
   situations: readonly Rec[],
   at: Date = new Date(),
+  report?: ExportDiagnosticSink,
 ): string {
-  const message = situations.flatMap((situation) => messagesOf(registry, situation, at));
+  const message = situations.flatMap((situation) => messagesOf(registry, situation, at, report));
   return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build({ feed: { message } })}`;
 }

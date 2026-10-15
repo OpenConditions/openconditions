@@ -1,15 +1,11 @@
 import { createHash } from "node:crypto";
 import type { CatalogFeed, EgressRecord } from "@openconditions/ingest-framework";
 import { publicRecords } from "@openconditions/ingest-framework";
-import {
-  isRestrictionEvidence,
-  isVehicleSpecific,
-  sealRecord,
-  situationEffects,
-} from "@openconditions/model";
+import { sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import {
   datexRecordsOf,
+  type ExportDiagnostic,
   effectStatesAt,
   situationsToDatex,
   situationsToGeoJSON,
@@ -25,15 +21,6 @@ type Rec = Record<string, unknown>;
 export const MAX_INSPECT_BYTES = 32 * 1024 * 1024;
 const MAX_RECORDS = 100;
 const registry = productionRegistry();
-
-/** Facts explaining the most common whole-record XML refusals. The fallback
- * deliberately makes no claim about an unsupported mapping's exact cause. */
-function xmlRefusal(record: Rec): string {
-  const effects = situationEffects(record);
-  if (effects.some(isVehicleSpecific)) return "vehicle_specific_effect";
-  if (effects.some(isRestrictionEvidence)) return "restriction_evidence";
-  return "no_representable_message";
-}
 
 /** Shared main-role parse, with the same completeness and input checks in both modes. */
 function parseSample(feed: CatalogFeed, buffers: readonly Buffer[], at: string) {
@@ -128,8 +115,8 @@ export function inspectFeed(
         effectStates: null,
         projection: {
           public: { eligible: false, reason: "invalid_draft" },
-          traff: { messages: 0, reason: "invalid_draft" },
-          datex: { records: 0, reason: "invalid_draft" },
+          traff: { messages: 0, reason: "invalid_draft", diagnostics: [] as ExportDiagnostic[] },
+          datex: { records: 0, reason: "invalid_draft", diagnostics: [] as ExportDiagnostic[] },
         },
       };
     }
@@ -144,12 +131,18 @@ export function inspectFeed(
       : shown === undefined
         ? "non_public_license"
         : null;
-    const traff = shown ? situationsToTraff(registry, [shown], instant) : "";
+    const traffDiagnostics: ExportDiagnostic[] = [];
+    const datexDiagnostics: ExportDiagnostic[] = [];
+    const traff = shown
+      ? situationsToTraff(registry, [shown], instant, (d) => traffDiagnostics.push(d))
+      : "";
     // Count the actual emitter's messages, including own-location effects.
     // XMLBuilder always emits this unprefixed element; attributes may contain
     // escaped text, never a literal '<message'. No independent eligibility gate.
     const messages = (traff.match(/<message(?:\s|>)/g) ?? []).length;
-    const datexCount = shown ? datexRecordsOf(shown, instant).length : 0;
+    const datexCount = shown
+      ? datexRecordsOf(shown, instant, (d) => datexDiagnostics.push(d)).length
+      : 0;
     if (shown) publicSituations.push(shown);
     return {
       draft,
@@ -160,18 +153,30 @@ export function inspectFeed(
         public: { eligible: shown !== undefined, reason },
         traff: {
           messages,
-          reason: reason ?? (messages === 0 ? xmlRefusal(canonicalPreview) : null),
+          reason:
+            reason ??
+            (messages === 0
+              ? (traffDiagnostics.find((d) => d.disposition === "withheld")?.code ??
+                "no_representable_message")
+              : null),
+          diagnostics: traffDiagnostics,
         },
         datex: {
           records: datexCount,
-          reason: reason ?? (datexCount === 0 ? xmlRefusal(canonicalPreview) : null),
+          reason:
+            reason ??
+            (datexCount === 0
+              ? (datexDiagnostics.find((d) => d.disposition === "withheld")?.code ??
+                "no_representable_message")
+              : null),
+          diagnostics: datexDiagnostics,
         },
       },
     };
   });
   const info = { attribution: feed.attribution, license: feed.license, timestamp };
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     mode: "preview",
     source: { id: feed.id, domain: feed.domain, format: feed.format },
     at: timestamp,

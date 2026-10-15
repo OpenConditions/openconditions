@@ -2,8 +2,6 @@ import {
   type Effect,
   effectStateAt,
   effectValidity,
-  isRestrictionEvidence,
-  isVehicleSpecific,
   type SituationClass,
   situationEffects,
   type Validity,
@@ -14,7 +12,7 @@ import {
   datexDiscriminator,
 } from "@openconditions/model-roads";
 import { XMLBuilder } from "fast-xml-parser";
-import { hasCoarseLocation } from "./situation-precision.js";
+import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -125,9 +123,6 @@ function effectDetail(effect: Effect): Rec {
   return effect.kind === "speed_limit" ? { "sit:temporarySpeedLimit": effect.limit.value } : {};
 }
 
-/** An effect DATEX cannot carry without widening or misstating it. */
-const untellable = (effect: Effect) => isVehicleSpecific(effect) || isRestrictionEvidence(effect);
-
 /** First coordinate of any geometry, as [lon, lat]. */
 function representativePoint(geometry: unknown): [number, number] | null {
   const g = geometry as { type?: string; coordinates?: unknown; geometries?: unknown[] } | null;
@@ -148,7 +143,13 @@ function representativePoint(geometry: unknown): [number, number] | null {
 /** A road's name, plain in `roadInformation`, so only its first language. */
 const roadName = (road: Rec) => (road["name"] as Text | undefined)?.[0];
 
-function buildLocation(location: Rec): Rec {
+function buildLocation(
+  location: Rec,
+  diagnostics: ProjectionDiagnostics,
+  path: string,
+  effect?: Effect,
+  directionPath = path,
+): Rec {
   const loc: Rec = { "@_xsi:type": "loc:PointLocation" };
   const roads = ((location["roads"] as Rec[] | undefined) ?? []).flatMap((road) => {
     const info: Rec = {};
@@ -162,10 +163,28 @@ function buildLocation(location: Rec): Rec {
   }
   const pt = representativePoint(location["geometry"]);
   if (pt) {
+    if ((location["geometry"] as Rec | undefined)?.["type"] !== "Point")
+      diagnostics.emit(
+        "geometry_to_point",
+        "field",
+        "reduced",
+        `${path}/geometry`,
+        "DATEX exports this geometry as its first representative coordinate only.",
+        effect,
+      );
     loc["loc:pointByCoordinates"] = {
       "loc:pointCoordinates": { "loc:latitude": pt[1], "loc:longitude": pt[0] },
     };
   }
+  if (location["direction"] !== undefined)
+    diagnostics.emit(
+      "direction_not_exported",
+      "field",
+      "omitted",
+      `${directionPath}/direction`,
+      "This DATEX emitter does not export location direction.",
+      effect,
+    );
   return loc;
 }
 
@@ -255,9 +274,10 @@ function natureDetail(c: SituationClass, code: string): Rec {
 }
 
 /** The DATEX records of a situation at `at`; none when DATEX cannot tell it truthfully. */
-export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
+export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnosticSink): Rec[] {
   const effects = situationEffects(situation);
-  if (hasCoarseLocation(situation) || effects.some(untellable)) return [];
+  const diagnostics = new ProjectionDiagnostics(situation, report);
+  if (diagnostics.blocked("datex")) return [];
   const id = situation["id"] as string;
   const version = String(situation["revision"] ?? 1);
   const validity = situation["validity"] as Validity;
@@ -265,7 +285,9 @@ export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
   const freshness = situation["freshness"] as Rec;
   const time =
     (provenance["sourceUpdatedAt"] as string | undefined) ?? (freshness["fetchedAt"] as string);
-  const location = buildLocation(situation["location"] as Rec);
+  let location: Rec | undefined;
+  const rootLocation = () =>
+    (location ??= buildLocation(situation["location"] as Rec, diagnostics, "/location"));
   const probability = PROBABILITY[String(situation["certainty"])] ?? "certain";
 
   // What the situation says as a whole travels on its leading record.
@@ -284,11 +306,53 @@ export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
   const folded: Effect[] | undefined = natureCode ? [] : undefined;
   const effectRecords: Rec[] = [];
   for (const effect of effects) {
+    // Delay duration is a leading-record supplement, selected above independently
+    // of management-effect time filtering. Do not claim the whole delay vanished.
+    if (effect.kind === "delay") continue;
     const { state } = effectStateAt(effect, validity, at);
-    if (state === "ended" || state === "unknown") continue;
+    const path = diagnostics.effectPath(effect);
+    if (state === "ended" || state === "unknown") {
+      diagnostics.emit(
+        state === "ended" ? "effect_ended" : "effect_time_unknown",
+        "effect",
+        "omitted",
+        state === "unknown" ? `${path}/issues` : effect.validity ? `${path}/validity` : "/validity",
+        `No management record is exported for this effect at the evaluation instant: ${state}.`,
+        effect,
+      );
+      continue;
+    }
     const code = effectCode(effect);
-    if (code === undefined) continue;
+    if (code === undefined) {
+      diagnostics.emit(
+        "unsupported_effect",
+        "effect",
+        "omitted",
+        `${path}/kind`,
+        "This effect has no DATEX management record mapping in the current emitter.",
+        effect,
+      );
+      continue;
+    }
+    if (effect.direction !== undefined)
+      diagnostics.emit(
+        "direction_not_exported",
+        "field",
+        "omitted",
+        `${path}/direction`,
+        "This DATEX emitter does not export effect direction.",
+        effect,
+      );
     const place = ownPlace(situation, effect);
+    if (place === undefined && effect.location?.direction !== undefined)
+      diagnostics.emit(
+        "direction_not_exported",
+        "field",
+        "omitted",
+        `${path}/location/direction`,
+        "This DATEX emitter does not export effect location direction.",
+        effect,
+      );
     // An effect folds into the nature record only where it holds at the same place.
     if (code === natureCode && place === undefined) {
       folded?.push(effect);
@@ -301,7 +365,16 @@ export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
         { id: effect.sourceRecordRef ?? `${id}#${effect.id}`, version, time, probability },
         {
           validity: effectValidity(effect, validity),
-          location: place === undefined ? location : buildLocation(place),
+          location:
+            place === undefined
+              ? rootLocation()
+              : buildLocation(
+                  place,
+                  diagnostics,
+                  `${path}/location`,
+                  effect,
+                  effect.location?.direction === undefined ? "/location" : `${path}/location`,
+                ),
           ...(first ? { lead } : {}),
           impact: { ...effectImpact(effect), ...(first ? delays : {}) },
           compliance: effect.compliance,
@@ -310,13 +383,22 @@ export function datexRecordsOf(situation: Rec, at: Date): Rec[] {
       ),
     );
   }
-  if (natureCode === undefined || folded === undefined) return effectRecords;
+  if (natureCode === undefined || folded === undefined) {
+    diagnostics.emit(
+      "unsupported_nature",
+      "field",
+      "omitted",
+      "/type",
+      "This situation classification has no DATEX nature record mapping in the current emitter.",
+    );
+    return effectRecords;
+  }
   const nature = record(
     natureCode,
     { id, version, time, probability },
     {
       validity,
-      location,
+      location: rootLocation(),
       lead,
       impact: Object.assign({}, ...folded.map(effectImpact), delays),
       compliance: folded[0]?.compliance,

@@ -123,3 +123,83 @@ describe("offline feed inspection", () => {
     ).toThrow();
   });
 });
+
+it("exposes publisher loss paths alongside actual outputs, including successful partial projections", () => {
+  const bytes = readFileSync(
+    new URL(
+      "../../../../packages/roads/src/__tests__/fixtures/cita-lu/situations.xml",
+      import.meta.url,
+    ),
+  );
+  const report = inspectFeed(repoFeed("lu-cita-events"), [bytes], at);
+  expect(report.schemaVersion).toBe(2);
+  const emitted = report.records.find((r) => r.projection.datex.records > 0)!;
+  expect(emitted.projection.datex.diagnostics).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        code: "geometry_to_point",
+        disposition: "reduced",
+        path: expect.stringContaining("/geometry"),
+      }),
+    ]),
+  );
+  const weights = inspectFeed(
+    repoFeed("fi-digitraffic-events"),
+    [
+      readFileSync(
+        new URL(
+          "../../../../packages/roads/src/__tests__/fixtures/digitraffic/weight-restriction.json",
+          import.meta.url,
+        ),
+      ),
+    ],
+    at,
+  );
+  for (const format of ["traff", "datex"] as const) {
+    expect(weights.records[0]!.projection[format].diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "vehicle_specific_effect",
+          scope: "situation",
+          disposition: "withheld",
+          path: expect.stringMatching(/^\/effects\/\d+\//),
+          effectId: expect.any(String),
+        }),
+      ]),
+    );
+  }
+});
+
+it("does not run XML diagnostics on records blocked before projection", () => {
+  const report = inspectFeed({ ...feed, restricted: true }, [payload], at);
+  for (const record of report.records) {
+    expect(record.projection.traff).toMatchObject({ reason: "restricted_source", diagnostics: [] });
+    expect(record.projection.datex).toMatchObject({ reason: "restricted_source", diagnostics: [] });
+  }
+});
+
+it("explains coarse VILD location refusal through the real parser and keeps GeoJSON", () => {
+  const bytes = readFileSync(
+    new URL(
+      "../../../../packages/roads/src/__tests__/fixtures/vild/ndw-method2-points.xml",
+      import.meta.url,
+    ),
+  );
+  const report = inspectFeed(repoFeed("nl-ndw-events"), [bytes], at);
+  expect(report.counts.valid).toBeGreaterThan(0);
+  const coarse = report.records.filter((r) => r.projection.traff.reason === "coarse_location");
+  expect(coarse.length).toBeGreaterThan(0);
+  for (const record of coarse) {
+    expect(record.projection.traff.messages).toBe(0);
+    expect(record.projection.datex.records).toBe(0);
+    expect(record.projection.datex.diagnostics).toContainEqual(
+      expect.objectContaining({
+        code: "coarse_location",
+        path: "/location/fuzziness",
+        scope: "situation",
+        disposition: "withheld",
+      }),
+    );
+  }
+  expect(report.exports.geojson.features.length).toBeGreaterThan(0);
+});
