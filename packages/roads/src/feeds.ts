@@ -15,6 +15,7 @@ export type DescribedFeed = Pick<
   | "geojson"
   | "flowMap"
   | "posListLonLat"
+  | "excludeMessageTypes"
   | "srsName"
   | "timezone"
 >;
@@ -36,6 +37,7 @@ export function feedToSourceDescriptor(feed: DescribedFeed): SourceDescriptor {
     ...(feed.geojson ? { geojson: feed.geojson } : {}),
     ...(feed.flowMap ? { flowMap: feed.flowMap } : {}),
     ...(feed.posListLonLat ? { posListLonLat: true } : {}),
+    ...(feed.excludeMessageTypes ? { excludeMessageTypes: feed.excludeMessageTypes } : {}),
     ...(feed.srsName ? { srsName: feed.srsName } : {}),
     ...(feed.timezone ? { timeZone: feed.timezone } : {}),
   };

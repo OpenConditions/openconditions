@@ -1,9 +1,13 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
+import { feedToSourceDescriptor } from "../feeds.js";
 import { parseTrafikverket } from "../trafikverket.js";
 import type { SourceDescriptor } from "../types.js";
+import { testFeed } from "./helpers/test-feeds.js";
 
 const SRC: SourceDescriptor = {
-  id: "se-trafikverket-events",
+  id: "se-trafikverket-situations-events",
   attribution: "Trafikverket",
   country: "SE",
   license: "CC0-1.0",
@@ -11,6 +15,17 @@ const SRC: SourceDescriptor = {
 
 function body(situations: unknown[]): string {
   return JSON.stringify({ RESPONSE: { RESULT: [{ Situation: situations }] } });
+}
+
+const at = (wkt: string) => ({ Point: { WGS84: wkt } });
+
+function one(deviation: Record<string, unknown>, situation: Record<string, unknown> = {}) {
+  const out = parseTrafikverket(
+    body([{ Id: "s", ...situation, Deviation: [{ Id: "d", ...deviation }] }]),
+    SRC,
+  );
+  expect(out).toHaveLength(1);
+  return out[0]!;
 }
 
 describe("parseTrafikverket", () => {
@@ -25,7 +40,7 @@ describe("parseTrafikverket", () => {
               Message: "Trafikolycka E4",
               SeverityCode: 4,
               RoadName: "E4",
-              Geometry: { Point: { WGS84: "POINT (18.0686 59.3293)" } },
+              Geometry: at("POINT (18.0686 59.3293)"),
             },
             {
               Id: "d2",
@@ -40,14 +55,13 @@ describe("parseTrafikverket", () => {
     );
     expect(out).toHaveLength(2);
     const byId = Object.fromEntries(out.map((e) => [e.id, e]));
-    expect(byId["se-trafikverket-events:d1"]!.type).toBe("accident");
-    expect(byId["se-trafikverket-events:d1"]!.severity).toBe("high");
-    expect(byId["se-trafikverket-events:d1"]!.geometry).toEqual({
-      type: "Point",
-      coordinates: [18.0686, 59.3293],
-    });
-    expect(byId["se-trafikverket-events:d2"]!.type).toBe("roadworks");
-    expect(byId["se-trafikverket-events:d2"]!.geometry!.type).toBe("LineString");
+    const d1 = byId["se-trafikverket-situations-events:d1"]!;
+    expect(d1.type).toBe("accident");
+    expect(d1.severity).toBe("high");
+    expect(d1.geometry).toEqual({ type: "Point", coordinates: [18.0686, 59.3293] });
+    const d2 = byId["se-trafikverket-situations-events:d2"]!;
+    expect(d2.type).toBe("roadworks");
+    expect(d2.geometry!.type).toBe("LineString");
     expect(out[0]!.sourceFormat).toBe("trafikverket");
   });
 
@@ -57,5 +71,254 @@ describe("parseTrafikverket", () => {
     ).toEqual([]);
     expect(parseTrafikverket("not json", SRC)).toEqual([]);
     expect(parseTrafikverket(JSON.stringify({ RESPONSE: {} }), SRC)).toEqual([]);
+  });
+
+  describe("geometry", () => {
+    it("keeps every part of a MULTILINESTRING", () => {
+      const ev = one({
+        MessageType: "Färjor",
+        Geometry: {
+          Line: {
+            WGS84: "MULTILINESTRING ((11.72 57.68, 11.71 57.68), (11.71 57.68, 11.70 57.68))",
+          },
+        },
+      });
+      expect(ev.geometry).toEqual({
+        type: "MultiLineString",
+        coordinates: [
+          [
+            [11.72, 57.68],
+            [11.71, 57.68],
+          ],
+          [
+            [11.71, 57.68],
+            [11.7, 57.68],
+          ],
+        ],
+      });
+    });
+
+    it("reads a one-part MULTILINESTRING as a LineString", () => {
+      const ev = one({
+        MessageType: "Hinder",
+        Geometry: { Line: { WGS84: "MULTILINESTRING((17 59,17.1 59.1))" } },
+      });
+      expect(ev.geometry).toEqual({
+        type: "LineString",
+        coordinates: [
+          [17, 59],
+          [17.1, 59.1],
+        ],
+      });
+    });
+
+    it("drops the Z of a 3D point or line", () => {
+      expect(
+        one({ MessageType: "Hinder", Geometry: at("POINT Z (13.41 55.88 0)") }).geometry,
+      ).toEqual({ type: "Point", coordinates: [13.41, 55.88] });
+      expect(
+        one({
+          MessageType: "Hinder",
+          Geometry: { Line: { WGS84: "LINESTRING Z (17 59 1, 17.1 59.1 2)" } },
+        }).geometry,
+      ).toEqual({
+        type: "LineString",
+        coordinates: [
+          [17, 59],
+          [17.1, 59.1],
+        ],
+      });
+    });
+
+    it("reads a POLYGON and the deviation-level Geometry.WGS84", () => {
+      const ev = one({
+        MessageType: "Viktig trafikinformation",
+        Geometry: { WGS84: "POLYGON ((17 59, 17.1 59, 17.1 59.1, 17 59))" },
+      });
+      expect(ev.geometry).toEqual({
+        type: "Polygon",
+        coordinates: [
+          [
+            [17, 59],
+            [17.1, 59],
+            [17.1, 59.1],
+            [17, 59],
+          ],
+        ],
+      });
+    });
+
+    it("prefers the line over the point and rejects malformed WKT", () => {
+      const ev = one({
+        MessageType: "Hinder",
+        Geometry: {
+          Point: { WGS84: "POINT (17.05 59.05)" },
+          Line: { WGS84: "LINESTRING (17 59, 17.1 59.1)" },
+        },
+      });
+      expect(ev.geometry!.type).toBe("LineString");
+      expect(
+        parseTrafikverket(
+          body([{ Id: "s", Deviation: [{ Id: "d", Geometry: at("POINT (17 59") }] }]),
+          SRC,
+        ),
+      ).toEqual([]);
+    });
+  });
+
+  describe("MessageType", () => {
+    it("maps the documented values", () => {
+      expect(one({ MessageType: "Färjor", Geometry: at("POINT (17 59)") }).type).toBe(
+        "transit_disruption",
+      );
+      expect(one({ MessageType: "Hinder", Geometry: at("POINT (17 59)") }).type).toBe(
+        "obstruction",
+      );
+      expect(one({ MessageType: "Trafikmeddelande", Geometry: at("POINT (17 59)") }).type).toBe(
+        "other",
+      );
+      expect(
+        one({ MessageType: "Viktig trafikinformation", Geometry: at("POINT (17 59)") }).type,
+      ).toBe("other");
+    });
+
+    it("reads a Restriktion's kind from its TemporaryLimit", () => {
+      const weight = one({
+        MessageType: "Restriktion",
+        TemporaryLimit: "bruttovikt 8 ton",
+        Geometry: at("POINT (17 59)"),
+      });
+      expect(weight.type).toBe("dimension_restriction");
+      const speed = one({
+        MessageType: "Restriktion",
+        TemporaryLimit: "hastighet 50 km/h",
+        Geometry: at("POINT (17 59)"),
+      });
+      expect(speed.type).toBe("speed_restriction");
+      expect(one({ MessageType: "Restriktion", Geometry: at("POINT (17 59)") }).type).toBe("other");
+    });
+
+    it("drops the feed's excluded MessageTypes and keeps the rest of the situation", () => {
+      const out = parseTrafikverket(
+        body([
+          {
+            Id: "s",
+            Deviation: [
+              { Id: "accident", MessageType: "Olycka", Geometry: at("POINT (17 59)") },
+              { Id: "obstacle", MessageType: "Hinder", Geometry: at("POINT (17.01 59.01)") },
+              { Id: "works", MessageType: "vägarbete", Geometry: at("POINT (17.02 59.02)") },
+            ],
+          },
+        ]),
+        { ...SRC, excludeMessageTypes: ["Olycka", "Vägarbete"] },
+      );
+      expect(out.map((e) => e.id)).toEqual(["se-trafikverket-situations-events:obstacle"]);
+      expect(out[0]!.situationId).toBe("s");
+    });
+  });
+
+  describe("times and lifecycle", () => {
+    it("takes the update time from VersionTime, never the StartTime", () => {
+      const ev = one(
+        {
+          MessageType: "Hinder",
+          StartTime: "2026-10-01T08:00:00.000+02:00",
+          VersionTime: "2026-10-14T07:55:10.000+02:00",
+          Geometry: at("POINT (17 59)"),
+        },
+        { ModifiedTime: "2026-10-14T05:55:11.004Z" },
+      );
+      expect(ev.dataUpdatedAt).toBe("2026-10-14T05:55:10.000Z");
+      expect(ev.situation?.sourceUpdatedAt).toBe("2026-10-14T05:55:10.000Z");
+      expect(ev.validFrom).toBe("2026-10-01T06:00:00.000Z");
+    });
+
+    it("falls back to the situation's VersionTime, then its ModifiedTime", () => {
+      const fromVersion = one(
+        { MessageType: "Hinder", StartTime: "2026-10-01T08:00:00Z", Geometry: at("POINT (17 59)") },
+        { VersionTime: "2026-10-14T09:00:00.000+02:00", ModifiedTime: "2026-10-14T07:00:01.000Z" },
+      );
+      expect(fromVersion.dataUpdatedAt).toBe("2026-10-14T07:00:00.000Z");
+      const fromModified = one(
+        { MessageType: "Hinder", StartTime: "2026-10-01T08:00:00Z", Geometry: at("POINT (17 59)") },
+        { ModifiedTime: "2026-10-14T07:00:01.000Z" },
+      );
+      expect(fromModified.dataUpdatedAt).toBe("2026-10-14T07:00:01.000Z");
+    });
+
+    it("reads a time without an offset in the feed's zone", () => {
+      const out = parseTrafikverket(
+        body([
+          {
+            Id: "s",
+            Deviation: [
+              {
+                Id: "d",
+                MessageType: "Restriktion",
+                StartTime: "2026-03-20T00:00:00",
+                EndTime: "2026-07-01T12:00:00",
+                Geometry: at("POINT (17 59)"),
+              },
+            ],
+          },
+        ]),
+        { ...SRC, timeZone: "Europe/Stockholm" },
+      );
+      expect(out[0]!.validFrom).toBe("2026-03-19T23:00:00.000Z");
+      expect(out[0]!.validTo).toBe("2026-07-01T10:00:00.000Z");
+    });
+
+    it("skips a deleted situation", () => {
+      expect(
+        parseTrafikverket(
+          body([
+            {
+              Id: "s",
+              Deleted: true,
+              Deviation: [{ Id: "d", MessageType: "Hinder", Geometry: at("POINT (17 59)") }],
+            },
+          ]),
+          SRC,
+        ),
+      ).toEqual([]);
+    });
+
+    it("keeps a suspended deviation as inactive", () => {
+      const ev = one({
+        MessageType: "Restriktion",
+        Suspended: true,
+        Geometry: at("POINT (17 59)"),
+      });
+      expect(ev.status).toBe("inactive");
+      expect(ev.situation?.validityStatus).toBe("suspended");
+      expect(one({ MessageType: "Hinder", Geometry: at("POINT (17 59)") }).status).toBe("active");
+    });
+  });
+
+  it("reads the documented-schema fixture through the feed's descriptor", () => {
+    const input = readFileSync(join(import.meta.dirname, "fixtures/trafikverket/situations.json"));
+    const out = parseTrafikverket(
+      input,
+      feedToSourceDescriptor(testFeed("se-trafikverket-situations-events")),
+    );
+    const byId = Object.fromEntries(
+      out.map((e) => [e.id.replace("se-trafikverket-situations-events:SE_STA_TRISSID_1_", ""), e]),
+    );
+    expect(Object.keys(byId).sort()).toEqual([
+      "9000001_D1",
+      "9000002_D2",
+      "9000003_D1",
+      "9000004_D1",
+    ]);
+    const ferry = byId["9000001_D1"]!;
+    expect(ferry.type).toBe("transit_disruption");
+    expect(ferry.geometry!.type).toBe("MultiLineString");
+    expect(ferry.direction).toBe("both");
+    expect(ferry.headline).toBe("Färjeleden Hönöleden");
+    const restriction = byId["9000003_D1"]!;
+    expect(restriction.type).toBe("dimension_restriction");
+    expect(restriction.status).toBe("inactive");
+    expect(restriction.dataUpdatedAt).toBe("2026-10-01T08:00:00.000Z");
+    expect(restriction.roads).toEqual([{ name: "Väg 331", ref: "Väg 331" }]);
   });
 });

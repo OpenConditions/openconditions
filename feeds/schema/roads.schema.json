@@ -1416,6 +1416,14 @@
           "posListLonLat": {
             "type": "boolean"
           },
+          "excludeMessageTypes": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
           "srsName": {
             "type": "string",
             "minLength": 1

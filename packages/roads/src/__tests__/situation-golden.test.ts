@@ -105,7 +105,12 @@ const CASES: [name: string, feed: string, fixture: string, format: string][] = [
   ["cars", "us-ny-511-events", "cars-ny/events.json", "cars"],
   ["cars-conditions", "us-ny-511-conditions", "cars-ny/conditions.json", "cars"],
   ["lta", "sg-lta-events", "lta/incidents.json", "lta"],
-  ["trafikverket", "se-trafikverket-events", "trafikverket/situations.json", "trafikverket"],
+  [
+    "trafikverket",
+    "se-trafikverket-situations-events",
+    "trafikverket/situations.json",
+    "trafikverket",
+  ],
 ];
 
 const SNAPSHOT_FORMATS = new Set(["datex2", "digitraffic", "cars"]);

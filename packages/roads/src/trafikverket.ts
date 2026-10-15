@@ -1,71 +1,181 @@
+import { toIsoTimestamp } from "@openconditions/core";
 import { trafikverketClassification } from "@openconditions/model-roads";
-import type { Geometry } from "geojson";
+import type { Geometry, Position } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
- * Parser for Sweden's Trafikverket "Situation" API (POST JSON query). The
- * response is `{ RESPONSE: { RESULT: [ { Situation: [ { Deviation: [ … ] } ] } ] } }`;
- * each Deviation is one event with WKT geometry in `Geometry.Point.WGS84` /
- * `Geometry.Line.WGS84` (lon-lat order). MessageType (Swedish) maps to the
- * canonical taxonomy. The feed is keyed (key embedded in the POST body), so this
- * is built from the documented schema — verify field shapes against a live
- * keyed response.
+ * Parser for Trafikverket's "Situation" object (schema 1.6, namespace
+ * `road.trafficinfo`) from the open API's `data.json` endpoint. The response is
+ * `{ RESPONSE: { RESULT: [ { Situation: [ { Deviation: [ … ] } ] } ] } }`; each
+ * Deviation is one event. Its geometry is WKT in `Geometry.Line.WGS84`,
+ * `Geometry.WGS84` or `Geometry.Point.WGS84`, lon-lat, which the schema allows
+ * to be a POINT, LINESTRING, MULTILINESTRING, POLYGON or MULTIPOLYGON with an
+ * optional Z. Times other than `ModifiedTime` are Swedish local time and may
+ * carry no offset, so the feed names its zone. `MessageType` is one of the
+ * seven documented Swedish values; a feed may leave some of them to another
+ * feed with `excludeMessageTypes`.
  */
 
 interface Deviation {
   Id?: string;
+  Header?: string;
   Message?: string;
   MessageType?: string;
-  SeverityText?: string;
+  MessageCode?: string;
   SeverityCode?: number;
   RoadName?: string;
+  RoadNumber?: string;
+  AffectedDirectionValue?: string;
+  TemporaryLimit?: string;
+  Suspended?: boolean;
   StartTime?: string;
   EndTime?: string;
-  Geometry?: { Point?: { WGS84?: string }; Line?: { WGS84?: string } };
+  CreationTime?: string;
+  VersionTime?: string;
+  Geometry?: {
+    WGS84?: string;
+    Point?: { WGS84?: string };
+    Line?: { WGS84?: string };
+  };
+}
+
+interface Situation {
+  Id?: string;
+  Deleted?: boolean;
+  VersionTime?: string;
+  ModifiedTime?: string;
+  Deviation?: Deviation[];
 }
 
 const TYPE_MAP: Record<string, RoadEventType> = {
   olycka: "accident",
   vägarbete: "roadworks",
   hinder: "obstruction",
-  avstängning: "road_closure",
-  "avstängd väg": "road_closure",
-  vägförhållande: "road_condition",
-  restriktion: "speed_restriction",
+  färjor: "transit_disruption",
 };
 
-const PLANNED = new Set<RoadEventType>(["roadworks"]);
-const INCIDENT = new Set<RoadEventType>(["accident", "road_closure", "obstruction"]);
-
-function categoryOf(type: RoadEventType): RoadEvent["category"] {
-  if (PLANNED.has(type)) return "planned";
-  if (INCIDENT.has(type)) return "incident";
-  return "conditions";
+/**
+ * A `Restriktion` names its limit only in `TemporaryLimit` ("bruttovikt 8
+ * ton"): a speed in km/h is a speed restriction, a weight or dimension a
+ * dimension restriction, anything else stays unclassified.
+ */
+function restrictionType(limit: string | undefined): RoadEventType {
+  if (!limit) return "other";
+  if (/km\/h/i.test(limit)) return "speed_restriction";
+  if (/ton\b|bruttovikt|axeltryck|boggitryck|bredd|höjd|längd/i.test(limit)) {
+    return "dimension_restriction";
+  }
+  return "other";
 }
 
-/** Parse a WKT "POINT (lon lat)" / "LINESTRING (lon lat, …)" to a geometry. */
+function typeOf(rawType: string, dev: Deviation): RoadEventType {
+  const lower = rawType.toLowerCase();
+  if (lower === "restriktion") return restrictionType(dev.TemporaryLimit);
+  return TYPE_MAP[lower] ?? "other";
+}
+
+type Nested = Position | Nested[];
+
+/** A WKT coordinate, `x y` with an optional `z` and `m` that are dropped. */
+const WKT_COORDINATE =
+  /^(-?[\d.]+(?:e[-+]?\d+)?)\s+(-?[\d.]+(?:e[-+]?\d+)?)(?:\s+-?[\d.]+(?:e[-+]?\d+)?)*/i;
+const WKT_GEOMETRY =
+  /^\s*(POINT|LINESTRING|MULTILINESTRING|POLYGON|MULTIPOLYGON)\s*(?:ZM|Z|M)?\s*(\(.*\))\s*$/is;
+
+/** The bracketed body of a WKT geometry as nested arrays of [x, y]. */
+function parseWktBody(body: string): Nested[] | null {
+  let i = 0;
+  const skip = () => {
+    while (i < body.length && /\s/.test(body[i]!)) i++;
+  };
+  const coordinate = (): Position | null => {
+    const m = WKT_COORDINATE.exec(body.slice(i));
+    if (!m) return null;
+    i += m[0].length;
+    const x = Number(m[1]);
+    const y = Number(m[2]);
+    return Number.isFinite(x) && Number.isFinite(y) ? [x, y] : null;
+  };
+  const list = (): Nested[] | null => {
+    if (body[i] !== "(") return null;
+    i++;
+    const items: Nested[] = [];
+    for (;;) {
+      skip();
+      const item = body[i] === "(" ? list() : coordinate();
+      if (item === null) return null;
+      items.push(item);
+      skip();
+      if (body[i] === ",") {
+        i++;
+        continue;
+      }
+      if (body[i] === ")") {
+        i++;
+        return items;
+      }
+      return null;
+    }
+  };
+  skip();
+  const out = list();
+  skip();
+  return out !== null && i === body.length ? out : null;
+}
+
+const isPosition = (n: Nested): n is Position => typeof n[0] === "number";
+const positions = (n: Nested): Position[] | null =>
+  Array.isArray(n) && n.every((c) => Array.isArray(c) && isPosition(c as Nested))
+    ? (n as Position[])
+    : null;
+const lines = (parts: Nested[]): Position[][] | null => {
+  const out = parts.map(positions);
+  return out.every((p) => p !== null) ? (out as Position[][]) : null;
+};
+
+/** Parse a WGS84 WKT POINT, LINESTRING, MULTILINESTRING, POLYGON or MULTIPOLYGON. */
 function wktToGeometry(wkt: string | undefined): Geometry | null {
   if (typeof wkt !== "string") return null;
-  const pt = wkt.match(/POINT\s*\(\s*(-?[\d.]+)\s+(-?[\d.]+)/i);
-  if (pt) {
-    const c: [number, number] = [Number(pt[1]), Number(pt[2])];
-    return Number.isFinite(c[0]) && Number.isFinite(c[1])
-      ? { type: "Point", coordinates: c }
-      : null;
+  const m = WKT_GEOMETRY.exec(wkt);
+  if (!m) return null;
+  const body = parseWktBody(m[2]!);
+  if (!body) return null;
+  switch (m[1]!.toUpperCase()) {
+    case "POINT": {
+      const pts = positions(body);
+      return pts?.length === 1 ? { type: "Point", coordinates: pts[0]! } : null;
+    }
+    case "LINESTRING": {
+      const pts = positions(body);
+      return pts && pts.length >= 2 ? { type: "LineString", coordinates: pts } : null;
+    }
+    case "MULTILINESTRING": {
+      const parts = lines(body)?.filter((p) => p.length >= 2);
+      if (!parts || parts.length === 0) return null;
+      return parts.length === 1
+        ? { type: "LineString", coordinates: parts[0]! }
+        : { type: "MultiLineString", coordinates: parts };
+    }
+    case "POLYGON": {
+      const rings = lines(body);
+      return rings && rings.length > 0 && rings.every((r) => r.length >= 4)
+        ? { type: "Polygon", coordinates: rings }
+        : null;
+    }
+    case "MULTIPOLYGON": {
+      const polygons = body.map((p) => (Array.isArray(p) && !isPosition(p) ? lines(p) : null));
+      return polygons.length > 0 &&
+        polygons.every((p) => p !== null && p.length > 0 && p.every((r) => r.length >= 4))
+        ? { type: "MultiPolygon", coordinates: polygons as Position[][][] }
+        : null;
+    }
+    default:
+      return null;
   }
-  const line = wkt.match(/LINESTRING\s*\(([^)]+)\)/i);
-  if (line) {
-    const coords = line[1]!
-      .split(",")
-      .map((p) => p.trim().split(/\s+/).map(Number))
-      .filter((c) => c.length >= 2 && Number.isFinite(c[0]) && Number.isFinite(c[1]))
-      .map((c) => [c[0]!, c[1]!] as [number, number]);
-    if (coords.length >= 2) return { type: "LineString", coordinates: coords };
-  }
-  return null;
 }
 
 function severityOf(code: number | undefined): RoadEvent["severity"] {
@@ -84,6 +194,9 @@ function severityOf(code: number | undefined): RoadEvent["severity"] {
   }
 }
 
+const text = (value: unknown): string | undefined =>
+  typeof value === "string" && value.trim() ? value.trim() : undefined;
+
 export function parseTrafikverket(
   input: string | Buffer | unknown,
   src: SourceDescriptor,
@@ -99,65 +212,88 @@ export function parseTrafikverket(
   const results = (data as { RESPONSE?: { RESULT?: unknown[] } })?.RESPONSE?.RESULT;
   if (!Array.isArray(results)) return [];
 
+  const excluded = new Set((src.excludeMessageTypes ?? []).map((t) => t.trim().toLowerCase()));
+  const fetchedAt = new Date().toISOString();
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
   for (const result of results) {
     const situations = (result as { Situation?: unknown[] })?.Situation;
     if (!Array.isArray(situations)) continue;
-    for (const sit of situations) {
-      const deviations = (sit as { Deviation?: Deviation[] })?.Deviation;
+    for (const sit of situations as Situation[]) {
+      // Only a query with includedeletedobjects returns these; a withdrawn situation is no event.
+      if (sit?.Deleted === true) continue;
+      const deviations = sit?.Deviation;
       if (!Array.isArray(deviations)) continue;
-      for (const dev of deviations) {
+      const sitId = text(sit.Id);
+      deviations.forEach((dev, index) => {
+        const rawType = text(dev?.MessageType) ?? "";
+        if (excluded.has(rawType.toLowerCase())) return;
+        const localId = text(dev.Id) ?? (sitId ? `${sitId}:${index}` : undefined);
+        if (!localId) return;
         const geometry =
-          wktToGeometry(dev.Geometry?.Point?.WGS84) ?? wktToGeometry(dev.Geometry?.Line?.WGS84);
+          wktToGeometry(dev.Geometry?.Line?.WGS84) ??
+          wktToGeometry(dev.Geometry?.WGS84) ??
+          wktToGeometry(dev.Geometry?.Point?.WGS84);
         if (!geometry) {
           skippedNoGeometry++;
-          continue;
+          return;
         }
-        const rawType = (dev.MessageType ?? "").trim();
-        const type = TYPE_MAP[rawType.toLowerCase()] ?? "other";
+        const { type, category, isPlanned } = coarseType(typeOf(rawType, dev));
         const classification = trafikverketClassification(rawType);
-        const road = typeof dev.RoadName === "string" && dev.RoadName ? dev.RoadName : undefined;
+        const header = text(dev.Header);
+        const message = text(dev.Message);
+        const roadName = text(dev.RoadName);
+        const roadNumber = text(dev.RoadNumber);
         const severity = severityOf(dev.SeverityCode);
+        const updated =
+          toIsoTimestamp(dev.VersionTime, src.timeZone) ??
+          toIsoTimestamp(sit.VersionTime, src.timeZone) ??
+          toIsoTimestamp(sit.ModifiedTime, src.timeZone);
+        const suspended = dev.Suspended === true;
 
         out.push({
-          id: `${src.id}:${dev.Id ?? out.length}`,
+          id: `${src.id}:${localId}`,
           source: src.id,
           sourceFormat: "trafikverket",
           domain: "roads",
           kind: "event",
           situation: {
             ...(classification !== undefined ? { classification } : {}),
-            ...(typeof dev.Message === "string" && dev.Message
-              ? {}
-              : { headlineFromSource: false as const }),
+            ...(updated !== undefined ? { sourceUpdatedAt: updated } : {}),
+            ...(header || message ? {} : { headlineFromSource: false as const }),
             ...(typeof dev.SeverityCode === "number"
               ? { severityRaw: String(dev.SeverityCode) }
               : {}),
+            ...(suspended ? { validityStatus: "suspended" as const } : {}),
           },
+          ...(sitId ? { situationId: sitId } : {}),
           type,
-          subtype: rawType || undefined,
-          category: categoryOf(type),
-          isPlanned: PLANNED.has(type),
+          subtype: text(dev.MessageCode) ?? (rawType || undefined),
+          category,
+          isPlanned,
           severity,
           severitySource: severity === "unknown" ? "derived" : "declared",
-          status: "active",
+          status: suspended ? "inactive" : "active",
           geometry,
-          roads: road ? [{ name: road }] : [],
-          headline: typeof dev.Message === "string" && dev.Message ? dev.Message : rawType || type,
-          description: typeof dev.Message === "string" ? dev.Message : undefined,
-          validFrom: dev.StartTime ?? null,
-          validTo: dev.EndTime ?? null,
+          roads:
+            roadName || roadNumber
+              ? [{ name: (roadName ?? roadNumber)!, ...(roadNumber ? { ref: roadNumber } : {}) }]
+              : [],
+          ...(dev.AffectedDirectionValue === "BothDirections" ? { direction: "both" } : {}),
+          headline: header ?? message ?? text(dev.MessageCode) ?? (rawType || type),
+          description: message,
+          validFrom: toIsoTimestamp(dev.StartTime, src.timeZone) ?? null,
+          validTo: toIsoTimestamp(dev.EndTime, src.timeZone) ?? null,
           sourceRaw: dev as Record<string, unknown>,
           origin: {
             kind: "feed",
             attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
           },
-          dataUpdatedAt: dev.StartTime ?? new Date().toISOString(),
-          fetchedAt: new Date().toISOString(),
+          dataUpdatedAt: updated ?? toIsoTimestamp(dev.CreationTime, src.timeZone) ?? fetchedAt,
+          fetchedAt,
           isStale: false,
         });
-      }
+      });
     }
   }
 

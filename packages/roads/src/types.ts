@@ -57,6 +57,8 @@ export interface SourceDescriptor {
    * unaffected.
    */
   posListLonLat?: boolean;
+  /** Trafikverket Situation deviation `MessageType`s another feed carries; they are dropped. */
+  excludeMessageTypes?: string[];
   /**
    * CRS of the feed's coordinates, for publishers using a projected grid that
    * declare no `srsName` in the payload. Without it the raw grid values are

@@ -1,16 +1,125 @@
 [
   {
-    "id": "oc:situation:se-trafikverket-events:d1",
+    "id": "oc:situation:se-trafikverket-situations-events:SE_STA_TRISSID_1_9000001",
     "temporality": "live",
     "location": {
       "geometry": {
-        "type": "Point",
+        "type": "MultiLineString",
         "coordinates": [
-          18.0686,
-          59.3293
+          [
+            [
+              11.7231,
+              57.6852
+            ],
+            [
+              11.7112,
+              57.6826
+            ]
+          ],
+          [
+            [
+              11.7112,
+              57.6826
+            ],
+            [
+              11.7019,
+              57.6807
+            ]
+          ]
         ]
       },
-      "extent": "point",
+      "extent": "linear",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "direction": {
+        "value": "both",
+        "basis": "text",
+        "text": "both"
+      },
+      "admin": {
+        "country": "SE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "se-trafikverket-situations-events",
+      "sourceFormat": "trafikverket",
+      "accessMode": "bulk",
+      "recordId": "SE_STA_TRISSID_1_9000001",
+      "sourceUpdatedAt": "2026-10-14T04:02:40.000Z",
+      "attribution": {
+        "provider": "Trafikverket",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.trafikverket.se/"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "minor",
+      "source": "declared",
+      "declaredRaw": "2"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Färjeleden Hönöleden"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Färjan går enligt reservtidtabell på grund av tekniskt fel."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-14T04:00:00.000Z",
+      "end": "2026-10-14T10:00:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    },
+    "canonicalId": "0e261801ff7bca9a304fc55f6c77d63a7f044f86fc2ad19fb57bb55d9504820a",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "1b12bd3b9761ee66cf11d5fb8d9ce00c572753d9829456a6f8117dca294d3d29"
+  },
+  {
+    "id": "oc:situation:se-trafikverket-situations-events:SE_STA_TRISSID_1_9000002",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "LineString",
+        "coordinates": [
+          [
+            17.9781,
+            59.3601
+          ],
+          [
+            17.9779,
+            59.3612
+          ],
+          [
+            17.9774,
+            59.3625
+          ]
+        ]
+      },
+      "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "roads": [
@@ -20,7 +129,8 @@
               "lang": "und",
               "text": "E4"
             }
-          ]
+          ],
+          "ref": "E4"
         }
       ],
       "admin": {
@@ -29,10 +139,11 @@
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "se-trafikverket-events",
+      "sourceId": "se-trafikverket-situations-events",
       "sourceFormat": "trafikverket",
       "accessMode": "bulk",
-      "recordId": "d1",
+      "recordId": "SE_STA_TRISSID_1_9000002",
+      "sourceUpdatedAt": "2026-10-14T05:55:10.000Z",
       "attribution": {
         "provider": "Trafikverket",
         "license": "CC0-1.0",
@@ -48,7 +159,7 @@
     },
     "class": "situation",
     "kind": "incident",
-    "type": "accident",
+    "type": "obstruction",
     "planned": false,
     "certainty": "unknown",
     "severity": {
@@ -59,59 +170,76 @@
     "headline": [
       {
         "lang": "und",
-        "text": "Trafikolycka E4"
+        "text": "Fordon på vägbanan"
       }
     ],
     "description": [
       {
         "lang": "und",
-        "text": "Trafikolycka E4"
+        "text": "Ett fordon står kvar i vänster körfält."
       }
     ],
     "validity": {
-      "status": "active"
+      "status": "active",
+      "start": "2026-10-14T05:42:00.000Z"
     },
     "effects": [],
     "details": {
       "kind": "incident",
       "v": 1
     },
-    "canonicalId": "9dfa7325881b90c558b4137ea59c54a8becf722c4d317236e5b7c6b1988cf53e",
+    "canonicalId": "1dfa6cfd37b9881b9082e95b25e7fac45bb3ccb71d567e94591478f42709c518",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0e27e2ba75cd57644fb0c059d202c0961311db7176342d89f02c7fd734f5cd78"
+    "contentHash": "e4cebffa6aa367002cc93bb2271f9e7dd9102fa37733ee2c70996810beb2c2a6"
   },
   {
-    "id": "oc:situation:se-trafikverket-events:d2",
+    "id": "oc:situation:se-trafikverket-situations-events:SE_STA_TRISSID_1_9000003",
     "temporality": "live",
     "location": {
       "geometry": {
         "type": "LineString",
         "coordinates": [
           [
-            17,
-            59
+            17.212,
+            62.411
           ],
           [
-            17.1,
-            59.1
+            17.1985,
+            62.4302
+          ],
+          [
+            17.1803,
+            62.4477
           ]
         ]
       },
       "extent": "linear",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Väg 331"
+            }
+          ],
+          "ref": "Väg 331"
+        }
+      ],
       "admin": {
         "country": "SE"
       }
     },
     "provenance": {
       "origin": "feed",
-      "sourceId": "se-trafikverket-events",
+      "sourceId": "se-trafikverket-situations-events",
       "sourceFormat": "trafikverket",
       "accessMode": "bulk",
-      "recordId": "d2",
+      "recordId": "SE_STA_TRISSID_1_9000003",
+      "sourceUpdatedAt": "2026-10-01T08:00:00.000Z",
       "attribution": {
         "provider": "Trafikverket",
         "license": "CC0-1.0",
@@ -126,38 +254,125 @@
       "fetchedAt": "2026-09-18T10:00:00.000Z"
     },
     "class": "situation",
-    "kind": "roadworks",
-    "type": "works",
-    "planned": true,
+    "kind": "restriction",
+    "type": "dimension",
+    "planned": false,
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "derived"
+      "source": "declared",
+      "declaredRaw": "2"
     },
     "headline": [
       {
         "lang": "und",
-        "text": "Vägarbete"
+        "text": "Bärighetsbegränsning"
       }
     ],
     "description": [
       {
         "lang": "und",
-        "text": "Vägarbete"
+        "text": "Tjällossning. Tillfälligt nedsatt bärighet."
       }
     ],
     "validity": {
-      "status": "active"
+      "status": "suspended",
+      "start": "2026-03-19T23:00:00.000Z"
     },
     "effects": [],
     "details": {
-      "kind": "roadworks",
-      "v": 1
+      "kind": "restriction",
+      "v": 1,
+      "basis": "temporary"
     },
-    "canonicalId": "e82065d047fb13c9c989198218cf1e0faa3444b7e17ac5d3e11fe789aa8b07df",
+    "canonicalId": "dc519d7bdad38f11687ac1d0ee2c72433da42c1701d0c0d490fac5c5bbc045ea",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d47a50f5bb2cf66126fa451e3ee0a27daa7f5f876c38beccafc6143d61eaecff"
+    "contentHash": "3a4baccb35763fcc2a83b865f5507986d376baf56048d246ffdfe61cd6b37793"
+  },
+  {
+    "id": "oc:situation:se-trafikverket-situations-events:SE_STA_TRISSID_1_9000004",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          13.412,
+          55.8811
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "roads": [
+        {
+          "name": [
+            {
+              "lang": "und",
+              "text": "Väg 13"
+            }
+          ],
+          "ref": "Väg 13"
+        }
+      ],
+      "admin": {
+        "country": "SE"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "se-trafikverket-situations-events",
+      "sourceFormat": "trafikverket",
+      "accessMode": "bulk",
+      "recordId": "SE_STA_TRISSID_1_9000004",
+      "sourceUpdatedAt": "2026-10-14T06:20:00.000Z",
+      "attribution": {
+        "provider": "Trafikverket",
+        "license": "CC0-1.0",
+        "licenseUrl": "https://data.trafikverket.se/"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "golden.test"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-18T10:00:00.000Z"
+    },
+    "class": "situation",
+    "kind": "other",
+    "type": "other",
+    "planned": false,
+    "certainty": "unknown",
+    "severity": {
+      "label": "unknown"
+    },
+    "headline": [
+      {
+        "lang": "und",
+        "text": "Djur på vägen"
+      }
+    ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Renar vid vägen, kör försiktigt."
+      }
+    ],
+    "validity": {
+      "status": "active",
+      "start": "2026-10-14T06:15:00.000Z"
+    },
+    "effects": [],
+    "details": {
+      "kind": "other",
+      "v": 1
+    },
+    "canonicalId": "c95a91b5bd53e87a8f07658c4f11065753f5b3095184dc80a5a75240d45af512",
+    "domain": "roads",
+    "revision": 1,
+    "recordedAt": "2026-09-18T10:00:00.000Z",
+    "contentHash": "ec00522ac688734e72eb22a7556084bffdf54229a12c040ccf717dc4c3e99abf"
   }
 ]

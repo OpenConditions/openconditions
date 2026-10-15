@@ -701,6 +701,16 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     licenseUrl: "https://data.trafikverket.se/",
     posListLonLat: true,
   },
+  "se-trafikverket-situations-events": {
+    region: "se",
+    product: "events",
+    format: "trafikverket",
+    attribution: "Trafikverket",
+    license: "CC0-1.0",
+    licenseUrl: "https://data.trafikverket.se/",
+    excludeMessageTypes: ["Olycka", "Vägarbete"],
+    timezone: "Europe/Stockholm",
+  },
   "se-trafikverket-flow": {
     region: "se",
     product: "flow",

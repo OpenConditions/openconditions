@@ -99,6 +99,12 @@ const roadsFeedExtension = {
    */
   posListLonLat: z.boolean().optional(),
   /**
+   * For `trafikverket` feeds: the deviation `MessageType`s ("Olycka",
+   * "Vägarbete") another feed already carries. A Situation keeps all its
+   * deviations whichever one a query matched, so these are dropped in parsing.
+   */
+  excludeMessageTypes: z.array(z.string().min(1)).nonempty().optional(),
+  /**
    * CRS for DATEX feeds publishing a projected grid that declare no `srsName`
    * in the payload (e.g. Mecklenburg-Vorpommern's UTM zone 33).
    */
