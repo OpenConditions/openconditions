@@ -1,6 +1,7 @@
 import { productionRegistry } from "@openconditions/model-registry";
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
+import { validateXML } from "xmllint-wasm";
 import { situationsToTraff, traffEventsOf } from "../situation-traff.js";
 
 type Rec = Record<string, unknown>;
@@ -364,6 +365,46 @@ describe("situationsToTraff", () => {
         to: "+51.2 +6.818",
       },
     });
+  });
+
+  it("stays well-formed when source text carries characters XML 1.0 cannot represent", async () => {
+    const dirty = (text: string) => `${text}\u0001\u0008\u000B\u000C\u001F\uDC00\uFFFE\uFFFF`;
+    const xml = situationsToTraff(
+      registry,
+      [
+        situation({
+          id: dirty("oc:situation:de-autobahn-events:a46"),
+          location: {
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [6.805, 51.2],
+                [6.818, 51.2],
+              ],
+            },
+            roads: [
+              {
+                ref: dirty("A 46"),
+                name: [{ lang: "de", text: dirty("Autobahn 46") }],
+                from: dirty("Wuppertal"),
+                to: dirty("Haan"),
+                class: "motorway",
+              },
+            ],
+          },
+        }),
+      ],
+      AT,
+    );
+    expect(xml).toMatch(/^[\t\n\r\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]*$/u);
+    const result = await validateXML({
+      xml: [{ fileName: "traff.xml", contents: xml }],
+      normalization: "format",
+    });
+    expect(result.errors).toEqual([]);
+    expect(parser.parse(xml).feed.message.location["@_road_name"]).toBe(
+      `Autobahn 46${"\uFFFD".repeat(8)}`,
+    );
   });
 });
 

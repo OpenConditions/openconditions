@@ -234,6 +234,30 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
     expect(await validate(xml)).toEqual([]);
   });
 
+  it("validates source text carrying characters XML 1.0 cannot represent", async ({ skip }) => {
+    if (unavailable) skip(unavailable);
+    const dirty = (text: string) => `${text}\u0001\u0008\u000B\u000C\u001F\uD800\uFFFE\uFFFF`;
+    const xml = situationsToDatex(
+      [
+        situation("control-chars", {
+          id: dirty("oc:situation:test:control"),
+          headline: [{ lang: "de", text: dirty("Bauarbeiten\tA 46\r\n") }],
+          location: {
+            geometry: { type: "Point", coordinates: [6.81, 51.2] },
+            roads: [{ ref: dirty("A46"), name: [{ lang: "de", text: dirty("Autobahn 46") }] }],
+          },
+          effects: [effect("closure", "closure", { scope: "road", sourceRecordRef: dirty("r1") })],
+        }),
+      ],
+      AT,
+      { ...INFO, attribution: dirty("OpenConditions") },
+      "de",
+    );
+    expect(xml).toMatch(/^[\t\n\r\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]*$/u);
+    expect(xml).toContain("Bauarbeiten\tA 46\r\n\uFFFD");
+    expect(await validate(xml)).toEqual([]);
+  }, 60_000);
+
   it("validates an empty publication with the default country", async ({ skip }) => {
     if (unavailable) skip(unavailable);
     expect(await validate(situationsToDatex([], AT, INFO))).toEqual([]);
