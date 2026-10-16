@@ -73,7 +73,13 @@ describe("observation history rows", () => {
       ),
     );
     expect(row).toMatchObject({ value_num: 87.5, value_json: null, fetch_id: 7, raw_part: 1 });
-    expect(row["extra"]).toEqual({ provenance: { sourceUpdatedAt: "2026-10-01T09:59:00Z" } });
+    expect(row["extra"]).toEqual({
+      provenance: {
+        attribution: (record["provenance"] as Record<string, unknown>)["attribution"],
+        upstream: [],
+        sourceUpdatedAt: "2026-10-01T09:59:00Z",
+      },
+    });
     expect(back).toEqual(record);
   });
 
@@ -188,7 +194,12 @@ describe("observation history rows", () => {
     const spec = registry.property("charging.evse_status")!.result;
     const row = historyRowOf(first, spec, {});
     expect(row["extra"]).toEqual({
-      provenance: { recordId: "a".repeat(64), reporter: { keyId: "key-one" } },
+      provenance: {
+        attribution: (first["provenance"] as Record<string, unknown>)["attribution"],
+        upstream: [],
+        recordId: "a".repeat(64),
+        reporter: { keyId: "key-one" },
+      },
     });
     expect(recordFromHistory(registry, template, fromDatabase(row))).toEqual(first);
   });

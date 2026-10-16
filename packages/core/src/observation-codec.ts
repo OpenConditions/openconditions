@@ -217,7 +217,15 @@ export function historyRowOf(
     | { hash: string; part?: string; pointer?: string }
     | undefined;
   const rawPart = rawRef ? (poll.payloadHashes?.indexOf(rawRef.hash) ?? -1) : -1;
-  const extraProvenance: Rec = {};
+  // A raw history row owns these terms even if the series later changes.
+  // Storage interns them in contributor_receipt before inserting the row.
+  const extraProvenance: Rec = {
+    attribution: provenance["attribution"],
+    upstream: provenance["upstream"] ?? [],
+    ...(provenance["mergedSources"] !== undefined
+      ? { mergedSources: provenance["mergedSources"] }
+      : {}),
+  };
   if (
     rawRef !== undefined &&
     (rawPart < 0 || rawRef.part !== undefined || rawRef.pointer !== undefined)
@@ -263,7 +271,7 @@ const iso = (value: unknown) => (value instanceof Date ? value.toISOString() : (
  * The id, canonical id and content hash are derived again. Instants read back
  * in UTC with milliseconds: a source's spelling of an instant is not kept
  * (the id already treats two spellings as one point), so the content hash is
- * that of the record as read back. The template is the series' current one.
+ * that of the record as read back. The template supplies series identity and geometry; licensing comes from the reading's immutable capture.
  */
 export function recordFromHistory(
   registry: Registry,
@@ -280,10 +288,33 @@ export function recordFromHistory(
   const start = iso(row["phenomenon_start"]);
   const end = row["phenomenon_end"] == null ? undefined : iso(row["phenomenon_end"]);
   const recordedAt = iso(row["recorded_at"]);
+  const ownProvenance = { ...((extra["provenance"] as Rec | undefined) ?? {}) };
+  const receipt = row["captured_provenance"] as Rec | null | undefined;
+  const {
+    attribution: _currentAttribution,
+    upstream: _currentUpstream,
+    mergedSources: _currentMerged,
+    ...sharedProvenance
+  } = template["provenance"] as Rec;
+  const captured =
+    receipt ?? (ownProvenance["attribution"] !== undefined ? ownProvenance : undefined);
   const provenance: Rec = {
-    ...(template["provenance"] as Rec),
-    ...((extra["provenance"] as Rec) ?? {}),
+    ...sharedProvenance,
+    ...ownProvenance,
+    attribution: captured?.["attribution"] ?? {
+      provider: "Unknown publisher",
+      license: "NOASSERTION",
+    },
+    ...(Array.isArray(captured?.["upstream"]) && (captured["upstream"] as unknown[]).length > 0
+      ? { upstream: captured["upstream"] }
+      : {}),
+    ...(captured?.["mergedSources"] !== undefined
+      ? { mergedSources: captured["mergedSources"] }
+      : {}),
   };
+  delete provenance["creditReceiptId"];
+  if (Array.isArray(provenance["upstream"]) && (provenance["upstream"] as unknown[]).length === 0)
+    delete provenance["upstream"];
   if (row["raw_part"] != null && provenance["rawRef"] === undefined) {
     provenance["rawRef"] = { hash: payloadHashes[row["raw_part"] as number] };
   }

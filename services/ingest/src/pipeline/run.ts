@@ -49,6 +49,7 @@ import { type ParseGate, payloadBytes } from "./parse-gate.js";
 import { type ParseProcess, ParseProcessError } from "./parse-process.js";
 import { PollSteps } from "./poll-steps.js";
 import {
+  attributionStamp,
   changedSituations,
   logRejections,
   type PollIdentity,
@@ -1370,7 +1371,8 @@ async function finishFlowPoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "error", error);
   }
-  const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampAttribution(d, src));
+  const stampOne = attributionStamp(src);
+  const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const stamped: FlowOutput = {
     features: stamp(output.features),
     observations: stamp(output.observations),
@@ -1448,7 +1450,8 @@ async function finishFeaturePoll(
   const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
-  const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampAttribution(d, src));
+  const stampOne = attributionStamp(src);
+  const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
     features: stamp(parse.features),
     observations: stamp(parse.observations),
@@ -1507,7 +1510,8 @@ async function finishFeaturePoll(
  */
 async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promise<RunResult> {
   const { src, deps } = poll;
-  const observations = output.observations.map((d) => stampAttribution(d, src));
+  const stamp = attributionStamp(src);
+  const observations = output.observations.map((d) => stamp(d));
   let published: Awaited<ReturnType<typeof publishReadings>>;
   poll.steps.lap("prepare");
   try {

@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { setFlagsFromString } from "node:v8";
+import { runInNewContext } from "node:vm";
 import { gzipSync } from "node:zlib";
 import type { CatalogFeed, ParseContext } from "@openconditions/ingest-framework";
 import { drainSkippedNoGeometry } from "@openconditions/roads";
@@ -89,6 +91,23 @@ describe("the parse process", { timeout: 60_000 }, () => {
       ctx,
     });
     expect(again.output.features.length).toBeGreaterThan(0);
+  });
+
+  it("keeps nothing of a parse its caller is done with", async () => {
+    setFlagsFromString("--expose-gc");
+    const gc = runInNewContext("gc") as () => void;
+    const parse = async () => {
+      const parsed = await child.parse({
+        feed: repoFeed("de-bnetza-charging"),
+        payloads: { main: [{ data: BNETZA, gzipped: false }] },
+        ctx,
+      });
+      return new WeakRef(parsed.output);
+    };
+    const output = await parse();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    gc();
+    expect(output.deref()).toBeUndefined();
   });
 
   it("stops an idle child, and the next parse starts a new one", async () => {

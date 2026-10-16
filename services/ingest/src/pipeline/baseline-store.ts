@@ -1,3 +1,5 @@
+import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
+import { type Attribution, type MergedSource, publicAttributionOf } from "@openconditions/model";
 import type { FlowBaseline } from "@openconditions/roads";
 import type postgres from "postgres";
 
@@ -25,13 +27,52 @@ export async function loadBaselineMap(
   source: string,
 ): Promise<Map<string, FlowBaseline>> {
   const rows = await sql<
-    { subject_key: string; free_flow_kph: number; method: FlowBaseline["method"] }[]
+    {
+      subject_key: string;
+      free_flow_kph: number;
+      method: FlowBaseline["method"];
+      provenances:
+        | { sourceId: string; attribution: Attribution; upstream?: MergedSource["upstream"] }[]
+        | null;
+    }[]
   >`
-    SELECT DISTINCT ON (subject_key) subject_key, free_flow_kph, method
-    FROM conditions.sensor_baseline
+    SELECT DISTINCT ON (subject_key) subject_key, free_flow_kph, method,
+      (SELECT jsonb_agg(r.provenance) FROM unnest(b.contributor_receipt_ids) ids
+        JOIN conditions.contributor_receipt r ON r.id=ids AND r.version=${CONTRIBUTOR_RECEIPT_VERSION}) AS provenances
+    FROM conditions.sensor_baseline b
     WHERE source = ${source} AND dow_bucket = -1 AND tod_bucket = -1
+      AND (method <> 'derived' OR (lineage_complete
+        AND conditions.flow_public_licenses(permission_licenses)
+        AND conditions.flow_receipt_permissions(contributor_receipt_ids,lineage_complete,${CONTRIBUTOR_RECEIPT_VERSION}) IS NOT NULL
+        AND contributing = ARRAY[b.source]
+        AND NOT EXISTS(SELECT 1 FROM unnest(contributing) ids LEFT JOIN conditions.source s ON s.id=ids WHERE s.id IS NULL OR s.restricted)))
     ORDER BY subject_key, (CASE method WHEN 'native' THEN 0 WHEN 'derived' THEN 1 ELSE 2 END)`;
   return new Map(
-    rows.map((r) => [r.subject_key, { freeFlowKph: r.free_flow_kph, method: r.method }]),
+    rows.map((r) => {
+      const upstream =
+        r.method === "derived"
+          ? (r.provenances ?? []).flatMap((p) => [
+              {
+                source: { sourceId: p.sourceId, attribution: publicAttributionOf(p.attribution) },
+                publisher:
+                  p.attribution.publisher?.name ?? p.attribution.name ?? p.attribution.provider,
+                license: p.attribution.license,
+                ...(p.attribution.licensing ? { licensing: p.attribution.licensing } : {}),
+                attribution: p.attribution.provider,
+              },
+              ...(p.upstream ?? []),
+            ])
+          : undefined;
+      return [
+        r.subject_key,
+        {
+          freeFlowKph: r.free_flow_kph,
+          method: r.method,
+          ...(upstream?.length
+            ? { upstream: [...new Map(upstream.map((u) => [JSON.stringify(u), u])).values()] }
+            : {}),
+        },
+      ];
+    }),
   );
 }

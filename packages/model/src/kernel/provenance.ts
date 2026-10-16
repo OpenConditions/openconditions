@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { AttributionPublisher, Licensing } from "./licensing.js";
+import { AttributionPublisher, creditLicensingOf, Licensing } from "./licensing.js";
 import { Iso8601, RecordRef, Sha256Hex } from "./scalars.js";
 import type { Vocab } from "./vocab.js";
 
@@ -85,6 +85,8 @@ export const isFusedSourceId = (sourceId: string): sourceId is FusedSourceId =>
 export const GrantState = z.enum(GRANT_STATES);
 export const EvidenceState = z.enum(EVIDENCE_STATES);
 export const InstanceId = z.string().regex(INSTANCE_ID_PATTERN);
+/** Shared source identity contract for a record and its immutable public snapshot. */
+const sourceIdentity = z.union([z.enum(FUSED_SOURCE_IDS), InstanceId.max(1000)]);
 
 export const RoutingRights = z.strictObject({
   source_redistribution: GrantState,
@@ -97,19 +99,63 @@ export const RoutingRights = z.strictObject({
   reviewed_at: z.string().nullable(),
 });
 
-export const Attribution = z.strictObject({
+const attributionBase = z.strictObject({
   provider: z.string().min(1),
   name: z.string().min(1).optional(),
   licensing: Licensing.optional(),
   publisher: AttributionPublisher.optional(),
   license: z.string().min(1),
   /** The provider's page for this data. */
-  url: z.url().optional(),
-  licenseUrl: z.url().optional(),
+  url: AttributionPublisher.shape.url,
+  licenseUrl: AttributionPublisher.shape.url,
   parentSourceId: z.string().min(1).optional(),
   childSourceId: z.string().min(1).optional(),
   policyIds: z.array(z.string().min(1)).min(1).optional(),
   rights: RoutingRights.optional(),
+});
+
+function checkCreditCapacity(captured: z.infer<typeof attributionBase>, ctx: z.RefinementCtx) {
+  try {
+    creditLicensingOf(captured);
+  } catch {
+    ctx.addIssue({
+      code: "custom",
+      path: ["licenseUrl"],
+      message: "captured licence link must fit the portable licensing evidence contract",
+    });
+  }
+}
+export const Attribution = attributionBase.superRefine(checkCreditCapacity);
+
+/** Complete captured public credit fields; internal rights evidence is deliberately absent. */
+export const PublicAttribution = attributionBase
+  .pick({
+    provider: true,
+    name: true,
+    licensing: true,
+    publisher: true,
+    license: true,
+    url: true,
+    licenseUrl: true,
+    parentSourceId: true,
+    childSourceId: true,
+    policyIds: true,
+  })
+  .superRefine(checkCreditCapacity);
+const publicAttributionFields = Object.keys(PublicAttribution.shape) as (keyof z.infer<
+  typeof PublicAttribution
+>)[];
+/** A field projection, not validation on the hot reading path. */
+export function publicAttributionOf(captured: Attribution): z.infer<typeof PublicAttribution> {
+  return Object.fromEntries(
+    publicAttributionFields.flatMap((key) =>
+      captured[key] === undefined ? [] : [[key, captured[key]]],
+    ),
+  ) as z.infer<typeof PublicAttribution>;
+}
+export const UpstreamSource = z.strictObject({
+  sourceId: sourceIdentity,
+  attribution: PublicAttribution,
 });
 
 export const OriginHop = z.strictObject({
@@ -119,13 +165,23 @@ export const OriginHop = z.strictObject({
 });
 
 /** A publisher an aggregating feed took the record from, credited with it. */
-export const UpstreamPublisher = z.strictObject({
-  publisher: z.string().min(1),
-  licensing: Licensing.optional(),
-  recordId: z.string().min(1).optional(),
-  license: z.string().min(1).optional(),
-  attribution: z.string().min(1).optional(),
-});
+export const UpstreamPublisher = z
+  .strictObject({
+    source: UpstreamSource.optional(),
+    publisher: z.string().min(1),
+    licensing: Licensing.optional(),
+    recordId: z.string().min(1).optional(),
+    license: z.string().min(1).optional(),
+    attribution: z.string().min(1).optional(),
+  })
+  .superRefine((upstream, ctx) => {
+    if (upstream.source && upstream.license !== upstream.source.attribution.license)
+      ctx.addIssue({
+        code: "custom",
+        path: ["license"],
+        message: "captured source and upstream permission licences must agree",
+      });
+  });
 
 export const MergedSource = z.strictObject({
   source: z.string().min(1),
@@ -159,13 +215,21 @@ export const EvidenceSummary = z.strictObject({
 
 export const Tombstone = z.strictObject({ reason: z.enum(TOMBSTONE_REASONS), at: Iso8601 });
 
-/** Stored provenance carries the writing instance; a parser draft never asserts it. */
-export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
+/**
+ * Stored provenance carries the writing instance; a parser draft never
+ * asserts it. `attribution` stands in for {@link Attribution} where the
+ * caller has validated it already.
+ */
+export function provenanceSchema<A extends z.ZodType = typeof Attribution>(
+  vocab: Vocab,
+  stage: "draft" | "stored",
+  attribution: A = Attribution as z.ZodType as A,
+) {
   return z
     .strictObject({
       origin: z.enum(ORIGINS),
       /** feed id | "crowd" | instance id | "@fused" or "@fused-public" (fused observation rows only). */
-      sourceId: z.union([z.enum(FUSED_SOURCE_IDS), z.string().regex(INSTANCE_ID_PATTERN)]),
+      sourceId: sourceIdentity,
       sourceFormat: vocab("source_format"),
       accessMode: z.enum(ACCESS_MODES),
       /** Source-local id. */
@@ -174,7 +238,7 @@ export function provenanceSchema(vocab: Vocab, stage: "draft" | "stored") {
       sourceUri: z.url().optional(),
       /** Publisher's record time; absent when the publisher gives none — never defaulted. */
       sourceUpdatedAt: Iso8601.optional(),
-      attribution: Attribution,
+      attribution,
       upstream: z.array(UpstreamPublisher).min(1).optional(),
       rawRef: z
         .strictObject({
@@ -233,6 +297,8 @@ export type GrantState = z.infer<typeof GrantState>;
 export type EvidenceState = z.infer<typeof EvidenceState>;
 export type RoutingRights = z.infer<typeof RoutingRights>;
 export type Attribution = z.infer<typeof Attribution>;
+export type PublicAttribution = z.infer<typeof PublicAttribution>;
+export type UpstreamSource = z.infer<typeof UpstreamSource>;
 export type OriginHop = z.infer<typeof OriginHop>;
 export type MergedSource = z.infer<typeof MergedSource>;
 export type Freshness = z.infer<typeof Freshness>;

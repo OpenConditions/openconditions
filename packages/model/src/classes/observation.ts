@@ -135,11 +135,17 @@ export function qualifierSchema(entry: PropertyEntry, k: Kernel): z.ZodType {
   return required ? nonEmpty : nonEmpty.optional();
 }
 
+/**
+ * The observation schema of a property at a stage. `validated` stands in
+ * for the location and provenance schemas where the caller has validated
+ * those parts already (see `Registry.observationDraftValidator`).
+ */
 export function observationSchema(
   k: Kernel,
   entry: PropertyEntry,
   parts: { result: z.ZodType; qualifiers: z.ZodType },
   stage: Stage,
+  validated?: { location: z.ZodType; provenance: z.ZodType },
 ) {
   const subjects = subjectSchemas(k);
   const allowed = [...new Set(entry.subjects.map((s) => s.kind))].map((kind) => subjects[kind]);
@@ -148,9 +154,12 @@ export function observationSchema(
       ? allowed[0]!
       : z.discriminatedUnion("kind", allowed as [(typeof allowed)[0], ...typeof allowed]);
   const { result, qualifiers } = parts;
+  const base = recordBaseShape(k, stage);
   return z
     .strictObject({
-      ...recordBaseShape(k, stage),
+      ...base,
+      location: (validated?.location ?? base.location) as typeof base.location,
+      provenance: (validated?.provenance ?? base.provenance) as typeof base.provenance,
       class: z.literal("observation"),
       kind: z.literal("observation"),
       property: z.literal(entry.code),

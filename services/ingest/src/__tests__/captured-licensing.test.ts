@@ -8,7 +8,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { Attribution, contentHash } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
-import { stampAttribution } from "../pipeline/publish.js";
+import { attributionStamp, stampAttribution } from "../pipeline/publish.js";
 import { repoFeed } from "./helpers/catalog.js";
 import { situationDraft } from "./helpers/situations.js";
 
@@ -103,6 +103,28 @@ it("captures the actual national issuer of a MeteoAlarm warning without changing
       attribution: { publisher: { name: "Actual NMHS", url: "https://warning.test/" } },
     },
   });
+});
+
+it("stamps one poll's drafts with one attribution, unless a draft names its own publisher", () => {
+  const stamp = attributionStamp({ ...source, format: "meteoalarm" });
+  const attributionOf = (draft: Record<string, unknown>) =>
+    (stamp(draft).provenance as { attribution: unknown }).attribution;
+  const first = attributionOf({ provenance: { recordId: "a" } });
+  const second = attributionOf({ provenance: { recordId: "b" } });
+  const issued = attributionOf({
+    provenance: { recordId: "c" },
+    details: { cap: { senderName: "Actual NMHS" } },
+  });
+  expect(second).toBe(first);
+  expect(first).toEqual(
+    (
+      stampAttribution({ provenance: {} }, { ...source, format: "meteoalarm" }).provenance as {
+        attribution: unknown;
+      }
+    ).attribution,
+  );
+  expect(issued).not.toBe(first);
+  expect(issued).toMatchObject({ publisher: { name: "Actual NMHS" } });
 });
 
 it("does not emit an invalid publisher or truncate the CAP originator when localized names exceed the bound", () => {

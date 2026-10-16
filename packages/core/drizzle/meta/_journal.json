@@ -540,6 +540,20 @@
       "when": 1792098332372,
       "tag": "0076_federation_peer_lapse",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1792102704918,
+      "tag": "0077_captured_attribution_receipts",
+      "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1792102744355,
+      "tag": "0078_captured_attribution_functions",
+      "breakpoints": true
     }
   ]
 }

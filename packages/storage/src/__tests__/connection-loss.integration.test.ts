@@ -1,3 +1,5 @@
+import { setFlagsFromString } from "node:v8";
+import { runInNewContext } from "node:vm";
 import { createTestDatabase } from "@openconditions/test-database";
 import postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, test } from "vitest";
@@ -28,4 +30,22 @@ describe("a transaction whose connection the server closes", () => {
     const [after] = await client<{ ok: number }[]>`SELECT 1 AS ok`;
     expect(after?.ok).toBe(1);
   }, 30_000);
+});
+
+describe("a tagged query's origin", () => {
+  test("keeps nothing of the call that first ran it", async () => {
+    setFlagsFromString("--expose-gc");
+    const gc = runInNewContext("gc") as () => void;
+    // What a poll's write closes over: its drafts.
+    const write = async (drafts: { n: number }[]) => {
+      await db.sql.begin(async (tx) => {
+        await tx`SELECT ${drafts.length}::int AS n`;
+      });
+      return new WeakRef(drafts);
+    };
+    const drafts = await write(Array.from({ length: 1000 }, (_, n) => ({ n })));
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    gc();
+    expect(drafts.deref()).toBeUndefined();
+  });
 });

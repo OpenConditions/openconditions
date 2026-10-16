@@ -1,5 +1,6 @@
 import type { Registry } from "@openconditions/model";
 import type postgres from "postgres";
+import { CONTRIBUTOR_RECEIPT_VERSION } from "../contributor-receipts.js";
 import { recordFromHistory, type SeriesKey } from "../observation-codec.js";
 import type { RevisionedClass } from "./record-schema.js";
 
@@ -202,10 +203,11 @@ export async function readObservationHistory(
   range: { from: string; to: string },
 ): Promise<Rec[]> {
   const rows = await sql<(Rec & { template: Rec; payload_hashes: string[] | null })[]>`
-    SELECT o.*, l.template, a.payload_hashes
+    SELECT o.*, l.template, a.payload_hashes, receipt.provenance AS captured_provenance
       FROM conditions.observation_latest l
       JOIN conditions.observation o ON o.series_id = l.series_id
       LEFT JOIN conditions.source_poll_attempt a ON a.id = o.fetch_id
+      LEFT JOIN conditions.contributor_receipt receipt ON receipt.id = o.extra #>> '{provenance,creditReceiptId}' AND receipt.version = ${CONTRIBUTOR_RECEIPT_VERSION}
      WHERE l.subject_key = ${key.subjectKey} AND l.property = ${key.property}
        AND l.qualifier_key = ${key.qualifierKey} AND l.source_id = ${key.sourceId}
        AND o.phenomenon_start >= ${range.from} AND o.phenomenon_start < ${range.to}

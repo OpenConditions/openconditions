@@ -1,4 +1,6 @@
 import {
+  CONTRIBUTOR_RECEIPT_VERSION,
+  type Contributor,
   readSegmentConditionRows,
   type Scope,
   type SegmentConditionRow,
@@ -156,12 +158,13 @@ async function storedRestrictedOf(
  * The SQL condition, over a table with a `contributing` source-id array
  * (`segment_speed` aliased `sp`, or whichever `alias` names), under which
  * `scope` may read a derived value: the operator any, the public none a
- * restricted source contributed to.
+ * restricted source contributed to, and all captured measurement licences are public.
  */
 function speedScopeClause(scope: Scope, alias = "sp"): string {
   return scope === "operator"
     ? "true"
-    : `NOT EXISTS (SELECT 1 FROM conditions.source scope_source
+    : `conditions.flow_public_licenses(${alias}.permission_licenses)
+       AND NOT EXISTS (SELECT 1 FROM conditions.source scope_source
                     WHERE scope_source.id = ANY(${alias}.contributing) AND scope_source.restricted)`;
 }
 
@@ -176,7 +179,11 @@ function profileScopeClause(scope: Scope): string {
   return `sp.segment_id NOT IN (
     SELECT withheld.segment_id FROM conditions.segment_profile withheld
      WHERE cardinality(withheld.contributing) = 0
-        OR NOT (${speedScopeClause(scope, "withheld")}))`;
+        OR NOT withheld.lineage_complete
+        OR conditions.flow_receipt_permissions(withheld.contributor_receipt_ids,withheld.lineage_complete,${CONTRIBUTOR_RECEIPT_VERSION}) IS NULL
+        OR NOT conditions.flow_public_licenses(withheld.permission_licenses)
+        OR EXISTS (SELECT 1 FROM conditions.source scope_source
+          WHERE scope_source.id = ANY(withheld.contributing) AND scope_source.restricted))`;
 }
 
 /** One `road_segment JOIN segment_profile` row: a single weekly-profile bucket
@@ -191,7 +198,26 @@ type SegmentProfileBucketRow = {
   dow: number;
   todHour: number;
   speedKph: number;
+  nativeSources: string[];
+  contributors: Contributor[];
+  lineageComplete: boolean;
+  permissionLicenses: string[] | null;
 };
+
+/** Header selectors come from served captured inputs, never source catalogue labels. */
+function capturedPermissionHeader(
+  inputs: readonly (readonly string[] | null | undefined)[],
+  graph: boolean,
+): string {
+  const licenses = new Set<string>(graph ? ["ODbL-1.0"] : []);
+  for (const input of inputs) {
+    if (!input?.length) licenses.add("unknown");
+    else
+      for (const license of input)
+        licenses.add(/^[\x20-\x7e]+$/.test(license) ? license : "unknown");
+  }
+  return licenses.size ? [...licenses].sort().join(", ") : "unknown";
+}
 
 /** First/last local hour (inclusive) of Valhalla's `constrained` window --
  * `constrained` applies strictly 07:00-19:00 local, `freeflow` at night. */
@@ -365,7 +391,8 @@ export function registerFeedStatusRoute(
  * which a propagated estimate inherits from its measurement) is withheld:
  * `/segments.geojson` keeps the segment's geometry without speed properties,
  * `/segments/speed.csv` omits the row. A share-alike source is restricted, so
- * this is the licence filter too. The operator scope serves every speed.
+ * captured own/upstream permission IDs must also pass the current reviewed policy.
+ * Missing permission evidence fails closed. The operator scope serves every speed.
  *
  * `/segments/profiles.json` serves the weekly profiles, each bucket recording
  * the sources it was built from (`segment_profile.contributing`). The public
@@ -439,13 +466,18 @@ export function registerPublishRoutes(
     // the observations readers) -- coerce to ISO before handing rows to
     // segmentsToGeoJSON, which expects SegmentSpeedRow.observedAt as a string.
     const rawRows = await db.execute<
-      Array<Omit<SegmentSpeedRow, "observedAt"> & { observedAt?: string | Date | null }>
+      Array<
+        Omit<SegmentSpeedRow, "observedAt"> & {
+          observedAt?: string | Date | null;
+          permissionLicenses: string[] | null;
+        }
+      >
     >(
       `SELECT s.segment_id AS "segmentId", s.dir, s.highway, s.ref,
               ST_AsGeoJSON(s.geom) AS geojson,
               sp.speed_ratio AS "speedRatio", sp.los, sp.confidence,
               sp.current_kph AS "currentKph", sp.free_flow_kph AS "freeFlowKph",
-              sp.observed_at AS "observedAt",
+              sp.observed_at AS "observedAt",sp.permission_licenses AS "permissionLicenses",
               COALESCE(sp.field_sources, jsonb_build_object('geometry', jsonb_build_array('openstreetmap'))) AS "fieldSources",
               COALESCE(sp.field_contributors, jsonb_build_object('geometry', conditions.flow_osm_credit())) AS "fieldContributors",
               COALESCE(sp.field_lineage_complete, jsonb_build_object('geometry',true,'speed',sp.current_kph IS NULL,'freeFlow',sp.free_flow_kph IS NULL,'ratio',sp.speed_ratio IS NULL,'los',sp.los IS NULL,'confidence',sp.confidence IS NULL)) AS "fieldLineageComplete"
@@ -462,6 +494,15 @@ export function registerPublishRoutes(
     }));
     reply.header("Content-Type", "application/geo+json");
     reply.header("Cache-Control", "public, max-age=60");
+    reply.header(
+      "X-Data-License",
+      capturedPermissionHeader(
+        rawRows
+          .filter((r) => r.currentKph != null || r.los != null || r.freeFlowKph != null)
+          .map((r) => r.permissionLicenses),
+        rawRows.length > 0,
+      ),
+    );
     return reply.send(segmentsToGeoJSON(rows));
   });
 
@@ -470,15 +511,22 @@ export function registerPublishRoutes(
   // segments with no `segment_speed` row are omitted rather than LEFT-JOINed
   // in as nulls — a routing consumer has no use for a speed-less row).
   app.get("/segments/speed.csv", async (req, reply) => {
-    const rows = await db.execute<SegmentSpeedCsvRow[]>(
+    const rows = await db.execute<(SegmentSpeedCsvRow & { permissionLicenses: string[] | null })[]>(
       `SELECT rs.way_id AS "wayId", rs.dir, sp.current_kph AS "currentKph",
-              sp.free_flow_kph AS "freeFlowKph", sp.los
+              sp.free_flow_kph AS "freeFlowKph", sp.los,sp.permission_licenses AS "permissionLicenses"
        FROM conditions.segment_speed sp
        JOIN conditions.road_segment rs USING (segment_id)
        WHERE sp.current_kph IS NOT NULL AND ${speedScopeClause(scopeOf(req))}`,
     );
     reply.header("Content-Type", "text/csv");
     reply.header("Cache-Control", "public, max-age=60");
+    reply.header(
+      "X-Data-License",
+      capturedPermissionHeader(
+        rows.map((r) => r.permissionLicenses),
+        rows.length > 0,
+      ),
+    );
     return reply.send(flowToSegmentSpeedCsv(rows));
   });
 
@@ -502,7 +550,11 @@ export function registerPublishRoutes(
     const rows = await db.execute<SegmentProfileBucketRow[]>(
       `SELECT rs.segment_id AS "segmentId", rs.way_id AS "wayId", rs.dir,
               rs.free_flow_kph AS "freeFlowKph",
-              sp.dow, sp.tod_hour AS "todHour", sp.speed_kph AS "speedKph"
+              sp.dow, sp.tod_hour AS "todHour", sp.speed_kph AS "speedKph",
+              sp.contributing AS "nativeSources",sp.permission_licenses AS "permissionLicenses",
+              sp.lineage_complete AND conditions.flow_receipt_permissions(sp.contributor_receipt_ids,sp.lineage_complete,${CONTRIBUTOR_RECEIPT_VERSION}) IS NOT NULL AS "lineageComplete",
+              (SELECT conditions.flow_credit_union(jsonb_agg(r.contributors)) FROM unnest(sp.contributor_receipt_ids) ids
+                JOIN conditions.contributor_receipt r ON r.id=ids AND r.version=${CONTRIBUTOR_RECEIPT_VERSION}) AS contributors
        FROM conditions.segment_profile sp
        JOIN conditions.road_segment rs USING (segment_id)
        WHERE ${profileScopeClause(scopeOf(req))}
@@ -516,6 +568,9 @@ export function registerPublishRoutes(
         dir: string;
         freeFlowKph: number | null;
         hourly: (number | null)[];
+        nativeSources: Set<string>;
+        contributors: Map<string, Contributor>;
+        lineageComplete: boolean;
       }
     >();
     for (const row of rows) {
@@ -526,33 +581,54 @@ export function registerPublishRoutes(
           dir: row.dir,
           freeFlowKph: row.freeFlowKph,
           hourly: new Array<number | null>(168).fill(null),
+          nativeSources: new Set(),
+          contributors: new Map(),
+          lineageComplete: true,
         };
         bySegment.set(row.segmentId, entry);
       }
       entry.hourly[row.dow * 24 + row.todHour] = row.speedKph;
+      for (const source of row.nativeSources) entry.nativeSources.add(source);
+      for (const credit of row.contributors) entry.contributors.set(JSON.stringify(credit), credit);
+      entry.lineageComplete &&= row.lineageComplete;
     }
 
-    const segments = [...bySegment.values()].map(({ wayId, dir, freeFlowKph, hourly }) => {
-      // Median of the daytime (07:00-19:00 local, inclusive) buckets only;
-      // Valhalla treats an absent/0 constrained speed as "don't set" and
-      // warns on predicted-without-freeflow/constrained, so this always
-      // falls back to free_flow_kph rather than omitting the field.
-      const daytime = hourly.filter(
-        (v, i): v is number =>
-          v != null && i % 24 >= DAYTIME_START_HOUR && i % 24 <= DAYTIME_END_HOUR,
-      );
-      const constrainedKph = daytime.length > 0 ? median(daytime) : freeFlowKph;
-      return {
-        way_id: wayId,
-        dir,
-        free_flow_kph: freeFlowKph,
-        constrained_kph: constrainedKph,
-        hourly,
-      };
-    });
+    const [osm] = await sql`SELECT conditions.flow_osm_credit() AS credits`;
+    const segments = [...bySegment.values()].map(
+      ({ wayId, dir, freeFlowKph, hourly, nativeSources, contributors, lineageComplete }) => {
+        // Median of the daytime (07:00-19:00 local, inclusive) buckets only;
+        // Valhalla treats an absent/0 constrained speed as "don't set" and
+        // warns on predicted-without-freeflow/constrained, so this always
+        // falls back to free_flow_kph rather than omitting the field.
+        const daytime = hourly.filter(
+          (v, i): v is number =>
+            v != null && i % 24 >= DAYTIME_START_HOUR && i % 24 <= DAYTIME_END_HOUR,
+        );
+        const constrainedKph = daytime.length > 0 ? median(daytime) : freeFlowKph;
+        for (const credit of osm?.credits ?? []) contributors.set(JSON.stringify(credit), credit);
+        return {
+          way_id: wayId,
+          dir,
+          free_flow_kph: freeFlowKph,
+          constrained_kph: constrainedKph,
+          hourly,
+          lineage_version: 1,
+          native_sources: [...nativeSources].sort(),
+          contributors: [...contributors.values()],
+          lineage_complete: lineageComplete,
+        };
+      },
+    );
 
     reply.header("Content-Type", "application/json");
     reply.header("Cache-Control", "public, max-age=3600");
+    reply.header(
+      "X-Data-License",
+      capturedPermissionHeader(
+        rows.map((r) => r.permissionLicenses),
+        rows.length > 0,
+      ),
+    );
     return reply.send(segments);
   });
 

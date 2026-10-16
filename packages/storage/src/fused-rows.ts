@@ -227,13 +227,36 @@ export async function refreshFused(
     ...vanished,
   ]);
   counts.deleted += await dropFused(tx, vanished);
-  if (canonical.length === 0) return counts;
-  // The properties in scope of each canonical feature: all fusable ones once any scope asks for all.
-  const scopeOf = new Map<string, Set<string> | "all">();
   // By feature, so a national poll's clusters each look up their own members
   // rather than scanning every scope of the poll.
   const wantedBy = new Map<string, FusedScope[]>();
   for (const s of wanted) wantedBy.set(s.featureId, [...(wantedBy.get(s.featureId) ?? []), s]);
+  // Locked whole, refreshed a share at a time: a register's poll would
+  // otherwise hold every candidate and fused row of its features at once.
+  for (let i = 0; i < canonical.length; i += FUSED_SLICE) {
+    await refreshCanonical(tx, registry, canonical.slice(i, i + FUSED_SLICE), wantedBy, {
+      fusable,
+      ctx,
+      counts,
+    });
+  }
+  return counts;
+}
+
+/** Canonical features {@link refreshFused} reads and writes at a time. */
+const FUSED_SLICE = 500;
+
+/** The fused rows of locked canonical features, as {@link refreshFused} refreshes them. */
+async function refreshCanonical(
+  tx: Sql,
+  registry: Registry,
+  canonical: readonly CanonicalRow[],
+  wantedBy: ReadonlyMap<string, readonly FusedScope[]>,
+  refresh: { fusable: ReadonlySet<string>; ctx: FusedContext; counts: FusedCounts },
+): Promise<void> {
+  const { fusable, ctx, counts } = refresh;
+  // The properties in scope of each canonical feature: all fusable ones once any scope asks for all.
+  const scopeOf = new Map<string, Set<string> | "all">();
   for (const c of canonical) {
     const ids = new Set([c.canonicalFeatureId, ...c.memberIds]);
     for (const s of [...ids].flatMap((id) => wantedBy.get(id) ?? [])) {
@@ -516,7 +539,7 @@ export async function refreshFused(
     writes,
     upsertClause(SERIES_KEY, FUSED_COLUMNS),
   );
-  counts.written = writes.length;
+  counts.written += writes.length;
 
   const gone = existing
     .filter((r) => {
@@ -529,7 +552,6 @@ export async function refreshFused(
     await tx`DELETE FROM conditions.observation_latest WHERE series_id = ANY(${gone}::bigint[])`;
   }
   counts.deleted += gone.length;
-  return counts;
 }
 
 export interface OutdatedRefreshOptions {

@@ -9,7 +9,13 @@ import {
 } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type { FlowOutput } from "@openconditions/roads";
-import { type WriteContext, type WriteSummary, writeSnapshotIn } from "@openconditions/storage";
+import {
+  LatestCache,
+  type LatestCacheWrite,
+  type WriteContext,
+  type WriteSummary,
+  writeSnapshotIn,
+} from "@openconditions/storage";
 import type postgres from "postgres";
 import { upsertSourceStatus } from "./source-status.js";
 
@@ -108,46 +114,63 @@ function warningPublisher(
 }
 
 export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDraft {
-  const provenance = draft["provenance"] as Record<string, unknown> | undefined;
-  if (provenance === undefined) return draft;
-  const publisher = warningPublisher(draft, src);
+  return attributionStamp(src)(draft);
+}
+
+/**
+ * {@link stampAttribution} for the drafts of one poll. Drafts that credit
+ * the feed alone share one attribution object, so the write validates it
+ * once (`Registry.observationDraftValidator`).
+ */
+export function attributionStamp(src: CatalogFeed): (draft: RecordDraft) => RecordDraft {
   const policyIds =
     src.policyIds ?? (src.parentSourceId ? [src.parentSourceId, src.id] : undefined);
-  return {
-    ...draft,
-    provenance: {
-      ...provenance,
-      ...(Array.isArray(provenance["upstream"])
-        ? {
-            upstream: provenance["upstream"].map((raw) => {
-              if (!raw || typeof raw !== "object") return raw;
-              const upstream = raw as Record<string, unknown>;
-              return {
-                ...upstream,
-                licensing: captureLicensing({
-                  id: src.id,
-                  name: String(upstream["publisher"] ?? src.name),
-                  license: String(upstream["license"] ?? "NOASSERTION"),
-                }),
-              };
-            }),
-          }
-        : {}),
-      attribution: {
-        provider: src.attribution,
-        ...(publisher ? { publisher } : {}),
-        name: src.name,
-        url: src.homepage,
-        licensing: captureLicensing(src),
-        license: src.license,
-        ...(src.licenseUrl ? { licenseUrl: src.licenseUrl } : {}),
-        ...(src.parentSourceId
-          ? { parentSourceId: src.parentSourceId, childSourceId: src.id }
+  const attributionOf = (publisher: { name: string; url?: string } | undefined) => ({
+    provider: src.attribution,
+    ...(publisher ? { publisher } : {}),
+    name: src.name,
+    url: src.homepage,
+    licensing: captureLicensing(src),
+    license: src.license,
+    ...(src.licenseUrl ? { licenseUrl: src.licenseUrl } : {}),
+    ...(src.parentSourceId ? { parentSourceId: src.parentSourceId, childSourceId: src.id } : {}),
+    ...(policyIds && policyIds.length > 0 ? { policyIds } : {}),
+    rights: routingRightsOf(src),
+  });
+  let feedAttribution: ReturnType<typeof attributionOf> | undefined;
+  return (draft) => {
+    const provenance = draft["provenance"] as Record<string, unknown> | undefined;
+    if (provenance === undefined) return draft;
+    const publisher = warningPublisher(draft, src);
+    if (publisher === undefined) feedAttribution ??= attributionOf(undefined);
+    return {
+      ...draft,
+      provenance: {
+        ...provenance,
+        ...(Array.isArray(provenance["upstream"])
+          ? {
+              upstream: provenance["upstream"].map((raw) => {
+                if (!raw || typeof raw !== "object") return raw;
+                const upstream = raw as Record<string, unknown>;
+                // A source snapshot is already acquired evidence, including an
+                // explicit absence of scoped terms. Never fill it from today's registry.
+                if (upstream["source"] !== undefined) return upstream;
+                return {
+                  ...upstream,
+                  licensing:
+                    upstream["licensing"] ??
+                    captureLicensing({
+                      id: src.id,
+                      name: String(upstream["publisher"] ?? src.name),
+                      license: String(upstream["license"] ?? "NOASSERTION"),
+                    }),
+                };
+              }),
+            }
           : {}),
-        ...(policyIds && policyIds.length > 0 ? { policyIds } : {}),
-        rights: routingRightsOf(src),
+        attribution: publisher ? attributionOf(publisher) : feedAttribution,
       },
-    },
+    };
   };
 }
 
@@ -302,7 +325,8 @@ export async function publishFlows(
     model: WriteModel;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  return sql.begin(async (tx) => {
+  const cache = latestCache.begin(src.id);
+  const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
     const summary = await writeSnapshotIn(
@@ -317,6 +341,7 @@ export async function publishFlows(
         ...writeContext(input),
         complete: { situation: input.situationsComplete ?? true },
         restatesTransient: input.restatesTransient === true,
+        latestCache: cache,
       },
     );
     const [live] = await tx<{ features: number; situations: number }[]>`
@@ -348,6 +373,7 @@ export async function publishFlows(
     });
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+  return withCache(cache, published);
 }
 
 /**
@@ -375,7 +401,8 @@ export async function publishFeatures(
     statesComplete?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  return sql.begin(async (tx) => {
+  const cache = latestCache.begin(src.id);
+  const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
     const summary = await writeSnapshotIn(
@@ -386,6 +413,7 @@ export async function publishFeatures(
         ...writeContext(input),
         complete: { feature: true, offer: true },
         statesComplete: input.statesComplete === true,
+        latestCache: cache,
       },
     );
     const [{ live }] = await tx<{ live: number }[]>`
@@ -416,6 +444,7 @@ export async function publishFeatures(
     });
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+  return withCache(cache, published);
 }
 
 /**
@@ -439,13 +468,14 @@ export async function publishReadings(
     warning?: string;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
-  return sql.begin(async (tx) => {
+  const cache = latestCache.begin(src.id);
+  const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const summary = await writeSnapshotIn(
       tx,
       src.id,
       { observations: input.observations },
-      { ...writeContext(input), complete: false },
+      { ...writeContext(input), complete: false, latestCache: cache },
     );
     const [{ live }] = await tx<{ live: number }[]>`
       SELECT count(*)::int AS live FROM conditions.feature
@@ -473,6 +503,29 @@ export async function publishReadings(
     });
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
+  return withCache(cache, published);
+}
+
+/**
+ * What this process's polls left in their sources' latest rows: a poll
+ * reads no reading back that it shows unchanged. A feed polls in one
+ * process; a restart starts it empty. Its budget is a share of this
+ * process's heap limit, or `OPENCONDITIONS_LATEST_CACHE_MB`.
+ */
+const latestCache = new LatestCache();
+
+/** A poll's transaction, the cache taking what it wrote when it commits and forgetting it when not. */
+function withCache<T>(cache: LatestCacheWrite, transaction: Promise<T>): Promise<T> {
+  return transaction.then(
+    (done) => {
+      cache.commit();
+      return done;
+    },
+    (err: unknown) => {
+      cache.discard();
+      throw err;
+    },
+  );
 }
 
 /** What a poll's publication reports on its source's status. */

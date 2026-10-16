@@ -2246,6 +2246,7 @@
             },
             {
               "type": "string",
+              "maxLength": 1000,
               "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
             }
           ]
@@ -2377,6 +2378,426 @@
           "items": {
             "type": "object",
             "properties": {
+              "source": {
+                "type": "object",
+                "properties": {
+                  "sourceId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "@fused",
+                          "@fused-public"
+                        ]
+                      },
+                      {
+                        "type": "string",
+                        "maxLength": 1000,
+                        "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+                      }
+                    ]
+                  },
+                  "attribution": {
+                    "type": "object",
+                    "properties": {
+                      "provider": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "name": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "licensing": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "type": "number",
+                            "const": 1
+                          },
+                          "declarations": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "text": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 1000
+                                },
+                                "url": {
+                                  "type": "string",
+                                  "maxLength": 2048,
+                                  "format": "uri"
+                                }
+                              },
+                              "additionalProperties": false
+                            }
+                          },
+                          "bindings": {
+                            "maxItems": 64,
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "scope": {
+                                  "type": "string",
+                                  "enum": [
+                                    "data",
+                                    "imagery",
+                                    "style",
+                                    "software",
+                                    "service"
+                                  ]
+                                },
+                                "subject": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 1000
+                                },
+                                "license": {
+                                  "oneOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "spdx"
+                                        },
+                                        "expression": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        },
+                                        "url": {
+                                          "type": "string",
+                                          "maxLength": 2048,
+                                          "format": "uri"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "expression"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "custom"
+                                        },
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000,
+                                          "pattern": "^LicenseRef-[A-Za-z0-9.-]+$"
+                                        },
+                                        "namespace": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000,
+                                          "pattern": "^[A-Za-z0-9][A-Za-z0-9:./_-]{0,255}$"
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        },
+                                        "url": {
+                                          "type": "string",
+                                          "maxLength": 2048,
+                                          "format": "uri"
+                                        },
+                                        "version": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "id",
+                                        "namespace",
+                                        "name"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "unknown"
+                                        },
+                                        "raw": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        },
+                                        "url": {
+                                          "type": "string",
+                                          "maxLength": 2048,
+                                          "format": "uri"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "per-item"
+                                        },
+                                        "raw": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        },
+                                        "url": {
+                                          "type": "string",
+                                          "maxLength": 2048,
+                                          "format": "uri"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "public-domain"
+                                        },
+                                        "name": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        },
+                                        "url": {
+                                          "type": "string",
+                                          "maxLength": 2048,
+                                          "format": "uri"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "name"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "type": "string",
+                                          "const": "status"
+                                        },
+                                        "id": {
+                                          "type": "string",
+                                          "const": "CC-PDM-1.0"
+                                        },
+                                        "url": {
+                                          "type": "string",
+                                          "maxLength": 2048,
+                                          "format": "uri"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "id"
+                                      ],
+                                      "additionalProperties": false
+                                    }
+                                  ]
+                                },
+                                "notice": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 16000
+                                },
+                                "conditions": {
+                                  "maxItems": 32,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1,
+                                    "maxLength": 1000
+                                  }
+                                },
+                                "attribution": {
+                                  "type": "object",
+                                  "properties": {
+                                    "placement": {
+                                      "type": "string",
+                                      "enum": [
+                                        "visible",
+                                        "details"
+                                      ]
+                                    },
+                                    "surfaces": {
+                                      "minItems": 1,
+                                      "maxItems": 3,
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "enum": [
+                                          "map",
+                                          "content",
+                                          "image"
+                                        ]
+                                      }
+                                    },
+                                    "basis": {
+                                      "type": "string",
+                                      "enum": [
+                                        "licence",
+                                        "provider-terms",
+                                        "recommendation",
+                                        "unresolved"
+                                      ]
+                                    },
+                                    "reviewedAt": {
+                                      "type": "string",
+                                      "format": "date",
+                                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                    },
+                                    "evidenceUrls": {
+                                      "minItems": 1,
+                                      "maxItems": 8,
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string",
+                                        "maxLength": 2048,
+                                        "format": "uri"
+                                      }
+                                    },
+                                    "reason": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2000
+                                    },
+                                    "compactText": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "maxLength": 2000
+                                    },
+                                    "logo": {
+                                      "type": "string",
+                                      "enum": [
+                                        "openweather",
+                                        "mapillary",
+                                        "maptiler",
+                                        "tdx"
+                                      ]
+                                    },
+                                    "prominence": {
+                                      "type": "string",
+                                      "const": "normal"
+                                    },
+                                    "includePublisher": {
+                                      "type": "boolean",
+                                      "const": true
+                                    }
+                                  },
+                                  "required": [
+                                    "placement",
+                                    "surfaces",
+                                    "basis",
+                                    "reviewedAt",
+                                    "evidenceUrls",
+                                    "reason"
+                                  ],
+                                  "additionalProperties": false
+                                }
+                              },
+                              "required": [
+                                "scope",
+                                "subject",
+                                "license"
+                              ],
+                              "additionalProperties": false
+                            }
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "bindings"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "publisher": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 1000
+                          },
+                          "url": {
+                            "type": "string",
+                            "maxLength": 2048,
+                            "format": "uri"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ],
+                        "additionalProperties": false
+                      },
+                      "license": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "url": {
+                        "type": "string",
+                        "maxLength": 2048,
+                        "format": "uri"
+                      },
+                      "licenseUrl": {
+                        "type": "string",
+                        "maxLength": 2048,
+                        "format": "uri"
+                      },
+                      "parentSourceId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "childSourceId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "policyIds": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      }
+                    },
+                    "required": [
+                      "provider",
+                      "license"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "sourceId",
+                  "attribution"
+                ],
+                "additionalProperties": false
+              },
               "publisher": {
                 "type": "string",
                 "minLength": 1
@@ -2802,6 +3223,426 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "source": {
+                      "type": "object",
+                      "properties": {
+                        "sourceId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "enum": [
+                                "@fused",
+                                "@fused-public"
+                              ]
+                            },
+                            {
+                              "type": "string",
+                              "maxLength": 1000,
+                              "pattern": "^[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?$"
+                            }
+                          ]
+                        },
+                        "attribution": {
+                          "type": "object",
+                          "properties": {
+                            "provider": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "licensing": {
+                              "type": "object",
+                              "properties": {
+                                "version": {
+                                  "type": "number",
+                                  "const": 1
+                                },
+                                "declarations": {
+                                  "maxItems": 64,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "text": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 1000
+                                      },
+                                      "url": {
+                                        "type": "string",
+                                        "maxLength": 2048,
+                                        "format": "uri"
+                                      }
+                                    },
+                                    "additionalProperties": false
+                                  }
+                                },
+                                "bindings": {
+                                  "maxItems": 64,
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "scope": {
+                                        "type": "string",
+                                        "enum": [
+                                          "data",
+                                          "imagery",
+                                          "style",
+                                          "software",
+                                          "service"
+                                        ]
+                                      },
+                                      "subject": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 1000
+                                      },
+                                      "license": {
+                                        "oneOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "const": "spdx"
+                                              },
+                                              "expression": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "url": {
+                                                "type": "string",
+                                                "maxLength": 2048,
+                                                "format": "uri"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "expression"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "const": "custom"
+                                              },
+                                              "id": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000,
+                                                "pattern": "^LicenseRef-[A-Za-z0-9.-]+$"
+                                              },
+                                              "namespace": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000,
+                                                "pattern": "^[A-Za-z0-9][A-Za-z0-9:./_-]{0,255}$"
+                                              },
+                                              "name": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "url": {
+                                                "type": "string",
+                                                "maxLength": 2048,
+                                                "format": "uri"
+                                              },
+                                              "version": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "id",
+                                              "namespace",
+                                              "name"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "const": "unknown"
+                                              },
+                                              "raw": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "url": {
+                                                "type": "string",
+                                                "maxLength": 2048,
+                                                "format": "uri"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "const": "per-item"
+                                              },
+                                              "raw": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "url": {
+                                                "type": "string",
+                                                "maxLength": 2048,
+                                                "format": "uri"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "const": "public-domain"
+                                              },
+                                              "name": {
+                                                "type": "string",
+                                                "minLength": 1,
+                                                "maxLength": 1000
+                                              },
+                                              "url": {
+                                                "type": "string",
+                                                "maxLength": 2048,
+                                                "format": "uri"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "name"
+                                            ],
+                                            "additionalProperties": false
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "type": "string",
+                                                "const": "status"
+                                              },
+                                              "id": {
+                                                "type": "string",
+                                                "const": "CC-PDM-1.0"
+                                              },
+                                              "url": {
+                                                "type": "string",
+                                                "maxLength": 2048,
+                                                "format": "uri"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "id"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        ]
+                                      },
+                                      "notice": {
+                                        "type": "string",
+                                        "minLength": 1,
+                                        "maxLength": 16000
+                                      },
+                                      "conditions": {
+                                        "maxItems": 32,
+                                        "type": "array",
+                                        "items": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "maxLength": 1000
+                                        }
+                                      },
+                                      "attribution": {
+                                        "type": "object",
+                                        "properties": {
+                                          "placement": {
+                                            "type": "string",
+                                            "enum": [
+                                              "visible",
+                                              "details"
+                                            ]
+                                          },
+                                          "surfaces": {
+                                            "minItems": 1,
+                                            "maxItems": 3,
+                                            "type": "array",
+                                            "items": {
+                                              "type": "string",
+                                              "enum": [
+                                                "map",
+                                                "content",
+                                                "image"
+                                              ]
+                                            }
+                                          },
+                                          "basis": {
+                                            "type": "string",
+                                            "enum": [
+                                              "licence",
+                                              "provider-terms",
+                                              "recommendation",
+                                              "unresolved"
+                                            ]
+                                          },
+                                          "reviewedAt": {
+                                            "type": "string",
+                                            "format": "date",
+                                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                                          },
+                                          "evidenceUrls": {
+                                            "minItems": 1,
+                                            "maxItems": 8,
+                                            "type": "array",
+                                            "items": {
+                                              "type": "string",
+                                              "maxLength": 2048,
+                                              "format": "uri"
+                                            }
+                                          },
+                                          "reason": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 2000
+                                          },
+                                          "compactText": {
+                                            "type": "string",
+                                            "minLength": 1,
+                                            "maxLength": 2000
+                                          },
+                                          "logo": {
+                                            "type": "string",
+                                            "enum": [
+                                              "openweather",
+                                              "mapillary",
+                                              "maptiler",
+                                              "tdx"
+                                            ]
+                                          },
+                                          "prominence": {
+                                            "type": "string",
+                                            "const": "normal"
+                                          },
+                                          "includePublisher": {
+                                            "type": "boolean",
+                                            "const": true
+                                          }
+                                        },
+                                        "required": [
+                                          "placement",
+                                          "surfaces",
+                                          "basis",
+                                          "reviewedAt",
+                                          "evidenceUrls",
+                                          "reason"
+                                        ],
+                                        "additionalProperties": false
+                                      }
+                                    },
+                                    "required": [
+                                      "scope",
+                                      "subject",
+                                      "license"
+                                    ],
+                                    "additionalProperties": false
+                                  }
+                                }
+                              },
+                              "required": [
+                                "version",
+                                "bindings"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "publisher": {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "maxLength": 1000
+                                },
+                                "url": {
+                                  "type": "string",
+                                  "maxLength": 2048,
+                                  "format": "uri"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "license": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "url": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "format": "uri"
+                            },
+                            "licenseUrl": {
+                              "type": "string",
+                              "maxLength": 2048,
+                              "format": "uri"
+                            },
+                            "parentSourceId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "childSourceId": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "policyIds": {
+                              "minItems": 1,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            }
+                          },
+                          "required": [
+                            "provider",
+                            "license"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "sourceId",
+                        "attribution"
+                      ],
+                      "additionalProperties": false
+                    },
                     "publisher": {
                       "type": "string",
                       "minLength": 1
@@ -3620,10 +4461,12 @@
         },
         "url": {
           "type": "string",
+          "maxLength": 2048,
           "format": "uri"
         },
         "licenseUrl": {
           "type": "string",
+          "maxLength": 2048,
           "format": "uri"
         },
         "parentSourceId": {

@@ -356,6 +356,12 @@ export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
     description: "Cap on the readings one poll may hold; a poll above it fails. Empty: 1000000.",
     default: "",
   },
+  OPENCONDITIONS_LATEST_CACHE_MB: {
+    title: "Latest-reading cache",
+    description:
+      "Megabytes of memory for remembering what each polled series holds, so an unchanged reading is not read back; a source is cached whole or not at all. 0 turns it off. Empty: 8% of the heap limit.",
+    default: "",
+  },
   OPENCONDITIONS_OSM_MAXSPEED_FALLBACK: {
     title: "OSM maxspeed fallback",
     description:

@@ -1,3 +1,4 @@
+import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
 import { syncSources } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
@@ -128,6 +129,12 @@ beforeAll(async () => {
   await sql`
     INSERT INTO conditions.segment_profile (segment_id, dow, tod_hour, speed_kph, sample_count, computed_at, contributing)
     VALUES (${NIGHT_ONLY_SEGMENT_ID}, 0, 2, 60, 30, ${NOW}, ARRAY['test-source'])`;
+  // This fixture explicitly models acquired CC0 measurements, separate from source policy.
+  await sql`UPDATE conditions.segment_speed SET permission_licenses=ARRAY['CC0-1.0']`;
+  await sql`INSERT INTO conditions.contributor_receipt(id,version,contributors,provenance)
+    VALUES ('test-profile-acquisition',${CONTRIBUTOR_RECEIPT_VERSION},'[{"sourceId":"test-source","name":"Captured profile supplier"}]'::jsonb,
+    '{"sourceId":"test-source","attribution":{"provider":"Captured profile supplier","license":"CC0-1.0"},"upstream":[]}'::jsonb)`;
+  await sql`UPDATE conditions.segment_profile SET permission_licenses=ARRAY['CC0-1.0'],contributor_receipt_ids=ARRAY['test-profile-acquisition'],lineage_complete=true`;
 });
 
 afterAll(async () => {

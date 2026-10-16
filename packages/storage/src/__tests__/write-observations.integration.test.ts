@@ -943,7 +943,9 @@ describe("observation writes", () => {
     );
     const [series] = await sql`SELECT template,
       conditions.observation_record(template, reading) AS record FROM conditions.observation_latest`;
-    const [row] = await sql`SELECT * FROM conditions.observation`;
+    const [row] = await sql`SELECT o.*, r.provenance AS captured_provenance
+      FROM conditions.observation o LEFT JOIN conditions.contributor_receipt r
+        ON r.id = o.extra #>> '{provenance,creditReceiptId}'`;
     const { sinceAt: _since, ...stored } = series!["record"] as Record<string, unknown>;
     const back = recordFromHistory(registry, series!["template"], row!);
     // The id treats two spellings of one instant as one point; the history keeps the instant.
@@ -1376,5 +1378,41 @@ describe("transient readings", () => {
       queries.filter((q) => /SELECT[\s\S]*FROM conditions\.observation_latest/.test(q)),
     ).toEqual([]);
     expect(await pixels()).toEqual({ latest: 20_001, history: 20_001 });
+  }, 120_000);
+
+  it("attach receipts to a large restated poll a statement of at most 1,000 series at a time", async () => {
+    const drafts = Array.from({ length: 2_500 }, (_, i) =>
+      firePixel(-100 + (i % 50) * 0.01, 30 + Math.floor(i / 50) * 0.01, "2026-10-01T09:30:00Z"),
+    );
+    await writeSnapshot(sql, FIRMS, { observations: drafts }, ctx);
+    const sent: number[] = [];
+    const summary = await sql.begin((tx) => {
+      const spied = new Proxy(tx, {
+        get(target, prop, receiver) {
+          if (prop === "unsafe") {
+            return (query: string, params?: unknown[]) => {
+              for (const param of params ?? []) {
+                if (typeof param !== "string" || !param.startsWith("[")) continue;
+                sent.push((JSON.parse(param) as unknown[]).length);
+              }
+              return target.unsafe(query, params as never);
+            };
+          }
+          return Reflect.get(target, prop, receiver);
+        },
+      });
+      return writeSnapshotIn(
+        spied,
+        FIRMS,
+        { observations: drafts },
+        { ...ctx, captureEvidence: "acquired" },
+      );
+    });
+    expect(summary.observations).toMatchObject({ latest: 0, history: 0, unchanged: 2_500 });
+    expect(Math.max(...sent)).toBeLessThanOrEqual(1_000);
+    const [{ missing }] = await sql<{ missing: number }[]>`
+      SELECT count(*)::int AS missing FROM conditions.observation_latest
+       WHERE source_id = ${FIRMS} AND contributor_receipt_id IS NULL`;
+    expect(missing).toBe(0);
   }, 120_000);
 });

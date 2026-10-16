@@ -213,7 +213,12 @@ export function createParseProcess(
       pending++;
       clearTimeout(retire);
       const run = queue.then(() => runOne(task)).finally(retireWhenIdle);
-      queue = run.catch(() => undefined);
+      // The queue waits for a parse, not for its records: holding them would
+      // keep a register's drafts until the next parse.
+      queue = run.then(
+        () => undefined,
+        () => undefined,
+      );
       return run;
     },
     async close() {

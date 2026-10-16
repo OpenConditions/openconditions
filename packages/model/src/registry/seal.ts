@@ -2,6 +2,18 @@ import { contentHash } from "../content-hash.js";
 import { canonicalIdOf, parseRecordId } from "../kernel/identity.js";
 import type { Registry, ValidationResult } from "./build.js";
 
+interface SealOptions {
+  instanceId: string;
+  revision: number;
+  recordedAt: string;
+  /**
+   * The draft's content hash, when the caller has it: sealing adds only
+   * derived fields, so it is the sealed record's too, and a writer that
+   * compared it with the stored one need not compute it twice.
+   */
+  contentHash?: string;
+}
+
 /**
  * The write seam: validates a parser draft, stamps the derived fields
  * (canonicalId, domain, provenance.instanceId, contentHash) and the storage
@@ -11,19 +23,34 @@ import type { Registry, ValidationResult } from "./build.js";
 export function sealRecord(
   registry: Registry,
   draft: unknown,
-  opts: {
-    instanceId: string;
-    revision: number;
-    recordedAt: string;
-    /**
-     * The draft's content hash, when the caller has it: sealing adds only
-     * derived fields, so it is the sealed record's too, and a writer that
-     * compared it with the stored one need not compute it twice.
-     */
-    contentHash?: string;
-  },
+  opts: SealOptions,
 ): ValidationResult {
-  const checked = registry.validateDraft(draft);
+  return sealChecked(registry, registry.validateDraft(draft), opts);
+}
+
+/**
+ * {@link sealRecord} for the observation drafts of one write, sealing each
+ * into the same record: a location or an attribution the drafts share is
+ * validated once (`Registry.observationDraftValidator`).
+ */
+export function observationSealer(
+  registry: Registry,
+  opts: Omit<SealOptions, "contentHash">,
+): (draft: unknown, contentHash?: string) => ValidationResult {
+  const validate = registry.observationDraftValidator();
+  return (draft, hash) =>
+    sealChecked(
+      registry,
+      validate(draft),
+      hash === undefined ? opts : { ...opts, contentHash: hash },
+    );
+}
+
+function sealChecked(
+  registry: Registry,
+  checked: ValidationResult,
+  opts: SealOptions,
+): ValidationResult {
   if (!checked.ok) return checked;
   const rec = checked.value;
   const parts = parseRecordId(rec["id"] as string)!;

@@ -2228,7 +2228,7 @@
     "/observations": {
       "get": {
         "operationId": "getSeries",
-        "summary": "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page. A series that keeps no history (a lane's or a vehicle class's) answers 400: its reading in effect is at `/observations/latest`.",
+        "summary": "One series over a range: raw readings within the property's raw retention, hourly or daily rollups beyond it (or as `resolution` asks), oldest first, one page. Raw records carry their own immutable historical provenance. Each rollup includes `provenance` (the distinct captured publisher/rights snapshots of its samples) and `lineageComplete`; incomplete or non-public buckets are withheld from public scope. `X-Data-License` lists only licences of returned records/buckets, including stated upstream licences. A series that keeps no history (a lane's or a vehicle class's) answers 400: its reading in effect is at `/observations/latest`.",
         "parameters": [
           {
             "name": "subject",

@@ -62,6 +62,11 @@ export async function writeSensorObservations(
         (l.reading #>> '{baseline,freeFlow,value}')::double precision AS free_flow,
         l.reading #>> '{baseline,source}' AS baseline_source,
         receipt.contributors AS credit, receipt.id IS NOT NULL AS receipt_complete,
+        CASE WHEN receipt.provenance #>> '{attribution,license}' IS NOT NULL
+          THEN ARRAY[receipt.provenance #>> '{attribution,license}'] || ARRAY(
+            SELECT permission.license FROM jsonb_array_elements(COALESCE(receipt.provenance->'upstream', '[]'::jsonb)) u
+            CROSS JOIN LATERAL(VALUES(CASE WHEN u ? 'license' THEN COALESCE(u->>'license','') END),(CASE WHEN u ? 'source' THEN COALESCE(u #>> '{source,attribution,license}','') END)) permission(license)
+            WHERE permission.license IS NOT NULL) END AS permission_licenses,
         COALESCE(l.effective_until, l.effective_from) AS input_at,
         CASE WHEN l.property = 'traffic.los'
           THEN GREATEST(COALESCE(l.effective_until, l.effective_from), st.last_success_at)
@@ -88,6 +93,7 @@ export async function writeSensorObservations(
         max(free_flow) FILTER (WHERE property = 'traffic.speed') AS free_flow,
         max(value_text) FILTER (WHERE property = 'traffic.los') AS los,
         max(at) AS observed_at,
+        conditions.flow_permission_union(jsonb_agg(to_jsonb(permission_licenses))) AS permission_licenses,
         bool_and(receipt_complete) FILTER (WHERE property = 'traffic.speed' AND value_num = selected_speed) AS speed_complete,
         bool_and(receipt_complete) FILTER (WHERE property = 'traffic.speed' AND free_flow = selected_free_flow) AS free_flow_complete,
         bool_and(receipt_complete) FILTER (WHERE property = 'traffic.los' AND value_text = selected_los) AS los_complete,
@@ -110,7 +116,7 @@ export async function writeSensorObservations(
       WHERE site.speed IS NOT NULL OR site.los <> 'unknown'
     )
     INSERT INTO conditions.segment_observation
-      (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at, native_field_sources, field_sources, field_contributors, field_lineage_complete)
+      (segment_id, source, source_tier, current_kph, free_flow_kph, speed_ratio, los, confidence, sample_count, observed_at, expires_at, native_field_sources, field_sources, field_contributors, field_lineage_complete, permission_licenses)
     SELECT agg.segment_id, agg.source, 'sensor',
       agg.current_kph, agg.free_flow_kph, agg.speed_ratio,
       CASE
@@ -128,7 +134,7 @@ export async function writeSensorObservations(
       0.9, agg.sample_count, agg.observed_at,
       agg.observed_at + make_interval(mins => ${READING_LIFETIME_MIN}),
       conditions.flow_native_field_sources(agg.field_contributors, agg.source),
-      conditions.flow_field_sources(agg.field_contributors), agg.field_contributors, agg.completeness
+      conditions.flow_field_sources(agg.field_contributors), agg.field_contributors, agg.completeness, agg.permission_licenses
     FROM (
       SELECT base.*, jsonb_build_object(
         'speed', COALESCE(speed_complete, current_kph IS NULL),
@@ -157,6 +163,7 @@ export async function writeSensorObservations(
           ELSE -1 END
         ) AS declared_rank,
         count(*) AS sample_count,
+        conditions.flow_permission_union(jsonb_agg(to_jsonb(site.permission_licenses))) AS permission_licenses,
         max(site.observed_at) AS observed_at,
         bool_and(site.speed_complete) FILTER (WHERE site.speed IS NOT NULL) AS speed_complete,
         bool_and(CASE WHEN site.free_flow IS NULL THEN true ELSE site.free_flow_complete END)
@@ -183,7 +190,7 @@ export async function writeSensorObservations(
       los=EXCLUDED.los, confidence=EXCLUDED.confidence, sample_count=EXCLUDED.sample_count,
       observed_at=EXCLUDED.observed_at, expires_at=EXCLUDED.expires_at,
       native_field_sources=EXCLUDED.native_field_sources, field_lineage_complete=EXCLUDED.field_lineage_complete,
-      field_contributors=EXCLUDED.field_contributors, field_sources=EXCLUDED.field_sources
+      field_contributors=EXCLUDED.field_contributors, field_sources=EXCLUDED.field_sources, permission_licenses=EXCLUDED.permission_licenses
     RETURNING segment_id`;
 
   return { written: rows.length };
@@ -245,6 +252,10 @@ export async function fuseSegmentSpeed(
       SELECT * FROM conditions.segment_observation o
       WHERE o.expires_at IS NULL OR o.expires_at > ${nowIso}::timestamptz
     ),
+    permissions AS (
+      SELECT segment_id, conditions.flow_permission_union(jsonb_agg(to_jsonb(permission_licenses))) AS licenses
+      FROM live GROUP BY segment_id
+    ),
     speed AS (
       SELECT DISTINCT ON (segment_id)
         segment_id, source, current_kph, free_flow_kph, speed_ratio, los AS speed_los, source_tier, observed_at,
@@ -280,7 +291,7 @@ export async function fuseSegmentSpeed(
       SELECT segment_id FROM declared
     )
     INSERT INTO conditions.segment_speed
-      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at, native_field_sources, field_sources, field_contributors, field_lineage_complete)
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at, native_field_sources, field_sources, field_contributors, field_lineage_complete, permission_licenses)
     SELECT
       segs.segment_id, sp.current_kph, sp.free_flow_kph, sp.speed_ratio,
       COALESCE(
@@ -293,8 +304,10 @@ export async function fuseSegmentSpeed(
       ARRAY(SELECT DISTINCT source FROM conditions.segment_observation o2
             WHERE o2.segment_id = segs.segment_id AND (o2.expires_at IS NULL OR o2.expires_at > ${nowIso}::timestamptz)),
       false, COALESCE(sp.observed_at, d.observed_at), ${nowIso},
-      lineage.native_fields, conditions.flow_field_sources(lineage.fields), lineage.fields, lineage.completeness
+      lineage.native_fields, conditions.flow_field_sources(lineage.fields), lineage.fields, lineage.completeness,
+      permissions.licenses
     FROM segs
+    JOIN permissions ON permissions.segment_id = segs.segment_id
     LEFT JOIN speed sp ON sp.segment_id = segs.segment_id
     LEFT JOIN declared d ON d.segment_id = segs.segment_id
     LEFT JOIN declared_lineage ON declared_lineage.segment_id = segs.segment_id
@@ -332,7 +345,7 @@ export async function fuseSegmentSpeed(
       los=EXCLUDED.los, confidence='measured', source_tier=EXCLUDED.source_tier, contributing=EXCLUDED.contributing,
       is_estimated=false, observed_at=EXCLUDED.observed_at, updated_at=EXCLUDED.updated_at,
       native_field_sources=EXCLUDED.native_field_sources, field_sources=EXCLUDED.field_sources,
-      field_contributors=EXCLUDED.field_contributors, field_lineage_complete=EXCLUDED.field_lineage_complete
+      field_contributors=EXCLUDED.field_contributors, field_lineage_complete=EXCLUDED.field_lineage_complete, permission_licenses=EXCLUDED.permission_licenses
     RETURNING segment_id`;
 
   return { measured: rows.length };
@@ -396,7 +409,7 @@ export async function propagateSegmentSpeed(
 
   const rows = await sql`
     INSERT INTO conditions.segment_speed
-      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at, native_field_sources, field_sources, field_contributors, field_lineage_complete)
+      (segment_id, current_kph, free_flow_kph, speed_ratio, los, confidence, source_tier, contributing, is_estimated, observed_at, updated_at, native_field_sources, field_sources, field_contributors, field_lineage_complete, permission_licenses)
     SELECT DISTINCT ON (nb.segment_id)
       nb.segment_id, m.current_kph, nb.free_flow_kph,
       CASE WHEN nb.free_flow_kph > 0 THEN m.current_kph / nb.free_flow_kph END,
@@ -406,7 +419,7 @@ export async function propagateSegmentSpeed(
            WHEN m.current_kph / nb.free_flow_kph >= 0.15 THEN 'queuing'
            ELSE 'stationary' END,
       'estimated', 'sensor', m.contributing, true, m.observed_at, ${nowIso},
-      lineage.native_fields, conditions.flow_field_sources(lineage.fields), lineage.fields, lineage.completeness
+      lineage.native_fields, conditions.flow_field_sources(lineage.fields), lineage.fields, lineage.completeness, m.permission_licenses
     FROM conditions.segment_speed m
     JOIN conditions.road_segment ms ON ms.segment_id = m.segment_id
     JOIN conditions.road_segment nb
