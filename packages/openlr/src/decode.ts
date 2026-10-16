@@ -27,9 +27,15 @@ export interface OpenLrLocation {
   type: "line";
   /** Ordered list of location reference points (at least two). */
   points: LrpPoint[];
-  /** Positive offset in metres from the first LRP. */
+  /**
+   * Positive offset in metres from the first LRP, estimated against the first
+   * LRP's distance to the second.
+   */
   positiveOffset: number;
-  /** Negative offset in metres from the last LRP. */
+  /**
+   * Negative offset in metres before the last LRP, estimated against the
+   * second-last LRP's distance to the last.
+   */
   negativeOffset: number;
 }
 
@@ -84,9 +90,13 @@ export function decodeOpenLrBinary(base64: string): OpenLrLocation {
     };
   });
 
-  const totalLength = points.reduce((sum, p) => sum + p.distanceToNext, 0);
-  const positiveOffset = offsets ? offsets.getPositiveOffset(totalLength) : 0;
-  const negativeOffset = offsets ? offsets.getNegativeOffset(totalLength) : 0;
+  // Binary v3 stores each offset as a share of its LRP length: the first LRP's
+  // distance to the second for the positive offset, and the second-last LRP's
+  // distance to the last for the negative offset (whitepaper v1.5, 7.5.2).
+  const headLength = points.at(0)?.distanceToNext ?? 0;
+  const tailLength = points.at(-2)?.distanceToNext ?? 0;
+  const positiveOffset = offsets ? offsets.getPositiveOffset(headLength) : 0;
+  const negativeOffset = offsets ? offsets.getNegativeOffset(tailLength) : 0;
 
   return { type: "line", points, positiveOffset, negativeOffset };
 }

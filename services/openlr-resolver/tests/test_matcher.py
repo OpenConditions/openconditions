@@ -5,9 +5,9 @@
 
 These exercise the real `openlr-dereferencer` engine end to end: a hand-built
 line location reference that traces the A->B->C road must resolve onto both
-edges, a reference placed far from any matching road must fail, and a three-LRP
-reference with a non-zero positive offset must trim against the TOTAL path
-length rather than only the first segment's length.
+edges, a reference placed far from any matching road must fail, and the offsets
+of a three-LRP reference must trim against the first and last LRP-to-LRP paths
+(OpenLR whitepaper v1.5 rev2, Rule 5 and section 7.5.2).
 """
 
 from __future__ import annotations
@@ -18,9 +18,10 @@ import pytest
 from openlr import FRC, FOW, LineLocationReference, LocationReferencePoint
 from openlr import Coordinates
 from openlr_dereferencer import Config
-from openlr_dereferencer.maps.wgs84 import bearing as wgs_bearing, distance, line_string_length
+from openlr_dereferencer import decode
+from openlr_dereferencer.maps.wgs84 import bearing as wgs_bearing, distance
 
-from app.matcher import NoMatchError, _join_line_geometries, match
+from app.matcher import NoMatchError, match
 from tests.conftest import NODE_A, NODE_B, NODE_C
 
 
@@ -82,104 +83,65 @@ def test_unresolvable_reference_raises(sample_graph) -> None:
         match(reference, sample_graph, config=Config(search_radius=100))
 
 
-def test_three_lrp_positive_offset_trims_against_total_length(sample_graph) -> None:
-    """A three-LRP reference with poffs > 0.5 must trim relative to the TOTAL path.
+def _abc_three_lrp_reference(poffs: float, noffs: float) -> LineLocationReference:
+    """A three-LRP reference along A->B->C with an intermediate LRP at B."""
 
-    The sample graph has A --(line10, ~194 m)--> B --(line11, ~194 m)--> C.
-    A three-LRP reference encodes A->B->C with an intermediate LRP at B.
-
-    The engine's ``build_line_location`` multiplies ``poffs`` by only the first
-    segment's length (~194 m), so a poffs of 0.55 would cut ~107 m into A->B
-    and the result would start well BEFORE B.
-
-    With the corrected trimming applied here, poffs is applied against the TOTAL
-    matched length (~387 m): 0.55 * 387 ≈ 213 m, which is past B (the ~194 m
-    mark) — completely within the second segment. The test asserts that the first
-    coordinate of the trimmed geometry is at longitude > NODE_B[0], proving
-    total-length trimming is in effect rather than first-segment-only trimming.
-    """
     dnp_ab = distance(Coordinates(*NODE_A), Coordinates(*NODE_B))
     dnp_bc = distance(Coordinates(*NODE_B), Coordinates(*NODE_C))
+    lrp_a = _lrp(*NODE_A, round(_bearing_deg(NODE_A, NODE_B)), FRC.FRC3, dnp_ab)
+    lrp_b = _lrp(*NODE_B, round(_bearing_deg(NODE_B, NODE_C)), FRC.FRC3, dnp_bc)
+    lrp_c = _lrp(*NODE_C, round(_bearing_deg(NODE_C, NODE_B)), FRC.FRC7, 0)
+    return LineLocationReference(points=[lrp_a, lrp_b, lrp_c], poffs=poffs, noffs=noffs)
 
-    # Three LRPs: first at A, intermediate at B, last at C.
-    lrp_a = LocationReferencePoint(
-        lon=NODE_A[0], lat=NODE_A[1],
-        frc=FRC.FRC3, fow=FOW.SINGLE_CARRIAGEWAY,
-        bear=round(_bearing_deg(NODE_A, NODE_B)),
-        lfrcnp=FRC.FRC3, dnp=round(dnp_ab),
-    )
-    lrp_b = LocationReferencePoint(
-        lon=NODE_B[0], lat=NODE_B[1],
-        frc=FRC.FRC3, fow=FOW.SINGLE_CARRIAGEWAY,
-        bear=round(_bearing_deg(NODE_B, NODE_C)),
-        lfrcnp=FRC.FRC3, dnp=round(dnp_bc),
-    )
-    lrp_c = LocationReferencePoint(
-        lon=NODE_C[0], lat=NODE_C[1],
-        frc=FRC.FRC3, fow=FOW.SINGLE_CARRIAGEWAY,
-        bear=round(_bearing_deg(NODE_C, NODE_B)),
-        lfrcnp=FRC.FRC7, dnp=0,
-    )
 
-    # poffs = 0.55: with total-length trimming starts at 0.55 * ~387 ≈ 213 m,
-    # which is past B (~194 m mark) — strictly in the second segment.
-    # With first-segment-only trimming (the engine bug) it would be
-    # 0.55 * ~194 ≈ 107 m, which is before B.
-    poffs = 0.55
-    reference = LineLocationReference(points=[lrp_a, lrp_b, lrp_c], poffs=poffs, noffs=0.0)
+def test_three_lrp_positive_offset_trims_against_first_lrp_path(sample_graph) -> None:
+    """The positive offset is a share of the path between the first two LRPs.
+
+    The sample graph has A --(line 10, ~193 m)--> B --(line 11, ~193 m)--> C.
+    A positive offset of 0.55 is 0.55 * ~193 m = ~106 m into A->B, so the
+    location starts before B. Measuring against the ~386 m total would wrongly
+    start it past B.
+    """
+    reference = _abc_three_lrp_reference(poffs=0.55, noffs=0.0)
 
     result = match(reference, sample_graph, config=Config(search_radius=100))
 
     coords = result.geometry["coordinates"]
     assert result.geometry["type"] == "LineString"
-    assert len(coords) >= 2
-
-    # The trimmed path must start past B (past the 50 % mark of the full road),
-    # proving the offset was applied against the total ~387 m, not just ~194 m.
-    first_lon = coords[0][0]
-    assert first_lon > NODE_B[0], (
-        f"Expected trimmed start longitude > {NODE_B[0]} (past midpoint B), "
-        f"got {first_lon:.6f} — offset was not applied against total path length"
-    )
-    # The trimmed path must end at or near C (no negative offset).
+    # The road runs due east, so longitude is proportional to distance along it.
+    expected_start_lon = NODE_A[0] + 0.55 * (NODE_B[0] - NODE_A[0])
+    assert coords[0][0] == pytest.approx(expected_start_lon, abs=1e-5)
+    assert coords[0][0] < NODE_B[0]
     assert coords[-1][0] == pytest.approx(NODE_C[0], abs=1e-4)
 
 
-def test_geometry_built_from_accepted_path_not_ghost_segments(sample_graph) -> None:
-    """The polyline must be built from the decoder's accepted path, not ghost segments.
+def test_three_lrp_negative_offset_trims_against_last_lrp_path(sample_graph) -> None:
+    """The negative offset is a share of the path between the last two LRPs."""
 
-    When the engine explores multiple candidate routes for an LRP pair it fires
-    ``on_route_success`` for every route found — including routes that are later
-    REJECTED by the DNP length check. Collecting lines from those observer
-    callbacks produces ghost segments that inflate path length and corrupt offset
-    trimming.
+    reference = _abc_three_lrp_reference(poffs=0.0, noffs=0.5)
 
-    This test verifies that the concatenated path length equals the sum of
-    lengths of the lines in the decoded ``LineLocation.lines`` (the accepted
-    path), not some larger ghost-inflated value.
+    result = match(reference, sample_graph, config=Config(search_radius=100))
+
+    coords = result.geometry["coordinates"]
+    expected_end_lon = NODE_C[0] - 0.5 * (NODE_C[0] - NODE_B[0])
+    assert coords[0][0] == pytest.approx(NODE_A[0], abs=1e-4)
+    assert coords[-1][0] == pytest.approx(expected_end_lon, abs=1e-5)
+    assert coords[-1][0] > NODE_B[0]
+
+
+def test_geometry_is_the_decoded_location_path(sample_graph) -> None:
+    """The returned geometry is the engine's offset-trimmed location path.
+
+    It must not be rebuilt from candidate routes the engine explored and
+    rejected, nor trimmed a second time after the engine applied the offsets.
     """
-    from openlr_dereferencer import decode as _decode
-    from app.matcher import _ScoreObserver
+    reference = _abc_three_lrp_reference(poffs=0.3, noffs=0.2)
+    config = Config(search_radius=100)
 
-    reference = _ab_to_c_reference()
+    location = decode(reference, sample_graph, config=config)
+    result = match(reference, sample_graph, config=config)
 
-    observer = _ScoreObserver()
-    location = _decode(reference, sample_graph, observer=observer, config=Config(search_radius=100))
-
-    # Build the polyline the way match() now does: from the accepted path only.
-    accepted_lines = location.lines
-    accepted_polyline = _join_line_geometries(accepted_lines)
-    accepted_len = line_string_length(accepted_polyline)
-
-    # The expected length is the sum of individual accepted line lengths.
-    expected_len = sum(ln.length for ln in accepted_lines)
-
-    # Within floating-point tolerance the two must agree — no ghost inflation.
-    assert accepted_len == pytest.approx(expected_len, rel=1e-4), (
-        f"Polyline length {accepted_len:.2f} m does not match sum of accepted "
-        f"line lengths {expected_len:.2f} m — ghost segments may be included"
-    )
-
-    # Sanity: the accepted path should span the full A-to-C road.
-    assert accepted_lines[0].line_id == 10
-    assert accepted_lines[-1].line_id == 11
+    assert [ln.line_id for ln in location.lines] == [10, 11]
+    expected = [value for c in location.coordinates() for value in (c.lon, c.lat)]
+    actual = [value for pair in result.geometry["coordinates"] for value in pair]
+    assert actual == pytest.approx(expected)
