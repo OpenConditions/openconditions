@@ -68,7 +68,7 @@ Equivalent same-type restrictions share one event. Equivalence compares canonica
 fields (including effective validity, compliance and lane scope), excluding IDs
 and source provenance; object key order does not matter. Different values that
 round to the same wire value are still different restrictions. When same-type
-restrictions differ, the containing message is withheld with `conflicting_effects`
+restrictions within one interval differ, the containing message is withheld with `conflicting_effects`
 for each implicated effect. The exporter never chooses the first, minimum or
 maximum speed limit. This is a conservative OC projection policy: TraFF allows
 multiple events, but cannot associate each one with its own lane scope or window.
@@ -77,6 +77,26 @@ Read the canonical JSON for the full statements.
 Effects with their own geometry continue as separate messages, including when a
 conflict withholds the parent message. Delay observations remain the separate
 case described below. Existing single-effect field reductions are unchanged.
+
+## Restriction timing
+
+Each message has one start/end interval. Effects at the root location whose
+interval differs from the situation are grouped by interval into separate
+messages; same-type conflict checks apply within each group. Group IDs are
+`<situation id>#<lexicographically first effect id>`, stable against input order.
+Effects with their own geometry keep their existing separate messages and IDs.
+Equivalent timestamp offsets describe the same interval. Effective validity is
+an effect's override, otherwise its phase's validity, otherwise the situation's.
+A classification event already represented by an effect does not create a second
+restriction with the parent's broader interval or resurrect an ended effect.
+
+The current XML emitters do not serialize recurring `periods` or `exceptions`.
+They withhold the whole situation with `unsupported_timing`, pointing to the
+actual root/effect/phase rule. This includes overnight and DST-dependent rules;
+no finite expansion or continuous approximation is made. TraFF also withholds
+suspended timing, since the current mapping cannot express suspension. Unknown
+or terminal root lifecycle is withheld; ended/cancelled or unknown individual
+effects are omitted with effect diagnostics. Canonical JSON retains these rules.
 
 ## Delay durations
 
@@ -90,7 +110,8 @@ zero is representable as `0:00`. Canonical records retain their original seconds
 
 Distinct duration/queue pairs remain separate events within their message;
 they are neither summed nor combined across effects. Exact duplicate pairs are
-collapsed. Each effect's location, validity and applicability still govern export.
+collapsed. Each effect's location, effective validity and applicability govern export as
+described above.
 
 The pinned Java reader **accepts but discards `q_duration`**: its deserializing
 constructor leaves duration parsing unimplemented. The independent check verifies
@@ -102,7 +123,7 @@ that this reader can display the delay duration.
 
 The optional check exercises the actual upstream `TraffFeed.read` with emitted
 bidirectional points/lines, canonical fractional/offset timestamps, empty and
-withheld feeds, and 5,001 distinct messages:
+withheld feeds, future effect intervals, and 5,001 distinct messages:
 
 ```bash
 pnpm install --frozen-lockfile

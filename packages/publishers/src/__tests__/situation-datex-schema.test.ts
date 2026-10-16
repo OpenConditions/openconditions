@@ -185,6 +185,26 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
     ["every classification DATEX has a record for", everyNature],
     ["every effect record and location shape", variants],
     [
+      "future same-type effect intervals",
+      [
+        situation("future-closure", {
+          kind: "closure",
+          type: "closure",
+          subtype: "full",
+          effects: [
+            effect("closure", "closure", {
+              scope: "road",
+              validity: {
+                status: "planned",
+                start: "2026-09-07T20:00:00Z",
+                end: "2026-09-08T05:00:00Z",
+              },
+            }),
+          ],
+        }),
+      ],
+    ],
+    [
       "separate same-type management records",
       [
         situation("repeated", {

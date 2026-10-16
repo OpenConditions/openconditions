@@ -1,14 +1,19 @@
 import {
   type Effect,
-  effectStateAt,
   effectValidity,
   type Registry,
   type SituationClass,
-  situationEffects,
   type Validity,
 } from "@openconditions/model";
 import { XMLBuilder } from "fast-xml-parser";
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
+import {
+  definesManagementNature,
+  type ProjectionEffect,
+  projectionEffects,
+  projectionStateAt,
+  sameInterval,
+} from "./export-validity.js";
 
 type Rec = Record<string, unknown>;
 
@@ -245,23 +250,27 @@ function effectSemantics(effect: Effect, validity: Validity): string {
 
 /** The events of `effects` in force or scheduled at `at`, appended to `out`. */
 function effectEvents(
-  effects: Effect[],
-  validity: Validity,
+  effects: ProjectionEffect[],
   at: Date,
   out: TraffEvent[],
   diagnostics: ProjectionDiagnostics,
 ) {
   let diversion = false;
   const byType = new Map<string, { effect: Effect; semantics: string }[]>();
-  for (const effect of effects) {
-    const { state } = effectStateAt(effect, validity, at);
+  for (const context of effects) {
+    const { effect, validity, validityPath } = context;
+    const { state } = projectionStateAt(context, at);
     const path = diagnostics.effectPath(effect);
     if (state === "ended" || state === "unknown") {
       diagnostics.emit(
         state === "ended" ? "effect_ended" : "effect_time_unknown",
         "effect",
         "omitted",
-        state === "unknown" ? `${path}/issues` : effect.validity ? `${path}/validity` : "/validity",
+        state === "unknown"
+          ? validity.status === "unknown"
+            ? `${validityPath}/status`
+            : `${path}/issues`
+          : validityPath,
         `This effect is not exported at the evaluation instant: ${state}.`,
         effect,
       );
@@ -316,7 +325,7 @@ export function traffEventsOf(
   at: Date,
   report?: ExportDiagnosticSink,
 ): TraffEvent[] {
-  const effects = situationEffects(situation);
+  const effects = projectionEffects(situation);
   const diagnostics = new ProjectionDiagnostics(situation, report);
   if (diagnostics.blocked("traff")) return [];
   const out: TraffEvent[] = [];
@@ -324,8 +333,16 @@ export function traffEventsOf(
     "traff",
     situation as unknown as SituationClass,
   );
-  if (nature) out.push(event(nature));
-  else
+  // A mapped effect owns the restriction, including its filtering and window.
+  const represented =
+    nature &&
+    effects.some(
+      ({ effect }) =>
+        definesManagementNature(situation, effect) ||
+        effectEvent(effect, new ProjectionDiagnostics(situation))?.type === nature,
+    );
+  if (nature && !represented) out.push(event(nature));
+  else if (!nature)
     diagnostics.emit(
       "unsupported_nature",
       "field",
@@ -333,8 +350,11 @@ export function traffEventsOf(
       "/type",
       "This situation classification has no TraFF nature mapping in the current registry.",
     );
-  const here = effects.filter((e) => !hasOwnPlace(e));
-  return effectEvents(here, situation["validity"] as Validity, at, out, diagnostics);
+  const here = effects.filter(
+    ({ effect, validity }) =>
+      !hasOwnPlace(effect) && sameInterval(validity, situation["validity"] as Validity),
+  );
+  return effectEvents(here, at, out, diagnostics);
 }
 
 /**
@@ -355,20 +375,38 @@ function messagesOf(
     events.length > 0 ? buildMessage(situation, events, diagnostics, "/location") : undefined;
   const out = main === undefined ? [] : [main];
   const validity = situation["validity"] as Validity;
-  for (const effect of situationEffects(situation).filter(hasOwnPlace)) {
-    const own = effectEvents([effect], validity, at, [], diagnostics);
+  const groups: ProjectionEffect[][] = [];
+  for (const context of projectionEffects(situation)) {
+    if (hasOwnPlace(context.effect)) groups.push([context]);
+    else if (!sameInterval(context.validity, validity)) {
+      const group = groups.find(
+        (g) => !hasOwnPlace(g[0]!.effect) && sameInterval(g[0]!.validity, context.validity),
+      );
+      if (group) group.push(context);
+      else groups.push([context]);
+    }
+  }
+  for (const group of groups) {
+    // Stable against input order; do not bypass collision checks when splitting.
+    group.sort((a, b) => a.effect.id.localeCompare(b.effect.id));
+    const first = group[0]!;
+    const ownPlace = hasOwnPlace(first.effect);
+    const own = effectEvents(group, at, [], diagnostics);
     if (own.length === 0) continue;
     const message = buildMessage(
       {
         ...situation,
-        id: `${String(situation["id"])}#${effect.id}`,
-        validity: effectValidity(effect, validity),
-        location: { ...(situation["location"] as Rec), ...(effect.location as Rec) },
+        id: `${String(situation["id"])}#${first.effect.id}`,
+        validity: first.validity,
+        location: {
+          ...(situation["location"] as Rec),
+          ...(ownPlace ? (first.effect.location as Rec) : {}),
+        },
       },
       own,
       diagnostics,
-      `${diagnostics.effectPath(effect)}/location`,
-      effect,
+      ownPlace ? `${diagnostics.effectPath(first.effect)}/location` : "/location",
+      ownPlace ? first.effect : undefined,
     );
     if (message !== undefined) out.push(message);
   }

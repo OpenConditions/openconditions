@@ -38,6 +38,16 @@ public class CheckTraff {
                 System.out.println(names[i] + ": " + counts[i] + " messages accepted");
             }
         }
+        try (FileInputStream input = new FileInputStream(Path.of(args[0], "timing.xml").toFile())) {
+            TraffFeed feed = TraffFeed.read(input);
+            if (feed.getMessages().size() != 1) throw new AssertionError("broad nature closure recreated");
+            TraffMessage message = feed.getMessages().get(0);
+            if (!message.id.endsWith("#closure") || message.events.length != 1
+                    || !message.startTime.toInstant().equals(Instant.parse("2026-09-07T10:00:00Z"))
+                    || !message.endTime.toInstant().equals(Instant.parse("2026-09-07T11:00:00Z")))
+                throw new AssertionError("effect interval widened");
+        }
+        System.out.println("timing: future effect interval preserved without broad nature closure");
         Path delays = Path.of(args[0], "delays.xml");
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);

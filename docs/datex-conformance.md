@@ -39,6 +39,9 @@ records carry the revision as `version`:
   matching effects remain independent records; fields are never combined across
   effects to synthesize a restriction.
   A nature without a record of its own leads with its first effect's record.
+  Generic management classifications are represented by their concrete effects,
+  including scoped closures and speed records with different discriminators;
+  they never add a second restriction with the parent's broader validity.
 - **Record ids.** A record keeps the DATEX record id it was parsed from
   (`effect.sourceRecordRef`); the nature record carries the situation id; any
   other record is `<situation id>#<effect id>`.
@@ -51,6 +54,18 @@ records carry the revision as `version`:
   `SpeedManagement`, `ReroutingManagement`, …) must state a `complianceOption`:
   the effect's `mandatory` or `advisory`, else `_extended` with
   `_extendedValue="unknown"` rather than a guess.
+- **Timing fidelity.** Simple effect intervals use effect → phase → situation
+  fallback. A filtered or own-place management effect cannot be recreated by a
+  broader root nature record. The current emitter withholds situations containing
+  recurring periods or exceptions with `unsupported_timing`; this is an emitter
+  limitation, not a limitation of DATEX II. It does not approximate overnight,
+  timezone/DST or exception rules as continuous intervals. Suspended validity is
+  preserved; unknown or terminal root lifecycle is withheld.
+- **Delay supplements.** Only a temporally eligible delay at the root place with
+  the actual leading record's interval and lifecycle can supply its duration.
+  Ended/unknown delays and mismatched contexts are omitted with diagnostics.
+  Different eligible durations cannot share the one supplement and are all
+  omitted with `conflicting_effects`; equivalent durations may share it.
 - **Validity.** DATEX requires an `overallStartTime`. A situation without a
   declared start is stated valid from its record version time, the earliest
   moment it is known to hold.

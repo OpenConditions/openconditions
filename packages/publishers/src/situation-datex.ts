@@ -1,7 +1,5 @@
 import {
   type Effect,
-  effectStateAt,
-  effectValidity,
   type SituationClass,
   situationEffects,
   type Validity,
@@ -13,6 +11,13 @@ import {
 } from "@openconditions/model-roads";
 import { XMLBuilder } from "fast-xml-parser";
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
+import {
+  definesManagementNature,
+  type ProjectionEffect,
+  projectionEffects,
+  projectionStateAt,
+  sameInterval,
+} from "./export-validity.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -31,8 +36,8 @@ type Text = { lang: string; text: string }[];
  * is folded into it; a nature without a record of its own leads with its first
  * effect's. A record keeps the DATEX id it was read from (`sourceRecordRef`),
  * else `<situation id>#<effect id>`. Every record states the situation's
- * probability; severity, headline and delay describe the whole situation and
- * travel on its leading record.
+ * probability; severity and headline travel on its leading record. A delay
+ * supplements that record only when its timing and place agree.
  *
  * The output validates against the base DATEX II v3.7 schemas inside an
  * Exchange 2020 `messageContainer`, but it is NOT SRTI-profile-conformant
@@ -275,7 +280,7 @@ function natureDetail(c: SituationClass, code: string): Rec {
 
 /** The DATEX records of a situation at `at`; none when DATEX cannot tell it truthfully. */
 export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnosticSink): Rec[] {
-  const effects = situationEffects(situation);
+  const effects = projectionEffects(situation);
   const diagnostics = new ProjectionDiagnostics(situation, report);
   if (diagnostics.blocked("datex")) return [];
   const id = situation["id"] as string;
@@ -295,28 +300,36 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     severity: SEVERITY[String((situation["severity"] as Rec | undefined)?.["label"])],
     headline: situation["headline"] as Text | undefined,
   };
-  const delay = effects.find((e) => e.kind === "delay");
-  const delays: Rec =
-    delay?.kind === "delay" && delay.delay
-      ? { "sit:delays": { "sit:delayTimeValue": delay.delay.value } }
-      : {};
-
   const classification = situation as unknown as SituationClass;
   const natureCode = natureRecordCode(classification);
-  let folded: Effect | undefined;
-  const effectRecords: Rec[] = [];
-  for (const effect of effects) {
-    // Delay duration is a leading-record supplement, selected above independently
-    // of management-effect time filtering. Do not claim the whole delay vanished.
+  // A classification must not recreate a filtered restriction at the root place.
+  const natureRepresented = effects.some(
+    ({ effect }) =>
+      natureCode !== undefined &&
+      (definesManagementNature(situation, effect) || effectCode(effect) === natureCode),
+  );
+  let folded: ProjectionEffect | undefined;
+  const pending: {
+    code: string;
+    header: RecordHeader;
+    body: RecordBody;
+    context: ProjectionEffect;
+  }[] = [];
+  for (const context of effects) {
+    const { effect, validity: effectWindow, validityPath } = context;
     if (effect.kind === "delay") continue;
-    const { state } = effectStateAt(effect, validity, at);
+    const { state } = projectionStateAt(context, at);
     const path = diagnostics.effectPath(effect);
     if (state === "ended" || state === "unknown") {
       diagnostics.emit(
         state === "ended" ? "effect_ended" : "effect_time_unknown",
         "effect",
         "omitted",
-        state === "unknown" ? `${path}/issues` : effect.validity ? `${path}/validity` : "/validity",
+        state === "unknown"
+          ? context.validity.status === "unknown"
+            ? `${validityPath}/status`
+            : `${path}/issues`
+          : validityPath,
         `No management record is exported for this effect at the evaluation instant: ${state}.`,
         effect,
       );
@@ -356,35 +369,33 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     // Only one effect may supply the nature record: never combine independent
     // values, compliance, impact or validity into a synthetic restriction.
     if (code === natureCode && place === undefined && folded === undefined) {
-      folded = effect;
+      folded = context;
       continue;
     }
-    const first = natureCode === undefined && effectRecords.length === 0;
-    effectRecords.push(
-      record(
-        code,
-        { id: effect.sourceRecordRef ?? `${id}#${effect.id}`, version, time, probability },
-        {
-          validity: effectValidity(effect, validity),
-          location:
-            place === undefined
-              ? rootLocation()
-              : buildLocation(
-                  place,
-                  diagnostics,
-                  `${path}/location`,
-                  effect,
-                  effect.location?.direction === undefined ? "/location" : `${path}/location`,
-                ),
-          ...(first ? { lead } : {}),
-          impact: { ...effectImpact(effect), ...(first ? delays : {}) },
-          compliance: effect.compliance,
-          detail: effectDetail(effect),
-        },
-      ),
-    );
+    pending.push({
+      code,
+      context,
+      header: { id: effect.sourceRecordRef ?? `${id}#${effect.id}`, version, time, probability },
+      body: {
+        validity: effectWindow,
+        location:
+          place === undefined
+            ? rootLocation()
+            : buildLocation(
+                place,
+                diagnostics,
+                `${path}/location`,
+                effect,
+                effect.location?.direction === undefined ? "/location" : `${path}/location`,
+              ),
+        impact: effectImpact(effect),
+        compliance: effect.compliance,
+        detail: effectDetail(effect),
+      },
+    });
   }
-  if (natureCode === undefined) {
+  const hasNature = natureCode !== undefined && (!natureRepresented || folded !== undefined);
+  if (natureCode === undefined)
     diagnostics.emit(
       "unsupported_nature",
       "field",
@@ -392,24 +403,84 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
       "/type",
       "This situation classification has no DATEX nature record mapping in the current emitter.",
     );
-    return effectRecords;
+  const bodies = hasNature
+    ? [
+        {
+          code: natureCode!,
+          header: { id, version, time, probability },
+          context: folded,
+          body: {
+            validity: folded?.validity ?? validity,
+            location: rootLocation(),
+            impact: folded ? effectImpact(folded.effect) : {},
+            compliance: folded?.effect.compliance,
+            detail: {
+              ...natureDetail(classification, natureCode!),
+              ...(folded ? effectDetail(folded.effect) : {}),
+            },
+          } as RecordBody,
+        },
+        ...pending,
+      ]
+    : pending;
+  const leading = bodies[0];
+  const delays: ProjectionEffect[] = [];
+  for (const context of effects.filter(({ effect }) => effect.kind === "delay")) {
+    const { effect, validity: delayWindow, validityPath } = context;
+    const { state } = projectionStateAt(context, at);
+    const path = diagnostics.effectPath(effect);
+    if (state === "ended" || state === "unknown") {
+      diagnostics.emit(
+        state === "ended" ? "effect_ended" : "effect_time_unknown",
+        "effect",
+        "omitted",
+        state === "unknown"
+          ? context.validity.status === "unknown"
+            ? `${validityPath}/status`
+            : `${path}/issues`
+          : validityPath,
+        `This delay supplement is not exported at the evaluation instant: ${state}.`,
+        effect,
+      );
+    } else if (
+      !leading ||
+      ownPlace(situation, effect) !== undefined ||
+      (leading.context && ownPlace(situation, leading.context.effect) !== undefined) ||
+      !sameInterval(delayWindow, leading.body.validity) ||
+      delayWindow.status !== leading.body.validity.status
+    ) {
+      diagnostics.emit(
+        "field_not_exported",
+        "field",
+        "omitted",
+        `${path}/delay`,
+        "This delay cannot supplement the leading record: its place, interval or lifecycle differs, or no leading record is available.",
+        effect,
+      );
+    } else if (effect.kind === "delay" && effect.delay) delays.push(context);
   }
-  const nature = record(
-    natureCode,
-    { id, version, time, probability },
-    {
-      validity: folded ? effectValidity(folded, validity) : validity,
-      location: rootLocation(),
-      lead,
-      impact: { ...(folded ? effectImpact(folded) : {}), ...delays },
-      compliance: folded?.compliance,
-      detail: {
-        ...natureDetail(classification, natureCode),
-        ...(folded ? effectDetail(folded) : {}),
-      },
-    },
+  // A leading record has only one duration slot. Never choose among conflicting observations.
+  const values = new Set(
+    delays.map(({ effect }) => (effect.kind === "delay" ? effect.delay?.value : undefined)),
   );
-  return [nature, ...effectRecords];
+  if (values.size > 1) {
+    for (const { effect } of delays)
+      diagnostics.emit(
+        "conflicting_effects",
+        "field",
+        "omitted",
+        `${diagnostics.effectPath(effect)}/delay`,
+        "Different delay durations cannot share the leading DATEX record's single supplement.",
+        effect,
+      );
+  } else if (leading && delays[0]?.effect.kind === "delay") {
+    leading.body.impact = {
+      ...leading.body.impact,
+      "sit:delays": { "sit:delayTimeValue": delays[0].effect.delay!.value },
+    };
+  }
+  if (leading) leading.body.lead = lead;
+  return bodies.map(({ code, header, body }) => record(code, header, body));
 }
 
 /**

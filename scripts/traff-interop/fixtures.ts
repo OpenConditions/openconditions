@@ -74,6 +74,24 @@ const feeds = {
       ],
     },
   ],
+  timing: [
+    {
+      ...record,
+      kind: "closure",
+      type: "closure",
+      subtype: "full",
+      effects: [
+        {
+          ...record.effects[0],
+          validity: {
+            status: "planned",
+            start: "2026-09-07T10:00:00Z",
+            end: "2026-09-07T11:00:00Z",
+          },
+        },
+      ],
+    },
+  ],
   empty: [],
   withheld: [
     {
