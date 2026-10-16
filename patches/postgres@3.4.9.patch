@@ -17,6 +17,23 @@ index 8e79170aeb13efe8c3c77ccede0cd3a115b5e1b5..ff3b84c7749af671efdf6ce7ddf567ff
      if (stream)
        return queryError(q, Errors.generic('COPY_IN_PROGRESS', 'You cannot execute queries during copy'))
  
+diff --git a/cf/src/query.js b/cf/src/query.js
+index 0d44a15cd9e42beaf11d4be6ccde60223e09508a..7ab59cbb827c926e81fbe11714130bd46aeb1a53 100644
+--- a/cf/src/query.js
++++ b/cf/src/query.js
+@@ -167,7 +167,11 @@ function cachedError(xs) {
+ 
+   const x = Error.stackTraceLimit
+   Error.stackTraceLimit = 4
+-  originCache.set(xs, new Error())
++  const error = new Error()
++  // An unread stack keeps the frames it captured, and with them whatever the
++  // first caller closed over, for as long as the cache lives: read it now.
++  void error.stack
++  originCache.set(xs, error)
+   Error.stackTraceLimit = x
+   return originCache.get(xs)
+ }
 diff --git a/cjs/src/connection.js b/cjs/src/connection.js
 index 07f6716702ac888215c86ad6e0071aaf55ae519c..2bf58fd204ac903dcff649879fff820be2c56bf3 100644
 --- a/cjs/src/connection.js
@@ -36,6 +53,23 @@ index 07f6716702ac888215c86ad6e0071aaf55ae519c..2bf58fd204ac903dcff649879fff820b
      if (stream)
        return queryError(q, Errors.generic('COPY_IN_PROGRESS', 'You cannot execute queries during copy'))
  
+diff --git a/cjs/src/query.js b/cjs/src/query.js
+index 45327f2fabcdbf8f8ec5020675012c310c04fee6..788cf29f528a8fcbce921b2177139299f3cee423 100644
+--- a/cjs/src/query.js
++++ b/cjs/src/query.js
+@@ -167,7 +167,11 @@ function cachedError(xs) {
+ 
+   const x = Error.stackTraceLimit
+   Error.stackTraceLimit = 4
+-  originCache.set(xs, new Error())
++  const error = new Error()
++  // An unread stack keeps the frames it captured, and with them whatever the
++  // first caller closed over, for as long as the cache lives: read it now.
++  void error.stack
++  originCache.set(xs, error)
+   Error.stackTraceLimit = x
+   return originCache.get(xs)
+ }
 diff --git a/src/connection.js b/src/connection.js
 index 1b1cccde43b4570d5d071d6ffaab2669b3c2065a..f65afe7077fec1b11faaee694e1d98aca945c44e 100644
 --- a/src/connection.js
@@ -55,3 +89,20 @@ index 1b1cccde43b4570d5d071d6ffaab2669b3c2065a..f65afe7077fec1b11faaee694e1d98ac
      if (stream)
        return queryError(q, Errors.generic('COPY_IN_PROGRESS', 'You cannot execute queries during copy'))
  
+diff --git a/src/query.js b/src/query.js
+index 0d44a15cd9e42beaf11d4be6ccde60223e09508a..7ab59cbb827c926e81fbe11714130bd46aeb1a53 100644
+--- a/src/query.js
++++ b/src/query.js
+@@ -167,7 +167,11 @@ function cachedError(xs) {
+ 
+   const x = Error.stackTraceLimit
+   Error.stackTraceLimit = 4
+-  originCache.set(xs, new Error())
++  const error = new Error()
++  // An unread stack keeps the frames it captured, and with them whatever the
++  // first caller closed over, for as long as the cache lives: read it now.
++  void error.stack
++  originCache.set(xs, error)
+   Error.stackTraceLimit = x
+   return originCache.get(xs)
+ }
