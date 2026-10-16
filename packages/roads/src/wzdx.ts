@@ -1,8 +1,14 @@
 import type { Confidence, GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
-import { wzdxClassification } from "@openconditions/model-roads";
+import { WZDX_LANE_STATUSES, wzdxClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
-import type { LaneStatus, Restriction, RoadEvent, RoadRef } from "./model.js";
+import {
+  LANE_STATUSES,
+  type LaneStatus,
+  type Restriction,
+  type RoadEvent,
+  type RoadRef,
+} from "./model.js";
 import { coarseOf, coarseType } from "./situation/classes.js";
 import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
@@ -81,6 +87,15 @@ interface WzdxFeed {
   [key: string]: unknown;
 }
 
+const isLaneStatus = (s: string | undefined): s is LaneStatus["status"] =>
+  (LANE_STATUSES as readonly (string | undefined)[]).includes(s);
+
+/** A WZDx 4.x `LaneStatus` value as a model lane status, through the WZDx crosswalk. */
+function laneStatusOf(raw: string | undefined): LaneStatus["status"] | undefined {
+  const status = raw === undefined ? undefined : WZDX_LANE_STATUSES[raw.toLowerCase()];
+  return isLaneStatus(status) ? status : undefined;
+}
+
 function parseLanes(rawLanes: WzdxLane[] | undefined): {
   laneStatuses: LaneStatus[];
   closed: number;
@@ -96,14 +111,13 @@ function parseLanes(rawLanes: WzdxLane[] | undefined): {
 
   for (const lane of rawLanes) {
     total++;
-    const rawStatus = (lane.status ?? "").toLowerCase();
-    let status: LaneStatus["status"] = "open";
-    if (rawStatus === "closed") {
-      status = "closed";
-      closed++;
-    } else if (rawStatus === "alternating-one-way" || rawStatus === "alternating") {
-      status = "alternating";
-    }
+    const status = laneStatusOf(lane.status);
+    // A lane whose status is outside the spec still counts towards the total,
+    // but nothing is said about it rather than guessing it open.
+    if (status === undefined) continue;
+    // A merging lane tapers into its neighbour and ends, so like a closed lane
+    // it carries no traffic through the work zone.
+    if (status === "closed" || status === "merge_left" || status === "merge_right") closed++;
 
     const laneRestrictions = parseRestrictions(lane.restrictions);
     laneStatuses.push({
@@ -139,11 +153,19 @@ function vehicleImpactToRoadState(
     case "all-lanes-closed":
       return "closed";
     case "some-lanes-closed":
+    case "some-lanes-closed-merge-left":
+    case "some-lanes-closed-merge-right":
+    case "some-lanes-closed-split":
       return "some_lanes_closed";
     case "alternating-one-way":
       return "single_lane_alternating";
     case "all-lanes-open":
+    case "all-lanes-open-shift-left":
+    case "all-lanes-open-shift-right":
       return "open";
+    // `flagging` and `temporary-traffic-signal` name the traffic control, not
+    // which lanes stay open; they and `unknown` leave the road state to the
+    // lane data.
     default:
       return undefined;
   }
@@ -236,7 +258,9 @@ const V3_CORE_KEYS = [
  * `core_details`. Feeding a v3 body to the v4 mapping unchanged silently yields
  * events with no event type at all — Québec City's 493 work zones all landed as
  * `other` — so the lift happens before the mapping rather than by relaxing the
- * version gate. A body that already has `core_details` is returned untouched.
+ * version gate. v3.1 lanes may still carry the `alternating-one-way` status it
+ * deprecated in favour of `alternating-flow`, which v4 removed; it is renamed.
+ * A body that already has `core_details` is returned untouched.
  */
 function liftV3Properties(props: WzdxProperties): WzdxProperties {
   if (props.core_details) return props;
@@ -247,7 +271,14 @@ function liftV3Properties(props: WzdxProperties): WzdxProperties {
   for (const key of V3_CORE_KEYS) {
     if (props[key] !== undefined) (core as Record<string, unknown>)[key] = props[key];
   }
-  return { ...props, core_details: core };
+  const lanes = Array.isArray(props.lanes)
+    ? props.lanes.map((lane) =>
+        lane?.status?.toLowerCase() === "alternating-one-way"
+          ? { ...lane, status: "alternating-flow" }
+          : lane,
+      )
+    : props.lanes;
+  return { ...props, core_details: core, ...(lanes !== undefined ? { lanes } : {}) };
 }
 
 /**

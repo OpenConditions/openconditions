@@ -111,7 +111,7 @@
         "lanes": [
           {
             "index": 1,
-            "status": "open"
+            "status": "alternating"
           },
           {
             "index": 2,
@@ -134,7 +134,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "b225c81e01e6cd19cba4c15f226cc42ea2254ebd88f96141cfbb70b8373c0a3d"
+    "contentHash": "455d1689dd2b1866ee78d23a31b49dfb0830918ed82e5b570865f2eb85739736"
   },
   {
     "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",

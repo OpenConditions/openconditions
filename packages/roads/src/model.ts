@@ -159,9 +159,24 @@ export interface RoadRef {
   milepostTo?: number;
 }
 
+/**
+ * Lane statuses a parser can state, each a kernel `lane_restriction` lane
+ * status. A shifted lane is open but displaced sideways; a merging lane tapers
+ * into its neighbour and ends.
+ */
+export const LANE_STATUSES = [
+  "open",
+  "closed",
+  "alternating",
+  "shift_left",
+  "shift_right",
+  "merge_left",
+  "merge_right",
+] as const;
+
 export interface LaneStatus {
   index: number;
-  status: "open" | "closed" | "alternating";
+  status: (typeof LANE_STATUSES)[number];
   type?: string;
   restrictions?: Restriction[];
 }
