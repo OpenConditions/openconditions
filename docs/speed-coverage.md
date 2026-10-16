@@ -178,3 +178,9 @@ currently public history of the same native source and preserves its suppliers
 on both new observations and derived congestion situations. An independent native
 or OSM baseline can still supply the denominator when a historical derived one
 is unavailable. See [licence metadata](licensing.md) for policy synchronization.
+
+NDW's speed/volume source uses the v3.6 endpoints, with version-matched station
+metadata. The current upstream table omits lane assignments that the old v2 table
+supplied; channels remain distinct with unknown lanes. See the
+[NDW flow migration receipt](ndw-flow-migration.md) for the retirement deadline,
+compatibility checks and rollout verification.

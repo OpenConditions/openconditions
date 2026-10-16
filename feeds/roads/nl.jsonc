@@ -37,8 +37,8 @@
     {
       // Separate source id from the events feed so each poll's write stays
       // source-scoped and the two NDW feeds never withdraw each other's records.
-      // The trafficspeed feed carries measurements keyed by site id only; the
-      // companion measurement.xml.gz site table supplies each site's geometry.
+      // NDW retires the v2.3 endpoints on 2027-02-09. The v3.6 pair keeps
+      // source/site/channel ids stable; the table supplies indexed metadata.
       "operator": "ndw",
       "product": "flow",
       "name": "NDW traffic speed (Netherlands)",
@@ -48,15 +48,17 @@
       "laneNumbering": "left_first",
       "endpoints": {
         "main": {
-          "url": "https://opendata.ndw.nu/trafficspeed.xml.gz",
+          "url": "https://opendata.ndw.nu/snelheden_en_intensiteiten_meetgegevens.xml.gz",
           "gzip": true,
           "cadenceSec": 60,
         },
         "sites": {
-          "url": "https://opendata.ndw.nu/measurement.xml.gz",
+          "url": "https://opendata.ndw.nu/snelheden_en_intensiteiten_configuratie_meetlocaties.xml.gz",
           "gzip": true,
           "decoder": "datex2-sites",
-          "cadenceSec": 21600,
+          // V3 revises individual sites under a table version of "latest".
+          // Refresh alongside measurements; mismatched site versions are withheld.
+          "cadenceSec": 60,
         },
       },
       "freshnessWindowSec": 300,

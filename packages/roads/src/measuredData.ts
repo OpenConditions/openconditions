@@ -2,7 +2,7 @@
  * Streaming parser for a DATEX II MeasuredDataPublication — the recurring
  * traffic-speed/flow feed that pairs with a MeasurementSiteTablePublication.
  *
- * The production NDW trafficspeed feed is ~50 MB uncompressed and is fetched
+ * The production NDW v3 measurements feed is ~70 MB uncompressed and is fetched
  * every ~60 s; parsing it into a full DOM balloons to several hundred MB and
  * OOMs a memory-capped ingest. This parser scans the document with a
  * streaming SAX reader instead: peak memory is the output readings plus a
@@ -10,7 +10,7 @@
  * document goes through the same scanner ({@link parseDatexMeasuredData}), so
  * the two paths cannot drift apart.
  *
- * Every `measuredValue` index of a site is kept: speeds, flow rates and
+ * Every `measuredValue` (v1/v2) or `physicalQuantity` (v3) index is kept: speeds, flow rates and
  * occupancies, each as a channel reading carrying the lane, vehicle class and
  * period the site table states for that index. The site speed is the mean of
  * the speed indexes weighted by `numberOfInputValuesUsed`, the site volume
@@ -50,7 +50,7 @@ export interface MeasuredDataParser {
   close(): FlowParse;
 }
 
-/** What one `measuredValue` index of the open site carried. */
+/** What one indexed measured value / physical quantity of the open site carried. */
 interface ValueState {
   key: string;
   speed?: number;
@@ -68,6 +68,7 @@ interface ValueState {
 /** Per-site accumulator; the surrounding subtree streams past and is discarded. */
 interface SiteState {
   siteId?: string;
+  siteVersion?: string;
   timeDefault?: string;
   obsTime?: string;
   trafficStatus?: string;
@@ -109,7 +110,7 @@ export function createMeasuredDataParser(
 
   const stack: string[] = [];
   let site: SiteState | null = null;
-  // The measuredValue index open, and the stack depth of the element that opened it.
+  // The indexed value open, and the stack depth of the outer wrapper that opened it.
   let current: ValueState | null = null;
   let currentDepth = -1;
   let ordinal = 0;
@@ -167,9 +168,11 @@ export function createMeasuredDataParser(
         const ref = attrs["id"] ?? attrs["targetClass"];
         if (ref != null) site.siteId ??= flattenString(ref);
         else capture("siteRef");
+        if (attrs["version"] !== undefined) site.siteVersion = flattenString(attrs["version"]);
         break;
       }
-      case "measuredValue": {
+      case "measuredValue":
+      case "physicalQuantity": {
         const index = attrs["index"];
         if (index != null) {
           current = valueFor(flattenString(index));
@@ -345,6 +348,7 @@ export function createMeasuredDataParser(
           break;
         }
         case "measuredValue":
+        case "physicalQuantity":
           if (stack.length === currentDepth) {
             current = null;
             currentDepth = -1;
@@ -398,6 +402,9 @@ function siteReading(
 ): FlowReading | null {
   const siteId = site.siteId ?? `site-${position + 1}`;
   const meta = site.siteId !== undefined ? sites?.get(site.siteId) : undefined;
+  // V3 keeps the table version at "latest" and revises individual sites. An
+  // index can change meaning between revisions; never borrow stale metadata.
+  if (meta?.version !== undefined && meta.version !== site.siteVersion) return null;
   const specOf = (key: string, property: string): ChannelSpec => {
     const declared = meta?.channels?.get(key);
     const lane = laneIndex(declared?.lane, src, meta?.laneCount);

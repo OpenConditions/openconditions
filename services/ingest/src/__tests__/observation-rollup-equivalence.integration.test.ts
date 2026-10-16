@@ -105,7 +105,7 @@ beforeAll(async () => {
     const fetchFn = (async (url: string | URL | Request) => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
       return new Response(
-        gzipSync(href.includes("measurement.xml.gz") ? SITES : document(at, speed)),
+        gzipSync(href === feed.endpoints["sites"]?.url ? SITES : document(at, speed)),
         { status: 200 },
       );
     }) as typeof fetch;

@@ -1,0 +1,295 @@
+<?xml version='1.0' encoding='utf-8'?>
+<mc:messageContainer xmlns:com="http://datex2.eu/schema/3/common" xmlns:mc="http://datex2.eu/schema/3/messageContainer" xmlns:ns4="http://datex2.eu/schema/3/exchangeInformation" xmlns:roa="http://datex2.eu/schema/3/roadTrafficData" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
+  <mc:payload xsi:type="roa:MeasuredDataPublication" lang="nl" modelBaseVersion="3">
+    <com:publicationTime>2026-10-16T09:57:00.000426601Z</com:publicationTime>
+    <com:publicationCreator>
+      <com:country>nl</com:country>
+      <com:nationalIdentifier>NDWNL</com:nationalIdentifier>
+    </com:publicationCreator>
+    <roa:measurementSiteTableReference targetClass="roa:MeasurementSiteTable" id="NDW01_AVG_TRAFFICFLOWTRAFFICSPEED" version="latest" />
+    <roa:headerInformation>
+      <com:confidentiality>noRestriction</com:confidentiality>
+      <com:informationStatus>real</com:informationStatus>
+    </roa:headerInformation>
+    <roa:siteMeasurements>
+      <roa:measurementSiteReference targetClass="roa:MeasurementSite" id="GAD02_Amstd_31_0" version="19" />
+      <roa:physicalQuantity index="1">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="2">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>660</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="3">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="4">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="5">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="6">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>660</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="7">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="8">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="11" standardDeviation="7.3">
+              <com:speed>56.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="9">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="10">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="11">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="12">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="11" standardDeviation="7.3">
+              <com:speed>56.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="13">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="14">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>480</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="15">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="16">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="17">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>0</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="18">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>480</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="19">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="20">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="8" standardDeviation="2.52">
+              <com:speed>46.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="21">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="22">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="23">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="0">
+              <com:speed>-1.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="24">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0" numberOfInputValuesUsed="8" standardDeviation="2.52">
+              <com:speed>46.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:measurementTimeDefault>
+        <roa:timeValue>2026-10-16T09:55:00Z</roa:timeValue>
+      </roa:measurementTimeDefault>
+    </roa:siteMeasurements>
+    <roa:siteMeasurements>
+      <roa:measurementSiteReference targetClass="roa:MeasurementSite" id="RWS01_MONIBAS_0010vwa0108ra" version="1742" />
+      <roa:physicalQuantity index="1">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>60</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="2">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0">
+              <com:speed>62.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="3">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficFlow">
+            <roa:vehicleFlow accuracy="0.0">
+              <com:vehicleFlowRate>480</com:vehicleFlowRate>
+            </roa:vehicleFlow>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:physicalQuantity index="4">
+        <roa:physicalQuantity xsi:type="roa:SinglePhysicalQuantity">
+          <roa:basicData xsi:type="roa:TrafficSpeed">
+            <roa:averageVehicleSpeed accuracy="0.0">
+              <com:speed>64.0</com:speed>
+            </roa:averageVehicleSpeed>
+          </roa:basicData>
+        </roa:physicalQuantity>
+      </roa:physicalQuantity>
+      <roa:measurementTimeDefault>
+        <roa:timeValue>2026-10-16T09:54:00Z</roa:timeValue>
+      </roa:measurementTimeDefault>
+    </roa:siteMeasurements>
+  </mc:payload>
+  <mc:exchangeInformation modelBaseVersion="3">
+    <ns4:exchangeContext>
+      <ns4:codedExchangeProtocol>snapshotPull</ns4:codedExchangeProtocol>
+      <ns4:exchangeSpecificationVersion>3</ns4:exchangeSpecificationVersion>
+      <ns4:supplierOrCisRequester>
+        <ns4:internationalIdentifier>
+          <com:country>nl</com:country>
+          <com:nationalIdentifier>NDWNL</com:nationalIdentifier>
+        </ns4:internationalIdentifier>
+      </ns4:supplierOrCisRequester>
+    </ns4:exchangeContext>
+    <ns4:dynamicInformation>
+      <ns4:exchangeStatus>online</ns4:exchangeStatus>
+      <ns4:messageGenerationTimestamp>2026-10-16T09:57:00.000426601Z</ns4:messageGenerationTimestamp>
+    </ns4:dynamicInformation>
+  </mc:exchangeInformation>
+</mc:messageContainer>

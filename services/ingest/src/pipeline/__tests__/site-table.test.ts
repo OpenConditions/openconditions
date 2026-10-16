@@ -1,4 +1,6 @@
 import { readFileSync } from "node:fs";
+import { gzipSync } from "node:zlib";
+import type { FlowSites } from "@openconditions/roads";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { testFeed } from "../../__tests__/helpers/catalog.js";
 import { clearReferenceCaches, loadReference } from "../reference.js";
@@ -28,6 +30,23 @@ function countingFetch() {
 
 describe("loadReference — DATEX site tables", () => {
   beforeEach(() => clearReferenceCaches());
+
+  it("streams a gzipped v3 table into revisioned metadata through the reference loader", async () => {
+    const xml = readFileSync(
+      new URL(
+        "../../../../../packages/roads/src/__tests__/fixtures/ndw-flow-v3/sites.xml",
+        import.meta.url,
+      ),
+    );
+    const feed = flowFeed({ url: "https://example.test/sites-v3.xml.gz", gzip: true });
+    const fetchFn = async () => new Response(new Uint8Array(gzipSync(xml)));
+    const sites = (await loadReference(feed, "sites", fetchFn as never, Date.now)) as FlowSites;
+    expect(sites.size).toBe(2);
+    expect(sites.get("RWS01_MONIBAS_0010vwa0108ra")).toMatchObject({
+      version: "1742",
+      geometry: { type: "Point", coordinates: [5.04329, 52.32839] },
+    });
+  });
 
   it("the site table refreshes on its endpoint cadence", async () => {
     const feed = flowFeed({ url: "https://example.test/sites.xml" });

@@ -18,6 +18,8 @@ export interface FlowChannel {
 /** Site metadata a site table or station registry provides, by the source's site id. */
 export interface FlowSite {
   geometry: Point | LineString | MultiLineString;
+  /** DATEX v3 site revision: indexed measurements must reference this exact version. */
+  version?: string;
   name?: string;
   /** The language of `name`, when the table states it. */
   nameLang?: string;
@@ -30,7 +32,7 @@ export interface FlowSite {
    * (a DATEX predefined location of one lane).
    */
   lane?: number;
-  /** Per measured-value index (DATEX `measuredValue@index`) or per lane/detector key the source uses. */
+  /** Per DATEX `measuredValue@index` / `physicalQuantity@index`, or the source's lane/detector key. */
   channels?: ReadonlyMap<string, FlowChannel>;
 }
 
