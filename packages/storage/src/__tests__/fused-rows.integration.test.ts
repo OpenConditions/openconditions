@@ -1121,3 +1121,75 @@ describe("property scopes in fusion reads", () => {
     );
   });
 });
+
+describe("a refresh of a whole register", () => {
+  const BULK = "es-fuel-bulk";
+  // Stations a kilometre apart, each one canonical feature with one price.
+  const stations = Array.from({ length: 1_100 }, (_, i) => {
+    const feature = {
+      ...twinOf(BULK, [(i % 100) * 0.01 + 1, Math.floor(i / 100) * 0.01 + 1], [componentOf("e5")]),
+      id: `oc:feature:${BULK}:bulk-${i}`,
+      externalIds: [{ scheme: "provider", id: `bulk-${i}`, authority: BULK }],
+    };
+    const price = priceDraft(BULK, feature.id, "e5", priceOf("e5"), {
+      location: feature.location,
+      result: { type: "money", amount: (1.5 + i / 10_000).toFixed(4), currency: "EUR", per: "L" },
+    });
+    return { feature, price };
+  });
+
+  test("reads and writes it a share of its canonical features at a time, as it would at once", async () => {
+    await syncSources(sql, [source(BULK, false)]);
+    await polled(sql, BULK, LATER);
+    const summary = await writeSnapshot(
+      sql,
+      BULK,
+      {
+        features: stations.map((s) => s.feature),
+        observations: stations.map((s) => s.price),
+      },
+      ctx,
+    );
+    expect(summary.rejected).toEqual([]);
+    const canonical = (
+      await sql<{ canonical_feature_id: string }[]>`
+        SELECT canonical_feature_id FROM conditions.feature_canonical
+         WHERE member_ids && ${stations.map((s) => s.feature.id)}::text[]`
+    ).map((r) => r.canonical_feature_id);
+    expect(canonical).toHaveLength(stations.length);
+    const fused = () => sql`
+      SELECT feature_id, source_id, template, reading, since_at, fused_public, fused_from
+        FROM conditions.observation_latest
+       WHERE source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})
+         AND feature_id = ANY(${canonical}::text[])
+       ORDER BY feature_id, source_id`;
+    const refreshAll = () => {
+      let fetched!: ReturnType<typeof countFusionRows>["fetched"];
+      return sql
+        .begin(async (tx) => {
+          const observer = countFusionRows(tx);
+          fetched = observer.fetched;
+          return refreshFused(
+            observer.measured,
+            registry,
+            canonical.map((featureId) => ({ featureId })),
+            { instanceId: INSTANCE, now: LATER },
+          );
+        })
+        .then((counts) => ({ counts, fetched }));
+    };
+    const before = await fused();
+    expect(before).toHaveLength(stations.length);
+
+    const { counts, fetched } = await refreshAll();
+    expect(counts.written + counts.unchanged).toBe(stations.length);
+    expect(counts.deleted).toBe(0);
+    expect(fetched).toEqual({
+      candidates: stations.length,
+      existing: stations.length,
+      candidateQueries: 3,
+      existingQueries: 3,
+    });
+    expect(await fused()).toEqual(before);
+  }, 120_000);
+});
