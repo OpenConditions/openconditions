@@ -232,6 +232,16 @@ describe("POST /contrib/reports — happy path landing", () => {
         attribution: {
           provider: `OpenConditions contributors at ${INSTANCE}`,
           license: "ODbL-1.0",
+          licensing: {
+            version: 1,
+            bindings: [
+              {
+                scope: "data",
+                subject: `OpenConditions contributors at ${INSTANCE}`,
+                license: { kind: "spdx", expression: "ODbL-1.0" },
+              },
+            ],
+          },
         },
       },
     });

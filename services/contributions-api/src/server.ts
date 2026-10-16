@@ -20,12 +20,7 @@ import {
 import { type GeoJsonGeometry, reliabilityLowerBound } from "@openconditions/core";
 import { resolveInstanceId } from "@openconditions/core/server";
 import { resolveCrowdCredit } from "@openconditions/ingest-framework";
-import {
-  type Attribution,
-  type LandingContext,
-  RECORD_CLASSES,
-  type Registry,
-} from "@openconditions/model";
+import { type LandingContext, RECORD_CLASSES, type Registry } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type postgres from "postgres";
@@ -39,6 +34,7 @@ import {
   UNVERIFIED_ATTESTATION,
   UNVERIFIED_OSM_AUTH,
 } from "./attester/verifier.js";
+import { captureCrowdAttribution } from "./crowd-attribution.js";
 import { autoCorroborateOnLanding } from "./evidence/autoCorroborate.js";
 import { crossValidateAgainstFeeds } from "./evidence/crossValidate.js";
 import { crossValidateObservation } from "./evidence/crossValidateObservation.js";
@@ -324,11 +320,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   });
 
   // How this instance credits its crowd on every report it lands.
-  const crowdAttribution: Attribution = {
-    provider: crowd.name,
-    license: crowd.license,
-    ...(crowd.url ? { url: crowd.url } : {}),
-  };
+  const crowdAttribution = captureCrowdAttribution(crowd);
 
   // Per-instance police-category toggle, resolved once at boot (DEFAULT OFF).
   const policeCategoryEnabled = isPoliceCategoryEnabled(env);
