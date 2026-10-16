@@ -3,7 +3,10 @@ import {
   isRestrictionEvidence,
   isVehicleSpecific,
   situationEffects,
+  type Validity,
 } from "@openconditions/model";
+
+import { projectionEffects } from "./export-validity.js";
 
 type Rec = Record<string, unknown>;
 export interface ExportDiagnostic {
@@ -20,6 +23,7 @@ export interface ExportDiagnostic {
     | "unsupported_nature"
     | "unsupported_effect"
     | "conflicting_effects"
+    | "unsupported_timing"
     | "effect_ended"
     | "effect_time_unknown"
     | "field_not_exported"
@@ -87,6 +91,31 @@ export class ProjectionDiagnostics {
    * that is the exporters' existing conservative policy, before time filtering. */
   blocked(format: "traff" | "datex"): boolean {
     let blocked = false;
+    const timing = (validity: Validity, path: string, effect?: Effect) => {
+      const fields: string[] = [];
+      if (validity.periods?.length) fields.push("periods");
+      if (validity.exceptions?.length) fields.push("exceptions");
+      if (
+        (path === "/validity" && ["unknown", "ended", "cancelled"].includes(validity.status)) ||
+        (format === "traff" && validity.status === "suspended")
+      )
+        fields.push("status");
+      for (const field of fields) {
+        blocked = true;
+        this.emit(
+          "unsupported_timing",
+          "situation",
+          "withheld",
+          `${path}/${field}`,
+          "The whole situation is withheld: this XML emitter cannot faithfully preserve this timing rule or lifecycle status.",
+          effect,
+        );
+      }
+    };
+    timing(this.situation["validity"] as Validity, "/validity");
+    for (const context of projectionEffects(this.situation))
+      if (context.validityPath !== "/validity")
+        timing(context.validity, context.validityPath, context.effect);
     const coarse = (location: Rec | undefined, path: string, effect?: Effect) => {
       if (location?.["fuzziness"] !== undefined && location["fuzziness"] !== "exact") {
         blocked = true;

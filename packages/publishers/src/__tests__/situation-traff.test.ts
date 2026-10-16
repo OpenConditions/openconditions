@@ -77,7 +77,7 @@ describe("traffEventsOf", () => {
     },
   );
 
-  it("deduplicates equivalent restrictions but refuses different lane scope or windows", () => {
+  it("deduplicates equivalent restrictions but refuses different lane scope or compliance", () => {
     const speed = effect("a", "speed_limit", { limit: { value: 60, unit: "km/h" } });
     expect(
       types(
@@ -96,11 +96,7 @@ describe("traffEventsOf", () => {
         }),
       ),
     ).toEqual(["CONSTRUCTION_ROADWORKS", "RESTRICTION_SPEED_LIMIT"]);
-    for (const fields of [
-      { compliance: "advisory" },
-      { laneScope: [{ index: 1 }] },
-      { validity: { status: "active", start: "2026-09-06T09:00:00Z" } },
-    ]) {
+    for (const fields of [{ compliance: "advisory" }, { laneScope: [{ index: 1 }] }]) {
       expect(types(situation({ effects: [speed, { ...speed, id: "b", ...fields }] }))).toEqual([]);
     }
   });

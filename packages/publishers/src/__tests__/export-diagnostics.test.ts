@@ -248,7 +248,7 @@ it("reports direction on an effect location even without its own geometry", () =
     }),
   );
 });
-it("does not claim DATEX's ended delay supplement was withheld", () => {
+it("withholds DATEX's ended delay supplement", () => {
   const s = situation({
     effects: [
       effect({
@@ -259,8 +259,15 @@ it("does not claim DATEX's ended delay supplement was withheld", () => {
     ],
   });
   const { diagnostics, output } = project(s, "datex");
-  expect(JSON.stringify(output)).toContain('"sit:delayTimeValue":300');
-  expect(diagnostics.some((d) => d.effectId === "closure" && d.scope === "effect")).toBe(false);
+  expect(JSON.stringify(output)).not.toContain('"sit:delayTimeValue":300');
+  expect(diagnostics).toContainEqual(
+    expect.objectContaining({
+      code: "effect_ended",
+      effectId: "closure",
+      scope: "effect",
+      disposition: "omitted",
+    }),
+  );
 });
 it("does not describe unused root geometry as exported", () => {
   const s = situation({
