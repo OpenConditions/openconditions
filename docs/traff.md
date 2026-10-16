@@ -62,6 +62,22 @@ Receive/update/expiration/start/end times are normalized to UTC with fractional
 seconds truncated on this wire projection. Stored canonical timestamps keep
 their original precision. XML escaping remains the XML builder's responsibility.
 
+## Repeated restrictions
+
+Equivalent same-type restrictions share one event. Equivalence compares canonical
+fields (including effective validity, compliance and lane scope), excluding IDs
+and source provenance; object key order does not matter. Different values that
+round to the same wire value are still different restrictions. When same-type
+restrictions differ, the containing message is withheld with `conflicting_effects`
+for each implicated effect. The exporter never chooses the first, minimum or
+maximum speed limit. This is a conservative OC projection policy: TraFF allows
+multiple events, but cannot associate each one with its own lane scope or window.
+Read the canonical JSON for the full statements.
+
+Effects with their own geometry continue as separate messages, including when a
+conflict withholds the parent message. Delay observations remain the separate
+case described below. Existing single-effect field reductions are unchanged.
+
 ## Delay durations
 
 Delay effects export `q_duration="hours:minutes"` alongside any queue `length`

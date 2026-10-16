@@ -303,7 +303,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
 
   const classification = situation as unknown as SituationClass;
   const natureCode = natureRecordCode(classification);
-  const folded: Effect[] | undefined = natureCode ? [] : undefined;
+  let folded: Effect | undefined;
   const effectRecords: Rec[] = [];
   for (const effect of effects) {
     // Delay duration is a leading-record supplement, selected above independently
@@ -353,9 +353,10 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         "This DATEX emitter does not export effect location direction.",
         effect,
       );
-    // An effect folds into the nature record only where it holds at the same place.
-    if (code === natureCode && place === undefined) {
-      folded?.push(effect);
+    // Only one effect may supply the nature record: never combine independent
+    // values, compliance, impact or validity into a synthetic restriction.
+    if (code === natureCode && place === undefined && folded === undefined) {
+      folded = effect;
       continue;
     }
     const first = natureCode === undefined && effectRecords.length === 0;
@@ -383,7 +384,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
       ),
     );
   }
-  if (natureCode === undefined || folded === undefined) {
+  if (natureCode === undefined) {
     diagnostics.emit(
       "unsupported_nature",
       "field",
@@ -397,12 +398,15 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     natureCode,
     { id, version, time, probability },
     {
-      validity,
+      validity: folded ? effectValidity(folded, validity) : validity,
       location: rootLocation(),
       lead,
-      impact: Object.assign({}, ...folded.map(effectImpact), delays),
-      compliance: folded[0]?.compliance,
-      detail: Object.assign(natureDetail(classification, natureCode), ...folded.map(effectDetail)),
+      impact: { ...(folded ? effectImpact(folded) : {}), ...delays },
+      compliance: folded?.compliance,
+      detail: {
+        ...natureDetail(classification, natureCode),
+        ...(folded ? effectDetail(folded) : {}),
+      },
     },
   );
   return [nature, ...effectRecords];
