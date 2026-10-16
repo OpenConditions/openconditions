@@ -7,7 +7,7 @@
  * joins against: geometry, name, lane count, equipment, and per measured-value
  * index the lane, vehicle class, period and value type.
  *
- * The table document is large — NDW's is ~362 MB uncompressed — so it is parsed
+ * The table document is large — NDW v3's is ~147 MB uncompressed — so it is parsed
  * with a streaming SAX scanner rather than a full DOM. Memory is bounded to the
  * output Map plus a few small per-record accumulators, regardless
  * of input size: at no point is the whole document, or even a whole record's
@@ -77,6 +77,7 @@ function finiteOrNaN(raw: string | undefined): number {
  */
 interface RecordState {
   id?: string;
+  version?: string;
   // Display point (lowest priority).
   displayLat?: number;
   displayLon?: number;
@@ -265,12 +266,21 @@ export function createSiteTableParser(): SiteTableParser {
     const local = stripXmlNamespace(tag.name);
     stack.push(local);
 
-    if (local === "measurementSiteRecord") {
+    if (local === "measurementSiteRecord" || local === "measurementSite") {
       const attrs = tag.attributes as Record<string, string>;
       // Flatten the id: it becomes a long-lived Map key, and a sliced-string key
       // would pin the whole input chunk it came from (see flattenString).
       const id = attrs["id"];
       record = freshRecord(id != null ? flattenString(id) : undefined);
+      if (local === "measurementSite") {
+        const version = attrs["version"]?.trim();
+        if (!version) {
+          // V3's indexed metadata is usable only with a verifiable revision.
+          record = null;
+          return;
+        }
+        record.version = flattenString(version);
+      }
       endpoint = null;
       textTarget = null;
       textBuffer = "";
@@ -295,7 +305,11 @@ export function createSiteTableParser(): SiteTableParser {
       capture("equipment");
     } else if (local === "measurementSiteNumberOfLanes") capture("lanes");
     else if (record.characteristic !== undefined && local === "period") capture("period");
-    else if (record.characteristic !== undefined && local === "specificLane") capture("lane");
+    else if (
+      record.characteristic !== undefined &&
+      (local === "specificLane" || (local === "laneNumber" && stack.includes("specificLane")))
+    )
+      capture("lane");
     else if (record.characteristic !== undefined && local === "specificMeasurementValueType") {
       capture("valueType");
     } else if (
@@ -347,11 +361,12 @@ export function createSiteTableParser(): SiteTableParser {
       endpoint = null;
     }
 
-    if (local === "measurementSiteRecord" && record != null) {
+    if ((local === "measurementSiteRecord" || local === "measurementSite") && record != null) {
       const geometry = geometryForRecord(record);
       if (record.id != null && geometry != null) {
         map.set(record.id, {
           geometry,
+          ...(record.version !== undefined ? { version: record.version } : {}),
           ...(record.name !== undefined ? { name: record.name } : {}),
           ...(record.nameLang !== undefined ? { nameLang: record.nameLang } : {}),
           ...(record.laneCount !== undefined ? { laneCount: record.laneCount } : {}),
@@ -392,7 +407,7 @@ export function createSiteTableParser(): SiteTableParser {
 
 /**
  * Parse a DATEX II MeasurementSiteTablePublication into the sites keyed by
- * `measurementSiteRecord id`. The id is the join key used by
+ * `measurementSiteRecord id` (v1/v2) or `measurementSite id` (v3). The id joins
  * a MeasuredDataPublication's `measurementSiteReference id`.
  *
  * This is a thin convenience over {@link createSiteTableParser} for unit tests

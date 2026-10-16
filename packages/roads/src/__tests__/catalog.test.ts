@@ -222,11 +222,11 @@ describe("the roads catalogue", () => {
     }
   });
 
-  test("reference endpoints refresh every six hours and carry a decoder", () => {
+  test("reference endpoints carry a decoder and use their source refresh cadence", () => {
     for (const f of allFeeds()) {
       const ref = f.endpoints["sites"];
       if (!ref) continue;
-      expect(ref.cadenceSec, f.id).toBe(21600);
+      expect(ref.cadenceSec, f.id).toBe(f.id === "nl-ndw-flow" ? 60 : 21600);
       expect(ref.decoder, f.id).toBeDefined();
     }
   });
@@ -273,7 +273,7 @@ describe("NDW", () => {
     });
   });
 
-  test("measures flow from trafficspeed joined to the gzipped measurement site table", () => {
+  test("measures v3 flow joined to a current gzipped station table", () => {
     const flow = feed("nl-ndw-flow");
     expect(flow.format).toBe("datex2-measured");
     expect(flow.product).toBe("flow");
@@ -281,15 +281,15 @@ describe("NDW", () => {
     expect(flow.terms).toBeUndefined();
     expect(flow.licenseUrl).toBe("https://www.ndw.nu");
     expect(main("nl-ndw-flow")).toEqual({
-      url: "https://opendata.ndw.nu/trafficspeed.xml.gz",
+      url: "https://opendata.ndw.nu/snelheden_en_intensiteiten_meetgegevens.xml.gz",
       gzip: true,
       cadenceSec: 60,
     });
     expect(sites("nl-ndw-flow")).toEqual({
-      url: "https://opendata.ndw.nu/measurement.xml.gz",
+      url: "https://opendata.ndw.nu/snelheden_en_intensiteiten_configuratie_meetlocaties.xml.gz",
       gzip: true,
       decoder: "datex2-sites",
-      cadenceSec: 21600,
+      cadenceSec: 60,
     });
   });
 

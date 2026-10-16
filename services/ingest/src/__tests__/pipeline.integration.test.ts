@@ -339,7 +339,8 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     (speed: Buffer) =>
     async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      const body = href.includes("measurement.xml.gz") ? gzipSync(sitePayload) : gzipSync(speed);
+      const body =
+        href === ndwFlowFeed.endpoints["sites"]?.url ? gzipSync(sitePayload) : gzipSync(speed);
       return new Response(body, { status: 200 });
     };
   const fakeFetch = fetchServing(speedPayload);
@@ -580,7 +581,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     clearReferenceCaches();
     const partialFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      if (href.includes("measurement.xml.gz")) {
+      if (href === ndwFlowFeed.endpoints["sites"]?.url) {
         return new Response("nope", { status: 503 });
       }
       return new Response(gzipSync(speedPayload), { status: 200 });
@@ -596,6 +597,41 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(status!.last_error).toBe(result.error);
     expect(await seriesOf("nl-ndw-flow")).toEqual(before);
     expect(await liveFeatures("nl-ndw-flow")).toBe(3);
+  }, 60_000);
+});
+
+describe("flow feed — NDW v3 captured snapshots", () => {
+  it("streams both gzip endpoints and persists version-matched channels at their source times", async () => {
+    const feed = { ...ndwFlowFeed, id: "nl-ndw-v3-test-flow" };
+    const fixtures = path.resolve(
+      import.meta.dirname,
+      "../../../../packages/roads/src/__tests__/fixtures/ndw-flow-v3",
+    );
+    const sites = readFileSync(path.join(fixtures, "sites.xml"));
+    const measurements = readFileSync(path.join(fixtures, "measurements.xml"));
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date("2026-10-16T09:58:20Z"),
+    });
+    clearReferenceCaches();
+    const result = await runSource(feed, {
+      sql,
+      fetch: (async (url: string | URL | Request) => {
+        const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
+        return new Response(gzipSync(href === feed.endpoints["sites"]?.url ? sites : measurements));
+      }) as typeof fetch,
+      lookup: fakeLookup,
+      now: () => "2026-10-16T09:58:20Z",
+    });
+    expect(result.error).toBeUndefined();
+    expect(await liveFeatures(feed.id)).toBe(2);
+    const rows = await sql<{ value_num: number; effective_from: Date; effective_until: Date }[]>`
+      SELECT value_num, effective_from, effective_until FROM conditions.observation_latest
+      WHERE source_id = ${feed.id} AND component_key = '8' AND property = 'traffic.speed'`;
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.value_num).toBe(56);
+    expect(rows[0]?.effective_from.toISOString()).toBe("2026-10-16T09:54:00.000Z");
+    expect(rows[0]?.effective_until.toISOString()).toBe("2026-10-16T09:55:00.000Z");
   }, 60_000);
 });
 
@@ -646,7 +682,7 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
     clearReferenceCaches();
     const goodFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      const body = href.includes("measurement.xml.gz") ? sitePayload : speedPayload;
+      const body = href === ndwFlowFeed.endpoints["sites"]?.url ? sitePayload : speedPayload;
       return new Response(gzipSync(body), { status: 200 });
     };
     const goodResult = await runSource(ndwFlowFeed, {
@@ -678,9 +714,10 @@ describe("pipeline — streaming SAX parse failure preserves last-good rows", ()
       .slice(0, Math.floor(speedPayload.length * 0.6));
     const brokenFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      const body = href.includes("measurement.xml.gz")
-        ? gzipSync(sitePayload)
-        : gzipSync(Buffer.from(truncatedSpeedXml, "utf8"));
+      const body =
+        href === ndwFlowFeed.endpoints["sites"]?.url
+          ? gzipSync(sitePayload)
+          : gzipSync(Buffer.from(truncatedSpeedXml, "utf8"));
       return new Response(body, { status: 200 });
     };
 
@@ -724,7 +761,7 @@ describe("pipeline — streamed fetch errors are redacted", () => {
     clearReferenceCaches();
     const fetchFn = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      return href.includes("measurement.xml.gz")
+      return href === ndwFlowFeed.endpoints["sites"]?.url
         ? new Response(gzipSync(sitePayload), { status: 200 })
         : new Response("forbidden", { status: 403 });
     };
@@ -754,7 +791,7 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     clearReferenceCaches();
     const goodFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      const body = href.includes("measurement.xml.gz") ? sitePayload : speedPayload;
+      const body = href === ndwFlowFeed.endpoints["sites"]?.url ? sitePayload : speedPayload;
       return new Response(gzipSync(body), { status: 200 });
     };
     const goodResult = await runSource(ndwFlowFeed, {
@@ -780,9 +817,10 @@ describe("pipeline — flow feed 200-with-garbage (well-formed empty publication
     // block above).
     const garbageFetch = async (url: string | URL | Request): Promise<Response> => {
       const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-      const body = href.includes("measurement.xml.gz")
-        ? gzipSync(sitePayload)
-        : gzipSync(Buffer.from("<D2LogicalModel><siteMeasurements/></D2LogicalModel>"));
+      const body =
+        href === ndwFlowFeed.endpoints["sites"]?.url
+          ? gzipSync(sitePayload)
+          : gzipSync(Buffer.from("<D2LogicalModel><siteMeasurements/></D2LogicalModel>"));
       return new Response(body, { status: 200 });
     };
 

@@ -36,8 +36,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      # The check imports the built catalogue framework and domain packages.
-      - run: pnpm --filter @openconditions/roads... build
+      # The checker loads every ingest domain, even for a single region file.
+      - run: pnpm build:domains
 
       # Gating: a feed whose payload does not parse fails the check; a network or
       # HTTP failure is only a warning annotation, and a feed whose credentials

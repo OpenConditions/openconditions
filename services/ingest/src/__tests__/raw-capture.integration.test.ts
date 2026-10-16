@@ -110,7 +110,9 @@ describe("raw payload capture", () => {
   it("archives a streamed flow document and its site table as a reference payload", async () => {
     const flow = feed("nl-ndw-flow", { rights: affirmed });
     // Both are published gzipped; the archive holds the decoded document.
-    const result = await poll(flow, (url) => gzipSync(url.includes("measurement") ? SITES : FLOW));
+    const result = await poll(flow, (url) =>
+      gzipSync(url === flow.endpoints["sites"]?.url ? SITES : FLOW),
+    );
     expect(result.error).toBeUndefined();
     const rows = await payloads();
     expect(rows.map((p) => [p.tier, p.bytes_raw])).toEqual([
@@ -126,7 +128,8 @@ describe("raw payload capture", () => {
       sql,
       fetch: (async (url: string | URL | Request) => {
         const href = typeof url === "string" ? url : url instanceof URL ? url.href : url.url;
-        if (href.includes("measurement")) return new Response(new Uint8Array(gzipSync(SITES)));
+        if (href === flow.endpoints["sites"]?.url)
+          return new Response(new Uint8Array(gzipSync(SITES)));
         // Not a socket error, so the stream is not retried: one broken download.
         const body = new ReadableStream<Uint8Array>({
           start(controller) {
