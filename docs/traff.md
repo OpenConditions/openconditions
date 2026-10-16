@@ -62,6 +62,26 @@ Receive/update/expiration/start/end times are normalized to UTC with fractional
 seconds truncated on this wire projection. Stored canonical timestamps keep
 their original precision. XML escaping remains the XML builder's responsibility.
 
+## Delay durations
+
+Delay effects export `q_duration="hours:minutes"` alongside any queue `length`
+in metres. Canonical delay seconds are rounded to the nearest whole minute
+(30 seconds rounds upward); the inspector reports `field_precision_reduced`
+when that changes the value. A positive delay below 30 seconds is omitted rather
+than exported as zero. Invalid, negative or unrepresentably large durations are
+also omitted with `field_not_exported`; queue length can still travel. An exact
+zero is representable as `0:00`. Canonical records retain their original seconds.
+
+Distinct duration/queue pairs remain separate events within their message;
+they are neither summed nor combined across effects. Exact duplicate pairs are
+collapsed. Each effect's location, validity and applicability still govern export.
+
+The pinned Java reader **accepts but discards `q_duration`**: its deserializing
+constructor leaves duration parsing unimplemented. The independent check verifies
+the emitted duration attributes with the JDK XML parser, then verifies reader
+acceptance and preservation of event count and queue length. It does not claim
+that this reader can display the delay duration.
+
 ## Independent reader check
 
 The optional check exercises the actual upstream `TraffFeed.read` with emitted

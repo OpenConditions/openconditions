@@ -134,19 +134,20 @@ public-eligible preview. It includes:
   legacy draft caller; the inspector itself projects sealed records.
 - `situationId`, plus `effectId` when the decision concerns an effect.
 
-| Code                                       | What it explains                                                                                                                                               |
-| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `coarse_location`                          | A root or effect location has non-exact precision, including coarse VILD recovery. Both XML exporters withhold the whole situation; GeoJSON can retain it.     |
-| `vehicle_specific_effect`                  | Vehicle applicability or an intrinsically vehicle-specific effect kind cannot be represented faithfully; the whole situation is withheld.                      |
-| `restriction_evidence`                     | Incomplete normalization or unknown applicability blocks the whole situation. Multiple applicable blockers are reported.                                       |
-| `unrepresentable_direction`                | TraFF cannot infer travel order from an explicit direction. An effect direction blocks the situation; a root/inherited location direction blocks that message. |
-| `direction_not_exported`                   | This DATEX emitter omits direction while still emitting records. This describes the current emitter, not a limitation of the DATEX standard.                   |
-| `geometry_to_point`                        | An emitted non-point geometry becomes its first coordinate.                                                                                                    |
-| `geometry_to_endpoints`                    | TraFF emits only the endpoints of a line with intermediate coordinates.                                                                                        |
-| `missing_geometry`                         | A TraFF message has no usable coordinate and is withheld.                                                                                                      |
-| `effect_ended`, `effect_time_unknown`      | The XML effect projection was skipped at the fixed evaluation instant. Scheduled effects remain eligible.                                                      |
-| `unsupported_nature`, `unsupported_effect` | The current registry/emitter has no event/management-record mapping for this classification or effect. Other messages/records can survive.                     |
-| `field_not_exported`                       | A specifically instrumented field is omitted, currently TraFF delay duration (queue length can still travel).                                                  |
+| Code                                       | What it explains                                                                                                                                                    |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `coarse_location`                          | A root or effect location has non-exact precision, including coarse VILD recovery. Both XML exporters withhold the whole situation; GeoJSON can retain it.          |
+| `vehicle_specific_effect`                  | Vehicle applicability or an intrinsically vehicle-specific effect kind cannot be represented faithfully; the whole situation is withheld.                           |
+| `restriction_evidence`                     | Incomplete normalization or unknown applicability blocks the whole situation. Multiple applicable blockers are reported.                                            |
+| `unrepresentable_direction`                | TraFF cannot infer travel order from an explicit direction. An effect direction blocks the situation; a root/inherited location direction blocks that message.      |
+| `direction_not_exported`                   | This DATEX emitter omits direction while still emitting records. This describes the current emitter, not a limitation of the DATEX standard.                        |
+| `geometry_to_point`                        | An emitted non-point geometry becomes its first coordinate.                                                                                                         |
+| `geometry_to_endpoints`                    | TraFF emits only the endpoints of a line with intermediate coordinates.                                                                                             |
+| `missing_geometry`                         | A TraFF message has no usable coordinate and is withheld.                                                                                                           |
+| `effect_ended`, `effect_time_unknown`      | The XML effect projection was skipped at the fixed evaluation instant. Scheduled effects remain eligible.                                                           |
+| `unsupported_nature`, `unsupported_effect` | The current registry/emitter has no event/management-record mapping for this classification or effect. Other messages/records can survive.                          |
+| `field_not_exported`                       | A specifically instrumented field is omitted, including delay durations that cannot be represented at TraFF whole-minute precision (queue length can still travel). |
+| `field_precision_reduced`                  | TraFF rounded delay seconds to whole minutes. See [delay durations](traff.md#delay-durations).                                                                      |
 
 ```bash
 jq '.records[] | {id: .draft.id,
