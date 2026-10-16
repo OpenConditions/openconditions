@@ -12,7 +12,8 @@ export interface ColumnSpec {
   geometry?: true;
 }
 
-const BATCH = 1000;
+/** The rows one bulk statement sends at most. */
+export const BATCH = 1000;
 
 function selectExpr(c: ColumnSpec): string {
   return c.geometry

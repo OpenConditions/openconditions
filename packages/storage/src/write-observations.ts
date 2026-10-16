@@ -19,7 +19,7 @@ import {
   sha256Hex,
   type ValidationResult,
 } from "@openconditions/model";
-import { type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
+import { BATCH, type ColumnSpec, insertRows, type Sql, updateRows, upsertClause } from "./bulk.js";
 import type { LatestCacheWrite, LatestEntry } from "./latest-cache.js";
 import { partitionCoverage, retentionDaysOf } from "./observation-partitions.js";
 import { pause, RECORDS_PER_TURN } from "./pause.js";
@@ -872,14 +872,28 @@ async function writeTransient(
        WHERE observation_latest.effective_from < excluded.effective_from`,
     "series_id, subject_key, property, qualifier_key, source_id",
   );
-  if (ctx.captureEvidence === "acquired" && seriesRows.length > 0)
+  // A series that already held its reading takes the receipt. A day of
+  // detections, rows whole and in one statement, outgrows a string.
+  for (let i = 0; ctx.captureEvidence === "acquired" && i < seriesRows.length; i += BATCH) {
     await tx.unsafe(
       `UPDATE conditions.observation_latest l SET contributor_receipt_id=r.contributor_receipt_id
-       FROM jsonb_to_recordset($1::text::jsonb) AS r(subject_key text,property text,qualifier_key text,source_id text,reading jsonb,contributor_receipt_id text)
+       FROM jsonb_to_recordset($1::text::jsonb) AS r(subject_key text,property text,qualifier_key text,source_id text,content_hash text,contributor_receipt_id text)
        WHERE l.subject_key=r.subject_key AND l.property=r.property AND l.qualifier_key=r.qualifier_key AND l.source_id=r.source_id
-         AND l.contributor_receipt_id IS NULL AND l.reading->>'contentHash'=r.reading->>'contentHash'`,
-      [JSON.stringify(seriesRows)],
+         AND l.contributor_receipt_id IS NULL AND l.reading->>'contentHash'=r.content_hash`,
+      [
+        JSON.stringify(
+          seriesRows.slice(i, i + BATCH).map((row) => ({
+            subject_key: row["subject_key"],
+            property: row["property"],
+            qualifier_key: row["qualifier_key"],
+            source_id: row["source_id"],
+            content_hash: (row["reading"] as Rec)["contentHash"],
+            contributor_receipt_id: row["contributor_receipt_id"],
+          })),
+        ),
+      ],
     );
+  }
   counts.latest += written.length;
   counts.unchanged += seriesRows.length - written.length;
   // Only a reading that wrote its series is new: one its series already
