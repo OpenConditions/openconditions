@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseTfnsw } from "../formats/tfnsw.js";
 import { fixture, parseContext, tfnswFeed } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -65,6 +65,8 @@ const zone = (zoneId: string, zoneName: string, spots: string, total: string) =>
 });
 
 describe("tfnsw", () => {
+  beforeEach(() => __resetSkips());
+
   test("TfNSW: MessageDate without a zone is Sydney time", () => {
     const out = fullList();
     const at = (stationId: string) =>
@@ -123,7 +125,7 @@ describe("tfnsw", () => {
     // Without a location there is no point: OpenMapX's table of points is not carried over.
     const unplaced = parse(json([{ ...facility([]), location: { suburb: "Tallawong" } }]));
     expect(unplaced.features).toEqual([]);
-    expect(unplaced.rejected).toBe(1);
+    expect(drainSkipped(tfnswFeed().id)).toEqual({ no_geometry: 1 });
   });
 
   test("TfNSW: zones are no areas and give no readings", () => {
@@ -142,5 +144,27 @@ describe("tfnsw", () => {
       ["parking.available", "site", 355],
       ["parking.occupied", "site", 100],
     ]);
+  });
+});
+
+describe("tfnsw skips", () => {
+  beforeEach(() => __resetSkips());
+
+  test("TfNSW: an entry without an id or with a coordinate that is no number is malformed", () => {
+    const { facility_id: _, ...anonymous } = facility([]);
+    const broken = { ...facility([]), location: { latitude: "south", longitude: "150.90" } };
+    expect(parse(json([anonymous, broken])).features).toEqual([]);
+    expect(drainSkipped(tfnswFeed().id)).toEqual({ malformed: 2 });
+  });
+
+  test("TfNSW: an unreadable MessageDate is an unknown value, the reading dated at the poll", () => {
+    const out = parse(json([{ ...facility([]), MessageDate: "yesterday" }]));
+    expect(out.observations[0]?.["phenomenonTime"]).toEqual({ instant: FETCHED });
+    expect(drainSkipped(tfnswFeed().id)).toEqual({ unknown_value: 1 });
+  });
+
+  test("TfNSW: the full list skips nothing", () => {
+    fullList();
+    expect(drainSkipped(tfnswFeed().id)).toEqual({});
   });
 });

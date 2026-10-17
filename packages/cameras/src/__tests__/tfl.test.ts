@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { matchesImageHost } from "../camera.js";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
@@ -50,6 +56,8 @@ const view = (out: ParseOutput, id: string) =>
   )?.[0] ?? expect.unreachable(`no camera ${id}`);
 
 describe("tfl", () => {
+  beforeEach(() => __resetSkips());
+
   test("a camera reads its properties by key, with the clip as an mp4 stream", () => {
     const out = parse({ main: [fixture("gb-eng-tfl-jamcams.json")] });
     expect(out.features.map((f) => f["id"])).toEqual([
@@ -143,12 +151,23 @@ describe("tfl", () => {
     }
   });
 
-  test("a record without a position is rejected", () => {
+  test("a record without a position is skipped", () => {
     const doc = list();
     delete doc[1].lat;
+    delete doc[1].lon;
     const out = parse({ main: [body(doc)] });
     expect(out.features).toHaveLength(2);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(tflFeed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  test("a record with half a position, or without an id, is malformed", () => {
+    const doc = list();
+    delete doc[1].lat;
+    delete doc[2].id;
+    const out = parse({ main: [body(doc)] });
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(tflFeed().id)).toEqual({ malformed: 2 });
   });
 
   test("a body that is no place list fails the parse", () => {

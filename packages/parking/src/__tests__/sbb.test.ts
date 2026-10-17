@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseSbb } from "../formats/sbb.js";
 import { fixture, parseContext, sbbFeed } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -13,12 +13,8 @@ const DIETLIKON = "6935079d-baaa-4f13-a1f5-2ce83941b307";
 const HERISAU = "0057697d-defb-4ce6-94fa-6c0a14bb5372";
 const BIKE = "6b868d5e-f242-4543-b904-0473e27f01c0";
 
-function parse(): ParseOutput {
-  const out = parseSbb(
-    sbbFeed(),
-    { main: [fixture("sbb-parking.json")] },
-    parseContext(FETCHED, 86400),
-  );
+function parse(body: Buffer = fixture("sbb-parking.json")): ParseOutput {
+  const out = parseSbb(sbbFeed(), { main: [body] }, parseContext(FETCHED, 86400));
   expect(sealFailures([...out.features, ...out.observations, ...out.offers])).toEqual([]);
   return out;
 }
@@ -177,5 +173,53 @@ describe("sbb", () => {
       access: { audience: "public" },
       details: { website: expect.stringMatching(/^https:\/\/www\.sbb\.ch\/en\//) },
     });
+  });
+});
+
+describe("sbb skips", () => {
+  beforeEach(() => __resetSkips());
+
+  const collection = (features: unknown[]) =>
+    Buffer.from(JSON.stringify({ type: "FeatureCollection", features }));
+  const car = (id: string, geometry: unknown, capacities: unknown[] = []) => ({
+    type: "Feature",
+    id,
+    geometry,
+    properties: { parkingFacilityCategory: "CAR", displayName: id, capacities },
+  });
+
+  test("SBB: a car facility without a point has no geometry; a broken one is malformed", () => {
+    const out = parse(
+      collection([
+        car("A", null),
+        car("B", { type: "Point", coordinates: ["7.4", "46.9"] }),
+        { ...car("C", { type: "Point", coordinates: [7.4, 46.9] }), id: undefined },
+        { type: "Feature", id: "D", geometry: null, properties: null },
+        // Bicycle facilities are not read; a category it does not know is skipped.
+        { ...car("E", null), properties: { parkingFacilityCategory: "BIKE" } },
+        { ...car("F", null), properties: { parkingFacilityCategory: "SCOOTER" } },
+      ]),
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(sbbFeed().id)).toEqual({ no_geometry: 1, malformed: 3, unknown_type: 1 });
+  });
+
+  test("SBB: a capacity category it does not know is an unknown value", () => {
+    const out = parse(
+      collection([
+        car("G", { type: "Point", coordinates: [7.4, 46.9] }, [
+          { categoryType: "STANDARD", total: 10 },
+          { categoryType: "RESERVABLE_PARKING_SPACE", total: 2 },
+          { categoryType: "CARSHARING", total: 3 },
+        ]),
+      ]),
+    );
+    expect(areas(out, "G")).toEqual([["car:any", 10]]);
+    expect(drainSkipped(sbbFeed().id)).toEqual({ unknown_value: 1 });
+  });
+
+  test("SBB: the fixture skips nothing", () => {
+    parse();
+    expect(drainSkipped(sbbFeed().id)).toEqual({});
   });
 });

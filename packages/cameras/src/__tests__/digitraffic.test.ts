@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -66,6 +72,8 @@ const value = (r: RecordDraft | undefined) =>
   (r?.["result"] as { value: Record<string, unknown> } | undefined)?.value;
 
 describe("digitraffic", () => {
+  beforeEach(() => __resetSkips());
+
   test("a station is one weather camera with a view per preset, named from its details", () => {
     const out = parse();
     expect(out.features.map((f) => f["id"])).toEqual([
@@ -226,11 +234,13 @@ describe("digitraffic", () => {
     expect(unknown.observations).toEqual(full.observations);
   });
 
-  test("a malformed data document is rejected without failing the daily full parse", () => {
+  test("a malformed data document is skipped without failing the daily full parse", () => {
     const whole = parse();
+    drainSkipped(digitrafficFeed().id);
     for (const body of ["{}", "not json", '{"stations": 3}']) {
       const out = parse({ ...payloads(), status: [Buffer.from(body)] });
-      expect(out.rejected, body).toBe(1);
+      expect(out.rejected ?? 0, body).toBe(0);
+      expect(drainSkipped(digitrafficFeed().id), body).toEqual({ malformed: 1 });
       expect(
         out.features.map((f) => f["id"]),
         body,
@@ -261,5 +271,44 @@ describe("digitraffic", () => {
   test("every camera and reading seals", () => {
     const out = parse();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
+  test("a station without an id or a position is skipped; unknown codes are unknown values", () => {
+    const sites = JSON.parse(fixture("fi-digitraffic-stations.json").toString("utf8"));
+    delete sites.features[1].properties.id;
+    sites.features[2].geometry = null;
+    sites.features[0].properties.collectionStatus = "SLEEPING";
+    const details = JSON.parse(fixture("fi-digitraffic-station-C01503.json").toString("utf8"));
+    details.properties.purpose = "muu";
+    details.properties.presets[0].direction = "UPWARDS";
+    const out = parse({
+      ...payloads(),
+      sites: [Buffer.from(JSON.stringify(sites))],
+      details: [Buffer.from(JSON.stringify(details)), Buffer.from("not json")],
+    });
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(digitrafficFeed().id)).toEqual({
+      malformed: 2,
+      no_geometry: 1,
+      unknown_value: 3,
+    });
+  });
+
+  test("a status entry whose image time cannot be read is malformed in the status-only parse", () => {
+    const feed = digitrafficFeed();
+    const ctx = parseContext(FETCHED, 600);
+    const full = format.parse(feed, payloads(), ctx);
+    drainSkipped(feed.id);
+    const data = JSON.parse(fixture("fi-digitraffic-data.json").toString("utf8"));
+    data.stations[0].presets[0].measuredTime = "yesterday";
+    const status = format.parseStatus!(
+      feed,
+      { status: [Buffer.from(JSON.stringify(data))] },
+      ctx,
+      full.statusIndex!,
+    );
+    expect(status.rejected).toBe(0);
+    expect(status.observations).toHaveLength(full.observations.length);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
   });
 });

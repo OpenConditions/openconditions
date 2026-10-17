@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
 import { instantIn, occupancyDrafts, type SiteInput, siteDraft } from "../site.js";
@@ -34,9 +35,17 @@ function count(value: unknown): number | undefined {
   return t !== undefined && /^\d+$/.test(t) ? Number(t) : undefined;
 }
 
-function coordinate(value: unknown): number | undefined {
-  const n = Number.parseFloat(text(value) ?? "");
-  return Number.isFinite(n) ? n : undefined;
+/**
+ * A facility's point, or why it has none: `no_geometry` without a
+ * coordinate, `malformed` with one that is no number.
+ */
+function pointOf(f: NswFacility): [number, number] | "no_geometry" | "malformed" {
+  const latText = text(f.location?.latitude);
+  const lonText = text(f.location?.longitude);
+  if (latText === undefined || lonText === undefined) return "no_geometry";
+  const lat = Number.parseFloat(latText);
+  const lon = Number.parseFloat(lonText);
+  return Number.isFinite(lat) && Number.isFinite(lon) ? [lon, lat] : "malformed";
 }
 
 /** The car parks of a body: a bare array. */
@@ -77,8 +86,9 @@ function siteInput(
  * v2.4 §2.1.5), the shape OpenMapX read one `?facility=` call at a time. Each
  * entry is a park-and-ride site at its `location`; free spaces are the spots
  * less the vehicles counted (`occupancy.total`), at least 0. `MessageDate` is
- * Sydney time. An entry without a location is rejected: no table of points
- * stands in for it.
+ * Sydney time; one it cannot read is an unknown value, the reading dated at
+ * the poll. An entry without an id, or without a location, is counted as
+ * skipped: no table of points stands in for a missing one.
  *
  * The `zones` are not read. Areas are keyed by vehicle type and user group,
  * and the documented zones are parts of the car park (the sample's one zone
@@ -92,27 +102,28 @@ export function parseTfnsw(
 ): ParseOutput {
   const out = emptyParseOutput();
   const seen = new Set<string>();
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     for (const f of facilitiesOf(body)) {
-      const stationId = text(f.facility_id);
-      const lat = coordinate(f.location?.latitude);
-      const lon = coordinate(f.location?.longitude);
-      if (stationId === undefined || lat === undefined || lon === undefined) {
-        rejected++;
+      const stationId = typeof f === "object" && f !== null ? text(f.facility_id) : undefined;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const point = pointOf(f);
+      if (!Array.isArray(point)) {
+        recordSkipped(feed.id, point);
         continue;
       }
       if (seen.has(stationId)) continue;
       seen.add(stationId);
-      const point: [number, number] = [lon, lat];
       const spots = count(f.spots);
       out.features.push(siteDraft(feed, siteInput(f, stationId, point, spots), ctx.fetchedAt));
       const occupied = count(f.occupancy?.total);
-      const reading = {
-        stationId,
-        at: instantIn(TIME_ZONE, f.MessageDate) ?? ctx.fetchedAt,
-        point,
-      };
+      const at = instantIn(TIME_ZONE, f.MessageDate);
+      if (at === undefined && text(f.MessageDate) !== undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
+      const reading = { stationId, at: at ?? ctx.fetchedAt, point };
       out.observations.push(
         ...occupancyDrafts(
           feed,
@@ -127,6 +138,5 @@ export function parseTfnsw(
       );
     }
   }
-  out.rejected = rejected;
   return out;
 }

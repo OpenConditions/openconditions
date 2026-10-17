@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import {
   type CameraStatus,
@@ -13,7 +14,7 @@ import {
   imageRedistributionOf,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, textOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
 
 /** An active webcam renews its image at least daily; one that did not is stale. */
 const ACTIVE_WITHIN_MS = 24 * 3600 * 1000;
@@ -40,14 +41,23 @@ const TYPES: Readonly<Record<string, CameraType>> = {
   indoor: "other",
 };
 
-/** The type of the first category Windy files the webcam under that is a known one. */
-function typeOf(categories: unknown): CameraType {
-  for (const category of Array.isArray(categories) ? categories : []) {
+/**
+ * The type of the first category Windy files the webcam under that is a
+ * known one; `other` without one, and a webcam filed under categories none
+ * of which is known has its categories skipped as an unknown value.
+ */
+function typeOf(feed: CamerasCatalogFeed, categories: unknown): CameraType {
+  const list = Array.isArray(categories) ? categories : [];
+  for (const category of list) {
     const type = isRecord(category) ? TYPES[textOf(category["id"]) ?? ""] : undefined;
     if (type !== undefined) return type;
   }
+  if (list.length > 0) recordSkipped(feed.id, "unknown_value");
   return "other";
 }
+
+/** The statuses of a webcam Windy lists but does not show: no webcam to show, left out. */
+const UNSHOWN = new Set(["unapproved", "rejected", "duplicate", "merged"]);
 
 /**
  * `active` webcams are online while their image is under a day old and stale
@@ -73,7 +83,10 @@ const inCell = (point: readonly [number, number], cell: NonNullable<ParseContext
 /**
  * Windy's webcam list (`/webcams?bbox=`), one page per payload, read per grid
  * cell. A bbox answer reaches past the cell's edges, so only the webcams
- * inside the cell stay: the next cell keeps its own. A webcam has one view,
+ * inside the cell stay: the next cell keeps its own. A webcam without an id
+ * or a status is skipped as malformed, one with a status Windy does not
+ * document as an unknown type, and one without a position as having no
+ * geometry. A webcam has one view,
  * its current image, whose address carries a token that dies within minutes;
  * the terms let it be shown only linked to Windy's page or player.
  */
@@ -94,12 +107,21 @@ export function parseWindy(
       const webcam = isRecord(record) ? record : {};
       const cameraId = textOf(webcam["webcamId"]);
       const updated = textOf(webcam["lastUpdatedOn"]);
-      const status = statusOf(textOf(webcam["status"]), updated, ctx.fetchedAt);
-      if (cameraId === undefined || status === undefined || seen.has(cameraId)) continue;
+      const stated = textOf(webcam["status"]);
+      if (cameraId === undefined || stated === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const status = statusOf(stated, updated, ctx.fetchedAt);
+      if (status === undefined) {
+        if (!UNSHOWN.has(stated)) recordSkipped(feed.id, "unknown_type");
+        continue;
+      }
+      if (seen.has(cameraId)) continue;
       const location = isRecord(webcam["location"]) ? webcam["location"] : {};
       const point = lonLat(location["longitude"], location["latitude"]);
       if (point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+        recordSkipped(feed.id, positionSkip(location["longitude"], location["latitude"]));
         continue;
       }
       if (ctx.cell !== undefined && !inCell(point, ctx.cell)) continue;
@@ -120,7 +142,7 @@ export function parseWindy(
           cameraId,
           point,
           names: title === undefined ? [] : [{ lang: "und", text: title }],
-          type: typeOf(webcam["categories"]),
+          type: typeOf(feed, webcam["categories"]),
           ...(detailUrl === undefined ? {} : { detailUrl }),
           ...(embed === undefined ? {} : { playerEmbedUrl: embed }),
           imageRedistribution: imageRedistributionOf(feed, "link_only"),

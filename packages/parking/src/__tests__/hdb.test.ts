@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseHdb, svy21ToWgs84 } from "../formats/hdb.js";
 import { fixture, hdbFeed, parseContext } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -164,5 +164,76 @@ describe("hdb", () => {
     expect(out.features).toHaveLength(2);
     expect(out.observations).toEqual([]);
     expect(site(out, "ACB")).not.toHaveProperty("components");
+  });
+});
+
+describe("hdb skips", () => {
+  beforeEach(() => __resetSkips());
+
+  const json = (value: unknown) => Buffer.from(JSON.stringify(value));
+  const table = (records: unknown[]) => json({ result: { records } });
+  const live = (carparks: unknown[]) => json({ items: [{ carpark_data: carparks }] });
+  const carPark = (
+    car_park_no: string,
+    x_coord: unknown,
+    y_coord: unknown,
+    car_park_type = "SURFACE CAR PARK",
+  ) => ({
+    car_park_no,
+    address: `CAR PARK ${car_park_no}`,
+    x_coord,
+    y_coord,
+    car_park_type,
+  });
+  const availability = (
+    carpark_number: string,
+    lotTypes: string[],
+    update_datetime = "2026-05-23T09:59:30",
+  ) => ({
+    carpark_number,
+    update_datetime,
+    carpark_info: lotTypes.map((lot_type) => ({ total_lots: "10", lot_type, lots_available: "4" })),
+  });
+
+  test("HDB: a car park without a point has no geometry; one outside Singapore or without a number is malformed", () => {
+    const out = parse(
+      [
+        table([
+          carPark("A", "0", "0"),
+          carPark("B", "", "30000"),
+          carPark("C", "east", "30000"),
+          carPark("D", "900000", "900000"),
+          { address: "NO NUMBER", x_coord: "30314.7936", y_coord: "31490.4942" },
+        ]),
+      ],
+      // A's availability is not counted again.
+      [live([availability("A", ["C"])])],
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(hdbFeed().id)).toEqual({ no_geometry: 2, malformed: 3 });
+  });
+
+  test("HDB: the availability of a car park the table lacks has no site", () => {
+    const out = parse(
+      [fixture("singapore-static.json")],
+      [live([availability("ACB", ["C"]), availability("ZZ9", ["C"]), { carpark_info: [] }])],
+    );
+    expect(out.features).toHaveLength(2);
+    expect(drainSkipped(hdbFeed().id)).toEqual({ no_geometry: 1, malformed: 1 });
+  });
+
+  test("HDB: a lot type, car park type or time it cannot read is an unknown value", () => {
+    const out = parse(
+      [table([carPark("E", "30314.7936", "31490.4942", "SURFACE/MULTI-STOREY CAR PARK")])],
+      [live([availability("E", ["C", "L"], "at noon")])],
+    );
+    expect(areas(out, "E")).toEqual([["car:any", 10]]);
+    expect(out.observations[0]?.["phenomenonTime"]).toEqual({ instant: FETCHED });
+    expect(drainSkipped(hdbFeed().id)).toEqual({ unknown_value: 3 });
+  });
+
+  test("HDB: the fixtures skip nothing", () => {
+    both();
+    expect(drainSkipped(hdbFeed().id)).toEqual({});
   });
 });

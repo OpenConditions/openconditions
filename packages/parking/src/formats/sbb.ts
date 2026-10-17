@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingUserGroup } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
@@ -63,6 +64,9 @@ const CATEGORIES: Readonly<Record<string, ParkingUserGroup>> = {
   WITH_CHARGING_STATION: "ev_charging",
 };
 
+/** Capacity categories known and left unread: reservable spaces are no user group. */
+const UNREAD_CATEGORIES: ReadonlySet<string> = new Set(["RESERVABLE_PARKING_SPACE"]);
+
 const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 const OSM_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
@@ -80,7 +84,12 @@ const text = (value: unknown): string | undefined =>
 
 const finite = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
-function pointOf(feature: SbbFeature): [number, number] | undefined {
+/**
+ * The first usable point of a feature's geometry, or why it has none:
+ * `no_geometry` without a point, `malformed` when its points' coordinates
+ * are no numbers.
+ */
+function pointOf(feature: SbbFeature): [number, number] | "no_geometry" | "malformed" {
   const g = feature.geometry;
   const points =
     g?.type === "Point" ? [g] : (g?.geometries ?? []).filter((p) => p.type === "Point");
@@ -88,8 +97,21 @@ function pointOf(feature: SbbFeature): [number, number] | undefined {
     const c = p.coordinates;
     if (Array.isArray(c) && c.length >= 2 && finite(c[0]) && finite(c[1])) return [c[0], c[1]];
   }
-  return undefined;
+  return points.some((p) => p.coordinates !== undefined && p.coordinates !== null)
+    ? "malformed"
+    : "no_geometry";
 }
+
+/** The capacity categories of a facility that are neither areas nor known and left unread. */
+const unknownCategories = (p: SbbProperties): number =>
+  (p.capacities ?? []).filter((c) => {
+    const category = text(c?.categoryType);
+    return (
+      category !== undefined &&
+      CATEGORIES[category] === undefined &&
+      !UNREAD_CATEGORIES.has(category)
+    );
+  }).length;
 
 /** A contiguous run of days as `Mo-Fr`, separate days as `Mo,We`. */
 function dayRanges(indices: number[]): string {
@@ -243,7 +265,11 @@ function featuresOf(body: Buffer): SbbFeature[] {
  * a percentage reading at the poll; being an estimate, it gives no count of
  * free spaces. It carries no time of its own, so it is dated at the poll and
  * stays current for an hour, not two of the feed's daily cadences: an
- * estimate goes stale fast. A facility without a point is rejected.
+ * estimate goes stale fast. Bicycle facilities are not read. A facility of
+ * a category it does not know, a feature without properties, a category or
+ * an id, and a car facility without a point are counted as skipped; a
+ * capacity category it does not know is an unknown value, the site published
+ * without that area.
  */
 export function parseSbb(
   feed: ParkingCatalogFeed,
@@ -251,17 +277,30 @@ export function parseSbb(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     for (const feature of featuresOf(body)) {
-      const p = feature.properties;
-      if (p?.parkingFacilityCategory !== "CAR") continue;
-      const stationId = text(feature.id);
-      const point = pointOf(feature);
-      if (stationId === undefined || point === undefined) {
-        rejected++;
+      const p = typeof feature === "object" && feature !== null ? feature.properties : undefined;
+      if (typeof p !== "object" || p === null) {
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      const category = p.parkingFacilityCategory;
+      if (category !== "CAR") {
+        if (text(category) === undefined) recordSkipped(feed.id, "malformed");
+        else if (category !== "BIKE") recordSkipped(feed.id, "unknown_type");
+        continue;
+      }
+      const stationId = text(feature.id);
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const point = pointOf(feature);
+      if (!Array.isArray(point)) {
+        recordSkipped(feed.id, point);
+        continue;
+      }
+      recordSkipped(feed.id, "unknown_value", unknownCategories(p));
       out.features.push(siteDraft(feed, siteInput(p, stationId, point), ctx.fetchedAt));
       const rate = rateDraft(feed, stationId, 1, {
         currency: "CHF",
@@ -279,6 +318,5 @@ export function parseSbb(
       }
     }
   }
-  out.rejected = rejected;
   return out;
 }

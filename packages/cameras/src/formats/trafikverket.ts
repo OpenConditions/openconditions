@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import {
   type CameraStatus,
@@ -12,7 +13,7 @@ import {
   imageRedistributionOf,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, numberOf, textOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
 
 /** Trafikverket names and describes its cameras in Swedish. */
 const LANG = "sv";
@@ -57,7 +58,9 @@ function camerasOf(body: Buffer): unknown[] {
  * view. A numeric `Direction` is where the camera looks, in degrees;
  * `PhotoTime` is when its photo was taken. The full-size photo is the
  * still where the camera has one, else the plain photo; the thumbnail is
- * the thumbnail. A deleted camera is left out.
+ * the thumbnail. A deleted camera is left out. A camera without an id or
+ * whose position is not a WKT point is skipped as malformed, one without a
+ * position as having no geometry.
  */
 export function parseTrafikverketCameras(
   feed: CamerasCatalogFeed,
@@ -72,10 +75,21 @@ export function parseTrafikverketCameras(
       if (camera["Deleted"] === true) continue;
       const cameraId = textOf(camera["Id"]);
       const geometry = isRecord(camera["Geometry"]) ? camera["Geometry"] : {};
-      const wkt = WKT_POINT.exec(textOf(geometry["WGS84"]) ?? "");
+      const wgs84 = textOf(geometry["WGS84"]);
+      const wkt = WKT_POINT.exec(wgs84 ?? "");
       const point = wkt === null ? undefined : lonLat(wkt[1], wkt[2]);
-      if (cameraId === undefined || point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+      if (cameraId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        const reason =
+          wgs84 === undefined
+            ? "no_geometry"
+            : wkt === null
+              ? "malformed"
+              : positionSkip(wkt[1], wkt[2]);
+        recordSkipped(feed.id, reason);
         continue;
       }
       const name = textOf(camera["Name"]);

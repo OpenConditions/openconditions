@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
@@ -64,6 +69,8 @@ const viewDetails = (draft: RecordDraft | undefined) =>
   ((draft?.["components"] ?? []) as { details: Record<string, unknown> }[])[0]?.details;
 
 describe("ibi511", () => {
+  beforeEach(() => __resetSkips());
+
   test("an Ontario camera keeps its three views, each with its own reading", () => {
     const out = parse(ontarioFeed(), "ca-on-511-cameras.json");
     expect(out.features).toHaveLength(3);
@@ -199,7 +206,7 @@ describe("ibi511", () => {
     expect(viewDetails(camera(out, "us-la-511-cameras", "1"))).not.toHaveProperty("direction");
   });
 
-  test("a camera without a position is rejected", () => {
+  test("a camera without a position or an id is skipped", () => {
     const body = Buffer.from(
       JSON.stringify([{ Id: 9, Location: "Nowhere", Views: [] }, { Location: "No id" }]),
     );
@@ -209,7 +216,29 @@ describe("ibi511", () => {
       parseContext(FETCHED),
     );
     expect(out.features).toEqual([]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(georgiaFeed().id)).toEqual({ no_geometry: 1, malformed: 1 });
+  });
+
+  test("a view without an id is skipped; an unknown direction or view status is an unknown value", () => {
+    const body = Buffer.from(
+      JSON.stringify([
+        {
+          Id: 9,
+          Latitude: 33.7,
+          Longitude: -84.4,
+          Direction: "Sideways",
+          Views: [{ Id: 1, Status: "Paused" }, { Status: "Enabled" }],
+        },
+      ]),
+    );
+    const out = camerasDomain.formats["ibi511"]!.parse(
+      georgiaFeed(),
+      { main: [body] },
+      parseContext(FETCHED),
+    );
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(georgiaFeed().id)).toEqual({ malformed: 1, unknown_value: 2 });
   });
 
   test("every camera and reading seals", () => {

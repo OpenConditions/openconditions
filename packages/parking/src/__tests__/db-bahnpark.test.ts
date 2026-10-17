@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseDbBahnpark } from "../formats/db-bahnpark.js";
 import { dbBahnparkFeed, fixture, parseContext } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -157,5 +157,48 @@ describe("db-bahnpark", () => {
     // An `_embedded` envelope is read as the list.
     const hal = parse(Buffer.from(JSON.stringify({ _embedded: [facility([])] })));
     expect(hal.features).toHaveLength(1);
+  });
+});
+
+describe("db-bahnpark skips", () => {
+  beforeEach(() => __resetSkips());
+
+  const json = (value: unknown) => Buffer.from(JSON.stringify(value));
+
+  test("DB BahnPark: a facility without a point has no geometry; one without an id is malformed", () => {
+    const { id: _, ...anonymous } = facility([]);
+    const out = parse(
+      json([
+        { ...facility([]), address: { location: { latitude: null, longitude: null } } },
+        anonymous,
+        { ...facility([]), address: { location: { latitude: "50.1", longitude: 8.6 } } },
+      ]),
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ no_geometry: 1, malformed: 2 });
+  });
+
+  test("DB BahnPark: a facility type or duration code it does not know is an unknown value", () => {
+    const out = parse(
+      json([
+        {
+          ...facility([
+            { duration: "1hour", price: 2 },
+            { duration: "1fortnight", price: 20 },
+            // Prices of other groups are not read at all.
+            { duration: "1fortnight", price: 20, group: "corporate" },
+          ]),
+          type: { name: "Parkdeck" },
+        },
+      ]),
+    );
+    expect(out.features).toHaveLength(1);
+    expect(rows(out)).toEqual([["2.00", { value: 1, unit: "h" }, undefined]]);
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
+  test("DB BahnPark: the sample skips nothing", () => {
+    sample();
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({});
   });
 });

@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseOpendatahub } from "../formats/opendatahub.js";
 import { fixture, opendatahubFeed, parseContext } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -33,6 +33,8 @@ const readings = (out: ParseOutput, stationId: string) =>
     ]);
 
 describe("opendatahub", () => {
+  beforeEach(() => __resetSkips());
+
   test("Open Data Hub: a measurement older than an hour is no reading", () => {
     const out = both();
     expect(readings(out, "BZ-001")).toEqual([["parking.available", 120, "2026-05-23T11:55:00Z"]]);
@@ -89,7 +91,7 @@ describe("opendatahub", () => {
   test("Open Data Hub: station names, layout, capacity and charging", () => {
     const out = both();
     expect(out.features).toHaveLength(3);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(opendatahubFeed().id)).toEqual({ no_geometry: 1 });
     expect(site(out, "BZ-001")).toMatchObject({
       name: [{ lang: "en", text: "Bolzano Parking Centre" }],
       location: {
@@ -135,5 +137,75 @@ describe("opendatahub", () => {
         { scheme: "provider", id: "105", authority: "it-32-opendatahub-parking/skidata" },
       ],
     });
+  });
+});
+
+describe("opendatahub skips", () => {
+  beforeEach(() => __resetSkips());
+
+  const station = (scode: string, scoordinate: unknown) => ({ scode, sname: scode, scoordinate });
+  const measurement = (
+    scode: string,
+    mvalue: unknown,
+    mvalidtime = "2026-05-23 11:50:00.000+0000",
+  ) => ({
+    scode,
+    tname: "free",
+    mvalue,
+    mvalidtime,
+  });
+
+  test("Open Data Hub: a station in another reference system has no geometry; one without an id is malformed", () => {
+    const out = parse(
+      [
+        json({
+          data: [station("A", { x: 680000, y: 5150000, srid: 25832 }), { sname: "anonymous" }],
+        }),
+      ],
+      [json({ data: [] })],
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(opendatahubFeed().id)).toEqual({ no_geometry: 1, malformed: 1 });
+  });
+
+  test("Open Data Hub: current measurements of a station the table lacks have no site", () => {
+    const out = parse(
+      [
+        json({
+          data: [
+            station("A", { x: 11.3, y: 46.5, srid: 4326 }),
+            station("B", { x: null, y: null }),
+          ],
+        }),
+      ],
+      [
+        json({
+          data: [
+            measurement("A", 5),
+            measurement("GONE", 5),
+            // The station is skipped already, and an old measurement is not current.
+            measurement("B", 5),
+            measurement("GONE", 5, "2026-05-23 09:00:00.000+0000"),
+            // Other measurement types are not read.
+            {
+              scode: "GONE",
+              tname: "parking-forecast",
+              mvalue: 3,
+              mvalidtime: "2026-05-23 11:50:00.000+0000",
+            },
+          ],
+        }),
+      ],
+    );
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(opendatahubFeed().id)).toEqual({ no_geometry: 2 });
+  });
+
+  test("Open Data Hub: a measurement without a number or a readable time is malformed", () => {
+    parse(
+      [fixture("opendatahub-it-stations.json")],
+      [json({ data: [measurement("BZ-001", null), measurement("BZ-001", 4, "soon")] })],
+    );
+    expect(drainSkipped(opendatahubFeed().id)).toEqual({ no_geometry: 1, malformed: 2 });
   });
 });

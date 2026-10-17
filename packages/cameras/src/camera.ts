@@ -276,7 +276,10 @@ const STREAM_PROTOCOLS = ["http:", "https:", "rtsp:", "rtsps:"];
  * A feed that declares `imageHosts` names every host its stills may be
  * fetched from, and the image proxy admits only those: a still or thumbnail
  * elsewhere is dropped and counted as rejected. A feed that declares none
- * keeps its URLs, which a consumer links rather than proxies.
+ * keeps its URLs, which a consumer links rather than proxies. A still that is
+ * no http(s) URL is dropped and counted the same way. The reading itself is
+ * written, so neither is a skipped record, and an address is no enumerated
+ * value to count as unknown.
  */
 export function imageReading(
   feed: CamerasFeed,

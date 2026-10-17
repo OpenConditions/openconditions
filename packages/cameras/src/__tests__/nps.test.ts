@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -42,6 +48,8 @@ const BIG_HOLE = "81B46554-1DD8-B71B-0BF6D4520C2357E9";
 const NEWFOUND = "C589EEEF-1DD8-B71B-0B0463C308FF64DD";
 
 describe("nps", () => {
+  beforeEach(() => __resetSkips());
+
   test("a camera is its NPS page, typed landscape, without any image", () => {
     const out = parse({ main: [fixture("us-nps-webcams.json")] });
     expect(camera(out, ANACAPA)).toMatchObject({
@@ -89,7 +97,8 @@ describe("nps", () => {
     expect(out.features.map((f) => f["id"])).not.toContain(
       `${ID}9603ED1D-F805-714D-AC4557683B558B00`,
     );
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(npsFeed().id)).toEqual({ no_geometry: 1 });
     const d = doc();
     d.data[3].latitude = "";
     d.data[3].longitude = "";
@@ -146,5 +155,14 @@ describe("nps", () => {
   test("every camera and reading seals", () => {
     const out = parse({ main: [fixture("us-nps-webcams.json")] });
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
+  test("a record without an id is malformed; a status other than Active or Inactive an unknown value", () => {
+    const d = doc();
+    delete d.data[0].id;
+    d.data[1].status = "Seasonal";
+    const out = parse({ main: [body(d)] });
+    expect(value(reading(out, ANACAPA)[0])?.["status"]).toBe("unknown");
+    expect(drainSkipped(npsFeed().id)).toEqual({ malformed: 1, no_geometry: 1, unknown_value: 1 });
   });
 });

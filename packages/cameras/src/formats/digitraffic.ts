@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
   type StatusSubject,
@@ -19,7 +20,7 @@ import {
   type ViewInput,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, numberOf, textOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
 
 /** Where every preset's still is served; the list and the details name the preset only. */
 const IMAGES = "https://weathercam.digitraffic.fi";
@@ -50,6 +51,21 @@ const DIRECTIONS: Readonly<Record<string, DirectionRef>> = {
   INCREASING_DIRECTION: { value: "positive", basis: "road_reference" },
   DECREASING_DIRECTION: { value: "negative", basis: "road_reference" },
 };
+
+/** The documented preset directions that give none along the road. */
+const NO_DIRECTION: ReadonlySet<string> = new Set([
+  "UNKNOWN",
+  "CROSSING_INCREASING_DIRECTION",
+  "CROSSING_DECREASING_DIRECTION",
+  "SPECIAL_DIRECTION",
+]);
+
+/** The documented collection statuses: gathering, or removed for a while or for good. */
+const COLLECTION_STATUSES: ReadonlySet<string> = new Set([
+  "GATHERING",
+  "REMOVED_TEMPORARILY",
+  "REMOVED_PERMANENTLY",
+]);
 
 /**
  * Where a preset's image readings belong, as the full parse found the preset:
@@ -89,8 +105,11 @@ interface StationDetails {
 
 const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
-/** The stations of the `sites` list; one without an id or a place is counted as rejected. */
-function stationsOf(body: Buffer, out: ParseOutput): Station[] {
+/**
+ * The stations of the `sites` list; one without an id or a place is skipped,
+ * and so is a preset without an id.
+ */
+function stationsOf(feed: CamerasCatalogFeed, body: Buffer): Station[] {
   const doc = jsonOf(body, "the weather camera station list");
   if (!isRecord(doc) || !Array.isArray(doc["features"])) {
     throw new Error("the weather camera station list carries no features");
@@ -101,8 +120,12 @@ function stationsOf(body: Buffer, out: ParseOutput): Station[] {
     const coordinates = isRecord(geometry) ? listOf(geometry["coordinates"]) : [];
     const id = isRecord(props) ? textOf(props["id"]) : undefined;
     const point = lonLat(coordinates[0], coordinates[1]);
-    if (!isRecord(props) || id === undefined || point === undefined) {
-      out.rejected = (out.rejected ?? 0) + 1;
+    if (!isRecord(props) || id === undefined) {
+      recordSkipped(feed.id, "malformed");
+      return [];
+    }
+    if (point === undefined) {
+      recordSkipped(feed.id, positionSkip(coordinates[0], coordinates[1]));
       return [];
     }
     const name = textOf(props["name"]);
@@ -117,7 +140,10 @@ function stationsOf(body: Buffer, out: ParseOutput): Station[] {
         ...(state === undefined ? {} : { state }),
         presets: listOf(props["presets"]).flatMap((preset) => {
           const presetId = isRecord(preset) ? textOf(preset["id"]) : undefined;
-          if (presetId === undefined) return [];
+          if (presetId === undefined) {
+            recordSkipped(feed.id, "malformed");
+            return [];
+          }
           return [
             {
               id: presetId,
@@ -132,23 +158,28 @@ function stationsOf(body: Buffer, out: ParseOutput): Station[] {
 
 /**
  * Each station's details by station id. A detail answer that cannot be read
- * is counted as rejected and its station keeps the list's data: the details
- * are fetched one by one, and one bad answer must not cost the others.
+ * is skipped as malformed and its station keeps the list's data: the details
+ * are fetched one by one, and one bad answer must not cost the others. A
+ * preset of the details without an id is skipped too, its view keeping the
+ * list's data.
  */
-function detailsOf(bodies: readonly Buffer[], out: ParseOutput): Map<string, StationDetails> {
+function detailsOf(
+  feed: CamerasCatalogFeed,
+  bodies: readonly Buffer[],
+): Map<string, StationDetails> {
   const details = new Map<string, StationDetails>();
   for (const body of bodies) {
     let doc: unknown;
     try {
       doc = JSON.parse(body.toString("utf8"));
     } catch {
-      out.rejected = (out.rejected ?? 0) + 1;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     const props = isRecord(doc) ? doc["properties"] : undefined;
     const id = isRecord(props) ? textOf(props["id"]) : undefined;
     if (!isRecord(props) || id === undefined) {
-      out.rejected = (out.rejected ?? 0) + 1;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     const names = isRecord(props["names"]) ? props["names"] : {};
@@ -167,11 +198,13 @@ function detailsOf(bodies: readonly Buffer[], out: ParseOutput): Map<string, Sta
       ...(purpose === undefined ? {} : { purpose }),
       presets: new Map(
         listOf(props["presets"]).flatMap((preset) => {
-          if (!isRecord(preset)) return [];
-          const presetId = textOf(preset["id"]);
-          if (presetId === undefined) return [];
-          const name = textOf(preset["presentationName"]);
-          const direction = textOf(preset["direction"]);
+          const presetId = isRecord(preset) ? textOf(preset["id"]) : undefined;
+          if (presetId === undefined) {
+            recordSkipped(feed.id, "malformed");
+            return [];
+          }
+          const name = textOf((preset as Record<string, unknown>)["presentationName"]);
+          const direction = textOf((preset as Record<string, unknown>)["direction"]);
           return [
             [
               presetId,
@@ -190,13 +223,16 @@ function detailsOf(bodies: readonly Buffer[], out: ParseOutput): Map<string, Sta
 
 /**
  * Each preset's latest image time, from the `status` data document. A
- * malformed document fails the read, unless `rejected` is given: the daily
- * full parse still has its stations and presets to write, so there it is
- * counted as rejected and the presets are read without image times.
+ * malformed document fails the read, unless `lenient`: the daily full parse
+ * still has its stations and presets to write, so there it is skipped as
+ * malformed and the presets are read without image times. A preset entry
+ * without an id, or whose image time cannot be read, is skipped as malformed;
+ * one with no image time yet is not.
  */
 function imageTimesOf(
+  feed: CamerasCatalogFeed,
   bodies: readonly Buffer[],
-  rejected?: Pick<ParseOutput, "rejected">,
+  lenient = false,
 ): Map<string, string> {
   const times = new Map<string, string>();
   for (const body of bodies) {
@@ -207,18 +243,24 @@ function imageTimesOf(
         throw new Error("the weather camera data document carries no stations");
       }
     } catch (error) {
-      if (rejected === undefined) throw error;
-      rejected.rejected = (rejected.rejected ?? 0) + 1;
+      if (!lenient) throw error;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     for (const station of doc["stations"]) {
       for (const preset of listOf(isRecord(station) ? station["presets"] : undefined)) {
-        if (!isRecord(preset)) continue;
-        const id = textOf(preset["id"]);
-        const at = textOf(preset["measuredTime"]);
-        if (id !== undefined && at !== undefined && Number.isFinite(Date.parse(at))) {
-          times.set(id, at);
+        const id = isRecord(preset) ? textOf(preset["id"]) : undefined;
+        if (id === undefined) {
+          recordSkipped(feed.id, "malformed");
+          continue;
         }
+        const at = textOf((preset as Record<string, unknown>)["measuredTime"]);
+        if (at === undefined) continue;
+        if (!Number.isFinite(Date.parse(at))) {
+          recordSkipped(feed.id, "malformed");
+          continue;
+        }
+        times.set(id, at);
       }
     }
   }
@@ -299,16 +341,32 @@ export function parseDigitraffic(
   const sites = payloads["sites"] ?? [];
   if (sites.length === 0) return out;
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
-  const details = detailsOf(payloads["details"] ?? [], out);
+  const details = detailsOf(feed, payloads["details"] ?? []);
   const index = new Map<string, PresetSubject[]>();
-  for (const station of sites.flatMap((body) => stationsOf(body, out))) {
+  for (const station of sites.flatMap((body) => stationsOf(feed, body))) {
     const detail = details.get(station.id);
+    if (
+      station.collectionStatus !== undefined &&
+      !COLLECTION_STATUSES.has(station.collectionStatus)
+    ) {
+      recordSkipped(feed.id, "unknown_value");
+    }
+    if (detail?.purpose !== undefined && PURPOSES[detail.purpose] === undefined) {
+      recordSkipped(feed.id, "unknown_value");
+    }
     const stationOffline =
       (station.collectionStatus?.startsWith("REMOVED") ?? false) ||
       FAULT_STATES.has(station.state ?? "");
     const views: ViewInput[] = station.presets.map((preset) => {
       const own = detail?.presets.get(preset.id);
       const direction = DIRECTIONS[own?.direction ?? ""];
+      if (
+        own?.direction !== undefined &&
+        direction === undefined &&
+        !NO_DIRECTION.has(own.direction)
+      ) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       return {
         key: preset.id,
         ...(own?.name === undefined ? {} : { name: [{ lang: "fi", text: own.name }] }),
@@ -348,7 +406,7 @@ export function parseDigitraffic(
     }
   }
   out.observations.push(
-    ...readingsOf(feed, dc, index, imageTimesOf(payloads["status"] ?? [], out)),
+    ...readingsOf(feed, dc, index, imageTimesOf(feed, payloads["status"] ?? [], true)),
   );
   out.statusIndex = index;
   return out;
@@ -363,6 +421,6 @@ export function parseDigitrafficStatus(
 ): StatusOutput {
   const out = { rejected: 0 };
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
-  const observations = readingsOf(feed, dc, index, imageTimesOf(payloads["status"] ?? []));
+  const observations = readingsOf(feed, dc, index, imageTimesOf(feed, payloads["status"] ?? []));
   return { observations, rejected: out.rejected };
 }

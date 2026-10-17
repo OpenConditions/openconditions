@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -33,6 +34,8 @@ const parse = () =>
   );
 
 describe("cars-cctv", () => {
+  beforeEach(() => __resetSkips());
+
   test("reads each camera with its one view, still and HLS stream", () => {
     const out = parse();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
@@ -69,5 +72,19 @@ describe("cars-cctv", () => {
 
   test("leaves out a camera whose still is off the image hosts and which streams nothing", () => {
     expect(parse().rejected).toBe(1);
+  });
+
+  test("an item without a device id is malformed, one without a position has no geometry", () => {
+    const xml = Buffer.from(
+      "<cctvInventories><cctvInventory><inventory><inventory-item><device-name>No id</device-name></inventory-item><inventory-item><device-id>7</device-id><video-url>https://example.org/7.m3u8</video-url></inventory-item></inventory></cctvInventory></cctvInventories>",
+    );
+    const out = camerasDomain.formats["cars-cctv"]!.parse(
+      nyFeed(),
+      { main: [xml] },
+      parseContext(FETCHED),
+    );
+    expect(out.features).toEqual([]);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(nyFeed().id)).toEqual({ malformed: 1, no_geometry: 1 });
   });
 });

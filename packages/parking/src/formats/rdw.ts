@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingSiteType } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
@@ -76,12 +77,21 @@ function rows<T>(body: Buffer, role: string): T[] {
   return doc as T[];
 }
 
-function pointOf(area: RdwArea): [number, number] | undefined {
-  const lat = Number.parseFloat(text(area.location?.latitude) ?? "");
-  const lon = Number.parseFloat(text(area.location?.longitude) ?? "");
-  if (!Number.isFinite(lat) || !Number.isFinite(lon) || (lat === 0 && lon === 0)) return undefined;
-  return [lon, lat];
+/**
+ * An area's point, or why it has none: `no_geometry` without a coordinate
+ * or at 0,0, `malformed` with a coordinate that is no number.
+ */
+function pointOf(area: RdwArea): [number, number] | "no_geometry" | "malformed" {
+  const latText = text(area.location?.latitude);
+  const lonText = text(area.location?.longitude);
+  if (latText === undefined || lonText === undefined) return "no_geometry";
+  const lat = Number.parseFloat(latText);
+  const lon = Number.parseFloat(lonText);
+  if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "malformed";
+  return lat === 0 && lon === 0 ? "no_geometry" : [lon, lat];
 }
+
+const isRow = (row: unknown): boolean => typeof row === "object" && row !== null;
 
 /**
  * The specification's value wins over the area dataset's; the area
@@ -128,6 +138,9 @@ function siteInput(
  * points. An area is a site, joined to its specification on
  * `areamanagerid/areaid`; the first area of an id wins, so a garage that is
  * also a P+R area stays one site. No readings: the datasets are static.
+ * A row without its id, or an area without a point, is counted as skipped;
+ * an area's usage it does not know is an unknown value, the site published
+ * as a plain off-street one.
  */
 export function parseRdw(
   feed: ParkingCatalogFeed,
@@ -138,26 +151,33 @@ export function parseRdw(
   const specs = new Map<string, RdwSpecs>();
   for (const body of payloads["specs"] ?? []) {
     for (const row of rows<RdwSpecs>(body, "specs")) {
-      const key = keyOf(row);
-      if (key !== undefined && !specs.has(key)) specs.set(key, row);
+      const key = isRow(row) ? keyOf(row) : undefined;
+      if (key === undefined) recordSkipped(feed.id, "malformed");
+      else if (!specs.has(key)) specs.set(key, row);
     }
   }
   const seen = new Set<string>();
-  let rejected = 0;
   for (const body of payloads["areas"] ?? []) {
     for (const area of rows<RdwArea>(body, "areas")) {
-      const stationId = keyOf(area);
+      const stationId = isRow(area) ? keyOf(area) : undefined;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       const point = pointOf(area);
-      if (stationId === undefined || point === undefined) {
-        rejected++;
+      if (!Array.isArray(point)) {
+        recordSkipped(feed.id, point);
         continue;
       }
       if (seen.has(stationId)) continue;
       seen.add(stationId);
+      const usage = text(area.usageid);
+      if (usage !== undefined && USAGES[usage] === undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       const input = siteInput(area, specs.get(stationId), stationId, point);
       out.features.push(siteDraft(feed, input, ctx.fetchedAt));
     }
   }
-  out.rejected = rejected;
   return out;
 }

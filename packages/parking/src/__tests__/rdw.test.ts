@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseRdw } from "../formats/rdw.js";
 import { fixture, parseContext, rdwFeed } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -126,5 +126,45 @@ describe("rdw", () => {
     ]);
     expect(site(out, "114/114_NOORD")?.["details"]).not.toHaveProperty("heightLimit");
     expect(areas(out, "153/010106")).toEqual([["car:any", 335]]);
+  });
+});
+
+describe("rdw skips", () => {
+  beforeEach(() => __resetSkips());
+
+  const area = (areaid: string, location: unknown, usageid = "GARAGEP") => ({
+    areamanagerid: "100",
+    areaid,
+    areadesc: `Area ${areaid}`,
+    location,
+    usageid,
+  });
+
+  test("RDW: an area without a point has no geometry; one without an id or a number is malformed", () => {
+    const out = parse(
+      [json([{ areamanagerid: "100" }])],
+      [
+        json([
+          area("A", undefined),
+          area("B", { latitude: "0", longitude: "0" }),
+          area("C", { latitude: "north", longitude: "4.89" }),
+          { areadesc: "no id", location: { latitude: "52.3", longitude: "4.89" } },
+        ]),
+      ],
+    );
+    expect(out.features).toEqual([]);
+    // The specification without its id is malformed too.
+    expect(drainSkipped(rdwFeed().id)).toEqual({ no_geometry: 2, malformed: 3 });
+  });
+
+  test("RDW: a usage it does not know is an unknown value, the site published off-street", () => {
+    const out = parse([], [json([area("D", { latitude: "52.3", longitude: "4.89" }, "KISSRIDE")])]);
+    expect(site(out, "100/D")).toMatchObject({ type: "off_street" });
+    expect(drainSkipped(rdwFeed().id)).toEqual({ unknown_value: 1 });
+  });
+
+  test("RDW: the fixtures skip nothing", () => {
+    fixtures();
+    expect(drainSkipped(rdwFeed().id)).toEqual({});
   });
 });

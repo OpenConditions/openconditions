@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -36,6 +42,8 @@ const value = (r: RecordDraft | undefined) =>
   (r?.["result"] as { value: Record<string, unknown> } | undefined)?.value;
 
 describe("hk-td", () => {
+  beforeEach(() => __resetSkips());
+
   test("a camera is named in English and Traditional Chinese, with its one still", () => {
     const out = parse({
       main: [fixture("hk-td-cameras-en.xml")],
@@ -88,5 +96,15 @@ describe("hk-td", () => {
       names: [fixture("hk-td-cameras-tc.xml")],
     });
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
+  test("an image without a key is malformed, one without a position has no geometry", () => {
+    const xml = Buffer.from(
+      "<image-list><image><description>No key</description><latitude>22.3</latitude><longitude>114.1</longitude></image><image><key>K1</key></image></image-list>",
+    );
+    const out = parse({ main: [xml] });
+    expect(out.features).toEqual([]);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(hkFeed().id)).toEqual({ malformed: 1, no_geometry: 1 });
   });
 });

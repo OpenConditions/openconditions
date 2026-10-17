@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -62,6 +67,8 @@ const viewDetails = (draft: RecordDraft | undefined) =>
   ((draft?.["components"] ?? []) as { details: Record<string, unknown> }[])[0]?.details;
 
 describe("tdx", () => {
+  beforeEach(() => __resetSkips());
+
   test("a freeway camera has only its MJPEG stream", () => {
     const out = parse();
     expect(out.features).toHaveLength(5);
@@ -118,5 +125,17 @@ describe("tdx", () => {
   test("every camera and reading seals", () => {
     const out = parse();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
+  test("a road direction other than a compass point or A is an unknown value", () => {
+    const doc = JSON.parse(fixture("tw-tdx-cctv-freeway.json").toString("utf8"));
+    doc.CCTVs[0].RoadDirection = "X";
+    const out = camerasDomain.formats["tdx"]!.parse(
+      tdxFeed(),
+      { main: [Buffer.from(JSON.stringify(doc))] },
+      parseContext(FETCHED, 86400),
+    );
+    expect(out.features).toHaveLength(doc.CCTVs.length);
+    expect(drainSkipped(tdxFeed().id)).toEqual({ unknown_value: 1 });
   });
 });

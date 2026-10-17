@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -56,6 +61,8 @@ const viewDetails = (draft: RecordDraft | undefined) =>
 const IMAGES = "https://api.trafikinfo.trafikverket.se/v2/Images/data/road.infrastructure.camera";
 
 describe("trafikverket", () => {
+  beforeEach(() => __resetSkips());
+
   test("a numeric Direction is the view's bearing, and PhotoTime is the image's time", () => {
     const out = parse();
     expect(out.features).toHaveLength(3);
@@ -143,5 +150,17 @@ describe("trafikverket", () => {
   test("every camera and reading seals", () => {
     const out = parse();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
+  test("a camera without an id or a readable point is malformed, one without a position has no geometry", () => {
+    const doc = JSON.parse(fixture("se-trafikverket-cameras.json").toString("utf8"));
+    const cameras = doc.RESPONSE.RESULT[0].Camera;
+    delete cameras[0].Id;
+    cameras[1].Geometry = { WGS84: "POINT (abc def)" };
+    delete cameras[2].Geometry;
+    const out = parse(Buffer.from(JSON.stringify(doc)));
+    expect(out.features).toEqual([]);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(trafikverketFeed().id)).toEqual({ malformed: 2, no_geometry: 1 });
   });
 });

@@ -3,20 +3,31 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { COMPASS_POINTS, type DirectionRef } from "@openconditions/model";
 import { cameraDraft, type DraftContext, imageReading, imageRedistributionOf } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, textOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
 
 /** TDX's road names and descriptions are in Traditional Chinese. */
 const LANG = "zh-Hant";
 
 const COMPASS = new Set<string>(COMPASS_POINTS);
 
-/** `RoadDirection` is the road's compass direction at the camera; `A` (all) gives none. */
-function directionOf(value: string | undefined): DirectionRef | undefined {
-  if (value === undefined || !COMPASS.has(value)) return undefined;
+/**
+ * `RoadDirection` is the road's compass direction at the camera; `A` (all)
+ * gives none, and any other value is skipped as an unknown one.
+ */
+function directionOf(
+  feed: CamerasCatalogFeed,
+  value: string | undefined,
+): DirectionRef | undefined {
+  if (value === undefined || value === "A") return undefined;
+  if (!COMPASS.has(value)) {
+    recordSkipped(feed.id, "unknown_value");
+    return undefined;
+  }
   return { value: "unknown", basis: "compass", compass: value as (typeof COMPASS_POINTS)[number] };
 }
 
@@ -46,8 +57,12 @@ export function parseTdxCameras(
       const cctv = isRecord(record) ? record : {};
       const cameraId = textOf(cctv["CCTVID"]);
       const point = lonLat(cctv["PositionLon"], cctv["PositionLat"]);
-      if (cameraId === undefined || point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+      if (cameraId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, positionSkip(cctv["PositionLon"], cctv["PositionLat"]));
         continue;
       }
       const roadName = textOf(cctv["RoadName"]);
@@ -55,7 +70,7 @@ export function parseTdxCameras(
       const name =
         textOf(cctv["SurveillanceDescription"]) ??
         ([roadName, mile].filter((part) => part !== undefined).join(" ") || undefined);
-      const direction = directionOf(textOf(cctv["RoadDirection"]));
+      const direction = directionOf(feed, textOf(cctv["RoadDirection"]));
       const stream = textOf(cctv["VideoStreamURL"]);
       const still = textOf(cctv["VideoImageURL"]);
       out.features.push(

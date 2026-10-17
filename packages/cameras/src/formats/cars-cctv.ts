@@ -4,6 +4,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import {
   cameraDraft,
@@ -13,7 +14,7 @@ import {
   matchesImageHost,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { clean, lonLat } from "../records.js";
+import { clean, lonLat, positionSkip } from "../records.js";
 
 const LANG = "en";
 
@@ -29,8 +30,11 @@ interface Device {
   longitude?: string;
 }
 
-/** Every `<inventory-item>` of the inventory, with the organisation whose inventory lists it. */
-function devicesOf(body: Buffer): Device[] {
+/**
+ * Every `<inventory-item>` of the inventory, with the organisation whose
+ * inventory lists it; an item without a device id is skipped as malformed.
+ */
+function devicesOf(feed: CamerasCatalogFeed, body: Buffer): Device[] {
   // The root is namespace-qualified (`cctv:cctvInventories`), its children not.
   const doc = parseXmlDocument(body, { removeNSPrefix: true });
   const root = doc["cctvInventories"];
@@ -43,9 +47,11 @@ function devicesOf(body: Buffer): Device[] {
     const list = inventory["inventory"];
     if (!isXmlObject(list)) return [];
     return xmlNodeToArray(list["inventory-item"]).flatMap((item): Device[] => {
-      if (!isXmlObject(item)) return [];
-      const id = clean(xmlText(item["device-id"]));
-      if (id === undefined) return [];
+      const id = isXmlObject(item) ? clean(xmlText(item["device-id"])) : undefined;
+      if (!isXmlObject(item) || id === undefined) {
+        recordSkipped(feed.id, "malformed");
+        return [];
+      }
       const still = xmlNodeToArray(
         isXmlObject(item["still-images"]) ? item["still-images"]["still-image"] : undefined,
       ).find(isXmlObject);
@@ -79,10 +85,12 @@ const degrees = (micro: string | undefined): number | undefined => {
  * Castle Rock CARS camera inventories (`cctv.xml`, the North American Hub's
  * CCTV schema): one camera per inventory item, with one view, its still and,
  * where the agency streams it, its HLS video. Positions are microdegrees. A
- * camera whose still lies off the feed's image hosts and that streams no
- * video shows nothing a consumer may load: it is left out and counted. The
- * images' licence is the feed's access agreement: they are only linked,
- * unless the feed says otherwise.
+ * camera without a still on the feed's image hosts that streams no video
+ * shows nothing a consumer may load: it is left out and counted as rejected,
+ * as the record breaks none of the format's rules. A camera without a
+ * position is skipped as having no geometry, or as malformed where its
+ * position cannot be read. The images' licence is the feed's access
+ * agreement: they are only linked, unless the feed says otherwise.
  */
 export function parseCarsCctv(
   feed: CamerasCatalogFeed,
@@ -93,14 +101,18 @@ export function parseCarsCctv(
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
   const hosts = feed.cameras?.imageHosts ?? [];
   for (const body of payloads["main"] ?? []) {
-    for (const device of devicesOf(body)) {
+    for (const device of devicesOf(feed, body)) {
       const point = lonLat(degrees(device.longitude), degrees(device.latitude));
       const still =
         device.stillUrl !== undefined &&
         (hosts.length === 0 || matchesImageHost(device.stillUrl, hosts))
           ? device.stillUrl
           : undefined;
-      if (point === undefined || (still === undefined && device.videoUrl === undefined)) {
+      if (point === undefined) {
+        recordSkipped(feed.id, positionSkip(device.longitude, device.latitude));
+        continue;
+      }
+      if (still === undefined && device.videoUrl === undefined) {
         out.rejected = (out.rejected ?? 0) + 1;
         continue;
       }

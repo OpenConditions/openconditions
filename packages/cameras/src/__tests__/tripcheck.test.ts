@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -44,6 +50,8 @@ const views = (out: ParseOutput, id: string) =>
   camera(out, id)?.["components"] as { key: string; kind: string }[];
 
 describe("tripcheck", () => {
+  beforeEach(() => __resetSkips());
+
   test("a camera is named, described and placed on its route", () => {
     const out = parse({ main: [fixture("us-or-tripcheck-cctv-inventory.json")] });
     expect(camera(out, "2240")).toMatchObject({
@@ -124,13 +132,15 @@ describe("tripcheck", () => {
     for (const o of out.observations) expect(value(o)).not.toHaveProperty("imageAt");
   });
 
-  test("a row without a position or a device is rejected", () => {
+  test("a row without a position or a device is skipped", () => {
     const d = doc();
     delete d["CCTVInventoryRequest"][2]["latitude"];
+    delete d["CCTVInventoryRequest"][2]["longitude"];
     delete d["CCTVInventoryRequest"][1]["device-id"];
     const out = parse({ main: [body(d)] });
     expect(out.features.map((f) => f["id"])).toEqual([`${ID}1101`]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(tripcheckFeed().id)).toEqual({ no_geometry: 1, malformed: 1 });
   });
 
   test("a bad percent escape in one image address does not fail the parse", () => {
@@ -156,7 +166,8 @@ describe("tripcheck", () => {
       const out = parse({ main: [body(d)] });
       expect(views(out, "1101")).toHaveLength(1);
       expect(readings(out, "1101")).toHaveLength(1);
-      expect(out.rejected).toBe(1);
+      expect(out.rejected ?? 0).toBe(0);
+      expect(drainSkipped(tripcheckFeed().id)).toEqual({ malformed: 1 });
     }
   });
 

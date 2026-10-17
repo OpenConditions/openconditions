@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { Quantity } from "@openconditions/model";
 import type { ParkingLayout } from "@openconditions/model-parking";
@@ -71,6 +72,26 @@ const finite = (v: unknown): v is number => typeof v === "number" && Number.isFi
 function integer(value: unknown): number | undefined {
   const t = typeof value === "number" ? String(value) : text(value);
   return t !== undefined && /^\d+$/.test(t) ? Number(t) : undefined;
+}
+
+type Placed =
+  | { stationId: string; point: [number, number] }
+  | { skip: "malformed" | "no_geometry" };
+
+/**
+ * A facility's id and point, or why it gives no site: `malformed` without an
+ * id or with a coordinate that is no number, `no_geometry` without one.
+ */
+function placed(f: BahnparkFacility): Placed {
+  if (typeof f !== "object" || f === null) return { skip: "malformed" };
+  const stationId = f.id === undefined || f.id === null ? undefined : text(String(f.id));
+  if (stationId === undefined) return { skip: "malformed" };
+  const lat = f.address?.location?.latitude;
+  const lon = f.address?.location?.longitude;
+  if (lat === undefined || lat === null || lon === undefined || lon === null) {
+    return { skip: "no_geometry" };
+  }
+  return finite(lat) && finite(lon) ? { stationId, point: [lon, lat] } : { skip: "malformed" };
 }
 
 /** The facilities of a body: a bare array, or a HAL envelope with `_embedded` as the array. */
@@ -144,7 +165,10 @@ function siteInput(f: BahnparkFacility, stationId: string, point: [number, numbe
   };
 }
 
-/** The standard prices as one rate; a duration code it does not know is left out. */
+/**
+ * The standard prices as one rate; a duration code it does not know is left
+ * out and counted as an unknown value.
+ */
 function rateOf(
   feed: ParkingCatalogFeed,
   f: BahnparkFacility,
@@ -155,6 +179,7 @@ function rateOf(
   const rows: RateRow[] = (f.tariff?.prices ?? []).flatMap((p) => {
     if (p.group?.groupName !== STANDARD || !finite(p.price)) return [];
     const row = DURATIONS[text(p.duration) ?? ""];
+    if (row === undefined) recordSkipped(feed.id, "unknown_value");
     return row === undefined ? [] : [{ amount: p.price, ...row }];
   });
   return rateDraft(feed, stationId, 1, { currency: "EUR", rows, point, fetchedAt });
@@ -164,8 +189,10 @@ function rateOf(
  * DB BahnPark (Parking Information API v2): each facility of the `main`
  * payload is a site, its standard prices one EUR `parking_rate`. P-Card,
  * long-term and reservation prices are rates for those groups. The API
- * publishes no occupancy, so there are no readings. A facility without a
- * point is rejected.
+ * publishes no occupancy, so there are no readings. A facility type or a
+ * standard price's duration code it does not know is an unknown value, the
+ * site published without it. A facility without an
+ * id or a point gives no site and is counted as skipped.
  */
 export function parseDbBahnpark(
   feed: ParkingCatalogFeed,
@@ -173,22 +200,22 @@ export function parseDbBahnpark(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     for (const f of facilitiesOf(body)) {
-      const stationId = f.id === undefined || f.id === null ? undefined : text(String(f.id));
-      const lat = f.address?.location?.latitude;
-      const lon = f.address?.location?.longitude;
-      if (stationId === undefined || !finite(lat) || !finite(lon)) {
-        rejected++;
+      const site = placed(f);
+      if ("skip" in site) {
+        recordSkipped(feed.id, site.skip);
         continue;
       }
-      const point: [number, number] = [lon, lat];
+      const { stationId, point } = site;
+      const typeName = text(f.type?.name);
+      if (typeName !== undefined && typeName !== PARK_AND_RIDE && LAYOUTS[typeName] === undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       out.features.push(siteDraft(feed, siteInput(f, stationId, point), ctx.fetchedAt));
       const rate = rateOf(feed, f, stationId, point, ctx.fetchedAt);
       if (rate !== undefined) out.offers.push(rate);
     }
   }
-  out.rejected = rejected;
   return out;
 }

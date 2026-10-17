@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { LocalizedText, RoadRef } from "@openconditions/model";
 import {
@@ -14,7 +15,7 @@ import {
   viewKey,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, textOf, urlOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, positionSkip, textOf, urlOf } from "../records.js";
 
 interface Device {
   point: [number, number];
@@ -51,7 +52,9 @@ function fileKey(url: string | undefined): string {
  * nothing of whether a camera works, and its `last-update-time` is the row's,
  * not the image's. The images are ODOT's or a partner agency's, and the
  * terms ask the republisher to credit the agency: the inventory's
- * organisation is the upstream publisher.
+ * organisation is the upstream publisher. A row without a device id, or
+ * whose image's key another image of its device already has, is skipped as
+ * malformed, one without a position as having no geometry.
  */
 export function parseTripcheck(
   feed: CamerasCatalogFeed,
@@ -73,8 +76,12 @@ export function parseTripcheck(
       const row = isRecord(record) ? record : {};
       const cameraId = textOf(row["device-id"]);
       const point = lonLat(row["longitude"], row["latitude"]);
-      if (cameraId === undefined || point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+      if (cameraId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, positionSkip(row["longitude"], row["latitude"]));
         continue;
       }
       let device = devices.get(cameraId);
@@ -101,7 +108,7 @@ export function parseTripcheck(
           ...(text === undefined ? {} : { text }),
         });
       } else if (taken.imageUrl !== imageUrl) {
-        out.rejected = (out.rejected ?? 0) + 1;
+        recordSkipped(feed.id, "malformed");
       }
     }
   }

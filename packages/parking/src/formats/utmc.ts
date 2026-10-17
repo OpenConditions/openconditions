@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingStatus } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
@@ -59,12 +60,20 @@ interface StaticSite {
   capacity?: number;
 }
 
-function staticSite(record: UtmcStatic): StaticSite | undefined {
-  const stationId = text(record.systemCodeNumber);
+/**
+ * The site of a static record, or why it gives none: `malformed` without
+ * an id or with a coordinate that is no number, `no_geometry` without a
+ * definition or a point.
+ */
+function staticSite(record: UtmcStatic): StaticSite | "malformed" | "no_geometry" {
+  const stationId =
+    typeof record === "object" && record !== null ? text(record.systemCodeNumber) : undefined;
+  if (stationId === undefined) return "malformed";
   const definition = record.definitions?.[0];
   const lat = definition?.point?.latitude;
   const lon = definition?.point?.longitude;
-  if (stationId === undefined || !finite(lat) || !finite(lon)) return undefined;
+  if (lat === undefined || lat === null || lon === undefined || lon === null) return "no_geometry";
+  if (!finite(lat) || !finite(lon)) return "malformed";
   const capacity = record.configurations?.[0]?.capacity;
   const counted = finite(capacity) && capacity > 0 ? capacity : undefined;
   const address = text(definition?.longDescription);
@@ -89,10 +98,14 @@ function readingsOf(
 ): RecordDraft[] {
   const dynamic = record.dynamics?.[0];
   if (dynamic === undefined) return [];
+  // The feed writes its offset without a colon (`+0000`).
+  const at = instantIn(TIME_ZONE, dynamic.lastUpdated);
+  if (at === undefined && text(dynamic.lastUpdated) !== undefined) {
+    recordSkipped(feed.id, "unknown_value");
+  }
   const reading = {
     stationId: site.input.stationId,
-    // The feed writes its offset without a colon (`+0000`).
-    at: instantIn(TIME_ZONE, dynamic.lastUpdated) ?? ctx.fetchedAt,
+    at: at ?? ctx.fetchedAt,
     point: site.input.point,
   };
   const out: (RecordDraft | undefined)[] = occupancyDrafts(
@@ -104,8 +117,10 @@ function readingsOf(
     },
     ctx,
   );
-  const status = STATES[text(dynamic.stateDescription)?.toUpperCase() ?? ""];
+  const state = text(dynamic.stateDescription)?.toUpperCase();
+  const status = STATES[state ?? ""];
   if (status !== undefined) out.push(statusDraft(feed, { ...reading, status }, ctx));
+  else if (state !== undefined) recordSkipped(feed.id, "unknown_value");
   return out.filter((d): d is RecordDraft => d !== undefined);
 }
 
@@ -113,8 +128,10 @@ function readingsOf(
  * UTMC car parks (NE Travel Data, Tyne and Wear): the `sites` feed gives
  * each car park, its WGS84 point and its capacity; the `status` feed its
  * occupancy and state. Free spaces are the capacity less the occupancy, at
- * least 0. A car park without a definition or a point is rejected; a
- * dynamic record of an unknown car park is dropped.
+ * least 0. A static record without an id, a definition or a point is
+ * counted as skipped, and so is a dynamic record of a car park the `sites`
+ * feed lacks: it has no site to place it. A state or time it cannot read is
+ * an unknown value, the readings published without it.
  */
 export function parseUtmc(
   feed: ParkingCatalogFeed,
@@ -123,14 +140,20 @@ export function parseUtmc(
 ): ParseOutput {
   const out = emptyParseOutput();
   const sites = new Map<string, StaticSite>();
-  let rejected = 0;
+  // Every car park the static feed names, placed or not: a skipped car
+  // park's dynamic record is not counted a second time.
+  const named = new Set<string>();
   for (const body of payloads["sites"] ?? []) {
     for (const record of records<UtmcStatic>(body, "sites")) {
       const site = staticSite(record);
-      if (site === undefined) {
-        rejected++;
+      if (typeof site === "string") {
+        const id =
+          typeof record === "object" && record !== null ? text(record.systemCodeNumber) : undefined;
+        if (id !== undefined) named.add(id);
+        recordSkipped(feed.id, site);
         continue;
       }
+      named.add(site.input.stationId);
       if (sites.has(site.input.stationId)) continue;
       sites.set(site.input.stationId, site);
       out.features.push(siteDraft(feed, site.input, ctx.fetchedAt));
@@ -138,10 +161,21 @@ export function parseUtmc(
   }
   for (const body of payloads["status"] ?? []) {
     for (const record of records<UtmcDynamic>(body, "status")) {
-      const site = sites.get(text(record.systemCodeNumber) ?? "");
+      if (typeof record !== "object" || record === null) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      // A record without dynamics holds nothing to lose.
+      if ((record.dynamics?.length ?? 0) === 0) continue;
+      const id = text(record.systemCodeNumber);
+      if (id === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const site = sites.get(id);
       if (site !== undefined) out.observations.push(...readingsOf(feed, site, record, ctx));
+      else if (!named.has(id)) recordSkipped(feed.id, "no_geometry");
     }
   }
-  out.rejected = rejected;
   return out;
 }

@@ -126,6 +126,19 @@ export function lonLat(lon: unknown, lat: unknown): [number, number] | undefined
   return [x, y];
 }
 
+const absent = (value: unknown): boolean =>
+  value === undefined || value === null || (typeof value === "string" && value.trim() === "");
+
+/**
+ * Why a record's position gave no `lonLat`: `no_geometry` when it states
+ * none (both coordinates absent, or the null island a missing position reads
+ * as), else `malformed`, a position given but broken.
+ */
+export function positionSkip(lon: unknown, lat: unknown): "no_geometry" | "malformed" {
+  if (absent(lon) && absent(lat)) return "no_geometry";
+  return numberOf(lon) === 0 && numberOf(lat) === 0 ? "no_geometry" : "malformed";
+}
+
 export const clean = (value: string | undefined): string | undefined => {
   const text = value?.trim();
   return text ? text : undefined;

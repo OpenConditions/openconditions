@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingLayout, ParkingVehicleType } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
@@ -174,21 +175,38 @@ interface Lots {
 interface Availability {
   at?: string;
   lots: Lots[];
+  /** The values left unread: lot types it does not know, an unreadable time. */
+  unknownValues: number;
 }
 
-/** The availability per car park: one entry per lot type, the first of a repeated type winning. */
-function availabilityOf(bodies: readonly Buffer[]): Map<string, Availability> {
+/**
+ * The availability per car park: one entry per lot type, the first of a
+ * repeated type winning. An entry without a car park number is counted as
+ * skipped.
+ */
+function availabilityOf(
+  feed: ParkingCatalogFeed,
+  bodies: readonly Buffer[],
+): Map<string, Availability> {
   const out = new Map<string, Availability>();
   for (const body of bodies) {
     const doc = JSON.parse(body.toString("utf8")) as { items?: { carpark_data?: unknown }[] };
     if (!Array.isArray(doc?.items)) throw new Error("hdb: availability body has no items array");
     const data = doc.items[0]?.carpark_data;
     for (const carPark of (Array.isArray(data) ? data : []) as HdbAvailability[]) {
-      const id = text(carPark.carpark_number);
-      if (id === undefined || out.has(id)) continue;
+      const id =
+        typeof carPark === "object" && carPark !== null ? text(carPark.carpark_number) : undefined;
+      if (id === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (out.has(id)) continue;
       const lots: Lots[] = [];
+      let unknownValues = 0;
       for (const info of carPark.carpark_info ?? []) {
-        const vehicleType = LOT_TYPES[text(info.lot_type) ?? ""];
+        const lotType = text(info?.lot_type);
+        const vehicleType = LOT_TYPES[lotType ?? ""];
+        if (vehicleType === undefined && lotType !== undefined) unknownValues++;
         if (vehicleType === undefined || lots.some((l) => l.vehicleType === vehicleType)) continue;
         const total = number(info.total_lots);
         const available = number(info.lots_available);
@@ -200,7 +218,8 @@ function availabilityOf(bodies: readonly Buffer[]): Map<string, Availability> {
       }
       // Singapore time; a time with an offset is taken as given.
       const at = instantIn(TIME_ZONE, carPark.update_datetime);
-      out.set(id, { ...(at === undefined ? {} : { at }), lots });
+      if (at === undefined && text(carPark.update_datetime) !== undefined) unknownValues++;
+      out.set(id, { ...(at === undefined ? {} : { at }), lots, unknownValues });
     }
   }
   return out;
@@ -214,13 +233,20 @@ function carParksOf(body: Buffer): HdbCarPark[] {
   return records as HdbCarPark[];
 }
 
-function pointOf(carPark: HdbCarPark): [number, number] | undefined {
+/**
+ * A car park's point, or why it has none: `no_geometry` without a
+ * coordinate or at 0, `malformed` with one that is no number or lies
+ * outside Singapore.
+ */
+function pointOf(carPark: HdbCarPark): [number, number] | "no_geometry" | "malformed" {
+  const absent = (v: unknown) => v === undefined || v === null || v === "" || number(v) === 0;
+  if (absent(carPark.x_coord) || absent(carPark.y_coord)) return "no_geometry";
   const x = number(carPark.x_coord);
   const y = number(carPark.y_coord);
-  if (x === undefined || y === undefined || x === 0 || y === 0) return undefined;
+  if (x === undefined || y === undefined) return "malformed";
   const { lat, lon } = svy21ToWgs84(y, x);
   if (lat < BOUNDS.minLat || lat > BOUNDS.maxLat || lon < BOUNDS.minLon || lon > BOUNDS.maxLon) {
-    return undefined;
+    return "malformed";
   }
   return [lon, lat];
 }
@@ -288,8 +314,11 @@ function readingsOf(
  * type, the lots and the free ones. Car (`C`), motorcycle (`Y`) and
  * heavy-vehicle (`H`) lots are areas with their own readings; the car lots
  * are also the site's capacity and readings. Availability is dated by its
- * `update_datetime`, Singapore time. A car park without a point in
- * Singapore is rejected.
+ * `update_datetime`, Singapore time. A car park without a number or a
+ * point in Singapore is counted as skipped, and so is the availability of a
+ * car park the table lacks: it has no site to place it. A lot type, car park
+ * type or time it cannot read is an unknown value, the site published
+ * without it.
  */
 export function parseHdb(
   feed: ParkingCatalogFeed,
@@ -297,23 +326,42 @@ export function parseHdb(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  const availability = availabilityOf(payloads["status"] ?? []);
-  let rejected = 0;
+  const availability = availabilityOf(feed, payloads["status"] ?? []);
+  // Every car park the table names, placed or not: a skipped car park's
+  // availability is not counted a second time.
+  const named = new Set<string>();
   for (const body of payloads["sites"] ?? []) {
     for (const carPark of carParksOf(body)) {
-      const stationId = text(carPark.car_park_no);
-      const point = pointOf(carPark);
-      if (stationId === undefined || point === undefined) {
-        rejected++;
+      const stationId =
+        typeof carPark === "object" && carPark !== null ? text(carPark.car_park_no) : undefined;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      named.add(stationId);
+      const point = pointOf(carPark);
+      if (!Array.isArray(point)) {
+        recordSkipped(feed.id, point);
+        continue;
+      }
+      const type = text(carPark.car_park_type);
+      if (type !== undefined && LAYOUTS[type.toUpperCase()] === undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       const live = availability.get(stationId);
+      if (live !== undefined) {
+        // Counted once, should the table repeat the car park.
+        recordSkipped(feed.id, "unknown_value", live.unknownValues);
+        live.unknownValues = 0;
+      }
       out.features.push(siteDraft(feed, siteInput(carPark, stationId, point, live), ctx.fetchedAt));
       if (live === undefined) continue;
       const reading = { stationId, at: live.at ?? ctx.fetchedAt, point };
       out.observations.push(...readingsOf(feed, reading, live, ctx));
     }
   }
-  out.rejected = rejected;
+  for (const id of availability.keys()) {
+    if (!named.has(id)) recordSkipped(feed.id, "no_geometry");
+  }
   return out;
 }

@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingLayout } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
@@ -116,22 +117,39 @@ interface Count {
 interface Counts {
   free?: Count;
   occupied?: Count;
+  /** The current measurements read, for counting those of a station with no site. */
+  measured: number;
 }
 
-/** Per station, the newest current `free` and `occupied` measurement. */
-function countsOf(bodies: readonly Buffer[], fetchedAt: string): Map<string, Counts> {
+/**
+ * Per station, the newest current `free` and `occupied` measurement. Other
+ * measurement types are not read; a measurement without a station, a time or
+ * a number is counted as skipped.
+ */
+function countsOf(
+  feed: ParkingCatalogFeed,
+  bodies: readonly Buffer[],
+  fetchedAt: string,
+): Map<string, Counts> {
   const oldest = Date.parse(fetchedAt) - MAX_AGE_MS;
   const out = new Map<string, Counts>();
   for (const body of bodies) {
     for (const m of dataOf<OdhMeasurement>(body, "status")) {
-      const scode = text(m.scode);
+      if (typeof m !== "object" || m === null) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       const kind = m.tname === "free" || m.tname === "occupied" ? m.tname : undefined;
+      if (kind === undefined) continue;
+      const scode = text(m.scode);
       const at = instantIn(TIME_ZONE, m.mvalidtime);
-      if (scode === undefined || kind === undefined || at === undefined || !finite(m.mvalue)) {
+      if (scode === undefined || at === undefined || !finite(m.mvalue)) {
+        recordSkipped(feed.id, "malformed");
         continue;
       }
       if (Date.parse(at) < oldest) continue;
-      const counts = out.get(scode) ?? {};
+      const counts = out.get(scode) ?? { measured: 0 };
+      counts.measured++;
       const held = counts[kind];
       if (held === undefined || Date.parse(at) > Date.parse(held.at)) {
         counts[kind] = { value: m.mvalue, at };
@@ -172,11 +190,26 @@ function readingsOf(
 }
 
 /**
+ * A station's WGS84 point, or why it has none: `no_geometry` without a
+ * coordinate or in another reference system, `malformed` with a coordinate
+ * that is no number.
+ */
+function pointOf(station: OdhStation): [number, number] | "no_geometry" | "malformed" {
+  const c = station.scoordinate;
+  const absent = (v: unknown) => v === undefined || v === null;
+  if (absent(c?.x) || absent(c?.y)) return "no_geometry";
+  if (!finite(c?.x) || !finite(c?.y)) return "malformed";
+  return c.srid === undefined || c.srid === 4326 ? [c.x, c.y] : "no_geometry";
+}
+
+/**
  * Open Data Hub parking stations (South Tyrol): the `sites` payload lists
  * the stations, the `status` payload their latest measurements. `free` and
  * `occupied` measurements of the last hour before the poll are readings at
  * their `mvalidtime`. A station's origin system qualifies its provider id.
- * A station without a WGS84 point is rejected.
+ * A station without an id or a WGS84 point is counted as skipped, and so
+ * are the current measurements of a station the `sites` payload lacks: they
+ * have no site to place them.
  */
 export function parseOpendatahub(
   feed: ParkingCatalogFeed,
@@ -184,21 +217,27 @@ export function parseOpendatahub(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  const counts = countsOf(payloads["status"] ?? [], ctx.fetchedAt);
+  const counts = countsOf(feed, payloads["status"] ?? [], ctx.fetchedAt);
   const seen = new Set<string>();
-  let rejected = 0;
+  // Every station the table names, placed or not: a skipped station's
+  // measurements are not counted a second time.
+  const named = new Set<string>();
   for (const body of payloads["sites"] ?? []) {
     for (const station of dataOf<OdhStation>(body, "sites")) {
-      const stationId = text(station.scode);
-      const c = station.scoordinate;
-      const wgs84 = c?.srid === undefined || c.srid === 4326;
-      if (stationId === undefined || !finite(c?.x) || !finite(c?.y) || !wgs84) {
-        rejected++;
+      const stationId =
+        typeof station === "object" && station !== null ? text(station.scode) : undefined;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      named.add(stationId);
+      const point = pointOf(station);
+      if (!Array.isArray(point)) {
+        recordSkipped(feed.id, point);
         continue;
       }
       if (seen.has(stationId)) continue;
       seen.add(stationId);
-      const point: [number, number] = [c.x, c.y];
       const input = siteInput(feed, station, stationId, point);
       out.features.push(siteDraft(feed, input, ctx.fetchedAt));
       const live = counts.get(stationId);
@@ -209,6 +248,8 @@ export function parseOpendatahub(
       }
     }
   }
-  out.rejected = rejected;
+  for (const [scode, c] of counts) {
+    if (!named.has(scode)) recordSkipped(feed.id, "no_geometry", c.measured);
+  }
   return out;
 }

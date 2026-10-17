@@ -4,37 +4,38 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { LocalizedText } from "@openconditions/model";
 import { cameraDraft, type DraftContext, imageReading, imageRedistributionOf } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { clean, lonLat } from "../records.js";
+import { clean, lonLat, positionSkip } from "../records.js";
 
 interface Image {
-  key: string;
+  /** Absent for an entry that names no camera. */
+  key?: string;
   description?: string;
   latitude?: string;
   longitude?: string;
   url?: string;
 }
 
-/** The `<image>` entries of a camera list. */
+/** The `<image>` entries of a camera list; one that is no element reads as an entry without a key. */
 function imagesOf(body: Buffer): Image[] {
   const doc = parseXmlDocument(body);
   const list = doc["image-list"];
   if (!isXmlObject(list)) throw new Error("the camera list has no image-list root");
   return xmlNodeToArray(list["image"]).flatMap((image): Image[] => {
-    if (!isXmlObject(image)) return [];
+    if (!isXmlObject(image)) return [{}];
     const field = (name: string) => clean(xmlText(image[name]));
     const key = field("key");
-    if (key === undefined) return [];
     const description = field("description");
     const latitude = field("latitude");
     const longitude = field("longitude");
     const url = field("url");
     return [
       {
-        key,
+        ...(key === undefined ? {} : { key }),
         ...(description === undefined ? {} : { description }),
         ...(latitude === undefined ? {} : { latitude }),
         ...(longitude === undefined ? {} : { longitude }),
@@ -48,6 +49,7 @@ function imagesOf(body: Buffer): Image[] {
 function nameOf(image: Image): string | undefined {
   const suffix = ` [${image.key}]`;
   const text = image.description;
+  if (image.key === undefined) return clean(text);
   return clean(text?.endsWith(suffix) ? text.slice(0, -suffix.length) : text);
 }
 
@@ -58,7 +60,9 @@ const SNAPSHOT_REFRESH_SEC = 120;
  * The Transport Department's traffic snapshot cameras: the English camera
  * list (`main`), and the same list in Traditional Chinese (`names`) for the
  * Chinese names. A camera has one view, its snapshot, which the publisher
- * renews every two minutes; the list says nothing of whether it works.
+ * renews every two minutes; the list says nothing of whether it works. An
+ * entry of the English list without a key is skipped as malformed, one
+ * without a position as having no geometry.
  */
 export function parseHkTdCameras(
   feed: CamerasCatalogFeed,
@@ -71,25 +75,30 @@ export function parseHkTdCameras(
   for (const body of payloads["names"] ?? []) {
     for (const image of imagesOf(body)) {
       const name = nameOf(image);
-      if (name !== undefined) chinese.set(image.key, name);
+      if (image.key !== undefined && name !== undefined) chinese.set(image.key, name);
     }
   }
   for (const body of payloads["main"] ?? []) {
     for (const image of imagesOf(body)) {
+      const key = image.key;
       const point = lonLat(image.longitude, image.latitude);
+      if (key === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       if (point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+        recordSkipped(feed.id, positionSkip(image.longitude, image.latitude));
         continue;
       }
       const english = nameOf(image);
-      const zh = chinese.get(image.key);
+      const zh = chinese.get(key);
       const names: LocalizedText[] = [
         ...(english === undefined ? [] : [{ lang: "en", text: english }]),
         ...(zh === undefined ? [] : [{ lang: "zh-Hant", text: zh }]),
       ];
       out.features.push(
         cameraDraft(feed, dc, {
-          cameraId: image.key,
+          cameraId: key,
           point,
           names,
           type: "traffic",
@@ -100,7 +109,7 @@ export function parseHkTdCameras(
       );
       out.observations.push(
         imageReading(feed, dc, {
-          cameraId: image.key,
+          cameraId: key,
           viewKey: "0",
           status: "unknown",
           point,

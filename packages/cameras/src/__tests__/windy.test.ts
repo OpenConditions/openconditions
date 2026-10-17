@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -51,6 +57,8 @@ const value = (r: RecordDraft | undefined) =>
   (r?.["result"] as { value: Record<string, unknown> } | undefined)?.value;
 
 describe("windy", () => {
+  beforeEach(() => __resetSkips());
+
   test("an active camera reads online with its categories' type, links and images", () => {
     const out = parse({ main: [fixture("windy-webcams.json")] });
     expect(out.features.map((f) => f["id"])).toEqual([
@@ -173,12 +181,22 @@ describe("windy", () => {
     expect(out.rejected).toBe(1);
   });
 
-  test("a camera without a position is rejected", () => {
+  test("a camera without a position is skipped", () => {
     const doc = page();
     delete doc.webcams[0].location;
     const out = parse({ main: [body(doc)] });
     expect(out.features).toHaveLength(2);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(windyFeed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  test("a status Windy does not document is an unknown type; an unknown category an unknown value", () => {
+    const doc = page();
+    doc.webcams[0].status = "archived";
+    doc.webcams[1].categories = [{ id: "volcano", name: "Volcano" }];
+    const out = parse({ main: [body(doc)] });
+    expect(out.features).toHaveLength(2);
+    expect(drainSkipped(windyFeed().id)).toEqual({ unknown_type: 1, unknown_value: 1 });
   });
 
   test("a page that is no webcam list fails the parse", () => {

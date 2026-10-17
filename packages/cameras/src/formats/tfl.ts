@@ -3,11 +3,12 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { COMPASS_POINTS, DirectionRef } from "@openconditions/model";
 import { cameraDraft, type DraftContext, imageReading, imageRedistributionOf } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, textOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
 
 /** TfL says its images refresh every three minutes. */
 const REFRESH_SEC = 180;
@@ -69,11 +70,14 @@ function directionOf(view: string): DirectionRef {
  * `additionalProperties` hold, by key, its availability, still, clip and
  * view. The list is cached at the CDN for up to a day, so an available
  * camera's state is unknown: only an explicit `available=false` reads
- * offline. A property's `modified` is when TfL last edited the record (days
+ * offline, and an availability other than `true` or `false` is skipped as
+ * an unknown value. A property's `modified` is when TfL last edited the record (days
  * or weeks back), not when the still was taken, so no reading carries an
  * image time. A camera has one view. The view text hints at presets of a movable
  * camera, but it is free text, so no camera is flagged ptz from it. A camera
- * listed again, in the same or a later payload, is the first one's.
+ * listed again, in the same or a later payload, is the first one's. A place
+ * without an id is skipped as malformed, one without a position as having
+ * no geometry.
  */
 export function parseTfl(
   feed: CamerasCatalogFeed,
@@ -90,8 +94,12 @@ export function parseTfl(
       const place = isRecord(record) ? record : {};
       const cameraId = textOf(place["id"]);
       const point = lonLat(place["lon"], place["lat"]);
-      if (cameraId === undefined || point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+      if (cameraId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, positionSkip(place["lon"], place["lat"]));
         continue;
       }
       if (seen.has(cameraId)) continue;
@@ -99,7 +107,10 @@ export function parseTfl(
       const properties = propertiesOf(place);
       const name = textOf(place["commonName"]);
       const view = properties.get("view")?.value;
-      const available = properties.get("available");
+      const available = properties.get("available")?.value.toLowerCase();
+      if (available !== undefined && available !== "true" && available !== "false") {
+        recordSkipped(feed.id, "unknown_value");
+      }
       const image = properties.get("imageUrl");
       const clip = properties.get("videoUrl");
       out.features.push(
@@ -121,7 +132,7 @@ export function parseTfl(
         imageReading(feed, dc, {
           cameraId,
           viewKey: "0",
-          status: available?.value.toLowerCase() === "false" ? "offline" : "unknown",
+          status: available === "false" ? "offline" : "unknown",
           point,
           ...(image === undefined ? {} : { imageUrl: image.value }),
           ...(clip === undefined ? {} : { streamUrl: clip.value, streamType: "mp4" as const }),

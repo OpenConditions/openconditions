@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { DirectionRef } from "@openconditions/model";
 import {
@@ -14,7 +15,7 @@ import {
   type ViewInput,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, numberOf, textOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
 
 /** The IBI 511 systems OpenConditions reads publish in English. */
 const LANG = "en";
@@ -37,12 +38,19 @@ const COMPASS: Readonly<Record<string, DirectionRef>> = Object.fromEntries(
   ),
 );
 const WORDS = new Set(["Inbound", "Outbound"]);
+const NO_DIRECTION = new Set(["Both Directions", "All Directions", "None", "Unknown"]);
 
-function directionOf(value: string | undefined): DirectionRef | undefined {
-  if (value === undefined) return undefined;
+/** A camera's direction; a word that is none of the known ones is skipped as an unknown value. */
+function directionOf(
+  feed: CamerasCatalogFeed,
+  value: string | undefined,
+): DirectionRef | undefined {
+  if (value === undefined || NO_DIRECTION.has(value)) return undefined;
   const compass = COMPASS[value];
   if (compass !== undefined) return compass;
-  return WORDS.has(value) ? { value: "unknown", basis: "text", text: value } : undefined;
+  if (WORDS.has(value)) return { value: "unknown", basis: "text", text: value };
+  recordSkipped(feed.id, "unknown_value");
+  return undefined;
 }
 
 /** `Enabled` says a view is configured, not that its image is current; `Disabled` that it delivers none. */
@@ -60,23 +68,34 @@ interface View {
   description?: string;
 }
 
-/** A camera's views by `SortId`, those without one after, in the publisher's order. */
-function viewsOf(value: unknown): View[] {
+/**
+ * A camera's views by `SortId`, those without one after, in the publisher's
+ * order. A view without an id is skipped as malformed; one whose status is
+ * none of the known ones is kept with an unknown status, and the status is
+ * skipped as an unknown value.
+ */
+function viewsOf(feed: CamerasCatalogFeed, value: unknown): View[] {
   const views = (Array.isArray(value) ? value : []).flatMap((view): View[] => {
-    if (!isRecord(view)) return [];
-    const key = textOf(view["Id"]);
-    if (key === undefined) return [];
+    const key = isRecord(view) ? textOf(view["Id"]) : undefined;
+    if (!isRecord(view) || key === undefined) {
+      recordSkipped(feed.id, "malformed");
+      return [];
+    }
     const sortId = numberOf(view["SortId"]);
     const url = textOf(view["Url"]);
     const videoUrl = textOf(view["VideoUrl"]);
     const description = textOf(view["Description"]);
+    const status = textOf(view["Status"]);
+    if (status !== undefined && VIEW_STATUSES[status] === undefined) {
+      recordSkipped(feed.id, "unknown_value");
+    }
     return [
       {
         key,
         ...(sortId === undefined ? {} : { sortId }),
         ...(url === undefined ? {} : { url }),
         ...(videoUrl === undefined ? {} : { videoUrl }),
-        status: VIEW_STATUSES[textOf(view["Status"]) ?? ""] ?? "unknown",
+        status: VIEW_STATUSES[status ?? ""] ?? "unknown",
         ...(description === undefined ? {} : { description }),
       },
     ];
@@ -115,8 +134,12 @@ export function parseIbi511(
       const camera = isRecord(record) ? record : {};
       const cameraId = textOf(camera["Id"]);
       const point = lonLat(camera["Longitude"], camera["Latitude"]);
-      if (cameraId === undefined || point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+      if (cameraId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, positionSkip(camera["Longitude"], camera["Latitude"]));
         continue;
       }
       const name = textOf(camera["Name"]);
@@ -124,9 +147,10 @@ export function parseIbi511(
       const roadway = textOf(camera["Roadway"]);
       const source = textOf(camera["Source"]);
       const sourceId = textOf(camera["SourceId"]);
-      const views = viewsOf(camera["Views"]);
+      const views = viewsOf(feed, camera["Views"]);
       // The camera's direction is a view's only where the camera has one view.
-      const direction = views.length === 1 ? directionOf(textOf(camera["Direction"])) : undefined;
+      const direction =
+        views.length === 1 ? directionOf(feed, textOf(camera["Direction"])) : undefined;
       const viewInputs: ViewInput[] = views.map((view) => ({
         key: view.key,
         ...(view.description === undefined

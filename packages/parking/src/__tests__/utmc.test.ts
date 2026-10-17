@@ -1,5 +1,5 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseUtmc } from "../formats/utmc.js";
 import { fixture, parseContext, utmcFeed } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -32,6 +32,8 @@ const dynamic = (systemCodeNumber: string, occupancy: number | null, stateDescri
 });
 
 describe("utmc", () => {
+  beforeEach(() => __resetSkips());
+
   test("UTMC: FULL is full, FAULTY is closed, occupancy above capacity clamps to 0 available", () => {
     const out = parse([fixture("utmc-static-sample.json")], [fixture("utmc-dynamic-sample.json")]);
     expect(readings(out, "CP1")).toEqual({
@@ -88,10 +90,11 @@ describe("utmc", () => {
     expect(local.observations[0]?.["phenomenonTime"]).toEqual({ instant: "2012-07-14T09:05:00Z" });
   });
 
-  test("UTMC: the static table gives the site; a record without a definition is rejected", () => {
+  test("UTMC: the static table gives the site; a record without a definition is skipped", () => {
     const out = parse([fixture("utmc-static-sample.json")], [fixture("utmc-dynamic-sample.json")]);
     expect(out.features).toHaveLength(2);
-    expect(out.rejected).toBe(1);
+    // CP3-NO-DEF has no point; CP-EMPTY holds no dynamics, so nothing of it is lost.
+    expect(drainSkipped(utmcFeed().id)).toEqual({ no_geometry: 1 });
     expect(site(out, "CP1")).toMatchObject({
       type: "off_street",
       name: [{ lang: "en", text: "Town Centre" }],
@@ -103,5 +106,49 @@ describe("utmc", () => {
     });
     // A dynamic record of no known site is dropped.
     expect(readings(out, "CP-EMPTY")).toEqual({});
+  });
+});
+
+describe("utmc skips", () => {
+  beforeEach(() => __resetSkips());
+
+  const sites = () => [fixture("utmc-static-sample.json")];
+
+  test("UTMC: a dynamic record of a car park the static feed lacks has no site", () => {
+    // CP3-NO-DEF is skipped already as a static record.
+    parse(sites(), [json([dynamic("CP9", 10, "SPACES"), dynamic("CP3-NO-DEF", 10, "SPACES")])]);
+    expect(drainSkipped(utmcFeed().id)).toEqual({ no_geometry: 2 });
+  });
+
+  test("UTMC: a state or time it cannot read is an unknown value", () => {
+    const out = parse(sites(), [
+      json([
+        dynamic("CP1", 10, "MAINTENANCE"),
+        { systemCodeNumber: "CP2", dynamics: [{ occupancy: 5, lastUpdated: "later" }] },
+      ]),
+    ]);
+    expect(readings(out, "CP1")).not.toHaveProperty("parking.status");
+    const cp2 = out.observations.find((o) =>
+      (o["subject"] as { featureId: string }).featureId.endsWith(":CP2"),
+    );
+    expect(cp2?.["phenomenonTime"]).toEqual({ instant: FETCHED });
+    expect(drainSkipped(utmcFeed().id)).toEqual({ no_geometry: 1, unknown_value: 2 });
+  });
+
+  test("UTMC: a record without an id or with a coordinate that is no number is malformed", () => {
+    const out = parse(
+      [
+        json([
+          { definitions: [{ point: { latitude: 54.9, longitude: -1.6 } }] },
+          {
+            systemCodeNumber: "CPX",
+            definitions: [{ point: { latitude: "54.9", longitude: -1.6 } }],
+          },
+        ]),
+      ],
+      [json([{ dynamics: [{ occupancy: 1 }] }])],
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(utmcFeed().id)).toEqual({ malformed: 3 });
   });
 });
