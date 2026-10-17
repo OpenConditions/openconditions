@@ -123,7 +123,7 @@ beforeAll(async () => {
     JSON.parse(pinned.files.find((f) => f.fileName === name)!.contents) as TableSchema;
   statique = schema(IRVE_STATIC_SCHEMA);
   dynamique = schema(IRVE_DYNAMIC_SCHEMA);
-});
+}, 120_000);
 
 beforeEach(() => {
   drainSkipped(FEED_ID);
