@@ -42,9 +42,8 @@ interface TaskReading {
  * The tasks of Digitraffic's list (`/api/maintenance/v1/tracking/tasks`) that
  * say something the position's vocabulary holds: ploughing with the blade
  * down, salting and sanding with the spreader on, and the publisher's own
- * `UNKNOWN`. Every other task (mowing, brushing, inspections, signs, gravel
- * roads, lighting, `OTHER`) is work the vocabulary has no activity for; its
- * code stays on the reading's extras.
+ * `UNKNOWN`. The tasks of `UNREAD_TASKS` are work the vocabulary has no
+ * activity for. Every task's code stays on the reading's extras.
  */
 const TASKS: Readonly<Record<string, TaskReading>> = {
   PLOUGHING_AND_SLUSH_REMOVAL: { activity: "plowing", plow: true },
@@ -54,6 +53,60 @@ const TASKS: Readonly<Record<string, TaskReading>> = {
   LINE_SANDING: { activity: "sanding", spreader: true },
   SPOT_SANDING: { activity: "sanding", spreader: true },
   UNKNOWN: { activity: "unknown" },
+};
+
+const WINTER =
+  "winter work that is neither ploughing the carriageway nor spreading, which the activities do not name";
+const SURFACE = "work on the road's surface or shoulders, which the activities do not name";
+const ROADSIDE = "roadside and equipment upkeep, which the activities do not name";
+const CHECK = "an inspection or a round, which the activities do not name";
+
+/**
+ * The other tasks of Digitraffic's list, each with why no activity is read
+ * from it. `GARBAGE_OLLECTION` is the publisher's spelling. A task in neither
+ * table is one the publisher added since, counted as a value not read.
+ */
+export const UNREAD_TASKS: Readonly<Record<string, string>> = {
+  TRANSFER_OF_SNOW: WINTER,
+  REMOVAL_OF_BULGE_ICE: WINTER,
+  PREVENTING_MELTING_WATER_PROBLEMS: WINTER,
+  SNOW_PLOUGHING_STICKS_AND_SNOW_FENCES: WINTER,
+  BRUSHING: SURFACE,
+  COMPACTION_BY_ROLLING: SURFACE,
+  CRACK_FILLING: SURFACE,
+  DUST_BINDING_OF_GRAVEL_ROAD_SURFACE: SURFACE,
+  DUST_BINDING_OF_PAVED_ROAD_SURFACE: SURFACE,
+  ENSURING_TRAFFIC_IN_RASPUTITSA: SURFACE,
+  FILLING_OF_GRAVEL_ROAD_SHOULDERS: SURFACE,
+  FILLING_OF_ROAD_SHOULDERS: SURFACE,
+  HEATING: SURFACE,
+  LEVELLING_GRAVEL_ROAD_SURFACE: SURFACE,
+  LEVELLING_OF_ROAD_SHOULDERS: SURFACE,
+  LEVELLING_OF_ROAD_SHOULDERS_UNDER_RAILING: SURFACE,
+  LEVELLING_OF_ROAD_SURFACE: SURFACE,
+  MIXING_OR_STABILIZATION: SURFACE,
+  PATCHING: SURFACE,
+  PAVING: SURFACE,
+  RESHAPING_GRAVEL_ROAD_SURFACE: SURFACE,
+  ROAD_MARKINGS: SURFACE,
+  SPREADING_OF_CRUSH: SURFACE,
+  BRUSH_CLEARING: ROADSIDE,
+  CLEANSING_OF_BRIDGES: ROADSIDE,
+  CLEANSING_OF_REST_AREAS: ROADSIDE,
+  CLEANSING_OF_TRAFFIC_SIGNS: ROADSIDE,
+  DITCHING: ROADSIDE,
+  GARBAGE_OLLECTION: ROADSIDE,
+  GROUP_REPLACEMENT_OF_LAMPS: ROADSIDE,
+  MAINTENANCE_OF_GUIDE_SIGNS_AND_REFLECTOR_POSTS: ROADSIDE,
+  MECHANICAL_CUT: ROADSIDE,
+  OTHER_OPERATIONS_OF_LIGHTING_CONTRACTS: ROADSIDE,
+  RENEWAL_OF_EDGE_COLUMNS: ROADSIDE,
+  SAFETY_EQUIPMENT: ROADSIDE,
+  CLIENTS_QUALITY_CONTROL: CHECK,
+  ROAD_INSPECTIONS: CHECK,
+  ROAD_STATE_CHECKING: CHECK,
+  SERVICE_ROUND: CHECK,
+  OTHER: "work the publisher does not name",
 };
 
 /** Which activity a tracking of several tasks reports: the first of these its tasks give. */
@@ -282,7 +335,8 @@ function positionReading(
  * machine (`/api/maintenance/v1/tracking/routes/latest`, the newest tracking
  * of each machine), each a `vehicle.position` reading at its location with
  * the bearing of its last observation and what its tasks say the vehicle is
- * doing.
+ * doing. A task code outside the publisher's list is kept on the extras and
+ * counted as a value not read.
  *
  * Digitraffic groups the points by machine but publishes no machine id, and
  * the tracking id it does publish lives from a few seconds to a few minutes.
@@ -340,12 +394,18 @@ export function parseDigitrafficMaintenance(
       const source = typeof props["source"] === "string" ? props["source"].trim() : "";
       const trackingId = String(id).trim();
       const trail = trailOf(routes, trackingId, at, point);
+      const tasks = tasksOf(props["tasks"]);
+      recordSkipped(
+        feed.id,
+        "unknown_value",
+        tasks.filter((t) => !Object.hasOwn(TASKS, t) && !Object.hasOwn(UNREAD_TASKS, t)).length,
+      );
       out.observations.push(
         positionReading(feed, ctx, {
           trackingId,
           at,
           point,
-          tasks: tasksOf(props["tasks"]),
+          tasks,
           ...(bearing === undefined ? {} : { bearing }),
           ...(source === "" ? {} : { source }),
           ...(trail === undefined ? {} : { trail }),
