@@ -20,8 +20,18 @@
  * Geometry per site, in priority order: an inline `locationReference`
  * `gml:posList` on a measurement, then the site table entry joined by
  * `measurementSiteReference id` (the NDW layout).
+ *
+ * What a document carries that the parser leaves unread is counted per
+ * source. A site with no geometry (none inline, and none in a site table
+ * holding its revision) is skipped as having none; a site whose every value is
+ * of a `BasicData` type the reading has no place for (travel times,
+ * headways, weather) as an unknown type; one whose only value is a traffic
+ * status no level of service reads as malformed. A kept site's values of such
+ * types, and such a status, are unknown values. A document of a DATEX model
+ * version the parser was not written for has every site skipped.
  */
 import { flattenString, stripXmlNamespace } from "@openconditions/datex2";
+import { type RecordSkipReason, recordSkipped } from "@openconditions/ingest-framework";
 import type { LineString } from "geojson";
 import { SaxesParser } from "saxes";
 import type { FlowContext, FlowSites } from "./flow-output.js";
@@ -31,6 +41,7 @@ import {
   type FlowParse,
   type FlowReading,
   laneIndex,
+  mapDatexTrafficStatus,
   mean,
   measuredReading,
   OCCUPANCY,
@@ -63,6 +74,8 @@ interface ValueState {
   periodSec?: number;
   /** The streams the index carries, whether or not their value counts this interval. */
   streams: Set<string>;
+  /** The `BasicData` type of the index, when it is one the reading has no place for. */
+  unreadType?: string;
 }
 
 /** Per-site accumulator; the surrounding subtree streams past and is discarded. */
@@ -96,6 +109,34 @@ type TextTarget =
 const num = (raw: string) => (raw.trim() === "" ? Number.NaN : Number(raw.trim()));
 
 /**
+ * The `BasicData` types whose values a site reading carries: speeds, flows,
+ * occupancy (a `TrafficConcentration`) and the traffic status.
+ */
+const READ_BASIC_DATA = new Set([
+  "TrafficSpeed",
+  "TrafficFlow",
+  "TrafficConcentration",
+  "TrafficStatus",
+]);
+
+/** DATEX model versions the parser reads: v1 element names are read as well. */
+const READ_MODEL_VERSIONS = new Set([1, 2, 3]);
+
+/** An element's `xsi:type` without its prefix, if it declares one. */
+function xsiType(attrs: Record<string, string>): string | undefined {
+  for (const [name, value] of Object.entries(attrs)) {
+    if (stripXmlNamespace(name) === "type" && name !== "type") return stripXmlNamespace(value);
+  }
+  return undefined;
+}
+
+/** A stated traffic status no level of service reads; DATEX's own `unknown` states none. */
+function unreadStatus(raw: string | undefined): boolean {
+  const t = raw?.trim();
+  return !!t && t.toLowerCase() !== "unknown" && mapDatexTrafficStatus(t) === "unknown";
+}
+
+/**
  * Creates a streaming DATEX MeasuredData parser. The returned object accepts
  * decoded XML in arbitrary chunks (which may split mid-element) and, on
  * `close()`, returns the readings. Malformed input is tolerated: a SAX error
@@ -119,6 +160,8 @@ export function createMeasuredDataParser(
   let parseError = false;
   // Did the document ever contain the DATEX publication, however few records it held.
   let sawPublication = false;
+  // A document of a model version the parser does not read has its sites counted, not read.
+  let unsupportedVersion = false;
 
   // No namespace resolution: tag names arrive verbatim (e.g. `gml:posList`) and
   // are normalised with stripXmlNamespace.
@@ -149,6 +192,13 @@ export function createMeasuredDataParser(
   parser.on("opentag", (tag) => {
     const local = stripXmlNamespace(tag.name);
     stack.push(local);
+
+    if (site == null) {
+      const declared = (tag.attributes as Record<string, string>)["modelBaseVersion"];
+      if (declared !== undefined && !READ_MODEL_VERSIONS.has(Number.parseInt(declared, 10))) {
+        unsupportedVersion = true;
+      }
+    }
 
     if (local === "siteMeasurements") {
       sawPublication = true;
@@ -181,6 +231,14 @@ export function createMeasuredDataParser(
           ordinal += 1;
           current = valueFor(String(ordinal));
           currentDepth = stack.length;
+        }
+        break;
+      }
+      case "basicData":
+      case "basicDataValue": {
+        const type = xsiType(attrs);
+        if (current != null && type !== undefined && !READ_BASIC_DATA.has(type)) {
+          current.unreadType = type;
         }
         break;
       }
@@ -355,8 +413,14 @@ export function createMeasuredDataParser(
           }
           break;
         case "siteMeasurements": {
-          const reading = siteReading(site, readings.length, src, sites);
-          if (reading) readings.push(reading);
+          const result = unsupportedVersion
+            ? ({ skipped: "unsupported_version" } as const)
+            : siteReading(site, readings.length, src, sites);
+          if (result && "skipped" in result) recordSkipped(src.id, result.skipped);
+          else if (result) {
+            readings.push(result.reading);
+            recordSkipped(src.id, "unknown_value", result.unreadValues);
+          }
           site = null;
           current = null;
           textTarget = null;
@@ -393,18 +457,24 @@ export function createMeasuredDataParser(
   };
 }
 
-/** One closed `siteMeasurements` as a site reading; null when it has nothing to say. */
+/**
+ * One closed `siteMeasurements` as a site reading with the count of values
+ * it left unread, why it was skipped, or null when it has nothing to say.
+ */
 function siteReading(
   site: SiteState,
   position: number,
   src: SourceDescriptor,
   sites: FlowSites | undefined,
-): FlowReading | null {
+): { reading: FlowReading; unreadValues: number } | { skipped: RecordSkipReason } | null {
   const siteId = site.siteId ?? `site-${position + 1}`;
   const meta = site.siteId !== undefined ? sites?.get(site.siteId) : undefined;
   // V3 keeps the table version at "latest" and revises individual sites. An
-  // index can change meaning between revisions; never borrow stale metadata.
-  if (meta?.version !== undefined && meta.version !== site.siteVersion) return null;
+  // index can change meaning between revisions; never borrow stale metadata,
+  // so a site the table holds in another revision has no placement.
+  if (meta?.version !== undefined && meta.version !== site.siteVersion) {
+    return { skipped: "no_geometry" };
+  }
   const specOf = (key: string, property: string): ChannelSpec => {
     const declared = meta?.channels?.get(key);
     const lane = laneIndex(declared?.lane, src, meta?.laneCount);
@@ -480,8 +550,11 @@ function siteReading(
       ? ({ type: "LineString", coordinates: site.posListCoords } satisfies LineString)
       : meta?.geometry;
   const at = site.timeDefault ?? site.obsTime;
+  if (!geometry) return { skipped: "no_geometry" };
+  const unreadTypes = [...site.values.values()].filter((v) => v.unreadType !== undefined).length;
+  const statusUnread = unreadStatus(site.trafficStatus);
 
-  return measuredReading({
+  const reading = measuredReading({
     site: siteId,
     geometry,
     ...(at !== undefined ? { at } : {}),
@@ -499,6 +572,9 @@ function siteReading(
     ...(meta?.laneCount !== undefined ? { laneCount: meta.laneCount } : {}),
     ...(meta?.equipment !== undefined ? { equipment: meta.equipment } : {}),
   });
+  if (reading) return { reading, unreadValues: unreadTypes + (statusUnread ? 1 : 0) };
+  if (unreadTypes > 0) return { skipped: "unknown_type" };
+  return statusUnread ? { skipped: "malformed" } : null;
 }
 
 /**

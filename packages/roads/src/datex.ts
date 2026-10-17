@@ -26,6 +26,8 @@ import {
 import { isPlausibleWgs84, recordSkipped, reprojectorFor } from "@openconditions/ingest-framework";
 import type { Issue, Schedule, Text, Validity } from "@openconditions/model";
 import {
+  DATEX2_V2,
+  DATEX2_V3,
   datexClassification,
   datexDiscriminator,
   parseRestrictionInstant,
@@ -100,6 +102,90 @@ function datexLifecycle(validity: XmlObject): DatexLifecycle {
   if (raw === "suspended") return { status: "inactive", validityStatus: "suspended", statusIssue };
   if (raw === "planned") return { status: "active", validityStatus: "planned", statusIssue };
   return { status: "active", validityStatus: "unknown", statusIssue };
+}
+
+/**
+ * The `ValidityStatusEnum` values of v2.3 and v3.7 that `datexLifecycle`
+ * reads, and the tokens outside the enumeration that publishers end a record
+ * with. `_extended`, whose meaning lives in an extension schema, is not read.
+ */
+const READ_VALIDITY_STATUSES = new Set([
+  "active",
+  "suspended",
+  "definedByValidityTimeSpec",
+  "planned",
+  "cancelled",
+  "archived",
+  "inactive",
+]);
+
+/** The non-placeholder values of a vocabulary list of either DATEX version. */
+const standardValues = (...lists: readonly (readonly string[])[]): ReadonlySet<string> =>
+  new Set(lists.flat().filter((v) => v !== "_extended"));
+
+const RECORD_CLASSES = standardValues(DATEX2_V3.recordClasses, DATEX2_V2.recordClasses);
+const CAUSE_TYPES = standardValues(DATEX2_V3.causeTypes, DATEX2_V2.causeTypes);
+const SEVERITIES = standardValues(DATEX2_V3.severities, DATEX2_V2.severities);
+const PROBABILITIES = standardValues(DATEX2_V3.probabilities, DATEX2_V2.probabilities);
+
+type DiscriminatorTable = Readonly<Record<string, { values: readonly string[] }>>;
+const DISCRIMINATOR_VALUES = new Map<string, ReadonlySet<string>>(
+  [
+    ...new Set([
+      ...Object.keys(DATEX2_V3.discriminators),
+      ...Object.keys(DATEX2_V2.discriminators),
+    ]),
+  ].map((cls) => [
+    cls,
+    standardValues(
+      (DATEX2_V3.discriminators as DiscriminatorTable)[cls]?.values ?? [],
+      (DATEX2_V2.discriminators as DiscriminatorTable)[cls]?.values ?? [],
+    ),
+  ]),
+);
+
+/** DATEX model versions the situation parser reads. */
+const READ_MODEL_VERSIONS = new Set([2, 3]);
+
+/**
+ * The DATEX model version a document declares: its `modelBaseVersion`, else
+ * the major version of the DATEX namespace it binds (v1's
+ * `http://datex2.eu/schema/1_0/1_0`); undefined when it declares neither.
+ */
+function datexModelVersion(input: string | Buffer): number | undefined {
+  const head =
+    typeof input === "string" ? input.slice(0, 8192) : input.subarray(0, 8192).toString("utf8");
+  const declared = /\bmodelBaseVersion\s*=\s*["']\s*(\d+)/.exec(head)?.[1];
+  if (declared !== undefined) return Number(declared);
+  const namespace = /["']http:\/\/datex2\.eu\/schema\/(\d+)[/_]/.exec(head)?.[1];
+  return namespace === undefined ? undefined : Number(namespace);
+}
+
+/**
+ * How many enumerated values a kept record carries that the parser cannot
+ * read: a discriminator, cause type, severity, probability or validity status
+ * outside both versions' enumerations, or the `_extended` placeholder, whose
+ * meaning lives in an extension schema the parser does not read. Each is
+ * published without; counting them keeps a renamed or national value from
+ * reading as a quiet feed.
+ */
+function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): number {
+  let unread = 0;
+  const check = (value: string | undefined, known: ReadonlySet<string>) => {
+    if (value !== undefined && !known.has(value)) unread++;
+  };
+  const discriminator = datexDiscriminator(recordClass);
+  const known = DISCRIMINATOR_VALUES.get(recordClass);
+  if (discriminator !== undefined && known !== undefined) {
+    for (const value of xmlNodeToArray(rec[discriminator])) check(text(value), known);
+  }
+  for (const cause of getXmlChildren(rec, "cause")) {
+    check(getXmlChildText(cause, "causeType"), CAUSE_TYPES);
+  }
+  check(severity.trim() || undefined, SEVERITIES);
+  check(getXmlChildText(rec, "probabilityOfOccurrence"), PROBABILITIES);
+  check(text(getXmlChild(rec, "validity")?.["validityStatus"]), READ_VALIDITY_STATUSES);
+  return unread;
 }
 
 /**
@@ -756,16 +842,38 @@ function plainName(name: string | undefined): Text | undefined {
   return trimmed ? [{ lang: UNDETERMINED, text: trimmed }] : undefined;
 }
 
+/**
+ * The state of the road a `RoadOrCarriagewayOrLaneManagementTypeEnum` value
+ * declares, by the enumeration's own definitions. Values that manage lanes
+ * without closing or opening the road (`narrowLanes`, `hardShoulderRunning…`,
+ * `keepToTheLeft`) declare none. `contraflow` ("two-way traffic is temporarily
+ * sharing a single carriageway") is not alternating single-lane working; the
+ * record is typed a contraflow instead.
+ */
+const ROAD_STATES: Readonly<Record<string, RoadEvent["roadState"]>> = {
+  // "The road is closed to vehicles with the specified characteristics or all."
+  roadClosed: "closed",
+  // "Carriageway closures are in operation at the specified location."
+  carriagewayClosures: "closed",
+  // Closed for the duration of the winter, every night, or intermittently for
+  // short durations; a schedule the record carries narrows when.
+  closedPermanentlyForTheWinter: "closed",
+  overnightClosures: "closed",
+  intermittentShortTermClosures: "closed",
+  // "Traffic is being directed back down the opposite carriageway."
+  turnAroundInOperation: "closed",
+  laneClosures: "some_lanes_closed",
+  // "Do not use the specified lane(s) or carriageway(s)."
+  doNotUseSpecifiedLanesOrCarriageways: "some_lanes_closed",
+  // "Traffic is being controlled to move in alternate single lines."
+  singleAlternateLineTraffic: "single_lane_alternating",
+  // "The road has been cleared of earlier reported problems."
+  roadCleared: "open",
+};
+
 function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
-  // A leaf-text enum (e.g. "carriagewayClosures", "laneClosures", "contraflow").
-  const raw = getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType")?.toLowerCase();
-  if (!raw) return undefined;
-  if (raw.includes("contraflow") || raw.includes("alternat")) return "single_lane_alternating";
-  if (raw.includes("carriageway") && raw.includes("clos")) return "closed";
-  if (raw.includes("roadclos")) return "closed";
-  if (raw.includes("lane") && raw.includes("clos")) return "some_lanes_closed";
-  if (raw.includes("clos")) return "closed";
-  return undefined;
+  const raw = getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType");
+  return raw === undefined ? undefined : ROAD_STATES[raw];
 }
 
 function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
@@ -799,20 +907,26 @@ function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
  * own typed discriminator is used — each DATEX situationRecord subclass carries
  * its own (accidentType, obstructionType, generalNetworkManagementType for
  * movable-bridge openings, abnormalTrafficType for congestion detail,
- * speedManagementType, …). Without this, those records fell back to the generic
+ * speedManagementType, …), then the discriminator the record class declares in
+ * either DATEX version. Without this, those records fell back to the generic
  * record class name and lost their specific kind.
  */
-function subtypeOf(rec: XmlObject): string | undefined {
-  return (
-    getXmlChildText(getXmlChild(rec, "cause"), "causeType") ??
-    getXmlChildText(rec, "accidentType") ??
-    getXmlChildText(rec, "obstructionType") ??
-    getXmlChildText(rec, "environmentalObstructionType") ??
-    getXmlChildText(rec, "vehicleObstructionType") ??
-    getXmlChildText(rec, "generalNetworkManagementType") ??
-    getXmlChildText(rec, "abnormalTrafficType") ??
-    getXmlChildText(rec, "speedManagementType")
-  );
+function subtypeOf(rec: XmlObject, recordClass: string): string | undefined {
+  const discriminator = datexDiscriminator(recordClass);
+  // `_extended` names no kind: its meaning lives in an extension schema.
+  return [
+    getXmlChildText(getXmlChild(rec, "cause"), "causeType"),
+    ...[
+      "accidentType",
+      "obstructionType",
+      "environmentalObstructionType",
+      "vehicleObstructionType",
+      "generalNetworkManagementType",
+      "abnormalTrafficType",
+      "speedManagementType",
+      ...(discriminator === undefined ? [] : [discriminator]),
+    ].map((name) => getXmlChildText(rec, name)),
+  ].find((value) => value !== undefined && value !== "_extended");
 }
 
 /** Human cause text (DATEX `cause/causeDescription`), a multilingual block. */
@@ -1348,6 +1462,19 @@ function parseDatexInternal(
   const unresolved: UnresolvedRoadEvent[] = [];
   const records: RoadSnapshotRecord[] = [];
   const errors: RoadSnapshotReport["errors"] = [];
+
+  // A DATEX version this parser was not written against (v1, or a future
+  // major) shares element names with v2 and v3 but not their meaning. Its
+  // records are counted, not read; a complete snapshot of one is refused
+  // rather than read as the publisher withdrawing everything.
+  const modelVersion = datexModelVersion(input);
+  if (modelVersion !== undefined && !READ_MODEL_VERSIONS.has(modelVersion)) {
+    recordSkipped(src.id, "unsupported_version", sourceRecords.length);
+    if (strictMetadata) {
+      errors.push({ code: "unsupported_version", id: null, sourcePath: "modelBaseVersion" });
+    }
+    return { withGeom, unresolved, records, errors, inputCount: sourceRecords.length };
+  }
   let skippedAlertCOnly = 0;
   let resolvedFromTmc = 0;
   const unresolvedReasons = new Map<string, number>();
@@ -1378,6 +1505,7 @@ function parseDatexInternal(
         : null;
     if (!recordId) {
       errors.push({ code: "missing_identity", id: null, sourcePath: "situationRecord" });
+      recordSkipped(src.id, "malformed");
       continue;
     }
 
@@ -1425,6 +1553,25 @@ function parseDatexInternal(
         });
         continue;
       }
+    }
+
+    // The record class says what the record is. Without one (`SituationRecord`
+    // is abstract) the record breaks the schema; one neither version defines
+    // is a type this parser cannot read. Either is dropped and counted, never
+    // published as an unclassified "other". In a complete snapshot it is held
+    // like an unplaceable record, so its situation is not ended.
+    const recType = elementType(rec) || className || "";
+    if (!RECORD_CLASSES.has(recType)) {
+      recordSkipped(src.id, recType === "" ? "malformed" : "unknown_type");
+      records.push({
+        id: prefixedId,
+        version,
+        versionTime,
+        fingerprint: canonicalSnapshotValue(rec),
+        disposition: "unlocatable",
+        ...(situationId ? { situationId } : {}),
+      });
+      continue;
     }
 
     const roads = roadsOf(rec);
@@ -1503,7 +1650,6 @@ function parseDatexInternal(
       continue;
     }
 
-    const recType = elementType(rec) || className || "";
     const discriminator = datexDiscriminator(recType);
     const classification = datexClassification(
       recType,
@@ -1517,12 +1663,15 @@ function parseDatexInternal(
         .filter((v): v is string => v !== undefined),
     );
     // A management record that declares a full road closure is a closure, even
-    // when the publisher's record id or headline names something narrower.
-    const declaresRoadClosed =
-      getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType") === "roadClosed";
-    const { type, category, isPlanned } = declaresRoadClosed
-      ? coarseType("road_closure")
-      : (DATEX_COARSE[recType] ?? coarseOf(classification));
+    // when the publisher's record id or headline names something narrower; one
+    // that declares two-way traffic sharing a carriageway is a contraflow.
+    const managementType = getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType");
+    const { type, category, isPlanned } =
+      managementType === "roadClosed"
+        ? coarseType("road_closure")
+        : managementType === "contraflow"
+          ? coarseType("contraflow")
+          : (DATEX_COARSE[recType] ?? coarseOf(classification));
 
     const severity =
       situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
@@ -1615,7 +1764,7 @@ function parseDatexInternal(
       },
       ...(situationId ? { situationId } : {}),
       type,
-      subtype: subtypeOf(rec) ?? recType ?? undefined,
+      subtype: subtypeOf(rec, recType) ?? recType,
       category,
       isPlanned,
       ...severityFields,
@@ -1678,6 +1827,7 @@ function parseDatexInternal(
         };
     if (geometry) withGeom.push(observation as RoadEvent);
     else unresolved.push(observation as UnresolvedRoadEvent);
+    recordSkipped(src.id, "unknown_value", unreadValuesOf(rec, recType, severity));
     records.push({
       id: prefixedId,
       version,

@@ -682,7 +682,50 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 4,
-        "vehicleImpact": "alternating_one_way"
+        "vehicleImpact": "unknown"
+      },
+      {
+        "id": "251209-001171-2/contraflow",
+        "sourceRecordRef": "251209-001171-2/1",
+        "location": {
+          "geometry": {
+            "type": "LineString",
+            "coordinates": [
+              [
+                -3.421232,
+                48.254673
+              ],
+              [
+                -3.413677,
+                48.2544
+              ]
+            ]
+          },
+          "extent": "linear",
+          "geometryOrigin": "source",
+          "fuzziness": "exact",
+          "roads": [
+            {
+              "ref": "N0164"
+            }
+          ],
+          "tmc": {
+            "country": "F",
+            "table": 32,
+            "version": "11.0",
+            "code": 47622
+          },
+          "admin": {
+            "country": "FR"
+          }
+        },
+        "applicability": {
+          "kind": "all"
+        },
+        "compliance": "mandatory",
+        "normalization": "complete",
+        "kind": "contraflow",
+        "v": 1
       },
       {
         "id": "251209-001171-3/lane_restriction",
@@ -738,6 +781,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "ac83bcd24c0056d7344348daa06eb69b41537c408e1bc8bd42c33a0561948520"
+    "contentHash": "bd4d2e3c75b4736e0db668ac1658c2fac7bc69f30b2a451a33f67ce19ce9a346"
   }
 ]

@@ -122,13 +122,24 @@ export function losFromSpeedRatio(ratio: number): Los {
 /** Levels of service a derived congestion situation is drafted for. */
 export const QUEUING_LOS: ReadonlySet<Los> = new Set(["queuing", "stationary", "blocked"]);
 
-/** A DATEX traffic status token (or a feed's mapping onto one) as a level of service. */
+/**
+ * A DATEX traffic status token (or a feed's mapping onto one) as a level of
+ * service. DATEX v3's `slow` (traffic moving below its normal speed without
+ * queuing) reads as heavy, as v2's `slowTraffic` does.
+ */
 export function mapDatexTrafficStatus(raw: string | undefined): Los {
   if (!raw) return "unknown";
   const lower = raw.toLowerCase().trim();
   if (lower === "freeflow" || lower === "free_flow" || lower === "normaltraffic")
     return "free_flow";
-  if (lower === "heavy" || lower === "heavy_traffic" || lower === "slowtraffic") return "heavy";
+  if (
+    lower === "heavy" ||
+    lower === "heavy_traffic" ||
+    lower === "slowtraffic" ||
+    lower === "slow"
+  ) {
+    return "heavy";
+  }
   if (lower === "queuing" || lower === "congested") return "queuing";
   if (lower === "stationary" || lower === "standstill") return "stationary";
   if (lower === "blocked" || lower === "impossible") return "blocked";
