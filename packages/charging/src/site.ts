@@ -116,6 +116,11 @@ export interface EvseInput {
   bays?: { key: string; position?: BayPosition }[];
   acceptedServiceProviders?: string[];
   manufacturer?: string;
+  /**
+   * Who asserts `evseId` where it is not the operator: a crowd-sourced id
+   * (OSM's) carries its authority, so it matches no operator's id.
+   */
+  idAuthority?: string;
   images?: ImageInput[];
   connectors: ConnectorInput[];
 }
@@ -466,7 +471,17 @@ function evseComponents(
       ...(evse.position === undefined ? {} : { position: pointGeometry(evse.position) }),
       ...(physicalReference === undefined ? {} : { physicalReference }),
       ...(floorLevel === undefined ? {} : { floorLevel }),
-      ...(emi3 === "" ? {} : { externalIds: [{ scheme: "emi3:evse", id: emi3 }] }),
+      ...(emi3 === ""
+        ? {}
+        : {
+            externalIds: [
+              {
+                scheme: "emi3:evse",
+                id: emi3,
+                ...(evse.idAuthority === undefined ? {} : { authority: evse.idAuthority }),
+              },
+            ],
+          }),
       ...(evse.lifecycle === undefined ? {} : { lifecycle: evse.lifecycle }),
       ...(images === undefined ? {} : { images }),
       details: {

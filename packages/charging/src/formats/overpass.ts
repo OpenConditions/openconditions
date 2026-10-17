@@ -22,6 +22,9 @@ import {
 /** OSM text is in whatever language the mapper wrote it. */
 const UNDETERMINED = "und";
 
+/** The authority of the ids a mapper writes about another register's records. */
+const OSM = "osm";
+
 interface Socket {
   standard: string;
   /** NACS (SAE J3400) delivers AC or DC through one plug: the socket alone says neither. */
@@ -210,7 +213,8 @@ function evsesOf(tags: Record<string, string>, unknown: () => void): EvseInput[]
       };
       evses.push({
         key: `${type}${suffix}`,
-        ...(evses.length === 0 && ref !== undefined ? { evseId: ref } : {}),
+        // The EVSE id is the mapper's, so its component id is OSM's claim, not the operator's.
+        ...(evses.length === 0 && ref !== undefined ? { evseId: ref, idAuthority: OSM } : {}),
         ...(count !== undefined && count >= 2 ? { quantity: count } : {}),
         ...(floor === undefined ? {} : { floorLevel: floor }),
         ...(wheelchair === undefined ? {} : { wheelchairAccessible: wheelchair }),
@@ -303,14 +307,13 @@ export function parseOverpassCharging(
       const covered = own(YES_NO, tag(tags, "covered"));
       const image = tag(tags, "image");
       const charge = tag(tags, "charge");
-      const crossFeed = [
-        ...(tag(tags, "ref:ocm") === undefined
-          ? []
-          : [{ scheme: "ocm", id: tag(tags, "ref:ocm")! }]),
-        ...(tag(tags, "ref:afdc") === undefined
-          ? []
-          : [{ scheme: "afdc", id: tag(tags, "ref:afdc")! }]),
-      ];
+      // A mapper's reference to another register's record is a claim anyone
+      // may edit: kept under OSM's authority, it never links nor parts a
+      // record of that register's own. Both registers' ids are numbers.
+      const crossFeed = (["ocm", "afdc"] as const).flatMap((scheme) => {
+        const id = tag(tags, `ref:${scheme}`);
+        return id === undefined || !/^\d+$/.test(id) ? [] : [{ scheme, id, authority: OSM }];
+      });
       const optional = <K extends keyof SiteInput>(key: K, value: SiteInput[K] | undefined) =>
         value === undefined ? {} : { [key]: value };
       const input: SiteInput = {

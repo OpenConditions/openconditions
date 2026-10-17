@@ -57,8 +57,6 @@ describe("charging module", () => {
     expect(rules?.osm?.idTags).toEqual({
       "ref:EU:EVSE": "emi3:evse",
       "ref:ocpi": "ocpi:location",
-      "ref:ocm": "ocm",
-      "ref:afdc": "afdc",
     });
   });
 });

@@ -4,6 +4,13 @@ import {
   type ParseOutput,
   type RecordDraft,
 } from "@openconditions/ingest-framework";
+import {
+  buildRegistry,
+  kernelModule,
+  type LinkableFeature,
+  proposeLink,
+} from "@openconditions/model";
+import { chargingModule } from "@openconditions/model-charging";
 import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
@@ -135,9 +142,9 @@ describe("overpass", () => {
       ["type2", 2, undefined],
       ["type2/1", undefined, 22],
     ]);
-    // The refs of the site go to its first charge point, as its eMI3 id.
+    // The refs of the site go to its first charge point, as its eMI3 id under OSM's authority.
     expect(components(enbw)[0]!.externalIds).toEqual([
-      { scheme: "emi3:evse", id: "DEEBWE9048941" },
+      { scheme: "emi3:evse", id: "DEEBWE9048941", authority: "osm" },
     ]);
     expect(enbw).toMatchObject({ details: { brand: "EnBW" } });
 
@@ -248,8 +255,8 @@ describe("skips", () => {
     expect(draft).toMatchObject({
       externalIds: [
         { scheme: "osm:node", id: "3" },
-        { scheme: "ocm", id: "123" },
-        { scheme: "afdc", id: "456" },
+        { scheme: "ocm", id: "123", authority: "osm" },
+        { scheme: "afdc", id: "456", authority: "osm" },
       ],
       operator: { email: "info@op.example" },
       owner: { name: [{ text: "Town" }] },
@@ -276,6 +283,54 @@ describe("skips", () => {
     const nacs = components(draft).filter((c) => c.parentKey === "nacs-2")[0]?.details;
     // NACS carries either current; `frequency=0` says this station's is direct.
     expect(nacs).toMatchObject({ standard: "SAE_J3400", current: "dc", maxPowerKw: 150 });
+  });
+
+  test("a mapper's reference to another register is OSM's claim: it neither links nor parts records", () => {
+    const rules = buildRegistry([kernelModule, chargingModule]).kind("feature", "charging_site")!
+      .linking!;
+    const node = (id: number, lat: number, refs: Record<string, string>) =>
+      parse(
+        elements([
+          {
+            type: "node",
+            id,
+            lat,
+            lon: 8.4,
+            tags: {
+              amenity: "charging_station",
+              "ref:EU:EVSE": "DE*ABC*E1",
+              "socket:type2": "1",
+              ...refs,
+            },
+          },
+        ]),
+      ).features[0] as unknown as LinkableFeature;
+    const ocm = (id: string, lat: number) =>
+      ({
+        id: `oc:feature:ocm-charging:${id}`,
+        kind: "charging_site",
+        location: { geometry: { type: "Point", coordinates: [8.4, lat] }, fuzziness: "exact" },
+        provenance: { sourceId: "ocm-charging" },
+        externalIds: [
+          { scheme: "provider", id, authority: "ocm-charging" },
+          { scheme: "ocm", id },
+        ],
+      }) as LinkableFeature;
+    // Tagged with a record 50 km away: no link by the tag.
+    expect(proposeLink(node(5, 49, { "ref:ocm": "777" }), ocm("777", 49.5), rules)).toBeUndefined();
+    // Tagged with another record: the one beside it still links by position.
+    expect(proposeLink(node(6, 49, { "ref:ocm": "778" }), ocm("777", 49), rules)?.status).toBe(
+      "accepted",
+    );
+    // A reference that is no register id is not kept; the EVSE id is OSM's.
+    const odd = node(7, 49, { "ref:ocm": "777; 778", "ref:afdc": "abc" }) as unknown as Record<
+      string,
+      unknown
+    >;
+    expect(odd["externalIds"]).toEqual([{ scheme: "osm:node", id: "7" }]);
+    expect(components(odd as RecordDraft).find((c) => c.kind === "evse")?.externalIds).toEqual([
+      { scheme: "emi3:evse", id: "DEABCE1", authority: "osm" },
+    ]);
   });
 
   test("a positionless element, an unknown access value and an unknown socket type are reported", () => {
