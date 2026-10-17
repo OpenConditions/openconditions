@@ -187,12 +187,19 @@ export async function runFeedAuthCommand(
   return 2;
 }
 
+/** The first line of what a pipe sends, which may end without a newline. */
+async function firstPipedLine(): Promise<string> {
+  let text = "";
+  for await (const chunk of process.stdin) text += String(chunk);
+  return text.split(/\r?\n/, 1)[0] ?? "";
+}
+
 /**
  * Reads one answer from stdin. On a terminal the question is shown and a
  * secret answer is not echoed; from a pipe the first line is the answer.
  */
 async function ask(question: string, opts: { secret: boolean }): Promise<string> {
-  const tty = process.stdin.isTTY === true;
+  if (process.stdin.isTTY !== true) return firstPipedLine();
   let muted = false;
   const output = new Writable({
     write(chunk, _encoding, done) {
@@ -200,14 +207,14 @@ async function ask(question: string, opts: { secret: boolean }): Promise<string>
       done();
     },
   });
-  const rl = createInterface({ input: process.stdin, output, terminal: tty });
+  const rl = createInterface({ input: process.stdin, output, terminal: true });
   try {
     const answer = rl.question(question);
-    muted = opts.secret && tty;
+    muted = opts.secret;
     return await answer;
   } finally {
     muted = false;
-    if (opts.secret && tty) process.stderr.write("\n");
+    if (opts.secret) process.stderr.write("\n");
     rl.close();
   }
 }
