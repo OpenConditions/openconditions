@@ -54,6 +54,14 @@ const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   tunnel: "RESTRICTION_TUNNEL_CLOSED",
 };
 
+/** The kernel's delay descriptions as TraFF's delay events. */
+const DELAY_EVENTS: Readonly<Record<string, string>> = {
+  delays: "DELAY_DELAY",
+  delays_of_uncertain_duration: "DELAY_UNCERTAIN_DURATION",
+  long_delays: "DELAY_LONG_DELAY",
+  very_long_delays: "DELAY_VERY_LONG_DELAY",
+};
+
 /** TraFF 0.8 q_duration is whole minutes, written as hours:minutes. */
 function delayDuration(effect: Effect, diagnostics: ProjectionDiagnostics): string | undefined {
   if (effect.kind !== "delay" || !effect.delay) return undefined;
@@ -97,6 +105,11 @@ function effectEvent(effect: Effect, diagnostics: ProjectionDiagnostics): TraffE
     case "lane_restriction":
       if (effect.vehicleImpact === "all_lanes_closed") return event("RESTRICTION_CLOSED");
       if (effect.vehicleImpact === "all_lanes_open") return undefined;
+      // Lanes restricted in a way no one states, none of them known closed,
+      // are restrictions, not a lane closure.
+      if (effect.vehicleImpact === "unknown" && !((effect.lanesClosed ?? 0) > 0)) {
+        return event("RESTRICTION_RESTRICTIONS");
+      }
       return event("RESTRICTION_LANE_CLOSED");
     case "contraflow":
       return event("RESTRICTION_CONTRAFLOW");
@@ -104,7 +117,33 @@ function effectEvent(effect: Effect, diagnostics: ProjectionDiagnostics): TraffE
       return event("RESTRICTION_SPEED_LIMIT", { speed: Math.round(effect.limit.value) });
     case "delay": {
       const duration = delayDuration(effect, diagnostics);
-      return event("DELAY_DELAY", {
+      const path = diagnostics.effectPath(effect);
+      // TraFF has an event for each way of describing delays, but only a
+      // length quantifies DELAY_DELAY: a stated length keeps it, and the
+      // description goes; none of TraFF's events says a band.
+      const described =
+        duration === undefined && effect.delayType !== undefined
+          ? DELAY_EVENTS[effect.delayType]
+          : undefined;
+      if (effect.delayType !== undefined && effect.delayType !== "delays" && !described)
+        diagnostics.emit(
+          "field_not_exported",
+          "field",
+          "omitted",
+          `${path}/delayType`,
+          "TraFF states this delay by its length; its description is not exported beside it.",
+          effect,
+        );
+      if (effect.delayBand !== undefined)
+        diagnostics.emit(
+          "field_not_exported",
+          "field",
+          "omitted",
+          `${path}/delayBand`,
+          "TraFF has no event or quantifier for a band of delay.",
+          effect,
+        );
+      return event(described ?? "DELAY_DELAY", {
         ...(effect.queueLength ? { length: Math.round(effect.queueLength.value) } : {}),
         ...(duration !== undefined ? { q_duration: duration } : {}),
       });
@@ -295,7 +334,7 @@ function effectEvents(
   }
   let conflict = false;
   for (const [type, entries] of byType) {
-    if (type === "DELAY_DELAY" || new Set(entries.map((e) => e.semantics)).size < 2) continue;
+    if (type.startsWith("DELAY_") || new Set(entries.map((e) => e.semantics)).size < 2) continue;
     conflict = true;
     for (const { effect } of entries)
       diagnostics.emit(

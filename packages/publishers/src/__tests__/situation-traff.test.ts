@@ -195,6 +195,52 @@ describe("traffEventsOf", () => {
     ]);
   });
 
+  it("tells a delay without a length by its description, and reports what TraFF cannot say", () => {
+    const diagnostics: { code: string; path: string }[] = [];
+    const s = situation({
+      effects: [
+        effect("long", "delay", { delayType: "long_delays" }),
+        effect("uncertain", "delay", { delayType: "delays_of_uncertain_duration" }),
+        effect("very-long", "delay", {
+          delayType: "very_long_delays",
+          delayBand: "longer_than_six_hours",
+        }),
+        effect("timed", "delay", { delay: { value: 600, unit: "s" }, delayType: "long_delays" }),
+      ],
+    });
+    expect(
+      traffEventsOf(registry, s, AT, (d) => diagnostics.push(d)).filter((e) => e.cls === "DELAY"),
+    ).toEqual([
+      { cls: "DELAY", type: "DELAY_LONG_DELAY" },
+      { cls: "DELAY", type: "DELAY_UNCERTAIN_DURATION" },
+      { cls: "DELAY", type: "DELAY_VERY_LONG_DELAY" },
+      { cls: "DELAY", type: "DELAY_DELAY", quantifiers: { q_duration: "0:10" } },
+    ]);
+    expect(diagnostics).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ code: "field_not_exported", path: "/effects/2/delayBand" }),
+        expect.objectContaining({ code: "field_not_exported", path: "/effects/3/delayType" }),
+      ]),
+    );
+  });
+
+  it("tells restricted lanes none of which are known closed as restrictions, not a lane closure", () => {
+    expect(
+      types(
+        situation({
+          effects: [
+            effect("lanes", "lane_restriction", {
+              vehicleImpact: "unknown",
+              lanesTotal: 2,
+              lanesRestricted: 2,
+              lanesOperational: 0,
+            }),
+          ],
+        }),
+      ),
+    ).toEqual(["CONSTRUCTION_ROADWORKS", "RESTRICTION_RESTRICTIONS"]);
+  });
+
   it.each([0.1, 29, -1, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_VALUE])(
     "withholds unrepresentable duration %s and explains the loss",
     (seconds) => {

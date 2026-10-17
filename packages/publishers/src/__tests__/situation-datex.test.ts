@@ -405,6 +405,145 @@ describe("DATEX II round-trip through the ingest parser", () => {
     ]);
   });
 
+  it("re-ingests a rating of no impact as none, not as an unknown one", () => {
+    const none = closure({ severity: { label: "none", source: "declared" } });
+    const [lead] = datexRecordsOf(none, AT);
+    expect(lead).toHaveProperty("sit:severity", "none");
+    const [draft] = parseEvents(feed, [Buffer.from(situationsToDatex([none], AT))]).situations;
+    expect(draft!["severity"]).toEqual({ label: "none", source: "declared", declaredRaw: "none" });
+  });
+
+  it("re-ingests a delay's length, band and description", () => {
+    const delayed = situation({
+      effects: [
+        ...(situation()["effects"] as Rec[]),
+        effect("a46/delay", "delay", {
+          compliance: "unknown",
+          delay: { value: 2400, unit: "s" },
+          delayBand: "between_thirty_minutes_and_one_hour",
+          delayType: "long_delays",
+        }),
+      ],
+    });
+    const [lead] = datexRecordsOf(delayed, AT);
+    expect((lead!["sit:impact"] as Rec)["sit:delays"]).toEqual({
+      "sit:delayBand": "betweenThirtyMinutesAndOneHour",
+      "sit:delaysType": "longDelays",
+      "sit:delayTimeValue": 2400,
+    });
+    const [draft] = parseEvents(feed, [Buffer.from(situationsToDatex([delayed], AT))]).situations;
+    expect(draft!["effects"]).toContainEqual(
+      expect.objectContaining({
+        kind: "delay",
+        delay: { value: 2400, unit: "s" },
+        delayBand: "between_thirty_minutes_and_one_hour",
+        delayType: "long_delays",
+      }),
+    );
+  });
+
+  it("re-ingests restricted lanes as restricted, and closed lanes as restricted of the total", () => {
+    const restricted = situation({
+      effects: [
+        effect("a46/lanes", "lane_restriction", {
+          vehicleImpact: "unknown",
+          lanesTotal: 3,
+          lanesRestricted: 2,
+          lanesOperational: 1,
+        }),
+      ],
+    });
+    const records = datexRecordsOf(restricted, AT);
+    // Restricted lanes may be open: they are managed lanes, not lane closures.
+    expect(records[1]).toMatchObject({
+      "sit:roadOrCarriagewayOrLaneManagementType": "other",
+      "sit:impact": { "sit:numberOfLanesRestricted": 2, "sit:numberOfOperationalLanes": 1 },
+    });
+    const [draft] = parseEvents(feed, [
+      Buffer.from(situationsToDatex([restricted], AT)),
+    ]).situations;
+    expect(draft!["effects"]).toEqual([
+      expect.objectContaining({
+        kind: "lane_restriction",
+        vehicleImpact: "unknown",
+        lanesTotal: 3,
+        lanesRestricted: 2,
+        lanesOperational: 1,
+      }),
+    ]);
+    const [closed] = parseEvents(feed, [
+      Buffer.from(situationsToDatex([situation()], AT)),
+    ]).situations;
+    expect(closed!["effects"]).toContainEqual(
+      expect.objectContaining({
+        kind: "lane_restriction",
+        vehicleImpact: "some_lanes_closed",
+        lanesTotal: 3,
+        lanesRestricted: 1,
+        lanesOperational: 2,
+      }),
+    );
+  });
+
+  it("re-ingests what the works are, the informant and a measure's direction of traffic", () => {
+    const described = situation({
+      details: {
+        kind: "roadworks",
+        v: 1,
+        scale: "major",
+        durationClass: "long_term",
+        urgent: false,
+        underTraffic: true,
+      },
+      provenance: {
+        sourceUpdatedAt: "2026-09-06T09:00:00Z",
+        informationSource: {
+          type: "road_operator_patrol",
+          name: [{ lang: "de", text: "Autobahnmeisterei" }],
+          id: "AM-7",
+          country: "DE",
+          reliable: true,
+        },
+      },
+      effects: [
+        effect("a46/speed", "speed_limit", {
+          limit: { value: 60, unit: "km/h" },
+          direction: { value: "unknown", basis: "compass", compass: "W", text: "westBound" },
+        }),
+      ],
+    });
+    const records = datexRecordsOf(described, AT);
+    expect(records[0]).toMatchObject({
+      "sit:source": {
+        "com:sourceCountry": "de",
+        "com:sourceIdentification": "AM-7",
+        "com:sourceType": "roadOperatorPatrol",
+        "com:reliable": true,
+      },
+      "sit:roadworksDurationClassification": "longTerm",
+      "sit:roadworksScale": "major",
+      "sit:underTraffic": true,
+      "sit:urgentRoadworks": false,
+    });
+    expect(records[1]).toHaveProperty("sit:applicableForTrafficDirection", "westBound");
+    const [draft] = parseEvents(feed, [Buffer.from(situationsToDatex([described], AT))]).situations;
+    expect(draft!["details"]).toMatchObject({
+      scale: "major",
+      durationClass: "long_term",
+      urgent: false,
+      underTraffic: true,
+    });
+    expect((draft!["provenance"] as Rec)["informationSource"]).toEqual(
+      (described["provenance"] as Rec)["informationSource"],
+    );
+    expect(draft!["effects"]).toEqual([
+      expect.objectContaining({
+        kind: "speed_limit",
+        direction: { value: "unknown", basis: "compass", compass: "W", text: "westBound" },
+      }),
+    ]);
+  });
+
   it("re-ingests roadworks with a lane closure and a speed limit as one situation with both effects", () => {
     const xml = situationsToDatex([situation()], AT);
     const { situations } = parseEvents(feed, [Buffer.from(xml)]);

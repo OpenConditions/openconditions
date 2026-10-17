@@ -1,5 +1,6 @@
 import {
   type Effect,
+  type InformationSource,
   type SituationClass,
   situationEffects,
   type Validity,
@@ -37,8 +38,9 @@ type Text = { lang: string; text: string }[];
  * is folded into it; a nature without a record of its own leads with its first
  * effect's. A record keeps the DATEX id it was read from (`sourceRecordRef`),
  * else `<situation id>#<effect id>`. Every record states the situation's
- * probability; severity and headline travel on its leading record. A delay
- * supplements that record only when its timing and place agree.
+ * probability; severity, the informant and headline travel on its leading
+ * record. A delay (its length, band and description) supplements that record
+ * only when its timing and place agree.
  *
  * The output validates against the base DATEX II v3.7 schemas inside an
  * Exchange 2020 `messageContainer`, but it is NOT SRTI-profile-conformant
@@ -52,6 +54,7 @@ type Text = { lang: string; text: string }[];
  */
 
 const SEVERITY: Readonly<Record<string, string>> = {
+  none: "none",
   minor: "low",
   moderate: "medium",
   major: "high",
@@ -132,8 +135,11 @@ function effectCode(effect: Effect): string | undefined {
       if (effect.vehicleImpact === "all_lanes_closed") {
         return "RoadOrCarriagewayOrLaneManagement:roadClosed";
       }
-      return effect.vehicleImpact === "all_lanes_open"
-        ? undefined
+      if (effect.vehicleImpact === "all_lanes_open") return undefined;
+      // Lanes restricted in a way no one states, none of them known closed,
+      // are managed lanes, not lane closures.
+      return effect.vehicleImpact === "unknown" && !((effect.lanesClosed ?? 0) > 0)
+        ? "RoadOrCarriagewayOrLaneManagement:other"
         : "RoadOrCarriagewayOrLaneManagement:laneClosures";
     case "contraflow":
       return "RoadOrCarriagewayOrLaneManagement:contraflow";
@@ -146,13 +152,24 @@ function effectCode(effect: Effect): string | undefined {
   }
 }
 
-/** What an effect says about the record's impact: its lanes. */
+/**
+ * What an effect says about the record's impact: its lanes. DATEX counts the
+ * lanes restricted fully or partially, so closed lanes are restricted ones
+ * where no count of restricted lanes is known, and the lanes that remain fully
+ * operational are the rest of the total.
+ */
 function effectImpact(effect: Effect): Rec {
   if (effect.kind !== "lane_restriction") return {};
   const impact: Rec = {};
-  if (effect.lanesClosed !== undefined) impact["sit:numberOfLanesRestricted"] = effect.lanesClosed;
-  if (effect.lanesTotal !== undefined && effect.lanesClosed !== undefined) {
-    impact["sit:numberOfOperationalLanes"] = effect.lanesTotal - effect.lanesClosed;
+  const restricted = effect.lanesRestricted ?? effect.lanesClosed;
+  if (restricted !== undefined) impact["sit:numberOfLanesRestricted"] = restricted;
+  const operational =
+    effect.lanesOperational ??
+    (effect.lanesTotal !== undefined && restricted !== undefined
+      ? effect.lanesTotal - restricted
+      : undefined);
+  if (operational !== undefined && operational >= 0) {
+    impact["sit:numberOfOperationalLanes"] = operational;
   }
   return impact;
 }
@@ -260,18 +277,26 @@ interface RecordHeader {
 interface RecordBody {
   validity: Validity;
   location: Rec;
-  /** Severity and the headline: what only the leading record carries. */
-  lead?: { severity?: string; headline?: Text };
+  /** Severity, the informant and the headline: what only the leading record carries. */
+  lead?: { severity?: string; source?: Rec; headline?: Text };
   impact?: Rec;
   compliance?: string;
   actionStatus?: Effect["actionStatus"];
+  /** A network management measure's `applicableForTrafficDirection`. */
+  trafficDirection?: string;
+  /** What roadworks say of the works before their discriminator. */
+  works?: Rec;
   detail?: Rec;
 }
+
+/** Record classes deriving from `Roadworks`. */
+const ROADWORKS = new Set(["ConstructionWorks", "MaintenanceWorks"]);
 
 /**
  * A record of `code` (`Class` or `Class:discriminator`) in schema order: the
  * situation record's elements up to its location, then the class's own —
- * an operator action's status, compliance for network management, the
+ * an operator action's status, compliance and the traffic direction for
+ * network management, the works' own elements for roadworks, the
  * discriminator and `detail`.
  */
 function record(code: string, header: RecordHeader, body: RecordBody): Rec {
@@ -286,6 +311,7 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
     "sit:situationRecordVersionTime": header.time,
     "sit:probabilityOfOccurrence": header.probability,
     ...(lead?.severity ? { "sit:severity": lead.severity } : {}),
+    ...(lead?.source ? { "sit:source": lead.source } : {}),
     "sit:validity": buildValidity(body.validity, header.time),
     ...(impact && Object.keys(impact).length > 0 ? { "sit:impact": impact } : {}),
     ...(lead?.headline?.length ? { "sit:generalPublicComment": comment(lead.headline) } : {}),
@@ -296,11 +322,132 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
     ...(NETWORK_MANAGEMENT.has(cls)
       ? {
           "sit:complianceOption": COMPLIANCE[body.compliance ?? "unknown"] ?? COMPLIANCE["unknown"],
+          ...(body.trafficDirection !== undefined
+            ? { "sit:applicableForTrafficDirection": body.trafficDirection }
+            : {}),
         }
       : {}),
+    ...(ROADWORKS.has(cls) ? body.works : {}),
     ...(value && discriminator ? { [`sit:${discriminator}`]: value } : {}),
     ...body.detail,
   };
+}
+
+/** The kernel's delay bands, delay types and roadworks duration classes, as DATEX writes them. */
+const DELAY_BAND: Readonly<Record<string, string>> = {
+  negligible: "negligible",
+  up_to_ten_minutes: "upToTenMinutes",
+  between_ten_minutes_and_thirty_minutes: "betweenTenMinutesAndThirtyMinutes",
+  between_thirty_minutes_and_one_hour: "betweenThirtyMinutesAndOneHour",
+  between_one_hour_and_three_hours: "betweenOneHourAndThreeHours",
+  between_three_hours_and_six_hours: "betweenThreeHoursAndSixHours",
+  longer_than_six_hours: "longerThanSixHours",
+};
+const DELAYS_TYPE: Readonly<Record<string, string>> = {
+  delays: "delays",
+  delays_of_uncertain_duration: "delaysOfUncertainDuration",
+  long_delays: "longDelays",
+  very_long_delays: "veryLongDelays",
+};
+const ROADWORKS_DURATION: Readonly<Record<string, string>> = {
+  long_term: "longTerm",
+  medium_term: "mediumTerm",
+  short_term: "shortTerm",
+};
+/** snake_case → camelCase, which is how the kernel's informant types derive from DATEX's. */
+const camelCase = (token: string) => token.replace(/_([a-z])/g, (_, c: string) => c.toUpperCase());
+
+/**
+ * A delay effect as DATEX `delays`, in schema order: its band, its
+ * description and its length.
+ */
+function delaysOf(effect: Extract<Effect, { kind: "delay" }>): Rec | undefined {
+  const out: Rec = {
+    ...(effect.delayBand !== undefined ? { "sit:delayBand": DELAY_BAND[effect.delayBand] } : {}),
+    ...(effect.delayType !== undefined ? { "sit:delaysType": DELAYS_TYPE[effect.delayType] } : {}),
+    ...(effect.delay !== undefined ? { "sit:delayTimeValue": effect.delay.value } : {}),
+  };
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
+ * The works' own elements of a roadworks nature record, in schema order:
+ * duration class, scale, whether under traffic, whether urgent.
+ */
+function worksOf(details: Rec | undefined): Rec {
+  if (details?.["kind"] !== "roadworks") return {};
+  const durationClass = details["durationClass"];
+  const scale = details["scale"];
+  return {
+    ...(typeof durationClass === "string" && ROADWORKS_DURATION[durationClass]
+      ? { "sit:roadworksDurationClassification": ROADWORKS_DURATION[durationClass] }
+      : {}),
+    ...(typeof scale === "string" ? { "sit:roadworksScale": scale } : {}),
+    ...(typeof details["underTraffic"] === "boolean"
+      ? { "sit:underTraffic": details["underTraffic"] }
+      : {}),
+    ...(typeof details["urgent"] === "boolean" ? { "sit:urgentRoadworks": details["urgent"] } : {}),
+  };
+}
+
+/** The situation's informant as DATEX `source`, in schema order. */
+function sourceOf(provenance: Rec | undefined): Rec | undefined {
+  const s = provenance?.["informationSource"] as InformationSource | undefined;
+  if (s === undefined) return undefined;
+  const out: Rec = {
+    ...(s.country !== undefined ? { "com:sourceCountry": s.country.toLowerCase() } : {}),
+    ...(s.id !== undefined ? { "com:sourceIdentification": s.id } : {}),
+    ...(s.name !== undefined
+      ? {
+          "com:sourceName": {
+            "com:values": {
+              "com:value": s.name.map((t) => ({ "@_lang": t.lang, "#text": t.text })),
+            },
+          },
+        }
+      : {}),
+    ...(s.type !== undefined ? { "com:sourceType": camelCase(s.type) } : {}),
+    ...(s.reliable !== undefined ? { "com:reliable": s.reliable } : {}),
+  };
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/** DATEX `DirectionEnum` values for a compass point. */
+const COMPASS_BOUND: Readonly<Record<string, string>> = {
+  N: "northBound",
+  NE: "northEastBound",
+  E: "eastBound",
+  SE: "southEastBound",
+  S: "southBound",
+  SW: "southWestBound",
+  W: "westBound",
+  NW: "northWestBound",
+};
+
+/** DATEX `DirectionEnum` values an effect's direction keeps as its text. */
+const DIRECTION_WORDS = new Set([
+  "allDirections",
+  "bothWays",
+  "clockwise",
+  "anticlockwise",
+  "innerRing",
+  "outerRing",
+  "inboundTowardsTown",
+  "outboundFromTown",
+]);
+
+/**
+ * An effect's own direction as `applicableForTrafficDirection`: a compass
+ * heading, or one of the axisless DATEX directions it keeps as its text. A
+ * direction along a reference axis is not, as the export's point locations
+ * carry no axis for it to align with.
+ */
+function trafficDirectionOf(effect: Effect): string | undefined {
+  const d = effect.direction;
+  if (d === undefined) return undefined;
+  if (d.basis === "compass" && d.compass !== undefined) return COMPASS_BOUND[d.compass];
+  if (d.basis === "text" && d.text !== undefined && DIRECTION_WORDS.has(d.text)) return d.text;
+  return undefined;
 }
 
 /** The DATEX record a classification has of its own: subtype's, else type's. */
@@ -337,6 +484,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
   // What the situation says as a whole travels on its leading record.
   const lead = {
     severity: SEVERITY[String((situation["severity"] as Rec | undefined)?.["label"])],
+    source: sourceOf(provenance),
     headline: situation["headline"] as Text | undefined,
   };
   const classification = situation as unknown as SituationClass;
@@ -383,13 +531,16 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
       );
       continue;
     }
-    if (effect.direction !== undefined)
+    // Every record an effect has is network management, which states the
+    // directions of traffic it applies to; one along a reference axis has
+    // none it can state.
+    if (effect.direction !== undefined && trafficDirectionOf(effect) === undefined)
       diagnostics.emit(
         "direction_not_exported",
         "field",
         "omitted",
         `${path}/direction`,
-        "This DATEX emitter does not export effect direction.",
+        "This DATEX emitter does not export an effect direction along a reference axis.",
         effect,
       );
     const place = ownPlace(situation, effect);
@@ -427,6 +578,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         impact: effectImpact(effect),
         compliance: effect.compliance,
         actionStatus: effect.actionStatus,
+        trafficDirection: trafficDirectionOf(effect),
         detail: effectDetail(effect),
       },
     });
@@ -452,6 +604,8 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
             impact: folded ? effectImpact(folded.effect) : {},
             compliance: folded?.effect.compliance,
             actionStatus: folded?.effect.actionStatus,
+            trafficDirection: folded ? trafficDirectionOf(folded.effect) : undefined,
+            works: worksOf(situation["details"] as Rec | undefined),
             detail: {
               ...natureDetail(classification, natureCode!),
               ...(folded ? effectDetail(folded.effect) : {}),
@@ -492,11 +646,13 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         "This delay cannot supplement the leading record: its place, interval or lifecycle differs, or no leading record is available.",
         effect,
       );
-    } else if (effect.kind === "delay" && effect.delay) delays.push(context);
+    } else if (effect.kind === "delay" && delaysOf(effect) !== undefined) delays.push(context);
   }
-  // A leading record has only one duration slot. Never choose among conflicting observations.
+  // A leading record has only one delay slot. Never choose among conflicting observations.
   const values = new Set(
-    delays.map(({ effect }) => (effect.kind === "delay" ? effect.delay?.value : undefined)),
+    delays.map(({ effect }) =>
+      JSON.stringify(effect.kind === "delay" ? delaysOf(effect) : undefined),
+    ),
   );
   if (values.size > 1) {
     for (const { effect } of delays)
@@ -505,14 +661,11 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         "field",
         "omitted",
         `${diagnostics.effectPath(effect)}/delay`,
-        "Different delay durations cannot share the leading DATEX record's single supplement.",
+        "Different delays cannot share the leading DATEX record's single supplement.",
         effect,
       );
   } else if (leading && delays[0]?.effect.kind === "delay") {
-    leading.body.impact = {
-      ...leading.body.impact,
-      "sit:delays": { "sit:delayTimeValue": delays[0].effect.delay!.value },
-    };
+    leading.body.impact = { ...leading.body.impact, "sit:delays": delaysOf(delays[0].effect) };
   }
   if (leading) leading.body.lead = lead;
   return bodies.map(({ code, header, body }) => record(code, header, body));
