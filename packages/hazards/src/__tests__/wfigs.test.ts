@@ -182,6 +182,30 @@ describe("the wfigs format over altered features", () => {
     expect(byId(out, NEWMAN)["details"]).not.toHaveProperty("ignitionCause");
   });
 
+  test("every general behaviour and the behaviours named beside it are read; others are counted", () => {
+    const inc = incidents();
+    const props = inc.features[0]!.properties;
+    props["FireBehaviorGeneral"] = "Extreme";
+    props["FireBehaviorGeneral1"] = "Group Torching";
+    props["FireBehaviorGeneral2"] = "Long-range Spotting";
+    props["FireBehaviorGeneral3"] = "Group Torching";
+    const out = parse({ incidents: [buffer(inc)] });
+    expect(sealFailures(out.situations)).toEqual([]);
+    expect(byId(out, NEWMAN)["details"]).toMatchObject({
+      fireBehavior: "extreme",
+      fireBehaviorDescriptors: ["group_torching", "long_range_spotting"],
+    });
+    __resetSkips();
+    props["FireBehaviorGeneral"] = "constructor";
+    props["FireBehaviorGeneral1"] = "Raging";
+    props["FireBehaviorGeneral2"] = null;
+    props["FireBehaviorGeneral3"] = null;
+    const unread = parse({ incidents: [buffer(inc)] });
+    expect(byId(unread, NEWMAN)["details"]).not.toHaveProperty("fireBehavior");
+    expect(byId(unread, NEWMAN)["details"]).not.toHaveProperty("fireBehaviorDescriptors");
+    expect(drainSkipped(feed.id)).toMatchObject({ unknown_value: 2 });
+  });
+
   test("a state that is no ISO 3166-2 code leaves the country alone", () => {
     const inc = incidents();
     inc.features[0]!.properties["POOState"] = "Florida";

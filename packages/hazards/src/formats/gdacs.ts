@@ -1,4 +1,5 @@
 import {
+  countryAlpha2,
   emptyParseOutput,
   type FeedPayloads,
   type ParseContext,
@@ -191,6 +192,38 @@ function impactOf(
   return { values: out, unread };
 }
 
+/** An alert colour as the severity it declares; undefined for a colour GDACS does not use. */
+function alertLabel(colour: string | undefined): string | undefined {
+  const c = colour?.toLowerCase();
+  return c !== undefined && Object.hasOwn(ALERTS, c) ? ALERTS[c] : undefined;
+}
+
+/**
+ * Where an event is: the countries GDACS names (`country`, a comma-separated
+ * list of names) as the area's description, and the country its `iso3` code
+ * gives when it names one country only. With several, `iso3` holds the first
+ * of them, which is not where the whole event is. An `iso3` that is no
+ * ISO 3166-1 code is `unread`.
+ */
+function placeOf(item: Record<string, unknown>): {
+  location: { admin?: { country: string }; areaDescription?: { lang: string; text: string }[] };
+  unread: boolean;
+} {
+  const iso3 = str(item["iso3"]);
+  const country = iso3 === undefined ? undefined : countryAlpha2(iso3);
+  const names = (str(item["country"]) ?? "")
+    .split(",")
+    .map((name) => name.trim())
+    .filter((name) => name !== "");
+  return {
+    location: {
+      ...(country !== undefined && names.length <= 1 ? { admin: { country } } : {}),
+      ...(names.length === 0 ? {} : { areaDescription: [{ lang: "en", text: names.join(", ") }] }),
+    },
+    unread: iso3 !== undefined && country === undefined,
+  };
+}
+
 function toDraft(
   item: Record<string, unknown>,
   eventType: string,
@@ -209,9 +242,15 @@ function toDraft(
   const current = currency !== "false";
   const end = gdacsTime(item["todate"]);
   const alert = str(item["alertlevel"]);
-  const colour = alert?.toLowerCase();
-  const label = colour !== undefined && Object.hasOwn(ALERTS, colour) ? ALERTS[colour] : undefined;
+  const label = alertLabel(alert);
   if (alert !== undefined && label === undefined) recordSkipped(feed.id, "unknown_value");
+  const episodeAlert = str(item["episodealertlevel"]);
+  const episodeLabel = alertLabel(episodeAlert);
+  if (episodeAlert !== undefined && episodeLabel === undefined) {
+    recordSkipped(feed.id, "unknown_value");
+  }
+  const place = placeOf(item);
+  if (place.unread) recordSkipped(feed.id, "unknown_value");
   const score = Number(str(item["alertscore"]));
   const level = score === 1 || score === 2 || score === 3 ? score : undefined;
   const title = str(item["title"]);
@@ -243,6 +282,7 @@ function toDraft(
       extent: geometry.type === "Point" ? "point" : "area",
       geometryOrigin: "source",
       fuzziness: "exact",
+      ...place.location,
     },
     provenance: provenance(feed, localId, updated),
     freshness: freshness(fetchedAt),
@@ -276,6 +316,9 @@ function toDraft(
         ? { maxWind: { value: Math.round(wind), unit: "km/h" } }
         : {}),
       ...impact.values,
+      ...(episodeLabel === undefined
+        ? {}
+        : { episodeSeverity: { label: episodeLabel, declaredRaw: episodeAlert } }),
     },
   };
 }
@@ -290,7 +333,11 @@ function toDraft(
  * The local id is the RSS `guid` (`<type><eventid>`), also the `gdacs:event`
  * external id, with the GLIDE number when GDACS has one. GDACS alerts are
  * `Green`, `Orange` or `Red` with a 1..3 score; another colour leaves the
- * severity unknown (`unknown_value`). An event with
+ * severity unknown (`unknown_value`). The current episode's own colour
+ * (`episodealertlevel`) is the event's `episodeSeverity`, which can differ
+ * from the event's. The countries GDACS names describe the area, and an
+ * event in one country is placed in it by its ISO alpha-3 `iso3` code (one
+ * that is no country code is `unknown_value`). An event with
  * `iscurrent=false` has ended at its `todate`. The optional `areas` role is
  * GDACS's CAP feed: the areas of an event's current episode
  * (`GDACS_<type>_<eventid>_<episode>`) become a MultiPolygon (a cyclone's
