@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseAutobahn } from "../autobahn.js";
 import { parseDigitraffic } from "../digitraffic.js";
 import { parseOpen511 } from "../open511.js";
-import { __resetSkipMetrics, drainSkippedNoGeometry } from "../skip-metrics.js";
 import type { SourceDescriptor } from "../types.js";
 import { parseWzdx } from "../wzdx.js";
 
@@ -23,16 +23,16 @@ const src = (id: string): SourceDescriptor => ({
  * shrinking feed looks identical to a healthy one.
  */
 describe("no-geometry skips are reported by every parser that drops records", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   it("autobahn", () => {
     parseAutobahn(readFileSync(join(FIXTURES, "autobahn/warning.json")), src("de-autobahn-events"));
-    expect(drainSkippedNoGeometry("de-autobahn-events")).toBeGreaterThan(0);
+    expect(drainSkipped("de-autobahn-events").no_geometry ?? 0).toBeGreaterThan(0);
   });
 
   it("digitraffic", () => {
     parseDigitraffic(readFileSync(join(FIXTURES, "digitraffic/messages.json")), src("fi-dt"));
-    expect(drainSkippedNoGeometry("fi-dt")).toBeGreaterThan(0);
+    expect(drainSkipped("fi-dt").no_geometry ?? 0).toBeGreaterThan(0);
   });
 
   it("wzdx", () => {
@@ -48,13 +48,13 @@ describe("no-geometry skips are reported by every parser that drops records", ()
       ],
     };
     parseWzdx(JSON.stringify(feed), src("us-wzdx-events"));
-    expect(drainSkippedNoGeometry("us-wzdx-events")).toBe(1);
+    expect(drainSkipped("us-wzdx-events").no_geometry ?? 0).toBe(1);
   });
 
   it("open511", () => {
     const feed = { events: [{ id: "no-geo", status: "ACTIVE", headline: "x" }] };
     parseOpen511(JSON.stringify(feed), src("ca-bc-drivebc-events"));
-    expect(drainSkippedNoGeometry("ca-bc-drivebc-events")).toBe(1);
+    expect(drainSkipped("ca-bc-drivebc-events").no_geometry ?? 0).toBe(1);
   });
 
   it("keeps every source's count separate", () => {
@@ -65,7 +65,7 @@ describe("no-geometry skips are reported by every parser that drops records", ()
       }),
       src("feed-a"),
     );
-    expect(drainSkippedNoGeometry("feed-b")).toBe(0);
-    expect(drainSkippedNoGeometry("feed-a")).toBe(1);
+    expect(drainSkipped("feed-b").no_geometry ?? 0).toBe(0);
+    expect(drainSkipped("feed-a").no_geometry ?? 0).toBe(1);
   });
 });

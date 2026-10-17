@@ -34,5 +34,6 @@ export * from "./payload.js";
 export * from "./public-license.js";
 export * from "./redact.js";
 export * from "./reproject.js";
+export * from "./skips.js";
 export * from "./version.js";
 export * from "./zip.js";

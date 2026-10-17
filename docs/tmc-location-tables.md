@@ -113,7 +113,8 @@ The SQL that produces `ground-truth.csv` is documented at the top of that script
 
 ## Records that still cannot be placed
 
-Counted per source in `GET /feeds/status`, with the reason logged:
+Counted per source under `lastSkipped.no_geometry` in `GET /feeds/status`, with
+the reason logged:
 
 | Reason             | Meaning                                                     |
 | ------------------ | ----------------------------------------------------------- |

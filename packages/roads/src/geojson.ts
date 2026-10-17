@@ -1,5 +1,9 @@
 import { type Severity, toIsoTimestamp } from "@openconditions/core";
-import { readFeatureCollection, reprojectGeometry } from "@openconditions/ingest-framework";
+import {
+  readFeatureCollection,
+  recordSkipped,
+  reprojectGeometry,
+} from "@openconditions/ingest-framework";
 import { jcs, sha256Hex } from "@openconditions/model";
 import { type RoadClassification, registeredClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
@@ -11,7 +15,6 @@ import {
   type RoadEventType,
 } from "./model.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -239,7 +242,7 @@ export function featuresToRoadEvents(
     console.debug(
       `[geojson] ${src.id}: skipped ${skippedNoGeometry} feature(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

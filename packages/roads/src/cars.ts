@@ -1,9 +1,9 @@
 import { type GeoJsonGeometry, scheduleTimezoneForGeometry } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { carsClassification, type RoadClassification } from "@openconditions/model-roads";
 import type { LaneStatus, RoadEvent } from "./model.js";
 import { buildLocalSchedule, jsDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseOf } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
@@ -456,7 +456,7 @@ export function parseCarsSnapshot(
     if (outcome.record) records.push(outcome.record);
   });
   const unlocatable = records.filter((r) => r.disposition === "unlocatable").length;
-  if (unlocatable > 0) recordSkippedNoGeometry(src.id, unlocatable);
+  if (unlocatable > 0) recordSkipped(src.id, "no_geometry", unlocatable);
   return { inputCount: data.length, records, errors };
 }
 

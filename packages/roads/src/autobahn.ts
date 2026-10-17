@@ -1,12 +1,12 @@
 import type { GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Schedule } from "@openconditions/model";
 import { autobahnClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseType } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface AutobahnCoordinate {
@@ -519,7 +519,7 @@ export function parseAutobahn(
   if (skippedNoGeometry > 0) {
     console.debug(`[autobahn] skipped ${skippedNoGeometry} item(s) with no usable geometry`);
     // Also counted per source so the loss shows up in GET /feeds/status.
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

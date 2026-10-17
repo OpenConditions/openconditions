@@ -1,11 +1,11 @@
 import type { GeoJsonGeometry } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { open511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseOf } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface Open511Road {
@@ -368,7 +368,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
   if (skippedNoGeometry > 0) {
     console.debug(`[open511] skipped ${skippedNoGeometry} event(s) with no usable geometry`);
     // Also counted per source so the loss shows up in GET /feeds/status.
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

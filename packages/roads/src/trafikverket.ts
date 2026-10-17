@@ -1,10 +1,10 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { trafikverketClassification } from "@openconditions/model-roads";
 import type { Geometry, Position } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import { coarseType } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -301,7 +301,7 @@ export function parseTrafikverket(
     console.debug(
       `[trafikverket] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

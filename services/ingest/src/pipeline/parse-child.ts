@@ -1,5 +1,9 @@
-import { type FeedPayloads, heldBuffers, type ParseOutput } from "@openconditions/ingest-framework";
-import { drainSkippedNoGeometry } from "@openconditions/roads";
+import {
+  drainSkipped,
+  type FeedPayloads,
+  heldBuffers,
+  type ParseOutput,
+} from "@openconditions/ingest-framework";
 import { formatOf } from "../domains.js";
 import { type ChildMessage, type ParseTask, RECORD_CLASSES } from "./parse-process.js";
 import { inspectSnapshotCompleteness, type SnapshotInspection } from "./snapshot-inspection.js";
@@ -50,7 +54,7 @@ async function parse(task: ParseTask): Promise<void> {
   try {
     output = formatOf(feed).parse(feed, payloads, task.ctx);
   } catch (err) {
-    drainSkippedNoGeometry(feed.id);
+    drainSkipped(feed.id);
     post({ type: "failed", stage: "parse", message: messageOf(err) });
     return;
   }
@@ -66,5 +70,5 @@ async function parse(task: ParseTask): Promise<void> {
   }
   const rest: Partial<ParseOutput> = { ...output };
   for (const cls of RECORD_CLASSES) delete rest[cls];
-  post({ type: "done", rest, inspection, skippedNoGeometry: drainSkippedNoGeometry(feed.id) });
+  post({ type: "done", rest, inspection, skipped: drainSkipped(feed.id) });
 }

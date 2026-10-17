@@ -116,13 +116,7 @@ export async function runFeedOnce(
       console.error(`[scheduler] ${src.id}: ${result.error}`);
       statusStore.recordError(src.id, now(), result.error);
     } else {
-      statusStore.recordSuccess(
-        src.id,
-        now(),
-        result.count,
-        result.durationMs,
-        result.skippedNoGeometry,
-      );
+      statusStore.recordSuccess(src.id, now(), result.count, result.durationMs, result.skipped);
     }
     // Flow feeds derive congestion situations too, so every poll may have queued work.
     o.bindingDrain?.request();

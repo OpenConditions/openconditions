@@ -1,5 +1,6 @@
 import type { Confidence, GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { WZDX_LANE_STATUSES, wzdxClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import {
@@ -10,7 +11,6 @@ import {
   type RoadRef,
 } from "./model.js";
 import { coarseOf, coarseType } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface WzdxLane {
@@ -451,7 +451,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
   if (skippedNoGeometry > 0) {
     console.debug(`[wzdx] skipped ${skippedNoGeometry} feature(s) with no usable geometry`);
     // Also counted per source so the loss shows up in GET /feeds/status.
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

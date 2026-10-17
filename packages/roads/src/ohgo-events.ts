@@ -1,8 +1,8 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { ohgoClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -156,7 +156,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     console.debug(
       `[ohgo-events] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

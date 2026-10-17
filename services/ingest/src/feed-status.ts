@@ -1,4 +1,4 @@
-import { redactUrl } from "@openconditions/ingest-framework";
+import { redactUrl, type SkipCounts } from "@openconditions/ingest-framework";
 
 /** Latest run outcome for one feed. All timestamps are ISO 8601 strings. */
 export interface FeedRunStatus {
@@ -9,11 +9,14 @@ export interface FeedRunStatus {
   lastRowCount?: number;
   lastDurationMs?: number;
   /**
-   * Records the last run's parser dropped for want of coordinate geometry
-   * (DATEX Alert-C/TMC-only location references). Absent when the run dropped
-   * none, so a feed that never loses records stays visually quiet.
+   * What the last run's parser left unread, by reason: records dropped for want
+   * of coordinate geometry (`no_geometry`, such as DATEX Alert-C/TMC-only
+   * location references), of an unmapped type (`unknown_type`), as malformed
+   * (`malformed`) or in an unsupported version (`unsupported_version`), and
+   * enumerated values it could not map (`unknown_value`). Absent when the run
+   * skipped nothing, so a feed that never loses data stays visually quiet.
    */
-  lastSkippedNoGeometry?: number;
+  lastSkipped?: SkipCounts;
 }
 
 /**
@@ -30,7 +33,7 @@ export class FeedStatusStore {
     at: string,
     rowCount: number,
     durationMs: number,
-    skippedNoGeometry?: number,
+    skipped?: SkipCounts,
   ): void {
     const prev = this.map.get(feedId) ?? {};
     this.map.set(feedId, {
@@ -41,7 +44,7 @@ export class FeedStatusStore {
       lastDurationMs: durationMs,
       // Always overwritten (not merged), so a run that dropped nothing clears a
       // previous run's count instead of leaving a stale number on the page.
-      lastSkippedNoGeometry: skippedNoGeometry,
+      lastSkipped: skipped,
       // A genuine success means the feed recovered — a stale error from a prior
       // cycle should not keep showing on GET /feeds/status.
       lastError: undefined,

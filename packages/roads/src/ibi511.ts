@@ -1,9 +1,9 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { ibi511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { CoarseType } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -199,7 +199,7 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
     console.debug(
       `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);
@@ -370,7 +370,7 @@ export function parseIbi511Conditions(
     console.debug(
       `[ibi511] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);

@@ -1,7 +1,7 @@
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { beforeEach, describe, expect, it } from "vitest";
 import { roadsDomain } from "../domain.js";
 import { situationParserOf } from "../parse.js";
-import { __resetSkipMetrics, drainSkippedNoGeometry } from "../skip-metrics.js";
 import type { SourceDescriptor } from "../types.js";
 
 /**
@@ -113,7 +113,7 @@ function eventFormats(): string[] {
 }
 
 describe("no-geometry accounting is instrumented for every situation format", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   it("every situation format has a geometry-less sample or a written exemption", () => {
     const missing = eventFormats().filter((f) => !(f in GEOMETRYLESS_SAMPLE) && !(f in EXEMPT));
@@ -128,7 +128,7 @@ describe("no-geometry accounting is instrumented for every situation format", ()
 
       expect(events, `${format} should emit no event for a geometry-less record`).toEqual([]);
       expect(
-        drainSkippedNoGeometry(id),
+        drainSkipped(id).no_geometry ?? 0,
         `${format} dropped a record without reporting it — an absent count reads as "loses nothing"`,
       ).toBeGreaterThan(0);
     },

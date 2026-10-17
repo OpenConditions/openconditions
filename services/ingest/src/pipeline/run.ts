@@ -11,10 +11,12 @@ import type {
   OAuthGrants,
   ParseOutput,
   RecordDraft,
+  SkipCounts,
   StatusIndex,
   StatusOutput,
 } from "@openconditions/ingest-framework";
 import {
+  drainSkipped,
   dueRoles,
   feedSecretValues,
   fetchEndpoint,
@@ -25,17 +27,16 @@ import {
   heldBytes,
   holdPayload,
   makeAuthorizedFetch,
+  recordSkipped,
   redactSecrets,
   redactUrl,
+  type SkipReason,
+  skippedRecords,
 } from "@openconditions/ingest-framework";
 import type { MapMatchClient } from "@openconditions/openlr";
 import { createResolverClient } from "@openconditions/openlr";
 import type { FlowOutput } from "@openconditions/roads";
-import {
-  drainSkippedNoGeometry,
-  enrichReadings,
-  recordSkippedNoGeometry,
-} from "@openconditions/roads";
+import { enrichReadings } from "@openconditions/roads";
 import { isDbTimeout, noteShrink, type WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
@@ -161,13 +162,13 @@ export interface RunResult {
   count: number;
   durationMs: number;
   /**
-   * Records the parser dropped this cycle because they carried no coordinate
-   * geometry (DATEX Alert-C/TMC-only location references). Absent when nothing
-   * was dropped. Surfaced per feed in `GET /feeds/status` so a source silently
-   * losing its records to TMC-only encoding is visible rather than looking like
-   * a healthy, quiet feed.
+   * What the parser left unread this cycle, by reason: records dropped (no
+   * coordinate geometry, an unknown type, a malformed record, an unsupported
+   * version) and enumerated values it could not map. Absent when nothing was
+   * skipped. Surfaced per feed in `GET /feeds/status` so a source silently
+   * losing its records is visible rather than looking like a healthy, quiet feed.
    */
-  skippedNoGeometry?: number;
+  skipped?: SkipCounts;
   /**
    * Set when the run swallowed a genuine failure (site-table cold failure,
    * streaming-flow error, or fetch error) rather than throwing. Absent for a
@@ -507,7 +508,7 @@ async function runAttempt(
   // failed (shrink tripwire, fan-out threshold, write error) would carry its count
   // into the next successful run and report the two summed — reading as a sudden
   // doubling of the loss rather than the same loss counted twice.
-  drainSkippedNoGeometry(src.id);
+  drainSkipped(src.id);
 
   // Load the reference data (a site table, a station registry) before the feed
   // fetch, so the streaming path has its join map ready. Each loads on its
@@ -566,7 +567,8 @@ async function runAttempt(
   });
   const finish = (parse: ParseOutput): Promise<RunResult> => {
     const poll = pollContext();
-    if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload);
+    const skipped = drainSkipped(src.id);
+    if (format.kind === "features") return finishFeaturePoll(poll, parse, heldPayload, skipped);
     return format.kind === "measurements"
       ? finishFlowPoll(
           poll,
@@ -576,8 +578,9 @@ async function runAttempt(
             situations: parse.situations,
           },
           format,
+          skipped,
         )
-      : finishEventPoll(poll, parse, snapshotInspection);
+      : finishEventPoll(poll, parse, snapshotInspection, skipped);
   };
   if (format.stream) {
     // A payload too large to buffer (NDW's ~50 MB DATEX flow document): stream
@@ -1032,7 +1035,7 @@ async function runAttempt(
           return failParse(err);
         }
         steps.lap("parse");
-        return finishStatusPoll(pollContext(), output);
+        return finishStatusPoll(pollContext(), output, drainSkipped(src.id));
       };
       return deps.parseGate
         ? deps.parseGate.run(bytesOf(fetched), statusAndFinish, src.id)
@@ -1061,7 +1064,9 @@ async function runAttempt(
       try {
         const parsed = await child.parse({ feed: src, payloads, ctx });
         snapshotInspection = parsed.inspection;
-        recordSkippedNoGeometry(src.id, parsed.skippedNoGeometry);
+        for (const [reason, count] of Object.entries(parsed.skipped)) {
+          recordSkipped(src.id, reason as SkipReason, count);
+        }
         if (deps.roles) delete deps.roles.statusIndex;
         return { parsed: parsed.output };
       } catch (err) {
@@ -1221,6 +1226,7 @@ async function finishEventPoll(
   poll: PollContext,
   parse: ParseOutput,
   inspection: SnapshotInspection | undefined,
+  skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
   const { resolved, dropped, failed, unlocatable } = await resolveOpenLr(
@@ -1251,8 +1257,10 @@ async function finishEventPoll(
   // changed its shape): publishing it would withdraw the last publication.
   // Terminal records do not change that, since some feeds always carry them
   // (a type left to another feed); what stands is bounded by its records'
-  // own expiry.
-  const parseRejected = parse.rejected ?? 0;
+  // own expiry. Records skipped for want of geometry are not among them: a
+  // snapshot of only unplaceable records says what is current.
+  const noGeometry = skipped.no_geometry ?? 0;
+  const parseRejected = (parse.rejected ?? 0) + skippedRecords(skipped) - noGeometry;
   if (accounting !== undefined && accounting.accepted === 0 && parseRejected > 0) {
     const refused = await fail(
       poll,
@@ -1274,8 +1282,7 @@ async function finishEventPoll(
     if (shrunk) return failShrunk(poll, "event", "situations", situations.length, shrunk);
   }
 
-  const skippedNoGeometry = drainSkippedNoGeometry(src.id);
-  const rejected = dropped + skippedNoGeometry + parseRejected;
+  const rejected = dropped + noGeometry + parseRejected;
   let summary: WriteSummary;
   poll.steps.lap("prepare");
   try {
@@ -1307,13 +1314,13 @@ async function finishEventPoll(
 
   const c = summary.counts.situation;
   const durationMs = Date.now() - poll.start;
-  // Records the parser dropped for want of a coordinate, drained per run so the
-  // status page shows what this cycle lost.
+  // Situations the OpenLR resolver could not place.
   const dropNote = dropped > 0 ? ` (${dropped} dropped — no geometry)` : "";
   console.info(
     `[ingest] ${src.id}: situations created=${c.created} updated=${c.updated} ` +
       `restored=${c.restored} withdrawn=${c.withdrawn} unchanged=${c.unchanged} ` +
-      `of ${situations.length} in ${durationMs}ms${dropNote} (${poll.steps.describe()})`,
+      `of ${situations.length} in ${durationMs}ms${dropNote}${skipNote(skipped)} ` +
+      `(${poll.steps.describe()})`,
   );
   return {
     count: c.created + c.updated + c.restored,
@@ -1324,7 +1331,7 @@ async function finishEventPoll(
     updated: c.updated,
     deleted: c.withdrawn,
     rejected: rejected + summary.rejected.length,
-    ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
+    ...skipsOf(skipped),
     ...(accounting !== undefined
       ? {
           snapshot: snapshotCounts(accounting, failed > 0 ? [] : unlocatable, situations),
@@ -1346,6 +1353,7 @@ async function finishFlowPoll(
   poll: PollContext,
   parse: FlowOutput,
   format: Pick<FeedFormat, "mayBeEmpty" | "restatesTransient">,
+  skipped: SkipCounts,
 ): Promise<RunResult> {
   const mayBeEmpty = format.mayBeEmpty === true;
   const { src, deps } = poll;
@@ -1389,7 +1397,6 @@ async function finishFlowPoll(
     observations: stamp(output.observations),
     situations: stamp(output.situations),
   };
-  const skippedNoGeometry = drainSkippedNoGeometry(src.id);
   let published: Awaited<ReturnType<typeof publishFlows>>;
   poll.steps.lap("prepare");
   try {
@@ -1397,7 +1404,7 @@ async function finishFlowPoll(
       output: stamped,
       situationsComplete: baselinesLoaded,
       restatesTransient: format.restatesTransient === true && poll.statesComplete,
-      rejected: skippedNoGeometry,
+      rejected: skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
       now: deps.now(),
@@ -1435,7 +1442,7 @@ async function finishFlowPoll(
     updated: counts.updated,
     deleted: counts.deleted,
     rejected: counts.rejected,
-    ...(skippedNoGeometry > 0 ? { skippedNoGeometry } : {}),
+    ...skipsOf(skipped),
     ...(pastRollup > 0 ? { pastRollup } : {}),
   };
 }
@@ -1450,6 +1457,7 @@ async function finishFeaturePoll(
   poll: PollContext,
   parse: ParseOutput,
   heldPayload: boolean,
+  skipped: SkipCounts,
 ): Promise<RunResult> {
   const { src, deps } = poll;
   if (heldPayload && parse.features.length === 0) {
@@ -1473,7 +1481,7 @@ async function finishFeaturePoll(
   try {
     published = await publishFeatures(deps.sql, src, {
       output,
-      rejected: parse.rejected ?? 0,
+      rejected: (parse.rejected ?? 0) + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
       now: deps.now(),
@@ -1498,8 +1506,8 @@ async function finishFeaturePoll(
   console.info(
     `[ingest] ${src.id}: ${output.features.length} features, ${output.observations.length} readings, ` +
       `${output.offers.length} offers (${counts.inserted} inserted, ${counts.updated} updated, ` +
-      `${counts.deleted} withdrawn, ${summary.observations.ended} readings ended) in ${durationMs}ms ` +
-      `(${poll.steps.describe()})`,
+      `${counts.deleted} withdrawn, ${summary.observations.ended} readings ended) in ${durationMs}ms` +
+      `${skipNote(skipped)} (${poll.steps.describe()})`,
   );
   return {
     count: counts.inserted + counts.updated,
@@ -1510,6 +1518,7 @@ async function finishFeaturePoll(
     updated: counts.updated,
     deleted: counts.deleted,
     rejected: counts.rejected,
+    ...skipsOf(skipped),
   };
 }
 
@@ -1519,7 +1528,11 @@ async function finishFeaturePoll(
  * and offers untouched and nothing withdrawn; the poll is a success of the
  * source like any other.
  */
-async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promise<RunResult> {
+async function finishStatusPoll(
+  poll: PollContext,
+  output: StatusOutput,
+  skipped: SkipCounts,
+): Promise<RunResult> {
   const { src, deps } = poll;
   const stamp = attributionStamp(src, new Date(poll.attempt.at));
   const observations = output.observations.map((d) => stamp(d));
@@ -1528,7 +1541,7 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
   try {
     published = await publishReadings(deps.sql, src, {
       observations,
-      rejected: output.rejected,
+      rejected: output.rejected + skippedRecords(skipped),
       poll: poll.identity,
       durationMs: Date.now() - poll.start,
       now: deps.now(),
@@ -1552,7 +1565,7 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
       `(latest ${o.latest}, history ${o.history}, unchanged ${o.unchanged}), ` +
       `${output.rejected} rejected` +
       `${output.unplaced === undefined ? "" : ` (${output.unplaced} unplaced)`} ` +
-      `in ${durationMs}ms (${poll.steps.describe()})`,
+      `in ${durationMs}ms${skipNote(skipped)} (${poll.steps.describe()})`,
   );
   return {
     count: counts.updated,
@@ -1563,7 +1576,19 @@ async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promis
     updated: counts.updated,
     deleted: 0,
     rejected: counts.rejected,
+    ...skipsOf(skipped),
   };
+}
+
+/** A run result's skip counts, absent when the parse skipped nothing. */
+function skipsOf(skipped: SkipCounts): Pick<RunResult, "skipped"> {
+  return Object.keys(skipped).length > 0 ? { skipped } : {};
+}
+
+/** The skip counts for a poll's log line, as ` (skipped: malformed 2, …)`. */
+function skipNote(skipped: SkipCounts): string {
+  const parts = Object.entries(skipped).map(([reason, count]) => `${reason} ${count}`);
+  return parts.length > 0 ? ` (skipped: ${parts.join(", ")})` : "";
 }
 
 /** Bounded per-run counts for a complete-snapshot source. */

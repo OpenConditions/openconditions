@@ -3,9 +3,13 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { gzipSync } from "node:zlib";
 import { CONTRIBUTOR_RECEIPT_VERSION } from "@openconditions/core";
-import type { CatalogFeed, FeedEndpoint, LookupFn } from "@openconditions/ingest-framework";
+import {
+  type CatalogFeed,
+  type FeedEndpoint,
+  type LookupFn,
+  recordSkipped,
+} from "@openconditions/ingest-framework";
 import { encodeOpenlrLine } from "@openconditions/openlr";
-import { recordSkippedNoGeometry } from "@openconditions/roads";
 import {
   ensureObservationPartitions,
   retentionClasses,
@@ -231,12 +235,12 @@ describe("pipeline — open511 (DriveBC)", () => {
     expect(parseInt(wrongRows[0]!.count, 10)).toBe(0);
   }, 60_000);
 
-  it("does not carry a crashed run's no-geometry count into the next successful run", async () => {
+  it("does not carry a crashed run's skip counts into the next successful run", async () => {
     // Most failure paths return before the drain at the end of runSource, so a run
     // that parsed and then failed leaves its count behind. Stand in for that
     // leftover directly — the reset at the top of the run must discard it, or the
     // next healthy cycle reports a loss that already happened.
-    recordSkippedNoGeometry("ca-bc-drivebc-events", 999);
+    recordSkipped("ca-bc-drivebc-events", "no_geometry", 999);
 
     const jsonPayload = readFileSync(DRIVEBC_FIXTURE_PATH);
     const result = await runSource(drivebcFeed, {
@@ -248,7 +252,7 @@ describe("pipeline — open511 (DriveBC)", () => {
 
     expect(result.error).toBeUndefined();
     // The fixture drops nothing, so this cycle's honest answer is "no loss".
-    expect(result.skippedNoGeometry).toBeUndefined();
+    expect(result.skipped).toBeUndefined();
   }, 60_000);
 
   it("all DriveBC geometries are valid PostGIS geometries", async () => {

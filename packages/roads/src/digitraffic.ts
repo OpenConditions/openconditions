@@ -1,5 +1,6 @@
 import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import {
   digitrafficClassification,
   parseRestrictionInstant,
@@ -9,7 +10,6 @@ import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
 import { normalizeDtToken } from "./digitraffic-token.js";
 import type { Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
 import { coarseOf, coarseType } from "./situation/classes.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
@@ -748,7 +748,7 @@ function parseDigitrafficInternal(
     if (outcome.record) records.push(outcome.record);
     if (outcome.skippedNoGeometry) skippedNoGeometry++;
   });
-  if (skippedNoGeometry > 0) recordSkippedNoGeometry(src.id, skippedNoGeometry);
+  if (skippedNoGeometry > 0) recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   return { inputCount: features.length, records, errors };
 }
 

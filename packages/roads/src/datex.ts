@@ -23,7 +23,7 @@ import {
   xmlNodeToArray,
   xmlText,
 } from "@openconditions/datex2";
-import { isPlausibleWgs84, reprojectorFor } from "@openconditions/ingest-framework";
+import { isPlausibleWgs84, recordSkipped, reprojectorFor } from "@openconditions/ingest-framework";
 import type { Issue, Schedule, Text, Validity } from "@openconditions/model";
 import {
   datexClassification,
@@ -44,7 +44,6 @@ import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { UNDETERMINED } from "./situation/location.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import {
   canonicalSnapshotValue,
   compareSnapshotRank,
@@ -1722,7 +1721,7 @@ function parseDatexInternal(
     );
     // Also counted per source, so the loss is measurable in GET /feeds/status
     // rather than visible only in a debug log line.
-    recordSkippedNoGeometry(src.id, skippedAlertCOnly);
+    recordSkipped(src.id, "no_geometry", skippedAlertCOnly);
   }
 
   // Unresolved OpenLR markers (no geometry yet) are appended after the located

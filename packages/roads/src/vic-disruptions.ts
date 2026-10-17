@@ -1,10 +1,10 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Schedule } from "@openconditions/model";
 import { vicClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -216,7 +216,7 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     console.debug(
       `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
   return out;
 }
@@ -274,7 +274,7 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     console.debug(
       `[vic-disruptions] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
   return out;
 }

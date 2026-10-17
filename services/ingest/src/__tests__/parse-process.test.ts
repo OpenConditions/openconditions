@@ -2,8 +2,11 @@ import { readFileSync } from "node:fs";
 import { setFlagsFromString } from "node:v8";
 import { runInNewContext } from "node:vm";
 import { gzipSync } from "node:zlib";
-import type { CatalogFeed, ParseContext } from "@openconditions/ingest-framework";
-import { drainSkippedNoGeometry } from "@openconditions/roads";
+import {
+  type CatalogFeed,
+  drainSkipped,
+  type ParseContext,
+} from "@openconditions/ingest-framework";
 import { afterAll, describe, expect, it } from "vitest";
 import { formatOf } from "../domains.js";
 import { createParseProcess, ParseProcessError } from "../pipeline/parse-process.js";
@@ -26,7 +29,7 @@ function inline(feed: CatalogFeed, main: Buffer) {
   return {
     output,
     inspection: inspectSnapshotCompleteness(feed, [main]),
-    skippedNoGeometry: drainSkippedNoGeometry(feed.id),
+    skipped: drainSkipped(feed.id),
   };
 }
 

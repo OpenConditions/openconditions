@@ -52,7 +52,6 @@ export * from "./routing.js";
 export * from "./segment.js";
 export * from "./siteTable.js";
 export * from "./situation/index.js";
-export * from "./skip-metrics.js";
 export * from "./snapshot.js";
 export * from "./stations-bcn.js";
 export * from "./stations-fintraffic.js";

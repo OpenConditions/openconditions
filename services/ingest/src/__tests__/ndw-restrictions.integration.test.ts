@@ -282,7 +282,7 @@ describe("ndw record lifecycle against a real database", () => {
       // The same drafts: every situation stands as it was, none written again.
       expect(apart).toMatchObject({ count: 0, inserted: 0, updated: 0, deleted: 0 });
       expect(apart.snapshot).toEqual(inline.snapshot);
-      expect(apart.skippedNoGeometry).toEqual(inline.skippedNoGeometry);
+      expect(apart.skipped).toEqual(inline.skipped);
       expect(apart.rejected).toBe(inline.rejected);
       expect(await stored(ROADWORKS_ID)).toEqual(before);
     } finally {

@@ -1,6 +1,6 @@
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseDatexSituations } from "../datex.js";
-import { __resetSkipMetrics, drainSkippedNoGeometry } from "../skip-metrics.js";
 import type { SourceDescriptor } from "../types.js";
 
 /**
@@ -50,7 +50,7 @@ const LINEAR = `<alertCLinear xsi:type="AlertCMethod4Linear">
 const version = (v: string) => LINEAR.replace("22.0", v);
 
 describe("DATEX records carrying only an Alert-C location", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   it("places a linear location as the stretch between its coded points", () => {
     const events = parseDatexSituations(alertCOnly(LINEAR), SOURCE);
@@ -64,7 +64,7 @@ describe("DATEX records carrying only an Alert-C location", () => {
       ],
     });
     // Nothing was lost, so nothing should be reported as lost.
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(0);
   });
 
   it("records which table placed it, since the geometry is not the feed's own", () => {
@@ -125,7 +125,7 @@ describe("DATEX records carrying only an Alert-C location", () => {
     const events = parseDatexSituations(alertCOnly(version("9.00")), SOURCE);
 
     expect(events).toEqual([]);
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(1);
   });
 
   it("drops a record for a country we hold no table for", () => {
@@ -134,7 +134,7 @@ describe("DATEX records carrying only an Alert-C location", () => {
       .replace("22.0", "A");
 
     expect(parseDatexSituations(alertCOnly(dutch), SOURCE)).toEqual([]);
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(1);
   });
 
   it("drops a record whose Alert-C block carries the empty placeholder code", () => {
@@ -143,7 +143,7 @@ describe("DATEX records carrying only an Alert-C location", () => {
     const zeroed = LINEAR.replace(">12271<", ">0<").replace(">12270<", ">0<");
 
     expect(parseDatexSituations(alertCOnly(zeroed), SOURCE)).toEqual([]);
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(1);
   });
 
   it("prefers the feed's own coordinates when it has them", () => {
@@ -168,7 +168,7 @@ describe("DATEX records carrying only an Alert-C location", () => {
  * were losing all of them.
  */
 describe("DATEX records located only by a display coordinate", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   const area = (inner: string) =>
     Buffer.from(
@@ -193,7 +193,7 @@ describe("DATEX records located only by a display coordinate", () => {
 
     expect(events).toHaveLength(1);
     expect(events[0]!.geometry).toEqual({ type: "Point", coordinates: [8.6821, 50.1109] });
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(0);
   });
 
   it("finds such a coordinate whatever element carries it", () => {
@@ -238,7 +238,7 @@ describe("DATEX records located only by a display coordinate", () => {
  * endpoints resolved to nothing and was dropped.
  */
 describe("DATEX linearByCoordinates endpoints", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   const linear = (inner: string) =>
     Buffer.from(
@@ -274,7 +274,7 @@ describe("DATEX linearByCoordinates endpoints", () => {
         [10.2203178, 48.6304951],
       ],
     });
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(0);
   });
 
   it("uses indexed intermediate points to build an ordered LineString", () => {
@@ -315,7 +315,7 @@ describe("DATEX linearByCoordinates endpoints", () => {
  * as if they were degrees, putting 62 records nowhere at all.
  */
 describe("DATEX feeds publishing an undeclared projected grid", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   const utm33 = (posList: string) =>
     Buffer.from(
@@ -354,7 +354,7 @@ describe("DATEX feeds publishing an undeclared projected grid", () => {
     const events = parseDatexSituations(utm33(POS), SOURCE);
 
     expect(events).toEqual([]);
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(1);
   });
 });
 
@@ -364,7 +364,7 @@ describe("DATEX feeds publishing an undeclared projected grid", () => {
  * keyed on element names could find it. All 298 records a poll were dropped.
  */
 describe("DATEX geometry under an unnamed element", () => {
-  beforeEach(() => __resetSkipMetrics());
+  beforeEach(() => __resetSkips());
 
   const wrapped = (inner: string) =>
     Buffer.from(
@@ -398,7 +398,7 @@ describe("DATEX geometry under an unnamed element", () => {
         [10.032202936906385, 53.626490917876176],
       ],
     });
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(0);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(0);
   });
 
   it("ignores numeric text that is not a coordinate sequence", () => {
@@ -407,7 +407,7 @@ describe("DATEX geometry under an unnamed element", () => {
     const events = parseDatexSituations(wrapped("<any>12345 67890 999999 111111</any>"), SOURCE);
 
     expect(events).toEqual([]);
-    expect(drainSkippedNoGeometry(SOURCE.id)).toBe(1);
+    expect(drainSkipped(SOURCE.id).no_geometry ?? 0).toBe(1);
   });
 
   it("does not let an unnamed list override the record's real geometry", () => {

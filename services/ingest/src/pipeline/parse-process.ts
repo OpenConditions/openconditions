@@ -5,6 +5,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  type SkipCounts,
 } from "@openconditions/ingest-framework";
 import { LARGE_PAYLOAD_BYTES } from "./parse-gate.js";
 import type { SnapshotInspection } from "./snapshot-inspection.js";
@@ -26,8 +27,8 @@ export interface ParseTask {
 export interface ParsedApart {
   output: ParseOutput;
   inspection: SnapshotInspection;
-  /** Records the roads parsers dropped for want of a coordinate. */
-  skippedNoGeometry: number;
+  /** What the parser left unread, by reason. */
+  skipped: SkipCounts;
 }
 
 /** The record classes of a parse, in the order the child sends them. */
@@ -44,7 +45,7 @@ export type ChildMessage =
       /** The parse's other fields: its accounting, rejections and status index. */
       rest: Partial<ParseOutput>;
       inspection: SnapshotInspection;
-      skippedNoGeometry: number;
+      skipped: SkipCounts;
     }
   | { type: "failed"; stage: "payloads" | "parse"; message: string };
 
@@ -166,7 +167,7 @@ export function createParseProcess(
         resolve({
           output: { ...output, ...message.rest },
           inspection: message.inspection,
-          skippedNoGeometry: message.skippedNoGeometry,
+          skipped: message.skipped,
         });
       };
       const died = (reason: string) => {

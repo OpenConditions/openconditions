@@ -5,10 +5,10 @@ import {
   getXmlChildText,
   parseXmlDocument,
 } from "@openconditions/datex2";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { gddkiaClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
-import { recordSkippedNoGeometry } from "./skip-metrics.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -142,7 +142,7 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
     console.debug(
       `[gddkia] ${src.id}: skipped ${skippedNoGeometry} record(s) with no usable geometry`,
     );
-    recordSkippedNoGeometry(src.id, skippedNoGeometry);
+    recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
 
   return dedupeRoadEvents(out);
