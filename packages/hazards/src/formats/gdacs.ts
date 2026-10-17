@@ -146,6 +146,51 @@ function areasOf(payloads: readonly Buffer[]): Map<string, [number, number][][][
   return areas;
 }
 
+const count = (raw: string | undefined): number | undefined => {
+  const n = Number(raw);
+  return raw !== undefined && Number.isInteger(n) && n >= 0 ? n : undefined;
+};
+
+/**
+ * What an event's `population` and `severity` say of its impact, read by
+ * their unit, which differs per event type: a cyclone's population is the
+ * people exposed to wind of the speed its unit names (`Pop74`: 74 mph, a
+ * category 1 hurricane), a volcano's the people living within 30 km, while a flood's
+ * holds its deaths ("2 deaths", "0 deaths and 20 displaced"), and a
+ * drought's severity its area in km². An unread unit stating a non-zero
+ * figure is `unread`; an empty one (a drought's population) is nothing.
+ */
+function impactOf(
+  eventType: string,
+  item: Record<string, unknown>,
+): { values: Record<string, number>; unread: boolean } {
+  const out: Record<string, number> = {};
+  let unread = false;
+  const population = item["population"];
+  const unit = (attribute(population, "unit") ?? "").toLowerCase();
+  const value = count(attribute(population, "value"));
+  if (eventType === "TC" && /^pop\d+$/.test(unit) && value !== undefined) {
+    out["populationAffected"] = value;
+  } else if (eventType === "VO" && unit === "population affected" && value !== undefined) {
+    out["populationAffected"] = value;
+  } else if (eventType === "FL" && unit === "population affected") {
+    const m = /^(\d+) deaths?(?: and (\d+) displaced)?$/.exec(str(population) ?? "");
+    if (m === null) unread = value !== undefined && value > 0;
+    else {
+      out["deaths"] = Number(m[1]);
+      if (m[2] !== undefined) out["displaced"] = Number(m[2]);
+    }
+  } else if (value !== undefined && value > 0) {
+    unread = true;
+  }
+  const severity = item["severity"];
+  const area = Number(attribute(severity, "value"));
+  if (attribute(severity, "unit") === "km2" && Number.isFinite(area) && area >= 0) {
+    out["areaHa"] = area * 100;
+  }
+  return { values: out, unread };
+}
+
 function toDraft(
   item: Record<string, unknown>,
   eventType: string,
@@ -157,7 +202,11 @@ function toDraft(
   const start = gdacsTime(item["fromdate"]);
   if (start === undefined) return null;
   const type = TYPES[eventType]!;
-  const current = str(item["iscurrent"])?.toLowerCase() !== "false";
+  const currency = str(item["iscurrent"])?.toLowerCase();
+  if (currency !== undefined && currency !== "true" && currency !== "false") {
+    recordSkipped(feed.id, "unknown_value");
+  }
+  const current = currency !== "false";
   const end = gdacsTime(item["todate"]);
   const alert = str(item["alertlevel"]);
   const colour = alert?.toLowerCase();
@@ -173,7 +222,8 @@ function toDraft(
   const severityText = str(item["severity"]);
   const wind = Number(attribute(item["severity"], "value"));
   const windUnit = attribute(item["severity"], "unit");
-  const population = Number(attribute(item["population"], "value"));
+  const impact = impactOf(eventType, item);
+  if (impact.unread) recordSkipped(feed.id, "unknown_value");
   const updated = gdacsTime(item["datemodified"]);
   const subtype =
     eventType === "TC" ? cycloneSubtype(severityText, rssPoint(item) ?? geometry) : undefined;
@@ -225,9 +275,7 @@ function toDraft(
       ...(eventType === "TC" && windUnit === "km/h" && Number.isFinite(wind) && wind >= 0
         ? { maxWind: { value: Math.round(wind), unit: "km/h" } }
         : {}),
-      ...(Number.isInteger(population) && population >= 0
-        ? { populationAffected: population }
-        : {}),
+      ...impact.values,
     },
   };
 }
@@ -249,7 +297,10 @@ function toDraft(
  * wind buffer, a flood's affected area), else the event keeps its RSS point;
  * only an actual, public alert or update supplies areas.
  * A cyclone's subtype comes from GDACS's severity text and its basin; its
- * wind is the severity value in km/h. An item with no usable id or time is
+ * wind is the severity value in km/h. The population and a drought's area
+ * are read by their unit (`impactOf`): a flood's deaths and displaced are
+ * no affected population. An `iscurrent` that is neither true nor false
+ * leaves the event current (`unknown_value`). An item with no usable id or time is
  * skipped as `malformed`, one with no position as `no_geometry`; a document
  * with no RSS channel fails the parse.
  */

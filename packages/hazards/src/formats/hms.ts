@@ -44,8 +44,9 @@ function ordinalTime(value: unknown): { at: string; day: string } | undefined {
  * does, so `Start`..`End_` is the detection window in `details.detection`,
  * and the situation stays active while the layer lists it, expiring a day
  * after `Start` should no later poll hold it. A feature with no geometry is
- * skipped as `no_geometry`, one with an unknown density as `unknown_type`,
- * and one with no `FID`, density, readable time or shape as `malformed`.
+ * skipped as `no_geometry`, and one with no `FID`, density, readable time
+ * or shape as `malformed`; a density other than the three grades is left
+ * out of a plume that is kept (`unknown_value`).
  * The layer is empty from early morning until the first analysis;
  * that is an accounted zero and ends yesterday's polygons. An `{error}`
  * document fails the parse.
@@ -76,10 +77,13 @@ export function parseHms(
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      if (!DENSITIES.has(density)) {
-        recordSkipped(feed.id, density === "" ? "malformed" : "unknown_type");
+      if (density === "") {
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      // A grade the analysts do not use leaves the plume without one.
+      const graded = DENSITIES.has(density);
+      if (!graded) recordSkipped(feed.id, "unknown_value");
       const localId = `${start.day}-${fid}`;
       if (seen.has(localId)) {
         duplicates++;
@@ -112,7 +116,7 @@ export function parseHms(
         details: {
           kind: "natural_hazard",
           v: 1,
-          density,
+          ...(graded ? { density } : {}),
           detection: {
             ...(satellite === "" ? {} : { satellite }),
             start: start.at,

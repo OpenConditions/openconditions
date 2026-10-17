@@ -60,7 +60,10 @@ describe("the wfigs format over the captured layers", () => {
       type: "wildfire",
       subtype: "wildfire_perimeter",
       planned: false,
-      externalIds: [{ scheme: "irwin", id: ASPEN }],
+      externalIds: [
+        { scheme: "irwin", id: ASPEN },
+        { scheme: "nwcg:unique_fire_id", id: "2026-COCUX-001160" },
+      ],
       validity: { status: "active", start: "2026-06-29T12:04:46Z" },
       provenance: {
         sourceId: "us-nifc-fires",
@@ -277,6 +280,55 @@ describe("the wfigs format over altered features", () => {
     const out = parse({ incidents: [Buffer.from('{"type":"FeatureCollection","features":[]}')] });
     expect(out.situations).toEqual([]);
     expect(out.records).toMatchObject({ inputCount: 0, accepted: 0, terminal: 0 });
+  });
+});
+
+describe("the wfigs format: what an incident says beside its fire", () => {
+  beforeEach(() => __resetSkips());
+
+  test("the captures: the unique fire id, where it is, and the team's fire behaviour", () => {
+    const out = parse(payloads());
+    expect(sealFailures(out.situations)).toEqual([]);
+    const aspen = byId(out, ASPEN);
+    expect(aspen["externalIds"]).toEqual([
+      { scheme: "irwin", id: ASPEN },
+      { scheme: "nwcg:unique_fire_id", id: "2026-COCUX-001160" },
+    ]);
+    expect(aspen["location"]).toMatchObject({
+      areaDescription: [{ lang: "en", text: "20 Miles SW from Pueblo, CO" }],
+    });
+    expect(aspen["details"]).toMatchObject({ fireBehavior: "moderate" });
+    expect(byId(out, TARTAR)["details"]).toMatchObject({ fireBehavior: "minimal" });
+  });
+
+  test("a complex's fire is grouped by the complex, and keeps its county and milestones (constructed)", () => {
+    const incidents = collection("nifc-incidents.geojson");
+    const newman = incidents.features.find((f) =>
+      String(f.properties["IrwinID"]).includes(NEWMAN),
+    )!;
+    Object.assign(newman.properties, {
+      CpxID: "{6ba20d58-b2b7-4190-9a35-e9455dfcc756}",
+      IsCpxChild: 1,
+      POOFips: "12021",
+      ContainmentDateTime: Date.parse("2026-10-07T18:00:00Z"),
+      ControlDateTime: Date.parse("2026-10-08T12:00:00Z"),
+      FireBehaviorGeneral: "Smouldering",
+      IncidentShortDescription: "null Miles null from null, ",
+    });
+    const out = parse({ perimeters: [], incidents: [buffer(incidents)] });
+    const s = byId(out, NEWMAN);
+    expect(sealFailures([s])).toEqual([]);
+    expect(s["groupId"]).toBe("6BA20D58-B2B7-4190-9A35-E9455DFCC756");
+    expect(s["location"]).toMatchObject({
+      admin: { country: "US", geocodes: [{ scheme: "fips", code: "12021" }] },
+    });
+    expect(s["location"]).not.toHaveProperty("areaDescription");
+    expect(s["details"]).toMatchObject({
+      containedAt: "2026-10-07T18:00:00Z",
+      controlledAt: "2026-10-08T12:00:00Z",
+    });
+    expect(s["details"]).not.toHaveProperty("fireBehavior");
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
   });
 });
 

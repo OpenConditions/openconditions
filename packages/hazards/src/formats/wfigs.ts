@@ -21,6 +21,17 @@ const CAUSES: Readonly<Record<string, string>> = {
   Undetermined: "undetermined",
 };
 
+/**
+ * The incident team's general fire behaviour, as the register writes it. The
+ * values are those the layer carries; one it does not is counted rather
+ * than guessed at.
+ */
+const BEHAVIOURS: Readonly<Record<string, string>> = {
+  Minimal: "minimal",
+  Moderate: "moderate",
+  Active: "active",
+};
+
 type Properties = Record<string, unknown>;
 
 /** The fields one incident carries, read from a perimeter's `attr_` copy or the incident layer's own. */
@@ -104,7 +115,22 @@ function toDraft(
   const containment = finite(field("PercentContained"));
   const discoveredAt = instant(field("FireDiscoveryDateTime"));
   const out = instant(field("FireOutDateTime"));
-  const cause = CAUSES[text(field("FireCause")) ?? ""];
+  const stated = text(field("FireCause"));
+  const cause = stated === undefined ? undefined : CAUSES[stated];
+  if (stated !== undefined && cause === undefined) recordSkipped(feed.id, "unknown_value");
+  const behaviour = text(field("FireBehaviorGeneral"));
+  const fireBehavior = behaviour === undefined ? undefined : BEHAVIOURS[behaviour];
+  if (behaviour !== undefined && fireBehavior === undefined) {
+    recordSkipped(feed.id, "unknown_value");
+  }
+  const containedAt = instant(field("ContainmentDateTime"));
+  const controlledAt = instant(field("ControlDateTime"));
+  const uniqueId = text(field("UniqueFireIdentifier"));
+  const fips = text(field("POOFips"));
+  // The register writes a placeholder ("null Miles null from null, ") where it has no place.
+  const where = text(field("IncidentShortDescription"));
+  const placeText = where !== undefined && !/\bnull\b/.test(where) ? where : undefined;
+  const complex = irwinOf(field("CpxID"));
   const state = text(field("POOState"));
   const perimeterAt =
     entry.shape === undefined ? undefined : instant(perimeter?.["poly_PolygonDateTime"]);
@@ -121,7 +147,10 @@ function toDraft(
         ? {}
         : { subtype: "wildfire_perimeter" }),
     temporality: "live",
-    externalIds: [{ scheme: "irwin", id: entry.irwin }],
+    externalIds: [
+      { scheme: "irwin", id: entry.irwin },
+      ...(uniqueId === undefined ? [] : [{ scheme: "nwcg:unique_fire_id", id: uniqueId }]),
+    ],
     location: {
       geometry,
       extent: entry.shape === undefined ? "point" : "area",
@@ -130,13 +159,19 @@ function toDraft(
       admin: {
         country: "US",
         ...(state !== undefined && /^US-[A-Z]{2}$/.test(state) ? { subdivision: state } : {}),
+        ...(fips !== undefined && /^\d{5}$/.test(fips)
+          ? { geocodes: [{ scheme: "fips", code: fips }] }
+          : {}),
       },
+      ...(placeText === undefined ? {} : { areaDescription: [{ lang: "en", text: placeText }] }),
     },
     provenance: provenance(feed, entry.irwin, sourceUpdatedAt),
     freshness: freshness(fetchedAt),
     planned: prescribed,
     certainty: "observed",
     severity: { label: "unknown" },
+    // The fires of a complex are one group, named by the complex's IRWIN id.
+    ...(complex === undefined || complex === entry.irwin ? {} : { groupId: complex }),
     validity: {
       status: out === undefined ? "active" : "ended",
       ...(discoveredAt === undefined ? {} : { start: discoveredAt }),
@@ -154,6 +189,9 @@ function toDraft(
       ...(discoveredAt === undefined ? {} : { discoveredAt }),
       ...(perimeterAt === undefined ? {} : { perimeterAt }),
       ...(cause === undefined ? {} : { ignitionCause: cause }),
+      ...(containedAt === undefined ? {} : { containedAt }),
+      ...(controlledAt === undefined ? {} : { controlledAt }),
+      ...(fireBehavior === undefined ? {} : { fireBehavior }),
     },
   };
 }
@@ -169,7 +207,12 @@ function toDraft(
  *
  * Wildfires with a perimeter are `wildfire_perimeter`, those with a point
  * only carry no subtype, prescribed burns are `prescribed_burn` and planned.
- * Complexes are terminal: their member fires are records of their own. A
+ * Complexes are terminal: their member fires are records of their own,
+ * grouped by the complex's IRWIN id. Besides the IRWIN id an incident keeps
+ * its NWCG unique fire id, its county's FIPS code, the register's short
+ * description of where it is, when it was contained and controlled, and the
+ * team's general fire behaviour; a cause or behaviour the register does not
+ * define is left out (`unknown_value`). A
  * feature with no geometry is skipped as `no_geometry`; one with no
  * properties, no IRWIN id or an unreadable shape as `malformed`. An
  * incident of a category this format does not know has every usable record

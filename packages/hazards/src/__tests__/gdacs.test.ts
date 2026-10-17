@@ -52,6 +52,18 @@ describe("the gdacs format over the live captures", () => {
     expect(sealFailures(out.situations)).toEqual([]);
   });
 
+  test("the population is read by its unit: a flood's is its deaths and displaced, a drought's area its severity", () => {
+    const details = (id: string) => byId(out, id)["details"] as Record<string, unknown>;
+    expect(details("FL1104203")).toMatchObject({ deaths: 2 });
+    expect(details("FL1104213")).toMatchObject({ deaths: 0, displaced: 20 });
+    expect(details("VO1000151")).toMatchObject({ populationAffected: 3502937 });
+    expect(details("DR1018332")).toMatchObject({ areaHa: 175997100 });
+    for (const id of ["FL1104203", "FL1104213", "DR1018332"]) {
+      expect(details(id)).not.toHaveProperty("populationAffected");
+    }
+    expect(drainSkipped(feed.id)).toEqual({});
+  });
+
   test("the hurricane has its wind and the wind-buffer MultiPolygon of its current episode", () => {
     const tc = byId(out, "TC1001334");
     expect(tc).toMatchObject({

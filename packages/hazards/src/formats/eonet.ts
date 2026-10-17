@@ -142,10 +142,12 @@ function toDraft(
   const closed = instantMs(event["closed"]);
   const activeUntil = last.at + (ACTIVE_DAYS[type] ?? DEFAULT_ACTIVE_DAYS) * DAY_MS;
   const end = closed ?? (activeUntil <= Date.parse(fetchedAt) ? activeUntil : undefined);
+  const unit = last.magnitude?.unit;
+  const area = unit !== undefined && Object.hasOwn(AREA_HA, unit) ? AREA_HA[unit] : undefined;
+  // A kept event's magnitude in a unit that is no area (a wind speed, a seismic scale) is not read.
+  if (unit !== undefined && area === undefined) recordSkipped(feed.id, "unknown_value");
   const hectares =
-    last.magnitude === undefined || AREA_HA[last.magnitude.unit] === undefined
-      ? undefined
-      : last.magnitude.value * AREA_HA[last.magnitude.unit]!;
+    last.magnitude === undefined || area === undefined ? undefined : last.magnitude.value * area;
   return {
     id: situationId(feed, id),
     class: "situation",

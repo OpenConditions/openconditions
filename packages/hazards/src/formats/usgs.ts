@@ -85,6 +85,9 @@ function quakeOf(feature: unknown): Quake | RecordSkipReason {
   };
 }
 
+/** Whether a seismologist reviewed the solution, by the feed's `status`; a deleted event leaves the feed. */
+const REVIEW_STATUS: Readonly<Record<string, boolean>> = { reviewed: true, automatic: false };
+
 function toDraft(
   quake: Quake,
   ids: readonly string[],
@@ -105,7 +108,12 @@ function toDraft(
   const url = page !== undefined && /^https?:\/\//.test(page) ? page : undefined;
   const felt = finite(p["felt"]);
   const mmi = finite(p["mmi"]);
+  const cdi = finite(p["cdi"]);
   const status = text(p["status"]);
+  const reviewed = status === undefined ? undefined : REVIEW_STATUS[status];
+  if (status !== undefined && reviewed === undefined) recordSkipped(feed.id, "unknown_value");
+  const tsunami = p["tsunami"];
+  if (tsunami != null && tsunami !== 0 && tsunami !== 1) recordSkipped(feed.id, "unknown_value");
   return {
     id: situationId(feed, quake.id),
     class: "situation",
@@ -136,10 +144,11 @@ function toDraft(
       ...(quake.depthKm === undefined
         ? {}
         : { depth: { value: Math.round(quake.depthKm * 1e6) / 1e3, unit: "m" } }),
-      ...(p["tsunami"] === 0 || p["tsunami"] === 1 ? { tsunamiFlag: p["tsunami"] === 1 } : {}),
+      ...(tsunami === 0 || tsunami === 1 ? { tsunamiFlag: tsunami === 1 } : {}),
       ...(felt === undefined || felt < 0 || !Number.isInteger(felt) ? {} : { feltReports: felt }),
       ...(mmi === undefined || mmi < 0 || mmi > 12 ? {} : { mmi }),
-      ...(status === undefined ? {} : { reviewed: status === "reviewed" }),
+      ...(cdi === undefined || cdi < 0 || cdi > 12 ? {} : { cdi }),
+      ...(reviewed === undefined ? {} : { reviewed }),
     },
   };
 }
@@ -160,7 +169,10 @@ function toDraft(
  * read by the time window it falls in. A null magnitude is left out, a depth
  * above sea level stays negative, and the tsunami flag is the publisher's
  * oceanic-region flag, not a warning; a PAGER level other than green,
- * yellow, orange or red leaves the severity unknown (`unknown_value`). A
+ * yellow, orange or red leaves the severity unknown, and a review status
+ * other than automatic or reviewed, or a tsunami flag other than 0 or 1, is
+ * left out (`unknown_value`). The highest intensity people reported
+ * (`cdi`) is kept beside the estimated one (`mmi`). A
  * feature with no geometry is skipped as `no_geometry`, one with no id,
  * point or origin time as `malformed`; a body that is no feature collection
  * fails the parse.

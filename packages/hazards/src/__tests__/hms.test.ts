@@ -156,7 +156,7 @@ describe("the hms ordinal times", () => {
 describe("the hms format over polygons that do not read", () => {
   beforeEach(() => __resetSkips());
 
-  test("an unknown density, a missing FID or geometry, or a bad shape is skipped, the rest publish", () => {
+  test("a missing FID or geometry, or a bad shape is skipped; an unknown density is left out of its plume", () => {
     const c = collection();
     const first = c.features[0]!;
     c.features.push(
@@ -174,14 +174,15 @@ describe("the hms format over polygons that do not read", () => {
       { properties: { ...first.properties, FID: 94, Density: null }, geometry: first.geometry },
     );
     const out = parse({ main: [buffer(c)] });
-    expect(out.situations).toHaveLength(3);
+    expect(out.situations).toHaveLength(4);
     expect(out.rejected).toBeUndefined();
-    expect(drainSkipped(feed.id)).toEqual({ unknown_type: 1, malformed: 3, no_geometry: 1 });
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1, malformed: 3, no_geometry: 1 });
+    expect(byId(out, "2026273-90")["details"]).not.toHaveProperty("density");
     expect(out.records).toMatchObject({
       inputCount: 9,
       uniqueCount: 8,
       duplicates: 1,
-      accepted: 3,
+      accepted: 4,
     });
   });
 

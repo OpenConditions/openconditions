@@ -51,7 +51,7 @@ describe("the slstr-frp format over the captures", () => {
     expect(sealFailures(out.observations)).toEqual([]);
   });
 
-  test("a Sentinel-3B night pixel carries its power, class, percentage and pixel size", () => {
+  test("a Sentinel-3B night pixel carries its power and its uncertainty, class, percentage, pixel size and baseline", () => {
     const o = byLocation(out, 24.03023, 40.476057);
     expect(o).toMatchObject({
       class: "observation",
@@ -59,7 +59,7 @@ describe("the slstr-frp format over the captures", () => {
       property: "fire.frp",
       temporality: "live",
       subject: { kind: "location" },
-      result: { type: "quantity", value: 8.16383, unit: "MW" },
+      result: { type: "quantity", value: 8.16383, unit: "MW", accuracy: 0.838197 },
       phenomenonTime: { instant: "2026-10-16T19:11:26Z" },
       aggregation: "instantaneous",
       quality: { supplierCode: "high", confidence: 0.914 },
@@ -75,8 +75,8 @@ describe("the slstr-frp format over the captures", () => {
         daynight: "night",
         scan: 1.1,
         track: 1.14,
-        frpUncertaintyMW: 0.838197,
         channel: "S7",
+        version: "FRP_NRT.003.02.00",
       },
       provenance: {
         sourceId: "eumetsat-slstr-fires",
@@ -144,7 +144,8 @@ describe("a row or granule that does not read", () => {
   test("is skipped under its reason while the rest of the granule is kept", () => {
     __resetSkips();
     const again = parse(granule(...rows));
-    expect(drainSkipped(feed.id)).toEqual({ malformed: 8, no_geometry: 1 });
+    // The bare pixel's class 7 is none the product defines.
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 8, no_geometry: 1, unknown_value: 1 });
     expect(again.rejected).toBeUndefined();
     expect(out.observations).toHaveLength(2);
     expect(sealFailures(out.observations)).toEqual([]);
