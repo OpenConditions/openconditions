@@ -1,7 +1,7 @@
 /**
- * Reading CAP's own text encodings: the `references` list, and `polygon`
- * and `circle` areas, which CAP writes as `lat,lon` pairs where GeoJSON
- * writes `[lon, lat]`.
+ * Reading CAP's own text encodings: the `references` list, group listings,
+ * and `polygon` and `circle` areas, which CAP writes as `lat,lon` pairs
+ * where GeoJSON writes `[lon, lat]`.
  */
 
 /** One earlier message a CAP message refers to. */
@@ -25,6 +25,17 @@ export function capReferences(text: string): CapReference[] {
         ? [{ sender, identifier, sent }]
         : [];
     });
+}
+
+/**
+ * A CAP group listing (`incidents`, `addresses`): space-delimited names, a
+ * name that holds whitespace enclosed in double quotes (CAP 1.2, 3.2.1).
+ */
+export function capGroupList(text: string): string[] {
+  return [...text.matchAll(/"([^"]*)"|(\S+)/g)].flatMap(([, quoted, bare]) => {
+    const name = (quoted ?? bare ?? "").trim();
+    return name === "" ? [] : [name];
+  });
 }
 
 type Position = [number, number];

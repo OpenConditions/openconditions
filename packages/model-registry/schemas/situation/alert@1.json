@@ -563,6 +563,11 @@
               "format": "date-time",
               "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
             },
+            "ends": {
+              "type": "string",
+              "format": "date-time",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            },
             "parameters": {
               "minItems": 1,
               "type": "array",
@@ -584,15 +589,171 @@
                 "additionalProperties": false
               }
             },
+            "vtec": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "productClass": {
+                    "type": "string",
+                    "enum": [
+                      "O",
+                      "T",
+                      "E",
+                      "X"
+                    ]
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "NEW",
+                      "CON",
+                      "EXT",
+                      "EXA",
+                      "EXB",
+                      "UPG",
+                      "CAN",
+                      "EXP",
+                      "COR",
+                      "ROU"
+                    ]
+                  },
+                  "office": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{4}$"
+                  },
+                  "phenomenon": {
+                    "type": "string",
+                    "pattern": "^[A-Z]{2}$"
+                  },
+                  "significance": {
+                    "type": "string",
+                    "enum": [
+                      "W",
+                      "A",
+                      "Y",
+                      "S",
+                      "F",
+                      "O",
+                      "N"
+                    ]
+                  },
+                  "eventNumber": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "begin": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  },
+                  "end": {
+                    "type": "string",
+                    "format": "date-time",
+                    "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                  }
+                },
+                "required": [
+                  "productClass",
+                  "action",
+                  "office",
+                  "phenomenon",
+                  "significance",
+                  "eventNumber"
+                ],
+                "additionalProperties": false
+              }
+            },
             "web": {
               "type": "string",
               "format": "uri"
+            },
+            "localizedWeb": {
+              "minItems": 2,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "lang": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$"
+                  },
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  }
+                },
+                "required": [
+                  "lang",
+                  "url"
+                ],
+                "additionalProperties": false
+              }
             },
             "senderName": {
               "$ref": "#/$defs/Text"
             },
             "contact": {
               "$ref": "#/$defs/Text"
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "note": {
+              "type": "string",
+              "minLength": 1
+            },
+            "incidents": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "altitudeFt": {
+              "type": "number"
+            },
+            "ceilingFt": {
+              "type": "number"
+            },
+            "resources": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "mimeType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "size": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "uri": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "digest": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "description",
+                  "mimeType"
+                ],
+                "additionalProperties": false
+              }
             }
           },
           "required": [

@@ -3,9 +3,13 @@ import {
   type CapPair,
   capCircle,
   capClassification,
+  capGroupList,
   capPolygon,
   capReferences,
   hazardsCrosswalk,
+  nwsVtec,
+  VTEC_ENDING_ACTIONS,
+  type Vtec,
 } from "@openconditions/model-hazards";
 import type { Geometry, Position } from "geojson";
 import { pointInRing } from "../geometry.js";
@@ -212,6 +216,11 @@ function capLocation(
       .filter((d) => d !== undefined)
       .join("; "),
   );
+  // A zone's type is part of its name: fire and forecast zones share ids.
+  const external = [...new Set(areas.flatMap((a) => list(a.zones)))].flatMap((zone) => {
+    const [type, id] = zone.split("/");
+    return type && id ? [{ system: `nws:${type}`, code: id }] : [];
+  });
   return {
     geometry: shape.geometry,
     extent: "area",
@@ -222,6 +231,7 @@ function capLocation(
       : { admin: geocodes.length > 0 ? { country, geocodes } : { country } }),
     ...optional("areaDescription", description),
     ...optional("locationTable", shape.table),
+    ...(external.length > 0 ? { external } : {}),
   };
 }
 
@@ -243,7 +253,13 @@ const signature = (i: CapInfo) =>
     i.effective,
     i.onset,
     i.expires,
-    list(i.area).map((a) => [a.polygon, a.circle, a.geocode]),
+    list(i.area).map((a) => [
+      a.polygon,
+      a.circle,
+      a.geocode,
+      decimal(a.altitude),
+      decimal(a.ceiling),
+    ]),
   ]);
 
 /** When a hazard stops being in force: the format's end if it states one, the message's `expires` otherwise. */
@@ -254,27 +270,80 @@ export function capEnd(
   return string(endOf === undefined ? info.expires : endOf(info));
 }
 
+/** Why a warning a message still describes is no longer in force. */
+type Ending = "cancelled" | "superseded" | "source_ended";
+
 /**
  * A warning is in force from when its message takes effect (`effective`,
  * which CAP defaults to `sent`) until its end (`capEnd`). The event it
  * warns of may begin later, even after the message expires (an NWS watch is
  * reissued before its hazard starts), so `onset` stays in the details. A
- * message that ends before it takes effect is in force for no time.
+ * message that ends before it takes effect is in force for no time. A
+ * `Cancel` is cancelled whatever else it says.
  */
-function capValidity(alert: CapAlert, info: CapInfo, allClear: boolean, end: string | undefined) {
+function capValidity(
+  alert: CapAlert,
+  info: CapInfo,
+  ending: Ending | undefined,
+  end: string | undefined,
+) {
   let start = string(info.effective) ?? string(alert.sent)!;
   if (end !== undefined && Date.parse(start) > Date.parse(end)) start = end;
-  const status = capToken(alert.msgType) === "Cancel" ? "cancelled" : allClear ? "ended" : "active";
+  const reason = capToken(alert.msgType) === "Cancel" ? "cancelled" : ending;
   return {
-    status,
+    status: reason === undefined ? "active" : reason === "cancelled" ? "cancelled" : "ended",
     start,
     ...optional("end", end),
-    ...(status === "cancelled"
-      ? { endedReason: "cancelled" }
-      : status === "ended"
-        ? { endedReason: "source_ended" }
-        : {}),
+    ...optional("endedReason", reason),
   };
+}
+
+/**
+ * The NWS events of an info block's `VTEC` parameters, and how many of them
+ * do not read: no P-VTEC string, or an action or significance NWS Directive
+ * 10-1703 does not define.
+ */
+export function vtecEvents(parameters: readonly CapPair[]): { events: Vtec[]; unread: number } {
+  const events: Vtec[] = [];
+  let unread = 0;
+  for (const p of parameters) {
+    if (p.valueName !== "VTEC") continue;
+    const v = nwsVtec(p.value);
+    if (v === null || v === "unknown") unread++;
+    else events.push(v);
+  }
+  return { events, unread };
+}
+
+/** Whether every NWS event a message acts on ends with it: upgraded, cancelled or expired. */
+export const vtecEnds = (events: readonly Vtec[]) =>
+  events.length > 0 && events.every((e) => VTEC_ENDING_ACTIONS.has(e.action));
+
+/**
+ * How the NWS events of a message end with it, once every one does:
+ * cancelled when each is, superseded when one was upgraded to another
+ * hazard. An expiring event stays in force until its end.
+ */
+function vtecEnding(events: readonly Vtec[]): Ending | undefined {
+  if (events.length === 0 || !events.every((e) => e.action === "CAN" || e.action === "UPG")) {
+    return undefined;
+  }
+  return events.every((e) => e.action === "CAN") ? "cancelled" : "superseded";
+}
+
+/**
+ * The warning a message with VTEC belongs to: its event's office,
+ * phenomenon, significance and tracking number, which NWS keeps for the
+ * event's life, and the year the number counts in (the event's begin, or the
+ * message's for one under way). The first event still in force names it.
+ * NWS sends a continuation as a fresh `Alert` without references, so its
+ * references cannot tie it to the warning.
+ */
+function vtecGroup(events: readonly Vtec[], sent: string): string | undefined {
+  const e = events.find((v) => !VTEC_ENDING_ACTIONS.has(v.action)) ?? events[0];
+  if (e === undefined) return undefined;
+  const year = new Date(Date.parse(e.begin ?? sent)).getUTCFullYear();
+  return `VTEC:${e.office}.${e.phenomenon}.${e.significance}.${String(e.eventNumber).padStart(4, "0")}:${year}`;
 }
 
 /** The relation a message's references have to the messages they name; an alert's are only related. */
@@ -295,6 +364,82 @@ const webOf = (raw: unknown) => {
     ? url
     : undefined;
 };
+
+/**
+ * Each language's link where the languages link to different pages (ECCC's
+ * English and French sites); undefined when they share one, which `web`
+ * already holds.
+ */
+function localizedWeb(infos: readonly CapInfo[]) {
+  const byLanguage = new Map<string, string>();
+  for (const i of infos) {
+    const url = webOf(i.web);
+    const lang = string(i.language) ?? "en-US";
+    if (url !== undefined && !byLanguage.has(lang)) byLanguage.set(lang, url);
+  }
+  return new Set(byLanguage.values()).size > 1
+    ? [...byLanguage].map(([lang, url]) => ({ lang, url }))
+    : undefined;
+}
+
+/** A CAP decimal, which MeteoAlarm's JSON writes as a number; undefined when it does not read. */
+function decimal(raw: unknown): number | undefined {
+  const n =
+    typeof raw === "number"
+      ? raw
+      : typeof raw === "string" && raw.trim() !== ""
+        ? Number(raw)
+        : Number.NaN;
+  return Number.isFinite(n) ? n : undefined;
+}
+
+/**
+ * The vertical extent of an info block's areas in feet: the lowest
+ * `altitude` and the highest `ceiling`. An area without an altitude has no
+ * lower limit, so the extent has one only when every area states it; CAP
+ * allows a ceiling only beside an altitude, and the same holds for it.
+ */
+function verticalExtent(areas: readonly CapArea[]) {
+  const altitudes = areas.map((a) => decimal(a.altitude));
+  const ceilings = areas.map((a) => decimal(a.ceiling));
+  const stated = (values: (number | undefined)[]) =>
+    values.length > 0 && values.every((v) => v !== undefined) ? (values as number[]) : undefined;
+  const low = stated(altitudes);
+  const high = low === undefined ? undefined : stated(ceilings);
+  return {
+    ...(low === undefined ? {} : { altitudeFt: Math.min(...low) }),
+    ...(high === undefined ? {} : { ceilingFt: Math.max(...high) }),
+  };
+}
+
+/**
+ * The files the info blocks point to, each once: one with a link by its
+ * link, one without by its description. A resource without the description
+ * and MIME type CAP requires is left out, and content CAP embeds
+ * (`derefUri`) is not kept.
+ */
+function resourcesOf(infos: readonly CapInfo[]) {
+  const seen = new Set<string>();
+  const out: Record<string, unknown>[] = [];
+  for (const r of infos.flatMap((i) => list(i.resource))) {
+    const description = string(r?.resourceDesc);
+    const mimeType = string(r?.mimeType);
+    if (description === undefined || mimeType === undefined) continue;
+    const uri = webOf(r.uri);
+    const key = uri ?? `${mimeType}\u0000${description}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    const size = decimal(r.size);
+    out.push({
+      description,
+      mimeType,
+      ...(size !== undefined && Number.isInteger(size) && size >= 0 ? { size } : {}),
+      ...optional("uri", uri),
+      ...optional("digest", string(r.digest)),
+    });
+  }
+  return out;
+}
 
 /** The known tokens of a repeatable CAP field as the vocabulary's values, and how many it does not know. */
 function tokens(vocabulary: string, raw: unknown): { values: string[]; unknown: number } {
@@ -327,10 +472,20 @@ export function capDrafts(
     groups.set(key, [...(groups.get(key) ?? []), info]);
   }
   const references = typeof alert.references === "string" ? capReferences(alert.references) : [];
+  // MeteoAlarm's hub writes each message's type into `incidents`; that names no incident.
+  const incidents = (
+    typeof alert.incidents === "string" ? capGroupList(alert.incidents) : []
+  ).filter((name) => name !== capToken(alert.msgType));
   const msgType = capToken(alert.msgType);
   const relation = Object.hasOwn(RELATION_OF, msgType) ? RELATION_OF[msgType]! : "related";
   const country = opts.countryOf?.(alert) ?? countryOf(alert, feed);
   const sent = string(alert.sent)!;
+  // Every hazard of a message is one warning: the first VTEC event of any of them names it.
+  const groupId =
+    vtecGroup(
+      list(alert.info).flatMap((i) => vtecEvents(pairs(i.parameter)).events),
+      sent,
+    ) ?? opts.groupId;
   const drafts: RecordDraft[] = [];
   const skipped: { malformed?: number; unknown_value?: number } = {};
   [...groups.values()].forEach((infos, n) => {
@@ -362,7 +517,9 @@ export function capDrafts(
       skipped.malformed = (skipped.malformed ?? 0) + 1;
       return;
     }
-    const unknown = categories.unknown + responses.unknown;
+    const parameters = pairs(info.parameter);
+    const vtec = vtecEvents(parameters);
+    const unknown = categories.unknown + responses.unknown + vtec.unread;
     if (unknown > 0) skipped.unknown_value = (skipped.unknown_value ?? 0) + unknown;
     // The first hazard keeps the message's id, so a reference to the message names a record.
     const localId = n === 0 ? alert.identifier : `${alert.identifier}#${n + 1}`;
@@ -371,17 +528,19 @@ export function capDrafts(
       type: "other",
     };
     const end = capEnd(info, opts.endOf);
-    const validity = capValidity(alert, info, responseType.includes("all_clear"), end);
+    const ending =
+      vtecEnding(vtec.events) ?? (responseType.includes("all_clear") ? "source_ended" : undefined);
+    const validity = capValidity(alert, info, ending, end);
     const onset = string(info.onset);
     const expiresAt = opts.expiresAt === undefined ? end : opts.expiresAt(end);
     const eventCodes = pairs(info.eventCode);
-    const parameters = pairs(info.parameter);
     const headline = text(infos, (i) => i.headline);
     const description = text(infos, (i) => i.description);
     const instruction = text(infos, (i) => i.instruction);
     const audience = text(infos, (i) => i.audience);
     const senderName = text(infos, (i) => i.senderName);
     const contact = text(infos, (i) => i.contact);
+    const resources = resourcesOf(infos);
     drafts.push({
       id: situationId(feed, localId),
       class: "situation",
@@ -414,7 +573,7 @@ export function capDrafts(
       ...optional("instruction", instruction),
       validity,
       effects: [],
-      groupId: opts.groupId,
+      groupId,
       details: {
         kind: "alert",
         v: 1,
@@ -438,10 +597,18 @@ export function capDrafts(
           ...optional("effective", string(info.effective)),
           ...optional("onset", onset),
           ...optional("expires", string(info.expires)),
+          ...optional("ends", string(info.ends)),
           ...(parameters.length === 0 ? {} : { parameters }),
+          ...(vtec.events.length === 0 ? {} : { vtec: vtec.events }),
           ...optional("web", webOf(info.web)),
+          ...optional("localizedWeb", localizedWeb(infos)),
           ...optional("senderName", senderName),
           ...optional("contact", contact),
+          ...optional("source", string(alert.source)),
+          ...optional("note", string(alert.note)),
+          ...(incidents.length > 0 ? { incidents } : {}),
+          ...verticalExtent(list(info.area)),
+          ...(resources.length > 0 ? { resources } : {}),
         },
       },
     });

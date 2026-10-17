@@ -67,6 +67,93 @@ describe("the cap format over the fit captures", () => {
   });
 });
 
+describe("the cap format: what a message says beside its hazard", () => {
+  const capOf = (s: RecordDraft) => (s["details"] as { cap: Record<string, unknown> }).cap;
+
+  test("DWD: the producing system, and the warned heights in feet", () => {
+    const out = parse(dwdFeed(), { alerts: [fixture("dwd-thunderstorm.xml")] }, DWD_FIT_AT);
+    expect(sealFailures(out.situations)).toEqual([]);
+    const details = capOf(out.situations[0]!);
+    expect(details).toMatchObject({
+      source: "PVW",
+      altitudeFt: 0,
+      ceilingFt: 9842.5197,
+      web: "https://dwd.de/warnungen",
+    });
+    expect(details).not.toHaveProperty("localizedWeb");
+  });
+
+  test("ECCC: the service note, and each language's own site", () => {
+    const out = parse(ecccFeed(), { alerts: [fixture("eccc-fog.xml")] }, ECCC_FIT_AT);
+    expect(sealFailures(out.situations)).toEqual([]);
+    const details = capOf(out.situations[0]!);
+    expect(details["note"]).toMatch(/^Service Notice – July 2026/);
+    expect(details["source"]).toBe("Env. Can. - Can. Met. Ctr. – Montréal");
+    expect(details["web"]).toBe("https://weather.gc.ca/");
+    expect(details["localizedWeb"]).toEqual([
+      { lang: "en-CA", url: "https://weather.gc.ca/" },
+      { lang: "fr-CA", url: "https://meteo.gc.ca/" },
+    ]);
+  });
+
+  const HEIGHTS = /<altitude>0\.0<\/altitude>\s*<ceiling>9842\.5197<\/ceiling>/;
+
+  /** The thunderstorm warning, two areas, with an incident list, resources, and its heights rewritten. */
+  const variant = (heights: (xml: string) => string, resources = "") =>
+    Buffer.from(
+      heights(fixture("dwd-thunderstorm.xml").toString("utf8"))
+        .replace("<code>", '<incidents>STORM-7 "Sturmtief Lea"</incidents><code>')
+        .replace("<area>", `${resources}<area>`),
+    );
+
+  test("incidents as a group listing, and the files it points to, each once", () => {
+    const map = (desc: string) =>
+      `<resource><resourceDesc>${desc}</resourceDesc><mimeType>image/png</mimeType><size>2048</size><uri>https://example.org/map.png</uri><digest>da39a3ee5e6b4b0d3255bfef95601890afd80709</digest></resource>`;
+    const out = parse(
+      dwdFeed(),
+      {
+        alerts: [
+          variant(
+            (xml) =>
+              xml
+                .replace(HEIGHTS, "<altitude>2624.67</altitude><ceiling>6561.68</ceiling>")
+                .replace(HEIGHTS, "<altitude>3280.84</altitude><ceiling>9842.5197</ceiling>"),
+            `${map("Karte")}${map("Map")}<resource><resourceDesc>Audio</resourceDesc><mimeType>audio/mpeg</mimeType><derefUri>AAAA</derefUri></resource><resource><resourceDesc>No type</resourceDesc></resource>`,
+          ),
+        ],
+      },
+      DWD_FIT_AT,
+    );
+    expect(sealFailures(out.situations)).toEqual([]);
+    const details = capOf(out.situations[0]!);
+    expect(details["incidents"]).toEqual(["STORM-7", "Sturmtief Lea"]);
+    expect(details["resources"]).toEqual([
+      {
+        description: "Karte",
+        mimeType: "image/png",
+        size: 2048,
+        uri: "https://example.org/map.png",
+        digest: "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+      },
+      { description: "Audio", mimeType: "audio/mpeg" },
+    ]);
+    // The lowest altitude and the highest ceiling of the two areas.
+    expect(details).toMatchObject({ altitudeFt: 2624.67, ceilingFt: 9842.5197 });
+  });
+
+  test("one area without heights leaves the warning without a vertical limit", () => {
+    const out = parse(
+      dwdFeed(),
+      { alerts: [variant((xml) => xml.replace(HEIGHTS, ""))] },
+      DWD_FIT_AT,
+    );
+    expect(sealFailures(out.situations)).toEqual([]);
+    const details = capOf(out.situations[0]!);
+    expect(details).not.toHaveProperty("altitudeFt");
+    expect(details).not.toHaveProperty("ceilingFt");
+  });
+});
+
 describe("the cap format: shapes for areas named only by warn cell", () => {
   /** The coast strong-wind warning of 2026-10-09, three coast cells and no polygon. */
   const COAST_AT = "2026-10-09T15:00:00Z";

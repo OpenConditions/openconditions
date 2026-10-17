@@ -1,7 +1,7 @@
 import type { FeedPayloads, ParseContext, ParseOutput } from "@openconditions/ingest-framework";
 import type { Geometry, MultiPolygon, Polygon } from "geojson";
 import { capOutput } from "../cap/accounting.js";
-import type { DerivedShape } from "../cap/situations.js";
+import { type DerivedShape, vtecEnds, vtecEvents } from "../cap/situations.js";
 import type { CapAlert, CapArea, CapInfo, CapPair } from "../cap/types.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
 import { DERIVED_SHAPE_TOLERANCE_DEG, derivedShape, unionPolygons } from "../geometry.js";
@@ -107,17 +107,16 @@ function decodeNws(body: Buffer): NwsDecoded {
     }
     const { polygon, holes } = areaShapes(isRecord(feature) ? feature["geometry"] : undefined);
     const geocodes = pairsOf(p["geocode"]);
+    const zones = Array.isArray(p["affectedZones"])
+      ? [...new Set(p["affectedZones"].flatMap((u) => zoneKeyOf(u) ?? []))]
+      : [];
     const area: CapArea = {
       areaDesc: text(p["areaDesc"]) ?? "",
       ...(polygon.length > 0 ? { polygon } : {}),
       geocode: [...geocodes, ...holes],
+      ...(zones.length > 0 ? { zones } : {}),
     };
-    if (polygon.length === 0) {
-      const zones = Array.isArray(p["affectedZones"])
-        ? [...new Set(p["affectedZones"].flatMap((u) => zoneKeyOf(u) ?? []))]
-        : [];
-      if (zones.length > 0) zonesOf.set(area, zones);
-    }
+    if (polygon.length === 0 && zones.length > 0) zonesOf.set(area, zones);
     const response = text(p["response"]);
     const code = text(p["code"]);
     const info: CapInfo = {
@@ -134,6 +133,7 @@ function decodeNws(body: Buffer): NwsDecoded {
       ...optional("effective", text(p["effective"])),
       ...optional("onset", text(p["onset"])),
       ...optional("expires", text(p["expires"])),
+      ...optional("ends", text(p["ends"])),
       ...optional("senderName", text(p["senderName"])),
       ...optional("headline", text(p["headline"])),
       ...optional("description", text(p["description"])),
@@ -142,7 +142,12 @@ function decodeNws(body: Buffer): NwsDecoded {
     };
     const ends = text(p["ends"]);
     const expires = text(p["expires"]);
-    if (ends !== undefined && expires !== undefined && Date.parse(ends) > Date.parse(expires)) {
+    if (
+      ends !== undefined &&
+      expires !== undefined &&
+      Date.parse(ends) > Date.parse(expires) &&
+      !vtecEnds(vtecEvents(info.parameter ?? []).events)
+    ) {
       endsOf.set(info, ends);
     }
     const references = referencesOf(p["references"]);
@@ -154,6 +159,7 @@ function decodeNws(body: Buffer): NwsDecoded {
       msgType: text(p["messageType"]) ?? "",
       scope: text(p["scope"]) ?? "",
       ...optional("code", code === undefined ? undefined : [code]),
+      ...optional("note", text(p["note"])),
       ...optional("references", references),
       info: [info],
     });
@@ -200,8 +206,14 @@ function zoneShapes(bodies: readonly Buffer[]): Map<string, Polygon | MultiPolyg
  * it, and an `Update` is told from the message it replaces by its
  * references. The snapshot keeps a long-fused alert past its CAP `expires`
  * (its next expected issuance) until the hazard `ends`, and so does the
- * format; `expires` stays in the details. An alert with no geometry of its own is placed at the union of
- * the shapes of its affected zones, as far as the zones role holds them.
+ * format, unless every VTEC event the alert carries is upgraded, cancelled
+ * or expiring: NWS lists such a segment beside the product that replaces it,
+ * still with its old `ends`. A cancelled event's alert is cancelled, an
+ * upgraded one's ended as superseded, and an alert is grouped with the
+ * others of its VTEC event; `expires` and `ends` stay in the details. An
+ * alert with no geometry of its own is placed at the union of the shapes of
+ * its affected zones, as far as the zones role holds them; the zones are
+ * kept as the location's external references either way.
  * A feature that is no alert is skipped as `malformed`. A publisher error
  * document, which carries no alert collection, fails the parse.
  */

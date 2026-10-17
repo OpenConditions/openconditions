@@ -198,7 +198,7 @@ describe("the nws format: updates", () => {
     return { c, update, predecessor };
   }
 
-  test("an Update and the message it replaces are one situation: the update, grouped under the original", () => {
+  test("an Update and the message it replaces are one situation: the update, grouped under its VTEC event", () => {
     const { c, update, predecessor } = withPredecessor();
     const out = parse({ alerts: [buffer(c)] });
     const id = update.properties["id"] as string;
@@ -208,7 +208,7 @@ describe("the nws format: updates", () => {
       out.situations.some((s) => String(s["id"]).includes(String(predecessor.properties["id"]))),
     ).toBe(false);
     expect(live[0]).toMatchObject({
-      groupId: predecessor.properties["id"],
+      groupId: "VTEC:KTBW.FL.W.0009:2026",
       relations: [
         {
           relation: "update_of",
@@ -228,9 +228,103 @@ describe("the nws format: updates", () => {
     const update = feature(c, "Flood Warning", "Update");
     const two = parse({ alerts: [buffer({ ...c, features: [update] })] });
     expect(two.situations).toHaveLength(1);
-    const refs = update.properties["references"] as { identifier: string }[];
-    expect(two.situations[0]!["groupId"]).toBe(refs[0]!.identifier);
+    expect(two.situations[0]!["groupId"]).toBe("VTEC:KTBW.FL.W.0009:2026");
     expect(out.situations).toHaveLength(5);
+  });
+
+  test("an alert without VTEC is grouped by its references", () => {
+    const c = collection();
+    const update = feature(c, "Flood Warning", "Update");
+    update.properties["parameters"] = {};
+    const out = parse({ alerts: [buffer({ ...c, features: [update] })] });
+    const refs = update.properties["references"] as { identifier: string }[];
+    expect(out.situations[0]!["groupId"]).toBe(refs[0]!.identifier);
+  });
+});
+
+describe("the nws format: VTEC", () => {
+  const capOf = (s: RecordDraft) => (s["details"] as { cap: Record<string, unknown> }).cap;
+  /** The small craft advisory (expires 04:15Z on Oct 9, ends 02:00Z on Oct 10) with its VTEC action replaced. */
+  function advisory(action: string) {
+    const c = collection();
+    const f = feature(c, "Small Craft Advisory");
+    const parameters = f.properties["parameters"] as Record<string, string[]>;
+    parameters["VTEC"] = [parameters["VTEC"]![0]!.replace("/O.CON.", `/O.${action}.`)];
+    return { c, f };
+  }
+  const AFTER_EXPIRES = "2026-10-09T05:00:00Z";
+  const BEFORE_EXPIRES = "2026-10-09T03:00:00Z";
+
+  test("each event is read: action, office, phenomenon, significance, number and times", () => {
+    const out = parse({ alerts: [fixture("nws-alerts-active.json")] });
+    expect(capOf(byId(out, "eb661929f4f0d9d23699668a.001.1"))["vtec"]).toEqual([
+      {
+        productClass: "O",
+        action: "NEW",
+        office: "PHFO",
+        phenomenon: "FF",
+        significance: "W",
+        eventNumber: 55,
+        begin: "2026-10-08T20:21:00Z",
+        end: "2026-10-08T23:15:00Z",
+      },
+    ]);
+    // An event under way until further notice states neither time.
+    const flood = out.situations.find((s) => capOf(s)["msgType"] === "update")!;
+    expect(capOf(flood)["vtec"]).toEqual([
+      expect.not.objectContaining({ begin: expect.anything(), end: expect.anything() }),
+    ]);
+  });
+
+  test("a continued event stays in force until its ends; NWS's ends is kept verbatim", () => {
+    const { c } = advisory("CON");
+    const out = parse({ alerts: [buffer(c)] }, AFTER_EXPIRES);
+    const s = out.situations.find((r) => kind(r) === "marine.small_craft")!;
+    expect(s["validity"]).toMatchObject({ status: "active", end: "2026-10-09T18:00:00-08:00" });
+    expect(capOf(s)["ends"]).toBe("2026-10-09T18:00:00-08:00");
+    expect(s["groupId"]).toBe("VTEC:PAJK.SC.Y.0322:2026");
+  });
+
+  test.for([
+    ["UPG", "ended", "superseded"],
+    ["CAN", "cancelled", "cancelled"],
+  ] as const)("an event's %s segment ends at its expires, %s", ([action, status, reason]) => {
+    const { c } = advisory(action);
+    const before = parse({ alerts: [buffer(c)] }, BEFORE_EXPIRES);
+    expect(sealFailures(before.situations)).toEqual([]);
+    const s = before.situations.find((r) => kind(r) === "marine.small_craft")!;
+    expect(s["validity"]).toMatchObject({
+      status,
+      endedReason: reason,
+      end: "2026-10-08T20:15:00-08:00",
+    });
+    // Past its expires it is gone, though NWS's ends lies a day later.
+    const after = parse({ alerts: [buffer(c)] }, AFTER_EXPIRES);
+    expect(after.situations.some((r) => kind(r) === "marine.small_craft")).toBe(false);
+  });
+
+  test("an expiring event is in force until its expires, not its ends", () => {
+    const { c } = advisory("EXP");
+    const before = parse({ alerts: [buffer(c)] }, BEFORE_EXPIRES);
+    const s = before.situations.find((r) => kind(r) === "marine.small_craft")!;
+    expect(s["validity"]).toMatchObject({ status: "active", end: "2026-10-08T20:15:00-08:00" });
+  });
+
+  test("a VTEC string with an action the directive does not define is left unread", () => {
+    const { c } = advisory("ZZZ");
+    const out = parse({ alerts: [buffer(c)] }, BEFORE_EXPIRES);
+    const s = out.situations.find((r) => kind(r) === "marine.small_craft")!;
+    expect(capOf(s)).not.toHaveProperty("vtec");
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
+  });
+
+  test("the affected zones are the location's external references, by type", () => {
+    const out = parse({ alerts: [fixture("nws-alerts-active.json")] });
+    const warning = byId(out, "eb661929f4f0d9d23699668a.001.1");
+    const external = (warning["location"] as { external?: { system: string; code: string }[] })
+      .external;
+    expect(external).toBeDefined();
+    expect(external!.every((e) => /^nws:(forecast|county|fire)$/.test(e.system))).toBe(true);
   });
 });
 

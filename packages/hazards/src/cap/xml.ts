@@ -11,6 +11,7 @@ const REPEATED = new Set([
   "responseType",
   "eventCode",
   "parameter",
+  "resource",
   "area",
   "polygon",
   "circle",

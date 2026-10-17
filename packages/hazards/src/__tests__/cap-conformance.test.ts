@@ -148,6 +148,101 @@ describe("NWS alerts against the weather.gov OpenAPI document", () => {
     expect(validate(snapshot).join("\n")).toMatch(/must be equal to one of the allowed values/);
   });
 
+  test("every property of its Alert is read", ({ skip }) => {
+    if (unavailable) skip(unavailable);
+    const ENDS = "2026-10-10T20:00:00+00:00";
+    const zone = "https://api.weather.gov/zones/forecast/FLZ019";
+    const f = nwsFeature({ id: "m", responseType: ["Prepare"], references: "orig" });
+    const p = {
+      ...f.properties,
+      geocode: { UGC: ["FLZ019"], SAME: ["012079"] },
+      affectedZones: [zone],
+      references: [
+        {
+          "@id": "https://api.weather.gov/alerts/orig",
+          identifier: "orig",
+          sender: SENDER,
+          sent: SENT,
+        },
+      ],
+      onset: "2026-10-08T22:00:00+00:00",
+      ends: ENDS,
+      headline: "Wind Advisory issued by NWS",
+      description: "Strong wind.",
+      instruction: "Secure loose objects.",
+      note: "Non-Weather Emergency Message. Not sent to IPAWS.",
+      parameters: {
+        NWSheadline: ["WIND ADVISORY IN EFFECT"],
+        VTEC: ["/O.NEW.KTAE.WI.Y.0012.261008T2000Z-261010T2000Z/"],
+      },
+      code: "IPAWSv1.0",
+      web: "http://www.weather.gov",
+      eventCode: { SAME: ["WIY"], NationalWeatherService: ["WIY"] },
+    };
+    const alert = openApiValidator(nwsApi!, "Alert");
+    expect(alert(p)).toEqual([]);
+    const feed = nwsFeed();
+    drainSkipped(feed.id);
+    const out = hazardsDomain.formats["nws"]!.parse(
+      feed,
+      { alerts: [json({ type: "FeatureCollection", features: [{ ...f, properties: p }] })] },
+      parseContext(FETCHED, 120),
+    );
+    expect(drainSkipped(feed.id)).toEqual({});
+    const s = out.situations[0]!;
+    const c = capOf(s);
+    const location = s["location"] as {
+      areaDescription: { text: string }[];
+      admin: { geocodes: unknown[] };
+      external: unknown[];
+    };
+    const checks: Readonly<Record<string, () => boolean>> = {
+      id: () => c["identifier"] === "m",
+      areaDesc: () => location.areaDescription[0]!.text === "Test area",
+      geocode: () =>
+        same(location.admin.geocodes, [
+          { scheme: "ugc", code: "FLZ019" },
+          { scheme: "same", code: "012079" },
+        ]),
+      affectedZones: () => same(location.external, [{ system: "nws:forecast", code: "FLZ019" }]),
+      references: () =>
+        (c["references"] as { identifier: string }[])[0]!.identifier === "orig" &&
+        (s["relations"] as unknown[]).length === 1,
+      sent: () => c["sent"] === SENT,
+      effective: () => c["effective"] === SENT,
+      onset: () => c["onset"] === p.onset,
+      expires: () => c["expires"] === EXPIRES,
+      ends: () => c["ends"] === ENDS && (s["validity"] as { end: string }).end === ENDS,
+      status: () => c["status"] === "actual",
+      messageType: () => c["msgType"] === "alert",
+      category: () => same(c["category"], ["met"]),
+      severity: () => c["severity"] === "moderate",
+      certainty: () => c["certainty"] === "likely",
+      urgency: () => c["urgency"] === "expected",
+      event: () => first(c["event"])?.text === "Wind",
+      sender: () => c["sender"] === SENDER,
+      senderName: () => first(c["senderName"])?.text === "Test office",
+      headline: () => first(s["headline"])?.text === p.headline,
+      description: () => first(s["description"])?.text === p.description,
+      instruction: () => first(s["instruction"])?.text === p.instruction,
+      note: () => c["note"] === p.note,
+      response: () => same(c["responseType"], ["prepare"]),
+      parameters: () =>
+        (c["parameters"] as unknown[]).length === 2 &&
+        (c["vtec"] as { action: string }[])[0]!.action === "NEW",
+      scope: () => c["scope"] === "public",
+      code: () => same(c["codes"], ["IPAWSv1.0"]),
+      language: () => first(c["event"])?.lang === "en-US",
+      web: () => c["web"] === "http://www.weather.gov",
+      eventCode: () => (c["eventCodes"] as unknown[]).length === 2,
+    };
+    const schemas = (nwsApi!["components"] as { schemas: Record<string, unknown> }).schemas;
+    const properties = Object.keys((schemas["Alert"] as { properties: object }).properties);
+    assertCovered("Alert", properties, {
+      handled: (property) => Object.hasOwn(checks, property) && checks[property]!(),
+    });
+  });
+
   test("its alert enumerations are CAP 1.2's", ({ skip }) => {
     if (unavailable) skip(unavailable);
     const sorted = (values: readonly string[]) => [...values].sort();
@@ -553,11 +648,202 @@ describe("CAP values outside the schema", () => {
   );
 });
 
+/** One message carrying every element CAP 1.2 declares, each with a value the checks below can find. */
+const FULL = {
+  identifier: "2.49.0.0.250.0.FR.full",
+  sender: SENDER,
+  sent: SENT,
+  status: "Actual",
+  msgType: "Alert",
+  source: "Forecaster 7",
+  scope: "Public",
+  restriction: "Emergency services only",
+  addresses: '"Fire Brigade" police',
+  code: ["profile:test:1.0"],
+  note: "Issued for the coverage check",
+  references: `${SENDER},earlier,${SENT}`,
+  incidents: "INC-1",
+  info: [
+    {
+      language: "de-DE",
+      category: ["Met"],
+      event: "Wind",
+      responseType: ["Prepare"],
+      urgency: "Expected",
+      severity: "Moderate",
+      certainty: "Likely",
+      audience: "Everyone",
+      eventCode: [{ valueName: "SAME", value: "HWW" }],
+      effective: SENT,
+      onset: "2026-10-08T22:00:00+00:00",
+      expires: EXPIRES,
+      senderName: "Test office",
+      headline: "Wind warning",
+      description: "Strong wind.",
+      instruction: "Stay inside.",
+      web: "https://example.org/warning",
+      contact: "Duty officer",
+      parameter: [{ valueName: "gusts", value: "90 km/h" }],
+      resource: [
+        {
+          resourceDesc: "Map",
+          mimeType: "image/png",
+          size: "1024",
+          uri: "https://example.org/map.png",
+          derefUri: "iVBORw0KGgo=",
+          digest: "da39a3ee5e6b4b0d3255bfef95601890afd80709",
+        },
+      ],
+      area: [
+        {
+          areaDesc: "Test area",
+          polygon: [AREA],
+          circle: ["50.5,12.5 5"],
+          geocode: [{ valueName: "NUTS3", value: "FR101" }],
+          altitude: "100",
+          ceiling: "3000",
+        },
+      ],
+    },
+  ],
+};
+
+type Check = (s: RecordDraft, cap: Record<string, unknown>) => boolean;
+const first = (t: unknown) => (t as { lang: string; text: string }[] | undefined)?.[0];
+const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
+const locationOf = (s: RecordDraft) =>
+  s["location"] as {
+    geometry: { type: string; coordinates: unknown[] };
+    areaDescription?: unknown;
+    admin?: { geocodes?: unknown[] };
+  };
+
+/** Where each element of the full message must show in the situation it publishes. */
+const ELEMENT_CHECKS: Readonly<Record<string, Readonly<Record<string, Check>>>> = {
+  alert: {
+    identifier: (_, c) => c["identifier"] === FULL.identifier,
+    sender: (_, c) => c["sender"] === SENDER,
+    sent: (_, c) => c["sent"] === SENT,
+    status: (_, c) => c["status"] === "actual",
+    msgType: (_, c) => c["msgType"] === "alert",
+    source: (_, c) => c["source"] === "Forecaster 7",
+    scope: (_, c) => c["scope"] === "public",
+    code: (_, c) => same(c["codes"], ["profile:test:1.0"]),
+    note: (_, c) => c["note"] === "Issued for the coverage check",
+    references: (s, c) =>
+      (c["references"] as { identifier: string }[] | undefined)?.[0]?.identifier === "earlier" &&
+      (s["relations"] as unknown[] | undefined)?.length === 1,
+    incidents: (_, c) => same(c["incidents"], ["INC-1"]),
+    info: (s) => s["kind"] === "alert",
+  },
+  info: {
+    language: (_, c) => first(c["event"])?.lang === "de-DE",
+    category: (_, c) => same(c["category"], ["met"]),
+    event: (_, c) => first(c["event"])?.text === "Wind",
+    responseType: (_, c) => same(c["responseType"], ["prepare"]),
+    urgency: (_, c) => c["urgency"] === "expected",
+    severity: (s, c) =>
+      c["severity"] === "moderate" && (s["severity"] as { label: string }).label === "moderate",
+    certainty: (s, c) => c["certainty"] === "likely" && s["certainty"] === "likely",
+    audience: (_, c) => first(c["audience"])?.text === "Everyone",
+    eventCode: (_, c) => same(c["eventCodes"], [{ valueName: "SAME", value: "HWW" }]),
+    effective: (s, c) =>
+      c["effective"] === SENT && (s["validity"] as { start: string }).start === SENT,
+    onset: (s, c) => c["onset"] === FULL.info[0]!.onset && s["temporality"] === "forecast",
+    expires: (s, c) =>
+      c["expires"] === EXPIRES && (s["validity"] as { end: string }).end === EXPIRES,
+    senderName: (_, c) => first(c["senderName"])?.text === "Test office",
+    headline: (s) => first(s["headline"])?.text === "Wind warning",
+    description: (s) => first(s["description"])?.text === "Strong wind.",
+    instruction: (s) => first(s["instruction"])?.text === "Stay inside.",
+    web: (_, c) => c["web"] === "https://example.org/warning",
+    contact: (_, c) => first(c["contact"])?.text === "Duty officer",
+    parameter: (_, c) => same(c["parameters"], [{ valueName: "gusts", value: "90 km/h" }]),
+    resource: (_, c) => (c["resources"] as unknown[] | undefined)?.length === 1,
+    area: (s) => locationOf(s).geometry !== null,
+  },
+  resource: {
+    resourceDesc: (_, c) =>
+      (c["resources"] as { description?: string }[])[0]?.description === "Map",
+    mimeType: (_, c) => (c["resources"] as { mimeType?: string }[])[0]?.mimeType === "image/png",
+    size: (_, c) => (c["resources"] as { size?: number }[])[0]?.size === 1024,
+    uri: (_, c) => (c["resources"] as { uri?: string }[])[0]?.uri === "https://example.org/map.png",
+    digest: (_, c) =>
+      (c["resources"] as { digest?: string }[])[0]?.digest === FULL.info[0]!.resource[0]!.digest,
+  },
+  area: {
+    areaDesc: (s) => first(locationOf(s).areaDescription)?.text === "Test area",
+    // The polygon and the circle are the two parts of one shape.
+    polygon: (s) => locationOf(s).geometry.coordinates.length === 2,
+    circle: (s) =>
+      locationOf(s).geometry.type === "MultiPolygon" &&
+      locationOf(s).geometry.coordinates.length === 2,
+    geocode: (s) => same(locationOf(s).admin?.geocodes, [{ scheme: "nuts", code: "FR101" }]),
+    altitude: (_, c) => c["altitudeFt"] === 100,
+    ceiling: (_, c) => c["ceilingFt"] === 3000,
+  },
+};
+
+/** The elements CAP declares that no situation carries, and why. */
+const ELEMENTS_UNSUPPORTED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  alert: {
+    restriction:
+      "for restricted messages only (CAP 1.2, 3.2.1), which are not republished; a public message has none to keep",
+    addresses:
+      "for restricted and private messages only (CAP 1.2, 3.2.1), which are not republished",
+  },
+  resource: {
+    derefUri:
+      "embedded content: the model keeps what a resource is and where it lives, not the file",
+  },
+};
+
+describe("every element CAP 1.2 declares", () => {
+  const PAYLOADS: Readonly<Record<string, () => FeedPayloads>> = {
+    cap: () => ({ alerts: [Buffer.from(capJsonAsXml(schema(), FULL))] }),
+    meteoalarm: () => ({ alerts: [json({ warnings: [{ alert: FULL, uuid: "full" }] })] }),
+  };
+
+  test("the full message is valid CAP", async ({ skip }) => {
+    if (unavailable) skip(unavailable);
+    expect(await valid(capJsonAsXml(schema(), FULL))).toEqual([]);
+  });
+
+  describe.each(FORMATS.filter((f) => Object.hasOwn(PAYLOADS, f.name)))("$name", (format) => {
+    test.for(["alert", "info", "resource", "area"])(
+      "every child of %s is read or listed with its reason",
+      (parent, { skip }) => {
+        if (unavailable) skip(unavailable);
+        const feed = format.feed();
+        drainSkipped(feed.id);
+        const out = hazardsDomain.formats[format.name]!.parse(
+          feed,
+          PAYLOADS[format.name]!(),
+          parseContext(FETCHED, 120),
+        );
+        expect(drainSkipped(feed.id)).toEqual({});
+        expect(out.situations).toHaveLength(1);
+        const s = out.situations[0]!;
+        const checks = ELEMENT_CHECKS[parent] ?? {};
+        assertCovered(parent, schema().children.get(parent) ?? [], {
+          handled: (element) => Object.hasOwn(checks, element) && checks[element]!(s, capOf(s)),
+          unsupported: ELEMENTS_UNSUPPORTED[parent] ?? {},
+        });
+      },
+    );
+  });
+});
+
 describe("the CAP gdacs areas follow CAP's status, scope and message type", () => {
   // GDACS's CAP feed only lends an event's current episode its polygons; the
-  // event, its severity and its certainty are read from the RSS.
+  // event, its severity and its certainty are read from the RSS. GDACS
+  // derives these CAP tokens from the RSS and says less with them: the
+  // severity from the alert colour without its score (a green cyclone or
+  // flood `Moderate`, a green earthquake `Minor`), the urgency `Past` for
+  // every event, those in progress too, the certainty `Unknown` but for
+  // earthquakes, and the category from the event type.
   const NOT_READ =
-    "the gdacs format takes only an episode's polygons from GDACS's CAP feed; the event's type, severity and time come from its RSS";
+    "GDACS derives the CAP token from its RSS, which the gdacs format reads: the alert level and score, whether the event is current, and its type";
 
   const areasWith = (element: string, from: string, to: string) => {
     const doc = text("gdacs-cap.xml");
