@@ -382,7 +382,8 @@ export function mapOcpi(
     const stationId = stationIdOf(loc);
     if (seen.has(stationId)) continue;
     seen.add(stationId);
-    const zone = PUBLISHER_ZONES[feed.region] ?? loc.time_zone ?? "UTC";
+    const naive = own(PUBLISHER_ZONES, feed.region);
+    const zone = naive ?? loc.time_zone ?? "UTC";
     const point: [number, number] = [loc.coordinates.longitude, loc.coordinates.latitude];
 
     const upstream =
@@ -527,8 +528,8 @@ export function mapOcpi(
       ...(loc.opening_times?.exceptional_openings ?? []).map((p) => ({ ...p, open: true })),
       ...(loc.opening_times?.exceptional_closings ?? []).map((p) => ({ ...p, open: false })),
     ].flatMap((p) => {
-      const start = instantIn(PUBLISHER_ZONES[feed.region] ?? "UTC", p.period_begin);
-      const end = instantIn(PUBLISHER_ZONES[feed.region] ?? "UTC", p.period_end);
+      const start = instantIn(naive ?? "UTC", p.period_begin);
+      const end = instantIn(naive ?? "UTC", p.period_end);
       return start === undefined || end === undefined ? [] : [{ start, end, open: p.open }];
     });
     const images = [
