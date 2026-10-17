@@ -24,10 +24,11 @@ const ALPHA2_OF: ReadonlyMap<string, string> = new Map(
 
 /**
  * The ISO 3166-1 alpha-2 code of a country code as a source writes it: an
- * alpha-2 code as given, an alpha-3 code (OCPI's) converted. Undefined for
- * anything else.
+ * alpha-2 code as given, an alpha-3 code (OCPI's, GDACS's) converted. Case
+ * and surrounding space are ignored. Undefined for anything else, a code no
+ * country holds included.
  */
-export function alpha2(code: string | undefined): string | undefined {
+export function countryAlpha2(code: string | undefined): string | undefined {
   const c = code?.trim().toUpperCase();
   if (c === undefined) return undefined;
   if (/^[A-Z]{2}$/.test(c)) return c;
