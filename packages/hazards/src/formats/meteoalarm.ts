@@ -185,8 +185,9 @@ function croatianCounties(): Map<string, Geometry | null> {
  * A warning is served for at most three minutes after the poll that read it
  * (`freshness.expiresAt` is the earlier of its `expires` and that), because
  * MeteoAlarm's terms bar showing its data later than ten minutes behind its
- * site. A country payload that is no envelope is rejected; the parse fails
- * only when every payload is.
+ * site. A country payload that is no envelope, and an entry of one that
+ * holds no alert, is skipped as `malformed`; the parse fails only when no
+ * payload is an envelope.
  */
 export function parseMeteoAlarm(
   feed: HazardsCatalogFeed,
@@ -256,7 +257,7 @@ export function parseMeteoAlarm(
 
   return capOutput(alerts, feed, {
     fetchedAt: ctx.fetchedAt,
-    unreadable: unreadable + unreadablePayloads,
+    undecoded: { malformed: unreadable + unreadablePayloads },
     geometryOf,
     expiresAt,
     countryOf,

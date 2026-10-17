@@ -1,4 +1,4 @@
-import type { RecordDraft } from "@openconditions/ingest-framework";
+import type { RecordDraft, SkipCounts } from "@openconditions/ingest-framework";
 import {
   type CapPair,
   capCircle,
@@ -123,7 +123,7 @@ const optional = (key: string, value: unknown) => (value === undefined ? {} : { 
  * supplies for a code-only area are derived, and a supplied shape from a
  * third party's table brings that table's credit; an area with only codes and no
  * supplied shape has no geometry. Undefined when a shape CAP gives does not
- * read (a position out of range, an open ring): the record is rejected.
+ * read (a position out of range, an open ring): the hazard is skipped.
  */
 function capGeometry(
   areas: readonly CapArea[],
@@ -277,12 +277,10 @@ function capValidity(alert: CapAlert, info: CapInfo, allClear: boolean, end: str
   };
 }
 
-/** The relation a message's references have to the messages they name. */
+/** The relation a message's references have to the messages they name; an alert's are only related. */
 const RELATION_OF: Readonly<Record<string, string>> = {
   Update: "update_of",
   Cancel: "cancels",
-  Ack: "related",
-  Error: "related",
 };
 
 const value = (vocabulary: string, token: unknown) => {
@@ -298,16 +296,31 @@ const webOf = (raw: unknown) => {
     : undefined;
 };
 
+/** The known tokens of a repeatable CAP field as the vocabulary's values, and how many it does not know. */
+function tokens(vocabulary: string, raw: unknown): { values: string[]; unknown: number } {
+  const values: string[] = [];
+  let unknown = 0;
+  for (const token of list(raw as unknown[] | undefined)) {
+    const v = value(vocabulary, token);
+    if (v === undefined) unknown++;
+    else values.push(v);
+  }
+  return { values, unknown };
+}
+
 /**
- * A message's situations, and how many of its hazards could not be read
- * (a vocabulary token the registry does not know, a shape out of range):
- * each is rejected, never the message's other hazards.
+ * A message's situations, and why any of its hazards, or any value of one,
+ * went unread. A hazard is skipped as `malformed` when a field CAP requires
+ * does not read: a header, urgency, severity or certainty token CAP 1.2 does
+ * not define, no category it defines, no event, or a shape out of range; the
+ * message's other hazards are kept. A category or response type CAP does not
+ * define is left out of a hazard that is kept, as `unknown_value`.
  */
 export function capDrafts(
   alert: CapAlert,
   feed: HazardsFeed,
   opts: CapSituationOptions,
-): { drafts: RecordDraft[]; rejected: number } {
+): { drafts: RecordDraft[]; skipped: SkipCounts } {
   const groups = new Map<string, CapInfo[]>();
   for (const info of list(alert.info)) {
     const key = signature(info);
@@ -319,11 +332,13 @@ export function capDrafts(
   const country = opts.countryOf?.(alert) ?? countryOf(alert, feed);
   const sent = string(alert.sent)!;
   const drafts: RecordDraft[] = [];
-  let rejected = 0;
+  const skipped: { malformed?: number; unknown_value?: number } = {};
   [...groups.values()].forEach((infos, n) => {
     const info = infos[0]!;
-    const category = list(info.category).map((x) => value("cap_category", x));
-    const responseType = list(info.responseType).map((r) => value("cap_response_type", r));
+    const categories = tokens("cap_category", info.category);
+    const responses = tokens("cap_response_type", info.responseType);
+    const category = categories.values;
+    const responseType = responses.values;
     const event = text(infos, (i) => i.event);
     const cap = {
       status: value("cap_status", alert.status),
@@ -339,16 +354,16 @@ export function capDrafts(
     if (
       Object.values(cap).includes(undefined) ||
       category.length === 0 ||
-      category.includes(undefined) ||
-      responseType.includes(undefined) ||
       event === undefined ||
       label === undefined ||
       certainty === undefined ||
       location === undefined
     ) {
-      rejected++;
+      skipped.malformed = (skipped.malformed ?? 0) + 1;
       return;
     }
+    const unknown = categories.unknown + responses.unknown;
+    if (unknown > 0) skipped.unknown_value = (skipped.unknown_value ?? 0) + unknown;
     // The first hazard keeps the message's id, so a reference to the message names a record.
     const localId = n === 0 ? alert.identifier : `${alert.identifier}#${n + 1}`;
     const c = capClassification(pairs(info.eventCode), pairs(info.parameter)) ?? {
@@ -431,7 +446,7 @@ export function capDrafts(
       },
     });
   });
-  return { drafts, rejected };
+  return { drafts, skipped };
 }
 
 /**

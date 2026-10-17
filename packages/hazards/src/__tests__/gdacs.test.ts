@@ -1,8 +1,16 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { fixture, gdacsFeed, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
+
+beforeEach(() => __resetSkips());
 
 const FETCHED = "2026-10-09T01:15:00Z";
 const gdacs = hazardsDomain.formats["gdacs"]!;
@@ -163,6 +171,33 @@ describe("the gdacs format without areas and over altered documents", () => {
     expect(geometry(byId(out, "TC1001334")).type).toBe("Point");
   });
 
+  test("only an actual, public alert or update lends its event an area", () => {
+    // The first CAP item is the ISAIAS-26 episode the RSS names.
+    const areas = (element: string, value: string) =>
+      Buffer.from(
+        fixture("gdacs-cap.xml")
+          .toString("utf8")
+          .replace(new RegExp(`<cap:${element}>[^<]*`), `<cap:${element}>${value}`),
+      );
+    const shape = (element: string, value: string) =>
+      geometry(
+        byId(
+          parse({ events: [fixture("gdacs-rss.xml")], areas: [areas(element, value)] }),
+          "TC1001334",
+        ),
+      ).type;
+    expect(shape("msgType", "Update")).toBe("MultiPolygon");
+    for (const [element, value] of [
+      ["status", "Test"],
+      ["status", "Exercise"],
+      ["scope", "Restricted"],
+      ["msgType", "Cancel"],
+      ["msgType", "Ack"],
+    ] as const) {
+      expect(shape(element, value), `${element} ${value}`).toBe("Point");
+    }
+  });
+
   test("a CAP polygon that does not close contributes nothing", () => {
     const cap = fixture("gdacs-cap.xml")
       .toString("utf8")
@@ -172,7 +207,7 @@ describe("the gdacs format without areas and over altered documents", () => {
     expect(out.rejected).toBeUndefined();
   });
 
-  test("an item with a repeated guid is a duplicate; one without a time or point is rejected", () => {
+  test("an item with a repeated guid is a duplicate; one without a time or point is skipped", () => {
     const items = rss().split("<item>").slice(1);
     const taal = `<item>${items.find((i) => i.includes("VO1000151"))!.split("</item>")[0]}</item>`;
     const noTime = taal
@@ -191,7 +226,8 @@ describe("the gdacs format without areas and over altered documents", () => {
       ],
     });
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1, no_geometry: 1 });
     expect(out.records).toMatchObject({
       inputCount: 4,
       uniqueCount: 3,

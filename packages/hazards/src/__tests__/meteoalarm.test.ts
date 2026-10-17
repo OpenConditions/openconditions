@@ -1,12 +1,14 @@
 import {
+  __resetSkips,
   createFetchState,
+  drainSkipped,
   type FeedPayloads,
   fetchEndpoint,
   type ParseOutput,
   type RecordDraft,
 } from "@openconditions/ingest-framework";
 import type { MultiPolygon, Polygon, Position } from "geojson";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import type { CapAlert } from "../cap/types.js";
 import { hazardsDomain } from "../domain.js";
 import { HR_NUTS3, type HrCountySnapshot } from "../formats/hr-counties.js";
@@ -21,6 +23,8 @@ import aliasSnapshot from "../formats/snapshots/meteoalarm-aliases.json" with { 
 import { pointInRing } from "../geometry.js";
 import { fixture, meteoalarmFeed, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
+
+beforeEach(() => __resetSkips());
 
 const meteoalarm = hazardsDomain.formats["meteoalarm"]!;
 const feed = meteoalarmFeed();
@@ -496,7 +500,7 @@ describe("the meteoalarm format: payloads", () => {
     expect(out.records).toMatchObject({ inputCount: 3, accepted: 3 });
   });
 
-  test("an entry with no alert is a rejected record; a payload that is no envelope, too, while another reads", () => {
+  test("an entry with no alert is a malformed record; a payload that is no envelope, too, while another reads", () => {
     const out = parse(
       {
         alerts: [
@@ -512,7 +516,8 @@ describe("the meteoalarm format: payloads", () => {
       NOW,
     );
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 2 });
   });
 
   test("when no payload is an envelope, the answer is the publisher's error and the parse fails", () => {

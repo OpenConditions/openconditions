@@ -6,7 +6,11 @@ export interface ReadCounts {
   inputCount: number;
   /** Records whose id an earlier record of the same parse already took. */
   duplicates: number;
-  /** Records that could not be used (a bad shape, a missing field), counted once per record. */
+  /**
+   * Records that could not be used, counted once per record, other than those
+   * skipped under a reason with `recordSkipped`: the pipeline counts those as
+   * rejected itself.
+   */
   rejected: number;
   /** Records that end here by design (a type the feed leaves to another source). */
   terminal?: number;

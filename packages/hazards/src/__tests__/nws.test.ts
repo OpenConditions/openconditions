@@ -1,15 +1,19 @@
 import {
+  __resetSkips,
   createFetchState,
+  drainSkipped,
   type FeedPayloads,
   fetchEndpoint,
   type ParseOutput,
   type RecordDraft,
 } from "@openconditions/ingest-framework";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { readNwsAlerts } from "../formats/nws.js";
 import { fixture, nwsFeed, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
+
+beforeEach(() => __resetSkips());
 
 const FETCHED = "2026-10-08T21:10:00Z";
 const nws = hazardsDomain.formats["nws"]!;
@@ -426,23 +430,25 @@ describe("the nws format: records and errors", () => {
     expect(polygon.info![0]!.area![0]!.polygon![0]!.startsWith(`${lat},${lon} `)).toBe(true);
   });
 
-  test("a polygon with a position out of range rejects that alert only", () => {
+  test("a polygon with a position out of range skips that alert only, as malformed", () => {
     const c = collection();
     const bad = feature(c, "Flash Flood Warning");
     (bad.geometry as { coordinates: number[][][] }).coordinates[0]![1] = [-157, 95];
     const out = parse({ alerts: [buffer(c)] });
     expect(out.situations).toHaveLength(4);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
     expect(out.records).toMatchObject({ inputCount: 6, accepted: 4, terminal: 1 });
   });
 
-  test("a feature that is no alert is a rejected record; the others publish", () => {
+  test("a feature that is no alert is a malformed record; the others publish", () => {
     const c = collection();
     const out = parse({
       alerts: [buffer({ ...c, features: [...c.features, 3, { type: "Feature" }] })],
     });
     expect(out.situations).toHaveLength(5);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 2 });
   });
 
   test("a quiet poll is an accounted zero", () => {

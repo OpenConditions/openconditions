@@ -1,14 +1,16 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import {
+  __resetSkips,
   createFetchState,
+  drainSkipped,
   type FeedPayloads,
   fetchEndpoint,
   type ParseOutput,
   type RecordDraft,
   unzipEntries,
 } from "@openconditions/ingest-framework";
-import { afterEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { capOutput } from "../cap/accounting.js";
 import type { CapAlert } from "../cap/types.js";
 import { readCapXml } from "../cap/xml.js";
@@ -16,6 +18,8 @@ import { hazardsDomain } from "../domain.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
 import { dwdFeed, ecccFeed, fixture, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
+
+beforeEach(() => __resetSkips());
 
 const FETCHED = "2026-10-08T22:00:00Z";
 const cap = hazardsDomain.formats["cap"]!;
@@ -196,14 +200,45 @@ describe("the cap format: what a parse keeps", () => {
     expect(out.records).toMatchObject({ inputCount: 2, terminal: 2, accepted: 0 });
   });
 
-  test("a message without its header fields is rejected, the rest kept", () => {
+  test("a restricted or private message is not republished, and counts as terminal", () => {
+    const out = parse(dwdFeed(), {
+      alerts: [
+        withAlert(original(), { scope: "Restricted" }),
+        withAlert(update(), { scope: "Private", references: "" }),
+      ],
+    });
+    expect(out.situations).toEqual([]);
+    expect(out.records).toMatchObject({ inputCount: 2, terminal: 2, accepted: 0 });
+    expect(drainSkipped("de-dwd-alerts")).toEqual({});
+  });
+
+  test("an acknowledgement or error warns of nothing and leaves the message it references standing", () => {
+    const a = readCapXml(original());
+    for (const msgType of ["Ack", "Error"]) {
+      const out = parse(dwdFeed(), { alerts: [original(), withAlert(update(), { msgType })] });
+      expect(out.situations.map(identifierOf)).toEqual([a.identifier]);
+      expect(out.records).toMatchObject({ inputCount: 2, terminal: 1, accepted: 1 });
+    }
+    expect(drainSkipped("de-dwd-alerts")).toEqual({});
+  });
+
+  test("a header token CAP 1.2 does not define is malformed, not terminal", () => {
+    // CAP's tokens are case-sensitive: `actual` is no status.
+    const out = parse(dwdFeed(), { alerts: [withAlert(original(), { status: "actual" })] });
+    expect(out.situations).toEqual([]);
+    expect(out.records).toMatchObject({ inputCount: 1, uniqueCount: 1, terminal: 0 });
+    expect(drainSkipped("de-dwd-alerts")).toEqual({ malformed: 1 });
+  });
+
+  test("a message without its header fields is skipped as malformed, the rest kept", () => {
     const out = parse(dwdFeed(), { alerts: [withAlert(original(), { sent: "" }), update()] });
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped("de-dwd-alerts")).toEqual({ malformed: 1 });
     expect(out.records).toMatchObject({ inputCount: 2, uniqueCount: 2, accepted: 1, terminal: 0 });
   });
 
-  test("a message that cannot be read is a unique record, rejected beside the terminal ones", () => {
+  test("a message that cannot be read is a unique record, skipped beside the terminal ones", () => {
     const out = parse(dwdFeed(), {
       alerts: [
         withAlert(original(), { status: "Exercise" }),
@@ -212,7 +247,8 @@ describe("the cap format: what a parse keeps", () => {
       ],
     });
     expect(out.situations).toEqual([]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped("de-dwd-alerts")).toEqual({ malformed: 2 });
     expect(out.records).toMatchObject({ inputCount: 3, uniqueCount: 3, terminal: 1, accepted: 0 });
   });
 
@@ -227,12 +263,12 @@ describe("the cap format: what a parse keeps", () => {
     });
   });
 
-  test("a payload that is no CAP message is a rejected record; the others publish", () => {
+  test("a payload that is no CAP message is a malformed record; the others publish", () => {
     const out = parse(dwdFeed(), {
       alerts: [update(), Buffer.from("<html><body>503</body></html>")],
     });
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped("de-dwd-alerts")).toEqual({ malformed: 1 });
     expect(out.records).toMatchObject({ inputCount: 2, accepted: 1, terminal: 0 });
   });
 
@@ -383,14 +419,14 @@ describe("the cap format over its endpoints", () => {
     expect(out.records).toMatchObject({ inputCount: 3, terminal: 3, accepted: 0 });
   });
 
-  test("ECCC: one file of the walk that is no CAP message is rejected; the rest publish", async () => {
+  test("ECCC: one file of the walk that is no CAP message is malformed; the rest publish", async () => {
     const feed = ecccFeed();
     const files = FILES.map(([, file]) => fixture(`eccc-datamart/${file}`));
     const out = parse(feed, { alerts: [...files, Buffer.from("<html>busy</html>")] });
     expect(new Set(out.situations.map(identifierOf))).toEqual(
       new Set(["urn:oid:2.49.0.1.124.1129882422.2026"]),
     );
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
     expect(out.records).toMatchObject({ inputCount: 4, terminal: 2 });
   });
 

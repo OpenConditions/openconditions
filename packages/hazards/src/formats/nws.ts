@@ -202,8 +202,8 @@ function zoneShapes(bodies: readonly Buffer[]): Map<string, Polygon | MultiPolyg
  * (its next expected issuance) until the hazard `ends`, and so does the
  * format; `expires` stays in the details. An alert with no geometry of its own is placed at the union of
  * the shapes of its affected zones, as far as the zones role holds them.
- * A publisher error document, which carries no alert collection, fails the
- * parse.
+ * A feature that is no alert is skipped as `malformed`. A publisher error
+ * document, which carries no alert collection, fails the parse.
  */
 export function parseNws(
   feed: HazardsCatalogFeed,
@@ -224,7 +224,7 @@ export function parseNws(
     feed,
     {
       fetchedAt: ctx.fetchedAt,
-      unreadable: decoded.reduce((n, d) => n + d.unreadable, 0),
+      undecoded: { malformed: decoded.reduce((n, d) => n + d.unreadable, 0) },
       geometryOf,
       endOf: (info) => endsOf.get(info) ?? info.expires,
     },

@@ -4,6 +4,8 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { capPolygon } from "@openconditions/model-hazards";
 import { XMLParser } from "fast-xml-parser";
@@ -20,6 +22,12 @@ const TYPES: Readonly<Record<string, string>> = {
   VO: "volcano",
   DR: "drought",
 };
+
+/**
+ * The GDACS event types left to other feeds by design: USGS reports
+ * earthquakes first-hand, and NIFC, EFFIS and FIRMS wildfires.
+ */
+const LEFT_TO_OTHERS = new Set(["EQ", "WF"]);
 
 /** GDACS's alert colours as the severity they declare. */
 const ALERTS: Readonly<Record<string, string>> = {
@@ -104,6 +112,18 @@ function cycloneSubtype(label: string | undefined, point: Geometry): string | un
   return "cyclone";
 }
 
+/**
+ * Whether a CAP alert of the `areas` role describes a real event's current
+ * area: an `Actual`, `Public` alert or update. An exercise, test, system
+ * message or draft is not real, a restricted or private one is not for
+ * republishing, and a cancel, acknowledgement or error describes no area
+ * (CAP 1.2, 3.2.1).
+ */
+const currentArea = (alert: Record<string, unknown>) =>
+  str(alert["status"]) === "Actual" &&
+  str(alert["scope"]) === "Public" &&
+  (str(alert["msgType"]) === "Alert" || str(alert["msgType"]) === "Update");
+
 /** The CAP alerts of the `areas` role by identifier, each as the exterior rings of its polygons. */
 function areasOf(payloads: readonly Buffer[]): Map<string, [number, number][][][]> {
   const areas = new Map<string, [number, number][][][]>();
@@ -111,7 +131,7 @@ function areasOf(payloads: readonly Buffer[]): Map<string, [number, number][][][
     for (const item of itemsOf(channelOf(body, "areas"))) {
       const alert = item["alert"];
       const identifier = isRecord(alert) ? str(alert["identifier"]) : undefined;
-      if (!isRecord(alert) || identifier === undefined) continue;
+      if (!isRecord(alert) || identifier === undefined || !currentArea(alert)) continue;
       const polygons = (Array.isArray(alert["info"]) ? alert["info"] : [])
         .filter(isRecord)
         .flatMap((info) => (Array.isArray(info["area"]) ? info["area"] : []).filter(isRecord))
@@ -140,7 +160,9 @@ function toDraft(
   const current = str(item["iscurrent"])?.toLowerCase() !== "false";
   const end = gdacsTime(item["todate"]);
   const alert = str(item["alertlevel"]);
-  const label = alert === undefined ? undefined : ALERTS[alert.toLowerCase()];
+  const colour = alert?.toLowerCase();
+  const label = colour !== undefined && Object.hasOwn(ALERTS, colour) ? ALERTS[colour] : undefined;
+  if (alert !== undefined && label === undefined) recordSkipped(feed.id, "unknown_value");
   const score = Number(str(item["alertscore"]));
   const level = score === 1 || score === 2 || score === 3 ? score : undefined;
   const title = str(item["title"]);
@@ -215,18 +237,21 @@ function toDraft(
  * current events (tropical cyclones, floods, volcanoes, droughts) as
  * `natural_hazard` situations, read from the `events` RSS. Earthquakes and
  * wildfires are terminal: USGS, NIFC, EFFIS and FIRMS report them first-hand.
+ * Any other event type is skipped as `unknown_type`.
  *
  * The local id is the RSS `guid` (`<type><eventid>`), also the `gdacs:event`
  * external id, with the GLIDE number when GDACS has one. GDACS alerts are
- * `Green`, `Orange` or `Red` with a 1..3 score. An event with
+ * `Green`, `Orange` or `Red` with a 1..3 score; another colour leaves the
+ * severity unknown (`unknown_value`). An event with
  * `iscurrent=false` has ended at its `todate`. The optional `areas` role is
  * GDACS's CAP feed: the areas of an event's current episode
  * (`GDACS_<type>_<eventid>_<episode>`) become a MultiPolygon (a cyclone's
- * wind buffer, a flood's affected area), else the event keeps its RSS point.
+ * wind buffer, a flood's affected area), else the event keeps its RSS point;
+ * only an actual, public alert or update supplies areas.
  * A cyclone's subtype comes from GDACS's severity text and its basin; its
- * wind is the severity value in km/h. An item with no usable id, time or
- * position is rejected and counted; a document with no RSS channel fails the
- * parse.
+ * wind is the severity value in km/h. An item with no usable id or time is
+ * skipped as `malformed`, one with no position as `no_geometry`; a document
+ * with no RSS channel fails the parse.
  */
 export function parseGdacs(
   feed: HazardsCatalogFeed,
@@ -238,15 +263,15 @@ export function parseGdacs(
   const seen = new Set<string>();
   let inputCount = 0;
   let duplicates = 0;
-  let rejected = 0;
   let terminal = 0;
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
   for (const body of payloads["events"] ?? []) {
     for (const item of itemsOf(channelOf(body, "events"))) {
       inputCount++;
       const eventType = str(item["eventtype"]);
       const eventId = str(item["eventid"]);
       if (eventType === undefined || eventId === undefined || !/^\d+$/.test(eventId)) {
-        rejected++;
+        skip("malformed");
         continue;
       }
       const localId = `${eventType}${eventId}`;
@@ -255,21 +280,28 @@ export function parseGdacs(
         continue;
       }
       seen.add(localId);
-      if (TYPES[eventType] === undefined) {
+      if (LEFT_TO_OTHERS.has(eventType)) {
         terminal++;
+        continue;
+      }
+      if (!Object.hasOwn(TYPES, eventType)) {
+        skip("unknown_type");
         continue;
       }
       const rings =
         areas.get(`GDACS_${eventType}_${eventId}_${str(item["episodeid"]) ?? ""}`) ?? [];
       const geometry: Geometry | null =
         rings.length > 0 ? { type: "MultiPolygon", coordinates: rings } : rssPoint(item);
-      const draft =
-        geometry === null ? null : toDraft(item, eventType, localId, geometry, feed, ctx.fetchedAt);
-      if (draft === null) rejected++;
+      if (geometry === null) {
+        skip("no_geometry");
+        continue;
+      }
+      const draft = toDraft(item, eventType, localId, geometry, feed, ctx.fetchedAt);
+      if (draft === null) skip("malformed");
       else out.situations.push(draft);
     }
   }
 
-  accountSituations(out, { inputCount, duplicates, rejected, terminal });
+  accountSituations(out, { inputCount, duplicates, rejected: 0, terminal });
   return out;
 }

@@ -1,9 +1,14 @@
-import type { FeedPayloads, ParseContext, ParseOutput } from "@openconditions/ingest-framework";
+import type {
+  FeedPayloads,
+  ParseContext,
+  ParseOutput,
+  RecordSkipReason,
+} from "@openconditions/ingest-framework";
 import type { Geometry } from "geojson";
 import { capOutput } from "../cap/accounting.js";
 import type { DerivedShape } from "../cap/situations.js";
 import type { CapAlert, CapArea } from "../cap/types.js";
-import { readCapXml } from "../cap/xml.js";
+import { CapReadError, readCapXml } from "../cap/xml.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
 import { DERIVED_SHAPE_TOLERANCE_DEG, derivedShape, unionPolygons } from "../geometry.js";
 import { isRecord } from "../records.js";
@@ -109,8 +114,9 @@ function warnCellGeometry(
  * its own takes the shapes of its `WARNCELLID` codes (of a Bavarian lake
  * group, its member lakes').
  *
- * Each payload is one record: one that is no CAP message is rejected and the
- * others publish. Only when every payload fails is the answer the
+ * Each payload is one record: one that is no CAP message is skipped as
+ * `malformed`, a message of an earlier CAP version as `unsupported_version`,
+ * and the others publish. Only when every payload fails is the answer the
  * publisher's error rather than a bad record, and the parse fails, so the
  * last good publication stands.
  */
@@ -121,19 +127,22 @@ export function parseCap(
 ): ParseOutput {
   const bodies = payloads["alerts"] ?? [];
   const alerts: CapAlert[] = [];
+  const undecoded: Partial<Record<RecordSkipReason, number>> = {};
   let firstError: unknown;
   for (const body of bodies) {
     try {
       alerts.push(readCapXml(body));
     } catch (error) {
       firstError ??= error;
+      const reason = error instanceof CapReadError ? error.reason : "malformed";
+      undecoded[reason] = (undecoded[reason] ?? 0) + 1;
     }
   }
   if (bodies.length > 0 && alerts.length === 0) throw firstError;
   const geometryOf = warnCellGeometry(payloads["areas"]);
   return capOutput(alerts, feed, {
     fetchedAt: ctx.fetchedAt,
-    unreadable: bodies.length - alerts.length,
+    undecoded,
     ...(geometryOf ? { geometryOf } : {}),
   });
 }
