@@ -6,6 +6,33 @@ const fixture = (name: string): string =>
   readFileSync(new URL(`./fixtures/${name}`, import.meta.url), "utf8");
 
 describe("parseDatexParkingTable", () => {
+  /** A v2 record whose operator and owner give every contact detail under this agreement. */
+  function contacts(agreement: string | undefined) {
+    const contact = (tag: string, name: string) =>
+      `<${tag} xsi:type="ContactDetails"><contactOrganisationName><values><value lang="en">${name}</value></values></contactOrganisationName><contactDetailsTelephoneNumber>+31 1</contactDetailsTelephoneNumber><contactDetailsEMail>a@example.org</contactDetailsEMail><urlLinkAddress>https://example.org</urlLinkAddress>${agreement === undefined ? "" : `<publishingAgreement>${agreement}</publishingAgreement>`}</${tag}>`;
+    const doc = `<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><payloadPublication xsi:type="ParkingTablePublication" lang="en"><parkingTable id="t" version="1"><parkingRecord xsi:type="UrbanParkingSite" id="r" version="1">${contact("owner", "J. Jansen")}${contact("operator", "Parking BV")}</parkingRecord></parkingTable></payloadPublication></d2LogicalModel>`;
+    const [record] = parseDatexParkingTable(parseXmlDocument(doc));
+    return { operator: record!.operatorContact, owner: record!.owner };
+  }
+
+  test.for([" true ", "1"])(
+    "a contact's details are published where the agreement is %j",
+    (agreement) => {
+      const full = { phone: "+31 1", email: "a@example.org", url: "https://example.org" };
+      expect(contacts(agreement)).toEqual({
+        operator: { name: "Parking BV", ...full },
+        owner: { name: "J. Jansen", ...full },
+      });
+    },
+  );
+
+  test.for([undefined, "false", "0", "yes", ""])(
+    "without an explicit agreement (%j) only the operator's organisation name is kept",
+    (agreement) => {
+      expect(contacts(agreement)).toEqual({ operator: { name: "Parking BV" }, owner: undefined });
+    },
+  );
+
   test("a v2 parking table yields records with groups, facilities and tariffs", () => {
     const records = parseDatexParkingTable(parseXmlDocument(fixture("ndw-truck-table.xml")));
     expect(records.map((r) => r.id)).toEqual(["NL-12_421", "NL-12_8"]);
@@ -53,6 +80,8 @@ describe("parseDatexParkingTable", () => {
       "equipmentType:toilet",
       "equipmentType:shower",
     ]);
+    // NDW agrees to publish an operator's e-mail, which comes without its name.
+    expect(records[1]!.operatorContact).toEqual({ email: "hverberne@nobis.nl" });
     expect(records[1]!.tariffs).toEqual([]);
     expect(records[1]!.freeOfCharge).toBeUndefined();
   });
@@ -78,6 +107,8 @@ describe("parseDatexParkingTable", () => {
       security: ["areaSeperatedFromSurroundings", "lighting", "fences"],
       labelSecurityLevel: "unknown",
     });
+    // CITA does not agree to publish the operator's telephone and e-mail.
+    expect(berchem.operatorContact).toEqual({ name: "Administration des Ponts et Chaussées" });
     // A charging point the publisher marks unavailable is not offered.
     expect(berchem.facilities).toEqual([
       "equipmentType:toilet",

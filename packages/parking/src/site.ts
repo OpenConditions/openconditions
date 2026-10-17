@@ -10,6 +10,7 @@ import {
   zonedWallClockToInstant,
 } from "@openconditions/model";
 import {
+  type PARKING_ENTRANCES,
   type PARKING_KERB_POSITIONS,
   type PARKING_ORIENTATIONS,
   PARKING_PROPERTIES,
@@ -22,6 +23,7 @@ import {
   type ParkingUserGroup,
   type ParkingVehicleType,
 } from "@openconditions/model-parking";
+import { z } from "zod";
 
 /** What a parking record takes from its feed. */
 export type ParkingFeed = Pick<
@@ -81,10 +83,19 @@ export interface SiteInput {
   layout?: ParkingLayout;
   lifecycle?: (typeof LIFECYCLES)[number];
   operator?: string;
+  /** How to reach the operator, where the publisher may make it known. */
+  operatorContact?: Contact;
+  /** Who owns the site, where it is not the operator. */
+  owner?: string;
+  ownerContact?: Contact;
   website?: string;
   address?: SiteAddress;
   /** Opening hours in the OSM `opening_hours` grammar. */
   openingHoursOsm?: string;
+  /** The weekly spans of `openingHoursOsm`, where the source states them as such. */
+  openingHoursSpec?: { days: string[]; opens: string; closes: string }[];
+  /** The source states opening hours the parser cannot read whole. */
+  openingHoursUnreadable?: boolean;
   /** Opening hours as the publisher wrote them. */
   openingHoursText?: string;
   /** Who may park, only as the source states it. */
@@ -134,10 +145,7 @@ export interface SiteInput {
   areaDescription?: string;
   /** An audited service rating of a lorry park. */
   serviceRating?: { scheme: "eu_label"; level: string };
-  entrances?: {
-    point: [number, number];
-    kind: "vehicle_entrance" | "vehicle_exit" | "pedestrian";
-  }[];
+  entrances?: { point: [number, number]; kind: (typeof PARKING_ENTRANCES)[number] }[];
   /** Single bays the source publishes, each with a key unique within the site. */
   spaces?: SpaceInput[];
 }
@@ -151,6 +159,13 @@ export interface SpaceInput {
   number?: string;
   vehicleType?: ParkingVehicleType;
   userGroup?: ParkingUserGroup;
+}
+
+/** An organisation's web page, phone and e-mail. */
+export interface Contact {
+  website?: string;
+  phone?: string;
+  email?: string;
 }
 
 /** A reading of a site, or of one of its areas. */
@@ -279,6 +294,9 @@ const clean = (value: string | undefined): string | undefined => {
   return text ? text : undefined;
 };
 
+/** An e-mail address the model can hold. */
+const EMAIL = z.email();
+
 /** A web page the model can hold: http(s) only, a bare `www.` host taken as https. */
 function webUrl(value: string | undefined): string | undefined {
   const text = clean(value);
@@ -403,14 +421,34 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
   const address = addressOf(input, country);
   const components = [...areaComponents(input.areas), ...spaceComponents(input.spaces, lang)];
   const name = text(input.name);
-  const operator = text(input.operator);
+  const organisation = (
+    role: "operator" | "owner",
+    name: string | undefined,
+    contact: Contact | undefined,
+  ) => {
+    const named = text(name);
+    if (named === undefined) return undefined;
+    const website = webUrl(contact?.website);
+    const phone = clean(contact?.phone);
+    const email = clean(contact?.email);
+    return {
+      role,
+      name: named,
+      ...(website === undefined ? {} : { website }),
+      ...(phone === undefined ? {} : { phone }),
+      ...(email !== undefined && EMAIL.safeParse(email).success ? { email } : {}),
+    };
+  };
+  const operator = organisation("operator", input.operator, input.operatorContact);
+  const owner = organisation("owner", input.owner, input.ownerContact);
   const description = Array.isArray(input.notes)
     ? input.notes.flatMap((n) => {
         const t = clean(n.text);
         return t === undefined ? [] : [{ lang: n.lang, text: t }];
       })
     : text(input.notes);
-  const hours = openingHours(input.openingHoursOsm);
+  const hours = input.openingHoursUnreadable ? undefined : openingHours(input.openingHoursOsm);
+  const spec = (input.openingHoursSpec ?? []).map((s) => ({ ...s, days: [...s.days] }));
   const payment = [
     ...new Set([...(input.free === true ? ["free"] : []), ...(input.payment ?? [])]),
   ];
@@ -487,8 +525,11 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
     ],
     ...(name === undefined ? {} : { name }),
     ...(description === undefined || description.length === 0 ? {} : { description }),
-    ...(operator === undefined ? {} : { operator: { role: "operator", name: operator } }),
-    ...(hours === undefined ? {} : { openingHours: hours }),
+    ...(operator === undefined ? {} : { operator }),
+    ...(owner === undefined ? {} : { owner }),
+    ...(hours === undefined
+      ? {}
+      : { openingHours: { ...hours, ...(spec.length === 0 ? {} : { spec }) } }),
     ...(access === undefined ? {} : { access }),
     ...(amenities.length === 0 ? {} : { amenities }),
     ...(images.length === 0 ? {} : { images }),
@@ -521,6 +562,7 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
       ...(website === undefined ? {} : { website }),
       ...(tariffText === undefined ? {} : { tariffText }),
       ...(openingHoursText === undefined ? {} : { openingHoursText }),
+      ...(input.openingHoursUnreadable === true ? { openingHoursUnreadable: true } : {}),
     },
   };
 }

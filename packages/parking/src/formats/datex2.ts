@@ -1,4 +1,5 @@
 import {
+  type DatexOpeningTimes,
   type DatexParkingRecord,
   type DatexParkingStatus,
   datexPublications,
@@ -121,6 +122,7 @@ const LAYOUTS: Readonly<Record<string, ParkingLayout>> = {
   "parkingLayout:covered": "covered",
   "parkingLayout:nested": "nested",
   "parkingLayout:unknown": "unknown",
+  "parkingLayout:undergroundAndMultistorey": "underground_and_multi_storey",
   "structureType:offStreetSurface": "surface",
   // Dropped off at a transfer cabin and parked by machine.
   "usageScenario:dropOffMechanical": "automated",
@@ -209,7 +211,7 @@ function unknownCodes(codes: readonly string[], prefix?: string): number {
   }).length;
 }
 
-/** The codes of a table record DATEX does not define. */
+/** The codes of a table record DATEX does not define, and opening times it cannot read whole. */
 function unknownRecordCodes(record: DatexParkingRecord): number {
   return (
     unknownCodes([...record.usage, ...record.layoutCodes, ...record.facilities]) +
@@ -236,7 +238,8 @@ function unknownRecordCodes(record: DatexParkingRecord): number {
       record.accesses.flatMap((a) => a.categories),
       "accessCategory",
     ) +
-    unknownCodes(record.payment, "payment")
+    unknownCodes(record.payment, "payment") +
+    Number(openingHoursOf(record.openingTimes) === "unreadable")
   );
 }
 
@@ -326,6 +329,81 @@ function groupAreas(record: DatexParkingRecord): Map<string, GroupArea> {
   return out;
 }
 
+const OSM_DAYS: Readonly<Record<string, number>> = {
+  monday: 0,
+  tuesday: 1,
+  wednesday: 2,
+  thursday: 3,
+  friday: 4,
+  saturday: 5,
+  sunday: 6,
+};
+const OSM_DAY_NAMES = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+const SPEC_DAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] as const;
+
+/** Days as OSM writes them: runs as `Mo-Fr`, single days and pairs listed. */
+function osmDays(indices: readonly number[]): string {
+  const runs: [number, number][] = [];
+  for (const i of [...indices].sort((a, b) => a - b)) {
+    const last = runs.at(-1);
+    if (last !== undefined && last[1] === i - 1) last[1] = i;
+    else runs.push([i, i]);
+  }
+  return runs
+    .map(([a, b]) =>
+      a === b
+        ? OSM_DAY_NAMES[a]
+        : `${OSM_DAY_NAMES[a]}${b === a + 1 ? "," : "-"}${OSM_DAY_NAMES[b]}`,
+    )
+    .join(",");
+}
+
+/** A span's end as OSM writes it: midnight after its start is `24:00`. */
+const osmEnd = (from: string, to: string) => (to === "00:00" && from !== "00:00" ? "24:00" : to);
+
+type OpeningHoursRead =
+  | { osm: string; spec?: { days: string[]; opens: string; closes: string }[] }
+  | "unreadable"
+  | undefined;
+
+/**
+ * A site's opening times in the OSM grammar, open rules before the closed
+ * exceptions that override them, with the weekly spans spelt out where every
+ * rule is an open one. A schedule with a part the rules do not hold, or a day
+ * DATEX does not name, is unreadable: narrowed hours would say the site is
+ * open or closed when the publisher did not.
+ */
+function openingHoursOf(times: DatexOpeningTimes | undefined): OpeningHoursRead {
+  if (times === undefined) return undefined;
+  if (times.unread.length > 0) return "unreadable";
+  const rules = [...times.rules].sort((a, b) => Number(a.closed) - Number(b.closed));
+  if (rules.some((r) => r.days.some((d) => !Object.hasOwn(OSM_DAYS, d)))) return "unreadable";
+  const always = (r: (typeof rules)[number]) =>
+    r.days.length === 0 && r.times.every((t) => t.from === "00:00" && t.to === "00:00");
+  // Validity without periods, or one open period of every day and hour: always open.
+  if (rules.length === 0 || (rules.length === 1 && !rules[0]!.closed && always(rules[0]!))) {
+    return { osm: "24/7" };
+  }
+  const osm = rules
+    .map((r) => {
+      const days = r.days.length === 0 ? "" : osmDays(r.days.map((d) => OSM_DAYS[d]!));
+      const spans = r.times.map((t) => `${t.from}-${osmEnd(t.from, t.to)}`).join(",");
+      const selector = [days, spans].filter((part) => part !== "").join(" ");
+      return `${selector === "" ? "Mo-Su" : selector}${r.closed ? " off" : ""}`;
+    })
+    .join("; ");
+  const spec = rules.every((r) => !r.closed && r.times.length > 0)
+    ? rules.flatMap((r) =>
+        r.times.map((t) => ({
+          days: r.days.length === 0 ? [...SPEC_DAYS] : r.days.map((d) => SPEC_DAYS[OSM_DAYS[d]!]!),
+          opens: t.from,
+          closes: osmEnd(t.from, t.to),
+        })),
+      )
+    : undefined;
+  return { osm, ...(spec === undefined ? {} : { spec }) };
+}
+
 const EU_LABEL = /^securityLevel(\d)$/;
 const EU_SERVICE_LABEL = /^serviceLevel(\d)$/;
 
@@ -359,6 +437,15 @@ function siteInput(
     ),
   );
   const website = record.url ?? record.tariffUrl;
+  const hours = openingHoursOf(record.openingTimes);
+  const contact = (c: DatexParkingRecord["owner"]) =>
+    c === undefined
+      ? undefined
+      : {
+          ...(c.url === undefined ? {} : { website: c.url }),
+          ...(c.phone === undefined ? {} : { phone: c.phone }),
+          ...(c.email === undefined ? {} : { email: c.email }),
+        };
   const supervision =
     record.supervision === undefined ? undefined : DATEX2_PARKING_SUPERVISION[record.supervision];
   return {
@@ -385,7 +472,20 @@ function siteInput(
     ],
     ...(type === undefined ? {} : { type }),
     ...(layout === undefined ? {} : { layout }),
-    ...(record.operator === undefined ? {} : { operator: record.operator }),
+    ...(record.operator === undefined
+      ? {}
+      : { operator: record.operator, operatorContact: contact(record.operatorContact) }),
+    ...(record.owner?.name === undefined
+      ? {}
+      : { owner: record.owner.name, ownerContact: contact(record.owner) }),
+    ...(hours === "unreadable"
+      ? { openingHoursUnreadable: true }
+      : hours === undefined
+        ? {}
+        : {
+            openingHoursOsm: hours.osm,
+            ...(hours.spec === undefined ? {} : { openingHoursSpec: hours.spec }),
+          }),
     ...(record.address === undefined ? {} : { address: { text: record.address } }),
     ...(record.freeOfCharge === true ? { free: true } : {}),
     ...(record.totalSpaces === undefined ? {} : { capacityTotal: record.totalSpaces }),

@@ -295,6 +295,7 @@
               "cash",
               "credit_card",
               "debit_card",
+              "card",
               "contactless",
               "app",
               "rfid",
@@ -914,6 +915,7 @@
             "single_level",
             "multi_storey",
             "underground",
+            "underground_and_multi_storey",
             "surface",
             "automated",
             "covered",
@@ -1093,7 +1095,10 @@
                 "enum": [
                   "vehicle_entrance",
                   "vehicle_exit",
-                  "pedestrian"
+                  "pedestrian",
+                  "bicycle",
+                  "emergency_exit",
+                  "rental_car_return"
                 ]
               }
             },
@@ -1459,6 +1464,10 @@
         },
         "openingHoursText": {
           "$ref": "#/$defs/Text"
+        },
+        "openingHoursUnreadable": {
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [

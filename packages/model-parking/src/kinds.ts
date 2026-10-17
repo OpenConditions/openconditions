@@ -106,11 +106,15 @@ export const PARKING_SITE_TYPES = [
 
 export type ParkingSiteType = (typeof PARKING_SITE_TYPES)[number];
 
-/** The physical structure of a site, independent of what it is used for. */
+/**
+ * The physical structure of a site, independent of what it is used for.
+ * `underground_and_multi_storey` has levels both below and above ground.
+ */
 export const PARKING_LAYOUTS = [
   "single_level",
   "multi_storey",
   "underground",
+  "underground_and_multi_storey",
   "surface",
   "automated",
   "covered",
@@ -166,6 +170,19 @@ export const PARKING_ORIENTATIONS = ["parallel", "diagonal", "perpendicular"] as
  * the shoulder (OpenStreetMap's `parking:<side>` values).
  */
 export const PARKING_KERB_POSITIONS = ["lane", "on_kerb", "half_on_kerb", "shoulder"] as const;
+
+/**
+ * The ways into and out of a site: for vehicles, on foot, for bicycles, an
+ * emergency exit, and the return of rental cars.
+ */
+export const PARKING_ENTRANCES = [
+  "vehicle_entrance",
+  "vehicle_exit",
+  "pedestrian",
+  "bicycle",
+  "emergency_exit",
+  "rental_car_return",
+] as const;
 
 /** The shapes a site's outline takes: an area, or a line of kerbside bays. */
 export const ParkingOutlineGeometry = z.discriminatedUnion("type", [
@@ -266,7 +283,7 @@ export const PARKING_KINDS = [
         .array(
           z.strictObject({
             point: k.PointGeometry,
-            kind: z.enum(["vehicle_entrance", "vehicle_exit", "pedestrian"]),
+            kind: z.enum(PARKING_ENTRANCES),
           }),
         )
         .min(1)
@@ -304,6 +321,11 @@ export const PARKING_KINDS = [
       tariffText: k.Text.optional(),
       /** Opening hours as the publisher wrote them, where they are not OSM grammar. */
       openingHoursText: k.Text.optional(),
+      /**
+       * The publisher states opening hours in a form the parser cannot read
+       * whole; rather than narrowed ones, the site has none.
+       */
+      openingHoursUnreadable: z.literal(true).optional(),
     }),
     linking: {
       idSchemes: ["provider", "datex:parking", "tpims:site", "osm:node", "osm:way", "osm:relation"],

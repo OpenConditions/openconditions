@@ -1,5 +1,5 @@
 import type { SourceTable, TargetTable } from "@openconditions/model";
-import type { ParkingVehicleType } from "../kinds.js";
+import type { PARKING_ENTRANCES, ParkingVehicleType } from "../kinds.js";
 
 /**
  * DATEX II parking codes → OpenConditions classifications and vocabulary
@@ -407,9 +407,9 @@ export const DATEX2_PARKING_SUPERVISION: Readonly<Record<string, string | null>>
 };
 
 /**
- * How a visitor can pay, from `MeansOfPaymentEnum`. A `paymentCard` may be a
- * credit or a debit card, and `mobilePhone` an app, a call or a text, which
- * the payment methods name apart; a direct cash transfer and an electronic
+ * How a visitor can pay, from `MeansOfPaymentEnum`. A `paymentCard` is a card
+ * of either kind. `mobilePhone` may be an app, a call or a text, which the
+ * payment methods name apart; a direct cash transfer and an electronic
  * settlement are none of them.
  */
 export const DATEX2_PARKING_PAYMENT: Readonly<Record<string, string | null>> = {
@@ -418,7 +418,7 @@ export const DATEX2_PARKING_PAYMENT: Readonly<Record<string, string | null>> = {
   rfid: "rfid",
   mobileApp: "app",
   payBySMS: "sms",
-  paymentCard: null,
+  paymentCard: "card",
   mobilePhone: null,
   directCashTransfer: null,
   electronicSettlement: null,
@@ -438,13 +438,9 @@ export const DATEX2_PARKING_RESERVATION: Readonly<Record<string, boolean | null>
   _extended: null,
 };
 
-/**
- * The entrances a site's access of an `AccessCategoryEnum` category is. A
- * rental car return, a bicycle access and an emergency exit are none of a
- * visitor's ways in or out.
- */
+/** The entrances a site's access of an `AccessCategoryEnum` category is. */
 export const DATEX2_PARKING_ACCESS: Readonly<
-  Record<string, readonly ("vehicle_entrance" | "vehicle_exit" | "pedestrian")[] | null>
+  Record<string, readonly (typeof PARKING_ENTRANCES)[number][] | null>
 > = {
   vehicleEntranceAndExit: ["vehicle_entrance", "vehicle_exit"],
   vehicleEntrance: ["vehicle_entrance"],
@@ -452,9 +448,9 @@ export const DATEX2_PARKING_ACCESS: Readonly<
   pedestrianEntranceAndExit: ["pedestrian"],
   pedestrianEntrance: ["pedestrian"],
   pedestrianExit: ["pedestrian"],
-  rentalCarReturn: null,
-  bicycles: null,
-  emergencyExit: null,
+  rentalCarReturn: ["rental_car_return"],
+  bicycles: ["bicycle"],
+  emergencyExit: ["emergency_exit"],
   unspecified: null,
   unknown: null,
   other: null,

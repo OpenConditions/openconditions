@@ -288,6 +288,7 @@
               "cash",
               "credit_card",
               "debit_card",
+              "card",
               "contactless",
               "app",
               "rfid",

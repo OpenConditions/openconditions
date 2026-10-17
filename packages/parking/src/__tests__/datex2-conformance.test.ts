@@ -135,6 +135,7 @@ const LAYOUTS: Record<string, string> = {
   covered: "covered",
   nested: "nested",
   unknown: "unknown",
+  undergroundAndMultistorey: "underground_and_multi_storey",
 };
 
 const SECURITY: Record<string, string> = {
@@ -439,10 +440,7 @@ describe("DATEX II parking through the parking parser", () => {
           details(parse(table(version, `<parkingLayout>${v}</parkingLayout>`, "UrbanParkingSite")))[
             "layout"
           ] === (LAYOUTS[v] ?? "-"),
-        unsupported: withExtended(version, {
-          undergroundAndMultistorey: "both below and above ground; the model's layout is one",
-          other: OTHER,
-        }),
+        unsupported: withExtended(version, { other: OTHER }),
       });
     });
 
@@ -515,10 +513,12 @@ describe("DATEX II parking through the parking parser", () => {
         pedestrianEntranceAndExit: ["pedestrian"],
         pedestrianEntrance: ["pedestrian"],
         pedestrianExit: ["pedestrian"],
+        rentalCarReturn: ["rental_car_return"],
+        bicycles: ["bicycle"],
+        emergencyExit: ["emergency_exit"],
       };
       const access = (v: string) =>
         `<parkingAccess id="a" version="1"><accessCategory>${v}</accessCategory>${LOCATION.replace(/parkingLocation/g, "location")}</parkingAccess>`;
-      const NO_WAY = "none of a visitor's ways in or out";
       assertCovered("AccessCategoryEnum", values(version, "AccessCategoryEnum"), {
         handled: (v) =>
           ACCESS[v] !== undefined &&
@@ -529,9 +529,6 @@ describe("DATEX II parking through the parking parser", () => {
             ACCESS[v],
           ),
         unsupported: withExtended(version, {
-          rentalCarReturn: NO_WAY,
-          bicycles: NO_WAY,
-          emergencyExit: NO_WAY,
           unspecified: UNKNOWN,
           unknown: UNKNOWN,
           other: OTHER,
@@ -543,6 +540,7 @@ describe("DATEX II parking through the parking parser", () => {
         rfid: "rfid",
         mobileApp: "app",
         payBySMS: "sms",
+        paymentCard: "card",
       };
       assertCovered("MeansOfPaymentEnum", values(version, "MeansOfPaymentEnum"), {
         handled: (v) =>
@@ -559,8 +557,6 @@ describe("DATEX II parking through the parking parser", () => {
             { audience: "unknown", payment: [PAYMENT[v]] },
           ),
         unsupported: withExtended(version, {
-          paymentCard:
-            "a credit or a debit card, which the payment methods name apart without saying which",
           mobilePhone: "an app, a call or a text, which the payment methods name apart",
           directCashTransfer: "no payment method of the model's",
           electronicSettlement: "no payment method of the model's",
@@ -696,7 +692,8 @@ describe("DATEX II parking through the parking parser", () => {
         OPENING,
         (v) => `<parkingSiteOpeningStatus>${v}</parkingSiteOpeningStatus>`,
         {
-          openingTimesInForce: '"not explicit said if it\'s open right now"',
+          openingTimesInForce:
+            "\"not explicit said if it's open right now\": the site's own opening times, read with the table, say when it is",
           other: OTHER,
         },
       );

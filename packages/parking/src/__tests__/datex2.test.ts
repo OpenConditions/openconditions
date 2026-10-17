@@ -1,4 +1,9 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
 import { parseDatex2 } from "../formats/datex2.js";
@@ -223,6 +228,11 @@ describe("datex2", () => {
         { scheme: "datex:parking", id: "G-MB-B", authority: "PCH" },
       ],
     });
+    // CITA does not agree to publish its contact details, so they are left out.
+    expect(berchem?.["operator"]).toEqual({
+      role: "operator",
+      name: [{ lang: "fr", text: "Administration des Ponts et Chaussées" }],
+    });
     // A free site publishes no charge band, so it has no rate.
     expect(out.offers).toEqual([]);
     expect(readings(out, "G-MB-B")).toEqual({
@@ -262,5 +272,95 @@ describe("datex2", () => {
       `<d2LogicalModel modelBaseVersion="2" xmlns="http://datex2.eu/schema/2/2_0"><payloadPublication xsi:type="GenericPublication" lang="en" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><publicationTime>2026-10-05T05:30:10+02:00</publicationTime><publicationCreator><country>lu</country><nationalIdentifier>PCH</nationalIdentifier></publicationCreator><genericPublicationName>ParkingStatusPublication</genericPublicationName><genericPublicationExtension><parkingStatusPublication><parkingRecordStatus xsi:type="ParkingSiteStatus"><parkingRecordReference targetClass="ParkingRecord" id="G-MB-B" version="1"/><parkingStatusOriginTime>2026-10-05T05:30:00+02:00</parkingStatusOriginTime><parkingSiteStatus>halfFull</parkingSiteStatus></parkingRecordStatus></parkingStatusPublication></genericPublicationExtension></payloadPublication></d2LogicalModel>`,
     );
     expect(readings(parse(citaFeed(), fixture("cita-static.xml"), v2), "G-MB-B")).toEqual({});
+  });
+  /** A v2.3 site with these opening times, and what the parser makes of them. */
+  function hoursOf(validity: string, extra = "") {
+    __resetSkips();
+    const table = Buffer.from(
+      `<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="2"><payloadPublication xsi:type="ParkingTablePublication" lang="en"><publicationTime>2026-10-05T00:00:00Z</publicationTime><parkingTable id="t" version="1"><parkingRecord xsi:type="UrbanParkingSite" id="r" version="1"><parkingRecordVersionTime>2026-10-05T00:00:00Z</parkingRecordVersionTime><parkingLocation xsi:type="Point"><pointByCoordinates><pointCoordinates><latitude>51.4</latitude><longitude>6.1</longitude></pointCoordinates></pointByCoordinates></parkingLocation><openingTimes>${extra}<validity><validityStatus>definedByValidityTimeSpec</validityStatus><validityTimeSpecification><overallStartTime>2020-01-01T00:00:00Z</overallStartTime>${validity}</validityTimeSpecification></validity></openingTimes><urbanParkingSiteType>offStreetParking</urbanParkingSiteType></parkingRecord></parkingTable></payloadPublication></d2LogicalModel>`,
+    );
+    const feature = site(parse(ndwFeed(), table, undefined), "r");
+    return {
+      hours: feature?.["openingHours"],
+      unreadable: (feature?.["details"] as Record<string, unknown> | undefined)?.[
+        "openingHoursUnreadable"
+      ],
+      skipped: drainSkipped(ndwFeed().id),
+    };
+  }
+
+  const period = (days: string[], spans: [string, string][], kind = "validPeriod") =>
+    `<${kind}>${spans
+      .map(
+        ([from, to]) =>
+          `<recurringTimePeriodOfDay xsi:type="TimePeriodByHour"><startTimeOfPeriod>${from}</startTimeOfPeriod><endTimeOfPeriod>${to}</endTimeOfPeriod></recurringTimePeriodOfDay>`,
+      )
+      .join(
+        "",
+      )}${days.length === 0 ? "" : `<recurringDayWeekMonthPeriod>${days.map((d) => `<applicableDay>${d}</applicableDay>`).join("")}</recurringDayWeekMonthPeriod>`}</${kind}>`;
+
+  const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday"];
+
+  test("DATEX: a site's opening times become OSM hours with their weekly spans", () => {
+    expect(
+      hoursOf(
+        period(WEEKDAYS, [["07:00:00", "19:00:00"]]) +
+          period(["saturday"], [["08:00:00", "14:00:00"]]),
+      ),
+    ).toEqual({
+      hours: {
+        osm: "Mo-Fr 07:00-19:00; Sa 08:00-14:00",
+        spec: [
+          { days: ["MO", "TU", "WE", "TH", "FR"], opens: "07:00", closes: "19:00" },
+          { days: ["SA"], opens: "08:00", closes: "14:00" },
+        ],
+      },
+      unreadable: undefined,
+      skipped: {},
+    });
+    // Every day, midnight to midnight, is round the clock.
+    expect(hoursOf(period([], [["00:00:00", "00:00:00"]])).hours).toEqual({
+      osm: "24/7",
+      twentyFourSeven: true,
+    });
+    // Until midnight, and across it.
+    expect(hoursOf(period(["friday"], [["18:00:00", "00:00:00"]])).hours).toMatchObject({
+      osm: "Fr 18:00-24:00",
+    });
+    expect(hoursOf(period(["saturday"], [["22:00:00", "06:00:00"]])).hours).toMatchObject({
+      osm: "Sa 22:00-06:00",
+    });
+  });
+
+  test("DATEX: an exception period is a closure overriding the opening times", () => {
+    expect(
+      hoursOf(period([], [["06:00:00", "22:00:00"]]) + period(["sunday"], [], "exceptionPeriod"))
+        .hours,
+    ).toEqual({ osm: "06:00-22:00; Su off" });
+  });
+
+  test("DATEX: opening times the parser cannot read whole are marked unreadable, never narrowed", () => {
+    // A week of the month restricts the days further than the rule could say.
+    const weekly = `<validPeriod><recurringDayWeekMonthPeriod><applicableDay>monday</applicableDay><applicableWeek>firstWeekOfMonth</applicableWeek></recurringDayWeekMonthPeriod></validPeriod>`;
+    expect(hoursOf(weekly)).toEqual({
+      hours: undefined,
+      unreadable: true,
+      skipped: { unknown_value: 1 },
+    });
+    // A dated period, and a schedule that ends.
+    const dated = `<validPeriod><startOfPeriod>2026-12-24T00:00:00Z</startOfPeriod></validPeriod>`;
+    expect(hoursOf(dated).unreadable).toBe(true);
+    expect(
+      hoursOf(
+        `<overallEndTime>2027-01-01T00:00:00Z</overallEndTime>${period([], [["06:00:00", "22:00:00"]])}`,
+      ).unreadable,
+    ).toBe(true);
+    // Times said to be unknown are none, and nothing is lost.
+    expect(
+      hoursOf(
+        period([], [["06:00:00", "22:00:00"]]),
+        "<openingTimesUnknown>true</openingTimesUnknown>",
+      ),
+    ).toEqual({ hours: undefined, unreadable: undefined, skipped: {} });
   });
 });
