@@ -27,10 +27,12 @@ import {
 } from "@openconditions/model-charging";
 import type { OcpiPriceComponent, OcpiRestrictions, OcpiTariff } from "@openconditions/ocpi";
 import { colocateSites } from "../colocate.js";
+import type { EnergyMixInput } from "../energy-mix.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours } from "../hours.js";
 import { detached } from "../records.js";
 import {
+  type ChargingMode,
   type ConnectorInput,
   type EvseInput,
   type EvseStatus,
@@ -50,18 +52,28 @@ const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "satur
 type Unknown = (value: string | undefined) => void;
 
 /**
- * The OCPI price component of a rate table line: a flat rate is flat; a
- * price per unit is per kilowatt-hour where the unit is the electric
- * charging point's (`kWh`, or none stated) and the table prices per delivery
- * unit or does not say. A price per unit of charging time names no time
- * unit in DATEX, and an incrementing or tiered rate has no single price, so
- * neither is read.
+ * The OCPI price component of a rate table line: a flat rate, or the flat
+ * charge of a time tier, is flat; a price per unit is per kilowatt-hour
+ * where the unit is the electric charging point's (`kWh`, or none stated)
+ * and the table prices per delivery unit or does not say; an incrementing
+ * rate, "a charge rate that increases by a defined amount in a defined
+ * time", is a time price billed in steps of its increment period. A price
+ * per unit of charging time names no time unit in DATEX, and an incrementing
+ * rate without its period no time, so neither is read.
  */
 function rateLineComponent(
   policy: string | undefined,
   line: DatexEnergyRate["lines"][number],
 ): OcpiPriceComponent | undefined {
-  if (line.type === "flatRate") return { type: "FLAT", price: line.value };
+  if (line.type === "flatRate" || line.type === "flatRateTier") {
+    return { type: "FLAT", price: line.value };
+  }
+  if (line.type === "incrementingRate") {
+    const step = line.incrementSeconds;
+    return step === undefined || !Number.isInteger(step)
+      ? undefined
+      : { type: "TIME", price: (line.value * 3600) / step, step_size: step };
+  }
   const perDeliveryUnit = policy === undefined || policy === "pricePerDeliveryUnit";
   if (line.type === "perUnit" && perDeliveryUnit) {
     return line.unit === undefined || line.unit === "kWh"
@@ -69,6 +81,25 @@ function rateLineComponent(
       : undefined;
   }
   return undefined;
+}
+
+/**
+ * When in a session, or of a day, a rate table line applies, as OCPI
+ * restrictions; undefined for always, null when its times cannot be read.
+ */
+function lineRestrictions(
+  line: DatexEnergyRate["lines"][number],
+): OcpiRestrictions | null | undefined {
+  if (line.unreadableTime) return null;
+  const r: OcpiRestrictions = {
+    ...(line.fromSecond === undefined || line.fromSecond === 0
+      ? {}
+      : { min_duration: line.fromSecond }),
+    ...(line.toSecond === undefined ? {} : { max_duration: line.toSecond }),
+    ...(line.fromTime === undefined ? {} : { start_time: line.fromTime }),
+    ...(line.toTime === undefined ? {} : { end_time: line.toTime }),
+  };
+  return Object.keys(r).length === 0 ? undefined : r;
 }
 
 /**
@@ -107,12 +138,13 @@ function restrictionsOf(line: DatexEnergyRate["lines"][number]): OcpiRestriction
 
 /**
  * DATEX authentication and identification methods. The RFID cards and
- * chips (Calypso, Mifare, a phone's active chip) identify by RFID; PLC is
- * ISO 15118 communication over the charging cable, plug and charge; a phone
- * call, text message or website starts a charge remotely. Paying cash is a
- * payment method, not an identification, and is read as one. Over-the-air
- * ISO 15118 names a channel rather than a method, a PIN pad or prepaid card
- * may be any of several, and "no access" is no method: those say nothing.
+ * chips (Calypso, Mifare, a phone's active chip) identify by RFID; PLC and
+ * "over the air according to ISO 15118-2 and -20" are ISO 15118's contract
+ * authentication, by cable or wireless, plug and charge; a phone call, text
+ * message or website starts a charge remotely; a PIN pad takes a PIN. Paying
+ * cash or by a prepaid card is a payment method, not an identification, and
+ * is read as one; "no access granted" says who may charge, nobody of the
+ * public.
  */
 const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[number] | null>> = {
   activeRFIDChip: "rfid",
@@ -124,10 +156,10 @@ const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[nu
   mifareClassic: "rfid",
   mifareDesfire: "rfid",
   nfc: "nfc",
-  overTheAir: null,
+  overTheAir: "plug_and_charge",
   phoneDialog: "remote",
   phoneSMS: "remote",
-  pinpad: null,
+  pinpad: "pin",
   plc: "plug_and_charge",
   prepaidCard: null,
   rfid: "rfid",
@@ -139,12 +171,14 @@ const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[nu
 
 const PAYMENT: Readonly<Record<string, (typeof PAYMENT_METHODS)[number]>> = {
   cashPayment: "cash",
+  prepaidCard: "prepaid_card",
 };
 
 /**
  * Where a site's vehicles stand, from its site type: inside a building is a
- * car park, an open space a parking lot. A roof or a company's ground says
- * nothing of how vehicles stand.
+ * car park, an open space a parking lot. A roof is the site's `roofed`, and
+ * says nothing of how vehicles stand; nor does a company's ground, which
+ * says neither how vehicles stand nor who may charge there.
  */
 const PARKING_TYPES: Readonly<Record<string, ParkingType | null>> = {
   "siteType:onstreet": "on_street",
@@ -155,6 +189,42 @@ const PARKING_TYPES: Readonly<Record<string, ParkingType | null>> = {
   "siteType:onCompanySite": null,
   "siteType:_extended": null,
 };
+
+/** IEC 61851-1 charging modes as the connector model names them. */
+const MODES: Readonly<Record<string, ChargingMode>> = {
+  mode1AC1p: "mode1",
+  mode1AC3p: "mode1",
+  mode2AC1p: "mode2",
+  mode2AC3p: "mode2",
+  mode3AC3p: "mode3",
+  mode4DC: "mode4",
+};
+
+/**
+ * DATEX electric energy sources as an energy mix names them: OCPI's
+ * categories where DATEX has them, biogas and other by their own names.
+ */
+const ENERGY_SOURCES: Readonly<Record<string, string | null>> = {
+  biogas: "biogas",
+  coal: "coal",
+  gas: "gas",
+  nuclear: "nuclear",
+  solar: "solar",
+  water: "water",
+  wind: "wind",
+  generalGreen: "general_green",
+  generalFossil: "general_fossil",
+  other: "other",
+  _extended: null,
+};
+
+/** CEE5, "400 V, 16-63 A", is the three-phase IEC 60309 plug its current rating names. */
+function cee5Standard(amperes: number | undefined): string {
+  if (amperes === undefined) return "UNKNOWN";
+  if (amperes <= 16) return "IEC_60309_2_three_16";
+  if (amperes <= 32) return "IEC_60309_2_three_32";
+  return "IEC_60309_2_three_64";
+}
 
 /**
  * Connector types as the crosswalk keys them, plus the AFIR profile's own
@@ -220,11 +290,14 @@ function connectorOf(
   tariffIds: string[],
   unknown: Unknown,
 ): ConnectorInput {
-  const standard = lookup(CONNECTOR_STANDARDS, c.type, unknown);
+  const standard =
+    c.type === "cee5" ? cee5Standard(c.maxCurrentA) : lookup(CONNECTOR_STANDARDS, c.type, unknown);
   const format = lookup(DATEX2_CONNECTOR_FORMATS, c.format, unknown);
   // AFIR states the charging mode and the current on the point, the energy
   // infrastructure namespace the mode on each connector.
-  const mode = lookup(CHARGING_MODES, c.chargingMode ?? point.chargingMode, unknown);
+  const written = c.chargingMode ?? point.chargingMode;
+  const mode = lookup(CHARGING_MODES, written, unknown);
+  const chargingMode = written === undefined ? undefined : MODES[written];
   const current = lookup(CURRENT_TYPES, point.currentType, unknown);
   const powerType = mode ?? (current === "dc" ? "DC" : undefined);
   return {
@@ -232,6 +305,7 @@ function connectorOf(
     standard: standard ?? "UNKNOWN",
     ...(format === "socket" || format === "cable" ? { format } : {}),
     ...(powerType === undefined ? {} : { powerType }),
+    ...(chargingMode === undefined ? {} : { chargingModes: [chargingMode] }),
     ...(current === undefined ? {} : { current }),
     ...(c.maxPowerW === undefined ? {} : { maxPowerKw: Math.round(c.maxPowerW) / 1000 }),
     ...(c.voltage === undefined ? {} : { maxVoltage: c.voltage }),
@@ -308,9 +382,26 @@ function tariffOf(id: string, rate: DatexEnergyRate, unknown: Unknown): OcpiTari
   } else if (rate.pricingPolicy === "free" && rate.lines.length === 0) {
     elements = [{ price_components: [{ type: "FLAT", price: 0 }] }];
   } else {
-    const components = rate.lines.map((line) => rateLineComponent(rate.pricingPolicy, line));
-    if (components.some((component) => component === undefined)) return undefined;
-    elements = [{ price_components: components as OcpiPriceComponent[] }];
+    // Lines applying at the same times are one element; OCPI prices each
+    // dimension by the first matching element, so the restricted come first.
+    const groups = new Map<string, OcpiTariff["elements"][number]>();
+    for (const line of rate.lines) {
+      const component = rateLineComponent(rate.pricingPolicy, line);
+      const restrictions = lineRestrictions(line);
+      if (component === undefined || restrictions === null) return undefined;
+      const key = JSON.stringify(restrictions ?? null);
+      const group = groups.get(key);
+      if (group !== undefined) group.price_components.push(component);
+      else {
+        groups.set(key, {
+          price_components: [component],
+          ...(restrictions === undefined ? {} : { restrictions }),
+        });
+      }
+    }
+    elements = [...groups.values()].sort(
+      (a, b) => Number(a.restrictions === undefined) - Number(b.restrictions === undefined),
+    );
   }
   if (elements.length === 0) return undefined;
   const taxes = new Set(rate.lines.map((line) => line.taxIncluded));
@@ -320,6 +411,40 @@ function tariffOf(id: string, rate: DatexEnergyRate, unknown: Unknown): OcpiTari
     currency: rate.currency,
     elements,
     ...(taxIncluded === undefined ? {} : { tax_included: taxIncluded ? "YES" : "NO" }),
+  };
+}
+
+/**
+ * The energy mix of a site's points, where every point that names one names
+ * the same; the site holds one mix, and points that differ say no one thing
+ * of it. A source DATEX does not define is left out and counted.
+ */
+function siteEnergyMix(
+  points: readonly DatexRefillPoint[],
+  unknown: Unknown,
+): EnergyMixInput | undefined {
+  const mixes = points.flatMap((p) => (p.energyMix === undefined ? [] : [p.energyMix]));
+  const [mix] = mixes;
+  if (mix === undefined || mixes.some((m) => JSON.stringify(m) !== JSON.stringify(mix))) {
+    return undefined;
+  }
+  const sources = mix.sources.flatMap((s) => {
+    const source = lookup(ENERGY_SOURCES, s.source, unknown);
+    return source === undefined ? [] : [{ source, pct: s.percentage }];
+  });
+  const impacts = [
+    ...(mix.carbonDioxide === undefined
+      ? []
+      : [{ category: "carbon_dioxide" as const, gPerKwh: mix.carbonDioxide }]),
+    ...(mix.nuclearWaste === undefined
+      ? []
+      : [{ category: "nuclear_waste" as const, gPerKwh: mix.nuclearWaste }]),
+  ];
+  return {
+    ...(mix.isGreen === undefined ? {} : { isGreen: mix.isGreen }),
+    ...(mix.productName === undefined ? {} : { productName: mix.productName }),
+    ...(sources.length === 0 ? {} : { sources }),
+    ...(impacts.length === 0 ? {} : { impacts }),
   };
 }
 
@@ -471,16 +596,25 @@ export function parseDatex2(
     ];
     const parkingType = lookup(PARKING_TYPES, site.siteType, unknown);
     const hours = hoursOf(site.openingHours);
+    const energyMix = siteEnergyMix(
+      site.stations.flatMap((s) => s.points),
+      unknown,
+    );
     const input: SiteInput = {
       stationId,
       point,
       ...(name === undefined ? {} : { name: name.value, lang: name.lang }),
       ...(site.operator?.name === undefined ? {} : { operator: { name: site.operator.name } }),
+      ...(site.brand === undefined ? {} : { brand: site.brand }),
       ...(site.address === undefined ? {} : { address: site.address }),
+      ...(site.entrance === undefined ? {} : { entrance: site.entrance }),
       ...(hours === undefined ? {} : { openingHoursOsm: hours }),
+      ...(methods.includes("noAccess") ? { audience: "private" as const } : {}),
       ...(authentication.length === 0 ? {} : { authentication }),
       ...(payment.length === 0 ? {} : { payment }),
       ...(parkingType === undefined ? {} : { parkingType }),
+      ...(site.siteType === "siteType:roofedStation" ? { roofed: true } : {}),
+      ...(energyMix === undefined ? {} : { energyMix }),
       evses,
     };
     out.features.push(siteDraft(feed, input, ctx.fetchedAt));

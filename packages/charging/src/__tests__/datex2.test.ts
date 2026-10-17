@@ -55,6 +55,7 @@ describe("datex2", () => {
       maxVoltage: 1000,
       maxAmperage: 500,
       maxPowerKw: 100,
+      chargingModes: ["mode4"],
     });
     // Two Type 2 sockets on one refill point are two connectors of one EVSE.
     const palma = byId(dgt.features, "oc:feature:es-dgt-charging:9TOKBPBKRBJVLI0RR4XG");
