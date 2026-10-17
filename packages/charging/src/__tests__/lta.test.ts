@@ -59,10 +59,15 @@ describe("lta", () => {
       ],
     });
     expect(components(road)).toEqual([
-      { key: "R123456A", kind: "evse", details: { kind: "evse", v: 1 } },
       {
-        key: "R123456A/1",
-        parentKey: "R123456A",
+        key: "R123456A-001",
+        kind: "evse",
+        physicalReference: "L1 Lot 123",
+        details: { kind: "evse", v: 1 },
+      },
+      {
+        key: "R123456A-001/1",
+        parentKey: "R123456A-001",
         kind: "connector",
         details: {
           kind: "connector",
@@ -76,7 +81,7 @@ describe("lta", () => {
     ]);
   });
 
-  test("LTA: per-hour prices are a time offer; a charger is one charge point read by its own status", () => {
+  test("LTA: per-hour prices are a time offer; each evId is a charge point read by its own status", () => {
     const out = parse();
     const avenue = site(out, "654321654321");
     expect(offer(out, "654321654321", "h-3")).toMatchObject({
@@ -86,7 +91,9 @@ describe("lta", () => {
         { components: [{ type: "time", price: { amount: "3", currency: "SGD" }, unit: "h" }] },
       ],
     });
-    // A charger with two evIds is still one charge point, its plug types its connectors.
+    // A charger's evIds, "individual charging points", are each a charge point with its plugs.
+    const kwh = ["oc:offer:sg-lta-charging:654321654321:kWh-0.65"];
+    const hour = ["oc:offer:sg-lta-charging:654321654321:h-3"];
     expect(
       components(avenue).map((c) => [
         c.key,
@@ -96,30 +103,39 @@ describe("lta", () => {
         c.details["tariffRefs"],
       ]),
     ).toEqual([
-      ["R654321B", undefined, undefined, undefined, undefined],
-      [
-        "R654321B/1",
-        "IEC_62196_T2_COMBO",
-        "dc",
-        50,
-        ["oc:offer:sg-lta-charging:654321654321:kWh-0.65"],
-      ],
-      ["R654321B/2", "IEC_62196_T2", "ac", 22, ["oc:offer:sg-lta-charging:654321654321:h-3"]],
-      ["R654321C", undefined, undefined, undefined, undefined],
-      ["R654321C/1", "IEC_62196_T2", "ac", 22, ["oc:offer:sg-lta-charging:654321654321:h-3"]],
+      ["R654321B-001", undefined, undefined, undefined, undefined],
+      ["R654321B-001/1", "IEC_62196_T2_COMBO", "dc", 50, kwh],
+      ["R654321B-001/2", "IEC_62196_T2", "ac", 22, hour],
+      ["R654321B-002", undefined, undefined, undefined, undefined],
+      ["R654321B-002/1", "IEC_62196_T2_COMBO", "dc", 50, kwh],
+      ["R654321B-002/2", "IEC_62196_T2", "ac", 22, hour],
+      ["R654321C-001", undefined, undefined, undefined, undefined],
+      ["R654321C-001/1", "IEC_62196_T2", "ac", 22, hour],
     ]);
     expect(states(out)).toEqual([
-      ["R123456A", "available", FETCHED],
-      // Two evIds, one occupied and one free: the charger's own 1, available,
-      // not the first evId's 0.
-      ["R654321B", "available", FETCHED],
-      // One evId is the charge point: its 100, not available.
-      ["R654321C", "inoperative", FETCHED],
+      ["R123456A-001", "available", FETCHED],
+      // Each point by its own status: one occupied, one free.
+      ["R654321B-001", "occupied", FETCHED],
+      ["R654321B-002", "available", FETCHED],
+      // Not available covers out of order, inoperative and unknown alike.
+      ["R654321C-001", "unknown", FETCHED],
     ]);
     expect(out.offers).toHaveLength(3);
-    expect(avenue?.["details"]).toMatchObject({
-      openingHoursText: [{ lang: "en", text: "24 hours" }],
-    });
+    expect(avenue).toMatchObject({ openingHours: { osm: "24/7", twentyFourSeven: true } });
+  });
+
+  test("LTA: an empty status is not available, and a charger without evIds is its own point", () => {
+    const doc = JSON.parse(fixture("lta-batch.json").toString("utf8")) as {
+      value: { chargingPoints: Record<string, unknown>[] }[];
+    };
+    const charger = doc.value[0]!.chargingPoints[0]!;
+    (charger["evIds"] as { status: string }[])[0]!.status = "";
+    const charger2 = doc.value[1]!.chargingPoints[1]!;
+    delete charger2["evIds"];
+    charger2["status"] = "0";
+    const read = states(parse(Buffer.from(JSON.stringify(doc))));
+    expect(read).toContainEqual(["R123456A-001", "unknown", FETCHED]);
+    expect(read).toContainEqual(["R654321C", "occupied", FETCHED]);
   });
 
   test("LTA: 0 is occupied, which says no more than that the point is in use", () => {
@@ -129,7 +145,7 @@ describe("lta", () => {
     // The charger's one evId is the charge point.
     doc.value[0]!.chargingPoints[0]!.evIds[0]!.status = "0";
     expect(states(parse(Buffer.from(JSON.stringify(doc))))[0]).toEqual([
-      "R123456A",
+      "R123456A-001",
       "occupied",
       FETCHED,
     ]);
