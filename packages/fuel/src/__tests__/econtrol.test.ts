@@ -187,6 +187,100 @@ describe("econtrol", () => {
     });
   });
 
+  test("opening hours, payment methods and the other cards taken are read", () => {
+    const { features } = parse();
+    const turmoel = station(features, 6083)!;
+    // Every day and holiday 00:00-24:00.
+    expect(turmoel["openingHours"]).toEqual({ osm: "24/7", twentyFourSeven: true });
+    expect(turmoel["access"]).toEqual({
+      audience: "unknown",
+      payment: ["cash", "debit_card", "credit_card", "other"],
+      notes: [{ lang: "de", text: "Turmöl Quick Card" }],
+    });
+  });
+
+  // Weekly hours as live answers of 2026-10-17 give them; 00:00-00:00 is a closed day.
+  const week = (hours: string[], holiday: string) =>
+    [..."MO DI MI DO FR SA SO".split(" "), "FE"].map((day, i) => {
+      const [from, to] = (i < 7 ? hours[i]! : holiday).split("-");
+      return { day, label: day, order: i + 1, from, to };
+    });
+
+  test.each([
+    {
+      what: "a Saturday half day, Sunday and holidays closed",
+      hours: week([...Array(5).fill("07:00-18:00"), "09:00-13:00", "00:00-00:00"], "00:00-00:00"),
+      osm: "Mo-Fr 07:00-18:00; Sa 09:00-13:00; Su off; PH off",
+    },
+    {
+      what: "holidays as Sunday",
+      hours: week([...Array(6).fill("06:00-21:00"), "07:00-21:00"], "07:00-21:00"),
+      osm: "Mo-Sa 06:00-21:00; Su 07:00-21:00; PH 07:00-21:00",
+    },
+    {
+      what: "holidays the same as every day",
+      hours: week(Array(7).fill("06:00-22:00"), "06:00-22:00"),
+      osm: "Mo-Su 06:00-22:00",
+    },
+  ])("opening hours: $what", ({ hours, osm }) => {
+    const { features } = parse([patchedDiesel(6083, { openingHours: hours })]);
+    expect(station(features, 6083)!["openingHours"]).toEqual({ osm });
+    expect(drainSkipped(FEED)).toEqual({});
+  });
+
+  test("a week closed throughout or missing a day has no hours; an unreadable time is counted", () => {
+    const closed = week(Array(7).fill("00:00-00:00"), "00:00-00:00");
+    expect(
+      station(parse([patchedDiesel(6083, { openingHours: closed })]).features, 6083)![
+        "openingHours"
+      ],
+    ).toBeUndefined();
+    const partial = week(Array(7).fill("06:00-22:00"), "06:00-22:00").slice(1);
+    expect(
+      station(parse([patchedDiesel(6083, { openingHours: partial })]).features, 6083)![
+        "openingHours"
+      ],
+    ).toBeUndefined();
+    expect(drainSkipped(FEED)).toEqual({});
+    const unreadable = week(["06:00-late", ...Array(6).fill("06:00-22:00")], "06:00-22:00");
+    expect(
+      station(parse([patchedDiesel(6083, { openingHours: unreadable })]).features, 6083)![
+        "openingHours"
+      ],
+    ).toBeUndefined();
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1 });
+  });
+
+  test("a station paid only by the cards it names takes `other`; one naming none has no access", () => {
+    const fleet = parse([
+      patchedDiesel(6083, {
+        paymentMethods: { cash: false, debitCard: false, creditCard: false, others: " UTA, DKV" },
+      }),
+    ]);
+    expect(station(fleet.features, 6083)!["access"]).toEqual({
+      audience: "unknown",
+      payment: ["other"],
+      notes: [{ lang: "de", text: "UTA, DKV" }],
+    });
+    const none = parse([
+      patchedDiesel(6083, {
+        paymentMethods: { cash: false, debitCard: false, creditCard: false },
+      }),
+    ]);
+    expect(station(none.features, 6083)!["access"]).toBeUndefined();
+  });
+
+  test("the other service offers are the station's description", () => {
+    const { features } = parse([
+      patchedDiesel(6083, {
+        otherServiceOffers: "Shop, Bistro, Portalwaschanlage, SB Staubsauger",
+      }),
+    ]);
+    expect(station(features, 6083)!["description"]).toEqual([
+      { lang: "de", text: "Shop, Bistro, Portalwaschanlage, SB Staubsauger" },
+    ]);
+  });
+
   test("every drafted record seals", () => {
     const { features, observations } = parse();
     expect(sealFailures([...features, ...observations])).toEqual([]);

@@ -8,7 +8,8 @@
       "tier": "authoritative",
       "format": "prix-carburants",
       // The ministry's instant flux as data.economie.gouv.fr exports it: every
-      // station with each grade's price and update time and its stock-outs.
+      // station with each grade's price and update time, its stock-outs, its
+      // hours, its services and whether it is on a motorway.
       "endpoints": {
         "main": {
           "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2/exports/json",

@@ -1,5 +1,11 @@
 import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
-import { type AUDIENCES, type LIFECYCLES, observationId } from "@openconditions/model";
+import {
+  type AUDIENCES,
+  type LIFECYCLES,
+  observationId,
+  type PAYMENT_METHODS,
+  type ROAD_CLASSES,
+} from "@openconditions/model";
 import { type FuelGrade, type FuelUnit, GRADE_UNIT } from "./grades.js";
 
 /** What a fuel record takes from its feed. */
@@ -51,7 +57,19 @@ export interface StationInput {
   openingHours?: string;
   address?: StationAddress;
   admin?: { country: string; geocodes?: { scheme: string; code: string }[] };
+  /** The class of the road the station is on, where the source names it. */
+  roadClass?: (typeof ROAD_CLASSES)[number];
+  /** Who may fill up; `unknown` when the station says how to pay but not who it serves. */
   audience?: (typeof AUDIENCES)[number];
+  /** How fuel can be paid for, in the order the source lists it. */
+  payment?: readonly (typeof PAYMENT_METHODS)[number][];
+  /** What the source says about payment beyond the methods, such as the fuel cards taken. */
+  paymentNotes?: { lang: string; text: string };
+  /** What the station offers besides fuel, as `amenity` vocabulary values. */
+  amenities?: readonly string[];
+  /** The source's free-text description of the station's other offers. */
+  description?: { lang: string; text: string };
+  truckSuitable?: boolean;
   lifecycle?: (typeof LIFECYCLES)[number];
   /** Whether the source lists every grade the station sells, so a missing one is not sold. */
   productsComplete: boolean;
@@ -118,6 +136,25 @@ function expiry(feed: FuelFeed, fetchedAt: string): string | undefined {
 }
 
 /**
+ * The station's access block: absent when the source says nothing about who
+ * may fill up or how to pay, its audience `unknown` when it names only the
+ * payment.
+ */
+function accessOf(input: StationInput): { access?: Record<string, unknown> } {
+  const payment = input.payment === undefined ? [] : [...new Set(input.payment)];
+  if (input.audience === undefined && payment.length === 0 && input.paymentNotes === undefined) {
+    return {};
+  }
+  return {
+    access: {
+      audience: input.audience ?? "unknown",
+      ...(payment.length === 0 ? {} : { payment }),
+      ...(input.paymentNotes === undefined ? {} : { notes: [input.paymentNotes] }),
+    },
+  };
+}
+
+/**
  * A `fuel_station` feature with one `fuel_product` component per product (none
  * when no product is known). An on-demand feed's station says when it expires.
  */
@@ -154,6 +191,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
       fuzziness: "exact",
       ...(input.address === undefined ? {} : { address: input.address }),
       ...(input.admin === undefined ? {} : { admin: input.admin }),
+      ...(input.roadClass === undefined ? {} : { roads: [{ class: input.roadClass }] }),
     },
     provenance: {
       origin: "feed",
@@ -174,6 +212,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
         ? [{ scheme: "provider", id: input.stationId, authority: feed.id }]
         : input.externalIds.map((e) => ({ ...e })),
     ...(input.name === undefined ? {} : { name: [input.name] }),
+    ...(input.description === undefined ? {} : { description: [input.description] }),
     ...(input.operator === undefined
       ? {}
       : { operator: { role: "operator", name: [input.operator] } }),
@@ -185,7 +224,10 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
             ...(input.openingHours === "24/7" ? { twentyFourSeven: true } : {}),
           },
         }),
-    ...(input.audience === undefined ? {} : { access: { audience: input.audience } }),
+    ...accessOf(input),
+    ...(input.amenities === undefined || input.amenities.length === 0
+      ? {}
+      : { amenities: [...new Set(input.amenities)] }),
     ...(components.length === 0 ? {} : { components }),
     details: {
       kind: "fuel_station",
@@ -193,6 +235,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
       ...(input.brand === undefined ? {} : { brand: input.brand }),
       ...(input.brandWikidata === undefined ? {} : { brandWikidata: input.brandWikidata }),
       productsComplete: input.productsComplete,
+      ...(input.truckSuitable === undefined ? {} : { truckSuitable: input.truckSuitable }),
     },
   };
 }

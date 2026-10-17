@@ -7,6 +7,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { zonedWallClockToInstant } from "@openconditions/model";
 import type { FuelGrade } from "../grades.js";
+import { type Interval, interval, osmOpeningHours } from "../hours.js";
 import {
   type FuelFeed,
   type ProductInput,
@@ -148,6 +149,70 @@ const text = (value: unknown): string | undefined => {
   return t ? t : undefined;
 };
 
+/** The ministry's weekday letters, Monday (`L`, lunes) to Sunday (`D`, domingo). */
+const WEEKDAYS = ["L", "M", "X", "J", "V", "S", "D"] as const;
+
+const HORARIO_RULE = /^([LMXJVSD])(?:-([LMXJVSD]))?:\s*(.+)$/;
+
+/**
+ * `Horario` in the OSM grammar: rules of a weekday or a range of them (`L-V`)
+ * with `24H` or intervals joined by `y` (`L-V: 08:00-14:00 y 16:00-20:00; S:
+ * 09:00-14:00`). A weekday no rule names is closed. A schedule of Monday
+ * alone (`L: 24H`, which the large brands' all-day stations publish) cannot
+ * be told from a station that opens only on Mondays, so it is not read, nor
+ * is one whose rules cannot be parsed; both are counted as values not read.
+ */
+function openingHoursOf(horario: string | undefined, feedId: string): string | undefined {
+  if (horario === undefined) return undefined;
+  const week: (Interval[] | undefined)[] = WEEKDAYS.map(() => undefined);
+  const unread = () => {
+    recordSkipped(feedId, "unknown_value");
+    return undefined;
+  };
+  for (const rule of horario.split(";")) {
+    const m = rule.trim().match(HORARIO_RULE);
+    if (!m) return unread();
+    const first = WEEKDAYS.indexOf(m[1] as (typeof WEEKDAYS)[number]);
+    const last = m[2] === undefined ? first : WEEKDAYS.indexOf(m[2] as (typeof WEEKDAYS)[number]);
+    if (last < first) return unread();
+    const spec = (m[3] ?? "").trim();
+    const intervals: Interval[] = [];
+    if (spec === "24H") {
+      intervals.push({ opens: "00:00", closes: "24:00" });
+    } else {
+      for (const span of spec.split(/\s+y\s+/)) {
+        const [opens, closes, ...rest] = span.split("-");
+        const read =
+          opens !== undefined && closes !== undefined && rest.length === 0
+            ? interval(opens, closes)
+            : undefined;
+        if (read === undefined) return unread();
+        intervals.push(read);
+      }
+    }
+    for (let d = first; d <= last; d++) {
+      if (week[d] !== undefined) return unread();
+      week[d] = intervals;
+    }
+  }
+  if (week.filter((d) => d !== undefined).length === 1 && week[0] !== undefined) return unread();
+  return osmOpeningHours(week.map((d) => d ?? []));
+}
+
+/**
+ * `Tipo Venta`: P sold to the public, R only to a restricted clientele (a
+ * cooperative's members, a fleet). Another value is counted as not read.
+ */
+function audienceOf(
+  tipoVenta: string | undefined,
+  feedId: string,
+): "public" | "restricted" | "unknown" {
+  if (tipoVenta === "P") return "public";
+  if (tipoVenta === "R") return "restricted";
+  if (tipoVenta !== undefined) recordSkipped(feedId, "unknown_value");
+  return "unknown";
+}
+
 /** The grades a station prices: each column with a positive price. */
 function pricedGrades(station: Station): { grade: FuelGrade; amount: string }[] {
   return GRADE_COLUMNS.flatMap(([column, grade]) => {
@@ -172,7 +237,9 @@ function unknownPricedColumns(station: Station): number {
  * The Spanish ministry's file of every station and every grade's price
  * (`EstacionesTerrestres`): decimal commas, an empty string for a grade the
  * station does not sell, and one publication time for the whole file. The
- * file lists every grade, so the station's products are complete.
+ * file lists every grade, so the station's products are complete. `Horario`
+ * gives the opening hours and `Tipo Venta` who may buy. `Margen`, the side of
+ * the road the station is on, has no counterpart without the road's direction.
  */
 export function parseMinetur(
   feed: FuelFeed,
@@ -211,6 +278,7 @@ export function parseMinetur(
       const sign = text(station["Rótulo"]);
       const province = PROVINCES[text(station["IDProvincia"]) ?? ""];
       const products: ProductInput[] = priced.map(({ grade }) => ({ key: grade, grade }));
+      const openingHours = openingHoursOf(text(station["Horario"]), feed.id);
       const feature = stationDraft(feed, {
         stationId,
         ...position,
@@ -226,8 +294,8 @@ export function parseMinetur(
           country: "ES",
           ...(province ? { geocodes: [{ scheme: "iso3166-2", code: `ES-${province}` }] } : {}),
         },
-        // `Tipo Venta` R: sold only to a restricted clientele (a cooperative's members, a fleet).
-        audience: text(station["Tipo Venta"]) === "R" ? "restricted" : "public",
+        ...(openingHours === undefined ? {} : { openingHours }),
+        audience: audienceOf(text(station["Tipo Venta"]), feed.id),
         productsComplete: true,
         products,
       });

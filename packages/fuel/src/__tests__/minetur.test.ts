@@ -8,7 +8,8 @@ import { sealFailures } from "./helpers/seal.js";
 /**
  * `minetur-stations.json` is a trimmed capture of the live MINETUR file,
  * fetched 2026-10-03 (publication `Fecha` 03/10/2026 23:54:02, Madrid): three
- * of its 11463 stations, one of them published at 0,0.
+ * of its 11463 stations, one of them published at 0,0. 15083's `Horario` names
+ * Monday alone (`L: 24H`), which is counted as a value not read in every parse.
  */
 const FETCHED = "2026-10-03T21:55:00Z";
 const PUBLISHED = "2026-10-03T21:54:02Z";
@@ -148,25 +149,71 @@ describe("MINETUR", () => {
     expect(station(out.features, "16499")).toBeUndefined();
     expect(out.features).toHaveLength(2);
     expect(out.rejected ?? 0).toBe(0);
-    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1 });
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1, unknown_value: 1 });
   });
 
   test("an unreadable position or a missing id skips the station as malformed", () => {
     expect(parse(patched("15959", { Latitud: "40,48x" })).features).toHaveLength(1);
-    expect(drainSkipped(FEED)).toEqual({ malformed: 1, no_geometry: 1 });
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1, no_geometry: 1, unknown_value: 1 });
     expect(parse(patched("15959", { IDEESS: "" })).features).toHaveLength(1);
-    expect(drainSkipped(FEED)).toEqual({ malformed: 1, no_geometry: 1 });
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1, no_geometry: 1, unknown_value: 1 });
   });
 
   test("a priced column of a grade the parser does not know is a value not read", () => {
     const { features } = parse(patched("15959", { "Precio Gasolina 100": "2,019" }));
     expect(features).toHaveLength(2);
-    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1, no_geometry: 1 });
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 2, no_geometry: 1 });
   });
 
   test("a station sold restricted (Tipo Venta R) is not public", () => {
     const { features } = parse(patched("15959", { "Tipo Venta": "R" }));
     expect(station(features, "15959")!["access"]).toEqual({ audience: "restricted" });
+  });
+
+  test("a Tipo Venta the parser does not know leaves the audience unknown and is counted", () => {
+    const { features } = parse(patched("15959", { "Tipo Venta": "Q" }));
+    expect(station(features, "15959")!["access"]).toEqual({ audience: "unknown" });
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1, unknown_value: 2 });
+  });
+
+  test("Horario is read as OSM opening hours", () => {
+    const { features } = parse();
+    expect(station(features, "15959")!["openingHours"]).toEqual({
+      osm: "24/7",
+      twentyFourSeven: true,
+    });
+    // Monday alone is not read.
+    expect(station(features, "15083")!["openingHours"]).toBeUndefined();
+  });
+
+  test.each([
+    ["L-D: 06:00-22:00", "Mo-Su 06:00-22:00"],
+    ["L-V: 06:00-22:00; S-D: 07:00-22:00", "Mo-Fr 06:00-22:00; Sa-Su 07:00-22:00"],
+    ["L-S: 06:00-22:00", "Mo-Sa 06:00-22:00; Su off"],
+    [
+      "L-V: 07:00-14:00 y 16:00-21:00; S: 09:00-14:00",
+      "Mo-Fr 07:00-14:00,16:00-21:00; Sa 09:00-14:00; Su off",
+    ],
+    ["L-J: 24H; V-D: 06:00-00:00", "Mo-Th 00:00-24:00; Fr-Su 06:00-24:00"],
+    ["L-S: 8:00 -21:00; D: 08:00-14:00", "Mo-Sa 08:00-21:00; Su 08:00-14:00"],
+    ["L-D: 00:00-23:59", "Mo-Su 00:00-23:59"],
+  ])("Horario %j is %j", (horario, osm) => {
+    const { features } = parse(patched("15959", { Horario: horario }));
+    expect(station(features, "15959")!["openingHours"]).toEqual({ osm });
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1, unknown_value: 1 });
+  });
+
+  test.each([
+    "L: 06:00-22:00",
+    "L-D: 06:00",
+    "L-D: abierto",
+    "D-L: 24H",
+    "L-V: 24H; V-D: 06:00-22:00",
+    "L-D: 06:00-06:00",
+  ])("Horario %j is not read and is counted", (horario) => {
+    const { features } = parse(patched("15959", { Horario: horario }));
+    expect(station(features, "15959")!["openingHours"]).toBeUndefined();
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1, unknown_value: 2 });
   });
 
   test("reads a publication hour written without its leading zero", () => {
