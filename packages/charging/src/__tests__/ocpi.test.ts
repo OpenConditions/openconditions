@@ -1,4 +1,5 @@
 import {
+  drainSkipped,
   type EgressRecord,
   type FeedPayloads,
   isPublicRecord,
@@ -430,7 +431,8 @@ describe("ocpi", () => {
     expect(status.rejected).toBe(0);
   });
 
-  test("a tariff with a restriction it cannot read is no offer, no connector's ref and one rejected record", () => {
+  test("a tariff with a restriction it cannot read is no offer, no connector's ref and one malformed record", () => {
+    drainSkipped("nl-ndw-charging");
     const tariffs = json("ndw-tariffs.json") as Record<string, unknown>[];
     const base = tariffs.find((t) => t["id"] === "A0")!;
     const locations = json("ndw-locations.json") as Record<string, unknown>[];
@@ -468,7 +470,8 @@ describe("ocpi", () => {
       expect(refs).toEqual([`${String(site["id"]).replace("oc:feature:", "oc:offer:")}:ok`]);
     }
     // One tariff, named at two sites, is one record the parse could not use.
-    expect(out.rejected).toBe(1);
+    expect(out.rejected).toBe(0);
+    expect(drainSkipped("nl-ndw-charging")).toEqual({ malformed: 1 });
   });
 
   test("two tariff ids of one site that reduce to the same offer key stay two offers", () => {

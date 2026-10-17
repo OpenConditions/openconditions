@@ -2,6 +2,7 @@ import type {
   OcpiBusinessDetails,
   OcpiConnector,
   OcpiDisplayText,
+  OcpiEnergyMix,
   OcpiEvse,
   OcpiExceptionalPeriod,
   OcpiLocation,
@@ -16,11 +17,18 @@ import type {
 
 export type RawRecord = Record<string, unknown>;
 
-/** A record the decoders cannot turn into a wire type without inventing data. */
+/**
+ * A record the decoders cannot turn into a wire type without inventing data:
+ * one without usable coordinates (`no_geometry`), or one that breaks OCPI's
+ * own rules (`malformed`). A body that is no list at all is `malformed` too.
+ */
 export class OcpiDecodeError extends Error {
-  constructor(message: string) {
+  readonly reason: "malformed" | "no_geometry";
+
+  constructor(message: string, reason: "malformed" | "no_geometry" = "malformed") {
     super(message);
     this.name = "OcpiDecodeError";
+    this.reason = reason;
   }
 }
 
@@ -200,6 +208,7 @@ function normaliseConnector(raw: unknown): OcpiConnector {
     max_voltage: num(raw.max_voltage ?? raw.voltage),
     max_amperage: num(raw.max_amperage ?? raw.amperage),
     max_electric_power: parseWatts(raw.max_electric_power),
+    capabilities: textList(raw.capabilities)?.map((c) => c.toUpperCase()),
     tariff_ids: textList(raw.tariff_ids),
     terms_and_conditions: text(raw.terms_and_conditions),
     last_updated: text(raw.last_updated),
@@ -237,7 +246,7 @@ export function normaliseLocation(raw: unknown): OcpiLocation {
   if (id === undefined) throw new OcpiDecodeError("a location has no id");
   const position = coordinates(raw.coordinates);
   if (position === undefined) {
-    throw new OcpiDecodeError(`location ${id} has no usable coordinates`);
+    throw new OcpiDecodeError(`location ${id} has no usable coordinates`, "no_geometry");
   }
   return drop({
     country_code: text(raw.country_code)?.toUpperCase(),
@@ -268,11 +277,16 @@ export function normaliseLocation(raw: unknown): OcpiLocation {
   });
 }
 
+/**
+ * A 2.2.1 `Price` (`excl_vat`, `incl_vat`) or a 2.3.0 `PriceLimit`
+ * (`before_taxes`, `after_taxes`), which 2.3.0's `min_price` and
+ * `max_price` are; a bare number is the amount before tax.
+ */
 function price(value: unknown): OcpiPrice | undefined {
   if (isRecord(value)) {
-    const exclVat = num(value.excl_vat);
+    const exclVat = num(value.excl_vat ?? value.before_taxes);
     if (exclVat === undefined) return undefined;
-    return drop({ excl_vat: exclVat, incl_vat: num(value.incl_vat) });
+    return drop({ excl_vat: exclVat, incl_vat: num(value.incl_vat ?? value.after_taxes) });
   }
   const amount = num(value);
   return amount === undefined ? undefined : { excl_vat: amount };
@@ -314,6 +328,7 @@ const RESTRICTIONS: ReadonlySet<string> = new Set([
   "max_duration",
   "day_of_week",
   "reservation",
+  "booking",
 ]);
 
 /**
@@ -352,6 +367,7 @@ function restrictions(raw: unknown): OcpiRestrictions | undefined {
     max_duration: nonZero("max_duration"),
     day_of_week: textList(raw.day_of_week)?.map((d) => d.toUpperCase()),
     reservation: read("reservation", text(raw.reservation)),
+    booking: read("booking", text(raw.booking)?.toUpperCase()),
   });
   const days = raw.day_of_week;
   if (
@@ -377,16 +393,43 @@ function element(raw: unknown): OcpiTariffElement {
   });
 }
 
-const TAX_INCLUDED = new Set(["YES", "NO", "N/A"]);
+function energyMix(value: unknown): OcpiEnergyMix | undefined {
+  if (!isRecord(value)) return undefined;
+  const sources = (Array.isArray(value.energy_sources) ? value.energy_sources : [])
+    .filter(isRecord)
+    .flatMap((entry) => {
+      const source = text(entry.source)?.toUpperCase();
+      const percentage = num(entry.percentage);
+      return source === undefined || percentage === undefined ? [] : [{ source, percentage }];
+    });
+  const impacts = (Array.isArray(value.environ_impact) ? value.environ_impact : [])
+    .filter(isRecord)
+    .flatMap((entry) => {
+      const category = text(entry.category)?.toUpperCase();
+      const amount = num(entry.amount);
+      return category === undefined || amount === undefined ? [] : [{ category, amount }];
+    });
+  const mix = drop<OcpiEnergyMix>({
+    is_green_energy: typeof value.is_green_energy === "boolean" ? value.is_green_energy : undefined,
+    energy_sources: sources.length > 0 ? sources : undefined,
+    environ_impact: impacts.length > 0 ? impacts : undefined,
+    supplier_name: text(value.supplier_name),
+    energy_product_name: text(value.energy_product_name),
+  });
+  return Object.keys(mix).length > 0 ? mix : undefined;
+}
 
-/** Reads one OCPI tariff, with the OCPDB `taxes[]` and the 2.3.0 `tax_included`, as the wire type. */
+/**
+ * Reads one OCPI tariff, with the OCPDB `taxes[]` and the 2.3.0
+ * `tax_included`, as the wire type. `tax_included` is kept as written
+ * (upper-cased), a value OCPI does not define included, for the mapping to judge.
+ */
 export function normaliseTariff(raw: unknown): OcpiTariff {
   if (!isRecord(raw)) throw new OcpiDecodeError("a tariff is not an object");
   const id = text(raw.id);
   if (id === undefined) throw new OcpiDecodeError("a tariff has no id");
   const currency = text(raw.currency)?.toUpperCase();
   if (currency === undefined) throw new OcpiDecodeError(`tariff ${id} has no currency`);
-  const taxIncluded = text(raw.tax_included)?.toUpperCase();
   return drop({
     country_code: text(raw.country_code)?.toUpperCase(),
     party_id: text(raw.party_id)?.toUpperCase(),
@@ -401,10 +444,8 @@ export function normaliseTariff(raw: unknown): OcpiTariff {
     elements: Array.isArray(raw.elements) ? raw.elements.map(element) : [],
     start_date_time: text(raw.start_date_time),
     end_date_time: text(raw.end_date_time),
-    tax_included:
-      taxIncluded !== undefined && TAX_INCLUDED.has(taxIncluded)
-        ? (taxIncluded as OcpiTariff["tax_included"])
-        : undefined,
+    energy_mix: energyMix(raw.energy_mix),
+    tax_included: text(raw.tax_included)?.toUpperCase(),
     last_updated: text(raw.last_updated),
     source: text(raw.source),
     original_id: text(raw.original_id),

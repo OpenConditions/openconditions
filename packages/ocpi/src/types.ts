@@ -4,6 +4,10 @@
  * exactly as the publisher wrote them (some publishers send naive local time).
  */
 
+/**
+ * A 2.2.1 `Price`; a 2.3.0 `PriceLimit` (`before_taxes`, `after_taxes`) is
+ * read into the same two amounts.
+ */
 export interface OcpiPrice {
   excl_vat: number;
   incl_vat?: number;
@@ -47,6 +51,8 @@ export interface OcpiConnector {
   max_amperage?: number;
   /** Watts, as OCPI defines it. */
   max_electric_power?: number;
+  /** 2.3.0 `ConnectorCapability`: the ISO 15118 Plug & Charge versions the connector supports. */
+  capabilities?: string[];
   tariff_ids?: string[];
   terms_and_conditions?: string;
   last_updated?: string;
@@ -104,6 +110,25 @@ export interface OcpiLocation {
   original_id?: string;
 }
 
+export interface OcpiEnergySource {
+  source: string;
+  percentage: number;
+}
+
+export interface OcpiEnvironmentalImpact {
+  category: string;
+  /** g/kWh. */
+  amount: number;
+}
+
+export interface OcpiEnergyMix {
+  is_green_energy?: boolean;
+  energy_sources?: OcpiEnergySource[];
+  environ_impact?: OcpiEnvironmentalImpact[];
+  supplier_name?: string;
+  energy_product_name?: string;
+}
+
 export interface OcpiPriceComponent {
   type: string;
   price: number;
@@ -131,6 +156,8 @@ export interface OcpiRestrictions {
   /** `MONDAY` to `SUNDAY`. */
   day_of_week?: string[];
   reservation?: string;
+  /** 2.3.0 `BookingRestrictionType`: the element prices a booking, not a charging session. */
+  booking?: string;
   /**
    * Restrictions the publisher set that the decoder could not read, or that
    * OCPI does not define (`restrictions` when the whole value is no object).
@@ -158,7 +185,9 @@ export interface OcpiTariff {
   elements: OcpiTariffElement[];
   start_date_time?: string;
   end_date_time?: string;
-  tax_included?: "YES" | "NO" | "N/A";
+  energy_mix?: OcpiEnergyMix;
+  /** 2.3.0: `YES`, `NO` or `N/A`; another value is kept as written, upper-cased, for the mapping to judge. */
+  tax_included?: string;
   last_updated?: string;
   /** OCPDB: the upstream source the aggregator took the tariff from. */
   source?: string;

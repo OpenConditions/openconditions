@@ -170,6 +170,22 @@ export const OCPI_PARKING_TYPES: Readonly<Record<string, string>> = {
   UNDERGROUND_GARAGE: "underground_garage",
 };
 
+/**
+ * OCPI energy source categories → an energy mix's `source`. OCPI's own
+ * categories, generic ones included: `GENERAL_GREEN` is green energy of an
+ * unnamed kind, `GENERAL_FOSSIL` fossil energy of one.
+ */
+export const OCPI_ENERGY_SOURCES: Readonly<Record<string, string>> = {
+  NUCLEAR: "nuclear",
+  GENERAL_FOSSIL: "general_fossil",
+  COAL: "coal",
+  GAS: "gas",
+  GENERAL_GREEN: "general_green",
+  SOLAR: "solar",
+  WIND: "wind",
+  WATER: "water",
+};
+
 /** OCPI image categories → the feature's image categories. */
 export const OCPI_IMAGE_CATEGORIES: Readonly<Record<string, string | null>> = {
   CHARGER: "site",

@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
 } from "@openconditions/ingest-framework";
@@ -47,7 +48,7 @@ import {
   statusIsLive,
 } from "../site.js";
 import { indexStatus, type StatusIndexDraft, statusReader } from "../status.js";
-import { tariffDraft, tariffKeys, unreadableTariff } from "../tariff.js";
+import { tariffDraft, tariffKeys, tariffUnreadValues, unreadableTariff } from "../tariff.js";
 
 /** The live state a status payload gives an EVSE, by uid. */
 export interface EvseState {
@@ -62,7 +63,10 @@ export interface EvseState {
 /** What the OCPI mapping reads: the locations and what the other roles add to them. */
 export interface OcpiInput {
   locations: OcpiLocation[];
-  /** Locations the decoder could not read. */
+  /**
+   * Locations the decoder could not read and did not record a skip reason
+   * for; `parseOcpi` records each under its reason and passes none.
+   */
   rejected: number;
   /** Live states by EVSE uid, overriding the locations' own. */
   statuses: ReadonlyMap<string, EvseState>;
@@ -81,6 +85,30 @@ const POWER_TYPES: ReadonlySet<string> = new Set(CONNECTOR_POWER_TYPES);
 
 /** States that say nothing live: a register's row, or a point not yet built. */
 const NOT_LIVE = new Set(["STATIC", "PLANNED"]);
+
+/** An EVSE state the mapping reads: one of OCPI's, or OCPDB's `STATIC`. */
+const knownState = (status: string) => {
+  const code = status.toUpperCase();
+  return NOT_LIVE.has(code) || typeof OCPI_EVSE_STATUSES[code] === "string";
+};
+
+/**
+ * The parking restrictions the EVSE model holds. OCPI 2.3.0 adds
+ * `EMPLOYEES`, `TAXIS` and `TENANTS`, which it has no value for yet.
+ */
+const PARKING_RESTRICTIONS: ReadonlySet<string> = new Set([
+  "EV_ONLY",
+  "PLUGGED",
+  "DISABLED",
+  "CUSTOMERS",
+  "MOTORCYCLES",
+]);
+
+/** OCPI 2.3.0 `ConnectorCapability` values: ISO 15118-2 and -20 Plug & Charge. */
+const PLUG_AND_CHARGE: ReadonlySet<string> = new Set([
+  "ISO_15118_2_PLUG_AND_CHARGE",
+  "ISO_15118_20_PLUG_AND_CHARGE",
+]);
 
 /** OCPDB writes its sources' licences in words (`CC BY 4.0`, `CC-0`). */
 function licenseId(written: string): string {
@@ -145,16 +173,26 @@ function tariffResolver(tariffs: readonly OcpiTariff[]) {
   };
 }
 
+/**
+ * A connector as the model holds it. A standard, format or power type OCPI
+ * does not define is left out (an unknown standard is `UNKNOWN`) and counted
+ * in `unread`; one the publisher did not set is not.
+ */
 function connectorOf(
   connector: OcpiEvse["connectors"][number],
   tariffIds: string[],
+  unread: () => void,
 ): ConnectorInput {
   const format = connector.format?.toLowerCase();
   const powerType = connector.power_type?.toUpperCase();
   const power = connectorPowerKw(connector);
+  const standard = STANDARDS.get(connector.standard?.toUpperCase() ?? "");
+  if (connector.standard !== undefined && standard === undefined) unread();
+  if (format !== undefined && format !== "socket" && format !== "cable") unread();
+  if (powerType !== undefined && !POWER_TYPES.has(powerType)) unread();
   return {
     id: connector.id,
-    standard: STANDARDS.get(connector.standard?.toUpperCase() ?? "") ?? "UNKNOWN",
+    standard: standard ?? "UNKNOWN",
     ...(format === "socket" || format === "cable" ? { format } : {}),
     ...(powerType !== undefined && POWER_TYPES.has(powerType)
       ? { powerType: powerType as PowerType }
@@ -191,7 +229,9 @@ const zonedTariff = (tariff: OcpiTariff, zone: string): OcpiTariff => {
  * provider id. One operator's locations within 15 m are one site. The status
  * index names every EVSE that is neither removed nor planned by its uid. A
  * tariff with restrictions that cannot be read is no offer and no connector's
- * tariff, and counts once among the rejected records.
+ * tariff, and is skipped once as `malformed`. An enumerated value OCPI does
+ * not define, or the model has no place for, is left out and skipped as
+ * `unknown_value`, a tariff's once however many sites name it.
  */
 export function mapOcpi(
   feed: ChargingCatalogFeed,
@@ -203,6 +243,11 @@ export function mapOcpi(
   const index: StatusIndexDraft = new Map();
   const seen = new Set<string>();
   const unreadable = new Set<OcpiTariff>();
+  const inspected = new Set<OcpiTariff>();
+  let unknown = 0;
+  const unread = () => {
+    unknown++;
+  };
   for (const loc of input.locations) {
     if (loc.publish === false) continue;
     const stationId = stationIdOf(loc);
@@ -216,6 +261,7 @@ export function mapOcpi(
     const evses: (OcpiEvse & { state?: EvseState })[] = [];
     for (const evse of loc.evses) {
       const own = ownState(evse);
+      if (own !== undefined && !knownState(own.status)) unread();
       const state = input.statuses.get(evse.uid) ?? own;
       if (state?.status.toUpperCase() === "REMOVED") continue;
       evses.push(state === undefined ? evse : { ...evse, state });
@@ -252,23 +298,38 @@ export function mapOcpi(
         return [tariff.id];
       });
     };
-    const evseInputs: EvseInput[] = evses.map((evse) => ({
-      key: evse.uid,
-      ...(emi3Of(evse.evse_id) === undefined ? {} : { evseId: evse.evse_id }),
-      ...(evse.uid === evse.evse_id ? {} : { uid: evse.uid }),
-      ...(evse.state?.status.toUpperCase() === "PLANNED"
-        ? { lifecycle: "planned" as Lifecycle }
-        : {}),
-      ...(evse.capabilities === undefined ? {} : { capabilities: evse.capabilities }),
-      ...(evse.parking_restrictions === undefined
-        ? {}
-        : { parkingRestrictions: evse.parking_restrictions.map((r) => r.toLowerCase()) }),
-      connectors: evse.connectors.map((c) => connectorOf(c, named(evse, c))),
-    }));
+    const evseInputs: EvseInput[] = evses.map((evse) => {
+      const restrictions = (evse.parking_restrictions ?? []).flatMap((r) => {
+        if (PARKING_RESTRICTIONS.has(r.toUpperCase())) return [r.toLowerCase()];
+        unread();
+        return [];
+      });
+      return {
+        key: evse.uid,
+        ...(emi3Of(evse.evse_id) === undefined ? {} : { evseId: evse.evse_id }),
+        ...(evse.uid === evse.evse_id ? {} : { uid: evse.uid }),
+        ...(evse.state?.status.toUpperCase() === "PLANNED"
+          ? { lifecycle: "planned" as Lifecycle }
+          : {}),
+        ...(evse.capabilities === undefined ? {} : { capabilities: evse.capabilities }),
+        ...(restrictions.length === 0 ? {} : { parkingRestrictions: restrictions }),
+        connectors: evse.connectors.map((c) => connectorOf(c, named(evse, c), unread)),
+      };
+    });
+    // ISO 15118 Plug & Charge on any connector is a way to start charging at the site.
+    const connectorCapabilities = evses.flatMap((e) =>
+      e.connectors.flatMap((c) => c.capabilities ?? []),
+    );
+    const plugAndCharge = connectorCapabilities.some((c) => PLUG_AND_CHARGE.has(c));
+    for (const capability of connectorCapabilities) if (!PLUG_AND_CHARGE.has(capability)) unread();
 
     const keys = tariffKeys(tariffs.keys());
     const offered = new Set<string>();
     for (const tariff of tariffs.values()) {
+      if (!inspected.has(tariff)) {
+        inspected.add(tariff);
+        unknown += tariffUnreadValues(tariff);
+      }
       if (unreadableTariff(tariff)) {
         unreadable.add(tariff);
         continue;
@@ -299,9 +360,12 @@ export function mapOcpi(
     const operator = loc.operator;
     const amenities = (loc.facilities ?? []).flatMap((f) => {
       const amenity = OCPI_FACILITIES[f.toUpperCase()];
-      return typeof amenity === "string" ? [amenity] : [];
+      if (typeof amenity === "string") return [amenity];
+      unread();
+      return [];
     });
     const parkingType = OCPI_PARKING_TYPES[loc.parking_type?.toUpperCase() ?? ""];
+    if (loc.parking_type !== undefined && parkingType === undefined) unread();
     const hours = hoursOf(loc.opening_times);
     const lifecycle: Lifecycle | undefined =
       evses.length > 0 && evseInputs.every((e) => e.lifecycle === "planned")
@@ -335,13 +399,16 @@ export function mapOcpi(
       },
       ...(hours === undefined ? {} : { openingHoursOsm: hours }),
       ...(lifecycle === undefined ? {} : { lifecycle }),
+      ...(plugAndCharge ? { authentication: ["plug_and_charge" as const] } : {}),
       ...(parkingType === undefined ? {} : { parkingType: parkingType as ParkingType }),
       ...(amenities.length === 0 ? {} : { amenities }),
       evses: evseInputs,
     };
     out.features.push(siteDraft(feed, site, ctx.fetchedAt));
   }
-  out.rejected = input.rejected + unreadable.size;
+  out.rejected = input.rejected;
+  recordSkipped(feed.id, "malformed", unreadable.size);
+  recordSkipped(feed.id, "unknown_value", unknown);
   out.statusIndex = index;
   colocateSites(out);
   out.observations = ocpiStatusReadings(feed, input.statuses, index, ctx).observations;
@@ -373,7 +440,8 @@ const readable = (state: EvseState, zone: string, fetchedAt: string) =>
  * state carries (the fetch without one). A
  * register's `STATIC` row, a `PLANNED` or `REMOVED` point and a status last
  * changed more than 30 days back are no reading; a status of a uid the index
- * does not hold is rejected.
+ * does not hold is rejected, and one OCPI does not define is skipped as
+ * `unknown_value`.
  */
 export function ocpiStatusReadings(
   feed: ChargingCatalogFeed,
@@ -400,6 +468,11 @@ export function ocpiStatusReadings(
     }
   }
   for (const uid of statuses.keys()) if (!index.has(uid)) reader.reject();
+  recordSkipped(
+    feed.id,
+    "unknown_value",
+    [...statuses.values()].filter((s) => !knownState(s.status)).length,
+  );
   return reader.output();
 }
 
@@ -410,46 +483,47 @@ export function parseOcpiStatus(
   ctx: ParseContext,
   index: StatusIndex,
 ): StatusOutput {
-  return ocpiStatusReadings(feed, liveStatesOf(payloads), index, ctx);
+  return ocpiStatusReadings(feed, liveStatesOf(feed.id, payloads), index, ctx);
 }
 
-/** Reads every record of the list bodies, counting those `read` refuses. */
-function readAll<T>(
-  bodies: readonly Buffer[],
-  read: (raw: unknown) => T,
-): { records: T[]; rejected: number } {
+/** Reads every record of the list bodies, skipping those `read` refuses under the decoder's reason. */
+function readAll<T>(feedId: string, bodies: readonly Buffer[], read: (raw: unknown) => T): T[] {
   const records: T[] = [];
-  let rejected = 0;
   for (const body of bodies) {
     for (const raw of decodeOcpiList<unknown>(body)) {
       try {
         records.push(read(raw));
       } catch (error) {
         if (!(error instanceof OcpiDecodeError)) throw error;
-        rejected++;
+        recordSkipped(feedId, error.reason);
       }
     }
   }
-  return { records, rejected };
+  return records;
 }
 
 /**
  * The live states of a poll by uid: the `status` list, then each answer of
  * `changes` since it, oldest first, so an EVSE's latest change stands.
  */
-function liveStatesOf(payloads: FeedPayloads): Map<string, EvseState> {
-  return statusesOf([...(payloads["status"] ?? []), ...(payloads["changes"] ?? [])]);
+function liveStatesOf(feedId: string, payloads: FeedPayloads): Map<string, EvseState> {
+  return statusesOf(feedId, [...(payloads["status"] ?? []), ...(payloads["changes"] ?? [])]);
 }
 
-/** The bare EVSEs of a status endpoint (OCPDB's `evses`) as live states by uid. */
-function statusesOf(bodies: readonly Buffer[]): Map<string, EvseState> {
+/**
+ * The bare EVSEs of a status endpoint (OCPDB's `evses`) as live states by
+ * uid; an entry without a uid or status is skipped as `malformed`.
+ */
+function statusesOf(feedId: string, bodies: readonly Buffer[]): Map<string, EvseState> {
   const states = new Map<string, EvseState>();
   for (const body of bodies) {
     for (const raw of decodeOcpiList<unknown>(body)) {
-      if (!isRecord(raw)) continue;
-      const uid = text(raw["uid"]) ?? text(raw["evse_id"]);
-      const status = text(raw["status"])?.toUpperCase();
-      if (uid === undefined || status === undefined) continue;
+      const uid = isRecord(raw) ? (text(raw["uid"]) ?? text(raw["evse_id"])) : undefined;
+      const status = isRecord(raw) ? text(raw["status"])?.toUpperCase() : undefined;
+      if (!isRecord(raw) || uid === undefined || status === undefined) {
+        recordSkipped(feedId, "malformed");
+        continue;
+      }
       const at = text(raw["status_last_updated"]) ?? text(raw["last_updated"]);
       states.set(uid, at === undefined ? { status } : { status, at });
     }
@@ -471,7 +545,9 @@ function associationsOf(bodies: readonly Buffer[]): Map<string, string[]> {
 /**
  * An OCPI 2.2/2.3 feed: `main` the locations (bare list, `{data}` or
  * `{items}` pages), and optionally `status` live EVSE states by uid,
- * `tariffs`, and OCPDB's `associations` and `sources`.
+ * `tariffs`, and OCPDB's `associations` and `sources`. A location or
+ * tariff the decoder refuses is skipped under its reason: `no_geometry`
+ * without usable coordinates, else `malformed`.
  */
 export function parseOcpi(
   feed: ChargingCatalogFeed,
@@ -480,16 +556,15 @@ export function parseOcpi(
 ): ParseOutput {
   const main = payloads["main"] ?? [];
   if (main.length === 0) return emptyParseOutput();
-  const locations = readAll(main, normaliseLocation);
   const associations = payloads["associations"];
   const sources = payloads["sources"];
   return mapOcpi(
     feed,
     {
-      locations: locations.records,
-      rejected: locations.rejected,
-      statuses: liveStatesOf(payloads),
-      tariffs: readAll(payloads["tariffs"] ?? [], normaliseTariff).records,
+      locations: readAll(feed.id, main, normaliseLocation),
+      rejected: 0,
+      statuses: liveStatesOf(feed.id, payloads),
+      tariffs: readAll(feed.id, payloads["tariffs"] ?? [], normaliseTariff),
       ...(associations === undefined || associations.length === 0
         ? {}
         : { associations: associationsOf(associations) }),

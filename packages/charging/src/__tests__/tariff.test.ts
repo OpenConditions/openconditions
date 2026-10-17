@@ -163,6 +163,83 @@ describe("tariffDraft", () => {
     expect(draft).not.toHaveProperty("maxPrice");
   });
 
+  test("2.3.0 PriceLimit bounds take before_taxes, or after_taxes when prices include tax", () => {
+    // 2.3.0's min_price and max_price are a PriceLimit: `before_taxes`
+    // "excluding taxes", `after_taxes` "including taxes". They were dropped
+    // when only 2.2.1's excl_vat and incl_vat were read.
+    const elements = [{ price_components: [{ type: "ENERGY", price: 0.49, step_size: 1 }] }];
+    const limits = {
+      min_price: { before_taxes: 1, after_taxes: 1.21 },
+      max_price: { before_taxes: 50, after_taxes: 60.5 },
+    };
+    expect(offer({ id: "EXCL", tax_included: "NO", ...limits, elements })).toMatchObject({
+      priceIncludesVat: false,
+      minPrice: { amount: "1", currency: "EUR" },
+      maxPrice: { amount: "50", currency: "EUR" },
+    });
+    expect(offer({ id: "INCL", tax_included: "YES", ...limits, elements })).toMatchObject({
+      priceIncludesVat: true,
+      minPrice: { amount: "1.21" },
+      maxPrice: { amount: "60.5" },
+    });
+  });
+
+  test("a tax_included OCPI does not define states no VAT status", () => {
+    const draft = offer({
+      id: "ODD",
+      tax_included: "SOMETIMES",
+      elements: [{ price_components: [{ type: "ENERGY", price: 0.49, step_size: 1 }] }],
+    });
+    expect(draft).toBeDefined();
+    expect(draft).not.toHaveProperty("priceIncludesVat");
+  });
+
+  test("an element priced for a 2.3.0 booking is left out, and the tariff stays readable", () => {
+    // "When this field is present, the TariffElement describes booking costs":
+    // it never prices a session without a booking.
+    const tariff = normaliseTariff({
+      id: "BOOK",
+      currency: "EUR",
+      elements: [
+        {
+          price_components: [{ type: "TIME", price: 2, step_size: 60 }],
+          restrictions: { booking: "BOOKING" },
+        },
+        { price_components: [{ type: "ENERGY", price: 0.49, step_size: 1 }] },
+      ],
+    });
+    expect(unreadableTariff(tariff)).toBe(false);
+    expect(offer({ ...tariff })).toMatchObject({
+      elements: [{ components: [{ type: "energy", price: { amount: "0.49" } }] }],
+    });
+    expect(offer({ ...tariff })?.["elements"]).toHaveLength(1);
+  });
+
+  test("a tariff's energy mix is the offer's, its known sources with their shares", () => {
+    const draft = offer({
+      id: "GREEN",
+      energy_mix: {
+        is_green_energy: true,
+        energy_sources: [
+          { source: "WIND", percentage: 70 },
+          { source: "SOLAR", percentage: 30 },
+        ],
+        environ_impact: [{ category: "CARBON_DIOXIDE", amount: 0 }],
+        supplier_name: "Greenpower",
+        energy_product_name: "Green 100",
+      },
+      elements: [{ price_components: [{ type: "ENERGY", price: 0.49, step_size: 1 }] }],
+    });
+    expect(draft?.["energyMix"]).toEqual({
+      isGreen: true,
+      supplierName: "Greenpower",
+      sources: [
+        { source: "wind", pct: 70 },
+        { source: "solar", pct: 30 },
+      ],
+    });
+  });
+
   test("a tariff that states no VAT status writes no priceIncludesVat", () => {
     const draft = offer({
       id: "NA",

@@ -1,6 +1,7 @@
 import type { RecordDraft } from "@openconditions/ingest-framework";
 import {
   OCPI_DAYS,
+  OCPI_ENERGY_SOURCES,
   OCPI_TARIFF_DIMENSIONS,
   OCPI_TARIFF_TYPES,
 } from "@openconditions/model-charging";
@@ -122,13 +123,17 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
  * components of a type the model knows; an element with none is left out.
  * OCPI looks the price of each dimension up in the first element that has a
  * component of it and whose restrictions match, so leaving out an element
- * without a known dimension changes no known dimension's price. Null when a
- * kept element's restrictions cannot be read: leaving that element out would
- * let a later one of its dimensions, or none, price what it prices.
+ * without a known dimension changes no known dimension's price. An element
+ * restricted to a booking (2.3.0 `booking`) prices the booking, which the
+ * model has no condition for; it never matches a session without one, so it
+ * is left out the same way. Null when a kept element's restrictions cannot be
+ * read: leaving that element out would let a later one of its dimensions, or
+ * none, price what it prices.
  */
 function elementsOf(tariff: OcpiTariff): Record<string, unknown>[] | null {
   const elements: Record<string, unknown>[] = [];
   for (const element of tariff.elements) {
+    if (element.restrictions?.booking !== undefined) continue;
     const components = element.price_components.flatMap((c) => {
       const type = OCPI_TARIFF_DIMENSIONS[c.type];
       if (type === undefined || !Number.isFinite(c.price) || c.price < 0) return [];
@@ -166,11 +171,71 @@ export function unreadableTariff(tariff: OcpiTariff): boolean {
   return elementsOf(tariff) === null;
 }
 
+/** What `tax_included` says of the prices: they include tax, exclude it, or no tax applies. */
+const TAX_INCLUDED: ReadonlyMap<string, boolean | null> = new Map([
+  ["YES", true],
+  ["NO", false],
+  ["N/A", null],
+]);
+
+/**
+ * The enumerated values of a tariff its offer is published without: a price
+ * component of a dimension the model does not know, a tariff type or
+ * `tax_included` OCPI does not define, an element priced for a booking, an
+ * energy source of an unknown category and every environmental impact (the
+ * energy mix holds no impact amounts).
+ */
+export function tariffUnreadValues(tariff: OcpiTariff): number {
+  let unread = 0;
+  for (const element of tariff.elements) {
+    if (element.restrictions?.booking !== undefined) {
+      unread++;
+      continue;
+    }
+    unread += element.price_components.filter(
+      (c) => OCPI_TARIFF_DIMENSIONS[c.type] === undefined,
+    ).length;
+  }
+  if (tariff.type !== undefined && OCPI_TARIFF_TYPES[tariff.type] === undefined) unread++;
+  if (tariff.tax_included !== undefined && !TAX_INCLUDED.has(tariff.tax_included)) unread++;
+  const mix = tariff.energy_mix;
+  unread += (mix?.energy_sources ?? []).filter(
+    (s) => OCPI_ENERGY_SOURCES[s.source] === undefined,
+  ).length;
+  unread += (mix?.environ_impact ?? []).length;
+  return unread;
+}
+
+/**
+ * A tariff's energy mix as the offer holds it: whether it is green, the
+ * supplier, and each source of a known category with its share. OCPI's
+ * product name and environmental impact have no place in it.
+ */
+function energyMixOf(tariff: OcpiTariff): Record<string, unknown> | undefined {
+  const mix = tariff.energy_mix;
+  if (mix === undefined) return undefined;
+  const sources = (mix.energy_sources ?? []).flatMap((s) => {
+    const source = OCPI_ENERGY_SOURCES[s.source];
+    return source === undefined || !(s.percentage >= 0 && s.percentage <= 100)
+      ? []
+      : [{ source, pct: s.percentage }];
+  });
+  const supplierName = clean(mix.supplier_name);
+  const out = {
+    ...(mix.is_green_energy === undefined ? {} : { isGreen: mix.is_green_energy }),
+    ...(supplierName === undefined ? {} : { supplierName }),
+    ...(sources.length === 0 ? {} : { sources }),
+  };
+  return Object.keys(out).length === 0 ? undefined : out;
+}
+
 /**
  * An `energy_tariff` offer for one tariff of a site: its subject is the site,
  * and the connectors it applies to name it in `tariffRefs`. OCPI prices are
- * before tax unless the tariff says they include it, so the price bounds take
- * the matching side of OCPI's pair. Undefined when no element holds a priced
+ * before tax unless the tariff says they include it (`tax_included` `YES`),
+ * so the price bounds take the matching side of OCPI's pair. A tariff that
+ * says no tax applies (`N/A`), or says something OCPI does not define,
+ * writes no `priceIncludesVat`. Undefined when no element holds a priced
  * component the model knows (text alone is the site's `tariffText`, never an
  * offer), or when one that does has restrictions that cannot be read
  * (`unreadableTariff`).
@@ -192,6 +257,8 @@ export function tariffDraft(
   if (elements === null || elements.length === 0) return undefined;
 
   const includesVat = tariff.tax_included === "YES";
+  const vatStated =
+    tariff.tax_included === undefined ? false : TAX_INCLUDED.get(tariff.tax_included);
   const bound = (price: OcpiPrice | undefined) => {
     const amount = includesVat ? price?.incl_vat : price?.excl_vat;
     return amount === undefined || !Number.isFinite(amount) || amount < 0
@@ -212,6 +279,7 @@ export function tariffDraft(
   };
   const start = instant(tariff.start_date_time);
   const end = instant(tariff.end_date_time);
+  const energyMix = energyMixOf(tariff);
   return {
     id: tariffOfferId(feed, stationId, ctx.key ?? tariff.id),
     class: "offer",
@@ -224,9 +292,10 @@ export function tariffDraft(
     ...(minPrice === undefined ? {} : { minPrice }),
     ...(maxPrice === undefined ? {} : { maxPrice }),
     // A tariff that states no VAT status writes none.
-    ...(tariff.tax_included === "N/A" ? {} : { priceIncludesVat: includesVat }),
+    ...(typeof vatStated === "boolean" ? { priceIncludesVat: vatStated } : {}),
     ...(altText.length === 0 ? {} : { altText }),
     ...(url === undefined ? {} : { url }),
+    ...(energyMix === undefined ? {} : { energyMix }),
     validity: {
       status: "active",
       ...(start === undefined ? {} : { start }),
