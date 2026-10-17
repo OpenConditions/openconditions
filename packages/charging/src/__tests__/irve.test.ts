@@ -1,11 +1,21 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
 import { byReadingId, fullAndStatus } from "./helpers/status-only.js";
 
 const FETCHED = "2026-10-06T02:45:56Z";
+const FEED_ID = "fr-irve-charging";
+
+beforeEach(() => {
+  drainSkipped(FEED_ID);
+});
 
 function parse(payloads: FeedPayloads, fetchedAt = FETCHED): ParseOutput {
   const out = chargingDomain.formats["irve"]!.parse(
@@ -227,5 +237,126 @@ describe("irve", () => {
       },
     ]);
     expect(status.rejected).toBe(1);
+  });
+
+  test("IRVE: the aménageur is the owner, the observations the description, the local id the uid", () => {
+    const out = both();
+    const acelec = site(out, "FR073P777022");
+    expect(acelec).toMatchObject({
+      owner: { name: [{ lang: "fr", text: "Acelec" }] },
+      description: [
+        {
+          lang: "fr",
+          text: "Recharge uniquement pendent les heures d'ouverture. Recharge pas QRcode, RFID....",
+        },
+      ],
+    });
+    expect(evsesOf(acelec)[0]?.details).toMatchObject({
+      evseId: "FR073ERJ5G5279",
+      uid: "FR073E77700221",
+    });
+    // "Parking privé à usage public" is a car park; "Voirie" the street.
+    expect(acelec?.["details"]).toMatchObject({ parkingType: "parking_lot" });
+    expect(site(out, "FRBFCPVDIUF")?.["details"]).toMatchObject({ parkingType: "on_street" });
+  });
+
+  test("IRVE: the captured files leave nothing unread", () => {
+    both();
+    expect(drainSkipped(FEED_ID)).toEqual({});
+  });
+
+  test("IRVE: a point outside roaming is keyed by its operator's id; one with neither id is malformed", () => {
+    const lines = fixture("irve-static.csv").toString("utf8").split("\n");
+    const acelec = lines[3]!;
+    const local = acelec.replace(",FR073ERJ5G5279,", ",Non concerné,");
+    const neither = acelec.replace(",FR073ERJ5G5279,FR073E77700221,", ",Non concerné,,");
+    const out = parse({ main: [Buffer.from([lines[0], local, local, neither].join("\n"))] });
+    const evses = evsesOf(site(out, "FR073P777022"));
+    expect(evses.map((e) => e.key)).toEqual(["FR073E77700221"]);
+    expect(evses[0]).not.toHaveProperty("externalIds");
+    expect(out.statusIndex?.has("FR073E77700221")).toBe(false);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(FEED_ID)).toEqual({ malformed: 1 });
+  });
+
+  test("IRVE: dropped rows and unread values are counted by reason", () => {
+    const lines = fixture("irve-static.csv").toString("utf8").split("\n");
+    const [header, semur1, semur2, acelec1] = lines as [string, string, string, string];
+    const rows = [
+      header,
+      semur1,
+      // No position: neither coordonneesXY nor the consolidated columns.
+      semur2.replace('"[4.335454, 47.490227]"', "").replace(",4.335454,47.490227,", ",,,"),
+      // The first Semur point again, under another station: a conflict.
+      semur1.replace(",FRBFCPVDIUF,", ",FRBFCPVDIUG,"),
+      // A plug flag that is no Table Schema boolean, and a location the schema does not list.
+      acelec1
+        .replace(",22,false,true,", ",22,false,oui,")
+        .replace(",Parking privé à usage public,", ",Parking souterrain,"),
+    ];
+    const status = [
+      "id_pdc_itinerance,etat_pdc,occupation_pdc,horodatage,etat_prise_type_2,etat_prise_type_combo_ccs,etat_prise_type_chademo,etat_prise_type_ef",
+      "FRBFCEVDIUF1,en_panne,libre,2026-10-05T10:00:00Z,,,,",
+      "FR073ERJ5G5279,en_service,disponible,2026-10-05T10:00:00Z,ok,,,",
+      ",en_service,libre,2026-10-05T10:00:00Z,,,,",
+      "UNLISTED,en_service,libre,2026-10-05T10:00:00Z,,,,",
+    ];
+    const out = parse({
+      main: [Buffer.from(rows.join("\n"))],
+      status: [Buffer.from(status.join("\n"))],
+    });
+    expect(drainSkipped(FEED_ID)).toEqual({ no_geometry: 1, malformed: 2, unknown_value: 5 });
+    // The pipeline counts dropped rows among the rejected from the skips; the parse adds none.
+    expect(out.rejected ?? 0).toBe(0);
+    // A plug flag that does not read is no plug; an unknown state or occupancy reads as unknown.
+    const acelec = site(out, "FR073P777022");
+    expect(components(acelec).filter((c) => c.kind === "connector")).toEqual([]);
+    expect(acelec?.["details"]).not.toHaveProperty("parkingType");
+    expect(readings(out).map((r) => [r.key, r.value])).toEqual([
+      ["FRBFCEVDIUF1", "available"],
+      ["FR073ERJ5G5279", "unknown"],
+    ]);
+  });
+
+  test("IRVE: status alone counts a row without a PDC id as malformed and rejects an unknown one", () => {
+    const rows = [
+      "id_pdc_itinerance,etat_pdc,occupation_pdc,horodatage",
+      ",en_service,libre,2026-10-05T10:00:00Z",
+      "UNLISTED,en_service,libre,2026-10-05T10:00:00Z",
+    ].join("\n");
+    const { status } = fullAndStatus(
+      "irve",
+      catalogFeed(FEED_ID),
+      { main: [fixture("irve-static.csv")], status: [Buffer.from(rows)] },
+      parseContext(FETCHED),
+    );
+    expect(status.rejected).toBe(1);
+    // The full parse and the status-only one each count the row.
+    expect(drainSkipped(FEED_ID)).toEqual({ malformed: 2 });
+  });
+
+  test("IRVE: each plug's state is a connector reading, through the full parse and status alone", () => {
+    const rows = [
+      "id_pdc_itinerance,etat_pdc,occupation_pdc,horodatage,etat_prise_type_2,etat_prise_type_combo_ccs,etat_prise_type_chademo,etat_prise_type_ef",
+      "FRBFCEVDIUF2,en_service,libre,2026-10-05T10:00:00Z,hors_service,,,fonctionnel",
+    ].join("\n");
+    const { full, status } = fullAndStatus(
+      "irve",
+      catalogFeed(FEED_ID),
+      { main: [fixture("irve-static.csv")], status: [Buffer.from(rows)] },
+      parseContext(FETCHED),
+    );
+    expect(byReadingId(status.observations)).toEqual(byReadingId(full.observations));
+    expect(
+      full.observations.map((o) => [
+        o["property"],
+        (o["subject"] as { componentKey: string }).componentKey,
+        (o["result"] as { value: string }).value,
+      ]),
+    ).toEqual([
+      ["charging.evse_status", "FRBFCEVDIUF2", "available"],
+      ["charging.connector_status", "FRBFCEVDIUF2/ef", "available"],
+      ["charging.connector_status", "FRBFCEVDIUF2/2", "out_of_order"],
+    ]);
   });
 });

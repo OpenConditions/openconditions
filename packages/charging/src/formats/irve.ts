@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
 } from "@openconditions/ingest-framework";
@@ -29,6 +30,7 @@ import { placeAt, placeFromText, text } from "./raw.js";
 const ZONE = "Europe/Paris";
 
 const STATIC_COLUMNS = [
+  "nom_amenageur",
   "nom_operateur",
   "nom_enseigne",
   "id_station_itinerance",
@@ -37,6 +39,7 @@ const STATIC_COLUMNS = [
   "adresse_station",
   "coordonneesXY",
   "id_pdc_itinerance",
+  "id_pdc_local",
   "puissance_nominale",
   "prise_type_ef",
   "prise_type_2",
@@ -50,6 +53,9 @@ const STATIC_COLUMNS = [
   "condition_acces",
   "reservation",
   "horaires",
+  "accessibilite_pmr",
+  "station_deux_roues",
+  "observations",
   "cable_t2_attache",
   "consolidated_longitude",
   "consolidated_latitude",
@@ -57,9 +63,32 @@ const STATIC_COLUMNS = [
   "consolidated_commune",
 ] as const;
 
-const STATUS_COLUMNS = ["id_pdc_itinerance", "etat_pdc", "occupation_pdc", "horodatage"] as const;
+/** The plugs the dynamic schema gives a state of, each by its `etat_prise_type_*` column. */
+const PLUG_STATES = ["2", "combo_ccs", "chademo", "ef"] as const;
 
-const isTrue = (value: string | undefined) => value?.toLowerCase() === "true";
+const STATUS_COLUMNS = [
+  "id_pdc_itinerance",
+  "etat_pdc",
+  "occupation_pdc",
+  "horodatage",
+  ...PLUG_STATES.map((plug) => `etat_prise_type_${plug}`),
+] as const;
+
+/** Table Schema's boolean values, which the IRVE schema keeps. */
+const TRUE_VALUES = new Set(["true", "True", "TRUE", "1"]);
+const FALSE_VALUES = new Set(["false", "False", "FALSE", "0"]);
+
+/**
+ * A boolean column's value, undefined where the publisher left it empty. A
+ * value that is no Table Schema boolean is left unread and counted.
+ */
+function booleanOf(feedId: string, raw: string | undefined): boolean | undefined {
+  const value = raw ?? "";
+  if (TRUE_VALUES.has(value)) return true;
+  if (FALSE_VALUES.has(value)) return false;
+  if (value !== "") recordSkipped(feedId, "unknown_value");
+  return undefined;
+}
 
 /** A placeholder the publishers write where a station has no itinerance id. */
 const NO_ID = new Set(["", "non concerné", "non concerne", "n/a"]);
@@ -152,49 +181,97 @@ const AUDIENCE: Readonly<Record<string, (typeof AUDIENCES)[number]>> = {
   "accès réservé": "restricted",
 };
 
+/**
+ * `implantation_station`. A public car park ("en ouvrage, en enclos") and a
+ * private one open to the public are both car parks the schema does not say
+ * are built over; a fast-charging station is first a place to charge, not to
+ * park.
+ */
 const PARKING: Readonly<Record<string, ParkingType>> = {
   voirie: "on_street",
+  "parking public": "parking_lot",
+  "parking privé à usage public": "parking_lot",
+  "parking privé réservé à la clientèle": "parking_lot",
   "station dédiée à la recharge rapide": "other",
 };
 
-function connectorsOf(row: DelimitedRow): ConnectorInput[] {
+/** A car park "réservé à la clientèle, aux usagers" (a hotel, a shop) holds its bays for customers. */
+const CUSTOMERS_ONLY = "parking privé réservé à la clientèle";
+
+/**
+ * `accessibilite_pmr`: a point signed and reserved for disabled drivers is a
+ * restricted bay. The model holds no wheelchair accessibility of a point, so
+ * the other three values say nothing it can carry.
+ */
+const ACCESSIBILITY: Readonly<Record<string, "disabled" | undefined>> = {
+  "réservé pmr": "disabled",
+  "accessible mais non réservé pmr": undefined,
+  "non accessible": undefined,
+  "accessibilité inconnue": undefined,
+};
+
+/** A mapped value of an enumerated column; a value the schema does not list is counted. */
+function enumerated<T>(
+  feedId: string,
+  table: Readonly<Record<string, T>>,
+  raw: string | undefined,
+): T | undefined {
+  const value = (raw ?? "").toLowerCase();
+  if (value === "") return undefined;
+  if (!Object.hasOwn(table, value)) {
+    recordSkipped(feedId, "unknown_value");
+    return undefined;
+  }
+  return table[value];
+}
+
+/** The bays a point's row restricts to: the car park's customers, disabled drivers, two-wheelers. */
+function restrictionsOf(feedId: string, row: DelimitedRow): string[] {
+  const implantation = (row["implantation_station"] ?? "").toLowerCase();
+  const disabled = enumerated(feedId, ACCESSIBILITY, row["accessibilite_pmr"]);
+  return [
+    ...(implantation === CUSTOMERS_ONLY ? ["customers"] : []),
+    ...(disabled === undefined ? [] : [disabled]),
+    ...(booleanOf(feedId, row["station_deux_roues"]) === true ? ["motorcycles"] : []),
+  ];
+}
+
+function connectorsOf(feedId: string, row: DelimitedRow): ConnectorInput[] {
   const kw = parsePowerKw(row["puissance_nominale"]);
+  const attached = booleanOf(feedId, row["cable_t2_attache"]);
   const cable =
-    row["cable_t2_attache"] === undefined || row["cable_t2_attache"] === ""
-      ? undefined
-      : isTrue(row["cable_t2_attache"])
-        ? ("cable" as const)
-        : ("socket" as const);
+    attached === undefined ? undefined : attached ? ("cable" as const) : ("socket" as const);
+  const has = (column: string) => booleanOf(feedId, row[column]) === true;
   const plugs: (ConnectorInput & { on: boolean })[] = [
     {
-      on: isTrue(row["prise_type_ef"]),
+      on: has("prise_type_ef"),
       id: "ef",
       standard: "DOMESTIC_E",
       format: "socket",
       current: "ac",
     },
     {
-      on: isTrue(row["prise_type_2"]),
+      on: has("prise_type_2"),
       id: "2",
       standard: "IEC_62196_T2",
       current: "ac",
       ...(cable === undefined ? {} : { format: cable }),
     },
     {
-      on: isTrue(row["prise_type_combo_ccs"]),
+      on: has("prise_type_combo_ccs"),
       id: "combo_ccs",
       standard: "IEC_62196_T2_COMBO",
       format: "cable",
       powerType: "DC",
     },
     {
-      on: isTrue(row["prise_type_chademo"]),
+      on: has("prise_type_chademo"),
       id: "chademo",
       standard: "CHADEMO",
       format: "cable",
       powerType: "DC",
     },
-    { on: isTrue(row["prise_type_autre"]), id: "autre", standard: "UNKNOWN" },
+    { on: has("prise_type_autre"), id: "autre", standard: "UNKNOWN" },
   ];
   const present = plugs.filter((p) => p.on);
   // The point's nominal power is its main plug's: a domestic socket beside
@@ -206,17 +283,23 @@ function connectorsOf(row: DelimitedRow): ConnectorInput[] {
   );
 }
 
-function stationOf(row: DelimitedRow, stationId: string, point: [number, number]): Station {
+function stationOf(
+  feedId: string,
+  row: DelimitedRow,
+  stationId: string,
+  point: [number, number],
+): Station {
   const operator = text(row["nom_operateur"]);
+  const owner = text(row["nom_amenageur"]);
   const hoursText = text(row["horaires"]);
   const osm = hoursOf(hoursText);
   const payment: (typeof PAYMENT_METHODS)[number][] = [
-    ...(isTrue(row["gratuit"]) ? (["free"] as const) : []),
-    ...(isTrue(row["paiement_cb"]) ? (["credit_card"] as const) : []),
-    ...(isTrue(row["paiement_autre"]) ? (["other"] as const) : []),
+    ...(booleanOf(feedId, row["gratuit"]) === true ? (["free"] as const) : []),
+    ...(booleanOf(feedId, row["paiement_cb"]) === true ? (["credit_card"] as const) : []),
+    ...(booleanOf(feedId, row["paiement_autre"]) === true ? (["other"] as const) : []),
   ];
-  const audience = AUDIENCE[(row["condition_acces"] ?? "").toLowerCase()];
-  const parkingType = PARKING[(row["implantation_station"] ?? "").toLowerCase()];
+  const audience = enumerated(feedId, AUDIENCE, row["condition_acces"]);
+  const parkingType = enumerated(feedId, PARKING, row["implantation_station"]);
   const evses: EvseInput[] = [];
   return {
     evses,
@@ -226,6 +309,7 @@ function stationOf(row: DelimitedRow, stationId: string, point: [number, number]
       lang: "fr",
       name: text(row["nom_station"]),
       ...(operator === undefined ? {} : { operator: { name: operator } }),
+      ...(owner === undefined ? {} : { owner: { name: owner } }),
       brand: row["nom_enseigne"],
       address: {
         text: row["adresse_station"],
@@ -235,6 +319,7 @@ function stationOf(row: DelimitedRow, stationId: string, point: [number, number]
       ...(osm === undefined ? {} : { openingHoursOsm: osm }),
       ...(osm === undefined && hoursText !== undefined ? { openingHoursText: hoursText } : {}),
       tariffText: row["tarification"],
+      notes: row["observations"],
       ...(audience === undefined ? {} : { audience }),
       ...(payment.length === 0 ? {} : { payment }),
       ...(parkingType === undefined ? {} : { parkingType }),
@@ -250,10 +335,48 @@ const STATUSES: Readonly<Record<string, EvseStatus>> = {
   reserve: "reserved",
 };
 
-/** A point out of service is out of order; otherwise its occupancy says what it is doing. */
-function statusOf(row: DelimitedRow): EvseStatus {
-  if (row["etat_pdc"] === "hors_service") return "out_of_order";
-  return STATUSES[row["occupation_pdc"] ?? ""] ?? "unknown";
+const STATES = new Set(["en_service", "hors_service", "inconnu"]);
+
+/**
+ * A point out of service is out of order; otherwise, its working state in
+ * service or unknown, its occupancy says what it is doing.
+ */
+function statusOf(feedId: string, row: DelimitedRow): EvseStatus {
+  const state = row["etat_pdc"] ?? "";
+  if (state !== "" && !STATES.has(state)) recordSkipped(feedId, "unknown_value");
+  if (state === "hors_service") return "out_of_order";
+  const occupancy = row["occupation_pdc"] ?? "";
+  if (occupancy !== "" && occupancy !== "inconnu" && STATUSES[occupancy] === undefined) {
+    recordSkipped(feedId, "unknown_value");
+  }
+  return STATUSES[occupancy] ?? "unknown";
+}
+
+/**
+ * A plug's status from its `etat_prise_type_*`: one out of service is out of
+ * order; a working one does what its point does, the point charging one
+ * vehicle at a time; one whose state is unknown is unknown unless its whole
+ * point is out of order. Undefined where the column is empty, which the
+ * schema reserves for a point without that plug.
+ */
+function plugStatusOf(
+  feedId: string,
+  raw: string | undefined,
+  point: EvseStatus,
+): EvseStatus | undefined {
+  switch (raw ?? "") {
+    case "":
+      return undefined;
+    case "hors_service":
+      return "out_of_order";
+    case "fonctionnel":
+      return point;
+    case "inconnu":
+      return point === "out_of_order" ? "out_of_order" : "unknown";
+    default:
+      recordSkipped(feedId, "unknown_value");
+      return undefined;
+  }
 }
 
 /**
@@ -262,7 +385,10 @@ function statusOf(row: DelimitedRow): EvseStatus {
  * record by record keeping only the mapped columns, since it is far larger
  * than the rest of the catalogue and its other columns are never used. A
  * station the publisher gave no id ("Non concerné") is grouped by position,
- * and one operator's stations within 15 m are one site.
+ * a point outside roaming is keyed by its operator's own id within its
+ * station, and one operator's stations within 15 m are one site. A row with
+ * neither point id, or of a point already claimed by another station, is
+ * malformed, and one without a position has no geometry.
  */
 export function parseIrve(
   feed: ChargingCatalogFeed,
@@ -272,42 +398,62 @@ export function parseIrve(
   const out = emptyParseOutput();
   const stations = new Map<string, Station>();
   const pdcs: StatusIndexDraft = new Map();
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     readDelimited(body, { delimiter: ",", columns: STATIC_COLUMNS }, (row) => {
       const pdc = usable(row["id_pdc_itinerance"]);
+      const local = text(row["id_pdc_local"]);
+      const key = pdc ?? local;
+      if (key === undefined) {
+        recordSkipped(feed.id, "malformed");
+        return;
+      }
       const point = pointOf(row);
-      if (pdc === undefined || point === undefined) {
-        rejected++;
+      if (point === undefined) {
+        recordSkipped(feed.id, "no_geometry");
         return;
       }
       const stationId =
         usable(row["id_station_itinerance"]) ?? `${point[1].toFixed(5)},${point[0].toFixed(5)}`;
-      const known = pdcs.get(pdc)?.[0];
+      const known = pdc === undefined ? undefined : pdcs.get(pdc)?.[0];
       if (known !== undefined) {
         // The consolidation repeats a PDC under its station; a PDC claimed by two stations is a conflict.
-        if (known.stationId !== stationId) rejected++;
+        if (known.stationId !== stationId) recordSkipped(feed.id, "malformed");
         return;
       }
       let station = stations.get(stationId);
       if (station === undefined) {
-        station = stationOf(row, stationId, point);
+        station = stationOf(feed.id, row, stationId, point);
         stations.set(stationId, station);
       }
+      // A point outside roaming has its operator's id only, unique within its station.
+      if (pdc === undefined && station.evses.some((e) => e.key === key)) return;
       const evseId = emi3Of(pdc);
+      const restrictions = restrictionsOf(feed.id, row);
+      const connectors = connectorsOf(feed.id, row);
       station.evses.push({
-        key: pdc,
+        key,
         ...(evseId === undefined ? {} : { evseId }),
-        ...(isTrue(row["reservation"]) ? { capabilities: ["RESERVABLE"] } : {}),
-        connectors: connectorsOf(row),
+        ...(local === undefined ? {} : { uid: local }),
+        ...(booleanOf(feed.id, row["reservation"]) === true
+          ? { capabilities: ["RESERVABLE"] }
+          : {}),
+        ...(restrictions.length === 0 ? {} : { parkingRestrictions: restrictions }),
+        connectors,
       });
-      indexStatus(pdcs, pdc, { stationId, evseKey: pdc, point: station.input.point });
+      // The dynamic file names a point by its itinerance id alone.
+      if (pdc === undefined) return;
+      const subject = { stationId, evseKey: pdc, point: station.input.point };
+      indexStatus(pdcs, pdc, subject);
+      for (const { id } of connectors) {
+        if ((PLUG_STATES as readonly string[]).includes(id)) {
+          indexStatus(pdcs, pdc, { ...subject, connectorId: id });
+        }
+      }
     });
   }
   for (const station of stations.values()) {
     out.features.push(siteDraft(feed, station.input, ctx.fetchedAt));
   }
-  out.rejected = rejected;
   out.statusIndex = pdcs;
   colocateSites(out);
   out.observations = parseIrveStatus(feed, payloads, ctx, pdcs).observations;
@@ -317,8 +463,9 @@ export function parseIrve(
 /**
  * The dynamic consolidation: one reading per indexed PDC, of its newest
  * status (the first where times tie or do not read), as of its `horodatage`,
- * and none when that lies more than 30 days back. A row of a PDC the index
- * does not hold is rejected.
+ * and none when that lies more than 30 days back; beside it one per plug the
+ * row gives a state of. A row without a PDC id is malformed; one of a PDC the
+ * index does not hold is rejected.
  */
 export function parseIrveStatus(
   feed: ChargingCatalogFeed,
@@ -331,7 +478,11 @@ export function parseIrveStatus(
   for (const body of payloads["status"] ?? []) {
     readDelimited(body, { delimiter: ",", columns: STATUS_COLUMNS }, (row) => {
       const id = text(row["id_pdc_itinerance"]);
-      if (id === undefined || !index.has(id)) {
+      if (id === undefined) {
+        recordSkipped(feed.id, "malformed");
+        return;
+      }
+      if (!index.has(id)) {
         reader.reject();
         return;
       }
@@ -346,7 +497,17 @@ export function parseIrveStatus(
   }
   for (const [id, { row, changedAt }] of latest) {
     if (!statusIsLive(changedAt, ctx.fetchedAt)) continue;
-    for (const subject of subjectsOf(index, id)) reader.read(subject, statusOf(row), changedAt);
+    const point = statusOf(feed.id, row);
+    const plugs = new Map(
+      PLUG_STATES.map((plug) => [
+        plug as string,
+        plugStatusOf(feed.id, row[`etat_prise_type_${plug}`], point),
+      ]),
+    );
+    for (const subject of subjectsOf(index, id)) {
+      const status = subject.connectorId === undefined ? point : plugs.get(subject.connectorId);
+      if (status !== undefined) reader.read(subject, status, changedAt);
+    }
   }
   return reader.output();
 }
