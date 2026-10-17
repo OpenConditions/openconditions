@@ -61,10 +61,11 @@ const LIVE_SITES: FeedFormat<ParkingCatalogFeed>["endpoints"] = {
 
 const FORMATS: FeedFormat<ParkingCatalogFeed>[] = [
   ...PARKING_LAYOUT_FORMATS.map((id) => sites(id, parseLayout)),
-  // The site list, and the upstream sources that type and credit its sites.
+  // The site list, the upstream sources that type and credit its sites, and the single bays.
   sites("parkapi-v3", parseParkApiV3, {
     main: { required: true },
     sources: { required: true },
+    spots: { required: false },
   }),
   sites("datex2", parseDatex2, LIVE_SITES),
   sites("datex2-light", parseDatex2Light),

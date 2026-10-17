@@ -443,4 +443,101 @@ describe("parkapi-v3", () => {
     // Without a licence page the publish step captures the licence alone, as before.
     expect(upstream("2")).not.toHaveProperty("licensing");
   });
+  /** The spots capture, with its items edited. */
+  function spotsWith(edit: (items: Record<string, unknown>[]) => Record<string, unknown>[]) {
+    const doc = JSON.parse(fixture("parkapi-v3-spots.json").toString("utf8"));
+    return Buffer.from(JSON.stringify({ ...doc, items: edit(doc.items) }));
+  }
+
+  const withSpots = (spots: Buffer) => {
+    const out = parseParkApiV3(
+      mobidataFeed(),
+      {
+        main: [fixture("parkapi-v3-sites.json")],
+        sources: [fixture("parkapi-v3-sources.json")],
+        spots: [spots],
+      },
+      parseContext(FETCHED),
+    );
+    expect(sealFailures([...out.features, ...out.observations, ...out.offers])).toEqual([]);
+    return out;
+  };
+
+  test("ParkAPI v3: a bay of a kept site is its space, with its live state", () => {
+    drainSkipped(mobidataFeed().id);
+    const out = withSpots(
+      spotsWith(([attached, live]) => [
+        // Moved onto a captured site, with the live state of another bay.
+        {
+          ...attached,
+          parking_site_id: 19776,
+          realtime_status: "AVAILABLE",
+          has_realtime_data: true,
+          realtime_data_updated_at: "2026-10-05T03:20:00Z",
+        },
+        { ...live, parking_site_id: 19776, realtime_status: "UNKNOWN" },
+      ]),
+    );
+    const karstadt = site(out, "19776");
+    expect(karstadt?.["components"]).toEqual([
+      {
+        key: "spot:5661",
+        kind: "parking_space",
+        name: [{ lang: "de", text: "Parkplatz" }],
+        position: { type: "Point", coordinates: [9.6581032, 49.6244416] },
+        details: { kind: "parking_space", v: 1, vehicleType: "car", userGroup: "disabled" },
+      },
+      expect.objectContaining({ key: "spot:762" }),
+    ]);
+    const spaces = Object.fromEntries(
+      out.observations
+        .filter((o) =>
+          (o["subject"] as { componentKey?: string }).componentKey?.startsWith("spot:"),
+        )
+        .map((o) => [
+          `${(o["subject"] as { componentKey: string }).componentKey} ${o["property"]}`,
+          (o["result"] as { value: unknown }).value,
+        ]),
+    );
+    expect(spaces).toEqual({
+      "spot:5661 parking.available": 1,
+      "spot:762 parking.status": "unknown",
+    });
+    // No bay stands alone.
+    expect(out.features.filter((f) => String(f["id"]).includes(":spot/"))).toEqual([]);
+    expect(drainSkipped(mobidataFeed().id)).toEqual({});
+  });
+
+  test("ParkAPI v3: a bay of no kept site is a site of one space", () => {
+    const out = withSpots(fixture("parkapi-v3-spots.json"));
+    // Bay 5661's site 17760 is not in the trimmed capture.
+    expect(site(out, "spot/5661")).toMatchObject({
+      type: "off_street",
+      details: { capacityTotal: 1, layout: "surface" },
+      components: [{ key: "car:disabled" }],
+    });
+    expect(site(out, "spot/762")).toMatchObject({ type: "on_street" });
+    expect(readings(out, "spot/762")).toEqual({ "parking.available": 0 });
+    expect(site(out, "spot/141")?.["details"]).toMatchObject({
+      outline: { geometry: { type: "Polygon" } },
+    });
+    expect(readings(out, "spot/141")).toEqual({});
+  });
+
+  test("ParkAPI v3: a bay is counted by why it is dropped, and a state ParkAPI does not define", () => {
+    drainSkipped(mobidataFeed().id);
+    withSpots(
+      spotsWith(([attached, live, alone]) => [
+        { ...attached, lat: null },
+        { ...live, realtime_status: "BLOCKED" },
+        { ...alone, purpose: "BIKE" },
+        { ...alone, id: undefined },
+      ]),
+    );
+    expect(drainSkipped(mobidataFeed().id)).toEqual({
+      no_geometry: 1,
+      malformed: 1,
+      unknown_value: 1,
+    });
+  });
 });

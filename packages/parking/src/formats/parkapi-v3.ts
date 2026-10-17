@@ -99,6 +99,15 @@ interface ParkApiSite {
   [field: string]: unknown;
 }
 
+/**
+ * One bay of `/v3/parking-spots`: of the site its `parking_site_id` names, or
+ * standing alone. Its live state is a `realtime_status`.
+ */
+type ParkApiSpot = ParkApiSite & {
+  parking_site_id?: number;
+  realtime_status?: string | null;
+};
+
 /** One entry of `/v3/sources`: the upstream publisher a site came from. */
 interface ParkApiSource {
   id?: number;
@@ -122,6 +131,13 @@ const PARK_AND_RIDE = new Set(["YES", "TRAIN", "TRAM", "BUS"]);
 const STATUSES: Readonly<Record<string, ParkingStatus>> = {
   OPEN: "open",
   CLOSED: "closed",
+  UNKNOWN: "unknown",
+};
+
+/** A bay's live state: its free count, or that it is not known. */
+const SPOT_STATES: Readonly<Record<string, number | "unknown">> = {
+  AVAILABLE: 1,
+  TAKEN: 0,
   UNKNOWN: "unknown",
 };
 
@@ -549,6 +565,112 @@ function readingsOf(
   return out.filter((d): d is RecordDraft => d !== undefined);
 }
 
+/** A record's id as text, when it has one. */
+const idOf = (value: unknown) =>
+  typeof value === "number" || typeof value === "string" ? text(String(value)) : undefined;
+
+/** A record's `[lon, lat]`, when it has a placeable one. */
+function pointOf(record: { lat?: unknown; lon?: unknown }): [number, number] | undefined {
+  const lon = coordinate(record.lon);
+  const lat = coordinate(record.lat);
+  return lon === undefined || lat === undefined ? undefined : [lon, lat];
+}
+
+/** A placed car bay of the spots payload. */
+interface PlacedSpot {
+  spot: ParkApiSpot;
+  id: string;
+  point: [number, number];
+}
+
+/**
+ * The car bays of the spots payload. A bay that is no object or has no id is
+ * malformed, one without a placeable point has no geometry, and one of a
+ * purpose ParkAPI does not define is of an unknown type; bays for bicycles,
+ * motorcycles and items are left out by design, as their sites are.
+ */
+function spotsOf(feed: ParkingCatalogFeed, payloads: FeedPayloads): PlacedSpot[] {
+  return (payloads["spots"] ?? []).flatMap((body) =>
+    items<unknown>(body).flatMap((item) => {
+      if (typeof item !== "object" || item === null || Array.isArray(item)) {
+        recordSkipped(feed.id, "malformed");
+        return [];
+      }
+      const spot = item as ParkApiSpot;
+      const purpose = spot.purpose ?? "CAR";
+      if (purpose !== "CAR") {
+        if (!PURPOSES.has(purpose)) recordSkipped(feed.id, "unknown_type");
+        return [];
+      }
+      const id = idOf(spot.id);
+      if (id === undefined) {
+        recordSkipped(feed.id, "malformed");
+        return [];
+      }
+      const point = pointOf(spot);
+      if (point === undefined) {
+        recordSkipped(feed.id, "no_geometry");
+        return [];
+      }
+      return [{ spot, id, point }];
+    }),
+  );
+}
+
+/** The component key of a site's bay. */
+const spaceKey = (id: string) => `spot:${id}`;
+
+/** Whether a bay's live state is unread: published, but not one ParkAPI defines. */
+const unreadState = (spot: ParkApiSpot) =>
+  typeof spot.realtime_status === "string" && !Object.hasOwn(SPOT_STATES, spot.realtime_status);
+
+/** The live state of a site's bay, as a free count of one or none, or an unknown status. */
+function spaceReadings(
+  feed: ParkingCatalogFeed,
+  { spot, id, point }: PlacedSpot,
+  stationId: string,
+  ctx: ParseContext,
+  upstream: SiteInput["upstream"],
+): RecordDraft[] {
+  const state = spot.realtime_status;
+  const updated = spot.realtime_data_updated_at;
+  if (spot.has_realtime_data === false || typeof state !== "string") return [];
+  if (updated === undefined || !Number.isFinite(Date.parse(updated))) return [];
+  const meaning = Object.hasOwn(SPOT_STATES, state) ? SPOT_STATES[state] : undefined;
+  if (meaning === undefined) return [];
+  const reading: ReadingInput = {
+    stationId,
+    spaceKey: spaceKey(id),
+    at: utcInstant(new Date(updated)),
+    point,
+    ...(upstream === undefined ? {} : { upstream }),
+  };
+  const draft =
+    meaning === "unknown"
+      ? statusDraft(feed, { ...reading, status: "unknown" }, ctx)
+      : occupancyDrafts(feed, reading, { available: meaning, capacity: 1 }, ctx)[0];
+  return draft === undefined ? [] : [draft];
+}
+
+/**
+ * A bay that stands alone, as a site of one space: its restrictions, outline,
+ * region and stops are read as a site's, its live state as the site's free
+ * count, or as an unknown status.
+ */
+function spotAsSite({ spot }: PlacedSpot): ParkApiSite {
+  const meaning =
+    typeof spot.realtime_status === "string" && Object.hasOwn(SPOT_STATES, spot.realtime_status)
+      ? SPOT_STATES[spot.realtime_status]
+      : undefined;
+  return {
+    ...spot,
+    id: undefined,
+    capacity: 1,
+    ...(typeof meaning === "number" ? { realtime_free_capacity: meaning } : {}),
+    ...(meaning === "unknown" ? { realtime_opening_status: "UNKNOWN" } : {}),
+  };
+}
+
 /**
  * ParkAPI v3 (MobiData BW): the `main` payload lists the parking sites, the
  * `sources` payload the upstream publishers they came from; a poll without
@@ -561,6 +683,10 @@ function readingsOf(
  * free count where it has them. A live free count is bounded by the live
  * capacity, else the static one. A site's outline, bay layout, estimated
  * capacity range, photo, regional key and the stops it serves are read too.
+ *
+ * The optional `spots` payload lists single bays: a bay of a kept site is a
+ * `parking_space` of it, with its live state as a free count of one or none;
+ * a bay of no kept site is a site of one space, `spot/<id>`.
  *
  * A site that is no object or has no id is malformed, one without a placeable
  * point has no geometry, and one of a purpose ParkAPI does not define is of
@@ -587,6 +713,57 @@ export function parseParkApiV3(
       if (typeof source.uid === "string") byUid.set(source.uid, source);
     }
   }
+  const spots = spotsOf(feed, payloads);
+  const spotsOfSite = new Map<string, PlacedSpot[]>();
+  for (const placed of spots) {
+    const site = idOf(placed.spot.parking_site_id);
+    if (site !== undefined) spotsOfSite.set(site, [...(spotsOfSite.get(site) ?? []), placed]);
+  }
+  const sourceOf = (record: { source_id?: number; source_uid?: string }) =>
+    (record.source_id === undefined ? undefined : byId.get(record.source_id)) ??
+    (record.source_uid === undefined ? undefined : byUid.get(record.source_uid));
+  /** Publishes a site and its readings, with the bays it holds. */
+  const publish = (
+    site: ParkApiSite,
+    stationId: string,
+    point: [number, number],
+    bays: readonly PlacedSpot[],
+  ) => {
+    const source = sourceOf(site);
+    const truck = isLorryPark(site);
+    const customers = isCustomerPark(site);
+    const areas = areasOf(site, truck, customers);
+    const input = siteInput(feed, site, stationId, point, source, truck, customers, areas);
+    const vehicleType = (PARKAPI_VEHICLE_TYPES[site.purpose ?? "CAR"] ??
+      "car") as ParkingVehicleType;
+    input.spaces = bays.map(({ spot, id, point: at }) => {
+      const restriction = restrictionsOf(spot).find(
+        (r) => r.type !== undefined && Object.hasOwn(PARKAPI_RESTRICTION_AREAS, r.type),
+      );
+      const target =
+        restriction?.type === undefined ? undefined : PARKAPI_RESTRICTION_AREAS[restriction.type];
+      const name = text(spot.name);
+      return {
+        key: spaceKey(id),
+        point: at,
+        ...(name === undefined ? {} : { name }),
+        vehicleType: (target?.vehicleType ?? vehicleType) as ParkingVehicleType,
+        ...(target ? { userGroup: target.userGroup as ParkingUserGroup } : {}),
+      };
+    });
+    recordSkipped(
+      feed.id,
+      "unknown_value",
+      unreadValues(site) +
+        bays.reduce((n, { spot }) => n + unreadValues(spot) + Number(unreadState(spot)), 0),
+    );
+    out.features.push(siteDraft(feed, input, ctx.fetchedAt));
+    out.observations.push(
+      ...readingsOf(feed, site, stationId, point, ctx, input.upstream, areas),
+      ...bays.flatMap((bay) => spaceReadings(feed, bay, stationId, ctx, input.upstream)),
+    );
+  };
+  const kept = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     for (const item of items<unknown>(body)) {
       if (typeof item !== "object" || item === null || Array.isArray(item)) {
@@ -599,34 +776,26 @@ export function parseParkApiV3(
         if (!PURPOSES.has(purpose)) recordSkipped(feed.id, "unknown_type");
         continue;
       }
-      const stationId =
-        typeof site.id === "number" || typeof site.id === "string"
-          ? text(String(site.id))
-          : undefined;
+      const stationId = idOf(site.id);
       if (stationId === undefined) {
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      const lon = coordinate(site.lon);
-      const lat = coordinate(site.lat);
-      if (lon === undefined || lat === undefined) {
+      const point = pointOf(site);
+      if (point === undefined) {
         recordSkipped(feed.id, "no_geometry");
         continue;
       }
-      const point: [number, number] = [lon, lat];
-      const source =
-        (site.source_id === undefined ? undefined : byId.get(site.source_id)) ??
-        (site.source_uid === undefined ? undefined : byUid.get(site.source_uid));
-      const truck = isLorryPark(site);
-      const customers = isCustomerPark(site);
-      const areas = areasOf(site, truck, customers);
-      const input = siteInput(feed, site, stationId, point, source, truck, customers, areas);
-      recordSkipped(feed.id, "unknown_value", unreadValues(site));
-      out.features.push(siteDraft(feed, input, ctx.fetchedAt));
-      out.observations.push(
-        ...readingsOf(feed, site, stationId, point, ctx, input.upstream, areas),
-      );
+      kept.add(stationId);
+      publish(site, stationId, point, spotsOfSite.get(stationId) ?? []);
     }
+  }
+  // A bay of no site the feed keeps is a site of its own, under an id of its own kind.
+  for (const placed of spots) {
+    const site = idOf(placed.spot.parking_site_id);
+    if (site !== undefined && kept.has(site)) continue;
+    publish(spotAsSite(placed), `spot/${placed.id}`, placed.point, []);
+    if (unreadState(placed.spot)) recordSkipped(feed.id, "unknown_value");
   }
   return out;
 }

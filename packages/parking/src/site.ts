@@ -138,6 +138,19 @@ export interface SiteInput {
     point: [number, number];
     kind: "vehicle_entrance" | "vehicle_exit" | "pedestrian";
   }[];
+  /** Single bays the source publishes, each with a key unique within the site. */
+  spaces?: SpaceInput[];
+}
+
+/** One bay of a site. */
+export interface SpaceInput {
+  key: string;
+  point?: [number, number];
+  name?: string;
+  /** The bay's number or label as the source writes it. */
+  number?: string;
+  vehicleType?: ParkingVehicleType;
+  userGroup?: ParkingUserGroup;
 }
 
 /** A reading of a site, or of one of its areas. */
@@ -146,6 +159,8 @@ export interface ReadingInput {
   upstream?: SiteInput["upstream"];
   stationId: string;
   area?: { vehicleType: ParkingVehicleType; userGroup: ParkingUserGroup };
+  /** A single space of the site the reading is of, by its component key. */
+  spaceKey?: string;
   /** When the source measured it (ISO instant). */
   at: string;
   /** The site's `[lon, lat]`, where the reading is located; unlocated without it. */
@@ -325,6 +340,34 @@ function areaComponents(areas: readonly AreaInput[] | undefined) {
   return out;
 }
 
+/** One component per bay, the first of a repeated key winning. */
+function spaceComponents(spaces: readonly SpaceInput[] | undefined, lang: string) {
+  const seen = new Set<string>();
+  return (spaces ?? []).flatMap((space) => {
+    if (seen.has(space.key)) return [];
+    seen.add(space.key);
+    const name = clean(space.name);
+    const number = clean(space.number);
+    return [
+      {
+        key: space.key,
+        kind: "parking_space",
+        ...(name === undefined ? {} : { name: [{ lang, text: name }] }),
+        ...(space.point === undefined
+          ? {}
+          : { position: { type: "Point", coordinates: [space.point[0], space.point[1]] } }),
+        details: {
+          kind: "parking_space",
+          v: 1,
+          ...(number === undefined ? {} : { number }),
+          ...(space.vehicleType === undefined ? {} : { vehicleType: space.vehicleType }),
+          ...(space.userGroup === undefined ? {} : { userGroup: space.userGroup }),
+        },
+      },
+    ];
+  });
+}
+
 /** A site's outline, when its geometry is one of the shapes the model holds. */
 function outlineOf(outline: SiteInput["outline"]) {
   const g = outline?.geometry as { type?: unknown; coordinates?: unknown } | undefined;
@@ -358,7 +401,7 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
   const stated = clean(input.address?.country)?.toUpperCase();
   const country = stated !== undefined && /^[A-Z]{2}$/.test(stated) ? stated : countryOf(feed);
   const address = addressOf(input, country);
-  const components = areaComponents(input.areas);
+  const components = [...areaComponents(input.areas), ...spaceComponents(input.spaces, lang)];
   const name = text(input.name);
   const operator = text(input.operator);
   const description = Array.isArray(input.notes)
@@ -517,7 +560,11 @@ function readingDraft(
     subject: {
       kind: "feature",
       featureId: siteId(feed, r.stationId),
-      ...(r.area === undefined ? {} : { componentKey: areaKey(r.area) }),
+      ...(r.spaceKey !== undefined
+        ? { componentKey: r.spaceKey }
+        : r.area === undefined
+          ? {}
+          : { componentKey: areaKey(r.area) }),
     },
     result,
     phenomenonTime: { instant: r.at },
