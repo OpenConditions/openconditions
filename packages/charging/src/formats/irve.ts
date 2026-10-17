@@ -31,12 +31,17 @@ const ZONE = "Europe/Paris";
 
 const STATIC_COLUMNS = [
   "nom_amenageur",
+  "siren_amenageur",
+  "contact_amenageur",
   "nom_operateur",
+  "contact_operateur",
+  "telephone_operateur",
   "nom_enseigne",
   "id_station_itinerance",
   "nom_station",
   "implantation_station",
   "adresse_station",
+  "code_insee_commune",
   "coordonneesXY",
   "id_pdc_itinerance",
   "id_pdc_local",
@@ -47,6 +52,7 @@ const STATIC_COLUMNS = [
   "prise_type_chademo",
   "prise_type_autre",
   "gratuit",
+  "paiement_acte",
   "paiement_cb",
   "paiement_autre",
   "tarification",
@@ -199,16 +205,20 @@ const PARKING: Readonly<Record<string, ParkingType>> = {
 const CUSTOMERS_ONLY = "parking privé réservé à la clientèle";
 
 /**
- * `accessibilite_pmr`: a point signed and reserved for disabled drivers is a
- * restricted bay. The model holds no wheelchair accessibility of a point, so
- * the other three values say nothing it can carry.
+ * `accessibilite_pmr`: whether a person of reduced mobility can use the
+ * point, and whether its bay is signed and reserved for them. Unknown
+ * accessibility says neither.
  */
-const ACCESSIBILITY: Readonly<Record<string, "disabled" | undefined>> = {
-  "réservé pmr": "disabled",
-  "accessible mais non réservé pmr": undefined,
-  "non accessible": undefined,
-  "accessibilité inconnue": undefined,
+const ACCESSIBILITY: Readonly<Record<string, { accessible?: boolean; reserved?: true }>> = {
+  "réservé pmr": { accessible: true, reserved: true },
+  "accessible mais non réservé pmr": { accessible: true },
+  "non accessible": { accessible: false },
+  "accessibilité inconnue": {},
 };
+
+/** The schema's SIREN and INSEE commune code patterns. */
+const SIREN = /^\d{9}$/;
+const INSEE = /^([013-9]\d|2[AB1-9])\d{3}$/;
 
 /** A mapped value of an enumerated column; a value the schema does not list is counted. */
 function enumerated<T>(
@@ -226,12 +236,15 @@ function enumerated<T>(
 }
 
 /** The bays a point's row restricts to: the car park's customers, disabled drivers, two-wheelers. */
-function restrictionsOf(feedId: string, row: DelimitedRow): string[] {
+function restrictionsOf(
+  feedId: string,
+  row: DelimitedRow,
+  access: { reserved?: true } | undefined,
+): string[] {
   const implantation = (row["implantation_station"] ?? "").toLowerCase();
-  const disabled = enumerated(feedId, ACCESSIBILITY, row["accessibilite_pmr"]);
   return [
     ...(implantation === CUSTOMERS_ONLY ? ["customers"] : []),
-    ...(disabled === undefined ? [] : [disabled]),
+    ...(access?.reserved === true ? ["disabled"] : []),
     ...(booleanOf(feedId, row["station_deux_roues"]) === true ? ["motorcycles"] : []),
   ];
 }
@@ -291,6 +304,8 @@ function stationOf(
 ): Station {
   const operator = text(row["nom_operateur"]);
   const owner = text(row["nom_amenageur"]);
+  const siren = text(row["siren_amenageur"]);
+  const insee = text(row["code_insee_commune"]);
   const hoursText = text(row["horaires"]);
   const osm = hoursOf(hoursText);
   const payment: (typeof PAYMENT_METHODS)[number][] = [
@@ -300,6 +315,7 @@ function stationOf(
   ];
   const audience = enumerated(feedId, AUDIENCE, row["condition_acces"]);
   const parkingType = enumerated(feedId, PARKING, row["implantation_station"]);
+  const adHoc = booleanOf(feedId, row["paiement_acte"]);
   const evses: EvseInput[] = [];
   return {
     evses,
@@ -308,14 +324,42 @@ function stationOf(
       point,
       lang: "fr",
       name: text(row["nom_station"]),
-      ...(operator === undefined ? {} : { operator: { name: operator } }),
-      ...(owner === undefined ? {} : { owner: { name: owner } }),
+      ...(operator === undefined
+        ? {}
+        : {
+            operator: {
+              name: operator,
+              ...(text(row["contact_operateur"]) === undefined
+                ? {}
+                : { email: text(row["contact_operateur"]) }),
+              ...(text(row["telephone_operateur"]) === undefined
+                ? {}
+                : { phone: text(row["telephone_operateur"]) }),
+            },
+          }),
+      ...(owner === undefined
+        ? {}
+        : {
+            owner: {
+              name: owner,
+              ...(text(row["contact_amenageur"]) === undefined
+                ? {}
+                : { email: text(row["contact_amenageur"]) }),
+              ...(siren === undefined || !SIREN.test(siren)
+                ? {}
+                : { ids: [{ scheme: "siren", id: siren }] }),
+            },
+          }),
       brand: row["nom_enseigne"],
       address: {
         text: row["adresse_station"],
         postalCode: row["consolidated_code_postal"],
         city: row["consolidated_commune"],
       },
+      ...(insee === undefined || !INSEE.test(insee)
+        ? {}
+        : { geocodes: [{ scheme: "insee", code: insee }] }),
+      ...(adHoc === undefined ? {} : { adHocCharging: adHoc }),
       ...(osm === undefined ? {} : { openingHoursOsm: osm }),
       ...(osm === undefined && hoursText !== undefined ? { openingHoursText: hoursText } : {}),
       tariffText: row["tarification"],
@@ -428,7 +472,8 @@ export function parseIrve(
       // A point outside roaming has its operator's id only, unique within its station.
       if (pdc === undefined && station.evses.some((e) => e.key === key)) return;
       const evseId = emi3Of(pdc);
-      const restrictions = restrictionsOf(feed.id, row);
+      const access = enumerated(feed.id, ACCESSIBILITY, row["accessibilite_pmr"]);
+      const restrictions = restrictionsOf(feed.id, row, access);
       const connectors = connectorsOf(feed.id, row);
       station.evses.push({
         key,
@@ -438,6 +483,7 @@ export function parseIrve(
           ? { capabilities: ["RESERVABLE"] }
           : {}),
         ...(restrictions.length === 0 ? {} : { parkingRestrictions: restrictions }),
+        ...(access?.accessible === undefined ? {} : { wheelchairAccessible: access.accessible }),
         connectors,
       });
       // The dynamic file names a point by its itinerance id alone.

@@ -307,8 +307,9 @@ export const CHARGING_KINDS = [
       /** Where vehicles enter, where the site lies within a larger facility. */
       entrance: k.PointGeometry.optional(),
       directions: k.Text.optional(),
+      /** Points beside the site a driver needs, named where the source names them. */
       relatedLocations: z
-        .array(z.strictObject({ name: k.Text, point: k.PointGeometry }))
+        .array(z.strictObject({ name: k.Text.optional(), point: k.PointGeometry }))
         .min(1)
         .optional(),
       /** OCPI `publish`: whether the operator allows the location to be shown at all. */

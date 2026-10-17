@@ -255,6 +255,12 @@ describe("IRVE enumerations through the parser", () => {
     "Accès libre": "public",
     "Accès réservé": "restricted",
   };
+  /** "Signalisé et réservé PMR" is accessible and a reserved bay; the rest say only whether accessible. */
+  const ACCESSIBLE: Record<string, [boolean, string[]]> = {
+    "Réservé PMR": [true, ["disabled"]],
+    "Accessible mais non réservé PMR": [true, []],
+    "Non accessible": [false, []],
+  };
   /** With `occupation_pdc` libre: a point whose working state is unknown is as its occupancy says. */
   const STATE: Record<string, string> = {
     en_service: "available",
@@ -315,15 +321,16 @@ describe("IRVE enumerations through the parser", () => {
       spec: {
         handled: (v) => {
           const out = one({ accessibilite_pmr: v });
-          return noneUnread() && String(evse(out)?.details["parkingRestrictions"]) === "disabled";
+          const [accessible, restrictions] = ACCESSIBLE[v] ?? [];
+          return (
+            noneUnread() &&
+            accessible !== undefined &&
+            evse(out)?.details["wheelchairAccessible"] === accessible &&
+            JSON.stringify(evse(out)?.details["parkingRestrictions"] ?? []) ===
+              JSON.stringify(restrictions)
+          );
         },
-        unsupported: {
-          "Accessible mais non réservé PMR":
-            "the model holds no wheelchair accessibility of a charge point, only a bay reserved for disabled drivers",
-          "Non accessible":
-            "the model holds no wheelchair accessibility of a charge point, only a bay reserved for disabled drivers",
-          "Accessibilité inconnue": "says nothing",
-        },
+        unsupported: { "Accessibilité inconnue": "says nothing" },
       },
     },
     raccordement: {
@@ -426,8 +433,8 @@ describe("IRVE booleans through the parser", () => {
     gratuit: paying("free"),
     paiement_cb: paying("credit_card"),
     paiement_autre: paying("other"),
-    paiement_acte:
-      "the model's payment methods are means of payment; it has no term for charging without identification or subscription, and `authentication: none` would deny the payment step",
+    // "Paiement à l'acte (sans identification ni abonnement)": ad hoc charging.
+    paiement_acte: (out, on) => details(out)["adHocCharging"] === on,
     reservation: (out, on) =>
       ((evse(out)?.details["capabilities"] as string[] | undefined) ?? []).includes(
         "RESERVABLE",
@@ -469,6 +476,35 @@ describe("IRVE booleans through the parser", () => {
   );
 });
 
+describe("IRVE organisations and commune", () => {
+  it("the owner's SIREN and address, the operator's address and telephone, the INSEE commune", () => {
+    const out = one({
+      siren_amenageur: "130025265",
+      contact_amenageur: "contact@societe-amenageur.com",
+      contact_operateur: "contact@societe-operateur.com",
+      telephone_operateur: "0111111111",
+      code_insee_commune: "21231",
+    });
+    expect(site(out)).toMatchObject({
+      owner: {
+        role: "owner",
+        ids: [{ scheme: "siren", id: "130025265" }],
+        email: "contact@societe-amenageur.com",
+      },
+      operator: {
+        role: "operator",
+        email: "contact@societe-operateur.com",
+        phone: "0111111111",
+      },
+      location: { admin: { country: "FR", geocodes: [{ scheme: "insee", code: "21231" }] } },
+    });
+    // Off the schema's patterns, the number and the code say nothing.
+    const off = one({ siren_amenageur: "30119246", code_insee_commune: "2A1" });
+    expect(site(off)?.["owner"]).not.toHaveProperty("ids");
+    expect(site(off)?.["location"]).not.toHaveProperty("admin.geocodes");
+  });
+});
+
 describe("IRVE opening hours", () => {
   it("the schema's own example and 24/7 read as OSM hours; other text stays the publisher's", ({
     skip,
@@ -495,18 +531,9 @@ describe("IRVE opening hours", () => {
  */
 describe("IRVE field coverage", () => {
   const UNREAD: Record<string, string> = {
-    siren_amenageur: "the model's owner is a name; it holds no company register number",
-    contact_amenageur:
-      "an address for the State's services to report anomalies to; the model holds no owner contact",
-    contact_operateur:
-      "the model's operator is a name, website and Wikidata id, with no e-mail address",
-    telephone_operateur: "the model's operator holds no telephone number",
     id_station_local:
       "unique only among its publisher's stations, not across the national consolidation; a station outside roaming is keyed by its position",
-    code_insee_commune:
-      "an INSEE commune code is no postal code; the address takes the consolidation's checked postal code and commune",
     nbre_pdc: "the station's charge points are its rows; their count adds nothing",
-    paiement_acte: "the model has no term for charging without identification or subscription",
     restriction_gabarit:
       "free text without a grammar (`inconnu`, `Hauteur maximale 2m`); the model holds no vehicle size limit",
     raccordement: "the grid connection is the distribution network's arrangement, not the site's",

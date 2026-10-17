@@ -194,12 +194,13 @@ describe("tariffDraft", () => {
     expect(draft).not.toHaveProperty("priceIncludesVat");
   });
 
-  test("an element priced for a 2.3.0 booking is left out, and the tariff stays readable", () => {
+  test("an element priced for a 2.3.0 booking is restricted to the booking it prices", () => {
     // "When this field is present, the TariffElement describes booking costs":
     // it never prices a session without a booking.
     const tariff = normaliseTariff({
       id: "BOOK",
       currency: "EUR",
+      preauthorize_amount: 50,
       elements: [
         {
           price_components: [{ type: "TIME", price: 2, step_size: 60 }],
@@ -210,12 +211,27 @@ describe("tariffDraft", () => {
     });
     expect(unreadableTariff(tariff)).toBe(false);
     expect(offer({ ...tariff })).toMatchObject({
-      elements: [{ components: [{ type: "energy", price: { amount: "0.49" } }] }],
+      elements: [
+        {
+          components: [{ type: "time", price: { amount: "2" }, stepSize: 60 }],
+          restrictions: { booking: "booking" },
+        },
+        { components: [{ type: "energy", price: { amount: "0.49" } }] },
+      ],
+      preauthorizeAmount: { amount: "50", currency: "EUR" },
     });
-    expect(offer({ ...tariff })?.["elements"]).toHaveLength(1);
+    // A booking type OCPI does not define cannot be applied as published.
+    expect(
+      unreadableTariff(
+        normaliseTariff({
+          ...tariff,
+          elements: [{ ...tariff.elements[0], restrictions: { booking: "BOOKING_LATER" } }],
+        }),
+      ),
+    ).toBe(true);
   });
 
-  test("a tariff's energy mix is the offer's, its known sources with their shares", () => {
+  test("a tariff's energy mix is the offer's: supplier, product, sources and impacts", () => {
     const draft = offer({
       id: "GREEN",
       energy_mix: {
@@ -233,10 +249,12 @@ describe("tariffDraft", () => {
     expect(draft?.["energyMix"]).toEqual({
       isGreen: true,
       supplierName: "Greenpower",
+      productName: "Green 100",
       sources: [
         { source: "wind", pct: 70 },
         { source: "solar", pct: 30 },
       ],
+      impacts: [{ category: "carbon_dioxide", gPerKwh: 0 }],
     });
   });
 

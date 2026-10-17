@@ -18,9 +18,74 @@ export interface OcpiDisplayText {
   text: string;
 }
 
+export interface OcpiImage {
+  url: string;
+  thumbnail?: string;
+  /** `CHARGER`, `ENTRANCE`, `LOCATION`, `NETWORK`, `OPERATOR`, `OTHER` or `OWNER`, upper-cased. */
+  category?: string;
+  /** The file type (`jpeg`, `png`). */
+  type?: string;
+  width?: number;
+  height?: number;
+}
+
 export interface OcpiBusinessDetails {
   name: string;
   website?: string;
+  logo?: OcpiImage;
+}
+
+export interface OcpiGeoPoint {
+  latitude: number;
+  longitude: number;
+}
+
+export interface OcpiAdditionalGeoLocation extends OcpiGeoPoint {
+  name?: OcpiDisplayText;
+}
+
+export interface OcpiStatusSchedule {
+  period_begin: string;
+  period_end?: string;
+  /** Upper-cased. */
+  status: string;
+}
+
+/** 2.3.0 `EVSEParking`: a parking place an EVSE serves, and where the EVSE stands beside it. */
+export interface OcpiEvseParking {
+  parking_id: string;
+  /** Upper-cased. */
+  evse_position?: string;
+}
+
+/** 2.3.0 `Parking`: a place a vehicle parks in while it charges. */
+export interface OcpiParking {
+  id: string;
+  physical_reference?: string;
+  /** Upper-cased. */
+  vehicle_types?: string[];
+  /** Kilograms. */
+  max_vehicle_weight?: number;
+  /** Centimetres, as are the other lengths. */
+  max_vehicle_height?: number;
+  max_vehicle_length?: number;
+  max_vehicle_width?: number;
+  parking_space_length?: number;
+  parking_space_width?: number;
+  dangerous_goods_allowed?: boolean;
+  /** Upper-cased. */
+  direction?: string;
+  drive_through?: boolean;
+  restricted_to_type?: boolean;
+  reservation_required?: boolean;
+  /** Minutes. */
+  time_limit?: number;
+  roofed?: boolean;
+  images?: OcpiImage[];
+  lighting?: boolean;
+  refrigeration_outlet?: boolean;
+  standards?: string[];
+  apds_reference?: string;
 }
 
 export interface OcpiRegularHours {
@@ -67,12 +132,18 @@ export interface OcpiEvse {
   /** Absent when the source carries no live status. `STATIC` is OCPDB's register marker. */
   status?: string;
   capabilities?: string[];
+  status_schedule?: OcpiStatusSchedule[];
   connectors: OcpiConnector[];
   floor_level?: string;
-  coordinates?: { latitude: number; longitude: number };
+  coordinates?: OcpiGeoPoint;
   physical_reference?: string;
   directions?: OcpiDisplayText[];
   parking_restrictions?: string[];
+  /** 2.3.0. */
+  parking?: OcpiEvseParking[];
+  /** 2.3.0. */
+  accepted_service_providers?: string[];
+  images?: OcpiImage[];
   last_updated?: string;
   status_last_updated?: string;
   /** OCPDB: the uid the upstream source gave the EVSE. */
@@ -92,9 +163,12 @@ export interface OcpiLocation {
   state?: string;
   /** ISO alpha-3 as OCPI defines it. */
   country?: string;
-  coordinates: { latitude: number; longitude: number };
+  coordinates: OcpiGeoPoint;
+  related_locations?: OcpiAdditionalGeoLocation[];
   parking_type?: string;
   evses: OcpiEvse[];
+  /** 2.3.0. */
+  parking_places?: OcpiParking[];
   directions?: OcpiDisplayText[];
   operator?: OcpiBusinessDetails;
   suboperator?: OcpiBusinessDetails;
@@ -103,6 +177,10 @@ export interface OcpiLocation {
   time_zone?: string;
   opening_times?: OcpiOpeningTimes;
   charging_when_closed?: boolean;
+  images?: OcpiImage[];
+  energy_mix?: OcpiEnergyMix;
+  /** 2.3.0: a number a driver may call for assistance. */
+  help_phone?: string;
   last_updated?: string;
   /** OCPDB: the upstream source the aggregator took the location from. */
   source?: string;
@@ -182,6 +260,8 @@ export interface OcpiTariff {
   tariff_alt_url?: string;
   min_price?: OcpiPrice;
   max_price?: OcpiPrice;
+  /** 2.3.0: what a payment terminal preauthorises for a session. */
+  preauthorize_amount?: number;
   elements: OcpiTariffElement[];
   start_date_time?: string;
   end_date_time?: string;

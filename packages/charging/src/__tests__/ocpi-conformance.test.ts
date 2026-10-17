@@ -90,17 +90,6 @@ const offer = (out: ParseOutput) => out.offers[0] as Json | undefined;
 const firstElement = (out: ParseOutput) =>
   ((offer(out)?.["elements"] ?? []) as Json[])[0] as Json | undefined;
 
-/** Whether `value`, or its lower-case form, is a string anywhere in the records. */
-function written(records: readonly unknown[], value: string): boolean {
-  const seek = (node: unknown): boolean =>
-    typeof node === "string"
-      ? node === value || node === value.toLowerCase()
-      : typeof node === "object" && node !== null && Object.values(node).some(seek);
-  return records.some(seek);
-}
-const anywhere = (out: ParseOutput, value: string) =>
-  written([...out.features, ...out.observations, ...out.offers], value);
-
 /** What OCPI says each EVSE status means, as the model holds it. */
 const STATUS_MEANS: Readonly<Record<string, string>> = {
   AVAILABLE: "available",
@@ -161,6 +150,33 @@ const DAY_MEANS: Readonly<Record<string, string>> = {
   SATURDAY: "SA",
   SUNDAY: "SU",
 };
+
+const IMPACT_MEANS: Readonly<Record<string, string>> = {
+  NUCLEAR_WASTE: "nuclear_waste",
+  CARBON_DIOXIDE: "carbon_dioxide",
+};
+
+/** What each OCPI image shows, as the model's image categories name it. */
+const IMAGE_MEANS: Readonly<Record<string, string>> = {
+  // "Photo of the physical device that contains one or more EVSEs."
+  CHARGER: "equipment",
+  ENTRANCE: "entrance",
+  LOCATION: "site",
+  NETWORK: "network_logo",
+  OPERATOR: "operator_logo",
+  OTHER: "other",
+  OWNER: "owner_logo",
+};
+
+/** A 2.3.0 parking place, `P1`, with the fields the schema requires. */
+const place = (over: Json = {}): Json => ({
+  id: "P1",
+  vehicle_types: ["PERSONAL_VEHICLE"],
+  restricted_to_type: false,
+  reservation_required: false,
+  ...over,
+});
+const bayOf = (out: ParseOutput) => componentsOf(out, "charging_bay")[0];
 
 /** A site with a tariff whose single element carries `restrictions`. */
 const restricted = (restrictions: Json) =>
@@ -227,12 +243,6 @@ const COVERAGE: Readonly<Record<string, CoverageSpec & { module: string; since?:
       const out = parseOne(location({ evses: [evse({ parking_restrictions: [value] })] }));
       return equal(details(evseNamed(out, "E1"))["parkingRestrictions"], [value.toLowerCase()]);
     },
-    unsupported: {
-      EMPLOYEES:
-        "2.3.0: the EVSE model's parkingRestrictions enumeration has no value for it yet; left out and skipped as unknown_value",
-      TAXIS: "2.3.0: as EMPLOYEES",
-      TENANTS: "2.3.0: as EMPLOYEES",
-    },
   },
   ParkingType: {
     module: "locations",
@@ -251,50 +261,59 @@ const COVERAGE: Readonly<Record<string, CoverageSpec & { module: string; since?:
   EnergySourceCategory: {
     module: "locations",
     handled: (value) => {
-      const out = parseOne(location(), [
-        tariff({
-          energy_mix: {
-            is_green_energy: false,
-            energy_sources: [{ source: value, percentage: 100 }],
-          },
-        }),
-      ]);
-      return equal(offer(out)?.["energyMix"], {
-        isGreen: false,
-        sources: [{ source: value.toLowerCase(), pct: 100 }],
-      });
+      const mix = { is_green_energy: false, energy_sources: [{ source: value, percentage: 100 }] };
+      const out = parseOne(location({ energy_mix: mix }), [tariff({ energy_mix: mix })]);
+      const expected = { isGreen: false, sources: [{ source: value.toLowerCase(), pct: 100 }] };
+      return (
+        equal(offer(out)?.["energyMix"], expected) &&
+        equal(details(site(out))["energyMix"], expected)
+      );
     },
   },
   EnvironmentalImpactCategory: {
     module: "locations",
-    handled: (value) =>
-      anywhere(
-        parseOne(location(), [
-          tariff({
-            energy_mix: { is_green_energy: true, environ_impact: [{ category: value, amount: 1 }] },
-          }),
-        ]),
-        value,
-      ),
-    unsupported: {
-      NUCLEAR_WASTE:
-        "the energy mix model holds sources and their shares, no environmental impact amounts; skipped as unknown_value",
-      CARBON_DIOXIDE: "as NUCLEAR_WASTE",
+    handled: (value) => {
+      const mix = { is_green_energy: true, environ_impact: [{ category: value, amount: 1.5 }] };
+      const out = parseOne(location({ energy_mix: mix }), [tariff({ energy_mix: mix })]);
+      const expected = {
+        isGreen: true,
+        impacts: [{ category: IMPACT_MEANS[value], gPerKwh: 1.5 }],
+      };
+      return (
+        IMPACT_MEANS[value] !== undefined &&
+        equal(offer(out)?.["energyMix"], expected) &&
+        equal(details(site(out))["energyMix"], expected)
+      );
     },
   },
   ImageCategory: {
     module: "components",
     handled: (value) => {
-      const image = { url: "https://example.org/a.jpg", category: value, type: "jpeg" };
+      const image = {
+        url: "https://example.org/a.jpg",
+        thumbnail: "https://example.org/a-small.jpg",
+        category: value,
+        type: "jpeg",
+        width: 800,
+        height: 600,
+      };
       const out = parseOne(location({ images: [image], evses: [evse({ images: [image] })] }));
-      return site(out)["images"] !== undefined;
+      const expected = [
+        {
+          url: image.url,
+          category: IMAGE_MEANS[value],
+          thumbnail: image.thumbnail,
+          format: "jpeg",
+          width: 800,
+          height: 600,
+        },
+      ];
+      return (
+        IMAGE_MEANS[value] !== undefined &&
+        equal(site(out)["images"], expected) &&
+        equal((evseNamed(out, "E1") as Json | undefined)?.["images"], expected)
+      );
     },
-    unsupported: Object.fromEntries(
-      ["CHARGER", "ENTRANCE", "LOCATION", "NETWORK", "OPERATOR", "OTHER", "OWNER"].map((c) => [
-        c,
-        "the mapping reads no images: the site input (site.ts) takes none and the colocation merge keeps only its lead's",
-      ]),
-    ),
   },
   ConnectorCapability: {
     module: "locations",
@@ -311,81 +330,38 @@ const COVERAGE: Readonly<Record<string, CoverageSpec & { module: string; since?:
     module: "locations",
     since: "2.3.0",
     handled: (value) =>
-      anywhere(
-        parseOne(
-          location({
-            parking_places: [
-              {
-                id: "P1",
-                vehicle_types: [value],
-                restricted_to_type: true,
-                reservation_required: false,
-              },
-            ],
-          }),
-        ),
-        value,
+      equal(
+        details(bayOf(parseOne(location({ parking_places: [place({ vehicle_types: [value] })] }))))[
+          "vehicleTypes"
+        ],
+        [value.toLowerCase()],
       ),
-    unsupported: Object.fromEntries(
-      [
-        "MOTORCYCLE",
-        "PERSONAL_VEHICLE",
-        "PERSONAL_VEHICLE_WITH_TRAILER",
-        "VAN",
-        "SEMI_TRACTOR",
-        "RIGID",
-        "TRUCK_WITH_TRAILER",
-        "BUS",
-        "DISABLED",
-      ].map((v) => [
-        v,
-        "2.3.0 parking_places: the charging site has no parking-place component to hold them",
-      ]),
-    ),
   },
   ParkingDirection: {
     module: "locations",
     since: "2.3.0",
     handled: (value) =>
-      anywhere(
-        parseOne(
-          location({
-            parking_places: [
-              {
-                id: "P1",
-                vehicle_types: ["PERSONAL_VEHICLE"],
-                restricted_to_type: false,
-                reservation_required: false,
-                direction: value,
-              },
-            ],
-          }),
-        ),
-        value,
-      ),
-    unsupported: Object.fromEntries(
-      ["PARALLEL", "PERPENDICULAR", "ANGLE"].map((v) => [
-        v,
-        "2.3.0 parking_places: as VehicleType",
-      ]),
-    ),
+      details(bayOf(parseOne(location({ parking_places: [place({ direction: value })] }))))[
+        "direction"
+      ] === value.toLowerCase(),
   },
   EVSEPosition: {
     module: "locations",
     since: "2.3.0",
-    handled: (value) =>
-      anywhere(
-        parseOne(
-          location({ evses: [evse({ parking: [{ parking_id: "P1", evse_position: value }] })] }),
-        ),
-        value,
-      ),
-    unsupported: Object.fromEntries(
-      ["LEFT", "RIGHT", "CENTER"].map((v) => [
-        v,
-        "2.3.0 EVSE parking: an EVSE's place beside a parking place the site does not hold",
-      ]),
-    ),
+    handled: (value) => {
+      const out = parseOne(
+        location({
+          parking_places: [place()],
+          evses: [evse({ parking: [{ parking_id: "P1", evse_position: value }] })],
+        }),
+      );
+      return (
+        ["LEFT", "RIGHT", "CENTER"].includes(value) &&
+        equal(details(evseNamed(out, "E1"))["bays"], [
+          { key: "bay:P1", position: value.toLowerCase() },
+        ])
+      );
+    },
   },
   TariffDimensionType: {
     module: "tariffs",
@@ -426,13 +402,10 @@ const COVERAGE: Readonly<Record<string, CoverageSpec & { module: string; since?:
   BookingRestrictionType: {
     module: "tariffs",
     since: "2.3.0",
-    handled: (value) => anywhere(restricted({ booking: value }), value),
-    unsupported: Object.fromEntries(
-      ["BOOKING", "BOOKING_EXPIRES", "BOOKING_CANCELLATION_FEES", "BOOKING_OVERTIME"].map((v) => [
-        v,
-        "2.3.0 Bookings: the offer's restrictions have no booking condition; an element priced for a booking never prices a session without one, so it is left out and skipped as unknown_value",
-      ]),
-    ),
+    handled: (value) =>
+      ((firstElement(restricted({ booking: value }))?.["restrictions"] ?? {}) as Json)[
+        "booking"
+      ] === value.toLowerCase(),
   },
   TaxIncluded: {
     module: "tariffs",
@@ -516,6 +489,129 @@ describe("OCPI enumerations, each handled by the real decoder and mapping or lis
   });
 });
 
+describe("OCPI location, EVSE and connector fields", () => {
+  test("every field of a 2.3.0 location lands where the model holds it", () => {
+    const out = parseOne(
+      location({
+        state: "Utrecht",
+        related_locations: [
+          {
+            latitude: "52.000100",
+            longitude: "5.000100",
+            name: { language: "nl", text: "Ingang" },
+          },
+        ],
+        directions: [{ language: "en", text: "Second floor" }],
+        operator: {
+          name: "Op",
+          website: "https://op.example",
+          logo: { url: "https://op.example/logo.png", category: "OPERATOR", type: "png" },
+        },
+        suboperator: { name: "Sub", website: "https://sub.example" },
+        owner: { name: "Own" },
+        opening_times: {
+          twentyfourseven: false,
+          regular_hours: [{ weekday: 1, period_begin: "08:00", period_end: "18:00" }],
+          exceptional_closings: [
+            { period_begin: "2026-12-25T00:00:00Z", period_end: "2026-12-26T00:00:00Z" },
+          ],
+        },
+        charging_when_closed: false,
+        help_phone: "+31201234567",
+        parking_places: [
+          place({
+            physical_reference: "12",
+            vehicle_types: ["TRUCK_WITH_TRAILER"],
+            max_vehicle_weight: 40000,
+            max_vehicle_height: 400,
+            parking_space_length: 2500,
+            time_limit: 90,
+            drive_through: true,
+            roofed: true,
+            standards: ["PAS 1899"],
+          }),
+        ],
+        evses: [
+          evse({
+            floor_level: "-1",
+            physical_reference: "A1",
+            coordinates: { latitude: "52.000010", longitude: "5.000010" },
+            directions: [{ language: "en", text: "Left of the lift" }],
+            status_schedule: [
+              {
+                period_begin: "2026-11-01T00:00:00Z",
+                period_end: "2026-11-02T00:00:00Z",
+                status: "INOPERATIVE",
+              },
+            ],
+            parking: [{ parking_id: "P1", evse_position: "RIGHT" }],
+            accepted_service_providers: ["NL-ABC"],
+            connectors: [connector({ terms_and_conditions: "https://op.example/terms" })],
+          }),
+        ],
+      }),
+    );
+    expect(site(out)).toMatchObject({
+      location: { address: { region: "Utrecht" } },
+      operator: { name: [{ text: "Op" }], website: "https://op.example" },
+      owner: { name: [{ text: "Own" }] },
+      images: [{ url: "https://op.example/logo.png", category: "operator_logo", format: "png" }],
+      openingHours: {
+        osm: "Mo 08:00-18:00",
+        exceptions: [{ start: "2026-12-25T00:00:00Z", end: "2026-12-26T00:00:00Z", open: false }],
+        chargingWhenClosed: false,
+        timezone: "Europe/Amsterdam",
+      },
+    });
+    expect(details(site(out))).toMatchObject({
+      suboperator: { role: "suboperator", name: [{ text: "Sub" }] },
+      hotline: "+31201234567",
+      directions: [{ lang: "en", text: "Second floor" }],
+      relatedLocations: [
+        {
+          name: [{ lang: "nl", text: "Ingang" }],
+          point: { type: "Point", coordinates: [5.0001, 52.0001] },
+        },
+      ],
+    });
+    expect(bayOf(out)).toMatchObject({
+      key: "bay:P1",
+      physicalReference: "12",
+      details: {
+        vehicleTypes: ["truck_with_trailer"],
+        maxVehicleWeight: { value: 40000, unit: "kg" },
+        maxVehicleHeight: { value: 4, unit: "m" },
+        length: { value: 25, unit: "m" },
+        timeLimit: { value: 90, unit: "min" },
+        driveThrough: true,
+        roofed: true,
+        standards: ["PAS 1899"],
+      },
+    });
+    expect(evseNamed(out, "E1")).toMatchObject({
+      floorLevel: "-1",
+      physicalReference: "A1",
+      position: { type: "Point", coordinates: [5.00001, 52.00001] },
+      details: {
+        directions: [{ lang: "en", text: "Left of the lift" }],
+        statusSchedule: [
+          { start: "2026-11-01T00:00:00Z", end: "2026-11-02T00:00:00Z", status: "inoperative" },
+        ],
+        bays: [{ key: "bay:P1", position: "right" }],
+        acceptedServiceProviders: ["NL-ABC"],
+      },
+    });
+    expect(details(componentsOf(out, "connector")[0])).toMatchObject({
+      termsUrl: "https://op.example/terms",
+    });
+  });
+
+  test("a tariff's preauthorisation amount is the offer's", () => {
+    const out = parseOne(location(), [tariff({ preauthorize_amount: 25 })]);
+    expect(offer(out)).toMatchObject({ preauthorizeAmount: { amount: "25", currency: "EUR" } });
+  });
+});
+
 describe("OCPI skips by reason", () => {
   beforeEach(() => {
     __resetSkips();
@@ -547,10 +643,19 @@ describe("OCPI skips by reason", () => {
       location({
         parking_type: "ROOFTOP",
         facilities: ["SPA", "CAFE"],
+        images: [{ url: "https://example.org/a.jpg", category: "SELFIE", type: "jpeg" }],
+        energy_mix: {
+          is_green_energy: false,
+          energy_sources: [{ source: "PEAT", percentage: 10 }],
+          environ_impact: [{ category: "SOOT", amount: 2 }],
+        },
+        parking_places: [place({ vehicle_types: ["TRACTOR", "VAN"], direction: "DIAGONAL" })],
         evses: [
           evse({
             status: "BROKEN",
-            parking_restrictions: ["TAXIS", "EV_ONLY"],
+            status_schedule: [{ period_begin: "2026-11-01T00:00:00Z", status: "MOVED" }],
+            parking_restrictions: ["VALETS", "EV_ONLY"],
+            parking: [{ parking_id: "P1", evse_position: "ABOVE" }],
             connectors: [
               connector({
                 standard: "X_MEGAPLUG",
@@ -568,8 +673,16 @@ describe("OCPI skips by reason", () => {
     expect(details(evseNamed(out, "E1"))["parkingRestrictions"]).toEqual(["ev_only"]);
     expect(details(componentsOf(out, "connector")[0])).toMatchObject({ standard: "UNKNOWN" });
     expect(readingOf(out, "E1")).toBeUndefined();
-    // Parking type, facility, status, restriction, standard, format, power type, capability.
-    expect(drainSkipped(FEED_ID)).toEqual({ unknown_value: 8 });
+    expect(site(out)).not.toHaveProperty("images");
+    expect(details(site(out))["energyMix"]).toEqual({ isGreen: false });
+    expect(details(bayOf(out))).toMatchObject({ vehicleTypes: ["van"] });
+    expect(details(bayOf(out))).not.toHaveProperty("direction");
+    expect(details(evseNamed(out, "E1"))["bays"]).toEqual([{ key: "bay:P1" }]);
+    expect(details(evseNamed(out, "E1"))).not.toHaveProperty("statusSchedule");
+    // Parking type, facility, image category, energy source, impact, vehicle type,
+    // direction, status, scheduled status, restriction, position, standard, format,
+    // power type, capability.
+    expect(drainSkipped(FEED_ID)).toEqual({ unknown_value: 15 });
   });
 
   test("a tariff's unread values count once however many sites name it", () => {
@@ -582,7 +695,10 @@ describe("OCPI skips by reason", () => {
           { source: "SOLAR", percentage: 60 },
           { source: "BIOMASS", percentage: 40 },
         ],
-        environ_impact: [{ category: "CARBON_DIOXIDE", amount: 12 }],
+        environ_impact: [
+          { category: "CARBON_DIOXIDE", amount: 12 },
+          { category: "SOOT", amount: 1 },
+        ],
       },
       elements: [
         {
@@ -608,13 +724,20 @@ describe("OCPI skips by reason", () => {
     });
     expect(out.offers).toHaveLength(2);
     expect(out.offers[0]).toMatchObject({
-      elements: [{ components: [{ type: "energy" }] }],
-      energyMix: { isGreen: true, sources: [{ source: "solar", pct: 60 }] },
+      elements: [
+        { components: [{ type: "energy" }] },
+        { components: [{ type: "flat" }], restrictions: { booking: "booking" } },
+      ],
+      energyMix: {
+        isGreen: true,
+        sources: [{ source: "solar", pct: 60 }],
+        impacts: [{ category: "carbon_dioxide", gPerKwh: 12 }],
+      },
     });
     expect(out.offers[0]).not.toHaveProperty("tariffType");
     expect(out.offers[0]).not.toHaveProperty("priceIncludesVat");
-    // Type, tax_included, the CO2 component, the booking element, BIOMASS, the impact.
-    expect(drainSkipped(FEED_ID)).toEqual({ unknown_value: 6 });
+    // Type, tax_included, the CO2 component, BIOMASS, the SOOT impact.
+    expect(drainSkipped(FEED_ID)).toEqual({ unknown_value: 5 });
   });
 
   test("status entries without a uid or status are malformed; an undefined status is an unread value", () => {
