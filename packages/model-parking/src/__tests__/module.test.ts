@@ -17,8 +17,8 @@ import {
   DATEX2_V3_PARKING_TRENDS,
   DATEX2_V3_PARKING_TYPES,
 } from "../crosswalk/datex2.js";
-import { PARKAPI_PARKING_TYPES } from "../crosswalk/parkapi.js";
-import { PARKING_VEHICLE_TYPES } from "../kinds.js";
+import { PARKAPI_PARKING_TYPES, PARKAPI_RESTRICTION_AREAS } from "../crosswalk/parkapi.js";
+import { PARKING_USER_GROUPS, PARKING_VEHICLE_TYPES } from "../kinds.js";
 import { parkingCrosswalk, parkingModule } from "../module.js";
 import {
   DATEX2_V2_PARKING,
@@ -115,6 +115,17 @@ describe("parking crosswalk coverage", () => {
     // Not every combination exists: bicycle furniture never has a car purpose.
     expect(known.length).toBeGreaterThan(0);
     expect(Object.keys(PARKAPI_PARKING_TYPES).filter((code) => !pairs.includes(code))).toEqual([]);
+  });
+
+  it("maps every ParkAPI restriction audience to an area or explicitly to none", () => {
+    expect(Object.keys(PARKAPI_RESTRICTION_AREAS).sort()).toEqual(
+      [...PARKAPI_V3.restrictionTypes].sort(),
+    );
+    for (const area of Object.values(PARKAPI_RESTRICTION_AREAS)) {
+      if (area === null) continue;
+      expect(PARKING_USER_GROUPS).toContain(area.userGroup);
+      if (area.vehicleType !== undefined) expect(PARKING_VEHICLE_TYPES).toContain(area.vehicleType);
+    }
   });
 
   it("resolves a measured value to the property it belongs to", () => {
