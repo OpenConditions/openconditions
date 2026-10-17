@@ -56,6 +56,15 @@ describe("fuel module", () => {
     );
   });
 
+  it("adds 100 octane petrol and the station amenities sources name beyond the kernel's", () => {
+    expect(registry.vocabulary("fuel_grade")?.values).toContain("sp100");
+    expect(registry.vocabulary("amenity")?.values).toEqual(
+      expect.arrayContaining(["compressed_air", "parcel_pickup", "bottled_gas", "takeaway"]),
+    );
+    expect(registry.kind("feature", "fuel_station")?.version).toBe("1.1");
+    expect(DATEX2_V3_FUEL_GRADES_OUT["sp100"]).toBeNull();
+  });
+
   it("reads DATEX biogas as compressed biomethane and writes it back", () => {
     expect(DATEX2_V3_FUEL_GRADES["organicGas:biogas"]).toBe("cng_bio");
     expect(DATEX2_V3_FUEL_GRADES_OUT["cng_bio"]).toBe("organicGas:biogas");

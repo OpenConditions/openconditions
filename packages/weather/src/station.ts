@@ -1,5 +1,10 @@
 import type { RecordDraft } from "@openconditions/ingest-framework";
-import { type LIFECYCLES, type LocalizedText, observationId } from "@openconditions/model";
+import {
+  type LIFECYCLES,
+  type LINEAR_SYSTEMS,
+  type LocalizedText,
+  observationId,
+} from "@openconditions/model";
 import {
   pointLocation,
   provenance,
@@ -27,9 +32,20 @@ export interface StationInput {
   lifecycle: (typeof LIFECYCLES)[number];
   /** The number of the road the station stands by. */
   roadRef?: string;
+  /** Where along its road the station stands, in the publisher's road addressing. */
+  linear?: {
+    system: (typeof LINEAR_SYSTEMS)[number];
+    ref: string;
+    from: number;
+    authority?: string;
+  };
   /** ISO 3166-1 alpha-2, upper case. */
   country: string;
+  /** ISO 3166-2. */
+  subdivision?: string;
   municipality?: string;
+  /** Codes of the station's place in the publisher's other location systems (a road-register id). */
+  external?: readonly { system: string; code: string }[];
   /** The publisher's station type or model. */
   equipment?: string;
   /** The properties the station reports: at least one. */
@@ -70,7 +86,15 @@ export function stationDraft(
     location: {
       ...pointLocation(input.point),
       ...(input.roadRef === undefined ? {} : { roads: [{ ref: input.roadRef }] }),
-      admin: { country: input.country, ...optional("municipality", input.municipality) },
+      ...optional("linear", input.linear),
+      admin: {
+        country: input.country,
+        ...optional("subdivision", input.subdivision),
+        ...optional("municipality", input.municipality),
+      },
+      ...(input.external === undefined || input.external.length === 0
+        ? {}
+        : { external: input.external.map((e) => ({ ...e })) }),
     },
     provenance: provenance(feed, input.stationId),
     freshness: { fetchedAt },
@@ -98,7 +122,7 @@ export interface ReadingInput {
   measuredAt: string;
   /** The span the value summarises, ending at `measuredAt`; an instant reading without one. */
   windowSec?: number;
-  aggregation: "instantaneous" | "mean" | "max";
+  aggregation: "instantaneous" | "mean" | "max" | "sum";
   /** The publisher's quality code of a value it does not call reliable. */
   supplierCode?: string;
 }

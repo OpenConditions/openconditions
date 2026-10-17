@@ -8,3 +8,4 @@ export * from "./module.js";
 export * from "./natural-hazards.js";
 export * from "./vocabularies/cap.js";
 export * from "./vocabularies/cap-events.js";
+export * from "./vtec.js";

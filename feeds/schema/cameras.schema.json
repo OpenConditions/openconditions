@@ -1394,6 +1394,73 @@
                   }
                 ]
               },
+              "milepost": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "pattern": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              "elevation": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "pattern": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "field"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "m",
+                      "ft"
+                    ]
+                  }
+                },
+                "required": [
+                  "field",
+                  "unit"
+                ],
+                "additionalProperties": false
+              },
               "viewName": {
                 "anyOf": [
                   {
@@ -1462,7 +1529,8 @@
                         "S",
                         "SW",
                         "W",
-                        "NW"
+                        "NW",
+                        "none"
                       ]
                     }
                   }
@@ -1472,6 +1540,14 @@
                   "map"
                 ],
                 "additionalProperties": false
+              },
+              "absent": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
               },
               "bearing": {
                 "anyOf": [

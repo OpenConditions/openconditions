@@ -100,6 +100,7 @@ describe("the usgs format over the live captures", () => {
         tsunamiFlag: false,
         feltReports: 5,
         mmi: 7.654,
+        cdi: 7,
         reviewed: true,
       },
     });
@@ -269,6 +270,25 @@ describe("the usgs format over merged and altered features", () => {
     });
     expect(byId(out, "us6000u0xi")["severity"]).toEqual({ label: "unknown" });
     expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
+  });
+
+  test("a review status or tsunami flag it does not know is left out and counted", () => {
+    const day = collection("usgs-all-day.geojson");
+    const base = feature(day, "us6000u0xi");
+    const out = parse({
+      recent: [
+        buffer({
+          features: [
+            { ...base, properties: { ...base.properties, status: "pending", tsunami: 2 } },
+          ],
+        }),
+      ],
+      window: [],
+    });
+    const details = byId(out, "us6000u0xi")["details"];
+    expect(details).not.toHaveProperty("reviewed");
+    expect(details).not.toHaveProperty("tsunamiFlag");
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
   });
 
   test("a quiet poll is an accounted zero", () => {

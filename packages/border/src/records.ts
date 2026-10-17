@@ -23,6 +23,8 @@ export interface LaneGroupInput {
   mode: BorderMode;
   program?: BorderProgram;
   direction: { from: string; to: string };
+  /** How many lanes the queue has in all, open or not. */
+  lanesTotal?: number;
 }
 
 /** What a border format knows of one crossing, beside its place in the vendored table. */
@@ -38,6 +40,8 @@ export interface CrossingInput {
   portIds?: readonly { scheme: string; id: string; authority?: string }[];
   /** Where the agency says the crossing is, in words. */
   areaDescription?: string;
+  /** What the agency tells travellers about the port, in English. */
+  description?: string;
   openingHours?: Record<string, unknown>;
   lanes: readonly LaneGroupInput[];
   modes: readonly BorderMode[];
@@ -87,6 +91,7 @@ export function crossingDraft(
       mode: lane.mode,
       ...(lane.program === undefined ? {} : { program: lane.program }),
       direction: lane.direction,
+      ...(lane.lanesTotal === undefined ? {} : { lanesTotal: lane.lanesTotal }),
     },
   }));
   const portIds = input.portIds ?? [];
@@ -121,6 +126,7 @@ export function crossingDraft(
     },
     freshness: { fetchedAt },
     name: en(input.name),
+    ...(input.description === undefined ? {} : { description: en(input.description) }),
     externalIds: [
       ...portIds.map((id) => ({ ...id })),
       { scheme: "wikidata", id: crossing.wikidata },

@@ -71,19 +71,39 @@ function acquiredAt(date: string, time: string): Date | undefined {
   return Number.isNaN(at.getTime()) || at.toISOString().slice(0, 10) !== date ? undefined : at;
 }
 
-const VIIRS_CONFIDENCE = new Set(["low", "nominal", "high", "l", "n", "h"]);
+/**
+ * VIIRS's confidence classes as the supplier's code: the global files write
+ * the words, the area API their initials, which are the same three classes.
+ */
+const VIIRS_CONFIDENCE: Readonly<Record<string, string>> = {
+  low: "low",
+  nominal: "nominal",
+  high: "high",
+  l: "low",
+  n: "nominal",
+  h: "high",
+};
 
-/** The quality a row's confidence gives: VIIRS words as the supplier's code, MODIS percentages as a fraction. */
-function qualityOf(instrument: Instrument, raw: string): Record<string, unknown> | undefined {
+/**
+ * The quality a row's confidence gives: VIIRS classes as the supplier's
+ * code, MODIS percentages as a fraction. `unknown` when the row states a
+ * confidence the instrument does not define.
+ */
+function qualityOf(instrument: Instrument, raw: string): Record<string, unknown> | "unknown" {
   const value = raw.trim().toLowerCase();
+  if (value === "") return {};
   if (instrument === "viirs") {
-    return VIIRS_CONFIDENCE.has(value) ? { supplierCode: value } : undefined;
+    return Object.hasOwn(VIIRS_CONFIDENCE, value)
+      ? { supplierCode: VIIRS_CONFIDENCE[value] }
+      : "unknown";
   }
   const percent = number(value);
   return percent !== undefined && percent >= 0 && percent <= 100
     ? { confidence: percent / 100 }
-    : undefined;
+    : "unknown";
 }
+
+const DAY_NIGHT: Readonly<Record<string, string>> = { D: "day", N: "night" };
 
 /**
  * A row's reading, or why it has none: `no_geometry` when it gives no
@@ -118,9 +138,13 @@ function readRow(
   const background = number(cell(instrument === "viirs" ? "bright_ti5" : "bright_t31"));
   const scan = number(cell("scan"));
   const track = number(cell("track"));
-  const daynight = { D: "day", N: "night" }[cell("daynight")];
+  const pass = cell("daynight");
+  const daynight = Object.hasOwn(DAY_NIGHT, pass) ? DAY_NIGHT[pass] : undefined;
+  if (pass !== "" && daynight === undefined) recordSkipped(feed.id, "unknown_value");
   const version = cell("version");
-  const quality = qualityOf(instrument, cell("confidence"));
+  const read = qualityOf(instrument, cell("confidence"));
+  if (read === "unknown") recordSkipped(feed.id, "unknown_value");
+  const quality = read === "unknown" || Object.keys(read).length === 0 ? undefined : read;
   const instant = utcInstant(at);
   const draft = {
     class: "observation",
@@ -161,7 +185,9 @@ function readRow(
  * `main` role is one satellite's last 24 hours; a pixel the next hourly file
  * restates has the same id and is written once. A row with no position is
  * skipped as `no_geometry`, one with a bad position, time or radiated power
- * as `malformed`, never the file. A file
+ * as `malformed`, never the file; a confidence or day/night flag the
+ * instrument does not define is left out of a reading that is kept
+ * (`unknown_value`). A file
  * with only its header holds no detection; the pipeline refuses such a poll
  * for a global feed, which keeps the last publication. A body that is no
  * active-fire file (an error page) fails the parse.

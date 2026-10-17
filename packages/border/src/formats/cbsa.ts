@@ -21,11 +21,18 @@ const OFFICE = "Customs Office";
 const LOCATION = "Location";
 const UPDATED = "Last updated";
 
-/** The Canada-bound flows CBSA reports: the U.S.-bound columns are always `--`. */
+/** The Canada-bound flows CBSA reports. */
 const FLOWS: readonly (readonly [string, BorderMode])[] = [
   ["Commercial Flow - Canada bound", "commercial"],
   ["Travellers Flow - Canada bound", "passenger"],
 ];
+
+/**
+ * The U.S.-bound columns, always `--`: CBP reports those queues. A value in
+ * one is not read (CBP's port is the queue's source) but counted, so a
+ * change in what CBSA publishes shows.
+ */
+const US_BOUND = ["Commercial Flow - U.S. bound", "Travellers Flow - U.S. bound"];
 
 /** CBSA's zone labels, which match its ports' clocks (Saskatchewan keeps CST all year). */
 const ZONE_OFFSETS: Readonly<Record<string, string>> = {
@@ -101,7 +108,7 @@ const slug = (name: string): string =>
  * passenger queue. `No Delay` is no delay without minutes, a stated wait a
  * delay of that many minutes, `Closed` and `Temporarily closed` a closed
  * queue; any other cell is a queue whose state is unknown, counted as a
- * value not read. A row without a readable update time is dated by the fetch, and one
+ * value not read, as is a U.S.-bound cell that is not `--`. A row without a readable update time is dated by the fetch, and one
  * dated after the fetch is read as the fetch.
  */
 export function parseCbsa(
@@ -151,7 +158,11 @@ export function parseCbsa(
       recordSkipped(
         feed.id,
         "unknown_value",
-        waits.filter((w) => w.value.status === "unknown").length,
+        waits.filter((w) => w.value.status === "unknown").length +
+          US_BOUND.filter((name) => {
+            const value = cell(name);
+            return value !== undefined && value !== "" && value !== "--";
+          }).length,
       );
       const updated = updatedAt(cell(UPDATED), crossing);
       const at = utcInstant(new Date(Math.min(updated ?? fetched, fetched)));

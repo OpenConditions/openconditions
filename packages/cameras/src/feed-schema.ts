@@ -141,9 +141,22 @@ export const camerasMappingSchema = z.strictObject({
   description: fieldRef.optional(),
   /** The road the camera stands on, by its number. */
   road: fieldRef.optional(),
+  /** The camera's milepost on its road, in miles. */
+  milepost: fieldRef.optional(),
+  /** The camera's elevation above sea level, in metres or feet. */
+  elevation: z.strictObject({ field: fieldRef, unit: z.enum(["m", "ft"]) }).optional(),
   viewName: fieldRef.optional(),
-  /** A compass word the publisher gives the view: where it looks, or the road's travel direction. */
-  direction: mapped(COMPASS_POINTS).optional(),
+  /**
+   * A compass word the publisher gives the view: where it looks, or the
+   * road's travel direction; `none` for a documented value that gives no
+   * direction (a camera on the median).
+   */
+  direction: mapped([...COMPASS_POINTS, "none"] as const).optional(),
+  /**
+   * Texts the publisher writes in a field in place of a value it does not
+   * have (`Not Reported`): every field reads them as absent.
+   */
+  absent: z.array(z.string().min(1)).min(1).optional(),
   /** Where the view looks, in degrees from north: only a true camera bearing. */
   bearing: fieldRef.optional(),
   imageUrl: fieldRef.optional(),

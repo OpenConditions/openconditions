@@ -171,9 +171,8 @@ describe("alerts fit check", () => {
         },
       },
     ]);
-    expect(tornado["groupId"]).toBe(
-      "urn:oid:2.49.0.1.840.0.93490fce2a191c24d1f347aa7be723bfaccb940a.001.1",
-    );
+    // The warning is its VTEC event, which NWS keeps for the warning's life.
+    expect(tornado["groupId"]).toBe("VTEC:KICT.TO.W.0030:2026");
     const location = tornado["location"] as { geometry: { type: string }; admin: object };
     expect(location.geometry.type).toBe("Polygon");
     expect(location.admin).toEqual({

@@ -58,18 +58,21 @@
         "lang": "en",
         "type": "traffic",
         "road": "cctv.location.route",
+        // The absolute postmile; `postmile` restarts at each county line.
+        "milepost": "cctv.location.milepost",
+        "elevation": { "field": "cctv.location.elevation", "unit": "ft" },
         "viewName": "cctv.imageData.imageDescription",
+        // The documented directions: a camera on the median faces neither carriageway.
         "direction": {
           "field": "cctv.location.direction",
-          "map": { "North": "N", "South": "S", "East": "E", "West": "W" },
+          "map": { "North": "N", "South": "S", "East": "E", "West": "W", "Median": "none" },
         },
+        // What the field description gives for a value Caltrans does not have.
+        "absent": ["Not Reported"],
         "imageUrl": "cctv.imageData.static.currentImageURL",
         "streamUrl": "cctv.imageData.streamingVideoURL",
         "streamType": "hls",
-        "status": {
-          "field": "cctv.inService",
-          "map": { "true": "unknown", "false": "offline", "Not Reported": "unknown" },
-        },
+        "status": { "field": "cctv.inService", "map": { "true": "unknown", "false": "offline" } },
         "refreshSec": {
           "field": "cctv.imageData.static.currentImageUpdateFrequency",
           "unit": "min",

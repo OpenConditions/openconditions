@@ -147,7 +147,7 @@ describe("federation enabled", () => {
       });
       expect(doc).not.toHaveProperty("supportedTypes");
       expect(doc.capabilities.schemaVersions).toContain("kernel@1.0");
-      expect(doc.capabilities.schemaVersions).toContain("situation/alert@1.0");
+      expect(doc.capabilities.schemaVersions).toContain("situation/alert@1.1");
 
       const rows = await sql`SELECT key_id FROM conditions.federation_instance_key`;
       expect(rows).toHaveLength(1);

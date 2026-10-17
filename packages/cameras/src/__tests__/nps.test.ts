@@ -77,8 +77,36 @@ describe("nps", () => {
         },
       },
     ]);
-    // The record's photo is a stock picture, not the camera's image.
+    // The record's photo is a stock picture, not the camera's image: a site image,
+    // its doubled host repaired.
     expect(value(reading(out, ANACAPA)[0])).toEqual({ v: 1, status: "unknown" });
+    expect(camera(out, ANACAPA)?.["images"]).toEqual([
+      {
+        url: "https://www.nps.gov/common/uploads/cropped_image/FB433FDB-A01F-8F9F-5D030367A1EF247C.jpg",
+        category: "site",
+      },
+    ]);
+    expect(camera(out, ANACAPA)?.["location"]).toMatchObject({
+      admin: { country: "US", subdivision: "US-CA" },
+    });
+  });
+
+  test("a camera of parks in several states is placed in the country alone; a credit is its upstream", () => {
+    const d = doc();
+    // Constructed: every captured record's credit is empty.
+    d.data[1].credit = "Channel Islands National Park Foundation";
+    const out = parse({ main: [body(d)] });
+    const smokies = out.features.find(
+      (f) => f["id"] === `${ID}C589EEEF-1DD8-B71B-0B0463C308FF64DD`,
+    );
+    expect(smokies?.["location"]).toHaveProperty("admin", { country: "US" });
+    expect(camera(out, ANACAPA)?.["provenance"]).toMatchObject({
+      upstream: [{ publisher: "Channel Islands National Park Foundation" }],
+    });
+    expect(reading(out, ANACAPA)[0]?.["provenance"]).toMatchObject({
+      upstream: [{ publisher: "Channel Islands National Park Foundation" }],
+    });
+    expect(camera(out, AIR)?.["provenance"]).not.toHaveProperty("upstream");
   });
 
   test("the air quality pages are weather cameras", () => {
@@ -90,6 +118,14 @@ describe("nps", () => {
     const out = parse({ main: [fixture("us-nps-webcams.json")] });
     expect(value(reading(out, BIG_HOLE)[0])?.["status"]).toBe("offline");
     expect(value(reading(out, AIR)[0])?.["status"]).toBe("unknown");
+  });
+
+  test("the park's status message rides with the reading; an empty one is none", () => {
+    const out = parse({ main: [fixture("us-nps-webcams.json")] });
+    expect(value(reading(out, BIG_HOLE)[0])?.["statusText"]).toEqual([
+      { lang: "en", text: expect.stringMatching(/^Please excuse our mess!/) },
+    ]);
+    expect(value(reading(out, AIR)[0])).not.toHaveProperty("statusText");
   });
 
   test("records without coordinates are skipped and counted", () => {

@@ -91,7 +91,7 @@ describe("overpass", () => {
         kind: "camera",
         v: 1,
         ptz: false,
-        mounting: "unknown",
+        mounting: "wall",
         imageRedistribution: "unknown",
       },
     });
@@ -279,6 +279,41 @@ describe("overpass", () => {
     expect(viewDetails(camera(out, "node_10"))?.[0]?.[1]).not.toHaveProperty("direction");
   });
 
+  test("names in every language, the description beside a name, the elevation and the website", () => {
+    const out = parse(fixture("osm-cameras.json"));
+    const byId = (id: string) =>
+      out.features.find((f) => (f["provenance"] as { recordId: string }).recordId === id);
+    // A still as the webcam address: the website is the camera's page.
+    expect(byId("node/9569407667")).toMatchObject({
+      name: [{ lang: "und", text: "UNI Innsbruck West" }],
+      description: [{ lang: "und", text: "Universität Innsbruck / Blick nach Westen" }],
+      location: { elevationM: 610 },
+      details: { detailUrl: "https://www.foto-webcam.eu/webcam/innsbruck-uni-west/" },
+    });
+    expect(byId("way/127912350")).toMatchObject({
+      name: [
+        { lang: "und", text: "Fluggelände Hahnweide" },
+        { lang: "de", text: "Fluggelände Hahnweide" },
+        { lang: "en", text: "Kirchheim-Hahnweide Airfield" },
+      ],
+      location: { elevationM: 352 },
+      details: { detailUrl: "http://www.hahnweide.com/" },
+    });
+    // `name:etymology` is no language.
+    expect(byId("way/117881300")?.["name"]).toEqual([
+      { lang: "und", text: "Oskar von Miller TUrM" },
+    ]);
+    // A webcam page stays the camera's page over the website.
+    expect(byId("node/282834988")).toMatchObject({
+      details: { detailUrl: "https://www.hotel-hubertus.de/webcam" },
+    });
+    // A traffic signal's camera is on a pole.
+    const signal = JSON.parse(fixture("osm-cameras.json").toString("utf8"));
+    signal.elements[0].tags["camera:mount"] = "traffic_signal";
+    const mounted = parse(Buffer.from(JSON.stringify(signal)));
+    expect(mounted.features[0]?.["details"]).toMatchObject({ mounting: "pole" });
+  });
+
   test("every camera seals", () => {
     const out = parse(fixture("osm-cameras.json"));
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
@@ -290,7 +325,9 @@ describe("skips", () => {
 
   test("the fixture reports what it leaves unread", () => {
     parse(fixture("osm-cameras.json"));
-    // A wall and a roof mount have no mounting of the vocabulary.
+    // A roof mount, which the wiki does not document, has no mounting of the
+    // vocabulary, and a direction range ("0 - 360") is neither a bearing nor
+    // a compass point.
     expect(drainSkipped(osmFeed().id)).toEqual({ unknown_value: 2 });
   });
 
@@ -313,7 +350,7 @@ describe("skips", () => {
               lon: 11,
               tags: {
                 "contact:webcam": "https://a.example/",
-                "camera:mount": "wall",
+                "camera:mount": "roof",
                 "camera:type": "fisheye",
               },
             },

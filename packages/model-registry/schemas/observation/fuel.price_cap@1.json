@@ -190,7 +190,8 @@
             "e5_premium",
             "sp98_e10",
             "cng_bio",
-            "lng_bio"
+            "lng_bio",
+            "sp100"
           ]
         }
       },
@@ -491,6 +492,7 @@
             "netex:line",
             "netex:stop_place",
             "irwin",
+            "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
             "glide"

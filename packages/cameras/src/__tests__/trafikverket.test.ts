@@ -128,6 +128,42 @@ describe("trafikverket", () => {
     expect(value(reading(out, "SE_STA_CAMERA_Orion_386"))?.["status"]).toBe("unknown");
     expect(value(reading(out, "SE_STA_CAMERA_Orion_387"))?.["status"]).toBe("unknown");
     expect(value(reading(out, "SE_STA_CAMERA_Orion_388"))?.["status"]).toBe("offline");
+    // Each status left unread is counted.
+    expect(drainSkipped(trafikverketFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
+  test("the county, the location text and the location sketch are read", () => {
+    const out = parse();
+    expect(drainSkipped(trafikverketFeed().id)).toEqual({});
+    const nybygget = camera(out, "SE_STA_CAMERA_Orion_386");
+    // Its location repeats its description, so it is not kept twice.
+    expect(nybygget?.["location"]).toMatchObject({
+      admin: { country: "SE", subdivision: "SE-AB" },
+    });
+    expect(nybygget?.["location"]).not.toHaveProperty("areaDescription");
+    expect(nybygget?.["images"]).toEqual([
+      { url: `${IMAGES}/TrafficFlowCamera_39626507_sketch.jpg`, category: "other" },
+    ]);
+    const rotebro = camera(out, "SE_STA_CAMERA_Orion_387");
+    expect(rotebro?.["location"]).toMatchObject({
+      areaDescription: [{ lang: "sv", text: "E4 Rotebro" }],
+    });
+    expect(rotebro).not.toHaveProperty("images");
+  });
+
+  test("a Type or a CountyNo not read is counted; the camera stays a traffic camera", () => {
+    // Constructed: only Trafikflödeskamera is seen in a real answer.
+    const doc = JSON.parse(fixture("se-trafikverket-cameras.json").toString("utf8"));
+    doc.RESPONSE.RESULT[0].Camera[0].Type = "Okänd kamera";
+    doc.RESPONSE.RESULT[0].Camera[1].CountyNo = 99;
+    doc.RESPONSE.RESULT[0].Camera[2].CountyNo = [1, 3];
+    const out = parse(Buffer.from(JSON.stringify(doc)));
+    expect(drainSkipped(trafikverketFeed().id)).toEqual({ unknown_value: 2 });
+    expect(camera(out, "SE_STA_CAMERA_Orion_386")?.["type"]).toBe("traffic");
+    // A number that is no county, or two counties, give the country alone.
+    for (const id of ["SE_STA_CAMERA_Orion_387", "SE_STA_CAMERA_Orion_388"]) {
+      expect(camera(out, id)?.["location"]).toHaveProperty("admin", { country: "SE" });
+    }
   });
 
   test("an error answer fails the parse, and a deleted camera is left out", () => {

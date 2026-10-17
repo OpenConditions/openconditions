@@ -146,6 +146,17 @@ describe("parseCbsa", () => {
     expect(drainSkipped(cbsaFeed().id)).toEqual({ unknown_value: 1 });
   });
 
+  it("counts a U.S.-bound flow that carries a value, and reads only the Canada-bound ones", () => {
+    const out = parse(
+      [
+        HEADER,
+        "Douglas;; Surrey, BC/Blaine, WA;; 2026-10-14 16:20 PDT;; Not Applicable;; No Delay;; 5 minutes;; 10 minutes;; ",
+      ].join("\n"),
+    );
+    expect(Object.keys(readings(out.observations, "douglas"))).toEqual(["passenger"]);
+    expect(drainSkipped(cbsaFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
   it("fails on a CSV without the columns it reads", () => {
     expect(() => parse("Office,Wait\nPeace Bridge,5")).toThrow(/lacks the office/);
   });

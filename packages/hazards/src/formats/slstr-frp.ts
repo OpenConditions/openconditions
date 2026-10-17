@@ -41,6 +41,17 @@ function readHeader(
   return REQUIRED.every((name) => index.has(name)) ? { at, index } : undefined;
 }
 
+/** A `#name = value` line of the granule's metadata; undefined when absent or empty. */
+function metadata(lines: readonly string[], name: string): string | undefined {
+  for (const line of lines) {
+    const m = /^#\s*([\w.]+)\s*=\s*(.*)$/.exec(line.trim());
+    if (m?.[1] === name) return m[2]!.trim() || undefined;
+  }
+  return undefined;
+}
+
+const DAY_NIGHT: Readonly<Record<string, string>> = { D: "day", N: "night" };
+
 const number = (value: string): number | undefined => {
   if (value === "") return undefined;
   const n = Number(value);
@@ -55,9 +66,18 @@ function acquiredAt(day: string, time: string): Date | undefined {
   return Number.isNaN(at.getTime()) || utcInstant(at) !== `${day}T${time}Z` ? undefined : at;
 }
 
-/** The product's class as the supplier's code and its percentage as a fraction; either may be missing. */
-function qualityOf(classCell: string, percentCell: string): Record<string, unknown> | undefined {
+/**
+ * The product's class as the supplier's code and its percentage as a
+ * fraction; either may be missing. A class the product does not define is
+ * left out (`unknown_value`).
+ */
+function qualityOf(
+  classCell: string,
+  percentCell: string,
+  feed: HazardsCatalogFeed,
+): Record<string, unknown> | undefined {
   const code = /^[012]$/.test(classCell) ? CONFIDENCE_CLASSES[Number(classCell)] : undefined;
+  if (classCell !== "" && code === undefined) recordSkipped(feed.id, "unknown_value");
   const percent = number(percentCell);
   // The product writes a tenth of a percent, which a plain division blurs (78.3 / 100).
   const fraction =
@@ -79,6 +99,7 @@ function qualityOf(classCell: string, percentCell: string): Record<string, unkno
 function readRow(
   cells: readonly string[],
   index: ReadonlyMap<string, number>,
+  version: string | undefined,
   feed: HazardsCatalogFeed,
   fetchedAt: string,
 ): RecordDraft | RecordSkipReason {
@@ -103,9 +124,11 @@ function readRow(
   const uncertainty = number(cell("FRPerr"));
   const scan = number(cell("actrack"));
   const track = number(cell("altrack"));
-  const daynight = { D: "day", N: "night" }[cell("D/N")];
+  const pass = cell("D/N");
+  const daynight = Object.hasOwn(DAY_NIGHT, pass) ? DAY_NIGHT[pass] : undefined;
+  if (pass !== "" && daynight === undefined) recordSkipped(feed.id, "unknown_value");
   const channel = cell("used_channel");
-  const quality = qualityOf(cell("confidence_class"), cell("confidence"));
+  const quality = qualityOf(cell("confidence_class"), cell("confidence"), feed);
   const draft = {
     class: "observation",
     kind: "observation",
@@ -118,7 +141,13 @@ function readRow(
     ),
     freshness: freshness(fetchedAt, utcInstant(new Date(at.getTime() + DETECTION_WINDOW_MS))),
     subject: { kind: "location" },
-    result: { type: "quantity", value: frp, unit: "MW" },
+    // The product's FRP uncertainty is the reading's accuracy, in its unit.
+    result: {
+      type: "quantity",
+      value: frp,
+      unit: "MW",
+      ...(uncertainty === undefined || uncertainty < 0 ? {} : { accuracy: uncertainty }),
+    },
     phenomenonTime: { instant: utcInstant(at) },
     aggregation: "instantaneous",
     ...(quality === undefined ? {} : { quality }),
@@ -129,8 +158,8 @@ function readRow(
       ...(daynight === undefined ? {} : { daynight }),
       ...(scan === undefined ? {} : { scan }),
       ...(track === undefined ? {} : { track }),
-      ...(uncertainty === undefined || uncertainty < 0 ? {} : { frpUncertaintyMW: uncertainty }),
       ...(channel === "" ? {} : { channel }),
+      ...(version === undefined ? {} : { version }),
     },
   };
   return withObservationId(feed, draft);
@@ -146,7 +175,10 @@ function readRow(
  * fire. The product's confidence class is the reading's `supplierCode` (low,
  * nominal, high, as FIRMS writes VIIRS's), its percentage the `confidence`;
  * the class decides, and a percentage may be high in the lowest class (a
- * gas flare). A pixel two polls restate has the same id and is written once.
+ * gas flare). The FRP uncertainty is the reading's accuracy and the
+ * granule's processing baseline its `version`; a confidence class or
+ * day/night flag the product does not define is left out (`unknown_value`).
+ * A pixel two polls restate has the same id and is written once.
  * A row with no position is skipped as `no_geometry`, one with a bad
  * position, time or radiated power as `malformed`, and so is a granule that
  * holds no FRP file (its fires cannot be told apart, so it counts once),
@@ -168,9 +200,10 @@ export function parseSlstrFrp(
       unreadable++;
       continue;
     }
+    const version = metadata(lines.slice(0, header.at), "processing_baseline");
     for (const line of lines.slice(header.at + 1)) {
       if (line.trim() === "" || line.startsWith("#")) continue;
-      const draft = readRow(line.split(","), header.index, feed, ctx.fetchedAt);
+      const draft = readRow(line.split(","), header.index, version, feed, ctx.fetchedAt);
       if (typeof draft === "string") {
         recordSkipped(feed.id, draft);
       } else if (!seen.has(String(draft["id"]))) {

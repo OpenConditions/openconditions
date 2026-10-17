@@ -127,10 +127,20 @@ describe("the firms format over the fit captures", () => {
     expect(sealFailures(out.observations)).toEqual([]);
   });
 
-  test("the abbreviated VIIRS confidence letters are kept as the supplier wrote them", () => {
+  test("the abbreviated VIIRS confidence letters are the classes they abbreviate", () => {
     const row = "10,20,300,0.4,0.4,2026-10-07,0305,N21,h,2.0NRT,280,2.5,D";
     const out = parse(viirs, `${HEADER}\n${row}\n`);
-    expect(out.observations[0]!["quality"]).toEqual({ supplierCode: "h" });
+    expect(out.observations[0]!["quality"]).toEqual({ supplierCode: "high" });
+  });
+
+  test("a confidence or day/night flag VIIRS does not define is left out of the kept reading", () => {
+    __resetSkips();
+    const row = "10,20,300,0.4,0.4,2026-10-07,0305,N21,certain,2.0NRT,280,2.5,X";
+    const out = parse(viirs, `${HEADER}\n${row}\n`);
+    expect(out.observations).toHaveLength(1);
+    expect(out.observations[0]!["quality"]).toBeUndefined();
+    expect(out.observations[0]!["extras"]).not.toHaveProperty("daynight");
+    expect(drainSkipped(viirs.id)).toEqual({ unknown_value: 2 });
   });
 });
 

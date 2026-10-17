@@ -8,15 +8,18 @@ import { z } from "zod";
 
 const DOMAIN = "fuel";
 const V = "1.0";
+/** The entries that accept the 100 octane grade and the station amenities this module adds. */
+const V_EXTENDED = "1.1";
 const HOUR = 3600;
 
 /**
  * The grades sources price separately; a grade is a product, not a pump. From
- * `e25` on are grades no European standard names but Spain publishes a price
- * column for, beside the column of the standard grade where there is one: a
- * 25 % ethanol blend, renewable petrol, the red diesel sold for agricultural
- * use, methanol, ammonia, premium 95 E5, 98 octane E10, and compressed and
- * liquefied biomethane.
+ * `e25` to `lng_bio` are grades no European standard names but Spain publishes
+ * a price column for, beside the column of the standard grade where there is
+ * one: a 25 % ethanol blend, renewable petrol, the red diesel sold for
+ * agricultural use, methanol, ammonia, premium 95 E5, 98 octane E10, and
+ * compressed and liquefied biomethane. `sp100` is 100 octane petrol, which
+ * OpenStreetMap tags as its own fuel (`fuel:octane_100`).
  */
 export const FUEL_GRADES = [
   "e5",
@@ -46,6 +49,26 @@ export const FUEL_GRADES = [
   "sp98_e10",
   "cng_bio",
   "lng_bio",
+  "sp100",
+] as const;
+
+/**
+ * What filling stations offer that the kernel's amenity list has no value
+ * for, from France's service list (`services_service`) and OpenStreetMap's
+ * station tags: an air pump for tyres, a parcel pick-up counter, a baby
+ * changing room, a bar, food to take away, and the sale of bottled gas,
+ * heating oil, lamp oil and fuel additives.
+ */
+export const FUEL_STATION_AMENITIES = [
+  "compressed_air",
+  "parcel_pickup",
+  "baby_changing",
+  "bar",
+  "takeaway",
+  "bottled_gas",
+  "heating_oil",
+  "lamp_oil",
+  "fuel_additives",
 ] as const;
 
 export const fuelGradeVocabulary = defineVocabulary({
@@ -68,7 +91,7 @@ export const FUEL_KINDS = [
   defineKind({
     class: "component",
     code: "fuel_product",
-    version: V,
+    version: V_EXTENDED,
     description:
       "One priced product of a station: a grade at a service and price level, sold per litre, kilogram or cubic metre.",
     identity: { fields: ["grade", "service", "priceLevel", "vehicleScope"] },
@@ -87,7 +110,7 @@ export const FUEL_KINDS = [
     class: "feature",
     code: "fuel_station",
     domain: DOMAIN,
-    version: V,
+    version: V_EXTENDED,
     description: "A filling station, with the products it sells.",
     components: ["fuel_product"],
     details: () => ({
@@ -102,6 +125,7 @@ export const FUEL_KINDS = [
        * a missing product a grade that is not sold rather than unknown.
        */
       productsComplete: z.boolean(),
+      /** Whether lorries can fill up: a lane or pump for heavy goods vehicles. */
       truckSuitable: z.boolean().optional(),
     }),
     linking: {
@@ -144,7 +168,7 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
   defineProperty({
     code: "fuel.price",
     domain: DOMAIN,
-    version: V,
+    version: V_EXTENDED,
     description: "What a litre, kilogram or cubic metre of one product costs.",
     result: { type: "money", per: FUEL_UNITS },
     subjects: [PRODUCT, { kind: "location" }],
@@ -182,7 +206,7 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
   defineProperty({
     code: "fuel.price_cap",
     domain: DOMAIN,
-    version: V,
+    version: V_EXTENDED,
     description: "A regulated maximum price for one grade in an area.",
     result: { type: "money", per: FUEL_UNITS },
     subjects: [{ kind: "location" }],

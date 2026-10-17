@@ -1778,6 +1778,10 @@
       }
     ],
     "lifecycle": "operational",
+    "openingHours": {
+      "osm": "24/7",
+      "twentyFourSeven": true
+    },
     "access": {
       "audience": "public"
     },
@@ -1819,7 +1823,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "b27959e7feca7c743659f3b3294e14ac79e4a2e4f242fa5abd6aacb928b0945d"
+    "contentHash": "d5e2f0532f77c5456a4b2c1c53371fee22e3870aab877900ca47103a8021b55f"
   },
   {
     "id": "oc:observation:es-minetur-fuel:03e85a003c9433cda35b064eb42193999caec3c0ce673ffe580543a42104e174",
@@ -2909,7 +2913,24 @@
         "text": "TMC Werkstatt & Tankstelle"
       }
     ],
+    "description": [
+      {
+        "lang": "de",
+        "text": "Wäsche \nAuto reperaturen \nPickerl (§57a)"
+      }
+    ],
     "lifecycle": "operational",
+    "openingHours": {
+      "osm": "Mo-Sa 07:00-19:00; Su off; PH off"
+    },
+    "access": {
+      "audience": "unknown",
+      "payment": [
+        "cash",
+        "debit_card",
+        "credit_card"
+      ]
+    },
     "components": [
       {
         "key": "diesel",
@@ -2935,7 +2956,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "058b7cc5387da9a4aaf751209f2edc416c5495b022609b871e73ee92c2a63871"
+    "contentHash": "fa36e398875c266217d9b70ebfb5931b63de682f7ac327c34de8bc55bdd1f25b"
   },
   {
     "id": "oc:feature:at-econtrol-fuel:34026",
@@ -2996,6 +3017,16 @@
       }
     ],
     "lifecycle": "operational",
+    "openingHours": {
+      "osm": "Mo-Sa 06:00-21:00; Su 09:00-18:00; PH 09:00-18:00"
+    },
+    "access": {
+      "audience": "unknown",
+      "payment": [
+        "cash",
+        "debit_card"
+      ]
+    },
     "components": [
       {
         "key": "diesel",
@@ -3021,7 +3052,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "78be0253a1250aee1fac15a60e033eb309fb5b7a04df4b16cfa3363e2614f048"
+    "contentHash": "16a8b9d08b6b579bbca462f08119824548ff2a503bc61e03a7fe38365224c180"
   },
   {
     "id": "oc:observation:at-econtrol-fuel:67741110db6890a444052cd7a715519121dfa5798271604171d282d6fcdb340c",

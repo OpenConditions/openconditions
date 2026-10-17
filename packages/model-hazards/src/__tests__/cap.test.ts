@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { capCircle, capPolygon, capReferences } from "../cap.js";
+import { capCircle, capGroupList, capPolygon, capReferences } from "../cap.js";
+import { nwsVtec } from "../vtec.js";
 
 describe("CAP encodings", () => {
+  it("reads a group listing, a name with whitespace in double quotes", () => {
+    expect(capGroupList(' INC-1  "Storm Lea" INC-2 ""')).toEqual(["INC-1", "Storm Lea", "INC-2"]);
+  });
+
   it("reads references and skips an entry that is not a triple", () => {
     expect(
       capReferences(
@@ -66,5 +71,41 @@ describe("CAP encodings", () => {
     expect(Math.max(...lons(east))).toBeLessThan(-179);
     for (const ring of [west[0]!, east[0]!]) expect(ring[0]).toEqual(ring[ring.length - 1]);
     expect(capCircle("-17.8,-179.95 50")?.type).toBe("MultiPolygon");
+  });
+});
+
+describe("NWS P-VTEC", () => {
+  it("reads every part of the code, a zero time as no time", () => {
+    expect(nwsVtec("/O.EXB.KTAE.FA.A.0005.261009T0900Z-261011T0000Z/")).toEqual({
+      productClass: "O",
+      action: "EXB",
+      office: "KTAE",
+      phenomenon: "FA",
+      significance: "A",
+      eventNumber: 5,
+      begin: "2026-10-09T09:00:00Z",
+      end: "2026-10-11T00:00:00Z",
+    });
+    expect(nwsVtec(" /O.CON.KTBW.FL.W.0009.000000T0000Z-000000T0000Z/ ")).toEqual({
+      productClass: "O",
+      action: "CON",
+      office: "KTBW",
+      phenomenon: "FL",
+      significance: "W",
+      eventNumber: 9,
+    });
+  });
+
+  it("tells a code with an undefined action or significance from no code at all", () => {
+    expect(nwsVtec("/O.ZZZ.KTAE.FA.A.0005.261009T0900Z-261011T0000Z/")).toBe("unknown");
+    expect(nwsVtec("/O.NEW.KTAE.FA.Q.0005.261009T0900Z-261011T0000Z/")).toBe("unknown");
+    expect(nwsVtec("/O.NEW.KTAE.FA.A.5.261009T0900Z-261011T0000Z/")).toBeNull();
+    expect(nwsVtec("FLOOD WATCH")).toBeNull();
+  });
+
+  it("a date that does not exist is no time", () => {
+    expect(nwsVtec("/O.NEW.KTAE.FA.A.0005.261309T0900Z-261031T2500Z/")).toEqual(
+      expect.not.objectContaining({ begin: expect.anything(), end: expect.anything() }),
+    );
   });
 });

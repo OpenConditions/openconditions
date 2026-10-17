@@ -120,6 +120,10 @@ describe("the meteoalarm format over the captured feeds", () => {
     expect(locationOf(warning).geometry!.type).toBe("Polygon");
     const event = (warning["details"] as { cap: { event: { lang: string }[] } }).cap.event;
     expect(event.map((t) => t.lang)).toEqual(["en", "de", "fr", "it", "rm"]);
+    const details = (warning["details"] as { cap: Record<string, unknown> }).cap;
+    expect(details).toMatchObject({ altitudeFt: 0, ceilingFt: 3000 });
+    // The hub repeats the message type as its incident list, which names no incident.
+    expect(details).not.toHaveProperty("incidents");
   });
 
   test("France: a NUTS3 area takes the shape of the EMMA region MeteoAlarm's aliases name", () => {

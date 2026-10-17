@@ -35,4 +35,5 @@ export const GRADE_UNIT: Readonly<Record<FuelGrade, FuelUnit>> = {
   sp98_e10: "L",
   cng_bio: "kg",
   lng_bio: "kg",
+  sp100: "L",
 };

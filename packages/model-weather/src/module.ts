@@ -75,6 +75,8 @@ export const WEATHER_PROPERTIES: PropertyEntry[] = [
   // An hourly mean of compass bearings is meaningless (359° and 1° average to 180°).
   quantity("weather.wind_direction", "deg", "Direction the wind blows from.", { rawDays: 7 }),
   quantity("weather.precipitation_rate", "mm/h", "Precipitation intensity."),
+  // A sum over the reading's window, which the reading states.
+  quantity("weather.precipitation_amount", "mm", "Precipitation fallen over the reading's window."),
   defineProperty({
     code: "weather.precipitation_type",
     domain: DOMAIN,
@@ -109,6 +111,8 @@ export const WEATHER_PROPERTIES: PropertyEntry[] = [
     "kg/m3",
     "De-icing salt concentration of the surface solution.",
   ),
+  // The salt dissolved on the surface, not a spreader's application rate.
+  quantity("road.salt_amount", "g/m2", "De-icing salt on the road surface per area."),
   defineProperty({
     code: "road.condition_forecast",
     domain: DOMAIN,

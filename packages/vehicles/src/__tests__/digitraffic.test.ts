@@ -161,7 +161,8 @@ describe("the digitraffic format over edited trackings", () => {
     expect(out.rejected).toBeUndefined();
     __resetSkips();
     parse([fixture("fi-digitraffic-maintenance-edges.json")]);
-    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1, malformed: 1 });
+    // The unknown value is 900000004's task outside the publisher's list.
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1, malformed: 1, unknown_value: 1 });
     expect(sealFailures(out.observations)).toEqual([]);
   });
 
@@ -193,7 +194,7 @@ describe("the digitraffic format over edited trackings", () => {
     expect(r).not.toHaveProperty("extras");
   });
 
-  test("a task the list does not hold is kept verbatim and claims nothing", () => {
+  test("a task the list does not hold is kept verbatim, claims nothing and is counted", () => {
     const r = tracking(out, "900000004");
     expect(value(r)).toEqual({ v: 1, point: { type: "Point", coordinates: [24.96, 60.19] } });
     expect(r["extras"]).toEqual({ tasks: ["SNOW_MELTING_WITH_LASERS"] });

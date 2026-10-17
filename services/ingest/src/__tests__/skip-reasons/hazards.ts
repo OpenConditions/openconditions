@@ -72,7 +72,7 @@ export const SAMPLES: SkipSamples = {
   },
   // A smoke density the format does not know.
   "hazards/hms": {
-    reason: "unknown_type",
+    reason: "unknown_value",
     payloads: {
       main: json({
         type: "FeatureCollection",

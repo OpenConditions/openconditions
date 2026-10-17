@@ -69,15 +69,18 @@ describe("windy", () => {
     expect(camera(out, "1179853135")).toMatchObject({
       type: "traffic",
       name: [{ lang: "und", text: "Innsbruck: Maria-Theresien-Strasse" }],
-      location: { geometry: { coordinates: [11.4041, 47.2692] } },
+      location: {
+        geometry: { coordinates: [11.4041, 47.2692] },
+        admin: { country: "AT", municipality: "Innsbruck" },
+      },
       details: {
         kind: "camera",
         v: 1,
         imageRedistribution: "link_only",
         detailUrl: "https://www.windy.com/webcams/1179853135",
-        // The timelapse is preferred to the live player.
+        // A webcam that streams has the live player, which shows its current view.
         playerEmbedUrl:
-          "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=day",
+          "https://webcams.windy.com/webcams/public//player?webcamId=1179853135&playerType=live",
       },
     });
     // The view carries Windy's page and terms itself: a canonical camera that
