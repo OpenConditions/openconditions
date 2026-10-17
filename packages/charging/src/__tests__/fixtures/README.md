@@ -116,7 +116,13 @@ Wartung`, no EVSE ids), 1085129 (`Kostenlos`, a cable plug), 1142486 and
   are issued on registration. One file per reader role: `eipa-pool.json`,
   `eipa-station.json`, `eipa-point.json`, `eipa-operator.json`,
   `eipa-dictionary.json` and `eipa-dynamic.json` (statuses stamped
-  2026-07-29, which the tests use as the fetch time).
+  2026-07-29, which the tests use as the fetch time). The dictionary's
+  charging modes, authentication and payment methods are the register's own
+  tables (a 2024 copy of the reader's `dictionary.json` in
+  github.com/m-wilkos/praca_inzynierska, `json/slownik.json`), not the
+  documentation's abridged example, which numbered them differently; the
+  points' charging modes are set to the matching ids (Mode 4 DC and Mode 3
+  AC three-phase).
 - `cynap.xml`: captured at 04:08 UTC on 2026-10-06 with
   `curl -sS -m 60 -A "Mozilla/5.0"` from
   https://fixcyprus.cy/gnosis/open/api/nap/datasets/electric_vehicle_chargers/

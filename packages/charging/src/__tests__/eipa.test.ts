@@ -97,7 +97,9 @@ describe("eipa", () => {
           country: "PL",
         },
       },
-      access: { authentication: ["rfid"], payment: ["free", "app"] },
+      // Payment 8 is "Płatne ładowanie, gotówka", cash.
+      access: { authentication: ["rfid"], payment: ["free", "cash"] },
+      details: { directions: [{ lang: "pl", text: "Wejście od ul. Rycerskiej" }] },
     });
 
     // Point 18 asks 2.54 PLN per kWh and 1.63 PLN per minute, 97.80 PLN an hour.
@@ -152,7 +154,8 @@ describe("eipa", () => {
     expect(states).toEqual([
       // As of each status's own ts.
       ["PL*2DT*E9FX7M3CL", "available", "2026-07-29T03:38:58Z"],
-      ["PL*V1J*EUEXG3Z5O", "out_of_order", "2026-07-29T02:59:00Z"],
+      // Availability 0, "niedostępne": not available, not broken.
+      ["PL*V1J*EUEXG3Z5O", "inoperative", "2026-07-29T02:59:00Z"],
     ]);
     const orlen = site(out, "3");
     expect(orlen).toMatchObject({
@@ -171,7 +174,7 @@ describe("eipa", () => {
     );
     expect(busy.observations.map((o) => (o["result"] as { value: string }).value)).toEqual([
       "occupied",
-      "out_of_order",
+      "inoperative",
     ]);
   });
 
@@ -216,5 +219,92 @@ describe("eipa", () => {
     );
     expect(unknown.status.observations).toEqual(status.observations);
     expect(unknown.status.rejected).toBe(status.rejected + 1);
+  });
+
+  test("EIPA: the Type 3A socket and China's GB/T parts are their OCPI standards", () => {
+    const out = parse(
+      payloads((docs) => {
+        const tables = docs["dictionary"]!.data[0]!;
+        (tables["connector_interface"] as unknown[]).push(
+          { id: 23, name: "IEC-62196-T3A-F" },
+          { id: 31, name: "CHINA-PART2" },
+          { id: 32, name: "CHINA-PART3" },
+        );
+        docs["points"]!.data[1]!["connectors"] = [{ interfaces: [23, 31, 32], power: 22 }];
+      }),
+    );
+    const orlen = site(out, "3");
+    expect(
+      components(orlen)
+        .filter((c) => c.kind === "connector")
+        .map((c) => c.details["standard"]),
+    ).toEqual(["IEC_62196_T3A", "GBT_AC", "GBT_DC"]);
+  });
+
+  test("EIPA: operator contacts and code, province, photos, closures, modes and every method", () => {
+    const out = parse(
+      payloads((docs) => {
+        const pool = docs["pools"]!.data[0]!;
+        Object.assign(pool, {
+          operating_hours: [{ weekday: 1, from_time: "08:00", to_time: "18:00" }],
+          closing_hours: [
+            { from_time: "2026-08-01T00:00:00+02:00", to_time: "2026-08-02T00:00:00+02:00" },
+          ],
+          images: [
+            { uri: "https://eipa.example/pool.jpg", thumbnail_uri: "https://eipa.example/t.jpg" },
+          ],
+          operator_phone: "+48 22 000",
+        });
+        Object.assign(docs["stations"]!.data[0]!, {
+          authentication_methods: [16, 32, 128, 1024, 8192],
+          payment_methods: [8, 16, 32],
+          images: [{ uri: "https://eipa.example/station.jpg" }],
+        });
+      }),
+    );
+    expect(drainSkipped("pl-eipa-charging")).toEqual({});
+    const pool = site(out, "2");
+    expect(pool).toMatchObject({
+      operator: {
+        phone: "+48 22 000",
+        email: "kontakt@operator.example.pl",
+        ids: [{ scheme: "cpo", id: "PL-2DT", authority: "pl-eipa-charging" }],
+      },
+      location: { address: { region: "wielkopolskie" } },
+      images: [
+        {
+          url: "https://eipa.example/pool.jpg",
+          category: "site",
+          thumbnail: "https://eipa.example/t.jpg",
+        },
+      ],
+      openingHours: {
+        osm: "Mo 08:00-18:00",
+        exceptions: [{ start: "2026-07-31T22:00:00Z", end: "2026-08-01T22:00:00Z", open: false }],
+      },
+      access: {
+        authentication: ["pin", "app", "plug_and_charge", "remote"],
+        payment: ["cash", "prepaid_card", "other"],
+      },
+    });
+    const point = evsesOf(pool)[0] as Component & { position?: unknown; images?: unknown };
+    expect(point.position).toEqual({ type: "Point", coordinates: [16.399548, 52.232128] });
+    expect(point.images).toEqual([
+      { url: "https://eipa.example/station.jpg", category: "equipment" },
+    ]);
+    // Mode 4 DC and Mode 3 AC three-phase: modes for each plug, no one power type.
+    expect(connectorsOf(pool, point.key)[0]?.details).toMatchObject({
+      chargingModes: ["mode4", "mode3"],
+    });
+    expect(connectorsOf(pool, point.key)[0]?.details).not.toHaveProperty("powerType");
+    // "Brak dostępu": not the public's; unknown method and price unit codes are counted.
+    const closed = parse(
+      payloads((docs) => {
+        Object.assign(docs["stations"]!.data[0]!, { authentication_methods: [1, 4096] });
+        (docs["status"]!.data[0]!["prices"] as unknown[]).push({ price: "3", unit: "h" });
+      }),
+    );
+    expect(site(closed, "2")).toMatchObject({ access: { audience: "private" } });
+    expect(drainSkipped("pl-eipa-charging")).toEqual({ unknown_value: 2 });
   });
 });
