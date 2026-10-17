@@ -47,7 +47,7 @@ import {
   statusIsLive,
 } from "../site.js";
 import { indexStatus, type StatusIndexDraft, statusReader } from "../status.js";
-import { tariffDraft, tariffKeys } from "../tariff.js";
+import { tariffDraft, tariffKeys, unreadableTariff } from "../tariff.js";
 
 /** The live state a status payload gives an EVSE, by uid. */
 export interface EvseState {
@@ -189,7 +189,9 @@ const zonedTariff = (tariff: OcpiTariff, zone: string): OcpiTariff => {
  * last changed more than 30 days back is no reading either. Aggregated rows
  * (OCPDB) credit the upstream source they name, which also qualifies their
  * provider id. One operator's locations within 15 m are one site. The status
- * index names every EVSE that is neither removed nor planned by its uid.
+ * index names every EVSE that is neither removed nor planned by its uid. A
+ * tariff with restrictions that cannot be read is no offer and no connector's
+ * tariff, and counts once among the rejected records.
  */
 export function mapOcpi(
   feed: ChargingCatalogFeed,
@@ -200,6 +202,7 @@ export function mapOcpi(
   const resolve = tariffResolver(input.tariffs);
   const index: StatusIndexDraft = new Map();
   const seen = new Set<string>();
+  const unreadable = new Set<OcpiTariff>();
   for (const loc of input.locations) {
     if (loc.publish === false) continue;
     const stationId = stationIdOf(loc);
@@ -266,6 +269,10 @@ export function mapOcpi(
     const keys = tariffKeys(tariffs.keys());
     const offered = new Set<string>();
     for (const tariff of tariffs.values()) {
+      if (unreadableTariff(tariff)) {
+        unreadable.add(tariff);
+        continue;
+      }
       const offer = tariffDraft(feed, stationId, zonedTariff(tariff, zone), {
         fetchedAt: ctx.fetchedAt,
         point,
@@ -334,7 +341,7 @@ export function mapOcpi(
     };
     out.features.push(siteDraft(feed, site, ctx.fetchedAt));
   }
-  out.rejected = input.rejected;
+  out.rejected = input.rejected + unreadable.size;
   out.statusIndex = index;
   colocateSites(out);
   out.observations = ocpiStatusReadings(feed, input.statuses, index, ctx).observations;

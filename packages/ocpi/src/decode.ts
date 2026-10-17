@@ -299,30 +299,72 @@ function priceComponent(raw: unknown): OcpiPriceComponent {
   return drop({ type, price: amount, vat: vat(raw), step_size: num(raw.step_size) });
 }
 
-function positive(value: unknown): number | undefined {
-  const number = num(value);
-  return number !== undefined && number > 0 ? number : undefined;
-}
+const RESTRICTIONS: ReadonlySet<string> = new Set([
+  "start_time",
+  "end_time",
+  "start_date",
+  "end_date",
+  "min_kwh",
+  "max_kwh",
+  "min_current",
+  "max_current",
+  "min_power",
+  "max_power",
+  "min_duration",
+  "max_duration",
+  "day_of_week",
+  "reservation",
+]);
 
+/**
+ * An element's restrictions. One set to a value the decoder cannot read, or
+ * one OCPI does not define, is named in `unreadable` rather than left out:
+ * left out, it would apply the element beyond what was published. Nulls are
+ * unset. Values are kept as written for the mapping to judge, except that a
+ * kWh or duration bound of 0 is unset (NDW and OCPDB write 0 for an unset
+ * `max_duration`).
+ */
 function restrictions(raw: unknown): OcpiRestrictions | undefined {
-  if (!isRecord(raw)) return undefined;
-  const days = textList(raw.day_of_week)?.map((d) => d.toUpperCase());
+  if (raw === undefined || raw === null) return undefined;
+  if (!isRecord(raw)) return { unreadable: ["restrictions"] };
+  const unreadable: string[] = [];
+  const read = <T>(key: string, value: T | undefined): T | undefined => {
+    if (value === undefined && raw[key] !== undefined && raw[key] !== null) unreadable.push(key);
+    return value;
+  };
+  const amount = (key: string) => read(key, num(raw[key]));
+  const nonZero = (key: string) => {
+    const value = amount(key);
+    return value === 0 ? undefined : value;
+  };
   const result = drop<OcpiRestrictions>({
-    start_time: clock(raw.start_time),
-    end_time: clock(raw.end_time),
-    start_date: text(raw.start_date),
-    end_date: text(raw.end_date),
-    min_kwh: positive(raw.min_kwh),
-    max_kwh: positive(raw.max_kwh),
-    min_current: num(raw.min_current),
-    max_current: num(raw.max_current),
-    min_power: num(raw.min_power),
-    max_power: num(raw.max_power),
-    min_duration: positive(raw.min_duration),
-    max_duration: positive(raw.max_duration),
-    day_of_week: days,
-    reservation: text(raw.reservation),
+    start_time: read("start_time", clock(raw.start_time)),
+    end_time: read("end_time", clock(raw.end_time)),
+    start_date: read("start_date", text(raw.start_date)),
+    end_date: read("end_date", text(raw.end_date)),
+    min_kwh: nonZero("min_kwh"),
+    max_kwh: nonZero("max_kwh"),
+    min_current: amount("min_current"),
+    max_current: amount("max_current"),
+    min_power: amount("min_power"),
+    max_power: amount("max_power"),
+    min_duration: nonZero("min_duration"),
+    max_duration: nonZero("max_duration"),
+    day_of_week: textList(raw.day_of_week)?.map((d) => d.toUpperCase()),
+    reservation: read("reservation", text(raw.reservation)),
   });
+  const days = raw.day_of_week;
+  if (
+    days !== undefined &&
+    days !== null &&
+    (!Array.isArray(days) || (result.day_of_week ?? []).length !== days.length)
+  ) {
+    unreadable.push("day_of_week");
+  }
+  for (const [key, value] of Object.entries(raw)) {
+    if (!RESTRICTIONS.has(key) && value !== undefined && value !== null) unreadable.push(key);
+  }
+  if (unreadable.length > 0) result.unreadable = unreadable;
   return Object.keys(result).length > 0 ? result : undefined;
 }
 

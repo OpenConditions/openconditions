@@ -1,7 +1,7 @@
 import { normaliseTariff } from "@openconditions/ocpi";
 import { describe, expect, test } from "vitest";
 import type { ChargingFeed } from "../site.js";
-import { tariffDraft, tariffOfferId } from "../tariff.js";
+import { tariffDraft, tariffOfferId, unreadableTariff } from "../tariff.js";
 import { sealFailures } from "./helpers/seal.js";
 
 const FEED: ChargingFeed = {
@@ -65,7 +65,7 @@ describe("tariffDraft", () => {
     expect((draft?.["elements"] as unknown[] | undefined)?.[1]).not.toHaveProperty("restrictions");
   });
 
-  test("min_price keeps excl_vat; max_duration 0 sets no maxDuration", () => {
+  test("min_price keeps excl_vat; a maximum of 0, as NDW and OCPDB write an unset one, sets none", () => {
     const draft = offer({
       id: "T1",
       min_price: { excl_vat: 1.5, incl_vat: 1.79 },
@@ -178,6 +178,67 @@ describe("tariffDraft", () => {
         elements: [{ price_components: [{ type: "ENERGY", price: 0.49 }] }],
       }),
     ).toMatchObject({ priceIncludesVat: false });
+  });
+
+  test.each([
+    ["an unknown reservation type", { reservation: "BOOKING" }],
+    ["only unknown days", { day_of_week: ["FUNDAY"] }],
+    ["one unknown day among known ones", { day_of_week: ["SATURDAY", "FUNDAY"] }],
+    ["a start time off OCPI's syntax", { start_time: "22.00" }],
+    ["an end time off OCPI's syntax", { start_time: "22:00", end_time: "24:00" }],
+    ["a start date off OCPI's syntax", { start_date: "2026/01/01" }],
+    ["an end date off OCPI's syntax", { end_date: "31.12.2026" }],
+    ["a negative minimum", { min_power: -1 }],
+    ["a negative maximum", { max_current: -16 }],
+    ["a bound that is no number", { max_power: "fast" }],
+    ["a property OCPI does not define", { min_soc: 80 }],
+    ["restrictions that are no object", "weekends"],
+  ])(
+    "a restricted element with %s is never applied more widely: the tariff is no offer",
+    (_, restrictions) => {
+      const draft = offer({
+        id: "R",
+        elements: [
+          { price_components: [{ type: "ENERGY", price: 0.29 }], restrictions },
+          { price_components: [{ type: "ENERGY", price: 0.59 }] },
+        ],
+      });
+      expect(draft).toBeUndefined();
+      expect(
+        unreadableTariff(
+          normaliseTariff({
+            id: "R",
+            currency: "EUR",
+            elements: [{ price_components: [{ type: "ENERGY", price: 0.29 }], restrictions }],
+          }),
+        ),
+      ).toBe(true);
+    },
+  );
+
+  test("an element of unknown dimensions alone leaves the others' order and is not read", () => {
+    const tariff = normaliseTariff({
+      id: "ORDER",
+      currency: "EUR",
+      elements: [
+        {
+          price_components: [{ type: "CONGESTION_TIME", price: 30 }],
+          restrictions: { min_soc: 80 },
+        },
+        {
+          price_components: [{ type: "ENERGY", price: 0.29 }],
+          restrictions: { day_of_week: ["SATURDAY", "SUNDAY"] },
+        },
+        { price_components: [{ type: "ENERGY", price: 0.59 }] },
+      ],
+    });
+    expect(unreadableTariff(tariff)).toBe(false);
+    expect(offer(tariff as unknown as Record<string, unknown>)).toMatchObject({
+      elements: [
+        { components: [{ price: { amount: "0.29" } }], restrictions: { days: ["SA", "SU"] } },
+        { components: [{ price: { amount: "0.59" } }] },
+      ],
+    });
   });
 
   test("a tariff without a priced element the model knows is no offer", () => {

@@ -66,38 +66,104 @@ const RESERVATIONS: Readonly<Record<string, string>> = {
 const CLOCK = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
-const nonNegative = (n: number | undefined) =>
-  n !== undefined && Number.isFinite(n) && n >= 0 ? n : undefined;
-/** A maximum of zero is OCPI's way of not setting one. */
-const positive = (n: number | undefined) =>
-  n !== undefined && Number.isFinite(n) && n > 0 ? n : undefined;
+/** Marks a restriction that is set but cannot be read. */
+const UNREADABLE = Symbol("unreadable");
 
-function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown> | undefined {
-  if (r === undefined) return undefined;
-  const days = (r.day_of_week ?? [])
-    .map((d) => OCPI_DAYS[d as keyof typeof OCPI_DAYS])
-    .filter((d) => d !== undefined);
-  const seconds = (n: number | undefined) =>
-    n === undefined ? undefined : { value: n, unit: "s" };
+/**
+ * An element's restrictions as the model holds them; null when one of them
+ * cannot be read (an unknown day or reservation type, a time or date off
+ * OCPI's syntax, a negative bound, one the decoder could not read). Left out,
+ * it would apply the element beyond what was published.
+ */
+function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown> | null {
+  if (r === undefined) return {};
+  if ((r.unreadable ?? []).length > 0) return null;
+  const pattern = (value: string | undefined, syntax: RegExp) =>
+    value === undefined ? undefined : syntax.test(value) ? value : UNREADABLE;
+  const min = (n: number | undefined) =>
+    n === undefined ? undefined : Number.isFinite(n) && n >= 0 ? n : UNREADABLE;
+  // OCPI bounds a maximum exclusively, so 0 would match nothing; NDW and
+  // OCPDB write it for an unset one, and it is read as unset.
+  const max = (n: number | undefined) => (n === 0 ? undefined : min(n));
+  const seconds = (n: number | undefined | typeof UNREADABLE) =>
+    typeof n === "number" ? { value: n, unit: "s" } : n;
+  const days = r.day_of_week?.map(
+    (d): string | typeof UNREADABLE => OCPI_DAYS[d as keyof typeof OCPI_DAYS] ?? UNREADABLE,
+  );
   const fields: Record<string, unknown> = {
-    startTime: r.start_time !== undefined && CLOCK.test(r.start_time) ? r.start_time : undefined,
-    endTime: r.end_time !== undefined && CLOCK.test(r.end_time) ? r.end_time : undefined,
-    startDate: r.start_date !== undefined && DATE.test(r.start_date) ? r.start_date : undefined,
-    endDate: r.end_date !== undefined && DATE.test(r.end_date) ? r.end_date : undefined,
-    days: days.length === 0 ? undefined : [...new Set(days)],
-    minKwh: nonNegative(r.min_kwh),
-    maxKwh: positive(r.max_kwh),
-    minCurrentA: nonNegative(r.min_current),
-    maxCurrentA: positive(r.max_current),
-    minPowerKw: nonNegative(r.min_power),
-    maxPowerKw: positive(r.max_power),
+    startTime: pattern(r.start_time, CLOCK),
+    endTime: pattern(r.end_time, CLOCK),
+    startDate: pattern(r.start_date, DATE),
+    endDate: pattern(r.end_date, DATE),
+    days:
+      days === undefined || days.length === 0
+        ? undefined
+        : days.includes(UNREADABLE)
+          ? UNREADABLE
+          : [...new Set(days)],
+    minKwh: min(r.min_kwh),
+    maxKwh: max(r.max_kwh),
+    minCurrentA: min(r.min_current),
+    maxCurrentA: max(r.max_current),
+    minPowerKw: min(r.min_power),
+    maxPowerKw: max(r.max_power),
     // OCPI durations are seconds, whatever a publisher's own documentation says.
-    minDuration: seconds(nonNegative(r.min_duration)),
-    maxDuration: seconds(positive(r.max_duration)),
-    reservation: r.reservation === undefined ? undefined : RESERVATIONS[r.reservation],
+    minDuration: seconds(min(r.min_duration)),
+    maxDuration: seconds(max(r.max_duration)),
+    reservation:
+      r.reservation === undefined ? undefined : (RESERVATIONS[r.reservation] ?? UNREADABLE),
   };
-  const written = Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
-  return Object.keys(written).length === 0 ? undefined : written;
+  if (Object.values(fields).includes(UNREADABLE)) return null;
+  return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
+}
+
+/**
+ * The tariff's elements as the model holds them, each with the price
+ * components of a type the model knows; an element with none is left out.
+ * OCPI looks the price of each dimension up in the first element that has a
+ * component of it and whose restrictions match, so leaving out an element
+ * without a known dimension changes no known dimension's price. Null when a
+ * kept element's restrictions cannot be read: leaving that element out would
+ * let a later one of its dimensions, or none, price what it prices.
+ */
+function elementsOf(tariff: OcpiTariff): Record<string, unknown>[] | null {
+  const elements: Record<string, unknown>[] = [];
+  for (const element of tariff.elements) {
+    const components = element.price_components.flatMap((c) => {
+      const type = OCPI_TARIFF_DIMENSIONS[c.type];
+      if (type === undefined || !Number.isFinite(c.price) || c.price < 0) return [];
+      const vat = c.vat;
+      const step = c.step_size;
+      return [
+        {
+          type,
+          price: { amount: money(c.price), currency: tariff.currency },
+          ...(vat !== undefined && Number.isFinite(vat) && vat >= 0 && vat <= 100
+            ? { vatPct: vat }
+            : {}),
+          ...(step !== undefined && Number.isInteger(step) && step > 0 ? { stepSize: step } : {}),
+          ...(UNITS[type] === undefined ? {} : { unit: UNITS[type] }),
+        },
+      ];
+    });
+    if (components.length === 0) continue;
+    const restrictions = restrictionsOf(element.restrictions);
+    if (restrictions === null) return null;
+    elements.push({
+      components,
+      ...(Object.keys(restrictions).length === 0 ? {} : { restrictions }),
+    });
+  }
+  return elements;
+}
+
+/**
+ * Whether a tariff holds a priced element whose restrictions cannot be read:
+ * no offer can state it without applying that element more widely or not at
+ * all, so the tariff is a source record the parse could not use.
+ */
+export function unreadableTariff(tariff: OcpiTariff): boolean {
+  return elementsOf(tariff) === null;
 }
 
 /**
@@ -105,8 +171,9 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
  * and the connectors it applies to name it in `tariffRefs`. OCPI prices are
  * before tax unless the tariff says they include it, so the price bounds take
  * the matching side of OCPI's pair. Undefined when no element holds a priced
- * component the model knows: text alone is the site's `tariffText`, never an
- * offer.
+ * component the model knows (text alone is the site's `tariffText`, never an
+ * offer), or when one that does has restrictions that cannot be read
+ * (`unreadableTariff`).
  */
 export function tariffDraft(
   feed: ChargingFeed,
@@ -121,29 +188,8 @@ export function tariffDraft(
   },
 ): RecordDraft | undefined {
   const currency = tariff.currency;
-  const elements = tariff.elements.flatMap((element) => {
-    const components = element.price_components.flatMap((c) => {
-      const type = OCPI_TARIFF_DIMENSIONS[c.type];
-      if (type === undefined || !Number.isFinite(c.price) || c.price < 0) return [];
-      const vat = c.vat;
-      const step = c.step_size;
-      return [
-        {
-          type,
-          price: { amount: money(c.price), currency },
-          ...(vat !== undefined && Number.isFinite(vat) && vat >= 0 && vat <= 100
-            ? { vatPct: vat }
-            : {}),
-          ...(step !== undefined && Number.isInteger(step) && step > 0 ? { stepSize: step } : {}),
-          ...(UNITS[type] === undefined ? {} : { unit: UNITS[type] }),
-        },
-      ];
-    });
-    if (components.length === 0) return [];
-    const restrictions = restrictionsOf(element.restrictions);
-    return [{ components, ...(restrictions === undefined ? {} : { restrictions }) }];
-  });
-  if (elements.length === 0) return undefined;
+  const elements = elementsOf(tariff);
+  if (elements === null || elements.length === 0) return undefined;
 
   const includesVat = tariff.tax_included === "YES";
   const bound = (price: OcpiPrice | undefined) => {

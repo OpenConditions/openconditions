@@ -98,7 +98,8 @@ function elementOf(rate: Raw): OcpiTariffElement | null {
   const maxKw = positiveNumber(rate["EndKW"]);
   const restrictions = {
     ...(allDay || start === undefined ? {} : { start_time: start }),
-    ...(allDay || end === undefined ? {} : { end_time: end }),
+    // A day's end is OCPI's 00:00, the same as no end time after a start.
+    ...(allDay || end === undefined || end === "24:00" ? {} : { end_time: end }),
     ...(days === undefined ? {} : { day_of_week: days }),
     ...(minKw === undefined ? {} : { min_power: minKw }),
     ...(maxKw === undefined ? {} : { max_power: maxKw }),
