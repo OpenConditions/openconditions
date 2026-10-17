@@ -1,4 +1,5 @@
 import {
+  drainSkipped,
   type EgressRecord,
   isPublicRecord,
   type ParseOutput,
@@ -239,6 +240,7 @@ describe("parkapi-v3", () => {
   });
 
   test("ParkAPI v3: only car sites and sites without a purpose are kept", () => {
+    drainSkipped(mobidataFeed().id);
     const out = parse(
       sitesWith((items) => [
         { ...items[1], id: 1, purpose: "BIKE", type: "STANDS" },
@@ -248,6 +250,86 @@ describe("parkapi-v3", () => {
       fixture("parkapi-v3-sources.json"),
     );
     expect(out.features.map((f) => f["id"])).toEqual(["oc:feature:de-bw-mobidata-parking:2"]);
-    expect(out.rejected).toBe(1);
+    // The bicycle site is left out by design; the unplaceable one is skipped.
+    expect(drainSkipped(mobidataFeed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  const maxStay = (restrictions: unknown[], extra: Record<string, unknown> = {}) => {
+    const out = parse(
+      sitesWith((items) => [{ ...items[1], id: 1, restrictions, ...extra }]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    return (site(out, "1")?.["details"] as { maxStay?: unknown } | undefined)?.maxStay;
+  };
+
+  test("ParkAPI v3: a maximum stay for every audience at all hours is the site's", () => {
+    expect(maxStay([{ max_stay: "PT2H" }])).toEqual({ value: 120, unit: "min" });
+    expect(maxStay([{ max_stay: "P1DT30M" }])).toEqual({ value: 1470, unit: "min" });
+    // Alternatives: any of them allows the longest.
+    expect(maxStay([{ max_stay: "PT1H" }, { max_stay: "PT3H" }])).toEqual({
+      value: 180,
+      unit: "min",
+    });
+    // The deprecated site field, in seconds, when no restriction gives one.
+    expect(maxStay([], { max_stay: 5400 })).toEqual({ value: 90, unit: "min" });
+    expect(maxStay([{ max_stay: "PT4H" }], { max_stay: 5400 })).toEqual({
+      value: 240,
+      unit: "min",
+    });
+  });
+
+  test("ParkAPI v3: a maximum stay for one audience, some hours or of no fixed length is not the site's", () => {
+    expect(maxStay([{ type: "DISABLED", capacity: 3, max_stay: "PT2H" }])).toBeUndefined();
+    expect(maxStay([{ max_stay: "PT2H", hours: "Mo-Fr 08:00-18:00" }])).toBeUndefined();
+    expect(maxStay([{ max_stay: "P1M" }])).toBeUndefined();
+    expect(maxStay([{ max_stay: "PT" }])).toBeUndefined();
+    expect(maxStay([{ max_stay: "2 hours" }])).toBeUndefined();
+  });
+
+  test("ParkAPI v3: supervision, lighting and a roof", () => {
+    const out = parse(
+      sitesWith((items) => [
+        { ...items[1], id: 1, supervision_type: "ATTENDED", has_lighting: true },
+        { ...items[1], id: 2, supervision_type: "VIDEO" },
+        {
+          ...items[1],
+          id: 3,
+          supervision_type: "NO",
+          type: "OFF_STREET_PARKING_GROUND",
+          is_covered: true,
+        },
+        // A garage is covered already.
+        { ...items[1], id: 4, is_covered: true },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    expect(site(out, "1")?.["details"]).toMatchObject({
+      supervision: "on_site",
+      securityFeatures: ["lighting"],
+    });
+    expect(site(out, "2")?.["details"]).toMatchObject({ securityFeatures: ["cctv"] });
+    expect(site(out, "2")?.["details"]).not.toHaveProperty("supervision");
+    expect(site(out, "3")?.["details"]).toMatchObject({ supervision: "none", layout: "covered" });
+    expect(site(out, "4")?.["details"]).toMatchObject({ layout: "multi_storey" });
+  });
+
+  test("ParkAPI v3: a site restricted to customers as a whole is a customers' car park", () => {
+    const out = parse(
+      sitesWith((items) => [
+        { ...items[1], id: 1, restrictions: [{ type: "CUSTOMER" }] },
+        { ...items[1], id: 2, restrictions: [{ type: "CUSTOMER", capacity: 260 }] },
+        // Part of a site: no area, and the site stays everyone's.
+        { ...items[1], id: 3, restrictions: [{ type: "CUSTOMER", capacity: 20 }] },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    for (const id of ["1", "2"]) {
+      expect(site(out, id)).toMatchObject({
+        access: { audience: "customers" },
+        details: { usage: ["customer"] },
+      });
+    }
+    expect(site(out, "3")).not.toHaveProperty("access");
+    expect(site(out, "3")?.["components"]).toBeUndefined();
   });
 });

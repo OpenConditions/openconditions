@@ -49,7 +49,8 @@ export const PARKAPI_VEHICLE_TYPES: Readonly<Record<string, string>> = {
  * of its own. An entry with its own capacity is a `parking_area` component
  * and the remainder stays the site's own capacity. `TAXI`, `DELIVERY`,
  * `CUSTOMER` and `CARGOBIKE` have no area, nor has an entry without a type,
- * which restricts every audience.
+ * which restricts every audience. A `CUSTOMER` entry covering the whole site
+ * makes it a customers' car park instead.
  */
 export const PARKAPI_RESTRICTION_AREAS: Readonly<
   Record<string, { vehicleType?: string; userGroup: string } | null>
@@ -67,4 +68,18 @@ export const PARKAPI_RESTRICTION_AREAS: Readonly<
   DELIVERY: null,
   CUSTOMER: null,
   CARGOBIKE: null,
+};
+
+/**
+ * How a site is watched, from its `supervision_type`: `ATTENDED` is staff on
+ * site. `VIDEO` is video surveillance, which the model holds as the `cctv`
+ * security feature rather than a supervision, since ParkAPI does not say
+ * whether anyone watches the cameras. `YES` says a site is supervised but
+ * not how, and the model's supervision values each name how.
+ */
+export const PARKAPI_SUPERVISION: Readonly<Record<string, string | null>> = {
+  NO: "none",
+  ATTENDED: "on_site",
+  VIDEO: null,
+  YES: null,
 };
