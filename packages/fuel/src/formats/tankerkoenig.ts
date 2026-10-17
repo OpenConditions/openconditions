@@ -9,6 +9,7 @@ import type { FuelGrade } from "../grades.js";
 import {
   availabilityDraft,
   type FuelFeed,
+  openStatusDraft,
   priceDraft,
   stationDraft,
   stationPosition,
@@ -44,6 +45,10 @@ const postalCodeOf = (value: unknown): string | undefined =>
  * product known to be unavailable), `null` a price not known (no product).
  * The answer carries no update time, so a price is as of the fetch. The
  * MTS-K tracks three grades only, so a station's products are not complete.
+ * `isOpen`, whether the station is open at the moment of the query by the
+ * hours and the closures it reported to the MTS-K, is the station's
+ * `facility.open_status` as of the fetch; a value that is no boolean is
+ * counted as not read.
  */
 export function parseTankerkoenig(
   feed: FuelFeed,
@@ -102,6 +107,12 @@ export function parseTankerkoenig(
         products: grades.map(({ grade }) => ({ key: grade, grade })),
       });
       out.features.push(feature);
+      const isOpen = station["isOpen"];
+      if (typeof isOpen === "boolean") {
+        out.observations.push(openStatusDraft(feature, { open: isOpen, at: ctx.fetchedAt }));
+      } else if (isOpen !== undefined && isOpen !== null) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       for (const { grade, price } of grades) {
         out.observations.push(
           price === undefined

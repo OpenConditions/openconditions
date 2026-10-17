@@ -5,7 +5,7 @@ import {
   type ParseOutput,
   recordSkipped,
 } from "@openconditions/ingest-framework";
-import { zonedWallClockToInstant } from "@openconditions/model";
+import { type DirectionRef, zonedWallClockToInstant } from "@openconditions/model";
 import type { FuelGrade } from "../grades.js";
 import { type Interval, interval, osmOpeningHours } from "../hours.js";
 import {
@@ -213,12 +213,120 @@ function audienceOf(
   return "unknown";
 }
 
-/** The grades a station prices: each column with a positive price. */
-function pricedGrades(station: Station): { grade: FuelGrade; amount: string }[] {
-  return GRADE_COLUMNS.flatMap(([column, grade]) => {
+/**
+ * The biofuel products whose blend the station declares in a column of its
+ * own: biodiesel by its fatty-acid methyl ester share (`% Éster metílico`),
+ * bioethanol by its ethanol share (`% BioEtanol`). A share a standard grade
+ * names makes the product that grade: B7, B10 and the EN 16709 B20 and B30,
+ * B100 from the 96.5 % ester content EN 14214 sets for neat biodiesel up,
+ * E85. Any other share, or a grade the station already prices in its own
+ * column, keeps the column's grade with the share beside it.
+ */
+const BLENDS: readonly {
+  column: string;
+  share: string;
+  grade: (pct: number) => FuelGrade | undefined;
+}[] = [
+  {
+    column: "Precio Biodiesel",
+    share: "% Éster metílico",
+    grade: (pct) =>
+      pct >= 96.5
+        ? "b100"
+        : pct === 7
+          ? "b7"
+          : pct === 10
+            ? "b10"
+            : pct === 20
+              ? "b20"
+              : pct === 30
+                ? "b30"
+                : undefined,
+  },
+  {
+    column: "Precio Bioetanol",
+    share: "% BioEtanol",
+    grade: (pct) => (pct === 85 ? "e85" : undefined),
+  },
+];
+
+interface Priced {
+  grade: FuelGrade;
+  amount: string;
+  biofuelPct?: number;
+}
+
+/**
+ * The grades a station prices: each column with a positive price, a
+ * biofuel product as the blend it declares (`BLENDS`). A share that is no
+ * percentage is counted as not read.
+ */
+function pricedGrades(station: Station, feedId: string): Priced[] {
+  const priced = GRADE_COLUMNS.flatMap(([column, grade]): (Priced & { column: string })[] => {
     const amount = decimalText(station[column]);
-    return amount !== undefined && Number(amount) > 0 ? [{ grade, amount }] : [];
+    return amount !== undefined && Number(amount) > 0 ? [{ column, grade, amount }] : [];
   });
+  const sold = new Set(priced.map((p) => p.grade));
+  return priced.map(({ column, ...product }) => {
+    const blend = BLENDS.find((b) => b.column === column);
+    if (blend === undefined) return product;
+    const raw = text(station[blend.share]);
+    const share = raw === undefined ? undefined : decimalText(raw);
+    const pct = share === undefined ? Number.NaN : Number(share);
+    if (raw !== undefined && !(pct >= 0 && pct <= 100)) recordSkipped(feedId, "unknown_value");
+    // The ministry writes 0 for a share the station does not declare.
+    if (!(pct > 0 && pct <= 100)) return product;
+    const grade = blend.grade(pct);
+    return {
+      ...product,
+      ...(grade === undefined || sold.has(grade) ? {} : { grade }),
+      biofuelPct: pct,
+    };
+  });
+}
+
+/**
+ * A road the address names with its kilometre point (`CARRETERA N-340 KM.
+ * 963,7`, `AUTOVIA A-31 KM. 69`, `N-II km 29,000`): the designation, its
+ * letters and number joined by a hyphen, and the kilometre. A European route
+ * written first (`E-15/N-340`) gives way to the national road whose
+ * kilometre points the address counts; the radial national roads are
+ * numbered in Roman numerals (`N-I` to `N-VI`). Undefined for an address on
+ * a street, or a road without a kilometre point.
+ */
+const ROAD_ADDRESS =
+  /^(?:(?:CARRETERA|CTRA\.?|AUTOV[IÍ]A|AUTOPISTA)\s+|AUTV\.\s*)?(?:E-?\d{1,3}\/)?(?:(N)[- ]?(VI|IV|V|I{1,3})|([A-Z]{1,3})[- ]?(\d{1,4}))\b[^,]*?\bKM\.?\s*(\d+(?:[.,]\d+)?)/;
+
+function roadOf(address: string | undefined): { ref: string; km: number } | undefined {
+  const m = address?.toUpperCase().match(ROAD_ADDRESS);
+  if (!m) return undefined;
+  return {
+    ref: `${m[1] ?? m[3]}-${m[2] ?? m[4]}`,
+    km: Number((m[5] ?? "").replace(",", ".")),
+  };
+}
+
+/**
+ * `Margen`, the side of the road the station stands on, read along the
+ * road's kilometre points: `D` (derecha) the right, the carriageway of
+ * travel towards higher kilometre points where traffic keeps right; `I`
+ * (izquierda) the left; `N` none. It has an axis only on a road with
+ * kilometre points, so a station whose address names none keeps no side:
+ * on a street the ministry's sides follow no numbering. A value the
+ * ministry does not define is counted as not read.
+ */
+function sideOf(
+  margen: string | undefined,
+  onRoad: boolean,
+  feedId: string,
+): DirectionRef | undefined {
+  if (margen === undefined || margen === "N") return undefined;
+  if (margen !== "D" && margen !== "I") {
+    recordSkipped(feedId, "unknown_value");
+    return undefined;
+  }
+  if (!onRoad) return undefined;
+  return { value: margen === "D" ? "positive" : "negative", basis: "road_reference" };
 }
 
 /**
@@ -238,8 +346,10 @@ function unknownPricedColumns(station: Station): number {
  * (`EstacionesTerrestres`): decimal commas, an empty string for a grade the
  * station does not sell, and one publication time for the whole file. The
  * file lists every grade, so the station's products are complete. `Horario`
- * gives the opening hours and `Tipo Venta` who may buy. `Margen`, the side of
- * the road the station is on, has no counterpart without the road's direction.
+ * gives the opening hours and `Tipo Venta` who may buy. An address on a road
+ * with a kilometre point places the station on that road, with the side of
+ * it `Margen` names (`sideOf`). A biodiesel or bioethanol is the blend its
+ * declared biofuel share makes it (`pricedGrades`).
  */
 export function parseMinetur(
   feed: FuelFeed,
@@ -274,11 +384,21 @@ export function parseMinetur(
         continue;
       }
       recordSkipped(feed.id, "unknown_value", unknownPricedColumns(station));
-      const priced = pricedGrades(station);
+      const priced = pricedGrades(station, feed.id);
       const sign = text(station["Rótulo"]);
-      const province = PROVINCES[text(station["IDProvincia"]) ?? ""];
-      const products: ProductInput[] = priced.map(({ grade }) => ({ key: grade, grade }));
+      const provinceCode = text(station["IDProvincia"]);
+      const province =
+        provinceCode !== undefined && Object.hasOwn(PROVINCES, provinceCode)
+          ? PROVINCES[provinceCode]
+          : undefined;
+      const products: ProductInput[] = priced.map(({ grade, biofuelPct }) => ({
+        key: grade,
+        grade,
+        ...(biofuelPct === undefined ? {} : { biofuelPct }),
+      }));
       const openingHours = openingHoursOf(text(station["Horario"]), feed.id);
+      const road = roadOf(text(station["Dirección"]));
+      const direction = sideOf(text(station["Margen"]), road !== undefined, feed.id);
       const feature = stationDraft(feed, {
         stationId,
         ...position,
@@ -295,6 +415,8 @@ export function parseMinetur(
           ...(province ? { geocodes: [{ scheme: "iso3166-2", code: `ES-${province}` }] } : {}),
         },
         ...(openingHours === undefined ? {} : { openingHours }),
+        ...(road === undefined ? {} : { road }),
+        ...(direction === undefined ? {} : { direction }),
         audience: audienceOf(text(station["Tipo Venta"]), feed.id),
         productsComplete: true,
         products,

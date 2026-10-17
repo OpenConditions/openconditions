@@ -121,7 +121,7 @@ function servicesOf(station: Station, feedId: string) {
   let cardTerminal = false;
   let truckSuitable = false;
   for (const name of names(station["services_service"])) {
-    const service = SERVICES[name];
+    const service = Object.hasOwn(SERVICES, name) ? SERVICES[name] : undefined;
     if (service === undefined) {
       recordSkipped(feedId, "unknown_value");
       continue;

@@ -113,12 +113,36 @@ describe("econtrol", () => {
     expect(service(1354751)).toBeUndefined();
   });
 
-  test("a station outside its opening hours is still operational", () => {
+  test("a station outside its opening hours is still operational, its status closed", () => {
     // E-Control's `open` says whether the station is open at the moment of
-    // the fetch, by its opening hours: it is no closure.
-    const { features } = parse([patchedDiesel(6083, { open: false })]);
+    // the fetch: it is no closure.
+    const { features, observations } = parse([patchedDiesel(6083, { open: false })]);
     expect(station(features, 6083)!["lifecycle"]).toBe("operational");
     expect(station(features, 449481)!["lifecycle"]).toBe("operational");
+    const status = (id: number) =>
+      observations.find(
+        (o) =>
+          o["property"] === "facility.open_status" &&
+          (o["subject"] as { featureId: string }).featureId === featureId(id),
+      )?.["result"];
+    expect(status(6083)).toEqual({
+      type: "category",
+      value: "closed",
+      vocabulary: "facility_open_status",
+    });
+    expect(status(449481)).toMatchObject({ value: "open" });
+  });
+
+  test("an open that is no boolean is counted", () => {
+    const { observations } = parse([patchedDiesel(6083, { open: "ja" })]);
+    expect(
+      observations.some(
+        (o) =>
+          o["property"] === "facility.open_status" &&
+          (o["subject"] as { featureId: string }).featureId === featureId(6083),
+      ),
+    ).toBe(false);
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1 });
   });
 
   test("a station the answers describe differently keeps the first answer's fields", () => {

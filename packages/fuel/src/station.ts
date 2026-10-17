@@ -1,6 +1,7 @@
 import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
 import {
   type AUDIENCES,
+  type DirectionRef,
   type LIFECYCLES,
   observationId,
   type PAYMENT_METHODS,
@@ -21,6 +22,8 @@ export interface ProductInput {
   grade: FuelGrade;
   /** The sale unit; the grade's own by default. */
   per?: FuelUnit;
+  /** The product's biofuel share by volume, as the station declares it. */
+  biofuelPct?: number;
   service?: "self" | "served" | "unknown";
   priceLevel?: "standard" | "member" | "card" | "fleet" | "cash" | "unknown";
   vehicleScope?: "any" | "car" | "hgv";
@@ -59,6 +62,10 @@ export interface StationInput {
   admin?: { country: string; geocodes?: { scheme: string; code: string }[] };
   /** The class of the road the station is on, where the source names it. */
   roadClass?: (typeof ROAD_CLASSES)[number];
+  /** The road the station is on and its kilometre point, where the source names them. */
+  road?: { ref: string; km?: number };
+  /** The carriageway the station stands beside, read against `road`. */
+  direction?: DirectionRef;
   /** Who may fill up; `unknown` when the station says how to pay but not who it serves. */
   audience?: (typeof AUDIENCES)[number];
   /** How fuel can be paid for, in the order the source lists it. */
@@ -154,6 +161,20 @@ function accessOf(input: StationInput): { access?: Record<string, unknown> } {
   };
 }
 
+/** The station's road, as `location.roads`: its class, reference and kilometre point. */
+function roadsOf(input: StationInput): { roads?: Record<string, unknown>[] } {
+  if (input.roadClass === undefined && input.road === undefined) return {};
+  return {
+    roads: [
+      {
+        ...(input.road === undefined ? {} : { ref: input.road.ref }),
+        ...(input.roadClass === undefined ? {} : { class: input.roadClass }),
+        ...(input.road?.km === undefined ? {} : { kmFrom: input.road.km }),
+      },
+    ],
+  };
+}
+
 /**
  * A `fuel_station` feature with one `fuel_product` component per product (none
  * when no product is known). An on-demand feed's station says when it expires.
@@ -176,6 +197,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
       vehicleScope: p.vehicleScope ?? "any",
       per: p.per ?? GRADE_UNIT[p.grade],
       priceBasis: p.priceBasis ?? "gross",
+      ...(p.biofuelPct === undefined ? {} : { biofuelPct: p.biofuelPct }),
     },
   }));
   return {
@@ -191,7 +213,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
       fuzziness: "exact",
       ...(input.address === undefined ? {} : { address: input.address }),
       ...(input.admin === undefined ? {} : { admin: input.admin }),
-      ...(input.roadClass === undefined ? {} : { roads: [{ class: input.roadClass }] }),
+      ...roadsOf(input),
     },
     provenance: {
       origin: "feed",
@@ -236,19 +258,23 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
       ...(input.brandWikidata === undefined ? {} : { brandWikidata: input.brandWikidata }),
       productsComplete: input.productsComplete,
       ...(input.truckSuitable === undefined ? {} : { truckSuitable: input.truckSuitable }),
+      ...(input.direction === undefined ? {} : { direction: input.direction }),
     },
   };
 }
 
-/** A reading of one of the station's products, located and attributed as the station is. */
+/**
+ * A reading of the station, or of one of its products when `componentKey`
+ * names one, located and attributed as the station is.
+ */
 function readingDraft(
   station: StationDraft,
-  componentKey: string,
+  componentKey: string | undefined,
   property: string,
   result: RecordDraft,
   at: string,
 ): RecordDraft {
-  if (!station.components?.some((c) => c.key === componentKey)) {
+  if (componentKey !== undefined && !station.components?.some((c) => c.key === componentKey)) {
     throw new Error(`${station.id} has no product ${componentKey}`);
   }
   const draft = {
@@ -259,7 +285,11 @@ function readingDraft(
     location: station.location,
     provenance: station.provenance,
     freshness: station.freshness,
-    subject: { kind: "feature", featureId: station.id, componentKey },
+    subject: {
+      kind: "feature",
+      featureId: station.id,
+      ...(componentKey === undefined ? {} : { componentKey }),
+    },
     result,
     phenomenonTime: { instant: at },
     aggregation: "instantaneous",
@@ -297,5 +327,28 @@ export function availabilityDraft(
     "fuel.product_available",
     { type: "boolean", value: availability.available },
     availability.at,
+  );
+}
+
+/**
+ * A `facility.open_status` reading of the whole station: whether the
+ * publisher says it is open at `at`. It is the publisher's word on the
+ * moment, which a temporary closure the hours do not show changes too; it
+ * does not retire the station.
+ */
+export function openStatusDraft(
+  station: StationDraft,
+  status: { open: boolean; at: string },
+): RecordDraft {
+  return readingDraft(
+    station,
+    undefined,
+    "facility.open_status",
+    {
+      type: "category",
+      value: status.open ? "open" : "closed",
+      vocabulary: "facility_open_status",
+    },
+    status.at,
   );
 }
