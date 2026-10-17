@@ -1,6 +1,30 @@
-import { defineKind, LOS, type NestedEffect } from "@openconditions/model";
+import { defineKind, Iso8601, LOS, type NestedEffect } from "@openconditions/model";
 import { z } from "zod";
 import { roadsSeverity } from "./severity.js";
+
+/** How a publisher finds whether workers are present (WZDx `WorkerPresenceMethod`). */
+export const WORKER_PRESENCE_METHODS = [
+  "camera_monitoring",
+  "arrow_board_present",
+  "cones_present",
+  "maintenance_vehicle_present",
+  "wearables_present",
+  "mobile_device_present",
+  "check_in_app",
+  "check_in_verbal",
+  "scheduled",
+] as const;
+
+/** What a publisher counts as workers being present (WZDx `WorkerPresenceDefinition`). */
+export const WORKER_PRESENCE_DEFINITIONS = [
+  "workers_working",
+  "workers_not_working",
+  "mobile_equipment_moving",
+  "mobile_equipment_not_moving",
+  "fixed_equipment",
+  "humans_behind_barrier",
+  "humans_in_right_of_way",
+] as const;
 
 /** A works phase as the roadworks details hold it, for its nested effects. */
 interface RoadworksPhase {
@@ -126,6 +150,12 @@ export const ROADS_SITUATION_KINDS = [
       workZoneType: z.enum(["static", "moving", "planned_moving_area"]).optional(),
       workersPresent: z.boolean().optional(),
       workerPresenceConfidence: z.enum(["low", "medium", "high"]).optional(),
+      /** How the publisher found whether workers are present. */
+      workerPresenceMethod: z.enum(WORKER_PRESENCE_METHODS).optional(),
+      /** What the publisher counts as workers being present. */
+      workerPresenceDefinition: z.array(z.enum(WORKER_PRESENCE_DEFINITIONS)).min(1).optional(),
+      /** When the presence of workers was last confirmed. */
+      workerPresenceConfirmedAt: Iso8601.optional(),
       typesOfWork: z
         .array(
           z.strictObject({
@@ -138,6 +168,12 @@ export const ROADS_SITUATION_KINDS = [
       locationMethod: z
         .enum(["channel_device_method", "sign_method", "junction_method", "other", "unknown"])
         .optional(),
+      /**
+       * Whether the start (end) of the location was measured by a GPS device
+       * at the actual extent of the works, rather than estimated.
+       */
+      startPositionVerified: z.boolean().optional(),
+      endPositionVerified: z.boolean().optional(),
       phases: z
         .array(
           z.strictObject({

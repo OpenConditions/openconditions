@@ -44,15 +44,19 @@ import {
   WZDX_LANE_TYPES,
   WZDX_RELATIONS,
   WZDX_SITUATIONS,
+  WZDX_UNITS,
   WZDX_VEHICLE_IMPACTS,
+  WZDX_WORKER_PRESENCE_DEFINITIONS,
+  WZDX_WORKER_PRESENCE_METHODS,
 } from "../crosswalk/wzdx.js";
+import { WORKER_PRESENCE_DEFINITIONS, WORKER_PRESENCE_METHODS } from "../kinds.js";
 import { roadsModule } from "../module.js";
 import { DATEX2_V2, DATEX2_V3 } from "../vocabularies/datex2.js";
 import { GTFS_RT } from "../vocabularies/gtfs-rt.js";
 import { IBI511 } from "../vocabularies/ibi511.js";
 import { OPEN511 } from "../vocabularies/open511.js";
 import { TRAFF } from "../vocabularies/traff.js";
-import { WZDX } from "../vocabularies/wzdx.js";
+import { WZDX, WZDX_V31_LANE_TYPES } from "../vocabularies/wzdx.js";
 
 /**
  * Vocabulary coverage: every value of every source vocabulary OpenConditions
@@ -108,7 +112,7 @@ describe("source crosswalk coverage", () => {
     );
   });
 
-  it("maps every WZDx 4.2 event type, work type and restriction type", () => {
+  it("maps every WZDx 4.2 event type, work type, restriction type, unit and worker presence value, and every 3.1 lane type", () => {
     expect(sorted(Object.keys(WZDX_SITUATIONS))).toEqual(
       sorted([
         ...WZDX.eventType,
@@ -118,8 +122,23 @@ describe("source crosswalk coverage", () => {
     );
     expect(sorted(Object.keys(WZDX_VEHICLE_IMPACTS))).toEqual(sorted(WZDX.vehicleImpact));
     expect(sorted(Object.keys(WZDX_LANE_STATUSES))).toEqual(sorted(WZDX.laneStatus));
-    expect(sorted(Object.keys(WZDX_LANE_TYPES))).toEqual(sorted(WZDX.laneType));
+    expect(sorted(Object.keys(WZDX_LANE_TYPES))).toEqual(
+      sorted([...WZDX.laneType, ...WZDX_V31_LANE_TYPES]),
+    );
     expect(sorted(Object.keys(WZDX_RELATIONS))).toEqual(sorted(WZDX.relatedRoadEventType));
+    expect(sorted(Object.keys(WZDX_UNITS))).toEqual(sorted(WZDX.unitOfMeasurement));
+    expect(sorted(Object.keys(WZDX_WORKER_PRESENCE_METHODS))).toEqual(
+      sorted(WZDX.workerPresenceMethod),
+    );
+    expect(sorted(Object.values(WZDX_WORKER_PRESENCE_METHODS))).toEqual(
+      sorted(WORKER_PRESENCE_METHODS),
+    );
+    expect(sorted(Object.keys(WZDX_WORKER_PRESENCE_DEFINITIONS))).toEqual(
+      sorted(WZDX.workerPresenceDefinition),
+    );
+    expect(sorted(Object.values(WZDX_WORKER_PRESENCE_DEFINITIONS))).toEqual(
+      sorted(WORKER_PRESENCE_DEFINITIONS),
+    );
   });
 
   it("maps every Open511 event type, subtype, severity and certainty", () => {
