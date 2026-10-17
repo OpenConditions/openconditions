@@ -294,6 +294,7 @@
               "sms",
               "membership",
               "direct_debit",
+              "prepaid_card",
               "free",
               "other"
             ]
@@ -313,7 +314,8 @@
               "debit_card",
               "nfc",
               "qr",
-              "remote"
+              "remote",
+              "pin"
             ]
           }
         },
@@ -428,7 +430,10 @@
             "enum": [
               "site",
               "entrance",
+              "equipment",
               "operator_logo",
+              "owner_logo",
+              "network_logo",
               "sign",
               "other"
             ]
@@ -436,6 +441,20 @@
           "thumbnail": {
             "type": "string",
             "format": "uri"
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
           }
         },
         "required": [
@@ -551,6 +570,55 @@
                   "unknown"
                 ]
               },
+              "images": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "site",
+                        "entrance",
+                        "equipment",
+                        "operator_logo",
+                        "owner_logo",
+                        "network_logo",
+                        "sign",
+                        "other"
+                      ]
+                    },
+                    "thumbnail": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "format": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "width": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "height": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "category"
+                  ],
+                  "additionalProperties": false
+                }
+              },
               "details": {
                 "type": "object",
                 "properties": {
@@ -588,12 +656,55 @@
                         "plugged",
                         "disabled",
                         "customers",
-                        "motorcycles"
+                        "motorcycles",
+                        "employees",
+                        "taxis",
+                        "tenants"
                       ]
                     }
                   },
+                  "wheelchairAccessible": {
+                    "type": "boolean"
+                  },
                   "directions": {
                     "$ref": "#/$defs/Text"
+                  },
+                  "bays": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "position": {
+                          "type": "string",
+                          "enum": [
+                            "left",
+                            "right",
+                            "center"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "key"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "acceptedServiceProviders": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "manufacturer": {
+                    "type": "string",
+                    "minLength": 1
                   },
                   "quantity": {
                     "type": "integer",
@@ -755,6 +866,55 @@
                   "unknown"
                 ]
               },
+              "images": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "site",
+                        "entrance",
+                        "equipment",
+                        "operator_logo",
+                        "owner_logo",
+                        "network_logo",
+                        "sign",
+                        "other"
+                      ]
+                    },
+                    "thumbnail": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "format": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "width": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "height": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "category"
+                  ],
+                  "additionalProperties": false
+                }
+              },
               "details": {
                 "type": "object",
                 "properties": {
@@ -891,6 +1051,262 @@
               "details"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1
+              },
+              "parentKey": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "const": "charging_bay"
+              },
+              "name": {
+                "$ref": "#/$defs/Text"
+              },
+              "position": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "const": "Point"
+                  },
+                  "coordinates": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 2,
+                        "maxItems": 2
+                      },
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number",
+                            "minimum": -180,
+                            "maximum": 180
+                          },
+                          {
+                            "type": "number",
+                            "minimum": -90,
+                            "maximum": 90
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 3,
+                        "maxItems": 3
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "type",
+                  "coordinates"
+                ],
+                "additionalProperties": false
+              },
+              "physicalReference": {
+                "type": "string",
+                "minLength": 1
+              },
+              "floorLevel": {
+                "type": "string",
+                "minLength": 1
+              },
+              "externalIds": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "$ref": "#/$defs/ExternalId"
+                }
+              },
+              "lifecycle": {
+                "type": "string",
+                "enum": [
+                  "planned",
+                  "under_construction",
+                  "operational",
+                  "temporarily_closed",
+                  "decommissioned",
+                  "unknown"
+                ]
+              },
+              "images": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "url": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "category": {
+                      "type": "string",
+                      "enum": [
+                        "site",
+                        "entrance",
+                        "equipment",
+                        "operator_logo",
+                        "owner_logo",
+                        "network_logo",
+                        "sign",
+                        "other"
+                      ]
+                    },
+                    "thumbnail": {
+                      "type": "string",
+                      "format": "uri"
+                    },
+                    "format": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "width": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "height": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "url",
+                    "category"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "details": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "const": "charging_bay"
+                  },
+                  "v": {
+                    "type": "number",
+                    "const": 1
+                  },
+                  "vehicleTypes": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "enum": [
+                        "motorcycle",
+                        "personal_vehicle",
+                        "personal_vehicle_with_trailer",
+                        "van",
+                        "semi_tractor",
+                        "rigid",
+                        "truck_with_trailer",
+                        "bus",
+                        "disabled"
+                      ]
+                    }
+                  },
+                  "restrictedToType": {
+                    "type": "boolean"
+                  },
+                  "reservationRequired": {
+                    "type": "boolean"
+                  },
+                  "maxVehicleWeight": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "maxVehicleHeight": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "maxVehicleLength": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "maxVehicleWidth": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "length": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "width": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "dangerousGoodsAllowed": {
+                    "type": "boolean"
+                  },
+                  "direction": {
+                    "type": "string",
+                    "enum": [
+                      "parallel",
+                      "perpendicular",
+                      "angle"
+                    ]
+                  },
+                  "driveThrough": {
+                    "type": "boolean"
+                  },
+                  "timeLimit": {
+                    "$ref": "#/$defs/Quantity"
+                  },
+                  "roofed": {
+                    "type": "boolean"
+                  },
+                  "lighting": {
+                    "type": "boolean"
+                  },
+                  "refrigerationOutlet": {
+                    "type": "boolean"
+                  },
+                  "standards": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "apdsReference": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "kind",
+                  "v"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "key",
+              "kind",
+              "details"
+            ],
+            "additionalProperties": false
           }
         ]
       }
@@ -918,6 +1334,9 @@
             "other"
           ]
         },
+        "roofed": {
+          "type": "boolean"
+        },
         "energyMix": {
           "type": "object",
           "properties": {
@@ -925,6 +1344,10 @@
               "type": "boolean"
             },
             "supplierName": {
+              "type": "string",
+              "minLength": 1
+            },
+            "productName": {
               "type": "string",
               "minLength": 1
             },
@@ -950,8 +1373,100 @@
                 ],
                 "additionalProperties": false
               }
+            },
+            "impacts": {
+              "minItems": 1,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "category": {
+                    "type": "string",
+                    "enum": [
+                      "nuclear_waste",
+                      "carbon_dioxide"
+                    ]
+                  },
+                  "gPerKwh": {
+                    "type": "number",
+                    "minimum": 0
+                  }
+                },
+                "required": [
+                  "category",
+                  "gPerKwh"
+                ],
+                "additionalProperties": false
+              }
             }
           },
+          "additionalProperties": false
+        },
+        "suboperator": {
+          "$ref": "#/$defs/Organization"
+        },
+        "hotline": {
+          "type": "string",
+          "minLength": 1
+        },
+        "adHocCharging": {
+          "type": "boolean"
+        },
+        "entrance": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "const": "Point"
+            },
+            "coordinates": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number",
+                      "minimum": -180,
+                      "maximum": 180
+                    },
+                    {
+                      "type": "number",
+                      "minimum": -90,
+                      "maximum": 90
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 2,
+                  "maxItems": 2
+                },
+                {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "number",
+                      "minimum": -180,
+                      "maximum": 180
+                    },
+                    {
+                      "type": "number",
+                      "minimum": -90,
+                      "maximum": 90
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ],
+                  "items": false,
+                  "minItems": 3,
+                  "maxItems": 3
+                }
+              ]
+            }
+          },
+          "required": [
+            "type",
+            "coordinates"
+          ],
           "additionalProperties": false
         },
         "directions": {
@@ -1154,6 +1669,7 @@
             "bnetza",
             "cpo",
             "provider",
+            "siren",
             "netex:line",
             "netex:stop_place",
             "irwin",
@@ -1378,6 +1894,7 @@
                       "same",
                       "ugc",
                       "ars",
+                      "insee",
                       "padd",
                       "warncellid",
                       "emma_id",
@@ -4999,6 +5516,28 @@
       "required": [
         "role",
         "name"
+      ],
+      "additionalProperties": false
+    },
+    "Quantity": {
+      "type": "object",
+      "properties": {
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 32
+        },
+        "accuracy": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "value",
+        "unit"
       ],
       "additionalProperties": false
     }

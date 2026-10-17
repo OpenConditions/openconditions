@@ -298,6 +298,7 @@
               "sms",
               "membership",
               "direct_debit",
+              "prepaid_card",
               "free",
               "other"
             ]
@@ -317,7 +318,8 @@
               "debit_card",
               "nfc",
               "qr",
-              "remote"
+              "remote",
+              "pin"
             ]
           }
         },
@@ -432,7 +434,10 @@
             "enum": [
               "site",
               "entrance",
+              "equipment",
               "operator_logo",
+              "owner_logo",
+              "network_logo",
               "sign",
               "other"
             ]
@@ -440,6 +445,20 @@
           "thumbnail": {
             "type": "string",
             "format": "uri"
+          },
+          "format": {
+            "type": "string",
+            "minLength": 1
+          },
+          "width": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
+          },
+          "height": {
+            "type": "integer",
+            "exclusiveMinimum": 0,
+            "maximum": 9007199254740991
           }
         },
         "required": [
@@ -552,6 +571,55 @@
               "decommissioned",
               "unknown"
             ]
+          },
+          "images": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "category": {
+                  "type": "string",
+                  "enum": [
+                    "site",
+                    "entrance",
+                    "equipment",
+                    "operator_logo",
+                    "owner_logo",
+                    "network_logo",
+                    "sign",
+                    "other"
+                  ]
+                },
+                "thumbnail": {
+                  "type": "string",
+                  "format": "uri"
+                },
+                "format": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "width": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "height": {
+                  "type": "integer",
+                  "exclusiveMinimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "required": [
+                "url",
+                "category"
+              ],
+              "additionalProperties": false
+            }
           },
           "details": {
             "type": "object",
@@ -770,6 +838,7 @@
             "bnetza",
             "cpo",
             "provider",
+            "siren",
             "netex:line",
             "netex:stop_place",
             "irwin",
@@ -994,6 +1063,7 @@
                       "same",
                       "ugc",
                       "ars",
+                      "insee",
                       "padd",
                       "warncellid",
                       "emma_id",

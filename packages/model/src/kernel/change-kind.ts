@@ -132,6 +132,7 @@ export const KERNEL_CHANGE_KINDS = [
         "minPrice",
         "maxPrice",
         "priceIncludesVat",
+        "preauthorizeAmount",
         "tariffType",
         "scope",
         "applicability",

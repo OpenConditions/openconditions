@@ -186,13 +186,23 @@ export const OCPI_ENERGY_SOURCES: Readonly<Record<string, string>> = {
   WATER: "water",
 };
 
-/** OCPI image categories → the feature's image categories. */
-export const OCPI_IMAGE_CATEGORIES: Readonly<Record<string, string | null>> = {
-  CHARGER: "site",
+/**
+ * OCPI image categories → the image categories of a feature or component: a
+ * photo of the charger is of the equipment, one of the location of the site,
+ * and the network, operator and owner each have a logo of their own.
+ */
+export const OCPI_IMAGE_CATEGORIES: Readonly<Record<string, string>> = {
+  CHARGER: "equipment",
   ENTRANCE: "entrance",
   LOCATION: "site",
-  NETWORK: "operator_logo",
+  NETWORK: "network_logo",
   OPERATOR: "operator_logo",
-  OWNER: "operator_logo",
+  OWNER: "owner_logo",
   OTHER: "other",
+};
+
+/** OCPI 2.3.0 environmental impact categories → an energy mix's impact categories. */
+export const OCPI_ENERGY_IMPACTS: Readonly<Record<string, string>> = {
+  NUCLEAR_WASTE: "nuclear_waste",
+  CARBON_DIOXIDE: "carbon_dioxide",
 };

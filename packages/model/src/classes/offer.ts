@@ -23,6 +23,43 @@ export const TARIFF_TYPES = [
   "member",
   "roaming",
 ] as const;
+/**
+ * The environmental impact an energy mix states per kilowatt-hour: the
+ * radioactive waste and the carbon dioxide its generation leaves behind.
+ */
+export const ENERGY_IMPACT_CATEGORIES = ["nuclear_waste", "carbon_dioxide"] as const;
+/** What a booking-priced element prices: the booking, its expiry, cancelling it, or overstaying it. */
+export const BOOKING_RESTRICTIONS = [
+  "booking",
+  "booking_expires",
+  "booking_cancellation_fees",
+  "booking_overtime",
+] as const;
+/**
+ * Where the energy supplied at a site, or under a tariff, comes from: whether
+ * it is wholly renewable, the supplier and its product, the share of each
+ * source and the impact its generation has.
+ */
+export const EnergyMix = z.strictObject({
+  isGreen: z.boolean().optional(),
+  supplierName: z.string().min(1).optional(),
+  /** The supplier's product or tariff plan the energy is bought under. */
+  productName: z.string().min(1).optional(),
+  sources: z
+    .array(z.strictObject({ source: z.string().min(1), pct: z.number().min(0).max(100) }))
+    .min(1)
+    .optional(),
+  impacts: z
+    .array(
+      z.strictObject({
+        category: z.enum(ENERGY_IMPACT_CATEGORIES),
+        /** Grams per kilowatt-hour. */
+        gPerKwh: z.number().nonnegative(),
+      }),
+    )
+    .min(1)
+    .optional(),
+});
 const WEEK_DAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"] as const;
 const LocalTime = z.string().regex(/^(?:[01]\d|2[0-3]):[0-5]\d$/);
 const LocalDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
@@ -50,16 +87,10 @@ export function offerSchema(k: Kernel, entry: KindEntry, stage: Stage) {
     minDuration: Quantity.optional(),
     maxDuration: Quantity.optional(),
     reservation: z.enum(["reservation", "reservation_expires"]).optional(),
+    /** The element prices a booking made ahead of arrival, never a session without one. */
+    booking: z.enum(BOOKING_RESTRICTIONS).optional(),
     vehicle: k.VehicleApplicability.optional(),
     userGroups: z.array(z.string().min(1)).min(1).optional(),
-  });
-  const EnergyMix = z.strictObject({
-    isGreen: z.boolean().optional(),
-    supplierName: z.string().min(1).optional(),
-    sources: z
-      .array(z.strictObject({ source: z.string().min(1), pct: z.number().min(0).max(100) }))
-      .min(1)
-      .optional(),
   });
   return z
     .strictObject({
@@ -83,6 +114,8 @@ export function offerSchema(k: Kernel, entry: KindEntry, stage: Stage) {
       minPrice: k.Money.optional(),
       maxPrice: k.Money.optional(),
       priceIncludesVat: z.boolean().optional(),
+      /** What a payment terminal reserves on a card before a session under this offer. */
+      preauthorizeAmount: k.Money.optional(),
       altText: k.Text.optional(),
       url: z.url().optional(),
       validity: k.Validity,
@@ -108,6 +141,7 @@ export function offerSchema(k: Kernel, entry: KindEntry, stage: Stage) {
       });
       if (o.minPrice) monies.push([["minPrice"], o.minPrice]);
       if (o.maxPrice) monies.push([["maxPrice"], o.maxPrice]);
+      if (o.preauthorizeAmount) monies.push([["preauthorizeAmount"], o.preauthorizeAmount]);
       for (const [path, money] of monies) {
         if (money.currency !== o.currency) {
           ctx.addIssue({

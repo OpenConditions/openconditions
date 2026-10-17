@@ -22,6 +22,8 @@ export const PAYMENT_METHODS = [
   "sms",
   "membership",
   "direct_debit",
+  /** A card paid for in advance, as DATEX names it beside credit and debit cards. */
+  "prepaid_card",
   "free",
   "other",
 ] as const;
@@ -43,8 +45,35 @@ export const AUTHENTICATION_METHODS = [
   "nfc",
   "qr",
   "remote",
+  /** A PIN typed on the device's keypad. */
+  "pin",
 ] as const;
-export const IMAGE_CATEGORIES = ["site", "entrance", "operator_logo", "sign", "other"] as const;
+/**
+ * What an image shows: the place, its entrance, the equipment installed
+ * there (a charger, a pump, a ticket machine), the logo of the operator, the
+ * owner or a network the place belongs to, a sign, or something else.
+ */
+export const IMAGE_CATEGORIES = [
+  "site",
+  "entrance",
+  "equipment",
+  "operator_logo",
+  "owner_logo",
+  "network_logo",
+  "sign",
+  "other",
+] as const;
+/** A link to an image of a feature or one of its components, as its publisher hosts it. */
+export const ImageLink = z.strictObject({
+  url: z.url(),
+  category: z.enum(IMAGE_CATEGORIES),
+  thumbnail: z.url().optional(),
+  /** The file format as published (`jpeg`, `png`, `svg`). */
+  format: z.string().min(1).optional(),
+  /** Pixels. */
+  width: z.number().int().positive().optional(),
+  height: z.number().int().positive().optional(),
+});
 const OPENING_DAYS = ["MO", "TU", "WE", "TH", "FR", "SA", "SU", "PH"] as const;
 const LocalTime = z.string().regex(/^(?:[01]\d|2[0-4]):[0-5]\d$/);
 
@@ -82,6 +111,7 @@ export function componentSchema(k: Kernel, entry: KindEntry, details: z.ZodType)
     floorLevel: z.string().min(1).optional(),
     externalIds: z.array(k.ExternalId).min(1).optional(),
     lifecycle: z.enum(LIFECYCLES).optional(),
+    images: z.array(ImageLink).min(1).optional(),
     details,
   });
 }
@@ -125,16 +155,7 @@ export function featureSchema(
         })
         .optional(),
       amenities: z.array(k.vocab("amenity")).min(1).optional(),
-      images: z
-        .array(
-          z.strictObject({
-            url: z.url(),
-            category: z.enum(IMAGE_CATEGORIES),
-            thumbnail: z.url().optional(),
-          }),
-        )
-        .min(1)
-        .optional(),
+      images: z.array(ImageLink).min(1).optional(),
       components: z.array(component).min(1).optional(),
       details,
       osmMatch: z

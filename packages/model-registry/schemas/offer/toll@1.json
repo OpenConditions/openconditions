@@ -291,6 +291,15 @@
                   "reservation_expires"
                 ]
               },
+              "booking": {
+                "type": "string",
+                "enum": [
+                  "booking",
+                  "booking_expires",
+                  "booking_cancellation_fees",
+                  "booking_overtime"
+                ]
+              },
               "vehicle": {
                 "$ref": "#/$defs/VehicleApplicability"
               },
@@ -321,6 +330,9 @@
     "priceIncludesVat": {
       "type": "boolean"
     },
+    "preauthorizeAmount": {
+      "$ref": "#/$defs/Money"
+    },
     "altText": {
       "$ref": "#/$defs/Text"
     },
@@ -344,6 +356,10 @@
           "type": "string",
           "minLength": 1
         },
+        "productName": {
+          "type": "string",
+          "minLength": 1
+        },
         "sources": {
           "minItems": 1,
           "type": "array",
@@ -363,6 +379,31 @@
             "required": [
               "source",
               "pct"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "impacts": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "category": {
+                "type": "string",
+                "enum": [
+                  "nuclear_waste",
+                  "carbon_dioxide"
+                ]
+              },
+              "gPerKwh": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "category",
+              "gPerKwh"
             ],
             "additionalProperties": false
           }
@@ -432,6 +473,7 @@
             "bnetza",
             "cpo",
             "provider",
+            "siren",
             "netex:line",
             "netex:stop_place",
             "irwin",
@@ -656,6 +698,7 @@
                       "same",
                       "ugc",
                       "ars",
+                      "insee",
                       "padd",
                       "warncellid",
                       "emma_id",
