@@ -80,6 +80,47 @@ describe("XSD helpers across namespaces", () => {
     expect(xsdSubtypes(types, "{urn:u}Record")).toEqual(["Accident", "AnimalPresence"]);
     expect(types.get("{urn:u}Accident")?.base).toBe("{urn:u}Record");
   });
+
+  it("resolves a base type another namespace declares through the root's prefix", () => {
+    const sub = `<?xml version="1.0"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:t="urn:t" xmlns:s="urn:s" targetNamespace="urn:s">
+  <xs:import namespace="urn:t" schemaLocation="t.xsd"/>
+  <xs:complexType name="Roadworks">
+    <xs:complexContent><xs:extension base="t:Record"><xs:sequence/></xs:extension></xs:complexContent>
+  </xs:complexType>
+</xs:schema>`;
+    const types = xsdComplexTypes([...SCHEMAS, { fileName: "s.xsd", contents: sub }]);
+    expect(types.get("{urn:s}Roadworks")?.base).toBe("{urn:t}Record");
+    expect(xsdSubtypes(types, "{urn:t}Record")).toEqual([
+      "Accident",
+      "AnimalPresence",
+      "Roadworks",
+    ]);
+  });
+});
+
+describe("XSD enumerations declared inside elements", () => {
+  it("reads an element's anonymous enumeration under the element's name", () => {
+    const cap = `<?xml version="1.0"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="urn:c">
+  <element name="alert"><complexType><sequence>
+    <element name="msgType"><simpleType><restriction base="string">
+      <enumeration value="Alert"/><enumeration value="Cancel"/>
+    </restriction></simpleType></element>
+  </sequence></complexType></element>
+</schema>`;
+    const enumerations = xsdEnumerations([{ fileName: "c.xsd", contents: cap }]);
+    expect(enumerations).toEqual([
+      {
+        file: "c.xsd",
+        namespace: "urn:c",
+        name: "msgType",
+        declaredBy: "element",
+        values: ["Alert", "Cancel"],
+      },
+    ]);
+    expect(xsdEnumeration(enumerations, "msgType")).toEqual(["Alert", "Cancel"]);
+  });
 });
 
 describe("JSON Schema helpers", () => {

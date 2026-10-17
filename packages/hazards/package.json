@@ -33,6 +33,7 @@
     "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {
+    "@openconditions/conformance": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

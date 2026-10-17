@@ -34,6 +34,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@openconditions/conformance": "workspace:*",
     "@openconditions/model-charging": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

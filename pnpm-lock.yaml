@@ -280,6 +280,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.6
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@openconditions/model-charging':
         specifier: workspace:*
         version: link:../model-charging
@@ -314,6 +317,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.6
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@openconditions/model-roads':
         specifier: workspace:*
         version: link:../model-roads
@@ -432,6 +438,21 @@ importers:
         specifier: ^5.11.2
         version: 5.11.2
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
+      '@openconditions/model-charging':
+        specifier: workspace:*
+        version: link:../model-charging
+      '@openconditions/model-facilities':
+        specifier: workspace:*
+        version: link:../model-facilities
+      '@openconditions/model-fuel':
+        specifier: workspace:*
+        version: link:../model-fuel
+      '@openconditions/model-parking':
+        specifier: workspace:*
+        version: link:../model-parking
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -537,6 +558,9 @@ importers:
         specifier: ^5.11.2
         version: 5.11.2
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16
@@ -738,6 +762,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.6
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -877,6 +904,9 @@ importers:
 
   packages/ocpi:
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -927,6 +957,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.6
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.29)(tsx@4.23.15)(typescript@6.0.3)(yaml@2.9.1)
@@ -1053,6 +1086,9 @@ importers:
         specifier: ^4.6.5
         version: 4.6.6
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16

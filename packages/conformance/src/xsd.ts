@@ -58,20 +58,27 @@ interface SchemaRoot {
   prefixes: Map<string, string>;
 }
 
+/**
+ * The namespace declarations of a schema document's root element. The parser
+ * drops `xmlns` attributes along with the prefixes it removes, so they are
+ * read from the root's start tag itself.
+ */
+function rootPrefixes(contents: string): Map<string, string> {
+  const start = /<(?:[\w.-]+:)?schema\b([^>]*)>/.exec(contents)?.[1] ?? "";
+  return new Map(
+    [...start.matchAll(/\sxmlns(?::([\w.-]+))?\s*=\s*(["'])(.*?)\2/g)].map(
+      (m) => [m[1] ?? "", m[3]!] as const,
+    ),
+  );
+}
+
 function schemaRoots(schemas: readonly SchemaFile[]): SchemaRoot[] {
   return schemas.flatMap((s) =>
     list((parser.parse(s.contents) as Node)["schema"]).map((schema) => ({
       file: s.fileName,
       schema,
       namespace: attr(schema, "targetNamespace") ?? "",
-      prefixes: new Map(
-        Object.keys(schema)
-          .filter((key) => key === "@xmlns" || key.startsWith("@xmlns:"))
-          .map((key) => [
-            key === "@xmlns" ? "" : key.slice("@xmlns:".length),
-            attr(schema, key.slice(1))!,
-          ]),
-      ),
+      prefixes: rootPrefixes(s.contents),
     })),
   );
 }
@@ -86,25 +93,41 @@ function resolve(root: SchemaRoot, qname: string): string {
   return clark(root.prefixes.get(prefix) ?? root.namespace, local(qname));
 }
 
-/** A named simple type's enumeration values, and where it is declared. */
+/**
+ * An enumeration's values and where it is declared: a named simple type, or
+ * the anonymous simple type of a named element (CAP declares every one of its
+ * enumerations that way), known by the element's name.
+ */
 export interface XsdEnumeration {
   file: string;
   namespace: string;
   name: string;
+  /** Whether `name` is a simple type's or an element's. */
+  declaredBy: "type" | "element";
   values: string[];
 }
 
-/** Every named simple type of the schemas that restricts by enumeration. */
+const enumerationValues = (simpleType: Node): string[] =>
+  list(simpleType["restriction"]).flatMap((r) =>
+    list(r["enumeration"]).map((e) => attr(e, "value") ?? ""),
+  );
+
+/** Every enumeration of the schemas, named types first, then elements' anonymous ones. */
 export function xsdEnumerations(schemas: readonly SchemaFile[]): XsdEnumeration[] {
   const out: XsdEnumeration[] = [];
   for (const { file, schema, namespace } of schemaRoots(schemas)) {
     for (const type of list(schema["simpleType"])) {
       const name = attr(type, "name");
-      if (!name) continue;
-      const values = list(type["restriction"]).flatMap((r) =>
-        list(r["enumeration"]).map((e) => attr(e, "value") ?? ""),
-      );
-      if (values.length > 0) out.push({ file, namespace, name, values });
+      const values = enumerationValues(type);
+      if (name && values.length > 0)
+        out.push({ file, namespace, name, declaredBy: "type", values });
+    }
+    for (const element of descendants(schema, "element")) {
+      const name = attr(element, "name");
+      const values = list(element["simpleType"]).flatMap(enumerationValues);
+      if (name && values.length > 0) {
+        out.push({ file, namespace, name, declaredBy: "element", values });
+      }
     }
   }
   return out;

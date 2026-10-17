@@ -31,6 +31,11 @@
     "fast-xml-parser": "^5.11.2"
   },
   "devDependencies": {
+    "@openconditions/conformance": "workspace:*",
+    "@openconditions/model-charging": "workspace:*",
+    "@openconditions/model-facilities": "workspace:*",
+    "@openconditions/model-fuel": "workspace:*",
+    "@openconditions/model-parking": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
