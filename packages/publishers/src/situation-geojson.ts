@@ -6,6 +6,7 @@ import {
 } from "@openconditions/model";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { geoJsonLdContext, recordIri } from "./geojson-ld.js";
+import { rfc7946Geometry } from "./rfc7946.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -56,7 +57,9 @@ export interface SituationGeoJsonOptions {
  * Situations as a GeoJSON FeatureCollection: each record as a feature whose
  * geometry is its location's, whose properties are the record itself (its
  * location without the geometry the feature already carries), plus the state
- * of each effect at `at`. Records are never rebuilt, only wrapped.
+ * of each effect at `at`. Records are never rebuilt, only wrapped; a
+ * geometry is only put in the form RFC 7946 asks of a producer
+ * (`rfc7946Geometry`).
  */
 export function situationsToGeoJSON(
   situations: readonly Rec[],
@@ -69,7 +72,7 @@ export function situationsToGeoJSON(
     return {
       type: "Feature",
       id: String(situation["id"]),
-      geometry: (geometry as Geometry | null | undefined) ?? null,
+      geometry: rfc7946Geometry((geometry as Geometry | null | undefined) ?? null),
       properties: { ...situation, location, effectStates: effectStatesAt(situation, at) },
     };
   });

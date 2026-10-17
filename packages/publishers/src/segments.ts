@@ -1,5 +1,6 @@
 import type { Contributor } from "@openconditions/core";
-import type { Feature } from "geojson";
+import type { Feature, Geometry } from "geojson";
+import { rfc7946Geometry } from "./rfc7946.js";
 
 /**
  * One row of `road_segment LEFT JOIN segment_speed` — a directed road segment
@@ -42,6 +43,8 @@ export interface SegmentSpeedRow {
  * (C4) stays the single place that invents a default, rather than this
  * emitter guessing one. The `!= null` guard omits both `null` (real LEFT-JOIN
  * miss from the driver) and `undefined` (an in-memory row that never set it).
+ * A segment drawn across the antimeridian is cut there into a
+ * MultiLineString (`rfc7946Geometry`).
  */
 export function segmentsToGeoJSON(rows: SegmentSpeedRow[]): {
   type: "FeatureCollection";
@@ -68,7 +71,7 @@ export function segmentsToGeoJSON(rows: SegmentSpeedRow[]): {
     if (row.fieldContributors != null) properties["field_contributors"] = row.fieldContributors;
     return {
       type: "Feature",
-      geometry: JSON.parse(row.geojson),
+      geometry: rfc7946Geometry(JSON.parse(row.geojson) as Geometry),
       properties,
     };
   });

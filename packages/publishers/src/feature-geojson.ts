@@ -1,5 +1,6 @@
 import type { Feature, FeatureCollection, Geometry } from "geojson";
 import { geoJsonLdContext, recordIri } from "./geojson-ld.js";
+import { rfc7946Geometry } from "./rfc7946.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -18,7 +19,8 @@ export type FeatureRecordCollection = FeatureCollection<Geometry | null, Rec> & 
  * feature whose geometry is its location's and whose properties are the
  * record itself (its location without the geometry the GeoJSON feature
  * already carries). Components ride along exactly when the records carry
- * them. Records are never rebuilt, only wrapped.
+ * them. Records are never rebuilt, only wrapped; a geometry is only put in
+ * the form RFC 7946 asks of a producer (`rfc7946Geometry`).
  */
 export function featuresToGeoJSON(
   features: readonly Rec[],
@@ -37,7 +39,7 @@ export function featuresToGeoJSON(
       return {
         type: "Feature",
         id: String(record["id"]),
-        geometry: (geometry as Geometry | null | undefined) ?? null,
+        geometry: rfc7946Geometry((geometry as Geometry | null | undefined) ?? null),
         properties: { ...record, location },
       };
     }),
