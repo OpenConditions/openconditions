@@ -50,6 +50,14 @@ const TRANSPORT: Boundary = {
   message: "Event truth must remain independent of federation transport health.",
 };
 
+const CONFORMANCE_PACKAGE = /^@openconditions\/conformance(?:\/|$)/;
+
+const CONFORMANCE: Boundary = {
+  id: "conformance",
+  pattern: CONFORMANCE_PACKAGE,
+  message: "The conformance package fetches official schemas for tests; import it only from tests.",
+};
+
 const MODEL: Boundary = {
   id: "model",
   pattern: /^@openconditions\//,
@@ -158,6 +166,9 @@ export function boundariesFor(path: string): Boundary[] {
   } else if (path.startsWith("packages/model-")) boundaries.push(DOMAIN_MODEL);
   if (BELOW_ASSEMBLY.some((root) => path.startsWith(root))) boundaries.push(ASSEMBLY);
   if (!isTestFile(path)) {
+    if (isPackageOrServiceSource(path) && !path.startsWith("packages/conformance/")) {
+      boundaries.push(CONFORMANCE);
+    }
     if (isPackageOrServiceSource(path) && !path.startsWith("packages/probe-spike/")) {
       boundaries.push(SPIKE);
     }
@@ -214,6 +225,9 @@ export function importBoundaryViolations(source: string, path: string): ImportBo
   for (const { text, node } of moduleSpecifiers(parsed)) {
     // One report per specifier, so a name caught by two boundaries is one
     // finding rather than a pile.
+    // A test holds any layer to the standards' official schemas, the model
+    // packages' included: the conformance package is outside the layering.
+    if (isTestFile(path) && CONFORMANCE_PACKAGE.test(text)) continue;
     const boundary = boundaries.find((candidate) => candidate.pattern.test(text));
     if (boundary === undefined) continue;
     const { line } = parsed.getLineAndCharacterOfPosition(node.getStart(parsed));

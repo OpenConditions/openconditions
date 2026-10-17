@@ -172,6 +172,19 @@ describe("AST architecture boundaries", () => {
     },
   );
 
+  it("keeps the schema conformance package to tests, in every layer", async () => {
+    const source = 'import { xsdErrors } from "@openconditions/conformance";';
+    expect(await violations(source, "packages/roads/src/datex.ts")).toBe(1);
+    expect(await violations(source, "packages/roads/src/__tests__/datex.test.ts")).toBe(0);
+    expect(await violations(source, "packages/model-roads/src/__tests__/datex2.test.ts")).toBe(0);
+    expect(
+      await violations(
+        'import { DATEX2_V3 } from "@openconditions/conformance/standards/datex2-v3";',
+        "packages/model-registry/src/__tests__/fit.test.ts",
+      ),
+    ).toBe(0);
+  });
+
   it("allows supported packages, local admission rates and test-only imports", async () => {
     expect(
       await violations(

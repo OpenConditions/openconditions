@@ -37,6 +37,7 @@
     "hyparquet-writer": "0.16.11"
   },
   "devDependencies": {
+    "@openconditions/conformance": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
     "@types/geojson": "^7946.0.16",
     "@types/jsonld": "^1.5.15",

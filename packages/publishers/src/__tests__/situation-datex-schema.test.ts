@@ -1,8 +1,11 @@
+import { pinnedOrUnavailable, type SchemaFile, xsdErrors } from "@openconditions/conformance";
+import {
+  DATEX2_V3,
+  MESSAGE_CONTAINER_SCHEMA,
+} from "@openconditions/conformance/standards/datex2-v3";
 import { DATEX2_RECORDS } from "@openconditions/model-roads";
 import { beforeAll, describe, expect, it } from "vitest";
-import { validateXML } from "xmllint-wasm";
 import { situationsToDatex } from "../situation-datex.js";
-import { datexSchemas, ROOT_SCHEMA } from "./helpers/datex-schemas.js";
 
 type Rec = Record<string, unknown>;
 
@@ -157,29 +160,17 @@ const variants = [
 ];
 
 describe("situationsToDatex against the DATEX II v3 schemas", () => {
-  let schemas: Awaited<ReturnType<typeof datexSchemas>> | undefined;
+  let schemas: SchemaFile[] = [];
   let unavailable: string | undefined;
 
   beforeAll(async () => {
-    try {
-      schemas = await datexSchemas();
-    } catch (error) {
-      // CI always runs this check; only an offline local run may go without it.
-      if (process.env["CI"]) throw error;
-      unavailable = `DATEX II schemas unavailable (${(error as Error).message}); run once online to cache them`;
-    }
+    const pinned = await pinnedOrUnavailable(DATEX2_V3);
+    if ("files" in pinned) schemas = pinned.files;
+    else unavailable = pinned.unavailable;
   }, 120_000);
 
-  async function validate(xml: string) {
-    const all = schemas ?? [];
-    const result = await validateXML({
-      xml: [{ fileName: "situations.xml", contents: xml }],
-      schema: all.filter((s) => s.fileName === ROOT_SCHEMA),
-      preload: all.filter((s) => s.fileName !== ROOT_SCHEMA),
-      maxMemoryPages: 4096,
-    });
-    return result.errors.map((e) => e.rawMessage);
-  }
+  const validate = (xml: string) =>
+    xsdErrors(xml, schemas, MESSAGE_CONTAINER_SCHEMA, "situations.xml");
 
   it.for<[string, Rec[]]>([
     ["every classification DATEX has a record for", everyNature],
