@@ -189,24 +189,43 @@ export const endpointSchema = z
     body: z.string().optional(),
     headers: z.record(z.string(), z.string()).optional(),
     pagination: z
-      .object({
-        skipParam: z.string(),
-        pageSize: z.number().int().positive(),
-        mode: z.enum(["offset", "page"]).optional(),
-        firstPage: z.number().int().nonnegative().optional(),
-        recordsPath: z.string().optional(),
-        maxPages: z.number().int().positive().optional(),
+      .union([
+        z
+          .object({
+            skipParam: z.string(),
+            pageSize: z.number().int().positive(),
+            mode: z.enum(["offset", "page"]).optional(),
+            firstPage: z.number().int().nonnegative().optional(),
+            recordsPath: z.string().optional(),
+            maxPages: z.number().int().positive().optional(),
+            /**
+             * The JSON is converted from XML (data.go.kr): a list of one is the
+             * item itself, and an empty list is absent or `""`.
+             */
+            xmlLists: z.literal(true).optional(),
+          })
+          .strict()
+          .refine((p) => p.firstPage === undefined || p.mode === "page", {
+            path: ["firstPage"],
+            message: "firstPage applies to page mode only",
+          }),
         /**
-         * The JSON is converted from XML (data.go.kr): a list of one is the
-         * item itself, and an empty list is absent or `""`.
+         * Each page names the next: the `Link` header's `rel="next"` target
+         * (OCPI 2.2.1/2.3.0 transport, RFC 8288), or the URL at `nextPath` in
+         * the body. A page naming none is the last. The total the publisher
+         * reports (`X-Total-Count`, or the number at `totalPath`) must have
+         * arrived by then.
          */
-        xmlLists: z.literal(true).optional(),
-      })
-      .strict()
-      .refine((p) => p.firstPage === undefined || p.mode === "page", {
-        path: ["firstPage"],
-        message: "firstPage applies to page mode only",
-      })
+        z
+          .object({
+            mode: z.literal("link"),
+            recordsPath: z.string().optional(),
+            maxPages: z.number().int().positive().optional(),
+            nextPath: z.string().min(1).optional(),
+            totalPath: z.string().min(1).optional(),
+          })
+          .strict(),
+      ])
       .optional(),
     follow: z
       .object({ path: z.string().min(1).optional(), pattern: z.string().min(1).optional() })

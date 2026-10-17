@@ -41,19 +41,27 @@
       // status role asks for the live states only: about 110 pages, minutes
       // of requests, so hourly. Between them the changes role asks for the
       // states changed since its last answer, a page or two. Tariffs and
-      // their associations also page by at most 1,000.
+      // their associations also page by at most 1,000. OCPDB sends no OCPI
+      // paging headers; each page names the next in `next_path` (none on the
+      // last) and the total in `total_count`.
       "endpoints": {
         "main": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/locations?exclude_source_uid=opendata_swiss&limit=5000",
-          "pagination": { "skipParam": "offset", "pageSize": 5000, "recordsPath": "items" },
+          "pagination": {
+            "mode": "link",
+            "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count",
+          },
           "cadenceSec": 86400,
         },
         "status": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 1000,
+            "mode": "link",
             "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count",
             "maxPages": 300,
           },
           "cadenceSec": 3600,
@@ -62,21 +70,32 @@
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
           "changesSince": { "param": "last_updated_since" },
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 1000,
+            "mode": "link",
             "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count",
             "maxPages": 300,
           },
           "cadenceSec": 300,
         },
         "tariffs": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
-          "pagination": { "skipParam": "offset", "pageSize": 1000, "recordsPath": "items" },
+          "pagination": {
+            "mode": "link",
+            "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count",
+          },
           "cadenceSec": 86400,
         },
         "associations": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/3.0/tariff-associations?limit=1000",
-          "pagination": { "skipParam": "offset", "pageSize": 1000, "recordsPath": "items" },
+          "pagination": {
+            "mode": "link",
+            "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count",
+          },
           "cadenceSec": 86400,
         },
         "sources": {
