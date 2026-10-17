@@ -20,6 +20,9 @@ import {
 } from "@openconditions/ingest-framework";
 import type { MappingTarget } from "@openconditions/model";
 import {
+  DATEX2_PARKING_ACCESS,
+  DATEX2_PARKING_PAYMENT,
+  DATEX2_PARKING_RESERVATION,
   DATEX2_PARKING_SUPERVISION,
   DATEX2_PARKING_VEHICLE_TYPES,
   DATEX2_V2_PARKING,
@@ -101,6 +104,10 @@ const USER_GROUPS: Readonly<Record<string, ParkingUserGroup>> = {
   shortTermParker: "short_term",
   longTermParker: "long_term",
   carSharer: "car_sharing",
+  allUsers: "any",
+  customers: "customers",
+  shoppers: "customers",
+  hotelGuests: "customers",
 };
 
 /** v2 `parkingLayout` and v3 `structureType` codes that say how the site is built. */
@@ -115,6 +122,8 @@ const LAYOUTS: Readonly<Record<string, ParkingLayout>> = {
   "parkingLayout:nested": "nested",
   "parkingLayout:unknown": "unknown",
   "structureType:offStreetSurface": "surface",
+  // Dropped off at a transfer cabin and parked by machine.
+  "usageScenario:dropOffMechanical": "automated",
 };
 
 /**
@@ -185,6 +194,10 @@ const STANDARD_CODES: Readonly<Record<string, ReadonlySet<string>>> = {
   labelSecurityLevel: known(V2.labelSecurityLevels),
   vehicleType: known(V2.vehicleTypes, V2.vehicleTypes2, V3.vehicleTypes),
   userType: known(V2.userTypes),
+  labelServiceLevel: known(V2.labelServiceLevels),
+  reservation: known(V2.reservationTypes),
+  accessCategory: known(V2.accessCategories),
+  payment: known(V2.meansOfPayment),
 };
 
 /** How many of these codes (`prefix:value`, or bare under `prefix`) DATEX does not define. */
@@ -213,16 +226,37 @@ function unknownRecordCodes(record: DatexParkingRecord): number {
     unknownCodes(
       record.groups.flatMap((g) => g.userGroups),
       "userType",
-    )
+    ) +
+    unknownCodes(
+      record.labelServiceLevel === undefined ? [] : [record.labelServiceLevel],
+      "labelServiceLevel",
+    ) +
+    unknownCodes(record.reservation === undefined ? [] : [record.reservation], "reservation") +
+    unknownCodes(
+      record.accesses.flatMap((a) => a.categories),
+      "accessCategory",
+    ) +
+    unknownCodes(record.payment, "payment")
   );
 }
 
-/** Usage scenarios that are usages of the model. */
+/**
+ * Usage scenarios that are usages of the model. A drop-off area is for
+ * dropping off and picking up, as kiss and ride is.
+ */
 const USAGES: Readonly<Record<string, string>> = {
   "usageScenario:truckParking": "truck",
   "usageScenario:parkAndRide": "park_and_ride",
+  "usageScenario:parkAndCycle": "park_and_cycle",
+  "usageScenario:parkAndWalk": "park_and_walk",
+  "usageScenario:kissAndRide": "kiss_and_ride",
+  "usageScenario:dropOff": "kiss_and_ride",
   "usageScenario:liftshare": "carpool",
+  "usageScenario:carSharing": "car_sharing",
+  "usageScenario:dropOffWithValet": "valet",
   "usageScenario:eventParking": "event",
+  "usageScenario:loadingBay": "loading",
+  "usageScenario:overnightParking": "overnight",
 };
 
 /**
@@ -281,6 +315,9 @@ function groupAreas(record: DatexParkingRecord): Map<string, GroupArea> {
       vehicleType,
       userGroup,
       ...(group.spaces === undefined ? {} : { capacity: group.spaces }),
+      ...(group.maxStaySec === undefined || group.maxStaySec <= 0
+        ? {}
+        : { maxStay: { value: group.maxStaySec / 60, unit: "min" } }),
     };
     const key = areaKey(area);
     out.set(group.index, { area, owner: !seen.has(key) });
@@ -290,6 +327,11 @@ function groupAreas(record: DatexParkingRecord): Map<string, GroupArea> {
 }
 
 const EU_LABEL = /^securityLevel(\d)$/;
+const EU_SERVICE_LABEL = /^serviceLevel(\d)$/;
+
+/** A table's lookup of a code, when the table holds a meaning for it. */
+const meaning = <T>(table: Readonly<Record<string, T | null>>, code: string | undefined) =>
+  code !== undefined && Object.hasOwn(table, code) ? (table[code] ?? undefined) : undefined;
 
 function siteInput(
   record: DatexParkingRecord,
@@ -302,15 +344,38 @@ function siteInput(
   const type = codes
     .map((code) => either(target, (t) => parkingCrosswalk.feature(t, code)?.type))
     .find(Boolean) as ParkingSiteType | undefined;
-  const layout = record.layoutCodes.map((code) => LAYOUTS[code]).find(Boolean);
+  const layout = [...record.layoutCodes, ...record.usage]
+    .map((code) => LAYOUTS[code])
+    .find(Boolean);
   const name = record.names[0];
+  const description = record.descriptions[0];
   const level = record.labelSecurityLevel?.match(EU_LABEL)?.[1];
+  const service = record.labelServiceLevel?.match(EU_SERVICE_LABEL)?.[1];
+  const reservation = meaning(DATEX2_PARKING_RESERVATION, record.reservation);
+  const payment = unique(record.payment.map((code) => meaning(DATEX2_PARKING_PAYMENT, code)));
+  const entrances = record.accesses.flatMap((access) =>
+    unique(access.categories.flatMap((c) => meaning(DATEX2_PARKING_ACCESS, c) ?? [])).map(
+      (kind) => ({ point: access.point, kind }),
+    ),
+  );
+  const website = record.url ?? record.tariffUrl;
   const supervision =
     record.supervision === undefined ? undefined : DATEX2_PARKING_SUPERVISION[record.supervision];
   return {
     stationId: record.id,
     point,
     ...(name === undefined ? {} : { name: name.value, lang: name.lang }),
+    ...(description === undefined ? {} : { notes: description.value }),
+    ...(website === undefined ? {} : { website }),
+    ...(record.photoUrl === undefined
+      ? {}
+      : { images: [{ url: record.photoUrl, category: "site" as const }] }),
+    ...(record.maxStaySec === undefined || record.maxStaySec <= 0
+      ? {}
+      : { maxStay: { value: record.maxStaySec / 60, unit: "min" } }),
+    ...(reservation === undefined ? {} : { reservation }),
+    ...(payment.length === 0 ? {} : { payment: payment as SiteInput["payment"] }),
+    ...(entrances.length === 0 ? {} : { entrances }),
     externalIds: [
       {
         scheme: "datex:parking",
@@ -337,6 +402,7 @@ function siteInput(
       ),
     ),
     ...(level === undefined ? {} : { securityRating: { scheme: "eu_label", level } }),
+    ...(service === undefined ? {} : { serviceRating: { scheme: "eu_label", level: service } }),
     ...(supervision === undefined || supervision === null
       ? {}
       : { supervision: supervision as SiteInput["supervision"] }),
@@ -374,6 +440,7 @@ function rateOf(
     rows,
     point: site.point,
     fetchedAt,
+    ...(site.record.tariffUrl === undefined ? {} : { url: site.record.tariffUrl }),
     ...(text === undefined ? {} : { text }),
     ...(lang === undefined ? {} : { lang }),
   });
@@ -422,9 +489,11 @@ function readingsOf(
       ? utcInstant(new Date(status.at))
       : ctx.fetchedAt;
   const reading: ReadingInput = { stationId: site.record.id, at, point: site.point };
+  // The spaces the status says the site has now stand in for the table's.
+  const capacity = status.capacity ?? site.record.totalSpaces;
   // Without a stated total, the groups' spaces bound the free count: a count
   // above them is impossible. They only bound it; nothing is derived from them.
-  const bound = site.record.totalSpaces === undefined ? groupSpaces(site.record) : undefined;
+  const bound = capacity === undefined ? groupSpaces(site.record) : undefined;
   const vacant =
     bound !== undefined && status.vacant !== undefined && status.vacant > bound
       ? undefined
@@ -436,7 +505,7 @@ function readingsOf(
       {
         available: vacant,
         occupied: status.occupied,
-        capacity: site.record.totalSpaces,
+        capacity,
       },
       ctx,
     ),
@@ -466,7 +535,11 @@ function readingsOf(
       ...occupancyDrafts(
         feed,
         groupReading,
-        { available: group.vacant, occupied: group.occupied, capacity: owned.area.capacity },
+        {
+          available: group.vacant,
+          occupied: group.occupied,
+          capacity: group.capacity ?? owned.area.capacity,
+        },
         ctx,
       ),
     );

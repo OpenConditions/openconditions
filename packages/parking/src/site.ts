@@ -659,6 +659,8 @@ export function rateDraft(
     point?: [number, number];
     /** When the poll read the tariff. */
     fetchedAt: string;
+    /** The publisher's page of the tariff. */
+    url?: string;
   },
 ): RecordDraft | undefined {
   const elements = input.rows
@@ -685,6 +687,7 @@ export function rateDraft(
     });
   if (elements.length === 0) return undefined;
   const text = clean(input.text);
+  const url = webUrl(input.url);
   return {
     id: `oc:offer:${feed.id}:${stationId}:${n}`,
     class: "offer",
@@ -694,6 +697,7 @@ export function rateDraft(
     currency: input.currency,
     elements,
     ...(text === undefined ? {} : { displayText: [{ lang: input.lang ?? "und", text }] }),
+    ...(url === undefined ? {} : { url }),
     validity: { status: "active" },
     location: input.point === undefined ? { ...UNLOCATED } : pointLocation(input.point),
     provenance: provenance(feed, stationId),

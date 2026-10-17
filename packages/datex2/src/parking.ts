@@ -39,6 +39,8 @@ export interface DatexParkingGroup {
    */
   characterised: boolean;
   spaces?: number;
+  /** The longest stay in the group's spaces, in seconds. */
+  maxStaySec?: number;
 }
 
 export interface DatexParkingTariff {
@@ -49,14 +51,30 @@ export interface DatexParkingTariff {
   name?: string;
 }
 
+/** A way into or out of a site, where the publisher places it. */
+export interface DatexParkingAccess {
+  /** `AccessCategoryEnum` codes, bare. */
+  categories: string[];
+  point: [number, number];
+}
+
 export interface DatexParkingRecord {
   id: string;
   version?: string;
   type: string;
   names: { lang: string; value: string }[];
+  descriptions: { lang: string; value: string }[];
   point?: [number, number];
   address?: string;
   operator?: string;
+  /** The site's own web page and photo. */
+  url?: string;
+  photoUrl?: string;
+  /** The longest stay at the site, in seconds. */
+  maxStaySec?: number;
+  /** A `ReservationTypeEnum` code, bare. */
+  reservation?: string;
+  accesses: DatexParkingAccess[];
   /** `usageScenario:<code>`. */
   usage: string[];
   /** `parkingLayout:`, `urbanParkingSiteType:`, `interUrbanParkingSiteLocation:`, `structureType:` codes. */
@@ -68,12 +86,18 @@ export interface DatexParkingRecord {
   security: string[];
   supervision?: string;
   labelSecurityLevel?: string;
+  labelServiceLevel?: string;
   freeOfCharge?: boolean;
+  /** `MeansOfPaymentEnum` codes, bare. */
+  payment: string[];
+  /** The page of the site's tariffs and payment. */
+  tariffUrl?: string;
   tariffs: DatexParkingTariff[];
 }
 
 export interface DatexParkingGroupStatus {
   index: string;
+  capacity?: number;
   vacant?: number;
   occupied?: number;
   occupancyPct?: number;
@@ -82,6 +106,8 @@ export interface DatexParkingGroupStatus {
 export interface DatexParkingStatus {
   recordId: string;
   at?: string;
+  /** The spaces the site has now, where they differ from its table's. */
+  capacity?: number;
   vacant?: number;
   occupied?: number;
   occupancyPct?: number;
@@ -177,12 +203,14 @@ function groupsOf(rec: XmlObject): DatexParkingGroup[] {
   return localChildren(rec, "groupOfParkingSpaces").map((wrapper, position) => {
     const body = localChild(wrapper, "parkingSpaceBasics") ?? wrapper;
     const spaces = nonNegative(localChildText(body, "parkingNumberOfSpaces"));
+    const maxStaySec = nonNegative(localChildText(body, "maximumParkingDuration"));
     return {
       index: localAttribute(wrapper, "groupIndex") ?? String(position),
       vehicleTypes: unique(leaves(body, ["vehicleType", "vehicleType2"], ["prohibitedParking"])),
       userGroups: unique(leaves(body, ["applicableForUser"], ["prohibitedParking"])),
       characterised: hasElement(body, "vehicleCharacteristics", ["prohibitedParking"]),
       ...(spaces === undefined ? {} : { spaces }),
+      ...(maxStaySec === undefined ? {} : { maxStaySec }),
     };
   });
 }
@@ -198,6 +226,15 @@ function facilitiesOf(rec: XmlObject): string[] {
   }
   out.push(...prefixed("facilityType", localChildTexts(rec, "facilityType")));
   return unique(out);
+}
+
+/** The site's ways in and out that the publisher places at a point. */
+function accessesOf(rec: XmlObject): DatexParkingAccess[] {
+  return localChildren(rec, "parkingAccess").flatMap((access) => {
+    const point = pointOf(localChild(access, "location"));
+    const categories = unique(localChildTexts(access, "accessCategory"));
+    return point === undefined || categories.length === 0 ? [] : [{ categories, point }];
+  });
 }
 
 function tariffsOf(payment: XmlObject | undefined): DatexParkingTariff[] {
@@ -238,8 +275,14 @@ function parkingRecord(
   const standards = localChild(rec, "parkingStandardsAndSecurity");
   const supervision = localChildText(standards, "parkingSupervision");
   const labelSecurityLevel = localChildText(standards, "labelSecurityLevel");
+  const labelServiceLevel = localChildText(standards, "labelServiceLevel");
   const payment = localChild(rec, "tariffsAndPayment");
   const freeOfCharge = bool(localChildText(payment, "freeOfCharge"));
+  const url = localChildText(rec, "urlLinkAddress");
+  const tariffUrl = localChildText(payment, "urlLinkAddress");
+  const photoUrl = localChildText(rec, "photoUrl");
+  const maxStaySec = nonNegative(localChildText(rec, "maximumParkingDuration"));
+  const reservation = localChildText(rec, "parkingReservation");
   // v2 and v3 wrap each scenario twice under an index; a bare leaf is read as well.
   const usage = [
     ...localChildTexts(rec, "parkingUsageScenario"),
@@ -252,9 +295,15 @@ function parkingRecord(
     ...(version === undefined ? {} : { version }),
     type: elementType(rec),
     names: multilingual(localChild(rec, "parkingName")),
+    descriptions: multilingual(localChild(rec, "parkingDescription")),
     ...(point === undefined ? {} : { point }),
     ...(address === undefined ? {} : { address }),
     ...(operator === undefined ? {} : { operator }),
+    ...(url === undefined ? {} : { url }),
+    ...(photoUrl === undefined ? {} : { photoUrl }),
+    ...(maxStaySec === undefined ? {} : { maxStaySec }),
+    ...(reservation === undefined ? {} : { reservation }),
+    accesses: accessesOf(rec),
     usage: prefixed("usageScenario", unique(usage)),
     layoutCodes: [
       "parkingLayout",
@@ -268,7 +317,10 @@ function parkingRecord(
     security: unique(localChildTexts(standards, "parkingSecurity")),
     ...(supervision === undefined ? {} : { supervision }),
     ...(labelSecurityLevel === undefined ? {} : { labelSecurityLevel }),
+    ...(labelServiceLevel === undefined ? {} : { labelServiceLevel }),
     ...(freeOfCharge === undefined ? {} : { freeOfCharge }),
+    payment: unique(localChildTexts(payment, "acceptedMeansOfPayment")),
+    ...(tariffUrl === undefined ? {} : { tariffUrl }),
     tariffs: tariffsOf(payment),
   };
 }
@@ -304,6 +356,7 @@ export function parseDatexParkingTable(
 }
 
 interface Counts {
+  capacity?: number;
   vacant?: number;
   occupied?: number;
   occupancyPct?: number;
@@ -311,6 +364,9 @@ interface Counts {
 
 function counts(occupancy: XmlObject | undefined, v37: boolean): Counts {
   const name = (v2: string, v3: string) => (v37 ? v3 : v2);
+  const capacity = nonNegative(
+    localChildText(occupancy, name("parkingNumberOfSpacesOverride", "numberOfSpacesOverride")),
+  );
   const vacant = nonNegative(
     localChildText(occupancy, name("parkingNumberOfVacantSpaces", "numberOfVacantSpaces")),
   );
@@ -321,6 +377,7 @@ function counts(occupancy: XmlObject | undefined, v37: boolean): Counts {
     localChildText(occupancy, name("parkingOccupancy", "occupancy")),
   );
   return {
+    ...(capacity === undefined ? {} : { capacity }),
     ...(vacant === undefined ? {} : { vacant }),
     ...(occupied === undefined ? {} : { occupied }),
     ...(occupancyPct === undefined ? {} : { occupancyPct }),

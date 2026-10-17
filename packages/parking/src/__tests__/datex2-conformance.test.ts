@@ -110,8 +110,20 @@ const USAGE_TYPES: Record<string, string> = {
   restArea: "rest_area_parking",
   serviceArea: "rest_area_parking",
 };
-const USAGES: Record<string, string> = { liftshare: "carpool", eventParking: "event" };
-const NO_USAGE = "a way of using the site the model has no usage for";
+const USAGES: Record<string, string> = {
+  liftshare: "carpool",
+  eventParking: "event",
+  parkAndCycle: "park_and_cycle",
+  parkAndWalk: "park_and_walk",
+  kissAndRide: "kiss_and_ride",
+  dropOff: "kiss_and_ride",
+  carSharing: "car_sharing",
+  dropOffWithValet: "valet",
+  loadingBay: "loading",
+  overnightParking: "overnight",
+};
+const HANDLING =
+  "how the site guides or moves vehicles to their spaces, which parking_site has no field for";
 
 const LAYOUTS: Record<string, string> = {
   multiStorey: "multi_storey",
@@ -210,6 +222,10 @@ const USERS: Record<string, string> = {
   residents: "residents",
   shortTermParker: "short_term",
   longTermParker: "long_term",
+  allUsers: "any",
+  customers: "customers",
+  shoppers: "customers",
+  hotelGuests: "customers",
 };
 const NO_GROUP = "no area of its own in the model";
 
@@ -359,21 +375,14 @@ describe("DATEX II parking through the parking parser", () => {
             ),
           );
           if (USAGE_TYPES[v] !== undefined) return site(out)?.["type"] === USAGE_TYPES[v];
+          // Parked by machine: an automated garage.
+          if (v === "dropOffMechanical") return details(out)["layout"] === "automated";
           return USAGES[v] !== undefined && same(details(out)["usage"], [USAGES[v]]);
         },
         unsupported: withExtended(version, {
-          parkAndCycle: NO_USAGE,
-          parkAndWalk: NO_USAGE,
-          kissAndRide: NO_USAGE,
-          carSharing: "car sharing bays are an area, which a site's scenario does not count",
-          dropOffWithValet: NO_USAGE,
-          dropOffMechanical: NO_USAGE,
-          automaticParkingGuidance: NO_USAGE,
-          staffGuidesToSpace: NO_USAGE,
-          vehicleLift: NO_USAGE,
-          loadingBay: NO_USAGE,
-          dropOff: NO_USAGE,
-          overnightParking: NO_USAGE,
+          automaticParkingGuidance: HANDLING,
+          staffGuidesToSpace: HANDLING,
+          vehicleLift: HANDLING,
           unknown: UNKNOWN,
           other: OTHER,
         }),
@@ -470,6 +479,94 @@ describe("DATEX II parking through the parking parser", () => {
             },
           ),
         unsupported: withExtended(version, { none: "no label is no rating", unknown: UNKNOWN }),
+      });
+      assertCovered("LABELServiceLevelEnum", values(version, "LABELServiceLevelEnum"), {
+        handled: (v) =>
+          same(
+            details(parse(standards(`<labelServiceLevel>${v}</labelServiceLevel>`)))[
+              "serviceRating"
+            ],
+            { scheme: "eu_label", level: v.slice(-1) },
+          ),
+        unsupported: withExtended(version, { none: "no label is no rating", unknown: UNKNOWN }),
+      });
+    });
+
+    test("reservation, accesses and means of payment", ({ skip }) => {
+      if (unavailable) skip(unavailable);
+      const RESERVATION: Record<string, boolean> = {
+        optional: true,
+        mandatory: true,
+        partly: true,
+        notAvailable: false,
+      };
+      assertCovered("ReservationTypeEnum", values(version, "ReservationTypeEnum"), {
+        handled: (v) =>
+          RESERVATION[v] !== undefined &&
+          details(parse(table(version, `<parkingReservation>${v}</parkingReservation>`)))[
+            "reservation"
+          ] === RESERVATION[v],
+        unsupported: withExtended(version, { unknown: UNKNOWN, unspecified: UNKNOWN }),
+      });
+      const ACCESS: Record<string, string[]> = {
+        vehicleEntranceAndExit: ["vehicle_entrance", "vehicle_exit"],
+        vehicleEntrance: ["vehicle_entrance"],
+        vehicleExit: ["vehicle_exit"],
+        pedestrianEntranceAndExit: ["pedestrian"],
+        pedestrianEntrance: ["pedestrian"],
+        pedestrianExit: ["pedestrian"],
+      };
+      const access = (v: string) =>
+        `<parkingAccess id="a" version="1"><accessCategory>${v}</accessCategory>${LOCATION.replace(/parkingLocation/g, "location")}</parkingAccess>`;
+      const NO_WAY = "none of a visitor's ways in or out";
+      assertCovered("AccessCategoryEnum", values(version, "AccessCategoryEnum"), {
+        handled: (v) =>
+          ACCESS[v] !== undefined &&
+          same(
+            (
+              (details(parse(table(version, access(v))))["entrances"] ?? []) as { kind: string }[]
+            ).map((e) => e.kind),
+            ACCESS[v],
+          ),
+        unsupported: withExtended(version, {
+          rentalCarReturn: NO_WAY,
+          bicycles: NO_WAY,
+          emergencyExit: NO_WAY,
+          unspecified: UNKNOWN,
+          unknown: UNKNOWN,
+          other: OTHER,
+        }),
+      });
+      const PAYMENT: Record<string, string> = {
+        cash: "cash",
+        cashCoinsOnly: "cash",
+        rfid: "rfid",
+        mobileApp: "app",
+        payBySMS: "sms",
+      };
+      assertCovered("MeansOfPaymentEnum", values(version, "MeansOfPaymentEnum"), {
+        handled: (v) =>
+          PAYMENT[v] !== undefined &&
+          same(
+            site(
+              parse(
+                table(
+                  version,
+                  `<tariffsAndPayment><acceptedMeansOfPayment>${v}</acceptedMeansOfPayment></tariffsAndPayment>`,
+                ),
+              ),
+            )?.["access"],
+            { audience: "unknown", payment: [PAYMENT[v]] },
+          ),
+        unsupported: withExtended(version, {
+          paymentCard:
+            "a credit or a debit card, which the payment methods name apart without saying which",
+          mobilePhone: "an app, a call or a text, which the payment methods name apart",
+          directCashTransfer: "no payment method of the model's",
+          electronicSettlement: "no payment method of the model's",
+          unknown: UNKNOWN,
+          other: OTHER,
+        }),
       });
     });
 

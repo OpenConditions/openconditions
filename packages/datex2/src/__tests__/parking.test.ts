@@ -25,6 +25,9 @@ describe("parseDatexParkingTable", () => {
       supervision: "patrol",
       labelSecurityLevel: "securityLevel3",
       freeOfCharge: false,
+      tariffUrl: "https://truckparkingvenlo.nl",
+      reservation: "mandatory",
+      accesses: [{ categories: ["vehicleEntrance"], point: [6.1081944, 51.390896] }],
       tariffs: [{ currency: "EUR", amount: 1, intervalSec: 3600, name: "Tarief per uur" }],
     });
     expect(venlo.operator).toBeUndefined();

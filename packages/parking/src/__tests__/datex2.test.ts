@@ -99,7 +99,7 @@ describe("datex2", () => {
     expect(venlo["site parking.occupancy_pct"]).toBeCloseTo(57.43, 2);
   });
 
-  test("DATEX: NDW's lorry park keeps its rating, security, facilities and hourly tariff", () => {
+  test("DATEX: NDW's lorry park keeps its rating, security, facilities, entrance and hourly tariff", () => {
     const out = ndw();
     const venlo = site(out, "NL-12_421");
     expect(venlo).toMatchObject({
@@ -111,6 +111,15 @@ describe("datex2", () => {
         securityRating: { scheme: "eu_label", level: "3" },
         securityFeatures: ["cctv", "fences", "lighting", "guard_24h"],
         supervision: "patrol",
+        // Booking is mandatory; the tariff page is the only page the site names.
+        reservation: true,
+        website: "https://truckparkingvenlo.nl",
+        entrances: [
+          {
+            point: { type: "Point", coordinates: [6.1081944, 51.390896] },
+            kind: "vehicle_entrance",
+          },
+        ],
       },
     });
     expect(venlo?.["amenities"]).toEqual(
@@ -135,7 +144,25 @@ describe("datex2", () => {
           },
         ],
         displayText: [{ lang: "nl", text: "Tarief per uur" }],
+        url: "https://truckparkingvenlo.nl",
       }),
+    ]);
+  });
+
+  test("DATEX: a status's own number of spaces bounds its free count", () => {
+    const table = Buffer.from(
+      `<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="2"><payloadPublication xsi:type="ParkingTablePublication" lang="en"><publicationTime>2026-10-05T00:00:00Z</publicationTime><parkingTable id="t" version="1"><parkingRecord xsi:type="UrbanParkingSite" id="r" version="1"><parkingRecordVersionTime>2026-10-05T00:00:00Z</parkingRecordVersionTime><parkingNumberOfSpaces>100</parkingNumberOfSpaces><parkingLocation xsi:type="Point"><pointByCoordinates><pointCoordinates><latitude>51.4</latitude><longitude>6.1</longitude></pointCoordinates></pointByCoordinates></parkingLocation><urbanParkingSiteType>offStreetParking</urbanParkingSiteType></parkingRecord></parkingTable></payloadPublication></d2LogicalModel>`,
+    );
+    const statusOf = (vacant: number) =>
+      Buffer.from(
+        `<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="2"><payloadPublication xsi:type="ParkingStatusPublication" lang="en"><publicationTime>2026-10-05T03:30:00Z</publicationTime><parkingRecordStatus xsi:type="ParkingSiteStatus"><parkingRecordReference targetClass="ParkingRecord" id="r" version="1"/><parkingStatusOriginTime>2026-10-05T03:30:00Z</parkingStatusOriginTime><parkingOccupancy><parkingNumberOfSpacesOverride>40</parkingNumberOfSpacesOverride><parkingNumberOfVacantSpaces>${vacant}</parkingNumberOfVacantSpaces></parkingOccupancy></parkingRecordStatus></payloadPublication></d2LogicalModel>`,
+      );
+    expect(readings(parse(ndwFeed(), table, statusOf(30)), "r")).toMatchObject({
+      "site parking.available": 30,
+    });
+    // Free spaces above the 40 the site has today are no reading.
+    expect(readings(parse(ndwFeed(), table, statusOf(60)), "r")).not.toHaveProperty([
+      "site parking.available",
     ]);
   });
 

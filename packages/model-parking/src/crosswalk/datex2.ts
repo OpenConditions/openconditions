@@ -405,3 +405,58 @@ export const DATEX2_PARKING_SUPERVISION: Readonly<Record<string, string | null>>
   other: null,
   _extended: null,
 };
+
+/**
+ * How a visitor can pay, from `MeansOfPaymentEnum`. A `paymentCard` may be a
+ * credit or a debit card, and `mobilePhone` an app, a call or a text, which
+ * the payment methods name apart; a direct cash transfer and an electronic
+ * settlement are none of them.
+ */
+export const DATEX2_PARKING_PAYMENT: Readonly<Record<string, string | null>> = {
+  cash: "cash",
+  cashCoinsOnly: "cash",
+  rfid: "rfid",
+  mobileApp: "app",
+  payBySMS: "sms",
+  paymentCard: null,
+  mobilePhone: null,
+  directCashTransfer: null,
+  electronicSettlement: null,
+  unknown: null,
+  other: null,
+  _extended: null,
+};
+
+/** Whether a space can be booked ahead, from `ReservationTypeEnum`. */
+export const DATEX2_PARKING_RESERVATION: Readonly<Record<string, boolean | null>> = {
+  optional: true,
+  mandatory: true,
+  partly: true,
+  notAvailable: false,
+  unknown: null,
+  unspecified: null,
+  _extended: null,
+};
+
+/**
+ * The entrances a site's access of an `AccessCategoryEnum` category is. A
+ * rental car return, a bicycle access and an emergency exit are none of a
+ * visitor's ways in or out.
+ */
+export const DATEX2_PARKING_ACCESS: Readonly<
+  Record<string, readonly ("vehicle_entrance" | "vehicle_exit" | "pedestrian")[] | null>
+> = {
+  vehicleEntranceAndExit: ["vehicle_entrance", "vehicle_exit"],
+  vehicleEntrance: ["vehicle_entrance"],
+  vehicleExit: ["vehicle_exit"],
+  pedestrianEntranceAndExit: ["pedestrian"],
+  pedestrianEntrance: ["pedestrian"],
+  pedestrianExit: ["pedestrian"],
+  rentalCarReturn: null,
+  bicycles: null,
+  emergencyExit: null,
+  unspecified: null,
+  unknown: null,
+  other: null,
+  _extended: null,
+};

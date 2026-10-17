@@ -143,6 +143,10 @@ const LISTS: (readonly [
       ["equipmentTypes", "EquipmentTypeEnum"],
       ["serviceFacilityTypes", "ServiceFacilityTypeEnum"],
       ["labelSecurityLevels", "LABELSecurityLevelEnum"],
+      ["labelServiceLevels", "LABELServiceLevelEnum"],
+      ["reservationTypes", "ReservationTypeEnum"],
+      ["accessCategories", "AccessCategoryEnum"],
+      ["meansOfPayment", "MeansOfPaymentEnum"],
     ] as const
   ).map(([key, name]) => [`parking v2 ${key}`, DATEX2_V2_PARKING[key], "v2.3", name] as const),
   // The census leaves out `_extended`, which the parking crosswalk does not key.
@@ -171,6 +175,10 @@ const RECORD_BASED_V3: [key: keyof typeof DATEX2_V2_PARKING, name: string][] = [
   ["parkingSiteStatuses", "ParkingSiteStatusEnum"],
   ["openingStatuses", "OpeningStatusEnum"],
   ["labelSecurityLevels", "LABELSecurityLevelEnum"],
+  ["labelServiceLevels", "LABELServiceLevelEnum"],
+  ["reservationTypes", "ReservationTypeEnum"],
+  ["accessCategories", "AccessCategoryEnum"],
+  ["meansOfPayment", "MeansOfPaymentEnum"],
 ];
 
 describe("the DATEX vocabularies are the schemas' enumerations", () => {
