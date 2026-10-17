@@ -42,6 +42,20 @@ export function credentialEnvName(ownerId: string, ref: CredentialRef): string {
 }
 
 /**
+ * The name of the OAuth2 grant an `oauth2-authorization-code` auth reads: the
+ * shared group of its `clientId` ref, so every feed of one account shares
+ * one login, else the feed that owns the field.
+ */
+export function oauthGrantKey(ownerId: string, clientIdRef: CredentialRef): string {
+  if (clientIdRef.startsWith("@")) {
+    const match = SHARED_REF.exec(clientIdRef);
+    if (!match) throw new Error(`${clientIdRef} is not a shared credential ref (@group.field)`);
+    return match[1] as string;
+  }
+  return ownerId;
+}
+
+/**
  * Resolve a credential value, supporting the `*_FILE` convention used by
  * file-based secret delivery (Docker `secrets:` mounts at `/run/secrets/<KEY>`).
  * Prefers a non-empty env var; otherwise reads the file named by `<KEY>_FILE`.
@@ -112,6 +126,8 @@ function authRefs(auth: FeedDefinition["auth"]): { ref: CredentialRef; optional?
       return [{ ref: auth.user }, { ref: auth.password }];
     case "oauth2-client-credentials":
       return [{ ref: auth.clientId }, { ref: auth.clientSecret }];
+    case "oauth2-authorization-code":
+      return [{ ref: auth.clientId }];
     case "mtls":
       return [
         { ref: auth.cert },

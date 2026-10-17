@@ -12,6 +12,7 @@ import { parseGdacs } from "./formats/gdacs.js";
 import { parseHms } from "./formats/hms.js";
 import { parseMeteoAlarm } from "./formats/meteoalarm.js";
 import { parseNws } from "./formats/nws.js";
+import { parseSlstrFrp } from "./formats/slstr-frp.js";
 import { parseUsgs } from "./formats/usgs.js";
 import { parseWfigs } from "./formats/wfigs.js";
 
@@ -58,6 +59,14 @@ const FORMATS: FeedFormat<HazardsCatalogFeed>[] = [
     products: ["fires"],
     endpoints: { main: { required: true } },
     parse: parseFirms,
+  },
+  {
+    id: "slstr-frp",
+    kind: "measurements",
+    products: ["fires"],
+    // The listing of the granules with a fire, and each granule's fire list.
+    endpoints: { granules: { required: true }, fires: { required: true } },
+    parse: parseSlstrFrp,
   },
   {
     id: "wfigs",

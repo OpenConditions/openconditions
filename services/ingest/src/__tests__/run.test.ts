@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import type { CatalogFeed } from "@openconditions/ingest-framework";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { stampAttribution } from "../pipeline/publish.js";
+import { attributionStamp, stampAttribution } from "../pipeline/publish.js";
 import { createOpenlrClient, guardedFeedFetch } from "../pipeline/run.js";
 import { inspectSnapshotCompleteness } from "../pipeline/snapshot-inspection.js";
 import { repoFeed, testFeed } from "./helpers/catalog.js";
@@ -83,6 +83,37 @@ describe("stampAttribution", () => {
         reviewed_at: "2026-09-11T00:00:00.000Z",
       },
     });
+  });
+
+  it("credits each reading with the year it was observed, one attribution per year", () => {
+    const feed = testFeed({
+      id: "eumetsat-slstr-fires",
+      attribution: "Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT",
+      license: "LicenseRef-Copernicus-Sentinel-Data",
+    });
+    const reading = (time: Record<string, string> | undefined) => ({
+      id: "oc:observation:eumetsat-slstr-fires:1",
+      provenance: { origin: "feed", sourceId: feed.id },
+      ...(time ? { phenomenonTime: time } : {}),
+    });
+    const stamp = attributionStamp(feed, new Date("2027-01-01T00:20:00Z"));
+    const [late, early, interval, undated] = [
+      reading({ instant: "2026-12-31T23:58:00Z" }),
+      reading({ instant: "2027-01-01T00:04:00Z" }),
+      reading({ start: "2026-12-31T23:00:00Z", end: "2027-01-01T00:00:00Z" }),
+      reading(undefined),
+    ].map(
+      (draft) => (stamp(draft)["provenance"] as { attribution: { provider: string } }).attribution,
+    );
+    expect(late?.provider).toBe(
+      "Contains modified Copernicus Sentinel data 2026, processed by EUMETSAT",
+    );
+    expect(early?.provider).toBe(
+      "Contains modified Copernicus Sentinel data 2027, processed by EUMETSAT",
+    );
+    expect(interval).toBe(late);
+    // A draft that states no time is credited with the poll's year.
+    expect(undated).toBe(early);
   });
 });
 

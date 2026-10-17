@@ -73,6 +73,78 @@
       "privacyUrl": "https://www.nasa.gov/privacy/",
     },
     {
+      "operator": "eumetsat",
+      "qualifier": "slstr",
+      "product": "fires",
+      "name": "EUMETSAT Sentinel-3 SLSTR active fires",
+      "tier": "authoritative",
+      "format": "slstr-frp",
+      // The Data Store serves Copernicus products to an account that holds
+      // the Copernicus licence, through the account's OAuth2 login (see
+      // @eumetsat in credentials.jsonc); its API keys are refused.
+      "auth": {
+        "kind": "oauth2-authorization-code",
+        "authorizeUrl": "https://user.eumetsat.int/cas/oidc/oidcAuthorize",
+        "tokenUrl": "https://user.eumetsat.int/cas/oauth2.0/accessToken",
+        "redirectUri": "https://api.eumetsat.int/cli",
+        "clientId": "@eumetsat.client_id",
+        "scope": "openid profile email",
+        "responseMode": "fragment",
+        "refreshTokenTtlSec": 2592000,
+      },
+      // The near-real-time Sentinel-3A and -3B granules (three minutes of the
+      // swath each) in which the processor detected a fire, newest first:
+      // 100 are about ten hours, and a granule is published one to three
+      // hours after the satellite saw it. Each granule's fire list is fetched
+      // once and kept while the listing names it; a pixel stays 72 hours,
+      // like a FIRMS one. The satellites cross the equator at 10:00 and 22:00
+      // local time, the hours VIIRS's 13:30 and 01:30 orbits leave open.
+      "endpoints": {
+        "granules": {
+          "url": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=100&format=json",
+          "cadenceSec": 900,
+        },
+        "fires": {
+          "url": "https://api.eumetsat.int/data/download/2.0.0/collections/EO%3AEUM%3ADAT%3A0417/products/{item}/entry?name={item}%2FFRP_MWIR1km_standard.csv",
+          // A granule that fails costs only its fires: the next poll asks again.
+          "fanout": "tolerant",
+          "cadenceSec": 900,
+          "each": {
+            "role": "granules",
+            "records": "features",
+            "field": "id",
+            "pattern": "^(S3[AB]_SL_2_FRP_{4}\\w+_NR_\\d{3}\\.SEN3)$",
+            "keepSec": 259200,
+          },
+        },
+      },
+      "freshnessWindowSec": 10800,
+      // The Data Store allows 40 requests a second; the first poll after a
+      // start fetches every listed granule.
+      "requestLimits": { "perMinute": 120 },
+      "extrasAllow": [
+        "instrument",
+        "satellite",
+        "brightnessK",
+        "daynight",
+        "scan",
+        "track",
+        "frpUncertaintyMW",
+        "channel",
+      ],
+      "coverage": { "bbox": [-180, -90, 180, 90] },
+      "license": "LicenseRef-Copernicus-Sentinel-Data",
+      "licenseUrl": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+      "terms": {
+        "url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+        "reviewedAt": "2026-10-16",
+        "note": "Free, full and open use under Regulation (EU) No 1159/2013. Data that was modified is credited 'Contains modified Copernicus Sentinel data [Year]': each pixel is credited with the UTC year of its detection, and GET /sources with the current year. EUMETSAT's own Meteosat terms do not apply to Sentinel data.",
+      },
+      "attribution": "Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT",
+      "homepage": "https://data.eumetsat.int/product/EO:EUM:DAT:0417",
+      "privacyUrl": "https://www.eumetsat.int/privacy-policy",
+    },
+    {
       "operator": "usgs",
       "product": "quakes",
       "name": "USGS earthquakes",

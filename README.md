@@ -47,9 +47,10 @@ Road domain, v0.1:
   `GET /sources` serves for a consumer's image proxy (`osm-cameras` and `us-nps-cameras` declare none), and an OpenStreetMap webcam links with the publisher's camera it stands beside.
 - **Hazards domain:** weather and civil-protection warnings as CAP alerts in every language they carry, from
   the NWS (US), ECCC (CA), DWD (DE) and MeteoAlarm (38 more European countries); wildfire perimeters and incidents from NIFC (US) and burnt areas from EFFIS (EU); satellite
-  fire pixels from NASA FIRMS (VIIRS and MODIS, worldwide), one `fire.frp` reading each, swept 72 hours after
-  detection and counted in cells by `GET /observations/grid`; NOAA HMS smoke (North America); USGS earthquakes,
-  read by time window; and NASA EONET and GDACS natural events: 12 keyless feeds.
+  fire pixels from NASA FIRMS (VIIRS and MODIS, worldwide) and EUMETSAT (Sentinel-3 SLSTR, worldwide, with a
+  free account the operator logs in once), one `fire.frp` reading each, swept 72 hours after detection and
+  counted in cells by `GET /observations/grid`; NOAA HMS smoke (North America); USGS earthquakes, read by time
+  window; and NASA EONET and GDACS natural events: 12 keyless feeds and one with a login.
 - **Weather domain:** road weather stations with their current air and road-surface measurements from Fintraffic
   Digitraffic (FI): temperature, dew point, humidity, visibility, wind, precipitation, and per surface sensor the
   surface state, temperatures, freezing point, water film, salt, friction, snow and ice, each sensor its own

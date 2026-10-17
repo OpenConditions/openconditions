@@ -28,6 +28,7 @@ export { crsName, readFeatureCollection, reprojectGeometry } from "./layouts/geo
 export * from "./layouts/overpass.js";
 export { getPath, type LayoutRow } from "./layouts/row.js";
 export * from "./licensing.js";
+export * from "./oauth-grant.js";
 export * from "./parse-output.js";
 export * from "./payload.js";
 export * from "./public-license.js";

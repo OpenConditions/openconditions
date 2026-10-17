@@ -1,3 +1,4 @@
+import { resolveAttribution } from "@openconditions/ingest-framework";
 import type { RoadFeed } from "./feed-schema.js";
 import type { SourceDescriptor } from "./types.js";
 
@@ -22,12 +23,16 @@ export type DescribedFeed = Pick<
 
 /**
  * Maps a roads feed to the minimal SourceDescriptor that parsers receive at
- * call time. Keeps parsers decoupled from the full catalogue feed shape.
+ * call time. Keeps parsers decoupled from the full catalogue feed shape. The
+ * attribution's `{year}` is the year of `at`, the poll.
  */
-export function feedToSourceDescriptor(feed: DescribedFeed): SourceDescriptor {
+export function feedToSourceDescriptor(
+  feed: DescribedFeed,
+  at: Date = new Date(),
+): SourceDescriptor {
   return {
     id: feed.id,
-    attribution: feed.attribution,
+    attribution: resolveAttribution(feed.attribution, at),
     ...(feed.country !== undefined ? { country: feed.country } : {}),
     license: feed.license,
     licenseUrl: feed.licenseUrl,

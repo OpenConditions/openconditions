@@ -427,6 +427,34 @@ it is the service's config, a non-secret field of `service.json`'s
 Overpass host also needs `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`, since the
 egress guard refuses private addresses otherwise.
 
+### OAuth2 logins
+
+A feed with `oauth2-authorization-code` auth (EUMETSAT's Sentinel-3 fires) reads
+an account the operator logs in once, not a key: its grant lives in
+`conditions.oauth_grant`, which the service renews itself (see
+[`feeds/README.md`](../../feeds/README.md#credentials)). The commands run
+against `DATABASE_URL` in the image as `node dist/feed-auth.js <command>`, in
+a checkout as `pnpm --filter @openconditions/ingest feed-auth <command>`:
+
+- `login <grant>` prints the provider's login URL and asks for the
+  authorization code the page shows after the login; paste it at once, as it
+  lapses within minutes. Run it with a terminal:
+  `docker compose exec -it ingest node dist/feed-auth.js login eumetsat`
+  (the compose service is `openconditions-ingest` under OpenMapX).
+- `import <grant>` reads a refresh token obtained elsewhere from stdin, never
+  from the command line or the environment, spends it on one refresh to prove
+  it and stores the refresh token that refresh returned:
+  `docker compose exec -T ingest node dist/feed-auth.js import eumetsat < token-file`.
+- `status [<grant>...]` shows whether a login is stored, until when the access
+  token is valid, when the refresh token was issued and until when the
+  provider honours it, and the last error; it never prints a token.
+
+A feed whose grant has no login, or whose refresh token the provider refused
+(30 days unused, or revoked), fails each poll with the `login` command in its
+status error and sends the provider nothing until the operator logs in again.
+A token request that fails otherwise (the provider down) is retried at the
+next poll.
+
 ## Speed history
 
 A flow poll writes its sites, readings and derived congestion through the

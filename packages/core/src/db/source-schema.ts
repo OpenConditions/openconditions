@@ -88,3 +88,24 @@ export const source = conditionsSchema.table(
     check("source_tier_enum", sql.raw(enumCheckSql("tier", SOURCE_TIERS))),
   ],
 );
+
+/**
+ * An account's OAuth2 grant (`oauth2-authorization-code` auth), by the name
+ * its feeds share: the operator's login creates it, and every refresh
+ * replaces the refresh token the provider rotated. It is state, not
+ * configuration, so it lives here rather than in the environment, and the
+ * ingest processes that poll its feeds refresh it under this row's lock.
+ * `rejected_at` is set when the provider refused the refresh token; until a
+ * new login no request is sent with it.
+ */
+export const oauthGrant = conditionsSchema.table("oauth_grant", {
+  grantKey: text("grant_key").primaryKey(),
+  refreshToken: text("refresh_token").notNull(),
+  refreshIssuedAt: tstz("refresh_issued_at").notNull(),
+  accessToken: text("access_token"),
+  accessExpiresAt: tstz("access_expires_at"),
+  rejectedAt: tstz("rejected_at"),
+  lastError: text("last_error"),
+  lastErrorAt: tstz("last_error_at"),
+  updatedAt: tstz("updated_at").notNull().defaultNow(),
+});

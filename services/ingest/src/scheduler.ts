@@ -11,6 +11,7 @@ import { Cron } from "croner";
 import type postgres from "postgres";
 import { fetch as undiciFetch } from "undici";
 import type { FeedStatusStore } from "./feed-status.js";
+import { createOAuthGrants } from "./oauth-grants.js";
 import { buildDailyArchive } from "./pipeline/archive-build.js";
 import { deriveBaselines } from "./pipeline/baseline-derive.js";
 import { drainBindingQueue as defaultDrainBindingQueue } from "./pipeline/bind-records.js";
@@ -298,6 +299,8 @@ export function startScheduler(
   const parseGate = createParseGate();
   // And one child process that parses them, so the event loop stays free meanwhile.
   const parseProcess = createParseProcess();
+  // One holder of the OAuth2 grants, so the feeds of one account share its access token.
+  const grants = createOAuthGrants(sql);
   const bindingDrain = opts.primary
     ? createBindingDrain(
         () => defaultDrainBindingQueue(sql, { now: () => new Date().toISOString() }),
@@ -319,6 +322,7 @@ export function startScheduler(
         raw,
         parseGate,
         parseProcess,
+        grants,
       },
       ...(inFlight ? { inFlight } : {}),
       ...(bindingDrain ? { bindingDrain } : {}),

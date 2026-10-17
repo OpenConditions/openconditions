@@ -1,6 +1,12 @@
+import { ATTRIBUTION_YEAR, unknownAttributionPlaceholders } from "../attribution.js";
 import { assertPublicUrl } from "../egress.js";
 import { cellRadiusKm, usesCellPlaceholder } from "./cells.js";
-import { credentialEnvName, credentialRefs, isSettingsGroup } from "./credentials.js";
+import {
+  credentialEnvName,
+  credentialRefs,
+  isSettingsGroup,
+  oauthGrantKey,
+} from "./credentials.js";
 import type { IngestDomain } from "./domain.js";
 import { deriveFeedId } from "./ids.js";
 import { licenseInfo } from "./licenses.js";
@@ -46,8 +52,14 @@ function staticFetchUrls(feed: FeedDefinition): { label: string; url: string }[]
       out.push({ label: `endpoint ${role} URL`, url });
     }
   }
-  if (feed.auth?.kind === "oauth2-client-credentials") {
+  if (
+    feed.auth?.kind === "oauth2-client-credentials" ||
+    feed.auth?.kind === "oauth2-authorization-code"
+  ) {
     out.push({ label: "auth tokenUrl", url: feed.auth.tokenUrl });
+  }
+  if (feed.auth?.kind === "oauth2-authorization-code") {
+    out.push({ label: "auth authorizeUrl", url: feed.auth.authorizeUrl });
   }
   return out.filter(({ url }) => !url.includes("${"));
 }
@@ -220,6 +232,10 @@ function onDemandIssues(feed: FeedDefinition, domain: IngestDomain): string[] {
   }
 
   if (!feed.onDemand) out.push("on_demand feed needs onDemand");
+  // A read's cell fetch holds no grants: only the polls refresh them.
+  if (feed.auth?.kind === "oauth2-authorization-code") {
+    out.push("on_demand feed cannot use oauth2-authorization-code auth");
+  }
   const bbox = feed.coverage?.bbox;
   if (!bbox) out.push("on_demand feed needs coverage.bbox");
   const format = Object.hasOwn(domain.formats, feed.format)
@@ -344,6 +360,13 @@ function rightsIssues(feed: FeedDefinition): string[] {
   return [];
 }
 
+/** An attribution writes no placeholder but `{year}`, which every reader resolves. */
+function attributionIssues(feed: FeedDefinition): string[] {
+  return unknownAttributionPlaceholders(feed.attribution).map(
+    (token) => `attribution placeholder ${token} is unknown; the only one is ${ATTRIBUTION_YEAR}`,
+  );
+}
+
 function urlIssues(feed: FeedDefinition): string[] {
   const out: string[] = [];
   for (const { label, url } of staticFetchUrls(feed)) {
@@ -362,8 +385,10 @@ function urlIssues(feed: FeedDefinition): string[] {
  * ref declared and every declared field used, a shared group serving at least
  * two feeds (one when every field has a default: a group of settings), no two
  * declared fields read from one env var (or its `_FILE`);
- * known licences, `NOASSERTION` with terms; public static URLs; the domain's
- * `$schema` and its own feed checks (`lintFeed`); no future `disabled.since`; and catalogue parents with a usable
+ * known licences, `NOASSERTION` with terms; no attribution placeholder but
+ * `{year}`; public static URLs; the domain's
+ * `$schema` and its own feed checks (`lintFeed`); no future `disabled.since`; the
+ * feeds of one OAuth2 grant agreeing on how it is obtained; and catalogue parents with a usable
  * registry URL, one per resolver, whose children resolve. Disabled feeds are
  * checked like the rest.
  */
@@ -377,6 +402,8 @@ export function lintCatalog(
   const today = now.toISOString().slice(0, 10);
   const groupUsers = new Map<string, number>();
   const resolverParents = new Map<CatalogResolver, { id: string; file: string }>();
+  // One login serves every feed of a grant, so they must ask for it alike.
+  const grants = new Map<string, { id: string; auth: string }>();
   const declarations: CredentialDeclaration[] = Object.entries(credentials.groups).flatMap(
     ([group, fields]) =>
       Object.keys(fields).map((field) => ({
@@ -414,11 +441,21 @@ export function lintCatalog(
         ...eachIssues(feed),
         ...credentialIssues(feed, credentials),
         ...rightsIssues(feed),
+        ...attributionIssues(feed),
         ...urlIssues(feed),
         ...(domain.lintFeed?.(feed) ?? []),
       ];
       if (feed.disabled && feed.disabled.since > today) {
         messages.push(`disabled.since ${feed.disabled.since} is in the future`);
+      }
+      if (feed.auth?.kind === "oauth2-authorization-code") {
+        const key = oauthGrantKey(id, feed.auth.clientId);
+        const auth = JSON.stringify(feed.auth, Object.keys(feed.auth).sort());
+        const first = grants.get(key);
+        if (first === undefined) grants.set(key, { id, auth });
+        else if (first.auth !== auth) {
+          messages.push(`auth of OAuth2 grant ${key} differs from that of ${first.id}`);
+        }
       }
       for (const message of messages) error(message, id);
       declarations.push(...feedDeclarations(id, feed, file.path, id));

@@ -553,6 +553,54 @@
                 "properties": {
                   "kind": {
                     "type": "string",
+                    "const": "oauth2-authorization-code"
+                  },
+                  "authorizeUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "tokenUrl": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "redirectUri": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "clientId": {
+                    "type": "string",
+                    "pattern": "^(@[a-z0-9]+(-[a-z0-9]+)*\\.)?[a-z][a-z0-9_]*$"
+                  },
+                  "scope": {
+                    "type": "string"
+                  },
+                  "responseMode": {
+                    "type": "string",
+                    "enum": [
+                      "query",
+                      "fragment"
+                    ]
+                  },
+                  "refreshTokenTtlSec": {
+                    "type": "integer",
+                    "exclusiveMinimum": 0,
+                    "maximum": 9007199254740991
+                  }
+                },
+                "required": [
+                  "kind",
+                  "authorizeUrl",
+                  "tokenUrl",
+                  "redirectUri",
+                  "clientId"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
                     "const": "mtls"
                   },
                   "cert": {
@@ -781,6 +829,7 @@
               "LicenseRef-ODOT-TripCheck",
               "LicenseRef-ECCC-Data-Servers-End-use",
               "LicenseRef-MeteoAlarm-Terms",
+              "LicenseRef-Copernicus-Sentinel-Data",
               "LicenseRef-US-Gov-Public-Domain"
             ]
           },

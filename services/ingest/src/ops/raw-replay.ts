@@ -95,7 +95,10 @@ export async function replayRaw(
     );
     poll.unplaced = unlocatable;
     const drafts = new Map(
-      resolved.map((d) => [String(d["id"]), contentHash(stampAttribution(d, feed))]),
+      resolved.map((d) => [
+        String(d["id"]),
+        contentHash(stampAttribution(d, feed, new Date(poll.attemptedAt))),
+      ]),
     );
 
     // The source's live situations as the poll left them: each one's latest

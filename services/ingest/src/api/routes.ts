@@ -1116,10 +1116,11 @@ export function registerApiRoutes(
   // the restricted sources it names are served to it.
   app.get("/sources", async (req, reply) => {
     reply.header("Cache-Control", "public, max-age=300");
+    const at = now();
     return reply.send({
-      generatedAt: now().toISOString(),
+      generatedAt: at.toISOString(),
       scope: scopeOf(req),
-      sources: deps.catalog ? sourcesOf(deps.catalog) : [],
+      sources: deps.catalog ? sourcesOf(deps.catalog, at) : [],
       ...(deps.crowd ? { crowd: crowdSourceOf(deps.crowd) } : {}),
     });
   });

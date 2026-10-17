@@ -1,0 +1,29 @@
+#title = SLSTR Level 2 Product, Fire Radiative Power (FRP) measurement, Near Real Time (NRT)
+#description = csv output from the Standard MWIR 1km scheme
+#product_name = S3B_SL_2_FRP____20261016T191036_20261016T191336_20261016T200123_0179_125_370______MAR_O_NR_003.SEN3
+#institution = EUMETSAT (Darmstadt, Germany)
+#source = IPF-SL-2-FRP 04.05
+#history = 
+#reference1 = EUM/RSP/DOC/20/1169482 - EUMETSAT - FRP_NRT.003.00 SLSTR L2 NRT FRP Product Data Format Specification
+#reference2 = S3IPF PDS 002 - i1r8 - Product Data Format Specification - Product Structures
+#reference3 = S3MPC ACR FRP 002 - i1r3 - SLSTR L2 FRP Detailed processing model
+#contact = ops@eumetsat.int
+#creation_time = Fri Oct 16 19:01:23 2026
+#absolute_orbit_number = 44147
+#start_time = 2026-10-16T19:10:36.371979Z
+#stop_time = 2026-10-16T19:13:36.371979Z
+#processing_baseline = FRP_NRT.003.02.00
+#track_offset = 998
+#start_offset = 2403
+#number_of_detected_fires = 9
+
+lat(deg),lon(deg),day,time,D/N,FRP(MW),FRPerr(MW),used_channel,confidence(%),confidence_class(lower=0;nominal=1;higher=2),MWIR_BT(K),IFOV_area(m2),SZA(deg),VZA(deg),actrack(km),altrack(km),satellite
+24.030230,40.476057,2026-10-16,19:11:26,N,8.163830,0.838197,S7,91.4,2,309.13,1262177.500,149.29,15.67,1.10,1.14,S3B
+23.739728,38.485937,2026-10-16,19:11:24,N,6.598054,0.887518,S7,90.8,2,308.56,1153291.875,147.73,6.46,1.07,1.08,S3B
+31.760731,46.046592,2026-10-16,19:14:19,N,27.048823,3.803807,S7,0.0,0,299.44,5421310.000,149.64,55.82,1.75,3.11,S3B
+31.758167,46.034277,2026-10-16,19:14:19,N,23.010638,2.974616,S7,52.8,1,297.38,5421310.000,149.64,55.78,1.75,3.10,S3B
+31.775660,46.031247,2026-10-16,19:14:19,N,19.532433,3.091375,S7,0.0,0,296.57,5421310.000,149.62,55.78,1.75,3.10,S3B
+31.773308,46.023943,2026-10-16,19:14:19,N,19.373118,2.659081,S7,68.9,1,296.98,5392324.500,149.62,55.74,1.74,3.09,S3B
+31.770740,46.011653,2026-10-16,19:14:19,N,14.029934,2.323600,S7,68.7,1,294.59,5392324.500,149.62,55.70,1.74,3.09,S3B
+32.478416,45.585637,2026-10-16,19:14:28,N,12.415957,2.802017,S7,0.0,0,294.01,4985425.000,148.89,54.48,1.70,2.93,S3B
+30.706522,33.843595,2026-10-16,19:13:39,N,6.119869,1.025538,S7,80.3,2,299.99,1364757.625,141.53,21.26,1.13,1.21,S3B

@@ -18,8 +18,13 @@ const repoFeeds = fileURLToPath(new URL("../../feeds", import.meta.url));
 const bundledFeeds = fileURLToPath(new URL("./dist/feeds", import.meta.url));
 
 export default defineConfig({
-  // The parse child process runs from a file of its own, next to the entry.
-  entry: { index: "src/index.ts", "parse-child": "src/pipeline/parse-child.ts" },
+  // The parse child process runs from a file of its own, next to the entry, as
+  // does the operator's OAuth2 login (`node dist/feed-auth.js` in the image).
+  entry: {
+    index: "src/index.ts",
+    "parse-child": "src/pipeline/parse-child.ts",
+    "feed-auth": "src/ops/feed-auth.ts",
+  },
   format: ["esm"],
   sourcemap: true,
   clean: true,

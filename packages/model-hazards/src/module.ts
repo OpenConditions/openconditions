@@ -34,15 +34,17 @@ const cap = (vocabulary: string, table: Readonly<Record<string, string | null>>)
 
 /**
  * The wire formats hazards parses: CAP XML, NWS's GeoJSON-LD projection of
- * CAP, MeteoAlarm's CAP as JSON, the FIRMS fire-pixel CSV, NIFC's WFIGS
- * incidents and perimeters, EFFIS burnt areas, NOAA HMS smoke, the USGS
- * earthquake GeoJSON, NASA EONET events and GDACS's RSS.
+ * CAP, MeteoAlarm's CAP as JSON, the FIRMS fire-pixel CSV, the Sentinel-3
+ * SLSTR fire radiative power CSV, NIFC's WFIGS incidents and perimeters,
+ * EFFIS burnt areas, NOAA HMS smoke, the USGS earthquake GeoJSON, NASA EONET
+ * events and GDACS's RSS.
  */
 export const HAZARDS_SOURCE_FORMATS = [
   "cap",
   "nws",
   "meteoalarm",
   "firms",
+  "slstr-frp",
   "wfigs",
   "effis",
   "hms",

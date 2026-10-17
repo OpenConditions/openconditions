@@ -12,7 +12,8 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "raw": "tsx src/ops/raw.ts",
-    "inspect-feed": "tsx src/ops/feed-inspect-command.ts"
+    "inspect-feed": "tsx src/ops/feed-inspect-command.ts",
+    "feed-auth": "tsx src/ops/feed-auth.ts"
   },
   "dependencies": {
     "@fastify/proxy-addr": "^5.1.2",

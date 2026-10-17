@@ -531,6 +531,46 @@ describe("lintCatalog", () => {
     ).toEqual([]);
   });
 
+  test("an attribution writes no placeholder but {year}", () => {
+    expect(messages([file([def({ attribution: "Op data {year}" })])])).toEqual([]);
+    expect(messages([file([def({ attribution: "Op data {Year} via {publisher}" })])])).toEqual([
+      "attribution placeholder {Year} is unknown; the only one is {year}",
+      "attribution placeholder {publisher} is unknown; the only one is {year}",
+    ]);
+  });
+
+  test("the feeds of one OAuth2 grant ask for it alike, and its URLs are public", () => {
+    const shared: SharedCredentials = {
+      groups: { acme: { client_id: { title: "Client", default: "public-client" } } },
+    };
+    const auth = {
+      kind: "oauth2-authorization-code" as const,
+      authorizeUrl: "https://login.example/authorize",
+      tokenUrl: "https://login.example/token",
+      redirectUri: "https://api.example/cli",
+      clientId: "@acme.client_id",
+      scope: "openid",
+    };
+    const fires = def({ operator: "a", auth });
+    // The same auth with its keys written in another order.
+    const { kind, scope, ...rest } = auth;
+    const smoke = def({ operator: "b", auth: { scope, ...rest, kind } });
+    expect(messages([file([fires, smoke])], shared)).toEqual([]);
+    expect(
+      messages([file([fires, def({ operator: "b", auth: { ...auth, scope: "email" } })])], shared),
+    ).toEqual(["auth of OAuth2 grant acme differs from that of de-a-events"]);
+    // A feed's own client field is a grant of its own.
+    const own = def({
+      operator: "b",
+      credentials: { client_id: { title: "Client", default: "public-client" } },
+      auth: { ...auth, scope: "email", clientId: "client_id" },
+    });
+    expect(messages([file([fires, own])], shared)).toEqual([]);
+    expect(
+      messages([file([def({ auth: { ...auth, tokenUrl: "http://10.0.0.1/token" } })])], shared),
+    ).toEqual([expect.stringMatching(/auth tokenUrl http:\/\/10\.0\.0\.1\/token is not public/)]);
+  });
+
   test("static URLs must be public and $schema must name the domain schema", () => {
     expect(
       messages([
@@ -765,6 +805,20 @@ describe("lintCatalog", () => {
       expect(lint(onDemand({ format: "plain" }))).toEqual([
         expect.stringMatching(/format plain must be a features format that declares produces/),
       ]);
+    });
+
+    test("an on-demand feed cannot read an OAuth2 grant, which only polls refresh", () => {
+      const grant = onDemand({
+        credentials: { client_id: { title: "Client", default: "public-client" } },
+        auth: {
+          kind: "oauth2-authorization-code",
+          authorizeUrl: "https://login.example/authorize",
+          tokenUrl: "https://login.example/token",
+          redirectUri: "https://api.example/cli",
+          clientId: "client_id",
+        },
+      });
+      expect(lint(grant)).toEqual(["on_demand feed cannot use oauth2-authorization-code auth"]);
     });
 
     test("a bulk feed may not carry onDemand", () => {

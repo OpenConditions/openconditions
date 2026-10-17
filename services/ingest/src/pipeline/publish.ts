@@ -1,6 +1,6 @@
 import { resolveInstanceId } from "@openconditions/core/server";
 import type { CatalogFeed, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { captureLicensing } from "@openconditions/ingest-framework";
+import { captureLicensing, resolveAttribution } from "@openconditions/ingest-framework";
 import {
   AttributionPublisher,
   type GrantState,
@@ -113,20 +113,41 @@ function warningPublisher(
   return parsed.success ? parsed.data : publisher;
 }
 
-export function stampAttribution(draft: RecordDraft, src: CatalogFeed): RecordDraft {
-  return attributionStamp(src)(draft);
+export function stampAttribution(
+  draft: RecordDraft,
+  src: CatalogFeed,
+  polledAt?: Date,
+): RecordDraft {
+  return attributionStamp(src, polledAt)(draft);
 }
 
 /**
- * {@link stampAttribution} for the drafts of one poll. Drafts that credit
- * the feed alone share one attribution object, so the write validates it
- * once (`Registry.observationDraftValidator`).
+ * When the data a draft credits was observed: its reading's instant, or the
+ * start of its interval; undefined for a draft that states neither.
  */
-export function attributionStamp(src: CatalogFeed): (draft: RecordDraft) => RecordDraft {
+function observedAt(draft: RecordDraft): Date | undefined {
+  const time = draft["phenomenonTime"] as { instant?: unknown; start?: unknown } | undefined;
+  const at = time?.instant ?? time?.start;
+  if (typeof at !== "string") return undefined;
+  const date = new Date(at);
+  return Number.isNaN(date.getTime()) ? undefined : date;
+}
+
+/**
+ * {@link stampAttribution} for the drafts of one poll. The catalogue's
+ * `{year}` is the UTC year of the draft's reading, else of the poll
+ * (`polledAt`, now when unset). Drafts that credit the feed alone share one
+ * attribution object per year, so the write validates it once
+ * (`Registry.observationDraftValidator`).
+ */
+export function attributionStamp(
+  src: CatalogFeed,
+  polledAt: Date = new Date(),
+): (draft: RecordDraft) => RecordDraft {
   const policyIds =
     src.policyIds ?? (src.parentSourceId ? [src.parentSourceId, src.id] : undefined);
-  const attributionOf = (publisher: { name: string; url?: string } | undefined) => ({
-    provider: src.attribution,
+  const attributionOf = (publisher: { name: string; url?: string } | undefined, at: Date) => ({
+    provider: resolveAttribution(src.attribution, at),
     ...(publisher ? { publisher } : {}),
     name: src.name,
     url: src.homepage,
@@ -137,12 +158,18 @@ export function attributionStamp(src: CatalogFeed): (draft: RecordDraft) => Reco
     ...(policyIds && policyIds.length > 0 ? { policyIds } : {}),
     rights: routingRightsOf(src),
   });
-  let feedAttribution: ReturnType<typeof attributionOf> | undefined;
+  // One per year credited: a poll spans two at most, across New Year.
+  const feedAttributions = new Map<number, ReturnType<typeof attributionOf>>();
   return (draft) => {
     const provenance = draft["provenance"] as Record<string, unknown> | undefined;
     if (provenance === undefined) return draft;
     const publisher = warningPublisher(draft, src);
-    if (publisher === undefined) feedAttribution ??= attributionOf(undefined);
+    const at = observedAt(draft) ?? polledAt;
+    let feedAttribution = feedAttributions.get(at.getUTCFullYear());
+    if (publisher === undefined && feedAttribution === undefined) {
+      feedAttribution = attributionOf(undefined, at);
+      feedAttributions.set(at.getUTCFullYear(), feedAttribution);
+    }
     return {
       ...draft,
       provenance: {
@@ -168,7 +195,7 @@ export function attributionStamp(src: CatalogFeed): (draft: RecordDraft) => Reco
               }),
             }
           : {}),
-        attribution: publisher ? attributionOf(publisher) : feedAttribution,
+        attribution: publisher ? attributionOf(publisher, at) : feedAttribution,
       },
     };
   };

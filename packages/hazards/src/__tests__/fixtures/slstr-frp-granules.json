@@ -1,0 +1,133 @@
+{
+  "id": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=150&",
+  "type": "FeatureCollection",
+  "totalResults": 359477,
+  "itemsPerPage": 3,
+  "startIndex": 0,
+  "queries": {
+    "request": [
+      {
+        "count": 150,
+        "eo:parentIdentifier": "EO:EUM:DAT:0417",
+        "eum:elementSetName": "brief",
+        "eo:timeliness": "NR",
+        "eum:fireDetected": "true"
+      }
+    ]
+  },
+  "properties": {
+    "type": "Properties",
+    "title": "EUMETSAT EOP OpenSearch (EOPOS) results feed for EO:EUM:DAT:0417",
+    "subTitle": "Search results for your query pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=150&",
+    "rights": "Copyright",
+    "updated": "2026-10-16T20:36:57.179Z",
+    "subject": "climatologyMeteorologyAtmosphere",
+    "creator": "EUMETSAT",
+    "lang": "en",
+    "links": {
+      "type": "Links",
+      "search": {
+        "type": "application/opensearchdescription+xml",
+        "href": "https://api.eumetsat.int/data/search-products/2.0.0/osdd?pi=EO:EUM:DAT:0417",
+        "title": "OpenSearch Description Document"
+      },
+      "self": {
+        "type": "application/json",
+        "href": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=150&format=json",
+        "title": "this search"
+      },
+      "next": {
+        "type": "application/json",
+        "href": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&si=150&c=150&format=json",
+        "title": "next result page"
+      },
+      "first": {
+        "type": "application/json",
+        "href": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=150&format=json",
+        "title": "first result page"
+      },
+      "last": {
+        "type": "application/json",
+        "href": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&si=359400&c=150&format=json",
+        "title": "last result page"
+      }
+    },
+    "profiles": [
+      {
+        "href": "http://www.opengis.net/spec/owc-geojson/1.0/req/core"
+      },
+      {
+        "href": "http://www.opengis.net/spec/os-geojson/1.0/req/core"
+      }
+    ],
+    "extraInformation": {
+      "warning": {
+        "code": "ResultsetTooLargeForPaging",
+        "message": "The resultset is too large for paging, a maximum of 10000 records is supported. Please specify a more selective filter.",
+        "details": "You can generate a smaller result set starting at your last current hit by adding the following paramter in your query: dtend=2026-10-16T03:55:43.300988Z"
+      }
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "id": "S3B_SL_2_FRP____20261016T191036_20261016T191336_20261016T200123_0179_125_370______MAR_O_NR_003.SEN3",
+      "properties": {
+        "type": "Properties",
+        "date": "2026-10-16T19:10:36.371979Z/2026-10-16T19:13:36.371979Z",
+        "updated": "2026-10-16T20:13:39.631Z",
+        "links": {
+          "type": "Links",
+          "data": [
+            {
+              "type": "Link",
+              "href": "https://api.eumetsat.int/data/download/2.0.0/collections//products/S3B_SL_2_FRP____20261016T191036_20261016T191336_20261016T200123_0179_125_370______MAR_O_NR_003.SEN3",
+              "mediaType": "application/zip",
+              "title": "Product download"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S3B_SL_2_FRP____20261016T190736_20261016T191036_20261016T195944_0180_125_370______MAR_O_NR_003.SEN3",
+      "properties": {
+        "type": "Properties",
+        "date": "2026-10-16T19:07:36.371979Z/2026-10-16T19:10:36.371979Z",
+        "updated": "2026-10-16T20:14:38.921Z",
+        "links": {
+          "type": "Links",
+          "data": [
+            {
+              "type": "Link",
+              "href": "https://api.eumetsat.int/data/download/2.0.0/collections//products/S3B_SL_2_FRP____20261016T190736_20261016T191036_20261016T195944_0180_125_370______MAR_O_NR_003.SEN3",
+              "mediaType": "application/zip",
+              "title": "Product download"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "type": "Feature",
+      "id": "S3A_SL_2_FRP____20261016T065423_20261016T065723_20261016T085120_0179_145_120______MAR_O_NR_003.SEN3",
+      "properties": {
+        "type": "Properties",
+        "date": "2026-10-16T06:54:23.343263Z/2026-10-16T06:57:23.343263Z",
+        "updated": "2026-10-16T09:09:26.742Z",
+        "links": {
+          "type": "Links",
+          "data": [
+            {
+              "type": "Link",
+              "href": "https://api.eumetsat.int/data/download/2.0.0/collections//products/S3A_SL_2_FRP____20261016T065423_20261016T065723_20261016T085120_0179_145_120______MAR_O_NR_003.SEN3",
+              "mediaType": "application/zip",
+              "title": "Product download"
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

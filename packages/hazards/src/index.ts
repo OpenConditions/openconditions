@@ -15,6 +15,7 @@ export * from "./formats/gdacs.js";
 export * from "./formats/hms.js";
 export * from "./formats/meteoalarm.js";
 export * from "./formats/nws.js";
+export * from "./formats/slstr-frp.js";
 export * from "./formats/usgs.js";
 export * from "./formats/wfigs.js";
 export * from "./geometry.js";

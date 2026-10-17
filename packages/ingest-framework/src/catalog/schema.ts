@@ -65,6 +65,26 @@ export const feedAuthSchema = z.discriminatedUnion("kind", [
       scope: z.string().optional(),
     })
     .strict(),
+  /**
+   * An account's OAuth2 grant, obtained once by the operator's login
+   * (authorization code with PKCE) and kept alive by refreshing: the tokens
+   * are state in the database, not configuration. `clientId` names the
+   * field holding the public client's id; its owner (the shared group, else
+   * the feed) names the grant. `refreshTokenTtlSec` is how long the provider
+   * honours a refresh token.
+   */
+  z
+    .object({
+      kind: z.literal("oauth2-authorization-code"),
+      authorizeUrl: z.string().url(),
+      tokenUrl: z.string().url(),
+      redirectUri: z.string().url(),
+      clientId: credentialRef,
+      scope: z.string().optional(),
+      responseMode: z.enum(["query", "fragment"]).optional(),
+      refreshTokenTtlSec: z.number().int().positive().optional(),
+    })
+    .strict(),
   z
     .object({
       kind: z.literal("mtls"),
@@ -440,6 +460,11 @@ export const feedBaseShape = {
   rawRetention: z.enum(RAW_RETENTION_CLASSES).optional(),
   license: z.string().min(1),
   licenseUrl: z.string().url().optional(),
+  /**
+   * The credit shown with the feed's data. `{year}`, its only placeholder, is
+   * the UTC year of the data credited (a record's time, else now); see
+   * `resolveAttribution`.
+   */
   attribution: z.string().min(1),
   attributionPolicy: AttributionPolicy.optional(),
   terms: feedTermsSchema.optional(),

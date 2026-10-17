@@ -9,3 +9,28 @@ export function attributionLine(license: string, attribution: string): string | 
   if (licenseInfo(license)?.attributionRequired === false) return undefined;
   return attribution;
 }
+
+/**
+ * The one placeholder a catalogue `attribution` may write: the year of the
+ * data credited, which a notice such as Copernicus's ("Contains modified
+ * Copernicus Sentinel data [Year]") requires.
+ */
+export const ATTRIBUTION_YEAR = "{year}";
+
+/** Every `{…}` token of an attribution that is not {@link ATTRIBUTION_YEAR}. */
+export function unknownAttributionPlaceholders(attribution: string): string[] {
+  return [...attribution.matchAll(/\{[^}]*\}/g)]
+    .map((m) => m[0])
+    .filter((token) => token !== ATTRIBUTION_YEAR);
+}
+
+/**
+ * A catalogue attribution as it is shown for data of the instant `at`: its
+ * `{year}` written as that instant's UTC year. Where no record dates the
+ * credit (a source listing), `at` is now.
+ */
+export function resolveAttribution(attribution: string, at: Date): string {
+  return attribution.includes(ATTRIBUTION_YEAR)
+    ? attribution.replaceAll(ATTRIBUTION_YEAR, String(at.getUTCFullYear()))
+    : attribution;
+}

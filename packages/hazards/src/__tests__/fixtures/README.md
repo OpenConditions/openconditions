@@ -159,6 +159,28 @@ Captured 2026-10-09, keyless:
   and an unreadable body, so no live ExceptionReport could be captured; this is the OGC
   ExceptionReport a MapServer answers for an unknown type name, which a gateway may pass as 200.
 
+Captured 2026-10-16 from EUMETSAT's Data Store, the listing keyless, the granules with an OAuth2
+access token of an account holding the Copernicus licence:
+
+- `slstr-frp-granules.json`: three features of
+  https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=150&format=json
+  (the granules of the three files below), unchanged except that the feature list is trimmed,
+  `itemsPerPage` set to 3 and the document reformatted.
+- `slstr-frp-s3b-night.csv`: `FRP_MWIR1km_standard.csv` of
+  `S3B_SL_2_FRP____20261016T191036_20261016T191336_20261016T200123_0179_125_370______MAR_O_NR_003.SEN3`,
+  unchanged: nine night pixels on channel S7 in all three confidence classes (Saudi Arabia, Iraq,
+  Egypt), from
+  https://api.eumetsat.int/data/download/2.0.0/collections/EO%3AEUM%3ADAT%3A0417/products/{id}/entry?name={id}%2FFRP_MWIR1km_standard.csv.
+- `slstr-frp-s3a-day.csv`: the same file of
+  `S3A_SL_2_FRP____20261016T065423_20261016T065723_20261016T085120_0179_145_120______MAR_O_NR_003.SEN3`,
+  its metadata and header and five of its 39 rows (the first, the third, the seventh, the 23rd and
+  the 29th), unchanged: daytime pixels on channel F1 between the Caspian Sea and the Persian Gulf, among them two of the lowest
+  class at 97.5% and 0% (gas flares) and one of 152 MW. Its `#number_of_detected_fires` still
+  says 39.
+- `slstr-frp-no-fires.csv`: the same file of
+  `S3B_SL_2_FRP____20261016T190736_20261016T191036_20261016T195944_0180_125_370______MAR_O_NR_003.SEN3`,
+  unchanged: a granule the listing marks as having a fire whose standard 1 km file holds none.
+
 ## Earthquakes, natural events, disasters
 
 All captured 2026-10-09 (the USGS and GDACS files are rewritten every minute to ten minutes, so a

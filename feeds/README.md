@@ -110,6 +110,14 @@ get before the feed is reported stale. `snapshot` declares a publication that
 is the publisher's complete current set, so a record missing from it is
 withdrawn.
 
+`attribution` is the credit shown with the feed's data. Its one placeholder,
+`{year}`, is for a notice that names the year of the data:
+`"Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT"`.
+Each record is credited with the UTC year of its reading (the instant, or the
+start of the interval), else of the poll; `GET /sources` and the other
+listings of the catalogue say the current year. The catalogue itself and the
+atlas keep the template. `feeds:lint` refuses any other `{…}` in it.
+
 The other optional fields every feed may carry:
 
 - `accessMode`: `bulk` (the default; each poll fetches the published set) or
@@ -277,17 +285,17 @@ The hazards products are:
 | `events` | other natural events: tropical cyclones, floods, volcanoes, droughts, sea ice |
 
 Every hazards format reads its publisher's own shape, so a hazards feed has no
-mapping block. Every format but `firms` is a `situations` format whose poll is
-the publisher's complete current set (`snapshot`), so a record missing from it
-is withdrawn, and a poll with no record publishes zero: the CAP formats `cap`
-(CAP 1.2 XML, one message per payload), `nws` (the NWS alerts API's
-GeoJSON-LD) and `meteoalarm` (MeteoAlarm's CAP as JSON), and `wfigs`, `effis`,
-`hms`, `usgs`, `eonet` and `gdacs`. One poll sees every current message of a
-CAP feed, so a message that another message of the poll updates or cancels is
-left out and its successor names it. `firms` is a `measurements` format: each
-fire pixel is one `fire.frp` reading at its position, written once and swept
-72 hours after the satellite saw it. The formats are in
-`packages/hazards/src/domain.ts`.
+mapping block. Every format but `firms` and `slstr-frp` is a `situations`
+format whose poll is the publisher's complete current set (`snapshot`), so a
+record missing from it is withdrawn, and a poll with no record publishes zero:
+the CAP formats `cap` (CAP 1.2 XML, one message per payload), `nws` (the NWS
+alerts API's GeoJSON-LD) and `meteoalarm` (MeteoAlarm's CAP as JSON), and
+`wfigs`, `effis`, `hms`, `usgs`, `eonet` and `gdacs`. One poll sees every
+current message of a CAP feed, so a message that another message of the poll
+updates or cancels is left out and its successor names it. `firms` and
+`slstr-frp` are `measurements` formats: each fire pixel is one `fire.frp`
+reading at its position, written once and swept 72 hours after the satellite
+saw it. The formats are in `packages/hazards/src/domain.ts`.
 
 The hazards roles:
 
@@ -322,6 +330,10 @@ The hazards roles:
 - `eonet` reads `open` and `closed` (optional, the events closed lately);
   `gdacs` reads `events` and `areas` (optional, the CAP areas of the current
   episodes).
+- `slstr-frp` reads `granules`, EUMETSAT's Data Store search for the
+  near-real-time Sentinel-3 granules in which a fire was detected, and `fires`,
+  an `each` endpoint that fetches each granule's `FRP_MWIR1km_standard.csv`
+  once and keeps it while the listing names it.
 - `firms`, `effis` and `hms` read `main`.
 
 The weather product is:
@@ -577,7 +589,42 @@ A field is used by `auth` or as a `${field}` placeholder in a URL, body or heade
 ```
 
 The auth kinds are `none`, `query-key`, `header-key` (with an optional
-`valuePrefix`), `basic`, `bearer`, `oauth2-client-credentials` and `mtls`.
+`valuePrefix`), `basic`, `bearer`, `oauth2-client-credentials`,
+`oauth2-authorization-code` and `mtls`.
+
+`oauth2-authorization-code` is an account the operator logs in once, for a
+publisher that issues no static key (EUMETSAT's Data Store):
+
+```jsonc
+"auth": {
+  "kind": "oauth2-authorization-code",
+  "authorizeUrl": "https://user.eumetsat.int/cas/oidc/oidcAuthorize",
+  "tokenUrl": "https://user.eumetsat.int/cas/oauth2.0/accessToken",
+  "redirectUri": "https://api.eumetsat.int/cli",
+  "clientId": "@eumetsat.client_id",
+  "scope": "openid profile email",
+  "responseMode": "fragment",
+  "refreshTokenTtlSec": 2592000,
+},
+```
+
+`clientId` names the field holding the public client's id, and its owner names
+the grant: the shared group (`eumetsat`), so one login serves every feed of the
+account, else the feed. The tokens are no configuration but state in the
+database (`conditions.oauth_grant`): `node dist/feed-auth.js login <grant>`
+in the ingest container (`pnpm --filter @openconditions/ingest feed-auth` in a
+checkout) prints the login URL and exchanges the authorization code pasted
+back with PKCE; `import <grant>` stores a refresh token read from stdin
+instead, after spending it on one refresh; `status` shows each grant, never a
+token. The service then refreshes the access token before it expires, under
+the grant's row lock so two ingest processes never spend one refresh token,
+and stores the refresh token the provider rotated before the new access token
+is used; a refresh token older than half its `refreshTokenTtlSec` is renewed
+even while the access token is valid. A grant with no login, or whose refresh
+token the provider refused, fails its feeds' polls with the command to run and
+sends the provider nothing until the operator logs in again. The feeds of one
+grant must write the same `auth`; an `on_demand` feed cannot use it.
+
 `expand` names a field whose value is a comma-separated list: the endpoint's URL
 is filled once per item (one Mobilithek client pull per subscription id), and an
 unset value means no URLs, so the feed stays dormant until it is configured.

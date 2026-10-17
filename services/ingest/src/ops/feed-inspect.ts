@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import type { CatalogFeed, EgressRecord } from "@openconditions/ingest-framework";
-import { publicRecords } from "@openconditions/ingest-framework";
+import { publicRecords, resolveAttribution } from "@openconditions/ingest-framework";
 import { sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import {
@@ -101,7 +101,7 @@ export function inspectFeed(
   }
   const publicSituations: Rec[] = [];
   const records = selected.map((draft) => {
-    const stamped = stampAttribution(draft, feed);
+    const stamped = stampAttribution(draft, feed, instant);
     const sealed = sealRecord(registry, stamped, {
       instanceId: "inspect.local",
       revision: 1,
@@ -174,7 +174,11 @@ export function inspectFeed(
       },
     };
   });
-  const info = { attribution: feed.attribution, license: feed.license, timestamp };
+  const info = {
+    attribution: resolveAttribution(feed.attribution, instant),
+    license: feed.license,
+    timestamp,
+  };
   return {
     schemaVersion: 2,
     mode: "preview",

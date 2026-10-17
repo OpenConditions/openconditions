@@ -98,7 +98,10 @@ export function parseEvents(
   buffers: readonly Buffer[],
   opts: { fetchedAt?: string } = {},
 ): ParseOutput {
-  const source = feedToSourceDescriptor(feed);
+  const source = feedToSourceDescriptor(
+    feed,
+    opts.fetchedAt !== undefined ? new Date(opts.fetchedAt) : undefined,
+  );
   const at = opts.fetchedAt !== undefined ? { fetchedAt: opts.fetchedAt } : {};
   const reporter =
     feed.snapshot?.completeness === "complete" && Object.hasOwn(SNAPSHOT_REPORTERS, feed.format)
@@ -181,7 +184,7 @@ export function parseFlows(
   sites: FlowSites | undefined,
   ctx: FlowContext,
 ): FlowOutput {
-  const source = feedToSourceDescriptor(feed);
+  const source = feedToSourceDescriptor(feed, new Date(ctx.now));
   const { readings, failed } = flowParserOf(feed.format)(input, source, sites, ctx);
   if (failed) throw new Error(`flow parser reported a hard parse failure for source ${feed.id}`);
   return flowOutput(readings, { source, format: feed.format, ctx });
@@ -198,7 +201,7 @@ export function measuredDataReader(
   sites: FlowSites | undefined,
   ctx: FlowContext,
 ): { write(chunk: string | Uint8Array): void; close(): FlowOutput & { failed: boolean } } {
-  const source = feedToSourceDescriptor(feed);
+  const source = feedToSourceDescriptor(feed, new Date(ctx.now));
   const parser = createMeasuredDataParser(source, sites);
   const decoder = new TextDecoder("utf-8");
   return {

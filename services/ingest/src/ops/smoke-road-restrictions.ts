@@ -8,6 +8,7 @@ import {
   guardOptionsFromEnv,
   type LookupFn,
   type RecordDraft,
+  resolveAttribution,
 } from "@openconditions/ingest-framework";
 import { isVehicleSpecific, situationEffects } from "@openconditions/model";
 import { fetch as undiciFetch } from "undici";
@@ -256,7 +257,7 @@ export async function runRestrictionSmoke(
       sourceUpdatedAt: (provenance?.["sourceUpdatedAt"] as string | undefined) ?? null,
       recordId: (provenance?.["recordId"] as string | undefined) ?? null,
       recordVersion: (provenance?.["recordVersion"] as string | undefined) ?? null,
-      publisher: feed.attribution,
+      publisher: resolveAttribution(feed.attribution, new Date()),
       license: feed.license,
       licenseUrl: feed.licenseUrl ?? null,
       termsUrl: feed.terms?.url ?? null,

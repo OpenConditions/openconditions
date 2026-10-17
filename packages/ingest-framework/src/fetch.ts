@@ -20,6 +20,7 @@ import { boundedGunzip, maxFeedBytes } from "./egress.js";
 import { decodedFromGzip, type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { getPath } from "./layouts/row.js";
+import type { OAuthGrants } from "./oauth-grant.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
 import { unzipEntries } from "./zip.js";
@@ -171,6 +172,8 @@ export interface FetchOptions {
   resolvers?: readonly CatalogResolver[];
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** Where a feed reading an OAuth2 grant takes its access token. */
+  grants?: OAuthGrants;
   /** Fill the endpoint's cell placeholders for this cell. A cell read keeps no conditional-GET state. */
   cell?: Cell;
   /** Replaces the impersonating client and DNS lookup (tests). */
@@ -1075,7 +1078,7 @@ async function fetchRole(
     throw new Error("impersonate cannot be combined with mtls auth");
   }
   const base = endpoint.impersonate ? guardedImpersonatingFetch(opts.impersonation) : baseFetch;
-  const authorized = makeAuthorizedFetch(feed, base, env);
+  const authorized = makeAuthorizedFetch(feed, base, env, Date.now, opts.grants);
   // A bulk fetch keeps to the feed's stated rate here; a cell read is paced
   // by the on-demand request budget instead. A followed URL is not the
   // publisher's API and goes unpaced.

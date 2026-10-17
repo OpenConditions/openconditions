@@ -5,6 +5,7 @@ import {
   captureLicensing,
   type EffectiveRights,
   effectiveRights,
+  resolveAttribution,
 } from "@openconditions/ingest-framework";
 
 /** One feed the instance serves, as a consumer credits and discloses it. */
@@ -63,7 +64,7 @@ function imageHostsOf(feed: CatalogFeed): string[] | undefined {
     : undefined;
 }
 
-function sourceOf(feed: CatalogFeed): Source {
+function sourceOf(feed: CatalogFeed, at: Date): Source {
   const imageHosts = imageHostsOf(feed);
   const terms = {
     ...(feed.terms?.url ? { url: feed.terms.url } : {}),
@@ -85,7 +86,7 @@ function sourceOf(feed: CatalogFeed): Source {
     restricted: feed.restricted,
     license: feed.license,
     licensing: captureLicensing(feed),
-    attribution: feed.attribution,
+    attribution: resolveAttribution(feed.attribution, at),
     homepage: feed.homepage,
     privacyUrl: feed.privacyUrl,
     ...(Object.keys(terms).length > 0 ? { terms } : {}),
@@ -106,12 +107,13 @@ function sourceOf(feed: CatalogFeed): Source {
 /**
  * The feeds the instance serves, sorted by id: the enabled feeds of the
  * catalogue, scheduled and on demand. A catalogue's children are credited
- * through their parent and left out.
+ * through their parent and left out. An attribution's `{year}` is the
+ * year of `at`.
  */
-export function sourcesOf(catalog: Pick<Catalog, "sources">): Source[] {
+export function sourcesOf(catalog: Pick<Catalog, "sources">, at: Date = new Date()): Source[] {
   return catalog.sources
     .filter((feed) => feed.parentSourceId === undefined && feed.disabled === undefined)
-    .map(sourceOf)
+    .map((feed) => sourceOf(feed, at))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 }
 

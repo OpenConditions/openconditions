@@ -4,10 +4,12 @@ import {
   type Env,
   type FeedCredentialName,
   feedCredentialNames,
+  oauthGrantKey,
   resolveCredential,
 } from "./catalog/credentials.js";
 import type { CatalogFeed } from "./catalog/types.js";
 import { guardedFetch, guardOptionsFromEnv } from "./egress.js";
+import type { AuthorizationCodeAuth, GrantRequest, OAuthGrants } from "./oauth-grant.js";
 
 /**
  * Per-feed authentication. Turns a feed's declared `auth` into a `fetch`
@@ -140,18 +142,79 @@ function oauthClientCredentialsFetch(
   };
 }
 
+function grantRequest(
+  feed: CatalogFeed,
+  auth: AuthorizationCodeAuth,
+  baseFetch: typeof fetch,
+  credentials: CredentialReader,
+): GrantRequest {
+  return {
+    key: oauthGrantKey(feed.parentSourceId ?? feed.id, auth.clientId),
+    auth,
+    clientId: credentials.need(auth.clientId),
+    fetch: baseFetch,
+  };
+}
+
+/**
+ * The OAuth2 grant a feed reads, with its token requests sent through
+ * `baseFetch`; undefined for a feed of another auth.
+ */
+export function feedGrantRequest(
+  feed: CatalogFeed,
+  baseFetch: typeof fetch,
+  env: Env = process.env,
+): GrantRequest | undefined {
+  const auth = feed.auth;
+  if (auth?.kind !== "oauth2-authorization-code") return undefined;
+  return grantRequest(feed, auth, baseFetch, credentialReader(feed, env));
+}
+
+/**
+ * Bearer fetch with the access token of the account's OAuth2 grant, which
+ * `grants` keeps. A 401 answer drops the token and the request is sent once
+ * more with a fresh one: the provider may revoke a token before it expires.
+ */
+function oauthGrantFetch(
+  feed: CatalogFeed,
+  auth: AuthorizationCodeAuth,
+  baseFetch: typeof fetch,
+  credentials: CredentialReader,
+  grants: OAuthGrants | undefined,
+): typeof fetch {
+  const request = grantRequest(feed, auth, baseFetch, credentials);
+  const send = (token: string, input: Parameters<typeof fetch>[0], init?: RequestInit) => {
+    const headers = new Headers(init?.headers);
+    headers.set("Authorization", `Bearer ${token}`);
+    return baseFetch(input, { ...init, headers });
+  };
+  return async (input, init) => {
+    if (!grants) {
+      throw new Error(`feed ${feed.id}: no store of OAuth2 grants to read ${request.key} from`);
+    }
+    const token = await grants.accessToken(request);
+    const res = await send(token, input, init);
+    if (res.status !== 401) return res;
+    await res.body?.cancel();
+    await grants.invalidate(request.key, token);
+    return send(await grants.accessToken(request), input, init);
+  };
+}
+
 /**
  * Wraps `baseFetch` so every request for `feed` carries its credential. Returns
  * `baseFetch` unchanged for keyless feeds. Reads each credential from its
  * derived env var (or `_FILE` variant), else its field's `default` (e.g. a
  * public key); throws if a required static secret is missing (the scheduler
  * gates on {@link hasCredentials} first, so this only fires on misconfiguration).
+ * A feed reading an OAuth2 grant takes its tokens from `grants`.
  */
 export function makeAuthorizedFetch(
   feed: CatalogFeed,
   baseFetch: typeof fetch,
   env: Env = process.env,
   now: () => number = Date.now,
+  grants?: OAuthGrants,
 ): typeof fetch {
   const auth = feed.auth;
   if (!auth || auth.kind === "none") return baseFetch;
@@ -178,6 +241,8 @@ export function makeAuthorizedFetch(
     }
     case "oauth2-client-credentials":
       return oauthClientCredentialsFetch(auth, baseFetch, credentials, now);
+    case "oauth2-authorization-code":
+      return oauthGrantFetch(feed, auth, baseFetch, credentials, grants);
     case "mtls": {
       // Fold the client certificate into the egress guard's OWN pinned
       // dispatcher, so mTLS gets the same SSRF/DNS-rebinding protection as every

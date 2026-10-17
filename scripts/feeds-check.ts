@@ -140,6 +140,9 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
   if (feed.disabled) return result("skipped", `disabled: ${feed.disabled.reason}`);
   const missing = missingCredentials(feed, env);
   if (missing.length > 0) return result("skipped", `missing configuration: ${missing.join(", ")}`);
+  if (feed.auth?.kind === "oauth2-authorization-code") {
+    return result("skipped", "reads an OAuth2 grant, which only the ingest service holds");
+  }
 
   let format: ReturnType<typeof formatOf>;
   try {

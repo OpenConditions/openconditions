@@ -11,6 +11,7 @@ import {
   type EffectiveRights,
   isPublicLicense,
   missingCredentials,
+  resolveAttribution,
 } from "@openconditions/ingest-framework";
 import type { RoutingRights } from "@openconditions/model";
 import {
@@ -132,7 +133,8 @@ export function hydrateSegmentRows(
         routing_source_id: parentSourceId ?? row.source_id,
         child_source_id: parentSourceId ? row.source_id : null,
         license_url: feed?.licenseUrl ?? attribution?.licenseUrl ?? attribution?.url ?? null,
-        attribution: attribution?.provider ?? feed?.attribution ?? null,
+        attribution:
+          attribution?.provider ?? (feed ? resolveAttribution(feed.attribution, new Date()) : null),
         rights: routingRights(feed ? routingRightsOf(feed) : attribution?.rights),
       };
     });

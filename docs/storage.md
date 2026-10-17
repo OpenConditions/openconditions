@@ -518,9 +518,11 @@ class, in the same statement, so a grid cell counts, sums and credits only the
 readings kept. A `quality.confidence` fraction is classed as FIRMS classes MODIS
 percentages: below 0.3 low, below 0.8 nominal, else high. A
 `quality.supplierCode` of `low`, `nominal` or `high` (or `l`, `n`, `h`, as VIIRS
-writes them) is its own class. A reading that states neither is kept, and `low`
-leaves out nothing. `minConfidence=nominal` drops the low-confidence fire
-detections of both instruments. An instance older than the parameter answers it
+writes them) is its own class. A reading that states both, as Sentinel-3 SLSTR
+does, is left out when either is lower; SLSTR's nominal class starts above 30%
+and its high class at 80%, so its class decides. A reading that states neither
+is kept, and `low` leaves out nothing. `minConfidence=nominal` drops the
+low-confidence fire detections of every instrument. An instance older than the parameter answers it
 400, as it does any query key it does not know.
 
 ### Historical attribution

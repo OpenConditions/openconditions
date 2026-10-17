@@ -43,4 +43,4 @@ export {
   sensorSegment,
   sourceStatus,
 } from "./schema.js";
-export { source } from "./source-schema.js";
+export { oauthGrant, source } from "./source-schema.js";

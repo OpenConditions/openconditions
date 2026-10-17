@@ -1241,6 +1241,25 @@
           "cost": "Free",
           "notes": "Self-service, no approval step. Republishers credit the agency that provides each camera, mirror the data rather than hotlink it, and repeat ODOT's disclaimer."
         }
+      },
+      "EUMETSAT_CLIENT_ID": {
+        "type": "string",
+        "title": "EUMETSAT Data Store login (OAuth2 client)",
+        "description": "The public OAuth2 client of EUMETSAT's command-line login; leave the default. The account itself is logged in on the server, not set here: run `node dist/feed-auth.js login eumetsat` in the ingest container (`docker compose exec -it ingest node dist/feed-auth.js login eumetsat`), open the URL it prints, log in, and paste the authorization code the page shows; the code lapses within minutes. The service then renews the login itself (the access token every 8 hours, each renewal replacing the 30-day refresh token). `node dist/feed-auth.js status` shows whether a login is stored and when it was last renewed; a feed whose login is missing or was refused fails with an error naming the command.",
+        "default": "api-public-auth-code",
+        "x-openmapx-secret": false,
+        "x-openmapx-setup": {
+          "url": "https://user.eumetsat.int/",
+          "urlLabel": "EUMETSAT User Portal",
+          "steps": [
+            "Register a free account at user.eumetsat.int (EUMETSAT User Portal).",
+            "Under 'My data licences', request 'Meteosat > 1 hr latency & Metop, Copernicus data & Third party data'; it is free and takes effect after logging in again.",
+            "On the server, run `docker compose exec -it ingest node dist/feed-auth.js login eumetsat` (the compose service is `openconditions-ingest` under OpenMapX), open the URL it prints, log in with the account, and paste the authorization code the page shows into the prompt at once.",
+            "Check with `docker compose exec ingest node dist/feed-auth.js status`."
+          ],
+          "cost": "Free: the Data Store allows 40 requests a second and 15 parallel connections.",
+          "notes": "The legacy API key (consumer key and secret from api.eumetsat.int/api-key) does not work: licensed Copernicus data answers it with 403 'Copernicus license required'. A refresh token obtained elsewhere can be stored instead with `node dist/feed-auth.js import eumetsat`, which reads it from stdin (`docker compose exec -T ingest node dist/feed-auth.js import eumetsat < token-file`). If the service is stopped for 30 days the login lapses and must be repeated."
+        }
       }
     }
   },

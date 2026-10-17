@@ -8,6 +8,7 @@ import type {
   ImpersonationOptions,
   KeptItems,
   LookupFn,
+  OAuthGrants,
   ParseOutput,
   RecordDraft,
   StatusIndex,
@@ -232,6 +233,8 @@ export interface RunDeps {
   model?: Partial<WriteModel>;
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** The process's OAuth2 grants, which a feed with `oauth2-authorization-code` auth reads. */
+  grants?: OAuthGrants;
   /**
    * What the feed's earlier polls fetched, which the scheduler keeps per feed:
    * with it, a poll fetches only the data roles whose cadence is due and
@@ -302,11 +305,17 @@ export function createRoleState(): RoleState {
  */
 export function feedFetch(
   src: CatalogFeed,
-  deps: { fetch: typeof fetch; lookup?: LookupFn; env?: Env },
+  deps: { fetch: typeof fetch; lookup?: LookupFn; env?: Env; grants?: OAuthGrants },
   role?: string,
 ): typeof fetch {
   const timeoutSec = role === undefined ? undefined : src.endpoints[role]?.timeoutSec;
-  return makeAuthorizedFetch(src, guardedFeedFetch(deps, timeoutSec), deps.env ?? process.env);
+  return makeAuthorizedFetch(
+    src,
+    guardedFeedFetch(deps, timeoutSec),
+    deps.env ?? process.env,
+    Date.now,
+    deps.grants,
+  );
 }
 
 /**
@@ -744,6 +753,7 @@ async function runAttempt(
             {
               resolvers: domainOf(src).resolvers,
               env,
+              ...(deps.grants ? { grants: deps.grants } : {}),
               at: polledAt,
               ...(since !== undefined ? { since } : {}),
               ...(eachSource ? { eachSource } : {}),
@@ -1251,7 +1261,8 @@ async function finishEventPoll(
     );
     return { ...refused, rejected: parseRejected };
   }
-  const situations = resolved.map((draft) => stampAttribution(draft, src));
+  const polledAt = new Date(poll.attempt.at);
+  const situations = resolved.map((draft) => stampAttribution(draft, src, polledAt));
 
   // Shrink tripwire: a complete snapshot withdraws every situation it does not
   // hold, so a suspiciously shrunk fresh set is as dangerous as a parse error.
@@ -1371,7 +1382,7 @@ async function finishFlowPoll(
     console.warn(`[ingest] ${src.id}: ${error}`);
     return fail(poll, "error", error);
   }
-  const stampOne = attributionStamp(src);
+  const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const stamped: FlowOutput = {
     features: stamp(output.features),
@@ -1450,7 +1461,7 @@ async function finishFeaturePoll(
   const shrunk = await shrinkTripped(deps.sql, src.id, parse.features.length, deps.now());
   if (shrunk) return failShrunk(poll, "features", "features", parse.features.length, shrunk);
 
-  const stampOne = attributionStamp(src);
+  const stampOne = attributionStamp(src, new Date(poll.attempt.at));
   const stamp = (drafts: readonly RecordDraft[]) => drafts.map((d) => stampOne(d));
   const output = {
     features: stamp(parse.features),
@@ -1510,7 +1521,7 @@ async function finishFeaturePoll(
  */
 async function finishStatusPoll(poll: PollContext, output: StatusOutput): Promise<RunResult> {
   const { src, deps } = poll;
-  const stamp = attributionStamp(src);
+  const stamp = attributionStamp(src, new Date(poll.attempt.at));
   const observations = output.observations.map((d) => stamp(d));
   let published: Awaited<ReturnType<typeof publishReadings>>;
   poll.steps.lap("prepare");

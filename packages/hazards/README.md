@@ -25,6 +25,9 @@ hazard publications into the `alert` and `natural_hazard` situations and the
   most three minutes past its poll.
 - `firms`: NASA FIRMS active-fire CSV files as transient `fire.frp` readings,
   one per pixel.
+- `slstr-frp`: EUMETSAT's near-real-time Sentinel-3 SLSTR fire radiative
+  power, one CSV per granule, as transient `fire.frp` readings, one per pixel,
+  the product's confidence class as the supplier's code.
 - `wfigs`: NIFC WFIGS incidents and perimeters merged into one
   `natural_hazard` per IRWIN id.
 - `effis`: EFFIS burnt areas (WFS GeoJSON) as `burned_area` situations.

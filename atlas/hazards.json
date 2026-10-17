@@ -202,7 +202,7 @@
           "terms": {
             "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
             "reviewedAt": "2026-10-09",
-            "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
+            "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). Croatian county shapes are DGU's (Upravne jedinice INSPIRE) under the Croatian Open Licence, credited in each location's locationTable. The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
             "notice": "Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org."
           },
           "privacyUrl": "https://api.meteoalarm.org/privacy",
@@ -370,6 +370,74 @@
           "attribution": "NASA FIRMS (LANCE / ESDIS)",
           "privacyUrl": "https://www.nasa.gov/privacy/",
           "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
+          "coverage": {
+            "bbox": [
+              -180,
+              -90,
+              180,
+              90
+            ]
+          }
+        },
+        {
+          "operator": "eumetsat",
+          "qualifier": "slstr",
+          "product": "fires",
+          "name": "EUMETSAT Sentinel-3 SLSTR active fires",
+          "format": "slstr-frp",
+          "tier": "authoritative",
+          "endpoints": {
+            "granules": {
+              "url": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=100&format=json",
+              "cadenceSec": 900
+            },
+            "fires": {
+              "url": "https://api.eumetsat.int/data/download/2.0.0/collections/EO%3AEUM%3ADAT%3A0417/products/{item}/entry?name={item}%2FFRP_MWIR1km_standard.csv",
+              "fanout": "tolerant",
+              "each": {
+                "role": "granules",
+                "records": "features",
+                "field": "id",
+                "pattern": "^(S3[AB]_SL_2_FRP_{4}\\w+_NR_\\d{3}\\.SEN3)$",
+                "keepSec": 259200
+              },
+              "cadenceSec": 900
+            }
+          },
+          "auth": {
+            "kind": "oauth2-authorization-code",
+            "authorizeUrl": "https://user.eumetsat.int/cas/oidc/oidcAuthorize",
+            "tokenUrl": "https://user.eumetsat.int/cas/oauth2.0/accessToken",
+            "redirectUri": "https://api.eumetsat.int/cli",
+            "clientId": "@eumetsat.client_id",
+            "scope": "openid profile email",
+            "responseMode": "fragment",
+            "refreshTokenTtlSec": 2592000
+          },
+          "freshnessWindowSec": 10800,
+          "requestLimits": {
+            "perMinute": 120
+          },
+          "extrasAllow": [
+            "instrument",
+            "satellite",
+            "brightnessK",
+            "daynight",
+            "scan",
+            "track",
+            "frpUncertaintyMW",
+            "channel"
+          ],
+          "license": "LicenseRef-Copernicus-Sentinel-Data",
+          "licenseUrl": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+          "attribution": "Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT",
+          "terms": {
+            "url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+            "reviewedAt": "2026-10-16",
+            "note": "Free, full and open use under Regulation (EU) No 1159/2013. Data that was modified is credited 'Contains modified Copernicus Sentinel data [Year]': each pixel is credited with the UTC year of its detection, and GET /sources with the current year. EUMETSAT's own Meteosat terms do not apply to Sentinel data."
+          },
+          "privacyUrl": "https://www.eumetsat.int/privacy-policy",
+          "homepage": "https://data.eumetsat.int/product/EO:EUM:DAT:0417",
           "coverage": {
             "bbox": [
               -180,
@@ -653,6 +721,29 @@
           }
         }
       ]
+    },
+    "credentials": {
+      "credentials": {
+        "eumetsat": {
+          "client_id": {
+            "title": "EUMETSAT Data Store login (OAuth2 client)",
+            "description": "The public OAuth2 client of EUMETSAT's command-line login; leave the default. The account itself is logged in on the server, not set here: run `node dist/feed-auth.js login eumetsat` in the ingest container (`docker compose exec -it ingest node dist/feed-auth.js login eumetsat`), open the URL it prints, log in, and paste the authorization code the page shows; the code lapses within minutes. The service then renews the login itself (the access token every 8 hours, each renewal replacing the 30-day refresh token). `node dist/feed-auth.js status` shows whether a login is stored and when it was last renewed; a feed whose login is missing or was refused fails with an error naming the command.",
+            "setup": {
+              "url": "https://user.eumetsat.int/",
+              "urlLabel": "EUMETSAT User Portal",
+              "steps": [
+                "Register a free account at user.eumetsat.int (EUMETSAT User Portal).",
+                "Under 'My data licences', request 'Meteosat > 1 hr latency & Metop, Copernicus data & Third party data'; it is free and takes effect after logging in again.",
+                "On the server, run `docker compose exec -it ingest node dist/feed-auth.js login eumetsat` (the compose service is `openconditions-ingest` under OpenMapX), open the URL it prints, log in with the account, and paste the authorization code the page shows into the prompt at once.",
+                "Check with `docker compose exec ingest node dist/feed-auth.js status`."
+              ],
+              "cost": "Free: the Data Store allows 40 requests a second and 15 parallel connections.",
+              "notes": "The legacy API key (consumer key and secret from api.eumetsat.int/api-key) does not work: licensed Copernicus data answers it with 403 'Copernicus license required'. A refresh token obtained elsewhere can be stored instead with `node dist/feed-auth.js import eumetsat`, which reads it from stdin (`docker compose exec -T ingest node dist/feed-auth.js import eumetsat < token-file`). If the service is stopped for 30 days the login lapses and must be repeated."
+            },
+            "default": "api-public-auth-code"
+          }
+        }
+      }
     }
   },
   "feeds": [
@@ -877,7 +968,7 @@
       "terms": {
         "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
         "reviewedAt": "2026-10-09",
-        "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
+        "note": "The warnings are CC BY 4.0-equivalent under §5 of the terms. The area shapes come from the geocode and alias files MeteoAlarm publishes on its Redistribution Hub for redistributors to draw warning areas with; the files carry no licence of their own, and they are used as KDE's FOSS Public Alert Server uses them (credited \"Meteoalarm / EUMETNET\"). Croatian county shapes are DGU's (Upravne jedinice INSPIRE) under the Croatian Open Licence, credited in each location's locationTable. The terms require redistribution within ten minutes of MeteoAlarm's site: a warning expires three minutes after the poll that read it. A display shows the issuing service (\"EUMETNET – MeteoAlarm\" across countries), the issue time, a link to www.meteoalarm.org and the notice, and keeps the warning's text unaltered.",
         "notice": "Time delays between this website and the www.meteoalarm.org website are possible. For the most up-to-date awareness information as published by the participating National Meteorological and Hydrological Services, please refer to www.meteoalarm.org."
       },
       "privacyUrl": "https://api.meteoalarm.org/privacy",
@@ -1108,6 +1199,89 @@
       },
       "restricted": false,
       "cadenceSec": 3600
+    },
+    {
+      "operator": "eumetsat",
+      "qualifier": "slstr",
+      "product": "fires",
+      "name": "EUMETSAT Sentinel-3 SLSTR active fires",
+      "format": "slstr-frp",
+      "tier": "authoritative",
+      "endpoints": {
+        "granules": {
+          "url": "https://api.eumetsat.int/data/search-products/2.0.0/os?pi=EO:EUM:DAT:0417&timeliness=NR&fire=true&set=brief&c=100&format=json",
+          "cadenceSec": 900
+        },
+        "fires": {
+          "url": "https://api.eumetsat.int/data/download/2.0.0/collections/EO%3AEUM%3ADAT%3A0417/products/{item}/entry?name={item}%2FFRP_MWIR1km_standard.csv",
+          "fanout": "tolerant",
+          "each": {
+            "role": "granules",
+            "records": "features",
+            "field": "id",
+            "pattern": "^(S3[AB]_SL_2_FRP_{4}\\w+_NR_\\d{3}\\.SEN3)$",
+            "keepSec": 259200
+          },
+          "cadenceSec": 900
+        }
+      },
+      "auth": {
+        "kind": "oauth2-authorization-code",
+        "authorizeUrl": "https://user.eumetsat.int/cas/oidc/oidcAuthorize",
+        "tokenUrl": "https://user.eumetsat.int/cas/oauth2.0/accessToken",
+        "redirectUri": "https://api.eumetsat.int/cli",
+        "clientId": "@eumetsat.client_id",
+        "scope": "openid profile email",
+        "responseMode": "fragment",
+        "refreshTokenTtlSec": 2592000
+      },
+      "freshnessWindowSec": 10800,
+      "requestLimits": {
+        "perMinute": 120
+      },
+      "extrasAllow": [
+        "instrument",
+        "satellite",
+        "brightnessK",
+        "daynight",
+        "scan",
+        "track",
+        "frpUncertaintyMW",
+        "channel"
+      ],
+      "license": "LicenseRef-Copernicus-Sentinel-Data",
+      "licenseUrl": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+      "attribution": "Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT",
+      "terms": {
+        "url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+        "reviewedAt": "2026-10-16",
+        "note": "Free, full and open use under Regulation (EU) No 1159/2013. Data that was modified is credited 'Contains modified Copernicus Sentinel data [Year]': each pixel is credited with the UTC year of its detection, and GET /sources with the current year. EUMETSAT's own Meteosat terms do not apply to Sentinel data."
+      },
+      "privacyUrl": "https://www.eumetsat.int/privacy-policy",
+      "homepage": "https://data.eumetsat.int/product/EO:EUM:DAT:0417",
+      "coverage": {
+        "bbox": [
+          -180,
+          -90,
+          180,
+          90
+        ]
+      },
+      "id": "eumetsat-slstr-fires",
+      "domain": "hazards",
+      "region": "global",
+      "file": "feeds/hazards/global.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "cadenceSec": 900
     },
     {
       "operator": "usgs",

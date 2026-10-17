@@ -1,0 +1,25 @@
+#title = SLSTR Level 2 Product, Fire Radiative Power (FRP) measurement, Near Real Time (NRT)
+#description = csv output from the Standard MWIR 1km scheme
+#product_name = S3A_SL_2_FRP____20261016T065423_20261016T065723_20261016T085120_0179_145_120______MAR_O_NR_003.SEN3
+#institution = EUMETSAT (Darmstadt, Germany)
+#source = IPF-SL-2-FRP 04.05
+#history = 
+#reference1 = EUM/RSP/DOC/20/1169482 - EUMETSAT - FRP_NRT.003.00 SLSTR L2 NRT FRP Product Data Format Specification
+#reference2 = S3IPF PDS 002 - i1r8 - Product Data Format Specification - Product Structures
+#reference3 = S3MPC ACR FRP 002 - i1r3 - SLSTR L2 FRP Detailed processing model
+#contact = ops@eumetsat.int
+#creation_time = Fri Oct 16 07:51:20 2026
+#absolute_orbit_number = 55533
+#start_time = 2026-10-16T06:54:23.343263Z
+#stop_time = 2026-10-16T06:57:23.343263Z
+#processing_baseline = FRP_NRT.003.02.00
+#track_offset = 998
+#start_offset = 15599
+#number_of_detected_fires = 38
+
+lat(deg),lon(deg),day,time,D/N,FRP(MW),FRPerr(MW),used_channel,confidence(%),confidence_class(lower=0;nominal=1;higher=2),MWIR_BT(K),IFOV_area(m2),SZA(deg),VZA(deg),actrack(km),altrack(km),satellite
+38.043371,56.227435,2026-10-16,06:55:04,D,10.494417,1.985208,F1,88.4,2,319.39,1354049.875,49.43,20.48,1.13,1.20,S3A
+36.256972,51.181085,2026-10-16,06:55:45,D,7.902110,1.852714,F1,78.3,1,311.64,1193494.250,49.45,11.01,1.08,1.10,S3A
+32.250556,47.243745,2026-10-16,06:57:13,D,25.203143,2.742413,F1,97.5,0,334.82,1609814.000,47.56,28.46,1.19,1.35,S3A
+31.088999,47.785115,2026-10-16,06:57:26,D,27.031255,3.012235,F1,0.0,0,337.85,1431835.375,46.30,23.41,1.15,1.25,S3A
+31.033373,47.283539,2026-10-16,06:57:31,D,152.405901,15.811874,F1,100.0,2,372.89,1531531.750,46.53,26.49,1.17,1.31,S3A

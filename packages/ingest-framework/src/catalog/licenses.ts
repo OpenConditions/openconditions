@@ -236,6 +236,14 @@ export const LICENSES: readonly LicenseInfo[] = [
     name: "MeteoAlarm Terms and Conditions",
     url: "https://meteoalarm.org/en/live/page/terms-and-conditions",
   }),
+  // Free, full and open use under Regulation (EU) No 1159/2013, with the
+  // notice "Contains modified Copernicus Sentinel data [Year]" on data that
+  // was adapted.
+  open({
+    id: "LicenseRef-Copernicus-Sentinel-Data",
+    name: "Legal notice on the use of Copernicus Sentinel Data and Service Information",
+    url: "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+  }),
   open({
     id: "LicenseRef-US-Gov-Public-Domain",
     name: "U.S. Government Public Domain (17 U.S.C. §105)",

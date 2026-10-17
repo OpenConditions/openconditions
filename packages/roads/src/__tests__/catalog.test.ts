@@ -197,6 +197,7 @@ describe("the roads catalogue", () => {
       "au-nsw-tfnsw",
       "au-vic-transportvic",
       "ca-on-511",
+      "eumetsat",
       "hr-hc",
       "mobilithek",
       "no-vegvesen",

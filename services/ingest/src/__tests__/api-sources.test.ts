@@ -213,6 +213,34 @@ describe("GET /sources", () => {
   });
 });
 
+describe("GET /sources of a feed whose credit names the year", () => {
+  const dated = Fastify();
+  const copernicus = testFeed({
+    operator: "eumetsat",
+    name: "Sentinel-3 fires",
+    attribution: "Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT",
+  });
+
+  beforeAll(async () => {
+    registerScope(dated, undefined);
+    registerApiRoutes(dated, {} as postgres.Sql, {
+      registry: productionRegistry(),
+      catalog: { sources: [copernicus] },
+      now: () => new Date("2027-01-01T00:05:00Z"),
+    });
+    await dated.ready();
+  });
+
+  afterAll(() => dated.close());
+
+  it("says the current UTC year", async () => {
+    const body = (await dated.inject({ method: "GET", url: "/sources" })).json() as Body;
+    expect(body.sources[0]?.["attribution"]).toBe(
+      "Contains modified Copernicus Sentinel data 2027, processed by EUMETSAT",
+    );
+  });
+});
+
 describe("GET /sources without an operator token configured", () => {
   const open = Fastify();
 

@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { crc32 } from "node:zlib";
-import { type CatalogFeed, type LookupFn, unzipEntries } from "@openconditions/ingest-framework";
+import {
+  type CatalogFeed,
+  type LookupFn,
+  type OAuthGrants,
+  unzipEntries,
+} from "@openconditions/ingest-framework";
 import {
   ensureObservationPartitions,
   retentionClasses,
@@ -14,6 +19,7 @@ import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
+import { createOAuthGrants } from "../oauth-grants.js";
 import { createRoleState, type RunResult, runSource } from "../pipeline/run.js";
 import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
 import { registry } from "./helpers/situations.js";
@@ -70,15 +76,22 @@ afterAll(async () => {
   await db?.close();
 }, 30_000);
 
-/** A feed of the catalogue polled over `serve`, which answers each request; `requested` lists them. */
-function harness(id: string, serve: (url: string) => Response | Promise<Response>) {
+/**
+ * A feed of the catalogue polled over `serve`, which answers each request;
+ * `requested` lists them. A feed reading an OAuth2 grant reads it from `grants`.
+ */
+function harness(
+  id: string,
+  serve: (url: string, init?: RequestInit) => Response | Promise<Response>,
+  grants?: OAuthGrants,
+) {
   const feed = repoFeed(id) as CatalogFeed;
   const roles = createRoleState();
   const requested: string[] = [];
-  const fetch = (async (url: string | URL | Request) => {
+  const fetch = (async (url: string | URL | Request, init?: RequestInit) => {
     const href = String(url instanceof Request ? url.url : url);
     requested.push(href);
-    return serve(href);
+    return serve(href, init);
   }) as typeof globalThis.fetch;
   const poll = (at: string): Promise<RunResult> => {
     clock = at;
@@ -89,6 +102,7 @@ function harness(id: string, serve: (url: string) => Response | Promise<Response
       lookup: fakeLookup,
       model: { registry, instanceId: "test.local" },
       roles,
+      ...(grants ? { grants } : {}),
     });
   };
   const live = async () =>
@@ -541,6 +555,81 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
     expect((await counts()).series).toBe(0);
   }, 60_000);
 
+  it("eumetsat-slstr-fires: without a login the poll names the command; with one, each granule is fetched once", async () => {
+    const granules: Record<string, string> = {
+      S3B_SL_2_FRP____20261016T191036: "slstr-frp-s3b-night.csv",
+      S3B_SL_2_FRP____20261016T190736: "slstr-frp-no-fires.csv",
+      S3A_SL_2_FRP____20261016T065423: "slstr-frp-s3a-day.csv",
+    };
+    const bearers = new Set<string | null>();
+    const slstr = harness(
+      "eumetsat-slstr-fires",
+      (url, init) => {
+        bearers.add(new Headers(init?.headers).get("authorization"));
+        if (url.startsWith("https://api.eumetsat.int/data/search-products/2.0.0/os?")) {
+          return new Response(fixture("slstr-frp-granules.json"), {
+            headers: { "content-type": "application/json" },
+          });
+        }
+        const granule = Object.keys(granules).find((id) => url.includes(`/products/${id}_`));
+        return granule === undefined
+          ? notFound()
+          : new Response(fixture(granules[granule]!), { headers: { "content-type": "text/csv" } });
+      },
+      createOAuthGrants(sql, () => Date.parse(clock)),
+    );
+    const source = slstr.feed.id;
+    const T = "2026-10-16T21:00:00.000Z";
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date(T),
+    });
+
+    const missing = await slstr.poll(T);
+    expect(missing.error).toContain(
+      'OAuth2 grant eumetsat has no stored login: log in with "node dist/feed-auth.js login eumetsat" in the ingest container',
+    );
+    expect(slstr.requested).toEqual([]);
+    const [status] = await sql<{ last_error: string }[]>`
+      SELECT last_error FROM conditions.source_status WHERE source = ${source}`;
+    expect(status?.last_error).toContain("node dist/feed-auth.js login eumetsat");
+
+    await sql`
+      INSERT INTO conditions.oauth_grant
+        (grant_key, refresh_token, refresh_issued_at, access_token, access_expires_at)
+      VALUES ('eumetsat', 'refresh-1', ${new Date(T)}, 'access-1',
+              ${new Date(Date.parse(T) + 8 * 3_600_000)})`;
+    const series = async () => {
+      const [row] = await sql<{ n: number }[]>`
+        SELECT count(*)::int AS n FROM conditions.observation_latest WHERE source_id = ${source}`;
+      return row!.n;
+    };
+    expect((await slstr.poll(later(T, 900))).error).toBeUndefined();
+    expect(bearers).toEqual(new Set(["Bearer access-1"]));
+    const downloads = () => slstr.requested.filter((url) => url.includes("/data/download/2.0.0/"));
+    expect(downloads()).toHaveLength(3);
+    expect(downloads()[0]).toBe(
+      "https://api.eumetsat.int/data/download/2.0.0/collections/EO%3AEUM%3ADAT%3A0417/products/S3B_SL_2_FRP____20261016T191036_20261016T191336_20261016T200123_0179_125_370______MAR_O_NR_003.SEN3/entry?name=S3B_SL_2_FRP____20261016T191036_20261016T191336_20261016T200123_0179_125_370______MAR_O_NR_003.SEN3%2FFRP_MWIR1km_standard.csv",
+    );
+    expect(await series()).toBe(14);
+
+    // The next poll lists the granules again and fetches none of the kept ones.
+    expect((await slstr.poll(later(T, 1800))).error).toBeUndefined();
+    expect(downloads()).toHaveLength(3);
+    expect(await series()).toBe(14);
+
+    const counted = async (minConfidence: string) => {
+      const grid = await get(
+        `/observations/grid?property=fire.frp&bbox=30,20,60,40&cellDeg=1&since=2026-10-16T00:00:00Z&minConfidence=${minConfidence}`,
+      );
+      const cells = grid["cells"] as [number, number, number, number, number][];
+      return cells.reduce((sum, cell) => sum + cell[2], 0);
+    };
+    expect(await counted("low")).toBe(14);
+    expect(await counted("nominal")).toBe(9);
+    expect(await counted("high")).toBe(5);
+  }, 60_000);
+
   it("usgs-quakes: the window read lists the month's quakes, and one gone from both roles is withdrawn", async () => {
     const month = JSON.parse(fixtureText("usgs-all-month.geojson")) as { features: Rec[] };
     let window = JSON.stringify(month);
@@ -617,12 +706,13 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
 });
 
 describe("hazards feeds in the catalogue", () => {
-  it("holds the twelve feeds", () => {
+  it("holds the thirteen feeds", () => {
     expect(HAZARDS.map((f) => f.id).sort()).toEqual([
       "ca-eccc-alerts",
       "de-dwd-alerts",
       "eu-effis-fires",
       "eu-meteoalarm-alerts",
+      "eumetsat-slstr-fires",
       "gdacs-events",
       "nasa-eonet-events",
       "nasa-firms-modis-fires",

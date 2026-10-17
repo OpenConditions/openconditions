@@ -273,7 +273,12 @@ function requestHosts(feed: FeedDefinition): Set<string> {
     ...(e.url !== undefined ? [e.url] : []),
     ...(e.urls ?? []),
   ]);
-  if (feed.auth?.kind === "oauth2-client-credentials") urls.push(feed.auth.tokenUrl);
+  if (
+    feed.auth?.kind === "oauth2-client-credentials" ||
+    feed.auth?.kind === "oauth2-authorization-code"
+  ) {
+    urls.push(feed.auth.tokenUrl);
+  }
   return new Set(urls.map(hostOf));
 }
 

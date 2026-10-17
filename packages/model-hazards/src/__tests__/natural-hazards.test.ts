@@ -217,6 +217,7 @@ describe("natural hazards", () => {
       "nws",
       "meteoalarm",
       "firms",
+      "slstr-frp",
       "wfigs",
       "effis",
       "hms",
