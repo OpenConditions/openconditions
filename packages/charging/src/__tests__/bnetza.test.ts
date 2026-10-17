@@ -141,6 +141,42 @@ describe("bnetza", () => {
     });
   });
 
+  test("BNetzA: region, directions, parking spellings, and a slot of several EVSE ids a point per plug", () => {
+    const header =
+      "Ladeeinrichtungs-ID;Betreiber;Anzeigename (Karte);Status;Anzahl Ladepunkte;Adresszusatz;Bundesland;Breitengrad;Längengrad;Standortbezeichnung;Informationen zum Parkraum;Bezahlsysteme;Öffnungszeiten;Steckertypen1;Nennleistung Stecker1;EVSE-ID1";
+    const row =
+      '78;Beispiel GmbH;Markt;In Betrieb;1;Hinterhof;Hessen;50,1;8,5;Parkdeck 2;Kunden/Besucher;"Plug & Charge;Bargeld";Eingeschränkt;"AC Typ 2 Steckdose;DC CHAdeMO";"22;50";"DE*XMP*E0001;DE*XMP*E0002"';
+    const out = parse({ main: [Buffer.from(`${header}\r\n${row}\r\n`)] });
+    expect(drainSkipped("de-bnetza-charging")).toEqual({});
+    const draft = site(out, "78");
+    expect(draft).toMatchObject({
+      name: [{ text: "Markt" }],
+      location: { address: { region: "Hessen" } },
+      access: { audience: "customers", payment: ["cash"], authentication: ["plug_and_charge"] },
+      details: {
+        directions: [
+          { lang: "de", text: "Parkdeck 2" },
+          { lang: "de", text: "Hinterhof" },
+        ],
+      },
+    });
+    expect(
+      evsesOf(draft).map((e) => [e.key, connectorsOf(draft, e.key)[0]?.details["standard"]]),
+    ).toEqual([
+      ["DE*XMP*E0001", "IEC_62196_T2"],
+      ["DE*XMP*E0002", "CHADEMO"],
+    ]);
+    // A parking note, payment system or opening-hours kind the register does not write is counted.
+    parse({
+      main: [
+        Buffer.from(
+          `${header}\r\n79;B;M;In Betrieb;1;;;50,2;8,5;;Anwohner;Gutschein;Nachts;AC Schuko;3;\r\n`,
+        ),
+      ],
+    });
+    expect(drainSkipped("de-bnetza-charging")).toEqual({ unknown_value: 3 });
+  });
+
   test("BNetzA: points beyond the six slots are one undifferentiated EVSE of their count", () => {
     const header =
       "Ladeeinrichtungs-ID;Betreiber;Status;Anzahl Ladepunkte;Breitengrad;Längengrad;Steckertypen1;Nennleistung Stecker1;EVSE-ID1";

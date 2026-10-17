@@ -9,6 +9,7 @@ import type { AUDIENCES, PAYMENT_METHODS } from "@openconditions/model";
 import { colocateSites } from "../colocate.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours, type WeeklyPeriod } from "../hours.js";
+import { own } from "../records.js";
 import {
   type ConnectorInput,
   type EvseInput,
@@ -36,8 +37,10 @@ const COLUMNS = [
   "Nennleistung Ladeeinrichtung [kW]",
   "Straße",
   "Hausnummer",
+  "Adresszusatz",
   "Postleitzahl",
   "Ort",
+  "Bundesland",
   "Breitengrad",
   "Längengrad",
   "Standortbezeichnung",
@@ -112,6 +115,8 @@ const PAYMENTS: Readonly<Record<string, readonly Payment[]>> = {
   "Kostenlos (Registrierung)": ["free"],
   Bargeld: ["cash"],
   Sonstige: ["other"],
+  // Plug & Charge is how a driver identifies, read as authentication.
+  "Plug & Charge": [],
 };
 
 const WEEKDAYS: Readonly<Record<string, number>> = {
@@ -143,15 +148,17 @@ interface Hours {
  * weekday and time-of-day lists pair up by position (one time span stands for
  * every day) into OSM hours; lists that do not pair stay as written.
  */
-function hoursOf(row: DelimitedRow): Hours {
+function hoursOf(row: DelimitedRow, unread: () => void): Hours {
   const kind = row["Öffnungszeiten"] ?? "";
   if (kind === "247") return { osm: "24/7" };
+  // "Eingeschränkt" is restricted hours, which the weekday and time lists give.
+  if (kind !== "" && kind !== "Keine Angabe" && kind !== "Eingeschränkt") unread();
   const days = items(row["Öffnungszeiten: Wochentage"]);
   const times = items(row["Öffnungszeiten: Tageszeiten"]);
   if (days.length === 0 || times.length === 0) return {};
   const periods: WeeklyPeriod[] = [];
   days.forEach((name, i) => {
-    const day = WEEKDAYS[name.toLowerCase()];
+    const day = own(WEEKDAYS, name.toLowerCase());
     const span = (times.length === 1 ? times[0] : times[i])?.match(CLOCK_SPAN);
     if (day !== undefined && span?.[1] !== undefined && span[2] !== undefined) {
       periods.push({ day, from: span[1], to: span[2] });
@@ -161,9 +168,12 @@ function hoursOf(row: DelimitedRow): Hours {
   return osm === undefined ? { text: `${days.join(", ")}: ${times.join(", ")}` } : { osm };
 }
 
+/** `Informationen zum Parkraum`, as the register writes it in several spellings. */
 const AUDIENCE: Readonly<Record<string, (typeof AUDIENCES)[number]>> = {
   "keine beschränkung": "public",
   "nur für kunden/besucher": "customers",
+  "nur kunden/besucher": "customers",
+  "kunden/besucher": "customers",
 };
 
 /**
@@ -185,7 +195,7 @@ function connectorsOf(
     ];
   }
   return plugs.map((name, j) => {
-    const known = PLUGS[name];
+    const known = own(PLUGS, name);
     if (known === undefined) recordSkipped(feedId, "unknown_value");
     const kw = powers[j] ?? (powers.length === 1 ? powers[0] : undefined);
     return {
@@ -217,16 +227,31 @@ function evsesOf(feedId: string, stationId: string, row: DelimitedRow): EvseInpu
         ? [1]
         : filled
       : Array.from({ length: Math.min(count, SLOTS) }, (_, k) => k + 1);
-  const evses = wanted.map((i): EvseInput => {
+  const evses = wanted.flatMap((i): EvseInput[] => {
     const s = slot(i);
     // A device of one charge point is rated as that point where the plug is not.
     const powers = s.powers.length === 0 && count === 1 ? [deviceKw] : s.powers;
-    const evseId = emi3Of(s.id);
-    return {
-      key: evseId ?? `${stationId}-${i}`,
-      ...(evseId === undefined ? {} : { evseId }),
-      connectors: connectorsOf(feedId, s.plugs, powers),
-    };
+    // A slot naming as many EVSE ids as plugs registers a charge point per plug.
+    const ids = (s.id ?? "").split(/[;,]/).flatMap((id) => emi3Of(id.trim()) ?? []);
+    if (ids.length > 1 && ids.length === s.plugs.length) {
+      return ids.map((evseId, j) => ({
+        key: evseId,
+        evseId,
+        connectors: connectorsOf(
+          feedId,
+          [s.plugs[j]!],
+          [powers[j] ?? (powers.length === 1 ? powers[0] : undefined)],
+        ),
+      }));
+    }
+    const evseId = emi3Of(s.id) ?? ids[0];
+    return [
+      {
+        key: evseId ?? `${stationId}-${i}`,
+        ...(evseId === undefined ? {} : { evseId }),
+        connectors: connectorsOf(feedId, s.plugs, powers),
+      },
+    ];
   });
   if (count !== undefined && count > SLOTS) {
     // Points past the sixth have no columns: the register states only how many there are.
@@ -252,14 +277,32 @@ function deviceSite(
   row: DelimitedRow,
   point: [number, number],
 ): SiteInput {
-  const hours = hoursOf(row);
+  const unread = () => recordSkipped(feedId, "unknown_value");
+  const hours = hoursOf(row, unread);
   const status = text(row["Status"]);
-  const lifecycle = status === undefined ? undefined : LIFECYCLES[status];
-  if (status !== undefined && lifecycle === undefined) recordSkipped(feedId, "unknown_value");
-  const payments = [...new Set(items(row["Bezahlsysteme"]).flatMap((p) => PAYMENTS[p] ?? []))];
-  const audience = AUDIENCE[(row["Informationen zum Parkraum"] ?? "").toLowerCase()];
+  const lifecycle = own(LIFECYCLES, status);
+  if (status !== undefined && lifecycle === undefined) unread();
+  const payments = [
+    ...new Set(
+      items(row["Bezahlsysteme"]).flatMap((p) => {
+        const methods = own(PAYMENTS, p);
+        if (methods === undefined) unread();
+        return methods ?? [];
+      }),
+    ),
+  ];
+  const parking = text(row["Informationen zum Parkraum"]);
+  const audience = own(AUDIENCE, parking?.toLowerCase());
+  if (parking !== undefined && audience === undefined) unread();
   const operator = text(row["Betreiber"]);
-  const name = text(row["Anzeigename (Karte)"]) ?? text(row["Standortbezeichnung"]);
+  const shown = text(row["Anzeigename (Karte)"]);
+  const label = text(row["Standortbezeichnung"]);
+  const name = shown ?? label;
+  // The location label, where the map name names the site, and the address
+  // supplement say where on the ground the device stands.
+  const directions = [shown === undefined ? undefined : label, text(row["Adresszusatz"])].flatMap(
+    (t) => (t === undefined ? [] : [{ lang: "de", text: t }]),
+  );
   return {
     stationId: id,
     point,
@@ -272,7 +315,9 @@ function deviceSite(
       houseNumber: row["Hausnummer"],
       postalCode: row["Postleitzahl"],
       city: row["Ort"],
+      region: row["Bundesland"],
     },
+    ...(directions.length === 0 ? {} : { directions }),
     lifecycle: lifecycle ?? "unknown",
     ...(hours.osm === undefined ? {} : { openingHoursOsm: hours.osm }),
     ...(hours.text === undefined ? {} : { openingHoursText: hours.text }),
