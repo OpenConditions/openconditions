@@ -62,6 +62,13 @@ or the convenience form (decoded server-side):
 `LrpPoint` mirrors the `@openconditions/openlr` decoder output:
 `{ sequenceNumber, longitude, latitude, frc, fow, lfrcnp, bearing, distanceToNext, isLast }`.
 
+`positiveOffset` and `negativeOffset` are metres. As in OpenLR binary v3
+(whitepaper v1.5 rev2, section 7.5.2), the positive offset is measured against
+the first LRP's `distanceToNext` and the negative offset against the second-last
+LRP's `distanceToNext`, never against the whole reference. The resolver turns
+each offset into that share and applies it to the matched route between the
+same two LRPs, as TomTom's reference decoder does.
+
 Responses:
 
 - `200` — `{ "geometry": <GeoJSON LineString>, "confidence": <0..1> }`. The
