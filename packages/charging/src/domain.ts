@@ -130,11 +130,21 @@ const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   ),
   // The batch file the DataMall link names, sites, prices and states together.
   sites("lta", parseLta),
-  // Per city: the stations, the rates per connector, the connectors' live states.
+  // Per city: the stations, the rates per connector, the connectors' live
+  // states, and where a feed fetches them the connectors' and charging
+  // points' own rows, the operators and the service times.
   sites(
     "tdx",
     parseTdx,
-    { sites: { required: true }, tariffs: optional, status: liveStatus },
+    {
+      sites: { required: true },
+      tariffs: optional,
+      status: liveStatus,
+      connectors: optional,
+      points: optional,
+      operators: optional,
+      servicetimes: optional,
+    },
     parseTdxStatus,
   ),
   // Per grid cell, full objects.
