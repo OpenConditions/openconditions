@@ -79,6 +79,72 @@ function textsCompatible(a: RoadEvent, b: RoadEvent): boolean {
   return jaccardOverlap(la, lb) >= LABEL_JACCARD_MIN;
 }
 
+const norm = (s: string | undefined) => s?.trim().toLowerCase() || undefined;
+
+/** The direction an event states, on itself or, failing that, on its roads. */
+function directionOf(e: RoadEvent): string | undefined {
+  const own = norm(e.direction);
+  if (own !== undefined) return own;
+  const onRoads = [...new Set(e.roads.map((r) => norm(r.direction)).filter((d) => d))];
+  return onRoads.length > 0 ? onRoads.sort().join("|") : undefined;
+}
+
+/** An instant as epoch milliseconds when it parses, else as its text. */
+const instantKey = (s: string | null | undefined) => {
+  if (!s) return undefined;
+  const ms = Date.parse(s);
+  return Number.isFinite(ms) ? String(ms) : s;
+};
+
+/** The road names and numbers an event names, normalised. */
+const roadKeys = (e: RoadEvent) =>
+  new Set(
+    e.roads
+      .flatMap((r) => [r.name, r.ref])
+      .map((s) => s?.replace(/\s+/g, "").toUpperCase())
+      .filter((s): s is string => !!s),
+  );
+
+const json = (v: unknown) => JSON.stringify(v);
+
+/**
+ * Whether two events say different things about the road, so are two events
+ * even at one place with one text: opposite directions of a carriageway, two
+ * occurrences of a recurring closure, different lanes, vehicles, limits or
+ * roads. A fact only one of them states is no difference: the other may
+ * simply be the sparser copy.
+ */
+function distinct(a: RoadEvent, b: RoadEvent): boolean {
+  const differ = <T>(x: T | undefined, y: T | undefined) =>
+    x !== undefined && y !== undefined && x !== y;
+  if (differ(directionOf(a), directionOf(b))) return true;
+  if (differ(instantKey(a.validFrom), instantKey(b.validFrom))) return true;
+  if (differ(instantKey(a.validTo), instantKey(b.validTo))) return true;
+  if (a.schedule?.length && b.schedule?.length && differ(json(a.schedule), json(b.schedule)))
+    return true;
+  if ((a.isForecast === true) !== (b.isForecast === true)) return true;
+  if (differ(a.subtype, b.subtype)) return true;
+  if (differ(a.roadState, b.roadState)) return true;
+  if (differ(a.speedLimitKph, b.speedLimitKph)) return true;
+  if (differ(a.lanesAffected && json(a.lanesAffected), b.lanesAffected && json(b.lanesAffected)))
+    return true;
+  const vehicles = (e: RoadEvent) =>
+    e.vehiclesAffected?.length ? json([...e.vehiclesAffected].sort()) : undefined;
+  if (differ(vehicles(a), vehicles(b))) return true;
+  if (differ(a.restrictions && json(a.restrictions), b.restrictions && json(b.restrictions)))
+    return true;
+  if (
+    differ(
+      a.restrictionDetails && json(a.restrictionDetails.facts),
+      b.restrictionDetails && json(b.restrictionDetails.facts),
+    )
+  )
+    return true;
+  const ra = roadKeys(a);
+  const rb = roadKeys(b);
+  return ra.size > 0 && rb.size > 0 && ![...ra].some((r) => rb.has(r));
+}
+
 /** The event updated last; of events updated at once, the one with the lowest id, whatever their order. */
 function newestByDataUpdatedAt(cluster: RoadEvent[]): RoadEvent {
   let best = cluster[0]!;
@@ -95,9 +161,11 @@ function newestByDataUpdatedAt(cluster: RoadEvent[]): RoadEvent {
 
 /**
  * Folds the duplicates one feed publishes for one event: same type, within
- * 60 m, with compatible text. Clusters merge only when every pair across them
- * qualifies, so a chain of neighbours never collapses into one; the event
- * updated last survives, the same one whichever order the feed lists them in.
+ * 60 m, with compatible text, and nothing either states that the other
+ * contradicts (see {@link distinct}). Clusters merge only when every pair
+ * across them qualifies, so a chain of neighbours never collapses into one;
+ * the event updated last survives, the same one whichever order the feed
+ * lists them in.
  */
 export function dedupeRoadEvents(events: RoadEvent[]): RoadEvent[] {
   const n = events.length;
@@ -116,7 +184,7 @@ export function dedupeRoadEvents(events: RoadEvent[]): RoadEvent[] {
   function shouldMerge(i: number, j: number): boolean {
     if (events[i]!.type !== events[j]!.type) return false;
     if (haversineMeters(pts[i]!, pts[j]!) > MERGE_DISTANCE_M) return false;
-    return textsCompatible(events[i]!, events[j]!);
+    return textsCompatible(events[i]!, events[j]!) && !distinct(events[i]!, events[j]!);
   }
 
   function neighborsOf(i: number): number[] {

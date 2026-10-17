@@ -116,6 +116,75 @@ describe("dedupeRoadEvents", () => {
     expect(dedupeRoadEvents([A, B, C])).toHaveLength(2);
   });
 
+  describe("keeps events at one place with one text apart when they say different things", () => {
+    const at = { lng: 4.9, lat: 52.3, type: "roadworks" as const, headline: "Lane closed" };
+    const PAIRS: [string, Partial<RoadEvent>, Partial<RoadEvent>][] = [
+      ["directions", { direction: "northbound" }, { direction: "southbound" }],
+      [
+        "directions on their roads",
+        { roads: [{ name: "I-80", direction: "eastbound" }] },
+        { roads: [{ name: "I-80", direction: "westbound" }] },
+      ],
+      [
+        "occurrences",
+        { validFrom: "2026-03-01T20:00:00Z", validTo: "2026-03-02T05:00:00Z" },
+        { validFrom: "2026-03-02T20:00:00Z", validTo: "2026-03-03T05:00:00Z" },
+      ],
+      [
+        "schedules",
+        { schedule: [{ byDay: ["MO"], scheduleTimezone: "UTC" }] },
+        { schedule: [{ byDay: ["TU"], scheduleTimezone: "UTC" }] },
+      ],
+      ["a forecast and a current event", { isForecast: true }, {}],
+      [
+        "lanes",
+        { lanesAffected: { total: 2, closed: 1, lanes: [{ index: 1, status: "closed" }] } },
+        { lanesAffected: { total: 2, closed: 1, lanes: [{ index: 2, status: "closed" }] } },
+      ],
+      ["vehicles", { vehiclesAffected: ["truck"] }, { vehiclesAffected: ["bus"] }],
+      [
+        "restrictions",
+        { restrictions: [{ type: "reduced-height", value: 4, unit: "m" }] },
+        { restrictions: [{ type: "reduced-height", value: 3.5, unit: "m" }] },
+      ],
+      ["speed limits", { speedLimitKph: 60 }, { speedLimitKph: 80 }],
+      ["road states", { roadState: "closed" }, { roadState: "some_lanes_closed" }],
+      ["subtypes", { subtype: "resurfacing" }, { subtype: "bridge_work" }],
+      ["roads", { roads: [{ name: "Main St" }] }, { roads: [{ name: "Oak Ave" }] }],
+    ];
+
+    it.each(PAIRS)("%s", (_, a, b) => {
+      expect(
+        dedupeRoadEvents([makeRoadEvent({ ...at, ...a }), makeRoadEvent({ ...at, ...b })]),
+      ).toHaveLength(2);
+    });
+  });
+
+  it("folds a copy that leaves out what the other states, and copies alike in what both state", () => {
+    const at = { lng: 4.9, lat: 52.3, type: "roadworks" as const, headline: "Lane closed" };
+    const full = {
+      direction: "Northbound",
+      validFrom: "2026-03-01T20:00:00Z",
+      roads: [{ name: "I 80", ref: "I-80" }],
+      lanesAffected: { total: 2, closed: 1 },
+    };
+    expect(
+      dedupeRoadEvents([makeRoadEvent({ ...at, ...full }), makeRoadEvent({ ...at })]),
+    ).toHaveLength(1);
+    expect(
+      dedupeRoadEvents([
+        makeRoadEvent({ ...at, ...full }),
+        makeRoadEvent({
+          ...at,
+          ...full,
+          direction: "northbound ",
+          validFrom: "2026-03-01T21:00:00+01:00",
+          roads: [{ name: "I80" }],
+        }),
+      ]),
+    ).toHaveLength(1);
+  });
+
   it("returns an empty array for no events", () => {
     expect(dedupeRoadEvents([])).toEqual([]);
   });
