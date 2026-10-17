@@ -5,7 +5,6 @@ import {
   type SituationClass,
   type Validity,
 } from "@openconditions/model";
-import { XMLBuilder } from "fast-xml-parser";
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 import {
   definesManagementNature,
@@ -14,6 +13,7 @@ import {
   projectionStateAt,
   sameInterval,
 } from "./export-validity.js";
+import { buildXmlDocument } from "./xml.js";
 
 type Rec = Record<string, unknown>;
 
@@ -461,13 +461,6 @@ function buildMessage(
   };
 }
 
-const builder = new XMLBuilder({
-  ignoreAttributes: false,
-  attributeNamePrefix: "@_",
-  format: true,
-  suppressEmptyNode: true,
-});
-
 /**
  * Projects situations to a TraFF v0.8 `<feed>` document, evaluated at `at`.
  * A situation with no event TraFF can carry, or with a vehicle-specific
@@ -482,5 +475,5 @@ export function situationsToTraff(
   report?: ExportDiagnosticSink,
 ): string {
   const message = situations.flatMap((situation) => messagesOf(registry, situation, at, report));
-  return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build({ feed: { message } })}`;
+  return buildXmlDocument({ feed: { message } });
 }

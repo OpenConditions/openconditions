@@ -96,7 +96,10 @@ re-ingests through our own parser as the same situations: a full closure stays a
 full closure with its validity and place, and roadworks with a lane closure and
 a speed limit stay one situation with both effects
 ([`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)).
-That proves internal consistency.
+That proves internal consistency. Like the TraFF emitter, it replaces characters
+XML 1.0 cannot carry (C0 controls other than tab, line feed and carriage return,
+unpaired surrogates, U+FFFE, U+FFFF) with U+FFFD in every text and attribute
+value.
 
 ### What is validated
 

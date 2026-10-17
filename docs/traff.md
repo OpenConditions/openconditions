@@ -61,6 +61,10 @@ The Java `libtraff` reader uses a second-resolution ISO timestamp parser.
 Receive/update/expiration/start/end times are normalized to UTC with fractional
 seconds truncated on this wire projection. Stored canonical timestamps keep
 their original precision. XML escaping remains the XML builder's responsibility.
+Characters XML 1.0 cannot carry at all (C0 controls other than tab, line feed and
+carriage return, unpaired surrogates, U+FFFE and U+FFFF) are replaced with
+U+FFFD in every element text and attribute value, so source text cannot make the
+feed malformed.
 
 ## Repeated restrictions
 

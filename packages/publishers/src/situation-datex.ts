@@ -9,7 +9,6 @@ import {
   DATEX2_RECORDS,
   datexDiscriminator,
 } from "@openconditions/model-roads";
-import { XMLBuilder } from "fast-xml-parser";
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 import {
   definesManagementNature,
@@ -19,6 +18,7 @@ import {
   sameInterval,
 } from "./export-validity.js";
 import type { FeedInfo } from "./types.js";
+import { buildXmlDocument } from "./xml.js";
 
 type Rec = Record<string, unknown>;
 type Text = { lang: string; text: string }[];
@@ -515,13 +515,6 @@ function publicationLang(situations: readonly Rec[]): string {
   return more.length > 0 ? "mul" : only;
 }
 
-const builder = new XMLBuilder({
-  ignoreAttributes: false,
-  attributeNamePrefix: "@_",
-  format: true,
-  suppressEmptyNode: true,
-});
-
 /**
  * Projects situations to a DATEX II v3 `SituationPublication` in an Exchange
  * 2020 snapshot-pull `messageContainer`, evaluated at `at`. `info.timestamp`
@@ -584,5 +577,5 @@ export function situationsToDatex(
       },
     },
   };
-  return `<?xml version="1.0" encoding="UTF-8"?>\n${builder.build(doc)}`;
+  return buildXmlDocument(doc);
 }
