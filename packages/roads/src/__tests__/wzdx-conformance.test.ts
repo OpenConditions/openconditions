@@ -75,7 +75,7 @@ beforeAll(async () => {
     }
     examples[version] = pinned.files;
   }
-});
+}, 120_000);
 
 beforeEach(() => __resetSkips());
 
