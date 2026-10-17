@@ -227,7 +227,10 @@ describe("GET /situations", () => {
     for (const path of ["/situations.geojson", "/situations.jsonld"]) {
       const { res, body } = await get(`${path}?${AT}&dedupe=1`);
       expect(res.statusCode).toBe(200);
-      expect((body["features"] as Rec[]).map((r) => r["id"])).toEqual([a["id"], b["id"]]);
+      expect((body["features"] as Rec[]).map((r) => (r["properties"] as Rec)["id"])).toEqual([
+        a["id"],
+        b["id"],
+      ]);
     }
     for (const path of ["/traff.xml", "/datex2/situations.xml"]) {
       const response = await app.inject(`${path}?${AT}&dedupe=1`);
@@ -341,7 +344,10 @@ describe("GET /situations.geojson and .jsonld", () => {
     const ld = await get(`/situations.jsonld?${AT}&limit=1`);
     expect(ld.body["@context"]).toBeDefined();
     expect((ld.body["features"] as Rec[])[0]).toMatchObject({
+      type: "Feature",
+      id: `https://openconditions.org/id/${encodeURIComponent("oc:situation:de-autobahn-events:g1")}`,
       "@type": "schema:SpecialAnnouncement",
+      properties: { id: "oc:situation:de-autobahn-events:g1" },
     });
   });
 });

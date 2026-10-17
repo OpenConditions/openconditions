@@ -60,7 +60,8 @@ export const API_ROUTES: readonly ApiRoute[] = [
   {
     path: "/situations.jsonld",
     operationId: "listSituationsJsonLd",
-    summary: "Live situations as GeoJSON-LD (schema.org and SOSA context), one keyset page.",
+    summary:
+      "Live situations as GeoJSON-LD (schema.org and SOSA context), one keyset page. Each feature's `id` is its record's `https://openconditions.org/id/` IRI; the record id stays in `properties.id`.",
     query: SituationListQuery,
     produces: ["application/ld+json"],
     alwaysPublic: true,
@@ -128,7 +129,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/features.jsonld",
     operationId: "listFeaturesJsonLd",
     summary:
-      "Live features as GeoJSON-LD (schema.org and SOSA context), one keyset page. `expand` takes components only: latest and offers are ignored.",
+      "Live features as GeoJSON-LD (schema.org and SOSA context), one keyset page. Each feature's `id` is its record's `https://openconditions.org/id/` IRI; the record id stays in `properties.id`. `expand` takes components only: latest and offers are ignored.",
     query: FeatureListQuery,
     produces: ["application/ld+json"],
     alwaysPublic: true,
