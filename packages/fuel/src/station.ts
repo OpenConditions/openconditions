@@ -84,6 +84,23 @@ export function placeable(lon: number, lat: number): boolean {
   );
 }
 
+/**
+ * A station's source position, or why it cannot place the station as a skip
+ * reason: `no_geometry` when the source gives none (a coordinate absent, or
+ * 0,0, the unlocated station), `malformed` when it gives one that is not a
+ * position on the globe. An absent coordinate is `undefined`; one present but
+ * unreadable is NaN.
+ */
+export function stationPosition(
+  lon: number | undefined,
+  lat: number | undefined,
+): { lon: number; lat: number } | { skip: "no_geometry" | "malformed" } {
+  if (lon === undefined || lat === undefined || (lon === 0 && lat === 0)) {
+    return { skip: "no_geometry" };
+  }
+  return placeable(lon, lat) ? { lon, lat } : { skip: "malformed" };
+}
+
 /** An instant in UTC at second precision, as the drafts carry it. */
 export function utcInstant(at: Date): string {
   return at.toISOString().replace(/\.000Z$/, "Z");

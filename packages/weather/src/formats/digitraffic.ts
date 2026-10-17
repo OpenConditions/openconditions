@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
   type StatusSubject,
@@ -117,8 +118,12 @@ interface Sample {
   reliability?: string;
 }
 
-/** The stations of the `sites` list; one without an id or a place is counted as rejected. */
-function stationsOf(body: Buffer, out: Pick<ParseOutput, "rejected">): Station[] {
+/**
+ * The stations of the `sites` list, each id the list names added to `listed`.
+ * One that is not an object or has no id is skipped as malformed, one without
+ * a position as unplaced, and one whose position is off the globe as malformed.
+ */
+function stationsOf(feed: WeatherCatalogFeed, body: Buffer, listed: Set<string>): Station[] {
   const doc = jsonOf(body, "the weather station list");
   if (!isRecord(doc) || !Array.isArray(doc["features"])) {
     throw new Error("the weather station list carries no features");
@@ -128,10 +133,17 @@ function stationsOf(body: Buffer, out: Pick<ParseOutput, "rejected">): Station[]
     const geometry = isRecord(feature) ? feature["geometry"] : undefined;
     const coordinates = isRecord(geometry) ? listOf(geometry["coordinates"]) : [];
     const id = isRecord(props) ? textOf(props["id"]) : undefined;
+    if (!isRecord(props) || id === undefined) {
+      recordSkipped(feed.id, "malformed");
+      return [];
+    }
+    listed.add(id);
     // The published altitude is always zero, which says nothing.
     const point = lonLat(coordinates[0], coordinates[1]);
-    if (!isRecord(props) || id === undefined || point === undefined) {
-      out.rejected = (out.rejected ?? 0) + 1;
+    if (point === undefined) {
+      const [lon, lat] = coordinates.map(numberOf);
+      const absent = lon === undefined || lat === undefined || (lon === 0 && lat === 0);
+      recordSkipped(feed.id, absent ? "no_geometry" : "malformed");
       return [];
     }
     const name = textOf(props["name"]);
@@ -153,12 +165,12 @@ function stationsOf(body: Buffer, out: Pick<ParseOutput, "rejected">): Station[]
 
 /**
  * Each station's details by station id. A detail answer that cannot be read
- * is counted as rejected and its station keeps the list's data: the details
+ * is skipped as malformed and its station keeps the list's data: the details
  * are fetched one by one, and one bad answer must not cost the others.
  */
 function detailsOf(
+  feed: WeatherCatalogFeed,
   bodies: readonly Buffer[],
-  out: Pick<ParseOutput, "rejected">,
 ): Map<string, StationDetails> {
   const details = new Map<string, StationDetails>();
   for (const body of bodies) {
@@ -166,13 +178,13 @@ function detailsOf(
     try {
       doc = JSON.parse(body.toString("utf8"));
     } catch {
-      out.rejected = (out.rejected ?? 0) + 1;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     const props = isRecord(doc) ? doc["properties"] : undefined;
     const id = isRecord(props) ? textOf(props["id"]) : undefined;
     if (!isRecord(props) || id === undefined) {
-      out.rejected = (out.rejected ?? 0) + 1;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     const names = isRecord(props["names"]) ? props["names"] : {};
@@ -203,14 +215,16 @@ const isInstant = (value: string | undefined): value is string =>
 
 /**
  * Each station's values from the `status` data document, by station id. A
- * value without a sensor id or a numeric value is not one. A malformed
- * document fails the read, unless `rejected` is given: the hourly full parse
- * still has its stations to write, so there it is counted as rejected and
+ * station entry that is not an object or has no id is skipped as malformed;
+ * a value without a sensor id or a numeric value is not one. A malformed
+ * document fails the read, unless `tolerant`: the hourly full parse still has
+ * its stations to write, so there the document is skipped as malformed and
  * the stations are read without values.
  */
 function samplesOf(
+  feed: WeatherCatalogFeed,
   bodies: readonly Buffer[],
-  rejected?: Pick<ParseOutput, "rejected">,
+  tolerant = false,
 ): Map<string, Sample[]> {
   const samples = new Map<string, Sample[]>();
   for (const body of bodies) {
@@ -221,14 +235,16 @@ function samplesOf(
         throw new Error("the weather station data document carries no stations");
       }
     } catch (error) {
-      if (rejected === undefined) throw error;
-      rejected.rejected = (rejected.rejected ?? 0) + 1;
+      if (!tolerant) throw error;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     for (const station of doc["stations"]) {
-      if (!isRecord(station)) continue;
-      const id = textOf(station["id"]);
-      if (id === undefined) continue;
+      const id = isRecord(station) ? textOf(station["id"]) : undefined;
+      if (!isRecord(station) || id === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       const updated = textOf(station["dataUpdatedTime"]);
       const values = listOf(station["sensorValues"]).flatMap((v): Sample[] => {
         if (!isRecord(v)) return [];
@@ -323,8 +339,9 @@ function resultOf(sensor: DigitrafficSensor, value: number): Record<string, unkn
  * read here only, stated in its sensor's unit, not marked faulty, measured
  * within its property's freshness window of the fetch, of a channel the
  * station's feature carries, and, for a value of the surface's solution, of
- * a sensor measuring a water film (not among `dry`). A value whose code or
- * name the publisher's tables do not hold is counted as rejected.
+ * a sensor measuring a water film (not among `dry`). A value of a sensor read
+ * here whose code, name or unit the publisher's tables do not hold is counted
+ * as a value not read.
  */
 function readingOf(
   feed: WeatherCatalogFeed,
@@ -332,14 +349,13 @@ function readingOf(
   subject: StationSubject,
   sample: Sample,
   dry: ReadonlySet<string>,
-  out: Pick<ParseOutput, "rejected">,
 ): RecordDraft | undefined {
   const known = DIGITRAFFIC_SENSOR_BY_ID.get(sample.sensorId);
   if (known === undefined) return undefined;
   const sensor = sensorOf(sample);
   const result = sensor === undefined ? undefined : resultOf(sensor, sample.value);
   if (sensor === undefined || result === undefined) {
-    out.rejected = (out.rejected ?? 0) + 1;
+    recordSkipped(feed.id, "unknown_value");
     return undefined;
   }
   if (sample.reliability === "FAULTY") return undefined;
@@ -347,7 +363,7 @@ function readingOf(
     return undefined;
   }
   if (sample.unit !== undefined && sample.unit !== sensor.unit) {
-    out.rejected = (out.rejected ?? 0) + 1;
+    recordSkipped(feed.id, "unknown_value");
     return undefined;
   }
   const maxAgeSec = MAX_AGE_SEC.get(sensor.property);
@@ -376,28 +392,27 @@ function readingOf(
 
 /**
  * The readings of every station the data document names, placed through the
- * index, and the number of stations with values that the index does not
- * hold, for the caller to count as rejected.
+ * index, and the ids of the stations with values that the index does not
+ * hold, for the caller to account for.
  */
 function readingsOf(
   feed: WeatherCatalogFeed,
   fetchedAt: string,
   index: StatusIndex,
   samples: ReadonlyMap<string, readonly Sample[]>,
-  out: Pick<ParseOutput, "rejected">,
-): { readings: RecordDraft[]; unplaced: number } {
+): { readings: RecordDraft[]; unplaced: string[] } {
   const readings: RecordDraft[] = [];
-  let unplaced = 0;
+  const unplaced: string[] = [];
   for (const [stationId, values] of samples) {
     if (values.length === 0) continue;
     const subject = index.get(stationId)?.find(isStationSubject);
     if (subject === undefined) {
-      unplaced++;
+      unplaced.push(stationId);
       continue;
     }
     const dry = drySensors(values);
     for (const sample of values) {
-      const draft = readingOf(feed, fetchedAt, subject, sample, dry, out);
+      const draft = readingOf(feed, fetchedAt, subject, sample, dry);
       if (draft !== undefined) readings.push(draft);
     }
   }
@@ -430,7 +445,10 @@ function sensorsOf(
  * without details keeps the list's technical name. A station's channels are
  * the sensors its values name, or, without values, those its details list;
  * a station whose sensors are unknown has nothing to report and is counted
- * as rejected. The list's maintenance state of a station, or its collection
+ * as rejected. Values of a station the list does not name have nowhere to
+ * stand and are skipped as unplaced; those of a station the list names but
+ * that is not written (retired, without a position, or without sensors) are
+ * accounted for with that station. The list's maintenance state of a station, or its collection
  * removed for now, is the station's `device.status`, dated by the list's
  * last change of the station; the status-only parse leaves it to the next
  * list.
@@ -443,13 +461,16 @@ export function parseDigitrafficWeather(
   const out = emptyParseOutput();
   const sites = payloads["sites"] ?? [];
   if (sites.length === 0) return out;
-  const details = detailsOf(payloads["details"] ?? [], out);
-  const samples = samplesOf(payloads["status"] ?? [], out);
+  const details = detailsOf(feed, payloads["details"] ?? []);
+  const samples = samplesOf(feed, payloads["status"] ?? [], true);
   const index = new Map<string, StationSubject[]>();
-  for (const station of sites.flatMap((body) => stationsOf(body, out))) {
+  const listed = new Set<string>();
+  for (const station of sites.flatMap((body) => stationsOf(feed, body, listed))) {
     if (station.collectionStatus === RETIRED || index.has(station.id)) continue;
     const detail = details.get(station.id);
     const sensors = sensorsOf(detail, samples.get(station.id) ?? []);
+    // A well-formed, placed station that nothing says what it measures: no
+    // skip reason fits, so it stays among the parse's rejected records.
     if (sensors.length === 0) {
       out.rejected = (out.rejected ?? 0) + 1;
       continue;
@@ -504,9 +525,9 @@ export function parseDigitrafficWeather(
       );
     }
   }
-  const { readings, unplaced } = readingsOf(feed, ctx.fetchedAt, index, samples, out);
+  const { readings, unplaced } = readingsOf(feed, ctx.fetchedAt, index, samples);
   out.observations.push(...readings);
-  if (unplaced > 0) out.rejected = (out.rejected ?? 0) + unplaced;
+  recordSkipped(feed.id, "no_geometry", unplaced.filter((id) => !listed.has(id)).length);
   out.statusIndex = index;
   return out;
 }
@@ -518,13 +539,11 @@ export function parseDigitrafficWeatherStatus(
   ctx: ParseContext,
   index: StatusIndex,
 ): StatusOutput {
-  const out = { rejected: 0 };
   const { readings, unplaced } = readingsOf(
     feed,
     ctx.fetchedAt,
     index,
-    samplesOf(payloads["status"] ?? []),
-    out,
+    samplesOf(feed, payloads["status"] ?? []),
   );
-  return { observations: readings, rejected: out.rejected + unplaced, unplaced };
+  return { observations: readings, rejected: unplaced.length, unplaced: unplaced.length };
 }

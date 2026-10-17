@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { effisFeed, fixture, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -135,7 +141,9 @@ describe("the effis format over EU-style countries and missing values", () => {
 });
 
 describe("the effis format over features that do not read", () => {
-  test("a feature with no id, polygon or fire date is rejected, the rest publish", () => {
+  beforeEach(() => __resetSkips());
+
+  test("a feature with no id, geometry, polygon or fire date is skipped, the rest publish", () => {
     const c = collection("effis-el-ks-zero.geojson");
     const [a, b, d] = c.features as [Collection["features"][0], ...Collection["features"]];
     c.features = [
@@ -148,13 +156,15 @@ describe("the effis format over features that do not read", () => {
         geometry: d!.geometry,
       },
       { properties: { ...d!.properties, id: "A1" }, geometry: d!.geometry },
+      { properties: { ...d!.properties, id: "A2" }, geometry: null },
     ];
     const out = parse({ main: [buffer(c)] });
     expect(out.situations).toHaveLength(2);
-    expect(out.rejected).toBe(3);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 3, no_geometry: 1 });
     expect(out.records).toMatchObject({
-      inputCount: 6,
-      uniqueCount: 5,
+      inputCount: 7,
+      uniqueCount: 6,
       duplicates: 1,
       accepted: 2,
     });

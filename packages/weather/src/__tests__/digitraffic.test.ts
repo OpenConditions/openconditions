@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { weatherDomain } from "../domain.js";
 import { DIGITRAFFIC_SENSOR_BY_ID, DIGITRAFFIC_SENSORS } from "../formats/digitraffic-sensors.js";
 import { sealFailures, weatherRegistry } from "./helpers/seal.js";
@@ -58,6 +64,8 @@ const value = (id: number, v: number, over: Record<string, unknown> = {}) => ({
 });
 
 describe("digitraffic-weather", () => {
+  beforeEach(() => __resetSkips());
+
   test("a station is a weather station named and placed from its details", () => {
     const out = parse();
     expect(out.features.map((f) => f["id"])).toEqual(
@@ -277,10 +285,32 @@ describe("digitraffic-weather", () => {
     expect(measured(parse(payloads(), "2026-10-15T00:25:00Z").observations)).toEqual([]);
   });
 
-  test("a station the list does not name is counted as rejected", () => {
+  test("the values of a station the list does not name are skipped as unplaced", () => {
     const out = parse();
     expect(readings(out, 1002)).toEqual([]);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(feed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  test("a listed station without an id or a position is skipped, its values with it", () => {
+    const list = JSON.parse(fixture("fi-digitraffic-weather-stations.json").toString("utf8")) as {
+      features: { geometry: { coordinates: unknown[] }; properties: Record<string, unknown> }[];
+    };
+    const byId = (id: number) => list.features.find((f) => f.properties["id"] === id)!;
+    byId(1001).geometry.coordinates = [null, null, 0];
+    byId(1030).geometry.coordinates = [24.6, 160.2, 0];
+    delete byId(1174).properties["id"];
+    const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(list))] });
+    expect(out.features.map((f) => f["id"])).toEqual([1071, 7037, 8003].map(featureId));
+    // 1001's and 1030's values are theirs, not unplaced ones; 1174's lost their station's id.
+    expect(drainSkipped(feed().id)).toEqual({ no_geometry: 3, malformed: 2 });
+    expect(out.rejected ?? 0).toBe(0);
+  });
+
+  test("a details answer that cannot be read is skipped; its station keeps the list's data", () => {
+    const out = parse({ ...payloads(), details: [Buffer.from("{ not json"), Buffer.from("{}")] });
+    expect(station(out, 1001)).toBeDefined();
+    expect(drainSkipped(feed().id)).toEqual({ malformed: 2, no_geometry: 1 });
   });
 
   test("every draft seals against the weather model", () => {
@@ -303,10 +333,13 @@ describe("digitraffic-weather", () => {
     expect(status.observations).toEqual(measured(full.observations));
     expect(status.rejected).toBe(1);
     expect(status.unplaced).toBe(1);
+    // The full parse skipped 1002's values as unplaced; the status-only parse leaves them unplaced.
+    expect(drainSkipped(feed().id)).toEqual({ no_geometry: 1 });
   });
 
   test("a malformed data document fails a status-only parse but not a full one", () => {
     const index = parse().statusIndex!;
+    __resetSkips();
     const broken = { status: [Buffer.from("{ not json")] };
     expect(() => format.parseStatus!(feed(), broken, parseContext(FETCHED), index)).toThrow(
       /not JSON/,
@@ -315,11 +348,17 @@ describe("digitraffic-weather", () => {
     // 8003 has neither details nor values, so nothing says what it measures.
     expect(out.features.map((f) => f["id"])).toEqual([1001, 1030, 1071, 1174, 7037].map(featureId));
     expect(measured(out.observations)).toEqual([]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBe(1);
+    expect(drainSkipped(feed().id)).toEqual({ malformed: 1 });
   });
 
   describe("one value", () => {
-    const index = () => parse().statusIndex!;
+    // The full parse skips 1002's values; the counts here are the status-only parse's own.
+    const index = () => {
+      const statusIndex = parse().statusIndex!;
+      __resetSkips();
+      return statusIndex;
+    };
     const read = (values: Record<string, unknown>[]) =>
       format.parseStatus!(feed(), { status: [dataOf(values)] }, parseContext(FETCHED), index());
 
@@ -338,7 +377,7 @@ describe("digitraffic-weather", () => {
       expect(out.rejected).toBe(0);
     });
 
-    test("a value in another unit, under another name or with an unknown code is rejected", () => {
+    test("a value in another unit, under another name or with an unknown code is a value not read", () => {
       const out = read([
         value(1, 49.5, { unit: "°F" }),
         value(9, 8.8, { name: "KUURAPISTE" }),
@@ -346,9 +385,10 @@ describe("digitraffic-weather", () => {
         { ...value(1, 0.1), id: 2, name: "ILMA_DERIVAATTA", unit: "°C/h" },
       ]);
       expect(out.observations).toEqual([]);
-      // The derivative is a sensor not read, which is no rejection.
-      expect(out.rejected).toBe(3);
+      // The derivative is a sensor not read by design, which is no skip.
+      expect(out.rejected).toBe(0);
       expect(out.unplaced).toBe(0);
+      expect(drainSkipped(feed().id)).toEqual({ unknown_value: 3 });
     });
 
     test("a publisher's fixed window is the reading's window; a later time is held to the fetch", () => {

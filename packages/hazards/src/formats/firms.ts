@@ -4,6 +4,8 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
 import { freshness, pointLocation, provenance, utcInstant, withObservationId } from "../records.js";
@@ -83,13 +85,19 @@ function qualityOf(instrument: Instrument, raw: string): Record<string, unknown>
     : undefined;
 }
 
+/**
+ * A row's reading, or why it has none: `no_geometry` when it gives no
+ * position at all, `malformed` when its position is unreadable or out of
+ * range, or its time, radiated power or satellite is.
+ */
 function readRow(
   cells: readonly string[],
   header: Header,
   feed: HazardsCatalogFeed,
   fetchedAt: string,
-): RecordDraft | undefined {
+): RecordDraft | RecordSkipReason {
   const cell = (name: string): string => cells[header.index.get(name) ?? -1]?.trim() ?? "";
+  if (cell("latitude") === "" && cell("longitude") === "") return "no_geometry";
   const latitude = number(cell("latitude"));
   const longitude = number(cell("longitude"));
   if (
@@ -98,12 +106,12 @@ function readRow(
     Math.abs(latitude) > 90 ||
     Math.abs(longitude) > 180
   ) {
-    return undefined;
+    return "malformed";
   }
   const at = acquiredAt(cell("acq_date"), cell("acq_time"));
   const frp = number(cell("frp"));
   const satellite = cell("satellite");
-  if (at === undefined || frp === undefined || frp < 0 || satellite === "") return undefined;
+  if (at === undefined || frp === undefined || frp < 0 || satellite === "") return "malformed";
 
   const { instrument } = header;
   const brightness = number(cell(instrument === "viirs" ? "bright_ti4" : "brightness"));
@@ -151,8 +159,9 @@ function readRow(
  * The `firms` format: NASA FIRMS's keyless active-fire files, one `fire.frp`
  * reading per detected pixel, located at the pixel centre. Each file of the
  * `main` role is one satellite's last 24 hours; a pixel the next hourly file
- * restates has the same id and is written once. A row with a bad position,
- * time or radiated power is rejected and counted, never the file. A file
+ * restates has the same id and is written once. A row with no position is
+ * skipped as `no_geometry`, one with a bad position, time or radiated power
+ * as `malformed`, never the file. A file
  * with only its header holds no detection; the pipeline refuses such a poll
  * for a global feed, which keeps the last publication. A body that is no
  * active-fire file (an error page) fails the parse.
@@ -164,21 +173,19 @@ export function parseFirms(
 ): ParseOutput {
   const out = emptyParseOutput();
   const seen = new Set<string>();
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     const lines = body.toString("utf8").split(/\r?\n/);
     const header = readHeader(lines[0] ?? "");
     for (const line of lines.slice(1)) {
       if (line.trim() === "") continue;
       const draft = readRow(line.split(","), header, feed, ctx.fetchedAt);
-      if (draft === undefined) {
-        rejected++;
+      if (typeof draft === "string") {
+        recordSkipped(feed.id, draft);
       } else if (!seen.has(String(draft["id"]))) {
         seen.add(String(draft["id"]));
         out.observations.push(draft);
       }
     }
   }
-  if (rejected > 0) out.rejected = rejected;
   return out;
 }

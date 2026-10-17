@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { fixture, hmsFeed, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -102,6 +108,8 @@ describe("the hms format over the captured layer", () => {
 });
 
 describe("the hms ordinal times", () => {
+  beforeEach(() => __resetSkips());
+
   test("day 366 reads in a leap year and the polygon is rejected otherwise", () => {
     const leap = only({ FID: 7, Start: "2028366 2330", End_: "2028366 2359" });
     expect(leap.situations).toHaveLength(1);
@@ -114,7 +122,8 @@ describe("the hms ordinal times", () => {
     });
     const common = only({ FID: 7, Start: "2026366 2330", End_: "2026366 2359" });
     expect(common.situations).toEqual([]);
-    expect(common.rejected).toBe(1);
+    expect(common.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
     expect(only({ FID: 7, Start: "1900366 0000" }).situations).toEqual([]);
     expect(only({ FID: 7, Start: "2000366 0000" }).situations).toHaveLength(1);
   });
@@ -128,7 +137,8 @@ describe("the hms ordinal times", () => {
       "2026-273 1200",
       "",
     ]) {
-      expect(only({ Start }).rejected, Start).toBe(1);
+      only({ Start });
+      expect(drainSkipped(feed.id), Start).toEqual({ malformed: 1 });
     }
   });
 
@@ -144,7 +154,9 @@ describe("the hms ordinal times", () => {
 });
 
 describe("the hms format over polygons that do not read", () => {
-  test("an unknown density, a missing FID or a bad shape is rejected, the rest publish", () => {
+  beforeEach(() => __resetSkips());
+
+  test("an unknown density, a missing FID or geometry, or a bad shape is skipped, the rest publish", () => {
     const c = collection();
     const first = c.features[0]!;
     c.features.push(
@@ -158,13 +170,16 @@ describe("the hms format over polygons that do not read", () => {
         geometry: { type: "Point", coordinates: [1, 2] },
       },
       { properties: { ...first.properties, FID: 2 }, geometry: first.geometry },
+      { properties: { ...first.properties, FID: 93 }, geometry: null },
+      { properties: { ...first.properties, FID: 94, Density: null }, geometry: first.geometry },
     );
     const out = parse({ main: [buffer(c)] });
     expect(out.situations).toHaveLength(3);
-    expect(out.rejected).toBe(3);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ unknown_type: 1, malformed: 3, no_geometry: 1 });
     expect(out.records).toMatchObject({
-      inputCount: 7,
-      uniqueCount: 6,
+      inputCount: 9,
+      uniqueCount: 8,
       duplicates: 1,
       accepted: 3,
     });

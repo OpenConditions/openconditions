@@ -4,6 +4,8 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { Geometry } from "geojson";
 import { accountSituations } from "../accounting.js";
@@ -15,7 +17,7 @@ const ACRE_HA = 0.40468564224;
 const NM2_HA = 342.99;
 const DAY_MS = 86_400_000;
 
-/** EONET's categories as the hazard type they become; the rest have no place in the model. */
+/** EONET's categories as the hazard type they become. */
 const TYPES: Readonly<Record<string, string>> = {
   volcanoes: "volcano",
   floods: "flood",
@@ -27,6 +29,9 @@ const TYPES: Readonly<Record<string, string>> = {
 
 /** Categories another source reports first-hand: wildfires, earthquakes and cyclones. */
 const FIRST_HAND = new Set(["wildfires", "earthquakes", "severeStorms"]);
+
+/** Categories with no place in the model: man-made events, snow, temperature extremes and water colour. */
+const UNMODELLED = new Set(["manmade", "snow", "tempExtremes", "waterColor"]);
 
 /**
  * How long after its last dated position an event still counts as going on.
@@ -101,14 +106,21 @@ const categoriesOf = (event: Record<string, unknown>): string[] =>
     isRecord(c) && text(c["id"]) !== undefined ? [String(c["id"])] : [],
   );
 
-/** The hazard type an event is, or null when another source reports it first-hand or the model has none. */
-function typeOf(event: Record<string, unknown>): string | null {
+/**
+ * The hazard type an event is; `terminal` when another source reports it
+ * first-hand or its categories have no place in the model; or why it is
+ * skipped: `malformed` with no category, `unknown_type` with only
+ * categories this format does not know.
+ */
+function typeOf(event: Record<string, unknown>): { type: string } | "terminal" | RecordSkipReason {
   const categories = categoriesOf(event);
-  if (categories.some((c) => FIRST_HAND.has(c))) return null;
+  if (categories.some((c) => FIRST_HAND.has(c))) return "terminal";
   // GDACS events are taken from GDACS itself, which keeps them current.
-  if (sourcesOf(event).some((s) => text(s["id"])?.toUpperCase() === "GDACS")) return null;
-  const category = categories.find((c) => TYPES[c] !== undefined);
-  return category === undefined ? null : TYPES[category]!;
+  if (sourcesOf(event).some((s) => text(s["id"])?.toUpperCase() === "GDACS")) return "terminal";
+  const category = categories.find((c) => Object.hasOwn(TYPES, c));
+  if (category !== undefined) return { type: TYPES[category]! };
+  if (categories.some((c) => UNMODELLED.has(c))) return "terminal";
+  return categories.length === 0 ? "malformed" : "unknown_type";
 }
 
 function toDraft(
@@ -178,10 +190,14 @@ function toDraft(
  * left `open` needs.
  *
  * Wildfires, earthquakes and cyclones, and every event with a GDACS source,
- * are terminal: their publishers are read first-hand. The record is placed
- * at the event's latest dated geometry, a point or a polygon; an event
- * whose latest geometry is unreadable or has a position out of range is
- * rejected and counted, never the payload. EONET leaves events open for
+ * are terminal: their publishers are read first-hand; so are man-made
+ * events, snow, temperature extremes and water colour, which the model has
+ * no type for. An event of only categories this format does not know is
+ * skipped as `unknown_type`. The record is placed at the event's latest
+ * dated geometry, a point or a polygon; an event with no geometry is skipped
+ * as `no_geometry`, and one with no id or category, no dated geometry, or
+ * whose latest geometry is unreadable or out of range as `malformed`, never
+ * the payload. EONET leaves events open for
  * years, so an open event whose last geometry is older than its type's
  * window ends there (a volcano after 90 days, sea ice after 30, the rest
  * after 14). A body without an event list fails the parse.
@@ -195,14 +211,13 @@ export function parseEonet(
   const byId = new Map<string, Record<string, unknown>>();
   let inputCount = 0;
   let duplicates = 0;
-  let rejected = 0;
   for (const role of ["open", "closed"]) {
     for (const body of payloads[role] ?? []) {
       for (const event of eventsOf(body)) {
         inputCount++;
         const id = isRecord(event) ? text(event["id"]) : undefined;
         if (!isRecord(event) || id === undefined) {
-          rejected++;
+          recordSkipped(feed.id, "malformed");
           continue;
         }
         const held = byId.get(id);
@@ -221,9 +236,18 @@ export function parseEonet(
 
   let terminal = 0;
   for (const [id, event] of byId) {
-    const type = typeOf(event);
-    if (type === null) {
+    const kind = typeOf(event);
+    if (kind === "terminal") {
       terminal++;
+      continue;
+    }
+    if (typeof kind === "string") {
+      recordSkipped(feed.id, kind);
+      continue;
+    }
+    const listed = Array.isArray(event["geometry"]) ? event["geometry"] : [];
+    if (!listed.some(isRecord)) {
+      recordSkipped(feed.id, "no_geometry");
       continue;
     }
     const dated = datedGeometries(event);
@@ -233,12 +257,12 @@ export function parseEonet(
         ? null
         : (pointGeometry(last.geometry) ?? polygonalGeometry(last.geometry));
     if (last === undefined || geometry === null) {
-      rejected++;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
-    out.situations.push(toDraft(event, id, type, dated, geometry, feed, ctx.fetchedAt));
+    out.situations.push(toDraft(event, id, kind.type, dated, geometry, feed, ctx.fetchedAt));
   }
 
-  accountSituations(out, { inputCount, duplicates, rejected, terminal });
+  accountSituations(out, { inputCount, duplicates, rejected: 0, terminal });
   return out;
 }

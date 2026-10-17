@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { fixture, parseContext, wfigsFeed } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -148,6 +154,8 @@ describe("the wfigs format over the captured layers", () => {
 });
 
 describe("the wfigs format over altered features", () => {
+  beforeEach(() => __resetSkips());
+
   const perimeters = () => collection("nifc-perimeters.geojson");
   const incidents = () => collection("nifc-incidents.geojson");
 
@@ -178,7 +186,7 @@ describe("the wfigs format over altered features", () => {
     expect(location(byId(out, NEWMAN)).admin).toEqual({ country: "US" });
   });
 
-  test("an unreadable perimeter shape leaves the incident's point and is counted", () => {
+  test("an unreadable perimeter shape leaves the incident's point and is skipped", () => {
     const per = perimeters();
     per.features[0]!.geometry = { type: "Polygon", coordinates: [[[200, 40]]] };
     const out = parse({
@@ -187,12 +195,13 @@ describe("the wfigs format over altered features", () => {
     });
     expect(location(byId(out, ASPEN)).extent).toBe("point");
     expect(byId(out, ASPEN)).not.toHaveProperty("subtype");
-    expect(out.rejected).toBe(1);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
     expect(out.records).toMatchObject({ inputCount: 6, uniqueCount: 6, accepted: 4, terminal: 1 });
     expect(sealFailures(out.situations)).toEqual([]);
   });
 
-  test("features with no IRWIN id or no position are rejected, the rest publish", () => {
+  test("features with no IRWIN id, geometry or readable position are skipped, the rest publish", () => {
     const inc = incidents();
     inc.features.push(
       {
@@ -214,10 +223,19 @@ describe("the wfigs format over altered features", () => {
         },
         geometry: inc.features[0]!.geometry,
       },
+      {
+        properties: {
+          ...inc.features[0]!.properties,
+          IrwinID: "{11111111-2222-3333-4444-777777777777}",
+        },
+        geometry: null,
+      },
+      "not a feature" as never,
     );
     const out = parse({ incidents: [buffer(inc)] });
     expect(out.situations).toHaveLength(2);
-    expect(out.rejected).toBe(3);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 3, unknown_type: 1, no_geometry: 1 });
   });
 
   test("a perimeter whose own id does not read is matched by its incident copy", () => {
@@ -231,7 +249,7 @@ describe("the wfigs format over altered features", () => {
     expect(out.rejected).toBeUndefined();
   });
 
-  test("an unknown category counts every record of the fire as rejected", () => {
+  test("an unknown category skips every record of the fire as unknown_type", () => {
     const per = perimeters();
     const inc = incidents();
     const aspen = inc.features.find((f) => f.properties["IrwinID"] === `{${ASPEN}}`)!;
@@ -242,7 +260,8 @@ describe("the wfigs format over altered features", () => {
     perimeterOfAspen.properties["attr_IncidentTypeCategory"] = "OT";
     const out = parse({ perimeters: [buffer(per)], incidents: [buffer(inc)] });
     expect(byId(out, ASPEN)).toBeUndefined();
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ unknown_type: 2 });
     expect(out.records).toMatchObject({ inputCount: 6, uniqueCount: 6, accepted: 3, terminal: 1 });
   });
 

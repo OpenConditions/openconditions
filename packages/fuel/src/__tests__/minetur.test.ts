@@ -1,5 +1,6 @@
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { observationId } from "@openconditions/model";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { fuelDomain } from "../domain.js";
 import { fixture, mineturFeed, parseContext } from "./helpers/fuel-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -16,6 +17,8 @@ type Draft = Record<string, unknown>;
 
 const parse = (payload: Buffer = fixture("minetur-stations.json")) =>
   fuelDomain.formats["minetur"]!.parse(mineturFeed(), { main: [payload] }, parseContext(FETCHED));
+
+const FEED = "es-minetur-fuel";
 
 const station = (features: Draft[], id: string) =>
   features.find((f) => f["id"] === `oc:feature:es-minetur-fuel:${id}`);
@@ -40,6 +43,8 @@ function patched(id: string, fields: Record<string, string>): Buffer {
 }
 
 describe("MINETUR", () => {
+  beforeEach(() => __resetSkips());
+
   test("MINETUR prices each sold grade at the publication time in Madrid", () => {
     const { features, observations } = parse();
     const tarragona = station(features, "15083")!;
@@ -138,11 +143,25 @@ describe("MINETUR", () => {
     expect(componentKeys(station(features, "15959"))).toEqual(["e5"]);
   });
 
-  test("a station at 0,0 is skipped", () => {
+  test("a station at 0,0 is skipped as unplaced", () => {
     const out = parse();
     expect(station(out.features, "16499")).toBeUndefined();
     expect(out.features).toHaveLength(2);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1 });
+  });
+
+  test("an unreadable position or a missing id skips the station as malformed", () => {
+    expect(parse(patched("15959", { Latitud: "40,48x" })).features).toHaveLength(1);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1, no_geometry: 1 });
+    expect(parse(patched("15959", { IDEESS: "" })).features).toHaveLength(1);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1, no_geometry: 1 });
+  });
+
+  test("a priced column of a grade the parser does not know is a value not read", () => {
+    const { features } = parse(patched("15959", { "Precio Gasolina 100": "2,019" }));
+    expect(features).toHaveLength(2);
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1, no_geometry: 1 });
   });
 
   test("a station sold restricted (Tipo Venta R) is not public", () => {

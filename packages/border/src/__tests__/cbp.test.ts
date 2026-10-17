@@ -1,5 +1,5 @@
-import type { RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, it } from "vitest";
+import { __resetSkips, drainSkipped, type RecordDraft } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, it } from "vitest";
 import { cbpOpeningHours, parseCbp } from "../formats/cbp.js";
 import { cbpFeed, fixture, parseContext } from "./helpers/border-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -71,15 +71,18 @@ function port(
 }
 
 describe("parseCbp", () => {
+  beforeEach(() => __resetSkips());
+
   it("seals every port it places, and leaves out El Paso without a crossing, which states no queue", () => {
     const out = live();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
     expect(out.features).toHaveLength(10);
-    expect(out.rejected).toBe(0);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(cbpFeed().id)).toEqual({});
     expect(out.features.some((f) => (f["id"] as string).endsWith(":240221"))).toBe(false);
   });
 
-  it("rejects a port the crossing table lacks once it states a queue", () => {
+  it("skips a port the crossing table lacks as unplaced once it states a queue", () => {
     const pending = { operational_status: "Update Pending" };
     const unknownPort = (lanes: Record<string, Record<string, unknown>>) =>
       port({ port_number: "240221", port_name: "El Paso", crossing_name: "" }, lanes);
@@ -101,7 +104,8 @@ describe("parseCbp", () => {
     );
     expect(out.features).toEqual([]);
     expect(out.observations).toEqual([]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(cbpFeed().id)).toEqual({ no_geometry: 2 });
   });
 
   it("places a port at its crossing, with the port number and the crossing's Wikidata item", () => {
@@ -308,10 +312,11 @@ describe("parseCbp", () => {
       at: PAGE,
     });
     expect(waits["passenger/standard"]?.value).toEqual({ v: 1, status: "unknown" });
+    expect(drainSkipped(cbpFeed().id)).toEqual({ unknown_value: 1 });
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
   });
 
-  it("keeps a port whose every queue is N/A by the modes it has lanes for, and rejects one with none", () => {
+  it("keeps a port whose every queue is N/A by the modes it has lanes for, and skips one with none", () => {
     const out = parse(
       JSON.stringify([
         port({}),
@@ -326,7 +331,8 @@ describe("parseCbp", () => {
     expect(out.features).toHaveLength(1);
     expect(out.features[0]!["components"]).toBeUndefined();
     expect(out.features[0]!["details"]).toMatchObject({ modes: ["commercial", "passenger"] });
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(cbpFeed().id)).toEqual({ malformed: 1 });
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
   });
 

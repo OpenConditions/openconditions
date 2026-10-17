@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { type BorderCrossing, crossingOfCbpPort } from "../crossings.js";
 import {
@@ -171,9 +172,10 @@ interface Located {
  * crossing, with the U.S.-bound queues it inspects. Each port is one
  * `border_crossing`, placed at its crossing of the vendored table (neither
  * coordinates nor an id beyond the port number are published); a port the
- * table lacks is rejected rather than guessed, unless it states no queue
- * (every queue N/A or pending): then it carries nothing to place and is
- * left out. CBP's El Paso record 240221, the port as a whole with no
+ * table lacks is skipped as unplaced rather than guessed, unless it states
+ * no queue (every queue N/A or pending): then it carries nothing to place
+ * and is left out. A port without a number, or one with no queue and no
+ * lanes of any mode, is skipped as malformed. CBP's El Paso record 240221, the port as a whole with no
  * crossing named, has been all pending since it appeared in 2026; it
  * stands for none of El Paso's four bridges, which report on their own.
  *
@@ -182,8 +184,10 @@ interface Located {
  * CBP marks N/A does not exist at the port and gets no lane group. "no delay"
  * and "delay" keep the minutes and open lanes CBP states ("no delay" carries
  * up to a few minutes); "Lanes Closed" is a closed queue and "Update Pending"
- * one whose state is unknown, neither with minutes. The port's `port_status`
- * is the crossing's `facility.open_status`.
+ * one whose state is unknown, neither with minutes; a state CBP did not
+ * write before is unknown too, and counted as a value not read. The port's
+ * `port_status` is the crossing's `facility.open_status`, unknown and
+ * counted alike when it is another word.
  *
  * Times are wall-clock times without a date, and their zone labels are
  * wrong at some ports (EST in summer, PST in Arizona), so the vendored zone
@@ -198,7 +202,6 @@ interface Located {
 export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseContext): ParseOutput {
   const out = emptyParseOutput();
   const fetched = Date.parse(ctx.fetchedAt);
-  let rejected = 0;
   const located: Located[] = [];
   for (const payload of payloads["main"] ?? []) {
     const answer = JSON.parse(payload.toString("utf8").replace(/^﻿/, "")) as unknown;
@@ -206,9 +209,13 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
     for (const port of answer as CbpPort[]) {
       const portNumber = text(port.port_number);
       const crossing = portNumber === undefined ? undefined : crossingOfCbpPort(portNumber);
-      if (portNumber === undefined || crossing === undefined) {
+      if (portNumber === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (crossing === undefined) {
         // A port the table lacks that states no queue has nothing to place.
-        if (portNumber === undefined || !statesNoQueue(port)) rejected++;
+        if (!statesNoQueue(port)) recordSkipped(feed.id, "no_geometry");
         continue;
       }
       const page = pageClock(port);
@@ -247,6 +254,7 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
     const lanes: LaneGroupInput[] = [];
     const waits: { key: string; value: WaitValue; at: string }[] = [];
     const reported = new Set<BorderMode>();
+    let unread = 0;
     for (const [field, mode] of MODES) {
       const group = port[field];
       if (typeof group !== "object" || group === null) continue;
@@ -256,9 +264,10 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
         const lane = groupFields[name] as CbpLane | undefined;
         if (typeof lane !== "object" || lane === null) continue;
         const said = text(lane.operational_status)?.toLowerCase();
-        const status =
-          said !== undefined && Object.hasOwn(STATES, said) ? (STATES[said] ?? null) : "unknown";
+        const known = said !== undefined && Object.hasOwn(STATES, said);
+        const status = known ? (STATES[said] ?? null) : "unknown";
         if (status === null) continue;
+        if (!known && said !== undefined) unread++;
         const key = `${mode}/${program}`;
         lanes.push({ key, mode, program, direction: { from: other, to: "US" } });
         const minutes = count(lane.delay_minutes);
@@ -278,7 +287,7 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
     const modes = [...new Set(lanes.map((l) => l.mode))];
     if (modes.length === 0) modes.push(...MODES.map(([, m]) => m).filter((m) => reported.has(m)));
     if (modes.length === 0) {
-      rejected++;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
 
@@ -304,10 +313,11 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
     const stated = text(port.port_status)?.toLowerCase();
     const portState =
       stated !== undefined && Object.hasOwn(PORT_STATES, stated) ? PORT_STATES[stated]! : "unknown";
+    if (stated !== undefined && portState === "unknown") unread++;
+    recordSkipped(feed.id, "unknown_value", unread);
     out.observations.push(openStatusDraft(feature, portState, undated));
     for (const { key, value, at } of waits)
       out.observations.push(waitDraft(feature, key, value, at));
   }
-  out.rejected = rejected;
   return out;
 }

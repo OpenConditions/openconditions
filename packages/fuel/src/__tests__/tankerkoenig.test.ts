@@ -1,5 +1,6 @@
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { observationId } from "@openconditions/model";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { fuelDomain } from "../domain.js";
 import { fixture, parseContext, tankerkoenigFeed } from "./helpers/fuel-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -24,6 +25,8 @@ const parse = (payload: Buffer = fixture("tankerkoenig-list.json")) =>
     parseContext(FETCHED),
   );
 
+const FEED = "de-tankerkoenig-fuel";
+
 const featureId = (id: string) => `oc:feature:de-tankerkoenig-fuel:${id}`;
 const TOTAL = "474e5046-deaf-4f9b-9a32-9797b778f047";
 const DIESEL_ONLY = "60c0eefa-d2a8-4f5c-82cc-b5244ecae955";
@@ -43,6 +46,8 @@ const keys = (feature: Draft | undefined) =>
   (feature?.["components"] as { key: string }[] | undefined)?.map((c) => c.key);
 
 describe("tankerkoenig", () => {
+  beforeEach(() => __resetSkips());
+
   test("a Tankerkönig price of false is a grade the station does not sell; null is unknown", () => {
     const { features, observations } = parse();
     const station = features.find((f) => f["id"] === featureId(DIESEL_ONLY));
@@ -128,6 +133,20 @@ describe("tankerkoenig", () => {
   test("an answer that is not ok throws with the API's message", () => {
     const refused = Buffer.from(JSON.stringify({ ok: false, message: "apikey nicht angegeben" }));
     expect(() => parse(refused)).toThrow(/tankerkoenig: apikey nicht angegeben/);
+  });
+
+  test("a station without an id or a position is skipped", () => {
+    const answer = JSON.parse(fixture("tankerkoenig-list.json").toString("utf8"));
+    const [first] = answer.stations as Draft[];
+    answer.stations.push(
+      { ...first, id: "no-position", lat: null, lng: null },
+      { ...first, id: "off-globe", lat: 952.5, lng: 13.4 },
+      { ...first, id: null },
+    );
+    const out = parse(Buffer.from(JSON.stringify(answer)));
+    expect(out.features).toHaveLength(3);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1, malformed: 2 });
   });
 
   test("every drafted record seals", () => {

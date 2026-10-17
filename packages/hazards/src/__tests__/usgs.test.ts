@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { fixture, parseContext, usgsFeed } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -127,6 +133,8 @@ describe("the usgs format over the live captures", () => {
 });
 
 describe("the usgs format over merged and altered features", () => {
+  beforeEach(() => __resetSkips());
+
   test("the recent copy with the later updated wins over the window", () => {
     const month = collection("usgs-all-month.geojson");
     const stale = feature(month, "us6000u0xi");
@@ -227,7 +235,7 @@ describe("the usgs format over merged and altered features", () => {
     ]);
   });
 
-  test("features without an id, a position or an origin time are rejected and counted", () => {
+  test("features without an id, a geometry, a position or an origin time are skipped", () => {
     const day = collection("usgs-all-day.geojson");
     const base = feature(day, "us6000u0xi");
     const out = parse({
@@ -237,6 +245,7 @@ describe("the usgs format over merged and altered features", () => {
             { ...base, id: undefined },
             { ...base, id: "badpoint", geometry: { type: "Point", coordinates: [200, 10, 5] } },
             { ...base, id: "notime", properties: { ...base.properties, time: null } },
+            { ...base, id: "nowhere", geometry: null },
             base,
           ],
         }),
@@ -244,8 +253,22 @@ describe("the usgs format over merged and altered features", () => {
       window: [],
     });
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(3);
-    expect(out.records).toMatchObject({ inputCount: 4, uniqueCount: 4, accepted: 1 });
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 3, no_geometry: 1 });
+    expect(out.records).toMatchObject({ inputCount: 5, uniqueCount: 5, accepted: 1 });
+  });
+
+  test("a PAGER level it does not know leaves the severity unknown and is counted", () => {
+    const day = collection("usgs-all-day.geojson");
+    const base = feature(day, "us6000u0xi");
+    const out = parse({
+      recent: [
+        buffer({ features: [{ ...base, properties: { ...base.properties, alert: "purple" } }] }),
+      ],
+      window: [],
+    });
+    expect(byId(out, "us6000u0xi")["severity"]).toEqual({ label: "unknown" });
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
   });
 
   test("a quiet poll is an accounted zero", () => {

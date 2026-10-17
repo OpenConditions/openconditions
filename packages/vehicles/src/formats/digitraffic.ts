@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { VEHICLE_ACTIVITIES } from "@openconditions/model-vehicles";
 import type { VehiclesCatalogFeed } from "../feed-schema.js";
@@ -89,20 +90,33 @@ function bearingOf(value: unknown): number | undefined {
 /**
  * The tracking's latest position: a point, or the last position of a line or
  * of points (the endpoint answers points; its schema allows the others). The
- * height Digitraffic appends, always 0, is dropped.
+ * height Digitraffic appends, always 0, is dropped. Without one, why as a
+ * skip reason: `no_geometry` for no position, another geometry type or null
+ * island, `malformed` for a position that is not one on the globe.
  */
-function positionOf(geometry: unknown): [number, number] | undefined {
-  if (!isRecord(geometry) || !Array.isArray(geometry["coordinates"])) return undefined;
+function positionOf(
+  geometry: unknown,
+): { point: [number, number] } | { skip: "no_geometry" | "malformed" } {
+  if (!isRecord(geometry) || !Array.isArray(geometry["coordinates"])) {
+    return { skip: "no_geometry" };
+  }
   const coordinates = geometry["coordinates"] as unknown[];
+  let position: unknown;
   switch (geometry["type"]) {
     case "Point":
-      return lonLat(coordinates);
+      position = coordinates;
+      break;
     case "LineString":
     case "MultiPoint":
-      return lonLat(coordinates.at(-1));
+      position = coordinates.at(-1);
+      break;
     default:
-      return undefined;
+      return { skip: "no_geometry" };
   }
+  const point = lonLat(position);
+  if (point !== undefined) return { point };
+  const [x, y] = Array.isArray(position) ? (position as unknown[]) : [];
+  return { skip: x === undefined || (x === 0 && y === 0) ? "no_geometry" : "malformed" };
 }
 
 /** How far back a trail reaches: the trackings that ended within this of the vehicle's latest position. */
@@ -145,30 +159,38 @@ const idOf = (value: unknown): string | undefined =>
 
 /**
  * The trackings of the `routes` documents by id. Trails are the reading's
- * extra: a body that cannot be read gives none and is counted as rejected,
- * and the positions stand without trails.
+ * extra: a body that cannot be read gives none and is skipped as malformed,
+ * and the positions stand without trails. A tracking without an id or an end
+ * time is skipped as malformed, one without a usable position as unplaced.
  */
-function routesOf(bodies: readonly Buffer[], out: Pick<ParseOutput, "rejected">) {
+function routesOf(feed: VehiclesCatalogFeed, bodies: readonly Buffer[]) {
   const routes = new Map<string, Route>();
   for (const body of bodies) {
     let doc: unknown;
     try {
       doc = jsonOf(body, "the maintenance routes document");
     } catch {
-      out.rejected = (out.rejected ?? 0) + 1;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     if (!isRecord(doc) || !Array.isArray(doc["features"])) {
-      out.rejected = (out.rejected ?? 0) + 1;
+      recordSkipped(feed.id, "malformed");
       continue;
     }
     for (const feature of doc["features"]) {
       const props = isRecord(feature) ? feature["properties"] : undefined;
-      if (!isRecord(props) || !isRecord(feature)) continue;
-      const id = idOf(props["id"]);
-      const endAt = Date.parse(typeof props["endTime"] === "string" ? props["endTime"] : "");
+      const id = isRecord(props) ? idOf(props["id"]) : undefined;
+      const endTime = isRecord(props) ? props["endTime"] : undefined;
+      const endAt = Date.parse(typeof endTime === "string" ? endTime : "");
+      if (!isRecord(feature) || !isRecord(props) || id === undefined || !Number.isFinite(endAt)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       const positions = positionsOf(feature["geometry"]);
-      if (id === undefined || !Number.isFinite(endAt) || positions.length === 0) continue;
+      if (positions.length === 0) {
+        recordSkipped(feed.id, "no_geometry");
+        continue;
+      }
       const previousId = idOf(props["previousId"]);
       routes.set(id, { endAt, positions, ...(previousId === undefined ? {} : { previousId }) });
     }
@@ -269,8 +291,9 @@ function positionReading(
  * until a poll no longer restates it because the vehicle has moved on (the
  * format `restatesTransient`). A point already older than that at the fetch
  * is a vehicle that stopped reporting and is left out. A point without an
- * id, a time or a usable position is rejected and counted; a body that is no
- * feature collection fails the parse.
+ * id or a time is skipped as malformed, one without a usable position as
+ * unplaced (`positionOf`); a body that is no feature collection fails the
+ * parse.
  *
  * The optional `routes` role (`/api/maintenance/v1/tracking/routes` over the
  * last ten minutes) gives each position its trail: where the vehicle has
@@ -283,7 +306,7 @@ export function parseDigitrafficMaintenance(
 ): ParseOutput {
   const out = emptyParseOutput();
   const fetched = Date.parse(ctx.fetchedAt);
-  const routes = routesOf(payloads["routes"] ?? [], out);
+  const routes = routesOf(feed, payloads["routes"] ?? []);
   for (const body of payloads["main"] ?? []) {
     const doc = jsonOf(body, "the maintenance tracking document");
     if (!isRecord(doc) || !Array.isArray(doc["features"])) {
@@ -293,18 +316,23 @@ export function parseDigitrafficMaintenance(
       const props = isRecord(feature) ? feature["properties"] : undefined;
       const id = isRecord(props) ? props["id"] : undefined;
       const stated = isRecord(props) && typeof props["time"] === "string" ? props["time"] : "";
-      const point = isRecord(feature) ? positionOf(feature["geometry"]) : undefined;
       const time = Date.parse(stated);
       if (
+        !isRecord(feature) ||
         !isRecord(props) ||
         (typeof id !== "number" && typeof id !== "string") ||
         String(id).trim() === "" ||
-        !Number.isFinite(time) ||
-        point === undefined
+        !Number.isFinite(time)
       ) {
-        out.rejected = (out.rejected ?? 0) + 1;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      const position = positionOf(feature["geometry"]);
+      if ("skip" in position) {
+        recordSkipped(feed.id, position.skip);
+        continue;
+      }
+      const { point } = position;
       // A position cannot be newer than the fetch that read it: a later time is the fetch's.
       const at = Math.min(time, fetched);
       if (fetched - at > MAX_POSITION_AGE_SEC * 1000) continue;

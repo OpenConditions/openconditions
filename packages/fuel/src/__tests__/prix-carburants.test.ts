@@ -1,5 +1,6 @@
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { observationId } from "@openconditions/model";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { fuelDomain } from "../domain.js";
 import { fixture, parseContext, prixCarburantsFeed } from "./helpers/fuel-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -23,6 +24,8 @@ const parse = (payload: Buffer = fixture("prix-carburants.json")) =>
     parseContext(FETCHED),
   );
 
+const FEED = "fr-prixcarburants-fuel";
+
 const featureId = (id: number) => `oc:feature:fr-prixcarburants-fuel:${id}`;
 
 const readings = (observations: Draft[], id: number, property: string) =>
@@ -44,6 +47,8 @@ function patched(id: number, fields: Record<string, unknown>): Buffer {
 }
 
 describe("prix-carburants", () => {
+  beforeEach(() => __resetSkips());
+
   test("prix-carburants keeps each grade's own update time", () => {
     const { observations } = parse();
     const prices = readings(observations, 89100001, "fuel.price");
@@ -136,13 +141,28 @@ describe("prix-carburants", () => {
     expect(prices.get("e5")!["phenomenonTime"]).toEqual({ instant: "2026-10-03T08:29:00Z" });
   });
 
-  test("a station at 0,0 is skipped", () => {
+  test("a station at 0,0 is skipped as unplaced; one off the globe as malformed", () => {
     const out = parse(patched(38230003, { geom: { lon: 0, lat: 0 } }));
     expect(out.features.map((f) => f["id"])).not.toContain(featureId(38230003));
-    expect(out.rejected).toBe(1);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1 });
     const outside = parse(patched(38230003, { geom: { lon: 5.183, lat: 145.745 } }));
     expect(outside.features).toHaveLength(2);
-    expect(outside.rejected).toBe(1);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1 });
+    parse(patched(38230003, { geom: null }));
+    expect(drainSkipped(FEED)).toEqual({ no_geometry: 1 });
+  });
+
+  test("a station without an id is skipped as malformed", () => {
+    const out = parse(patched(38230003, { id: null }));
+    expect(out.features).toHaveLength(2);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1 });
+  });
+
+  test("a grade the availability lists name but the parser does not know is a value not read", () => {
+    const out = parse(patched(38230003, { carburants_disponibles: ["Gazole", "SP95", "B100"] }));
+    expect(out.features).toHaveLength(3);
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1 });
   });
 
   test("every drafted record seals", () => {

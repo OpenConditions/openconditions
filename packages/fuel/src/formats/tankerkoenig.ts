@@ -3,20 +3,25 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { FuelGrade } from "../grades.js";
 import {
   availabilityDraft,
   type FuelFeed,
-  placeable,
   priceDraft,
   stationDraft,
+  stationPosition,
 } from "../station.js";
 
 /** The three grades the MTS-K reports, by their field in the answer. */
 const GRADES: readonly FuelGrade[] = ["e5", "e10", "diesel"];
 
 type Station = Record<string, unknown>;
+
+/** A coordinate: undefined when absent, NaN when present but not a number. */
+const coordinate = (value: unknown): number | undefined =>
+  value === undefined || value === null ? undefined : typeof value === "number" ? value : NaN;
 
 const text = (value: unknown): string | undefined => {
   if (typeof value === "number" && Number.isFinite(value)) return String(value);
@@ -46,7 +51,6 @@ export function parseTankerkoenig(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   for (const payload of payloads["main"] ?? []) {
     const answer = JSON.parse(payload.toString("utf8").replace(/^﻿/, "")) as {
       ok?: unknown;
@@ -61,10 +65,13 @@ export function parseTankerkoenig(
     }
     for (const station of answer.stations as Station[]) {
       const stationId = text(station["id"]);
-      const lon = typeof station["lng"] === "number" ? station["lng"] : Number.NaN;
-      const lat = typeof station["lat"] === "number" ? station["lat"] : Number.NaN;
-      if (stationId === undefined || !placeable(lon, lat)) {
-        rejected++;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const position = stationPosition(coordinate(station["lng"]), coordinate(station["lat"]));
+      if ("skip" in position) {
+        recordSkipped(feed.id, position.skip);
         continue;
       }
       // A grade with `price` undefined is one the station does not sell.
@@ -79,8 +86,7 @@ export function parseTankerkoenig(
       const postalCode = postalCodeOf(station["postCode"]);
       const feature = stationDraft(feed, {
         stationId,
-        lon,
-        lat,
+        ...position,
         fetchedAt: ctx.fetchedAt,
         ...(name ? { name: { lang: "de", text: name } } : {}),
         ...(brand ? { brand } : {}),
@@ -114,6 +120,5 @@ export function parseTankerkoenig(
       }
     }
   }
-  out.rejected = rejected;
   return out;
 }

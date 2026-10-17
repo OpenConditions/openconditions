@@ -3,15 +3,16 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { zonedWallClockToInstant } from "@openconditions/model";
 import type { FuelGrade } from "../grades.js";
 import {
   type FuelFeed,
   type ProductInput,
-  placeable,
   priceDraft,
   stationDraft,
+  stationPosition,
   utcInstant,
 } from "../station.js";
 
@@ -46,6 +47,8 @@ const GRADE_COLUMNS: readonly (readonly [string, FuelGrade])[] = [
   ["Precio Biogas Natural Licuado", "lng_bio"],
   ["Precio Gasolina 95 E5 Premium", "e5_premium"],
 ];
+
+const PRICE_COLUMNS: ReadonlySet<string> = new Set(GRADE_COLUMNS.map(([column]) => column));
 
 /** INE province code (`IDProvincia`) → ISO 3166-2:ES province code. */
 const PROVINCES: Readonly<Record<string, string>> = {
@@ -112,8 +115,11 @@ function decimalText(value: unknown): string | undefined {
   return /^-?\d+(\.\d+)?$/.test(text) ? text : undefined;
 }
 
-/** A decimal-comma number; NaN when empty, unreadable or not a string. */
-function decimal(value: unknown): number {
+/** A decimal-comma coordinate: undefined when empty or absent, NaN when unreadable. */
+function coordinate(value: unknown): number | undefined {
+  if (value === undefined || value === null || (typeof value === "string" && value.trim() === "")) {
+    return undefined;
+  }
   const text = decimalText(value);
   return text === undefined ? Number.NaN : Number(text);
 }
@@ -151,6 +157,18 @@ function pricedGrades(station: Station): { grade: FuelGrade; amount: string }[] 
 }
 
 /**
+ * The price columns of grades the ministry added after the ones mapped here
+ * that hold a price for the station: prices the station is published without.
+ */
+function unknownPricedColumns(station: Station): number {
+  return Object.keys(station).filter((column) => {
+    if (!column.startsWith("Precio ") || PRICE_COLUMNS.has(column)) return false;
+    const amount = decimalText(station[column]);
+    return amount !== undefined && Number(amount) > 0;
+  }).length;
+}
+
+/**
  * The Spanish ministry's file of every station and every grade's price
  * (`EstacionesTerrestres`): decimal commas, an empty string for a grade the
  * station does not sell, and one publication time for the whole file. The
@@ -162,7 +180,6 @@ export function parseMinetur(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   for (const payload of payloads["main"] ?? []) {
     const file = JSON.parse(payload.toString("utf8").replace(/^﻿/, "")) as {
       Fecha?: unknown;
@@ -177,20 +194,26 @@ export function parseMinetur(
     const at = publicationTime(file.Fecha);
     for (const station of file.ListaEESSPrecio as Station[]) {
       const stationId = text(station["IDEESS"]);
-      const lon = decimal(station["Longitud (WGS84)"]);
-      const lat = decimal(station["Latitud"]);
-      if (stationId === undefined || !placeable(lon, lat)) {
-        rejected++;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      const position = stationPosition(
+        coordinate(station["Longitud (WGS84)"]),
+        coordinate(station["Latitud"]),
+      );
+      if ("skip" in position) {
+        recordSkipped(feed.id, position.skip);
+        continue;
+      }
+      recordSkipped(feed.id, "unknown_value", unknownPricedColumns(station));
       const priced = pricedGrades(station);
       const sign = text(station["Rótulo"]);
       const province = PROVINCES[text(station["IDProvincia"]) ?? ""];
       const products: ProductInput[] = priced.map(({ grade }) => ({ key: grade, grade }));
       const feature = stationDraft(feed, {
         stationId,
-        lon,
-        lat,
+        ...position,
         fetchedAt: ctx.fetchedAt,
         ...(sign ? { name: { lang: "es", text: sign }, brand: sign } : {}),
         address: {
@@ -216,6 +239,5 @@ export function parseMinetur(
       }
     }
   }
-  out.rejected = rejected;
   return out;
 }

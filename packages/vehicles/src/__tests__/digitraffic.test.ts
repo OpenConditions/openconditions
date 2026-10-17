@@ -1,4 +1,10 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { vehiclesDomain } from "../domain.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -143,7 +149,7 @@ describe("the digitraffic format over the live capture", () => {
 describe("the digitraffic format over edited trackings", () => {
   const out = parse([fixture("fi-digitraffic-maintenance-edges.json")]);
 
-  test("a tracking at null island or without a time is rejected; the rest are read", () => {
+  test("a tracking at null island is unplaced, one without a time malformed; the rest are read", () => {
     expect(recordIds(out)).toEqual([
       "900000001",
       "900000002",
@@ -152,7 +158,10 @@ describe("the digitraffic format over edited trackings", () => {
       "900000005",
       "900000006",
     ]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected).toBeUndefined();
+    __resetSkips();
+    parse([fixture("fi-digitraffic-maintenance-edges.json")]);
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1, malformed: 1 });
     expect(sealFailures(out.observations)).toEqual([]);
   });
 
@@ -287,9 +296,22 @@ describe("the digitraffic format's trails over a paired capture", () => {
     const bare = parsePaired([]);
     expect(recordIds(bare)).toHaveLength(5);
     expect(bare.observations.every((o) => !("trail" in value(o)))).toBe(true);
+    __resetSkips();
     const broken = parsePaired(["<html>busy</html>", JSON.stringify({ status: 500 })]);
     expect(broken.observations.map((o) => o["id"])).toEqual(bare.observations.map((o) => o["id"]));
-    expect(broken.rejected).toBe(2);
+    expect(broken.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 2 });
+  });
+
+  test("a route tracking without an id or a position gives no trail and is skipped", () => {
+    const doc = routesDoc() as { features: Record<string, unknown>[] };
+    doc.features.push(
+      { type: "Feature", properties: { endTime: "2026-10-15T07:00:00Z" }, geometry: null },
+      { type: "Feature", properties: { id: 1, endTime: "2026-10-15T07:00:00Z" }, geometry: null },
+    );
+    __resetSkips();
+    expect(trail(parsePaired([JSON.stringify(doc)]), "202663819")).toHaveLength(5);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1, no_geometry: 1 });
   });
 });
 
@@ -305,6 +327,27 @@ describe("the digitraffic format's edges", () => {
     expect(() => parse([JSON.stringify({ status: 400, error: "Bad Request" })])).toThrow(
       /carries no features/,
     );
+  });
+
+  test("a tracking without a position is unplaced; one off the globe is malformed", () => {
+    const at = (geometry: unknown) => ({
+      type: "Feature",
+      properties: { id: 1, time: "2026-10-14T23:20:00Z" },
+      geometry,
+    });
+    __resetSkips();
+    const out = parse([
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          at(null),
+          at({ type: "Polygon", coordinates: [] }),
+          at({ type: "Point", coordinates: [24.94, 160.17] }),
+        ],
+      }),
+    ]);
+    expect(out.observations).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 2, malformed: 1 });
   });
 
   test("a time after the fetch is the fetch's", () => {

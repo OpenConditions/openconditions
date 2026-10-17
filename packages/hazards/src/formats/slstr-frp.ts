@@ -4,6 +4,8 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
 import { freshness, pointLocation, provenance, utcInstant, withObservationId } from "../records.js";
@@ -69,13 +71,19 @@ function qualityOf(classCell: string, percentCell: string): Record<string, unkno
   };
 }
 
+/**
+ * A row's reading, or why it has none: `no_geometry` when it gives no
+ * position at all, `malformed` when its position is unreadable or out of
+ * range, or its time, radiated power or satellite is.
+ */
 function readRow(
   cells: readonly string[],
   index: ReadonlyMap<string, number>,
   feed: HazardsCatalogFeed,
   fetchedAt: string,
-): RecordDraft | undefined {
+): RecordDraft | RecordSkipReason {
   const cell = (name: string): string => cells[index.get(name) ?? -1]?.trim() ?? "";
+  if (cell("lat") === "" && cell("lon") === "") return "no_geometry";
   const latitude = number(cell("lat"));
   const longitude = number(cell("lon"));
   if (
@@ -84,12 +92,12 @@ function readRow(
     Math.abs(latitude) > 90 ||
     Math.abs(longitude) > 180
   ) {
-    return undefined;
+    return "malformed";
   }
   const at = acquiredAt(cell("day"), cell("time"));
   const frp = number(cell("FRP"));
   const satellite = cell("satellite");
-  if (at === undefined || frp === undefined || frp < 0 || satellite === "") return undefined;
+  if (at === undefined || frp === undefined || frp < 0 || satellite === "") return "malformed";
 
   const brightness = number(cell("MWIR_BT"));
   const uncertainty = number(cell("FRPerr"));
@@ -139,9 +147,10 @@ function readRow(
  * nominal, high, as FIRMS writes VIIRS's), its percentage the `confidence`;
  * the class decides, and a percentage may be high in the lowest class (a
  * gas flare). A pixel two polls restate has the same id and is written once.
- * A row with a bad position, time or radiated power is rejected and counted,
- * and so is a granule that holds no FRP file, never the poll, unless no
- * granule does.
+ * A row with no position is skipped as `no_geometry`, one with a bad
+ * position, time or radiated power as `malformed`, and so is a granule that
+ * holds no FRP file (its fires cannot be told apart, so it counts once),
+ * never the poll, unless no granule does.
  */
 export function parseSlstrFrp(
   feed: HazardsCatalogFeed,
@@ -151,7 +160,6 @@ export function parseSlstrFrp(
   const out = emptyParseOutput();
   const seen = new Set<string>();
   const bodies = payloads["fires"] ?? [];
-  let rejected = 0;
   let unreadable = 0;
   for (const body of bodies) {
     const lines = body.toString("utf8").split(/\r?\n/);
@@ -163,8 +171,8 @@ export function parseSlstrFrp(
     for (const line of lines.slice(header.at + 1)) {
       if (line.trim() === "" || line.startsWith("#")) continue;
       const draft = readRow(line.split(","), header.index, feed, ctx.fetchedAt);
-      if (draft === undefined) {
-        rejected++;
+      if (typeof draft === "string") {
+        recordSkipped(feed.id, draft);
       } else if (!seen.has(String(draft["id"]))) {
         seen.add(String(draft["id"]));
         out.observations.push(draft);
@@ -174,6 +182,6 @@ export function parseSlstrFrp(
   if (bodies.length > 0 && unreadable === bodies.length) {
     throw new Error(`none of the ${bodies.length} granules is an SLSTR FRP file`);
   }
-  if (rejected + unreadable > 0) out.rejected = rejected + unreadable;
+  recordSkipped(feed.id, "malformed", unreadable);
   return out;
 }

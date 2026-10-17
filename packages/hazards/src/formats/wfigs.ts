@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { Geometry } from "geojson";
 import { accountSituations } from "../accounting.js";
@@ -168,10 +169,12 @@ function toDraft(
  *
  * Wildfires with a perimeter are `wildfire_perimeter`, those with a point
  * only carry no subtype, prescribed burns are `prescribed_burn` and planned.
- * Complexes are skipped: their member fires are records of their own. A
- * feature with no IRWIN id, an unreadable shape or an unknown category is
- * rejected and counted, never the payload; a publisher `{error}` document
- * fails the parse. A snapshot with no incident is an accounted zero.
+ * Complexes are terminal: their member fires are records of their own. A
+ * feature with no geometry is skipped as `no_geometry`; one with no
+ * properties, no IRWIN id or an unreadable shape as `malformed`. An
+ * incident of a category this format does not know has every usable record
+ * skipped as `unknown_type`, as `malformed` when it names none. Neither
+ * fails the payload; a publisher `{error}` document fails the parse. A snapshot with no incident is an accounted zero.
  */
 export function parseWfigs(
   feed: HazardsCatalogFeed,
@@ -182,7 +185,14 @@ export function parseWfigs(
   const entries = new Map<string, Incident>();
   let inputCount = 0;
   let duplicates = 0;
-  let rejected = 0;
+
+  /** A feature's position, or the reason none was taken from it. */
+  const placed = <T>(geometry: unknown, read: (value: unknown) => T | null): T | undefined => {
+    const value = read(geometry);
+    if (value !== null) return value;
+    recordSkipped(feed.id, geometry == null ? "no_geometry" : "malformed");
+    return undefined;
+  };
 
   const note = (role: "perimeters" | "incidents", features: Feature[]) => {
     for (const { properties, geometry } of features) {
@@ -192,7 +202,7 @@ export function parseWfigs(
           ? (irwinOf(properties["poly_IRWINID"]) ?? irwinOf(properties["attr_IrwinID"]))
           : irwinOf(properties["IrwinID"]);
       if (irwin === undefined) {
-        rejected++;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
       const entry = entries.get(irwin) ?? { irwin };
@@ -203,18 +213,16 @@ export function parseWfigs(
           continue;
         }
         entry.perimeter = properties;
-        const shape = polygonalGeometry(geometry);
-        if (shape === null) rejected++;
-        else entry.shape = shape;
+        const shape = placed(geometry, polygonalGeometry);
+        if (shape !== undefined) entry.shape = shape;
       } else {
         if (entry.incident !== undefined) {
           duplicates++;
           continue;
         }
         entry.incident = properties;
-        const point = pointGeometry(geometry);
-        if (point === null) rejected++;
-        else entry.point = point;
+        const point = placed(geometry, pointGeometry);
+        if (point !== undefined) entry.point = point;
       }
     }
   };
@@ -223,7 +231,7 @@ export function parseWfigs(
     for (const body of payloads[role] ?? []) {
       const decoded = featuresOf(body);
       inputCount += decoded.unreadable;
-      rejected += decoded.unreadable;
+      recordSkipped(feed.id, "malformed", decoded.unreadable);
       note(role, decoded.features);
     }
   }
@@ -231,7 +239,7 @@ export function parseWfigs(
   let terminal = 0;
   const folded: Record<string, number> = {};
   for (const entry of entries.values()) {
-    // A record whose shape was rejected is already counted in `rejected`.
+    // A record whose shape could not be read is already counted as skipped.
     const usable = (entry.shape === undefined ? 0 : 1) + (entry.point === undefined ? 0 : 1);
     const category = categoryOf(entry);
     if (category === "CX") {
@@ -241,7 +249,7 @@ export function parseWfigs(
     const place = entry.shape ?? entry.point;
     if (place === undefined) continue;
     if (category !== "WF" && category !== "RX") {
-      rejected += usable;
+      recordSkipped(feed.id, category === undefined ? "malformed" : "unknown_type", usable);
       continue;
     }
     const draft = toDraft(entry, place, category, feed, ctx.fetchedAt);
@@ -249,6 +257,6 @@ export function parseWfigs(
     folded[String(draft["id"])] = usable;
   }
 
-  accountSituations(out, { inputCount, duplicates, rejected, terminal, folded });
+  accountSituations(out, { inputCount, duplicates, rejected: 0, terminal, folded });
   return out;
 }

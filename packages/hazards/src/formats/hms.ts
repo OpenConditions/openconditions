@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { accountSituations } from "../accounting.js";
 import { arcgisFeatures } from "../arcgis.js";
@@ -42,9 +43,10 @@ function ordinalTime(value: unknown): { at: string; day: string } | undefined {
  * The image sequence a polygon was drawn from ends hours before the plume
  * does, so `Start`..`End_` is the detection window in `details.detection`,
  * and the situation stays active while the layer lists it, expiring a day
- * after `Start` should no later poll hold it. A polygon with no
- * `FID`, an unknown density, an unreadable time or shape is rejected and
- * counted. The layer is empty from early morning until the first analysis;
+ * after `Start` should no later poll hold it. A feature with no geometry is
+ * skipped as `no_geometry`, one with an unknown density as `unknown_type`,
+ * and one with no `FID`, density, readable time or shape as `malformed`.
+ * The layer is empty from early morning until the first analysis;
  * that is an accounted zero and ends yesterday's polygons. An `{error}`
  * document fails the parse.
  */
@@ -57,7 +59,6 @@ export function parseHms(
   const seen = new Set<string>();
   let inputCount = 0;
   let duplicates = 0;
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     for (const feature of arcgisFeatures(body, "HMS")) {
       inputCount++;
@@ -67,14 +68,16 @@ export function parseHms(
       const fid = isRecord(p) && Number.isInteger(p["FID"]) ? Number(p["FID"]) : undefined;
       const density =
         isRecord(p) && typeof p["Density"] === "string" ? p["Density"].trim().toLowerCase() : "";
-      if (
-        !isRecord(p) ||
-        geometry === null ||
-        start === undefined ||
-        fid === undefined ||
-        !DENSITIES.has(density)
-      ) {
-        rejected++;
+      if (isRecord(feature) && feature["geometry"] == null) {
+        recordSkipped(feed.id, "no_geometry");
+        continue;
+      }
+      if (!isRecord(p) || geometry === null || start === undefined || fid === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (!DENSITIES.has(density)) {
+        recordSkipped(feed.id, density === "" ? "malformed" : "unknown_type");
         continue;
       }
       const localId = `${start.day}-${fid}`;
@@ -119,6 +122,6 @@ export function parseHms(
       });
     }
   }
-  accountSituations(out, { inputCount, duplicates, rejected });
+  accountSituations(out, { inputCount, duplicates, rejected: 0 });
   return out;
 }

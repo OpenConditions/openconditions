@@ -4,6 +4,8 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { Point } from "geojson";
 import { accountSituations } from "../accounting.js";
@@ -51,16 +53,23 @@ function featuresOf(body: Buffer): unknown[] {
   return features;
 }
 
-/** A feature as an event: its own id, a position and an origin time, or null. */
-function quakeOf(feature: unknown): Quake | null {
-  if (!isRecord(feature)) return null;
+/**
+ * A feature as an event: its own id, a position and an origin time. A
+ * feature with no geometry is `no_geometry`; one with no id or origin time,
+ * or a position that is no point in range, is `malformed`.
+ */
+function quakeOf(feature: unknown): Quake | RecordSkipReason {
+  if (!isRecord(feature)) return "malformed";
   const properties = feature["properties"];
   const id = text(feature["id"]);
-  if (id === undefined || !isRecord(properties)) return null;
+  if (id === undefined || !isRecord(properties)) return "malformed";
   const geometry = feature["geometry"];
+  if (geometry == null) return "no_geometry";
   const point = pointGeometry(geometry);
   const time = finite(properties["time"]);
-  if (point === null || time === undefined || Number.isNaN(new Date(time).getTime())) return null;
+  if (point === null || time === undefined || Number.isNaN(new Date(time).getTime())) {
+    return "malformed";
+  }
   const depthKm = finite(
     isRecord(geometry) ? (geometry["coordinates"] as unknown[])[2] : undefined,
   );
@@ -85,7 +94,8 @@ function toDraft(
   const p = quake.properties;
   const time = utcInstant(new Date(quake.time));
   const alert = text(p["alert"])?.toLowerCase();
-  const severity = alert === undefined ? undefined : PAGER[alert];
+  const severity = alert !== undefined && Object.hasOwn(PAGER, alert) ? PAGER[alert] : undefined;
+  if (alert !== undefined && severity === undefined) recordSkipped(feed.id, "unknown_value");
   const mag = finite(p["mag"]);
   const scale = text(p["magType"]);
   const place = text(p["place"]);
@@ -149,8 +159,10 @@ function toDraft(
  * validity starts and ends at the origin time and carries no expiry: it is
  * read by the time window it falls in. A null magnitude is left out, a depth
  * above sea level stays negative, and the tsunami flag is the publisher's
- * oceanic-region flag, not a warning. A feature with no id, position or
- * origin time is rejected and counted; a body that is no feature collection
+ * oceanic-region flag, not a warning; a PAGER level other than green,
+ * yellow, orange or red leaves the severity unknown (`unknown_value`). A
+ * feature with no geometry is skipped as `no_geometry`, one with no id,
+ * point or origin time as `malformed`; a body that is no feature collection
  * fails the parse.
  */
 export function parseUsgs(
@@ -162,14 +174,13 @@ export function parseUsgs(
   const byId = new Map<string, Quake>();
   let inputCount = 0;
   let duplicates = 0;
-  let rejected = 0;
   for (const role of ["recent", "window"]) {
     for (const body of payloads[role] ?? []) {
       for (const feature of featuresOf(body)) {
         inputCount++;
         const quake = quakeOf(feature);
-        if (quake === null) {
-          rejected++;
+        if (typeof quake === "string") {
+          recordSkipped(feed.id, quake);
           continue;
         }
         const held = byId.get(quake.id);
@@ -227,6 +238,6 @@ export function parseUsgs(
     folded[String(draft["id"])] = group.length;
   }
 
-  accountSituations(out, { inputCount, duplicates, rejected, terminal, folded });
+  accountSituations(out, { inputCount, duplicates, rejected: 0, terminal, folded });
   return out;
 }

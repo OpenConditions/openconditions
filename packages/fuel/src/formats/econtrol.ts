@@ -3,17 +3,21 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { FuelGrade } from "../grades.js";
 import {
   type FuelFeed,
   type ProductInput,
-  placeable,
   priceDraft,
   stationDraft,
+  stationPosition,
 } from "../station.js";
 
-/** The E-Control fuel types: diesel, Super 95 and CNG (sold by the kilogram). */
+/**
+ * The E-Control fuel types: diesel, Super 95 and CNG (sold by the kilogram).
+ * A price of another type is left out and counted as a value not read.
+ */
 const GRADES: Readonly<Record<string, FuelGrade>> = { DIE: "diesel", SUP: "e5", GAS: "cng" };
 
 interface Station {
@@ -29,6 +33,10 @@ interface Station {
   offerInformation?: { service?: unknown; selfService?: unknown; unattended?: unknown };
   prices?: { fuelType?: unknown; amount?: unknown }[];
 }
+
+/** A coordinate: undefined when absent, NaN when present but not a number. */
+const coordinate = (value: unknown): number | undefined =>
+  value === undefined || value === null ? undefined : typeof value === "number" ? value : NaN;
 
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
@@ -68,7 +76,6 @@ export function parseEcontrol(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const stations = new Map<string, { station: Station; prices: Map<FuelGrade, string> }>();
   for (const payload of payloads["main"] ?? []) {
     const answer = JSON.parse(payload.toString("utf8").replace(/^﻿/, "")) as unknown;
@@ -79,26 +86,30 @@ export function parseEcontrol(
           ? String(station.id)
           : undefined;
       if (id === undefined) {
-        rejected++;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
       const entry = stations.get(id) ?? { station, prices: new Map<FuelGrade, string>() };
       stations.set(id, entry);
       for (const price of station.prices ?? []) {
         const grade = typeof price.fuelType === "string" ? GRADES[price.fuelType] : undefined;
-        if (grade === undefined || typeof price.amount !== "number" || !(price.amount > 0)) {
+        if (grade === undefined) {
+          recordSkipped(feed.id, "unknown_value");
           continue;
         }
+        if (typeof price.amount !== "number" || !(price.amount > 0)) continue;
         if (!entry.prices.has(grade)) entry.prices.set(grade, price.amount.toFixed(3));
       }
     }
   }
 
   for (const [stationId, { station, prices }] of stations) {
-    const lon = typeof station.location?.longitude === "number" ? station.location.longitude : NaN;
-    const lat = typeof station.location?.latitude === "number" ? station.location.latitude : NaN;
-    if (!placeable(lon, lat)) {
-      rejected++;
+    const position = stationPosition(
+      coordinate(station.location?.longitude),
+      coordinate(station.location?.latitude),
+    );
+    if ("skip" in position) {
+      recordSkipped(feed.id, position.skip);
       continue;
     }
     const service = serviceOf(station.offerInformation);
@@ -106,8 +117,7 @@ export function parseEcontrol(
     const location = station.location ?? {};
     const feature = stationDraft(feed, {
       stationId,
-      lon,
-      lat,
+      ...position,
       fetchedAt: ctx.fetchedAt,
       ...(name ? { name: { lang: "de", text: name } } : {}),
       address: {
@@ -131,6 +141,5 @@ export function parseEcontrol(
       );
     }
   }
-  out.rejected = rejected;
   return out;
 }

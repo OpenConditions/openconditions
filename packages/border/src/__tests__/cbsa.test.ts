@@ -1,5 +1,5 @@
-import type { RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, it } from "vitest";
+import { __resetSkips, drainSkipped, type RecordDraft } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, it } from "vitest";
 import { cbsaFlow, parseCbsa } from "../formats/cbsa.js";
 import { cbsaFeed, fixture, parseContext } from "./helpers/border-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -33,11 +33,14 @@ function readings(observations: readonly RecordDraft[], localId: string) {
 }
 
 describe("parseCbsa", () => {
+  beforeEach(() => __resetSkips());
+
   it("seals every office of the live CSV, each placed at its crossing", () => {
     const out = live();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
     expect(out.features).toHaveLength(30);
-    expect(out.rejected).toBe(0);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(cbsaFeed().id)).toEqual({});
     expect(out.features.find((f) => f["id"] === "oc:feature:ca-cbsa-waits:douglas")).toMatchObject({
       name: [{ lang: "en", text: "Douglas" }],
       location: {
@@ -115,7 +118,7 @@ describe("parseCbsa", () => {
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
   });
 
-  it("rejects an office the crossing table lacks, and one with no flow", () => {
+  it("skips an office the crossing table lacks as unplaced, and one with no flow as malformed", () => {
     const out = parse(
       [
         HEADER,
@@ -125,7 +128,22 @@ describe("parseCbsa", () => {
       ].join("\n"),
     );
     expect(out.features).toHaveLength(1);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(cbsaFeed().id)).toEqual({ no_geometry: 1, malformed: 1 });
+  });
+
+  it("reads a flow it does not know as an unknown state, counted as a value not read", () => {
+    const out = parse(
+      [
+        HEADER,
+        "Douglas;; Surrey, BC/Blaine, WA;; 2026-10-14 16:20 PDT;; Not Applicable;; --;; Delayed;; --;; ",
+      ].join("\n"),
+    );
+    expect(readings(out.observations, "douglas")["passenger"]?.value).toEqual({
+      v: 1,
+      status: "unknown",
+    });
+    expect(drainSkipped(cbsaFeed().id)).toEqual({ unknown_value: 1 });
   });
 
   it("fails on a CSV without the columns it reads", () => {

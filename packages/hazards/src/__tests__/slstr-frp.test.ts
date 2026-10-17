@@ -1,4 +1,10 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/hazards-feed.js";
@@ -131,12 +137,16 @@ describe("a row or granule that does not read", () => {
     "10,20,2026-10-16,03:05:00,D,-0.1,0.4,F1,90.0,2,320,1200000,40,10,1.1,1.1,S3A",
     "10,20,2026-10-16,03:05:00,D,,0.4,F1,90.0,2,320,1200000,40,10,1.1,1.1,",
     "11,21,2026-10-16,03:05:00,N,0,,S7,,7,,,,,,,S3B",
+    ",,2026-10-16,03:05:00,D,2.5,0.4,F1,90.0,2,320,1200000,40,10,1.1,1.1,S3A",
   ];
   const out = parse(granule(...rows));
 
-  test("is rejected and counted while the rest of the granule is kept", () => {
+  test("is skipped under its reason while the rest of the granule is kept", () => {
+    __resetSkips();
+    const again = parse(granule(...rows));
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 8, no_geometry: 1 });
+    expect(again.rejected).toBeUndefined();
     expect(out.observations).toHaveLength(2);
-    expect(out.rejected).toBe(8);
     expect(sealFailures(out.observations)).toEqual([]);
   });
 
@@ -151,11 +161,13 @@ describe("a row or granule that does not read", () => {
     });
   });
 
-  test("a granule that is no FRP file is counted, unless no granule is one", () => {
+  test("a granule that is no FRP file is skipped as malformed, unless no granule is one", () => {
     const html = "<!DOCTYPE html><html><body>Maintenance</body></html>";
+    __resetSkips();
     const mixed = parse(html, granule(good));
     expect(mixed.observations).toHaveLength(1);
-    expect(mixed.rejected).toBe(1);
+    expect(mixed.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
     expect(() => parse(html, '{"error":"busy"}')).toThrow(
       "none of the 2 granules is an SLSTR FRP file",
     );

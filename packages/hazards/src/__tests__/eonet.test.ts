@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { eonetFeed, fixture, parseContext } from "./helpers/hazards-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -148,6 +154,8 @@ describe("the eonet format over the windows of an open event", () => {
 });
 
 describe("the eonet format over altered events", () => {
+  beforeEach(() => __resetSkips());
+
   const flood = () => {
     const { events: list } = events("eonet-closed.json");
     const event = list[0]!;
@@ -173,11 +181,12 @@ describe("the eonet format over altered events", () => {
     const volcano = events("eonet-open.json").events.find((e) => e.id === "EONET_20710")!;
     const out = parse({ open: [buffer({ events: [volcano] })], closed: [buffer(bad)] });
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(1);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
     expect(out.records).toMatchObject({ inputCount: 2, accepted: 1, terminal: 0 });
   });
 
-  test("an event with no dated geometry or no id is rejected and counted", () => {
+  test("an event with no geometry, no dated geometry or no id is skipped", () => {
     const volcano = events("eonet-open.json").events.find((e) => e.id === "EONET_20710")!;
     const out = parse({
       open: [
@@ -196,7 +205,8 @@ describe("the eonet format over altered events", () => {
       ],
     });
     expect(out.situations).toHaveLength(1);
-    expect(out.rejected).toBe(3);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1, malformed: 2 });
   });
 
   test("an event in both lists is one, the closed copy standing", () => {
@@ -213,16 +223,46 @@ describe("the eonet format over altered events", () => {
     });
   });
 
-  test("categories another source reports first-hand are terminal", () => {
+  test("categories another source reports first-hand, or the model has no type for, are terminal", () => {
     const volcano = events("eonet-open.json").events.find((e) => e.id === "EONET_20710")!;
     const of = (id: string) => ({ ...volcano, id: `X_${id}`, categories: [{ id, title: id }] });
     const out = parse({
       open: [
-        buffer({ events: [of("wildfires"), of("earthquakes"), of("severeStorms"), of("snow")] }),
+        buffer({
+          events: [
+            of("wildfires"),
+            of("earthquakes"),
+            of("severeStorms"),
+            of("snow"),
+            of("manmade"),
+            of("tempExtremes"),
+            of("waterColor"),
+          ],
+        }),
       ],
     });
     expect(out.situations).toEqual([]);
-    expect(out.records).toMatchObject({ inputCount: 4, accepted: 0, terminal: 4 });
+    expect(out.records).toMatchObject({ inputCount: 7, accepted: 0, terminal: 7 });
+    expect(drainSkipped(feed.id)).toEqual({});
+  });
+
+  test("an unknown category is skipped as unknown_type, no category as malformed", () => {
+    const volcano = events("eonet-open.json").events.find((e) => e.id === "EONET_20710")!;
+    const out = parse({
+      open: [
+        buffer({
+          events: [
+            { ...volcano, id: "X_new", categories: [{ id: "meteors", title: "Meteors" }] },
+            { ...volcano, id: "X_none", categories: [] },
+            volcano,
+          ],
+        }),
+      ],
+    });
+    expect(out.situations).toHaveLength(1);
+    expect(out.rejected).toBeUndefined();
+    expect(drainSkipped(feed.id)).toEqual({ unknown_type: 1, malformed: 1 });
+    expect(out.records).toMatchObject({ inputCount: 3, accepted: 1, terminal: 0 });
   });
 
   test("a quiet poll is an accounted zero and a body without events fails the parse", () => {

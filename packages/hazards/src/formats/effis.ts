@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { accountSituations } from "../accounting.js";
 import type { HazardsCatalogFeed } from "../feed-schema.js";
@@ -71,8 +72,8 @@ function featuresOf(body: Buffer): unknown[] {
  * "N.A." is no value, and the zone-less times are UTC. The burnt area's
  * date is when the fire was first seen, not a validity: the state is
  * unknown. EFFIS's class and land-cover shares travel as extras. A feature
- * with no id, no readable polygon or no fire date is rejected and counted;
- * an OGC ExceptionReport fails the parse.
+ * with no geometry is skipped as `no_geometry`; one with no id, fire date
+ * or readable polygon as `malformed`. An OGC ExceptionReport fails the parse.
  */
 export function parseEffis(
   feed: HazardsCatalogFeed,
@@ -83,7 +84,6 @@ export function parseEffis(
   const seen = new Set<string>();
   let inputCount = 0;
   let duplicates = 0;
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     for (const feature of featuresOf(body)) {
       inputCount++;
@@ -91,8 +91,12 @@ export function parseEffis(
       const id = isRecord(p) ? given(p["id"]) : undefined;
       const geometry = isRecord(feature) ? polygonalGeometry(feature["geometry"]) : null;
       const firedAt = isRecord(p) ? utcTime(p["FIREDATE"]) : undefined;
+      if (isRecord(feature) && feature["geometry"] == null) {
+        recordSkipped(feed.id, "no_geometry");
+        continue;
+      }
       if (!isRecord(p) || id === undefined || geometry === null || firedAt === undefined) {
-        rejected++;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
       if (seen.has(id)) {
@@ -148,6 +152,6 @@ export function parseEffis(
       });
     }
   }
-  accountSituations(out, { inputCount, duplicates, rejected });
+  accountSituations(out, { inputCount, duplicates, rejected: 0 });
   return out;
 }

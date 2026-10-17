@@ -44,7 +44,7 @@ export interface DigitrafficSensor {
  * KELI_1's where the station has the sensor. A station also states 0 for a
  * numbered sensor it does not have (it reports nothing else of it): that is
  * no sensor, not a fault. The VAISALA_API station 15038 sends 13, which is
- * outside the table and so dropped as a rejected value.
+ * outside the table and so dropped, counted as a value not read.
  */
 const KELI: Readonly<Record<number, string | null>> = {
   0: null,

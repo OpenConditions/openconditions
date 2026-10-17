@@ -1,4 +1,10 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { hazardsDomain } from "../domain.js";
 import { firmsModisFeed, firmsViirsFeed, fixture, parseContext } from "./helpers/hazards-feed.js";
@@ -141,12 +147,15 @@ describe("a row that does not read", () => {
     "10,20,300,0.4,0.4,2026-10-07,0305,N21,nominal,2.0NRT,280,-0.1,D",
     "10,20,300,0.4,0.4,2026-10-07,0305,N21,nominal,2.0NRT,280,,D",
     "11,21,299,0.4,0.4,2026-10-07,0305,N21,low,2.0NRT,280,0,N",
+    ",,300,0.4,0.4,2026-10-07,0305,N21,nominal,2.0NRT,280,2.5,D",
   ];
-  const out = parse(viirs, `${HEADER}\n${rows.join("\n")}\n`);
 
-  test("is rejected and counted while the rest of the file is kept", () => {
+  test("is skipped under its reason while the rest of the file is kept", () => {
+    __resetSkips();
+    const out = parse(viirs, `${HEADER}\n${rows.join("\n")}\n`);
+    expect(drainSkipped(viirs.id)).toEqual({ malformed: 8, no_geometry: 1 });
+    expect(out.rejected).toBeUndefined();
     expect(out.observations).toHaveLength(2);
-    expect(out.rejected).toBe(8);
     expect(out.observations.map((o) => (o["result"] as { value: number }).value)).toEqual([2.5, 0]);
   });
 

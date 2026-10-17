@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { type BorderCrossing, crossingOfCbsaOffice } from "../crossings.js";
 import {
@@ -91,13 +92,16 @@ const slug = (name: string): string =>
  * busiest land crossings, cells separated by `;;`, with the Canada-bound
  * commercial and traveller flows. CBSA publishes no office id and no
  * coordinates, so the office name is the key and its crossing in the vendored
- * table the place; an office the table lacks is rejected rather than guessed.
+ * table the place; an office the table lacks is skipped as unplaced rather
+ * than guessed. A row without an office, or with no Canada-bound flow, is
+ * skipped as malformed.
  *
  * Each flow the office has is a `lane_group` keyed by its mode, without a
  * programme (CBSA does not split its queues by one): travellers are the
  * passenger queue. `No Delay` is no delay without minutes, a stated wait a
  * delay of that many minutes, `Closed` and `Temporarily closed` a closed
- * queue. A row without a readable update time is dated by the fetch, and one
+ * queue; any other cell is a queue whose state is unknown, counted as a
+ * value not read. A row without a readable update time is dated by the fetch, and one
  * dated after the fetch is read as the fetch.
  */
 export function parseCbsa(
@@ -107,7 +111,6 @@ export function parseCbsa(
 ): ParseOutput {
   const out = emptyParseOutput();
   const fetched = Date.parse(ctx.fetchedAt);
-  let rejected = 0;
   for (const payload of payloads["main"] ?? []) {
     const [header, ...rows] = payload
       .toString("utf8")
@@ -123,9 +126,13 @@ export function parseCbsa(
       const cells = row.split(";;").map((c) => c.trim());
       const cell = (name: string) => (column(name) < 0 ? undefined : cells[column(name)]);
       const office = cell(OFFICE);
-      const crossing = office ? crossingOfCbsaOffice(office) : undefined;
-      if (!office || crossing === undefined) {
-        rejected++;
+      if (!office) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const crossing = crossingOfCbsaOffice(office);
+      if (crossing === undefined) {
+        recordSkipped(feed.id, "no_geometry");
         continue;
       }
       const other = crossing.countries.find((c) => c !== "CA") ?? crossing.countries[0];
@@ -138,9 +145,14 @@ export function parseCbsa(
         waits.push({ key: mode, value });
       }
       if (lanes.length === 0) {
-        rejected++;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      recordSkipped(
+        feed.id,
+        "unknown_value",
+        waits.filter((w) => w.value.status === "unknown").length,
+      );
       const updated = updatedAt(cell(UPDATED), crossing);
       const at = utcInstant(new Date(Math.min(updated ?? fetched, fetched)));
       const location = cell(LOCATION);
@@ -162,6 +174,5 @@ export function parseCbsa(
       for (const { key, value } of waits) out.observations.push(waitDraft(feature, key, value, at));
     }
   }
-  out.rejected = rejected;
   return out;
 }

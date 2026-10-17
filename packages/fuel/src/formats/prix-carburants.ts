@@ -4,15 +4,16 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { zonedWallClockToInstant } from "@openconditions/model";
 import type { FuelGrade } from "../grades.js";
 import {
   availabilityDraft,
   type FuelFeed,
-  placeable,
   priceDraft,
   stationDraft,
+  stationPosition,
   utcInstant,
 } from "../station.js";
 
@@ -26,7 +27,13 @@ const GRADES: readonly { field: string; name: string; grade: FuelGrade }[] = [
   { field: "gplc", name: "GPLc", grade: "lpg" },
 ];
 
+const GRADE_NAMES: ReadonlySet<string> = new Set(GRADES.map(({ name }) => name));
+
 type Station = Record<string, unknown>;
+
+/** A coordinate: undefined when absent, NaN when present but not a number. */
+const coordinate = (value: unknown): number | undefined =>
+  value === undefined || value === null ? undefined : typeof value === "number" ? value : NaN;
 
 const ZONELESS = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}(?::\d{2})?)(?:\.\d+)?(?:Z|[+-]00:?00)?$/;
 const OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?[+-]\d{2}:?\d{2}$/;
@@ -73,24 +80,30 @@ export function parsePrixCarburants(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   for (const payload of payloads["main"] ?? []) {
     const stations = JSON.parse(payload.toString("utf8").replace(/^﻿/, "")) as unknown;
     if (!Array.isArray(stations)) throw new Error("prix-carburants: the export is not a list");
     for (const station of stations as Station[]) {
-      const geom = station["geom"] as { lon?: unknown; lat?: unknown } | null | undefined;
-      const lon = typeof geom?.lon === "number" ? geom.lon : Number.NaN;
-      const lat = typeof geom?.lat === "number" ? geom.lat : Number.NaN;
       const stationId =
         typeof station["id"] === "number" || typeof station["id"] === "string"
           ? String(station["id"])
           : undefined;
-      if (stationId === undefined || !placeable(lon, lat)) {
-        rejected++;
+      if (stationId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const geom = station["geom"] as { lon?: unknown; lat?: unknown } | null | undefined;
+      const position = stationPosition(coordinate(geom?.lon), coordinate(geom?.lat));
+      if ("skip" in position) {
+        recordSkipped(feed.id, position.skip);
         continue;
       }
       const available = names(station["carburants_disponibles"]);
       const unavailable = names(station["carburants_indisponibles"]);
+      // A grade the lists name that the ministry did not track before is lost to the station.
+      for (const name of new Set([...available, ...unavailable])) {
+        if (!GRADE_NAMES.has(name)) recordSkipped(feed.id, "unknown_value");
+      }
       const products: {
         grade: FuelGrade;
         inStock: boolean;
@@ -116,8 +129,7 @@ export function parsePrixCarburants(
       const departement = text(station["code_departement"]);
       const feature = stationDraft(feed, {
         stationId,
-        lon,
-        lat,
+        ...position,
         fetchedAt: ctx.fetchedAt,
         address: {
           ...(text(station["adresse"]) ? { street: text(station["adresse"]) } : {}),
@@ -161,6 +173,5 @@ export function parsePrixCarburants(
       out.observations.push(...readings);
     }
   }
-  out.rejected = rejected;
   return out;
 }

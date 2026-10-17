@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { fuelDomain } from "../domain.js";
 import { econtrolFeed, fixture, parseContext } from "./helpers/fuel-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -19,6 +20,8 @@ const ANSWERS = ["die", "sup", "gas"].map((t) => fixture(`econtrol-by-address-${
 
 const parse = (payloads: Buffer[] = ANSWERS) =>
   fuelDomain.formats["econtrol"]!.parse(econtrolFeed(), { main: payloads }, parseContext(FETCHED));
+
+const FEED = "at-econtrol-fuel";
 
 const featureId = (id: number) => `oc:feature:at-econtrol-fuel:${id}`;
 const station = (features: Draft[], id: number) => features.find((f) => f["id"] === featureId(id));
@@ -45,6 +48,8 @@ function patchedDiesel(id: number, fields: Record<string, unknown>): Buffer {
 }
 
 describe("econtrol", () => {
+  beforeEach(() => __resetSkips());
+
   test("E-Control answers of three fuel types merge into one station per id", () => {
     const { features, observations } = parse();
     const ids = features.map((f) => f["id"]);
@@ -157,6 +162,29 @@ describe("econtrol", () => {
     const { features, observations } = parse([patchedDiesel(6083, { contact })]);
     const text = JSON.stringify([...features, ...observations]);
     for (const value of Object.values(contact)) expect(text).not.toContain(value);
+  });
+
+  test("a station without an id or a position is skipped; an unknown fuel type is a value not read", () => {
+    const stations = JSON.parse(ANSWERS[0]!.toString("utf8")) as Draft[];
+    const first = stations[0]!;
+    const unplaced = { ...first, id: 999001, location: { city: "Wien" } };
+    const offGlobe = { ...first, id: 999002, location: { latitude: 148.2, longitude: 16.3 } };
+    const anonymous = { ...first, id: undefined };
+    const premium = { ...first, prices: [{ fuelType: "SUPPLUS", amount: 1.999 }] };
+    const before = parse().features.length;
+    __resetSkips();
+    const out = parse([
+      Buffer.from(JSON.stringify([premium, unplaced, offGlobe, anonymous, ...stations.slice(1)])),
+      ANSWERS[1]!,
+      ANSWERS[2]!,
+    ]);
+    expect(out.features).toHaveLength(before);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(FEED)).toEqual({
+      unknown_value: 1,
+      no_geometry: 1,
+      malformed: 2,
+    });
   });
 
   test("every drafted record seals", () => {
