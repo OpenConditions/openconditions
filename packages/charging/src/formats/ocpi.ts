@@ -535,6 +535,8 @@ export function mapOcpi(
       ...imagesOf(loc.images, unread),
       ...logoOf(loc.operator, "operator_logo"),
       ...logoOf(loc.owner, "owner_logo"),
+      // The image categories name no suboperator's logo; it is another image of the site.
+      ...logoOf(loc.suboperator, "other"),
     ];
     const bays = (loc.parking_places ?? []).map((p) => bayOf(p, unread));
     const energyMix = ocpiEnergyMix(loc.energy_mix, unread);

@@ -507,7 +507,11 @@ describe("OCPI location, EVSE and connector fields", () => {
           website: "https://op.example",
           logo: { url: "https://op.example/logo.png", category: "OPERATOR", type: "png" },
         },
-        suboperator: { name: "Sub", website: "https://sub.example" },
+        suboperator: {
+          name: "Sub",
+          website: "https://sub.example",
+          logo: { url: "https://sub.example/logo.svg", category: "OPERATOR", type: "svg" },
+        },
         owner: { name: "Own" },
         opening_times: {
           twentyfourseven: false,
@@ -555,7 +559,10 @@ describe("OCPI location, EVSE and connector fields", () => {
       location: { address: { region: "Utrecht" } },
       operator: { name: [{ text: "Op" }], website: "https://op.example" },
       owner: { name: [{ text: "Own" }] },
-      images: [{ url: "https://op.example/logo.png", category: "operator_logo", format: "png" }],
+      images: [
+        { url: "https://op.example/logo.png", category: "operator_logo", format: "png" },
+        { url: "https://sub.example/logo.svg", category: "other", format: "svg" },
+      ],
       openingHours: {
         osm: "Mo 08:00-18:00",
         exceptions: [{ start: "2026-12-25T00:00:00Z", end: "2026-12-26T00:00:00Z", open: false }],

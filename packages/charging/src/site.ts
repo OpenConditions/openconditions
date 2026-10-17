@@ -186,7 +186,10 @@ export interface SiteInput {
   twentyFourSeven?: boolean;
   /** Periods, UTC instants, the site opens or closes beside its regular hours. */
   openingExceptions?: { start: string; end: string; open: boolean }[];
-  /** Whether a vehicle plugged in keeps charging while the site is closed. */
+  /**
+   * Whether a vehicle plugged in keeps charging while the site is closed;
+   * held with the opening hours, since without them no period is closed.
+   */
   chargingWhenClosed?: boolean;
   /** The IANA zone the opening hours are in. */
   timeZone?: string;
