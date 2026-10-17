@@ -178,7 +178,8 @@ describe("datex2-light", () => {
           bean({
             type: "garage",
             occupancyTrend: "sideways",
-            assignedFor: [{ user: "pilots" }, { user: "disabled" }],
+            // The exporter's plural of a user it reads is no unknown one.
+            assignedFor: [{ user: "pilots" }, { user: "disabled" }, { user: "shortTermParkers" }],
           }),
         ]),
       ),

@@ -185,6 +185,7 @@ const USERS: Readonly<Record<string, ParkingUserGroup>> = {
   families: "family",
   family: "family",
   residents: "residents",
+  customers: "customers",
   shorttermparkers: "short_term",
   longtermparkers: "long_term",
 };
@@ -202,10 +203,10 @@ const VEHICLES: Readonly<Record<string, ParkingVehicleType>> = {
 
 const CHARGING_FUELS = new Set(["battery", "electric", "electricity"]);
 
-/** Every user DATEX names, lower-cased as the exporter's spellings are compared, and its `familys`. */
+/** Every user DATEX names, lower-cased as the exporter's spellings are compared, and those read. */
 const KNOWN_USERS: ReadonlySet<string> = new Set([
   ...DATEX2_V2_PARKING.userTypes.map((u) => u.toLowerCase()),
-  "familys",
+  ...Object.keys(USERS),
 ]);
 
 const KNOWN_TRENDS: ReadonlySet<string> = new Set(
