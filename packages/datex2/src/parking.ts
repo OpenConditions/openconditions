@@ -1,4 +1,5 @@
 import { type DatexPublication, datexPublications } from "./publication.js";
+import { type DatexDecodeOptions, skipped } from "./skips.js";
 import {
   elementType,
   localAttribute,
@@ -14,11 +15,17 @@ import { isXmlObject, stripXmlNamespace, type XmlObject } from "./xml.js";
 /**
  * DATEX II parking table and status publications, decoded to plain records.
  *
- * The v2 (2.3) and v3 (3.0–3.6) parking schemas share their element names, so
- * one reader serves both; v3.7's facility hierarchy (`parkingStatusInformation`)
- * is read for status. Codes keep the enumeration they come from as a prefix
- * (`parkingSiteStatus:full`) where the parking crosswalks are keyed that way,
- * and stay bare where they are not (vehicle types, security, supervision).
+ * The v2.3 parking model and the record-based v3 parking schema (the one
+ * published with v3.2, which declares itself 3.1) share their element names,
+ * so one reader serves both. From v3.3 on, a parking table holds a facility
+ * hierarchy (`hierarchyElementGeneral`) instead of parking records; those
+ * tables are not read, and each of their elements is counted as
+ * `unsupported_version` under the options' feed. Their status
+ * (`parkingStatusInformation`) is read. Codes keep the enumeration they come
+ * from as a prefix (`parkingSiteStatus:full`) where the parking crosswalks
+ * are keyed that way, and stay bare where they are not (vehicle types,
+ * security, supervision). A record or status that names no record id is
+ * counted as `malformed`.
  */
 
 export interface DatexParkingGroup {
@@ -214,9 +221,15 @@ function tariffsOf(payment: XmlObject | undefined): DatexParkingTariff[] {
   return out;
 }
 
-function parkingRecord(rec: XmlObject): DatexParkingRecord | undefined {
+function parkingRecord(
+  rec: XmlObject,
+  options: DatexDecodeOptions,
+): DatexParkingRecord | undefined {
   const id = localAttribute(rec, "id");
-  if (!id) return undefined;
+  if (!id) {
+    skipped(options, "malformed");
+    return undefined;
+  }
   const version = localAttribute(rec, "version");
   const point = pointOf(localChild(rec, "parkingLocation"));
   const address = addressOf(localChild(rec, "parkingSiteAddress"));
@@ -270,12 +283,23 @@ function isPublication(p: DatexPublication, type: string): boolean {
 }
 
 /** Every parking record in the document's parking table publications, v2 or v3. */
-export function parseDatexParkingTable(doc: XmlObject): DatexParkingRecord[] {
-  return datexPublications(doc)
+export function parseDatexParkingTable(
+  doc: XmlObject,
+  options: DatexDecodeOptions = {},
+): DatexParkingRecord[] {
+  const tables = datexPublications(doc)
     .filter((p) => isPublication(p, "ParkingTablePublication"))
-    .flatMap((p) => localChildren(p.body, "parkingTable"))
+    .flatMap((p) => localChildren(p.body, "parkingTable"));
+  skipped(
+    options,
+    "unsupported_version",
+    tables.reduce((n, table) => n + localChildren(table, "hierarchyElementGeneral").length, 0),
+  );
+  // A group of parking sites may hold its sites in place of naming them.
+  return tables
     .flatMap((table) => localChildren(table, "parkingRecord"))
-    .map(parkingRecord)
+    .flatMap((r) => [r, ...localChildren(r, "parkingSite")])
+    .map((r) => parkingRecord(r, options))
     .filter((r): r is DatexParkingRecord => r !== undefined);
 }
 
@@ -308,10 +332,17 @@ function trendOf(occupancy: XmlObject | undefined, v37: boolean): { trendCode?: 
   return trend === undefined ? {} : { trendCode: `parkingOccupancyTrend:${trend}` };
 }
 
-/** A v2/v3.0–3.6 `parkingRecordStatus`. */
-function recordStatus(status: XmlObject, version: 2 | 3): DatexParkingStatus | undefined {
+/** A v2 or record-based v3 `parkingRecordStatus`. */
+function recordStatus(
+  status: XmlObject,
+  version: 2 | 3,
+  options: DatexDecodeOptions,
+): DatexParkingStatus | undefined {
   const recordId = localAttribute(localChild(status, "parkingRecordReference"), "id");
-  if (!recordId) return undefined;
+  if (!recordId) {
+    skipped(options, "malformed");
+    return undefined;
+  }
   const at = localChildText(status, "parkingStatusOriginTime");
   const occupancy = localChild(status, "parkingOccupancy");
   const graded = localChildText(occupancy, "parkingNumberOfVacantSpacesGraded");
@@ -342,11 +373,17 @@ function recordStatus(status: XmlObject, version: 2 | 3): DatexParkingStatus | u
  * entries (a place status, an access status, …) that share its reference;
  * they merge into one status, first value wins.
  */
-function mergeStatusInformation(entries: XmlObject[]): DatexParkingStatus[] {
+function mergeStatusInformation(
+  entries: XmlObject[],
+  options: DatexDecodeOptions,
+): DatexParkingStatus[] {
   const byId = new Map<string, DatexParkingStatus>();
   for (const info of entries) {
     const recordId = localAttribute(localChild(info, "reference"), "id");
-    if (!recordId) continue;
+    if (!recordId) {
+      skipped(options, "malformed");
+      continue;
+    }
     const occupancy = localChild(info, "occupancy");
     const at = localChildText(info, "lastUpdated");
     const placeStatus = elementType(info) === "PlaceStatus" ? localChildTexts(info, "status") : [];
@@ -377,13 +414,16 @@ function mergeStatusInformation(entries: XmlObject[]): DatexParkingStatus[] {
 }
 
 /** Every record status in the document's parking status publications, v2 or v3. */
-export function parseDatexParkingStatus(doc: XmlObject): DatexParkingStatus[] {
+export function parseDatexParkingStatus(
+  doc: XmlObject,
+  options: DatexDecodeOptions = {},
+): DatexParkingStatus[] {
   return datexPublications(doc)
     .filter((p) => isPublication(p, "ParkingStatusPublication"))
     .flatMap((p) => [
       ...localChildren(p.body, "parkingRecordStatus")
-        .map((s) => recordStatus(s, p.version))
+        .map((s) => recordStatus(s, p.version, options))
         .filter((s): s is DatexParkingStatus => s !== undefined),
-      ...mergeStatusInformation(localChildren(p.body, "parkingStatusInformation")),
+      ...mergeStatusInformation(localChildren(p.body, "parkingStatusInformation"), options),
     ]);
 }

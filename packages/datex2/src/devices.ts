@@ -1,4 +1,5 @@
 import { type DatexPublication, datexPublications } from "./publication.js";
+import { type DatexDecodeOptions, skipped } from "./skips.js";
 import { localAttribute, localChild, localChildren, localChildText, pointOf } from "./values.js";
 import { isXmlObject, type XmlObject } from "./xml.js";
 
@@ -6,7 +7,8 @@ import { isXmlObject, type XmlObject } from "./xml.js";
  * DATEX II v3 device publications, decoded to plain records. DGT publishes its
  * traffic cameras this way: the road and kilometre point sit in its Spanish
  * location extensions, and the still image URL in a `deviceUrl` extension
- * element on the device.
+ * element on the device. A device other than a camera is left out; one that
+ * names no id is counted as `malformed` under the options' feed.
  */
 
 export interface DatexCameraDevice {
@@ -58,10 +60,13 @@ function descendantText(node: unknown, name: string): string | undefined {
   return undefined;
 }
 
-function device(node: XmlObject): DatexCameraDevice | undefined {
-  const id = localAttribute(node, "id");
-  if (id === undefined || id === "") return undefined;
+function device(node: XmlObject, options: DatexDecodeOptions): DatexCameraDevice | undefined {
   if (localChildText(node, "typeOfDevice") !== "camera") return undefined;
+  const id = localAttribute(node, "id");
+  if (id === undefined || id === "") {
+    skipped(options, "malformed");
+    return undefined;
+  }
 
   const location = localChild(node, "pointLocation");
   const point = pointOf(location);
@@ -95,10 +100,13 @@ function device(node: XmlObject): DatexCameraDevice | undefined {
 }
 
 /** Every camera device in the document's device publications. */
-export function parseDatexCameraDevices(doc: XmlObject): DatexCameraDevice[] {
+export function parseDatexCameraDevices(
+  doc: XmlObject,
+  options: DatexDecodeOptions = {},
+): DatexCameraDevice[] {
   return datexPublications(doc)
     .filter(isDevicePublication)
     .flatMap((p) => localChildren(p.body, "device"))
-    .map(device)
+    .map((d) => device(d, options))
     .filter((d): d is DatexCameraDevice => d !== undefined);
 }

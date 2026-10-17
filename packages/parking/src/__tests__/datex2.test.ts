@@ -213,15 +213,26 @@ describe("datex2", () => {
     expect(readings(out, "C-WC-W")).toEqual({});
   });
 
-  test("DATEX: a status code the crosswalk has no key for gives no status reading", () => {
-    // v3 grades vacant spaces, a code the v3 status crosswalk does not hold.
+  test("DATEX: record-based statuses read graded vacant spaces and opening statuses", () => {
+    // The record-based v3 schema grades vacant spaces as v2 does; the v3.7 crosswalk has no key for it.
     const v3 = status(
       `<ns3:payload xsi:type="ns2:ParkingStatusPublication" lang="en" modelBaseVersion="3" xmlns="http://datex2.eu/schema/3/common" xmlns:ns2="http://datex2.eu/schema/3/parking" xmlns:ns3="http://datex2.eu/schema/3/d2Payload" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><publicationTime>2026-10-05T03:31:35Z</publicationTime><ns2:parkingRecordStatus xsi:type="ns2:ParkingSiteStatus"><ns2:parkingRecordReference targetClass="par:ParkingRecord" id="NL-12_413"/><ns2:parkingStatusOriginTime>2026-10-05T03:25:39Z</ns2:parkingStatusOriginTime><ns2:parkingOccupancy><ns2:parkingNumberOfVacantSpacesGraded>lessThan10SpacesAvailable</ns2:parkingNumberOfVacantSpacesGraded></ns2:parkingOccupancy></ns2:parkingRecordStatus></ns3:payload>`,
     );
-    expect(readings(parse(ndwFeed(), fixture("ndw-truck-table.xml"), v3), "NL-12_413")).toEqual({});
+    expect(readings(parse(ndwFeed(), fixture("ndw-truck-table.xml"), v3), "NL-12_413")).toEqual({
+      "site parking.status": "spaces_available",
+    });
     // v2 publishes an opening status the v2 crosswalk does not hold.
     const v2 = status(
       `<d2LogicalModel modelBaseVersion="2" xmlns="http://datex2.eu/schema/2/2_0"><payloadPublication xsi:type="GenericPublication" lang="en" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><publicationTime>2026-10-05T05:30:10+02:00</publicationTime><publicationCreator><country>lu</country><nationalIdentifier>PCH</nationalIdentifier></publicationCreator><genericPublicationName>ParkingStatusPublication</genericPublicationName><genericPublicationExtension><parkingStatusPublication><parkingRecordStatus xsi:type="ParkingSiteStatus"><parkingRecordReference targetClass="ParkingRecord" id="G-MB-B" version="1"/><parkingStatusOriginTime>2026-10-05T05:30:00+02:00</parkingStatusOriginTime><parkingSiteOpeningStatus>closed</parkingSiteOpeningStatus></parkingRecordStatus></parkingStatusPublication></genericPublicationExtension></payloadPublication></d2LogicalModel>`,
+    );
+    expect(readings(parse(citaFeed(), fixture("cita-static.xml"), v2), "G-MB-B")).toEqual({
+      "site parking.status": "closed",
+    });
+  });
+
+  test("DATEX: a status code DATEX does not define gives no status reading", () => {
+    const v2 = status(
+      `<d2LogicalModel modelBaseVersion="2" xmlns="http://datex2.eu/schema/2/2_0"><payloadPublication xsi:type="GenericPublication" lang="en" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><publicationTime>2026-10-05T05:30:10+02:00</publicationTime><publicationCreator><country>lu</country><nationalIdentifier>PCH</nationalIdentifier></publicationCreator><genericPublicationName>ParkingStatusPublication</genericPublicationName><genericPublicationExtension><parkingStatusPublication><parkingRecordStatus xsi:type="ParkingSiteStatus"><parkingRecordReference targetClass="ParkingRecord" id="G-MB-B" version="1"/><parkingStatusOriginTime>2026-10-05T05:30:00+02:00</parkingStatusOriginTime><parkingSiteStatus>halfFull</parkingSiteStatus></parkingRecordStatus></parkingStatusPublication></genericPublicationExtension></payloadPublication></d2LogicalModel>`,
     );
     expect(readings(parse(citaFeed(), fixture("cita-static.xml"), v2), "G-MB-B")).toEqual({});
   });

@@ -1,4 +1,5 @@
 import { type DatexPublication, datexPublications } from "./publication.js";
+import { type DatexDecodeOptions, skipped } from "./skips.js";
 import {
   elementType,
   localAttribute,
@@ -17,6 +18,17 @@ import type { XmlObject } from "./xml.js";
  * modes bare (`iec62196T2`, `socket`, `mode3AC3p`), the site type prefixed
  * (`siteType:onstreet`) as the charging crosswalk is keyed, and a refill point
  * status as the v3.7 enumeration value (`outOfOrder`).
+ *
+ * Both v3.7 energy namespaces are read: `energyInfrastructure` and the AFIR
+ * profile `afirEnergyInfrastructure`, whose element names are the same where
+ * they say the same thing. AFIR moves the charging mode from the connector to
+ * the refill point, adds the point's current type, and prices a point by the
+ * energy rates of its energy products instead of a rate table.
+ *
+ * A site, station, refill point or connector without the identity or type the
+ * schema requires of it, a rate without a currency or with a line that cannot
+ * be read, and a status that names no refill point or no status are counted
+ * as `malformed` under the options' feed.
  */
 
 export interface DatexEnergyConnector {
@@ -30,18 +42,32 @@ export interface DatexEnergyConnector {
 }
 
 export interface DatexEnergyRateLine {
+  /** A rate table line's `rateLineType`, or an AFIR energy price's `priceType`. */
   type: string;
   value: number;
   /** The refill point's delivery unit, on a per-unit line. */
   unit?: string;
   description?: string;
+  /** An AFIR price's charging minutes it applies from and up to. */
+  fromMinute?: number;
+  toMinute?: number;
+  /** An AFIR price's delivered kWh it applies from and up to. */
+  fromKWh?: number;
+  toKWh?: number;
+  /** Whether the price includes tax, where it says. */
+  taxIncluded?: boolean;
+  /** The price applies only in periods of its own (`overallPeriod`). */
+  periodic?: boolean;
 }
 
 export interface DatexEnergyRate {
-  /** The rate table's own id, where it has one. */
+  /** `rateTable`: a facilities rate table; `energyRate`: an AFIR energy rate. */
+  kind: "rateTable" | "energyRate";
+  /** The rate's own id, where it has one. */
   id?: string;
   /** ISO 4217, upper case. */
   currency: string;
+  /** A rate table's `pricingPolicy`, an energy rate's `ratePolicy`. */
   pricingPolicy?: string;
   lines: DatexEnergyRateLine[];
 }
@@ -51,6 +77,10 @@ export interface DatexRefillPoint {
   externalId?: string;
   /** The eMI3 EVSE id, as published, when the name or external identifier is one. */
   emi3?: string;
+  /** The point's own charging mode, where AFIR states it on the point. */
+  chargingMode?: string;
+  /** AFIR's `currentType`: `ac` or `dc`. */
+  currentType?: string;
   connectors: DatexEnergyConnector[];
   rates: DatexEnergyRate[];
 }
@@ -251,9 +281,15 @@ function operatorOf(site: XmlObject): DatexEnergySite["operator"] {
   return Object.keys(out).length === 0 ? undefined : out;
 }
 
-function connectorOf(connector: XmlObject): DatexEnergyConnector | undefined {
+function connectorOf(
+  connector: XmlObject,
+  options: DatexDecodeOptions,
+): DatexEnergyConnector | undefined {
   const type = localChildText(connector, "connectorType");
-  if (type === undefined) return undefined;
+  if (type === undefined) {
+    skipped(options, "malformed");
+    return undefined;
+  }
   const format = localChildText(connector, "connectorFormat");
   const chargingMode = localChildText(connector, "chargingMode");
   const maxPowerW = positive(localChildText(connector, "maxPowerAtSocket"));
@@ -269,7 +305,7 @@ function connectorOf(connector: XmlObject): DatexEnergyConnector | undefined {
   };
 }
 
-function ratesOf(point: XmlObject): DatexEnergyRate[] {
+function ratesOf(point: XmlObject, options: DatexDecodeOptions): DatexEnergyRate[] {
   const deliveryUnit = localChildText(point, "deliveryUnit");
   const out: DatexEnergyRate[] = [];
   for (const table of localChildren(point, "rates")) {
@@ -279,14 +315,15 @@ function ratesOf(point: XmlObject): DatexEnergyRate[] {
       localChildText(table, "applicableCurrency") ??
       collections.map((c) => localChildText(c, "applicableCurrency")).find((c) => c !== undefined)
     )?.toUpperCase();
-    if (currency === undefined) continue;
-    const pricingPolicy = localChildText(localChild(table, "energyPricingPolicy"), "pricingPolicy");
     const lines: DatexEnergyRateLine[] = [];
+    let unreadable = currency === undefined;
     for (const line of collections.flatMap((c) => localChildren(c, "rateLine"))) {
       const type = localChildText(line, "rateLineType");
-      const raw = localChildText(line, "value");
-      const value = raw === undefined ? Number.NaN : Number(raw);
-      if (type === undefined || !Number.isFinite(value)) continue;
+      const value = amount(localChildText(line, "value"));
+      if (type === undefined || value === undefined) {
+        unreadable = true;
+        continue;
+      }
       const description = firstText(localChild(line, "description"));
       lines.push({
         type,
@@ -295,20 +332,88 @@ function ratesOf(point: XmlObject): DatexEnergyRate[] {
         ...(description === undefined ? {} : { description }),
       });
     }
+    // Part of a price is a wrong price: a table missing its currency or a line is not read.
+    if (unreadable || currency === undefined) {
+      skipped(options, "malformed");
+      continue;
+    }
+    const pricingPolicy = localChildText(localChild(table, "energyPricingPolicy"), "pricingPolicy");
     const id = present(localAttribute(table, "id"));
     out.push({
+      kind: "rateTable",
       ...(id === undefined ? {} : { id }),
       currency,
       ...(pricingPolicy === undefined ? {} : { pricingPolicy }),
       lines,
     });
   }
+  for (const rate of localChildren(point, "energyProduct").flatMap((p) =>
+    localChildren(p, "energyRate"),
+  )) {
+    const energyRate = energyRateOf(rate);
+    if (energyRate === undefined) skipped(options, "malformed");
+    else out.push(energyRate);
+  }
   return out;
 }
 
-function refillPointOf(point: XmlObject): DatexRefillPoint | undefined {
+function amount(raw: string | undefined): number | undefined {
+  const value = raw === undefined ? Number.NaN : Number(raw);
+  return Number.isFinite(value) ? value : undefined;
+}
+
+/**
+ * An AFIR energy rate, a line per energy price. Undefined when it names no
+ * currency or a price lacks its type or value.
+ */
+function energyRateOf(rate: XmlObject): DatexEnergyRate | undefined {
+  const currency = localChildText(rate, "applicableCurrency")?.toUpperCase();
+  if (currency === undefined) return undefined;
+  const lines: DatexEnergyRateLine[] = [];
+  for (const price of localChildren(rate, "energyPrice")) {
+    const type = localChildText(price, "priceType");
+    const value = amount(localChildText(price, "value"));
+    if (type === undefined || value === undefined) return undefined;
+    const time = localChild(price, "timeBasedApplicability");
+    const energy = localChild(price, "energyBasedApplicability");
+    const fromMinute = amount(localChildText(time, "fromMinute"));
+    const toMinute = amount(localChildText(time, "toMinute"));
+    const fromKWh = amount(localChildText(energy, "fromKWh"));
+    const toKWh = amount(localChildText(energy, "toKWh"));
+    const tax = localChildText(price, "taxIncluded");
+    const description = firstText(localChild(price, "additionalInformation"));
+    lines.push({
+      type,
+      value,
+      ...(description === undefined ? {} : { description }),
+      ...(fromMinute === undefined ? {} : { fromMinute }),
+      ...(toMinute === undefined ? {} : { toMinute }),
+      ...(fromKWh === undefined ? {} : { fromKWh }),
+      ...(toKWh === undefined ? {} : { toKWh }),
+      ...(tax === "true" || tax === "false" ? { taxIncluded: tax === "true" } : {}),
+      ...(localChildren(price, "overallPeriod").length > 0 ? { periodic: true } : {}),
+    });
+  }
+  const pricingPolicy = localChildText(rate, "ratePolicy");
+  const id = present(localAttribute(rate, "id"));
+  return {
+    kind: "energyRate",
+    ...(id === undefined ? {} : { id }),
+    currency,
+    ...(pricingPolicy === undefined ? {} : { pricingPolicy }),
+    lines,
+  };
+}
+
+function refillPointOf(
+  point: XmlObject,
+  options: DatexDecodeOptions,
+): DatexRefillPoint | undefined {
   const id = present(localAttribute(point, "id"));
-  if (id === undefined) return undefined;
+  if (id === undefined) {
+    skipped(options, "malformed");
+    return undefined;
+  }
   const externalId = present(localChildText(point, "externalIdentifier"));
   const names = multilingual(localChild(point, "name")).map((n) => n.value);
   // Spain names the point by its EVSE id; Slovenia gives the EVSE id as the point's own id.
@@ -318,34 +423,47 @@ function refillPointOf(point: XmlObject): DatexRefillPoint | undefined {
     ...(externalId === undefined ? [] : [externalId]),
     ...(id.includes("*") ? [id] : []),
   ].find((candidate) => EMI3_EVSE_ID.test(candidate));
+  const chargingMode = localChildText(point, "chargingMode");
+  const currentType = localChildText(point, "currentType");
   return {
     id,
     ...(externalId === undefined ? {} : { externalId }),
     ...(emi3 === undefined ? {} : { emi3 }),
+    ...(chargingMode === undefined ? {} : { chargingMode }),
+    ...(currentType === undefined ? {} : { currentType }),
     connectors: localChildren(point, "connector")
-      .map(connectorOf)
+      .map((c) => connectorOf(c, options))
       .filter((c): c is DatexEnergyConnector => c !== undefined),
-    rates: ratesOf(point),
+    rates: ratesOf(point, options),
   };
 }
 
-function stationOf(station: XmlObject): DatexEnergyStation | undefined {
+function stationOf(
+  station: XmlObject,
+  options: DatexDecodeOptions,
+): DatexEnergyStation | undefined {
   const id = present(localAttribute(station, "id"));
-  if (id === undefined) return undefined;
+  if (id === undefined) {
+    skipped(options, "malformed");
+    return undefined;
+  }
   return {
     id,
     authMethods: [...new Set(localChildTexts(station, "authenticationAndIdentificationMethods"))],
     points: localChildren(station, "refillPoint")
       // Hydrogen and gas refill points share the table; only charging is read.
       .filter((p) => ["", "ElectricChargingPoint"].includes(elementType(p)))
-      .map(refillPointOf)
+      .map((p) => refillPointOf(p, options))
       .filter((p): p is DatexRefillPoint => p !== undefined),
   };
 }
 
-function siteOf(site: XmlObject): DatexEnergySite | undefined {
+function siteOf(site: XmlObject, options: DatexDecodeOptions): DatexEnergySite | undefined {
   const id = present(localAttribute(site, "id"));
-  if (id === undefined) return undefined;
+  if (id === undefined) {
+    skipped(options, "malformed");
+    return undefined;
+  }
   const version = present(localAttribute(site, "version"));
   const point = pointOf(localChild(site, "locationReference"));
   const address = addressOf(site);
@@ -372,7 +490,7 @@ function siteOf(site: XmlObject): DatexEnergySite | undefined {
     ...(openingHours === undefined ? {} : { openingHours }),
     ...(lastUpdated === undefined ? {} : { lastUpdated }),
     stations: localChildren(site, "energyInfrastructureStation")
-      .map(stationOf)
+      .map((s) => stationOf(s, options))
       .filter((s): s is DatexEnergyStation => s !== undefined),
   };
 }
@@ -381,12 +499,15 @@ const isEnergyPublication = (p: DatexPublication, type: string): boolean =>
   p.type === type || p.type === "";
 
 /** Every site in the document's energy infrastructure table publications. */
-export function parseDatexEnergyTable(doc: XmlObject): DatexEnergySite[] {
+export function parseDatexEnergyTable(
+  doc: XmlObject,
+  options: DatexDecodeOptions = {},
+): DatexEnergySite[] {
   return datexPublications(doc)
     .filter((p) => isEnergyPublication(p, "EnergyInfrastructureTablePublication"))
     .flatMap((p) => localChildren(p.body, "energyInfrastructureTable"))
     .flatMap((table) => localChildren(table, "energyInfrastructureSite"))
-    .map(siteOf)
+    .map((s) => siteOf(s, options))
     .filter((s): s is DatexEnergySite => s !== undefined);
 }
 
@@ -425,7 +546,10 @@ function subjectId(node: XmlObject): string | undefined {
 }
 
 /** Every refill point status in the document's energy infrastructure status publications. */
-export function parseDatexEnergyStatus(doc: XmlObject): DatexEnergyStatus[] {
+export function parseDatexEnergyStatus(
+  doc: XmlObject,
+  options: DatexDecodeOptions = {},
+): DatexEnergyStatus[] {
   const out: DatexEnergyStatus[] = [];
   const publications = datexPublications(doc).filter((p) =>
     isEnergyPublication(p, "EnergyInfrastructureStatusPublication"),
@@ -441,7 +565,10 @@ export function parseDatexEnergyStatus(doc: XmlObject): DatexEnergyStatus[] {
       for (const point of localChildren(station, "refillPointStatus")) {
         const refillPointId = subjectId(point);
         const status = localChildText(point, "status");
-        if (refillPointId === undefined || status === undefined) continue;
+        if (refillPointId === undefined || status === undefined) {
+          skipped(options, "malformed");
+          continue;
+        }
         const connectorIndex = present(localAttribute(point, "connectorIndex"));
         const at = localChildText(point, "lastUpdated") ?? stationAt;
         out.push({

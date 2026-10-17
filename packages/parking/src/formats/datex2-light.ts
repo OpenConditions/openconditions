@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type {
   ParkingLayout,
@@ -367,7 +368,9 @@ function sitesOf(body: Buffer): { sites: LightSite[]; publishedAt?: string } {
  * The DATEX II Light JSON of the NRW Mobilithek exporter (Mobidrom): a
  * `parkingPublicationLight.parkingSite[]` publication or a bare array of
  * sites. Text is repaired where the publisher double-encoded it. Readings
- * are dated by the site's last update, else the publication time.
+ * are dated by the site's last update, else the publication time. A site
+ * without an id is counted as `malformed`, one without a placeable point as
+ * `no_geometry`.
  */
 export function parseDatex2Light(
   feed: ParkingCatalogFeed,
@@ -375,14 +378,19 @@ export function parseDatex2Light(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
+  let malformed = 0;
+  let unplaced = 0;
   for (const body of payloads["main"] ?? []) {
     const { sites, publishedAt } = sitesOf(body);
     for (const site of sites) {
       const stationId = text(site.id) ?? text(site.externalId);
       const point = pointOf(site.locationAndDimension?.coordinatesForDisplay);
-      if (stationId === undefined || point === undefined) {
-        rejected++;
+      if (stationId === undefined) {
+        malformed++;
+        continue;
+      }
+      if (point === undefined) {
+        unplaced++;
         continue;
       }
       out.features.push(siteDraft(feed, siteInput(feed, site, stationId, point), ctx.fetchedAt));
@@ -391,6 +399,7 @@ export function parseDatex2Light(
       out.observations.push(...readingsOf(feed, site, { stationId, at, point }, ctx));
     }
   }
-  out.rejected = rejected;
+  recordSkipped(feed.id, "malformed", malformed);
+  recordSkipped(feed.id, "no_geometry", unplaced);
   return out;
 }

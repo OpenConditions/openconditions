@@ -4,6 +4,7 @@ import {
   type DatexEnergyRate,
   type DatexEnergySite,
   type DatexEnergyStatus,
+  type DatexRefillPoint,
   parseDatexEnergyStatus,
   parseDatexEnergyTable,
   parseXmlDocument,
@@ -13,17 +14,18 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
   type StatusSubject,
 } from "@openconditions/ingest-framework";
-import type { AUTHENTICATION_METHODS } from "@openconditions/model";
+import type { AUTHENTICATION_METHODS, PAYMENT_METHODS } from "@openconditions/model";
 import {
   DATEX2_CONNECTOR_FORMATS,
   DATEX2_CONNECTOR_STANDARDS,
   DATEX2_REFILL_POINT_STATUSES,
 } from "@openconditions/model-charging";
-import type { OcpiTariff } from "@openconditions/ocpi";
+import type { OcpiPriceComponent, OcpiRestrictions, OcpiTariff } from "@openconditions/ocpi";
 import { colocateSites } from "../colocate.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours } from "../hours.js";
@@ -33,6 +35,7 @@ import {
   type EvseInput,
   type EvseStatus,
   instantIn,
+  type ParkingType,
   type PowerType,
   type SiteInput,
   siteDraft,
@@ -43,47 +46,193 @@ import { tariffDraft, tariffKeys } from "../tariff.js";
 
 const WEEKDAYS = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
+/** Counts a value the parser does not know under the feed, when there is one. */
+type Unknown = (value: string | undefined) => void;
+
 /**
- * The OCPI dimension a rate line prices: a session fee is flat; a price per
- * unit under a per-delivery-unit policy is per kilowatt-hour, the unit an
- * electric charging point delivers when it states none. A price per unit of
- * charging time names no time unit in DATEX, so it is not read.
+ * The OCPI price component of a rate table line: a flat rate is flat; a
+ * price per unit is per kilowatt-hour where the unit is the electric
+ * charging point's (`kWh`, or none stated) and the table prices per delivery
+ * unit or does not say. A price per unit of charging time names no time
+ * unit in DATEX, and an incrementing or tiered rate has no single price, so
+ * neither is read.
  */
-function dimensionOf(policy: string | undefined, line: DatexEnergyRate["lines"][number]) {
-  if (line.type === "flatRate") return "FLAT";
-  if (line.type === "perUnit" && policy === "pricePerDeliveryUnit") {
-    return line.unit === undefined || line.unit === "kWh" ? "ENERGY" : undefined;
+function rateLineComponent(
+  policy: string | undefined,
+  line: DatexEnergyRate["lines"][number],
+): OcpiPriceComponent | undefined {
+  if (line.type === "flatRate") return { type: "FLAT", price: line.value };
+  const perDeliveryUnit = policy === undefined || policy === "pricePerDeliveryUnit";
+  if (line.type === "perUnit" && perDeliveryUnit) {
+    return line.unit === undefined || line.unit === "kWh"
+      ? { type: "ENERGY", price: line.value }
+      : undefined;
   }
   return undefined;
 }
 
-const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[number]>> = {
-  rfid: "rfid",
-  apps: "app",
-  creditCard: "credit_card",
-  debitCard: "debit_card",
-  nfc: "nfc",
-  plugAndCharge: "plug_and_charge",
-};
-
-/** The power a charging mode names: `mode3AC3p` is three-phase AC, `mode4DC` DC. */
-function powerTypeOf(mode: string | undefined): PowerType | undefined {
-  if (mode === undefined) return undefined;
-  if (/DC$/i.test(mode) || mode === "chademo") return "DC";
-  if (/AC3p$/i.test(mode)) return "AC_3_PHASE";
-  if (/AC1p$/i.test(mode)) return "AC_1_PHASE";
-  return undefined;
+/**
+ * The OCPI price component of an AFIR energy price. A price per minute is
+ * OCPI's time price, which is per hour; a base price is added to the rest,
+ * as OCPI's flat price is. A price per kilogram is no electricity price.
+ */
+function energyPriceComponent(line: DatexEnergyRate["lines"][number]) {
+  switch (line.type) {
+    case "pricePerKWh":
+      return { type: "ENERGY", price: line.value };
+    case "pricePerMinute":
+      return { type: "TIME", price: line.value * 60 };
+    case "basePrice":
+    case "flatRate":
+      return { type: "FLAT", price: line.value };
+    case "free":
+      return { type: "FLAT", price: 0 };
+    default:
+      return undefined;
+  }
 }
 
-function connectorOf(c: DatexEnergyConnector, i: number, tariffIds: string[]): ConnectorInput {
-  const standard = DATEX2_CONNECTOR_STANDARDS[c.type];
-  const format = c.format === undefined ? undefined : DATEX2_CONNECTOR_FORMATS[c.format];
-  const powerType = powerTypeOf(c.chargingMode);
+/** An AFIR price's charging minutes and kilowatt-hours as OCPI restrictions. */
+function restrictionsOf(line: DatexEnergyRate["lines"][number]): OcpiRestrictions | undefined {
+  const r: OcpiRestrictions = {
+    ...(line.fromMinute === undefined || line.fromMinute === 0
+      ? {}
+      : { min_duration: line.fromMinute * 60 }),
+    ...(line.toMinute === undefined ? {} : { max_duration: line.toMinute * 60 }),
+    ...(line.fromKWh === undefined || line.fromKWh === 0 ? {} : { min_kwh: line.fromKWh }),
+    ...(line.toKWh === undefined ? {} : { max_kwh: line.toKWh }),
+  };
+  return Object.keys(r).length === 0 ? undefined : r;
+}
+
+/**
+ * DATEX authentication and identification methods. The RFID cards and
+ * chips (Calypso, Mifare, a phone's active chip) identify by RFID; PLC is
+ * ISO 15118 communication over the charging cable, plug and charge; a phone
+ * call, text message or website starts a charge remotely. Paying cash is a
+ * payment method, not an identification, and is read as one. Over-the-air
+ * ISO 15118 names a channel rather than a method, a PIN pad or prepaid card
+ * may be any of several, and "no access" is no method: those say nothing.
+ */
+const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[number] | null>> = {
+  activeRFIDChip: "rfid",
+  apps: "app",
+  calypso: "rfid",
+  cashPayment: null,
+  creditCard: "credit_card",
+  debitCard: "debit_card",
+  mifareClassic: "rfid",
+  mifareDesfire: "rfid",
+  nfc: "nfc",
+  overTheAir: null,
+  phoneDialog: "remote",
+  phoneSMS: "remote",
+  pinpad: null,
+  plc: "plug_and_charge",
+  prepaidCard: null,
+  rfid: "rfid",
+  website: "remote",
+  unlimitedAccess: "none",
+  noAccess: null,
+  _extended: null,
+};
+
+const PAYMENT: Readonly<Record<string, (typeof PAYMENT_METHODS)[number]>> = {
+  cashPayment: "cash",
+};
+
+/**
+ * Where a site's vehicles stand, from its site type: inside a building is a
+ * car park, an open space a parking lot. A roof or a company's ground says
+ * nothing of how vehicles stand.
+ */
+const PARKING_TYPES: Readonly<Record<string, ParkingType | null>> = {
+  "siteType:onstreet": "on_street",
+  "siteType:inBuilding": "parking_garage",
+  "siteType:openSpace": "parking_lot",
+  "siteType:other": "other",
+  "siteType:roofedStation": null,
+  "siteType:onCompanySite": null,
+  "siteType:_extended": null,
+};
+
+/**
+ * Connector types as the crosswalk keys them, plus the AFIR profile's own
+ * spellings: AFIR writes the domestic sockets `domesticFType` for
+ * `domesticF` and adds the Megawatt Charging System. DATEX defines
+ * `teslaConnectorEurope` as "modification of the Type 2 connector", which a
+ * Type 2 plug fits, and `teslaConnectorAmerica` as Tesla's own American
+ * connector, the one OCPI calls `TESLA_S`.
+ */
+const CONNECTOR_STANDARDS: Readonly<Record<string, string | null>> = {
+  ...DATEX2_CONNECTOR_STANDARDS,
+  ...Object.fromEntries(
+    [..."ABCDEFGHIJKLMNO"].map((letter) => [`domestic${letter}Type`, `DOMESTIC_${letter}`]),
+  ),
+  mcs: "MCS",
+  teslaConnectorEurope: "IEC_62196_T2",
+  teslaConnectorAmerica: "TESLA_S",
+};
+
+/**
+ * The power a charging mode names (IEC 61851-1 modes 1 to 3 are AC with
+ * their phases, mode 4 is DC). A combined charging solution uses AC and DC
+ * at once, and an inductive, other or unknown mode names no power type.
+ */
+const CHARGING_MODES: Readonly<Record<string, PowerType | null>> = {
+  mode1AC1p: "AC_1_PHASE",
+  mode1AC3p: "AC_3_PHASE",
+  mode2AC1p: "AC_1_PHASE",
+  mode2AC3p: "AC_3_PHASE",
+  mode3AC3p: "AC_3_PHASE",
+  mode4DC: "DC",
+  legacyInductive: null,
+  ccs: null,
+  other: null,
+  unknown: null,
+  _extended: null,
+};
+
+const CURRENT_TYPES: Readonly<Record<string, "ac" | "dc" | null>> = {
+  ac: "ac",
+  dc: "dc",
+  _extended: null,
+};
+
+/** A value of a table, counted as unknown when the table does not know it. */
+function lookup<T>(
+  table: Readonly<Record<string, T | null>>,
+  value: string | undefined,
+  unknown: Unknown,
+): T | undefined {
+  if (value === undefined) return undefined;
+  if (!(value in table)) {
+    unknown(value);
+    return undefined;
+  }
+  return table[value] ?? undefined;
+}
+
+function connectorOf(
+  c: DatexEnergyConnector,
+  i: number,
+  point: DatexRefillPoint,
+  tariffIds: string[],
+  unknown: Unknown,
+): ConnectorInput {
+  const standard = lookup(CONNECTOR_STANDARDS, c.type, unknown);
+  const format = lookup(DATEX2_CONNECTOR_FORMATS, c.format, unknown);
+  // AFIR states the charging mode and the current on the point, the energy
+  // infrastructure namespace the mode on each connector.
+  const mode = lookup(CHARGING_MODES, c.chargingMode ?? point.chargingMode, unknown);
+  const current = lookup(CURRENT_TYPES, point.currentType, unknown);
+  const powerType = mode ?? (current === "dc" ? "DC" : undefined);
   return {
     id: String(i + 1),
-    standard: typeof standard === "string" ? standard : "UNKNOWN",
+    standard: standard ?? "UNKNOWN",
     ...(format === "socket" || format === "cable" ? { format } : {}),
     ...(powerType === undefined ? {} : { powerType }),
+    ...(current === undefined ? {} : { current }),
     ...(c.maxPowerW === undefined ? {} : { maxPowerKw: Math.round(c.maxPowerW) / 1000 }),
     ...(c.voltage === undefined ? {} : { maxVoltage: c.voltage }),
     ...(c.maxCurrentA === undefined ? {} : { maxAmperage: c.maxCurrentA }),
@@ -101,22 +250,76 @@ function hoursOf(hours: DatexEnergyOpeningHours | undefined): string | undefined
   );
 }
 
+const RATE_LINE_TYPES = new Set(["flatRate", "incrementingRate", "flatRateTier", "perUnit"]);
+const PRICE_TYPES = new Set([
+  "pricePerMinute",
+  "pricePerKg",
+  "pricePerKWh",
+  "basePrice",
+  "flatRate",
+  "free",
+  "other",
+]);
+const PRICING_POLICIES = new Set([
+  "pricePerChargingTime",
+  "pricePerDeliveryUnit",
+  "contract",
+  "flatRate",
+  "unknown",
+  "free",
+  "other",
+]);
+const RATE_POLICIES = new Set(["contract", "adHoc"]);
+
 /**
- * A rate table as the OCPI tariff it is: one priced element of its lines,
- * each priced by its own line type. A table with a line that cannot be
- * priced (a minimum, a maximum, a time price) is no tariff: part of a price
- * is a wrong price.
+ * A rate as the OCPI tariff it is. A rate table is one priced element of
+ * its lines; a table that is free and lists no lines is a zero flat price.
+ * An AFIR energy rate is an element per energy price, restricted to the
+ * charging minutes and kilowatt-hours the price applies to. A rate with a
+ * price that cannot be priced (a minimum, a time price without a unit, a
+ * price for a period of its own) is no tariff: part of a price is a wrong
+ * price. A rate a contract sets is no public price either; of an energy
+ * rate, only the ad hoc price is.
  */
-function tariffOf(id: string, rate: DatexEnergyRate): OcpiTariff | undefined {
-  const components = rate.lines.map((line) => {
-    const type = dimensionOf(rate.pricingPolicy, line);
-    return type === undefined ? undefined : { type, price: line.value };
-  });
-  if (components.length === 0 || components.some((c) => c === undefined)) return undefined;
+function tariffOf(id: string, rate: DatexEnergyRate, unknown: Unknown): OcpiTariff | undefined {
+  const policies = rate.kind === "energyRate" ? RATE_POLICIES : PRICING_POLICIES;
+  if (rate.pricingPolicy !== undefined && !policies.has(rate.pricingPolicy)) {
+    unknown(rate.pricingPolicy);
+  }
+  const lineTypes = rate.kind === "energyRate" ? PRICE_TYPES : RATE_LINE_TYPES;
+  for (const line of rate.lines) if (!lineTypes.has(line.type)) unknown(line.type);
+  if (rate.pricingPolicy === "contract") return undefined;
+  if (rate.kind === "energyRate" && rate.pricingPolicy !== "adHoc") return undefined;
+  let elements: OcpiTariff["elements"];
+  if (rate.kind === "energyRate") {
+    if (rate.lines.some((line) => line.periodic)) return undefined;
+    const priced = rate.lines.map((line) => {
+      const component = energyPriceComponent(line);
+      const restrictions = restrictionsOf(line);
+      return component === undefined
+        ? undefined
+        : {
+            price_components: [component],
+            ...(restrictions === undefined ? {} : { restrictions }),
+          };
+    });
+    if (priced.some((e) => e === undefined)) return undefined;
+    elements = priced as OcpiTariff["elements"];
+  } else if (rate.pricingPolicy === "free" && rate.lines.length === 0) {
+    elements = [{ price_components: [{ type: "FLAT", price: 0 }] }];
+  } else {
+    const components = rate.lines.map((line) => rateLineComponent(rate.pricingPolicy, line));
+    if (components.some((component) => component === undefined)) return undefined;
+    elements = [{ price_components: components as OcpiPriceComponent[] }];
+  }
+  if (elements.length === 0) return undefined;
+  const taxes = new Set(rate.lines.map((line) => line.taxIncluded));
+  const taxIncluded = taxes.size === 1 ? [...taxes][0] : undefined;
   return {
     id,
     currency: rate.currency,
-    elements: [{ price_components: components as { type: string; price: number }[] }],
+    elements,
+    ...(taxIncluded === undefined ? {} : { tax_included: taxIncluded ? "YES" : "NO" }),
   };
 }
 
@@ -135,9 +338,13 @@ const bicyclesOnly = (site: DatexEnergySite) =>
  * (Lithuania numbers them), so a status is joined on site, station and point.
  * A planned point has no live state but its lifecycle; a removed one is no
  * charge point, and a site of removed points no site; a status last changed
- * more than 30 days back is no reading. DATEX does not say whether a rate
- * includes VAT, so its offers do not either. One operator's sites within
- * 15 m are one site.
+ * more than 30 days back is no reading. An offer says whether its price
+ * includes VAT only where every price of an AFIR energy rate says so; a rate
+ * table does not say. One operator's sites within 15 m are one site.
+ *
+ * A site without a placeable point is counted as `no_geometry`, and a code
+ * none of the tables here knows as `unknown_value`, under the feed; the
+ * decoder counts what it cannot read at all as `malformed`.
  */
 export function parseDatex2(
   feed: ChargingCatalogFeed,
@@ -147,7 +354,11 @@ export function parseDatex2(
   const out = emptyParseOutput();
   const main = payloads["main"] ?? [];
   if (main.length === 0) return out;
-  const sites = main.flatMap((body) => parseDatexEnergyTable(parseXmlDocument(body)));
+  const options = { sourceId: feed.id };
+  const unknown: Unknown = (value) => {
+    if (value !== undefined) recordSkipped(feed.id, "unknown_value");
+  };
+  const sites = main.flatMap((body) => parseDatexEnergyTable(parseXmlDocument(body), options));
   // A status names its refill point by site, station and point, or by the
   // bare point id where that is unique in the table.
   const points = new Map<string, number>();
@@ -155,17 +366,17 @@ export function parseDatex2(
     for (const refill of station.points) points.set(refill.id, (points.get(refill.id) ?? 0) + 1);
   }
   const unique = (pointId: string) => points.get(pointId) === 1;
-  const statuses = statusesOf(payloads["status"] ?? []);
+  const statuses = statusesOf(payloads["status"] ?? [], feed.id);
   const statusOf = (siteId: string, stationId: string, pointId: string) =>
     statuses.get(pointKey(siteId, stationId, pointId)) ??
     (unique(pointId) ? statuses.get(pointKey(undefined, undefined, pointId)) : undefined);
   const index: StatusIndexDraft = new Map();
   const seen = new Set<string>();
-  let rejected = 0;
+  let unplaced = 0;
   for (const site of sites) {
     if (bicyclesOnly(site)) continue;
     if (site.point === undefined) {
-      rejected++;
+      unplaced++;
       continue;
     }
     if (seen.has(site.id)) continue;
@@ -189,7 +400,7 @@ export function parseDatex2(
         if (evseKeys.has(key)) key = `${station.id}-${refill.id}`;
         evseKeys.add(key);
         const tariffIds = refill.rates.flatMap((rate, i) => {
-          const tariff = tariffOf(rate.id ?? `${key}-${i + 1}`, rate);
+          const tariff = tariffOf(rate.id ?? `${key}-${i + 1}`, rate, unknown);
           if (tariff === undefined) return [];
           tariffs.set(tariff.id, tariff);
           return [tariff.id];
@@ -198,7 +409,9 @@ export function parseDatex2(
           key,
           ...(refill.emi3 === undefined ? {} : { evseId: refill.emi3 }),
           ...(value === "planned" ? { lifecycle: "planned" as const } : {}),
-          connectors: refill.connectors.map((c, i) => connectorOf(c, i, tariffIds)),
+          connectors: refill.connectors.map((c, i) =>
+            connectorOf(c, i, refill, tariffIds, unknown),
+          ),
         });
         // A point not yet built takes its live state from the next full parse.
         if (value === "planned") continue;
@@ -226,8 +439,12 @@ export function parseDatex2(
         key: keys.get(tariff.id) ?? tariff.id,
       });
       if (offer === undefined) continue;
-      const { priceIncludesVat: _unstated, ...stated } = offer;
-      out.offers.push(stated);
+      if (tariff.tax_included === undefined) {
+        const { priceIncludesVat: _unstated, ...stated } = offer;
+        out.offers.push(stated);
+      } else {
+        out.offers.push(offer);
+      }
       offered.add(tariff.id);
     }
     for (const evse of evses) {
@@ -240,16 +457,19 @@ export function parseDatex2(
       }
     }
     const name = site.names[0];
+    const methods = site.stations.flatMap((s) => s.authMethods);
     const authentication = [
       ...new Set(
-        site.stations.flatMap((s) =>
-          s.authMethods.flatMap((m) => {
-            const method = AUTHENTICATION[m];
-            return method === undefined ? [] : [method];
-          }),
-        ),
+        methods.flatMap((m) => {
+          const method = lookup(AUTHENTICATION, m, unknown);
+          return method === undefined ? [] : [method];
+        }),
       ),
     ];
+    const payment = [
+      ...new Set(methods.flatMap((m) => (PAYMENT[m] === undefined ? [] : [PAYMENT[m]]))),
+    ];
+    const parkingType = lookup(PARKING_TYPES, site.siteType, unknown);
     const hours = hoursOf(site.openingHours);
     const input: SiteInput = {
       stationId,
@@ -259,11 +479,13 @@ export function parseDatex2(
       ...(site.address === undefined ? {} : { address: site.address }),
       ...(hours === undefined ? {} : { openingHoursOsm: hours }),
       ...(authentication.length === 0 ? {} : { authentication }),
+      ...(payment.length === 0 ? {} : { payment }),
+      ...(parkingType === undefined ? {} : { parkingType }),
       evses,
     };
     out.features.push(siteDraft(feed, input, ctx.fetchedAt));
   }
-  out.rejected = rejected;
+  recordSkipped(feed.id, "no_geometry", unplaced);
   out.statusIndex = index;
   colocateSites(out);
   out.observations = datexStatusReadings(feed, statuses, index, ctx).observations;
@@ -279,10 +501,18 @@ const pointKey = (siteId: string | undefined, stationId: string | undefined, poi
     ? `${siteId}|${stationId}|${pointId}`
     : `|${pointId}`;
 
-function statusesOf(bodies: readonly Buffer[]): Map<string, DatexEnergyStatus> {
+/**
+ * The statuses of the status bodies by the key they name their refill point
+ * by. A status value the refill point statuses do not know is counted as
+ * `unknown_value`.
+ */
+function statusesOf(bodies: readonly Buffer[], feedId: string): Map<string, DatexEnergyStatus> {
   const statuses = new Map<string, DatexEnergyStatus>();
   for (const body of bodies) {
-    for (const status of parseDatexEnergyStatus(parseXmlDocument(body))) {
+    for (const status of parseDatexEnergyStatus(parseXmlDocument(body), { sourceId: feedId })) {
+      if (!(status.status in DATEX2_REFILL_POINT_STATUSES)) {
+        recordSkipped(feedId, "unknown_value");
+      }
       statuses.set(pointKey(status.siteId, status.stationId, status.refillPointId), status);
     }
   }
@@ -332,5 +562,5 @@ export function parseDatex2Status(
   ctx: ParseContext,
   index: StatusIndex,
 ): StatusOutput {
-  return datexStatusReadings(feed, statusesOf(payloads["status"] ?? []), index, ctx);
+  return datexStatusReadings(feed, statusesOf(payloads["status"] ?? [], feed.id), index, ctx);
 }

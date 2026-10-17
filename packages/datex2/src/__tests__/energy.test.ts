@@ -98,6 +98,7 @@ describe("parseDatexEnergyTable", () => {
     expect(point.emi3).toBe("SI*GNE*E1297");
     expect(point.rates).toEqual([
       {
+        kind: "rateTable",
         id: "ea9984e6-8786-4c9e-913b-aebe4c167073-rp-c",
         currency: "EUR",
         pricingPolicy: "pricePerDeliveryUnit",

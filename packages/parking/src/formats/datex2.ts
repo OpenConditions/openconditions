@@ -16,15 +16,21 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { MappingTarget } from "@openconditions/model";
 import {
   DATEX2_PARKING_SUPERVISION,
   DATEX2_PARKING_VEHICLE_TYPES,
+  DATEX2_V2_PARKING,
+  DATEX2_V3_2_PARKING_SITE_STATUSES,
+  DATEX2_V3_FACILITIES,
+  DATEX2_V3_PARKING,
   type ParkingLayout,
   type ParkingSiteType,
   type ParkingStatus,
   type ParkingUserGroup,
+  type ParkingVehicleType,
   parkingCrosswalk,
 } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
@@ -77,10 +83,17 @@ function publisherOf(doc: XmlObject): string | undefined {
   return undefined;
 }
 
-/** The user groups DATEX names that are areas of their own. */
+/**
+ * The user groups DATEX names that are areas of their own. A bay for
+ * registered disabled persons, wheelchair users or "persons with
+ * deficiencies in their daily life" is a disabled bay.
+ */
 const USER_GROUPS: Readonly<Record<string, ParkingUserGroup>> = {
   disabled: "disabled",
   disabledWithPermit: "disabled",
+  registeredDisabledUsers: "disabled",
+  handicapped: "disabled",
+  wheelchairUsers: "disabled",
   women: "women",
   families: "family",
   residents: "residents",
@@ -100,8 +113,109 @@ const LAYOUTS: Readonly<Record<string, ParkingLayout>> = {
   "parkingLayout:field": "surface",
   "parkingLayout:covered": "covered",
   "parkingLayout:nested": "nested",
+  "parkingLayout:unknown": "unknown",
   "structureType:offStreetSurface": "surface",
 };
+
+/**
+ * Vehicle types the crosswalk does not name: v2's `fourWheelDrive` (the
+ * crosswalk spells it `fourWheelDriveVehicle`, which no DATEX version
+ * does), the car-sized types and v2's `VehicleType2Enum`, whose goods
+ * vehicles are vans or lorries and whose motorhome parks in a caravan bay. A
+ * car with a trailer still parks as a car.
+ */
+const VEHICLE_TYPES: Readonly<Record<string, ParkingVehicleType>> = {
+  ...DATEX2_PARKING_VEHICLE_TYPES,
+  fourWheelDrive: "car",
+  carOrLightVehicle: "car",
+  carWithTrailer: "car",
+  passengerCar: "car",
+  smallCar: "car",
+  largeCar: "car",
+  lightGoodsVehicle: "car",
+  heavyGoodsVehicle: "truck",
+  heavyGoodsVehicleWithTrailer: "truck",
+  motorhome: "caravan",
+};
+
+/**
+ * The opening statuses of v2 and the record-based v3 parking schema, which
+ * the crosswalk does not key: "closed because of some scheduled or
+ * unscheduled event" is an abnormal closure. "The normal opening times are
+ * in force, i.e. it is not explicit said if it's open right now" says
+ * neither.
+ */
+const RECORD_OPENING_STATUSES: Readonly<Record<string, ParkingStatus>> = {
+  "openingStatus:open": "open",
+  "openingStatus:closed": "closed",
+  "openingStatus:closedAbnormal": "closed_abnormally",
+  "openingStatus:statusUnknown": "unknown",
+};
+
+/** A standard's values with the `_extended` every v3 enumeration ends with. */
+const known = (...lists: readonly (readonly string[])[]): ReadonlySet<string> =>
+  new Set([...lists.flat(), "_extended"]);
+
+const V2 = DATEX2_V2_PARKING;
+const V3 = DATEX2_V3_PARKING;
+
+/**
+ * Every value DATEX defines for each code the decoder prefixes, in v2.3, the
+ * record-based v3 parking schema and v3.7. A code outside them is one the
+ * parser cannot know the meaning of, and is counted as `unknown_value`.
+ */
+const STANDARD_CODES: Readonly<Record<string, ReadonlySet<string>>> = {
+  usageScenario: known(V2.parkingUsageScenarios, V3.parkingUsageScenarios),
+  parkingLayout: known(V2.parkingLayouts),
+  urbanParkingSiteType: known(V2.urbanParkingSiteTypes),
+  interUrbanParkingSiteLocation: known(V2.interUrbanParkingSiteLocations),
+  structureType: known(V3.structureTypes),
+  equipmentType: known(V2.equipmentTypes),
+  serviceFacilityType: known(V2.serviceFacilityTypes),
+  facilityType: known(Object.keys(DATEX2_V3_FACILITIES).map((k) => k.slice(k.indexOf(":") + 1))),
+  parkingSiteStatus: known(V2.parkingSiteStatuses, DATEX2_V3_2_PARKING_SITE_STATUSES),
+  openingStatus: known(V2.openingStatuses, V3.openingStatuses),
+  overcrowdingStatus: known(V2.parkingSiteOvercrowdingStatuses),
+  placeStatus: known(V2.parkingSiteOvercrowdingStatuses, V3.parkingPlaceStatuses),
+  vacantSpaces: known(V2.parkingVacantSpaces, V3.parkingVacantSpaces),
+  operationStatus: known(V3.operationStatuses),
+  parkingOccupancyTrend: known(V2.parkingOccupancyTrends, V3.parkingOccupancyTrends),
+  security: known(V2.parkingSecurity, V3.parkingSecurity),
+  supervision: known(V2.parkingSupervisions, V3.parkingSupervisions),
+  labelSecurityLevel: known(V2.labelSecurityLevels),
+  vehicleType: known(V2.vehicleTypes, V2.vehicleTypes2, V3.vehicleTypes),
+  userType: known(V2.userTypes),
+};
+
+/** How many of these codes (`prefix:value`, or bare under `prefix`) DATEX does not define. */
+function unknownCodes(codes: readonly string[], prefix?: string): number {
+  return codes.filter((code) => {
+    const colon = prefix === undefined ? code.indexOf(":") : -1;
+    const set = STANDARD_CODES[prefix ?? code.slice(0, colon)];
+    return set !== undefined && !set.has(prefix === undefined ? code.slice(colon + 1) : code);
+  }).length;
+}
+
+/** The codes of a table record DATEX does not define. */
+function unknownRecordCodes(record: DatexParkingRecord): number {
+  return (
+    unknownCodes([...record.usage, ...record.layoutCodes, ...record.facilities]) +
+    unknownCodes(record.security, "security") +
+    unknownCodes(record.supervision === undefined ? [] : [record.supervision], "supervision") +
+    unknownCodes(
+      record.labelSecurityLevel === undefined ? [] : [record.labelSecurityLevel],
+      "labelSecurityLevel",
+    ) +
+    unknownCodes(
+      record.groups.flatMap((g) => g.vehicleTypes),
+      "vehicleType",
+    ) +
+    unknownCodes(
+      record.groups.flatMap((g) => g.userGroups),
+      "userType",
+    )
+  );
+}
 
 /** Usage scenarios that are usages of the model. */
 const USAGES: Readonly<Record<string, string>> = {
@@ -159,7 +273,7 @@ function groupAreas(record: DatexParkingRecord): Map<string, GroupArea> {
   const out = new Map<string, GroupArea>();
   for (const group of record.groups) {
     if (group.spaces === 0) continue;
-    const typed = group.vehicleTypes.map((v) => DATEX2_PARKING_VEHICLE_TYPES[v]).find(Boolean);
+    const typed = group.vehicleTypes.map((v) => VEHICLE_TYPES[v]).find(Boolean);
     if (typed === undefined && group.characterised) continue;
     const vehicleType = typed ?? "any";
     const userGroup = group.userGroups.map((u) => USER_GROUPS[u]).find(Boolean) ?? "any";
@@ -266,13 +380,18 @@ function rateOf(
 }
 
 /**
- * A status's codes as one `parking.status`. A code its version's crosswalk
- * has no key for (v3's graded vacant spaces, v2's opening status) says
- * nothing; when several map, the most telling wins.
+ * A status's codes as one `parking.status`: by the crosswalk of the
+ * document's version, else the other's (the record-based v3 schema publishes
+ * v2's graded vacant spaces), else the record-based opening statuses. When
+ * several map, the most telling wins.
  */
 function statusOf(status: DatexParkingStatus, target: Target): ParkingStatus | undefined {
   const mapped = status.statusCodes
-    .map((code) => parkingCrosswalk.value("parking_status", target, code))
+    .map(
+      (code) =>
+        either(target, (t) => parkingCrosswalk.value("parking_status", t, code)) ??
+        RECORD_OPENING_STATUSES[code],
+    )
     .filter((v): v is ParkingStatus => v !== undefined);
   return STATUS_RANK.find((s) => mapped.includes(s));
 }
@@ -329,10 +448,13 @@ function readingsOf(
   if (parkingStatus !== undefined) {
     out.push(statusDraft(feed, { ...reading, status: parkingStatus }, ctx));
   }
+  const trendCode = status.trendCode;
   const trend =
-    status.trendCode === undefined
+    trendCode === undefined
       ? undefined
-      : (parkingCrosswalk.value("trend", target, status.trendCode) as ParkingTrend | undefined);
+      : (either(target, (t) => parkingCrosswalk.value("trend", t, trendCode)) as
+          | ParkingTrend
+          | undefined);
   if (trend !== undefined) out.push(trendDraft(feed, { ...reading, trend }, ctx));
 
   for (const group of status.groups) {
@@ -358,9 +480,11 @@ function readingsOf(
 /**
  * A DATEX II parking feed (v2 or v3): its `sites` table makes the sites, each
  * space group an area, its charge bands a rate; its `status` publication the
- * readings of the sites and of their groups, joined by record id. A status
- * of a record the table does not hold is dropped; a record without a
- * placeable point is rejected.
+ * readings of the sites and of their groups, joined by record id. A group of
+ * parking sites is no site: its sites are records of their own, and its
+ * status is left out with it. A record without a placeable point, and a
+ * status of a record the table gives no place, are counted as
+ * `no_geometry`; a code DATEX does not define as `unknown_value`.
  */
 export function parseDatex2(
   feed: ParkingCatalogFeed,
@@ -368,15 +492,23 @@ export function parseDatex2(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
+  const options = { sourceId: feed.id };
   const sites = new Map<string, TableSite>();
-  let rejected = 0;
+  const groupsOfSites = new Set<string>();
+  let unplaced = 0;
+  let unknown = 0;
   for (const body of payloads["sites"] ?? []) {
     const doc = parseXmlDocument(body);
     const target = targetOf(versionOf(doc));
     const publisher = publisherOf(doc);
-    for (const record of parseDatexParkingTable(doc)) {
+    for (const record of parseDatexParkingTable(doc, options)) {
+      if (record.type === "GroupOfParkingSites") {
+        groupsOfSites.add(record.id);
+        continue;
+      }
+      unknown += unknownRecordCodes(record);
       if (record.point === undefined) {
-        rejected++;
+        unplaced++;
         continue;
       }
       const groups = groupAreas(record);
@@ -391,12 +523,20 @@ export function parseDatex2(
   for (const body of payloads["status"] ?? []) {
     const doc = parseXmlDocument(body);
     const target = targetOf(versionOf(doc));
-    for (const status of parseDatexParkingStatus(doc)) {
+    for (const status of parseDatexParkingStatus(doc, options)) {
+      if (groupsOfSites.has(status.recordId)) continue;
+      unknown +=
+        unknownCodes(status.statusCodes) +
+        unknownCodes(status.trendCode === undefined ? [] : [status.trendCode]);
       const site = sites.get(status.recordId);
-      if (site === undefined) continue;
+      if (site === undefined) {
+        unplaced++;
+        continue;
+      }
       out.observations.push(...readingsOf(feed, site, status, target, ctx));
     }
   }
-  out.rejected = rejected;
+  recordSkipped(feed.id, "no_geometry", unplaced);
+  recordSkipped(feed.id, "unknown_value", unknown);
   return out;
 }

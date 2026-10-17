@@ -4,6 +4,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { cameraDraft, type DraftContext, imageReading, imageRedistributionOf } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
@@ -19,6 +20,7 @@ const LANG = "es";
  * view faces. The device's update time dates its record, not its image, and
  * the publication says nothing of whether a camera works. The images sit on
  * a portal whose legal notice reserves them, so their licence is unknown.
+ * A camera without a placeable point is counted as `no_geometry`.
  */
 export function parseDatex2Cameras(
   feed: CamerasCatalogFeed,
@@ -27,10 +29,11 @@ export function parseDatex2Cameras(
 ): ParseOutput {
   const out = emptyParseOutput();
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
+  let unplaced = 0;
   for (const body of payloads["main"] ?? []) {
-    for (const device of parseDatexCameraDevices(parseXmlDocument(body))) {
+    for (const device of parseDatexCameraDevices(parseXmlDocument(body), { sourceId: feed.id })) {
       if (device.point === undefined) {
-        out.rejected = (out.rejected ?? 0) + 1;
+        unplaced++;
         continue;
       }
       const name = [device.roadName, device.roadDestination]
@@ -72,5 +75,6 @@ export function parseDatex2Cameras(
       );
     }
   }
+  recordSkipped(feed.id, "no_geometry", unplaced);
   return out;
 }

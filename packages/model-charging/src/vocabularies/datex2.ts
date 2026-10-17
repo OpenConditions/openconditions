@@ -156,3 +156,77 @@ export const DATEX2_V3_ENERGY = {
     "_extended",
   ],
 } as const;
+
+/**
+ * DATEX II v3.7 AFIR profile vocabularies, verbatim from
+ * `DATEXII_3_AfirEnergyInfrastructure.xsd` (https://docs.datex2.eu/_static/data/v3.7/),
+ * where they differ from `DATEX2_V3_ENERGY`: the domestic sockets are spelt
+ * `domesticFType`, the Megawatt Charging System is added, a roofed station is
+ * no site type, the refill point states its current type, and an energy
+ * rate is priced by price type under a rate policy instead of a pricing
+ * policy.
+ */
+export const DATEX2_V3_AFIR_ENERGY = {
+  version: "3.7",
+  energyInfrastructureSiteTypes: [
+    "inBuilding",
+    "openSpace",
+    "onstreet",
+    "onCompanySite",
+    "other",
+    "_extended",
+  ],
+  connectorTypes: [
+    "chademo",
+    "cee3",
+    "cee5",
+    "yazaki",
+    "domestic",
+    "domesticAType",
+    "domesticBType",
+    "domesticCType",
+    "domesticDType",
+    "domesticEType",
+    "domesticFType",
+    "domesticGType",
+    "domesticHType",
+    "domesticIType",
+    "domesticJType",
+    "domesticKType",
+    "domesticLType",
+    "domesticMType",
+    "domesticNType",
+    "domesticOType",
+    "iec60309x2single16",
+    "iec60309x2three16",
+    "iec60309x2three32",
+    "iec60309x2three64",
+    "iec62196T1",
+    "iec62196T1COMBO",
+    "iec62196T2",
+    "iec62196T2COMBO",
+    "iec62196T3A",
+    "iec62196T3C",
+    "mcs",
+    "pantographBottomUp",
+    "pantographTopDown",
+    "teslaConnectorEurope",
+    "teslaConnectorAmerica",
+    "teslaR",
+    "teslaS",
+    "other",
+    "_extended",
+  ],
+  currentTypes: ["ac", "dc", "_extended"],
+  ratePolicies: ["contract", "adHoc", "_extended"],
+  priceTypes: [
+    "pricePerMinute",
+    "pricePerKg",
+    "pricePerKWh",
+    "basePrice",
+    "flatRate",
+    "free",
+    "other",
+    "_extended",
+  ],
+} as const;
