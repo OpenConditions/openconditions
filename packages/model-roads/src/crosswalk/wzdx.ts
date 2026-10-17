@@ -75,13 +75,20 @@ export const WZDX_LANE_TYPES: Readonly<Record<string, string | null>> = {
   parking: "parking",
   median: "median",
   "two-way-center-turn-lane": "center_turn",
-  "center-left-turn-lane": "turn",
+  // Deprecated in 4.1 for `two-way-center-turn-lane`, which it defines the
+  // same: the centre lane traffic from both directions turns left from.
+  "center-left-turn-lane": "center_turn",
 };
 
-/** WZDx `related_road_events[].type` → the kernel relation. */
+/**
+ * WZDx `related_road_events[].type` → the kernel relation. The sequence
+ * values link the road events that together make up one work zone or detour
+ * along the road, so they group; only the occurrence values are recurrences
+ * in time.
+ */
 export const WZDX_RELATIONS: Readonly<Record<string, string>> = {
   "first-in-sequence": "group",
-  "next-in-sequence": "next_occurrence",
+  "next-in-sequence": "group",
   "first-occurrence": "first_occurrence",
   "next-occurrence": "next_occurrence",
   "related-work-zone": "related_work_zone",

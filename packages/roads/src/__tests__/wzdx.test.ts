@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { buildRegistry, kernelModule } from "@openconditions/model";
 import { roadsModule, WZDX } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
@@ -329,12 +330,10 @@ describe("parseWzdx — coarse type", () => {
     });
   });
 
-  it("reads an unknown event type as other", () => {
-    expect(parse("unknown-event-type")).toMatchObject({
-      type: "other",
-      category: "conditions",
-      isPlanned: false,
-    });
+  it("leaves out a feature whose event type is not a WZDx road event type", () => {
+    __resetSkips();
+    expect(parse("unknown-event-type")).toBeUndefined();
+    expect(drainSkipped(WZDX_SOURCE.id)).toEqual({ unknown_type: 1 });
   });
 });
 
@@ -497,7 +496,9 @@ describe("parseWzdx — confidence from date verification", () => {
     expect(ev!.confidence).toBe("likely");
   });
 
-  it("sets confidence:'possible' when worker_presence.confidence is 'low' and no date signal", () => {
+  // The worker presence confidence is the publisher's confidence in
+  // are_workers_present, not in the work zone.
+  it("does not read worker_presence.confidence as the event's certainty", () => {
     const feed = {
       type: "FeatureCollection",
       features: [
@@ -513,7 +514,8 @@ describe("parseWzdx — confidence from date verification", () => {
       ],
     };
     const [ev] = parseWzdx(JSON.stringify(feed), WZDX_SOURCE);
-    expect(ev!.confidence).toBe("possible");
+    expect(ev!.confidence).toBeUndefined();
+    expect(ev!.workersPresent).toBe(true);
   });
 
   it("prefers the date-accuracy signal over worker_presence confidence", () => {

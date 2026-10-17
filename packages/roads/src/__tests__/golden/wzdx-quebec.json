@@ -1,7 +1,7 @@
 [
   {
     "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ACL-20260729-02-JFP-P6_1",
-    "temporality": "live",
+    "temporality": "scheduled",
     "externalIds": [
       {
         "scheme": "wzdx:road_event",
@@ -86,7 +86,7 @@
       }
     ],
     "validity": {
-      "status": "active",
+      "status": "planned",
       "start": "2026-08-07T13:00:00Z",
       "end": "2026-08-07T19:00:00Z"
     },
@@ -111,6 +111,7 @@
         "lanes": [
           {
             "index": 1,
+            "type": "general",
             "status": "alternating"
           },
           {
@@ -134,7 +135,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "455d1689dd2b1866ee78d23a31b49dfb0830918ed82e5b570865f2eb85739736"
+    "contentHash": "8b3cd9f81ac47673610116f1b388556ff439d88d9bb77b41a738e164be8d5cf6"
   },
   {
     "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",

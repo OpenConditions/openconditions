@@ -251,7 +251,7 @@
     "type": "works",
     "subtype": "resurfacing",
     "planned": true,
-    "certainty": "possible",
+    "certainty": "unknown",
     "severity": {
       "label": "moderate",
       "source": "derived"
@@ -424,7 +424,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d8066d12ef7b9d42ce5d0052359fadc27b33cd08ac1a483cefa82b2a82ab9f50"
+    "contentHash": "a410fb56c7632f347fe2b9fb2fa27a11a262fb259f15cca02de2adddf25b3fc5"
   },
   {
     "id": "oc:situation:us-wzdx-events:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
@@ -516,7 +516,7 @@
           "class": "situation",
           "id": "oc:situation:us-wzdx-events:4d151e7d-11d8-4b99-a192-51e189da0de7"
         },
-        "relation": "next_occurrence"
+        "relation": "group"
       },
       {
         "ref": {
@@ -652,6 +652,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "adb5023d2a415a85c01c9f5379625fcc0ed888cae3d008cde871e81763f86324"
+    "contentHash": "4e4b0f8ff98ffcd1bccb59ff74e1b2763291239f26e59b503b76b7bc6e061ce7"
   }
 ]
