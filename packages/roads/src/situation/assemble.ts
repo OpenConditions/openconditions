@@ -114,17 +114,18 @@ function isoDuration(ms: number): string {
 /**
  * A parser schedule as a kernel Schedule. DATEX `validPeriod` bounds are
  * instants, the kernel's recurrence bounds are local dates. A period with
- * both bounds and no time of day is one window: it becomes one occurrence
- * starting at its exact start and lasting until its exact end. Otherwise an
- * instant bound becomes its local date in the schedule's zone, which is how
- * the evaluator reads a recurrence's bounds.
+ * both bounds and neither a time of day nor a calendar is one window: it
+ * becomes one occurrence starting at its exact start and lasting until its
+ * exact end. Otherwise an instant bound becomes its local date in the
+ * schedule's zone, which is how the evaluator reads a recurrence's bounds.
  */
 function kernelSchedule(s: Schedule): Schedule | undefined {
   const start = s.startDate?.includes("T")
     ? instantMs(s.startDate, s.scheduleTimezone)
     : Number.NaN;
   const end = s.endDate?.includes("T") ? instantMs(s.endDate, s.scheduleTimezone) : Number.NaN;
-  if (s.startTime === undefined && Number.isFinite(start) && Number.isFinite(end)) {
+  const oneWindow = s.startTime === undefined && s.byDay === undefined && s.byMonth === undefined;
+  if (oneWindow && Number.isFinite(start) && Number.isFinite(end)) {
     if (end <= start) return undefined;
     const day = localDateInZone(new Date(start), s.scheduleTimezone);
     return {
@@ -154,15 +155,21 @@ function validityOf(event: SnapshotEvent, timeZone: string | undefined): Validit
   if (start !== undefined && end !== undefined && Date.parse(end) < Date.parse(start)) {
     end = undefined;
   }
-  const periods = (event.schedule ?? [])
-    .filter((s): s is Schedule => typeof s.scheduleTimezone === "string")
-    .map(kernelSchedule)
-    .filter((s): s is Schedule => s !== undefined);
+  const schedules = (list: Schedule[] | undefined) =>
+    (list ?? [])
+      .filter((s): s is Schedule => typeof s.scheduleTimezone === "string")
+      .map(kernelSchedule)
+      .filter((s): s is Schedule => s !== undefined);
+  const periods = schedules(event.schedule);
+  const exceptions = schedules(event.scheduleExceptions);
+  const estimatedEnd = instant(event.situation?.estimatedEnd, timeZone);
   return {
     status: event.situation?.validityStatus ?? STATUS[event.status],
     ...(start !== undefined ? { start } : {}),
     ...(end !== undefined ? { end } : {}),
+    ...(estimatedEnd !== undefined ? { estimatedEnd } : {}),
     ...(periods.length > 0 ? { periods: periods as Validity["periods"] } : {}),
+    ...(exceptions.length > 0 ? { exceptions: exceptions as Validity["exceptions"] } : {}),
   };
 }
 

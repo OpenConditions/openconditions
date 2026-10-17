@@ -237,6 +237,7 @@
           },
           "compliance": "mandatory",
           "normalization": "complete",
+          "actionStatus": "implemented",
           "kind": "lane_restriction",
           "v": 1,
           "lanesTotal": 2,
@@ -252,7 +253,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "9a2050cdc648a3090947fe8259e5f5114c9f627e7e951309c3209400840a1e6e"
+      "contentHash": "481727301c057ca3e919ed1e0cd86c72c635f661c3afbf04e2d37a2a460e7704"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS10_OBS0000038442",
@@ -804,9 +805,10 @@
           },
           "compliance": "mandatory",
           "normalization": "complete",
+          "actionStatus": "implemented",
           "kind": "closure",
           "v": 1,
-          "scope": "road"
+          "scope": "carriageway"
         },
         {
           "id": "RWS01_M1148373_JUNCTION_CLOSURE_1_D2_WWA/closure",
@@ -830,9 +832,10 @@
           },
           "compliance": "mandatory",
           "normalization": "complete",
+          "actionStatus": "implemented",
           "kind": "closure",
           "v": 1,
-          "scope": "road"
+          "scope": "carriageway"
         },
         {
           "id": "RWS01_M1148373_REROUTING_1_D2_WWA/detour",
@@ -873,6 +876,7 @@
           },
           "compliance": "advisory",
           "normalization": "complete",
+          "actionStatus": "implemented",
           "kind": "detour",
           "v": 1,
           "description": [
@@ -2132,7 +2136,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "80416ee891cd0c8418e993ab6135726dd0c8124d6ad8fb47c20252be407d63f0"
+      "contentHash": "0344c82242ebb94ed83b405f8913315ae735629767a3ec12fe4cce19da84683d"
     }
   ]
 }

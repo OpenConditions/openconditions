@@ -98,14 +98,10 @@
         "id": "230814-001797-1/dimension_limit",
         "sourceRecordRef": "230814-001797-1/4",
         "applicability": {
-          "kind": "classes",
-          "include": [
-            {
-              "class": "truck"
-            }
-          ],
+          "kind": "unknown",
           "raw": [
-            "lorry"
+            "lorry",
+            "grossWeightCharacteristic"
           ]
         },
         "compliance": "mandatory",
@@ -149,7 +145,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "cf0731f285df26facb15fcbb5113fb63e69f0c11134ebe19fa2a436607a15f6f"
+    "contentHash": "61494b8b469fcb3b2eb652026b206e19adab77515f6e8be8b9e26f88b9e0652a"
   },
   {
     "id": "oc:situation:fr-dir-events:251022-000640",
@@ -383,7 +379,18 @@
           "kind": "all"
         },
         "compliance": "mandatory",
-        "normalization": "complete",
+        "normalization": "partial",
+        "issues": [
+          {
+            "code": "compound_condition",
+            "sourcePath": "situationRecord.placesAtWhichApplicable",
+            "sourceTokens": {
+              "placesAtWhichApplicable": [
+                "onPasses"
+              ]
+            }
+          }
+        ],
         "kind": "closure",
         "v": 1,
         "scope": "road"
@@ -400,7 +407,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e3e9ccb75c250fa9ead5c074515be221a3712531b50a43ae3df0d848043b4269"
+    "contentHash": "a26bd6273fe28f02662e990bcda677c2947109dcc6a10ceef9077b379a19b262"
   },
   {
     "id": "oc:situation:fr-dir-events:241125-001455",

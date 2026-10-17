@@ -466,12 +466,33 @@ function tokensFor(characteristic: Characteristic): RestrictionTokens {
  * Vehicle tokens published under the applicability role, for the legacy
  * `vehiclesAffected` array. Participants are deliberately excluded: the array
  * means "vehicles this measure applies to", not "vehicles mentioned anywhere".
+ *
+ * Groups are alternatives, so a group naming only `anyVehicle` makes the
+ * measure apply to every vehicle. A characteristic other than a vehicle type
+ * or usage (a weight, height, fuel or emission bound) narrows its group in a
+ * way vehicle classes cannot say, and a declared group with nothing readable
+ * narrows it unknowably: each is published as its element name, so the
+ * measure's vehicles read as unknown instead of as every vehicle of a class.
  */
 export function datexApplicabilityVehicles(rec: XmlObject): string[] | undefined {
   const out = new Set<string>();
-  for (const group of getXmlChildren(rec, "forVehiclesWithCharacteristicsOf")) {
-    for (const characteristic of characteristicsOf(group)) {
-      if (characteristic.name !== "vehicleType" && characteristic.name !== "vehicleUsage") continue;
+  const declared = xmlNodeToArray(childByLocalName(rec, "forVehiclesWithCharacteristicsOf"));
+  const groups = getXmlChildren(rec, "forVehiclesWithCharacteristicsOf");
+  if (declared.length > groups.length) out.add("forVehiclesWithCharacteristicsOf");
+  for (const group of groups) {
+    const characteristics = characteristicsOf(group);
+    if (characteristics.length === 0) out.add("forVehiclesWithCharacteristicsOf");
+    if (
+      characteristics.length > 0 &&
+      characteristics.every((c) => c.name === "vehicleType" && text(c.node) === "anyVehicle")
+    ) {
+      return undefined;
+    }
+    for (const characteristic of characteristics) {
+      if (characteristic.name !== "vehicleType" && characteristic.name !== "vehicleUsage") {
+        out.add(characteristic.name);
+        continue;
+      }
       const token = text(characteristic.node);
       if (token !== null) out.add(token);
     }

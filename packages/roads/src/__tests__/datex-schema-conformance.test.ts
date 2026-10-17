@@ -510,6 +510,24 @@ describe("the DATEX vocabularies the parsers map are the schemas' own", () => {
           ]),
         ),
       );
+      const lists: [readonly string[], string][] = [
+        [situation.validityStatuses, "ValidityStatusEnum"],
+        [situation.operatorActionStatuses, "OperatorActionStatusEnum"],
+        [situation.complianceOptions, "ComplianceOptionEnum"],
+        [situation.trafficConstrictionTypes, "TrafficConstrictionTypeEnum"],
+        [situation.trafficTypes, "TrafficTypeEnum"],
+        [situation.mobilityTypes, set === "v3" ? "MobilityTypeEnum" : "MobilityEnum"],
+        [situation.days, "DayEnum"],
+        [situation.months, "MonthOfYearEnum"],
+        ...("weeksOfMonth" in situation
+          ? [[situation.weeksOfMonth, "WeekOfMonthEnum"] as [readonly string[], string]]
+          : []),
+      ];
+      for (const [values, name] of lists) {
+        expect(sorted(values), name).toEqual(
+          sorted(enumIn(enums, name, [namespace("situation"), namespace("common")])),
+        );
+      }
     },
   );
 
