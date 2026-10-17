@@ -131,6 +131,12 @@ export interface OcpiRestrictions {
   /** `MONDAY` to `SUNDAY`. */
   day_of_week?: string[];
   reservation?: string;
+  /**
+   * Restrictions the publisher set that the decoder could not read, or that
+   * OCPI does not define (`restrictions` when the whole value is no object).
+   * The element cannot be applied as published.
+   */
+  unreadable?: string[];
 }
 
 export interface OcpiTariffElement {

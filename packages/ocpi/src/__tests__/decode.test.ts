@@ -299,6 +299,37 @@ describe("normaliseTariff", () => {
     expect(tariff.elements[0]?.restrictions).toEqual({ min_duration: 1800, min_kwh: 5 });
   });
 
+  test("a restriction that is set but cannot be read is named, never left out", () => {
+    const read = (restrictions: unknown) =>
+      normaliseTariff({
+        id: "t",
+        currency: "EUR",
+        elements: [{ price_components: [{ type: "ENERGY", price: 1 }], restrictions }],
+      }).elements[0]?.restrictions;
+    expect(
+      read({
+        start_time: null,
+        max_power: "fast",
+        min_kwh: 5,
+        day_of_week: "SATURDAY",
+        reservation: 1,
+        start_date: {},
+        min_soc: 80,
+      }),
+    ).toEqual({
+      min_kwh: 5,
+      reservation: "1",
+      unreadable: ["start_date", "max_power", "day_of_week", "min_soc"],
+    });
+    expect(read({ day_of_week: ["SATURDAY", null] })).toEqual({
+      day_of_week: ["SATURDAY"],
+      unreadable: ["day_of_week"],
+    });
+    expect(read("weekends")).toEqual({ unreadable: ["restrictions"] });
+    expect(read(null)).toBeUndefined();
+    expect(read({ max_kwh: -5 })).toEqual({ max_kwh: -5 });
+  });
+
   test("a price object keeps both its amounts", () => {
     const tariff = normaliseTariff({
       id: "t",

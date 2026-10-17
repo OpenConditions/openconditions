@@ -430,6 +430,47 @@ describe("ocpi", () => {
     expect(status.rejected).toBe(0);
   });
 
+  test("a tariff with a restriction it cannot read is no offer, no connector's ref and one rejected record", () => {
+    const tariffs = json("ndw-tariffs.json") as Record<string, unknown>[];
+    const base = tariffs.find((t) => t["id"] === "A0")!;
+    const locations = json("ndw-locations.json") as Record<string, unknown>[];
+    const qwc = structuredClone(locations.find((l) => l["party_id"] === "QWC")!) as {
+      evses: { connectors: { tariff_ids: string[] }[] }[];
+      coordinates: { latitude: string; longitude: string };
+    } & Record<string, unknown>;
+    qwc.evses[0]!.connectors[0]!.tariff_ids = ["ok", "odd"];
+    const far = structuredClone(qwc);
+    far["id"] = "far-1";
+    far.coordinates = { latitude: "52.0", longitude: "5.0" };
+    const odd = {
+      ...base,
+      party_id: "QWC",
+      id: "odd",
+      elements: [
+        {
+          price_components: [{ type: "ENERGY", price: 0.29 }],
+          restrictions: { reservation: "BOOKING" },
+        },
+        { price_components: [{ type: "ENERGY", price: 0.59 }] },
+      ],
+    };
+    const out = parse(catalogFeed("nl-ndw-charging"), {
+      main: [Buffer.from(JSON.stringify([qwc, far]))],
+      tariffs: [Buffer.from(JSON.stringify([{ ...base, party_id: "QWC", id: "ok" }, odd]))],
+    });
+    expect(out.offers.map((o) => o["id"])).toEqual([
+      `oc:offer:nl-ndw-charging:NL*QWC*${qwc["id"]}:ok`,
+      "oc:offer:nl-ndw-charging:NL*QWC*far-1:ok",
+    ]);
+    expect(out.features).toHaveLength(2);
+    for (const site of out.features) {
+      const refs = components(site).find((c) => c.kind === "connector")?.details["tariffRefs"];
+      expect(refs).toEqual([`${String(site["id"]).replace("oc:feature:", "oc:offer:")}:ok`]);
+    }
+    // One tariff, named at two sites, is one record the parse could not use.
+    expect(out.rejected).toBe(1);
+  });
+
   test("two tariff ids of one site that reduce to the same offer key stay two offers", () => {
     const tariffs = json("ndw-tariffs.json") as Record<string, unknown>[];
     const base = tariffs.find((t) => t["id"] === "A0")!;
