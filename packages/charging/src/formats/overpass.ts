@@ -4,6 +4,8 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { AUDIENCES, AUTHENTICATION_METHODS } from "@openconditions/model";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
@@ -88,8 +90,11 @@ const amount = (value: string | undefined): number | undefined => {
   return n > 0 ? n : undefined;
 };
 
-/** One EVSE per tagged socket type, standing for as many points as the count says. */
-function evsesOf(tags: Record<string, string>): EvseInput[] {
+/**
+ * One EVSE per tagged socket type, standing for as many points as the count
+ * says. A socket type not read here is left out and counts as unknown.
+ */
+function evsesOf(tags: Record<string, string>, unknown: () => void): EvseInput[] {
   const ref = (tag(tags, "ref:EU:EVSE") ?? "")
     .split(";")
     .map((r) => emi3Of(r.trim()))
@@ -97,10 +102,14 @@ function evsesOf(tags: Record<string, string>): EvseInput[] {
   const evses: EvseInput[] = [];
   for (const key of Object.keys(tags)) {
     const type = key.match(SOCKET_COUNT)?.[1];
-    const socket = type === undefined ? undefined : SOCKETS[type];
-    if (type === undefined || socket === undefined) continue;
+    if (type === undefined) continue;
     const value = tag(tags, key);
     if (value === undefined || value === "no" || value === "0") continue;
+    const socket = Object.hasOwn(SOCKETS, type) ? SOCKETS[type] : undefined;
+    if (socket === undefined) {
+      unknown();
+      continue;
+    }
     const count = /^\d+$/.test(value) ? Number(value) : undefined;
     const power = outputKw(tag(tags, `${key}:output`));
     const voltage = amount(tag(tags, `${key}:voltage`));
@@ -150,6 +159,7 @@ function bicyclesOnly(tags: Record<string, string>): boolean {
  * id the only id linking matches on. Its charge points are one EVSE per
  * socket type, with the tagged count as its quantity. OSM holds no live
  * state and no prices: no readings, no offers. E-bike chargers are left out.
+ * An `access` value or a socket type not read here counts as unknown.
  */
 export function parseOverpassCharging(
   feed: ChargingCatalogFeed,
@@ -157,11 +167,16 @@ export function parseOverpassCharging(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
+  const unknown = () => recordSkipped(feed.id, "unknown_value");
   for (const payload of payloads["main"] ?? []) {
-    for (const element of decodeOverpass(payload)) {
+    for (const element of decodeOverpass(payload, skip)) {
       const { tags } = element;
       if (tags["amenity"] !== "charging_station" || bicyclesOnly(tags)) continue;
-      const audience = AUDIENCE[tag(tags, "access") ?? ""];
+      const access = tag(tags, "access");
+      const audience =
+        access !== undefined && Object.hasOwn(AUDIENCE, access) ? AUDIENCE[access] : undefined;
+      if (access !== undefined && audience === undefined) unknown();
       const authentication = Object.entries(AUTHENTICATION).flatMap(([key, method]) => {
         const value = tag(tags, key);
         return value === undefined || value === "no" ? [] : [method];
@@ -202,7 +217,7 @@ export function parseOverpassCharging(
                 city: tag(tags, "addr:city"),
               },
             }),
-        evses: evsesOf(tags),
+        evses: evsesOf(tags, unknown),
       };
       out.features.push(siteDraft(feed, input, ctx.fetchedAt));
     }

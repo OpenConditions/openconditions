@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { type ParkingCatalogFeed, parkingMappingSchema } from "../feed-schema.js";
 import { parseLayout } from "../formats/layout.js";
 import {
@@ -20,6 +25,8 @@ import {
 import { sealFailures } from "./helpers/seal.js";
 
 const FETCHED = "2026-10-05T03:12:30Z";
+
+beforeEach(() => __resetSkips());
 
 function parse(feed: ParkingCatalogFeed, file: string): ParseOutput {
   const out = parseLayout(feed, { main: [fixture(file)] }, parseContext(FETCHED));
@@ -284,7 +291,7 @@ describe("csv", () => {
 });
 
 describe("parseLayout", () => {
-  test("a record without a placeable point or an id is rejected", () => {
+  test("a record without a placeable point or an id is skipped", () => {
     const payload = Buffer.from(
       JSON.stringify({
         type: "FeatureCollection",
@@ -298,9 +305,44 @@ describe("parseLayout", () => {
         ],
       }),
     );
-    const out = parseLayout(baselFeed(), { main: [payload] }, parseContext(FETCHED));
+    const feed = baselFeed();
+    const out = parseLayout(feed, { main: [payload] }, parseContext(FETCHED));
     expect(out.features).toEqual([]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1, malformed: 1 });
+  });
+
+  test("a status or type the mapping does not name counts as unknown", () => {
+    const base = baselFeed();
+    const feed: ParkingCatalogFeed = {
+      ...base,
+      parking: {
+        id: "id",
+        type: { field: "kind", map: { garage: "off_street" } },
+        status: [
+          { field: "state", map: { open: "open" } },
+          { field: "flag", map: { x: "closed" } },
+        ],
+      },
+    };
+    const feature = (properties: Record<string, unknown>) => ({
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [7.59, 47.55] },
+      properties,
+    });
+    const payload = Buffer.from(
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          feature({ id: "a", kind: "garage", state: "busy", flag: "x" }),
+          feature({ id: "b", kind: "tent", state: "busy" }),
+        ],
+      }),
+    );
+    const out = parseLayout(feed, { main: [payload] }, parseContext(FETCHED));
+    expect(out.features).toHaveLength(2);
+    // The second rule maps a's status; b's kind and status are unread.
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
   });
 
   /** Basel's mapping over one garage whose `published` time is `published`. */

@@ -77,12 +77,19 @@ export function fieldText(
   return ref === undefined ? undefined : scalarText(readField(fields, ref));
 }
 
-/** The vocabulary value a value map gives a field's text; undefined for a value it does not name. */
+/**
+ * The vocabulary value a value map gives a field's text; undefined for a
+ * value it does not name, whose text goes to `onUnknown`.
+ */
 export function lookupField<T>(
   fields: Record<string, unknown>,
   rule: { field: FieldRef; map: Record<string, T> } | undefined,
+  onUnknown?: (text: string) => void,
 ): T | undefined {
   if (rule === undefined) return undefined;
   const key = fieldText(fields, rule.field);
-  return key !== undefined && Object.hasOwn(rule.map, key) ? rule.map[key] : undefined;
+  if (key === undefined) return undefined;
+  if (Object.hasOwn(rule.map, key)) return rule.map[key];
+  onUnknown?.(key);
+  return undefined;
 }

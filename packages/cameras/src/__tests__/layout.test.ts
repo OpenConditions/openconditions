@@ -1,11 +1,18 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
 
 const FETCHED = "2026-10-08T07:00:00Z";
+
+beforeEach(() => __resetSkips());
 
 const base = {
   product: "cameras",
@@ -450,7 +457,7 @@ describe("layout", () => {
     });
   });
 
-  test("a record without an id or a place is rejected", () => {
+  test("a record without an id or a place is skipped", () => {
     const rows = [
       { Maelist_nr: 1, Breidd: 64, Lengd: -21, Slod: "https://www.vegagerdin.is/a_1.jpg" },
       { Breidd: 64, Lengd: -21, Slod: "https://www.vegagerdin.is/b_1.jpg" },
@@ -458,7 +465,42 @@ describe("layout", () => {
     ];
     const out = parse(icelandFeed(), Buffer.from(JSON.stringify(rows)));
     expect(out.features.map((f) => f["id"])).toEqual(["oc:feature:is-vegagerdin-cameras:1"]);
-    expect(out.rejected).toBe(2);
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(icelandFeed().id)).toEqual({ malformed: 1, no_geometry: 1 });
+  });
+
+  test("a status or type the mapping does not name counts as unknown", () => {
+    const base = icelandFeed();
+    const feed: CamerasCatalogFeed = {
+      ...base,
+      cameras: {
+        ...base.cameras,
+        type: { field: "Tegund", map: { vedur: "weather" } },
+        status: { field: "Stada", map: { virk: "online" } },
+      },
+    };
+    const rows = [
+      {
+        Maelist_nr: 1,
+        Breidd: 64,
+        Lengd: -21,
+        Tegund: "nytt",
+        Stada: "virk",
+        Slod: "https://www.vegagerdin.is/a_1.jpg",
+      },
+      {
+        Maelist_nr: 1,
+        Breidd: 64,
+        Lengd: -21,
+        Tegund: "nytt",
+        Stada: "bilud",
+        Slod: "https://www.vegagerdin.is/a_2.jpg",
+      },
+    ];
+    const out = parse(feed, Buffer.from(JSON.stringify(rows)));
+    expect(out.features.map((f) => f["type"])).toEqual(["other"]);
+    // The type is the camera's, read from its first view; each view has its status.
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
   });
 
   test("a view key a camera already has is read once", () => {
@@ -471,7 +513,7 @@ describe("layout", () => {
     const out = parse(icelandFeed(), Buffer.from(JSON.stringify([row, row])));
     expect(views(out.features[0])).toHaveLength(1);
     expect(out.observations).toHaveLength(1);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(icelandFeed().id)).toEqual({ malformed: 1 });
   });
 
   test("view keys are compared as the components carry them", () => {
@@ -487,7 +529,7 @@ describe("layout", () => {
     );
     expect(views(out.features[0]).map((v) => v.key)).toEqual(["a_1"]);
     expect(out.observations).toHaveLength(1);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(icelandFeed().id)).toEqual({ malformed: 1 });
   });
 
   test("a camera grouped from its view records is the same whatever the row order", () => {

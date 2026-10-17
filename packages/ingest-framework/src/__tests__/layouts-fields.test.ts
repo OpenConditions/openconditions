@@ -73,4 +73,13 @@ describe("field readers", () => {
     expect(lookupField({ v: "toString" }, { field: "v", map: {} })).toBeUndefined();
     expect(lookupField(record, undefined)).toBeUndefined();
   });
+
+  it("hands a value the map does not name to onUnknown", () => {
+    const unknown: string[] = [];
+    const rule = { field: "v", map: { a: 1 } };
+    expect(lookupField({ v: "a" }, rule, (t) => unknown.push(t))).toBe(1);
+    expect(lookupField({ v: " b " }, rule, (t) => unknown.push(t))).toBeUndefined();
+    expect(lookupField({}, rule, (t) => unknown.push(t))).toBeUndefined();
+    expect(unknown).toEqual(["b"]);
+  });
 });

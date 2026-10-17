@@ -7,7 +7,9 @@ import {
   lookupField as lookup,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
   readField as read,
+  recordSkipped,
   scalarText,
   fieldText as text,
 } from "@openconditions/ingest-framework";
@@ -115,10 +117,14 @@ function heightOf(fields: Record<string, unknown>, mapping: ParkingMapping): num
   return mapping.heightLimit.unit === "cm" ? n / 100 : n;
 }
 
+/** Called for each enumerated value a record holds that its mapping does not name. */
+type OnUnknown = () => void;
+
 function siteInput(
   row: LayoutRow & { point: [number, number] },
   stationId: string,
   mapping: ParkingMapping,
+  unknown: OnUnknown,
 ): SiteInput {
   const f = row.fields;
   const name = (mapping.name ?? []).map((ref) => text(f, ref)).find((n) => n !== undefined);
@@ -137,8 +143,16 @@ function siteInput(
     point: row.point,
     ...optional("name", name),
     ...optional("lang", mapping.lang),
-    ...optional("type", lookup(f, mapping.type) ?? mapping.defaultType),
-    ...optional("layout", lookup(f, mapping.layout) ?? mapping.defaultLayout),
+    ...optional(
+      "type",
+      lookup(f, mapping.type, mapping.defaultType === undefined ? unknown : undefined) ??
+        mapping.defaultType,
+    ),
+    ...optional(
+      "layout",
+      lookup(f, mapping.layout, mapping.defaultLayout === undefined ? unknown : undefined) ??
+        mapping.defaultLayout,
+    ),
     ...optional("operator", text(f, mapping.operator)),
     ...optional("website", text(f, mapping.website)),
     ...optional("address", address),
@@ -156,24 +170,33 @@ function siteInput(
   };
 }
 
+/** The status of the first rule whose value maps; a value no rule maps counts as unknown. */
 function statusOf(
   fields: Record<string, unknown>,
   mapping: ParkingMapping,
+  unknown: OnUnknown,
 ): ParkingStatus | undefined {
   if (mapping.status === undefined) return undefined;
   const rules = Array.isArray(mapping.status) ? mapping.status : [mapping.status];
+  let unmapped = false;
   for (const rule of rules) {
-    const status = lookup(fields, rule);
+    const status = lookup(fields, rule, () => {
+      unmapped = true;
+    });
     if (status !== undefined) return status;
   }
+  if (unmapped) unknown();
   return undefined;
 }
 
 /**
  * A feed in a generic layout (`geojson`, `json`, `csv`): its `layout` block
  * cuts the payload into records, its `parking` mapping makes each record a
- * site, its live counts and status, and its rate. A record without an id or a
- * placeable point is rejected.
+ * site, its live counts and status, and its rate. A record without a point
+ * is skipped as malformed when its position cannot be read, else as having no
+ * geometry; a placed record without an id, or an item that is no object, as
+ * malformed. A value a map does not name, and no default stands in for,
+ * counts as unknown.
  */
 export function parseLayout(
   feed: ParkingCatalogFeed,
@@ -186,17 +209,22 @@ export function parseLayout(
   const mapping = feed.parking;
   if (mapping === undefined) throw new Error(`feed ${feed.id} has no parking mapping`);
   const kind = feed.format as (typeof PARKING_LAYOUT_FORMATS)[number];
-  let rejected = 0;
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
+  const unknown = () => recordSkipped(feed.id, "unknown_value");
   for (const body of bodies) {
-    for (const row of decodeLayout(kind, body, feed.layout ?? {})) {
+    for (const row of decodeLayout(kind, body, feed.layout ?? {}, skip)) {
       if (!kept(row.fields, mapping)) continue;
+      if (row.point === undefined) {
+        skip(row.unplaced ?? "no_geometry");
+        continue;
+      }
       const stationId = text(row.fields, mapping.id);
-      if (stationId === undefined || row.point === undefined) {
-        rejected++;
+      if (stationId === undefined) {
+        skip("malformed");
         continue;
       }
       const placed = { ...row, point: row.point };
-      const input = siteInput(placed, stationId, mapping);
+      const input = siteInput(placed, stationId, mapping, unknown);
       out.features.push(siteDraft(feed, input, ctx.fetchedAt));
 
       if (mapping.rates !== undefined) {
@@ -240,18 +268,17 @@ export function parseLayout(
           ctx,
         ),
       );
-      const status = statusOf(row.fields, mapping);
+      const status = statusOf(row.fields, mapping, unknown);
       if (status !== undefined) {
         const draft = statusDraft(feed, { ...reading, status }, ctx);
         if (draft) out.observations.push(draft);
       }
-      const trend: ParkingTrend | undefined = lookup(row.fields, mapping.trend);
+      const trend: ParkingTrend | undefined = lookup(row.fields, mapping.trend, unknown);
       if (trend !== undefined) {
         const draft = trendDraft(feed, { ...reading, trend }, ctx);
         if (draft) out.observations.push(draft);
       }
     }
   }
-  out.rejected = rejected;
   return out;
 }

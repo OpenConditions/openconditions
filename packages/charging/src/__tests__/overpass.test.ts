@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -189,5 +194,40 @@ describe("overpass", () => {
     });
     // A relation without sockets is a site without charge points.
     expect(site(out, "relation/19682362")).not.toHaveProperty("components");
+  });
+});
+
+describe("skips", () => {
+  beforeEach(() => __resetSkips());
+
+  test("the fixture reports what it leaves unread", () => {
+    osm();
+    expect(drainSkipped(catalogFeed("osm-charging").id)).toEqual({});
+  });
+
+  test("a positionless element, an unknown access value and an unknown socket type are reported", () => {
+    const out = parse(
+      elements([
+        { type: "relation", id: 1, tags: { amenity: "charging_station" } },
+        {
+          type: "node",
+          id: 2,
+          lat: 49,
+          lon: 8.4,
+          tags: {
+            amenity: "charging_station",
+            access: "maybe",
+            "socket:type2": "2",
+            "socket:as_3112": "1",
+            "socket:bs1363": "no",
+          },
+        },
+      ]),
+    );
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(catalogFeed("osm-charging").id)).toEqual({
+      no_geometry: 1,
+      unknown_value: 2,
+    });
   });
 });

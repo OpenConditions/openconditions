@@ -1,5 +1,5 @@
 import type { LayoutBlock } from "./block.js";
-import { type LayoutRow, pointFromFields } from "./row.js";
+import { type LayoutRow, layoutRow, namesPosition, pointFromFields } from "./row.js";
 
 /** Cells of a delimited text, honouring double-quoted cells with doubled quotes and embedded newlines. */
 function parseCells(text: string, delimiter: string): string[][] {
@@ -55,7 +55,6 @@ export function decodeCsv(payload: Buffer, block: LayoutBlock): LayoutRow[] {
     names.forEach((name, i) => {
       fields[name] = (cells[i] ?? "").trim();
     });
-    const point = pointFromFields(fields, block);
-    return point ? { point, fields } : { fields };
+    return layoutRow(fields, pointFromFields(fields, block), namesPosition(fields, block));
   });
 }

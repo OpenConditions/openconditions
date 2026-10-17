@@ -14,6 +14,7 @@ describe("decodeLayout csv", () => {
     expect(rows[0]!.fields).toEqual({ nom: "Gare Zürich", pos: "47.378, 8.54", note: "a; b" });
     expect(rows[0]!.point).toEqual([8.54, 47.378]);
     expect(rows[1]!.point).toBeUndefined();
+    expect(rows[1]!.unplaced).toBe("no_geometry");
   });
 
   test("csv honours decimal commas", () => {

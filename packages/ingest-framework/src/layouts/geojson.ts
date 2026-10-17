@@ -1,7 +1,15 @@
 import type { Geometry } from "geojson";
 import { reprojectorFor } from "../reproject.js";
 import type { LayoutBlock } from "./block.js";
-import { getPath, type LayoutRow, placeable, pointFromFields, vertexMean } from "./row.js";
+import {
+  getPath,
+  type LayoutRow,
+  layoutRow,
+  namesPosition,
+  placeable,
+  pointFromFields,
+  vertexMean,
+} from "./row.js";
 
 /** The CRS name on a geometry or FeatureCollection `crs` member, if any. */
 export function crsName(crs: unknown): string | undefined {
@@ -102,7 +110,10 @@ export function geometryPoint(geometry: Geometry): [number, number] | undefined 
   return mean && placeable(mean[0], mean[1]);
 }
 
-/** The rows of a FeatureCollection: `properties` as fields, a point from the block or the geometry. */
+/**
+ * The rows of a FeatureCollection: `properties` as fields, a point from the
+ * block or the geometry. A feature with neither names no position.
+ */
 export function decodeGeoJson(text: string, block: LayoutBlock): LayoutRow[] {
   const collection = readFeatureCollection(text, block.records);
   if (!collection) return [];
@@ -117,7 +128,7 @@ export function decodeGeoJson(text: string, block: LayoutBlock): LayoutRow[] {
     if (!point && hasShape(f.geometry)) {
       point = geometryPoint(reprojectGeometry(f.geometry, collection.crs, block.crs));
     }
-    rows.push(point ? { point, fields } : { fields });
+    rows.push(layoutRow(fields, point, namesPosition(fields, block) || hasShape(f.geometry)));
   }
   return rows;
 }

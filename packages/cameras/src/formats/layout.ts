@@ -6,6 +6,8 @@ import {
   lookupField as lookup,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
+  recordSkipped,
   fieldText as text,
 } from "@openconditions/ingest-framework";
 import {
@@ -42,10 +44,22 @@ function cameraIdOf(fields: Record<string, unknown>, mapping: CamerasMapping) {
   return parts.every((p) => p !== undefined) ? parts.join(":") : undefined;
 }
 
-function typeOf(fields: Record<string, unknown>, mapping: CamerasMapping): CameraType {
+/** Called for each enumerated value a record holds that its mapping does not name. */
+type OnUnknown = () => void;
+
+/** The camera type; a value the map does not name, with no default, is `other` and counts as unknown. */
+function typeOf(
+  fields: Record<string, unknown>,
+  mapping: CamerasMapping,
+  unknown: OnUnknown,
+): CameraType {
   const rule = mapping.type;
   if (typeof rule === "string") return rule;
-  return lookup(fields, rule) ?? rule.default ?? "other";
+  return (
+    lookup(fields, rule, rule.default === undefined ? unknown : undefined) ??
+    rule.default ??
+    "other"
+  );
 }
 
 function refreshOf(fields: Record<string, unknown>, mapping: CamerasMapping) {
@@ -80,8 +94,13 @@ function imageAtOf(fields: Record<string, unknown>, mapping: CamerasMapping) {
 const textOf = (value: string | undefined, lang: string) =>
   value === undefined ? undefined : [{ lang, text: value }];
 
-function viewOf(key: string, fields: Record<string, unknown>, mapping: CamerasMapping): ViewInput {
-  const compass = lookup(fields, mapping.direction);
+function viewOf(
+  key: string,
+  fields: Record<string, unknown>,
+  mapping: CamerasMapping,
+  unknown: OnUnknown,
+): ViewInput {
+  const compass = lookup(fields, mapping.direction, unknown);
   const bearing = numberOf(fields, mapping.bearing);
   const name = textOf(text(fields, mapping.viewName), mapping.lang);
   return {
@@ -109,9 +128,12 @@ const byKey = new Intl.Collator("en", { numeric: true }).compare;
  * records sharing a camera id one camera, each record one of its views with
  * its image reading. Views are in key order, and the camera's place and own
  * fields come from its first view's record, so a publisher reordering its
- * rows changes nothing. A record without an id or a placeable point is
- * rejected, and so is a second record of a view a camera already has. The
- * payloads of several URLs or pages are read as one list.
+ * rows changes nothing. A record without a point is skipped as malformed
+ * when its position cannot be read, else as having no geometry; a placed
+ * record without an id, an item that is no object and a second record of a
+ * view a camera already has, as malformed. A value a map does not name
+ * counts as unknown. The payloads of several URLs or pages are read as one
+ * list.
  */
 export function parseLayout(
   feed: CamerasCatalogFeed,
@@ -128,19 +150,24 @@ export function parseLayout(
   const { mapping } = read;
   const kind = feed.format as CamerasLayoutFormat;
   const cameras = new Map<string, Map<string, ViewRecord>>();
-  let rejected = 0;
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
+  const unknown = () => recordSkipped(feed.id, "unknown_value");
   for (const body of bodies) {
-    for (const row of decodeLayout(kind, body, feed.layout ?? {})) {
+    for (const row of decodeLayout(kind, body, feed.layout ?? {}, skip)) {
+      if (row.point === undefined) {
+        skip(row.unplaced ?? "no_geometry");
+        continue;
+      }
       const cameraId = cameraIdOf(row.fields, mapping);
-      if (cameraId === undefined || row.point === undefined) {
-        rejected++;
+      if (cameraId === undefined) {
+        skip("malformed");
         continue;
       }
       // Keys are compared as the components will carry them.
       const key = viewKey(text(row.fields, mapping.viewKey) ?? "0");
       const views = cameras.get(cameraId) ?? new Map<string, ViewRecord>();
       cameras.set(cameraId, views);
-      if (views.has(key)) rejected++;
+      if (views.has(key)) skip("malformed");
       else views.set(key, { point: row.point, fields: row.fields });
     }
   }
@@ -159,17 +186,17 @@ export function parseLayout(
         cameraId,
         point,
         names: textOf(text(first, mapping.name), mapping.lang) ?? [],
-        type: typeOf(first, mapping),
+        type: typeOf(first, mapping, unknown),
         ...(description === undefined ? {} : { description }),
         ...(road === undefined ? {} : { road: { ref: road } }),
         ...(detailUrl === undefined ? {} : { detailUrl }),
         ...(refreshSec === undefined ? {} : { refreshSec }),
         imageRedistribution: mapping.imageRedistribution,
-        views: views.map(([key, { fields }]) => viewOf(key, fields, mapping)),
+        views: views.map(([key, { fields }]) => viewOf(key, fields, mapping, unknown)),
       }),
     );
     for (const [key, { fields }] of views) {
-      const status: CameraStatus = lookup(fields, mapping.status) ?? "unknown";
+      const status: CameraStatus = lookup(fields, mapping.status, unknown) ?? "unknown";
       const streamUrl = text(fields, mapping.streamUrl);
       out.observations.push(
         imageReading(feed, dc, {
@@ -188,7 +215,6 @@ export function parseLayout(
       );
     }
   }
-  out.rejected = (out.rejected ?? 0) + rejected;
   return out;
 }
 

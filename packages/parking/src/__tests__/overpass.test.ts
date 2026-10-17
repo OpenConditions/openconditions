@@ -1,7 +1,7 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
 import { type LinkableFeature, proposeLink } from "@openconditions/model";
 import { PARKING_KINDS } from "@openconditions/model-parking";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { parseOverpassParking } from "../formats/overpass.js";
 import { fixture, osmParkingFeed, parseContext } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -136,5 +136,42 @@ describe("overpass", () => {
     expect(out.features).toHaveLength(1);
     expect(site(out, "node/1")?.["details"]).toEqual({ kind: "parking_site", v: 1 });
     expect(areas(out, "node/1")).toEqual([["car:ev_charging", undefined]]);
+  });
+});
+
+describe("skips", () => {
+  beforeEach(() => __resetSkips());
+
+  test("the fixture reports what it leaves unread", () => {
+    osm();
+    expect(drainSkipped(osmParkingFeed().id)).toEqual({});
+  });
+
+  test("an element of another type, an unknown access value and an unknown layout are reported", () => {
+    const out = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [
+            { type: "area", id: 1, lat: 49, lon: 8.4, tags: { amenity: "parking" } },
+            {
+              type: "node",
+              id: 2,
+              lat: 49,
+              lon: 8.4,
+              tags: { amenity: "parking", access: "maybe", parking: "sheds" },
+            },
+            {
+              type: "node",
+              id: 3,
+              lat: 49,
+              lon: 8.4,
+              tags: { amenity: "parking", parking: "street_side" },
+            },
+          ],
+        }),
+      ),
+    );
+    expect(out.features).toHaveLength(2);
+    expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_type: 1, unknown_value: 2 });
   });
 });

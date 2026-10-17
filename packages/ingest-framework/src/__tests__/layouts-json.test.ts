@@ -61,6 +61,25 @@ describe("decodeLayout json", () => {
   test("an out-of-range point is not placeable", () => {
     const rows = decodeLayout("json", body([{ x: 500, y: 47 }]), { lon: "x", lat: "y" });
     expect(rows[0]!.point).toBeUndefined();
+    expect(rows[0]!.unplaced).toBe("malformed");
+  });
+
+  test("a row without a point says whether it names a position", () => {
+    const rows = decodeLayout(
+      "json",
+      body([{ x: "", y: null }, { x: "east" }, { g: { type: "Point", coordinates: [0, 99] } }]),
+      { lon: "x", lat: "y", geometryPath: "g" },
+    );
+    expect(rows.map((r) => r.unplaced)).toEqual(["no_geometry", "malformed", "malformed"]);
+  });
+
+  test("an element that is no object is left out and reported", () => {
+    const reasons: string[] = [];
+    const rows = decodeLayout("json", body([1, null, [2], { id: "a" }]), {}, (reason) =>
+      reasons.push(reason),
+    );
+    expect(rows.map((r) => r.fields)).toEqual([{ id: "a" }]);
+    expect(reasons).toEqual(["malformed", "malformed", "malformed"]);
   });
 
   test("getPath reads dotted paths with array indexes", () => {

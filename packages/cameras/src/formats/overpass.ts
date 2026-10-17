@@ -4,6 +4,8 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { COMPASS_POINTS } from "@openconditions/model";
 import {
@@ -99,7 +101,8 @@ function viewOf(tags: Record<string, string>): ViewInput {
  * its `osm:<type>` id the only id linking matches on. A webcam address that
  * names an image file is the still of the camera's one view; any other is
  * the camera's page. OSM says nothing of whether the camera works, and the
- * image belongs to the camera's operator, not to OSM.
+ * image belongs to the camera's operator, not to OSM. A `camera:mount` or
+ * `camera:type` value not read here counts as unknown.
  */
 export function parseOverpassCameras(
   feed: CamerasCatalogFeed,
@@ -108,8 +111,10 @@ export function parseOverpassCameras(
 ): ParseOutput {
   const out = emptyParseOutput();
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
+  const unknown = () => recordSkipped(feed.id, "unknown_value");
   for (const payload of payloads["main"] ?? []) {
-    for (const element of decodeOverpass(payload)) {
+    for (const element of decodeOverpass(payload, skip)) {
       const { tags } = element;
       const address = WEBCAM_TAGS.map((key) => tag(tags, key)).find((v) => v !== undefined);
       const isWebcam = tag(tags, "surveillance:type") === "webcam";
@@ -121,7 +126,13 @@ export function parseOverpassCameras(
         tag(tags, "name") ??
         (description === undefined || urlOf(description) ? undefined : description);
       const mount = tag(tags, "camera:mount");
-      const ptz = PTZ[tag(tags, "camera:type") ?? ""];
+      const mounting =
+        mount !== undefined && Object.hasOwn(MOUNTINGS, mount) ? MOUNTINGS[mount] : undefined;
+      if (mount !== undefined && mounting === undefined) unknown();
+      const cameraType = tag(tags, "camera:type");
+      const ptz =
+        cameraType !== undefined && Object.hasOwn(PTZ, cameraType) ? PTZ[cameraType] : undefined;
+      if (cameraType !== undefined && ptz === undefined) unknown();
       const operator = tag(tags, "operator");
       const cameraId = `${element.type}/${element.id}`;
       const point = [element.lon, element.lat] as const;
@@ -140,7 +151,7 @@ export function parseOverpassCameras(
             : { operator: [{ lang: UNDETERMINED, text: operator }], provider: operator }),
           ...(url === undefined || isImage ? {} : { detailUrl: url }),
           ...(ptz === undefined ? {} : { ptz }),
-          ...(mount === undefined ? {} : { mounting: MOUNTINGS[mount] ?? "unknown" }),
+          ...(mount === undefined ? {} : { mounting: mounting ?? "unknown" }),
           imageRedistribution: imageRedistributionOf(feed, "unknown"),
           views: [viewOf(tags)],
         }),

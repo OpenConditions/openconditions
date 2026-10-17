@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { parseLayout } from "../formats/layout.js";
 import {
@@ -14,6 +19,8 @@ import {
 import { sealFailures } from "./helpers/seal.js";
 
 const FETCHED = "2026-10-06T02:15:00Z";
+
+beforeEach(() => __resetSkips());
 
 function parse(feed: ChargingCatalogFeed, file: string): ParseOutput {
   const out = parseLayout(feed, { main: [fixture(file)] }, parseContext(FETCHED, 86400));
@@ -61,7 +68,7 @@ describe("geojson", () => {
   test("Flanders: rows of one location become one site with an EVSE per row and maximaal_vermogen_kw as power", () => {
     const out = parse(flandersFeed(), "be-vlg-mow.json");
     expect(out.features).toHaveLength(3);
-    expect(out.rejected).toBe(0);
+    expect(drainSkipped(flandersFeed().id)).toEqual({});
     const herent = site(out, "a4d397a0-54ad-11ec-80be-42010a840003");
     expect(herent).toMatchObject({
       kind: "charging_site",
@@ -157,7 +164,7 @@ describe("geojson", () => {
     const out = parse(victoriaFeed(), "au-vic.geojson");
     // The record with every property null has no id.
     expect(out.features).toHaveLength(5);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(victoriaFeed().id)).toEqual({ malformed: 1 });
     const tatura = site(out, "104 Hogan Street, TATURA VIC 3614");
     expect(tatura).toMatchObject({
       name: [{ lang: "en", text: "Tatura" }],
@@ -265,9 +272,9 @@ describe("geojson", () => {
 describe("csv", () => {
   test("Wallonia: an EPSG:31370 WKT point lands in Namur", () => {
     const out = parse(walloniaFeed(), "be-wal-spw.csv");
-    // The row without an EMPLACEMENT_ID is rejected.
+    // The row without an EMPLACEMENT_ID is skipped.
     expect(out.features).toHaveLength(4);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(walloniaFeed().id)).toEqual({ malformed: 1 });
     const namur = site(out, "89b3a26e-f841-11ee-b689-42010aa400b8");
     const [lon, lat] = (namur["location"] as { geometry: { coordinates: [number, number] } })
       .geometry.coordinates;
@@ -373,13 +380,45 @@ describe("edge records", () => {
     ]);
   });
 
-  test("a record without a placeable point is rejected", () => {
+  test("a value a map does not name counts as unknown", () => {
+    const feed: ChargingCatalogFeed = {
+      ...nswFeed(),
+      format: "json",
+      layout: { lon: "lon", lat: "lat" },
+      charging: {
+        id: "id",
+        audience: { field: "access", map: { public: "public" } },
+        connectors: {
+          row: {
+            standard: { field: "plug", map: { CCS: "IEC_62196_T2_COMBO" } },
+            current: { field: "cur", map: { DC: "dc" } },
+          },
+        },
+      },
+    };
+    const rows = [
+      { id: "a", lon: 151.2, lat: -33.9, access: "members", plug: "CCS", cur: "DC" },
+      { id: "a", lon: 151.2, lat: -33.9, plug: "XYZ", cur: "DC" },
+    ];
+    const out = parseLayout(
+      feed,
+      { main: [Buffer.from(JSON.stringify(rows))] },
+      parseContext(FETCHED),
+    );
+    expect(evses(site(out, "a")).map((e) => e.connectors[0]?.["standard"])).toEqual([
+      "IEC_62196_T2_COMBO",
+      "UNKNOWN",
+    ]);
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
+  });
+
+  test("a record without a position is skipped as having no geometry", () => {
     const feed = nswFeed();
     const csv =
       "OBJECTID,Station_name,Station_address,Operator,Number_of_plugs,Charger_Type,Charger_rating,Latitude,Longitude,LGANAME,PCODE,Source\n" +
       "1,,Somewhere,NRMA,2,AC,22 kW,,,,,\n";
     const out = parseLayout(feed, { main: [Buffer.from(csv)] }, parseContext(FETCHED));
     expect(out.features).toEqual([]);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1 });
   });
 });

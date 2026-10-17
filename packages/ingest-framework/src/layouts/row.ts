@@ -1,9 +1,18 @@
 import { isPlausibleWgs84, reprojectorFor } from "../reproject.js";
+import type { RecordSkipReason } from "../skips.js";
 import type { LayoutBlock } from "./block.js";
 
-/** One decoded record: where it sits (when placeable) and its raw fields. */
+/** Why a decoded record has no point. */
+export type UnplacedReason = Extract<RecordSkipReason, "no_geometry" | "malformed">;
+
+/**
+ * One decoded record: where it sits (when placeable) and its raw fields. A
+ * record without a point says why: `no_geometry` when it names no position,
+ * `malformed` when the position it names cannot be read or lies outside WGS84.
+ */
 export interface LayoutRow {
   point?: [number, number];
+  unplaced?: UnplacedReason;
   fields: Record<string, unknown>;
 }
 
@@ -28,6 +37,27 @@ export function getPath(fields: unknown, path: string): unknown {
     }
   }
   return cur;
+}
+
+/** A row of a record: its point, else why it has none. */
+export function layoutRow(
+  fields: Record<string, unknown>,
+  point: [number, number] | undefined,
+  positioned: boolean,
+): LayoutRow {
+  return point ? { point, fields } : { fields, unplaced: positioned ? "malformed" : "no_geometry" };
+}
+
+const holdsValue = (value: unknown): boolean =>
+  Array.isArray(value)
+    ? value.length > 0
+    : value !== undefined && value !== null && !(typeof value === "string" && value.trim() === "");
+
+/** Whether a record holds a value in any of the position fields the block reads. */
+export function namesPosition(fields: unknown, block: LayoutBlock): boolean {
+  return [block.point?.field, block.wkt, block.lon, block.lat].some(
+    (path) => path !== undefined && holdsValue(getPath(fields, path)),
+  );
 }
 
 /** A finite number from a number or a numeric string, honouring a decimal comma. */

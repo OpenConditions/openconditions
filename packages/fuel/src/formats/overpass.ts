@@ -4,6 +4,8 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import {
   availabilityDraft,
@@ -71,7 +73,8 @@ const tag = (tags: Record<string, string>, key: string): string | undefined => {
  * that linking matches on. Its `fuel:*` tags are the products, each with an
  * availability reading as of the fetch; OSM holds no prices. The tags list
  * what mappers recorded, so the products are not complete. The address is
- * kept only when its tags name the country.
+ * kept only when its tags name the country. A station placed outside WGS84
+ * range is skipped as malformed.
  */
 export function parseOverpassFuel(
   feed: FuelFeed,
@@ -79,13 +82,13 @@ export function parseOverpassFuel(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
   for (const payload of payloads["main"] ?? []) {
-    for (const element of decodeOverpass(payload)) {
+    for (const element of decodeOverpass(payload, skip)) {
       const { tags } = element;
       if (tags["amenity"] !== "fuel") continue;
       if (!placeable(element.lon, element.lat)) {
-        rejected++;
+        skip("malformed");
         continue;
       }
       const products = productsOf(tags);
@@ -134,6 +137,5 @@ export function parseOverpassFuel(
       }
     }
   }
-  out.rejected = rejected;
   return out;
 }

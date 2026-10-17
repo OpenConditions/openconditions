@@ -4,6 +4,8 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { AUDIENCES } from "@openconditions/model";
 import type {
@@ -90,7 +92,9 @@ function typeOf(tags: Record<string, string>): ParkingSiteType {
  * id is the element (`way/<id>`), and its `osm:<type>` id the only id
  * linking matches on: the node and the way of one car park may link, two
  * ways may not. OSM holds no occupancy, so there are no readings. The address
- * is kept only when its tags name the country.
+ * is kept only when its tags name the country. An `access` value, or a
+ * `parking` value that is neither a layout nor kerbside, not read here counts
+ * as unknown.
  */
 export function parseOverpassParking(
   feed: ParkingCatalogFeed,
@@ -98,13 +102,21 @@ export function parseOverpassParking(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
+  const unknown = () => recordSkipped(feed.id, "unknown_value");
   for (const payload of payloads["main"] ?? []) {
-    for (const element of decodeOverpass(payload)) {
+    for (const element of decodeOverpass(payload, skip)) {
       const { tags } = element;
       if (tags["amenity"] !== "parking") continue;
       const type = typeOf(tags);
-      const layout = LAYOUTS[tag(tags, "parking") ?? ""];
-      const audience = AUDIENCE[tag(tags, "access") ?? ""];
+      const parking = tag(tags, "parking");
+      const layout =
+        parking !== undefined && Object.hasOwn(LAYOUTS, parking) ? LAYOUTS[parking] : undefined;
+      if (parking !== undefined && layout === undefined && !ON_STREET.has(parking)) unknown();
+      const access = tag(tags, "access");
+      const audience =
+        access !== undefined && Object.hasOwn(AUDIENCE, access) ? AUDIENCE[access] : undefined;
+      if (access !== undefined && audience === undefined) unknown();
       const country = tag(tags, "addr:country");
       const optional = <K extends keyof SiteInput>(key: K, value: SiteInput[K] | undefined) =>
         value === undefined ? {} : { [key]: value };

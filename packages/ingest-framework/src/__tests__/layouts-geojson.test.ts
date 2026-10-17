@@ -81,6 +81,18 @@ describe("decodeLayout geojson", () => {
     expect(rows[0]!.point).toEqual([7.5, 46]);
   });
 
+  test("a feature without a point says whether it names a position", () => {
+    const rows = decodeLayout(
+      "geojson",
+      fc([
+        { geometry: null, properties: {} },
+        { geometry: { type: "Point", coordinates: [500, 47] }, properties: {} },
+      ]),
+      {},
+    );
+    expect(rows.map((r) => r.unplaced)).toEqual(["no_geometry", "malformed"]);
+  });
+
   test("a body that is not JSON yields no rows", () => {
     expect(decodeLayout("geojson", Buffer.from("nope"), {})).toEqual([]);
   });

@@ -1,4 +1,5 @@
-import { describe, expect, test } from "vitest";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { fuelDomain } from "../domain.js";
 import { fixture, osmFuelFeed, parseContext } from "./helpers/fuel-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -168,5 +169,31 @@ describe("overpass", () => {
   test("an Overpass runtime error fails the parse", () => {
     const error = Buffer.from(JSON.stringify({ elements: [], remark: "runtime error: timeout" }));
     expect(() => parse(error)).toThrow(/runtime error/);
+  });
+});
+
+describe("skips", () => {
+  beforeEach(() => __resetSkips());
+
+  test("the fixture reports nothing left unread", () => {
+    parse();
+    expect(drainSkipped(osmFuelFeed().id)).toEqual({});
+  });
+
+  test("a station without a position or outside WGS84 range is skipped", () => {
+    const { features, rejected } = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [
+            { type: "way", id: 1, tags: { amenity: "fuel" } },
+            { type: "node", id: 2, lat: 95, lon: 8, tags: { amenity: "fuel" } },
+            { type: "node", id: 3, lat: 49, lon: 8, tags: { amenity: "fuel" } },
+          ],
+        }),
+      ),
+    );
+    expect(features).toHaveLength(1);
+    expect(rejected ?? 0).toBe(0);
+    expect(drainSkipped(osmFuelFeed().id)).toEqual({ no_geometry: 1, malformed: 1 });
   });
 });

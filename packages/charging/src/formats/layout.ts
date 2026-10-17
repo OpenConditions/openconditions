@@ -7,6 +7,8 @@ import {
   lookupField as lookup,
   type ParseContext,
   type ParseOutput,
+  type RecordSkipReason,
+  recordSkipped,
   cachedRegex as regex,
   scalarText,
   fieldText as text,
@@ -28,6 +30,9 @@ import {
 export const CHARGING_LAYOUT_FORMATS = ["geojson", "json", "csv"] as const;
 
 export type ChargingLayoutFormat = (typeof CHARGING_LAYOUT_FORMATS)[number];
+
+/** Called for each enumerated value a record holds that its mapping does not name. */
+type OnUnknown = () => void;
 
 /** A whole number of zero or more; undefined for anything else. */
 function countOf(fields: Record<string, unknown>, ref: FieldRef | undefined): number | undefined {
@@ -67,6 +72,7 @@ function defined<T extends object>(value: T): T {
 function rowEntry(
   fields: Record<string, unknown>,
   row: Extract<ChargingMapping["connectors"], { row: unknown }>["row"],
+  unknown: OnUnknown,
 ): Entry {
   const code = row.standard && text(fields, row.standard.field);
   const standard =
@@ -77,6 +83,7 @@ function rowEntry(
         : Object.hasOwn(row.standard.map, code)
           ? row.standard.map[code]
           : undefined;
+  if (code !== undefined && standard === undefined) unknown();
   const power = row.powerKw;
   const powerText =
     power === undefined
@@ -86,9 +93,9 @@ function rowEntry(
     count: countOf(fields, row.count),
     connector: defined({
       standard: standard ?? "UNKNOWN",
-      format: typeof row.format === "string" ? row.format : lookup(fields, row.format),
-      current: lookup(fields, row.current),
-      powerType: lookup(fields, row.powerType) as PowerType | undefined,
+      format: typeof row.format === "string" ? row.format : lookup(fields, row.format, unknown),
+      current: lookup(fields, row.current, unknown),
+      powerType: lookup(fields, row.powerType, unknown) as PowerType | undefined,
       maxPowerKw: power && parsePowerKw(powerText, power.unit),
     }),
   };
@@ -143,14 +150,23 @@ function countIn(groups: Record<string, string | undefined>): number | undefined
   return count !== undefined && /^\d+$/.test(count) ? Number(count) : undefined;
 }
 
-function listEntries(fields: Record<string, unknown>, list: ListMapping): Entry[] {
-  const current = lookup(fields, list.current);
+/**
+ * The connectors a record's list names. A type the list's map does not name
+ * is a connector of unknown standard.
+ */
+function listEntries(
+  fields: Record<string, unknown>,
+  list: ListMapping,
+  unknown: OnUnknown,
+): Entry[] {
+  const current = lookup(fields, list.current, unknown);
   return listParts(fields, list).map((groups) => {
     const type = scalarText(groups["type"]);
     const mapped =
       type !== undefined && list.map !== undefined && Object.hasOwn(list.map, type)
         ? list.map[type]
         : undefined;
+    if (type !== undefined && list.map !== undefined && mapped === undefined) unknown();
     return {
       count: countIn(groups),
       connector: defined({
@@ -170,8 +186,12 @@ function listEntries(fields: Record<string, unknown>, list: ListMapping): Entry[
  * is empty. Without groups, the listed connectors are one charge point's.
  * Keys are set by the caller.
  */
-function chargerGroups(fields: Record<string, unknown>, list: ListMapping): EvseInput[] {
-  const plugs = listEntries(fields, list).map((entry) => entry.connector);
+function chargerGroups(
+  fields: Record<string, unknown>,
+  list: ListMapping,
+  unknown: OnUnknown,
+): EvseInput[] {
+  const plugs = listEntries(fields, list, unknown).map((entry) => entry.connector);
   const groups = list.groups === undefined ? [] : listParts(fields, list.groups);
   const numbered = (connectors: Omit<ConnectorInput, "id">[]) =>
     connectors.map((c, i) => ({ id: String(i + 1), ...c }));
@@ -206,7 +226,11 @@ function evseOf(key: string, entry: Entry): EvseInput | undefined {
 }
 
 /** The charge points of one site's records, in the order the records name them. */
-function evsesOf(rows: readonly LayoutRow[], mapping: ChargingMapping): EvseInput[] {
+function evsesOf(
+  rows: readonly LayoutRow[],
+  mapping: ChargingMapping,
+  unknown: OnUnknown,
+): EvseInput[] {
   const connectors = mapping.connectors;
   if ("columns" in connectors) {
     return rows.flatMap((row, i) =>
@@ -220,10 +244,10 @@ function evsesOf(rows: readonly LayoutRow[], mapping: ChargingMapping): EvseInpu
     const list = connectors.list;
     if (list.as === "connectors") {
       return rows
-        .flatMap((row) => chargerGroups(row.fields, list))
+        .flatMap((row) => chargerGroups(row.fields, list, unknown))
         .map((evse, i) => ({ ...evse, key: String(i + 1) }));
     }
-    const entries = rows.flatMap((row) => listEntries(row.fields, list));
+    const entries = rows.flatMap((row) => listEntries(row.fields, list, unknown));
     return entries.flatMap((entry, i) => {
       const evse = evseOf(String(i + 1), entry);
       return evse === undefined ? [] : [evse];
@@ -233,7 +257,7 @@ function evsesOf(rows: readonly LayoutRow[], mapping: ChargingMapping): EvseInpu
   // a record without one is its own, keyed apart from every source key.
   const byKey = new Map<string, EvseInput>();
   rows.forEach((row, i) => {
-    const entry = rowEntry(row.fields, connectors.row);
+    const entry = rowEntry(row.fields, connectors.row, unknown);
     const key = text(row.fields, mapping.evse?.key);
     if (key === undefined) {
       const evse = evseOf(`row-${i + 1}`, entry);
@@ -304,6 +328,7 @@ function siteInput(
   rows: readonly [LayoutRow, ...LayoutRow[]],
   mapping: ChargingMapping,
   fetchedAt: string,
+  unknown: OnUnknown,
 ): SiteInput {
   const f = rows[0].fields;
   const completion = text(f, mapping.completion);
@@ -332,12 +357,12 @@ function siteInput(
       : mapping.openingHours?.syntax === "osm"
         ? { openingHoursOsm: hours }
         : { openingHoursText: hours }),
-    audience: lookup(f, mapping.audience),
-    lifecycle: unbuilt ? "planned" : lookup(f, mapping.lifecycle),
-    parkingType: lookup(f, mapping.parkingType) as ParkingType | undefined,
+    audience: lookup(f, mapping.audience, unknown),
+    lifecycle: unbuilt ? "planned" : lookup(f, mapping.lifecycle, unknown),
+    parkingType: lookup(f, mapping.parkingType, unknown) as ParkingType | undefined,
     tariffText: text(f, mapping.tariffText),
     notes: text(f, mapping.notes),
-    evses: evsesOf(rows, mapping),
+    evses: evsesOf(rows, mapping, unknown),
   });
 }
 
@@ -346,8 +371,10 @@ function siteInput(
  * cuts the payloads into records, and its `charging` mapping makes the
  * records sharing an id one site, with the charge points and connectors they
  * name; one operator's sites within 15 m are then one site. A record without
- * an id or a placeable point is rejected. The pages of a paginated feed are
- * read as one list, so a site may span them.
+ * a point is skipped as malformed when its position cannot be read, else as
+ * having no geometry; a placed record without an id, or an item that is no
+ * object, as malformed. A value a map does not name counts as unknown. The pages of a
+ * paginated feed are read as one list, so a site may span them.
  */
 export function parseLayout(
   feed: ChargingCatalogFeed,
@@ -361,13 +388,18 @@ export function parseLayout(
   if (mapping === undefined) throw new Error(`feed ${feed.id} has no charging mapping`);
   const kind = feed.format as ChargingLayoutFormat;
   const sites = new Map<string, { point: [number, number]; rows: [LayoutRow, ...LayoutRow[]] }>();
-  let rejected = 0;
+  const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
   for (const body of bodies) {
-    for (const row of decodeLayout(kind, body, feed.layout ?? {})) {
+    for (const row of decodeLayout(kind, body, feed.layout ?? {}, skip)) {
       if (!kept(row.fields, mapping)) continue;
+      // A composite id may be built of the position, so the position is checked first.
+      if (row.point === undefined) {
+        skip(row.unplaced ?? "no_geometry");
+        continue;
+      }
       const stationId = stationIdOf(row.fields, mapping);
-      if (stationId === undefined || row.point === undefined) {
-        rejected++;
+      if (stationId === undefined) {
+        skip("malformed");
         continue;
       }
       const known = sites.get(stationId);
@@ -376,9 +408,10 @@ export function parseLayout(
     }
   }
   for (const [stationId, { point, rows }] of sites) {
-    const input = siteInput(stationId, point, rows, mapping, ctx.fetchedAt);
+    const input = siteInput(stationId, point, rows, mapping, ctx.fetchedAt, () =>
+      recordSkipped(feed.id, "unknown_value"),
+    );
     out.features.push(siteDraft(feed, input, ctx.fetchedAt));
   }
-  out.rejected = rejected;
   return colocateSites(out);
 }

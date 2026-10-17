@@ -36,6 +36,25 @@ describe("decodeOverpass", () => {
     expect(elements.map((e) => e.id)).toEqual([7]);
   });
 
+  test("decodeOverpass reports each element it leaves out, with the reason", () => {
+    const reasons: string[] = [];
+    const elements = decodeOverpass(
+      body({
+        elements: [
+          null,
+          { type: "area", id: 1, lat: 1, lon: 2 },
+          { type: "node", id: -1, lat: 1, lon: 2 },
+          { type: "relation", id: 3, tags: {} },
+          { type: "node", id: 4, lat: "1", lon: 2 },
+          { type: "node", id: 5, lat: 1, lon: 2 },
+        ],
+      }),
+      (reason) => reasons.push(reason),
+    );
+    expect(elements.map((e) => e.id)).toEqual([5]);
+    expect(reasons).toEqual(["malformed", "unknown_type", "malformed", "no_geometry", "malformed"]);
+  });
+
   test("another remark is not an error", () => {
     expect(decodeOverpass(body({ elements: [], remark: "note" }))).toEqual([]);
   });

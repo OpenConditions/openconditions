@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { camerasDomain } from "../domain.js";
 import { cameraFeed, fixture, parseContext } from "./helpers/cameras-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -277,5 +282,46 @@ describe("overpass", () => {
   test("every camera seals", () => {
     const out = parse(fixture("osm-cameras.json"));
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+});
+
+describe("skips", () => {
+  beforeEach(() => __resetSkips());
+
+  test("the fixture reports what it leaves unread", () => {
+    parse(fixture("osm-cameras.json"));
+    // A wall and a roof mount have no mounting of the vocabulary.
+    expect(drainSkipped(osmFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
+  test("an element with a bad id and unknown mount and camera type values are reported", () => {
+    const out = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [
+            {
+              type: "node",
+              id: 0,
+              lat: 47,
+              lon: 11,
+              tags: { "contact:webcam": "https://a.example/" },
+            },
+            {
+              type: "node",
+              id: 2,
+              lat: 47,
+              lon: 11,
+              tags: {
+                "contact:webcam": "https://a.example/",
+                "camera:mount": "wall",
+                "camera:type": "fisheye",
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(osmFeed().id)).toEqual({ malformed: 1, unknown_value: 2 });
   });
 });
