@@ -7,6 +7,7 @@ import {
   type CatalogFeed,
   cellsCovering,
   createFetchState,
+  drainSkipped,
   type Env,
   type FeedPayloads,
   type FetchFn,
@@ -19,6 +20,8 @@ import {
   type ParseOutput,
   redactSecrets,
   redactUrl,
+  type SkipCounts,
+  skippedRecords,
 } from "@openconditions/ingest-framework";
 import { domainOf, formatOf, INGEST_DOMAINS } from "../services/ingest/src/domains.js";
 import {
@@ -50,8 +53,10 @@ export interface FeedCheck {
   message?: string;
   /** Records the feed parsed into, when it was fetched. */
   records?: number;
-  /** Source records the parse could not use, when it counted any. */
+  /** Source records the parse could not use, when it counted any: its skipped records included. */
   rejected?: number;
+  /** What the parse left unread, by reason, when it skipped anything. */
+  skipped?: SkipCounts;
   /** Source records that end by design (superseded, expired, a type left to another feed). */
   terminal?: number;
   /** Bytes of the payloads the parse read. */
@@ -61,7 +66,7 @@ export interface FeedCheck {
 }
 
 /** What one parse kept and left, for the report line. */
-type ParseStats = Pick<FeedCheck, "rejected" | "terminal" | "bytes" | "parseMs">;
+type ParseStats = Pick<FeedCheck, "rejected" | "skipped" | "terminal" | "bytes" | "parseMs">;
 
 export interface FeedsCheckOptions {
   feedsDir: string;
@@ -231,14 +236,17 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
     // A cell's answer is read for that cell, as the service reads it.
     const read = cell ? { ...ctx, cell } : ctx;
     const started = performance.now();
+    drainSkipped(feed.id);
     const output = format.parse(feed, payloads as FeedPayloads, read);
     const parseMs = Math.round(performance.now() - started);
+    const skipped = drainSkipped(feed.id);
     records = recordCount(output);
     const bytes = Object.values(payloads)
       .flat()
       .reduce((sum, buffer) => sum + buffer.length, 0);
     stats = {
-      rejected: output.rejected ?? 0,
+      rejected: (output.rejected ?? 0) + skippedRecords(skipped),
+      ...(Object.keys(skipped).length > 0 ? { skipped } : {}),
       ...(output.records !== undefined ? { terminal: output.records.terminal } : {}),
       bytes,
       parseMs,
@@ -314,6 +322,7 @@ function formatResult(r: FeedCheck, annotate: boolean): string {
   const counts = [
     `${r.records ?? 0} records`,
     ...(r.rejected !== undefined ? [`${r.rejected} rejected`] : []),
+    ...Object.entries(r.skipped ?? {}).map(([reason, count]) => `${count} skipped (${reason})`),
     ...(r.terminal !== undefined ? [`${r.terminal} terminal`] : []),
     ...(r.bytes !== undefined ? [`${r.bytes} bytes`] : []),
     ...(r.parseMs !== undefined ? [`parsed in ${r.parseMs} ms`] : []),

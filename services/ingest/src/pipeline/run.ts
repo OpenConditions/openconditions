@@ -1257,17 +1257,19 @@ async function finishEventPoll(
   // changed its shape): publishing it would withdraw the last publication.
   // Terminal records do not change that, since some feeds always carry them
   // (a type left to another feed); what stands is bounded by its records'
-  // own expiry. Records skipped for want of geometry are not among them: a
-  // snapshot of only unplaceable records says what is current.
-  const noGeometry = skipped.no_geometry ?? 0;
-  const parseRejected = (parse.rejected ?? 0) + skippedRecords(skipped) - noGeometry;
-  if (accounting !== undefined && accounting.accepted === 0 && parseRejected > 0) {
+  // own expiry. Nor do records the accounting holds as unlocatable (a DATEX
+  // record with only an Alert-C location), which keep their situations
+  // published; a record dropped for want of geometry that the accounting does
+  // not hold that way counts among the unusable ones.
+  const parseRejected = (parse.rejected ?? 0) + skippedRecords(skipped);
+  const unusable = parseRejected - Math.min(skipped.no_geometry ?? 0, accounting?.unlocatable ?? 0);
+  if (accounting !== undefined && accounting.accepted === 0 && unusable > 0) {
     const refused = await fail(
       poll,
       "failed",
-      `every usable record of the snapshot was rejected (${parseRejected})`,
+      `every usable record of the snapshot was rejected (${unusable})`,
     );
-    return { ...refused, rejected: parseRejected };
+    return { ...refused, rejected: parseRejected, ...skipsOf(skipped) };
   }
   const polledAt = new Date(poll.attempt.at);
   const situations = resolved.map((draft) => stampAttribution(draft, src, polledAt));
@@ -1282,7 +1284,7 @@ async function finishEventPoll(
     if (shrunk) return failShrunk(poll, "event", "situations", situations.length, shrunk);
   }
 
-  const rejected = dropped + noGeometry + parseRejected;
+  const rejected = dropped + parseRejected;
   let summary: WriteSummary;
   poll.steps.lap("prepare");
   try {
