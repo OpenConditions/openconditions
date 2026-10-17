@@ -69,13 +69,14 @@ describe("datex2", () => {
       location: {
         geometry: { coordinates: [-3.9403, 42.2624] },
         roads: [{ ref: "A-62", kmFrom: 25.3 }],
+        admin: { country: "ES", subdivision: "BURGOS" },
       },
       details: { kind: "camera", v: 1, imageRedistribution: "unknown" },
     });
     expect(viewDetails(burgos)).toEqual({
       kind: "camera_view",
       v: 1,
-      direction: { value: "negative", basis: "road_reference" },
+      direction: { value: "negative", basis: "road_reference", toward: "BURGOS" },
       imageRedistribution: "unknown",
     });
     expect(value(out.observations[0])).toEqual({
@@ -91,9 +92,7 @@ describe("datex2", () => {
     const out = parse();
     const both = camera(out, "167979");
     expect(both?.["name"]).toEqual([{ lang: "es", text: "AP-6" }]);
-    expect(viewDetails(both)).toMatchObject({
-      direction: { value: "both", basis: "road_reference" },
-    });
+    expect(viewDetails(both)?.["direction"]).toEqual({ value: "both", basis: "road_reference" });
   });
 
   test("every camera and reading seals", () => {

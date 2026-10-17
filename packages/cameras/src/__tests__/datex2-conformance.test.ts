@@ -5,6 +5,7 @@ import {
   xsdEnumeration,
   xsdEnumerations,
 } from "@openconditions/conformance";
+import { DATEX2_DGT_ES } from "@openconditions/conformance/standards/datex2-dgt-es";
 import { DATEX2_V3 } from "@openconditions/conformance/standards/datex2-v3";
 import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
 import { beforeAll, beforeEach, describe, expect, test } from "vitest";
@@ -66,6 +67,52 @@ describe("DATEX II v3.7 devices through the camera parser", () => {
               : "not a camera: the camera parser reads cameras only, by design",
           ]),
       ),
+    });
+  });
+});
+
+describe("DGT's Spanish location extension through the camera parser", () => {
+  let enums: XsdEnumeration[] = [];
+  let unavailable: string | undefined;
+
+  beforeAll(async () => {
+    const pinned = await pinnedOrUnavailable(DATEX2_DGT_ES);
+    if ("unavailable" in pinned) unavailable = pinned.unavailable;
+    else enums = xsdEnumerations(pinned.files);
+  }, 120_000);
+  beforeEach(() => __resetSkips());
+
+  const directed = (direction: string) =>
+    `<device id="d" version="1"><typeOfDevice>camera</typeOfDevice><pointLocation xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:lse="http://levelC/schema/3/locationReferencingSpanishExtension"><loc:tpegPointLocation xsi:type="loc:TpegSimplePoint"><loc:point xsi:type="loc:TpegNonJunctionPoint"><loc:pointCoordinates><loc:latitude>42.26</loc:latitude><loc:longitude>-3.94</loc:longitude></loc:pointCoordinates></loc:point><loc:_tpegSimplePointExtension><loc:extendedTpegSimplePoint><lse:tpegDirectionRoad>${direction}</lse:tpegDirectionRoad></loc:extendedTpegSimplePoint></loc:_tpegSimplePointExtension></loc:tpegPointLocation></pointLocation></device>`;
+  const viewDirection = (out: ParseOutput) =>
+    (
+      (out.features[0]?.["components"] as { details: Record<string, unknown> }[] | undefined)?.[0]
+        ?.details as { direction?: { value: string; basis: string } } | undefined
+    )?.direction;
+
+  test("road directions: each along the road's reference, unknown as none", ({ skip }) => {
+    if (unavailable) skip(unavailable);
+    const values = xsdEnumeration(
+      enums,
+      "TpegDirectionRoadEnum",
+      "http://levelC/schema/3/locationReferencingSpanishExtension",
+    );
+    assertCovered("TpegDirectionRoadEnum", values, {
+      handled: (v) => {
+        const out = parse(devices(directed(v)));
+        const skipped = drainSkipped(FEED);
+        const direction = viewDirection(out);
+        return (
+          skipped["unknown_value"] === undefined &&
+          (v === "unknown"
+            ? direction === undefined
+            : direction?.value === v && direction.basis === "road_reference")
+        );
+      },
+      unsupported: {
+        _extended:
+          "the schema's escape hatch for national extensions: the view has no direction and the value is counted unread",
+      },
     });
   });
 });
