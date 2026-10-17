@@ -65,6 +65,15 @@ describe("fuel module", () => {
     expect(DATEX2_V3_FUEL_GRADES_OUT["sp100"]).toBeNull();
   });
 
+  it("carries the EN 16709 blends, a product's biofuel share and a station's open status", () => {
+    expect(registry.vocabulary("fuel_grade")?.values).toEqual(
+      expect.arrayContaining(["b20", "b30"]),
+    );
+    expect(DATEX2_V3_FUEL_GRADES_OUT["b20"]).toBeNull();
+    expect(registry.kind("feature", "fuel_station")?.traits).toContain("operated_site");
+    expect(registry.kind("component", "fuel_product")?.version).toBe("1.1");
+  });
+
   it("reads DATEX biogas as compressed biomethane and writes it back", () => {
     expect(DATEX2_V3_FUEL_GRADES["organicGas:biogas"]).toBe("cng_bio");
     expect(DATEX2_V3_FUEL_GRADES_OUT["cng_bio"]).toBe("organicGas:biogas");

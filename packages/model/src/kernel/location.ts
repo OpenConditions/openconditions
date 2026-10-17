@@ -33,6 +33,12 @@ export const DIRECTION_BASES = [
   "unknown",
 ] as const;
 export const COMPASS_POINTS = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"] as const;
+/**
+ * The two carriageways of a ring road or beltway, as signs name them. Where
+ * traffic keeps right the inner loop runs clockwise and the outer loop
+ * counter-clockwise; where it keeps left, the other way round.
+ */
+export const DIRECTION_LOOPS = ["inner", "outer"] as const;
 export const LANE_TYPES = [
   "general",
   "hov",
@@ -75,7 +81,9 @@ export const FUZZINESS = [
  * DirectionRef.value is read against `basis`: road_reference → positive =
  * increasing milepost/km; alert_c → TMC positive direction; openlr → along the
  * reference. bearing/compass/text carry no axis, so `value` stays "both" or
- * "unknown" unless ingest resolved it against a road reference.
+ * "unknown" unless ingest resolved it against a road reference. `loop` names
+ * the loop of a ring road the direction is on; it is no axis either, so a
+ * consumer that does not know the ring cannot apply it to one carriageway.
  */
 export const DirectionRef = z
   .strictObject({
@@ -83,6 +91,7 @@ export const DirectionRef = z
     basis: z.enum(DIRECTION_BASES),
     compass: z.enum(COMPASS_POINTS).optional(),
     bearingDeg: z.number().min(0).lt(360).optional(),
+    loop: z.enum(DIRECTION_LOOPS).optional(),
     toward: z.string().min(1).optional(),
     text: z.string().min(1).optional(),
   })

@@ -113,7 +113,13 @@ describe("production registry", () => {
       .kinds("feature")
       .filter((k) => k.traits?.includes("operated_site"))
       .map((k) => k.code);
-    expect(operated).toEqual(["toll_point", "rest_area", "weigh_station", "border_crossing"]);
+    expect(operated).toEqual([
+      "toll_point",
+      "fuel_station",
+      "rest_area",
+      "weigh_station",
+      "border_crossing",
+    ]);
   });
 
   it("registers the offers and the kinds they price", () => {

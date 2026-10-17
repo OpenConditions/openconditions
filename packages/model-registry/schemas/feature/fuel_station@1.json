@@ -599,7 +599,9 @@
                   "sp98_e10",
                   "cng_bio",
                   "lng_bio",
-                  "sp100"
+                  "sp100",
+                  "b20",
+                  "b30"
                 ]
               },
               "service": {
@@ -643,6 +645,11 @@
                   "gross",
                   "net"
                 ]
+              },
+              "biofuelPct": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
               }
             },
             "required": [
@@ -687,6 +694,9 @@
         },
         "truckSuitable": {
           "type": "boolean"
+        },
+        "direction": {
+          "$ref": "#/$defs/DirectionRef"
         }
       },
       "required": [
@@ -785,7 +795,8 @@
             "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
-            "glide"
+            "glide",
+            "gvp:volcano"
           ]
         },
         "id": {
@@ -2053,6 +2064,13 @@
           "type": "number",
           "minimum": 0,
           "exclusiveMaximum": 360
+        },
+        "loop": {
+          "type": "string",
+          "enum": [
+            "inner",
+            "outer"
+          ]
         },
         "toward": {
           "type": "string",

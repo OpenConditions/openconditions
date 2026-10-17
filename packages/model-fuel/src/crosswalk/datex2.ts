@@ -73,6 +73,8 @@ export const DATEX2_V3_FUEL_GRADES_OUT: TargetTable = {
   hvo100: null,
   b7: null,
   b10: null,
+  b20: null,
+  b30: null,
   e85: null,
   ethanol: null,
   adblue: null,

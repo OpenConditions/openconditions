@@ -23,6 +23,7 @@ import {
 import {
   CARRIAGEWAYS,
   DIRECTION_BASES,
+  DIRECTION_LOOPS,
   DIRECTION_VALUES,
   EXTENTS,
   FUZZINESS,
@@ -48,7 +49,7 @@ import { ENDED_REASONS, VALIDITY_STATUSES } from "./validity.js";
 import { DIMENSIONS, VEHICLE_CLASSES, VEHICLE_FUELS, VEHICLE_USAGES } from "./vehicle.js";
 
 /** The kernel version, negotiated at federation like a kind: a major bump touches every class. */
-export const KERNEL_VERSION = "1.0" as const;
+export const KERNEL_VERSION = "1.1" as const;
 
 const closed = (code: string, values: readonly string[], description: string): VocabularyEntry =>
   defineVocabulary({ code, values, extensible: false, description });
@@ -79,6 +80,7 @@ export const kernelModule: RegistryModule = {
     closed("carriageway", CARRIAGEWAYS, "Carriageway part of a road reference."),
     closed("direction_value", DIRECTION_VALUES, "Direction relative to the basis's axis."),
     closed("direction_basis", DIRECTION_BASES, "What a direction value is read against."),
+    closed("direction_loop", DIRECTION_LOOPS, "The loop of a ring road a direction is on."),
     closed("lane_type", LANE_TYPES, "Lane types."),
     closed("extent", EXTENTS, "Spatial extent of a location."),
     closed("geometry_origin", GEOMETRY_ORIGINS, "Where a location's geometry came from."),

@@ -1,4 +1,10 @@
-import { defineKind, defineProperty, Iso8601, quantityIn } from "@openconditions/model";
+import {
+  defineKind,
+  defineProperty,
+  Iso8601,
+  quantityIn,
+  SEVERITY_LABELS,
+} from "@openconditions/model";
 import { z } from "zod";
 
 const DOMAIN = "hazards";
@@ -6,8 +12,40 @@ const V = "1.0";
 
 /** How a wildfire started, as incident registers record it once investigated. */
 export const IGNITION_CAUSES = ["natural", "human", "undetermined"] as const;
-/** The general fire behaviour incident teams report, from least to most intense. */
-export const FIRE_BEHAVIORS = ["minimal", "moderate", "active"] as const;
+/**
+ * The general fire behaviour incident teams report, from least to most
+ * intense: the four the ICS-209's General Behavior list offers.
+ */
+export const FIRE_BEHAVIORS = ["minimal", "moderate", "active", "extreme"] as const;
+/**
+ * What a fire is doing, in the terms incident teams pick beside its general
+ * behaviour (the ICS-209's additional behaviours, IRWIN's
+ * FireBehaviorGeneral1 to 3): how it spreads on the ground, how it climbs
+ * into the trees, and how far it throws embers.
+ */
+export const FIRE_BEHAVIOR_DESCRIPTORS = [
+  "smoldering",
+  "creeping",
+  "backing",
+  "flanking",
+  "running",
+  "uphill_runs",
+  "wind_driven_runs",
+  "short_crown_runs",
+  "single_tree_torching",
+  "isolated_torching",
+  "group_torching",
+  "torching",
+  "crowning",
+  "spotting",
+  "short_range_spotting",
+  "long_range_spotting",
+] as const;
+/** The grades a publisher's own alert scale is read as; an unknown grade is not stated. */
+const STATED_SEVERITIES = SEVERITY_LABELS.filter((label) => label !== "unknown") as [
+  Exclude<(typeof SEVERITY_LABELS)[number], "unknown">,
+  ...Exclude<(typeof SEVERITY_LABELS)[number], "unknown">[],
+];
 /** Satellite smoke analysts grade a plume by how much it hides the ground. */
 export const SMOKE_DENSITIES = ["light", "medium", "heavy"] as const;
 
@@ -55,6 +93,8 @@ export const naturalHazardKind = defineKind({
     controlledAt: Iso8601.optional(),
     /** How the incident team describes the fire's current behaviour. */
     fireBehavior: z.enum(FIRE_BEHAVIORS).optional(),
+    /** The behaviours the incident team names beside the general one, in its order. */
+    fireBehaviorDescriptors: z.array(z.enum(FIRE_BEHAVIOR_DESCRIPTORS)).min(1).optional(),
     density: z.enum(SMOKE_DENSITIES).optional(),
     /**
      * The satellite pass or image sequence a detection comes from; a smoke
@@ -105,6 +145,18 @@ export const naturalHazardKind = defineKind({
     displaced: z.number().int().nonnegative().optional(),
     /** The river, estuary or sea a flood comes from. */
     waterBody: z.string().min(1).optional(),
+    /**
+     * The publisher's grade of the event's latest episode, where it grades
+     * each update of an event apart from the event as a whole (GDACS), so
+     * the two can differ over an event's course; the situation's severity is
+     * the event's. `declaredRaw` is the publisher's own token.
+     */
+    episodeSeverity: z
+      .strictObject({
+        label: z.enum(STATED_SEVERITIES),
+        declaredRaw: z.string().min(1).optional(),
+      })
+      .optional(),
   }),
 });
 
