@@ -251,11 +251,12 @@ function evsesOf(feedId: string, poi: Raw): EvseInput[] {
         ...(volts === undefined ? {} : { maxVoltage: volts }),
         ...(amps === undefined ? {} : { maxAmperage: amps }),
       };
-      // A connection's reference is its EVSE id where it is one, else the label on it.
+      // A connection's reference is its EVSE id where it is one, else the label
+      // on it; Open Charge Map's users write it, so the id is Open Charge Map's claim.
       return [
         {
           key,
-          ...(evseId === undefined ? {} : { evseId }),
+          ...(evseId === undefined ? {} : { evseId, idAuthority: "ocm" }),
           ...(reference === undefined || evseId !== undefined
             ? {}
             : { physicalReference: reference }),

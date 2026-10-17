@@ -247,6 +247,10 @@ describe("ocm", () => {
       [undefined, undefined],
       ["LU*ABC*E1", undefined],
     ]);
+    // Users write the reference: the EVSE id is Open Charge Map's claim, not the operator's.
+    expect((evses[2] as { externalIds?: unknown }).externalIds).toEqual([
+      { scheme: "emi3:evse", id: "LUABCE1", authority: "ocm" },
+    ]);
     // Unpublished listings are left out; a status or usage id Open Charge Map does not list is counted.
     const hidden = { ...poi, ID: 9, SubmissionStatus: { ID: 1, IsLive: false } };
     const odd = { ...poi, ID: 10, StatusType: { ID: 999 }, UsageType: { ID: 99 } };
