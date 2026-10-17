@@ -5,6 +5,7 @@ import {
   type Validity,
 } from "@openconditions/model";
 import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { geoJsonLdContext, recordIri } from "./geojson-ld.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -83,33 +84,28 @@ export function situationsToGeoJSON(
   };
 }
 
-/** GeoJSON-LD base context plus the schema.org and SOSA terms a situation's fields map to. */
-const CONTEXT: unknown = [
-  "https://geojson.org/geojson-ld/geojson-context.jsonld",
-  {
-    oc: "https://openconditions.org/ns#",
-    sosa: "http://www.w3.org/ns/sosa/",
-    schema: "https://schema.org/",
-    kind: "oc:kind",
-    subtype: "oc:subtype",
-    severity: "oc:severity",
-    certainty: "oc:certainty",
-    validity: "oc:validity",
-    effects: "oc:effects",
-    effectStates: "oc:effectStates",
-    headline: "schema:headline",
-    description: "schema:description",
-    provenance: "oc:provenance",
-    recordedAt: "schema:dateModified",
-  },
-];
+/** The schema.org and SOSA terms a situation's fields map to. */
+const CONTEXT = geoJsonLdContext({
+  kind: "oc:kind",
+  subtype: "oc:subtype",
+  severity: "oc:severity",
+  certainty: "oc:certainty",
+  validity: "oc:validity",
+  effects: "oc:effects",
+  effectStates: "oc:effectStates",
+  headline: "schema:headline",
+  description: "schema:description",
+  provenance: "oc:provenance",
+  recordedAt: "schema:dateModified",
+});
 
 export type SituationJsonLdCollection = SituationFeatureCollection & { "@context": unknown };
 
 /**
  * Situations as GeoJSON-LD: the GeoJSON collection with a schema.org/SOSA
- * `@context` and a per-feature `@id`/`@type`, so semantic-web, research and
- * search-index consumers can read it as RDF.
+ * `@context`, each feature identified by its record's IRI and typed a
+ * `schema:SpecialAnnouncement`, so semantic-web, research and search-index
+ * consumers can read it as RDF. The record id stays in the properties.
  */
 export function situationsToJsonLd(
   situations: readonly Rec[],
@@ -122,7 +118,7 @@ export function situationsToJsonLd(
     ...fc,
     features: fc.features.map((f) => ({
       ...f,
-      "@id": `https://openconditions.org/id/${encodeURIComponent(String(f.id))}`,
+      id: recordIri(f.id),
       "@type": "schema:SpecialAnnouncement",
     })) as SituationFeatureCollection["features"],
   };

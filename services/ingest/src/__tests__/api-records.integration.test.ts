@@ -571,7 +571,7 @@ describe("GET /features.geojson and .jsonld", () => {
     expect(ld.res.headers["content-type"]).toContain("application/ld+json");
     expect(JSON.stringify(ld.body["@context"])).toContain("http://www.w3.org/ns/sosa/");
     expect((ld.body["features"] as Rec[])[0]).toMatchObject({
-      "@id": `https://openconditions.org/id/${enc("oc:feature:de-bw-mobidata-charging:72555")}`,
+      id: `https://openconditions.org/id/${enc("oc:feature:de-bw-mobidata-charging:72555")}`,
       "@type": "schema:Place",
     });
   });

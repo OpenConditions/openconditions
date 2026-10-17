@@ -1,4 +1,5 @@
 import type { Feature, FeatureCollection, Geometry } from "geojson";
+import { geoJsonLdContext, recordIri } from "./geojson-ld.js";
 import type { FeedInfo } from "./types.js";
 
 type Rec = Record<string, unknown>;
@@ -43,36 +44,31 @@ export function featuresToGeoJSON(
   };
 }
 
-/** GeoJSON-LD base context plus the schema.org and SOSA terms a feature's fields map to. */
-const CONTEXT: unknown = [
-  "https://geojson.org/geojson-ld/geojson-context.jsonld",
-  {
-    oc: "https://openconditions.org/ns#",
-    sosa: "http://www.w3.org/ns/sosa/",
-    schema: "https://schema.org/",
-    kind: "oc:kind",
-    subtype: "oc:subtype",
-    lifecycle: "oc:lifecycle",
-    components: "sosa:hosts",
-    name: "schema:name",
-    description: "schema:description",
-    operator: "schema:provider",
-    owner: "schema:owner",
-    address: "schema:address",
-    openingHours: "schema:openingHours",
-    externalIds: "schema:identifier",
-    provenance: "oc:provenance",
-    recordedAt: "schema:dateModified",
-  },
-];
+/** The schema.org and SOSA terms a feature's fields map to. */
+const CONTEXT = geoJsonLdContext({
+  kind: "oc:kind",
+  subtype: "oc:subtype",
+  lifecycle: "oc:lifecycle",
+  components: "sosa:hosts",
+  name: "schema:name",
+  description: "schema:description",
+  operator: "schema:provider",
+  owner: "schema:owner",
+  address: "schema:address",
+  openingHours: "schema:openingHours",
+  externalIds: "schema:identifier",
+  provenance: "oc:provenance",
+  recordedAt: "schema:dateModified",
+});
 
 export type FeatureRecordJsonLd = FeatureRecordCollection & { "@context": unknown };
 
 /**
  * Feature records as GeoJSON-LD: the GeoJSON collection with a
- * schema.org/SOSA `@context` and a per-feature `@id`/`@type`. Every feature is
- * a `schema:Place`; a measurement site is also a `sosa:Platform` hosting its
- * channels.
+ * schema.org/SOSA `@context`, each feature identified by its record's IRI.
+ * Every feature is a `schema:Place`; a measurement site is also a
+ * `sosa:Platform`, whose properties list the channels it hosts. The record id
+ * stays in the properties.
  */
 export function featuresToJsonLd(
   features: readonly Rec[],
@@ -85,7 +81,7 @@ export function featuresToJsonLd(
     ...fc,
     features: fc.features.map((f) => ({
       ...f,
-      "@id": `https://openconditions.org/id/${encodeURIComponent(String(f.id))}`,
+      id: recordIri(f.id),
       "@type":
         f.properties["kind"] === "measurement_site"
           ? ["schema:Place", "sosa:Platform"]

@@ -160,6 +160,10 @@ describes it all, and [storage](docs/storage.md#read-api) says what each route r
 | `GET /coverage`                      | Live records per country, kind and access mode; live series per property                                                       |
 | `GET /status`                        | health (unlimited)                                                                                                             |
 
+The GeoJSON-LD variants extend the [GeoJSON-LD 1.1](https://geojson.org/geojson-ld/) context and
+need a JSON-LD 1.1 processor. Each feature's `id` is its record's `https://openconditions.org/id/`
+IRI, and the record id stays in `properties.id`.
+
 ## Using OpenConditions with OpenMapX
 
 OpenConditions installs into an OpenMapX deployment as an extension, in one step:
