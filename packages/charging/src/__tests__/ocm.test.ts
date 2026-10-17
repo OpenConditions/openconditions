@@ -1,4 +1,10 @@
-import type { Cell, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  __resetSkips,
+  type Cell,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { chargingDomain } from "../domain.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
@@ -92,9 +98,9 @@ describe("ocm", () => {
       ]),
     );
 
-    // A provider without a licence is credited without one.
+    // A provider without a licence is credited without one, with its own id of the record.
     const grandRapids = site(out, "7708");
-    expect(upstreamOf(grandRapids)).toEqual([{ publisher: "CarStations.com" }]);
+    expect(upstreamOf(grandRapids)).toEqual([{ publisher: "CarStations.com", recordId: "6779" }]);
     expect(grandRapids?.["lifecycle"]).toBe("unknown");
     expect(plugs(grandRapids)).toEqual([["5140/1", { standard: "IEC_62196_T1" }]]);
 
@@ -176,6 +182,84 @@ describe("ocm", () => {
     expect(parse(luxembourg, capped).truncated).toBe(true);
     expect(warn).toHaveBeenCalledTimes(1);
     expect(String(warn.mock.calls[0]?.[0])).toMatch(/ocm-charging.*0\.25\/24\/198.*5/);
+  });
+
+  test("OCM: contacts, comments, photos, pay at location and IEC 60309 plugs by their current", () => {
+    __resetSkips();
+    const [poi] = JSON.parse(fixture("ocm.json").toString("utf8")) as Record<string, unknown>[];
+    const address = poi!["AddressInfo"] as Record<string, unknown>;
+    Object.assign(address, {
+      AddressLine2: "Parking P2",
+      StateOrProvince: "Esch-sur-Alzette",
+      ContactTelephone1: "+352 123",
+      AccessComments: "Ground floor",
+    });
+    poi!["GeneralComments"] = "Free for customers";
+    poi!["UsageType"] = { ID: 5, Title: "Public - Pay At Location", IsPayAtLocation: true };
+    poi!["MediaItems"] = [
+      { ItemURL: "https://ocm.example/1.jpg", ItemThumbnailURL: "https://ocm.example/1s.jpg" },
+      { ItemURL: "https://ocm.example/v.mp4", IsVideo: true },
+    ];
+    poi!["StatusType"] = { ID: 30, IsOperational: true, Title: "Temporarily Unavailable" };
+    poi!["Connections"] = [
+      { ID: 1, ConnectionTypeID: 35, Amps: 32, Reference: "LU*ABC*E1" },
+      { ID: 2, ConnectionTypeID: 34, Amps: 16, Reference: "Bay 4" },
+      { ID: 3, ConnectionTypeID: 35 },
+    ];
+    const out = parse(undefined, catalogFeed("ocm-charging"), Buffer.from(JSON.stringify([poi])));
+    expect(drainSkipped("ocm-charging")).toEqual({});
+    const draft = out.features[0];
+    expect(draft).toMatchObject({
+      lifecycle: "temporarily_closed",
+      operator: { phone: "0800 377 36 83", email: "elektrischrijden@essent.nl" },
+      description: [{ text: "Free for customers" }],
+      location: {
+        address: { street: "Rue de Neudorf, Parking P2", region: "Esch-sur-Alzette" },
+      },
+      access: { audience: "public" },
+      images: [
+        {
+          url: "https://ocm.example/1.jpg",
+          category: "site",
+          thumbnail: "https://ocm.example/1s.jpg",
+        },
+      ],
+      details: {
+        adHocCharging: true,
+        hotline: "+352 123",
+        directions: [{ text: "Ground floor" }],
+      },
+    });
+    // Charge points in the order of their EVSE ids, else their keys.
+    expect(plugs(draft).map(([, p]) => (p as { standard: string }).standard)).toEqual([
+      "IEC_60309_2_single_16",
+      "UNKNOWN",
+      "IEC_60309_2_three_32",
+    ]);
+    const evses = components(draft).filter((c) => c.kind === "evse") as (Component & {
+      physicalReference?: string;
+    })[];
+    expect(evses.map((e) => [e.details["evseId"], e.physicalReference])).toEqual([
+      [undefined, "Bay 4"],
+      [undefined, undefined],
+      ["LU*ABC*E1", undefined],
+    ]);
+    // Unpublished listings are left out; a status or usage id Open Charge Map does not list is counted.
+    const hidden = { ...poi, ID: 9, SubmissionStatus: { ID: 1, IsLive: false } };
+    const odd = { ...poi, ID: 10, StatusType: { ID: 999 }, UsageType: { ID: 99 } };
+    const more = parse(
+      undefined,
+      catalogFeed("ocm-charging"),
+      Buffer.from(
+        JSON.stringify([
+          hidden,
+          odd,
+          { ...poi, ID: 11, AddressInfo: { ...address, Latitude: null } },
+        ]),
+      ),
+    );
+    expect(more.features.map((f) => f["id"])).toEqual(["oc:feature:ocm-charging:10"]);
+    expect(drainSkipped("ocm-charging")).toEqual({ unknown_value: 2, no_geometry: 1 });
   });
 
   test("OCM: a POI on a cell's east or north edge belongs to the next cell; notice-required use is public", () => {

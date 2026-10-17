@@ -76,7 +76,7 @@ test("chargingDomain registers its formats with their roles and what they produc
     overpass: main,
     bnetza: main,
     irve: { main: { required: true }, status: live },
-    afdc: main,
+    afdc: { ...main, networks: { required: false } },
     nobil: main,
     eipa: {
       pools: { required: true },
