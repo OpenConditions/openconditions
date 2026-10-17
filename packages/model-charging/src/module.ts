@@ -74,6 +74,11 @@ export const chargingModule: RegistryModule = {
       description: "Where an electric vehicle can charge, and whether a point is free.",
     }),
     extendVocabulary({ vocabulary: "source_format", values: CHARGING_SOURCE_FORMATS }),
+    // France's national register names a site's owner by its SIREN company
+    // number and its commune by the INSEE code.
+    // The Alternative Fuels Data Center's station id.
+    extendVocabulary({ vocabulary: "external_id_scheme", values: ["siren", "afdc"] }),
+    extendVocabulary({ vocabulary: "admin_geocode_scheme", values: ["insee"] }),
     evseStatusVocabulary,
     chargingSiteStatusVocabulary,
     connectorStandardVocabulary,

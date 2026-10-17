@@ -17,6 +17,7 @@ interface Component {
   kind: string;
   lifecycle?: string;
   externalIds?: { scheme: string; id: string }[];
+  details?: Rec;
 }
 
 interface Member {
@@ -121,18 +122,38 @@ function union<T>(lists: readonly (readonly T[] | undefined)[]): T[] {
   return [...seen.values()];
 }
 
+/** Every member's images, each URL once, the lead's first. */
+function imagesOf(drafts: readonly RecordDraft[]): Rec[] {
+  const seen = new Map<string, Rec>();
+  for (const image of drafts.flatMap((d) => (d["images"] ?? []) as Rec[])) {
+    const url = image["url"] as string;
+    if (!seen.has(url)) seen.set(url, image);
+  }
+  return [...seen.values()];
+}
+
 function accessOf(drafts: readonly RecordDraft[]): Rec | undefined {
   const accesses = drafts.map((d) => record(d["access"]));
   const payment = union(accesses.map((a) => a["payment"] as string[] | undefined));
   const authentication = union(accesses.map((a) => a["authentication"] as string[] | undefined));
   const audience = shared(drafts, (d) => record(d["access"])["audience"]) as string | undefined;
-  if (audience === undefined && payment.length === 0 && authentication.length === 0) {
+  const reservation = shared(drafts, (d) => record(d["access"])["reservation"]) as
+    | boolean
+    | undefined
+    | null;
+  if (
+    audience === undefined &&
+    payment.length === 0 &&
+    authentication.length === 0 &&
+    typeof reservation !== "boolean"
+  ) {
     return undefined;
   }
   return {
     audience: audience ?? "unknown",
     ...(payment.length === 0 ? {} : { payment }),
     ...(authentication.length === 0 ? {} : { authentication }),
+    ...(typeof reservation === "boolean" ? { reservation } : {}),
   };
 }
 
@@ -173,9 +194,15 @@ function mergeComponents(group: readonly Member[], lifecycles: (string | undefin
       if (dropped.has(top)) continue;
       const key = keyOf(c.key);
       const lifecycle = lifecycles[i];
+      // A charge point names its bays by key, which may have moved with them.
+      const details = record(c.details);
+      const bays = details["bays"] as { key: string }[] | undefined;
       const component: Component = {
         ...c,
         key,
+        ...(bays === undefined
+          ? {}
+          : { details: { ...details, bays: bays.map((b) => ({ ...b, key: keyOf(b.key) })) } }),
         ...(c.parentKey === undefined ? {} : { parentKey: keyOf(c.parentKey) }),
         ...(mixed && c.kind === "evse" && c.lifecycle === undefined && lifecycle !== undefined
           ? { lifecycle }
@@ -204,6 +231,7 @@ function merge(lead: Member, group: readonly Member[]) {
   const openingHours = shared(drafts, (d) => d["openingHours"]);
   const access = accessOf(drafts);
   const amenities = union(drafts.map((d) => d["amenities"] as string[] | undefined));
+  const images = imagesOf(drafts);
   const upstream = union(drafts.map((d) => record(d["provenance"])["upstream"] as Rec[]));
   const details = record(base["details"]);
   const detail = (field: string, how: typeof shared) =>
@@ -212,7 +240,15 @@ function merge(lead: Member, group: readonly Member[]) {
     ...Object.fromEntries(
       Object.entries(base).filter(
         ([k]) =>
-          !["name", "description", "owner", "openingHours", "access", "amenities"].includes(k),
+          ![
+            "name",
+            "description",
+            "owner",
+            "openingHours",
+            "access",
+            "amenities",
+            "images",
+          ].includes(k),
       ),
     ),
     lifecycle,
@@ -231,17 +267,31 @@ function merge(lead: Member, group: readonly Member[]) {
     ...(openingHours === undefined || openingHours === null ? {} : { openingHours }),
     ...(access === undefined ? {} : { access }),
     ...(amenities.length === 0 ? {} : { amenities }),
+    ...(images.length === 0 ? {} : { images }),
     ...(components.length === 0 ? {} : { components }),
     details: Object.fromEntries(
       Object.entries({
         kind: details["kind"],
         v: details["v"],
         parkingType: detail("parkingType", shared),
+        roofed: detail("roofed", shared),
+        energyMix: detail("energyMix", shared),
+        suboperator: detail("suboperator", shared),
+        hotline: detail("hotline", first),
+        adHocCharging: detail("adHocCharging", shared),
+        entrance: detail("entrance", shared),
+        directions: detail("directions", first),
+        relatedLocations: union(
+          drafts.map((d) => record(d["details"])["relatedLocations"] as Rec[] | undefined),
+        ),
+        calibrationLaw: detail("calibrationLaw", shared),
+        dynamicInfoAvailable: detail("dynamicInfoAvailable", shared),
+        hubOperatorId: detail("hubOperatorId", shared),
         brand: detail("brand", first),
         website: detail("website", first),
         tariffText: detail("tariffText", first),
         openingHoursText: detail("openingHoursText", shared),
-      }).filter(([, v]) => v !== undefined && v !== null),
+      }).filter(([, v]) => v !== undefined && v !== null && !(Array.isArray(v) && v.length === 0)),
     ),
   };
   return { merged, renamed };

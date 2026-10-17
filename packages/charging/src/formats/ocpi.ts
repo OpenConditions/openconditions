@@ -8,10 +8,15 @@ import {
   type StatusOutput,
 } from "@openconditions/ingest-framework";
 import {
+  CHARGING_BAY_DIRECTIONS,
+  CHARGING_BAY_VEHICLE_TYPES,
   CONNECTOR_POWER_TYPES,
   CONNECTOR_STANDARDS,
+  EVSE_BAY_POSITIONS,
+  EVSE_PARKING_RESTRICTIONS,
   OCPI_EVSE_STATUSES,
   OCPI_FACILITIES,
+  OCPI_IMAGE_CATEGORIES,
   OCPI_PARKING_TYPES,
 } from "@openconditions/model-charging";
 import {
@@ -23,27 +28,35 @@ import {
   type OcpdbSource,
   OcpiDecodeError,
   type OcpiEvse,
+  type OcpiImage,
   type OcpiLocation,
   type OcpiOpeningTimes,
+  type OcpiParking,
   type OcpiTariff,
   ocpdbAssociations,
   ocpdbSources,
   text,
 } from "@openconditions/ocpi";
 import { colocateSites } from "../colocate.js";
+import { ocpiEnergyMix } from "../energy-mix.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours } from "../hours.js";
-import type { Upstream } from "../records.js";
+import { own, type Upstream } from "../records.js";
 import {
+  type BayInput,
+  type BayPosition,
   type ConnectorInput,
   type EvseInput,
   type EvseStatus,
   emi3Of,
+  type ImageCategory,
+  type ImageInput,
   instantIn,
   type Lifecycle,
   type ParkingType,
   type PowerType,
   type SiteInput,
+  type StatusScheduleInput,
   siteDraft,
   statusIsLive,
 } from "../site.js";
@@ -89,20 +102,118 @@ const NOT_LIVE = new Set(["STATIC", "PLANNED"]);
 /** An EVSE state the mapping reads: one of OCPI's, or OCPDB's `STATIC`. */
 const knownState = (status: string) => {
   const code = status.toUpperCase();
-  return NOT_LIVE.has(code) || typeof OCPI_EVSE_STATUSES[code] === "string";
+  return NOT_LIVE.has(code) || typeof own(OCPI_EVSE_STATUSES, code) === "string";
 };
 
+/** OCPI's parking restrictions, 2.3.0's included, as the EVSE model names them. */
+const PARKING_RESTRICTIONS: ReadonlySet<string> = new Set(
+  EVSE_PARKING_RESTRICTIONS.map((r) => r.toUpperCase()),
+);
+
+const BAY_VEHICLE_TYPES: ReadonlySet<string> = new Set(
+  CHARGING_BAY_VEHICLE_TYPES.map((t) => t.toUpperCase()),
+);
+const BAY_DIRECTIONS: ReadonlySet<string> = new Set(
+  CHARGING_BAY_DIRECTIONS.map((d) => d.toUpperCase()),
+);
+const BAY_POSITIONS: ReadonlySet<string> = new Set(EVSE_BAY_POSITIONS.map((p) => p.toUpperCase()));
+
+/** The images of a record whose category OCPI defines; another category is counted in `unread`. */
+function imagesOf(images: readonly OcpiImage[] | undefined, unread: () => void): ImageInput[] {
+  return (images ?? []).flatMap((image) => {
+    const category = own(OCPI_IMAGE_CATEGORIES, image.category);
+    if (category === undefined) {
+      unread();
+      return [];
+    }
+    return [
+      {
+        url: image.url,
+        category: category as ImageCategory,
+        ...(image.thumbnail === undefined ? {} : { thumbnail: image.thumbnail }),
+        ...(image.type === undefined ? {} : { format: image.type }),
+        ...(image.width === undefined ? {} : { width: image.width }),
+        ...(image.height === undefined ? {} : { height: image.height }),
+      },
+    ];
+  });
+}
+
+/** A business's logo, which says whose logo it is by where it stands. */
+const logoOf = (details: OcpiLocation["operator"], category: ImageCategory): ImageInput[] =>
+  details?.logo === undefined
+    ? []
+    : [
+        {
+          url: details.logo.url,
+          category,
+          ...(details.logo.thumbnail === undefined ? {} : { thumbnail: details.logo.thumbnail }),
+          ...(details.logo.type === undefined ? {} : { format: details.logo.type }),
+          ...(details.logo.width === undefined ? {} : { width: details.logo.width }),
+          ...(details.logo.height === undefined ? {} : { height: details.logo.height }),
+        },
+      ];
+
+const displayTexts = (list: readonly { language: string; text: string }[] | undefined) =>
+  (list ?? []).map((t) => ({ lang: t.language === "" ? "und" : t.language, text: t.text }));
+
+/** A length OCPI gives in centimetres, in metres. */
+const centimetres = (cm: number | undefined) =>
+  cm === undefined ? undefined : { value: cm / 100, unit: "m" };
+
 /**
- * The parking restrictions the EVSE model holds. OCPI 2.3.0 adds
- * `EMPLOYEES`, `TAXIS` and `TENANTS`, which it has no value for yet.
+ * A 2.3.0 parking place as a charging bay: lengths in metres, the weight in
+ * kilograms, the time limit in minutes. A vehicle type or direction OCPI does
+ * not define is left out and counted in `unread`.
  */
-const PARKING_RESTRICTIONS: ReadonlySet<string> = new Set([
-  "EV_ONLY",
-  "PLUGGED",
-  "DISABLED",
-  "CUSTOMERS",
-  "MOTORCYCLES",
-]);
+function bayOf(place: OcpiParking, unread: () => void): BayInput {
+  const vehicleTypes = (place.vehicle_types ?? []).flatMap((t) => {
+    if (BAY_VEHICLE_TYPES.has(t)) return [t.toLowerCase()];
+    unread();
+    return [];
+  });
+  const direction = place.direction;
+  if (direction !== undefined && !BAY_DIRECTIONS.has(direction)) unread();
+  const quantities: Record<string, { value: number; unit: string } | undefined> = {
+    maxVehicleWeight:
+      place.max_vehicle_weight === undefined
+        ? undefined
+        : { value: place.max_vehicle_weight, unit: "kg" },
+    maxVehicleHeight: centimetres(place.max_vehicle_height),
+    maxVehicleLength: centimetres(place.max_vehicle_length),
+    maxVehicleWidth: centimetres(place.max_vehicle_width),
+    length: centimetres(place.parking_space_length),
+    width: centimetres(place.parking_space_width),
+    timeLimit:
+      place.time_limit === undefined ? undefined : { value: place.time_limit, unit: "min" },
+  };
+  const flags: Record<string, boolean | undefined> = {
+    restrictedToType: place.restricted_to_type,
+    reservationRequired: place.reservation_required,
+    dangerousGoodsAllowed: place.dangerous_goods_allowed,
+    driveThrough: place.drive_through,
+    roofed: place.roofed,
+    lighting: place.lighting,
+    refrigerationOutlet: place.refrigeration_outlet,
+  };
+  return {
+    key: place.id,
+    ...(place.physical_reference === undefined
+      ? {}
+      : { physicalReference: place.physical_reference }),
+    images: imagesOf(place.images, unread),
+    details: {
+      ...(vehicleTypes.length === 0 ? {} : { vehicleTypes: [...new Set(vehicleTypes)] }),
+      ...Object.fromEntries(Object.entries(flags).filter(([, v]) => v !== undefined)),
+      ...Object.fromEntries(Object.entries(quantities).filter(([, v]) => v !== undefined)),
+      ...(direction !== undefined && BAY_DIRECTIONS.has(direction)
+        ? { direction: direction.toLowerCase() }
+        : {}),
+      ...(place.standards === undefined ? {} : { standards: place.standards }),
+      ...(place.apds_reference === undefined ? {} : { apdsReference: place.apds_reference }),
+    },
+  };
+}
 
 /** OCPI 2.3.0 `ConnectorCapability` values: ISO 15118-2 and -20 Plug & Charge. */
 const PLUG_AND_CHARGE: ReadonlySet<string> = new Set([
@@ -200,8 +311,26 @@ function connectorOf(
     ...(power === undefined ? {} : { maxPowerKw: power }),
     ...(connector.max_voltage === undefined ? {} : { maxVoltage: connector.max_voltage }),
     ...(connector.max_amperage === undefined ? {} : { maxAmperage: connector.max_amperage }),
+    ...(connector.terms_and_conditions === undefined
+      ? {}
+      : { termsUrl: connector.terms_and_conditions }),
     ...(tariffIds.length === 0 ? {} : { tariffIds }),
   };
+}
+
+/**
+ * The planned statuses of an EVSE, its period read in the location's zone;
+ * a status OCPI does not define is left out and counted in `unread`.
+ */
+function scheduleOf(evse: OcpiEvse, zone: string, unread: () => void): StatusScheduleInput[] {
+  return (evse.status_schedule ?? []).flatMap((s) => {
+    const status = own(OCPI_EVSE_STATUSES, s.status);
+    const start = instantIn(zone, s.period_begin);
+    const end = s.period_end === undefined ? undefined : instantIn(zone, s.period_end);
+    if (typeof status !== "string") unread();
+    if (typeof status !== "string" || start === undefined) return [];
+    return [{ start, ...(end === undefined ? {} : { end }), status: status as EvseStatus }];
+  });
 }
 
 /** A tariff with its validity read in the publisher's zone, as the offer carries it in UTC. */
@@ -253,7 +382,8 @@ export function mapOcpi(
     const stationId = stationIdOf(loc);
     if (seen.has(stationId)) continue;
     seen.add(stationId);
-    const zone = PUBLISHER_ZONES[feed.region] ?? loc.time_zone ?? "UTC";
+    const naive = own(PUBLISHER_ZONES, feed.region);
+    const zone = naive ?? loc.time_zone ?? "UTC";
     const point: [number, number] = [loc.coordinates.longitude, loc.coordinates.latitude];
 
     const upstream =
@@ -304,6 +434,19 @@ export function mapOcpi(
         unread();
         return [];
       });
+      const bays = (evse.parking ?? []).map((p) => {
+        const position = p.evse_position;
+        if (position !== undefined && !BAY_POSITIONS.has(position)) unread();
+        return {
+          key: p.parking_id,
+          ...(position !== undefined && BAY_POSITIONS.has(position)
+            ? { position: position.toLowerCase() as BayPosition }
+            : {}),
+        };
+      });
+      const schedule = scheduleOf(evse, zone, unread);
+      const images = imagesOf(evse.images, unread);
+      const directions = displayTexts(evse.directions);
       return {
         key: evse.uid,
         ...(emi3Of(evse.evse_id) === undefined ? {} : { evseId: evse.evse_id }),
@@ -313,6 +456,20 @@ export function mapOcpi(
           : {}),
         ...(evse.capabilities === undefined ? {} : { capabilities: evse.capabilities }),
         ...(restrictions.length === 0 ? {} : { parkingRestrictions: restrictions }),
+        ...(evse.coordinates === undefined
+          ? {}
+          : { position: [evse.coordinates.longitude, evse.coordinates.latitude] }),
+        ...(evse.floor_level === undefined ? {} : { floorLevel: evse.floor_level }),
+        ...(evse.physical_reference === undefined
+          ? {}
+          : { physicalReference: evse.physical_reference }),
+        ...(directions.length === 0 ? {} : { directions }),
+        ...(schedule.length === 0 ? {} : { statusSchedule: schedule }),
+        ...(bays.length === 0 ? {} : { bays }),
+        ...(evse.accepted_service_providers === undefined
+          ? {}
+          : { acceptedServiceProviders: evse.accepted_service_providers }),
+        ...(images.length === 0 ? {} : { images }),
         connectors: evse.connectors.map((c) => connectorOf(c, named(evse, c), unread)),
       };
     });
@@ -356,17 +513,39 @@ export function mapOcpi(
       }
     }
 
-    // The feature holds one operator organisation, so a suboperator has no place.
     const operator = loc.operator;
     const amenities = (loc.facilities ?? []).flatMap((f) => {
-      const amenity = OCPI_FACILITIES[f.toUpperCase()];
+      const amenity = own(OCPI_FACILITIES, f.toUpperCase());
       if (typeof amenity === "string") return [amenity];
       unread();
       return [];
     });
-    const parkingType = OCPI_PARKING_TYPES[loc.parking_type?.toUpperCase() ?? ""];
+    const parkingType = own(OCPI_PARKING_TYPES, loc.parking_type?.toUpperCase());
     if (loc.parking_type !== undefined && parkingType === undefined) unread();
     const hours = hoursOf(loc.opening_times);
+    // Exceptional periods are UTC, though a publisher writing naive local time means its own.
+    const exceptions = [
+      ...(loc.opening_times?.exceptional_openings ?? []).map((p) => ({ ...p, open: true })),
+      ...(loc.opening_times?.exceptional_closings ?? []).map((p) => ({ ...p, open: false })),
+    ].flatMap((p) => {
+      const start = instantIn(naive ?? "UTC", p.period_begin);
+      const end = instantIn(naive ?? "UTC", p.period_end);
+      return start === undefined || end === undefined ? [] : [{ start, end, open: p.open }];
+    });
+    const images = [
+      ...imagesOf(loc.images, unread),
+      ...logoOf(loc.operator, "operator_logo"),
+      ...logoOf(loc.owner, "owner_logo"),
+      // The image categories name no suboperator's logo; it is another image of the site.
+      ...logoOf(loc.suboperator, "other"),
+    ];
+    const bays = (loc.parking_places ?? []).map((p) => bayOf(p, unread));
+    const energyMix = ocpiEnergyMix(loc.energy_mix, unread);
+    const directions = displayTexts(loc.directions);
+    const relatedLocations = (loc.related_locations ?? []).map((r) => ({
+      point: [r.longitude, r.latitude] as [number, number],
+      ...(r.name === undefined ? {} : { name: displayTexts([r.name]) }),
+    }));
     const lifecycle: Lifecycle | undefined =
       evses.length > 0 && evseInputs.every((e) => e.lifecycle === "planned")
         ? "planned"
@@ -390,19 +569,48 @@ export function mapOcpi(
               ...(operator.website === undefined ? {} : { website: operator.website }),
             },
           }),
-      ...(loc.owner === undefined ? {} : { owner: { name: loc.owner.name } }),
+      ...(loc.owner === undefined
+        ? {}
+        : {
+            owner: {
+              name: loc.owner.name,
+              ...(loc.owner.website === undefined ? {} : { website: loc.owner.website }),
+            },
+          }),
+      ...(loc.suboperator === undefined
+        ? {}
+        : {
+            suboperator: {
+              name: loc.suboperator.name,
+              ...(loc.suboperator.website === undefined
+                ? {}
+                : { website: loc.suboperator.website }),
+            },
+          }),
       address: {
         street: loc.address,
         postalCode: loc.postal_code,
         city: loc.city,
+        region: loc.state,
         country: loc.country ?? loc.country_code,
       },
       ...(hours === undefined ? {} : { openingHoursOsm: hours }),
+      ...(exceptions.length === 0 ? {} : { openingExceptions: exceptions }),
+      ...(loc.charging_when_closed === undefined
+        ? {}
+        : { chargingWhenClosed: loc.charging_when_closed }),
+      ...(loc.time_zone === undefined ? {} : { timeZone: loc.time_zone }),
       ...(lifecycle === undefined ? {} : { lifecycle }),
       ...(plugAndCharge ? { authentication: ["plug_and_charge" as const] } : {}),
       ...(parkingType === undefined ? {} : { parkingType: parkingType as ParkingType }),
       ...(amenities.length === 0 ? {} : { amenities }),
+      ...(images.length === 0 ? {} : { images }),
+      ...(energyMix === undefined ? {} : { energyMix }),
+      ...(loc.help_phone === undefined ? {} : { hotline: loc.help_phone }),
+      ...(directions.length === 0 ? {} : { directions }),
+      ...(relatedLocations.length === 0 ? {} : { relatedLocations }),
       evses: evseInputs,
+      ...(bays.length === 0 ? {} : { bays }),
     };
     out.features.push(siteDraft(feed, site, ctx.fetchedAt));
   }
@@ -425,7 +633,7 @@ const ownState = (evse: OcpiEvse): EvseState | undefined =>
 function liveStatus(state: EvseState, zone: string, fetchedAt: string): EvseStatus | undefined {
   const code = state.status.toUpperCase();
   if (NOT_LIVE.has(code)) return undefined;
-  const status = OCPI_EVSE_STATUSES[code];
+  const status = own(OCPI_EVSE_STATUSES, code);
   if (typeof status !== "string" || status === "removed") return undefined;
   if (!statusIsLive(instantIn(zone, state.at), fetchedAt)) return undefined;
   return status as EvseStatus;

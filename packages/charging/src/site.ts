@@ -7,6 +7,7 @@ import {
   type AUDIENCES,
   type AUTHENTICATION_METHODS,
   type ExternalId,
+  type IMAGE_CATEGORIES,
   type LIFECYCLES,
   observationId,
   type PAYMENT_METHODS,
@@ -16,9 +17,13 @@ import {
   type CHARGING_PARKING_TYPES,
   type CONNECTOR_POWER_TYPES,
   CONNECTOR_STANDARDS,
+  type EVSE_BAY_POSITIONS,
+  EVSE_PARKING_RESTRICTIONS,
   type EVSE_STATUSES,
 } from "@openconditions/model-charging";
 import { normaliseEmi3 } from "@openconditions/ocpi";
+import { z } from "zod";
+import { type EnergyMixInput, energyMixDraft } from "./energy-mix.js";
 import {
   type ChargingFeed,
   clean,
@@ -39,6 +44,12 @@ export type PowerType = (typeof CONNECTOR_POWER_TYPES)[number];
 export type Lifecycle = (typeof LIFECYCLES)[number];
 export type EvseStatus = (typeof EVSE_STATUSES)[number];
 export type ParkingType = (typeof CHARGING_PARKING_TYPES)[number];
+export type ImageCategory = (typeof IMAGE_CATEGORIES)[number];
+export type BayPosition = (typeof EVSE_BAY_POSITIONS)[number];
+/** The connector model's charging modes: IEC 61851-1's four and CHAdeMO's. */
+const CHARGING_MODES = ["mode1", "mode2", "mode3", "mode4", "chademo"] as const;
+export type ChargingMode = (typeof CHARGING_MODES)[number];
+const MODES: ReadonlySet<string> = new Set(CHARGING_MODES);
 
 /** One plug or socket of a charge point. */
 export interface ConnectorInput {
@@ -53,8 +64,36 @@ export interface ConnectorInput {
   maxPowerKw?: number;
   maxVoltage?: number;
   maxAmperage?: number;
+  /** IEC 61851-1 charging modes (`mode3`), or `chademo`. */
+  chargingModes?: ChargingMode[];
+  /** The operator's terms and conditions for the plug. */
+  termsUrl?: string;
   /** The source's ids of the tariffs that apply here; they become the offers' ids. */
   tariffIds?: string[];
+}
+
+/** A text in one language; `und` when the source does not say which. */
+export interface TextInput {
+  lang: string;
+  text: string;
+}
+
+/** A link to an image as the source publishes it. */
+export interface ImageInput {
+  url: string;
+  category: ImageCategory;
+  thumbnail?: string;
+  format?: string;
+  width?: number;
+  height?: number;
+}
+
+/** A planned status of a charge point over a period, as the operator publishes it. */
+export interface StatusScheduleInput {
+  /** UTC instants. */
+  start: string;
+  end?: string;
+  status: EvseStatus;
 }
 
 /** One charge point, or `quantity` identical ones the source does not tell apart. */
@@ -68,7 +107,46 @@ export interface EvseInput {
   lifecycle?: Lifecycle;
   capabilities?: string[];
   parkingRestrictions?: string[];
+  wheelchairAccessible?: boolean;
+  /** `[lon, lat]` of the charge point itself. */
+  position?: [number, number];
+  floorLevel?: string;
+  /** What is printed on the charge point to tell it apart. */
+  physicalReference?: string;
+  directions?: TextInput[];
+  statusSchedule?: StatusScheduleInput[];
+  /** The bays (by `BayInput.key`) a vehicle charging here stands in. */
+  bays?: { key: string; position?: BayPosition }[];
+  acceptedServiceProviders?: string[];
+  manufacturer?: string;
+  /**
+   * Who asserts `evseId` where it is not the operator: a crowd-sourced id
+   * (OSM's) carries its authority, so it matches no operator's id.
+   */
+  idAuthority?: string;
+  images?: ImageInput[];
   connectors: ConnectorInput[];
+}
+
+/** A parking place a vehicle stands in while it charges. */
+export interface BayInput {
+  /** The source's id of the bay, unique within the site. */
+  key: string;
+  physicalReference?: string;
+  images?: ImageInput[];
+  /** The `charging_bay` details, as the model holds them. */
+  details: Record<string, unknown>;
+}
+
+/** An organisation as the source names it, with what it publishes of how to reach it. */
+export interface OrganisationInput {
+  name: string;
+  website?: string;
+  wikidata?: string;
+  phone?: string;
+  email?: string;
+  /** Its ids in registers (`siren`). */
+  ids?: ExternalId[];
 }
 
 export interface SiteAddress {
@@ -76,6 +154,8 @@ export interface SiteAddress {
   houseNumber?: string;
   postalCode?: string;
   city?: string;
+  /** The state, province or region. */
+  region?: string;
   /** ISO 3166-1 alpha-2 or alpha-3; else the feed's region. */
   country?: string;
   text?: string;
@@ -99,29 +179,60 @@ export interface SiteInput {
   lang?: string;
   /** Ids beside the provider id that linking matches on (`ocpi:location`, `osm:node`). */
   externalIds?: ExternalId[];
-  operator?: { name: string; website?: string; wikidata?: string };
-  owner?: { name: string };
+  operator?: OrganisationInput;
+  owner?: OrganisationInput;
+  suboperator?: OrganisationInput;
   brand?: string;
   website?: string;
   address?: SiteAddress;
+  /** Codes of the administrative areas the site lies in (`insee`). */
+  geocodes?: { scheme: string; code: string }[];
   /** Opening hours in the OSM `opening_hours` grammar. */
   openingHoursOsm?: string;
   /** Opening hours as the publisher wrote them. */
   openingHoursText?: string;
   twentyFourSeven?: boolean;
+  /** Periods, UTC instants, the site opens or closes beside its regular hours. */
+  openingExceptions?: { start: string; end: string; open: boolean }[];
+  /**
+   * Whether a vehicle plugged in keeps charging while the site is closed;
+   * held with the opening hours, since without them no period is closed.
+   */
+  chargingWhenClosed?: boolean;
+  /** The IANA zone the opening hours are in. */
+  timeZone?: string;
   /** Who may charge, only as the source states it. */
   audience?: (typeof AUDIENCES)[number];
   payment?: (typeof PAYMENT_METHODS)[number][];
   authentication?: (typeof AUTHENTICATION_METHODS)[number][];
+  /** Whether a driver may book a charge point ahead. */
+  reservation?: boolean;
   lifecycle?: Lifecycle;
   parkingType?: ParkingType;
+  roofed?: boolean;
+  /** Whether a driver may charge paying for the session alone, without a contract. */
+  adHocCharging?: boolean;
+  hotline?: string;
+  /** `[lon, lat]` of the entrance, where the site lies within a larger facility. */
+  entrance?: [number, number];
+  directions?: TextInput[];
+  /** Points beside the site a driver needs: an entrance, a car park's access. */
+  relatedLocations?: { point: [number, number]; name?: TextInput[] }[];
+  energyMix?: EnergyMixInput;
+  calibrationLaw?: string;
+  dynamicInfoAvailable?: "true" | "false" | "auto";
+  hubOperatorId?: string;
+  images?: ImageInput[];
   /** A tariff as the publisher wrote it, where it is not broken into priced elements. */
   tariffText?: string;
   notes?: string;
+  /** The language of `notes`, where the source states it apart from the site's. */
+  notesLang?: string;
   amenities?: string[];
   /** The upstream publishers an aggregator took the site from. */
   upstream?: Upstream;
   evses: EvseInput[];
+  bays?: BayInput[];
 }
 
 /** What a reading takes from the poll. */
@@ -206,6 +317,7 @@ function addressOf(address: SiteAddress | undefined, country: string | undefined
     houseNumber: clean(address.houseNumber),
     postalCode: clean(address.postalCode),
     city: clean(address.city),
+    region: clean(address.region),
     text: clean(address.text),
   };
   const written = Object.fromEntries(Object.entries(parts).filter(([, v]) => v !== undefined));
@@ -224,16 +336,79 @@ export const connectorKey = (evse: string, connectorId: string) =>
   `${evseKey(evse)}/${connectorId.trim().replace(/#/g, "_")}`;
 
 const STANDARDS: ReadonlySet<string> = new Set(CONNECTOR_STANDARDS);
-const PARKING_RESTRICTIONS: ReadonlySet<string> = new Set([
-  "ev_only",
-  "plugged",
-  "disabled",
-  "customers",
-  "motorcycles",
-]);
+const PARKING_RESTRICTIONS: ReadonlySet<string> = new Set(EVSE_PARKING_RESTRICTIONS);
 
 const positive = (n: number | undefined) =>
   n !== undefined && Number.isFinite(n) && n > 0 ? n : undefined;
+
+/** Texts as the model holds them, the blank ones left out; undefined for none. */
+function texts(list: readonly TextInput[] | undefined) {
+  const out = (list ?? []).flatMap((t) => {
+    const text = clean(t.text);
+    return text === undefined ? [] : [{ lang: clean(t.lang)?.toLowerCase() || "und", text }];
+  });
+  return out.length === 0 ? undefined : out;
+}
+
+/** Image links as the model holds them: web URLs only, each once. */
+function imagesOf(list: readonly ImageInput[] | undefined) {
+  const seen = new Set<string>();
+  const out = (list ?? []).flatMap((image) => {
+    const url = webUrl(image.url);
+    if (url === undefined || seen.has(url)) return [];
+    seen.add(url);
+    const thumbnail = webUrl(image.thumbnail);
+    const format = clean(image.format)?.toLowerCase();
+    const size = (n: number | undefined) =>
+      n !== undefined && Number.isInteger(n) && n > 0 ? n : undefined;
+    const width = size(image.width);
+    const height = size(image.height);
+    return [
+      {
+        url,
+        category: image.category,
+        ...(thumbnail === undefined ? {} : { thumbnail }),
+        ...(format === undefined ? {} : { format }),
+        ...(width === undefined ? {} : { width }),
+        ...(height === undefined ? {} : { height }),
+      },
+    ];
+  });
+  return out.length === 0 ? undefined : out;
+}
+
+const pointGeometry = (point: [number, number]) => ({
+  type: "Point",
+  coordinates: [point[0], point[1]],
+});
+
+/** An organisation as the model holds it, in `role`; undefined without a name. */
+function organisation(org: OrganisationInput | undefined, role: string, lang: string) {
+  const name = clean(org?.name);
+  if (org === undefined || name === undefined) return undefined;
+  const website = webUrl(org.website);
+  const wikidata = clean(org.wikidata);
+  const phone = clean(org.phone);
+  const email = clean(org.email);
+  const ids = [
+    ...(wikidata === undefined ? [] : [{ scheme: "wikidata", id: wikidata }]),
+    ...(org.ids ?? []).map((e) => ({ ...e })),
+  ];
+  return {
+    role,
+    name: [{ lang, text: name }],
+    ...(ids.length === 0 ? {} : { ids }),
+    ...(website === undefined ? {} : { website }),
+    ...(phone === undefined ? {} : { phone }),
+    ...(email === undefined || !EMAIL.safeParse(email).success ? {} : { email }),
+  };
+}
+
+/** What the model takes for an e-mail address. */
+const EMAIL = z.email();
+
+/** A bay's component key: `bay:<key>`, apart from every charge point's. */
+export const bayKey = (key: string) => `bay:${key.trim().replace(/[#/]/g, "_")}`;
 
 const currentOf = (c: ConnectorInput): "ac" | "dc" | undefined =>
   c.current ?? (c.powerType === undefined ? undefined : c.powerType === "DC" ? "dc" : "ac");
@@ -257,8 +432,9 @@ function evseComponents(
   feed: ChargingFeed,
   stationId: string,
   evses: readonly EvseInput[],
+  listedBays: ReadonlySet<string>,
 ): RecordDraft[] {
-  const seen = new Set<string>();
+  const seen = new Set<string>(listedBays);
   const out: RecordDraft[] = [];
   for (const evse of [...evses].sort(byEvse)) {
     const key = evseKey(evse.key);
@@ -272,11 +448,47 @@ function evseComponents(
     const restrictions = [
       ...new Set((evse.parkingRestrictions ?? []).filter((r) => PARKING_RESTRICTIONS.has(r))),
     ];
+    const floorLevel = clean(evse.floorLevel);
+    const physicalReference = clean(evse.physicalReference);
+    const images = imagesOf(evse.images);
+    const directions = texts(evse.directions);
+    const schedule = (evse.statusSchedule ?? []).filter(
+      (s) => s.end === undefined || Date.parse(s.end) > Date.parse(s.start),
+    );
+    // A bay the site does not list is no bay to name.
+    const bays = [
+      ...new Map(
+        (evse.bays ?? [])
+          .filter((b) => listedBays.has(bayKey(b.key)))
+          .map((b) => [
+            b.key,
+            { key: bayKey(b.key), ...(b.position === undefined ? {} : { position: b.position }) },
+          ]),
+      ).values(),
+    ];
+    const providers = [
+      ...new Set((evse.acceptedServiceProviders ?? []).flatMap((p) => clean(p) ?? [])),
+    ];
+    const manufacturer = clean(evse.manufacturer);
     out.push({
       key,
       kind: "evse",
+      ...(evse.position === undefined ? {} : { position: pointGeometry(evse.position) }),
+      ...(physicalReference === undefined ? {} : { physicalReference }),
+      ...(floorLevel === undefined ? {} : { floorLevel }),
+      ...(emi3 === ""
+        ? {}
+        : {
+            externalIds: [
+              {
+                scheme: "emi3:evse",
+                id: emi3,
+                ...(evse.idAuthority === undefined ? {} : { authority: evse.idAuthority }),
+              },
+            ],
+          }),
       ...(evse.lifecycle === undefined ? {} : { lifecycle: evse.lifecycle }),
-      ...(emi3 === "" ? {} : { externalIds: [{ scheme: "emi3:evse", id: emi3 }] }),
+      ...(images === undefined ? {} : { images }),
       details: {
         kind: "evse",
         v: 1,
@@ -287,6 +499,14 @@ function evseComponents(
           : {}),
         ...(capabilities.length === 0 ? {} : { capabilities }),
         ...(restrictions.length === 0 ? {} : { parkingRestrictions: restrictions }),
+        ...(evse.wheelchairAccessible === undefined
+          ? {}
+          : { wheelchairAccessible: evse.wheelchairAccessible }),
+        ...(directions === undefined ? {} : { directions }),
+        ...(bays.length === 0 ? {} : { bays }),
+        ...(providers.length === 0 ? {} : { acceptedServiceProviders: providers }),
+        ...(manufacturer === undefined ? {} : { manufacturer }),
+        ...(schedule.length === 0 ? {} : { statusSchedule: schedule.map((s) => ({ ...s })) }),
       },
     });
     for (const connector of [...evse.connectors].sort((a, b) => POINT_ORDER.compare(a.id, b.id))) {
@@ -301,6 +521,8 @@ function evseComponents(
       const power = positive(connector.maxPowerKw);
       const voltage = positive(connector.maxVoltage);
       const amperage = positive(connector.maxAmperage);
+      const modes = [...new Set(connector.chargingModes ?? [])].filter((m) => MODES.has(m));
+      const termsUrl = webUrl(connector.termsUrl);
       out.push({
         key: childKey,
         parentKey: key,
@@ -315,10 +537,33 @@ function evseComponents(
           ...(voltage === undefined ? {} : { maxVoltage: voltage }),
           ...(amperage === undefined ? {} : { maxAmperage: amperage }),
           ...(power === undefined ? {} : { maxPowerKw: power }),
+          ...(modes.length === 0 ? {} : { chargingModes: modes }),
+          ...(termsUrl === undefined ? {} : { termsUrl }),
           ...(tariffRefs.length === 0 ? {} : { tariffRefs }),
         },
       });
     }
+  }
+  return out;
+}
+
+/** The `charging_bay` components, keyed `bay:<key>`, in the order of their keys. A repeated key keeps the first. */
+function bayComponents(bays: readonly BayInput[]): RecordDraft[] {
+  const seen = new Set<string>();
+  const out: RecordDraft[] = [];
+  for (const bay of [...bays].sort((a, b) => POINT_ORDER.compare(a.key, b.key))) {
+    const key = bayKey(bay.key);
+    if (bay.key.trim() === "" || seen.has(key)) continue;
+    seen.add(key);
+    const physicalReference = clean(bay.physicalReference);
+    const images = imagesOf(bay.images);
+    out.push({
+      key,
+      kind: "charging_bay",
+      ...(physicalReference === undefined ? {} : { physicalReference }),
+      ...(images === undefined ? {} : { images }),
+      details: { kind: "charging_bay", v: 1, ...structuredClone(bay.details) },
+    });
   }
   return out;
 }
@@ -337,30 +582,59 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
   };
   const country = alpha2(input.address?.country) ?? countryOf(feed);
   const address = addressOf(input.address, country);
-  const components = evseComponents(feed, input.stationId, input.evses);
+  const bays = bayComponents(input.bays ?? []);
+  const components = [
+    ...evseComponents(
+      feed,
+      input.stationId,
+      input.evses,
+      new Set(bays.map((b) => b.key as string)),
+    ),
+    ...bays,
+  ];
   const name = text(input.name);
-  const description = text(input.notes);
-  const operatorName = text(input.operator?.name);
-  const operatorSite = webUrl(input.operator?.website);
-  const wikidata = clean(input.operator?.wikidata);
-  const ownerName = text(input.owner?.name);
+  const notes = clean(input.notes);
+  const description =
+    notes === undefined ? undefined : [{ lang: clean(input.notesLang) ?? lang, text: notes }];
+  const operator = organisation(input.operator, "operator", lang);
+  const owner = organisation(input.owner, "owner", lang);
+  const suboperator = organisation(input.suboperator, "suboperator", lang);
   const openingHoursOsm =
     clean(input.openingHoursOsm) ?? (input.twentyFourSeven === true ? "24/7" : undefined);
+  const exceptions = (input.openingExceptions ?? []).filter(
+    (e) => Date.parse(e.end) > Date.parse(e.start),
+  );
+  const timeZone = clean(input.timeZone);
   const payment = [...new Set(input.payment ?? [])];
   const authentication = [...new Set(input.authentication ?? [])];
   const access =
-    input.audience !== undefined || payment.length > 0 || authentication.length > 0
+    input.audience !== undefined ||
+    payment.length > 0 ||
+    authentication.length > 0 ||
+    input.reservation !== undefined
       ? {
           audience: input.audience ?? "unknown",
           ...(payment.length === 0 ? {} : { payment }),
           ...(authentication.length === 0 ? {} : { authentication }),
+          ...(input.reservation === undefined ? {} : { reservation: input.reservation }),
         }
       : undefined;
   const amenities = [...new Set((input.amenities ?? []).filter((a) => a.trim() !== ""))];
+  const images = imagesOf(input.images);
   const brand = clean(input.brand);
   const website = webUrl(input.website);
   const tariffText = text(input.tariffText);
   const openingHoursText = text(input.openingHoursText);
+  const hotline = clean(input.hotline);
+  const directions = texts(input.directions);
+  const relatedLocations = (input.relatedLocations ?? []).map((r) => {
+    const named = texts(r.name);
+    return { ...(named === undefined ? {} : { name: named }), point: pointGeometry(r.point) };
+  });
+  const energyMix = energyMixDraft(input.energyMix);
+  const calibrationLaw = clean(input.calibrationLaw);
+  const hubOperatorId = clean(input.hubOperatorId);
+  const geocodes = (input.geocodes ?? []).filter((g) => clean(g.code) !== undefined);
   return {
     id: siteId(feed, input.stationId),
     class: "feature",
@@ -370,7 +644,14 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
     location: {
       ...pointLocation(input.point),
       ...(address === undefined ? {} : { address }),
-      ...(country === undefined ? {} : { admin: { country } }),
+      ...(country === undefined
+        ? {}
+        : {
+            admin: {
+              country,
+              ...(geocodes.length === 0 ? {} : { geocodes: geocodes.map((g) => ({ ...g })) }),
+            },
+          }),
     },
     provenance: provenance(feed, input.stationId, input.upstream),
     freshness: freshness(feed, fetchedAt),
@@ -388,32 +669,42 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
     ],
     ...(name === undefined ? {} : { name }),
     ...(description === undefined ? {} : { description }),
-    ...(operatorName === undefined
-      ? {}
-      : {
-          operator: {
-            role: "operator",
-            name: operatorName,
-            ...(wikidata === undefined ? {} : { ids: [{ scheme: "wikidata", id: wikidata }] }),
-            ...(operatorSite === undefined ? {} : { website: operatorSite }),
-          },
-        }),
-    ...(ownerName === undefined ? {} : { owner: { role: "owner", name: ownerName } }),
+    ...(operator === undefined ? {} : { operator }),
+    ...(owner === undefined ? {} : { owner }),
     ...(openingHoursOsm === undefined
       ? {}
       : {
           openingHours: {
             osm: openingHoursOsm,
             ...(openingHoursOsm === "24/7" ? { twentyFourSeven: true } : {}),
+            ...(exceptions.length === 0 ? {} : { exceptions: exceptions.map((e) => ({ ...e })) }),
+            ...(input.chargingWhenClosed === undefined
+              ? {}
+              : { chargingWhenClosed: input.chargingWhenClosed }),
+            ...(timeZone === undefined ? {} : { timezone: timeZone }),
           },
         }),
     ...(access === undefined ? {} : { access }),
     ...(amenities.length === 0 ? {} : { amenities }),
+    ...(images === undefined ? {} : { images }),
     ...(components.length === 0 ? {} : { components }),
     details: {
       kind: "charging_site",
       v: 1,
       ...(input.parkingType === undefined ? {} : { parkingType: input.parkingType }),
+      ...(input.roofed === undefined ? {} : { roofed: input.roofed }),
+      ...(energyMix === undefined ? {} : { energyMix }),
+      ...(suboperator === undefined ? {} : { suboperator }),
+      ...(hotline === undefined ? {} : { hotline }),
+      ...(input.adHocCharging === undefined ? {} : { adHocCharging: input.adHocCharging }),
+      ...(input.entrance === undefined ? {} : { entrance: pointGeometry(input.entrance) }),
+      ...(directions === undefined ? {} : { directions }),
+      ...(relatedLocations.length === 0 ? {} : { relatedLocations }),
+      ...(calibrationLaw === undefined ? {} : { calibrationLaw }),
+      ...(input.dynamicInfoAvailable === undefined
+        ? {}
+        : { dynamicInfoAvailable: input.dynamicInfoAvailable }),
+      ...(hubOperatorId === undefined ? {} : { hubOperatorId }),
       ...(brand === undefined ? {} : { brand }),
       ...(website === undefined ? {} : { website }),
       ...(tariffText === undefined ? {} : { tariffText }),

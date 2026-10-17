@@ -93,7 +93,8 @@ const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   sites("bnetza", parseBnetza),
   // The static consolidation, and the dynamic one's status per charge point.
   sites("irve", parseIrve, { main: { required: true }, status: liveStatus }, parseIrveStatus),
-  sites("afdc", parseAfdc),
+  // The stations, and the electric networks list that names their networks.
+  sites("afdc", parseAfdc, { main: { required: true }, networks: optional }),
   sites("nobil", parseNobil),
   // The reader's files: pools are the sites, the other files join to them;
   // `dynamic.json` adds each point's state (and its prices, read in full only).
@@ -129,11 +130,21 @@ const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   ),
   // The batch file the DataMall link names, sites, prices and states together.
   sites("lta", parseLta),
-  // Per city: the stations, the rates per connector, the connectors' live states.
+  // Per city: the stations, the rates per connector, the connectors' live
+  // states, and where a feed fetches them the connectors' and charging
+  // points' own rows, the operators and the service times.
   sites(
     "tdx",
     parseTdx,
-    { sites: { required: true }, tariffs: optional, status: liveStatus },
+    {
+      sites: { required: true },
+      tariffs: optional,
+      status: liveStatus,
+      connectors: optional,
+      points: optional,
+      operators: optional,
+      servicetimes: optional,
+    },
     parseTdxStatus,
   ),
   // Per grid cell, full objects.

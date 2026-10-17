@@ -31,14 +31,18 @@ function standardOf(name: string | undefined): string {
 }
 
 /**
- * A charger's or an evId's status: 0 is occupied, which DataMall's guide says
- * covers a charging, reserved or blocked point, so it says no more than in
- * use; 1 available; 100 not available. An empty status says nothing.
+ * An evId's status: 0 is occupied, which DataMall's guide says covers a
+ * charging, reserved or blocked point, so it says no more than in use; 1
+ * available; "" not available, which covers a point out of order,
+ * inoperative, of unknown state, planned or removed, so it says no more than
+ * unknown. A charger's 100, every one of its points not available, is the
+ * same. A missing status says nothing.
  */
 const STATES: Readonly<Record<string, EvseStatus>> = {
   "0": "occupied",
   "1": "available",
-  "100": "inoperative",
+  "": "unknown",
+  "100": "unknown",
 };
 
 const trimmed = (n: number) => String(Math.round(n * 1e6) / 1e6);
@@ -76,9 +80,11 @@ const listOf = (value: unknown): Raw[] => (Array.isArray(value) ? value.filter(i
 /**
  * LTA DataMall's EV charging points batch, the file its `EVCBatch` link
  * names: a location per site (`locationId`, the longitude's decimals and the
- * postal code), each of its chargers one charge point with its plug types as
- * connectors. A charger's status is its own, or its evId's when it has exactly
- * one. Statuses are read as of the fetch, the file holding no time. Prices
+ * postal code), each evId of its chargers (the guide's "individual charging
+ * points") one charge point with the charger's plug types as connectors and
+ * position as its reference, read by its own status; a charger without evIds
+ * is one charge point read by the charger's status. "24 hours" is round the
+ * clock. Statuses are read as of the fetch, the file holding no time. Prices
  * include GST. A location without its id, or listed again under one, is
  * malformed; one without a position, or with one that places nothing, is
  * counted as such. A plug type or a status the guide does not list is left
@@ -127,24 +133,36 @@ export function parseLta(
           ...(tariff === undefined ? {} : { tariffIds: [tariff.id] }),
         };
       });
-      const evIds = listOf(charger["evIds"]);
-      const [only] = evIds.length === 1 ? evIds : [];
-      const key =
-        text(charger["id"]) ??
-        (only === undefined ? undefined : (text(only["evCpId"]) ?? text(only["id"]))) ??
-        `${stationId}-${c + 1}`;
-      evses.push({ key, connectors });
-      // One evId is the charge point itself; over several, the charger's own
-      // status is what the file says of the charge point.
-      const state = text((only ?? charger)["status"]);
-      const status = state === undefined ? undefined : STATES[state];
-      if (status !== undefined) states.push({ key, status });
-      else if (state !== undefined) recordSkipped(feed.id, "unknown_value");
+      const position = text(charger["position"]);
+      // Each evId is a charge point with the charger's plugs and its own
+      // status; a charger without evIds is the charge point itself.
+      const points = listOf(charger["evIds"]).flatMap((ev) => {
+        const id = text(ev["evCpId"]) ?? text(ev["id"]);
+        return id === undefined ? [] : [{ key: id, row: ev }];
+      });
+      const own =
+        points.length > 0
+          ? points
+          : [{ key: text(charger["id"]) ?? `${stationId}-${c + 1}`, row: charger }];
+      for (const { key, row } of own) {
+        evses.push({
+          key,
+          ...(position === undefined ? {} : { physicalReference: position }),
+          connectors: connectors.map((connector) => ({ ...connector })),
+        });
+        const state =
+          typeof row["status"] === "string" ? row["status"].trim() : text(row["status"]);
+        if (state === undefined) continue;
+        const status = Object.hasOwn(STATES, state) ? STATES[state] : undefined;
+        if (status !== undefined) states.push({ key, status });
+        else recordSkipped(feed.id, "unknown_value");
+      }
     }
 
     const address = text(station["address"]);
     const operator = chargers.map((c) => text(c["operator"])).find((o) => o !== undefined);
     const hours = chargers.map((c) => text(c["operationHours"])).find((h) => h !== undefined);
+    const allDay = hours !== undefined && /^24\s*hours?$/i.test(hours);
     out.features.push(
       siteDraft(
         feed,
@@ -156,7 +174,11 @@ export function parseLta(
           ...(operator === undefined ? {} : { operator: { name: operator } }),
           // The location id ends in the six-digit postal code.
           address: { text: address, postalCode: stationId.match(/(\d{6})$/)?.[1] },
-          ...(hours === undefined ? {} : { openingHoursText: hours }),
+          ...(allDay
+            ? { twentyFourSeven: true }
+            : hours === undefined
+              ? {}
+              : { openingHoursText: hours }),
           evses,
         },
         ctx.fetchedAt,

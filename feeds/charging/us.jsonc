@@ -33,6 +33,11 @@
           "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1.json?fuel_type=ELEC&country=all&status=E,P&access=public&limit=all",
           "cadenceSec": 86400,
         },
+        // The networks' names and web pages; a station names its network by key (WATT_EV).
+        "networks": {
+          "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1/electric-networks.json",
+          "cadenceSec": 604800,
+        },
       },
       "coverage": { "countries": ["US", "CA"] },
       "freshnessWindowSec": 172800,

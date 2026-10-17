@@ -5,9 +5,9 @@
       "code": "PL-2DT-E9FX7M3CL",
       "station_id": 22,
       "charging_solutions": [
-        { "mode": 4, "power": 24 },
-        { "mode": 4, "power": 39 },
-        { "mode": 2, "power": 22 }
+        { "mode": 7, "power": 24 },
+        { "mode": 7, "power": 39 },
+        { "mode": 6, "power": 22 }
       ],
       "connectors": [
         {
@@ -32,7 +32,7 @@
       "id": 90,
       "code": "PL-V1J-EUEXG3Z5O",
       "station_id": 46,
-      "charging_solutions": [{ "mode": 4, "power": 50 }],
+      "charging_solutions": [{ "mode": 7, "power": 50 }],
       "connectors": [
         {
           "interfaces": [2],

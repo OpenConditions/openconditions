@@ -108,6 +108,7 @@ const OFFER: Record<keyof Offer, Role> = {
   minPrice: "content",
   maxPrice: "content",
   priceIncludesVat: "content",
+  preauthorizeAmount: "content",
   altText: "content",
   url: "content",
   validity: "content",

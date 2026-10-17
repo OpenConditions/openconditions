@@ -64,8 +64,17 @@ function evse(raw: unknown): unknown {
     physical_reference: raw.physicalReference,
     directions: raw.directions,
     parking_restrictions: raw.parkingRestrictions,
+    parking: snakeKeys(raw.parking),
+    accepted_service_providers: raw.acceptedServiceProviders,
     connectors: connectors(raw.connectors),
   };
+}
+
+/** Digitraffic's energy mix, its `environmentalImpact` OCPI's `environ_impact`. */
+function energyMix(value: unknown): unknown {
+  if (!isRecord(value)) return value;
+  const { environmentalImpact, ...rest } = value;
+  return { ...(snakeKeys(rest) as Raw), environ_impact: snakeKeys(environmentalImpact) };
 }
 
 /**
@@ -93,11 +102,18 @@ export function digitrafficLocation(feature: unknown): OcpiLocation {
     coordinates: point(feature.geometry),
     parking_type: properties.parkingType,
     evses: Array.isArray(properties.evses) ? properties.evses.map(evse) : [],
+    parking_places: snakeKeys(properties.parkingPlaces),
     directions: properties.directions,
     operator:
-      details.name === undefined ? undefined : { name: details.name, website: details.website },
+      details.name === undefined
+        ? undefined
+        : { name: details.name, website: details.website, logo: details.logo },
+    // Opening times are local to Finland, and the location names no zone.
+    time_zone: "Europe/Helsinki",
     opening_times: snakeKeys(properties.openingTimes),
     charging_when_closed: properties.chargingWhenClosed,
+    energy_mix: energyMix(properties.energyMix),
+    help_phone: properties.helpPhone,
     last_updated: text(properties.modifiedAt),
   });
 }
@@ -113,14 +129,22 @@ export function fromDigitraffic(features: unknown): OcpiLocation[] {
   return list.map(digitrafficLocation);
 }
 
-/** The EVSE statuses of a `locations/statuses/all` payload. */
-export function digitrafficStatuses(payload: Buffer): DigitrafficStatus[] {
+/**
+ * The EVSE statuses of a `locations/statuses/all` payload; an entry without
+ * an EVSE id or a status is passed to `malformed`.
+ */
+export function digitrafficStatuses(
+  payload: Buffer,
+  malformed: () => void = () => {},
+): DigitrafficStatus[] {
   const statuses: DigitrafficStatus[] = [];
   for (const entry of listIn(payload, "statuses")) {
-    if (!isRecord(entry)) continue;
-    const evseId = text(entry.evseId);
-    const status = text(entry.status)?.toUpperCase();
-    if (evseId === undefined || status === undefined) continue;
+    const evseId = isRecord(entry) ? text(entry.evseId) : undefined;
+    const status = isRecord(entry) ? text(entry.status)?.toUpperCase() : undefined;
+    if (!isRecord(entry) || evseId === undefined || status === undefined) {
+      malformed();
+      continue;
+    }
     const at = text(entry.lastUpdatedAt) ?? text(entry.modifiedAt);
     statuses.push(at === undefined ? { evseId, status } : { evseId, status, at });
   }

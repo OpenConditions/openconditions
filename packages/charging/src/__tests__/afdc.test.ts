@@ -65,6 +65,9 @@ describe("afdc", () => {
 
   test("AFDC: charging units give per-connector power and quantity; NEMA is never Schuko", () => {
     const out = parse({ main: [fixture("afdc-more.json")] });
+    // Every code the captures write is one AFDC lists.
+    parse({ main: [fixture("afdc.json")] });
+    expect(drainSkipped("us-afdc-charging")).toEqual({});
     // A Tesla Supercharger: eight units of one 150 kW port.
     const tesla = site(out, "83915");
     expect(evsesOf(tesla)).toHaveLength(8);
@@ -80,8 +83,8 @@ describe("afdc", () => {
     // A campground: a Level 1 NEMA 14-50 outlet and a J1772 plug.
     const camp = site(out, "48640");
     expect(connectorsOf(camp).map((c) => c.details)).toEqual([
-      { kind: "connector", v: 1, standard: "NEMA_14_50", current: "ac" },
-      { kind: "connector", v: 1, standard: "IEC_62196_T1", current: "ac" },
+      { kind: "connector", v: 1, standard: "NEMA_14_50", format: "socket", current: "ac" },
+      { kind: "connector", v: 1, standard: "IEC_62196_T1", format: "cable", current: "ac" },
     ]);
     expect(camp?.["operator"]).toBeUndefined();
     expect(camp?.["details"]).toMatchObject({ tariffText: [{ lang: "en", text: "$15 per day" }] });
@@ -117,8 +120,15 @@ describe("afdc", () => {
     const evses = evsesOf(site(out, "900"));
     expect(evses.map((e) => e.details["quantity"])).toEqual([3, undefined]);
     expect(connectorsOf(site(out, "900")).map((c) => c.details)).toEqual([
-      { kind: "connector", v: 1, standard: "IEC_62196_T1", current: "ac", maxPowerKw: 7.2 },
-      { kind: "connector", v: 1, standard: "NEMA_5_20", current: "ac" },
+      {
+        kind: "connector",
+        v: 1,
+        standard: "IEC_62196_T1",
+        format: "cable",
+        current: "ac",
+        maxPowerKw: 7.2,
+      },
+      { kind: "connector", v: 1, standard: "NEMA_5_20", format: "socket", current: "ac" },
     ]);
   });
 
@@ -145,7 +155,8 @@ describe("afdc", () => {
       "CHADEMO",
       "IEC_62196_T1",
       "IEC_62196_T1_COMBO",
-      "SAE_J3400",
+      // "MCS (J3271 DC)".
+      "MCS",
       "DOMESTIC_B",
       "SAE_J3400",
       "UNKNOWN",
@@ -196,5 +207,80 @@ describe("afdc", () => {
     const closed = parse({ main: [station({ status_code: "T" })] });
     expect(site(closed, "900")).toMatchObject({ lifecycle: "temporarily_closed" });
     expect(out.observations).toEqual([]);
+  });
+
+  test("AFDC: network names, access, cards, venue, contact and directions as the model holds them", () => {
+    const networks = Buffer.from(
+      JSON.stringify([
+        { key: "all", name: "All" },
+        { key: "WATT_EV", name: "WattEV", url: "https://www.wattev.com" },
+      ]),
+    );
+    const out = parse({
+      main: [
+        station({
+          ev_network: "WATT_EV",
+          ev_network_ids: { station: ["BKF-1"], posts: ["P1"] },
+          access_code: "public",
+          access_detail_code: "CREDIT_CARD_ALWAYS",
+          cards_accepted: "A M V Debit APPLE_PAY Voyager",
+          facility_type: "HOTEL",
+          state: "CA",
+          zip: "93308",
+          plus4: "1234",
+          station_phone: "949-916-2751",
+          intersection_directions: "Behind the lobby",
+          intersection_directions_fr: "Derrière le hall",
+          federal_agency: { id: 3, code: "DOE", name: "Department of Energy" },
+          ev_workplace_charging: true,
+          ev_connector_types: ["J1772"],
+        }),
+      ],
+      networks: [networks],
+    });
+    expect(drainSkipped("us-afdc-charging")).toEqual({});
+    expect(site(out, "900")).toMatchObject({
+      operator: { name: [{ text: "WattEV" }], website: "https://www.wattev.com" },
+      owner: { name: [{ text: "Department of Energy" }] },
+      externalIds: expect.arrayContaining([{ scheme: "cpo", id: "BKF-1", authority: "WATT_EV" }]),
+      location: { address: { region: "CA", postalCode: "93308-1234" } },
+      access: {
+        audience: "public",
+        payment: ["credit_card", "debit_card", "contactless", "other"],
+      },
+      amenities: ["hotel"],
+      details: {
+        hotline: "949-916-2751",
+        directions: [
+          { lang: "en", text: "Behind the lobby" },
+          { lang: "fr", text: "Derrière le hall" },
+        ],
+      },
+    });
+    expect(evsesOf(site(out, "900"))[0]?.details).toMatchObject({
+      parkingRestrictions: ["employees"],
+    });
+    // Reserved for a business's patrons, or fleet only.
+    expect(site(parse({ main: [station({ restricted_access: true })] }), "900")).toMatchObject({
+      access: { audience: "customers" },
+    });
+    expect(site(parse({ main: [station({ access_detail_code: "FLEET" })] }), "900")).toMatchObject({
+      access: { audience: "restricted" },
+    });
+    // A paid garage is a garage; codes AFDC does not list are counted.
+    expect(
+      site(parse({ main: [station({ facility_type: "PAY_GARAGE" })] }), "900")?.["details"],
+    ).toMatchObject({ parkingType: "parking_garage" });
+    parse({
+      main: [
+        station({
+          facility_type: "SPACEPORT",
+          cards_accepted: "BITCOIN",
+          access_detail_code: "toString",
+          ev_charging_units: [unit({ J1772: { power_kw: 7, port_count: 1 } }, 1, "3")],
+        }),
+      ],
+    });
+    expect(drainSkipped("us-afdc-charging")).toEqual({ unknown_value: 4 });
   });
 });

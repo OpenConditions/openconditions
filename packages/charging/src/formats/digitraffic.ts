@@ -67,16 +67,18 @@ export function parseDigitraffic(
       recordSkipped(feed.id, refusedReason(feature));
     }
   }
-  const statuses = statusesOf(payloads["status"] ?? []);
+  const statuses = statusesOf(feed.id, payloads["status"] ?? []);
   const tariffs = (payloads["tariffs"] ?? []).flatMap(digitrafficTariffs);
   return mapOcpi(feed, { locations, rejected: 0, statuses, tariffs }, ctx);
 }
 
-/** The EVSE statuses by eMI3 id. */
-function statusesOf(bodies: readonly Buffer[]): Map<string, EvseState> {
+/** The EVSE statuses by eMI3 id; an entry without its id or status is malformed. */
+function statusesOf(feedId: string, bodies: readonly Buffer[]): Map<string, EvseState> {
   const statuses = new Map<string, EvseState>();
   for (const body of bodies) {
-    for (const { evseId, status, at } of digitrafficStatuses(body)) {
+    for (const { evseId, status, at } of digitrafficStatuses(body, () =>
+      recordSkipped(feedId, "malformed"),
+    )) {
       statuses.set(evseId, at === undefined ? { status } : { status, at });
     }
   }
@@ -90,5 +92,5 @@ export function parseDigitrafficStatus(
   ctx: ParseContext,
   index: StatusIndex,
 ): StatusOutput {
-  return ocpiStatusReadings(feed, statusesOf(payloads["status"] ?? []), index, ctx);
+  return ocpiStatusReadings(feed, statusesOf(feed.id, payloads["status"] ?? []), index, ctx);
 }

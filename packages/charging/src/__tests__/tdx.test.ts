@@ -243,4 +243,108 @@ describe("tdx", () => {
     ]);
     expect(status.rejected).toBe(1);
   });
+
+  test("TDX: the connector, charging point, operator and service time rows, where a feed fetches them", () => {
+    // Shaped as TDX's live answers of 2026-10-17 for station TPE1733.
+    const wrap = (key: string, rows: unknown[]) =>
+      Buffer.from(JSON.stringify({ UpdateTime: "2026-10-17T00:00:00+08:00", [key]: rows }));
+    const station = {
+      StationID: "TPE1733",
+      StationName: { Zh_tw: "測試站" },
+      OperatorID: "29162550",
+      PositionLat: 25.05,
+      PositionLon: 121.55,
+      Description: "地下停車場",
+      UsageRestriction: "限電動車",
+      Telephone: "02-0000",
+      PhotoURLs: ["https://tdx.example/p.jpg"],
+      Location: { Freeway: { FreewayID: "N1" } },
+    };
+    const out = parse({
+      sites: [wrap("Stations", [station])],
+      connectors: [
+        wrap("Connectors", [
+          {
+            StationID: "TPE1733",
+            ChargingPointID: "P1",
+            ConnectorID: "C1",
+            Type: 5,
+            Power: 1,
+            Voltage: "220V",
+            CurrentRating: "32A",
+            PowerRating: "7kW",
+            Floor: "B1",
+          },
+          { StationID: "TPE1733", ChargingPointID: "P1", ConnectorID: "C2", Type: 254 },
+        ]),
+      ],
+      points: [
+        wrap("ChargingPoints", [
+          {
+            StationID: "TPE1733",
+            ChargingPointID: "P1",
+            Payment: { CreditCard: true, SmartCard: true, EPay: false, Others: false },
+            StartType: { ByCard: true, ByApp: true, ByStaff: false, Others: false },
+          },
+        ]),
+      ],
+      operators: [
+        wrap("Operators", [
+          {
+            OperatorID: "29162550",
+            OperatorName: { Zh_tw: "裕電能源股份有限公司" },
+            Telephone: "02-27026627",
+            WebURL: "https://op.example/",
+            LogoURL: "https://op.example/logo.png",
+            TsAndCsURL: "https://op.example/terms",
+            BAN: "29162550",
+          },
+        ]),
+      ],
+      servicetimes: [
+        wrap("ServiceTimes", [
+          {
+            StationID: "TPE1733",
+            OpeningHours: [{ ServiceType: 3, DayType: 2, StartTime: "08:00", EndTime: "20:00" }],
+          },
+        ]),
+      ],
+    });
+    const draft = site(out, "TPE1733");
+    expect(draft).toMatchObject({
+      operator: {
+        name: [{ text: "裕電能源股份有限公司" }],
+        phone: "02-27026627",
+        ids: [{ scheme: "cpo", id: "29162550", authority: "tw-tdx-charging" }],
+      },
+      openingHours: { osm: "Mo-Fr 08:00-20:00" },
+      access: { payment: ["credit_card", "prepaid_card"], authentication: ["rfid", "app"] },
+      images: [
+        { url: "https://tdx.example/p.jpg", category: "site" },
+        { url: "https://op.example/logo.png", category: "operator_logo" },
+      ],
+      description: [{ text: "地下停車場; 限電動車" }],
+      details: { hotline: "02-0000", parkingType: "along_motorway" },
+    });
+    const evse = components(draft).find((c) => c.kind === "evse") as Component & {
+      floorLevel?: string;
+    };
+    expect(evse.floorLevel).toBe("B1");
+    // Type 254, "Others", is a plug of no standard the model names, and no unknown code.
+    expect(
+      components(draft)
+        .filter((c) => c.kind === "connector")
+        .map((c) => c.details),
+    ).toEqual([
+      expect.objectContaining({
+        standard: "IEC_62196_T1",
+        current: "ac",
+        maxPowerKw: 7,
+        maxVoltage: 220,
+        maxAmperage: 32,
+        termsUrl: "https://op.example/terms",
+      }),
+      expect.objectContaining({ standard: "UNKNOWN" }),
+    ]);
+  });
 });

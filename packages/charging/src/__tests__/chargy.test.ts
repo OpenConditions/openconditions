@@ -68,6 +68,8 @@ describe("chargy", () => {
         address: { text: "Rue Louis Pasteur, L-4276 Esch-sur-Alzette Luxembourg", country: "LU" },
       },
     });
+    // The device's name is the label on the charge point.
+    expect(components(brill)[0]).toMatchObject({ key: "10644", physicalReference: "CP2500" });
     expect(
       components(brill).map((c) => [
         c.key,

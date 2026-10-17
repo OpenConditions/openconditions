@@ -1,16 +1,21 @@
 import type {
+  OcpiAdditionalGeoLocation,
   OcpiBusinessDetails,
   OcpiConnector,
   OcpiDisplayText,
   OcpiEnergyMix,
   OcpiEvse,
+  OcpiEvseParking,
   OcpiExceptionalPeriod,
+  OcpiImage,
   OcpiLocation,
   OcpiOpeningTimes,
+  OcpiParking,
   OcpiPrice,
   OcpiPriceComponent,
   OcpiRegularHours,
   OcpiRestrictions,
+  OcpiStatusSchedule,
   OcpiTariff,
   OcpiTariffElement,
 } from "./types.js";
@@ -128,11 +133,112 @@ function displayTexts(value: unknown): OcpiDisplayText[] | undefined {
   return list.length > 0 ? list : undefined;
 }
 
+/** A whole number of pixels or the like; anything else is unset. */
+function count(value: unknown): number | undefined {
+  const n = num(value);
+  return n !== undefined && Number.isInteger(n) && n > 0 ? n : undefined;
+}
+
+function boolean(value: unknown): boolean | undefined {
+  return typeof value === "boolean" ? value : undefined;
+}
+
+/** An `Image`; one without a URL is none. */
+function image(value: unknown): OcpiImage | undefined {
+  if (!isRecord(value)) return undefined;
+  const url = text(value.url);
+  if (url === undefined) return undefined;
+  return drop({
+    url,
+    thumbnail: text(value.thumbnail),
+    category: text(value.category)?.toUpperCase(),
+    type: text(value.type)?.toLowerCase(),
+    width: count(value.width),
+    height: count(value.height),
+  });
+}
+
+function images(value: unknown): OcpiImage[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list = value.map(image).filter((i): i is OcpiImage => i !== undefined);
+  return list.length > 0 ? list : undefined;
+}
+
 function businessDetails(value: unknown): OcpiBusinessDetails | undefined {
   if (!isRecord(value)) return undefined;
   const name = text(value.name);
   if (name === undefined) return undefined;
-  return drop({ name, website: text(value.website) });
+  return drop({ name, website: text(value.website), logo: image(value.logo) });
+}
+
+function relatedLocations(value: unknown): OcpiAdditionalGeoLocation[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list: OcpiAdditionalGeoLocation[] = [];
+  for (const entry of value) {
+    const point = coordinates(entry);
+    if (point === undefined || !isRecord(entry)) continue;
+    const [name] = displayTexts([entry.name]) ?? [];
+    list.push(name === undefined ? point : { ...point, name });
+  }
+  return list.length > 0 ? list : undefined;
+}
+
+function statusSchedule(value: unknown): OcpiStatusSchedule[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list: OcpiStatusSchedule[] = [];
+  for (const entry of value) {
+    if (!isRecord(entry)) continue;
+    const begin = text(entry.period_begin);
+    const status = text(entry.status)?.toUpperCase();
+    if (begin === undefined || status === undefined) continue;
+    list.push(drop({ period_begin: begin, period_end: text(entry.period_end), status }));
+  }
+  return list.length > 0 ? list : undefined;
+}
+
+function evseParking(value: unknown): OcpiEvseParking[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list: OcpiEvseParking[] = [];
+  for (const entry of value) {
+    const id = isRecord(entry) ? text(entry.parking_id) : undefined;
+    if (id === undefined || !isRecord(entry)) continue;
+    list.push(drop({ parking_id: id, evse_position: text(entry.evse_position)?.toUpperCase() }));
+  }
+  return list.length > 0 ? list : undefined;
+}
+
+/** A 2.3.0 `Parking`; one without an id is none, since an EVSE names it by its id. */
+function parkingPlace(value: unknown): OcpiParking | undefined {
+  if (!isRecord(value)) return undefined;
+  const id = text(value.id);
+  if (id === undefined) return undefined;
+  const amount = (v: unknown) => {
+    const n = num(v);
+    return n !== undefined && n > 0 ? n : undefined;
+  };
+  return drop({
+    id,
+    physical_reference: text(value.physical_reference),
+    vehicle_types: textList(value.vehicle_types)?.map((t) => t.toUpperCase()),
+    max_vehicle_weight: amount(value.max_vehicle_weight),
+    max_vehicle_height: amount(value.max_vehicle_height),
+    max_vehicle_length: amount(value.max_vehicle_length),
+    max_vehicle_width: amount(value.max_vehicle_width),
+    parking_space_length: amount(value.parking_space_length),
+    parking_space_width: amount(value.parking_space_width),
+    dangerous_goods_allowed: boolean(value.dangerous_goods_allowed),
+    direction: text(value.direction)?.toUpperCase(),
+    drive_through: boolean(value.drive_through),
+    restricted_to_type: boolean(value.restricted_to_type),
+    reservation_required: boolean(value.reservation_required),
+    time_limit: amount(value.time_limit),
+    roofed: boolean(value.roofed),
+    images: images(value.images),
+    lighting: boolean(value.lighting),
+    refrigeration_outlet: boolean(value.refrigeration_outlet),
+    standards: textList(value.standards),
+    apds_reference: text(value.apds_reference),
+  });
 }
 
 function coordinates(value: unknown): { latitude: number; longitude: number } | undefined {
@@ -226,6 +332,7 @@ function normaliseEvse(raw: unknown): OcpiEvse {
     uid,
     evse_id: text(raw.evse_id),
     status,
+    status_schedule: statusSchedule(raw.status_schedule),
     capabilities: textList(raw.capabilities),
     connectors,
     floor_level: text(raw.floor_level),
@@ -233,6 +340,9 @@ function normaliseEvse(raw: unknown): OcpiEvse {
     physical_reference: text(raw.physical_reference),
     directions: displayTexts(raw.directions),
     parking_restrictions: textList(raw.parking_restrictions),
+    parking: evseParking(raw.parking),
+    accepted_service_providers: textList(raw.accepted_service_providers),
+    images: images(raw.images),
     last_updated: text(raw.last_updated),
     status_last_updated: text(raw.status_last_updated),
     original_uid: text(raw.original_uid),
@@ -260,8 +370,10 @@ export function normaliseLocation(raw: unknown): OcpiLocation {
     state: text(raw.state),
     country: text(raw.country)?.toUpperCase(),
     coordinates: position,
+    related_locations: relatedLocations(raw.related_locations),
     parking_type: text(raw.parking_type),
     evses: Array.isArray(raw.evses) ? raw.evses.map(normaliseEvse) : [],
+    parking_places: parkingPlaces(raw.parking_places),
     directions: displayTexts(raw.directions),
     operator: businessDetails(raw.operator),
     suboperator: businessDetails(raw.suboperator),
@@ -271,10 +383,19 @@ export function normaliseLocation(raw: unknown): OcpiLocation {
     opening_times: openingTimes(raw.opening_times),
     charging_when_closed:
       typeof raw.charging_when_closed === "boolean" ? raw.charging_when_closed : undefined,
+    images: images(raw.images),
+    energy_mix: energyMix(raw.energy_mix),
+    help_phone: text(raw.help_phone),
     last_updated: text(raw.last_updated),
     source: text(raw.source),
     original_id: text(raw.original_id),
   });
+}
+
+function parkingPlaces(value: unknown): OcpiParking[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const list = value.map(parkingPlace).filter((p): p is OcpiParking => p !== undefined);
+  return list.length > 0 ? list : undefined;
 }
 
 /**
@@ -441,6 +562,7 @@ export function normaliseTariff(raw: unknown): OcpiTariff {
     tariff_alt_url: text(raw.tariff_alt_url),
     min_price: price(raw.min_price),
     max_price: price(raw.max_price),
+    preauthorize_amount: num(raw.preauthorize_amount),
     elements: Array.isArray(raw.elements) ? raw.elements.map(element) : [],
     start_date_time: text(raw.start_date_time),
     end_date_time: text(raw.end_date_time),

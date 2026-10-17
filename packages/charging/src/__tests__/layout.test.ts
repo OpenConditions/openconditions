@@ -74,7 +74,8 @@ describe("geojson", () => {
       kind: "charging_site",
       lifecycle: "operational",
       operator: { role: "operator", name: [{ lang: "nl", text: "Mobiflow" }] },
-      access: { audience: "restricted" },
+      // Semi-public: open to every driver, for at least ten hours a day.
+      access: { audience: "public" },
       externalIds: [
         {
           scheme: "provider",
@@ -84,9 +85,16 @@ describe("geojson", () => {
       ],
       location: {
         geometry: { type: "Point", coordinates: [4.668648, 50.90203604] },
-        address: { street: "Kouterstraat 17", postalCode: "3020", city: "Herent", country: "BE" },
+        address: {
+          street: "Kouterstraat 17",
+          postalCode: "3020",
+          city: "Herent",
+          region: "VLAAMS-BRABANT",
+          country: "BE",
+        },
       },
     });
+    expect(herent).not.toHaveProperty("openingHours");
     const ac = {
       standard: "IEC_62196_T2",
       powerType: "AC_3_PHASE",
@@ -107,8 +115,10 @@ describe("geojson", () => {
       { key: "112402427", connectors: [{ key: "112402427/1", ...dc }] },
       { key: "112402428", connectors: [{ key: "112402428/1", ...dc }] },
     ]);
+    // Public: open to every driver round the clock.
     expect(site(out, "ff248c18-84d3-11f1-967e-42010aa400b8")).toMatchObject({
       access: { audience: "public" },
+      openingHours: { osm: "24/7", twentyFourSeven: true },
     });
   });
 
@@ -306,8 +316,34 @@ describe("csv", () => {
     });
   });
 
+  test("Wallonia: the province, and a location's restrictions on each of its charge points", () => {
+    const lines = fixture("be-wal-spw.csv").toString("utf8").split("\n");
+    const header = lines[0]!.replace(/^﻿/, "").split(";");
+    const at = (name: string) => header.indexOf(name);
+    const namur = lines.find((l) => l.includes('"67409491"'))!.split(";");
+    namur[at("RESTRICTIONS_EMPLACEMENT")] = '"[""ONLY_CUSTOMERS"",""TIME_RESTRICTED""]"';
+    const odd = [...namur];
+    odd[at("CONNECTEUR_ID")] = '"99"';
+    odd[at("EMPLACEMENT_ID")] = '"odd"';
+    odd[at("RESTRICTIONS_EMPLACEMENT")] = '"[""ONLY_TAXIS""]"';
+    const out = parseLayout(
+      walloniaFeed(),
+      { main: [Buffer.from([lines[0], namur.join(";"), odd.join(";")].join("\n"))] },
+      parseContext(FETCHED, 86400),
+    );
+    expect(drainSkipped(walloniaFeed().id)).toEqual({ unknown_value: 1 });
+    const draft = site(out, "89b3a26e-f841-11ee-b689-42010aa400b8");
+    expect(draft).toMatchObject({ location: { address: { region: "Namur" } } });
+    const evse = (draft["components"] as { key: string; details: Record<string, unknown> }[]).find(
+      (c) => c.key === "67409491",
+    );
+    expect(evse?.details["parkingRestrictions"]).toEqual(["customers"]);
+  });
+
   test("NSW: 'Upcoming' is a planned site; '2x350kW & 2x175kW' gives two EVSE groups of 350 and 175 kW", () => {
     const out = parse(nswFeed(), "au-nsw.csv");
+    // A working charger's type is its current, an upcoming one's no current: neither is unread.
+    expect(drainSkipped(nswFeed().id)).toEqual({});
     expect(out.features).toHaveLength(7);
     const ourimbah = site(out, "-33.353198,151.369027,NRMA Electric");
     expect(ourimbah).toMatchObject({

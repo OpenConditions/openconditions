@@ -8,11 +8,14 @@ import {
   type StatusOutput,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
+import { own } from "../records.js";
 import {
   type ConnectorInput,
   type EvseInput,
   type EvseStatus,
   instantIn,
+  type ParkingType,
+  type PowerType,
   parsePowerKw,
   type SiteInput,
   siteDraft,
@@ -23,13 +26,13 @@ import { isRecord, placeFromText, type Raw, text, unplacedReason } from "./raw.j
 
 const ZONE = "Asia/Seoul";
 
-const CHADEMO = { standard: "CHADEMO", current: "dc" } as const;
+const CHADEMO = { standard: "CHADEMO", current: "dc", powerType: "DC" } as const;
 const AC_SLOW = { standard: "IEC_62196_T1", current: "ac" } as const;
-const AC_3_PHASE = { standard: "IEC_62196_T2", current: "ac" } as const;
-const DC_COMBO = { standard: "IEC_62196_T1_COMBO", current: "dc" } as const;
+const AC_3_PHASE = { standard: "IEC_62196_T2", current: "ac", powerType: "AC_3_PHASE" } as const;
+const DC_COMBO = { standard: "IEC_62196_T1_COMBO", current: "dc", powerType: "DC" } as const;
 const NACS = { standard: "SAE_J3400" } as const;
 
-type Plug = { standard: string; current?: "ac" | "dc" };
+type Plug = { standard: string; current?: "ac" | "dc"; powerType?: PowerType };
 
 /**
  * `chgerType`: the plugs one charger has. Korean slow AC is Type 1 and its
@@ -46,19 +49,112 @@ const CHARGER_TYPES: Readonly<Record<string, readonly Plug[]>> = {
   "08": [DC_COMBO],
   "09": [NACS],
   "10": [DC_COMBO, NACS],
-  "11": [{ standard: "IEC_62196_T2_COMBO", current: "dc" }],
+  "11": [{ standard: "IEC_62196_T2_COMBO", current: "dc", powerType: "DC" }],
 };
 
-/** `stat`: what the charger is doing. A lost connection or an unconfirmed state is unknown. */
+/**
+ * `stat`: what the charger is doing. A lost connection or an unconfirmed
+ * state is unknown; operation suspended (4) and under inspection (5,
+ * 점검중) are not available for now, with nothing said of a fault.
+ */
 const STATES: Readonly<Record<string, EvseStatus>> = {
   "0": "unknown",
   "1": "unknown",
   "2": "available",
   "3": "charging",
   "4": "inoperative",
-  "5": "out_of_order",
+  "5": "inoperative",
   "6": "reserved",
   "9": "unknown",
+};
+
+/** `zcode`: the province (시도) of the station, by the first two digits of its administrative code. */
+const PROVINCES: Readonly<Record<string, string>> = {
+  "11": "서울특별시",
+  "12": "전남광주통합특별시",
+  "26": "부산광역시",
+  "27": "대구광역시",
+  "28": "인천광역시",
+  "30": "대전광역시",
+  "31": "울산광역시",
+  "36": "세종특별자치시",
+  "41": "경기도",
+  "43": "충청북도",
+  "44": "충청남도",
+  "47": "경상북도",
+  "48": "경상남도",
+  "50": "제주특별자치도",
+  "51": "강원특별자치도",
+  "52": "전북특별자치도",
+};
+
+/**
+ * `kindDetail`: a car park is a parking lot and an expressway service area
+ * (C001) a site along a motorway; the venues are amenities of the station.
+ * Public offices, housing, schools and the like name nothing the site
+ * offers a driver.
+ */
+const KINDS: Readonly<Record<string, { parking?: ParkingType; amenities?: string[] }>> = {
+  B001: { parking: "parking_lot" },
+  B002: { parking: "parking_lot" },
+  B003: { parking: "parking_lot", amenities: ["public_transport_hub"] },
+  B004: { parking: "parking_lot" },
+  C001: { parking: "along_motorway" },
+  D001: { amenities: ["recreation_area"] },
+  D004: { amenities: ["nature"] },
+  D008: { amenities: ["museum"] },
+  E001: { amenities: ["mall"] },
+  E002: { amenities: ["mall"] },
+  E003: { amenities: ["overnight_accommodation"] },
+  E005: { amenities: ["cafe"] },
+  E006: { amenities: ["restaurant"] },
+  E007: { amenities: ["petrol_station"] },
+  E008: { amenities: ["leisure"] },
+  F001: { amenities: ["vehicle_maintenance"] },
+  F002: { amenities: ["vehicle_maintenance"] },
+  G002: { amenities: ["overnight_accommodation"] },
+  I001: { amenities: ["medical_facility"] },
+  ...Object.fromEntries(
+    [
+      "A001",
+      "A002",
+      "A003",
+      "A004",
+      "C002",
+      "C003",
+      "D002",
+      "D003",
+      "D005",
+      "D006",
+      "D007",
+      "D009",
+      "E004",
+      "G001",
+      "G003",
+      "G004",
+      "G005",
+      "G006",
+      "H001",
+      "H002",
+      "H003",
+      "H004",
+      "H005",
+      "I002",
+      "I003",
+      "I004",
+      "I005",
+      "I006",
+      "I007",
+      "I008",
+      "J001",
+      "J002",
+      "J003",
+      "J004",
+      "J005",
+      "J006",
+      "J007",
+    ].map((code) => [code, {}]),
+  ),
 };
 
 /** The items of one answer page: `items.item`, a list or a single item. */
@@ -84,7 +180,7 @@ function seoulInstant(value: unknown): string | undefined {
  */
 function connectorsOf(feedId: string, item: Raw): ConnectorInput[] {
   const type = text(item["chgerType"]);
-  const known = type === undefined ? undefined : CHARGER_TYPES[type];
+  const known = own(CHARGER_TYPES, type);
   if (type !== undefined && known === undefined) recordSkipped(feedId, "unknown_value");
   const plugs = known ?? [{ standard: "UNKNOWN" }];
   const kw = parsePowerKw(item["output"]);
@@ -92,10 +188,22 @@ function connectorsOf(feedId: string, item: Raw): ConnectorInput[] {
   return plugs.map((p) => ({
     id: p.standard,
     standard: p.standard,
+    ...(p.powerType === undefined ? {} : { powerType: p.powerType }),
     ...(p.current === undefined ? {} : { current: p.current }),
     ...(kw !== undefined && (!fast || p.current !== "ac") ? { maxPowerKw: kw } : {}),
   }));
 }
+
+/** `floorType` (지상 F above ground, 지하 B below) and `floorNum`: `2`, or `B1` below ground. */
+function floorOf(item: Raw): string | undefined {
+  const num = text(item["floorNum"]);
+  if (num === undefined) return undefined;
+  return text(item["floorType"])?.toUpperCase() === "B" ? `B${num}` : num;
+}
+
+/** The first value of a field any of a station's chargers gives. */
+const firstOf = (chargers: readonly Raw[], field: string) =>
+  chargers.map((c) => text(c[field])).find((v) => v !== undefined);
 
 /** `useTime`: `24시간 …` is open around the clock; anything else is the publisher's text. */
 function hoursOf(
@@ -149,7 +257,14 @@ export function parseKeco(
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      evses.push({ key: chgerId, connectors: connectorsOf(feed.id, charger) });
+      const floor = floorOf(charger);
+      const location = text(charger["location"]);
+      evses.push({
+        key: chgerId,
+        ...(floor === undefined ? {} : { floorLevel: floor }),
+        ...(location === undefined ? {} : { directions: [{ lang: "ko", text: location }] }),
+        connectors: connectorsOf(feed.id, charger),
+      });
       const stat = text(charger["stat"]);
       const changed = seoulInstant(charger["statUpdDt"]);
       indexStatus(index, chargerKey(statId, chgerId), {
@@ -160,24 +275,49 @@ export function parseKeco(
         ...(changed === undefined ? {} : { snapshotAt: changed }),
       });
     }
-    const operator = text(first["busiNm"]);
-    const limited = text(first["limitYn"])?.toUpperCase();
-    const notes = [text(first["note"]), limited === "Y" ? text(first["limitDetail"]) : undefined]
+    // A station's attributes are repeated on each charger; the first that gives one counts.
+    const field = (name: string) => firstOf(chargers, name);
+    const operator = field("busiNm");
+    const operatorId = field("busiId");
+    const phone = field("busiCall");
+    const limited = field("limitYn")?.toUpperCase();
+    const notes = [field("note"), limited === "Y" ? field("limitDetail") : undefined]
       .filter((n) => n !== undefined)
       .join("; ");
+    const kindCode = field("kindDetail");
+    const kind = own(KINDS, kindCode);
+    if (kindCode !== undefined && kind === undefined) recordSkipped(feed.id, "unknown_value");
+    const zcode = field("zcode");
+    const province = own(PROVINCES, zcode);
+    if (zcode !== undefined && province === undefined) recordSkipped(feed.id, "unknown_value");
+    const detail = field("addrDetail");
     out.features.push(
       siteDraft(
         feed,
         {
           stationId: statId,
           point,
-          name: text(first["statNm"]),
+          name: field("statNm"),
           lang: "ko",
-          ...(operator === undefined ? {} : { operator: { name: operator } }),
-          address: { text: text(first["addr"]) },
-          ...hoursOf(text(first["useTime"])),
+          ...(operator === undefined
+            ? {}
+            : {
+                operator: {
+                  name: operator,
+                  ...(phone === undefined ? {} : { phone }),
+                  ...(operatorId === undefined
+                    ? {}
+                    : { ids: [{ scheme: "cpo", id: operatorId, authority: feed.id }] }),
+                },
+              }),
+          address: { text: field("addr"), region: province },
+          ...(detail === undefined ? {} : { directions: [{ lang: "ko", text: detail }] }),
+          ...(phone === undefined ? {} : { hotline: phone }),
+          ...hoursOf(field("useTime")),
           ...(limited === "N" ? { audience: "public" as const } : {}),
           ...(limited === "Y" ? { audience: "restricted" as const } : {}),
+          ...(kind?.parking === undefined ? {} : { parkingType: kind.parking }),
+          ...(kind?.amenities === undefined ? {} : { amenities: kind.amenities }),
           notes,
           evses,
         },
@@ -231,7 +371,7 @@ export function parseKecoStatus(
           ? update
           : { stat: subject.snapshotStatus, at: subject.snapshotAt };
       if (!statusIsLive(state.at, ctx.fetchedAt)) continue;
-      const status = state.stat === undefined ? undefined : STATES[state.stat];
+      const status = own(STATES, state.stat);
       if (status === undefined) {
         unread ||= state.stat !== undefined;
         continue;

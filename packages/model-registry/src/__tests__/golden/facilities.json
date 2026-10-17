@@ -31,6 +31,7 @@
         "street": "Viktoriastr. 5",
         "postalCode": "44532",
         "city": "Lünen",
+        "region": "Nordrhein-Westfalen",
         "country": "DE"
       }
     },
@@ -73,7 +74,8 @@
     },
     "openingHours": {
       "osm": "24/7",
-      "twentyFourSeven": true
+      "twentyFourSeven": true,
+      "timezone": "Europe/Berlin"
     },
     "components": [
       {
@@ -167,7 +169,7 @@
     "domain": "charging",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "d90d9624de7064140bc5fdd4776d602678fd30e30b13d470e68b96388bfc350e"
+    "contentHash": "33dd8d592708dee5a96e94969b4fbf858d096a5de5e0236dab8dd9d1e573fe10"
   },
   {
     "id": "oc:feature:de-bw-mobidata-charging:72557",
@@ -201,6 +203,7 @@
         "street": "Stellenbachstr. 49-51",
         "postalCode": "44536",
         "city": "Lünen",
+        "region": "Nordrhein-Westfalen",
         "country": "DE"
       }
     },
@@ -243,7 +246,8 @@
     },
     "openingHours": {
       "osm": "24/7",
-      "twentyFourSeven": true
+      "twentyFourSeven": true,
+      "timezone": "Europe/Berlin"
     },
     "components": [
       {
@@ -331,7 +335,7 @@
     "domain": "charging",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "cc09c725c42396e503f2276d36d94abd56c13fccb63e8ee923d3af6214b4d8d9"
+    "contentHash": "1ab29a3f43a1e06a682eee10a20c55cea7e8682119e2a1a1f37e81619df4ce30"
   },
   {
     "id": "oc:offer:de-bw-mobidata-charging:72555:138586",

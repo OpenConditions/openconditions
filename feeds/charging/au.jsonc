@@ -35,13 +35,41 @@
         // `Non-networked` says the charger belongs to no network, not who runs it.
         "operator": { "field": "Operator", "pattern": "^(?!Non-networked$)(.+)$" },
         "address": { "text": "Station_address", "postalCode": "PCODE" },
-        "lifecycle": { "field": "Charger_Type", "map": { "Upcoming": "planned" } },
+        // `Charger_Type` is `Upcoming` for a site being built, else the
+        // current of a working one.
+        "lifecycle": {
+          "field": "Charger_Type",
+          "map": { "Upcoming": "planned" },
+          "ignore": ["AC", "DC"],
+        },
+        // The programme a site was funded under; the kerbside one's chargers
+        // stand on the street, the others say nothing of where.
+        "parkingType": {
+          "field": "Source",
+          "map": { "Kerbside Charging R1": "on_street" },
+          "ignore": [
+            "Existing Destination Chargers",
+            "Destination Charging R1",
+            "Destination Charging R2",
+            "Existing Fast Chargers",
+            "ARENA - Driving the Nation",
+            "Fast Charging R1",
+            "Fast Charging R2",
+            "Fast Charging R3",
+            "TfNSW Regional",
+            "TfNSW Commuter Car Parks",
+          ],
+        },
         "connectors": {
           "list": {
             "field": "Charger_rating",
             "separator": "\\s*&\\s*",
             "pattern": "^(?:(?<count>\\d+)\\s*x\\s*)?(?:(?<power>\\d+(?:\\.\\d+)?\\s*(?:kW)?)|AC|DC)$",
-            "current": { "field": "Charger_Type", "map": { "AC": "ac", "DC": "dc" } },
+            "current": {
+              "field": "Charger_Type",
+              "map": { "AC": "ac", "DC": "dc" },
+              "ignore": ["Upcoming"],
+            },
           },
         },
       },

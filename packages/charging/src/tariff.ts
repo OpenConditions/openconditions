@@ -1,15 +1,16 @@
 import type { RecordDraft } from "@openconditions/ingest-framework";
 import {
   OCPI_DAYS,
-  OCPI_ENERGY_SOURCES,
   OCPI_TARIFF_DIMENSIONS,
   OCPI_TARIFF_TYPES,
 } from "@openconditions/model-charging";
 import type { OcpiPrice, OcpiRestrictions, OcpiTariff } from "@openconditions/ocpi";
+import { energyMixDraft, ocpiEnergyMix } from "./energy-mix.js";
 import {
   type ChargingFeed,
   clean,
   freshness,
+  own,
   pointLocation,
   provenance,
   siteId,
@@ -64,6 +65,14 @@ const RESERVATIONS: Readonly<Record<string, string>> = {
   RESERVATION_EXPIRES: "reservation_expires",
 };
 
+/** OCPI 2.3.0 `BookingRestrictionType`: what of a booking an element prices. */
+const BOOKINGS: Readonly<Record<string, string>> = {
+  BOOKING: "booking",
+  BOOKING_EXPIRES: "booking_expires",
+  BOOKING_CANCELLATION_FEES: "booking_cancellation_fees",
+  BOOKING_OVERTIME: "booking_overtime",
+};
+
 const CLOCK = /^(?:[01]\d|2[0-3]):[0-5]\d$/;
 const DATE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -89,7 +98,7 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
   const seconds = (n: number | undefined | typeof UNREADABLE) =>
     typeof n === "number" ? { value: n, unit: "s" } : n;
   const days = r.day_of_week?.map(
-    (d): string | typeof UNREADABLE => OCPI_DAYS[d as keyof typeof OCPI_DAYS] ?? UNREADABLE,
+    (d): string | typeof UNREADABLE => own<string>(OCPI_DAYS, d) ?? UNREADABLE,
   );
   const fields: Record<string, unknown> = {
     startTime: pattern(r.start_time, CLOCK),
@@ -112,7 +121,8 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
     minDuration: seconds(min(r.min_duration)),
     maxDuration: seconds(max(r.max_duration)),
     reservation:
-      r.reservation === undefined ? undefined : (RESERVATIONS[r.reservation] ?? UNREADABLE),
+      r.reservation === undefined ? undefined : (own(RESERVATIONS, r.reservation) ?? UNREADABLE),
+    booking: r.booking === undefined ? undefined : (own(BOOKINGS, r.booking) ?? UNREADABLE),
   };
   if (Object.values(fields).includes(UNREADABLE)) return null;
   return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
@@ -124,18 +134,16 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
  * OCPI looks the price of each dimension up in the first element that has a
  * component of it and whose restrictions match, so leaving out an element
  * without a known dimension changes no known dimension's price. An element
- * restricted to a booking (2.3.0 `booking`) prices the booking, which the
- * model has no condition for; it never matches a session without one, so it
- * is left out the same way. Null when a kept element's restrictions cannot be
+ * restricted to a booking (2.3.0 `booking`) or a reservation prices that, as
+ * its restriction says. Null when a kept element's restrictions cannot be
  * read: leaving that element out would let a later one of its dimensions, or
  * none, price what it prices.
  */
 function elementsOf(tariff: OcpiTariff): Record<string, unknown>[] | null {
   const elements: Record<string, unknown>[] = [];
   for (const element of tariff.elements) {
-    if (element.restrictions?.booking !== undefined) continue;
     const components = element.price_components.flatMap((c) => {
-      const type = OCPI_TARIFF_DIMENSIONS[c.type];
+      const type = own(OCPI_TARIFF_DIMENSIONS, c.type);
       if (type === undefined || !Number.isFinite(c.price) || c.price < 0) return [];
       const vat = c.vat;
       const step = c.step_size;
@@ -181,52 +189,22 @@ const TAX_INCLUDED: ReadonlyMap<string, boolean | null> = new Map([
 /**
  * The enumerated values of a tariff its offer is published without: a price
  * component of a dimension the model does not know, a tariff type or
- * `tax_included` OCPI does not define, an element priced for a booking, an
- * energy source of an unknown category and every environmental impact (the
- * energy mix holds no impact amounts).
+ * `tax_included` OCPI does not define, and an energy source or environmental
+ * impact of a category OCPI does not define.
  */
 export function tariffUnreadValues(tariff: OcpiTariff): number {
   let unread = 0;
   for (const element of tariff.elements) {
-    if (element.restrictions?.booking !== undefined) {
-      unread++;
-      continue;
-    }
     unread += element.price_components.filter(
-      (c) => OCPI_TARIFF_DIMENSIONS[c.type] === undefined,
+      (c) => own(OCPI_TARIFF_DIMENSIONS, c.type) === undefined,
     ).length;
   }
-  if (tariff.type !== undefined && OCPI_TARIFF_TYPES[tariff.type] === undefined) unread++;
+  if (tariff.type !== undefined && own(OCPI_TARIFF_TYPES, tariff.type) === undefined) unread++;
   if (tariff.tax_included !== undefined && !TAX_INCLUDED.has(tariff.tax_included)) unread++;
-  const mix = tariff.energy_mix;
-  unread += (mix?.energy_sources ?? []).filter(
-    (s) => OCPI_ENERGY_SOURCES[s.source] === undefined,
-  ).length;
-  unread += (mix?.environ_impact ?? []).length;
-  return unread;
-}
-
-/**
- * A tariff's energy mix as the offer holds it: whether it is green, the
- * supplier, and each source of a known category with its share. OCPI's
- * product name and environmental impact have no place in it.
- */
-function energyMixOf(tariff: OcpiTariff): Record<string, unknown> | undefined {
-  const mix = tariff.energy_mix;
-  if (mix === undefined) return undefined;
-  const sources = (mix.energy_sources ?? []).flatMap((s) => {
-    const source = OCPI_ENERGY_SOURCES[s.source];
-    return source === undefined || !(s.percentage >= 0 && s.percentage <= 100)
-      ? []
-      : [{ source, pct: s.percentage }];
+  ocpiEnergyMix(tariff.energy_mix, () => {
+    unread++;
   });
-  const supplierName = clean(mix.supplier_name);
-  const out = {
-    ...(mix.is_green_energy === undefined ? {} : { isGreen: mix.is_green_energy }),
-    ...(supplierName === undefined ? {} : { supplierName }),
-    ...(sources.length === 0 ? {} : { sources }),
-  };
-  return Object.keys(out).length === 0 ? undefined : out;
+  return unread;
 }
 
 /**
@@ -267,7 +245,7 @@ export function tariffDraft(
   };
   const minPrice = bound(tariff.min_price);
   const maxPrice = bound(tariff.max_price);
-  const tariffType = tariff.type === undefined ? undefined : OCPI_TARIFF_TYPES[tariff.type];
+  const tariffType = own(OCPI_TARIFF_TYPES, tariff.type);
   const altText = (tariff.tariff_alt_text ?? []).flatMap((t) => {
     const text = clean(t.text);
     return text === undefined ? [] : [{ lang: clean(t.language)?.toLowerCase() ?? "und", text }];
@@ -279,7 +257,8 @@ export function tariffDraft(
   };
   const start = instant(tariff.start_date_time);
   const end = instant(tariff.end_date_time);
-  const energyMix = energyMixOf(tariff);
+  const energyMix = energyMixDraft(ocpiEnergyMix(tariff.energy_mix, () => {}));
+  const preauthorize = tariff.preauthorize_amount;
   return {
     id: tariffOfferId(feed, stationId, ctx.key ?? tariff.id),
     class: "offer",
@@ -293,6 +272,9 @@ export function tariffDraft(
     ...(maxPrice === undefined ? {} : { maxPrice }),
     // A tariff that states no VAT status writes none.
     ...(typeof vatStated === "boolean" ? { priceIncludesVat: vatStated } : {}),
+    ...(preauthorize !== undefined && Number.isFinite(preauthorize) && preauthorize >= 0
+      ? { preauthorizeAmount: { amount: money(preauthorize), currency } }
+      : {}),
     ...(altText.length === 0 ? {} : { altText }),
     ...(url === undefined ? {} : { url }),
     ...(energyMix === undefined ? {} : { energyMix }),

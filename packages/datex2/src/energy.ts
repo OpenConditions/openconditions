@@ -58,6 +58,30 @@ export interface DatexEnergyRateLine {
   taxIncluded?: boolean;
   /** The price applies only in periods of its own (`overallPeriod`). */
   periodic?: boolean;
+  /** A rate table line's `incrementPeriod`, in seconds: the time each increment of an incrementing rate buys. */
+  incrementSeconds?: number;
+  /**
+   * A rate table line's `durationStart` and `durationEnd`: seconds since the
+   * session began where its collection's times are relative, else times of
+   * day (`HH:MM`).
+   */
+  fromSecond?: number;
+  toSecond?: number;
+  fromTime?: string;
+  toTime?: string;
+  /** A time the line names that cannot be read. */
+  unreadableTime?: boolean;
+}
+
+/** The energy mix of the energy a refill point supplies. */
+export interface DatexEnergyMix {
+  productName?: string;
+  isGreen?: boolean;
+  /** Grams per kWh. */
+  carbonDioxide?: number;
+  nuclearWaste?: number;
+  /** `ElectricEnergySourceTypeEnum` values, as published. */
+  sources: { source: string; percentage: number }[];
 }
 
 export interface DatexEnergyRate {
@@ -83,6 +107,8 @@ export interface DatexRefillPoint {
   currentType?: string;
   connectors: DatexEnergyConnector[];
   rates: DatexEnergyRate[];
+  /** The first energy mix the point names: `electricEnergyMix`, or AFIR's electric `energyProduct`. */
+  energyMix?: DatexEnergyMix;
 }
 
 export interface DatexEnergyStation {
@@ -113,6 +139,9 @@ export interface DatexEnergySite {
   operator?: { id?: string; name?: string; legalName?: string };
   /** `siteType:<code>`. */
   siteType?: string;
+  brand?: string;
+  /** `[lon, lat]` of the site's entrance. */
+  entrance?: [number, number];
   /** The vehicle types the site serves (`car`, `bicycle`), when it says. */
   vehicleTypes?: string[];
   openingHours?: DatexEnergyOpeningHours;
@@ -317,20 +346,24 @@ function ratesOf(point: XmlObject, options: DatexDecodeOptions): DatexEnergyRate
     )?.toUpperCase();
     const lines: DatexEnergyRateLine[] = [];
     let unreadable = currency === undefined;
-    for (const line of collections.flatMap((c) => localChildren(c, "rateLine"))) {
-      const type = localChildText(line, "rateLineType");
-      const value = amount(localChildText(line, "value"));
-      if (type === undefined || value === undefined) {
-        unreadable = true;
-        continue;
+    for (const collection of collections) {
+      const relative = localChildText(collection, "relativeTimes") === "true";
+      for (const line of localChildren(collection, "rateLine")) {
+        const type = localChildText(line, "rateLineType");
+        const value = amount(localChildText(line, "value"));
+        if (type === undefined || value === undefined) {
+          unreadable = true;
+          continue;
+        }
+        const description = firstText(localChild(line, "description"));
+        lines.push({
+          type,
+          value,
+          ...(type === "perUnit" && deliveryUnit !== undefined ? { unit: deliveryUnit } : {}),
+          ...(description === undefined ? {} : { description }),
+          ...lineTimes(line, relative),
+        });
       }
-      const description = firstText(localChild(line, "description"));
-      lines.push({
-        type,
-        value,
-        ...(type === "perUnit" && deliveryUnit !== undefined ? { unit: deliveryUnit } : {}),
-        ...(description === undefined ? {} : { description }),
-      });
     }
     // Part of a price is a wrong price: a table missing its currency or a line is not read.
     if (unreadable || currency === undefined) {
@@ -353,6 +386,51 @@ function ratesOf(point: XmlObject, options: DatexDecodeOptions): DatexEnergyRate
     const energyRate = energyRateOf(rate);
     if (energyRate === undefined) skipped(options, "malformed");
     else out.push(energyRate);
+  }
+  return out;
+}
+
+/** An `xs:duration` of days, hours, minutes and seconds (`PT15M`), in seconds. */
+function durationSeconds(raw: string | undefined): number | undefined {
+  const m = raw?.trim().match(/^P(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/);
+  if (m === null || m === undefined || raw?.trim() === "P" || raw?.trim().endsWith("T")) {
+    return undefined;
+  }
+  const [, d = "0", h = "0", min = "0", s = "0"] = m;
+  const seconds = Number(d) * 86400 + Number(h) * 3600 + Number(min) * 60 + Number(s);
+  return seconds > 0 ? seconds : undefined;
+}
+
+/** An `xs:time` (`01:30:00`) as seconds since midnight. */
+function timeSeconds(raw: string | undefined): number | undefined {
+  const m = raw?.trim().match(/^(\d{2}):(\d{2})(?::(\d{2})(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})?$/);
+  if (m === null || m === undefined) return undefined;
+  return Number(m[1]) * 3600 + Number(m[2]) * 60 + Number(m[3] ?? "0");
+}
+
+/**
+ * A rate line's increment period and the times it applies between: seconds
+ * into the session where its collection's times are relative, else times of
+ * day.
+ */
+function lineTimes(line: XmlObject, relative: boolean): Partial<DatexEnergyRateLine> {
+  const out: Partial<DatexEnergyRateLine> = {};
+  const increment = localChildText(line, "incrementPeriod");
+  if (increment !== undefined) {
+    const seconds = durationSeconds(increment);
+    if (seconds === undefined) out.unreadableTime = true;
+    else out.incrementSeconds = seconds;
+  }
+  for (const [field, second, time] of [
+    ["durationStart", "fromSecond", "fromTime"],
+    ["durationEnd", "toSecond", "toTime"],
+  ] as const) {
+    const raw = localChildText(line, field);
+    if (raw === undefined) continue;
+    const seconds = timeSeconds(raw);
+    if (seconds === undefined) out.unreadableTime = true;
+    else if (relative) out[second] = seconds;
+    else out[time] = raw.trim().slice(0, 5);
   }
   return out;
 }
@@ -435,7 +513,37 @@ function refillPointOf(
       .map((c) => connectorOf(c, options))
       .filter((c): c is DatexEnergyConnector => c !== undefined),
     rates: ratesOf(point, options),
+    ...energyMixOf(point),
   };
+}
+
+/**
+ * The point's first energy mix: the energy infrastructure namespace's
+ * `electricEnergyMix`, or the AFIR profile's `energyProduct` (an
+ * `ElectricEnergy` carries the impacts and sources). Undefined when it says
+ * nothing.
+ */
+function energyMixOf(point: XmlObject): { energyMix?: DatexEnergyMix } {
+  const node =
+    localChildren(point, "electricEnergyMix")[0] ?? localChildren(point, "energyProduct")[0];
+  if (node === undefined) return {};
+  const productName = firstText(localChild(node, "energyProductName"));
+  const green = localChildText(node, "isGreenEnergy");
+  const carbonDioxide = amount(localChildText(node, "carbonDioxideImpact"));
+  const nuclearWaste = amount(localChildText(node, "nuclearWasteImpact"));
+  const sources = localChildren(node, "electricEnergySourceRatio").flatMap((ratio) => {
+    const source = localChildText(ratio, "energySource");
+    const percentage = amount(localChildText(localChild(ratio, "sourceRatioValue"), "percentage"));
+    return source === undefined || percentage === undefined ? [] : [{ source, percentage }];
+  });
+  const mix: DatexEnergyMix = {
+    ...(productName === undefined ? {} : { productName }),
+    ...(green === "true" || green === "false" ? { isGreen: green === "true" } : {}),
+    ...(carbonDioxide === undefined ? {} : { carbonDioxide }),
+    ...(nuclearWaste === undefined ? {} : { nuclearWaste }),
+    sources,
+  };
+  return Object.keys(mix).length === 1 && sources.length === 0 ? {} : { energyMix: mix };
 }
 
 function stationOf(
@@ -478,6 +586,8 @@ function siteOf(site: XmlObject, options: DatexDecodeOptions): DatexEnergySite |
   ];
   const openingHours = openingHoursOf(site);
   const lastUpdated = localChildText(site, "lastUpdated");
+  const brand = firstText(localChild(site, "brand"));
+  const entrance = pointOf(localChild(site, "entrance"));
   return {
     id,
     ...(version === undefined ? {} : { version }),
@@ -486,6 +596,8 @@ function siteOf(site: XmlObject, options: DatexDecodeOptions): DatexEnergySite |
     ...(address === undefined ? {} : { address }),
     ...(operator === undefined ? {} : { operator }),
     ...(typeOfSite === undefined ? {} : { siteType: `siteType:${typeOfSite}` }),
+    ...(brand === undefined ? {} : { brand }),
+    ...(entrance === undefined ? {} : { entrance }),
     ...(vehicleTypes.length === 0 ? {} : { vehicleTypes }),
     ...(openingHours === undefined ? {} : { openingHours }),
     ...(lastUpdated === undefined ? {} : { lastUpdated }),

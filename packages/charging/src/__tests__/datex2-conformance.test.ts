@@ -129,17 +129,19 @@ const STANDARDS: Readonly<Record<string, string>> = {
   teslaConnectorAmerica: "TESLA_S",
   teslaR: "TESLA_R",
   teslaS: "TESLA_S",
+  // "CEE5, 400 V, 16-63 A": OCPI names the three-phase IEC 60309 plugs by
+  // current, which the connector's 32 A maximum says.
+  cee5: "IEC_60309_2_three_32",
+  // "A domestic socket of unspecified type" and "other charging interface"
+  // name no standard: the connector's standard is unknown.
+  domestic: "UNKNOWN",
+  other: "UNKNOWN",
 };
 
 const EXTENDED =
   "the schema's escape hatch for national extensions; the meaning is in `_extendedValue`";
 
-const CONNECTOR_UNSUPPORTED = {
-  cee5: "CEE5 is 400 V at 16 to 63 A, and OCPI names its three-phase IEC 60309 plugs by current; the crosswalk takes it as 16 A",
-  domestic: "a domestic socket of unspecified type, kept as an UNKNOWN standard",
-  other: "another charging interface, kept as an UNKNOWN standard",
-  _extended: EXTENDED,
-};
+const CONNECTOR_UNSUPPORTED = { _extended: EXTENDED };
 
 const CHARGING_MODES: Readonly<Record<string, string>> = {
   mode1AC1p: "AC_1_PHASE",
@@ -151,10 +153,11 @@ const CHARGING_MODES: Readonly<Record<string, string>> = {
 };
 
 const CHARGING_MODES_UNSUPPORTED = {
-  legacyInductive: "inductive charging names no power type",
-  ccs: '"AC and DC are used simultaneously": no one power type',
-  other: "names no power type",
-  unknown: "names no power type",
+  legacyInductive:
+    "inductive charging names no power type and no IEC 61851-1 conductive mode, which is all the connector's charging modes hold",
+  ccs: '"AC and DC are used simultaneously": no one power type, and no IEC 61851-1 mode',
+  other: "names no power type or mode",
+  unknown: "names no power type or mode",
   _extended: EXTENDED,
 };
 
@@ -185,18 +188,15 @@ const AUTHENTICATION: Readonly<Record<string, string>> = {
   phoneDialog: "remote",
   phoneSMS: "remote",
   plc: "plug_and_charge",
+  // "Over the air according to ISO 15118-2 and -20": its contract authentication.
+  overTheAir: "plug_and_charge",
+  pinpad: "pin",
   rfid: "rfid",
   website: "remote",
   unlimitedAccess: "none",
 };
 
-const AUTHENTICATION_UNSUPPORTED = {
-  overTheAir: "ISO 15118 over the air names a channel, not how a driver identifies",
-  pinpad: "a PIN pad may take any of several cards; the model has no PIN method",
-  prepaidCard: "says how a card is funded, not how it identifies",
-  noAccess: "no access granted: no method to read",
-  _extended: EXTENDED,
-};
+const AUTHENTICATION_UNSUPPORTED = { _extended: EXTENDED };
 
 const PARKING_TYPES: Readonly<Record<string, string>> = {
   onstreet: "on_street",
@@ -206,16 +206,20 @@ const PARKING_TYPES: Readonly<Record<string, string>> = {
 };
 
 const SITE_TYPES_UNSUPPORTED = {
-  roofedStation: "says the site has a roof, not where vehicles stand",
-  onCompanySite: "says whose ground the site is on, not how vehicles stand there",
+  onCompanySite:
+    "says whose ground the site is on: neither how vehicles stand there nor who may charge, as a company may open its ground to the public",
   _extended: EXTENDED,
 };
 
 const rateTable = (policy: string, lines: string, unit = "kWh") =>
   `<egi:deliveryUnit>${unit}</egi:deliveryUnit><egi:connector><egi:connectorType>iec62196T2</egi:connectorType></egi:connector><fac:rates xmlns:fac="http://datex2.eu/schema/3/facilities" xsi:type="fac:RateTable"><fac:applicableCurrency>EUR</fac:applicableCurrency><fac:energyPricingPolicy><egi:pricingPolicy>${policy}</egi:pricingPolicy></fac:energyPricingPolicy><fac:rateLineCollection>${lines}</fac:rateLineCollection></fac:rates>`;
 
-const rateLine = (type: string, value = "0.30") =>
-  `<fac:rateLine><fac:rateLineType>${type}</fac:rateLineType><fac:value>${value}</fac:value></fac:rateLine>`;
+const rateLine = (type: string, value = "0.30", times = "") =>
+  `<fac:rateLine><fac:rateLineType>${type}</fac:rateLineType>${times}<fac:value>${value}</fac:value></fac:rateLine>`;
+
+/** An incrementing rate of `value` per 15 minutes. */
+const incrementing = (value = "0.30") =>
+  rateLine("incrementingRate", value, "<fac:incrementPeriod>PT15M</fac:incrementPeriod>");
 
 const energyRate = (policy: string, prices: string) =>
   `<egi:connector><egi:connectorType>iec62196T2</egi:connectorType></egi:connector><egi:energyProduct><egi:energyRate><egi:ratePolicy>${policy}</egi:ratePolicy><egi:lastUpdated>2026-10-01T00:00:00Z</egi:lastUpdated><egi:applicableCurrency>EUR</egi:applicableCurrency>${prices}</egi:energyRate></egi:energyProduct>`;
@@ -252,11 +256,22 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
     test("connector types", ({ skip }) => {
       if (unavailable) skip(unavailable);
       assertCovered("ConnectorTypeEnum", values("ConnectorTypeEnum", ns), {
-        handled: (v) =>
-          STANDARDS[v] !== undefined &&
-          connector(parse(connectorPoint(ns, `<egi:connectorType>${v}</egi:connectorType>`)))?.[
-            "standard"
-          ] === STANDARDS[v],
+        handled: (v) => {
+          __resetSkips();
+          const read = connector(
+            parse(
+              connectorPoint(
+                ns,
+                `<egi:connectorType>${v}</egi:connectorType><egi:maximumCurrent>32</egi:maximumCurrent>`,
+              ),
+            ),
+          );
+          return (
+            STANDARDS[v] !== undefined &&
+            read?.["standard"] === STANDARDS[v] &&
+            drainSkipped(FEED)["unknown_value"] === undefined
+          );
+        },
         unsupported: CONNECTOR_UNSUPPORTED,
       });
     });
@@ -293,8 +308,12 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
             ns === AFIR
               ? connectorPoint(ns, "<egi:connectorType>iec62196T2</egi:connectorType>", mode(v))
               : connectorPoint(ns, `<egi:connectorType>iec62196T2</egi:connectorType>${mode(v)}`);
-          const power = connector(parse(doc))?.["powerType"];
-          return power !== undefined && power === CHARGING_MODES[v];
+          const read = connector(parse(doc));
+          return (
+            read?.["powerType"] !== undefined &&
+            read["powerType"] === CHARGING_MODES[v] &&
+            JSON.stringify(read["chargingModes"]) === JSON.stringify([`mode${v[4]}`])
+          );
         },
         unsupported: CHARGING_MODES_UNSUPPORTED,
       });
@@ -334,9 +353,17 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
                 station: `<egi:authenticationAndIdentificationMethods>${v}</egi:authenticationAndIdentificationMethods>`,
               }),
             );
-            // Paying cash is no identification: it is read as how one pays.
+            // Paying cash or by a prepaid card is no identification: it is read as how one pays.
             if (v === "cashPayment") return same(access(out).payment, ["cash"]);
-            return same(access(out).authentication, [AUTHENTICATION[v]]);
+            if (v === "prepaidCard") return same(access(out).payment, ["prepaid_card"]);
+            // "No access granted": the site is not the public's.
+            if (v === "noAccess") {
+              return (out.features[0]?.["access"] as { audience?: string })?.audience === "private";
+            }
+            return (
+              AUTHENTICATION[v] !== undefined &&
+              same(access(out).authentication, [AUTHENTICATION[v]])
+            );
           },
           unsupported: AUTHENTICATION_UNSUPPORTED,
         },
@@ -349,13 +376,15 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
         "EnergyInfrastructureSiteTypeEnum",
         values("EnergyInfrastructureSiteTypeEnum", ns),
         {
-          handled: (v) =>
-            PARKING_TYPES[v] !== undefined &&
-            (
-              parse(table({ ns, site: `<egi:typeOfSite>${v}</egi:typeOfSite>` })).features[0]?.[
-                "details"
-              ] as { parkingType?: string }
-            )?.parkingType === PARKING_TYPES[v],
+          handled: (v) => {
+            const details = parse(table({ ns, site: `<egi:typeOfSite>${v}</egi:typeOfSite>` }))
+              .features[0]?.["details"] as { parkingType?: string; roofed?: boolean } | undefined;
+            // "The site has got a roof": a roof, not where vehicles stand.
+            if (v === "roofedStation") {
+              return details?.roofed === true && details.parkingType === undefined;
+            }
+            return PARKING_TYPES[v] !== undefined && details?.parkingType === PARKING_TYPES[v];
+          },
           unsupported: Object.fromEntries(
             Object.entries(SITE_TYPES_UNSUPPORTED).filter(
               ([v]) => v !== "roofedStation" || ns === EGI,
@@ -385,6 +414,10 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
       if (unavailable) skip(unavailable);
       const expected: Record<string, [string, string][]> = {
         flatRate: [["flat", "0.3"]],
+        // A flat charge of its tier, which the line's times bound.
+        flatRateTier: [["flat", "0.3"]],
+        // 0.30 for every 15 minutes is 1.20 an hour, billed by the quarter hour.
+        incrementingRate: [["time", "1.2"]],
         perUnit: [["energy", "0.3"]],
       };
       const facilities = ns === AFIR ? "afirFacilities" : "facilities";
@@ -399,17 +432,20 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
                 parse(
                   table({
                     ns,
-                    points: [{ inner: rateTable("pricePerDeliveryUnit", rateLine(v)) }],
+                    points: [
+                      {
+                        inner: rateTable(
+                          "pricePerDeliveryUnit",
+                          v === "incrementingRate" ? incrementing() : rateLine(v),
+                        ),
+                      },
+                    ],
                   }),
                 ),
               ),
               expected[v],
             ),
-          unsupported: {
-            incrementingRate: "a price that rises by steps of time has no single OCPI price",
-            flatRateTier: "a flat price per time tier, whose tiers a rate line does not bound",
-            _extended: EXTENDED,
-          },
+          unsupported: { _extended: EXTENDED },
         },
       );
     });
@@ -447,6 +483,8 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
     if (unavailable) skip(unavailable);
     const cases: Record<string, [lines: string, expected: [string, string][]]> = {
       pricePerDeliveryUnit: [rateLine("perUnit"), [["energy", "0.3"]]],
+      // "The charging time defines the price": a rate that increments with it.
+      pricePerChargingTime: [incrementing(), [["time", "1.2"]]],
       flatRate: [rateLine("flatRate", "5"), [["flat", "5"]]],
       free: ["", [["flat", "0"]]],
     };
@@ -459,7 +497,6 @@ describe("DATEX II v3.7 energy infrastructure through the charging parser", () =
         );
       },
       unsupported: {
-        pricePerChargingTime: "a per-unit price of charging time names no unit of time",
         contract: "a price a contract sets is no public price",
         unknown: "says nothing of what a per-unit price is per",
         other: "says nothing of what a per-unit price is per",
@@ -562,6 +599,80 @@ describe("DATEX energy prices as offers", () => {
         },
       ],
     });
+  });
+
+  test("a rate table's tiers are elements bounded by their times, the tiered first", () => {
+    const lines = `<fac:rateLineCollection collectionSequence="1"><fac:relativeTimes>true</fac:relativeTimes>${rateLine("perUnit", "0.40")}${rateLine("flatRateTier", "2", "<fac:durationStart>02:00:00</fac:durationStart><fac:durationEnd>04:00:00</fac:durationEnd>")}</fac:rateLineCollection>`;
+    const out = parse(
+      table({
+        ns: EGI,
+        points: [
+          {
+            inner: `<egi:connector><egi:connectorType>iec62196T2</egi:connectorType></egi:connector><fac:rates xmlns:fac="http://datex2.eu/schema/3/facilities" xsi:type="fac:RateTable"><fac:applicableCurrency>EUR</fac:applicableCurrency>${lines}</fac:rates>`,
+          },
+        ],
+      }),
+    );
+    expect(out.offers[0]?.["elements"]).toEqual([
+      {
+        components: [{ type: "flat", price: { amount: "2", currency: "EUR" } }],
+        restrictions: {
+          minDuration: { value: 7200, unit: "s" },
+          maxDuration: { value: 14400, unit: "s" },
+        },
+      },
+      {
+        components: [{ type: "energy", price: { amount: "0.4", currency: "EUR" }, unit: "kW.h" }],
+      },
+    ]);
+    // An incrementing rate is billed in steps of its period.
+    const quarter = parse(
+      table({ ns: EGI, points: [{ inner: rateTable("pricePerChargingTime", incrementing()) }] }),
+    );
+    expect(quarter.offers[0]?.["elements"]).toMatchObject([
+      { components: [{ type: "time", price: { amount: "1.2" }, stepSize: 900, unit: "h" }] },
+    ]);
+    // Without a period it names no time, and the table no price.
+    const bare = parse(
+      table({
+        ns: EGI,
+        points: [{ inner: rateTable("pricePerChargingTime", rateLine("incrementingRate")) }],
+      }),
+    );
+    expect(bare.offers).toEqual([]);
+  });
+
+  test("a point's energy mix, the site's brand and entrance", () => {
+    const mix = `<egi:electricEnergyMix energyMixIndex="1"><egi:energyProductName><values><value lang="en">Green</value></values></egi:energyProductName><egi:isGreenEnergy>true</egi:isGreenEnergy><egi:carbonDioxideImpact>0</egi:carbonDioxideImpact><egi:nuclearWasteImpact>0.0001</egi:nuclearWasteImpact><egi:electricEnergySourceRatio><egi:energySource>wind</egi:energySource><egi:sourceRatioValue><percentage>60</percentage></egi:sourceRatioValue></egi:electricEnergySourceRatio><egi:electricEnergySourceRatio><egi:energySource>generalGreen</egi:energySource><egi:sourceRatioValue><percentage>40</percentage></egi:sourceRatioValue></egi:electricEnergySourceRatio></egi:electricEnergyMix>`;
+    const out = parse(
+      table({
+        ns: EGI,
+        site: `<egi:brand><values><value lang="en">Volt</value></values></egi:brand><egi:entrance><pointByCoordinates><pointCoordinates><latitude>48.1001</latitude><longitude>11.5001</longitude></pointCoordinates></pointByCoordinates></egi:entrance>`,
+        points: [
+          {
+            inner: `<egi:connector><egi:connectorType>cee5</egi:connectorType></egi:connector>${mix}`,
+          },
+        ],
+      }),
+    );
+    expect(out.features[0]?.["details"]).toMatchObject({
+      brand: "Volt",
+      entrance: { type: "Point", coordinates: [11.5001, 48.1001] },
+      energyMix: {
+        isGreen: true,
+        productName: "Green",
+        sources: [
+          { source: "wind", pct: 60 },
+          { source: "general_green", pct: 40 },
+        ],
+        impacts: [
+          { category: "carbon_dioxide", gPerKwh: 0 },
+          { category: "nuclear_waste", gPerKwh: 0.0001 },
+        ],
+      },
+    });
+    // CEE5 without its current names none of OCPI's IEC 60309 plugs.
+    expect(connector(out)?.["standard"]).toBe("UNKNOWN");
   });
 
   test("a price for a period of its own, or one that cannot be priced, makes no offer", () => {

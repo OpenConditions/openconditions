@@ -76,7 +76,7 @@ test("chargingDomain registers its formats with their roles and what they produc
     overpass: main,
     bnetza: main,
     irve: { main: { required: true }, status: live },
-    afdc: main,
+    afdc: { ...main, networks: { required: false } },
     nobil: main,
     eipa: {
       pools: { required: true },
@@ -94,7 +94,15 @@ test("chargingDomain registers its formats with their roles and what they produc
       status: { ...live, accumulatesSince: "main", changesWindowSec: 600 },
     },
     lta: main,
-    tdx: { sites: { required: true }, tariffs: { required: false }, status: live },
+    tdx: {
+      sites: { required: true },
+      tariffs: { required: false },
+      status: live,
+      connectors: { required: false },
+      points: { required: false },
+      operators: { required: false },
+      servicetimes: { required: false },
+    },
     ocm: main,
   });
   // Every format with a live status role reads it alone too.

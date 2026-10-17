@@ -12,12 +12,17 @@ import { CONNECTOR_STANDARDS } from "@openconditions/model-charging";
 import type { OcpiTariff } from "@openconditions/ocpi";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours, type WeeklyPeriod } from "../hours.js";
+import { own } from "../records.js";
 import {
+  type ChargingMode,
   type ConnectorInput,
   type EvseInput,
   type EvseStatus,
   emi3Of,
+  type ImageCategory,
+  type ImageInput,
   instantIn,
+  type PowerType,
   parsePowerKw,
   type SiteInput,
   siteDraft,
@@ -42,11 +47,11 @@ function rowsOf(bodies: readonly Buffer[] | undefined): Raw[] {
 
 const idOf = (value: unknown): string | undefined => text(value);
 
-/** The dictionary's `connector_interface` names by id. */
-function interfacesOf(dictionary: Raw[]): Map<string, string> {
+/** One of the dictionary's tables (`connector_interface`, `charging_mode`): names by id. */
+function dictionaryTable(dictionary: Raw[], table: string): Map<string, string> {
   const names = new Map<string, string>();
-  for (const table of dictionary) {
-    const list = table["connector_interface"];
+  for (const tables of dictionary) {
+    const list = tables[table];
     if (!Array.isArray(list)) continue;
     for (const entry of list.filter(isRecord)) {
       const id = idOf(entry["id"]);
@@ -60,6 +65,16 @@ function interfacesOf(dictionary: Raw[]): Map<string, string> {
 const CABLE_SUFFIX = /^(.*?)(?:_[FM])?_(NO)?CABLE$/;
 
 /**
+ * The interfaces whose names are no OCPI standard's: the Type 3A socket
+ * (`IEC-62196-T3A-F`) and China's GB/T parts 2 (AC) and 3 (DC).
+ */
+const RENAMED: Readonly<Record<string, string>> = {
+  IEC_62196_T3A_F: "IEC_62196_T3A",
+  CHINA_PART2: "GBT_AC",
+  CHINA_PART3: "GBT_DC",
+};
+
+/**
  * An interface name (`IEC-62196-T2-F-CABLE`) as a connector standard and,
  * where the name says it, whether the plug is a socket or a cable.
  */
@@ -67,12 +82,22 @@ function plugOf(name: string | undefined): { standard: string; format?: "socket"
   if (name === undefined) return { standard: "UNKNOWN" };
   const underscored = name.replace(/-/g, "_").toUpperCase();
   const suffix = underscored.match(CABLE_SUFFIX);
-  const base = suffix?.[1] ?? underscored;
+  const written = suffix?.[1] ?? underscored;
+  const base = own(RENAMED, written) ?? written;
   const format = suffix === null ? undefined : suffix[2] === undefined ? "cable" : "socket";
   return {
     standard: STANDARDS.has(base) ? base : "UNKNOWN",
     ...(format === undefined ? {} : { format }),
   };
+}
+
+/** A charging mode name (`Mode3-AC-3p`, `Mode4-DC`) as its IEC 61851-1 mode and power type. */
+function modeOf(name: string | undefined): { mode?: ChargingMode; powerType?: PowerType } {
+  const m = name?.match(/^Mode([1-4])-(AC-([13])p|DC)$/i);
+  if (m === null || m === undefined) return {};
+  const powerType: PowerType =
+    m[3] === undefined ? "DC" : m[3] === "1" ? "AC_1_PHASE" : "AC_3_PHASE";
+  return { mode: `mode${m[1]}` as ChargingMode, powerType };
 }
 
 interface Dynamic {
@@ -110,9 +135,12 @@ function dynamicOf(rows: Raw[]): Map<string, Dynamic> {
   return byPoint;
 }
 
-/** Not operating is out of order; an operating point is free or occupied. */
+/**
+ * A point "niedostępne" (not available operationally) is inoperative, which
+ * says nothing of it being broken; an available point is free or occupied.
+ */
 function statusOf(d: Dynamic): EvseStatus {
-  if (d.availability === 0) return "out_of_order";
+  if (d.availability === 0) return "inoperative";
   if (d.occupancy === 1) return "available";
   if (d.occupancy === 0) return "occupied";
   return "unknown";
@@ -157,17 +185,59 @@ function adHocTariff(d: Dynamic | undefined): OcpiTariff | undefined {
   };
 }
 
-const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[number]>> = {
+/**
+ * The dictionary's `station_authentication_method`: unlimited access; the
+ * RFID cards (Mifare Classic and DESFire, Calypso, a phone's active RFID
+ * chip); a PIN pad; an app; ISO 15118 by cable or wirelessly, plug and
+ * charge; a voice call or text message, a charge started remotely. "Brak
+ * dostępu", no access, is a station not open to the public, and a prepaid
+ * card a means of payment (`PREPAID`).
+ */
+const AUTHENTICATION: Readonly<Record<string, (typeof AUTHENTICATION_METHODS)[number] | null>> = {
   "0": "none",
+  "1": null,
   "2": "rfid",
+  "4": "rfid",
+  "8": "rfid",
+  "16": "pin",
+  "32": "app",
+  "64": "rfid",
+  "128": "plug_and_charge",
+  "256": "plug_and_charge",
+  "512": "remote",
+  "1024": "remote",
+  "8192": null,
 };
+const NO_ACCESS = "1";
+const PREPAID = "8192";
 
+/**
+ * The dictionary's `station_payment_method`: unspecified; free; a contract
+ * with the operator; a payment card; cash; a prepaid card; a fleet card, a
+ * bank transfer and online payment, means the model names no further.
+ */
 const PAYMENTS: Readonly<Record<string, readonly (typeof PAYMENT_METHODS)[number][]>> = {
+  "0": [],
   "1": ["free"],
   "2": ["membership"],
   "4": ["credit_card", "debit_card"],
-  "8": ["app"],
+  "8": ["cash"],
+  "16": ["prepaid_card"],
+  "32": ["other"],
+  "64": ["other"],
+  "128": ["other"],
 };
+
+/** A pool's or station's photos (`images`: `uri`, `thumbnail_uri`). */
+function imagesOf(row: Raw, category: ImageCategory): ImageInput[] {
+  return (Array.isArray(row["images"]) ? row["images"] : []).filter(isRecord).flatMap((image) => {
+    const url = text(image["uri"]);
+    const thumbnail = text(image["thumbnail_uri"]);
+    return url === undefined
+      ? []
+      : [{ url, category, ...(thumbnail === undefined ? {} : { thumbnail }) }];
+  });
+}
 
 const list = (value: unknown): string[] =>
   Array.isArray(value) ? value.flatMap((v) => idOf(v) ?? []) : [];
@@ -212,8 +282,11 @@ export function parseEipa(
     const id = idOf(o["id"]);
     if (id !== undefined) operators.set(id, o);
   }
-  const interfaces = interfacesOf(rowsOf(payloads["dictionary"]));
+  const dictionary = rowsOf(payloads["dictionary"]);
+  const interfaces = dictionaryTable(dictionary, "connector_interface");
+  const modes = dictionaryTable(dictionary, "charging_mode");
   const dynamic = dynamicOf(rowsOf(payloads["status"]));
+  const unread = () => recordSkipped(feed.id, "unknown_value");
 
   const stationsOf = new Map<string, Raw[]>();
   for (const station of stations) {
@@ -234,10 +307,10 @@ export function parseEipa(
       recordSkipped(feed.id, "malformed");
       continue;
     }
-    const own = stationsOf.get(poolId);
-    if (own === undefined || seen.has(poolId)) continue;
+    const poolStations = stationsOf.get(poolId);
+    if (poolStations === undefined || seen.has(poolId)) continue;
     seen.add(poolId);
-    const fallback = own.find(
+    const fallback = poolStations.find(
       (s) => placeAt(Number(s["latitude"]), Number(s["longitude"])) !== undefined,
     );
     const point =
@@ -246,20 +319,25 @@ export function parseEipa(
         ? undefined
         : placeAt(Number(fallback["latitude"]), Number(fallback["longitude"])));
     if (point === undefined) {
-      const written = [pool, ...own].some(
+      const written = [pool, ...poolStations].some(
         (row) => unplacedReason(row["latitude"], row["longitude"]) === "malformed",
       );
       recordSkipped(feed.id, written ? "malformed" : "no_geometry");
       continue;
     }
 
+    // The pool's own operator fields, where the operator gave them for the pool, else the operator's.
     const operator = operators.get(idOf(pool["operator_id"]) ?? "");
-    const operatorName = text(pool["operator_name"]) ?? text(operator?.["name"]);
-    const operatorSite = text(pool["operator_website"]) ?? text(operator?.["website"]);
+    const operatorField = (field: string) =>
+      text(pool[`operator_${field}`]) ?? text(operator?.[field]);
+    const operatorName = operatorField("name");
+    const operatorCode = text(operator?.["code"]);
 
     const evses: EvseInput[] = [];
     const tariffs = new Map<string, OcpiTariff>();
-    for (const station of own) {
+    for (const station of poolStations) {
+      const stationPoint = placeAt(Number(station["latitude"]), Number(station["longitude"]));
+      const stationImages = imagesOf(station, "equipment");
       for (const p of pointsOf.get(idOf(station["id"]) ?? "") ?? []) {
         const pointId = idOf(p["id"]);
         if (pointId === undefined) {
@@ -271,8 +349,26 @@ export function parseEipa(
         const evseId = emi3Of(code?.replace(/-/g, "*"));
         const key = evseId ?? pointId;
         const d = dynamic.get(pointId);
+        for (const price of d?.prices ?? []) {
+          if (!["kwh", "min"].includes(price.unit.toLowerCase())) unread();
+        }
         const tariff = adHocTariff(d);
         if (tariff !== undefined) tariffs.set(tariff.id, tariff);
+        // The point's charging modes, and its power type where every mode names the same.
+        const solutions = (Array.isArray(p["charging_solutions"]) ? p["charging_solutions"] : [])
+          .filter(isRecord)
+          .map((s) => {
+            const id = idOf(s["mode"]);
+            const name = id === undefined ? undefined : modes.get(id);
+            const mode = modeOf(name);
+            if (id !== undefined && mode.mode === undefined) unread();
+            return mode;
+          });
+        const chargingModes = [
+          ...new Set(solutions.flatMap((s) => (s.mode === undefined ? [] : [s.mode]))),
+        ];
+        const powerTypes = [...new Set(solutions.flatMap((s) => s.powerType ?? []))];
+        const powerType = powerTypes.length === 1 ? powerTypes[0] : undefined;
         const connectors: ConnectorInput[] = (Array.isArray(p["connectors"]) ? p["connectors"] : [])
           .filter(isRecord)
           .flatMap((entry, k) => {
@@ -282,36 +378,69 @@ export function parseEipa(
             return list(entry["interfaces"]).map((interfaceId): ConnectorInput => {
               const name = interfaces.get(interfaceId);
               const plug = plugOf(name);
-              if (name !== undefined && plug.standard === "UNKNOWN") {
-                recordSkipped(feed.id, "unknown_value");
-              }
+              if (name !== undefined && plug.standard === "UNKNOWN") unread();
               const format =
                 plug.format ?? (attached === undefined ? undefined : attached ? "cable" : "socket");
               return {
                 id: `${k + 1}.${interfaceId}`,
                 standard: plug.standard,
                 ...(format === undefined ? {} : { format }),
+                ...(powerType === undefined ? {} : { powerType }),
                 ...(kw === undefined ? {} : { maxPowerKw: kw }),
+                ...(chargingModes.length === 0 ? {} : { chargingModes }),
                 ...(tariff === undefined ? {} : { tariffIds: [tariff.id] }),
               };
             });
           });
-        evses.push({ key, ...(evseId === undefined ? {} : { evseId }), connectors });
+        evses.push({
+          key,
+          ...(evseId === undefined ? {} : { evseId }),
+          ...(stationPoint === undefined ? {} : { position: stationPoint }),
+          ...(stationImages.length === 0 ? {} : { images: stationImages }),
+          connectors,
+        });
         indexStatus(index, pointId, { stationId: poolId, evseKey: key, point });
       }
     }
 
+    const methods = poolStations.flatMap((s) => list(s["authentication_methods"]));
     const authentication = [
       ...new Set(
-        own.flatMap((s) =>
-          list(s["authentication_methods"]).flatMap((a) => AUTHENTICATION[a] ?? []),
-        ),
+        methods.flatMap((a) => {
+          const method = own(AUTHENTICATION, a);
+          if (method === undefined) unread();
+          return method ?? [];
+        }),
       ),
     ];
     const payment = [
-      ...new Set(own.flatMap((s) => list(s["payment_methods"]).flatMap((m) => PAYMENTS[m] ?? []))),
+      ...new Set([
+        ...poolStations.flatMap((s) =>
+          list(s["payment_methods"]).flatMap((m) => {
+            const means = own(PAYMENTS, m);
+            if (means === undefined) unread();
+            return means ?? [];
+          }),
+        ),
+        ...(methods.includes(PREPAID) ? (["prepaid_card"] as const) : []),
+      ]),
     ];
     const osm = hoursOf(pool);
+    const closures = (Array.isArray(pool["closing_hours"]) ? pool["closing_hours"] : [])
+      .filter(isRecord)
+      .flatMap((c) => {
+        const start = instantIn(ZONE, c["from_time"]);
+        const end = instantIn(ZONE, c["to_time"]);
+        return start === undefined || end === undefined ? [] : [{ start, end, open: false }];
+      });
+    const accessibility = text(pool["accessibility"]);
+    const province = poolStations
+      .map((s) => (isRecord(s["location"]) ? text(s["location"]["province"]) : undefined))
+      .find((p) => p !== undefined);
+    const images = imagesOf(pool, "site");
+    const website = operatorField("website");
+    const phone = operatorField("phone");
+    const email = operatorField("email");
     const input: SiteInput = {
       stationId: poolId,
       point,
@@ -322,7 +451,12 @@ export function parseEipa(
         : {
             operator: {
               name: operatorName,
-              ...(operatorSite === undefined ? {} : { website: operatorSite }),
+              ...(website === undefined ? {} : { website }),
+              ...(phone === undefined ? {} : { phone }),
+              ...(email === undefined ? {} : { email }),
+              ...(operatorCode === undefined
+                ? {}
+                : { ids: [{ scheme: "cpo", id: operatorCode, authority: feed.id }] }),
             },
           }),
       address: {
@@ -332,10 +466,15 @@ export function parseEipa(
           .join(""),
         postalCode: text(pool["postal_code"]),
         city: text(pool["city"]),
+        region: province,
       },
+      ...(accessibility === undefined ? {} : { directions: [{ lang: "pl", text: accessibility }] }),
       ...(osm === undefined ? {} : { openingHoursOsm: osm }),
+      ...(closures.length === 0 ? {} : { openingExceptions: closures }),
+      ...(methods.includes(NO_ACCESS) ? { audience: "private" as const } : {}),
       ...(authentication.length === 0 ? {} : { authentication }),
       ...(payment.length === 0 ? {} : { payment }),
+      ...(images.length === 0 ? {} : { images }),
       evses,
     };
     out.features.push(siteDraft(feed, input, ctx.fetchedAt));

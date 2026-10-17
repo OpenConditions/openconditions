@@ -2,8 +2,10 @@ import {
   defineKind,
   defineProperty,
   defineVocabulary,
+  EnergyMix,
   Iso8601,
   type PropertyEntry,
+  Quantity,
 } from "@openconditions/model";
 import { z } from "zod";
 
@@ -113,6 +115,40 @@ export const CHARGING_PARKING_TYPES = [
   "other",
 ] as const;
 
+/**
+ * Who may park at a charge point, apart from what vehicle it is: OCPI's
+ * `ParkingRestriction` (2.3.0's employees, taxis and tenants included).
+ */
+export const EVSE_PARKING_RESTRICTIONS = [
+  "ev_only",
+  "plugged",
+  "disabled",
+  "customers",
+  "motorcycles",
+  "employees",
+  "taxis",
+  "tenants",
+] as const;
+
+/** The vehicles a charging bay is laid out for: OCPI 2.3.0's `VehicleType`. */
+export const CHARGING_BAY_VEHICLE_TYPES = [
+  "motorcycle",
+  "personal_vehicle",
+  "personal_vehicle_with_trailer",
+  "van",
+  "semi_tractor",
+  "rigid",
+  "truck_with_trailer",
+  "bus",
+  "disabled",
+] as const;
+
+/** How a bay lies to the roadway vehicles approach it on: OCPI 2.3.0's `ParkingDirection`. */
+export const CHARGING_BAY_DIRECTIONS = ["parallel", "perpendicular", "angle"] as const;
+
+/** Where a charge point stands beside a bay: OCPI 2.3.0's `EVSEPosition`. */
+export const EVSE_BAY_POSITIONS = ["left", "right", "center"] as const;
+
 export const evseStatusVocabulary = defineVocabulary({
   code: "evse_status",
   values: EVSE_STATUSES,
@@ -153,11 +189,24 @@ export const CHARGING_KINDS = [
       /** The operator's own id, where it differs from the eMI3 one. */
       uid: z.string().min(1).optional(),
       capabilities: z.array(z.string().min(1)).min(1).optional(),
-      parkingRestrictions: z
-        .array(z.enum(["ev_only", "plugged", "disabled", "customers", "motorcycles"]))
+      parkingRestrictions: z.array(z.enum(EVSE_PARKING_RESTRICTIONS)).min(1).optional(),
+      /** Whether a wheelchair user can reach and use the charge point. */
+      wheelchairAccessible: z.boolean().optional(),
+      directions: k.Text.optional(),
+      /** The bays (`charging_bay` components) a vehicle charging here stands in. */
+      bays: z
+        .array(
+          z.strictObject({
+            key: z.string().min(1),
+            position: z.enum(EVSE_BAY_POSITIONS).optional(),
+          }),
+        )
         .min(1)
         .optional(),
-      directions: k.Text.optional(),
+      /** The only service providers whose drivers may charge here, by their ids. */
+      acceptedServiceProviders: z.array(z.string().min(1)).min(1).optional(),
+      /** Who built the charge point. */
+      manufacturer: z.string().min(1).optional(),
       /**
        * One component standing for this many identical charge points that the
        * source does not tell apart; it has no live status.
@@ -202,28 +251,65 @@ export const CHARGING_KINDS = [
     }),
   }),
   defineKind({
+    class: "component",
+    code: "charging_bay",
+    version: V,
+    description: "A parking place a vehicle stands in while it charges, with what fits there.",
+    details: () => ({
+      vehicleTypes: z.array(z.enum(CHARGING_BAY_VEHICLE_TYPES)).min(1).optional(),
+      /** Whether only the vehicle types listed may use the bay. */
+      restrictedToType: z.boolean().optional(),
+      reservationRequired: z.boolean().optional(),
+      maxVehicleWeight: Quantity.optional(),
+      maxVehicleHeight: Quantity.optional(),
+      maxVehicleLength: Quantity.optional(),
+      maxVehicleWidth: Quantity.optional(),
+      /** The bay's own size. */
+      length: Quantity.optional(),
+      width: Quantity.optional(),
+      dangerousGoodsAllowed: z.boolean().optional(),
+      direction: z.enum(CHARGING_BAY_DIRECTIONS).optional(),
+      driveThrough: z.boolean().optional(),
+      /** How long a vehicle may stay. */
+      timeLimit: Quantity.optional(),
+      roofed: z.boolean().optional(),
+      lighting: z.boolean().optional(),
+      /** A socket for a refrigerated trailer or body. */
+      refrigerationOutlet: z.boolean().optional(),
+      /** Standards the bay is laid out to (PAS 1899). */
+      standards: z.array(z.string().min(1)).min(1).optional(),
+      /** The Alliance for Parking Data Standards element describing the bay. */
+      apdsReference: z.string().min(1).optional(),
+    }),
+  }),
+  defineKind({
     class: "feature",
     code: "charging_site",
     domain: DOMAIN,
     version: V,
     description:
       "A place to charge an electric vehicle: one OCPI location, with its charge points.",
-    components: ["evse", "connector"],
+    components: ["evse", "connector", "charging_bay"],
     details: (k) => ({
       parkingType: z.enum(CHARGING_PARKING_TYPES).optional(),
-      energyMix: z
-        .strictObject({
-          isGreen: z.boolean().optional(),
-          supplierName: z.string().min(1).optional(),
-          sources: z
-            .array(z.strictObject({ source: z.string().min(1), pct: z.number().min(0).max(100) }))
-            .min(1)
-            .optional(),
-        })
-        .optional(),
+      /** Whether the charge points stand under a roof. */
+      roofed: z.boolean().optional(),
+      energyMix: EnergyMix.optional(),
+      /** The operator's subcontractor running the site, where the source names one. */
+      suboperator: k.Organization.optional(),
+      /** A telephone number a driver may call for help at the site. */
+      hotline: z.string().min(1).optional(),
+      /**
+       * Whether a driver may charge without a contract or subscription, paying
+       * for the session alone (AFIR's ad hoc charging).
+       */
+      adHocCharging: z.boolean().optional(),
+      /** Where vehicles enter, where the site lies within a larger facility. */
+      entrance: k.PointGeometry.optional(),
       directions: k.Text.optional(),
+      /** Points beside the site a driver needs, named where the source names them. */
       relatedLocations: z
-        .array(z.strictObject({ name: k.Text, point: k.PointGeometry }))
+        .array(z.strictObject({ name: k.Text.optional(), point: k.PointGeometry }))
         .min(1)
         .optional(),
       /** OCPI `publish`: whether the operator allows the location to be shown at all. */

@@ -15,7 +15,11 @@
       // fit it, and so do the live states every six hours. The account's
       // quota is shared with `tw-tdx-cameras`, whose two daily calls leave
       // the total near 4,000 calls a month. An operator on the paid Bronze
-      // tier lowers the `status` cadence through the local catalogue layer.
+      // tier lowers the `status` cadence through the local catalogue layer,
+      // and may add the `connectors` (each plug's rated power, voltage,
+      // current and floor), `points` (payment and how charging starts),
+      // `operators` and `servicetimes` roles the format reads, 22 calls a
+      // day each, which the free tier has no room for.
       "auth": {
         "kind": "oauth2-client-credentials",
         "tokenUrl": "https://tdx.transportdata.tw/auth/realms/TDXConnect/protocol/openid-connect/token",
