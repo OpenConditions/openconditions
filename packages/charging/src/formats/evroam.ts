@@ -3,10 +3,11 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { type EvseInput, type Lifecycle, parsePowerKw, siteDraft } from "../site.js";
-import { isRecord, placeAt, positiveInteger, type Raw, text } from "./raw.js";
+import { isRecord, placeAt, positiveInteger, type Raw, text, unplacedReason } from "./raw.js";
 
 interface Plug {
   standard: string;
@@ -125,7 +126,11 @@ function unitsOf(groups: readonly Group[]): Group[][] {
  * standing for its `Count`. A group's state is the publisher's daily operative flag, a
  * lifecycle and never a reading. `GlobalID` and `OBJECTID` are regenerated on
  * every reload, so the site is keyed by its rounded coordinates and its
- * normalised name, and neither upstream id is kept.
+ * normalised name, and neither upstream id is kept. A feature without a name,
+ * or keyed again by its position and name, is malformed; one without a
+ * position, or with one that places nothing, is counted as such. A plug the
+ * layer names outside Type 1, Type 2, CCS and CHAdeMO is left unread and
+ * counted.
  */
 export function parseEvroam(
   feed: ChargingCatalogFeed,
@@ -133,30 +138,40 @@ export function parseEvroam(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = JSON.parse(body.toString("utf8")) as unknown;
     const features = isRecord(doc) && Array.isArray(doc["features"]) ? doc["features"] : [];
-    for (const feature of features.filter(isRecord)) {
+    for (const feature of features) {
+      if (!isRecord(feature)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       const props: Raw = isRecord(feature["properties"]) ? feature["properties"] : {};
       const geometry = isRecord(feature["geometry"]) ? feature["geometry"] : {};
       const [lon, lat] = Array.isArray(geometry["coordinates"]) ? geometry["coordinates"] : [];
       const point = placeAt(Number(lat ?? Number.NaN), Number(lon ?? Number.NaN));
       const name = text(props["name"]);
       const slug = name === undefined ? "" : normalised(name);
-      if (point === undefined || slug === "") {
-        rejected++;
+      if (slug === "") {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, unplacedReason(lat, lon));
         continue;
       }
       const stationId = `${rounded(point[1])},${rounded(point[0])},${slug}`;
       if (seen.has(stationId)) {
-        rejected++;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
       seen.add(stationId);
 
       const groups = groupsOf(text(props["connectorsList"]));
+      for (const g of groups) {
+        if (g.plug.standard === "UNKNOWN") recordSkipped(feed.id, "unknown_value");
+      }
       const evses: EvseInput[] = unitsOf(groups).map((unit, i) => {
         const [g] = unit;
         const lifecycle = g?.status === undefined ? undefined : LIFECYCLES[g.status];
@@ -196,6 +211,5 @@ export function parseEvroam(
       );
     }
   }
-  out.rejected = rejected;
   return out;
 }

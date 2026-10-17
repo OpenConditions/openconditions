@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -34,6 +40,8 @@ const connectorsOf = (draft: RecordDraft | undefined, evse: string) =>
 const dump = () => parse({ main: [fixture("nobil.json")] });
 
 describe("nobil", () => {
+  beforeEach(() => __resetSkips());
+
   test("NOBIL: the datadump object parses into sites with one EVSE per connector", () => {
     const out = dump();
     expect(out.features).toHaveLength(2);
@@ -129,6 +137,6 @@ describe("nobil", () => {
     doc.chargerstations[1]!.csmd["Position"] = "";
     const out = parse({ main: [Buffer.from(JSON.stringify([doc]))] });
     expect(out.features).toHaveLength(1);
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped("no-nobil-charging")).toEqual({ no_geometry: 1 });
   });
 });

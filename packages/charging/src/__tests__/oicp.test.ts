@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -33,6 +39,8 @@ const swiss = () =>
   parse({ main: [fixture("oicp-data.json")], status: [fixture("oicp-status.json")] });
 
 describe("oicp", () => {
+  beforeEach(() => __resetSkips());
+
   test("OICP: Occupied is occupied, OutOfService out_of_order, and '22.0' is 22 kW", () => {
     const out = swiss();
     const category = (value: string) => ({ type: "category", value, vocabulary: "evse_status" });
@@ -126,7 +134,7 @@ describe("oicp", () => {
       main: [Buffer.from(JSON.stringify(data))],
       status: [Buffer.from(JSON.stringify(status))],
     });
-    expect(out.rejected).toBe(0);
+    expect(drainSkipped("ch-bfe-charging")).toEqual({});
     const site = out.features.find(
       (f) => f["id"] === "oc:feature:ch-bfe-charging:DE*ABC*P1234TEST*1",
     );

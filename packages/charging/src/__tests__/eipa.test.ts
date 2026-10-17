@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -51,6 +57,8 @@ function payloads(edit?: (docs: Record<string, Envelope>) => void): FeedPayloads
 }
 
 describe("eipa", () => {
+  beforeEach(() => __resetSkips());
+
   test("EIPA: a pool with two stations is one site; dynamic prices become an ad-hoc offer", () => {
     const out = parse(
       payloads((docs) => {
@@ -183,7 +191,7 @@ describe("eipa", () => {
       openingHours: { osm: "Mo,Tu 08:00-20:00; Sa 10:00-14:00" },
     });
     expect(site(out, "3")).toBeUndefined();
-    expect(out.rejected).toBe(1);
+    expect(drainSkipped("pl-eipa-charging")).toEqual({ no_geometry: 1 });
   });
 
   test("EIPA: the dynamic file alone, through the full parse's index, gives the full parse's readings", () => {

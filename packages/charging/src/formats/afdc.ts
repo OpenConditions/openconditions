@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import {
@@ -13,7 +14,15 @@ import {
   type SiteInput,
   siteDraft,
 } from "../site.js";
-import { isRecord, placeAt, positiveInteger, positiveNumber, type Raw, text } from "./raw.js";
+import {
+  isRecord,
+  placeAt,
+  positiveInteger,
+  positiveNumber,
+  type Raw,
+  text,
+  unplacedReason,
+} from "./raw.js";
 
 interface Plug {
   standard: string;
@@ -61,11 +70,18 @@ const FACILITIES: Readonly<Record<string, ParkingType>> = {
 const levelCurrent = (level: string | undefined): "ac" | "dc" | undefined =>
   level === "1" || level === "2" ? "ac" : level === "dc_fast" ? "dc" : undefined;
 
-function connectorOf(code: string, id: string, kw: number | undefined, level: string | undefined) {
+/** A connector of one AFDC code; a code AFDC does not list is left unread and counted. */
+function connectorOf(
+  feedId: string,
+  code: string,
+  kw: number | undefined,
+  level: string | undefined,
+) {
   const plug = PLUGS[code];
+  if (plug === undefined) recordSkipped(feedId, "unknown_value");
   const current = levelCurrent(level) ?? plug?.current;
   return {
-    id,
+    id: code,
     standard: plug?.standard ?? "UNKNOWN",
     ...(current === undefined ? {} : { current }),
     ...(kw === undefined ? {} : { maxPowerKw: kw }),
@@ -79,7 +95,7 @@ function connectorOf(code: string, id: string, kw: number | undefined, level: st
  * many identical charge points; a connector count above the unit's port count
  * is a count of cables, not of charge points.
  */
-function unitsOf(units: unknown[]): EvseInput[] {
+function unitsOf(feedId: string, units: unknown[]): EvseInput[] {
   const evses: EvseInput[] = [];
   units.filter(isRecord).forEach((unit, i) => {
     const connectors = isRecord(unit["connectors"]) ? unit["connectors"] : {};
@@ -98,7 +114,7 @@ function unitsOf(units: unknown[]): EvseInput[] {
     evses.push({
       key: `unit-${i + 1}`,
       ...(quantity === undefined ? {} : { quantity }),
-      connectors: present.map((p) => connectorOf(p.code, p.code, p.kw, level)),
+      connectors: present.map((p) => connectorOf(feedId, p.code, p.kw, level)),
     });
   });
   return evses;
@@ -108,7 +124,7 @@ function unitsOf(units: unknown[]): EvseInput[] {
  * Without charging units the listed connector types are all the record says:
  * one EVSE for each, and a count only where one type is every port.
  */
-function typesOf(station: Raw): EvseInput[] {
+function typesOf(feedId: string, station: Raw): EvseInput[] {
   const types = Array.isArray(station["ev_connector_types"])
     ? station["ev_connector_types"].flatMap((t) => text(t) ?? [])
     : [];
@@ -120,16 +136,24 @@ function typesOf(station: Raw): EvseInput[] {
   return types.map((code) => ({
     key: `type-${code}`,
     ...(types.length === 1 && ports !== undefined && ports >= 2 ? { quantity: ports } : {}),
-    connectors: [connectorOf(code, code, undefined, undefined)],
+    connectors: [connectorOf(feedId, code, undefined, undefined)],
   }));
 }
 
-function siteOf(station: Raw, stationId: string, point: [number, number]): SiteInput {
+function siteOf(
+  feedId: string,
+  station: Raw,
+  stationId: string,
+  point: [number, number],
+): SiteInput {
   const network = text(station["ev_network"]);
   const facility = FACILITIES[text(station["facility_type"]) ?? ""];
   const hours = text(station["access_days_time"]);
   const units = Array.isArray(station["ev_charging_units"]) ? station["ev_charging_units"] : [];
-  const fromUnits = unitsOf(units);
+  const fromUnits = unitsOf(feedId, units);
+  const status = text(station["status_code"]);
+  const lifecycle = status === undefined ? undefined : LIFECYCLES[status];
+  if (status !== undefined && lifecycle === undefined) recordSkipped(feedId, "unknown_value");
   const around24h = hours !== undefined && /^24 hours daily\.?$/i.test(hours);
   return {
     stationId,
@@ -147,7 +171,7 @@ function siteOf(station: Raw, stationId: string, point: [number, number]): SiteI
       postalCode: text(station["zip"]),
       country: text(station["country"]),
     },
-    lifecycle: LIFECYCLES[text(station["status_code"]) ?? ""] ?? "unknown",
+    lifecycle: lifecycle ?? "unknown",
     ...(facility === undefined ? {} : { parkingType: facility }),
     ...(around24h
       ? { twentyFourSeven: true }
@@ -155,14 +179,16 @@ function siteOf(station: Raw, stationId: string, point: [number, number]): SiteI
         ? {}
         : { openingHoursText: hours }),
     tariffText: text(station["ev_pricing"]),
-    evses: fromUnits.length > 0 ? fromUnits : typesOf(station),
+    evses: fromUnits.length > 0 ? fromUnits : typesOf(feedId, station),
   };
 }
 
 /**
  * The Alternative Fuel Stations API, electric stations: `fuel_stations` of
  * one `v1.json` answer. The register states each station's status code
- * (E, P, T) and no live state, so nothing is read as a reading.
+ * (E, P, T) and no live state, so nothing is read as a reading. A station
+ * without an id, or listed again under one, is malformed; one without a
+ * position, or with one that places nothing, is counted as such.
  */
 export function parseAfdc(
   feed: ChargingCatalogFeed,
@@ -170,28 +196,34 @@ export function parseAfdc(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = JSON.parse(body.toString("utf8")) as unknown;
     const stations =
       isRecord(doc) && Array.isArray(doc["fuel_stations"]) ? doc["fuel_stations"] : [];
-    for (const station of stations.filter(isRecord)) {
+    for (const station of stations) {
+      if (!isRecord(station)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       if (station["fuel_type_code"] !== undefined && station["fuel_type_code"] !== "ELEC") continue;
       const id = text(station["id"]);
+      if (id === undefined || seen.has(id)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       // A missing coordinate is not zero: Number(null) would place the station at the equator.
       const point = placeAt(
         Number(text(station["latitude"]) ?? Number.NaN),
         Number(text(station["longitude"]) ?? Number.NaN),
       );
-      if (id === undefined || point === undefined || seen.has(id)) {
-        rejected++;
+      if (point === undefined) {
+        recordSkipped(feed.id, unplacedReason(station["latitude"], station["longitude"]));
         continue;
       }
       seen.add(id);
-      out.features.push(siteDraft(feed, siteOf(station, id, point), ctx.fetchedAt));
+      out.features.push(siteDraft(feed, siteOf(feed.id, station, id, point), ctx.fetchedAt));
     }
   }
-  out.rejected = rejected;
   return out;
 }

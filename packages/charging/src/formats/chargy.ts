@@ -10,10 +10,11 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { connectorStatusDraft, type EvseInput, type EvseStatus, siteDraft } from "../site.js";
-import { isRecord, placeFromText, positiveNumber, type Raw, text } from "./raw.js";
+import { isRecord, placeFromText, positiveNumber, type Raw, text, unplacedReason } from "./raw.js";
 
 /**
  * The OCPP connector states the devices report. Only `CHARGING` says energy
@@ -68,7 +69,10 @@ function devicesOf(placemark: unknown): Raw[] {
  * (the file carries no time). The file names no plug standard: its
  * descriptions say Type 2 even at 400 kW, so every plug is `UNKNOWN`. A site
  * has no id of its own and is keyed by its lowest device id: numerically when
- * every id is a number, as Chargy's are, else the first in string order.
+ * every id is a number, as Chargy's are, else the first in string order. A
+ * placemark without a device id, or keyed again by one, is malformed; one
+ * without a position, or with one that places nothing, is counted as such. A
+ * connector state outside the OCPP states is no reading and counted.
  */
 export function parseChargy(
   feed: ChargingCatalogFeed,
@@ -76,7 +80,6 @@ export function parseChargy(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = parseXmlDocument(body, {
@@ -95,8 +98,12 @@ export function parseChargy(
         return id === undefined ? [] : [{ id, device }];
       });
       const stationId = lowestId(devices.map((d) => d.id));
-      if (point === undefined || stationId === undefined || seen.has(stationId)) {
-        rejected++;
+      if (stationId === undefined || seen.has(stationId)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, unplacedReason(lat, lon));
         continue;
       }
       seen.add(stationId);
@@ -112,8 +119,10 @@ export function parseChargy(
           connectors: connectors.flatMap((c) => {
             const connectorId = text(c["id"]);
             if (connectorId === undefined) return [];
-            const status = STATES[text(c["description"])?.toUpperCase() ?? ""];
+            const state = text(c["description"])?.toUpperCase();
+            const status = state === undefined ? undefined : STATES[state];
             if (status !== undefined) states.push({ evseKey: id, connectorId, status });
+            else if (state !== undefined) recordSkipped(feed.id, "unknown_value");
             const kw = positiveNumber(c["maxchspeed"]);
             return [
               {
@@ -143,6 +152,5 @@ export function parseChargy(
       }
     }
   }
-  out.rejected = rejected;
   return out;
 }

@@ -1,5 +1,10 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -43,6 +48,8 @@ const withState = (connectorId: number, state: string) =>
   );
 
 describe("chargy", () => {
+  beforeEach(() => __resetSkips());
+
   test("Chargy: connector OCPP states become connector status readings", () => {
     const out = parse();
     expect(out.features).toHaveLength(6);
@@ -126,7 +133,7 @@ describe("chargy", () => {
       .replace('{"id":10645,', '{"id":"CP-A",');
     const out = parse(Buffer.from(kml));
     expect(out.features).toHaveLength(6);
-    expect(out.rejected).toBe(0);
+    expect(drainSkipped("lu-chargy-charging")).toEqual({});
     expect(components(site(out, "CP-A")).map((c) => c.key)).toEqual([
       "CP-A",
       "CP-A/59987",

@@ -4,6 +4,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { AUDIENCES } from "@openconditions/model";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
@@ -15,7 +16,15 @@ import {
   type SiteInput,
   siteDraft,
 } from "../site.js";
-import { isRecord, placeAt, positiveInteger, positiveNumber, type Raw, text } from "./raw.js";
+import {
+  isRecord,
+  placeAt,
+  positiveInteger,
+  positiveNumber,
+  type Raw,
+  text,
+  unplacedReason,
+} from "./raw.js";
 
 interface Plug {
   standard: string;
@@ -27,7 +36,8 @@ interface Plug {
  * type B; a type whose formal name is SAE J3400 (27, "NACS / Tesla
  * Supercharger") is NACS, whatever its id. A plug whose standard the model
  * cannot name exactly (an IEC 60309 socket of unstated amperage, Avcon,
- * inductive, wireless, a battery swap) is `UNKNOWN`.
+ * inductive, wireless, a battery swap) is `UNKNOWN`, and counted as unread
+ * unless Open Charge Map itself says unknown (0).
  */
 const CONNECTION_TYPES: Readonly<Record<string, Plug>> = {
   "1": { standard: "IEC_62196_T1" },
@@ -122,19 +132,32 @@ function accessOf(poi: Raw): Pick<SiteInput, "audience" | "payment"> {
   };
 }
 
-/** One charge point per connection, standing for `Quantity` of them. */
-function evsesOf(poi: Raw): EvseInput[] {
+/**
+ * One charge point per connection, standing for `Quantity` of them. A
+ * connection type or current type outside the tables is left unread and
+ * counted.
+ */
+function evsesOf(feedId: string, poi: Raw): EvseInput[] {
   return (Array.isArray(poi["Connections"]) ? poi["Connections"] : [])
     .filter(isRecord)
     .flatMap((c) => {
       const key = text(c["ID"]);
       if (key === undefined) return [];
       const type = record(c["ConnectionType"]);
+      const typeId = text(type["ID"]) ?? text(c["ConnectionTypeID"]);
       const plug = /^SAE\s*J3400$/i.test(text(type["FormalName"]) ?? "")
         ? { standard: "SAE_J3400" }
-        : CONNECTION_TYPES[text(type["ID"]) ?? text(c["ConnectionTypeID"]) ?? ""];
-      const powerType =
-        POWER_TYPES[text(record(c["CurrentType"])["ID"]) ?? text(c["CurrentTypeID"]) ?? ""];
+        : typeId === undefined
+          ? undefined
+          : CONNECTION_TYPES[typeId];
+      if (typeId !== undefined && typeId !== "0" && plug === undefined) {
+        recordSkipped(feedId, "unknown_value");
+      }
+      const currentId = text(record(c["CurrentType"])["ID"]) ?? text(c["CurrentTypeID"]);
+      const powerType = currentId === undefined ? undefined : POWER_TYPES[currentId];
+      if (currentId !== undefined && powerType === undefined) {
+        recordSkipped(feedId, "unknown_value");
+      }
       const kw = positiveNumber(c["PowerKW"]);
       const volts = positiveNumber(c["Voltage"]);
       const amps = positiveNumber(c["Amps"]);
@@ -183,7 +206,9 @@ function maxResultsOf(feed: ChargingCatalogFeed): number | undefined {
  * are maintained by users: a lifecycle, never a reading; a duplicate listing
  * is left out. `UsageCost` stays the publisher's text. A cell keeps only the
  * POIs inside it; an answer as long as `maxresults` may have been cut short,
- * so it is logged and the output marked truncated.
+ * so it is logged and the output marked truncated. A POI without an id, or
+ * listed again under one, is malformed; one without a position, or with one
+ * that places nothing, is counted as such.
  */
 export function parseOcm(
   feed: ChargingCatalogFeed,
@@ -191,11 +216,10 @@ export function parseOcm(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = JSON.parse(body.toString("utf8")) as unknown;
-    const pois = (Array.isArray(doc) ? doc : []).filter(isRecord);
+    const pois: unknown[] = Array.isArray(doc) ? doc : [];
     const cap = maxResultsOf(feed);
     if (cap !== undefined && pois.length >= cap) {
       out.truncated = true;
@@ -204,11 +228,15 @@ export function parseOcm(
       );
     }
     for (const poi of pois) {
-      const id = text(poi["ID"]);
+      const id = isRecord(poi) ? text(poi["ID"]) : undefined;
+      if (!isRecord(poi) || id === undefined || seen.has(id)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       const address = record(poi["AddressInfo"]);
       const point = placeAt(Number(address["Latitude"]), Number(address["Longitude"]));
-      if (id === undefined || point === undefined || seen.has(id)) {
-        rejected++;
+      if (point === undefined) {
+        recordSkipped(feed.id, unplacedReason(address["Latitude"], address["Longitude"]));
         continue;
       }
       if (ctx.cell !== undefined && !inside(ctx.cell, point)) continue;
@@ -248,13 +276,12 @@ export function parseOcm(
             ...(publisher === undefined
               ? {}
               : { upstream: [{ publisher, ...(license === undefined ? {} : { license }) }] }),
-            evses: evsesOf(poi),
+            evses: evsesOf(feed.id, poi),
           },
           ctx.fetchedAt,
         ),
       );
     }
   }
-  out.rejected = rejected;
   return out;
 }

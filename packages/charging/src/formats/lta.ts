@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { OcpiTariff } from "@openconditions/ocpi";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
@@ -15,7 +16,7 @@ import {
   siteDraft,
 } from "../site.js";
 import { tariffDraft } from "../tariff.js";
-import { isRecord, placeFromText, type Raw, text } from "./raw.js";
+import { isRecord, placeFromText, type Raw, text, unplacedReason } from "./raw.js";
 
 /** A plug type as DataMall names it. */
 function standardOf(name: string | undefined): string {
@@ -64,10 +65,10 @@ function tariffOf(plug: Raw): OcpiTariff | undefined {
 }
 
 /** The stations of a batch file: `{ value: [...] }`, or the list itself. */
-function stationsOf(body: Buffer): Raw[] {
+function stationsOf(body: Buffer): unknown[] {
   const doc = JSON.parse(body.toString("utf8")) as unknown;
   const list = isRecord(doc) ? doc["value"] : doc;
-  return Array.isArray(list) ? list.filter(isRecord) : [];
+  return Array.isArray(list) ? list : [];
 }
 
 const listOf = (value: unknown): Raw[] => (Array.isArray(value) ? value.filter(isRecord) : []);
@@ -78,7 +79,10 @@ const listOf = (value: unknown): Raw[] => (Array.isArray(value) ? value.filter(i
  * postal code), each of its chargers one charge point with its plug types as
  * connectors. A charger's status is its own, or its evId's when it has exactly
  * one. Statuses are read as of the fetch, the file holding no time. Prices
- * include GST.
+ * include GST. A location without its id, or listed again under one, is
+ * malformed; one without a position, or with one that places nothing, is
+ * counted as such. A plug type or a status the guide does not list is left
+ * unread and counted.
  */
 export function parseLta(
   feed: ChargingCatalogFeed,
@@ -86,14 +90,18 @@ export function parseLta(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const station of (payloads["main"] ?? []).flatMap(stationsOf)) {
-    const stationId = text(station["locationId"]);
+    const stationId = isRecord(station) ? text(station["locationId"]) : undefined;
+    if (!isRecord(station) || stationId === undefined || seen.has(stationId)) {
+      recordSkipped(feed.id, "malformed");
+      continue;
+    }
     // `longtitude` is the guide's own spelling.
-    const point = placeFromText(station["latitude"], station["longtitude"] ?? station["longitude"]);
-    if (stationId === undefined || point === undefined || seen.has(stationId)) {
-      rejected++;
+    const [lat, lon] = [station["latitude"], station["longtitude"] ?? station["longitude"]];
+    const point = placeFromText(lat, lon);
+    if (point === undefined) {
+      recordSkipped(feed.id, unplacedReason(lat, lon));
       continue;
     }
     seen.add(stationId);
@@ -108,9 +116,12 @@ export function parseLta(
         if (tariff !== undefined) tariffs.set(tariff.id, tariff);
         const rating = text(plug["powerRating"])?.toLowerCase();
         const kw = parsePowerKw(plug["chargingSpeed"]);
+        const name = text(plug["plugType"]);
+        const standard = standardOf(name);
+        if (name !== undefined && standard === "UNKNOWN") recordSkipped(feed.id, "unknown_value");
         return {
           id: String(i + 1),
-          standard: standardOf(text(plug["plugType"])),
+          standard,
           ...(rating === "ac" || rating === "dc" ? { current: rating } : {}),
           ...(kw === undefined ? {} : { maxPowerKw: kw }),
           ...(tariff === undefined ? {} : { tariffIds: [tariff.id] }),
@@ -125,8 +136,10 @@ export function parseLta(
       evses.push({ key, connectors });
       // One evId is the charge point itself; over several, the charger's own
       // status is what the file says of the charge point.
-      const status = STATES[text((only ?? charger)["status"]) ?? ""];
+      const state = text((only ?? charger)["status"]);
+      const status = state === undefined ? undefined : STATES[state];
       if (status !== undefined) states.push({ key, status });
+      else if (state !== undefined) recordSkipped(feed.id, "unknown_value");
     }
 
     const address = text(station["address"]);
@@ -159,6 +172,5 @@ export function parseLta(
       );
     }
   }
-  out.rejected = rejected;
   return out;
 }

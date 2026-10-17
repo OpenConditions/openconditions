@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -55,6 +61,8 @@ const unit = (
 ) => ({ network: "N", connectors, port_count: portCount, charging_level: level });
 
 describe("afdc", () => {
+  beforeEach(() => __resetSkips());
+
   test("AFDC: charging units give per-connector power and quantity; NEMA is never Schuko", () => {
     const out = parse({ main: [fixture("afdc-more.json")] });
     // A Tesla Supercharger: eight units of one 150 kW port.
@@ -143,6 +151,8 @@ describe("afdc", () => {
       "UNKNOWN",
     ]);
     expect(evsesOf(stationDraft).every((e) => e.details["quantity"] === undefined)).toBe(true);
+    // A code AFDC does not list is a connector of unknown standard, its code counted as unread.
+    expect(drainSkipped("us-afdc-charging")).toEqual({ unknown_value: 1 });
     // One connector type is all of its ports: the counts say how many.
     const single = parse({
       main: [station({ ev_connector_types: ["J1772"], ev_level2_evse_num: 4 })],
@@ -156,7 +166,7 @@ describe("afdc", () => {
     // A null coordinate is no position.
     const unplaced = parse({ main: [station({ latitude: null })] });
     expect(unplaced.features).toEqual([]);
-    expect(unplaced.rejected).toBe(1);
+    expect(drainSkipped("us-afdc-charging")).toEqual({ no_geometry: 1 });
   });
 
   test("AFDC: P is planned and T temporarily closed; E is a register state, never a reading", () => {

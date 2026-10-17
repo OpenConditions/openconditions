@@ -9,6 +9,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours, type WeeklyPeriod } from "../hours.js";
@@ -20,7 +21,7 @@ import {
   type SiteInput,
   siteDraft,
 } from "../site.js";
-import { placeFromText } from "./raw.js";
+import { placeFromText, unplacedReason } from "./raw.js";
 
 type Current = "ac" | "dc";
 
@@ -80,7 +81,10 @@ const valueText = (node: unknown, key: string) => getXmlChildText(getXmlChild(no
  * The connector power is each plug's own, never the point's total, and goes
  * to the plugs of the point's declared power type: a Type 2 socket on a DC
  * point is AC of unstated power. The register's status is the site's
- * lifecycle, never a reading.
+ * lifecycle, never a reading. A row without an identification, or listed
+ * again under one, is malformed; one without a position, or with one that
+ * places nothing, is counted as such. A connector type or a status the table
+ * does not list is left unread and counted.
  */
 export function parseCynap(
   feed: ChargingCatalogFeed,
@@ -88,7 +92,6 @@ export function parseCynap(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = parseXmlDocument(body, { removeNSPrefix: true });
@@ -105,12 +108,17 @@ export function parseCynap(
         getXmlChild(getXmlChild(row, "location"), "pointByCoordinates"),
         "pointCoordinates",
       );
-      const point = placeFromText(
+      const [lat, lon] = [
         getXmlChildText(coordinates, "latitude"),
         getXmlChildText(coordinates, "longitude"),
-      );
-      if (id === undefined || id === "" || point === undefined || seen.has(id)) {
-        rejected++;
+      ];
+      const point = placeFromText(lat, lon);
+      if (id === undefined || id === "" || seen.has(id)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      if (point === undefined) {
+        recordSkipped(feed.id, unplacedReason(lat, lon));
         continue;
       }
       seen.add(id);
@@ -124,7 +132,9 @@ export function parseCynap(
       const connectors: ConnectorInput[] = listed.flatMap((value, i) => {
         const type = typeof value === "string" ? value.trim().toLowerCase() : "";
         if (type === "") return [];
-        const plug = PLUGS[type] ?? { standard: "UNKNOWN", current };
+        const known = PLUGS[type];
+        if (known === undefined) recordSkipped(feed.id, "unknown_value");
+        const plug = known ?? { standard: "UNKNOWN", current };
         const powered = kw !== undefined && (current === undefined || plug.current === current);
         return [
           {
@@ -139,6 +149,11 @@ export function parseCynap(
       const operator = getXmlChildText(row, "chargingPointOperator");
       const owner = getXmlChildText(row, "chargingPointOwner");
       const evseId = emi3Of(id);
+      const status = valueText(row, "chargingPointStatus")?.trim();
+      const lifecycle = status === undefined || status === "" ? undefined : LIFECYCLES[status];
+      if (status !== undefined && status !== "" && lifecycle === undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       out.features.push(
         siteDraft(
           feed,
@@ -151,7 +166,7 @@ export function parseCynap(
             address: { text: valueText(row, "chargingPointAddress") },
             ...hoursOf(valueText(row, "operatingTime")?.trim()),
             notes: valueText(row, "accessInformation"),
-            lifecycle: LIFECYCLES[valueText(row, "chargingPointStatus")?.trim() ?? ""] ?? "unknown",
+            lifecycle: lifecycle ?? "unknown",
             evses: [{ key: id, ...(evseId === undefined ? {} : { evseId }), connectors }],
           },
           ctx.fetchedAt,
@@ -159,6 +174,5 @@ export function parseCynap(
       );
     }
   }
-  out.rejected = rejected;
   return out;
 }

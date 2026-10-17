@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
 } from "@openconditions/ingest-framework";
@@ -24,7 +25,7 @@ import {
 } from "../site.js";
 import { indexStatus, type StatusIndexDraft, statusReader, subjectsOf } from "../status.js";
 import { tariffDraft } from "../tariff.js";
-import { isRecord, placeAt, type Raw, text } from "./raw.js";
+import { isRecord, placeAt, type Raw, text, unplacedReason } from "./raw.js";
 
 const ZONE = "Europe/Warsaw";
 
@@ -117,6 +118,10 @@ function statusOf(d: Dynamic): EvseStatus {
   return "unknown";
 }
 
+/** An operating point's occupancy written as a code the reader does not list. */
+const unlistedOccupancy = (d: Dynamic) =>
+  d.availability !== 0 && d.occupancy !== undefined && d.occupancy !== 0 && d.occupancy !== 1;
+
 const trimmed = (n: number) => String(Math.round(n * 1e6) / 1e6);
 
 /**
@@ -186,7 +191,10 @@ function hoursOf(pool: Raw): string | undefined {
  * electric), a station's points (the charge points, each interface a
  * connector), the operator and dictionary tables, and `dynamic.json` with
  * each point's availability and ad-hoc prices. Prices are the point's, so
- * they become offers on the site that its connectors reference.
+ * they become offers on the site that its connectors reference. A pool or a
+ * point without an id is malformed, a pool none of whose rows places it is
+ * counted as such, and an interface the dictionary names outside the
+ * connector standards is left unread and counted.
  */
 export function parseEipa(
   feed: ChargingCatalogFeed,
@@ -219,12 +227,15 @@ export function parseEipa(
   }
 
   const index: StatusIndexDraft = new Map();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const pool of pools) {
     const poolId = idOf(pool["id"]);
-    const own = poolId === undefined ? undefined : stationsOf.get(poolId);
-    if (poolId === undefined || own === undefined || seen.has(poolId)) continue;
+    if (poolId === undefined) {
+      recordSkipped(feed.id, "malformed");
+      continue;
+    }
+    const own = stationsOf.get(poolId);
+    if (own === undefined || seen.has(poolId)) continue;
     seen.add(poolId);
     const fallback = own.find(
       (s) => placeAt(Number(s["latitude"]), Number(s["longitude"])) !== undefined,
@@ -235,7 +246,10 @@ export function parseEipa(
         ? undefined
         : placeAt(Number(fallback["latitude"]), Number(fallback["longitude"])));
     if (point === undefined) {
-      rejected++;
+      const written = [pool, ...own].some(
+        (row) => unplacedReason(row["latitude"], row["longitude"]) === "malformed",
+      );
+      recordSkipped(feed.id, written ? "malformed" : "no_geometry");
       continue;
     }
 
@@ -248,7 +262,10 @@ export function parseEipa(
     for (const station of own) {
       for (const p of pointsOf.get(idOf(station["id"]) ?? "") ?? []) {
         const pointId = idOf(p["id"]);
-        if (pointId === undefined) continue;
+        if (pointId === undefined) {
+          recordSkipped(feed.id, "malformed");
+          continue;
+        }
         const code = text(p["code"]);
         // The register writes its eMI3 ids with hyphens; the standard separator is `*`.
         const evseId = emi3Of(code?.replace(/-/g, "*"));
@@ -263,7 +280,11 @@ export function parseEipa(
             const attached =
               typeof entry["cable_attached"] === "boolean" ? entry["cable_attached"] : undefined;
             return list(entry["interfaces"]).map((interfaceId): ConnectorInput => {
-              const plug = plugOf(interfaces.get(interfaceId));
+              const name = interfaces.get(interfaceId);
+              const plug = plugOf(name);
+              if (name !== undefined && plug.standard === "UNKNOWN") {
+                recordSkipped(feed.id, "unknown_value");
+              }
               const format =
                 plug.format ?? (attached === undefined ? undefined : attached ? "cable" : "socket");
               return {
@@ -327,7 +348,6 @@ export function parseEipa(
       if (offer !== undefined) out.offers.push(offer);
     }
   }
-  out.rejected = rejected;
   out.statusIndex = index;
   out.observations = eipaStatusReadings(feed, dynamic, index, ctx).observations;
   return out;
@@ -336,7 +356,8 @@ export function parseEipa(
 /**
  * A reading per indexed point of `dynamic.json`, as of its status time (`ts`),
  * and none when that lies more than 30 days back; a point the index does not
- * hold is rejected. Its prices are the full parse's: they change offers.
+ * hold is rejected, and an occupancy code the reader does not list is read
+ * as unknown and counted. Its prices are the full parse's: they change offers.
  */
 function eipaStatusReadings(
   feed: ChargingCatalogFeed,
@@ -353,6 +374,7 @@ function eipaStatusReadings(
     }
     const at = instantIn(ZONE, d.ts);
     if (!statusIsLive(at, ctx.fetchedAt)) continue;
+    if (unlistedOccupancy(d)) recordSkipped(feed.id, "unknown_value");
     for (const subject of subjects) reader.read(subject, statusOf(d), at);
   }
   return reader.output();

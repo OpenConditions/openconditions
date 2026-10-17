@@ -1,5 +1,11 @@
-import type { FeedPayloads, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { describe, expect, test } from "vitest";
+import {
+  __resetSkips,
+  drainSkipped,
+  type FeedPayloads,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
+import { beforeEach, describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -35,6 +41,8 @@ const connectorsOf = (draft: RecordDraft | undefined, evse: string) =>
 const register = () => parse({ main: [fixture("bnetza.csv")] });
 
 describe("bnetza", () => {
+  beforeEach(() => __resetSkips());
+
   test("BNetzA: six charge points of one device are six EVSEs with their plugs and power", () => {
     const out = register();
     // The ten preamble lines and the BOM are skipped; every row below the header is a site.
@@ -164,7 +172,7 @@ describe("bnetza", () => {
       "91;Andere GmbH;;In Betrieb;1;Markt;1;49,0094;8,4044;;;DC CHAdeMO;50;",
     ];
     const out = parse({ main: [Buffer.from(`${header}\r\n${rows.join("\r\n")}\r\n`)] });
-    expect(out.rejected).toBe(0);
+    expect(drainSkipped("de-bnetza-charging")).toEqual({});
     // The other operator, the other house number and the device 22 m away stay
     // sites of their own; the device 11 m away joins.
     expect(out.features.map((f) => f["id"]).sort()).toEqual([

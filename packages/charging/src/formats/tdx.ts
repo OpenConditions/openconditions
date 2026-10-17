@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
 } from "@openconditions/ingest-framework";
@@ -18,7 +19,15 @@ import {
 } from "../site.js";
 import { indexStatus, type StatusIndexDraft, statusReader, subjectsOf } from "../status.js";
 import { tariffDraft } from "../tariff.js";
-import { isRecord, placeAt, positiveInteger, positiveNumber, type Raw, text } from "./raw.js";
+import {
+  isRecord,
+  placeAt,
+  positiveInteger,
+  positiveNumber,
+  type Raw,
+  text,
+  unplacedReason,
+} from "./raw.js";
 
 const ZONE = "Asia/Taipei";
 
@@ -46,6 +55,13 @@ const DAY_TYPES: Readonly<Record<string, string[] | undefined>> = {
   "2": WEEKDAYS,
   "3": ["SATURDAY", "SUNDAY"],
 };
+
+/** A connector `Type`'s standard; a code TDX does not list is left unread and counted. */
+function standardOf(feedId: string, type: string | undefined): string {
+  const standard = type === undefined ? undefined : STANDARDS[type];
+  if (type !== undefined && standard === undefined) recordSkipped(feedId, "unknown_value");
+  return standard ?? "UNKNOWN";
+}
 
 /** The records of an answer: the wrapper's list, or the list itself. */
 function rowsOf(bodies: readonly Buffer[] | undefined, key: string): Raw[] {
@@ -160,7 +176,7 @@ function addressOf(station: Raw): string | undefined {
  * point and a group of one type stands for its `Quantity`; otherwise each
  * group is one charge point of uncounted plugs.
  */
-function groupEvses(station: Raw, groups: Raw[]): EvseInput[] {
+function groupEvses(feedId: string, station: Raw, groups: Raw[]): EvseInput[] {
   const guns = groups.reduce((n, g) => n + (positiveInteger(g["Quantity"]) ?? 0), 0);
   const counted = guns > 0 && guns === positiveInteger(station["ChargingPoints"]);
   const keys = new Set<string>();
@@ -179,7 +195,7 @@ function groupEvses(station: Raw, groups: Raw[]): EvseInput[] {
         connectors: [
           {
             id: "1",
-            standard: STANDARDS[type] ?? "UNKNOWN",
+            standard: standardOf(feedId, type),
             ...(power === "1"
               ? { current: "ac" as const }
               : power === "2"
@@ -202,7 +218,9 @@ function groupEvses(station: Raw, groups: Raw[]): EvseInput[] {
  * connector names, or the whole site's when no connector of the site is
  * known; TDX states no VAT. The station's charging-rate text is the site's
  * tariff text, its parking rate a note, and its service time the opening
- * hours as written.
+ * hours as written. A station without its id, or listed again under one, is
+ * malformed; one without a position, or with one that places nothing, is
+ * counted as such.
  */
 export function parseTdx(
   feed: ChargingCatalogFeed,
@@ -214,13 +232,16 @@ export function parseTdx(
   const live = byStation(liveRows);
   const rates = byStation(rowsOf(payloads["tariffs"], "ChargingRates"));
   const index: StatusIndexDraft = new Map();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const station of rowsOf(payloads["sites"], "Stations")) {
     const stationId = text(station["StationID"]);
+    if (stationId === undefined || seen.has(stationId)) {
+      recordSkipped(feed.id, "malformed");
+      continue;
+    }
     const point = placeAt(Number(station["PositionLat"]), Number(station["PositionLon"]));
-    if (stationId === undefined || point === undefined || seen.has(stationId)) {
-      rejected++;
+    if (point === undefined) {
+      recordSkipped(feed.id, unplacedReason(station["PositionLat"], station["PositionLon"]));
       continue;
     }
     seen.add(stationId);
@@ -260,7 +281,7 @@ export function parseTdx(
         ...(points.get(pointId) ?? []),
         {
           id: connectorId,
-          standard: STANDARDS[type ?? ""] ?? "UNKNOWN",
+          standard: standardOf(feed.id, type),
           ...(current === undefined ? {} : { current }),
           ...(tariff === undefined ? {} : { tariffIds: [tariff] }),
         },
@@ -275,7 +296,7 @@ export function parseTdx(
     const evses: EvseInput[] =
       points.size > 0
         ? [...points].map(([key, connectors]) => ({ key, connectors }))
-        : groupEvses(station, groups);
+        : groupEvses(feed.id, station, groups);
 
     const name = isRecord(station["StationName"]) ? station["StationName"] : {};
     const zh = text(name["Zh_tw"]);
@@ -301,7 +322,6 @@ export function parseTdx(
       if (offer !== undefined) out.offers.push(offer);
     }
   }
-  out.rejected = rejected;
   out.statusIndex = index;
   out.observations = tdxStatusReadings(feed, liveRows, index, ctx).observations;
   return out;
@@ -316,7 +336,8 @@ const connectorRef = (
 /**
  * A reading per live state of an indexed connector, as of its
  * `LastUpdateTime`, and none when that lies more than 30 days back; a state
- * of a connector the index does not hold is rejected.
+ * of a connector the index does not hold is rejected, and a status code TDX
+ * does not list is no reading and counted.
  */
 function tdxStatusReadings(
   feed: ChargingCatalogFeed,
@@ -336,10 +357,14 @@ function tdxStatusReadings(
       reader.reject();
       continue;
     }
-    const status = STATES[text(row["ConnectorStatus"]) ?? ""];
-    if (status === undefined) continue;
     const at = instantIn(ZONE, row["LastUpdateTime"]);
     if (!statusIsLive(at, ctx.fetchedAt)) continue;
+    const code = text(row["ConnectorStatus"]);
+    const status = code === undefined ? undefined : STATES[code];
+    if (status === undefined) {
+      if (code !== undefined) recordSkipped(feed.id, "unknown_value");
+      continue;
+    }
     for (const subject of subjects) reader.read(subject, status, at);
   }
   return reader.output();

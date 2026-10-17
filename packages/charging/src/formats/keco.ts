@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
 } from "@openconditions/ingest-framework";
@@ -18,7 +19,7 @@ import {
   statusIsLive,
 } from "../site.js";
 import { indexStatus, type StatusIndexDraft, statusReader } from "../status.js";
-import { isRecord, placeFromText, type Raw, text } from "./raw.js";
+import { isRecord, placeFromText, type Raw, text, unplacedReason } from "./raw.js";
 
 const ZONE = "Asia/Seoul";
 
@@ -78,10 +79,14 @@ function seoulInstant(value: unknown): string | undefined {
 
 /**
  * A charger's plugs. `output` is the charger's power: a charger with DC plugs
- * delivers it on those, and its AC plug of unstated power.
+ * delivers it on those, and its AC plug of unstated power. A charger type the
+ * API does not list is left unread and counted.
  */
-function connectorsOf(item: Raw): ConnectorInput[] {
-  const plugs = CHARGER_TYPES[text(item["chgerType"]) ?? ""] ?? [{ standard: "UNKNOWN" }];
+function connectorsOf(feedId: string, item: Raw): ConnectorInput[] {
+  const type = text(item["chgerType"]);
+  const known = type === undefined ? undefined : CHARGER_TYPES[type];
+  if (type !== undefined && known === undefined) recordSkipped(feedId, "unknown_value");
+  const plugs = known ?? [{ standard: "UNKNOWN" }];
   const kw = parsePowerKw(item["output"]);
   const fast = plugs.some((p) => p.current === "dc");
   return plugs.map((p) => ({
@@ -108,7 +113,9 @@ function hoursOf(
  * every status answer since the information was fetched, so the daily state
  * with every change since is each charger's state now, read as of its change
  * time (`statUpdDt`, Seoul time), and no reading when that lies more than 30
- * days back. A deleted charger (`delYn=Y`) is left out.
+ * days back. A deleted charger (`delYn=Y`) is left out. A charger without its
+ * station or charger id is malformed; a station whose first charger places
+ * nothing is counted once, as such.
  */
 export function parseKeco(
   feed: ChargingCatalogFeed,
@@ -118,24 +125,31 @@ export function parseKeco(
   const out = emptyParseOutput();
   const stations = new Map<string, Raw[]>();
   for (const item of (payloads["main"] ?? []).flatMap(itemsOf)) {
+    if (text(item["delYn"])?.toUpperCase() === "Y") continue;
     const statId = text(item["statId"]);
-    if (statId === undefined || text(item["delYn"])?.toUpperCase() === "Y") continue;
+    if (statId === undefined) {
+      recordSkipped(feed.id, "malformed");
+      continue;
+    }
     stations.set(statId, [...(stations.get(statId) ?? []), item]);
   }
   const index: StatusIndexDraft = new Map();
-  let rejected = 0;
   for (const [statId, chargers] of stations) {
     const [first] = chargers;
-    const point = first === undefined ? undefined : placeFromText(first["lat"], first["lng"]);
-    if (first === undefined || point === undefined) {
-      rejected++;
+    if (first === undefined) continue;
+    const point = placeFromText(first["lat"], first["lng"]);
+    if (point === undefined) {
+      recordSkipped(feed.id, unplacedReason(first["lat"], first["lng"]));
       continue;
     }
     const evses: EvseInput[] = [];
     for (const charger of chargers) {
       const chgerId = text(charger["chgerId"]);
-      if (chgerId === undefined) continue;
-      evses.push({ key: chgerId, connectors: connectorsOf(charger) });
+      if (chgerId === undefined) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      evses.push({ key: chgerId, connectors: connectorsOf(feed.id, charger) });
       const stat = text(charger["stat"]);
       const changed = seoulInstant(charger["statUpdDt"]);
       indexStatus(index, chargerKey(statId, chgerId), {
@@ -171,7 +185,6 @@ export function parseKeco(
       ),
     );
   }
-  out.rejected = rejected;
   out.statusIndex = index;
   out.observations = parseKecoStatus(feed, payloads, ctx, index).observations;
   return out;
@@ -188,7 +201,8 @@ const msOf = (instant: string | undefined) => Date.parse(instant ?? "") || 0;
  * the information was fetched, oldest poll first. A charger's latest change
  * stands, and a change older than the state it would replace changes
  * nothing. Read as of its change time, unless that lies more than 30 days
- * back; a change of a charger the index does not hold is rejected.
+ * back; a change of a charger the index does not hold is rejected, and a
+ * state the API does not list is no reading and counted.
  */
 export function parseKecoStatus(
   feed: ChargingCatalogFeed,
@@ -210,15 +224,21 @@ export function parseKecoStatus(
   }
   for (const [key, subjects] of index) {
     const update = updates.get(key);
+    let unread = false;
     for (const subject of subjects) {
       const state =
         update !== undefined && msOf(update.at) >= msOf(subject.snapshotAt)
           ? update
           : { stat: subject.snapshotStatus, at: subject.snapshotAt };
-      const status = STATES[state.stat ?? ""];
-      if (status === undefined || !statusIsLive(state.at, ctx.fetchedAt)) continue;
+      if (!statusIsLive(state.at, ctx.fetchedAt)) continue;
+      const status = state.stat === undefined ? undefined : STATES[state.stat];
+      if (status === undefined) {
+        unread ||= state.stat !== undefined;
+        continue;
+      }
       reader.read(subject, status, state.at);
     }
+    if (unread) recordSkipped(feed.id, "unknown_value");
   }
   return reader.output();
 }

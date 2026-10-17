@@ -40,3 +40,15 @@ export function placeFromText(lat: unknown, lon: unknown): [number, number] | un
   };
   return placeAt(toNumber(lat), toNumber(lon));
 }
+
+/**
+ * Why a coordinate pair placed nothing: a position not written at all, or
+ * written as the null island a missing one stands in for, is no geometry; one
+ * written but unreadable or off the globe is malformed.
+ */
+export function unplacedReason(lat: unknown, lon: unknown): "no_geometry" | "malformed" {
+  const [a, b] = [text(lat), text(lon)];
+  if (a === undefined || b === undefined) return "no_geometry";
+  const zero = (t: string) => Number(t.replace(",", ".")) === 0;
+  return zero(a) && zero(b) ? "no_geometry" : "malformed";
+}

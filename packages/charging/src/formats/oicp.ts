@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
   type StatusIndex,
   type StatusOutput,
 } from "@openconditions/ingest-framework";
@@ -21,6 +22,7 @@ import {
   siteDraft,
 } from "../site.js";
 import { indexStatus, type StatusIndexDraft, statusReader, subjectsOf } from "../status.js";
+import { unplacedReason } from "./raw.js";
 
 type Raw = Record<string, unknown>;
 
@@ -119,6 +121,21 @@ function pointOf(geo: unknown): [number, number] | undefined {
   return [lon, lat];
 }
 
+/** Why `pointOf` placed nothing: no coordinates written, or unreadable ones. */
+function unplacedOf(geo: unknown): "no_geometry" | "malformed" {
+  const g = isRecord(geo) ? geo : {};
+  const google = text(isRecord(g["Google"]) ? g["Google"]["Coordinates"] : g["Google"]);
+  if (google !== undefined) {
+    const [lat, lon] = google.split(/[\s,]+/);
+    return unplacedReason(lat, lon);
+  }
+  for (const format of ["DecimalDegree", "DegreeMinuteSeconds"]) {
+    const c = g[format];
+    if (isRecord(c)) return unplacedReason(c["Latitude"], c["Longitude"]);
+  }
+  return "no_geometry";
+}
+
 /** The first name a record gives, with its language; OICP sends a list or one object. */
 function nameOf(names: unknown): { name: string; lang: string } | undefined {
   const list = Array.isArray(names) ? names : [names];
@@ -143,8 +160,9 @@ const strings = (value: unknown): string[] =>
  * plug, one facility per plug pairs by position; otherwise power is left out
  * rather than guessed. OICP writes power in kW, as a number or as text; the
  * Swiss federal file writes a facility's `PowerType` and `Power` lowercase.
+ * A plug name or power type outside OICP's lists is left unread and counted.
  */
-function connectorsOf(record: Raw): ConnectorInput[] {
+function connectorsOf(feedId: string, record: Raw): ConnectorInput[] {
   const facilities = (
     Array.isArray(record["ChargingFacilities"]) ? record["ChargingFacilities"] : []
   ).filter(isRecord);
@@ -157,7 +175,11 @@ function connectorsOf(record: Raw): ConnectorInput[] {
           ? facilities[i]
           : undefined;
     const known = PLUGS[plug];
+    if (known === undefined) recordSkipped(feedId, "unknown_value");
     const powerType = text(facility?.["PowerType"] ?? facility?.["powertype"])?.toUpperCase();
+    if (powerType !== undefined && !POWER_TYPES.has(powerType)) {
+      recordSkipped(feedId, "unknown_value");
+    }
     const power = parsePowerKw(facility?.["Power"] ?? facility?.["power"]);
     const voltage = num(facility?.["Voltage"]);
     const amperage = num(facility?.["Amperage"]);
@@ -181,12 +203,14 @@ interface Pool {
   records: Raw[];
 }
 
-function siteOf(stationId: string, pool: Pool): SiteInput {
+function siteOf(feedId: string, stationId: string, pool: Pool): SiteInput {
   const [first] = pool.records as [Raw, ...Raw[]];
   const named = nameOf(first["ChargingStationNames"]);
   const address = isRecord(first["Address"]) ? first["Address"] : {};
   const audience = AUDIENCE[text(first["Accessibility"]) ?? ""];
-  const parkingType = PARKING[text(first["AccessibilityLocation"]) ?? ""];
+  const location = text(first["AccessibilityLocation"]);
+  const parkingType = location === undefined ? undefined : PARKING[location];
+  if (location !== undefined && parkingType === undefined) recordSkipped(feedId, "unknown_value");
   const authentication = [
     ...new Set(
       strings(first["AuthenticationModes"]).flatMap((m) =>
@@ -196,7 +220,9 @@ function siteOf(stationId: string, pool: Pool): SiteInput {
   ];
   const evses: EvseInput[] = pool.records.flatMap((record) => {
     const evseId = text(record["EvseID"]);
-    return evseId === undefined ? [] : [{ key: evseId, evseId, connectors: connectorsOf(record) }];
+    return evseId === undefined
+      ? []
+      : [{ key: evseId, evseId, connectors: connectorsOf(feedId, record) }];
   });
   const street = [text(address["Street"]), text(address["HouseNum"])]
     .filter((p) => p !== undefined)
@@ -236,18 +262,25 @@ export function parseOicp(
   if (main.length === 0) return out;
   const pools = new Map<string, Pool>();
   const index: StatusIndexDraft = new Map();
-  let rejected = 0;
   for (const body of main) {
     const doc = JSON.parse(body.toString("utf8")) as unknown;
     const groups = isRecord(doc) && Array.isArray(doc["EVSEData"]) ? doc["EVSEData"] : [];
     for (const group of groups.filter(isRecord)) {
       const operator = text(group["OperatorName"]) ?? text(group["OperatorID"]);
       const records = Array.isArray(group["EVSEDataRecord"]) ? group["EVSEDataRecord"] : [];
-      for (const record of records.filter(isRecord)) {
+      for (const record of records) {
+        if (!isRecord(record)) {
+          recordSkipped(feed.id, "malformed");
+          continue;
+        }
         const evseId = text(record["EvseID"]);
+        if (evseId === undefined) {
+          recordSkipped(feed.id, "malformed");
+          continue;
+        }
         const point = pointOf(record["GeoCoordinates"]);
-        if (evseId === undefined || point === undefined) {
-          rejected++;
+        if (point === undefined) {
+          recordSkipped(feed.id, unplacedOf(record["GeoCoordinates"]));
           continue;
         }
         if (index.has(evseId)) continue;
@@ -268,9 +301,8 @@ export function parseOicp(
     }
   }
   for (const [stationId, pool] of pools) {
-    out.features.push(siteDraft(feed, siteOf(stationId, pool), ctx.fetchedAt));
+    out.features.push(siteDraft(feed, siteOf(feed.id, stationId, pool), ctx.fetchedAt));
   }
-  out.rejected = rejected;
   out.statusIndex = index;
   colocateSites(out);
   out.observations = parseOicpStatus(feed, payloads, ctx, index).observations;
@@ -279,8 +311,9 @@ export function parseOicp(
 
 /**
  * The status file: a reading per record of an indexed EVSE, as of the fetch;
- * a record of an EVSE the index does not hold is rejected. The Swiss federal
- * file writes OICP's `EvseStatus` as `EVSEStatus`.
+ * a record of an EVSE the index does not hold is rejected; one without a
+ * status, or with a status outside OICP's list, is no reading and counted.
+ * The Swiss federal file writes OICP's `EvseStatus` as `EVSEStatus`.
  */
 export function parseOicpStatus(
   feed: ChargingCatalogFeed,
@@ -300,8 +333,12 @@ export function parseOicpStatus(
           reader.reject();
           continue;
         }
-        const status = OICP_EVSE_STATUSES[text(record["EvseStatus"] ?? record["EVSEStatus"]) ?? ""];
-        if (typeof status !== "string") continue;
+        const written = text(record["EvseStatus"] ?? record["EVSEStatus"]);
+        const status = written === undefined ? undefined : OICP_EVSE_STATUSES[written];
+        if (typeof status !== "string") {
+          recordSkipped(feed.id, written === undefined ? "malformed" : "unknown_value");
+          continue;
+        }
         for (const subject of subjects) reader.read(subject, status as EvseStatus, undefined);
       }
     }

@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { AUDIENCES, AUTHENTICATION_METHODS } from "@openconditions/model";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
@@ -16,7 +17,7 @@ import {
   type SiteInput,
   siteDraft,
 } from "../site.js";
-import { isRecord, placeAt, type Raw, text } from "./raw.js";
+import { isRecord, placeAt, type Raw, text, unplacedReason } from "./raw.js";
 
 /** NOBIL attribute type ids that the records are read by. */
 const ATTR = {
@@ -94,6 +95,14 @@ function pointOf(value: unknown): [number, number] | undefined {
     : placeAt(Number(m[1]), Number(m[2]));
 }
 
+/** Why `pointOf` placed nothing: no position written, or an unreadable one. */
+function unplacedOf(value: unknown): "no_geometry" | "malformed" {
+  const t = text(value);
+  if (t === undefined) return "no_geometry";
+  const [lat, lon] = t.replace(/[()\s]/g, "").split(",");
+  return unplacedReason(lat, lon);
+}
+
 const isAttribute = (value: unknown): value is Raw => isRecord(value) && "attrtypeid" in value;
 
 /**
@@ -163,12 +172,16 @@ function capacityOf(label: string | undefined): Capacity {
   };
 }
 
-function evseOf(index: string, attrs: Raw): EvseInput | undefined {
+/**
+ * A connector entry's charge point; a connector value NOBIL does not list is
+ * left unread and counted.
+ */
+function evseOf(feedId: string, index: string, attrs: Raw): EvseInput | undefined {
   const valueId = text(attrOf(attrs, ATTR.connector)?.["attrvalid"]);
   if (valueId !== undefined && NOT_CHARGING.has(valueId)) return undefined;
-  const plugs = (valueId === undefined ? undefined : PLUGS[valueId]) ?? [
-    { standard: "UNKNOWN", rated: true },
-  ];
+  const known = valueId === undefined ? undefined : PLUGS[valueId];
+  if (valueId !== undefined && known === undefined) recordSkipped(feedId, "unknown_value");
+  const plugs = known ?? [{ standard: "UNKNOWN", rated: true }];
   const fixed = attributeText(attrs, ATTR.fixedCable)?.toLowerCase();
   const capacity = capacityOf(attributeText(attrs, ATTR.capacity));
   const uid = text(attrOf(attrs, ATTR.evseUid)?.["attrval"]);
@@ -204,11 +217,17 @@ function lifecycleOf(csmd: Raw): Lifecycle {
   return text(csmd["Station_status"]) === "1" ? "operational" : "unknown";
 }
 
-function siteOf(csmd: Raw, attr: Raw, stationId: string, point: [number, number]): SiteInput {
+function siteOf(
+  feedId: string,
+  csmd: Raw,
+  attr: Raw,
+  stationId: string,
+  point: [number, number],
+): SiteInput {
   const st = isRecord(attr["st"]) ? attr["st"] : {};
   const entries = entriesOf(attr["conn"]);
   const evses = entries.flatMap(({ index, attrs }) => {
-    const evse = evseOf(index, attrs);
+    const evse = evseOf(feedId, index, attrs);
     return evse === undefined ? [] : [evse];
   });
   const countryCode = (text(csmd["Land_code"]) ?? "").toLowerCase();
@@ -248,7 +267,10 @@ function siteOf(csmd: Raw, attr: Raw, stationId: string, point: [number, number]
  * and `attr.st` (the station's attributes) and `attr.conn` (a connector's, or
  * a map of connectors by index). One EVSE per connector entry; a station's
  * advertised point count is not turned into points the record does not
- * describe. NOBIL publishes the station's status as a register state.
+ * describe. NOBIL publishes the station's status as a register state. A
+ * station without its `csmd` or an id, or listed again under one, is
+ * malformed; one without a position, or with one that places nothing, is
+ * counted as such.
  */
 export function parseNobil(
   feed: ChargingCatalogFeed,
@@ -256,7 +278,6 @@ export function parseNobil(
   ctx: ParseContext,
 ): ParseOutput {
   const out = emptyParseOutput();
-  let rejected = 0;
   const seen = new Set<string>();
   for (const body of payloads["main"] ?? []) {
     const doc = JSON.parse(body.toString("utf8")) as unknown;
@@ -264,19 +285,22 @@ export function parseNobil(
     const stations = docs.flatMap((d) =>
       isRecord(d) && Array.isArray(d["chargerstations"]) ? d["chargerstations"] : [],
     );
-    for (const station of stations.filter(isRecord)) {
-      const csmd = isRecord(station["csmd"]) ? station["csmd"] : undefined;
-      const attr = isRecord(station["attr"]) ? station["attr"] : {};
+    for (const station of stations) {
+      const csmd = isRecord(station) && isRecord(station["csmd"]) ? station["csmd"] : undefined;
       const id = text(csmd?.["International_id"]) ?? text(csmd?.["id"]);
-      const point = pointOf(csmd?.["Position"]);
-      if (csmd === undefined || id === undefined || point === undefined || seen.has(id)) {
-        rejected++;
+      if (csmd === undefined || id === undefined || seen.has(id)) {
+        recordSkipped(feed.id, "malformed");
         continue;
       }
+      const point = pointOf(csmd["Position"]);
+      if (point === undefined) {
+        recordSkipped(feed.id, unplacedOf(csmd["Position"]));
+        continue;
+      }
+      const attr = isRecord(station["attr"]) ? station["attr"] : {};
       seen.add(id);
-      out.features.push(siteDraft(feed, siteOf(csmd, attr, id, point), ctx.fetchedAt));
+      out.features.push(siteDraft(feed, siteOf(feed.id, csmd, attr, id, point), ctx.fetchedAt));
     }
   }
-  out.rejected = rejected;
   return out;
 }

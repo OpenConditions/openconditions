@@ -3,6 +3,7 @@ import {
   type FeedPayloads,
   type ParseContext,
   type ParseOutput,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { AUDIENCES, PAYMENT_METHODS } from "@openconditions/model";
 import { colocateSites } from "../colocate.js";
@@ -19,7 +20,7 @@ import {
   siteDraft,
 } from "../site.js";
 import { type DelimitedRow, readDelimited } from "./delimited.js";
-import { placeFromText, positiveInteger, text } from "./raw.js";
+import { placeFromText, positiveInteger, text, unplacedReason } from "./raw.js";
 
 /** The register lists up to this many charge points of one device in its own columns. */
 const SLOTS = 6;
@@ -165,8 +166,15 @@ const AUDIENCE: Readonly<Record<string, (typeof AUDIENCES)[number]>> = {
   "nur für kunden/besucher": "customers",
 };
 
-/** The connectors of one charge point: a plug per list entry, power by position. */
-function connectorsOf(plugs: string[], powers: (number | undefined)[]): ConnectorInput[] {
+/**
+ * The connectors of one charge point: a plug per list entry, power by
+ * position. A plug name the register does not list is left unread and counted.
+ */
+function connectorsOf(
+  feedId: string,
+  plugs: string[],
+  powers: (number | undefined)[],
+): ConnectorInput[] {
   if (plugs.length === 0) {
     return [
       {
@@ -178,6 +186,7 @@ function connectorsOf(plugs: string[], powers: (number | undefined)[]): Connecto
   }
   return plugs.map((name, j) => {
     const known = PLUGS[name];
+    if (known === undefined) recordSkipped(feedId, "unknown_value");
     const kw = powers[j] ?? (powers.length === 1 ? powers[0] : undefined);
     return {
       id: String(j + 1),
@@ -190,7 +199,7 @@ function connectorsOf(plugs: string[], powers: (number | undefined)[]): Connecto
   });
 }
 
-function evsesOf(stationId: string, row: DelimitedRow): EvseInput[] {
+function evsesOf(feedId: string, stationId: string, row: DelimitedRow): EvseInput[] {
   const count = positiveInteger(row["Anzahl Ladepunkte"]);
   const deviceKw = parsePowerKw(row["Nennleistung Ladeeinrichtung [kW]"]);
   const slot = (i: number) => ({
@@ -216,7 +225,7 @@ function evsesOf(stationId: string, row: DelimitedRow): EvseInput[] {
     return {
       key: evseId ?? `${stationId}-${i}`,
       ...(evseId === undefined ? {} : { evseId }),
-      connectors: connectorsOf(s.plugs, powers),
+      connectors: connectorsOf(feedId, s.plugs, powers),
     };
   });
   if (count !== undefined && count > SLOTS) {
@@ -237,8 +246,16 @@ function evsesOf(stationId: string, row: DelimitedRow): EvseInput[] {
  * site where the map name and the location label are empty: the operator is
  * no name.
  */
-function deviceSite(id: string, row: DelimitedRow, point: [number, number]): SiteInput {
+function deviceSite(
+  feedId: string,
+  id: string,
+  row: DelimitedRow,
+  point: [number, number],
+): SiteInput {
   const hours = hoursOf(row);
+  const status = text(row["Status"]);
+  const lifecycle = status === undefined ? undefined : LIFECYCLES[status];
+  if (status !== undefined && lifecycle === undefined) recordSkipped(feedId, "unknown_value");
   const payments = [...new Set(items(row["Bezahlsysteme"]).flatMap((p) => PAYMENTS[p] ?? []))];
   const audience = AUDIENCE[(row["Informationen zum Parkraum"] ?? "").toLowerCase()];
   const operator = text(row["Betreiber"]);
@@ -256,7 +273,7 @@ function deviceSite(id: string, row: DelimitedRow, point: [number, number]): Sit
       postalCode: row["Postleitzahl"],
       city: row["Ort"],
     },
-    lifecycle: LIFECYCLES[row["Status"] ?? ""] ?? "unknown",
+    lifecycle: lifecycle ?? "unknown",
     ...(hours.osm === undefined ? {} : { openingHoursOsm: hours.osm }),
     ...(hours.text === undefined ? {} : { openingHoursText: hours.text }),
     ...(audience === undefined ? {} : { audience }),
@@ -264,7 +281,7 @@ function deviceSite(id: string, row: DelimitedRow, point: [number, number]): Sit
     ...(items(row["Bezahlsysteme"]).includes("Plug & Charge")
       ? { authentication: ["plug_and_charge" as const] }
       : {}),
-    evses: evsesOf(id, row),
+    evses: evsesOf(feedId, id, row),
   };
 }
 
@@ -277,7 +294,9 @@ function deviceSite(id: string, row: DelimitedRow, point: [number, number]): Sit
  * One device in service keeps the site in service; a device whose state
  * differs carries it on its own charge points. The commissioning date is no
  * update time. The register states no live status, so "In Betrieb" and
- * "In Wartung" set the lifecycle and no reading is written.
+ * "In Wartung" set the lifecycle and no reading is written. A row without a
+ * device id is malformed; one without a position, or with one that places
+ * nothing, is counted as such.
  */
 export function parseBnetza(
   feed: ChargingCatalogFeed,
@@ -286,25 +305,27 @@ export function parseBnetza(
 ): ParseOutput {
   const out = emptyParseOutput();
   const seen = new Set<string>();
-  let rejected = 0;
   for (const body of payloads["main"] ?? []) {
     readDelimited(
       body,
       { delimiter: ";", columns: COLUMNS, headerStartsWith: HEADER_START },
       (row) => {
         const id = text(row[HEADER_START]);
+        if (id === undefined) {
+          recordSkipped(feed.id, "malformed");
+          return;
+        }
         const point = placeFromText(row["Breitengrad"], row["Längengrad"]);
-        if (id === undefined || point === undefined) {
-          rejected++;
+        if (point === undefined) {
+          recordSkipped(feed.id, unplacedReason(row["Breitengrad"], row["Längengrad"]));
           return;
         }
         // A device listed twice is the device once, not a malformed row.
         if (seen.has(id)) return;
         seen.add(id);
-        out.features.push(siteDraft(feed, deviceSite(id, row, point), ctx.fetchedAt));
+        out.features.push(siteDraft(feed, deviceSite(feed.id, id, row, point), ctx.fetchedAt));
       },
     );
   }
-  out.rejected = rejected;
   return colocateSites(out);
 }
