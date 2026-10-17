@@ -57,6 +57,14 @@ const COMPASS: Record<string, DirectionRef["compass"]> = {
   nw: "NW",
 };
 
+/** Ring-road loops as sources write them (WZDx `inner-loop`, `outer-loop`). */
+const LOOPS: Record<string, DirectionRef["loop"]> = {
+  "inner-loop": "inner",
+  "inner loop": "inner",
+  "outer-loop": "outer",
+  "outer loop": "outer",
+};
+
 const BOTH = new Set([
   "both",
   "bothways",
@@ -70,7 +78,8 @@ const BOTH = new Set([
 /**
  * A parser's free-text direction as a DirectionRef. A bearing becomes basis
  * `bearing`, a compass token basis `compass`, an Alert-C direction on a
- * TMC-located event basis `alert_c`; anything else stays verbatim text with
+ * TMC-located event basis `alert_c`, a ring road's inner or outer loop its
+ * `loop` beside the verbatim text; anything else stays verbatim text with
  * value `unknown` (or `both` when it says so). Only an Alert-C direction
  * carries an axis, so only it may be positive or negative.
  */
@@ -98,6 +107,8 @@ export function directionFromText(
   }
   const compass = entryOf(COMPASS, lower);
   if (compass) return { value: "unknown", basis: "compass", compass, text: raw };
+  const loop = entryOf(LOOPS, lower);
+  if (loop) return { value: "unknown", basis: "text", loop, text: raw };
   return { value: BOTH.has(lower) ? "both" : "unknown", basis: "text", text: raw };
 }
 

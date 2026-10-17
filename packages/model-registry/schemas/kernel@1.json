@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "OpenConditions kernel 1.0",
+  "title": "OpenConditions kernel 1.1",
   "$defs": {
     "Text": {
       "minItems": 1,
@@ -925,7 +925,8 @@
             "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
-            "glide"
+            "glide",
+            "gvp:volcano"
           ]
         },
         "id": {
@@ -1066,6 +1067,13 @@
           "type": "number",
           "minimum": 0,
           "exclusiveMaximum": 360
+        },
+        "loop": {
+          "type": "string",
+          "enum": [
+            "inner",
+            "outer"
+          ]
         },
         "toward": {
           "type": "string",

@@ -109,13 +109,17 @@ const SHOPS: Readonly<Record<string, string>> = {
   supermarket: "supermarket",
 };
 
+/** A table's own entry for a tag value; an inherited key such as `constructor` is none. */
+const own = <T>(table: Readonly<Record<string, T>>, key: string): T | undefined =>
+  Object.hasOwn(table, key) ? table[key] : undefined;
+
 /** The station's amenity tags, each `yes` but for `shop` and `internet_access`. */
 function amenitiesOf(tags: Record<string, string>): string[] {
   const yes = (key: string) => tags[key]?.trim().toLowerCase() === "yes";
   const shop = tags["shop"]?.trim().toLowerCase();
   const internet = tags["internet_access"]?.trim().toLowerCase();
   return [
-    ...(shop && shop !== "no" ? [SHOPS[shop] ?? "shop"] : []),
+    ...(shop && shop !== "no" ? [own(SHOPS, shop) ?? "shop"] : []),
     ...(yes("kiosk") ? ["kiosk"] : []),
     ...(yes("car_wash") ? ["car_wash"] : []),
     ...(yes("atm") ? ["cash_machine"] : []),
@@ -134,7 +138,8 @@ function paymentOf(tags: Record<string, string>, skip: (reason: "unknown_value")
   for (const [key, raw] of Object.entries(tags)) {
     if (!key.startsWith("payment:")) continue;
     const value = raw.trim().toLowerCase();
-    if (value === "yes") methods.push(PAYMENT[key.slice(8).toLowerCase()] ?? "other");
+    const method = key.slice(8).toLowerCase();
+    if (value === "yes") methods.push(own(PAYMENT, method) ?? "other");
     else if (value !== "no") skip("unknown_value");
   }
   return methods;
@@ -224,7 +229,7 @@ export function parseOverpassFuel(
       }
       const products = productsOf(tags, serviceOf(tags), skip);
       const access = tag(tags, "access")?.toLowerCase();
-      const audience = access === undefined ? undefined : ACCESS[access];
+      const audience = access === undefined ? undefined : own(ACCESS, access);
       if (access !== undefined && audience === undefined) skip("unknown_value");
       const payment = paymentOf(tags, skip);
       const hgv = tag(tags, "hgv")?.toLowerCase();

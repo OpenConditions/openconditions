@@ -24,6 +24,9 @@ const FEED = "es-minetur-fuel";
 const station = (features: Draft[], id: string) =>
   features.find((f) => f["id"] === `oc:feature:es-minetur-fuel:${id}`);
 
+const components = (feature: Draft | undefined) =>
+  (feature?.["components"] as { key: string; details: Draft }[] | undefined) ?? [];
+
 const componentKeys = (feature: Draft | undefined) =>
   (feature?.["components"] as { key: string }[] | undefined)?.map((c) => c.key);
 
@@ -162,6 +165,99 @@ describe("MINETUR", () => {
   test("a priced column of a grade the parser does not know is a value not read", () => {
     const { features } = parse(patched("15959", { "Precio Gasolina 100": "2,019" }));
     expect(features).toHaveLength(2);
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 2, no_geometry: 1 });
+  });
+
+  test("a station on a road with a kilometre point stands beside the side Margen names", () => {
+    const right = parse(patched("15959", { Dirección: "AUTOVIA A-31 KM. 143,350", Margen: "D" }));
+    const onRoad = station(right.features, "15959")!;
+    expect((onRoad["location"] as Draft)["roads"]).toEqual([{ ref: "A-31", kmFrom: 143.35 }]);
+    expect(onRoad["details"]).toMatchObject({
+      direction: { value: "positive", basis: "road_reference" },
+    });
+    const left = parse(
+      patched("15959", { Dirección: "CARRETERA N IV MADRID-CADIZ KM 531,5", Margen: "I" }),
+    );
+    const nIv = station(left.features, "15959")!;
+    expect((nIv["location"] as Draft)["roads"]).toEqual([{ ref: "N-IV", kmFrom: 531.5 }]);
+    expect(nIv["details"]).toMatchObject({ direction: { value: "negative" } });
+    const european = parse(patched("15959", { Dirección: "CARRETERA E-15/N-340 KM. 471" }));
+    expect((station(european.features, "15959")!["location"] as Draft)["roads"]).toEqual([
+      { ref: "N-340", kmFrom: 471 },
+    ]);
+    const regional = parse(patched("15959", { Dirección: "AUTOVIA EX-A2 DE MIAJADAS KM. 6,160" }));
+    expect(station(regional.features, "15959")!["location"]).not.toHaveProperty("roads");
+    expect(sealFailures([...right.features, ...left.features])).toEqual([]);
+  });
+
+  test("a side without a road to read it against, or Margen N, places no side", () => {
+    const { features } = parse();
+    for (const id of ["15083", "15959"]) {
+      expect(station(features, id)!["details"]).not.toHaveProperty("direction");
+      expect(station(features, id)!["location"]).not.toHaveProperty("roads");
+    }
+    const none = parse(patched("15959", { Dirección: "CARRETERA N-340 KM. 963,7", Margen: "N" }));
+    expect(station(none.features, "15959")!["details"]).not.toHaveProperty("direction");
+    expect((station(none.features, "15959")!["location"] as Draft)["roads"]).toEqual([
+      { ref: "N-340", kmFrom: 963.7 },
+    ]);
+  });
+
+  test("a Margen the ministry does not define is counted", () => {
+    __resetSkips();
+    parse(patched("15959", { Margen: "X" }));
+    // 15083's Monday-only Horario is the other value not read.
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 2, no_geometry: 1 });
+  });
+
+  test("a biodiesel and a bioethanol are the blends their declared shares make them", () => {
+    const blend = (fields: Record<string, string>) => {
+      const { features } = parse(patched("15959", fields));
+      return components(station(features, "15959")).filter(
+        (c) => c.details["biofuelPct"] !== undefined || ["b100", "ethanol"].includes(c.key),
+      );
+    };
+    const b7 = blend({ "Precio Biodiesel": "1,699", "% Éster metílico": "7,0" });
+    expect(b7.map((c) => [c.key, c.details["grade"], c.details["biofuelPct"]])).toEqual([
+      ["b7", "b7", 7],
+    ]);
+    const neat = blend({ "Precio Biodiesel": "1,990", "% Éster metílico": "96,5" });
+    expect(neat.map((c) => [c.key, c.details["biofuelPct"]])).toEqual([["b100", 96.5]]);
+    const b30 = blend({ "Precio Biodiesel": "2,089", "% Éster metílico": "30,0" });
+    expect(b30.map((c) => c.key)).toEqual(["b30"]);
+    const odd = blend({ "Precio Biodiesel": "2,089", "% Éster metílico": "50,0" });
+    expect(odd.map((c) => [c.key, c.details["biofuelPct"]])).toEqual([["b100", 50]]);
+    const e85 = blend({ "Precio Bioetanol": "2,399", "% BioEtanol": "85,0" });
+    expect(e85.map((c) => [c.key, c.details["biofuelPct"]])).toEqual([["e85", 85]]);
+    const undeclared = blend({ "Precio Biodiesel": "1,749", "% Éster metílico": "0,0" });
+    expect(undeclared.map((c) => [c.key, c.details["biofuelPct"]])).toEqual([["b100", undefined]]);
+  });
+
+  test("a blend already priced in its own column keeps the biofuel column's grade", () => {
+    const { features } = parse(
+      patched("15959", {
+        "Precio Bioetanol": "2,399",
+        "% BioEtanol": "85,0",
+        "Precio Gasolina 95 E85": "1,299",
+      }),
+    );
+    const blends = components(station(features, "15959"))
+      .filter((c) => c.key === "e85" || c.key === "ethanol")
+      .map((c) => [c.key, c.details["biofuelPct"]]);
+    expect(blends).toEqual([
+      ["ethanol", 85],
+      ["e85", undefined],
+    ]);
+  });
+
+  test("a share that is no percentage is counted and not read", () => {
+    __resetSkips();
+    const { features } = parse(
+      patched("15959", { "Precio Biodiesel": "1,749", "% Éster metílico": "siete" }),
+    );
+    expect(
+      components(station(features, "15959")).find((c) => c.key === "b100")?.details,
+    ).not.toHaveProperty("biofuelPct");
     expect(drainSkipped(FEED)).toEqual({ unknown_value: 2, no_geometry: 1 });
   });
 

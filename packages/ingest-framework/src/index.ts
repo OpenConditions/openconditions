@@ -15,6 +15,7 @@ export * from "./catalog/schema.js";
 export * from "./catalog/templates.js";
 export * from "./catalog/terms.js";
 export * from "./catalog/types.js";
+export * from "./countries.js";
 export * from "./crowd.js";
 export * from "./download.js";
 export * from "./egress.js";

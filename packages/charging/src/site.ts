@@ -1,4 +1,8 @@
-import type { ParseContext, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  countryAlpha2 as alpha2,
+  type ParseContext,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import {
   type AUDIENCES,
   type AUTHENTICATION_METHODS,
@@ -15,7 +19,6 @@ import {
   type EVSE_STATUSES,
 } from "@openconditions/model-charging";
 import { normaliseEmi3 } from "@openconditions/ocpi";
-import { alpha2 } from "./countries.js";
 import {
   type ChargingFeed,
   clean,

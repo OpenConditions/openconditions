@@ -106,6 +106,32 @@ const categoriesOf = (event: Record<string, unknown>): string[] =>
     isRecord(c) && text(c["id"]) !== undefined ? [String(c["id"])] : [],
   );
 
+/** A Global Volcanism Program volcano number: six digits (`357070`). */
+const GVP_NUMBER = /^\d{6}$/;
+
+/**
+ * The volcano numbers of the Smithsonian Global Volcanism Program pages an
+ * event cites as its `SIVolcano` sources (`volcano.cfm?vn=357070`), and how
+ * many such sources name no number.
+ */
+function volcanoNumbersOf(event: Record<string, unknown>): { ids: string[]; unread: number } {
+  const ids = new Set<string>();
+  let unread = 0;
+  for (const source of sourcesOf(event)) {
+    if (text(source["id"]) !== "SIVolcano") continue;
+    const url = text(source["url"]);
+    let vn: string | null = null;
+    try {
+      vn = url === undefined ? null : new URL(url).searchParams.get("vn");
+    } catch {
+      vn = null;
+    }
+    if (vn !== null && GVP_NUMBER.test(vn)) ids.add(vn);
+    else unread++;
+  }
+  return { ids: [...ids], unread };
+}
+
 /**
  * The hazard type an event is; `terminal` when another source reports it
  * first-hand or its categories have no place in the model; or why it is
@@ -148,6 +174,8 @@ function toDraft(
   if (unit !== undefined && area === undefined) recordSkipped(feed.id, "unknown_value");
   const hectares =
     last.magnitude === undefined || area === undefined ? undefined : last.magnitude.value * area;
+  const volcanoes = volcanoNumbersOf(event);
+  recordSkipped(feed.id, "unknown_value", volcanoes.unread);
   return {
     id: situationId(feed, id),
     class: "situation",
@@ -155,6 +183,9 @@ function toDraft(
     type,
     ...(type === "sea_ice" && /^iceberg\b/i.test(title ?? "") ? { subtype: "iceberg" } : {}),
     temporality: "live",
+    ...(volcanoes.ids.length === 0
+      ? {}
+      : { externalIds: volcanoes.ids.map((id) => ({ scheme: "gvp:volcano", id })) }),
     location: {
       geometry,
       extent: geometry.type === "Point" ? "point" : "area",
@@ -196,7 +227,10 @@ function toDraft(
  * events, snow, temperature extremes and water colour, which the model has
  * no type for. An event of only categories this format does not know is
  * skipped as `unknown_type`. The record is placed at the event's latest
- * dated geometry, a point or a polygon; an event with no geometry is skipped
+ * dated geometry, a point or a polygon. A volcano's Smithsonian Global
+ * Volcanism Program page among its sources (`SIVolcano`) gives its
+ * `gvp:volcano` number; such a source without one is `unknown_value`. An
+ * event with no geometry is skipped
  * as `no_geometry`, and one with no id or category, no dated geometry, or
  * whose latest geometry is unreadable or out of range as `malformed`, never
  * the payload. EONET leaves events open for

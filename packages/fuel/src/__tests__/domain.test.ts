@@ -20,9 +20,15 @@ test("fuelDomain registers every format with produces", () => {
     expect(format.kind).toBe("features");
     expect(format.products).toEqual(["fuel"]);
     expect(format.endpoints).toEqual({ main: { required: true } });
+    // Tankerkönig and E-Control also say whether each station is open now.
+    const openStatus = code === "tankerkoenig" || code === "econtrol";
     expect(format.produces).toEqual({
       kinds: ["fuel_station"],
-      properties: ["fuel.price", "fuel.product_available"],
+      properties: [
+        "fuel.price",
+        "fuel.product_available",
+        ...(openStatus ? ["facility.open_status"] : []),
+      ],
     });
   }
 });

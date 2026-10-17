@@ -93,6 +93,24 @@ describe("natural hazards", () => {
     expect(registry.validateDraft(withDetails({ ignitionCause: "lightning" })).ok).toBe(false);
   });
 
+  it("describes a fire's behaviour in the ICS-209's general terms and its additional ones", () => {
+    const behaviour = {
+      fireBehavior: "extreme",
+      fireBehaviorDescriptors: ["crowning", "spotting"],
+    };
+    expect(valid(withDetails(behaviour))).toBe(true);
+    expect(valid(withDetails({ fireBehavior: "very_active" }))).toBe(false);
+    expect(valid(withDetails({ fireBehaviorDescriptors: [] }))).toBe(false);
+    expect(valid(withDetails({ fireBehaviorDescriptors: ["raging"] }))).toBe(false);
+  });
+
+  it("grades an event's latest episode apart from the event, never as unknown", () => {
+    expect(valid(withDetails({ episodeSeverity: { label: "minor", declaredRaw: "Green" } }))).toBe(
+      true,
+    );
+    expect(valid(withDetails({ episodeSeverity: { label: "unknown" } }))).toBe(false);
+  });
+
   it("refuses a fire contained beyond its whole perimeter", () => {
     expect(registry.validateDraft(withDetails({ containmentPct: 150 })).ok).toBe(false);
   });
@@ -207,6 +225,17 @@ describe("natural hazards", () => {
     expect(schemes.values).toContain("cisorp");
     expect(schemes.values).toContain("fips10_4");
     expect(schemes.values).toContain("fips");
+  });
+
+  it("names a volcano by its Global Volcanism Program number", () => {
+    const { subtype: _fireOnly, ...event } = perimeter;
+    const volcano = {
+      ...event,
+      type: "volcano",
+      externalIds: [{ scheme: "gvp:volcano", id: "357070" }],
+      details: { kind: "natural_hazard", v: 1 },
+    };
+    expect(valid(volcano)).toBe(true);
   });
 
   it("contributes the hazards source formats", () => {

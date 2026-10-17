@@ -149,6 +149,39 @@ describe("tankerkoenig", () => {
     expect(drainSkipped(FEED)).toEqual({ no_geometry: 1, malformed: 2 });
   });
 
+  test("isOpen is the station's own open status as of the fetch", () => {
+    const { observations } = parse();
+    const status = observations.filter((o) => o["property"] === "facility.open_status");
+    expect(status.map((o) => [o["subject"], o["result"], o["phenomenonTime"]])).toEqual([
+      [
+        { kind: "feature", featureId: featureId(TOTAL) },
+        { type: "category", value: "closed", vocabulary: "facility_open_status" },
+        { instant: FETCHED },
+      ],
+      [
+        { kind: "feature", featureId: expect.any(String) as unknown },
+        { type: "category", value: "open", vocabulary: "facility_open_status" },
+        { instant: FETCHED },
+      ],
+      [
+        { kind: "feature", featureId: featureId(DIESEL_ONLY) },
+        { type: "category", value: "open", vocabulary: "facility_open_status" },
+        { instant: FETCHED },
+      ],
+    ]);
+    expect(drainSkipped(FEED)).toEqual({});
+  });
+
+  test("an isOpen that is no boolean is counted, and no status is drafted", () => {
+    const answer = JSON.parse(fixture("tankerkoenig-list.json").toString("utf8"));
+    (answer.stations as Draft[])[0]!["isOpen"] = "maybe";
+    (answer.stations as Draft[])[1]!["isOpen"] = null;
+    const { features, observations } = parse(Buffer.from(JSON.stringify(answer)));
+    expect(features).toHaveLength(3);
+    expect(observations.filter((o) => o["property"] === "facility.open_status")).toHaveLength(1);
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1 });
+  });
+
   test("every drafted record seals", () => {
     const { features, observations } = parse();
     expect(features).toHaveLength(3);

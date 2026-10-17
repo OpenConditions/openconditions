@@ -763,7 +763,8 @@
             "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
-            "glide"
+            "glide",
+            "gvp:volcano"
           ]
         },
         "id": {
@@ -2031,6 +2032,13 @@
           "type": "number",
           "minimum": 0,
           "exclusiveMaximum": 360
+        },
+        "loop": {
+          "type": "string",
+          "enum": [
+            "inner",
+            "outer"
+          ]
         },
         "toward": {
           "type": "string",

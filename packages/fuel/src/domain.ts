@@ -20,16 +20,26 @@ const PRODUCES = {
   properties: ["fuel.price", "fuel.product_available"],
 } as const;
 
+/** What a format that also states whether each station is open emits. */
+const PRODUCES_OPEN_STATUS = {
+  kinds: PRODUCES.kinds,
+  properties: [...PRODUCES.properties, "facility.open_status"],
+} as const;
+
 /**
  * A format of stations: a bulk poll's complete set, or an on-demand answer
  * for one cell.
  */
-function stations(id: string, parse: FeedFormat["parse"]): FeedFormat {
+function stations(
+  id: string,
+  parse: FeedFormat["parse"],
+  produces: FeedFormat["produces"] = PRODUCES,
+): FeedFormat {
   return {
     id,
     kind: "features",
     products: FUEL_PRODUCTS,
-    produces: PRODUCES,
+    produces,
     endpoints: { main: { required: true } },
     parse,
   };
@@ -38,8 +48,8 @@ function stations(id: string, parse: FeedFormat["parse"]): FeedFormat {
 const FORMATS: FeedFormat[] = [
   stations("minetur", parseMinetur),
   stations("prix-carburants", parsePrixCarburants),
-  stations("tankerkoenig", parseTankerkoenig),
-  stations("econtrol", parseEcontrol),
+  stations("tankerkoenig", parseTankerkoenig, PRODUCES_OPEN_STATUS),
+  stations("econtrol", parseEcontrol, PRODUCES_OPEN_STATUS),
   stations("overpass", parseOverpassFuel),
 ];
 

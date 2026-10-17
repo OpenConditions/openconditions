@@ -1,5 +1,5 @@
 import type { AccessMode } from "@openconditions/model";
-import type { LaneNumbering } from "./feed-schema.js";
+import type { LaneNumbering, SpeedUnit } from "./feed-schema.js";
 import type { GeoJsonMapping } from "./model.js";
 
 /**
@@ -67,4 +67,6 @@ export interface SourceDescriptor {
   srsName?: string;
   /** The IANA zone the publisher writes its times without an offset in; UTC without one. */
   timeZone?: string;
+  /** The unit the publisher writes the speeds its format states no unit for in. */
+  speedUnit?: SpeedUnit;
 }

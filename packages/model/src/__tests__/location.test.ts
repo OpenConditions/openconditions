@@ -41,6 +41,13 @@ describe("location", () => {
     expect(ok(DirectionRef, { value: "positive", basis: "road_reference" })).toBe(true);
   });
 
+  it("names the loop of a ring road, inner or outer only", () => {
+    const loop = { value: "unknown", basis: "text", text: "inner-loop" };
+    expect(ok(DirectionRef, { ...loop, loop: "inner" })).toBe(true);
+    expect(ok(DirectionRef, { ...loop, loop: "outer" })).toBe(true);
+    expect(ok(DirectionRef, { ...loop, loop: "clockwise" })).toBe(false);
+  });
+
   it("keeps extent none, null geometry and geometryOrigin none consistent", () => {
     const none = { geometry: null, extent: "none", geometryOrigin: "none", fuzziness: "exact" };
     expect(ok(LocationRef, none)).toBe(true);

@@ -161,6 +161,51 @@ describe("the gdacs format over the live captures", () => {
   test("no event expires on its own", () => {
     for (const s of out.situations) expect(s["freshness"]).toEqual({ fetchedAt: FETCHED });
   });
+
+  test("an event in one country is placed in it; one over several describes them all", () => {
+    expect(byId(out, "VO1000151")["location"]).toMatchObject({
+      admin: { country: "PH" },
+      areaDescription: [{ lang: "en", text: "Philippines" }],
+    });
+    const europe = byId(out, "DR1018332")["location"] as Record<string, unknown>;
+    expect(europe).not.toHaveProperty("admin");
+    expect(europe["areaDescription"]).toEqual([
+      {
+        lang: "en",
+        text: expect.stringMatching(/^Austria, Bosnia & Herzegovina, .*, Ukraine$/) as unknown,
+      },
+    ]);
+    expect(byId(out, "TC1001334")["location"]).not.toHaveProperty("admin");
+  });
+
+  test("each event carries its current episode's own alert beside the event's", () => {
+    expect(byId(out, "VO1000151")["details"]).toMatchObject({
+      episodeSeverity: { label: "major", declaredRaw: "Orange" },
+    });
+    expect(byId(out, "TC1001334")["details"]).toMatchObject({
+      episodeSeverity: { label: "minor", declaredRaw: "Green" },
+    });
+  });
+});
+
+describe("the gdacs format's countries and episodes over altered items", () => {
+  const rss = () => fixture("gdacs-rss.xml").toString("utf8");
+
+  test("an episode alert of another colour, and an iso3 that is no country, are counted", () => {
+    const altered = rss()
+      .replace(
+        "<gdacs:episodealertlevel>Orange</gdacs:episodealertlevel>",
+        "<gdacs:episodealertlevel>Purple</gdacs:episodealertlevel>",
+      )
+      .replace("<gdacs:iso3>THA</gdacs:iso3>", "<gdacs:iso3>XXX</gdacs:iso3>");
+    const out = parse({ events: [Buffer.from(altered)] });
+    expect(sealFailures(out.situations)).toEqual([]);
+    const withoutEpisode = out.situations.filter(
+      (s) => !("episodeSeverity" in (s["details"] as object)),
+    );
+    expect(withoutEpisode).toHaveLength(1);
+    expect(drainSkipped(feed.id)).toMatchObject({ unknown_value: 2 });
+  });
 });
 
 describe("the gdacs format without areas and over altered documents", () => {

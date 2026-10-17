@@ -11,6 +11,10 @@ import { ROAD_EVENT_TYPES } from "./model.js";
 export const LANE_NUMBERINGS = ["standard", "left_first"] as const;
 export type LaneNumbering = (typeof LANE_NUMBERINGS)[number];
 
+/** The units a publisher may write a unitless speed in. */
+export const SPEED_UNITS = ["km/h", "mph"] as const;
+export type SpeedUnit = (typeof SPEED_UNITS)[number];
+
 const roadEventType = z.enum(ROAD_EVENT_TYPES);
 /** Every registered roads situation code: `kind.type` and `kind.type.subtype`. */
 const SITUATION_CODES = ROADS_SITUATION_KINDS.flatMap((kind) =>
@@ -125,6 +129,12 @@ const roadsFeedExtension = {
    * read as UTC.
    */
   timezone: z.string().refine(isKnownTimeZone, { message: "unknown IANA time zone" }).optional(),
+  /**
+   * The unit the publisher writes the speeds its format states no unit for
+   * in: WZDx 3.1's `reduced_speed_limit`, which its schema leaves without
+   * one. Without it such a speed is not read.
+   */
+  speedUnit: z.enum(SPEED_UNITS).optional(),
 } as const;
 
 /**

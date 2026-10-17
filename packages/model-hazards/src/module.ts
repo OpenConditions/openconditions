@@ -71,7 +71,15 @@ export const hazardsModule: RegistryModule = {
     extendVocabulary({ vocabulary: "source_format", values: HAZARDS_SOURCE_FORMATS }),
     extendVocabulary({
       vocabulary: "external_id_scheme",
-      values: ["irwin", "nwcg:unique_fire_id", "usgs:event", "gdacs:event", "glide"],
+      values: [
+        "irwin",
+        "nwcg:unique_fire_id",
+        "usgs:event",
+        "gdacs:event",
+        "glide",
+        // The Smithsonian Global Volcanism Program's volcano number (`357070`).
+        "gvp:volcano",
+      ],
     }),
     extendVocabulary({
       vocabulary: "admin_geocode_scheme",

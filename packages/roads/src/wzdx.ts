@@ -94,6 +94,8 @@ interface WzdxProperties {
   beginning_cross_street?: string;
   ending_cross_street?: string;
   reduced_speed_limit_kph?: number;
+  /** 3.1: the reduced speed limit, in a unit the schema does not state. */
+  reduced_speed_limit?: number;
   restrictions?: WzdxRestriction[];
   types_of_work?: WzdxTypeOfWork[];
   worker_presence?: WzdxWorkerPresence;
@@ -476,6 +478,28 @@ function locationMethodsOf(feed: WzdxFeed): (dataSourceId: unknown) => unknown {
     byId.get(dataSourceId) ?? (sources.length === 1 ? sources[0]?.location_method : undefined);
 }
 
+const KPH_PER_MPH = 1.609344;
+
+/**
+ * The reduced speed limit in km/h: 4.x's `reduced_speed_limit_kph`, else
+ * 3.1's `reduced_speed_limit` in the unit the catalogue states the
+ * publisher writes it in. A 3.1 limit from a feed whose unit the catalogue
+ * does not state is counted as unread.
+ */
+function speedLimitOf(
+  props: WzdxProperties,
+  unit: SourceDescriptor["speedUnit"],
+  unread: Unread,
+): number | undefined {
+  if (typeof props.reduced_speed_limit_kph === "number") return props.reduced_speed_limit_kph;
+  const limit = props.reduced_speed_limit;
+  if (typeof limit !== "number") return undefined;
+  if (unit === "km/h") return limit;
+  if (unit === "mph") return Math.round(limit * KPH_PER_MPH * 100) / 100;
+  unread.count++;
+  return undefined;
+}
+
 /** The v3 property names that v4 moved into the `core_details` sub-object. */
 const V3_CORE_KEYS = [
   "data_source_id",
@@ -520,9 +544,10 @@ function liftLaneRestriction(r: unknown): unknown {
  *   favour of `alternating-flow`, which v4 removed.
  *
  * 3.1's `reduced_speed_limit` states no unit (4.0 replaced it with
- * `reduced_speed_limit_kph`) and 3.1 publishers give it in the unit of their
- * signs, miles per hour in the US and km/h in Québec, so it stays unread. A
- * lane's `lane_number` restates the position its `order` gives. A body that
+ * `reduced_speed_limit_kph`; the 3.1 schema says only "the reduced speed
+ * limit posted"), so it is read in the unit the catalogue gives the feed
+ * (`speedLimitOf`). A lane's `lane_number` restates the position its
+ * `order` gives. A body that
  * already has `core_details` is returned untouched.
  */
 function liftV3Properties(props: WzdxProperties): WzdxProperties {
@@ -857,10 +882,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         roads,
         roadState: derivedRoadState,
         lanesAffected,
-        speedLimitKph:
-          typeof props.reduced_speed_limit_kph === "number"
-            ? props.reduced_speed_limit_kph
-            : undefined,
+        speedLimitKph: speedLimitOf(props, src.speedUnit, unread),
         restrictions: parseRestrictions(props.restrictions, unread),
         workersPresent: typeof workersPresent === "boolean" ? workersPresent : undefined,
         ...(workerPresence !== undefined ? { workerPresence } : {}),

@@ -22,15 +22,45 @@ const CAUSES: Readonly<Record<string, string>> = {
 };
 
 /**
- * The incident team's general fire behaviour, as the register writes it. The
- * values are those the layer carries; one it does not is counted rather
+ * The incident team's general fire behaviour, as the register writes it: the
+ * four the ICS-209's General Behavior list offers. Another is counted rather
  * than guessed at.
  */
 const BEHAVIOURS: Readonly<Record<string, string>> = {
   Minimal: "minimal",
   Moderate: "moderate",
   Active: "active",
+  Extreme: "extreme",
 };
+
+/**
+ * The behaviours a team names beside the general one
+ * (`FireBehaviorGeneral1` to `3`), as the register writes them; the values
+ * the incident layers have carried. Another is counted rather than guessed
+ * at.
+ */
+const DESCRIPTORS: Readonly<Record<string, string>> = {
+  Smoldering: "smoldering",
+  Creeping: "creeping",
+  Backing: "backing",
+  Flanking: "flanking",
+  Running: "running",
+  "Uphill Runs": "uphill_runs",
+  "Wind Driven Runs": "wind_driven_runs",
+  "Short Crown Runs": "short_crown_runs",
+  "Single Tree Torching": "single_tree_torching",
+  "Isolated Torching": "isolated_torching",
+  "Group Torching": "group_torching",
+  Torching: "torching",
+  Crowning: "crowning",
+  Spotting: "spotting",
+  "Short-range Spotting": "short_range_spotting",
+  "Long-range Spotting": "long_range_spotting",
+};
+
+/** A table's own entry for a register token; an inherited key such as `constructor` is none. */
+const entryOf = (table: Readonly<Record<string, string>>, key: string | undefined) =>
+  key !== undefined && Object.hasOwn(table, key) ? table[key] : undefined;
 
 type Properties = Record<string, unknown>;
 
@@ -116,12 +146,19 @@ function toDraft(
   const discoveredAt = instant(field("FireDiscoveryDateTime"));
   const out = instant(field("FireOutDateTime"));
   const stated = text(field("FireCause"));
-  const cause = stated === undefined ? undefined : CAUSES[stated];
+  const cause = entryOf(CAUSES, stated);
   if (stated !== undefined && cause === undefined) recordSkipped(feed.id, "unknown_value");
   const behaviour = text(field("FireBehaviorGeneral"));
-  const fireBehavior = behaviour === undefined ? undefined : BEHAVIOURS[behaviour];
+  const fireBehavior = entryOf(BEHAVIOURS, behaviour);
   if (behaviour !== undefined && fireBehavior === undefined) {
     recordSkipped(feed.id, "unknown_value");
+  }
+  const descriptors: string[] = [];
+  for (const name of ["FireBehaviorGeneral1", "FireBehaviorGeneral2", "FireBehaviorGeneral3"]) {
+    const named = text(field(name));
+    const descriptor = entryOf(DESCRIPTORS, named);
+    if (named !== undefined && descriptor === undefined) recordSkipped(feed.id, "unknown_value");
+    if (descriptor !== undefined && !descriptors.includes(descriptor)) descriptors.push(descriptor);
   }
   const containedAt = instant(field("ContainmentDateTime"));
   const controlledAt = instant(field("ControlDateTime"));
@@ -192,6 +229,7 @@ function toDraft(
       ...(containedAt === undefined ? {} : { containedAt }),
       ...(controlledAt === undefined ? {} : { controlledAt }),
       ...(fireBehavior === undefined ? {} : { fireBehavior }),
+      ...(descriptors.length === 0 ? {} : { fireBehaviorDescriptors: descriptors }),
     },
   };
 }
@@ -211,8 +249,9 @@ function toDraft(
  * grouped by the complex's IRWIN id. Besides the IRWIN id an incident keeps
  * its NWCG unique fire id, its county's FIPS code, the register's short
  * description of where it is, when it was contained and controlled, and the
- * team's general fire behaviour; a cause or behaviour the register does not
- * define is left out (`unknown_value`). A
+ * team's general fire behaviour with the up to three behaviours it names
+ * beside it; a cause or behaviour the register does not define is left out
+ * (`unknown_value`). A
  * feature with no geometry is skipped as `no_geometry`; one with no
  * properties, no IRWIN id or an unreadable shape as `malformed`. An
  * incident of a category this format does not know has every usable record

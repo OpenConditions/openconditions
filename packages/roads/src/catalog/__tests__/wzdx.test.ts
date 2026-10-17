@@ -129,6 +129,38 @@ describe("wzdxRegistryResolver", () => {
     });
   });
 
+  it("gives Québec City's 3.1 feed the km/h its unitless speed limits are written in", async () => {
+    const [quebec, other] = await wzdxRegistryResolver.resolve(
+      PARENT,
+      jsonResponder([
+        {
+          feedname: "Quebec City",
+          state: "n/a",
+          issuingorganization: "Quebec City",
+          active: true,
+          format: "geojson",
+          version: "3.1",
+          url: { url: "https://quebec.gewi.com/wzdx/pull" },
+        },
+        {
+          feedname: "Washington DOT",
+          state: "washington",
+          issuingorganization: "Washington DOT",
+          active: true,
+          format: "geojson",
+          version: "3.1",
+          url: "https://example.test/washington",
+        },
+      ]),
+    );
+    expect(quebec).toMatchObject({ speedUnit: "km/h" });
+    expect(other).not.toHaveProperty("speedUnit");
+    const snapshotted = wzdxRegistryResolver.snapshot.find(
+      (c) => c.endpoints["main"]?.url === "https://quebec.gewi.com/wzdx/pull",
+    );
+    expect(snapshotted).toMatchObject({ speedUnit: "km/h" });
+  });
+
   it("keeps child identity stable across registry order and label changes without transferring grants", async () => {
     const rows = [
       {

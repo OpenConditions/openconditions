@@ -407,8 +407,34 @@
           "enum": [
             "minimal",
             "moderate",
-            "active"
+            "active",
+            "extreme"
           ]
+        },
+        "fireBehaviorDescriptors": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": [
+              "smoldering",
+              "creeping",
+              "backing",
+              "flanking",
+              "running",
+              "uphill_runs",
+              "wind_driven_runs",
+              "short_crown_runs",
+              "single_tree_torching",
+              "isolated_torching",
+              "group_torching",
+              "torching",
+              "crowning",
+              "spotting",
+              "short_range_spotting",
+              "long_range_spotting"
+            ]
+          }
         },
         "density": {
           "type": "string",
@@ -541,6 +567,28 @@
         "waterBody": {
           "type": "string",
           "minLength": 1
+        },
+        "episodeSeverity": {
+          "type": "object",
+          "properties": {
+            "label": {
+              "type": "string",
+              "enum": [
+                "minor",
+                "moderate",
+                "major",
+                "critical"
+              ]
+            },
+            "declaredRaw": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "label"
+          ],
+          "additionalProperties": false
         }
       },
       "required": [
@@ -618,7 +666,8 @@
             "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
-            "glide"
+            "glide",
+            "gvp:volcano"
           ]
         },
         "id": {
@@ -1886,6 +1935,13 @@
           "type": "number",
           "minimum": 0,
           "exclusiveMaximum": 360
+        },
+        "loop": {
+          "type": "string",
+          "enum": [
+            "inner",
+            "outer"
+          ]
         },
         "toward": {
           "type": "string",

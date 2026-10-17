@@ -6,6 +6,7 @@ import {
   type ChildFeed,
   registryUrl,
 } from "@openconditions/ingest-framework";
+import type { SpeedUnit } from "../feed-schema.js";
 import { roadChildren } from "./child-schema.js";
 import wzdxSnapshot from "./snapshots/wzdx-registry.json" with { type: "json" };
 
@@ -71,6 +72,14 @@ const VERIFIED_CHILD_GRANTS: Record<string, Pick<ChildFeed, "license" | "license
 };
 
 /**
+ * The unit a 3.1 feed writes its unitless `reduced_speed_limit` in, by its
+ * URL: Québec City signs its limits in km/h, as Canada does.
+ */
+const V3_SPEED_UNITS: Readonly<Record<string, SpeedUnit>> = {
+  "https://quebec.gewi.com/wzdx/pull": "km/h",
+};
+
+/**
  * A child with the licence its dataset was reviewed under, approved; or, when
  * none was, `NOASSERTION` with the registry note, discovered only. Applied to
  * the snapshot too, so a grant reviewed later needs no snapshot refresh.
@@ -79,10 +88,16 @@ function withChildEvidence(child: ChildFeed): ChildFeed {
   // A grant belongs to the reviewed dataset URL, never to a state label or
   // its position in the registry (several states publish multiple feeds).
   const url = child.endpoints["main"]?.url;
-  const grant = url !== undefined ? VERIFIED_CHILD_GRANTS[url] : undefined;
+  const grant =
+    url !== undefined && Object.hasOwn(VERIFIED_CHILD_GRANTS, url)
+      ? VERIFIED_CHILD_GRANTS[url]
+      : undefined;
+  const speedUnit =
+    url !== undefined && Object.hasOwn(V3_SPEED_UNITS, url) ? V3_SPEED_UNITS[url] : undefined;
   const { license: _license, licenseUrl: _licenseUrl, terms: _terms, ...rest } = child;
   return {
     ...rest,
+    ...(speedUnit === undefined ? {} : { speedUnit }),
     ...(grant ?? UNVERIFIED),
     selectionState: grant ? "approved" : "discovered",
     snapshot: { completeness: "complete", recordsPath: "features" },

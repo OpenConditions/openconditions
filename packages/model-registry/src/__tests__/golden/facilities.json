@@ -1633,6 +1633,12 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "ref": "M-114",
+          "kmFrom": 0.7
+        }
+      ],
       "admin": {
         "country": "ES",
         "geocodes": [
@@ -1751,13 +1757,17 @@
       "kind": "fuel_station",
       "v": 1,
       "brand": "REPSOL",
-      "productsComplete": true
+      "productsComplete": true,
+      "direction": {
+        "value": "negative",
+        "basis": "road_reference"
+      }
     },
     "canonicalId": "58e049e8e78b2c814e926d25e4584938234d79ec8524afc83f225723c4b4cbc3",
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "42636a3682319198ffcd1d3cbcd90bf1d2ac906c60b241e83eebcb9d85705932"
+    "contentHash": "c04193b0dd8b487c4bd6154eb295f0c938f2b0779e54d6a67b5b06b219281d4d"
   },
   {
     "id": "oc:feature:es-minetur-fuel:15493",
@@ -1885,6 +1895,12 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "ref": "M-114",
+          "kmFrom": 0.7
+        }
+      ],
       "admin": {
         "country": "ES",
         "geocodes": [
@@ -1942,7 +1958,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "2ce43e11fbc6dbf80b3492a35ff72f43c61b06dce97b9f08a2e4b111268eed39"
+    "contentHash": "28ac7756dbc0baedab03d99fa56c54e2f90ccf747efa94f91348b13286649c15"
   },
   {
     "id": "oc:observation:es-minetur-fuel:46667b1770a1bec60ee709622efeef5b0c2e4ad990fc6cb010cbab05278f2b02",
@@ -1958,6 +1974,12 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "ref": "M-114",
+          "kmFrom": 0.7
+        }
+      ],
       "admin": {
         "country": "ES",
         "geocodes": [
@@ -2015,7 +2037,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "0bc27ba01e1ba7a22a9a4928df9ab1fcfb00010b1ca2451dc729fefd0e151fee"
+    "contentHash": "7fadab27469b3ab2a3b6ce31db2cb65ad0eecddd959a693f0bd1cc6e634ba89b"
   },
   {
     "id": "oc:observation:es-minetur-fuel:b1b30adc3350cc0519a79ca866d0318c0b0c0b642f6cf490c7e948d3b04fd400",
@@ -2031,6 +2053,12 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "ref": "M-114",
+          "kmFrom": 0.7
+        }
+      ],
       "admin": {
         "country": "ES",
         "geocodes": [
@@ -2088,7 +2116,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "eff665eb5375fea3e8c0721a0d78d229a3c7adcfe1686fa92d12c7b12dbde8d0"
+    "contentHash": "35723120ad699d0126cc3bd24a7ebd64ab9e49f83efd0137897a50769f23f36d"
   },
   {
     "id": "oc:observation:es-minetur-fuel:67892a26d620a8313ca83667557a86d1c5d534a7987c7b2b8b228186e03f4523",
@@ -2104,6 +2132,12 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "ref": "M-114",
+          "kmFrom": 0.7
+        }
+      ],
       "admin": {
         "country": "ES",
         "geocodes": [
@@ -2161,7 +2195,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "ad956d81237a63e69c0391a3e4217ab4303551f5cdfdd9d75cf6feabc290b460"
+    "contentHash": "0af22ca02a6718d6019c88fdde0b5ce69c04270838f550666df9aa20bc8052dc"
   },
   {
     "id": "oc:observation:es-minetur-fuel:b3cdc1264f2afc12c7351dc356cfe5561f0efe07e997e553302c4ae433665d14",
@@ -2177,6 +2211,12 @@
       "extent": "point",
       "geometryOrigin": "source",
       "fuzziness": "exact",
+      "roads": [
+        {
+          "ref": "M-114",
+          "kmFrom": 0.7
+        }
+      ],
       "admin": {
         "country": "ES",
         "geocodes": [
@@ -2234,7 +2274,7 @@
     "domain": "fuel",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "ba7a3a40d77d39a2386d028f2ce4c0b372237f1f21d5179c4e0187c8a708a488"
+    "contentHash": "6906c9152717f54a09af57459643b434a57880a4c947c8bc2a93c01d4dd64ebd"
   },
   {
     "id": "oc:observation:es-minetur-fuel:2a1aa1ae70511d1195fb107f1cbeefdd132f31171c520699fab55b5f3ba2e42f",
@@ -3101,6 +3141,71 @@
     "contentHash": "16a8b9d08b6b579bbca462f08119824548ff2a503bc61e03a7fe38365224c180"
   },
   {
+    "id": "oc:observation:at-econtrol-fuel:7b487932a10b1b177a1e44da77c515d5399335648a6cd2e88a5186c015fc16f6",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.358812,
+          48.1963966
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "AT"
+      },
+      "address": {
+        "street": "Rechte Wienzeile 43",
+        "postalCode": "1050",
+        "city": "Wien",
+        "country": "AT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "at-econtrol-fuel",
+      "sourceFormat": "econtrol",
+      "accessMode": "on_demand",
+      "recordId": "1494440",
+      "attribution": {
+        "provider": "E-Control (Spritpreisrechner)",
+        "license": "NOASSERTION"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "fit.example"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z",
+      "expiresAt": "2026-09-22T11:25:00Z"
+    },
+    "class": "observation",
+    "kind": "observation",
+    "property": "facility.open_status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:at-econtrol-fuel:1494440"
+    },
+    "result": {
+      "type": "category",
+      "value": "open",
+      "vocabulary": "facility_open_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:10:00Z"
+    },
+    "aggregation": "instantaneous",
+    "canonicalId": "e56246ebff21e9ff71f2a8fe026c3bb2f9a5cd6cb0635ff68dc2d0ffa6bab852",
+    "domain": "facilities",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "contentHash": "de7224c92b7f2cb0fb5940609145f3972a8837cb2eaf1b575c506bcd7516439b"
+  },
+  {
     "id": "oc:observation:at-econtrol-fuel:67741110db6890a444052cd7a715519121dfa5798271604171d282d6fcdb340c",
     "temporality": "live",
     "location": {
@@ -3166,6 +3271,71 @@
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
     "contentHash": "9a61cfa8f23e672e1b6302ba2c298d8f6bd2a2756a226e7bf1a090636310fdec"
+  },
+  {
+    "id": "oc:observation:at-econtrol-fuel:e3952cff57031888e70ab34daa163cbcb4faa744b1f8254f5b608c2c110472db",
+    "temporality": "live",
+    "location": {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          16.3445982,
+          48.2004272
+        ]
+      },
+      "extent": "point",
+      "geometryOrigin": "source",
+      "fuzziness": "exact",
+      "admin": {
+        "country": "AT"
+      },
+      "address": {
+        "street": "Seidengasse 12",
+        "postalCode": "1070",
+        "city": "Wien",
+        "country": "AT"
+      }
+    },
+    "provenance": {
+      "origin": "feed",
+      "sourceId": "at-econtrol-fuel",
+      "sourceFormat": "econtrol",
+      "accessMode": "on_demand",
+      "recordId": "34026",
+      "attribution": {
+        "provider": "E-Control (Spritpreisrechner)",
+        "license": "NOASSERTION"
+      },
+      "privacy": {
+        "class": "authoritative"
+      },
+      "instanceId": "fit.example"
+    },
+    "freshness": {
+      "fetchedAt": "2026-09-22T11:10:00Z",
+      "expiresAt": "2026-09-22T11:25:00Z"
+    },
+    "class": "observation",
+    "kind": "observation",
+    "property": "facility.open_status",
+    "subject": {
+      "kind": "feature",
+      "featureId": "oc:feature:at-econtrol-fuel:34026"
+    },
+    "result": {
+      "type": "category",
+      "value": "open",
+      "vocabulary": "facility_open_status"
+    },
+    "phenomenonTime": {
+      "instant": "2026-09-22T11:10:00Z"
+    },
+    "aggregation": "instantaneous",
+    "canonicalId": "b438852ca4c0448b7e62b854d4046b4b5a0abecb97d2b2b199580a0b56a0e6bf",
+    "domain": "facilities",
+    "revision": 1,
+    "recordedAt": "2026-09-22T11:10:00Z",
+    "contentHash": "23d133a25cba86240ad42dc219b00dc936c90341edbf77c939bb24f4cf8bdaee"
   },
   {
     "id": "oc:observation:at-econtrol-fuel:923db8ad08d15a1ae815f0289a380b4a964150a048f7489720dfaf44681e5ac0",

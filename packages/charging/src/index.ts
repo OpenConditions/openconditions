@@ -1,4 +1,3 @@
-export * from "./countries.js";
 export * from "./domain.js";
 export * from "./feed-schema.js";
 export * from "./formats/afdc.js";

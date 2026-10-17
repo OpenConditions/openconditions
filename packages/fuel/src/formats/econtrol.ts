@@ -10,6 +10,7 @@ import type { FuelGrade } from "../grades.js";
 import { type Interval, interval, osmOpeningHours } from "../hours.js";
 import {
   type FuelFeed,
+  openStatusDraft,
   type ProductInput,
   priceDraft,
   stationDraft,
@@ -36,6 +37,7 @@ interface Station {
   openingHours?: { day?: unknown; from?: unknown; to?: unknown }[];
   paymentMethods?: { cash?: unknown; debitCard?: unknown; creditCard?: unknown; others?: unknown };
   otherServiceOffers?: unknown;
+  open?: unknown;
   prices?: { fuelType?: unknown; amount?: unknown }[];
 }
 
@@ -116,9 +118,10 @@ function serviceOf(offer: Station["offerInformation"]): ProductInput["service"] 
  * station with two products. Its name, position, address and service are the
  * first answer's that lists it (the order of the endpoint's `urls`: diesel,
  * Super 95, CNG); a later answer adds only its price. The station's opening
- * hours, payment methods and free-text other offers are read; `open` says
- * whether the station is open by those hours at the moment of the search, not
- * a closure, so it leaves the station operational. A station listed without a
+ * hours, payment methods and free-text other offers are read; `open`, whether
+ * the station is open at the moment of the search, is its
+ * `facility.open_status` as of the fetch, and leaves the station operational:
+ * it is no closure. An `open` that is no boolean is counted as not read. A station listed without a
  * price is one whose price the calculator does not show; it gets no product
  * for that type. The search covers three fuel types, so a station's products
  * are not complete. The answer carries no update time, so a price is as of
@@ -147,7 +150,10 @@ export function parseEcontrol(
       const entry = stations.get(id) ?? { station, prices: new Map<FuelGrade, string>() };
       stations.set(id, entry);
       for (const price of station.prices ?? []) {
-        const grade = typeof price.fuelType === "string" ? GRADES[price.fuelType] : undefined;
+        const grade =
+          typeof price.fuelType === "string" && Object.hasOwn(GRADES, price.fuelType)
+            ? GRADES[price.fuelType]
+            : undefined;
         if (grade === undefined) {
           recordSkipped(feed.id, "unknown_value");
           continue;
@@ -198,6 +204,11 @@ export function parseEcontrol(
       })),
     });
     out.features.push(feature);
+    if (typeof station.open === "boolean") {
+      out.observations.push(openStatusDraft(feature, { open: station.open, at: ctx.fetchedAt }));
+    } else if (station.open !== undefined && station.open !== null) {
+      recordSkipped(feed.id, "unknown_value");
+    }
     for (const [grade, amount] of prices) {
       out.observations.push(
         priceDraft(feature, { componentKey: grade, amount, currency: "EUR", at: ctx.fetchedAt }),

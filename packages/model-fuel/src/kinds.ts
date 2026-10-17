@@ -8,7 +8,11 @@ import { z } from "zod";
 
 const DOMAIN = "fuel";
 const V = "1.0";
-/** The entries that accept the 100 octane grade and the station amenities this module adds. */
+/**
+ * The entries that accept the 100 octane and EN 16709 grades, the station
+ * amenities this module adds, a product's biofuel share and a station's side
+ * of the road.
+ */
 const V_EXTENDED = "1.1";
 const HOUR = 3600;
 
@@ -19,7 +23,9 @@ const HOUR = 3600;
  * one: a 25 % ethanol blend, renewable petrol, the red diesel sold for
  * agricultural use, methanol, ammonia, premium 95 E5, 98 octane E10, and
  * compressed and liquefied biomethane. `sp100` is 100 octane petrol, which
- * OpenStreetMap tags as its own fuel (`fuel:octane_100`).
+ * OpenStreetMap tags as its own fuel (`fuel:octane_100`). `b20` and `b30` are
+ * the high-biodiesel diesel blends of EN 16709, 20 and 30 % FAME, which
+ * Spanish stations sell as their biodiesel.
  */
 export const FUEL_GRADES = [
   "e5",
@@ -50,6 +56,8 @@ export const FUEL_GRADES = [
   "cng_bio",
   "lng_bio",
   "sp100",
+  "b20",
+  "b30",
 ] as const;
 
 /**
@@ -104,6 +112,12 @@ export const FUEL_KINDS = [
       per: z.enum(FUEL_UNITS),
       /** Whether the published price includes taxes; ES and US publish both. */
       priceBasis: z.enum(["gross", "net"]),
+      /**
+       * The biofuel share of the product by volume, as the station declares
+       * it: the fatty-acid methyl ester (FAME) in a biodiesel, the ethanol in
+       * a bioethanol.
+       */
+      biofuelPct: z.number().min(0).max(100).optional(),
     }),
   }),
   defineKind({
@@ -113,7 +127,10 @@ export const FUEL_KINDS = [
     version: V_EXTENDED,
     description: "A filling station, with the products it sells.",
     components: ["fuel_product"],
-    details: () => ({
+    // A station its operator opens and closes: the publisher's own open or
+    // closed status is a `facility.open_status` reading.
+    traits: ["operated_site"],
+    details: (k) => ({
       brand: z.string().min(1).optional(),
       /** The brand's Wikidata item, such as `Q565734` for Aral. */
       brandWikidata: z
@@ -127,6 +144,12 @@ export const FUEL_KINDS = [
       productsComplete: z.boolean(),
       /** Whether lorries can fill up: a lane or pump for heavy goods vehicles. */
       truckSuitable: z.boolean().optional(),
+      /**
+       * The carriageway the station stands beside, read against the road it
+       * is on (`location.roads`): on a dual carriageway, the one it is
+       * reached from.
+       */
+      direction: k.DirectionRef.optional(),
     }),
     linking: {
       idSchemes: ["provider", "osm:node", "osm:way", "osm:relation"],

@@ -79,6 +79,16 @@ describe("the eonet format over the live captures", () => {
     });
   });
 
+  test("a volcano is named by its Global Volcanism Program number", () => {
+    expect(byId(out, "EONET_20710")["externalIds"]).toEqual([
+      { scheme: "gvp:volcano", id: "357070" },
+    ]);
+    expect(byId(out, "EONET_19906")["externalIds"]).toEqual([
+      { scheme: "gvp:volcano", id: "285070" },
+    ]);
+    expect(byId(out, "EONET_6288")).not.toHaveProperty("externalIds");
+  });
+
   test("the iceberg is sea ice / iceberg at its latest position with its area", () => {
     expect(byId(out, "EONET_6288")).toMatchObject({
       type: "sea_ice",
@@ -163,6 +173,15 @@ describe("the eonet format over altered events", () => {
     (event as unknown as { categories: object[] }).categories = [{ id: "floods", title: "Floods" }];
     return { events: [event] };
   };
+
+  test("a Global Volcanism Program source without a volcano number is counted", () => {
+    const { events: list } = events("eonet-open.json");
+    const chillan = list.find((e) => e.id === "EONET_20710")!;
+    chillan.sources = [{ id: "SIVolcano", url: "https://volcano.si.edu/search_volcano.cfm" }];
+    const out = parse({ open: [buffer({ events: [chillan] })] });
+    expect(byId(out, "EONET_20710")).not.toHaveProperty("externalIds");
+    expect(drainSkipped(feed.id)).toMatchObject({ unknown_value: 1 });
+  });
 
   test("a polygon event keeps its polygon and its closing date", () => {
     const out = parse({ open: [Buffer.from('{"events":[]}')], closed: [buffer(flood())] });
