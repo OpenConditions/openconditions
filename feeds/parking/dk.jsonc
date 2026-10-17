@@ -26,7 +26,11 @@
         "id": "id",
         "lang": "da",
         "defaultType": "off_street",
-        "layout": { "field": "p_hus_type", "map": { "1": "multi_storey", "2": "underground" } },
+        // 1 "P-Hus", 2 "P-Kælder" (a basement), 3 "Underjordisk P-anlæg" (underground).
+        "layout": {
+          "field": "p_hus_type",
+          "map": { "1": "multi_storey", "2": "underground", "3": "underground" },
+        },
         "capacity": "antal_pladser",
         "address": {
           "street": "vejnavn",

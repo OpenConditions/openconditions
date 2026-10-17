@@ -109,7 +109,7 @@ function typeOf(tags: Record<string, string>): ParkingSiteType {
  * linking matches on: the node and the way of one car park may link, two
  * ways may not. OSM holds no occupancy, so there are no readings. The address
  * is kept only when its tags name the country. Besides the car park's own
- * tags, its description, lighting, supervision, width limit, kerbside bay
+ * tags, its owner, description, lighting, supervision, width limit, kerbside bay
  * position and orientation are read. An `access` value, or a `parking` value
  * that is neither a layout nor kerbside, not read here counts as unknown.
  */
@@ -149,6 +149,7 @@ export function parseOverpassParking(
         ...optional("layout", layout),
         ...optional("name", tag(tags, "name")),
         ...optional("operator", tag(tags, "operator")),
+        ...optional("owner", tag(tags, "owner")),
         ...optional("website", tag(tags, "website") ?? tag(tags, "contact:website")),
         ...optional("openingHoursOsm", tag(tags, "opening_hours")),
         ...optional("notes", tag(tags, "description")),

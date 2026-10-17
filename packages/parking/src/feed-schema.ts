@@ -80,6 +80,9 @@ export const parkingMappingSchema = z.strictObject({
   /** Parking is free of charge when this holds. */
   free: condition.optional(),
   heightLimit: z.strictObject({ field: fieldRef, unit: z.enum(["m", "cm"]) }).optional(),
+  widthLimit: z.strictObject({ field: fieldRef, unit: z.enum(["m", "cm"]) }).optional(),
+  /** How many levels the site parks vehicles on. */
+  levels: fieldRef.optional(),
   /**
    * The site's areas. An area with a `capacity` field is there when the count
    * is above zero; one with `presentWhen` when that holds, its count optional.

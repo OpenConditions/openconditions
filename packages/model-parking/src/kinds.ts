@@ -260,6 +260,8 @@ export const PARKING_KINDS = [
           max: z.number().int().nonnegative().optional(),
         })
         .optional(),
+      /** How many levels (decks, storeys) the site parks vehicles on. */
+      levels: z.number().int().positive().optional(),
       heightLimit: Quantity.optional(),
       widthLimit: Quantity.optional(),
       lengthLimit: Quantity.optional(),

@@ -70,6 +70,12 @@ are made up. The tests add live-shaped cases inline where a fixture lacks one
 (RDW's `1`/`0` flags, UTMC's `FAULTY`, Open Data Hub's
 `2026-05-23 11:40:00.000+0000` times).
 
+`db-bahnpark-sample.json` has since been edited to the shapes DB BahnPark
+publishes, after its OpenAPI document (BizHub Parking Information v2.7) and
+a published response: the operator's `url` without a scheme, the payment
+texts in German under `tariff.information.dynamic`, every price in the
+`standard` group, and the clearance as centimetre strings.
+
 | File                               | Publisher shape                                             |
 | ---------------------------------- | ----------------------------------------------------------- |
 | `db-bahnpark-sample.json`          | DB BahnPark Parking Information API v2 `parking-facilities` |

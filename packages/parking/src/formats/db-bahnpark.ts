@@ -17,7 +17,7 @@ interface BahnparkFacility {
   name?: { name?: string; context?: string }[];
   url?: string;
   type?: { name?: string };
-  operator?: { name?: string };
+  operator?: { name?: string; url?: string };
   address?: {
     streetAndNumber?: string;
     zip?: string;
@@ -28,10 +28,14 @@ interface BahnparkFacility {
   access?: {
     outOfService?: { isOutOfService?: boolean };
     openingHours?: { is24h?: boolean; text?: string };
-    restrictions?: { clearance?: { height?: string | number | null } };
+    restrictions?: {
+      clearance?: { height?: string | number | null; width?: string | number | null };
+    };
   };
   equipment?: { charging?: { hasChargingStation?: boolean } };
   tariff?: {
+    /** Free-form texts by key; the payment ones are German prose. */
+    information?: { dynamic?: Record<string, string | null | undefined> | null };
     prices?: { group?: { groupName?: string }; duration?: string; price?: number | null }[];
   };
 }
@@ -61,7 +65,48 @@ const DURATIONS: Readonly<Record<string, Omit<RateRow, "amount">>> = {
   "1monthVendingMachine": { maxDuration: duration(1, "mo") },
   "1monthLongTerm": { maxDuration: duration(1, "mo"), userGroups: ["long_term"] },
   "1monthReservation": { maxDuration: duration(1, "mo"), userGroups: ["reservation"] },
+  "1dayDiscount": { maxDuration: duration(1, "d"), userGroups: ["discount"] },
+  "1weekDiscount": { maxDuration: duration(1, "wk"), userGroups: ["discount"] },
 };
+
+/**
+ * Payment methods the tariff's payment texts name, by the words DB BahnPark
+ * writes them in (`Münzen, Kreditkarte (VISA, MasterCard), Bankkarte`). The
+ * Pcard is the operator's customer card.
+ */
+const PAYMENT_WORDS: readonly [RegExp, NonNullable<SiteInput["payment"]>[number]][] = [
+  [/münz|scheine|bargeld|\bcoins?\b|\bcash\b/i, "cash"],
+  [/kreditkarte|credit\s*card/i, "credit_card"],
+  [/girocard|bankkarte|ec-karte|debit|bank\s*card/i, "debit_card"],
+  [/\bapp\b|appparken/i, "app"],
+  [/pcard/i, "membership"],
+];
+
+/** The payment methods the facility's payment texts name. */
+function paymentOf(f: BahnparkFacility): NonNullable<SiteInput["payment"]> {
+  const dynamic = f.tariff?.information?.dynamic ?? {};
+  const texts = ["tariffPaymentOptions", "tariffPaymentMobile", "tariffPaymentCustomerCards"]
+    .map((key) => (Object.hasOwn(dynamic, key) ? text(dynamic[key]) : undefined))
+    .filter((t): t is string => t !== undefined);
+  return PAYMENT_WORDS.filter(([pattern]) => texts.some((t) => pattern.test(t))).map(
+    ([, method]) => method,
+  );
+}
+
+/**
+ * A clearance in metres. The API leaves the unit to the provider: a bare
+ * number is centimetres, as DB BahnPark writes them (`"200"`,
+ * `"229.99999999999997"`), and an `m` or `cm` after it says which.
+ */
+function clearanceM(value: unknown): number | undefined {
+  const t = typeof value === "number" ? String(value) : text(value);
+  const [, digits, unit] = t?.replace(",", ".").match(/^(\d+(?:\.\d+)?)\s*(cm|m)?$/i) ?? [];
+  if (digits === undefined) return undefined;
+  const n = Number(digits);
+  const metres = unit?.toLowerCase() === "m" ? n : n / 100;
+  const rounded = Math.round(metres * 100) / 100;
+  return rounded > 0 ? rounded : undefined;
+}
 
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
@@ -133,7 +178,10 @@ function siteInput(f: BahnparkFacility, stationId: string, point: [number, numbe
       : []),
   ];
   const hours = f.access?.openingHours;
-  const heightCm = integer(f.access?.restrictions?.clearance?.height);
+  const height = clearanceM(f.access?.restrictions?.clearance?.height);
+  const width = clearanceM(f.access?.restrictions?.clearance?.width);
+  const payment = paymentOf(f);
+  const operatorUrl = text(f.operator?.url);
   const name = nameOf(f);
   const operator = text(f.operator?.name);
   const website = text(f.url);
@@ -148,6 +196,8 @@ function siteInput(f: BahnparkFacility, stationId: string, point: [number, numbe
     ...(layout === undefined ? {} : { layout }),
     ...(f.access?.outOfService?.isOutOfService === true ? { lifecycle: "temporarily_closed" } : {}),
     ...(operator === undefined ? {} : { operator }),
+    ...(operatorUrl === undefined ? {} : { operatorContact: { website: operatorUrl } }),
+    ...(payment.length === 0 ? {} : { payment }),
     ...(website === undefined ? {} : { website }),
     address: {
       ...(text(address?.streetAndNumber) === undefined ? {} : { street: address?.streetAndNumber }),
@@ -160,7 +210,8 @@ function siteInput(f: BahnparkFacility, stationId: string, point: [number, numbe
         ? {}
         : { openingHoursText: hoursText }),
     ...(total === undefined ? {} : { capacityTotal: total }),
-    ...(heightCm !== undefined && heightCm > 0 ? { heightLimitM: heightCm / 100 } : {}),
+    ...(height === undefined ? {} : { heightLimitM: height }),
+    ...(width === undefined ? {} : { widthLimitM: width }),
     areas,
   };
 }
@@ -194,7 +245,9 @@ function rateOf(
  * DB BahnPark (Parking Information API v2): each facility of the `main`
  * payload is a site, its standard prices one EUR `parking_rate`, whose
  * P-Card, long-term and reservation durations are rows for those groups. The API
- * publishes no occupancy, so there are no readings. A facility type or a
+ * publishes no occupancy, so there are no readings. The clearance gives the
+ * height and width limits, the tariff's payment texts the payment methods
+ * they name, and the operator's page its website. A facility type or a
  * standard price's duration code it does not know is an unknown value, the
  * site published without it. A facility without an
  * id or a point gives no site and is counted as skipped.

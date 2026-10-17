@@ -1991,6 +1991,73 @@
                 ],
                 "additionalProperties": false
               },
+              "widthLimit": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "pattern": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "field"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "unit": {
+                    "type": "string",
+                    "enum": [
+                      "m",
+                      "cm"
+                    ]
+                  }
+                },
+                "required": [
+                  "field",
+                  "unit"
+                ],
+                "additionalProperties": false
+              },
+              "levels": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "pattern": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "field"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
               "areas": {
                 "minItems": 1,
                 "type": "array",

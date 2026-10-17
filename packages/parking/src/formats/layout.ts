@@ -110,11 +110,15 @@ function areasOf(fields: Record<string, unknown>, mapping: ParkingMapping): Area
   return out;
 }
 
-function heightOf(fields: Record<string, unknown>, mapping: ParkingMapping): number | undefined {
-  if (mapping.heightLimit === undefined) return undefined;
-  const n = numberOf(read(fields, mapping.heightLimit.field));
+/** A height or width limit in metres; zero or less (a `-999` sentinel) is none. */
+function limitOf(
+  fields: Record<string, unknown>,
+  limit: ParkingMapping["heightLimit"],
+): number | undefined {
+  if (limit === undefined) return undefined;
+  const n = numberOf(read(fields, limit.field));
   if (n === undefined || n <= 0) return undefined;
-  return mapping.heightLimit.unit === "cm" ? n / 100 : n;
+  return limit.unit === "cm" ? n / 100 : n;
 }
 
 /** Called for each enumerated value a record holds that its mapping does not name. */
@@ -163,7 +167,9 @@ function siteInput(
         : { openingHoursText: hours }),
     ...(mapping.free !== undefined && holds(f, mapping.free) ? { free: true } : {}),
     ...optional("capacityTotal", countOf(f, mapping.capacity)),
-    ...optional("heightLimitM", heightOf(f, mapping)),
+    ...optional("heightLimitM", limitOf(f, mapping.heightLimit)),
+    ...optional("widthLimitM", limitOf(f, mapping.widthLimit)),
+    ...optional("levels", countOf(f, mapping.levels)),
     ...optional("areas", mapping.areas && areasOf(f, mapping)),
     ...optional("tariffText", text(f, mapping.tariffText)),
     ...optional("notes", text(f, mapping.notes)),

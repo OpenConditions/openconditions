@@ -174,8 +174,12 @@ describe("skips", () => {
     expect(out.features).toHaveLength(2);
     expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_type: 1, unknown_value: 2 });
   });
-  test("Overpass: description, lighting, supervision, kerbside bays and customers' usage", () => {
+  test("Overpass: owner, description, lighting, supervision, kerbside bays and customers' usage", () => {
     const out = osm();
+    expect(site(out, "node/1725394191")?.["owner"]).toEqual({
+      role: "owner",
+      name: [{ lang: "und", text: "Aachener Grundvermögen Kapitalverwaltungsgesellschaft mbH" }],
+    });
     expect(site(out, "way/4706466")?.["details"]).toMatchObject({
       supervision: "none",
       securityFeatures: ["lighting"],

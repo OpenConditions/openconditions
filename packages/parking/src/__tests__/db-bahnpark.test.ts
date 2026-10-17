@@ -88,10 +88,10 @@ describe("db-bahnpark", () => {
       ["70.00", { value: 1, unit: "mo" }, ["long_term"]],
       ["90.00", { value: 1, unit: "mo" }, ["reservation"]],
     ]);
-    // The fixture's standard prices; its `monthly` group price is not a standard rate.
     expect(rows(sample())).toEqual([
       ["3.00", { value: 1, unit: "h" }, undefined],
       ["18.00", { value: 1, unit: "d" }, undefined],
+      ["140.00", { value: 1, unit: "mo" }, ["long_term"]],
     ]);
   });
 
@@ -105,13 +105,20 @@ describe("db-bahnpark", () => {
     expect(out.observations).toEqual([]);
   });
 
-  test("DB BahnPark: name, type, layout, height, hours and service state", () => {
+  test("DB BahnPark: name, type, layout, clearance, payment, hours and service state", () => {
     const out = sample();
     expect(site(out, "100")).toMatchObject({
       type: "off_street",
       lifecycle: "operational",
       name: [{ lang: "de", text: "Berlin Hbf P1 (Display)" }],
-      operator: { role: "operator", name: [{ lang: "de", text: "DB BahnPark" }] },
+      // The operator's page comes without a scheme.
+      operator: {
+        role: "operator",
+        name: [{ lang: "de", text: "Contipark Parkgaragengesellschaft mbH" }],
+        website: "https://www.mein-contipark.de",
+      },
+      // Coins, credit card, bank card, the app and the operator's Pcard.
+      access: { payment: ["cash", "credit_card", "debit_card", "app", "membership"] },
       openingHours: { osm: "24/7", twentyFourSeven: true },
       location: {
         geometry: { coordinates: [13.369, 52.525] },
@@ -121,6 +128,7 @@ describe("db-bahnpark", () => {
         layout: "multi_storey",
         capacityTotal: 920,
         heightLimit: { value: 2, unit: "m" },
+        widthLimit: { value: 2.3, unit: "m" },
         website: "https://www.bahnpark.de/p100",
       },
     });
@@ -197,8 +205,30 @@ describe("db-bahnpark skips", () => {
     expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 3 });
   });
 
-  test("DB BahnPark: the sample loses only its price of another group", () => {
+  test("DB BahnPark: the sample skips nothing", () => {
     sample();
-    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 1 });
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({});
+  });
+
+  test("DB BahnPark: a clearance is centimetres unless it says metres", () => {
+    const clearance = (height: unknown) =>
+      (
+        site(
+          parse(
+            json([
+              {
+                ...facility([]),
+                access: { restrictions: { clearance: { height } } },
+              },
+            ]),
+          ),
+          "500",
+        )?.["details"] as { heightLimit?: unknown } | undefined
+      )?.heightLimit;
+    expect(clearance("204.99999999999997")).toEqual({ value: 2.05, unit: "m" });
+    expect(clearance("3 m")).toEqual({ value: 3, unit: "m" });
+    expect(clearance("190 cm")).toEqual({ value: 1.9, unit: "m" });
+    expect(clearance("unbegrenzt")).toBeUndefined();
+    expect(clearance(null)).toBeUndefined();
   });
 });

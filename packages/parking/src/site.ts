@@ -74,7 +74,8 @@ export interface SiteInput {
   providerId?: false;
   /** `[lon, lat]`. */
   point: [number, number];
-  name?: string;
+  /** The name in the site's language, or in each language the source gives it in. */
+  name?: string | { lang: string; text: string }[];
   /** The language of the source's texts (BCP 47); `und` when unknown. */
   lang?: string;
   /** Ids beside the provider id that linking matches on (`osm:way`, `datex:parking`). */
@@ -124,6 +125,8 @@ export interface SiteInput {
   /** How a visitor can pay; `free` follows from `free` already. */
   payment?: (typeof PAYMENT_METHODS)[number][];
   widthLimitM?: number;
+  /** How many levels the site parks vehicles on. */
+  levels?: number;
   /** The longest a vehicle may stay, for everyone at all hours. */
   maxStay?: Quantity;
   /** Whether a space can be booked ahead. */
@@ -420,7 +423,12 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
   const country = stated !== undefined && /^[A-Z]{2}$/.test(stated) ? stated : countryOf(feed);
   const address = addressOf(input, country);
   const components = [...areaComponents(input.areas), ...spaceComponents(input.spaces, lang)];
-  const name = text(input.name);
+  const name = Array.isArray(input.name)
+    ? input.name.flatMap((n) => {
+        const t = clean(n.text);
+        return t === undefined ? [] : [{ lang: n.lang, text: t }];
+      })
+    : text(input.name);
   const organisation = (
     role: "operator" | "owner",
     name: string | undefined,
@@ -523,7 +531,7 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
           ]),
       ...(input.externalIds ?? []).map((e) => ({ ...e })),
     ],
-    ...(name === undefined ? {} : { name }),
+    ...(name === undefined || name.length === 0 ? {} : { name }),
     ...(description === undefined || description.length === 0 ? {} : { description }),
     ...(operator === undefined ? {} : { operator }),
     ...(owner === undefined ? {} : { owner }),
@@ -540,6 +548,9 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
       ...(input.layout === undefined ? {} : { layout: input.layout }),
       ...(validCount(input.capacityTotal) ? { capacityTotal: input.capacityTotal } : {}),
       ...(Object.keys(range).length === 0 ? {} : { capacityRange: range }),
+      ...(input.levels !== undefined && Number.isInteger(input.levels) && input.levels > 0
+        ? { levels: input.levels }
+        : {}),
       ...(heightLimitM !== undefined && Number.isFinite(heightLimitM) && heightLimitM > 0
         ? { heightLimit: { value: heightLimitM, unit: "m" } }
         : {}),
