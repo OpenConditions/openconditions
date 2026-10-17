@@ -93,7 +93,8 @@ const FORMATS: FeedFormat<ChargingCatalogFeed>[] = [
   sites("bnetza", parseBnetza),
   // The static consolidation, and the dynamic one's status per charge point.
   sites("irve", parseIrve, { main: { required: true }, status: liveStatus }, parseIrveStatus),
-  sites("afdc", parseAfdc),
+  // The stations, and the electric networks list that names their networks.
+  sites("afdc", parseAfdc, { main: { required: true }, networks: optional }),
   sites("nobil", parseNobil),
   // The reader's files: pools are the sites, the other files join to them;
   // `dynamic.json` adds each point's state (and its prices, read in full only).
