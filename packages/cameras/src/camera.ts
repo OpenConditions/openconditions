@@ -194,14 +194,30 @@ function adminOf(input: AdminInput | undefined): Record<string, string> | undefi
   };
 }
 
-/** The site images with an http(s) URL, each once; a thumbnail that is no URL is left off. */
-function imagesOf(list: SiteImageInput[] | undefined): Record<string, string>[] | undefined {
+/**
+ * The site images with an http(s) URL, each once; a thumbnail that is no URL
+ * is left off. A feed that declares `imageHosts` names every host its images
+ * may be fetched from, as it does for its stills (`imageReading`): an image
+ * or thumbnail elsewhere is dropped and counted as rejected.
+ */
+function imagesOf(
+  feed: CamerasFeed,
+  ctx: DraftContext,
+  list: SiteImageInput[] | undefined,
+): Record<string, string>[] | undefined {
+  const hosts = feed.cameras?.imageHosts ?? [];
+  const admitted = (value: string | undefined): string | undefined => {
+    const url = urlOf(value);
+    if (url === undefined || hosts.length === 0 || matchesImageHost(url, hosts)) return url;
+    ctx.out.rejected = (ctx.out.rejected ?? 0) + 1;
+    return undefined;
+  };
   const seen = new Set<string>();
   const kept = (list ?? []).flatMap((image) => {
-    const url = urlOf(image.url);
+    const url = admitted(image.url);
     if (url === undefined || seen.has(url)) return [];
     seen.add(url);
-    return [{ url, category: image.category, ...optional("thumbnail", urlOf(image.thumbnail)) }];
+    return [{ url, category: image.category, ...optional("thumbnail", admitted(image.thumbnail)) }];
   });
   return kept.length === 0 ? undefined : kept;
 }
@@ -238,11 +254,7 @@ function placeOf(input: CameraInput): Record<string, unknown> {
  * its provider id unless the input says otherwise, so two cameras of one
  * source never link; a camera without a stated lifecycle is operational.
  */
-export function cameraDraft(
-  feed: CamerasFeed,
-  ctx: Pick<DraftContext, "fetchedAt">,
-  input: CameraInput,
-): RecordDraft {
+export function cameraDraft(feed: CamerasFeed, ctx: DraftContext, input: CameraInput): RecordDraft {
   const views = input.views.length === 0 ? [{ key: "0" }] : input.views;
   const detailUrl = urlOf(input.detailUrl);
   const shared = { detailUrl, imageRedistribution: input.imageRedistribution };
@@ -289,7 +301,7 @@ export function cameraDraft(
     ...optional("name", texts(input.names)),
     ...optional("description", texts(input.description)),
     ...(operator === undefined ? {} : { operator: { role: "operator", name: operator } }),
-    ...optional("images", imagesOf(input.images)),
+    ...optional("images", imagesOf(feed, ctx, input.images)),
     components,
     details: {
       kind: "camera",

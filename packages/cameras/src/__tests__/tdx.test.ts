@@ -163,7 +163,8 @@ describe("tdx", () => {
     Object.assign(doc.CCTVs[0], {
       LocationType: 4,
       RoadClass: 7,
-      LookingViews: [{ Bearing: "S", Image: "https://cctvn.freeway.gov.tw/ref/10000-S.jpg" }],
+      LookingViews: [{ Bearing: "S", Image: "https://cctv.thb.gov.tw/ref/10000-S.jpg" }],
+      // Off the feed's image hosts: dropped, as a still there would be.
       LayoutMapURL: "https://cctvn.freeway.gov.tw/layout/10000.png",
     });
     Object.assign(doc.CCTVs[1], { LocationType: 9, RoadClass: 8 });
@@ -178,11 +179,9 @@ describe("tdx", () => {
     expect(gantry).toMatchObject({
       details: { mounting: "gantry" },
       location: { roads: [{ carriageway: "ramp" }] },
-      images: [
-        { url: "https://cctvn.freeway.gov.tw/ref/10000-S.jpg", category: "other" },
-        { url: "https://cctvn.freeway.gov.tw/layout/10000.png", category: "other" },
-      ],
+      images: [{ url: "https://cctv.thb.gov.tw/ref/10000-S.jpg", category: "other" }],
     });
+    expect(gantry?.["images"]).toHaveLength(1);
     expect(gantry?.["location"]).not.toHaveProperty("roads.0.class");
     expect(other?.["details"]).not.toHaveProperty("mounting");
     expect(other?.["location"]).toHaveProperty("roads.0.name");

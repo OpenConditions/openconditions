@@ -165,6 +165,30 @@ describe("cameraDraft", () => {
     expect(sealFailures([draft])).toEqual([]);
   });
 
+  test("a feed's image hosts admit its site images and thumbnails as they admit its stills", () => {
+    const ctx = context();
+    const draft = cameraDraft(caltransLike(["cwwp2.dot.ca.gov"]), ctx, {
+      cameraId: "1",
+      point: [-118.2, 34.1],
+      names: [],
+      type: "traffic",
+      imageRedistribution: "allowed",
+      views: [],
+      images: [
+        {
+          url: "https://cwwp2.dot.ca.gov/site.jpg",
+          category: "site",
+          thumbnail: "https://elsewhere.example/site-small.jpg",
+        },
+        { url: "https://elsewhere.example/sketch.png", category: "other" },
+      ],
+    });
+    expect(draft["images"]).toEqual([
+      { url: "https://cwwp2.dot.ca.gov/site.jpg", category: "site" },
+    ]);
+    expect(ctx.out.rejected).toBe(2);
+  });
+
   test("a camera without views has the one view `0`; one without a provider id carries none", () => {
     const draft = cameraDraft(caltransLike(), context(), {
       cameraId: "node/1",
