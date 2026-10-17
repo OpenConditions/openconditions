@@ -183,7 +183,8 @@ describe("keco", () => {
     ).toEqual([
       ["02", "charging"],
       ["03", "available"],
-      ["04", "out_of_order"],
+      // 5, 점검중: under inspection, not available for now.
+      ["04", "inoperative"],
     ]);
     // Chargers no answer names keep the daily state, read again as of this poll.
     expect(byReadingId(status.observations)).toEqual(byReadingId(full.observations));
@@ -204,6 +205,18 @@ describe("keco", () => {
       openingHours: { osm: "24/7", twentyFourSeven: true },
       access: { audience: "public" },
     });
+    // The operator's phone and id, the province of zcode 28, the address detail.
+    expect(station).toMatchObject({
+      operator: {
+        phone: "1661-9408",
+        ids: [{ scheme: "cpo", id: "ME", authority: "kr-keco-charging" }],
+      },
+      location: { address: { region: "인천광역시" } },
+      details: { hotline: "1661-9408", directions: [{ lang: "ko", text: "지상주차장" }] },
+    });
+    expect((components(station)[0] as Component & { floorLevel?: string }).floorLevel).toBe("1");
+    expect(components(station)[1]?.details).toMatchObject({ powerType: "DC" });
+    expect(components(station)[2]?.details).toMatchObject({ powerType: "AC_3_PHASE" });
     expect(
       components(station).map((c) => [c.key, c.details["standard"], c.details["maxPowerKw"]]),
     ).toEqual([
@@ -255,5 +268,29 @@ describe("keco", () => {
       access: { audience: "restricted" },
       description: [{ lang: "ko", text: "공사로 인해 이용 불가; 거주자외 출입제한" }],
     });
+  });
+
+  test("KECO: a station's kind is its parking or venue; a basement floor and a charger's location", () => {
+    const out = parse(
+      payloads([
+        {
+          ...sample,
+          statId: "ME000002",
+          kindDetail: "C001",
+          floorType: "B",
+          floorNum: "2",
+          location: "입구 진입 후 2시 방향",
+        },
+        { ...sample, statId: "ME000003", kindDetail: "E005" },
+        { ...sample, statId: "ME000004", kindDetail: "Z999" },
+      ]),
+    );
+    const rest = site(out, "ME000002");
+    expect(rest?.["details"]).toMatchObject({ parkingType: "along_motorway" });
+    expect(components(rest)[0]).toMatchObject({
+      floorLevel: "B2",
+      details: { directions: [{ lang: "ko", text: "입구 진입 후 2시 방향" }] },
+    });
+    expect(site(out, "ME000003")?.["amenities"]).toEqual(["cafe"]);
   });
 });
