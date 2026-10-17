@@ -65,6 +65,107 @@ describe("oicp", () => {
     });
   });
 
+  test("OICP: a record written as the Hubject 2.3 schema has its facility power and position", () => {
+    // The eRoamingPushEvseData record of the OICP 2.3 CPO code snippets.
+    const record = {
+      Accessibility: "Restricted access",
+      AccessibilityLocation: "ParkingGarage",
+      Address: {
+        City: "Berlin",
+        Country: "DEU",
+        Floor: "6OG",
+        HouseNum: "22",
+        PostalCode: "10829",
+        Region: "Berlin",
+        Street: "EUREF CAMPUS",
+        TimeZone: "UTC+01:00",
+        ParkingFacility: true,
+        ParkingSpot: "E36",
+      },
+      AuthenticationModes: ["NFC RFID Classic", "REMOTE"],
+      CalibrationLawDataAvailability: "Local",
+      ChargingFacilities: [
+        {
+          Amperage: 32,
+          Power: 22,
+          PowerType: "AC_3_PHASE",
+          Voltage: 480,
+          ChargingModes: ["Mode_4"],
+        },
+      ],
+      ChargingPoolID: "DE*ABC*P1234TEST*1",
+      ChargingStationNames: [
+        { lang: "en", value: "ABC Charging Station Test" },
+        { lang: "de", value: "ABC Testladestation" },
+      ],
+      DynamicInfoAvailable: "true",
+      EvseID: "DE*XYZ*ETEST1",
+      GeoCoordinates: { Google: { Coordinates: "52.480495 13.356465" } },
+      HotlinePhoneNumber: "+49123123123123",
+      IsHubjectCompatible: true,
+      IsOpen24Hours: false,
+      PaymentOptions: ["No Payment"],
+      Plugs: ["Type 2 Outlet"],
+      RenewableEnergy: true,
+      ValueAddedServices: ["Reservation"],
+    };
+    const data = {
+      EVSEData: [
+        { OperatorID: "DE*ABC", OperatorName: "ABC technologies", EVSEDataRecord: [record] },
+      ],
+    };
+    const status = {
+      EVSEStatuses: [
+        {
+          OperatorID: "DE*ABC",
+          EVSEStatusRecord: [{ EvseID: "DE*XYZ*ETEST1", EvseStatus: "Available" }],
+        },
+      ],
+    };
+    const out = parse({
+      main: [Buffer.from(JSON.stringify(data))],
+      status: [Buffer.from(JSON.stringify(status))],
+    });
+    expect(out.rejected).toBe(0);
+    const site = out.features.find(
+      (f) => f["id"] === "oc:feature:ch-bfe-charging:DE*ABC*P1234TEST*1",
+    );
+    expect(site).toMatchObject({
+      location: { geometry: { type: "Point", coordinates: [13.356465, 52.480495] } },
+    });
+    expect(components(site).find((c) => c.key === "DE*XYZ*ETEST1/1")?.details).toMatchObject({
+      standard: "IEC_62196_T2",
+      powerType: "AC_3_PHASE",
+      current: "ac",
+      maxPowerKw: 22,
+      maxVoltage: 480,
+      maxAmperage: 32,
+    });
+    expect(statusOf(out, "DE*XYZ*ETEST1")).toEqual({
+      type: "category",
+      value: "available",
+      vocabulary: "evse_status",
+    });
+  });
+
+  test("OICP: a position in degrees, minutes and seconds", () => {
+    const data = JSON.parse(fixture("oicp-data.json").toString("utf8")) as {
+      EVSEData: { EVSEDataRecord: Record<string, unknown>[] }[];
+    };
+    const record = data.EVSEData.flatMap((g) => g.EVSEDataRecord).find(
+      (r) => r["EvseID"] === "CH*CCI*E22896",
+    )!;
+    record["GeoCoordinates"] = {
+      DegreeMinuteSeconds: { Latitude: "52°28'49.782''", Longitude: "-13° 21' 23.274''" },
+    };
+    const out = parse({ main: [Buffer.from(JSON.stringify(data))] });
+    const site = out.features.find((f) => components(f).some((c) => c.key === "CH*CCI*E22896"));
+    const location = site?.["location"] as { geometry: { coordinates: [number, number] } };
+    const [lon, lat] = location.geometry.coordinates;
+    expect(lat).toBeCloseTo(52.480495, 6);
+    expect(lon).toBeCloseTo(-13.356465, 6);
+  });
+
   test("OICP: a pool is one site of its EVSEs; EVSEs without a pool group by position", () => {
     const out = swiss();
     const pool = out.features.find((f) => f["id"] === "oc:feature:ch-bfe-charging:CH*MIG*P*321");

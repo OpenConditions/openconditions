@@ -83,12 +83,24 @@ const PARKING: Readonly<Record<string, ParkingType>> = {
   UndergroundParkingGarage: "underground_garage",
 };
 
-/** `"lat lon"` (`Google`), or a decimal-degree pair; `[lon, lat]`. */
+/** One `DegreeMinuteSeconds` coordinate, `52°28'49.782''`, in decimal degrees. */
+function degreesOf(value: unknown): number | undefined {
+  const m = text(value)?.match(/^(-?)(\d{1,3})°\s?(\d{1,2})'\s?(\d{1,2}(?:\.\d+)?)''$/);
+  if (m === null || m === undefined) return undefined;
+  const degrees = Number(m[2]) + Number(m[3]) / 60 + Number(m[4]) / 3600;
+  return m[1] === "-" ? -degrees : degrees;
+}
+
+/**
+ * A position from any of OICP's three coordinate formats; `[lon, lat]`.
+ * `Google` is `{ Coordinates: "lat lon" }`, which the Swiss federal file
+ * writes as the bare string.
+ */
 function pointOf(geo: unknown): [number, number] | undefined {
   if (!isRecord(geo)) return undefined;
   let lat: number | undefined;
   let lon: number | undefined;
-  const google = text(geo["Google"]);
+  const google = text(isRecord(geo["Google"]) ? geo["Google"]["Coordinates"] : geo["Google"]);
   if (google !== undefined) {
     const [a, b] = google.split(/[\s,]+/).map(Number);
     lat = a;
@@ -96,6 +108,9 @@ function pointOf(geo: unknown): [number, number] | undefined {
   } else if (isRecord(geo["DecimalDegree"])) {
     lat = Number(geo["DecimalDegree"]["Latitude"]);
     lon = Number(geo["DecimalDegree"]["Longitude"]);
+  } else if (isRecord(geo["DegreeMinuteSeconds"])) {
+    lat = degreesOf(geo["DegreeMinuteSeconds"]["Latitude"]);
+    lon = degreesOf(geo["DegreeMinuteSeconds"]["Longitude"]);
   }
   if (lat === undefined || lon === undefined || !Number.isFinite(lat) || !Number.isFinite(lon)) {
     return undefined;
@@ -126,7 +141,8 @@ const strings = (value: unknown): string[] =>
 /**
  * A record's connectors: one per plug. A single facility applies to every
  * plug, one facility per plug pairs by position; otherwise power is left out
- * rather than guessed. OICP writes power in kW, as a number or as text.
+ * rather than guessed. OICP writes power in kW, as a number or as text; the
+ * Swiss federal file writes a facility's `PowerType` and `Power` lowercase.
  */
 function connectorsOf(record: Raw): ConnectorInput[] {
   const facilities = (
@@ -141,8 +157,8 @@ function connectorsOf(record: Raw): ConnectorInput[] {
           ? facilities[i]
           : undefined;
     const known = PLUGS[plug];
-    const powerType = text(facility?.["powertype"])?.toUpperCase();
-    const power = parsePowerKw(facility?.["power"]);
+    const powerType = text(facility?.["PowerType"] ?? facility?.["powertype"])?.toUpperCase();
+    const power = parsePowerKw(facility?.["Power"] ?? facility?.["power"]);
     const voltage = num(facility?.["Voltage"]);
     const amperage = num(facility?.["Amperage"]);
     return {
@@ -263,7 +279,8 @@ export function parseOicp(
 
 /**
  * The status file: a reading per record of an indexed EVSE, as of the fetch;
- * a record of an EVSE the index does not hold is rejected.
+ * a record of an EVSE the index does not hold is rejected. The Swiss federal
+ * file writes OICP's `EvseStatus` as `EVSEStatus`.
  */
 export function parseOicpStatus(
   feed: ChargingCatalogFeed,
@@ -283,7 +300,7 @@ export function parseOicpStatus(
           reader.reject();
           continue;
         }
-        const status = OICP_EVSE_STATUSES[text(record["EVSEStatus"]) ?? ""];
+        const status = OICP_EVSE_STATUSES[text(record["EvseStatus"] ?? record["EVSEStatus"]) ?? ""];
         if (typeof status !== "string") continue;
         for (const subject of subjects) reader.read(subject, status as EvseStatus, undefined);
       }
