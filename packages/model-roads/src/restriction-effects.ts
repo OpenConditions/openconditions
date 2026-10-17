@@ -52,15 +52,22 @@ function direction(fact: RoadRestrictionFact): DirectionRef {
   };
 }
 
+/**
+ * The lifecycle a DATEX `validityStatus` declares: `active` and
+ * `definedByValidityTimeSpec` leave the time specification to decide, as the
+ * kernel's `active` does; `planned` and `suspended` are their own; anything
+ * else establishes nothing.
+ */
+const VALIDITY_STATUS: Readonly<Record<string, Validity["status"]>> = {
+  active: "active",
+  definedByValidityTimeSpec: "active",
+  planned: "planned",
+  suspended: "suspended",
+};
+
 function validity(fact: RoadRestrictionFact): Validity {
-  const status =
-    fact.context.validityStatus === "active"
-      ? "active"
-      : fact.context.validityStatus === "suspended"
-        ? "suspended"
-        : "unknown";
   return {
-    status,
+    status: VALIDITY_STATUS[fact.context.validityStatus ?? ""] ?? "unknown",
     ...(fact.validFrom !== null ? { start: fact.validFrom } : {}),
     ...(fact.validTo !== null ? { end: fact.validTo } : {}),
     ...(fact.schedule !== undefined && fact.schedule.length > 0

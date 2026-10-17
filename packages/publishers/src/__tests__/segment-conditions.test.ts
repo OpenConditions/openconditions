@@ -87,6 +87,27 @@ describe("segmentConditionsToJson", () => {
     });
   });
 
+  it.each(["planned", "suspended", "unknown", "ended", "cancelled"] as const)(
+    "never routes an effect inside its window under a %s lifecycle",
+    (status) => {
+      const window = { start: "2026-09-06T08:00:00Z", end: "2026-09-06T16:00:00Z" };
+      expect(project([row({ validity: { status, ...window } })]).conditions).toEqual([]);
+      const own = { ...closure, validity: { status, ...window } } as Effect;
+      expect(project([row({ effect: own })]).conditions).toEqual([]);
+    },
+  );
+
+  it("lists an operator action that is not in place without routing it", () => {
+    const [c] = project([
+      row({ effect: { ...closure, actionStatus: "approved" } as Effect }),
+    ]).conditions;
+    expect(c?.routing_evidence.reason_codes).toEqual(["action_not_routable"]);
+    const [inPlace] = project([
+      row({ effect: { ...closure, actionStatus: "termination_requested" } as Effect }),
+    ]).conditions;
+    expect(inPlace?.routing_evidence.reason_codes).toEqual([]);
+  });
+
   it("drops a crowd effect its situation's evidence has not made routing eligible", () => {
     expect(project([row({ origin: "crowd", routing_eligible: false })]).conditions).toEqual([]);
     expect(project([row({ origin: "crowd", routing_eligible: true })]).conditions).toHaveLength(1);
