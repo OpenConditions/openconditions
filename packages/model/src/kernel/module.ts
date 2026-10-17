@@ -144,6 +144,7 @@ export const kernelModule: RegistryModule = {
         "cap",
         "gtfs:stop",
         "gtfs:route",
+        "ifopt",
         "ocm",
         "bnetza",
         "cpo",

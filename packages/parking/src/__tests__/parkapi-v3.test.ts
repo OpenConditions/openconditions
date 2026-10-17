@@ -158,7 +158,7 @@ describe("parkapi-v3", () => {
     expect(readings(out, "3")).toEqual({ "parking.available": 143 });
   });
 
-  test("ParkAPI v3: a site's restrictions with their own spaces are areas with live counts", () => {
+  test("ParkAPI v3: a site's restrictions are areas with their hours, stays and live counts", () => {
     const out = parse(
       sitesWith((items) => [
         {
@@ -167,10 +167,10 @@ describe("parkapi-v3", () => {
           restrictions: [
             { type: "DISABLED", capacity: 11, realtime_capacity: 10, realtime_free_capacity: 4 },
             { type: "WOMEN", capacity: 5, max_stay: "PT2H" },
-            // A count of none is no area, and ParkAPI audiences without a user group are skipped.
+            // A count of none is no area.
             { type: "CHARGING", capacity: 0 },
             { type: "TAXI", capacity: 2 },
-            // Applies to every audience: no area of its own.
+            // Every audience at some hours: the area of the site's own vehicles.
             { max_stay: "PT2H", hours: "Mo-Fr 08:00-18:00" },
             { type: "TRUCK", capacity: 3, realtime_free_capacity: 1 },
             // Above its capacity: no reading for the area.
@@ -182,18 +182,25 @@ describe("parkapi-v3", () => {
     );
     const feature = site(out, "1")!;
     expect(feature).toMatchObject({ type: "park_and_ride", details: { capacityTotal: 137 } });
-    expect((feature["details"] as { usage?: string[] }).usage).not.toContain("truck");
-    expect(
-      (feature["components"] as { key: string; details: { capacity?: number } }[]).map((c) => [
-        c.key,
-        c.details.capacity,
-      ]),
-    ).toEqual([
+    expect((feature["details"] as { usage?: string[]; maxStay?: unknown }).usage).not.toContain(
+      "truck",
+    );
+    // The stay at some hours only is the area's, not the site's.
+    expect((feature["details"] as { maxStay?: unknown }).maxStay).toBeUndefined();
+    const components = feature["components"] as { key: string; details: Record<string, unknown> }[];
+    expect(components.map((c) => [c.key, c.details["capacity"]])).toEqual([
       ["car:disabled", 11],
       ["car:women", 5],
+      ["car:taxi", 2],
+      ["car:any", undefined],
       ["truck:any", 3],
       ["car:family", 2],
     ]);
+    expect(components[1]!.details).toMatchObject({ maxStay: { value: 120, unit: "min" } });
+    expect(components[3]!.details).toMatchObject({
+      hours: { osm: "Mo-Fr 08:00-18:00" },
+      maxStay: { value: 120, unit: "min" },
+    });
     const byArea = Object.fromEntries(
       out.observations
         .filter((o) => o["property"] === "parking.available")
@@ -281,6 +288,7 @@ describe("parkapi-v3", () => {
   test("ParkAPI v3: a maximum stay for one audience, some hours or of no fixed length is not the site's", () => {
     expect(maxStay([{ type: "DISABLED", capacity: 3, max_stay: "PT2H" }])).toBeUndefined();
     expect(maxStay([{ max_stay: "PT2H", hours: "Mo-Fr 08:00-18:00" }])).toBeUndefined();
+    expect(maxStay([{ capacity: 4, max_stay: "PT2H" }])).toBeUndefined();
     expect(maxStay([{ max_stay: "P1M" }])).toBeUndefined();
     expect(maxStay([{ max_stay: "PT" }])).toBeUndefined();
     expect(maxStay([{ max_stay: "2 hours" }])).toBeUndefined();
@@ -300,6 +308,8 @@ describe("parkapi-v3", () => {
         },
         // A garage is covered already.
         { ...items[1], id: 4, is_covered: true },
+        // Supervised, without saying how.
+        { ...items[1], id: 5, supervision_type: "YES" },
       ]),
       fixture("parkapi-v3-sources.json"),
     );
@@ -311,6 +321,7 @@ describe("parkapi-v3", () => {
     expect(site(out, "2")?.["details"]).not.toHaveProperty("supervision");
     expect(site(out, "3")?.["details"]).toMatchObject({ supervision: "none", layout: "covered" });
     expect(site(out, "4")?.["details"]).toMatchObject({ layout: "multi_storey" });
+    expect(site(out, "5")?.["details"]).toMatchObject({ supervision: "supervised" });
   });
 
   test("ParkAPI v3: a site restricted to customers as a whole is a customers' car park", () => {
@@ -318,7 +329,7 @@ describe("parkapi-v3", () => {
       sitesWith((items) => [
         { ...items[1], id: 1, restrictions: [{ type: "CUSTOMER" }] },
         { ...items[1], id: 2, restrictions: [{ type: "CUSTOMER", capacity: 260 }] },
-        // Part of a site: no area, and the site stays everyone's.
+        // Part of a site: the customers' area, and the site stays everyone's.
         { ...items[1], id: 3, restrictions: [{ type: "CUSTOMER", capacity: 20 }] },
       ]),
       fixture("parkapi-v3-sources.json"),
@@ -330,6 +341,106 @@ describe("parkapi-v3", () => {
       });
     }
     expect(site(out, "3")).not.toHaveProperty("access");
-    expect(site(out, "3")?.["components"]).toBeUndefined();
+    expect(site(out, "3")?.["components"]).toEqual([
+      expect.objectContaining({
+        key: "car:customers",
+        details: expect.objectContaining({ capacity: 20 }),
+      }),
+    ]);
+  });
+
+  test("ParkAPI v3: a site's photo, limits, outline, bay layout, region and stops", () => {
+    const line = {
+      type: "LineString",
+      coordinates: [
+        [8.4, 49],
+        [8.41, 49],
+      ],
+    };
+    const out = parse(
+      sitesWith((items) => [
+        {
+          ...items[4],
+          id: 1,
+          photo_url: "https://example.org/p.jpg",
+          max_width: 230,
+          capacity_min: 5,
+          capacity_max: 9,
+          orientation: "DIAGONAL",
+          side: "LEFT",
+          parking_type: "HALF_ON_KERB",
+          linear_parking_position: "ROAD_CENTER_LINE",
+          geojson: line,
+          official_region_code: "082120000000",
+          related_location: "Schule am Park",
+          external_identifiers: [{ type: "DHID", value: "de:08212:1" }],
+        },
+        // An unclosed ring is no outline; an eight-digit municipality key is no regional key.
+        {
+          ...items[4],
+          id: 2,
+          geojson: {
+            type: "Polygon",
+            coordinates: [
+              [
+                [8.4, 49],
+                [8.41, 49],
+                [8.41, 49.01],
+              ],
+            ],
+          },
+          official_region_code: "08212000",
+        },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    const feature = site(out, "1")!;
+    expect(feature["images"]).toEqual([{ url: "https://example.org/p.jpg", category: "site" }]);
+    expect(feature["location"]).toMatchObject({
+      geometry: { type: "Point" },
+      admin: { country: "DE", geocodes: [{ scheme: "ars", code: "082120000000" }] },
+      areaDescription: [{ lang: "de", text: "Schule am Park" }],
+    });
+    expect(feature["details"]).toMatchObject({
+      widthLimit: { value: 2.3, unit: "m" },
+      capacityRange: { min: 5, max: 9 },
+      bays: { orientation: "diagonal", side: "left", position: "half_on_kerb" },
+      outline: { geometry: line, line: "road_centre" },
+      stops: [{ scheme: "ifopt", id: "de:08212:1" }],
+    });
+    expect(site(out, "2")?.["details"]).not.toHaveProperty("outline");
+    expect(site(out, "2")?.["location"]).not.toHaveProperty("admin.geocodes");
+  });
+
+  test("ParkAPI v3: a source's licence page goes with its credit", () => {
+    const out = parse(
+      sitesWith((items) => [
+        { ...items[2], id: 1 },
+        { ...items[0], id: 2 },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    const upstream = (id: string) =>
+      (site(out, id)?.["provenance"] as { upstream: Record<string, unknown>[] } | undefined)
+        ?.upstream[0];
+    expect(upstream("1")).toMatchObject({
+      publisher: "Stadt Karlsruhe",
+      license: "CC-BY-4.0",
+      licensing: {
+        declarations: [{ text: "CC-BY-4.0", url: "http://creativecommons.org/licenses/by/4.0/" }],
+        bindings: [
+          {
+            subject: "Stadt Karlsruhe",
+            license: {
+              kind: "spdx",
+              expression: "CC-BY-4.0",
+              url: "http://creativecommons.org/licenses/by/4.0/",
+            },
+          },
+        ],
+      },
+    });
+    // Without a licence page the publish step captures the licence alone, as before.
+    expect(upstream("2")).not.toHaveProperty("licensing");
   });
 });

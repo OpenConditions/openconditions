@@ -2004,6 +2004,7 @@
                         "coach",
                         "motorcycle",
                         "bicycle",
+                        "cargo_bike",
                         "caravan",
                         "any"
                       ]
@@ -2018,6 +2019,9 @@
                         "ev_charging",
                         "car_sharing",
                         "residents",
+                        "customers",
+                        "taxi",
+                        "delivery",
                         "short_term",
                         "long_term",
                         "hazmat"

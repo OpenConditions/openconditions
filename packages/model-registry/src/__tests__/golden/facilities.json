@@ -539,7 +539,13 @@
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "admin": {
-        "country": "DE"
+        "country": "DE",
+        "geocodes": [
+          {
+            "scheme": "ars",
+            "code": "082120000000"
+          }
+        ]
       },
       "address": {
         "country": "DE",
@@ -605,7 +611,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "f98b17abb2f3d7a24b26554ebc50c1eede8ed2bfe717da844c2054cda42be64c"
+    "contentHash": "336cb581053b74d7a3422a80dccb9e5c25fa40eac13366335396c9e7b6e74257"
   },
   {
     "id": "oc:feature:de-bw-mobidata-parking:391",
@@ -629,7 +635,13 @@
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "admin": {
-        "country": "DE"
+        "country": "DE",
+        "geocodes": [
+          {
+            "scheme": "ars",
+            "code": "082120000000"
+          }
+        ]
       },
       "address": {
         "country": "DE",
@@ -695,7 +707,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "64aec14d6dc1db128dd4bf54bd12eab7efe3101b2208251843ca94748faab8fa"
+    "contentHash": "1ded20c4fc21314acb3b3ec8adc20b13342f3acf2298507911abe87978242350"
   },
   {
     "id": "oc:feature:de-bw-mobidata-parking:384",
@@ -719,7 +731,13 @@
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "admin": {
-        "country": "DE"
+        "country": "DE",
+        "geocodes": [
+          {
+            "scheme": "ars",
+            "code": "081160019019"
+          }
+        ]
       },
       "address": {
         "country": "DE",
@@ -785,7 +803,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "d93de0fac3dc892ffa19727eaa49e786d9084586ad484f59a6c3509e60c56671"
+    "contentHash": "16ff2ffd89f86047615a97dca25ec5e13b9e8988010be7abce83254c81448011"
   },
   {
     "id": "oc:observation:de-bw-mobidata-parking:5dda9bd294327a42bd465b564a34bf6cf6c1d426ada6f5957ca2b3715a24776b",

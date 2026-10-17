@@ -1,4 +1,5 @@
 import {
+  captureLicensing,
   emptyParseOutput,
   type FeedPayloads,
   type ParseContext,
@@ -8,7 +9,11 @@ import {
 } from "@openconditions/ingest-framework";
 import type { ExternalId, Quantity } from "@openconditions/model";
 import {
+  PARKAPI_KERB_POSITIONS,
+  PARKAPI_LINE_POSITIONS,
+  PARKAPI_ORIENTATIONS,
   PARKAPI_RESTRICTION_AREAS,
+  PARKAPI_SIDES,
   PARKAPI_SUPERVISION,
   PARKAPI_V3,
   PARKAPI_VEHICLE_TYPES,
@@ -34,8 +39,9 @@ import {
 
 /**
  * One entry of a site's `restrictions[]`: an audience (`type`) the site, or
- * the part of it its own `capacity` counts, is kept for. Without a type it
- * restricts every audience.
+ * the part of it its own `capacity` counts, is kept for, during its `hours`
+ * (OSM `opening_hours`) and for at most its `max_stay` (ISO 8601). Without a
+ * type it restricts every audience. Several entries are alternatives.
  */
 interface ParkApiRestriction {
   type?: string;
@@ -52,6 +58,7 @@ interface ParkApiSite {
   source_id?: number;
   source_uid?: string;
   original_uid?: string;
+  photo_url?: string;
   name?: string;
   operator_name?: string;
   public_url?: string;
@@ -64,13 +71,23 @@ interface ParkApiSite {
   fee_description?: string;
   opening_hours?: string;
   max_height?: number;
+  max_width?: number;
   /** Deprecated for the restrictions' own: the longest stay, in seconds. */
   max_stay?: number;
   supervision_type?: string;
   has_lighting?: boolean;
   is_covered?: boolean;
+  orientation?: string;
+  side?: string;
+  parking_type?: string;
+  linear_parking_position?: string | null;
+  capacity_min?: number;
+  capacity_max?: number;
+  related_location?: string;
   lat?: number | string | null;
   lon?: number | string | null;
+  official_region_code?: string | null;
+  geojson?: { type?: string; coordinates?: unknown };
   capacity?: number;
   realtime_capacity?: number;
   has_realtime_data?: boolean;
@@ -89,6 +106,7 @@ interface ParkApiSource {
   name?: string;
   attribution_license?: string | null;
   attribution_contributor?: string | null;
+  attribution_url?: string | null;
 }
 
 /** How a car site is built, from its ParkAPI `type`. */
@@ -159,9 +177,12 @@ function restrictionsOf(site: ParkApiSite): ParkApiRestriction[] {
     : [];
 }
 
-/** Whether a restriction covers the whole site: no spaces of its own, or all of the site's. */
+/**
+ * Whether a restriction covers the whole site at all hours: no spaces of its
+ * own, or all of the site's, and no hours.
+ */
 const coversSite = (site: ParkApiSite, r: ParkApiRestriction) =>
-  r.capacity === undefined || r.capacity === site.capacity;
+  (r.capacity === undefined || r.capacity === site.capacity) && text(r.hours) === undefined;
 
 /**
  * Whether the site as a whole is kept for lorries: a `TRUCK` restriction
@@ -197,18 +218,24 @@ function durationMinutes(value: unknown): number | undefined {
   return ((weeks * 7 + days) * 24 + hours) * 60 + minutes + seconds / 60;
 }
 
+/** A restriction's `max_stay`, when it is a readable stay of more than nothing. */
+function stayOf(r: ParkApiRestriction): Quantity | undefined {
+  const minutes = durationMinutes(r.max_stay);
+  return minutes !== undefined && minutes > 0 ? { value: minutes, unit: "min" } : undefined;
+}
+
 /**
  * The longest a vehicle may stay at the site: the longest `max_stay` of the
- * restrictions on every audience at all hours (alternatives, so the longest
- * of them is allowed), else the site's deprecated `max_stay` in seconds. A
- * restriction's limit for one audience or for some hours only is left out:
- * the site's single maximum stay would state it for everyone at all times.
+ * restrictions on every audience that cover the whole site at all hours
+ * (alternatives, so the longest of them is allowed), else the site's
+ * deprecated `max_stay` in seconds. A limit for one audience, or for some
+ * hours or spaces only, is its area's.
  */
 function maxStayOf(site: ParkApiSite): Quantity | undefined {
   const limits = restrictionsOf(site)
-    .filter((r) => r.type === undefined && text(r.hours) === undefined)
-    .map((r) => durationMinutes(r.max_stay))
-    .filter((minutes): minutes is number => minutes !== undefined && minutes > 0);
+    .filter((r) => r.type === undefined && coversSite(site, r))
+    .map((r) => stayOf(r)?.value)
+    .filter((minutes): minutes is number => minutes !== undefined);
   if (limits.length > 0) return { value: Math.max(...limits), unit: "min" };
   const seconds = site.max_stay;
   return typeof seconds === "number" && Number.isFinite(seconds) && seconds > 0
@@ -220,29 +247,50 @@ function maxStayOf(site: ParkApiSite): Quantity | undefined {
 type RestrictionArea = AreaInput & { restriction: ParkApiRestriction };
 
 /**
- * The areas of a site's restrictions: one per audience that names a user
- * group or vehicle type, the first of a repeated one winning. A restriction
- * that counts no spaces is no area; one that counts none of its own says only
- * that the site has such spaces, except a lorry park's, which has all of them.
+ * The areas of a site's restrictions, each with its hours and maximum stay:
+ * one per audience, the first of a repeated one winning. A restriction of
+ * every audience is the area of the site's own vehicles where it keeps spaces
+ * of its own or holds at some hours only; covering the whole site at all
+ * hours it limits the site's stay instead. A restriction that counts no
+ * spaces is no area; one that counts none of its own says only that the site
+ * has such spaces, except a lorry park's, which has all of them. A
+ * customers' car park has no customers' area: the site is theirs.
  */
-function areasOf(site: ParkApiSite, lorryPark: boolean): RestrictionArea[] {
+function areasOf(site: ParkApiSite, lorryPark: boolean, customers: boolean): RestrictionArea[] {
   const vehicleType = (PARKAPI_VEHICLE_TYPES[site.purpose ?? "CAR"] ?? "car") as ParkingVehicleType;
   const seen = new Set<string>();
   return restrictionsOf(site).flatMap((restriction) => {
+    const { type } = restriction;
+    if (type === undefined && coversSite(site, restriction)) return [];
+    if (type === "CUSTOMER" && customers && coversSite(site, restriction)) return [];
     const target =
-      restriction.type === undefined ? undefined : PARKAPI_RESTRICTION_AREAS[restriction.type];
+      type === undefined
+        ? { userGroup: "any" }
+        : Object.hasOwn(PARKAPI_RESTRICTION_AREAS, type)
+          ? PARKAPI_RESTRICTION_AREAS[type]
+          : undefined;
     if (!target) return [];
     const capacity =
-      restriction.capacity ??
-      (lorryPark && restriction.type === "TRUCK" ? site.capacity : undefined);
+      restriction.capacity ?? (lorryPark && type === "TRUCK" ? site.capacity : undefined);
     if (capacity === 0) return [];
     const area = {
-      vehicleType: (target.vehicleType ?? vehicleType) as ParkingVehicleType,
+      vehicleType: ((target as { vehicleType?: string }).vehicleType ??
+        vehicleType) as ParkingVehicleType,
       userGroup: target.userGroup as ParkingUserGroup,
     };
     if (seen.has(areaKey(area))) return [];
     seen.add(areaKey(area));
-    return [{ ...area, ...(validCount(capacity) ? { capacity } : {}), restriction }];
+    const hoursOsm = text(restriction.hours);
+    const maxStay = stayOf(restriction);
+    return [
+      {
+        ...area,
+        ...(validCount(capacity) ? { capacity } : {}),
+        ...(hoursOsm === undefined ? {} : { hoursOsm }),
+        ...(maxStay === undefined ? {} : { maxStay }),
+        restriction,
+      },
+    ];
   });
 }
 
@@ -260,29 +308,91 @@ function typeOf(site: ParkApiSite, truck: boolean): ParkingSiteType | undefined 
   return structureType(site);
 }
 
+/** A value's meaning in a table, when the table has it. */
+const lookup = (table: Readonly<Record<string, string | null>>, value: unknown) =>
+  typeof value === "string" && Object.hasOwn(table, value)
+    ? (table[value] ?? undefined)
+    : undefined;
+
+/** Whether a field is set to a value its table does not hold. */
+const unread = (table: Readonly<Record<string, string | null>>, value: unknown) =>
+  value !== undefined && value !== null && lookup(table, value) === undefined;
+
+const EXTERNAL_ID_TYPES: ReadonlySet<string> = new Set(PARKAPI_V3.externalIdentifierTypes);
+
 /**
  * How many enumerated values of a kept site go unread: a structure `type`
  * the crosswalk gives no classification (`OTHER`, or bicycle furniture on a
- * car site), a `park_and_ride_type` or `supervision_type` it does not map,
- * an identifier other than an OpenStreetMap one, and a restriction audience
- * that is no area and not the whole site's customers.
+ * car site), a `park_and_ride_type`, `supervision_type`, bay layout,
+ * identifier type or restriction audience ParkAPI does not define.
  */
-function unreadValues(site: ParkApiSite, customers: boolean): number {
+function unreadValues(site: ParkApiSite): number {
   const supervision = site.supervision_type;
   return [
     site.type !== undefined && structureType(site) === undefined,
     ...parkAndRideTypes(site).map((t) => !PARK_AND_RIDE_TYPES.has(t)),
     supervision !== undefined &&
       supervision !== "VIDEO" &&
-      !(Object.hasOwn(PARKAPI_SUPERVISION, supervision) && PARKAPI_SUPERVISION[supervision]),
-    ...(site.external_identifiers ?? []).map((e) => e.type !== "OSM"),
+      unread(PARKAPI_SUPERVISION, supervision),
+    unread(PARKAPI_ORIENTATIONS, site.orientation),
+    unread(PARKAPI_SIDES, site.side),
+    unread(PARKAPI_KERB_POSITIONS, site.parking_type),
+    unread(PARKAPI_LINE_POSITIONS, site.linear_parking_position),
+    ...(site.external_identifiers ?? []).map((e) => !EXTERNAL_ID_TYPES.has(e.type ?? "")),
     ...restrictionsOf(site).map(
-      (r) =>
-        r.type !== undefined &&
-        !PARKAPI_RESTRICTION_AREAS[r.type] &&
-        !(r.type === "CUSTOMER" && customers),
+      (r) => r.type !== undefined && !Object.hasOwn(PARKAPI_RESTRICTION_AREAS, r.type),
     ),
   ].filter(Boolean).length;
+}
+
+/** The stops a site names by their DHID, the German form of an IFOPT id. */
+function stopsOf(site: ParkApiSite): ExternalId[] {
+  return (site.external_identifiers ?? []).flatMap((e) =>
+    e.type === "DHID" && typeof e.value === "string" && e.value.trim() !== ""
+      ? [{ scheme: "ifopt", id: e.value.trim() }]
+      : [],
+  );
+}
+
+/** A web address the licensing record can hold: http(s) only. */
+function webUrl(value: unknown): string | undefined {
+  const url = text(value);
+  if (url === undefined || !URL.canParse(url)) return undefined;
+  return ["http:", "https:"].includes(new URL(url).protocol) ? url : undefined;
+}
+
+/**
+ * The upstream source's credit: its publisher, the site's id there and its
+ * licence, with the licence's own page where the source links one.
+ */
+function upstreamOf(
+  feed: ParkingCatalogFeed,
+  site: ParkApiSite,
+  source: ParkApiSource | undefined,
+): SiteInput["upstream"] {
+  const publisher = text(source?.attribution_contributor) ?? text(source?.name);
+  if (publisher === undefined) return undefined;
+  const written = text(source?.attribution_license);
+  const license = written === undefined ? undefined : licenseId(written);
+  const licenseUrl = webUrl(source?.attribution_url);
+  const recordId = text(site.original_uid);
+  return [
+    {
+      publisher,
+      ...(recordId === undefined ? {} : { recordId }),
+      ...(license === undefined ? {} : { license }),
+      ...(licenseUrl === undefined
+        ? {}
+        : {
+            licensing: captureLicensing({
+              id: feed.id,
+              name: publisher,
+              license: license ?? "NOASSERTION",
+              licenseUrl,
+            }),
+          }),
+    },
+  ];
 }
 
 function siteInput(
@@ -292,11 +402,11 @@ function siteInput(
   point: [number, number],
   source: ParkApiSource | undefined,
   truck: boolean,
+  customers: boolean,
   areas: readonly RestrictionArea[],
 ): SiteInput {
   const sourceUid = source?.uid ?? text(site.source_uid);
   const type = typeOf(site, truck);
-  const customers = isCustomerPark(site);
   const built = site.type === undefined ? undefined : LAYOUTS[site.type];
   // A roofed lot or kerbside stretch; a garage is covered already.
   const layout = site.is_covered === true && (built ?? "surface") === "surface" ? "covered" : built;
@@ -308,10 +418,24 @@ function siteInput(
     ...(site.supervision_type === "VIDEO" ? ["cctv"] : []),
     ...(site.has_lighting === true ? ["lighting"] : []),
   ];
-  const publisher = text(source?.attribution_contributor) ?? text(source?.name);
-  const license = text(source?.attribution_license);
-  const recordId = text(site.original_uid);
+  const upstream = upstreamOf(feed, site, source);
   const address = text(site.address);
+  const photo = text(site.photo_url);
+  const region = text(site.official_region_code);
+  const bays = {
+    orientation: lookup(PARKAPI_ORIENTATIONS, site.orientation),
+    position: lookup(PARKAPI_KERB_POSITIONS, site.parking_type),
+    side: lookup(PARKAPI_SIDES, site.side),
+  } as NonNullable<SiteInput["bays"]>;
+  const line = lookup(PARKAPI_LINE_POSITIONS, site.linear_parking_position) as
+    | "road_centre"
+    | "bays_centre"
+    | undefined;
+  const count = (value: unknown) => (typeof value === "number" ? value : undefined);
+  const metres = (centimetres: unknown) => {
+    const cm = count(centimetres);
+    return cm !== undefined && cm > 0 ? cm / 100 : undefined;
+  };
   const usage = [
     ...(truck ? ["truck"] : []),
     ...(type === "park_and_ride" ? ["park_and_ride"] : []),
@@ -331,7 +455,16 @@ function siteInput(
     ...optional("layout", layout),
     ...optional("operator", text(site.operator_name)),
     ...optional("website", text(site.public_url)),
+    ...optional("images", photo === undefined ? undefined : [{ url: photo, category: "site" }]),
     ...optional("address", address === undefined ? undefined : { text: address }),
+    ...optional("areaDescription", text(site.related_location)),
+    // The German official regional key (Amtlicher Regionalschlüssel), twelve digits.
+    ...optional(
+      "geocodes",
+      region !== undefined && /^\d{12}$/.test(region)
+        ? [{ scheme: "ars", code: region }]
+        : undefined,
+    ),
     ...optional("openingHoursOsm", text(site.opening_hours)),
     ...optional("tariffText", text(site.fee_description)),
     ...optional("notes", text(site.description)),
@@ -339,26 +472,23 @@ function siteInput(
     ...optional("supervision", supervision as SiteInput["supervision"] | undefined),
     ...(securityFeatures.length === 0 ? {} : { securityFeatures }),
     ...(site.has_fee === false ? { free: true } : {}),
-    ...optional("capacityTotal", typeof site.capacity === "number" ? site.capacity : undefined),
+    ...optional("capacityTotal", count(site.capacity)),
+    capacityRange: { min: count(site.capacity_min), max: count(site.capacity_max) },
+    // ParkAPI gives both limits in centimetres.
+    ...optional("heightLimitM", metres(site.max_height)),
+    ...optional("widthLimitM", metres(site.max_width)),
+    ...optional("maxStay", maxStayOf(site)),
+    bays,
     ...optional(
-      "heightLimitM",
-      typeof site.max_height === "number" && site.max_height > 0
-        ? site.max_height / 100
-        : undefined,
+      "outline",
+      site.geojson === undefined
+        ? undefined
+        : { geometry: site.geojson, ...(line ? { line } : {}) },
     ),
+    stops: stopsOf(site),
     areas: areas.map(({ restriction: _, ...area }) => area),
     usage,
-    ...(publisher === undefined
-      ? {}
-      : {
-          upstream: [
-            {
-              publisher,
-              ...(recordId === undefined ? {} : { recordId }),
-              ...(license === undefined ? {} : { license: licenseId(license) }),
-            },
-          ],
-        }),
+    ...optional("upstream", upstream),
   };
 }
 
@@ -427,8 +557,10 @@ function readingsOf(
  * id, so sites of two upstream sources may still link. A site restricted to
  * lorries as a whole is a lorry park, and one restricted to customers as a
  * whole a customers' car park; a restriction of the site's other audiences
- * is an area of it, with the area's own live free count where it has one. A
- * live free count is bounded by the live capacity, else the static one.
+ * is an area of it, with its hours, its maximum stay and the area's own live
+ * free count where it has them. A live free count is bounded by the live
+ * capacity, else the static one. A site's outline, bay layout, estimated
+ * capacity range, photo, regional key and the stops it serves are read too.
  *
  * A site that is no object or has no id is malformed, one without a placeable
  * point has no geometry, and one of a purpose ParkAPI does not define is of
@@ -486,14 +618,11 @@ export function parseParkApiV3(
         (site.source_id === undefined ? undefined : byId.get(site.source_id)) ??
         (site.source_uid === undefined ? undefined : byUid.get(site.source_uid));
       const truck = isLorryPark(site);
-      const areas = areasOf(site, truck);
-      const input = siteInput(feed, site, stationId, point, source, truck, areas);
-      recordSkipped(feed.id, "unknown_value", unreadValues(site, isCustomerPark(site)));
-      const draft = siteDraft(feed, input, ctx.fetchedAt);
-      // `siteDraft` takes no maximum stay, which the site's details can hold.
-      const maxStay = maxStayOf(site);
-      if (maxStay !== undefined) (draft["details"] as Record<string, unknown>)["maxStay"] = maxStay;
-      out.features.push(draft);
+      const customers = isCustomerPark(site);
+      const areas = areasOf(site, truck, customers);
+      const input = siteInput(feed, site, stationId, point, source, truck, customers, areas);
+      recordSkipped(feed.id, "unknown_value", unreadValues(site));
+      out.features.push(siteDraft(feed, input, ctx.fetchedAt));
       out.observations.push(
         ...readingsOf(feed, site, stationId, point, ctx, input.upstream, areas),
       );

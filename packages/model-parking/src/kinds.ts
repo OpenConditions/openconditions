@@ -2,6 +2,11 @@ import {
   defineKind,
   defineProperty,
   defineVocabulary,
+  LineStringGeometry,
+  MultiLineStringGeometry,
+  MultiPolygonGeometry,
+  OpeningHours,
+  PolygonGeometry,
   type PropertyEntry,
   Quantity,
 } from "@openconditions/model";
@@ -58,13 +63,18 @@ export const PARKING_VEHICLE_TYPES = [
   "coach",
   "motorcycle",
   "bicycle",
+  "cargo_bike",
   "caravan",
   "any",
 ] as const;
 
 export type ParkingVehicleType = (typeof PARKING_VEHICLE_TYPES)[number];
 
-/** Who an area is reserved for. A site's untyped spaces are the `any` area. */
+/**
+ * Who an area is reserved for. A site's untyped spaces are the `any` area.
+ * `customers` are a business's own (shoppers, hotel guests), `taxi` a rank,
+ * `delivery` a loading bay.
+ */
 export const PARKING_USER_GROUPS = [
   "any",
   "disabled",
@@ -73,6 +83,9 @@ export const PARKING_USER_GROUPS = [
   "ev_charging",
   "car_sharing",
   "residents",
+  "customers",
+  "taxi",
+  "delivery",
   "short_term",
   "long_term",
   "hazmat",
@@ -107,18 +120,60 @@ export const PARKING_LAYOUTS = [
 
 export type ParkingLayout = (typeof PARKING_LAYOUTS)[number];
 
-/** Every usage a site is published for. */
+/**
+ * Every usage a site is published for: `kiss_and_ride` is dropping off or
+ * picking up passengers, `park_and_cycle` and `park_and_walk` leaving the
+ * car to go on by bicycle or on foot, `valet` handing the car to staff,
+ * `loading` a bay to load and unload goods, `overnight` a stay overnight.
+ */
 export const PARKING_USAGES = [
   "park_and_ride",
+  "park_and_cycle",
+  "park_and_walk",
+  "kiss_and_ride",
   "carpool",
+  "car_sharing",
+  "valet",
   "truck",
   "coach",
   "customer",
   "residents",
   "event",
+  "loading",
+  "overnight",
 ] as const;
 
 export type ParkingUsage = (typeof PARKING_USAGES)[number];
+
+/** How a site is watched; `supervised` says it is, without saying how. */
+export const PARKING_SUPERVISIONS = [
+  "remote",
+  "on_site",
+  "control_centre",
+  "patrol",
+  "supervised",
+  "none",
+  "unknown",
+] as const;
+
+export type ParkingSupervision = (typeof PARKING_SUPERVISIONS)[number];
+
+/** The angle of a site's bays to the kerb or aisle they open onto. */
+export const PARKING_ORIENTATIONS = ["parallel", "diagonal", "perpendicular"] as const;
+
+/**
+ * Where kerbside bays are: in the carriageway, on the kerb, half on it, or on
+ * the shoulder (OpenStreetMap's `parking:<side>` values).
+ */
+export const PARKING_KERB_POSITIONS = ["lane", "on_kerb", "half_on_kerb", "shoulder"] as const;
+
+/** The shapes a site's outline takes: an area, or a line of kerbside bays. */
+export const ParkingOutlineGeometry = z.discriminatedUnion("type", [
+  PolygonGeometry,
+  MultiPolygonGeometry,
+  LineStringGeometry,
+  MultiLineStringGeometry,
+]);
 
 /**
  * Parking sites and the sub-units their occupancy is reported for. A site is
@@ -140,6 +195,12 @@ export const PARKING_KINDS = [
       vehicleType: z.enum(PARKING_VEHICLE_TYPES),
       userGroup: z.enum(PARKING_USER_GROUPS).optional(),
       capacity: z.number().int().nonnegative().optional(),
+      /**
+       * When the area's restriction holds: its spaces are kept for its user
+       * group, and its maximum stay applies, during these hours only.
+       */
+      hours: OpeningHours.optional(),
+      maxStay: Quantity.optional(),
       dimensions: z
         .strictObject({
           length: Quantity.optional(),
@@ -172,7 +233,18 @@ export const PARKING_KINDS = [
       /** The physical structure, independent of what the site is used for. */
       layout: z.enum(PARKING_LAYOUTS).optional(),
       capacityTotal: z.number().int().nonnegative().optional(),
+      /**
+       * The least and the most spaces a source estimates where it cannot count
+       * them, such as along a kerb measured by its length.
+       */
+      capacityRange: z
+        .strictObject({
+          min: z.number().int().nonnegative().optional(),
+          max: z.number().int().nonnegative().optional(),
+        })
+        .optional(),
       heightLimit: Quantity.optional(),
+      widthLimit: Quantity.optional(),
       lengthLimit: Quantity.optional(),
       weightLimit: Quantity.optional(),
       /**
@@ -189,9 +261,7 @@ export const PARKING_KINDS = [
         .optional(),
       /** What the site does to be secure, rather than how it was rated. */
       securityFeatures: z.array(k.vocab("parking_security")).min(1).optional(),
-      supervision: z
-        .enum(["remote", "on_site", "control_centre", "patrol", "none", "unknown"])
-        .optional(),
+      supervision: z.enum(PARKING_SUPERVISIONS).optional(),
       entrances: z
         .array(
           z.strictObject({
@@ -203,6 +273,29 @@ export const PARKING_KINDS = [
         .optional(),
       maxStay: Quantity.optional(),
       reservation: z.boolean().optional(),
+      /** How the site's bays are laid out. */
+      bays: z
+        .strictObject({
+          orientation: z.enum(PARKING_ORIENTATIONS).optional(),
+          position: z.enum(PARKING_KERB_POSITIONS).optional(),
+          /** The side of the road the bays are on, looking along the outline as drawn. */
+          side: z.enum(["left", "right"]).optional(),
+        })
+        .optional(),
+      /**
+       * The site's extent as the source draws it: its area, or the line of its
+       * kerbside bays. The location stays the site's point, where it is shown
+       * and linked. A line runs along the road's centre line or along the
+       * bays' own, as `line` says where the source does.
+       */
+      outline: z
+        .strictObject({
+          geometry: ParkingOutlineGeometry,
+          line: z.enum(["road_centre", "bays_centre"]).optional(),
+        })
+        .optional(),
+      /** The public transport stops a park-and-ride site serves, by their ids. */
+      stops: z.array(k.ExternalId).min(1).optional(),
       /** Every usage the site is published for, the primary one included. */
       usage: z.array(z.enum(PARKING_USAGES)).min(1).optional(),
       /** The operator's page for the site; the kernel feature carries no URL. */

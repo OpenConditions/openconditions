@@ -2,17 +2,23 @@ import type { CatalogFeed, ParseContext, RecordDraft } from "@openconditions/ing
 import {
   type AUDIENCES,
   type ExternalId,
+  type IMAGE_CATEGORIES,
   type LIFECYCLES,
   observationId,
+  type PAYMENT_METHODS,
   type Quantity,
   zonedWallClockToInstant,
 } from "@openconditions/model";
 import {
+  type PARKING_KERB_POSITIONS,
+  type PARKING_ORIENTATIONS,
   PARKING_PROPERTIES,
   PARKING_USAGES,
   type ParkingLayout,
+  ParkingOutlineGeometry,
   type ParkingSiteType,
   type ParkingStatus,
+  type ParkingSupervision,
   type ParkingUserGroup,
   type ParkingVehicleType,
 } from "@openconditions/model-parking";
@@ -34,6 +40,9 @@ export interface AreaInput {
   vehicleType: ParkingVehicleType;
   userGroup: ParkingUserGroup;
   capacity?: number;
+  /** When the area is kept for its user group and its maximum stay holds, in the OSM `opening_hours` grammar. */
+  hoursOsm?: string;
+  maxStay?: Quantity;
 }
 
 export interface SiteAddress {
@@ -93,9 +102,39 @@ export interface SiteInput {
   securityRating?: { scheme: "esporg" | "eu_label"; level: string };
   /** `parking_security` values. */
   securityFeatures?: string[];
-  supervision?: "remote" | "on_site" | "control_centre" | "patrol" | "none" | "unknown";
+  supervision?: ParkingSupervision;
   /** The upstream publishers an aggregator took the site from. */
   upstream?: import("@openconditions/model").MergedSource["upstream"];
+  /** Pictures of the site, http(s) only. */
+  images?: { url: string; category: (typeof IMAGE_CATEGORIES)[number] }[];
+  /** How a visitor can pay; `free` follows from `free` already. */
+  payment?: (typeof PAYMENT_METHODS)[number][];
+  widthLimitM?: number;
+  /** The longest a vehicle may stay, for everyone at all hours. */
+  maxStay?: Quantity;
+  /** Whether a space can be booked ahead. */
+  reservation?: boolean;
+  /** The least and the most spaces the source estimates, where it does not count them. */
+  capacityRange?: { min?: number; max?: number };
+  bays?: {
+    orientation?: (typeof PARKING_ORIENTATIONS)[number];
+    position?: (typeof PARKING_KERB_POSITIONS)[number];
+    side?: "left" | "right";
+  };
+  /** The site's area or line of bays, `[lon, lat]` GeoJSON; left out when it is no valid shape. */
+  outline?: { geometry: unknown; line?: "road_centre" | "bays_centre" };
+  /** The public transport stops a park-and-ride site serves. */
+  stops?: ExternalId[];
+  /** Administrative codes of where the site is (`ars`, `nuts`, …). */
+  geocodes?: { scheme: string; code: string }[];
+  /** Where the site is, in words: the place it is at or serves. */
+  areaDescription?: string;
+  /** An audited service rating of a lorry park. */
+  serviceRating?: { scheme: "eu_label"; level: string };
+  entrances?: {
+    point: [number, number];
+    kind: "vehicle_entrance" | "vehicle_exit" | "pedestrian";
+  }[];
 }
 
 /** A reading of a site, or of one of its areas. */
@@ -245,6 +284,17 @@ function addressOf(input: SiteInput, country: string | undefined) {
   return Object.keys(written).length === 0 ? undefined : { ...written, country };
 }
 
+/** Opening hours in the OSM grammar, flagged when they are round the clock. */
+function openingHours(osm: string | undefined) {
+  const text = clean(osm);
+  if (text === undefined) return undefined;
+  return { osm: text, ...(text === "24/7" ? { twentyFourSeven: true } : {}) };
+}
+
+/** A quantity the model can hold: a finite value above zero. */
+const positive = (q: Quantity | undefined) =>
+  q !== undefined && Number.isFinite(q.value) && q.value > 0 ? { ...q } : undefined;
+
 /** One component per (vehicleType, userGroup), the first of a repeated pair winning. */
 function areaComponents(areas: readonly AreaInput[] | undefined) {
   const seen = new Set<string>();
@@ -253,6 +303,8 @@ function areaComponents(areas: readonly AreaInput[] | undefined) {
     const key = areaKey(area);
     if (seen.has(key)) continue;
     seen.add(key);
+    const hours = openingHours(area.hoursOsm);
+    const maxStay = positive(area.maxStay);
     out.push({
       key,
       kind: "parking_area",
@@ -262,11 +314,30 @@ function areaComponents(areas: readonly AreaInput[] | undefined) {
         vehicleType: area.vehicleType,
         userGroup: area.userGroup,
         ...(validCount(area.capacity) ? { capacity: area.capacity } : {}),
+        ...(hours === undefined ? {} : { hours }),
+        ...(maxStay === undefined ? {} : { maxStay }),
       },
     });
   }
   return out;
 }
+
+/** A site's outline, when its geometry is one of the shapes the model holds. */
+function outlineOf(outline: SiteInput["outline"]) {
+  const g = outline?.geometry as { type?: unknown; coordinates?: unknown } | undefined;
+  if (g === undefined || g === null || typeof g !== "object") return undefined;
+  const parsed = ParkingOutlineGeometry.safeParse({ type: g.type, coordinates: g.coordinates });
+  if (!parsed.success) return undefined;
+  const lines = parsed.data.type === "LineString" || parsed.data.type === "MultiLineString";
+  return {
+    geometry: parsed.data,
+    ...(lines && outline?.line !== undefined ? { line: outline.line } : {}),
+  };
+}
+
+/** The keys of an object whose value is set. */
+const defined = <T extends Record<string, unknown>>(o: T): Partial<T> =>
+  Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined)) as Partial<T>;
 
 const USAGES: ReadonlySet<string> = new Set(PARKING_USAGES);
 
@@ -288,14 +359,45 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
   const name = text(input.name);
   const operator = text(input.operator);
   const description = text(input.notes);
-  const openingHoursOsm = clean(input.openingHoursOsm);
+  const hours = openingHours(input.openingHoursOsm);
+  const payment = [
+    ...new Set([...(input.free === true ? ["free"] : []), ...(input.payment ?? [])]),
+  ];
   const access =
-    input.audience !== undefined || input.free === true
+    input.audience !== undefined || payment.length > 0
       ? {
           audience: input.audience ?? "unknown",
-          ...(input.free === true ? { payment: ["free"] } : {}),
+          ...(payment.length === 0 ? {} : { payment }),
         }
       : undefined;
+  const images = (input.images ?? []).flatMap((image) => {
+    const url = webUrl(image.url);
+    return url === undefined ? [] : [{ url, category: image.category }];
+  });
+  const geocodes = (input.geocodes ?? []).filter((g) => clean(g.code) !== undefined);
+  const areaDescription = text(input.areaDescription);
+  const admin =
+    country === undefined
+      ? undefined
+      : {
+          country,
+          ...(geocodes.length === 0
+            ? {}
+            : { geocodes: geocodes.map((g) => ({ scheme: g.scheme, code: g.code.trim() })) }),
+        };
+  const widthLimitM = input.widthLimitM;
+  const maxStay = positive(input.maxStay);
+  const range = defined({
+    min: validCount(input.capacityRange?.min) ? input.capacityRange.min : undefined,
+    max: validCount(input.capacityRange?.max) ? input.capacityRange.max : undefined,
+  });
+  const bays = defined({ ...input.bays });
+  const outline = outlineOf(input.outline);
+  const stops = (input.stops ?? []).map((e) => ({ ...e }));
+  const entrances = (input.entrances ?? []).map((e) => ({
+    point: { type: "Point", coordinates: [e.point[0], e.point[1]] },
+    kind: e.kind,
+  }));
   const amenities = (input.amenities ?? []).filter((a) => a.trim() !== "");
   const usage = (input.usage ?? []).filter((u) => USAGES.has(u));
   const website = webUrl(input.website);
@@ -313,7 +415,8 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
     location: {
       ...pointLocation(input.point),
       ...(address === undefined ? {} : { address }),
-      ...(country === undefined ? {} : { admin: { country } }),
+      ...(admin === undefined ? {} : { admin }),
+      ...(areaDescription === undefined ? {} : { areaDescription }),
     },
     provenance: provenance(feed, input.stationId, input.upstream),
     freshness: freshness(feed, fetchedAt),
@@ -332,30 +435,35 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
     ...(name === undefined ? {} : { name }),
     ...(description === undefined ? {} : { description }),
     ...(operator === undefined ? {} : { operator: { role: "operator", name: operator } }),
-    ...(openingHoursOsm === undefined
-      ? {}
-      : {
-          openingHours: {
-            osm: openingHoursOsm,
-            ...(openingHoursOsm === "24/7" ? { twentyFourSeven: true } : {}),
-          },
-        }),
+    ...(hours === undefined ? {} : { openingHours: hours }),
     ...(access === undefined ? {} : { access }),
     ...(amenities.length === 0 ? {} : { amenities }),
+    ...(images.length === 0 ? {} : { images }),
     ...(components.length === 0 ? {} : { components }),
     details: {
       kind: "parking_site",
       v: 1,
       ...(input.layout === undefined ? {} : { layout: input.layout }),
       ...(validCount(input.capacityTotal) ? { capacityTotal: input.capacityTotal } : {}),
+      ...(Object.keys(range).length === 0 ? {} : { capacityRange: range }),
       ...(heightLimitM !== undefined && Number.isFinite(heightLimitM) && heightLimitM > 0
         ? { heightLimit: { value: heightLimitM, unit: "m" } }
+        : {}),
+      ...(widthLimitM !== undefined && Number.isFinite(widthLimitM) && widthLimitM > 0
+        ? { widthLimit: { value: widthLimitM, unit: "m" } }
         : {}),
       ...(input.securityRating === undefined
         ? {}
         : { securityRating: { ...input.securityRating } }),
+      ...(input.serviceRating === undefined ? {} : { serviceRating: { ...input.serviceRating } }),
       ...(securityFeatures.length === 0 ? {} : { securityFeatures }),
       ...(input.supervision === undefined ? {} : { supervision: input.supervision }),
+      ...(entrances.length === 0 ? {} : { entrances }),
+      ...(maxStay === undefined ? {} : { maxStay }),
+      ...(input.reservation === undefined ? {} : { reservation: input.reservation }),
+      ...(Object.keys(bays).length === 0 ? {} : { bays }),
+      ...(outline === undefined ? {} : { outline }),
+      ...(stops.length === 0 ? {} : { stops }),
       ...(usage.length === 0 ? {} : { usage: [...new Set(usage)] }),
       ...(website === undefined ? {} : { website }),
       ...(tariffText === undefined ? {} : { tariffText }),
