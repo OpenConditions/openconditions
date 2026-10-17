@@ -13,6 +13,7 @@ import { colocateSites } from "../colocate.js";
 import type { EnergyMixInput } from "../energy-mix.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours, type WeeklyPeriod } from "../hours.js";
+import { own } from "../records.js";
 import {
   type BayInput,
   type ChargingMode,
@@ -300,7 +301,7 @@ function connectorsOf(record: Raw, unread: Unread): ConnectorInput[] {
         : facilities.length === plugs.length
           ? facilities[i]
           : undefined;
-    const known = PLUGS[plug];
+    const known = own(PLUGS, plug);
     if (known === undefined) unread();
     const powerType = textOf(facility, "PowerType")?.toUpperCase();
     if (powerType !== undefined && !POWER_TYPES.has(powerType)) unread();
@@ -308,7 +309,7 @@ function connectorsOf(record: Raw, unread: Unread): ConnectorInput[] {
     const voltage = num(field(facility, "Voltage"));
     const amperage = num(field(facility, "Amperage"));
     const modes = strings(field(facility, "ChargingModes")).flatMap((m) => {
-      const mode = CHARGING_MODES[m];
+      const mode = own(CHARGING_MODES, m);
       if (mode === undefined) unread();
       return mode === undefined ? [] : [mode];
     });
@@ -368,7 +369,7 @@ function evseOf(evseId: string, record: Raw, unread: Unread): EvseInput {
 function openingPeriods(value: unknown, unread: Unread): WeeklyPeriod[] {
   return listOf(value).flatMap((entry) => {
     const on = textOf(entry, "on");
-    const days = on === undefined ? undefined : OPENING_DAYS[on];
+    const days = own(OPENING_DAYS, on);
     if (on !== undefined && days === undefined) unread();
     if (days === undefined) return [];
     return listOf(field(entry, "Period")).flatMap((period) => {
@@ -385,7 +386,7 @@ function energyMixOf(record: Raw, unread: Unread): EnergyMixInput | undefined {
   const sources = listOf(field(record, "EnergySource")).flatMap((entry) => {
     const energy = textOf(entry, "Energy");
     const pct = Number(field(entry, "Percentage"));
-    const source = energy === undefined ? undefined : ENERGY_SOURCES[energy];
+    const source = own(ENERGY_SOURCES, energy);
     if (energy !== undefined && source === undefined) unread();
     return source === undefined || !Number.isFinite(pct) ? [] : [{ source, pct }];
   });
@@ -649,7 +650,7 @@ export function parseOicpStatus(
         continue;
       }
       const written = textOf(record, "EvseStatus");
-      const status = written === undefined ? undefined : OICP_EVSE_STATUSES[written];
+      const status = own(OICP_EVSE_STATUSES, written);
       if (typeof status !== "string") {
         recordSkipped(feed.id, written === undefined ? "malformed" : "unknown_value");
         continue;

@@ -43,7 +43,10 @@ export type EvseStatus = (typeof EVSE_STATUSES)[number];
 export type ParkingType = (typeof CHARGING_PARKING_TYPES)[number];
 export type ImageCategory = (typeof IMAGE_CATEGORIES)[number];
 export type BayPosition = (typeof EVSE_BAY_POSITIONS)[number];
-export type ChargingMode = "mode1" | "mode2" | "mode3" | "mode4" | "chademo";
+/** The connector model's charging modes: IEC 61851-1's four and CHAdeMO's. */
+const CHARGING_MODES = ["mode1", "mode2", "mode3", "mode4", "chademo"] as const;
+export type ChargingMode = (typeof CHARGING_MODES)[number];
+const MODES: ReadonlySet<string> = new Set(CHARGING_MODES);
 
 /** One plug or socket of a charge point. */
 export interface ConnectorInput {
@@ -495,7 +498,7 @@ function evseComponents(
       const power = positive(connector.maxPowerKw);
       const voltage = positive(connector.maxVoltage);
       const amperage = positive(connector.maxAmperage);
-      const modes = [...new Set(connector.chargingModes ?? [])];
+      const modes = [...new Set(connector.chargingModes ?? [])].filter((m) => MODES.has(m));
       const termsUrl = webUrl(connector.termsUrl);
       out.push({
         key: childKey,

@@ -30,7 +30,7 @@ import { colocateSites } from "../colocate.js";
 import type { EnergyMixInput } from "../energy-mix.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours } from "../hours.js";
-import { detached } from "../records.js";
+import { detached, own } from "../records.js";
 import {
   type ChargingMode,
   type ConnectorInput,
@@ -276,7 +276,7 @@ function lookup<T>(
   unknown: Unknown,
 ): T | undefined {
   if (value === undefined) return undefined;
-  if (!(value in table)) {
+  if (!Object.hasOwn(table, value)) {
     unknown(value);
     return undefined;
   }
@@ -297,7 +297,7 @@ function connectorOf(
   // infrastructure namespace the mode on each connector.
   const written = c.chargingMode ?? point.chargingMode;
   const mode = lookup(CHARGING_MODES, written, unknown);
-  const chargingMode = written === undefined ? undefined : MODES[written];
+  const chargingMode = own(MODES, written);
   const current = lookup(CURRENT_TYPES, point.currentType, unknown);
   const powerType = mode ?? (current === "dc" ? "DC" : undefined);
   return {
@@ -518,7 +518,7 @@ export function parseDatex2(
         listed++;
         const status = statusOf(site.id, station.id, refill.id);
         const value =
-          status === undefined ? undefined : DATEX2_REFILL_POINT_STATUSES[status.status];
+          status === undefined ? undefined : own(DATEX2_REFILL_POINT_STATUSES, status.status);
         // A point taken away is no charge point any more.
         if (value === "removed") continue;
         let key = refill.emi3 ?? refill.id;
@@ -591,9 +591,7 @@ export function parseDatex2(
         }),
       ),
     ];
-    const payment = [
-      ...new Set(methods.flatMap((m) => (PAYMENT[m] === undefined ? [] : [PAYMENT[m]]))),
-    ];
+    const payment = [...new Set(methods.flatMap((m) => own(PAYMENT, m) ?? []))];
     const parkingType = lookup(PARKING_TYPES, site.siteType, unknown);
     const hours = hoursOf(site.openingHours);
     const energyMix = siteEnergyMix(
@@ -644,7 +642,7 @@ function statusesOf(bodies: readonly Buffer[], feedId: string): Map<string, Date
   const statuses = new Map<string, DatexEnergyStatus>();
   for (const body of bodies) {
     for (const status of parseDatexEnergyStatus(parseXmlDocument(body), { sourceId: feedId })) {
-      if (!(status.status in DATEX2_REFILL_POINT_STATUSES)) {
+      if (!Object.hasOwn(DATEX2_REFILL_POINT_STATUSES, status.status)) {
         recordSkipped(feedId, "unknown_value");
       }
       statuses.set(pointKey(status.siteId, status.stationId, status.refillPointId), status);
@@ -680,7 +678,7 @@ function datexStatusReadings(
   }
   for (const [subject, status] of bare) if (!chosen.has(subject)) chosen.set(subject, status);
   for (const [subject, status] of chosen) {
-    const value = DATEX2_REFILL_POINT_STATUSES[status.status];
+    const value = own(DATEX2_REFILL_POINT_STATUSES, status.status);
     if (typeof value !== "string" || value === "planned" || value === "removed") continue;
     const at = instantIn("UTC", status.at);
     if (!statusIsLive(at, ctx.fetchedAt)) continue;

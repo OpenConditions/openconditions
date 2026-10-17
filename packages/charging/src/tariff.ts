@@ -10,6 +10,7 @@ import {
   type ChargingFeed,
   clean,
   freshness,
+  own,
   pointLocation,
   provenance,
   siteId,
@@ -97,7 +98,7 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
   const seconds = (n: number | undefined | typeof UNREADABLE) =>
     typeof n === "number" ? { value: n, unit: "s" } : n;
   const days = r.day_of_week?.map(
-    (d): string | typeof UNREADABLE => OCPI_DAYS[d as keyof typeof OCPI_DAYS] ?? UNREADABLE,
+    (d): string | typeof UNREADABLE => own<string>(OCPI_DAYS, d) ?? UNREADABLE,
   );
   const fields: Record<string, unknown> = {
     startTime: pattern(r.start_time, CLOCK),
@@ -120,8 +121,8 @@ function restrictionsOf(r: OcpiRestrictions | undefined): Record<string, unknown
     minDuration: seconds(min(r.min_duration)),
     maxDuration: seconds(max(r.max_duration)),
     reservation:
-      r.reservation === undefined ? undefined : (RESERVATIONS[r.reservation] ?? UNREADABLE),
-    booking: r.booking === undefined ? undefined : (BOOKINGS[r.booking] ?? UNREADABLE),
+      r.reservation === undefined ? undefined : (own(RESERVATIONS, r.reservation) ?? UNREADABLE),
+    booking: r.booking === undefined ? undefined : (own(BOOKINGS, r.booking) ?? UNREADABLE),
   };
   if (Object.values(fields).includes(UNREADABLE)) return null;
   return Object.fromEntries(Object.entries(fields).filter(([, v]) => v !== undefined));
@@ -142,7 +143,7 @@ function elementsOf(tariff: OcpiTariff): Record<string, unknown>[] | null {
   const elements: Record<string, unknown>[] = [];
   for (const element of tariff.elements) {
     const components = element.price_components.flatMap((c) => {
-      const type = OCPI_TARIFF_DIMENSIONS[c.type];
+      const type = own(OCPI_TARIFF_DIMENSIONS, c.type);
       if (type === undefined || !Number.isFinite(c.price) || c.price < 0) return [];
       const vat = c.vat;
       const step = c.step_size;
@@ -195,10 +196,10 @@ export function tariffUnreadValues(tariff: OcpiTariff): number {
   let unread = 0;
   for (const element of tariff.elements) {
     unread += element.price_components.filter(
-      (c) => OCPI_TARIFF_DIMENSIONS[c.type] === undefined,
+      (c) => own(OCPI_TARIFF_DIMENSIONS, c.type) === undefined,
     ).length;
   }
-  if (tariff.type !== undefined && OCPI_TARIFF_TYPES[tariff.type] === undefined) unread++;
+  if (tariff.type !== undefined && own(OCPI_TARIFF_TYPES, tariff.type) === undefined) unread++;
   if (tariff.tax_included !== undefined && !TAX_INCLUDED.has(tariff.tax_included)) unread++;
   ocpiEnergyMix(tariff.energy_mix, () => {
     unread++;
@@ -244,7 +245,7 @@ export function tariffDraft(
   };
   const minPrice = bound(tariff.min_price);
   const maxPrice = bound(tariff.max_price);
-  const tariffType = tariff.type === undefined ? undefined : OCPI_TARIFF_TYPES[tariff.type];
+  const tariffType = own(OCPI_TARIFF_TYPES, tariff.type);
   const altText = (tariff.tariff_alt_text ?? []).flatMap((t) => {
     const text = clean(t.text);
     return text === undefined ? [] : [{ lang: clean(t.language)?.toLowerCase() ?? "und", text }];

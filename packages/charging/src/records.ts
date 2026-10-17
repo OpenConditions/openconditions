@@ -76,6 +76,14 @@ export const UNLOCATED = {
  */
 export const detached = (text: string): string => Buffer.from(text, "utf8").toString("utf8");
 
+/**
+ * A code table's own entry for `key`: a source value that names an
+ * inherited property (`constructor`, `toString`, `__proto__`) is no entry.
+ */
+export function own<T>(table: Readonly<Record<string, T>>, key: string | undefined): T | undefined {
+  return key !== undefined && Object.hasOwn(table, key) ? table[key] : undefined;
+}
+
 export const clean = (value: string | undefined): string | undefined => {
   const text = value?.trim();
   return text ? text : undefined;

@@ -41,7 +41,7 @@ import { colocateSites } from "../colocate.js";
 import { ocpiEnergyMix } from "../energy-mix.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours } from "../hours.js";
-import type { Upstream } from "../records.js";
+import { own, type Upstream } from "../records.js";
 import {
   type BayInput,
   type BayPosition,
@@ -102,7 +102,7 @@ const NOT_LIVE = new Set(["STATIC", "PLANNED"]);
 /** An EVSE state the mapping reads: one of OCPI's, or OCPDB's `STATIC`. */
 const knownState = (status: string) => {
   const code = status.toUpperCase();
-  return NOT_LIVE.has(code) || typeof OCPI_EVSE_STATUSES[code] === "string";
+  return NOT_LIVE.has(code) || typeof own(OCPI_EVSE_STATUSES, code) === "string";
 };
 
 /** OCPI's parking restrictions, 2.3.0's included, as the EVSE model names them. */
@@ -121,7 +121,7 @@ const BAY_POSITIONS: ReadonlySet<string> = new Set(EVSE_BAY_POSITIONS.map((p) =>
 /** The images of a record whose category OCPI defines; another category is counted in `unread`. */
 function imagesOf(images: readonly OcpiImage[] | undefined, unread: () => void): ImageInput[] {
   return (images ?? []).flatMap((image) => {
-    const category = OCPI_IMAGE_CATEGORIES[image.category ?? ""];
+    const category = own(OCPI_IMAGE_CATEGORIES, image.category);
     if (category === undefined) {
       unread();
       return [];
@@ -324,7 +324,7 @@ function connectorOf(
  */
 function scheduleOf(evse: OcpiEvse, zone: string, unread: () => void): StatusScheduleInput[] {
   return (evse.status_schedule ?? []).flatMap((s) => {
-    const status = OCPI_EVSE_STATUSES[s.status];
+    const status = own(OCPI_EVSE_STATUSES, s.status);
     const start = instantIn(zone, s.period_begin);
     const end = s.period_end === undefined ? undefined : instantIn(zone, s.period_end);
     if (typeof status !== "string") unread();
@@ -514,12 +514,12 @@ export function mapOcpi(
 
     const operator = loc.operator;
     const amenities = (loc.facilities ?? []).flatMap((f) => {
-      const amenity = OCPI_FACILITIES[f.toUpperCase()];
+      const amenity = own(OCPI_FACILITIES, f.toUpperCase());
       if (typeof amenity === "string") return [amenity];
       unread();
       return [];
     });
-    const parkingType = OCPI_PARKING_TYPES[loc.parking_type?.toUpperCase() ?? ""];
+    const parkingType = own(OCPI_PARKING_TYPES, loc.parking_type?.toUpperCase());
     if (loc.parking_type !== undefined && parkingType === undefined) unread();
     const hours = hoursOf(loc.opening_times);
     // Exceptional periods are UTC, though a publisher writing naive local time means its own.
@@ -630,7 +630,7 @@ const ownState = (evse: OcpiEvse): EvseState | undefined =>
 function liveStatus(state: EvseState, zone: string, fetchedAt: string): EvseStatus | undefined {
   const code = state.status.toUpperCase();
   if (NOT_LIVE.has(code)) return undefined;
-  const status = OCPI_EVSE_STATUSES[code];
+  const status = own(OCPI_EVSE_STATUSES, code);
   if (typeof status !== "string" || status === "removed") return undefined;
   if (!statusIsLive(instantIn(zone, state.at), fetchedAt)) return undefined;
   return status as EvseStatus;

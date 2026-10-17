@@ -11,6 +11,7 @@ import type { AUDIENCES, PAYMENT_METHODS } from "@openconditions/model";
 import { colocateSites } from "../colocate.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours, type WeeklyPeriod } from "../hours.js";
+import { own } from "../records.js";
 import {
   type ConnectorInput,
   type EvseInput,
@@ -390,10 +391,11 @@ function statusOf(feedId: string, row: DelimitedRow): EvseStatus {
   if (state !== "" && !STATES.has(state)) recordSkipped(feedId, "unknown_value");
   if (state === "hors_service") return "out_of_order";
   const occupancy = row["occupation_pdc"] ?? "";
-  if (occupancy !== "" && occupancy !== "inconnu" && STATUSES[occupancy] === undefined) {
+  const status = own(STATUSES, occupancy);
+  if (occupancy !== "" && occupancy !== "inconnu" && status === undefined) {
     recordSkipped(feedId, "unknown_value");
   }
-  return STATUSES[occupancy] ?? "unknown";
+  return status ?? "unknown";
 }
 
 /**

@@ -1,6 +1,6 @@
 import { OCPI_ENERGY_IMPACTS, OCPI_ENERGY_SOURCES } from "@openconditions/model-charging";
 import type { OcpiEnergyMix } from "@openconditions/ocpi";
-import { clean } from "./records.js";
+import { clean, own } from "./records.js";
 
 /** An energy mix as a parser reads it, before `energyMixDraft` checks it. */
 export interface EnergyMixInput {
@@ -44,12 +44,12 @@ export function ocpiEnergyMix(
 ): EnergyMixInput | undefined {
   if (mix === undefined) return undefined;
   const sources = (mix.energy_sources ?? []).flatMap((s) => {
-    const source = OCPI_ENERGY_SOURCES[s.source];
+    const source = own(OCPI_ENERGY_SOURCES, s.source);
     if (source === undefined) unread();
     return source === undefined ? [] : [{ source, pct: s.percentage }];
   });
   const impacts = (mix.environ_impact ?? []).flatMap((i) => {
-    const category = OCPI_ENERGY_IMPACTS[i.category];
+    const category = own(OCPI_ENERGY_IMPACTS, i.category);
     if (category === undefined) unread();
     return category === undefined
       ? []
