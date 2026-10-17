@@ -4,7 +4,6 @@ import {
   type FeedPayloads,
   type FieldRef,
   type LayoutRow,
-  lookupField as lookup,
   type ParseContext,
   type ParseOutput,
   type RecordSkipReason,
@@ -33,6 +32,51 @@ export type ChargingLayoutFormat = (typeof CHARGING_LAYOUT_FORMATS)[number];
 
 /** Called for each enumerated value a record holds that its mapping does not name. */
 type OnUnknown = () => void;
+
+/**
+ * A field's value through a mapping's map: undefined for an empty field, or
+ * one the map does not name, which is counted unless the mapping ignores it.
+ */
+function lookup<T>(
+  fields: Record<string, unknown>,
+  rule: { field: FieldRef; map: Record<string, T>; ignore?: string[] } | undefined,
+  unknown: OnUnknown,
+): T | undefined {
+  if (rule === undefined) return undefined;
+  const key = text(fields, rule.field);
+  if (key === undefined) return undefined;
+  if (Object.hasOwn(rule.map, key)) return rule.map[key];
+  if (!(rule.ignore ?? []).includes(key)) unknown();
+  return undefined;
+}
+
+/**
+ * The parking restrictions a record names: the field's value, or each item
+ * of the JSON list it holds; an item neither mapped nor ignored is counted.
+ */
+function restrictionsOf(
+  fields: Record<string, unknown>,
+  rule: NonNullable<NonNullable<ChargingMapping["evse"]>["parkingRestrictions"]>,
+  unknown: OnUnknown,
+): string[] {
+  const value = text(fields, rule.field);
+  if (value === undefined) return [];
+  let items: string[] = [value];
+  if (rule.json === true) {
+    try {
+      const parsed = JSON.parse(value) as unknown;
+      items = Array.isArray(parsed) ? parsed.flatMap((item) => scalarText(item) ?? []) : [];
+    } catch {
+      unknown();
+      return [];
+    }
+  }
+  return items.flatMap((item) => {
+    if (Object.hasOwn(rule.map, item)) return [rule.map[item]!];
+    if (!(rule.ignore ?? []).includes(item)) unknown();
+    return [];
+  });
+}
 
 /** A whole number of zero or more; undefined for anything else. */
 function countOf(fields: Record<string, unknown>, ref: FieldRef | undefined): number | undefined {
@@ -276,6 +320,20 @@ function evsesOf(
     const evseId = text(row.fields, mapping.evse?.evseId);
     byKey.set(key, evseId === undefined ? evse : { ...evse, evseId });
   });
+  const restrictions = mapping.evse?.parkingRestrictions;
+  if (restrictions !== undefined) {
+    // The first record of each charge point says who may park there.
+    const firstRow = new Map<string, LayoutRow>();
+    rows.forEach((row, i) => {
+      const key = text(row.fields, mapping.evse?.key) ?? `\u0000${i}`;
+      if (!firstRow.has(key)) firstRow.set(key, row);
+    });
+    for (const [key, evse] of byKey) {
+      const row = firstRow.get(key);
+      const read = row === undefined ? [] : restrictionsOf(row.fields, restrictions, unknown);
+      if (read.length > 0) evse.parkingRestrictions = [...new Set(read)];
+    }
+  }
   return [...byKey.values()];
 }
 
@@ -342,8 +400,13 @@ function siteInput(
     houseNumber: text(f, mapping.address.houseNumber),
     postalCode: text(f, mapping.address.postalCode),
     city: text(f, mapping.address.city),
+    region: text(f, mapping.address.region),
     text: text(f, mapping.address.text),
   };
+  const roundTheClock = mapping.twentyFourSeven;
+  const allDay =
+    roundTheClock !== undefined &&
+    roundTheClock.values.includes(text(f, roundTheClock.field) ?? "\u0000");
   return defined({
     stationId,
     point,
@@ -357,6 +420,7 @@ function siteInput(
       : mapping.openingHours?.syntax === "osm"
         ? { openingHoursOsm: hours }
         : { openingHoursText: hours }),
+    ...(allDay ? { twentyFourSeven: true } : {}),
     audience: lookup(f, mapping.audience, unknown),
     lifecycle: unbuilt ? "planned" : lookup(f, mapping.lifecycle, unknown),
     parkingType: lookup(f, mapping.parkingType, unknown) as ParkingType | undefined,

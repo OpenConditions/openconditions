@@ -29,11 +29,25 @@
         "id": { "field": "uniek_identificatienummer", "pattern": "^(.+?)__" },
         "lang": "nl",
         "operator": "uitbater",
-        "address": { "street": "adres", "postalCode": "postcode", "city": "gemeente" },
+        "address": {
+          "street": "adres",
+          "postalCode": "postcode",
+          "city": "gemeente",
+          "region": { "field": "provincie", "pattern": "^(?:PROVINCIE\\s+)?(.+)$" },
+        },
+        // MOW's catalogue: a public point is open to every driver round the
+        // clock, a semi-public one to every driver for at least ten hours a
+        // day, so both are public; the hours set the two apart. "Other,
+        // non-private" says only that the point is not private.
         "audience": {
           "field": "toegankelijkheid",
-          "map": { "publiek": "public", "semi-publiek": "restricted" },
+          "map": {
+            "publiek": "public",
+            "semi-publiek": "public",
+            "andere niet-privaat": "unknown",
+          },
         },
+        "twentyFourSeven": { "field": "toegankelijkheid", "values": ["publiek"] },
         "evse": { "key": "evse" },
         // `connector` and `stroomtype` hold OCPI's ConnectorType and PowerType.
         "connectors": {
@@ -74,7 +88,12 @@
         "id": "EMPLACEMENT_ID",
         "lang": "fr",
         "operator": "OPERATEUR",
-        "address": { "street": "ADRESSE", "postalCode": "CODE_POSTAL", "city": "VILLE" },
+        "address": {
+          "street": "ADRESSE",
+          "postalCode": "CODE_POSTAL",
+          "city": "VILLE",
+          "region": "PROVINCE",
+        },
         "audience": {
           "field": "TYPE_ACCES",
           "map": { "public": "public", "semi-public": "restricted", "unknown": "unknown" },
@@ -91,7 +110,17 @@
             "OTHER": "other",
           },
         },
-        "evse": { "key": "CONNECTEUR_ID" },
+        // A JSON list: customers only, two-wheelers only; restricted hours and
+        // one car brand only say nothing the charge point's restrictions hold.
+        "evse": {
+          "key": "CONNECTEUR_ID",
+          "parkingRestrictions": {
+            "field": "RESTRICTIONS_EMPLACEMENT",
+            "json": true,
+            "map": { "ONLY_CUSTOMERS": "customers", "ONLY_2_WHEELERS": "motorcycles" },
+            "ignore": ["TIME_RESTRICTED", "ONLY_BRAND"],
+          },
+        },
         "connectors": { "row": { "powerKw": { "field": "PUISSANCE_KW", "unit": "kW" } } },
       },
     },

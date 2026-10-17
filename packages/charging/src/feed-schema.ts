@@ -3,7 +3,6 @@ import {
   feedBaseShape,
   fieldRef,
   layoutBlockSchema,
-  mapped,
   regexSource,
 } from "@openconditions/ingest-framework";
 import { AUDIENCES, LIFECYCLES } from "@openconditions/model";
@@ -11,11 +10,24 @@ import {
   CHARGING_PARKING_TYPES,
   CONNECTOR_POWER_TYPES,
   CONNECTOR_STANDARDS,
+  EVSE_PARKING_RESTRICTIONS,
 } from "@openconditions/model-charging";
 import { z } from "zod";
 
 const CURRENTS = ["ac", "dc"] as const;
 const FORMATS = ["socket", "cable"] as const;
+
+/**
+ * A value map whose `ignore` lists the field's values that are known but say
+ * nothing of what the map reads (a NSW charger type `AC` says nothing of the
+ * lifecycle); a value in neither is counted as unknown.
+ */
+const mapped = <T extends readonly [string, ...string[]]>(values: T) =>
+  z.strictObject({
+    field: fieldRef,
+    map: z.record(z.string(), z.enum(values)),
+    ignore: z.array(z.string()).min(1).optional(),
+  });
 
 const standard = z.enum(CONNECTOR_STANDARDS);
 
@@ -114,10 +126,16 @@ export const chargingMappingSchema = z.strictObject({
       houseNumber: fieldRef.optional(),
       postalCode: fieldRef.optional(),
       city: fieldRef.optional(),
+      /** The state, province or region. */
+      region: fieldRef.optional(),
       text: fieldRef.optional(),
     })
     .optional(),
   openingHours: z.strictObject({ field: fieldRef, syntax: z.enum(["osm", "text"]) }).optional(),
+  /** A site open round the clock: the field holds one of `values`. */
+  twentyFourSeven: z
+    .strictObject({ field: fieldRef, values: z.array(z.string()).min(1) })
+    .optional(),
   audience: mapped(AUDIENCES).optional(),
   lifecycle: mapped(LIFECYCLES).optional(),
   /**
@@ -133,7 +151,25 @@ export const chargingMappingSchema = z.strictObject({
    * Which records are one charge point: those sharing `key`, with its eMI3 id
    * from `evseId`. Without it, each connector entry is its own charge point.
    */
-  evse: z.strictObject({ key: fieldRef.optional(), evseId: fieldRef.optional() }).optional(),
+  evse: z
+    .strictObject({
+      key: fieldRef.optional(),
+      evseId: fieldRef.optional(),
+      /**
+       * Who may park at the charge point: the field's value, or with `json`
+       * each item of the JSON list it holds, through `map`; an item in
+       * neither `map` nor `ignore` is counted as unknown.
+       */
+      parkingRestrictions: z
+        .strictObject({
+          field: fieldRef,
+          json: z.boolean().optional(),
+          map: z.record(z.string(), z.enum(EVSE_PARKING_RESTRICTIONS)),
+          ignore: z.array(z.string()).min(1).optional(),
+        })
+        .optional(),
+    })
+    .optional(),
   /** How a record names its connectors: exactly one of `row`, `columns` and `list`. */
   connectors: z.union([
     z.strictObject({ row: rowConnectors }),

@@ -1370,6 +1370,31 @@
                       }
                     ]
                   },
+                  "region": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "pattern": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "field"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
                   "text": {
                     "anyOf": [
                       {
@@ -1440,6 +1465,48 @@
                 ],
                 "additionalProperties": false
               },
+              "twentyFourSeven": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "field": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "pattern": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "field"
+                        ],
+                        "additionalProperties": false
+                      }
+                    ]
+                  },
+                  "values": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "field",
+                  "values"
+                ],
+                "additionalProperties": false
+              },
               "audience": {
                 "type": "object",
                 "properties": {
@@ -1483,6 +1550,13 @@
                         "restricted",
                         "unknown"
                       ]
+                    }
+                  },
+                  "ignore": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
                     }
                   }
                 },
@@ -1535,6 +1609,13 @@
                         "decommissioned",
                         "unknown"
                       ]
+                    }
+                  },
+                  "ignore": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
                     }
                   }
                 },
@@ -1613,6 +1694,13 @@
                         "underground_garage",
                         "other"
                       ]
+                    }
+                  },
+                  "ignore": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string"
                     }
                   }
                 },
@@ -1724,6 +1812,70 @@
                         "additionalProperties": false
                       }
                     ]
+                  },
+                  "parkingRestrictions": {
+                    "type": "object",
+                    "properties": {
+                      "field": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "field": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "pattern": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "field"
+                            ],
+                            "additionalProperties": false
+                          }
+                        ]
+                      },
+                      "json": {
+                        "type": "boolean"
+                      },
+                      "map": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {
+                          "type": "string",
+                          "enum": [
+                            "ev_only",
+                            "plugged",
+                            "disabled",
+                            "customers",
+                            "motorcycles",
+                            "employees",
+                            "taxis",
+                            "tenants"
+                          ]
+                        }
+                      },
+                      "ignore": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    },
+                    "required": [
+                      "field",
+                      "map"
+                    ],
+                    "additionalProperties": false
                   }
                 },
                 "additionalProperties": false
@@ -1866,6 +2018,13 @@
                                         "cable"
                                       ]
                                     }
+                                  },
+                                  "ignore": {
+                                    "minItems": 1,
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
                                   }
                                 },
                                 "required": [
@@ -1923,6 +2082,13 @@
                                     "dc"
                                   ]
                                 }
+                              },
+                              "ignore": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
                               }
                             },
                             "required": [
@@ -1973,6 +2139,13 @@
                                     "AC_3_PHASE",
                                     "DC"
                                   ]
+                                }
+                              },
+                              "ignore": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
                                 }
                               }
                             },
@@ -2317,6 +2490,13 @@
                                     "ac",
                                     "dc"
                                   ]
+                                }
+                              },
+                              "ignore": {
+                                "minItems": 1,
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
                                 }
                               }
                             },
