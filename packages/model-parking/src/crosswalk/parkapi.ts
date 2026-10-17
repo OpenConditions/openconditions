@@ -4,8 +4,8 @@ import type { SourceTable } from "@openconditions/model";
  * ParkAPI v3 codes → OpenConditions classifications. A site's classification
  * needs both of its fields: `type` names a structure for cars and a piece of
  * furniture for bicycles, so the same `purpose` prefix decides which of the
- * two a value means. ParkAPI has no lorry purpose at all, so a lorry park it
- * publishes arrives as an ordinary car park.
+ * two a value means. ParkAPI has no lorry purpose at all: a lorry park it
+ * publishes arrives as a car park restricted to `TRUCK` as a whole.
  */
 export const PARKAPI_PARKING_TYPES: SourceTable = {
   "purpose:CAR|type:CAR_PARK": "parking_site.off_street",
@@ -44,13 +44,27 @@ export const PARKAPI_VEHICLE_TYPES: Readonly<Record<string, string>> = {
 };
 
 /**
- * The capacity fields that are areas of their own. ParkAPI publishes one
- * capacity per user group next to the total, so each becomes a
- * `parking_area` component and the remainder stays the site's own capacity.
+ * The area a site's `restrictions[]` entry of a ParkAPI audience (`type`)
+ * stands for: a user group of the site's own vehicle type, or a vehicle type
+ * of its own. An entry with its own capacity is a `parking_area` component
+ * and the remainder stays the site's own capacity. `TAXI`, `DELIVERY`,
+ * `CUSTOMER` and `CARGOBIKE` have no area, nor has an entry without a type,
+ * which restricts every audience.
  */
-export const PARKAPI_CAPACITY_AREAS: Readonly<Record<string, string>> = {
-  capacity_disabled: "disabled",
-  capacity_woman: "women",
-  capacity_family: "family",
-  capacity_charging: "ev_charging",
+export const PARKAPI_RESTRICTION_AREAS: Readonly<
+  Record<string, { vehicleType?: string; userGroup: string } | null>
+> = {
+  DISABLED: { userGroup: "disabled" },
+  WOMEN: { userGroup: "women" },
+  FAMILY: { userGroup: "family" },
+  CHARGING: { userGroup: "ev_charging" },
+  CARSHARING: { userGroup: "car_sharing" },
+  RESIDENT: { userGroup: "residents" },
+  TRUCK: { vehicleType: "truck", userGroup: "any" },
+  BUS: { vehicleType: "bus", userGroup: "any" },
+  CARAVAN: { vehicleType: "caravan", userGroup: "any" },
+  TAXI: null,
+  DELIVERY: null,
+  CUSTOMER: null,
+  CARGOBIKE: null,
 };

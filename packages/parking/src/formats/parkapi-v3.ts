@@ -7,7 +7,7 @@ import {
 } from "@openconditions/ingest-framework";
 import type { ExternalId } from "@openconditions/model";
 import {
-  PARKAPI_CAPACITY_AREAS,
+  PARKAPI_RESTRICTION_AREAS,
   PARKAPI_VEHICLE_TYPES,
   type ParkingLayout,
   type ParkingSiteType,
@@ -19,13 +19,29 @@ import {
 import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
+  areaKey,
   occupancyDrafts,
   type ReadingInput,
   type SiteInput,
   siteDraft,
   statusDraft,
   utcInstant,
+  validCount,
 } from "../site.js";
+
+/**
+ * One entry of a site's `restrictions[]`: an audience (`type`) the site, or
+ * the part of it its own `capacity` counts, is kept for. Without a type it
+ * restricts every audience.
+ */
+interface ParkApiRestriction {
+  type?: string;
+  capacity?: number;
+  realtime_capacity?: number;
+  realtime_free_capacity?: number;
+  hours?: string;
+  max_stay?: string;
+}
 
 /** One parking site of `/v3/parking-sites`, as far as it is read. */
 interface ParkApiSite {
@@ -53,6 +69,7 @@ interface ParkApiSite {
   realtime_data_updated_at?: string;
   realtime_free_capacity?: number;
   realtime_opening_status?: string;
+  restrictions?: ParkApiRestriction[] | null;
   external_identifiers?: { type?: string; value?: string }[];
   [field: string]: unknown;
 }
@@ -65,9 +82,6 @@ interface ParkApiSource {
   attribution_license?: string | null;
   attribution_contributor?: string | null;
 }
-
-/** MobiData BW relays Toll Collect's lorry parks of the German motorways as this source. */
-const TRUCK_SOURCE = "toll_collect";
 
 /** How a car site is built, from its ParkAPI `type`. */
 const LAYOUTS: Readonly<Record<string, ParkingLayout>> = {
@@ -128,22 +142,50 @@ function osmIds(site: ParkApiSite): ExternalId[] {
   });
 }
 
-function areasOf(site: ParkApiSite, truck: boolean): AreaInput[] {
-  if (truck) {
-    return [
-      {
-        vehicleType: "truck",
-        userGroup: "any",
-        ...(typeof site.capacity === "number" ? { capacity: site.capacity } : {}),
-      },
-    ];
-  }
+function restrictionsOf(site: ParkApiSite): ParkApiRestriction[] {
+  return Array.isArray(site.restrictions)
+    ? site.restrictions.filter((r): r is ParkApiRestriction => typeof r === "object" && r !== null)
+    : [];
+}
+
+/**
+ * Whether the site as a whole is kept for lorries: a `TRUCK` restriction
+ * without spaces of its own, or with all of the site's. Toll Collect's
+ * motorway lorry parks come so, and so do some city sources'.
+ */
+function isLorryPark(site: ParkApiSite): boolean {
+  return restrictionsOf(site).some(
+    (r) => r.type === "TRUCK" && (r.capacity === undefined || r.capacity === site.capacity),
+  );
+}
+
+/** An area a restriction stands for, with the restriction it came from. */
+type RestrictionArea = AreaInput & { restriction: ParkApiRestriction };
+
+/**
+ * The areas of a site's restrictions: one per audience that names a user
+ * group or vehicle type, the first of a repeated one winning. A restriction
+ * that counts no spaces is no area; one that counts none of its own says only
+ * that the site has such spaces, except a lorry park's, which has all of them.
+ */
+function areasOf(site: ParkApiSite, lorryPark: boolean): RestrictionArea[] {
   const vehicleType = (PARKAPI_VEHICLE_TYPES[site.purpose ?? "CAR"] ?? "car") as ParkingVehicleType;
-  return Object.entries(PARKAPI_CAPACITY_AREAS).flatMap(([field, userGroup]) => {
-    const capacity = site[field];
-    return typeof capacity === "number" && Number.isInteger(capacity) && capacity > 0
-      ? [{ vehicleType, userGroup: userGroup as ParkingUserGroup, capacity }]
-      : [];
+  const seen = new Set<string>();
+  return restrictionsOf(site).flatMap((restriction) => {
+    const target =
+      restriction.type === undefined ? undefined : PARKAPI_RESTRICTION_AREAS[restriction.type];
+    if (!target) return [];
+    const capacity =
+      restriction.capacity ??
+      (lorryPark && restriction.type === "TRUCK" ? site.capacity : undefined);
+    if (capacity === 0) return [];
+    const area = {
+      vehicleType: (target.vehicleType ?? vehicleType) as ParkingVehicleType,
+      userGroup: target.userGroup as ParkingUserGroup,
+    };
+    if (seen.has(areaKey(area))) return [];
+    seen.add(areaKey(area));
+    return [{ ...area, ...(validCount(capacity) ? { capacity } : {}), restriction }];
   });
 }
 
@@ -160,9 +202,10 @@ function siteInput(
   stationId: string,
   point: [number, number],
   source: ParkApiSource | undefined,
+  truck: boolean,
+  areas: readonly RestrictionArea[],
 ): SiteInput {
   const sourceUid = source?.uid ?? text(site.source_uid);
-  const truck = sourceUid === TRUCK_SOURCE;
   const type = typeOf(site, truck);
   const layout = site.type === undefined ? undefined : LAYOUTS[site.type];
   const publisher = text(source?.attribution_contributor) ?? text(source?.name);
@@ -199,7 +242,7 @@ function siteInput(
         ? site.max_height / 100
         : undefined,
     ),
-    areas: areasOf(site, truck),
+    areas: areas.map(({ restriction: _, ...area }) => area),
     usage,
     ...(publisher === undefined
       ? {}
@@ -222,6 +265,7 @@ function readingsOf(
   point: [number, number],
   ctx: ParseContext,
   upstream: SiteInput["upstream"],
+  areas: readonly RestrictionArea[],
 ): RecordDraft[] {
   if (site.has_realtime_data === false) return [];
   const updated = site.realtime_data_updated_at;
@@ -246,6 +290,22 @@ function readingsOf(
     },
     ctx,
   );
+  // An area's live free count is bounded by its own live capacity, else its static one.
+  for (const { vehicleType, userGroup, restriction } of areas) {
+    if (typeof restriction.realtime_free_capacity !== "number") continue;
+    const capacity = restriction.realtime_capacity ?? restriction.capacity;
+    out.push(
+      ...occupancyDrafts(
+        feed,
+        { ...reading, area: { vehicleType, userGroup } },
+        {
+          available: restriction.realtime_free_capacity,
+          ...(typeof capacity === "number" ? { capacity } : {}),
+        },
+        ctx,
+      ),
+    );
+  }
   const status =
     site.realtime_opening_status === undefined ? undefined : STATUSES[site.realtime_opening_status];
   if (status !== undefined) out.push(statusDraft(feed, { ...reading, status }, ctx));
@@ -257,9 +317,11 @@ function readingsOf(
  * `sources` payload the upstream publishers they came from; a poll without
  * the sources is refused. Car sites and sites without a purpose are kept.
  * Each site credits its upstream source, which also qualifies its provider
- * id, so sites of two upstream sources may still link. Toll Collect's sites
- * are lorry parks. A live free count is bounded by the live capacity, else
- * the static one. A site without a placeable point is rejected.
+ * id, so sites of two upstream sources may still link. A site restricted to
+ * lorries as a whole is a lorry park; a restriction of the site's other
+ * audiences is an area of it, with the area's own live free count where it
+ * has one. A live free count is bounded by the live capacity, else the static
+ * one. A site without a placeable point is rejected.
  */
 export function parseParkApiV3(
   feed: ParkingCatalogFeed,
@@ -268,7 +330,7 @@ export function parseParkApiV3(
 ): ParseOutput {
   const out = emptyParseOutput();
   const sources = payloads["sources"] ?? [];
-  // Without the source list a lorry park reads as a car park, uncredited.
+  // Without the source list every site goes uncredited under the bare feed authority.
   if (sources.length === 0 && (payloads["main"] ?? []).length > 0) {
     throw new Error("parkapi-v3: sites without a sources payload");
   }
@@ -295,9 +357,13 @@ export function parseParkApiV3(
       const source =
         (site.source_id === undefined ? undefined : byId.get(site.source_id)) ??
         (site.source_uid === undefined ? undefined : byUid.get(site.source_uid));
-      const input = siteInput(feed, site, stationId, point, source);
+      const truck = isLorryPark(site);
+      const areas = areasOf(site, truck);
+      const input = siteInput(feed, site, stationId, point, source, truck, areas);
       out.features.push(siteDraft(feed, input, ctx.fetchedAt));
-      out.observations.push(...readingsOf(feed, site, stationId, point, ctx, input.upstream));
+      out.observations.push(
+        ...readingsOf(feed, site, stationId, point, ctx, input.upstream, areas),
+      );
     }
   }
   out.rejected = rejected;

@@ -157,8 +157,78 @@ describe("parkapi-v3", () => {
     expect(readings(out, "3")).toEqual({ "parking.available": 143 });
   });
 
+  test("ParkAPI v3: a site's restrictions with their own spaces are areas with live counts", () => {
+    const out = parse(
+      sitesWith((items) => [
+        {
+          ...items[3],
+          id: 1,
+          restrictions: [
+            { type: "DISABLED", capacity: 11, realtime_capacity: 10, realtime_free_capacity: 4 },
+            { type: "WOMEN", capacity: 5, max_stay: "PT2H" },
+            // A count of none is no area, and ParkAPI audiences without a user group are skipped.
+            { type: "CHARGING", capacity: 0 },
+            { type: "TAXI", capacity: 2 },
+            // Applies to every audience: no area of its own.
+            { max_stay: "PT2H", hours: "Mo-Fr 08:00-18:00" },
+            { type: "TRUCK", capacity: 3, realtime_free_capacity: 1 },
+            // Above its capacity: no reading for the area.
+            { type: "FAMILY", capacity: 2, realtime_free_capacity: 3 },
+          ],
+        },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    const feature = site(out, "1")!;
+    expect(feature).toMatchObject({ type: "park_and_ride", details: { capacityTotal: 137 } });
+    expect((feature["details"] as { usage?: string[] }).usage).not.toContain("truck");
+    expect(
+      (feature["components"] as { key: string; details: { capacity?: number } }[]).map((c) => [
+        c.key,
+        c.details.capacity,
+      ]),
+    ).toEqual([
+      ["car:disabled", 11],
+      ["car:women", 5],
+      ["truck:any", 3],
+      ["car:family", 2],
+    ]);
+    const byArea = Object.fromEntries(
+      out.observations
+        .filter((o) => o["property"] === "parking.available")
+        .map((o) => [
+          (o["subject"] as { componentKey?: string }).componentKey ?? "site",
+          (o["result"] as { value: unknown }).value,
+        ]),
+    );
+    expect(byArea).toEqual({ site: 143, "car:disabled": 4, "truck:any": 1 });
+  });
+
+  test("ParkAPI v3: a site restricted to lorries as a whole is a lorry park, whatever its source", () => {
+    const out = parse(
+      sitesWith((items) => [
+        // Esslingen restricts a car site to lorries the way Toll Collect does.
+        { ...items[1], id: 1, capacity: 12, restrictions: [{ type: "TRUCK" }] },
+        // A Toll Collect site without the restriction is no lorry park.
+        { ...items[0], id: 2, restrictions: [] },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    expect(site(out, "1")).toMatchObject({
+      type: "truck_parking",
+      externalIds: [{ authority: "de-bw-mobidata-parking/karlsruhe" }],
+      components: [{ key: "truck:any", details: { capacity: 12 } }],
+      details: { usage: ["truck"] },
+    });
+    expect(site(out, "2")).toMatchObject({
+      type: "off_street",
+      externalIds: [{ authority: "de-bw-mobidata-parking/toll_collect" }],
+    });
+    expect(site(out, "2")?.["components"]).toBeUndefined();
+  });
+
   test("ParkAPI v3: a poll without the source list is refused", () => {
-    // Without it Toll Collect's lorry parks would read as car parks under the bare feed authority.
+    // Without it every site would go uncredited under the bare feed authority.
     expect(() =>
       parseParkApiV3(
         mobidataFeed(),
