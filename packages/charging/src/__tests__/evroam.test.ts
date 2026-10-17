@@ -1,4 +1,9 @@
-import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  __resetSkips,
+  drainSkipped,
+  type ParseOutput,
+  type RecordDraft,
+} from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { chargingDomain } from "../domain.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/charging-feed.js";
@@ -157,5 +162,32 @@ describe("evroam", () => {
       ["2/1", undefined, undefined, "IEC_62196_T2_COMBO"],
       ["2/2", undefined, undefined, "CHADEMO"],
     ]);
+  });
+
+  test("EVRoam: a time limit is the bay's, the coded yes and no read, odd groups counted", () => {
+    __resetSkips();
+    const doc = JSON.parse(fixture("evroam.geojson").toString("utf8")) as {
+      features: { properties: Record<string, unknown> }[];
+    };
+    Object.assign(doc.features[0]!.properties, {
+      maxTimeLimit: "120",
+      is24Hours: "1",
+      hasChargingCost: "0",
+      connectorsList:
+        "{AC, 22 kW, Type 2 Socketed, Status: Operative, Count:2},{XC, 22 kW, Type 2 Socketed, Status: Broken},{AC}",
+    });
+    const out = parse(Buffer.from(JSON.stringify(doc)));
+    const ormiston = out.features.find(
+      (f) => f["name"] !== undefined && JSON.stringify(f["name"]).includes("Ormiston"),
+    );
+    expect(ormiston).toMatchObject({
+      openingHours: { osm: "24/7" },
+      access: { payment: ["free"] },
+    });
+    expect(components(ormiston).find((c) => c.kind === "charging_bay")?.details).toMatchObject({
+      timeLimit: { value: 120, unit: "min" },
+    });
+    // The current and status no group of the layer writes; the group without its plug.
+    expect(drainSkipped("nz-nzta-charging")).toEqual({ unknown_value: 2, malformed: 1 });
   });
 });

@@ -6,6 +6,7 @@ import {
   recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
+import { own } from "../records.js";
 import { type EvseInput, type Lifecycle, parsePowerKw, siteDraft } from "../site.js";
 import { isRecord, placeAt, positiveInteger, type Raw, text, unplacedReason } from "./raw.js";
 
@@ -32,8 +33,12 @@ function plugOf(name: string): Plug {
   return { standard, ...(format === undefined ? {} : { format }) };
 }
 
-/** A group's operative state; its other values say nothing. */
-const LIFECYCLES: Readonly<Record<string, Lifecycle>> = { inoperative: "temporarily_closed" };
+/** A group's operative state: inoperative is closed for now; operative and unknown say no more. */
+const LIFECYCLES: Readonly<Record<string, Lifecycle | null>> = {
+  inoperative: "temporarily_closed",
+  operative: null,
+  unknown: null,
+};
 
 interface Group {
   current?: "ac" | "dc";
@@ -47,16 +52,21 @@ interface Group {
  * `connectorsList`: `{AC, 32 kW, Type 2 Socketed, Status: Operative, Count:9},…`,
  * one group of identical charge points per brace.
  */
-function groupsOf(list: string | undefined): Group[] {
+function groupsOf(list: string | undefined, malformed: () => void, unread: () => void): Group[] {
   return [...(list ?? "").matchAll(/\{([^}]*)\}/g)].flatMap(([, inner]) => {
     const parts = (inner ?? "").split(",").map((p) => p.trim());
     const [current, power, type] = parts;
-    if (type === undefined) return [];
+    if (type === undefined) {
+      malformed();
+      return [];
+    }
     const status = parts.find((p) => /^status\s*:/i.test(p))?.replace(/^status\s*:\s*/i, "");
+    if (status !== undefined && !Object.hasOwn(LIFECYCLES, status.toLowerCase())) unread();
     const count = positiveInteger(
       parts.find((p) => /^count\s*:/i.test(p))?.replace(/^count\s*:\s*/i, ""),
     );
     const c = current?.toLowerCase();
+    if (c !== "ac" && c !== "dc") unread();
     const kw = parsePowerKw(power?.replace(/\s+/g, " "));
     return [
       {
@@ -82,8 +92,16 @@ const normalised = (name: string) =>
 /** A coordinate to four decimals (about 11 m), without trailing zeros. */
 const rounded = (degrees: number) => String(Number(degrees.toFixed(4)));
 
-const isTrue = (value: unknown) => text(value)?.toLowerCase() === "true";
-const isFalse = (value: unknown) => text(value)?.toLowerCase() === "false";
+/** The layer's yes and no: `True`/`False` as written, or its coded domain's `1`/`0`. */
+const isTrue = (value: unknown) => ["true", "1"].includes(text(value)?.toLowerCase() ?? "");
+const isFalse = (value: unknown) => ["false", "0"].includes(text(value)?.toLowerCase() ?? "");
+
+/** `maxTimeLimit`: minutes, or none where it says there is no limit. */
+function timeLimitOf(value: unknown): number | undefined {
+  const limit = text(value);
+  if (limit === undefined || /^(?:unlimited|no limit|none)$/i.test(limit)) return undefined;
+  return positiveInteger(limit);
+}
 
 function siteLifecycle(groups: Group[]): Lifecycle {
   if (groups.some((g) => g.status === "operative")) return "operational";
@@ -168,17 +186,24 @@ export function parseEvroam(
       }
       seen.add(stationId);
 
-      const groups = groupsOf(text(props["connectorsList"]));
+      const groups = groupsOf(
+        text(props["connectorsList"]),
+        () => recordSkipped(feed.id, "malformed"),
+        () => recordSkipped(feed.id, "unknown_value"),
+      );
       for (const g of groups) {
         if (g.plug.standard === "UNKNOWN") recordSkipped(feed.id, "unknown_value");
       }
+      // The car park's time limit is each charge point's bay's.
+      const limit = timeLimitOf(props["maxTimeLimit"]);
       const evses: EvseInput[] = unitsOf(groups).map((unit, i) => {
         const [g] = unit;
-        const lifecycle = g?.status === undefined ? undefined : LIFECYCLES[g.status];
+        const lifecycle = own(LIFECYCLES, g?.status) ?? undefined;
         return {
           key: String(i + 1),
           ...(g?.count === undefined ? {} : { quantity: g.count }),
           ...(lifecycle === undefined ? {} : { lifecycle }),
+          ...(limit === undefined ? {} : { bays: [{ key: "1" }] }),
           connectors: unit.map((plug, k) => ({
             id: String(k + 1),
             ...plug.plug,
@@ -205,6 +230,9 @@ export function parseEvroam(
             ...(isFalse(props["hasChargingCost"]) ? { payment: ["free" as const] } : {}),
             lifecycle: siteLifecycle(groups),
             evses,
+            ...(limit === undefined
+              ? {}
+              : { bays: [{ key: "1", details: { timeLimit: { value: limit, unit: "min" } } }] }),
           },
           ctx.fetchedAt,
         ),

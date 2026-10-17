@@ -13,6 +13,7 @@ import {
   recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
+import { own } from "../records.js";
 import { connectorStatusDraft, type EvseInput, type EvseStatus, siteDraft } from "../site.js";
 import { isRecord, placeFromText, positiveNumber, type Raw, text, unplacedReason } from "./raw.js";
 
@@ -114,13 +115,16 @@ export function parseChargy(
         const connectors = (Array.isArray(device["connectors"]) ? device["connectors"] : []).filter(
           isRecord,
         );
+        // The device's name (`CP2500`) is the label on it.
+        const label = text(device["name"]);
         evses.push({
           key: id,
+          ...(label === undefined ? {} : { physicalReference: label }),
           connectors: connectors.flatMap((c) => {
             const connectorId = text(c["id"]);
             if (connectorId === undefined) return [];
             const state = text(c["description"])?.toUpperCase();
-            const status = state === undefined ? undefined : STATES[state];
+            const status = own(STATES, state);
             if (status !== undefined) states.push({ evseKey: id, connectorId, status });
             else if (state !== undefined) recordSkipped(feed.id, "unknown_value");
             const kw = positiveNumber(c["maxchspeed"]);

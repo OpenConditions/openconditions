@@ -45,9 +45,13 @@ describe("cynap", () => {
         key: "CY*EVP*ELCA0003",
         kind: "evse",
         externalIds: [{ scheme: "emi3:evse", id: "CYEVPELCA0003" }],
-        details: { kind: "evse", v: 1, evseId: "CY*EVP*ELCA0003" },
+        details: { kind: "evse", v: 1, evseId: "CY*EVP*ELCA0003", bays: [{ key: "bay:1" }] },
       },
     ]);
+    // The vehicles it is compatible with, by UNECE category, are its bay's.
+    expect(components(hotel).find((c) => c.kind === "charging_bay")?.details).toMatchObject({
+      vehicleTypes: ["personal_vehicle", "bus"],
+    });
     expect(plugs(hotel)).toEqual([["CY*EVP*ELCA0003/1", "IEC_62196_T2", "ac", 22]]);
     // A point listing Type 2 twice has two Type 2 plugs.
     expect(plugs(site(out, "TEC-NICOSIA-ZINAS-KANTHER"))).toEqual([
@@ -80,9 +84,10 @@ describe("cynap", () => {
     expect(site(out, "CY*EVP*ELCA0003")).toMatchObject({
       operator: { name: [{ lang: "und", text: "EV Power" }] },
       owner: { name: [{ lang: "und", text: "Nestoras Hotels Limited" }] },
+      // In the language the table gives it.
       description: [
         {
-          lang: "und",
+          lang: "en",
           text: "Hotel residents and guests only. The charging facilities are located within the parking area of the hotel.",
         },
       ],
@@ -95,12 +100,15 @@ describe("cynap", () => {
       },
       openingHours: { osm: "24/7", twentyFourSeven: true },
     });
-    expect(site(out, "Petrolina GSZ Station (150kW)")?.["openingHours"]).toEqual({
-      osm: "24/7",
-      twentyFourSeven: true,
+    // Cyprus's zone, the support line and the operator's e-mail.
+    expect(site(out, "Petrolina GSZ Station (150kW)")).toMatchObject({
+      openingHours: { osm: "24/7", twentyFourSeven: true, timezone: "Asia/Nicosia" },
+      operator: { email: "support@pcharge.com.cy" },
+      details: { hotline: "+357 70071071" },
     });
     expect(site(out, "CY*EVP*ENIC0007")?.["openingHours"]).toEqual({
       osm: "Mo-Sa 08:00-20:00; Su 10:00-19:00",
+      timezone: "Asia/Nicosia",
     });
     const lidl = site(out, "LIDL-L104");
     expect(lidl).not.toHaveProperty("openingHours");

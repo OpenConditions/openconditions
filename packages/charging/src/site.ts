@@ -223,6 +223,8 @@ export interface SiteInput {
   /** A tariff as the publisher wrote it, where it is not broken into priced elements. */
   tariffText?: string;
   notes?: string;
+  /** The language of `notes`, where the source states it apart from the site's. */
+  notesLang?: string;
   amenities?: string[];
   /** The upstream publishers an aggregator took the site from. */
   upstream?: Upstream;
@@ -588,7 +590,9 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
     ...bays,
   ];
   const name = text(input.name);
-  const description = text(input.notes);
+  const notes = clean(input.notes);
+  const description =
+    notes === undefined ? undefined : [{ lang: clean(input.notesLang) ?? lang, text: notes }];
   const operator = organisation(input.operator, "operator", lang);
   const owner = organisation(input.owner, "owner", lang);
   const suboperator = organisation(input.suboperator, "suboperator", lang);
