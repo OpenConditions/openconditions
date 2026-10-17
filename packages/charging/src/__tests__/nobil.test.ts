@@ -58,9 +58,13 @@ describe("nobil", () => {
         current: "ac",
         maxVoltage: 230,
         maxAmperage: 16,
-        maxPowerKw: 3.68,
+        // Capacity 7 is "3,6 kW - 230V 1-phase max 16A".
+        maxPowerKw: 3.6,
+        chargingModes: ["mode1"],
       },
     });
+    // Every value the documentation's records write is one NOBIL lists.
+    expect(drainSkipped("no-nobil-charging")).toEqual({});
     expect(ikea).toMatchObject({
       lifecycle: "operational",
       name: [{ lang: "no", text: "IKEA Slependen" }],
@@ -128,6 +132,95 @@ describe("nobil", () => {
     const out = parse({ main: [Buffer.from(JSON.stringify(doc))] });
     expect(site(out, "NOR_00041")).toMatchObject({ lifecycle: "unknown" });
     expect(site(out, "NOR_09001")).toMatchObject({ lifecycle: "decommissioned" });
+  });
+
+  test("NOBIL: attributes are read by their value ids, the station's photo, county, comment and real-time flag", () => {
+    const attribute = (id: string, valueId: string, value = "") => ({
+      attrtypeid: id,
+      attrvalid: valueId,
+      trans: "ignored",
+      attrval: value,
+    });
+    const doc = {
+      chargerstations: [
+        {
+          csmd: {
+            id: 7,
+            International_id: "NOR_00007",
+            name: "Test",
+            Position: "(59.9,10.7)",
+            Land_code: "NOR",
+            County: "Oslo",
+            Station_status: 1,
+            Description_of_location: "Ved inngangen",
+            User_comment: "Tilgjengelig 07-16",
+            Image: "7.jpg",
+          },
+          attr: {
+            st: {
+              "2": attribute("2", "5"),
+              "3": attribute("3", "6"),
+              "21": attribute("21", "1"),
+              "24": attribute("24", "2"),
+            },
+            conn: {
+              "1": {
+                "1": attribute("1", "6"),
+                "4": attribute("4", "32"),
+                "5": attribute("5", "17"),
+                "19": attribute("19", "21"),
+                "20": attribute("20", "3"),
+                "23": attribute("23", "6", "Zaptec"),
+                "25": attribute("25", "2"),
+                "29": attribute("29", "9", "A"),
+              },
+              "2": { "4": attribute("4", "39"), "26": attribute("26", "2") },
+            },
+          },
+        },
+      ],
+    };
+    const out = parse({ main: [Buffer.from(JSON.stringify(doc))] });
+    expect(drainSkipped("no-nobil-charging")).toEqual({});
+    const station = site(out, "NOR_00007");
+    expect(station).toMatchObject({
+      location: { address: { region: "Oslo" } },
+      description: [{ lang: "no", text: "Tilgjengelig 07-16" }],
+      images: [{ url: "https://nobil.no/img/ladestasjonbilder/7.jpg", category: "site" }],
+      access: {
+        audience: "private",
+        authentication: ["app"],
+        payment: ["credit_card", "debit_card", "rfid"],
+      },
+      amenities: ["hotel", "restaurant"],
+      details: {
+        dynamicInfoAvailable: "true",
+        directions: [{ lang: "no", text: "Ved inngangen" }],
+      },
+    });
+    expect(station?.["openingHours"]).toBeUndefined();
+    // The hydrogen entry is no charge point; the residents' one is restricted to tenants.
+    expect(evsesOf(station).map((e) => e.details)).toEqual([
+      expect.objectContaining({ parkingRestrictions: ["tenants"], manufacturer: "Zaptec" }),
+    ]);
+    // 230 V three-phase is Norway's IT grid: √3 × 230 V × 32 A.
+    expect(connectorsOf(station, "1")[0]).toMatchObject({
+      key: "1/A",
+      details: {
+        standard: "IEC_62196_T2",
+        format: "socket",
+        powerType: "AC_3_PHASE",
+        maxPowerKw: 12.748,
+        chargingModes: ["mode3"],
+      },
+    });
+    // A value id NOBIL does not list, a status it does not document.
+    const odd = structuredClone(doc);
+    odd.chargerstations[0]!.csmd.Station_status = 3;
+    odd.chargerstations[0]!.attr.st["2"] = attribute("2", "9");
+    odd.chargerstations[0]!.attr.conn["1"]["5"] = attribute("5", "toString");
+    parse({ main: [Buffer.from(JSON.stringify(odd))] });
+    expect(drainSkipped("no-nobil-charging")).toEqual({ unknown_value: 3 });
   });
 
   test("NOBIL: a datadump wrapped in a list, and a station without a position, are read as documented", () => {
