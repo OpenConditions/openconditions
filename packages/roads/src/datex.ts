@@ -24,7 +24,7 @@ import {
   xmlText,
 } from "@openconditions/datex2";
 import { isPlausibleWgs84, reprojectorFor } from "@openconditions/ingest-framework";
-import type { Schedule, Text } from "@openconditions/model";
+import type { Issue, Schedule, Text, Validity } from "@openconditions/model";
 import {
   datexClassification,
   datexDiscriminator,
@@ -56,18 +56,51 @@ import { resolveAlertC, tmcTables } from "./tmc/index.js";
 import { resolveVild, type VildReference } from "./tmc/vild.js";
 import type { SourceDescriptor } from "./types.js";
 
-type ValidityStatus = "active" | "inactive" | "archived" | "cancelled";
+/** How one DATEX record's lifecycle reads. */
+interface DatexLifecycle {
+  status: RoadEvent["status"];
+  /** The situation's lifecycle, where it says more than active or ended. */
+  validityStatus?: Validity["status"];
+  /** Present when the status does not establish that the record is in force. */
+  statusIssue?: Issue;
+}
 
-function validityStatusToStatus(raw: string | undefined): ValidityStatus {
-  if (!raw) return "active";
-  const lower = raw.toLowerCase();
-  if (lower === "active" || lower === "definedbyvaliditytimespec") {
-    return "active";
+/**
+ * The lifecycle a DATEX `validityStatus` declares (`ValidityStatusEnum`: v2.3
+ * `active | suspended | definedByValidityTimeSpec`, v3.7 adding `planned` and
+ * `_extended`). `definedByValidityTimeSpec` holds the record to its time
+ * specification and `active` declares it in force. `planned` and `suspended`
+ * declare it not in force whatever its time specification says, and an
+ * `_extended`, missing or unrecognised value does not say; those records stay
+ * current, but their effects carry `unsupported_status`, as the restriction
+ * contract's do, so none routes or exports as active. Publishers that end a
+ * record with a token outside the enumeration (`cancelled`, `archived`,
+ * `inactive`) have it ended.
+ */
+function datexLifecycle(validity: XmlObject): DatexLifecycle {
+  const node = validity["validityStatus"];
+  const raw = text(node);
+  switch (raw) {
+    case "active":
+    case "definedByValidityTimeSpec":
+      return { status: "active" };
+    case "cancelled":
+    case "archived":
+    case "inactive":
+      return { status: raw };
   }
-  if (lower === "suspended" || lower === "inactive") return "inactive";
-  if (lower === "archived") return "archived";
-  if (lower === "cancelled") return "cancelled";
-  return "active";
+  const extendedValue = isXmlObject(node) ? getXmlAttribute(node, "_extendedValue") : undefined;
+  const statusIssue: Issue = {
+    code: "unsupported_status",
+    sourcePath: "situationRecord.validity.validityStatus",
+    sourceTokens: {
+      validityStatus: raw ?? null,
+      ...(extendedValue !== undefined ? { extendedValue } : {}),
+    },
+  };
+  if (raw === "suspended") return { status: "inactive", validityStatus: "suspended", statusIssue };
+  if (raw === "planned") return { status: "active", validityStatus: "planned", statusIssue };
+  return { status: "active", validityStatus: "unknown", statusIssue };
 }
 
 /**
@@ -1350,9 +1383,9 @@ function parseDatexInternal(
     }
 
     const validity = getXmlChild(rec, "validity") ?? {};
-    const validityStatus = text(validity["validityStatus"]);
     const timeSpec = getXmlChild(validity, "validityTimeSpecification");
-    const status = validityStatusToStatus(validityStatus);
+    const lifecycle = datexLifecycle(validity);
+    const status = lifecycle.status;
     const dataUpdatedAt = versionTime ?? toRestrictionInstant(publicationTime);
     if (strictMetadata) {
       const invalidField = [
@@ -1576,9 +1609,10 @@ function parseDatexInternal(
         ...(descriptionText !== undefined && descriptionAll ? { description: descriptionAll } : {}),
         ...(otherComments.length > 0 ? { comments: otherComments } : {}),
         ...(severity.trim() ? { severityRaw: severity.trim() } : {}),
-        ...(validityStatus?.toLowerCase() === "suspended"
-          ? { validityStatus: "suspended" as const }
+        ...(lifecycle.validityStatus !== undefined
+          ? { validityStatus: lifecycle.validityStatus }
           : {}),
+        ...(lifecycle.statusIssue !== undefined ? { statusIssue: lifecycle.statusIssue } : {}),
       },
       ...(situationId ? { situationId } : {}),
       type,

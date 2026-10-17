@@ -329,6 +329,16 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     drafts.unshift({ kind: "closure", fields: closure });
   }
 
+  // A record whose lifecycle status does not establish that it is in force
+  // marks every effect it states; the restriction contract's effects carry
+  // their own status issue.
+  const statusIssue = event.situation?.statusIssue;
+  if (statusIssue !== undefined) {
+    for (const d of drafts) {
+      d.fields = { ...d.fields, issues: [...((d.fields["issues"] as Issue[]) ?? []), statusIssue] };
+    }
+  }
+
   const perKind = new Map<string, number>();
   for (const d of drafts) perKind.set(d.kind, (perKind.get(d.kind) ?? 0) + 1);
   const seen = new Map<string, number>();
