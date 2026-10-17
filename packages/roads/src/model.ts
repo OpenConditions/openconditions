@@ -7,7 +7,7 @@ import type {
   MultiLineStringGeometry,
   Severity,
 } from "@openconditions/core";
-import type { Issue, LinearRef, Schedule, Text, Validity } from "@openconditions/model";
+import type { Effect, Issue, LinearRef, Schedule, Text, Validity } from "@openconditions/model";
 import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
@@ -237,6 +237,28 @@ export interface SituationHints {
    * carries it, so none routes or exports as active.
    */
   statusIssue?: Issue;
+  /** The operator action's declared status (DATEX `operatorActionStatus`), on every effect. */
+  actionStatus?: Effect["actionStatus"];
+  /**
+   * Further record-level issues every effect read from the record carries: an
+   * operator action status the parser cannot read leaves the effects' time
+   * unknown, a condition they cannot express leaves them partial.
+   */
+  effectIssues?: Issue[];
+  /** Whether the record's measure is mandatory or advisory, as the source declares it. */
+  compliance?: Effect["compliance"];
+  /**
+   * The kinds of traffic the record's measure applies to (DATEX
+   * `applicableForTrafficType`), when it names any.
+   */
+  trafficTypes?: string[];
+  /** What a closure the record declares closes, when it is narrower than the road. */
+  closureScope?: "carriageway";
+  /**
+   * The end the source planned and the record has overrun (DATEX
+   * `overrunning`): an estimate, no longer a bound.
+   */
+  estimatedEnd?: string;
 }
 
 /**
@@ -259,6 +281,8 @@ export interface RoadEvent {
   validFrom?: string | null;
   validTo?: string | null;
   schedule?: Schedule[];
+  /** Recurrences inside the validity in which the record does not apply. */
+  scheduleExceptions?: Schedule[];
   confidence?: Confidence;
   /** A forecast condition (Autobahn `future`), not one in effect now. */
   isForecast?: boolean;
@@ -314,6 +338,8 @@ export interface RoadEvent {
   /** Quantified impact, when the source gives it. */
   delaySeconds?: number;
   queueLengthMeters?: number;
+  /** Remaining capacity as a percentage of the road's normal capacity. */
+  capacityRemainingPct?: number;
   /** WZDx: are workers present in the zone. */
   workersPresent?: boolean;
   /**

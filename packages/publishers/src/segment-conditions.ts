@@ -3,7 +3,13 @@ import {
   routingEvidenceReasons,
   type SegmentConditionRow,
 } from "@openconditions/core";
-import { type Effect, effectStateAt, effectValidity, routingBlockers } from "@openconditions/model";
+import {
+  type Effect,
+  effectStateAt,
+  effectValidity,
+  lifecycleInForce,
+  routingBlockers,
+} from "@openconditions/model";
 import type { LineString } from "geojson";
 
 /**
@@ -57,7 +63,9 @@ const EVIDENCE_ONLY = "evidence_reported_unapplied";
 /**
  * Projects bound effects in effect at `at` to the routing-consumer JSON. An
  * effect is evaluated against its own validity, else its situation's
- * (`effectStateAt`), so a roadworks phase routes only during its phase. A
+ * (`effectStateAt`), so a roadworks phase routes only during its phase, and
+ * only under an `active` lifecycle: a planned, suspended or unknown status
+ * keeps the effect out whatever its window says (`lifecycleInForce`). A
  * crowd effect routes only once evidence made its situation routing
  * eligible; a feed effect always may. Anything missing from the evidence
  * (binding currency, rights, freshness, spans) drops the effect: the feed
@@ -72,6 +80,8 @@ export function segmentConditionsToJson(
   const conditions: SegmentConditionJson[] = [];
   const evaluatedAt = info.evaluatedAt ?? at;
   for (const r of rows) {
+    const validity = effectValidity(r.effect, r.validity);
+    if (!lifecycleInForce(validity)) continue;
     const { state, nextTransitionAt } = effectStateAt(r.effect, r.validity, at);
     if (state !== "active") continue;
     if (r.origin === "crowd" && r.routing_eligible !== true) continue;
@@ -87,7 +97,6 @@ export function segmentConditionsToJson(
     ) {
       continue;
     }
-    const validity = effectValidity(r.effect, r.validity);
     const dirs = new Set(r.segments.map((span) => span.dir));
     const evidence: RoadConditionRoutingEvidence = {
       schema_version: 2,

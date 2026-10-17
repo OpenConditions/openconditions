@@ -3,6 +3,7 @@ import {
   effectStateAt,
   effectValidity,
   isRestrictionEvidence,
+  lifecycleInForce,
   routingBlockers,
 } from "../kernel/effect-state.js";
 import type { Effect } from "../kernel/effect-type.js";
@@ -84,7 +85,30 @@ describe("routingBlockers", () => {
     const evidence = effect({ applicability: { kind: "unknown" }, normalization: "partial" });
     expect(routingBlockers(evidence)).toEqual(["applicability_unknown", "not_normalized"]);
     expect(isRestrictionEvidence(evidence)).toBe(true);
-    expect(routingBlockers(effect({ actionStatus: "requested" }))).toEqual(["action_not_routable"]);
     expect(routingBlockers(effect({ actionStatus: "implemented" }))).toEqual([]);
+  });
+
+  // DATEX OperatorActionStatusEnum: requested, approved and rejected actions
+  // are not in place; termination requested "has not yet commenced", so the
+  // action still is, as it is while being implemented or terminated.
+  it.each([
+    ["requested", ["action_not_routable"]],
+    ["approved", ["action_not_routable"]],
+    ["rejected", ["action_not_routable"]],
+    ["being_implemented", []],
+    ["implemented", []],
+    ["termination_requested", []],
+    ["being_terminated", []],
+  ] as const)("routes a %s operator action only when it is in place", (status, blockers) => {
+    expect(routingBlockers(effect({ actionStatus: status }))).toEqual(blockers);
+  });
+});
+
+describe("lifecycleInForce", () => {
+  it("leaves only an active lifecycle to its window", () => {
+    expect(lifecycleInForce({ status: "active" })).toBe(true);
+    for (const status of ["planned", "suspended", "ended", "cancelled", "unknown"] as const) {
+      expect(lifecycleInForce({ status })).toBe(false);
+    }
   });
 });

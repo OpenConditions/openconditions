@@ -12,6 +12,7 @@ import {
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 import {
   definesManagementNature,
+  omittedPath,
   type ProjectionEffect,
   projectionEffects,
   projectionStateAt,
@@ -73,12 +74,45 @@ const COMPLIANCE: Readonly<Record<string, string | Rec>> = {
 
 /** Record classes deriving from `NetworkManagement`, which must state their compliance. */
 const NETWORK_MANAGEMENT = new Set([
+  "GeneralInstructionOrMessageToRoadUsers",
   "GeneralNetworkManagement",
   "ReroutingManagement",
   "RoadOrCarriagewayOrLaneManagement",
   "SpeedManagement",
   "WinterDrivingManagement",
 ]);
+
+/** Record classes deriving from `OperatorAction`, which may state the action's status. */
+const OPERATOR_ACTIONS = new Set([
+  ...NETWORK_MANAGEMENT,
+  "ConstructionWorks",
+  "MaintenanceWorks",
+  "RoadsideAssistance",
+]);
+
+/** The kernel's action statuses as `OperatorActionStatusEnum`. */
+const ACTION_STATUS: Readonly<Record<NonNullable<Effect["actionStatus"]>, string>> = {
+  requested: "requested",
+  approved: "approved",
+  being_implemented: "beingImplemented",
+  implemented: "implemented",
+  rejected: "rejected",
+  termination_requested: "terminationRequested",
+  being_terminated: "beingTerminated",
+};
+
+/**
+ * The `ValidityStatusEnum` value of a lifecycle. The kernel's `active` leaves
+ * the window to decide, which is DATEX `definedByValidityTimeSpec`; DATEX
+ * `active` would hold the record in force "regardless of the definition of the
+ * validity time specification", even before the start or after the end it
+ * exports. `planned` and `suspended` are DATEX's own.
+ */
+const VALIDITY_STATUS: Readonly<Partial<Record<Validity["status"], string>>> = {
+  active: "definedByValidityTimeSpec",
+  planned: "planned",
+  suspended: "suspended",
+};
 
 const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   carriageway: "carriagewayClosures",
@@ -201,7 +235,7 @@ function buildValidity(validity: Validity, since: string): Rec {
   const spec: Rec = { "com:overallStartTime": validity.start ?? since };
   if (validity.end) spec["com:overallEndTime"] = validity.end;
   return {
-    "com:validityStatus": validity.status === "suspended" ? "suspended" : "active",
+    "com:validityStatus": VALIDITY_STATUS[validity.status] ?? "definedByValidityTimeSpec",
     "com:validityTimeSpecification": spec,
   };
 }
@@ -230,13 +264,15 @@ interface RecordBody {
   lead?: { severity?: string; headline?: Text };
   impact?: Rec;
   compliance?: string;
+  actionStatus?: Effect["actionStatus"];
   detail?: Rec;
 }
 
 /**
  * A record of `code` (`Class` or `Class:discriminator`) in schema order: the
  * situation record's elements up to its location, then the class's own —
- * compliance for network management, the discriminator and `detail`.
+ * an operator action's status, compliance for network management, the
+ * discriminator and `detail`.
  */
 function record(code: string, header: RecordHeader, body: RecordBody): Rec {
   const [cls, value] = code.split(":") as [string, string | undefined];
@@ -254,6 +290,9 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
     ...(impact && Object.keys(impact).length > 0 ? { "sit:impact": impact } : {}),
     ...(lead?.headline?.length ? { "sit:generalPublicComment": comment(lead.headline) } : {}),
     "sit:locationReference": body.location,
+    ...(OPERATOR_ACTIONS.has(cls) && body.actionStatus !== undefined
+      ? { "sit:operatorActionStatus": ACTION_STATUS[body.actionStatus] }
+      : {}),
     ...(NETWORK_MANAGEMENT.has(cls)
       ? {
           "sit:complianceOption": COMPLIANCE[body.compliance ?? "unknown"] ?? COMPLIANCE["unknown"],
@@ -316,20 +355,17 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     context: ProjectionEffect;
   }[] = [];
   for (const context of effects) {
-    const { effect, validity: effectWindow, validityPath } = context;
+    const { effect, validity: effectWindow } = context;
     if (effect.kind === "delay") continue;
-    const { state } = projectionStateAt(context, at);
+    const projected = projectionStateAt(context, at, true);
+    const { state } = projected;
     const path = diagnostics.effectPath(effect);
     if (state === "ended" || state === "unknown") {
       diagnostics.emit(
         state === "ended" ? "effect_ended" : "effect_time_unknown",
         "effect",
         "omitted",
-        state === "unknown"
-          ? context.validity.status === "unknown"
-            ? `${validityPath}/status`
-            : `${path}/issues`
-          : validityPath,
+        omittedPath(context, projected, path),
         `No management record is exported for this effect at the evaluation instant: ${state}.`,
         effect,
       );
@@ -390,6 +426,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
               ),
         impact: effectImpact(effect),
         compliance: effect.compliance,
+        actionStatus: effect.actionStatus,
         detail: effectDetail(effect),
       },
     });
@@ -414,6 +451,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
             location: rootLocation(),
             impact: folded ? effectImpact(folded.effect) : {},
             compliance: folded?.effect.compliance,
+            actionStatus: folded?.effect.actionStatus,
             detail: {
               ...natureDetail(classification, natureCode!),
               ...(folded ? effectDetail(folded.effect) : {}),
@@ -426,19 +464,16 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
   const leading = bodies[0];
   const delays: ProjectionEffect[] = [];
   for (const context of effects.filter(({ effect }) => effect.kind === "delay")) {
-    const { effect, validity: delayWindow, validityPath } = context;
-    const { state } = projectionStateAt(context, at);
+    const { effect, validity: delayWindow } = context;
+    const projected = projectionStateAt(context, at, true);
+    const { state } = projected;
     const path = diagnostics.effectPath(effect);
     if (state === "ended" || state === "unknown") {
       diagnostics.emit(
         state === "ended" ? "effect_ended" : "effect_time_unknown",
         "effect",
         "omitted",
-        state === "unknown"
-          ? context.validity.status === "unknown"
-            ? `${validityPath}/status`
-            : `${path}/issues`
-          : validityPath,
+        omittedPath(context, projected, path),
         `This delay supplement is not exported at the evaluation instant: ${state}.`,
         effect,
       );

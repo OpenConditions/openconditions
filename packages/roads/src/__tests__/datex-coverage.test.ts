@@ -6,6 +6,7 @@ import {
   DATEX2_V3_INFRASTRUCTURE,
 } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
+import { applicabilityOf } from "../situation/effects.js";
 import {
   type DatexVersion,
   parseMeasured,
@@ -240,6 +241,271 @@ describe.each(VERSIONS)("DATEX II $label situation records", ({ version, label, 
     });
   });
 });
+
+/** `OperatorActionStatusEnum` as the kernel's action statuses. */
+const ACTION_STATUS: Readonly<Record<string, string>> = {
+  requested: "requested",
+  approved: "approved",
+  beingImplemented: "being_implemented",
+  implemented: "implemented",
+  rejected: "rejected",
+  terminationRequested: "termination_requested",
+  beingTerminated: "being_terminated",
+};
+
+/** What each `TrafficConstrictionTypeEnum` value declares about the road. */
+const CONSTRICTION: Readonly<
+  Record<string, { roadState?: string; closureScope?: string } | undefined>
+> = {
+  roadBlocked: { roadState: "closed" },
+  carriagewayBlocked: { roadState: "closed", closureScope: "carriageway" },
+  lanesBlocked: { roadState: "some_lanes_closed" },
+  roadPartiallyObstructed: undefined,
+  carriagewayPartiallyObstructed: undefined,
+  lanesPartiallyObstructed: undefined,
+};
+
+const DAY: Readonly<Record<string, string>> = {
+  monday: "MO",
+  tuesday: "TU",
+  wednesday: "WE",
+  thursday: "TH",
+  friday: "FR",
+  saturday: "SA",
+  sunday: "SU",
+};
+
+/** A road closure by network management, with `measure` before its management type. */
+const closureBy = (measure: string) =>
+  `${measure}<:roadOrCarriagewayOrLaneManagementType>roadClosed</:roadOrCarriagewayOrLaneManagementType>`;
+
+describe.each(VERSIONS)(
+  "DATEX II $label measures and their timing",
+  ({ version, label, vocab }) => {
+    it("reads every operator action status as the action's status", () => {
+      assertCovered(`${label} OperatorActionStatusEnum`, vocab.operatorActionStatuses, {
+        handled: (status) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "RoadOrCarriagewayOrLaneManagement",
+            body: closureBy(
+              `<:operatorActionStatus>${status}</:operatorActionStatus><:complianceOption>mandatory</:complianceOption>`,
+            ),
+          });
+          return (
+            skipped.unknown_value === undefined &&
+            event?.situation?.actionStatus === ACTION_STATUS[status] &&
+            event.situation.effectIssues === undefined
+          );
+        },
+        unsupported:
+          version === "v3"
+            ? {
+                _extended: `${EXTENDED}; every effect carries unsupported_status, so none routes on a status it cannot establish`,
+              }
+            : {},
+      });
+    });
+
+    it("reads every compliance option as the measure's compliance", () => {
+      assertCovered(`${label} ComplianceOptionEnum`, vocab.complianceOptions, {
+        handled: (option) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "RoadOrCarriagewayOrLaneManagement",
+            body: closureBy(`<:complianceOption>${option}</:complianceOption>`),
+          });
+          return skipped.unknown_value === undefined && event?.situation?.compliance === option;
+        },
+        unsupported:
+          version === "v3"
+            ? { _extended: `${EXTENDED}; the measure's compliance reads as unknown` }
+            : {},
+      });
+    });
+
+    it("reads every traffic constriction as the state of the road", () => {
+      assertCovered(`${label} TrafficConstrictionTypeEnum`, vocab.trafficConstrictionTypes, {
+        handled: (constriction) => {
+          if (!(constriction in CONSTRICTION)) return false;
+          const element = `<:trafficConstrictionType>${constriction}</:trafficConstrictionType>`;
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "Accident",
+            ...(version === "v3"
+              ? { body: `${element}<:accidentType>collision</:accidentType>` }
+              : { impact: element, body: `<:accidentType>collision</:accidentType>` }),
+          });
+          const expected = CONSTRICTION[constriction];
+          return (
+            skipped.unknown_value === undefined &&
+            event?.roadState === expected?.roadState &&
+            event?.situation?.closureScope === expected?.closureScope
+          );
+        },
+        unsupported:
+          version === "v3" ? { _extended: `${EXTENDED}; the record declares no road state` } : {},
+      });
+    });
+
+    it("reads every traffic type as the vehicles the measure applies to", () => {
+      assertCovered(`${label} TrafficTypeEnum`, vocab.trafficTypes, {
+        handled: (traffic) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "RoadOrCarriagewayOrLaneManagement",
+            body: closureBy(
+              `<:complianceOption>mandatory</:complianceOption><:applicableForTrafficType>${traffic}</:applicableForTrafficType>`,
+            ),
+          });
+          if (event === undefined || skipped.unknown_value !== undefined) return false;
+          const applicability = applicabilityOf(event);
+          const token = `applicableForTrafficType:${traffic}`;
+          // Through traffic is "traffic which is not for local access": local
+          // access is spared. Any other kind of traffic no selector names.
+          return traffic === "throughTraffic"
+            ? applicability.kind === "all" &&
+                applicability.except?.some((s) => s.usage === "local_access") === true
+            : applicability.kind === "unknown" && applicability.raw?.includes(token) === true;
+        },
+        unsupported:
+          version === "v3"
+            ? { _extended: `${EXTENDED}; the measure's vehicles read as unknown` }
+            : {},
+      });
+    });
+
+    it("reads every roadworks mobility as the work zone it makes", () => {
+      const expected: Record<string, string | undefined> = {
+        mobile: "moving",
+        stationary: "static",
+        unknown: undefined,
+      };
+      assertCovered(`${label} mobility types`, vocab.mobilityTypes, {
+        handled: (mobility) => {
+          if (!(mobility in expected)) return false;
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "MaintenanceWorks",
+            body: `<:mobility><:mobilityType>${mobility}</:mobilityType></:mobility><:roadMaintenanceType>roadworks</:roadMaintenanceType>`,
+          });
+          return skipped.unknown_value === undefined && event?.workZoneType === expected[mobility];
+        },
+        unsupported:
+          version === "v3" ? { _extended: `${EXTENDED}; the work zone reads as neither` } : {},
+      });
+    });
+
+    const recurrence = (content: string) =>
+      `<:validPeriod><:recurringDayWeekMonthPeriod>${content}</:recurringDayWeekMonthPeriod></:validPeriod>`;
+    const unrepresentable =
+      "the schedule carries no such day or month: it is dropped from its group, a group left naming nothing is reported, and every effect carries unsupported_schedule";
+
+    it("reads every recurrence day as a day of the schedule", () => {
+      assertCovered(`${label} DayEnum`, vocab.days, {
+        handled: (day) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "Accident",
+            body: "<:accidentType>collision</:accidentType>",
+            timeSpec: recurrence(`<:applicableDay>${day}</:applicableDay>`),
+          });
+          return (
+            skipped.unknown_value === undefined &&
+            event?.schedule?.[0]?.byDay?.join() === DAY[day] &&
+            event.situation?.effectIssues === undefined
+          );
+        },
+        unsupported: version === "v3" ? { _extended: `${EXTENDED}; ${unrepresentable}` } : {},
+      });
+    });
+
+    it("reads every recurrence month as a month of the schedule", () => {
+      assertCovered(`${label} MonthOfYearEnum`, vocab.months, {
+        handled: (month) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "Accident",
+            body: "<:accidentType>collision</:accidentType>",
+            timeSpec: recurrence(`<:applicableMonth>${month}</:applicableMonth>`),
+          });
+          return (
+            skipped.unknown_value === undefined &&
+            event?.schedule?.[0]?.byMonth?.join() ===
+              String(vocab.months.indexOf(month as never) + 1) &&
+            event.situation?.effectIssues === undefined
+          );
+        },
+        unsupported: version === "v3" ? { _extended: `${EXTENDED}; ${unrepresentable}` } : {},
+      });
+    });
+
+    if ("weeksOfMonth" in vocab) {
+      it("reports every week of the month as a recurrence it cannot carry", () => {
+        assertCovered(`${label} WeekOfMonthEnum`, vocab.weeksOfMonth, {
+          handled: () => false,
+          unsupported: Object.fromEntries(
+            vocab.weeksOfMonth.map((week) => [
+              week,
+              "a schedule has no week of the month (and v2.3 does not say how weeks are counted); every effect carries unsupported_schedule, so the record never routes as if in force every week",
+            ]),
+          ),
+        });
+        const { event } = parseRecord(version, {
+          recordClass: "Accident",
+          body: "<:accidentType>collision</:accidentType>",
+          timeSpec: recurrence(
+            "<:applicableDay>monday</:applicableDay><:applicableWeek>firstWeekOfMonth</:applicableWeek>",
+          ),
+        });
+        expect(event?.situation?.effectIssues).toContainEqual(
+          expect.objectContaining({
+            code: "unsupported_schedule",
+            sourceTokens: { unsupportedFields: ["applicableWeek"] },
+          }),
+        );
+      });
+    }
+
+    it("keeps an overrun end as the estimate it was, not as a bound", () => {
+      // The record's version time is 08:00: by then its 08:00 end has passed.
+      const overrun = parseRecord(version, {
+        recordClass: "Accident",
+        body: "<:accidentType>collision</:accidentType>",
+        overrunning: "<:overrunning>true</:overrunning>",
+        timeSpec: "<:overallEndTime>2026-09-18T08:00:00Z</:overallEndTime>",
+      }).event;
+      expect(overrun?.validTo).toBeNull();
+      expect(overrun?.situation?.estimatedEnd).toBe("2026-09-18T08:00:00Z");
+      const replanned = parseRecord(version, {
+        recordClass: "Accident",
+        body: "<:accidentType>collision</:accidentType>",
+        overrunning: "<:overrunning>true</:overrunning>",
+        timeSpec: "<:overallEndTime>2026-09-18T12:00:00Z</:overallEndTime>",
+      }).event;
+      expect(replanned?.validTo).toBe("2026-09-18T12:00:00Z");
+      expect(replanned?.situation?.estimatedEnd).toBeUndefined();
+    });
+
+    it("reads the remaining capacity as the delay's", () => {
+      const { event } = parseRecord(version, {
+        recordClass: "Accident",
+        body: "<:accidentType>collision</:accidentType>",
+        impact: "<:capacityRemaining>40</:capacityRemaining>",
+      });
+      expect(event?.capacityRemainingPct).toBe(40);
+    });
+
+    it("keeps a measure that applies only at some places within its location partial", () => {
+      const { event } = parseRecord(version, {
+        recordClass: "RoadOrCarriagewayOrLaneManagement",
+        body: closureBy(
+          "<:complianceOption>mandatory</:complianceOption><:placesAtWhichApplicable>inTunnels</:placesAtWhichApplicable>",
+        ),
+      });
+      expect(event?.situation?.effectIssues).toEqual([
+        {
+          code: "compound_condition",
+          sourcePath: "situationRecord.placesAtWhichApplicable",
+          sourceTokens: { placesAtWhichApplicable: ["inTunnels"] },
+        },
+      ]);
+    });
+  },
+);
 
 /**
  * The road state each `RoadOrCarriagewayOrLaneManagementTypeEnum` value

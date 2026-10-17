@@ -176,10 +176,7 @@
         "id": "5684393/closure",
         "sourceRecordRef": "5684393/1",
         "applicability": {
-          "kind": "unknown",
-          "raw": [
-            "anyVehicle"
-          ]
+          "kind": "all"
         },
         "compliance": "mandatory",
         "normalization": "complete",
@@ -196,7 +193,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e1bfd0b0e6a40977622d184b205e69d3382db6580d710ded3dfb939954159c39"
+    "contentHash": "bbf2137726b4ab8561f4554509573ae3e10c3c45297002fee0d8b7bbf9ac3cbf"
   },
   {
     "id": "oc:situation:es-dgt-events:8212884",
@@ -285,7 +282,8 @@
         "applicability": {
           "kind": "unknown",
           "raw": [
-            "anyVehicle"
+            "anyVehicle",
+            "grossWeightCharacteristic"
           ]
         },
         "compliance": "mandatory",
@@ -325,7 +323,8 @@
         "applicability": {
           "kind": "unknown",
           "raw": [
-            "anyVehicle"
+            "anyVehicle",
+            "lengthCharacteristic"
           ]
         },
         "compliance": "mandatory",
@@ -340,7 +339,8 @@
         "applicability": {
           "kind": "unknown",
           "raw": [
-            "anyVehicle"
+            "anyVehicle",
+            "lengthCharacteristic"
           ]
         },
         "compliance": "mandatory",
@@ -383,7 +383,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "bc75697a978a63392cd7ee31f85d18fa164a0138442ab1287129e9103d589026"
+    "contentHash": "e6793e18216e8228db2395e89ed0fe8d49d9badaf7eb56ac32025c8e77d1b3f9"
   },
   {
     "id": "oc:situation:es-dgt-events:8660292",
@@ -472,7 +472,8 @@
         "applicability": {
           "kind": "unknown",
           "raw": [
-            "anyVehicle"
+            "anyVehicle",
+            "grossWeightCharacteristic"
           ]
         },
         "compliance": "mandatory",
@@ -515,7 +516,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4619c7c33ee09a0831c535e950a2010b122bc4dde24f04a4162c39e59b2dd8e9"
+    "contentHash": "db4034c6679cf259ad92df4b6b04d9066e5e0d15359dbf139c32d426c48f6094"
   },
   {
     "id": "oc:situation:es-dgt-events:9479421",
@@ -733,10 +734,7 @@
           }
         },
         "applicability": {
-          "kind": "unknown",
-          "raw": [
-            "anyVehicle"
-          ]
+          "kind": "all"
         },
         "validity": {
           "status": "active",
@@ -756,10 +754,7 @@
         "id": "14331309/speed_limit",
         "sourceRecordRef": "14331309/4",
         "applicability": {
-          "kind": "unknown",
-          "raw": [
-            "anyVehicle"
-          ]
+          "kind": "all"
         },
         "compliance": "mandatory",
         "normalization": "complete",
@@ -779,6 +774,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "1085f9c98eee351a4542d50fce8f3ca9c0ab8a1eec1e7ad245845f0db7306325"
+    "contentHash": "d9f2063201acf3f26664e06b016dd394e002013263fdb6e5888e6ed2361eca88"
   }
 ]

@@ -24,7 +24,7 @@ import {
   xmlText,
 } from "@openconditions/datex2";
 import { isPlausibleWgs84, recordSkipped, reprojectorFor } from "@openconditions/ingest-framework";
-import type { Issue, Schedule, Text, Validity } from "@openconditions/model";
+import type { Effect, Issue, Schedule, Text, Validity } from "@openconditions/model";
 import {
   DATEX2_V2,
   DATEX2_V3,
@@ -45,7 +45,7 @@ import {
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
-import { UNDETERMINED } from "./situation/location.js";
+import { entryOf, UNDETERMINED } from "./situation/location.js";
 import {
   canonicalSnapshotValue,
   compareSnapshotRank,
@@ -144,6 +144,161 @@ const DISCRIMINATOR_VALUES = new Map<string, ReadonlySet<string>>(
   ]),
 );
 
+const ACTION_STATUSES = standardValues(
+  DATEX2_V3.operatorActionStatuses,
+  DATEX2_V2.operatorActionStatuses,
+);
+const COMPLIANCE_OPTIONS = standardValues(DATEX2_V3.complianceOptions, DATEX2_V2.complianceOptions);
+const CONSTRICTION_TYPES = standardValues(
+  DATEX2_V3.trafficConstrictionTypes,
+  DATEX2_V2.trafficConstrictionTypes,
+);
+const TRAFFIC_TYPES = standardValues(DATEX2_V3.trafficTypes, DATEX2_V2.trafficTypes);
+const MOBILITY_TYPES = standardValues(DATEX2_V3.mobilityTypes, DATEX2_V2.mobilityTypes);
+
+/** `OperatorActionStatusEnum` as the kernel's action statuses. */
+const ACTION_STATUS: Readonly<Record<string, NonNullable<Effect["actionStatus"]>>> = {
+  requested: "requested",
+  approved: "approved",
+  beingImplemented: "being_implemented",
+  implemented: "implemented",
+  rejected: "rejected",
+  terminationRequested: "termination_requested",
+  beingTerminated: "being_terminated",
+};
+
+/**
+ * What a record says about the measure it states, beyond its type: the
+ * operator action's status, whether the measure is mandatory or advisory, the
+ * traffic it applies to, and record-level issues every effect carries.
+ */
+interface DatexMeasure {
+  actionStatus?: Effect["actionStatus"];
+  compliance?: Effect["compliance"];
+  trafficTypes?: string[];
+  effectIssues: Issue[];
+}
+
+/**
+ * An `OperatorAction`'s `operatorActionStatus` and a `NetworkManagement`'s
+ * `complianceOption`, `applicableForTrafficType` and `placesAtWhichApplicable`.
+ * An action status outside the enumeration (or `_extended`) establishes
+ * nothing, so the effects carry `unsupported_status` and never route; an
+ * unreadable compliance is `unknown`. A measure that applies only at some
+ * kinds of place within its location (in tunnels, on bridges) applies under a
+ * condition no effect can carry: its effects are partial, never routed as if
+ * the whole location were affected.
+ */
+function measureOf(rec: XmlObject): DatexMeasure {
+  const effectIssues: Issue[] = [];
+  const actionNode = rec["operatorActionStatus"];
+  const action = text(actionNode);
+  const actionStatus = entryOf(ACTION_STATUS, action);
+  if (action !== undefined && actionStatus === undefined) {
+    const extendedValue = isXmlObject(actionNode)
+      ? getXmlAttribute(actionNode, "_extendedValue")
+      : undefined;
+    effectIssues.push({
+      code: "unsupported_status",
+      sourcePath: "situationRecord.operatorActionStatus",
+      sourceTokens: {
+        operatorActionStatus: action,
+        ...(extendedValue !== undefined ? { extendedValue } : {}),
+      },
+    });
+  }
+  const declared = getXmlChildText(rec, "complianceOption");
+  const compliance =
+    declared === undefined
+      ? undefined
+      : declared === "mandatory" || declared === "advisory"
+        ? declared
+        : ("unknown" as const);
+  const trafficTypes = xmlNodeToArray(rec["applicableForTrafficType"])
+    .map(text)
+    .filter((v): v is string => v !== undefined);
+  const places = xmlNodeToArray(rec["placesAtWhichApplicable"])
+    .map(text)
+    .filter((v): v is string => v !== undefined);
+  if (places.length > 0) {
+    effectIssues.push({
+      code: "compound_condition",
+      sourcePath: "situationRecord.placesAtWhichApplicable",
+      sourceTokens: { placesAtWhichApplicable: places },
+    });
+  }
+  return {
+    ...(actionStatus !== undefined ? { actionStatus } : {}),
+    ...(compliance !== undefined ? { compliance } : {}),
+    ...(trafficTypes.length > 0 ? { trafficTypes } : {}),
+    effectIssues,
+  };
+}
+
+/**
+ * What an unplanned event's `trafficConstrictionType` (v3 on the record, v2
+ * in its `impact`) says about the road, by the enumeration's definitions: a
+ * road "totally obstructed, for all vehicles in both directions" is closed; a
+ * carriageway "totally obstructed in the specified direction" is closed as a
+ * carriageway; lanes "totally obstructed" are closed lanes. A partial
+ * obstruction leaves the road and its lanes passable and declares nothing.
+ */
+const CONSTRICTION: Readonly<
+  Record<string, { roadState: NonNullable<RoadEvent["roadState"]>; scope?: "carriageway" }>
+> = {
+  roadBlocked: { roadState: "closed" },
+  carriagewayBlocked: { roadState: "closed", scope: "carriageway" },
+  lanesBlocked: { roadState: "some_lanes_closed" },
+};
+
+function constrictionOf(rec: XmlObject): string | undefined {
+  return (
+    getXmlChildText(rec, "trafficConstrictionType") ??
+    getXmlChildText(getXmlChild(rec, "impact"), "trafficConstrictionType")
+  );
+}
+
+/**
+ * The work zone a roadworks record's `mobility` declares: works "moving" are
+ * a moving work zone, "stationary" ones a static one; an unknown mobility
+ * says neither.
+ */
+function workZoneTypeOf(rec: XmlObject): RoadEvent["workZoneType"] | undefined {
+  switch (getXmlChildText(getXmlChild(rec, "mobility"), "mobilityType")) {
+    case "mobile":
+      return "moving";
+    case "stationary":
+      return "static";
+    default:
+      return undefined;
+  }
+}
+
+/** The record's remaining capacity (`impact/capacityRemaining`), a percentage. */
+function capacityRemainingOf(rec: XmlObject): number | undefined {
+  const raw = getXmlChildText(getXmlChild(rec, "impact"), "capacityRemaining");
+  const n = raw === undefined ? Number.NaN : Number(raw);
+  return Number.isFinite(n) && n >= 0 && n <= 100 ? n : undefined;
+}
+
+/**
+ * The overall end a record states and has overrun: DATEX `overrunning` says
+ * the activity "is still in progress, overrunning its planned duration", so an
+ * end at or before the record's version time no longer bounds it and is kept
+ * as the estimate it was. A later end is the current plan and stays the end.
+ */
+function overrunEndOf(
+  validity: XmlObject,
+  end: string | undefined,
+  asOf: string | null,
+): string | undefined {
+  if (getXmlChildText(validity, "overrunning") !== "true" || end === undefined || asOf === null) {
+    return undefined;
+  }
+  const endMs = Date.parse(end);
+  return Number.isFinite(endMs) && endMs <= Date.parse(asOf) ? end : undefined;
+}
+
 /** DATEX model versions the situation parser reads. */
 const READ_MODEL_VERSIONS = new Set([2, 3]);
 
@@ -163,11 +318,12 @@ function datexModelVersion(input: string | Buffer): number | undefined {
 
 /**
  * How many enumerated values a kept record carries that the parser cannot
- * read: a discriminator, cause type, severity, probability or validity status
- * outside both versions' enumerations, or the `_extended` placeholder, whose
- * meaning lives in an extension schema the parser does not read. Each is
- * published without; counting them keeps a renamed or national value from
- * reading as a quiet feed.
+ * read: a discriminator, cause type, severity, probability, validity status,
+ * operator action status, compliance, traffic constriction, traffic type,
+ * mobility or recurrence day or month outside both versions' enumerations, or
+ * the `_extended` placeholder, whose meaning lives in an extension schema the
+ * parser does not read. Each is published without; counting them keeps a
+ * renamed or national value from reading as a quiet feed.
  */
 function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): number {
   let unread = 0;
@@ -185,6 +341,25 @@ function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): 
   check(severity.trim() || undefined, SEVERITIES);
   check(getXmlChildText(rec, "probabilityOfOccurrence"), PROBABILITIES);
   check(text(getXmlChild(rec, "validity")?.["validityStatus"]), READ_VALIDITY_STATUSES);
+  check(text(rec["operatorActionStatus"]), ACTION_STATUSES);
+  check(getXmlChildText(rec, "complianceOption"), COMPLIANCE_OPTIONS);
+  check(constrictionOf(rec), CONSTRICTION_TYPES);
+  for (const value of xmlNodeToArray(rec["applicableForTrafficType"])) {
+    check(text(value), TRAFFIC_TYPES);
+  }
+  check(getXmlChildText(getXmlChild(rec, "mobility"), "mobilityType"), MOBILITY_TYPES);
+  const timeSpec = getXmlChild(getXmlChild(rec, "validity"), "validityTimeSpecification");
+  for (const period of [
+    ...getXmlChildren(timeSpec, "validPeriod"),
+    ...getXmlChildren(timeSpec, "exceptionPeriod"),
+  ]) {
+    for (const recurrence of getXmlChildren(period, "recurringDayWeekMonthPeriod")) {
+      for (const day of xmlNodeToArray(recurrence["applicableDay"])) check(text(day), DAYS);
+      for (const month of xmlNodeToArray(recurrence["applicableMonth"])) {
+        check(text(month), MONTHS);
+      }
+    }
+  }
   return unread;
 }
 
@@ -574,70 +749,128 @@ function detourGeometryOf(
   return g && (g.type === "LineString" || g.type === "MultiLineString") ? g : undefined;
 }
 
+const DAYS = standardValues(DATEX2_V3.days, DATEX2_V2.days);
+const MONTHS = standardValues(DATEX2_V3.months, DATEX2_V2.months);
+
+/** `DayEnum` as iCal day codes. */
+const ICAL_DAY: Readonly<Record<string, string>> = {
+  monday: "MO",
+  tuesday: "TU",
+  wednesday: "WE",
+  thursday: "TH",
+  friday: "FR",
+  saturday: "SA",
+  sunday: "SU",
+};
+
+/** `MonthOfYearEnum` as month numbers. */
+const MONTH: Readonly<Record<string, number>> = Object.fromEntries(
+  DATEX2_V2.months.map((month, i) => [month, i + 1]),
+);
+
 /**
- * validPeriod windows → schedule: each bounded date range (startOfPeriod /
- * endOfPeriod) plus the daily time window (recurringTimePeriodOfDay) when the
- * source supplies one. The overall start/end stay on validFrom/validTo.
+ * One DATEX `Period` as schedules: within its `startOfPeriod`/`endOfPeriod`,
+ * on the days and months each `recurringDayWeekMonthPeriod` names, during each
+ * `recurringTimePeriodOfDay`. Several days-of-week groups or times of day are
+ * alternatives, so the period is one schedule per pairing. A group naming any
+ * day or month outside the enumeration (or none it can read) is reported:
+ * kept without it, the group would apply on fewer days than the source
+ * says, or on every day.
  */
-function scheduleOf(timeSpec: XmlObject | undefined): LocalSchedule[] | undefined {
-  if (!timeSpec) return undefined;
+function periodSchedules(period: XmlObject, unsupported: Set<string>): LocalSchedule[] {
+  const times = getXmlChildren(period, "recurringTimePeriodOfDay").map((tod) => ({
+    startTime: getXmlChildText(tod, "startTimeOfPeriod"),
+    endTime: getXmlChildText(tod, "endTimeOfPeriod"),
+  }));
+  const calendars = getXmlChildren(period, "recurringDayWeekMonthPeriod").map((group) => {
+    const declared = (name: string) => xmlNodeToArray(group[name]).map(text);
+    if (declared("applicableWeek").length > 0) unsupported.add("applicableWeek");
+    const days = declared("applicableDay");
+    const months = declared("applicableMonth");
+    const byDay = days.flatMap((d) => entryOf(ICAL_DAY, d) ?? []);
+    const byMonth = months.flatMap((m) => entryOf(MONTH, m) ?? []);
+    if (byDay.length < days.length || byMonth.length < months.length) {
+      unsupported.add("recurringDayWeekMonthPeriod");
+    }
+    return {
+      ...(byDay.length > 0 ? { byDay } : {}),
+      ...(byMonth.length > 0 ? { byMonth } : {}),
+    };
+  });
+  const startDate = getXmlChildText(period, "startOfPeriod");
+  const endDate = getXmlChildText(period, "endOfPeriod");
   const out: LocalSchedule[] = [];
-  for (const vp of getXmlChildren(timeSpec, "validPeriod")) {
-    const tod = getXmlChild(vp, "recurringTimePeriodOfDay");
-    const win = buildLocalSchedule({
-      startDate: getXmlChildText(vp, "startOfPeriod"),
-      endDate: getXmlChildText(vp, "endOfPeriod"),
-      startTime: tod ? getXmlChildText(tod, "startTimeOfPeriod") : undefined,
-      endTime: tod ? getXmlChildText(tod, "endTimeOfPeriod") : undefined,
-    });
-    // Drop windows with neither a date range nor a time-of-day (no information).
-    if (win.startDate || win.endDate || win.startTime) out.push(win);
+  for (const time of times.length > 0 ? times : [{}]) {
+    for (const calendar of calendars.length > 0 ? calendars : [{}]) {
+      const win = buildLocalSchedule({ startDate, endDate, ...time, ...calendar });
+      // A period with neither a date range, a time of day nor a calendar says nothing.
+      if (win.startDate || win.endDate || win.startTime || win.byDay || win.byMonth) {
+        out.push(win);
+      }
+    }
   }
-  return out.length > 0 ? out : undefined;
+  return out;
 }
 
-/** Calendar fields `scheduleOf` actually consumes. */
+/** The time specification's members the schedule reading consumes. */
 const SUPPORTED_TIME_SPEC_CHILDREN = new Set([
   "overallStartTime",
   "overallEndTime",
   "overallBidirectionalReference",
   "validPeriod",
+  "exceptionPeriod",
 ]);
-const SUPPORTED_VALID_PERIOD_CHILDREN = new Set([
+const SUPPORTED_PERIOD_CHILDREN = new Set([
   "startOfPeriod",
   "endOfPeriod",
   "periodName",
   "recurringTimePeriodOfDay",
+  "recurringDayWeekMonthPeriod",
 ]);
 
 /**
- * Does the source calendar contain structure the schedule model silently drops?
- * Weekday recurrences, exception periods and unfamiliar members all change when
- * a restriction applies, so carrying the rest as if it were the whole rule would
- * publish a continuous restriction the source never declared.
+ * A DATEX `validityTimeSpecification` as schedules: its `validPeriod`s, in
+ * which the record applies, and its `exceptionPeriod`s, in which it does not.
+ * The overall start and end stay on validFrom/validTo. `unsupported` names
+ * the members the schedules cannot carry (special days and public holidays,
+ * weeks of the month, extensions): each changes when the record applies, so
+ * the rest must not stand for the whole rule.
  */
-function unsupportedScheduleFields(timeSpec: XmlObject | undefined): string[] {
-  if (!timeSpec) return [];
-  const dropped = new Set<string>();
+function timeSpecOf(timeSpec: XmlObject | undefined): {
+  periods?: LocalSchedule[];
+  exceptions?: LocalSchedule[];
+  unsupported: string[];
+} {
+  if (!timeSpec) return { unsupported: [] };
+  const unsupported = new Set<string>();
   for (const key of Object.keys(timeSpec)) {
     if (key.startsWith("@_")) continue;
     const name = stripXmlNamespace(key);
-    if (!SUPPORTED_TIME_SPEC_CHILDREN.has(name)) dropped.add(name);
+    if (!SUPPORTED_TIME_SPEC_CHILDREN.has(name)) unsupported.add(name);
   }
-  for (const period of getXmlChildren(timeSpec, "validPeriod")) {
-    for (const key of Object.keys(period)) {
-      if (key.startsWith("@_")) continue;
-      const name = stripXmlNamespace(key);
-      if (!SUPPORTED_VALID_PERIOD_CHILDREN.has(name)) dropped.add(name);
-    }
-  }
-  return [...dropped];
+  const read = (name: string) =>
+    getXmlChildren(timeSpec, name).flatMap((period) => {
+      for (const key of Object.keys(period)) {
+        if (key.startsWith("@_")) continue;
+        const member = stripXmlNamespace(key);
+        if (!SUPPORTED_PERIOD_CHILDREN.has(member)) unsupported.add(member);
+      }
+      return periodSchedules(period, unsupported);
+    });
+  const periods = read("validPeriod");
+  const exceptions = read("exceptionPeriod");
+  return {
+    ...(periods.length > 0 ? { periods } : {}),
+    ...(exceptions.length > 0 ? { exceptions } : {}),
+    unsupported: [...unsupported],
+  };
 }
 
 /**
- * Recurrences that genuinely repeat, as opposed to a `validPeriod` that merely
- * restates the overall window. Only a declared time of day makes a schedule a
- * recurrence; without one the overall start and end already say everything.
+ * The restriction contract's recurrences: `validPeriod`s that genuinely
+ * repeat, by a time of day or a calendar, as opposed to one that merely
+ * restates the overall window, which the overall start and end already say.
+ * The contract has no place for exception periods, so they stay unsupported.
  */
 function restrictionScheduleOf(
   timeSpec: XmlObject | undefined,
@@ -645,12 +878,14 @@ function restrictionScheduleOf(
 ): Schedule[] | undefined {
   if (!timeSpec) return undefined;
   const recurring = getXmlChildren(timeSpec, "validPeriod").some(
-    (period) => getXmlChild(period, "recurringTimePeriodOfDay") !== undefined,
+    (period) =>
+      getXmlChildren(period, "recurringTimePeriodOfDay").length > 0 ||
+      getXmlChildren(period, "recurringDayWeekMonthPeriod").length > 0,
   );
   if (!recurring || !geometry) return undefined;
   const timezone = scheduleTimezoneForGeometry(geometry);
   if (!timezone) return undefined;
-  return withTimezone(scheduleOf(timeSpec), timezone);
+  return withTimezone(timeSpecOf(timeSpec).periods, timezone);
 }
 
 function directionOf(rec: XmlObject): string | undefined {
@@ -726,7 +961,10 @@ function alertCDirectionIn(location: XmlObject): AlertCDirectionRef | null {
   if (directionCoded !== null) refs["directionCoded"] = directionCoded;
   if (affectedDirection !== null) refs["affectedDirection"] = affectedDirection;
   return {
-    value: directionCoded === null ? "unknown" : (ALERT_C_DIRECTIONS[directionCoded] ?? "unknown"),
+    value:
+      directionCoded === null
+        ? "unknown"
+        : (entryOf(ALERT_C_DIRECTIONS, directionCoded) ?? "unknown"),
     directionCoded,
     affectedDirection,
     refs,
@@ -873,7 +1111,7 @@ const ROAD_STATES: Readonly<Record<string, RoadEvent["roadState"]>> = {
 
 function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
   const raw = getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType");
-  return raw === undefined ? undefined : ROAD_STATES[raw];
+  return entryOf(ROAD_STATES, raw);
 }
 
 function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
@@ -1671,7 +1909,15 @@ function parseDatexInternal(
         ? coarseType("road_closure")
         : managementType === "contraflow"
           ? coarseType("contraflow")
-          : (DATEX_COARSE[recType] ?? coarseOf(classification));
+          : (entryOf(DATEX_COARSE, recType) ?? coarseOf(classification));
+    // A management type declares the road's state; an unplanned event's
+    // constriction says it where no management type does.
+    const declaredState = roadStateOf(rec);
+    const constriction =
+      declaredState === undefined ? entryOf(CONSTRICTION, constrictionOf(rec)) : undefined;
+    const closureScope =
+      managementType === "carriagewayClosures" ? "carriageway" : constriction?.scope;
+    const measure = measureOf(rec);
 
     const severity =
       situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
@@ -1716,14 +1962,43 @@ function parseDatexInternal(
       }));
 
     const sourceDirection = restrictionDirectionOf(rec);
-    const droppedScheduleFields = unsupportedScheduleFields(timeSpec);
+    const calendar = timeSpecOf(timeSpec);
+    const timeZone = geometry ? scheduleTimezoneForGeometry(geometry) : null;
+    const scheduleIssues: Issue[] =
+      calendar.unsupported.length > 0
+        ? [
+            {
+              code: "unsupported_schedule",
+              sourcePath: "situationRecord.validity.validityTimeSpecification",
+              sourceTokens: { unsupportedFields: calendar.unsupported },
+            },
+          ]
+        : (calendar.periods || calendar.exceptions) && !timeZone
+          ? [
+              {
+                // Local recurrences cannot be placed in time without the
+                // zone of where they apply.
+                code: "unsupported_schedule",
+                sourcePath: "situationRecord.validity.validityTimeSpecification",
+                sourceTokens: { unresolvedTimeZone: true },
+              },
+            ]
+          : [];
+    // The restriction contract has no place for exception periods.
+    const droppedScheduleFields = [
+      ...calendar.unsupported,
+      ...(getXmlChildren(timeSpec, "exceptionPeriod").length > 0 ? ["exceptionPeriod"] : []),
+    ];
     const restrictionSchedule = restrictionScheduleOf(timeSpec, geometry);
+    const rawEnd = text(timeSpec?.["overallEndTime"]);
+    const overrunEnd = overrunEndOf(validity, rawEnd, versionTime ?? dataUpdatedAt);
+    const effectIssues = [...measure.effectIssues, ...scheduleIssues];
     const restrictionDetails = restrictionDetailsFor(rec, src, {
       recordId,
       recordVersion: rawRecordVersion ?? null,
       sourceUpdatedAt: versionTime,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
-      validTo: text(timeSpec?.["overallEndTime"]) ?? null,
+      validTo: overrunEnd === undefined ? (rawEnd ?? null) : null,
       direction: sourceDirection.direction,
       locationDescription: roads[0]?.name ?? roads[0]?.ref ?? null,
       sourceLocationRefs: sourceDirection.sourceLocationRefs,
@@ -1761,6 +2036,12 @@ function parseDatexInternal(
           ? { validityStatus: lifecycle.validityStatus }
           : {}),
         ...(lifecycle.statusIssue !== undefined ? { statusIssue: lifecycle.statusIssue } : {}),
+        ...(measure.actionStatus !== undefined ? { actionStatus: measure.actionStatus } : {}),
+        ...(effectIssues.length > 0 ? { effectIssues } : {}),
+        ...(measure.compliance !== undefined ? { compliance: measure.compliance } : {}),
+        ...(measure.trafficTypes !== undefined ? { trafficTypes: measure.trafficTypes } : {}),
+        ...(closureScope !== undefined ? { closureScope } : {}),
+        ...(overrunEnd !== undefined ? { estimatedEnd: overrunEnd } : {}),
       },
       ...(situationId ? { situationId } : {}),
       type,
@@ -1772,7 +2053,7 @@ function parseDatexInternal(
       status,
       direction: directionOf(rec),
       roads,
-      roadState: roadStateOf(rec),
+      roadState: declaredState ?? constriction?.roadState,
       lanesAffected: lanesOf(rec),
       speedLimitKph: speedLimitOf(rec),
       restrictions: RESTRICTION_CONTRACT_SOURCES.has(src.id)
@@ -1784,6 +2065,8 @@ function parseDatexInternal(
       detourGeometry: detourGeometryOf(rec, reproject, lonFirst),
       delaySeconds: leafNumber(rec, "delayTimeValue"),
       queueLengthMeters: leafNumber(rec, "queueLength"),
+      capacityRemainingPct: capacityRemainingOf(rec),
+      workZoneType: workZoneTypeOf(rec),
       relatedIds: relatedRefsOf(rec),
       sourceRaw: {
         ...rec,
@@ -1794,7 +2077,7 @@ function parseDatexInternal(
       headline: headlineText,
       description: descriptionText,
       validFrom: text(timeSpec?.["overallStartTime"]) ?? null,
-      validTo: text(timeSpec?.["overallEndTime"]) ?? null,
+      validTo: overrunEnd === undefined ? (rawEnd ?? null) : null,
       origin: {
         kind: "feed" as const,
         attribution: {
@@ -1814,7 +2097,8 @@ function parseDatexInternal(
           geometry,
           // Local schedule times are stamped with the zone of the closure's
           // location (resolved from geometry), so the recurrence is unambiguous.
-          schedule: withTimezone(scheduleOf(timeSpec), scheduleTimezoneForGeometry(geometry)),
+          schedule: withTimezone(calendar.periods, timeZone),
+          scheduleExceptions: withTimezone(calendar.exceptions, timeZone),
           externalRefs: externalRefsOf(rec),
           ...(locationTable ? { locationTable } : {}),
           ...(locationTable?.ref === "VILD" ? { fuzziness: "low_res" as const } : {}),

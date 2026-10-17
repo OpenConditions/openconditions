@@ -115,6 +115,16 @@ const variants = [
     headline: undefined,
     validity: { status: "suspended", start: "2026-09-06T08:00:00Z" },
   }),
+  situation("planned-approved", {
+    validity: { status: "planned", start: "2026-09-06T08:00:00Z" },
+    effects: [
+      effect("closure", "closure", { scope: "carriageway", actionStatus: "approved" }),
+      effect("speed", "speed_limit", {
+        limit: { value: 60, unit: "km/h" },
+        actionStatus: "being_terminated",
+      }),
+    ],
+  }),
   situation("no-start", {
     certainty: "unknown",
     validity: { status: "active" },

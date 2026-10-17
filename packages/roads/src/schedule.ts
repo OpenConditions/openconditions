@@ -48,6 +48,8 @@ export interface LocalScheduleInput {
   endTime?: string;
   /** iCal day codes (SU..SA); when present, the recurrence is restricted to these days. */
   byDay?: string[];
+  /** Months of the year (1-12); when present, the recurrence is restricted to these months. */
+  byMonth?: number[];
 }
 
 /**
@@ -65,6 +67,7 @@ export function buildLocalSchedule(input: LocalScheduleInput): LocalSchedule {
   const duration = durationBetween(input.startTime, input.endTime);
   if (duration) s.duration = duration;
   if (hasDays) s.byDay = input.byDay;
+  if (input.byMonth && input.byMonth.length > 0) s.byMonth = input.byMonth;
   return s;
 }
 

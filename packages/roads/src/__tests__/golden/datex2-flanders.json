@@ -1053,7 +1053,7 @@
         "applicability": {
           "kind": "all"
         },
-        "compliance": "mandatory",
+        "compliance": "advisory",
         "normalization": "complete",
         "kind": "closure",
         "v": 1,
@@ -1068,7 +1068,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f521ccadc6ef264e3fc7b4e04d56b2e4e0d4d85615a546f7cbf1535fedbb7556"
+    "contentHash": "21d1bb08b09dced850622e17876fb931b6384c10d34832398866d8ed4198839a"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290563",

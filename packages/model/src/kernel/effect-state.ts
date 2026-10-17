@@ -55,14 +55,36 @@ export function effectStateAt(
 /** Why an effect may not constrain shared routing. */
 export type RoutingBlocker = "applicability_unknown" | "not_normalized" | "action_not_routable";
 
-const NON_ROUTING_ACTIONS = new Set(["requested", "rejected", "termination_requested"]);
+/**
+ * Operator action statuses under which the action is not in place, by DATEX
+ * `OperatorActionStatusEnum`: a request neither approved nor acted on, an
+ * approved action whose implementation "has not yet commenced", and a rejected
+ * one, "hence not implemented". An action whose termination is requested ("has
+ * not yet commenced") or under way is still in place.
+ */
+const NON_ROUTING_ACTIONS = new Set(["requested", "approved", "rejected"]);
+
+/** Whether the operator action an effect states, if any, is in place. */
+export function actionInPlace(effect: Pick<Effect, "actionStatus">): boolean {
+  return effect.actionStatus === undefined || !NON_ROUTING_ACTIONS.has(effect.actionStatus);
+}
+
+/**
+ * Whether a declared lifecycle leaves an effect's window to decide when it is
+ * in force: only `active` does. A planned or suspended record is not in force
+ * whatever its window says, an ended or cancelled one no longer is, and an
+ * unknown status establishes nothing, so none of them may route.
+ */
+export function lifecycleInForce(validity: Pick<Validity, "status">): boolean {
+  return validity.status === "active";
+}
 
 /**
  * The routing contract every effect is held to, independent of time, binding
  * and rights (those are checked at the edge). An effect whose vehicles are
  * unknown or that the parser could not fully type is restriction evidence:
- * stored, listed and counted, never routed. An operator action that is only
- * requested, rejected or asked to end never routes either.
+ * stored, listed and counted, never routed. An operator action that is not in
+ * place (requested, approved, rejected) never routes either.
  */
 export function routingBlockers(
   effect: Pick<Effect, "applicability" | "normalization" | "actionStatus">,
@@ -70,9 +92,7 @@ export function routingBlockers(
   const blockers: RoutingBlocker[] = [];
   if (effect.applicability.kind === "unknown") blockers.push("applicability_unknown");
   if (effect.normalization !== "complete") blockers.push("not_normalized");
-  if (effect.actionStatus !== undefined && NON_ROUTING_ACTIONS.has(effect.actionStatus)) {
-    blockers.push("action_not_routable");
-  }
+  if (!actionInPlace(effect)) blockers.push("action_not_routable");
   return blockers;
 }
 

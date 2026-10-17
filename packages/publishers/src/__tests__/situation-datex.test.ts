@@ -248,6 +248,63 @@ describe("datexRecordsOf", () => {
   });
 });
 
+describe("datexRecordsOf — lifecycle and operator action status", () => {
+  const status = (records: Rec[]) =>
+    records.map((r) => (r["sit:validity"] as Rec)["com:validityStatus"]);
+
+  it("leaves an active lifecycle to the time specification it writes", () => {
+    // DATEX `active` would hold the record in force regardless of its window.
+    const scheduled = closure({
+      validity: { status: "active", start: "2026-09-07T08:00:00Z", end: "2026-09-08T08:00:00Z" },
+    });
+    expect(status(datexRecordsOf(scheduled, AT))).toEqual(["definedByValidityTimeSpec"]);
+    expect(status(datexRecordsOf(closure(), AT))).toEqual(["definedByValidityTimeSpec"]);
+  });
+
+  it.each(["planned", "suspended"])(
+    "states a %s lifecycle on every record, including its management records",
+    (lifecycle) => {
+      // As the parser reads it: every effect restates the declared status.
+      const issue = {
+        code: "unsupported_status",
+        sourcePath: "situationRecord.validity.validityStatus",
+        sourceTokens: { validityStatus: lifecycle },
+      };
+      const s = situation({
+        validity: { status: lifecycle, start: "2026-09-06T08:00:00Z" },
+        effects: [
+          effect("a46/lanes", "lane_restriction", {
+            vehicleImpact: "some_lanes_closed",
+            issues: [issue],
+          }),
+        ],
+      });
+      const records = datexRecordsOf(s, AT);
+      expect(records.map((r) => r["@_xsi:type"])).toEqual([
+        "sit:MaintenanceWorks",
+        "sit:RoadOrCarriagewayOrLaneManagement",
+      ]);
+      expect(status(records)).toEqual([lifecycle, lifecycle]);
+    },
+  );
+
+  it("states the operator action's status on its management record", () => {
+    const s = closure({
+      effects: [effect("c/closure", "closure", { scope: "road", actionStatus: "approved" })],
+    });
+    const [record] = datexRecordsOf(s, AT);
+    expect(record).toMatchObject({
+      "@_xsi:type": "sit:RoadOrCarriagewayOrLaneManagement",
+      "sit:operatorActionStatus": "approved",
+      "sit:complianceOption": "mandatory",
+    });
+    const keys = Object.keys(record!);
+    expect(keys.indexOf("sit:operatorActionStatus")).toBeLessThan(
+      keys.indexOf("sit:complianceOption"),
+    );
+  });
+});
+
 describe("situationsToDatex — publication language", () => {
   const langOf = (situations: Rec[]) =>
     parser.parse(situationsToDatex(situations, AT)).messageContainer.payload["@_lang"];
@@ -321,6 +378,18 @@ describe("DATEX II round-trip through the ingest parser", () => {
       { ref: "A46", name: [{ lang: "und", text: "Autobahn 46" }] },
     ]);
     expect((draft!["effects"] as Rec[]).map((e) => e["kind"])).toContain("closure");
+  });
+
+  it("re-ingests the lifecycle and operator action status it wrote", () => {
+    const planned = closure({
+      validity: { status: "planned", start: "2026-09-06T08:00:00Z" },
+      effects: [effect("c/closure", "closure", { scope: "carriageway", actionStatus: "approved" })],
+    });
+    const [draft] = parseEvents(feed, [Buffer.from(situationsToDatex([planned], AT))]).situations;
+    expect(draft).toMatchObject({ validity: { status: "planned" } });
+    expect(draft!["effects"]).toEqual([
+      expect.objectContaining({ kind: "closure", scope: "carriageway", actionStatus: "approved" }),
+    ]);
   });
 
   it("re-ingests a road that has a name but no number", () => {

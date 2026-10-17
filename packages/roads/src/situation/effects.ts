@@ -10,12 +10,12 @@ import {
 import type { Restriction, RoadEvent } from "../model.js";
 import { vehicleClassesOf } from "../routing.js";
 import { localAccessExceptionOf } from "./local-access.js";
-import { text } from "./location.js";
+import { entryOf, text } from "./location.js";
 
 type Applicability = Effect["applicability"];
 
-/** Which vehicles the event's own effects apply to, from its vehicle terms. */
-export function applicabilityOf(event: RoadEvent): Applicability {
+/** Which vehicles the event's vehicle terms name. */
+function vehicleApplicabilityOf(event: RoadEvent): Applicability {
   const raw = (event.vehiclesAffected ?? []).filter((v) => v.trim().length > 0);
   if (raw.length === 0) return { kind: "all" };
   const classes = vehicleClassesOf(raw);
@@ -25,13 +25,36 @@ export function applicabilityOf(event: RoadEvent): Applicability {
 }
 
 /**
+ * Which vehicles the event's own effects apply to, from its vehicle terms and
+ * the traffic its measure applies to. A measure for through traffic only
+ * (DATEX `throughTraffic`, "traffic which is not for local access") spares
+ * local access; one for any other kind of traffic (long-distance, holiday,
+ * destined for the airport) applies to traffic no selector can name, so its
+ * vehicles are unknown.
+ */
+export function applicabilityOf(event: RoadEvent): Applicability {
+  const vehicles = vehicleApplicabilityOf(event);
+  const traffic = event.situation?.trafficTypes;
+  if (traffic === undefined || vehicles.kind === "unknown") return vehicles;
+  const tokens = traffic.map((t) => `applicableForTrafficType:${t}`);
+  if (traffic.some((t) => t !== "throughTraffic")) {
+    return { kind: "unknown", raw: [...(vehicles.raw ?? []), ...tokens] };
+  }
+  return {
+    ...vehicles,
+    except: [...(vehicles.except ?? []), { usage: "local_access" }],
+    raw: [...(vehicles.raw ?? []), ...tokens],
+  };
+}
+
+/**
  * Which vehicles a closure of the event applies to: as its vehicle terms say,
  * but open to local access or residents when a closure of every vehicle is
  * excepted for them, in the source's words or by WZDx `local-access-only`.
  */
 function closureApplicability(event: RoadEvent): Applicability {
   const applicability = applicabilityOf(event);
-  if (applicability.kind !== "all") return applicability;
+  if (applicability.kind !== "all" || applicability.except) return applicability;
   const stated = localAccessExceptionOf([
     event.headline,
     event.description,
@@ -82,6 +105,13 @@ const UNITS: Readonly<Record<string, readonly [string, number]>> = {
   pounds: ["kg", 0.45359237],
 };
 
+/** Issue codes that leave an effect's time unknown rather than its content partial. */
+const TEMPORAL_ISSUE_CODES = new Set([
+  "invalid_window",
+  "unsupported_schedule",
+  "unsupported_status",
+]);
+
 /**
  * An access rule a restriction type names. `truck` limits it to trucks;
  * `hovMin` exempts vehicles carrying at least that many people, so WZDx
@@ -118,8 +148,8 @@ function legacyRestriction(
   applicability: Applicability,
   units: Readonly<Record<string, readonly [string, number]>> = UNITS,
 ): Draft {
-  const dimension = DIMENSIONS[r.type.toLowerCase()];
-  const unit = r.unit === undefined ? undefined : units[r.unit.toLowerCase()];
+  const dimension = entryOf(DIMENSIONS, r.type.toLowerCase());
+  const unit = entryOf(units, r.unit?.toLowerCase());
   const source = { path, tokens: { ...r } };
   if (dimension !== undefined && r.value !== undefined && unit !== undefined) {
     const canonical = dimension === "gross_weight" || dimension === "axle_load" ? "kg" : "m";
@@ -140,7 +170,7 @@ function legacyRestriction(
       };
     }
   }
-  const access = ACCESS[r.type.toLowerCase()];
+  const access = entryOf(ACCESS, r.type.toLowerCase());
   if (access !== undefined) {
     return {
       kind: "access",
@@ -174,7 +204,7 @@ function legacyRestriction(
 
 function laneImpact(event: RoadEvent): string {
   const lanes = event.lanesAffected!;
-  const declared = lanes.vehicleImpact ? WZDX_VEHICLE_IMPACTS[lanes.vehicleImpact] : undefined;
+  const declared = entryOf(WZDX_VEHICLE_IMPACTS, lanes.vehicleImpact);
   if (declared !== undefined) return declared;
   if (event.roadState === "single_lane_alternating") return "alternating_one_way";
   if (lanes.total !== undefined && lanes.closed !== undefined) {
@@ -188,7 +218,7 @@ function laneImpact(event: RoadEvent): string {
 
 /** A parser lane type as the kernel's; only WZDx lane types are mapped. */
 const laneTypeOf = (event: RoadEvent, type: string | undefined) =>
-  event.sourceFormat === "wzdx" && type ? WZDX_LANE_TYPES[type] : undefined;
+  event.sourceFormat === "wzdx" ? entryOf(WZDX_LANE_TYPES, type) : undefined;
 
 function lanesOf(event: RoadEvent): Record<string, unknown>[] | undefined {
   const lanes = event.lanesAffected?.lanes;
@@ -247,8 +277,15 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     ...(ctx.validity ? { validity: ctx.validity } : {}),
   };
   const drafts: Draft[] = [];
-  const mandatory = { applicability, compliance: "mandatory", normalization: "complete" };
-  const closure = { scope: "road", ...mandatory, applicability: closureApplicability(event) };
+  // A measure is mandatory unless its source declares it advisory, or states
+  // a compliance it cannot establish.
+  const declared = event.situation?.compliance;
+  const measure = { applicability, compliance: declared ?? "mandatory", normalization: "complete" };
+  const closure = {
+    scope: event.situation?.closureScope ?? "road",
+    ...measure,
+    applicability: closureApplicability(event),
+  };
 
   const closed = event.roadState === "closed";
   // With the restriction contract present, its facts decide which vehicles the
@@ -273,15 +310,19 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
         ...(total !== undefined ? { lanesTotal: total } : {}),
         ...(closedLanes !== undefined ? { lanesClosed: closedLanes } : {}),
         ...(lanes && lanes.length > 0 ? { lanes } : {}),
-        ...mandatory,
+        ...measure,
       },
     });
   }
-  if (event.type === "contraflow") drafts.push({ kind: "contraflow", fields: { ...mandatory } });
+  if (event.type === "contraflow") drafts.push({ kind: "contraflow", fields: { ...measure } });
   if (event.speedLimitKph !== undefined && event.speedLimitKph > 0) {
     drafts.push({
       kind: "speed_limit",
-      fields: { limit: { value: event.speedLimitKph, unit: "km/h" }, ...mandatory },
+      fields: {
+        limit: { value: event.speedLimitKph, unit: "km/h" },
+        ...(declared === "advisory" ? { advisory: true } : {}),
+        ...measure,
+      },
     });
   }
   if (event.restrictionDetails === undefined) {
@@ -323,19 +364,22 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
         ...(description ? { description } : {}),
         ...(geometry ? { geometry } : {}),
         applicability,
-        compliance: "advisory",
+        // A diversion is advice unless the source makes it mandatory.
+        compliance: declared ?? "advisory",
         normalization: "complete",
       },
     });
   }
   const delay = event.delaySeconds !== undefined && event.delaySeconds > 0;
   const queue = event.queueLengthMeters !== undefined && event.queueLengthMeters > 0;
-  if (delay || queue) {
+  const capacity = event.capacityRemainingPct;
+  if (delay || queue || capacity !== undefined) {
     drafts.push({
       kind: "delay",
       fields: {
         ...(delay ? { delay: { value: event.delaySeconds!, unit: "s" } } : {}),
         ...(queue ? { queueLength: { value: event.queueLengthMeters!, unit: "m" } } : {}),
+        ...(capacity !== undefined ? { capacityRemainingPct: capacity } : {}),
         applicability,
         compliance: "unknown",
         normalization: "complete",
@@ -365,13 +409,26 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
   }
 
   // A record whose lifecycle status does not establish that it is in force
-  // marks every effect it states; the restriction contract's effects carry
-  // their own status issue.
-  const statusIssue = event.situation?.statusIssue;
-  if (statusIssue !== undefined) {
-    for (const d of drafts) {
-      d.fields = { ...d.fields, issues: [...((d.fields["issues"] as Issue[]) ?? []), statusIssue] };
+  // marks every effect it states, as do its other record-level issues; the
+  // restriction contract's effects carry their own. An issue that does not
+  // leave the effect's time unknown leaves a complete effect partial.
+  const recordIssues = [
+    ...(event.situation?.statusIssue ? [event.situation.statusIssue] : []),
+    ...(event.situation?.effectIssues ?? []),
+  ];
+  const partial = recordIssues.some((i) => !TEMPORAL_ISSUE_CODES.has(i.code));
+  const actionStatus = event.situation?.actionStatus;
+  for (const d of drafts) {
+    if (recordIssues.length > 0) {
+      d.fields = {
+        ...d.fields,
+        issues: [...((d.fields["issues"] as Issue[]) ?? []), ...recordIssues],
+        ...(partial && d.fields["normalization"] === "complete"
+          ? { normalization: "partial" }
+          : {}),
+      };
     }
+    if (actionStatus !== undefined) d.fields = { ...d.fields, actionStatus };
   }
 
   const perKind = new Map<string, number>();

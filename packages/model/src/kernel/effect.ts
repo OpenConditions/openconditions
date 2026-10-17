@@ -19,7 +19,11 @@ export const LOS = [
   "blocked",
   "unknown",
 ] as const;
-/** DATEX OperatorActionStatus, snake_cased. requested/rejected/termination_requested never route. */
+/**
+ * DATEX OperatorActionStatus, snake_cased. requested, approved and rejected
+ * actions are not in place and never route; one whose termination is only
+ * requested, or under way, still is.
+ */
 export const ACTION_STATUSES = [
   "requested",
   "approved",

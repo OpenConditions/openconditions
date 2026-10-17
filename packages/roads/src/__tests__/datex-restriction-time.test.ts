@@ -201,11 +201,26 @@ describe("ndw conservative restriction validity", () => {
     }
   });
 
-  it("reports an unrepresentable recurrence instead of claiming continuous effect", () => {
-    // Synthetic: a weekday recurrence the existing schedule model does not carry.
+  it("carries a weekday recurrence as the days it names", () => {
+    // Synthetic: in force on Mondays only.
     const view = heightView(
       withHeightValidity(
         "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime><com:validPeriod><com:recurringDayWeekMonthPeriod><com:applicableDay>monday</com:applicableDay></com:recurringDayWeekMonthPeriod></com:validPeriod></com:validityTimeSpecification></sit:validity>",
+      ),
+    );
+    expect(view.issues).not.toContainEqual(
+      expect.objectContaining({ code: "unsupported_schedule" }),
+    );
+    expect(view.fact.schedule).toEqual([
+      expect.objectContaining({ byDay: ["MO"], scheduleTimezone: "Europe/Amsterdam" }),
+    ]);
+  });
+
+  it("reports an unrepresentable recurrence instead of claiming continuous effect", () => {
+    // Synthetic: public holidays, which no schedule can carry without a holiday calendar.
+    const view = heightView(
+      withHeightValidity(
+        "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime><com:validPeriod><com:recurringSpecialDay><com:intersectWithApplicableDays>false</com:intersectWithApplicableDays><com:specialDayType>publicHoliday</com:specialDayType></com:recurringSpecialDay></com:validPeriod></com:validityTimeSpecification></sit:validity>",
       ),
     );
     expect(view.issues).toContainEqual(expect.objectContaining({ code: "unsupported_schedule" }));

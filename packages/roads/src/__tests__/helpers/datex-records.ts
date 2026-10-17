@@ -26,6 +26,12 @@ export interface RecordSpec {
   probability?: string;
   severity?: string;
   causeType?: string;
+  /** The validity's `overrunning` element, written `<:overrunning>` (common namespace in v3). */
+  overrunning?: string;
+  /** Members after `overallStartTime` in the time specification (common namespace in v3). */
+  timeSpec?: string;
+  /** The record's `impact` content, in the situation namespace. */
+  impact?: string;
   /** Replaces the `modelBaseVersion` the document declares. */
   modelBaseVersion?: string;
   /** Omits the record's `id`. */
@@ -37,6 +43,10 @@ export interface RecordSpec {
 /** The element `name` with `value`, prefixed for the version, or nothing. */
 const leaf = (prefix: string, name: string, value: string | undefined) =>
   value === undefined ? "" : `<${prefix}${name}>${value}</${prefix}${name}>`;
+
+/** Elements written `<:name>`, in the namespace `prefix` names. */
+const fill = (prefix: string, xml: string) =>
+  xml.replaceAll("<:", `<${prefix}`).replaceAll("</:", `</${prefix}`);
 
 export function datexDocument(version: DatexVersion, spec: RecordSpec): string {
   const type =
@@ -62,8 +72,10 @@ export function datexDocument(version: DatexVersion, spec: RecordSpec): string {
       <sit:probabilityOfOccurrence>${spec.probability ?? "certain"}</sit:probabilityOfOccurrence>
       <sit:validity>
         <com:validityStatus>${spec.validityStatus ?? "definedByValidityTimeSpec"}</com:validityStatus>
-        <com:validityTimeSpecification><com:overallStartTime>2026-09-18T08:00:00Z</com:overallStartTime></com:validityTimeSpecification>
+        ${fill("com:", spec.overrunning ?? "")}
+        <com:validityTimeSpecification><com:overallStartTime>2026-09-18T08:00:00Z</com:overallStartTime>${fill("com:", spec.timeSpec ?? "")}</com:validityTimeSpecification>
       </sit:validity>
+      ${spec.impact === undefined ? "" : `<sit:impact>${fill("sit:", spec.impact)}</sit:impact>`}
       ${spec.causeType === undefined ? "" : `<sit:cause><sit:causeType>${spec.causeType}</sit:causeType></sit:cause>`}
       ${location}
       ${body}
@@ -90,8 +102,10 @@ export function datexDocument(version: DatexVersion, spec: RecordSpec): string {
         <probabilityOfOccurrence>${spec.probability ?? "certain"}</probabilityOfOccurrence>
         <validity>
           <validityStatus>${spec.validityStatus ?? "definedByValidityTimeSpec"}</validityStatus>
-          <validityTimeSpecification><overallStartTime>2026-09-18T08:00:00Z</overallStartTime></validityTimeSpecification>
+          ${fill("", spec.overrunning ?? "")}
+          <validityTimeSpecification><overallStartTime>2026-09-18T08:00:00Z</overallStartTime>${fill("", spec.timeSpec ?? "")}</validityTimeSpecification>
         </validity>
+        ${spec.impact === undefined ? "" : `<impact>${fill("", spec.impact)}</impact>`}
         ${spec.causeType === undefined ? "" : `<cause xsi:type="NonManagedCause"><causeType>${spec.causeType}</causeType></cause>`}
         ${location}
         ${body}

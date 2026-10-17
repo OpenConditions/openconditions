@@ -199,7 +199,7 @@
           "text": "aligned"
         },
         "validity": {
-          "status": "unknown",
+          "status": "active",
           "start": "2025-09-05T22:59:03.000Z",
           "end": "2027-03-30T21:59:00.000Z"
         },
@@ -254,7 +254,7 @@
           "text": "aligned"
         },
         "validity": {
-          "status": "unknown",
+          "status": "active",
           "start": "2025-09-05T22:59:03.000Z",
           "end": "2027-03-30T21:59:00.000Z"
         },
@@ -295,7 +295,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d2da30d9878b17ebb3e4a270ffab03ed663da38c323eb2251ec8016d6b0c506d"
+    "contentHash": "0913bab62dcba48006502dc08ce002406673af6b0aec1eba7d6d69c0bba5ded8"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005382945",
@@ -443,7 +443,7 @@
           "text": "aligned"
         },
         "validity": {
-          "status": "unknown",
+          "status": "active",
           "start": "2026-08-16T05:15:13.121Z"
         },
         "compliance": "mandatory",
@@ -480,7 +480,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "735cbaf87458aa0656cf64fa6244757afb8677783b141901075f6f0301ff59f5"
+    "contentHash": "e17423d780df988442aace8aa76722bc99d6034fe5ce5954ecbd3dfa75c33a35"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005406494",
@@ -636,7 +636,7 @@
           "text": "aligned"
         },
         "validity": {
-          "status": "unknown",
+          "status": "active",
           "start": "2026-09-02T15:59:46.903Z"
         },
         "compliance": "mandatory",
@@ -673,6 +673,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d50f79e53410ed2c65e1e3688aa0554246fa21f503dd55346745644953c08549"
+    "contentHash": "7c81fa2a7689fdc0396912f57fa16af1d382c9cb76d4b65a64c2b35b405a55d0"
   }
 ]

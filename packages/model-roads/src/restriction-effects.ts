@@ -52,15 +52,26 @@ function direction(fact: RoadRestrictionFact): DirectionRef {
   };
 }
 
+/**
+ * The lifecycle a DATEX `validityStatus` declares: `active` and
+ * `definedByValidityTimeSpec` leave the time specification to decide, as the
+ * kernel's `active` does; `planned` and `suspended` are their own; anything
+ * else establishes nothing.
+ */
+const VALIDITY_STATUS: Readonly<Record<string, Validity["status"]>> = {
+  active: "active",
+  definedByValidityTimeSpec: "active",
+  planned: "planned",
+  suspended: "suspended",
+};
+
 function validity(fact: RoadRestrictionFact): Validity {
-  const status =
-    fact.context.validityStatus === "active"
-      ? "active"
-      : fact.context.validityStatus === "suspended"
-        ? "suspended"
-        : "unknown";
+  const declared = fact.context.validityStatus;
   return {
-    status,
+    status:
+      declared !== null && Object.hasOwn(VALIDITY_STATUS, declared)
+        ? VALIDITY_STATUS[declared]!
+        : "unknown",
     ...(fact.validFrom !== null ? { start: fact.validFrom } : {}),
     ...(fact.validTo !== null ? { end: fact.validTo } : {}),
     ...(fact.schedule !== undefined && fact.schedule.length > 0
@@ -129,10 +140,11 @@ export function restrictionEffects(
 
   const common = (fact: RoadRestrictionFact, factIssues: Issue[]) => {
     const issues = [...factIssues, ...recordIssues];
+    const declared = fact.context.operatorActionStatus;
     const actionStatus =
-      fact.context.operatorActionStatus === null
+      declared === null || !Object.hasOwn(ACTION_STATUS, declared)
         ? undefined
-        : ACTION_STATUS[fact.context.operatorActionStatus];
+        : ACTION_STATUS[declared];
     return {
       direction: direction(fact),
       validity: validity(fact),
