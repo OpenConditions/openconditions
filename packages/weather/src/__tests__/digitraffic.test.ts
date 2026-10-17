@@ -1,3 +1,4 @@
+import { assertCovered } from "@openconditions/conformance";
 import {
   __resetSkips,
   drainSkipped,
@@ -7,7 +8,11 @@ import {
 } from "@openconditions/ingest-framework";
 import { beforeEach, describe, expect, test } from "vitest";
 import { weatherDomain } from "../domain.js";
-import { DIGITRAFFIC_SENSOR_BY_ID, DIGITRAFFIC_SENSORS } from "../formats/digitraffic-sensors.js";
+import {
+  DIGITRAFFIC_SENSOR_BY_ID,
+  DIGITRAFFIC_SENSORS,
+  DIGITRAFFIC_UNREAD_SENSORS,
+} from "../formats/digitraffic-sensors.js";
 import { sealFailures, weatherRegistry } from "./helpers/seal.js";
 import { catalogFeed, fixture, parseContext } from "./helpers/weather-feed.js";
 
@@ -82,11 +87,50 @@ describe("digitraffic-weather", () => {
       location: {
         geometry: { type: "Point", coordinates: [24.596399, 60.228227] },
         roads: [{ ref: "1" }],
-        admin: { country: "FI", municipality: "Espoo" },
+        // Road 1, section 6, 2950 m from the section's start.
+        linear: { system: "provider", ref: "1/6", from: 2950, authority: "fi:tieosoite" },
+        admin: { country: "FI", subdivision: "FI-18", municipality: "Espoo" },
+        external: [{ system: "fi:livi", code: "Livi1090329" }],
       },
       externalIds: [{ scheme: "provider", id: "1001", authority: "fi-digitraffic-weather" }],
       details: { kind: "weather_station", v: 1, equipment: ["RWS_200"] },
     });
+    // Tarvo has no road-register id; Kousa stands in North Karelia.
+    expect(station(out, 1174)!["location"]).not.toHaveProperty("external");
+    expect(station(out, 7037)!["location"]).toMatchObject({
+      linear: { ref: "6/334", from: 6474 },
+      admin: { subdivision: "FI-13" },
+    });
+    expect(drainSkipped(feed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  test("a station off the road network has no road; an unknown region is counted", () => {
+    const detail = JSON.parse(
+      fixture("fi-digitraffic-weather-station-1001.json").toString("utf8"),
+    ) as { properties: Record<string, unknown> };
+    // As the details of 2052 Eckerö, on Åland, gave them on 2026-10-17.
+    detail.properties["roadAddress"] = {
+      roadNumber: 99999,
+      roadSection: 0,
+      distanceFromRoadSectionStart: 1,
+      carriageway: "ONE_CARRIAGEWAY",
+      side: "UNKNOWN",
+      contractArea: "",
+    };
+    detail.properties["province"] = "Ahvenanmaa";
+    const atAland = parse({ ...payloads(), details: [Buffer.from(JSON.stringify(detail))] });
+    const location = station(atAland, 1001)!["location"] as Record<string, unknown>;
+    expect(location).not.toHaveProperty("roads");
+    expect(location).not.toHaveProperty("linear");
+    expect(location["admin"]).toMatchObject({ subdivision: "FI-01" });
+    __resetSkips();
+    detail.properties["province"] = "Itä-Uusimaa";
+    const out = parse({ ...payloads(), details: [Buffer.from(JSON.stringify(detail))] });
+    expect(station(out, 1001)!["location"]).toMatchObject({ admin: { country: "FI" } });
+    expect((station(out, 1001)!["location"] as { admin: object }).admin).not.toHaveProperty(
+      "subdivision",
+    );
+    expect(drainSkipped(feed().id)).toEqual({ no_geometry: 1, unknown_value: 1 });
   });
 
   test("each road-surface value is a channel keyed by the sensor id; air values are the station's own", () => {
@@ -219,6 +263,24 @@ describe("digitraffic-weather", () => {
     // 8003's are wet and salty.
     expect(keys(8003, "road.salt_concentration")).toEqual(["54", "55"]);
     expect(keys(8003, "road.freezing_point")).toEqual(["10", "11"]);
+    expect(keys(1001, "road.salt_amount")).toEqual([]);
+    expect(
+      readings(out, 8003, "road.salt_amount").map((r) => [subjectOf(r).componentKey, r["result"]]),
+    ).toEqual([
+      ["52", { type: "quantity", value: 2.1, unit: "g/m2" }],
+      ["53", { type: "quantity", value: 1.6, unit: "g/m2" }],
+    ]);
+  });
+
+  test("the sliding 24-hour precipitation sum is the station's precipitation amount over a day", () => {
+    expect(readings(parse(), 1030, "weather.precipitation_amount")).toEqual([
+      expect.objectContaining({
+        subject: { kind: "feature", featureId: featureId(1030) },
+        result: { type: "quantity", value: 1.2, unit: "mm" },
+        phenomenonTime: { start: "2026-10-13T23:22:33Z", end: "2026-10-14T23:22:33Z" },
+        aggregation: "sum",
+      }),
+    ]);
   });
 
   test("a station's maintenance state is its device status, dated by the list's change of it", () => {
@@ -265,9 +327,13 @@ describe("digitraffic-weather", () => {
         value: expected,
       });
     }
+    __resetSkips();
     nupuri.properties["state"] = "SOMETHING_NEW";
+    nupuri.properties["collectionStatus"] = "PAUSED";
     const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(list))] });
     expect(readings(out, 1001, "device.status")).toEqual([]);
+    expect(station(out, 1001)).toMatchObject({ lifecycle: "unknown" });
+    expect(drainSkipped(feed().id)).toEqual({ no_geometry: 1, unknown_value: 2 });
   });
 
   test("numbered surface sensors stay separate series", () => {
@@ -375,6 +441,28 @@ describe("digitraffic-weather", () => {
       expect(out.observations[0]).toMatchObject({ quality: { supplierCode: "SUSPICIOUS" } });
       expect(out.observations[1]).not.toHaveProperty("quality");
       expect(out.rejected).toBe(0);
+      expect(drainSkipped(feed().id)).toEqual({});
+    });
+
+    test("a reliability the API does not define is kept as the value's code, and counted", () => {
+      const out = read([
+        value(1, 9.7, { reliability: "UNKNOWN" }),
+        value(9, 8.8, { reliability: "DOUBTFUL" }),
+      ]);
+      expect(out.observations.map((o) => o["quality"])).toEqual([
+        { supplierCode: "UNKNOWN" },
+        { supplierCode: "DOUBTFUL" },
+      ]);
+      expect(drainSkipped(feed().id)).toEqual({ unknown_value: 1 });
+    });
+
+    test("a sensor the publisher added since is counted; one left out on purpose is not", () => {
+      const out = read([
+        { ...value(1, 9.7), id: 999, name: "UUSI_ANTURI" },
+        { ...value(1, 1013), id: 19, name: "ILMANPAINE", unit: "hPa" },
+      ]);
+      expect(out.observations).toEqual([]);
+      expect(drainSkipped(feed().id)).toEqual({ unknown_value: 1 });
     });
 
     test("a value in another unit, under another name or with an unknown code is a value not read", () => {
@@ -476,7 +564,19 @@ describe("the sensor table", () => {
       expect(own?.name, String(sensor.id)).toBe(sensor.name);
       expect(own?.unit, sensor.name).toBe(sensor.unit);
     }
-    expect(DIGITRAFFIC_SENSORS).toHaveLength(published.sensors.length);
+  });
+
+  test("reads every published sensor or leaves it out with a reason", () => {
+    assertCovered(
+      "Digitraffic weather sensors",
+      published.sensors.map((s) => String(s.id)),
+      {
+        handled: DIGITRAFFIC_SENSORS.map((s) => String(s.id)),
+        unsupported: Object.fromEntries(
+          [...DIGITRAFFIC_UNREAD_SENSORS].map(([id, reason]) => [String(id), reason]),
+        ),
+      },
+    );
   });
 
   test("maps every code the publisher describes, onto the model's vocabularies", () => {

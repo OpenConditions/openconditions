@@ -20,7 +20,7 @@ export interface DigitrafficSensor {
    */
   codes?: Readonly<Record<number, string | null>>;
   vocabulary?: string;
-  aggregation: "instantaneous" | "mean" | "max";
+  aggregation: "instantaneous" | "mean" | "max" | "sum";
   /** The span the publisher's sensor description says the value covers. */
   windowSec?: number;
   /**
@@ -165,6 +165,17 @@ const NUMBERED: readonly {
     unit: "mm",
     modelUnit: "mm",
   },
+  // The salt the water film holds: in the answer of 2026-10-14 it is the
+  // concentration times the film (7.3 g/l on 0.29 mm is 2.1 g/m²), and 0 on
+  // every sensor measuring no water film.
+  {
+    name: "SUOLAN_MÄÄRÄ",
+    ids: [52, 53, 200, 201],
+    property: "road.salt_amount",
+    unit: "g/m2",
+    modelUnit: "g/m2",
+    ofSolution: true,
+  },
   // g/l is kg/m³.
   {
     name: "SUOLAN_VÄKEVYYS",
@@ -210,19 +221,8 @@ const OPTICAL: readonly {
 ];
 
 /**
- * Every Digitraffic sensor read, in the publisher's id order. Left out:
- * derivatives and differences of values read here (`*_DERIVAATTA`,
- * `KASTEPISTE_ERO_*`, `KUURAPISTE*`), duplicates in another unit
- * (`NÄKYVYYS_KM`, `KITKA*_LUKU`), the station's own forecasts (`*_ENNUSTE`),
- * sliding 24-hour extremes and sums (`ILMAN_LÄMPÖTILA_24H_*`, `SADESUMMA*`),
- * which would share a series with the current value, precipitation grades
- * without a form (`SADE`, `SADE_TILA`) and WMO present-weather codes
- * (`VALLITSEVA_SÄÄ`) where the form sensor is read, values no property holds
- * (air pressure, radiation, warning levels, salt per area, safety
- * temperature, the road body 30 cm down, the optical sensors' own surface
- * classes, `TIENPINNAN_TILA_*`, which the publisher gives no code table),
- * snow depth per lane position beside its mean, and the sensors' and the
- * station's raw signals and statuses.
+ * Every Digitraffic sensor read, in the publisher's id order. The sensors
+ * left out are `DIGITRAFFIC_UNREAD_SENSORS`.
  */
 export const DIGITRAFFIC_SENSORS: readonly DigitrafficSensor[] = [
   air(1, "ILMA", "weather.air_temperature", "°C", "Cel"),
@@ -255,6 +255,11 @@ export const DIGITRAFFIC_SENSORS: readonly DigitrafficSensor[] = [
     aggregation: "instantaneous",
   } satisfies DigitrafficSensor,
   air(58, "NÄKYVYYS_M", "weather.visibility", "m", "m"),
+  // The sum of the last 24 hours, sliding.
+  air(215, "SADESUMMA_LIUKUVA_24H", "weather.precipitation_amount", "mm", "mm", {
+    aggregation: "sum",
+    windowSec: 24 * 3600,
+  }),
   // A laser's mean snow depth across the road.
   surface(150, "LUMENMITTAUS_KA", "road.snow_depth", "mm", "mm", { sensor: "snow-depth" }),
   // The optical DST111 sensor's surface temperature.
@@ -287,4 +292,78 @@ export const DIGITRAFFIC_SENSORS: readonly DigitrafficSensor[] = [
 /** The sensors read, by the publisher's id. */
 export const DIGITRAFFIC_SENSOR_BY_ID: ReadonlyMap<number, DigitrafficSensor> = new Map(
   DIGITRAFFIC_SENSORS.map((sensor) => [sensor.id, sensor]),
+);
+
+/**
+ * The sensors of the publisher's list (`/api/weather/v2/sensors`) left out on
+ * purpose, by id, each with the reason. A value of a sensor neither read nor
+ * listed here is a sensor the publisher added since, counted as a value not
+ * read until it is placed on one side.
+ */
+export const DIGITRAFFIC_UNREAD_SENSORS: ReadonlyMap<number, string> = new Map(
+  (
+    [
+      [
+        [2, 4, 6, 20, 102, 112],
+        "a rate of change of a value read here (ILMA_, TIE_n_ and ILMANPAINE_DERIVAATTA)",
+      ],
+      [
+        [49, 73, 126, 127, 128, 226],
+        "derived from values read here: the dew point's distance to the air and surface temperatures, and the frost point (KASTEPISTE_ERO_*, KUURAPISTE*)",
+      ],
+      [[26], "the visibility read in metres, in kilometres (NÄKYVYYS_KM)"],
+      [[181, 191], "the friction read, as another figure of it (KITKAn_LUKU)"],
+      [
+        [160, 161],
+        "an optical road sensor's visibility, which would share a series with the station's own visibility sensor (NÄKYVYYS_DSC_n)",
+      ],
+      [[60, 61, 62, 63, 64, 65, 66, 67, 68, 71, 75], "the station's own forecasts (*_ENNUSTE)"],
+      [
+        [213, 214],
+        "the sliding 24-hour air temperature extremes, which would share a series with the current air temperature (ILMAN_LÄMPÖTILA_24H_MIN, _MAX)",
+      ],
+      [
+        [24],
+        "the precipitation since 06:00 local time, which would share a series with the sliding 24-hour sum (SADESUMMA)",
+      ],
+      [
+        [22, 48, 225],
+        "whether or how hard it rains, without the form the present-weather sensor states (SADE, SADE_TILA, SADE I/O)",
+      ],
+      [
+        [100],
+        "the WMO present-weather code, where the present-weather sensor's form is read (VALLITSEVA_SÄÄ)",
+      ],
+      [[19], "air pressure, which no property holds (ILMANPAINE)"],
+      [[141, 142, 143, 144, 145], "solar and net radiation, which no property holds"],
+      [[98, 99], "whether the sun is up and whether it is light, which the time and place give"],
+      [
+        [29, 30, 106, 116, 175, 185],
+        "the station's own warning level inferred from a surface sensor (VAROITUS_n, OPTISEN_ANTURIN_VAROITUSn)",
+      ],
+      [
+        [56, 57, 204, 205],
+        "the temperature above which the surface moisture should not freeze, which no property holds (TURVALLISUUSLÄMPÖ_n)",
+      ],
+      [
+        [12, 13],
+        "the temperature of the road body about 30 cm down, which no property holds (RUNKO_n)",
+      ],
+      [
+        [162, 163, 167, 168, 169, 170, 174, 184],
+        "surface classes the publisher gives no code table for (TIENPINNAN_TILA_*, OPTISEN_ANTURIN_KELIn)",
+      ],
+      [
+        [147, 148, 149],
+        "the snow depth at one lane position, beside the mean across the road (LUMENMITTAUS_A, _B, _C)",
+      ],
+      [
+        [
+          31, 32, 33, 34, 35, 36, 37, 38, 41, 91, 92, 93, 107, 108, 109, 117, 118, 119, 130, 131,
+          132, 133, 135, 136, 138, 140, 180, 190, 192, 193, 194, 195, 196, 197,
+        ],
+        "a sensor's or the station's raw signal or status code, which the publisher gives no code table for",
+      ],
+    ] as const
+  ).flatMap(([ids, reason]) => ids.map((id) => [id, reason] as const)),
 );

@@ -17,6 +17,7 @@ import { type ChannelInput, reading, stationDraft } from "../station.js";
 import {
   DIGITRAFFIC_SENSOR_BY_ID,
   DIGITRAFFIC_SENSORS,
+  DIGITRAFFIC_UNREAD_SENSORS,
   type DigitrafficSensor,
 } from "./digitraffic-sensors.js";
 
@@ -29,6 +30,7 @@ const NAME_LANGUAGES = ["fi", "sv", "en"] as const;
 /**
  * A station's data collection status as a lifecycle. A station removed for
  * good is not read: absent from the complete list, its feature is withdrawn.
+ * Another status is an unknown lifecycle, counted as a value not read.
  */
 const LIFECYCLE: Readonly<Record<string, (typeof LIFECYCLES)[number]>> = {
   GATHERING: "operational",
@@ -37,13 +39,20 @@ const LIFECYCLE: Readonly<Record<string, (typeof LIFECYCLES)[number]>> = {
 const RETIRED = "REMOVED_PERMANENTLY";
 
 /**
+ * A value's reliability: `OK` is read plainly, `FAULTY` not at all, and a
+ * doubted or unknown one carries the publisher's code as its quality.
+ */
+const RELIABILITIES = new Set(["OK", "SUSPICIOUS", "FAULTY", "UNKNOWN"]);
+
+/**
  * A station's maintenance state (Digitraffic's `state`, the Finnish
  * maintenance system's station state) as its `device.status`. A doubted
  * fault leaves the station reporting under a doubt; a confirmed fault, or
  * one a repair is requested for, is an error until the repair is done or the
  * doubt cancelled. A repair begun and interrupted names no fault: a sixth of
  * the network has stood in that state for weeks while reporting normally. A
- * station that states no state gets no reading.
+ * station that states no state gets no reading; one stating a state the API
+ * does not define gets none either and is counted as a value not read.
  */
 const DEVICE_STATUS: Readonly<Record<string, string>> = {
   OK: "ok",
@@ -101,6 +110,11 @@ interface Station {
 interface StationDetails {
   names: LocalizedText[];
   roadNumber?: string;
+  /** The station's road address: road and section, and metres from the section's start. */
+  address?: { ref: string; from: number };
+  subdivision?: string;
+  /** The station's id in the road register (`liviId`). */
+  registryId?: string;
   municipality?: string;
   stationType?: string;
   /** The ids of the sensors the station has. */
@@ -164,6 +178,83 @@ function stationsOf(feed: WeatherCatalogFeed, body: Buffer, listed: Set<string>)
 }
 
 /**
+ * The Finnish road address system (tieosoite) the details' road addresses are
+ * in, and the road register a station's `liviId` is its id in, named as the
+ * Digitraffic weather cameras name them, so a camera and a station at one
+ * place carry the same references.
+ */
+const ROAD_ADDRESSING = "fi:tieosoite";
+const ROAD_REGISTER = "fi:livi";
+
+/**
+ * The road number the details give a station off the public road network:
+ * Finavia's airport stations and those on Åland, with sections that address
+ * no road.
+ */
+const NO_ROAD = 99999;
+
+/**
+ * A station's road address (`roadAddress`: road, section and metres from the
+ * section's start) as its road and its place along it, keyed `<road>/<section>`
+ * as the register numbers sections within a road. A station off the road
+ * network has neither; an address without a section or a distance gives the
+ * road alone.
+ */
+function roadAddressOf(value: unknown): Pick<StationDetails, "roadNumber" | "address"> {
+  if (!isRecord(value)) return {};
+  const road = numberOf(value["roadNumber"]);
+  if (road === undefined || !Number.isInteger(road) || road < 1 || road >= NO_ROAD) return {};
+  const section = numberOf(value["roadSection"]);
+  const from = numberOf(value["distanceFromRoadSectionStart"]);
+  const addressed = section !== undefined && Number.isInteger(section) && section >= 1;
+  return {
+    roadNumber: String(road),
+    ...(addressed && from !== undefined && from >= 0
+      ? { address: { ref: `${road}/${section}`, from } }
+      : {}),
+  };
+}
+
+/**
+ * The details' provinces (`province`, the region's Finnish name) as ISO
+ * 3166-2:FI codes. Finavia's airports are a province of their own, which
+ * names no region.
+ */
+const REGIONS: Readonly<Record<string, string | null>> = {
+  Ahvenanmaa: "FI-01",
+  "Ahvenanmaan maakunta": "FI-01",
+  "Etelä-Karjala": "FI-02",
+  "Etelä-Pohjanmaa": "FI-03",
+  "Etelä-Savo": "FI-04",
+  Kainuu: "FI-05",
+  "Kanta-Häme": "FI-06",
+  "Keski-Pohjanmaa": "FI-07",
+  "Keski-Suomi": "FI-08",
+  Kymenlaakso: "FI-09",
+  Lappi: "FI-10",
+  Pirkanmaa: "FI-11",
+  Pohjanmaa: "FI-12",
+  "Pohjois-Karjala": "FI-13",
+  "Pohjois-Pohjanmaa": "FI-14",
+  "Pohjois-Savo": "FI-15",
+  "Päijät-Häme": "FI-16",
+  Satakunta: "FI-17",
+  Uusimaa: "FI-18",
+  "Varsinais-Suomi": "FI-19",
+  "Finavia lentokentät": null,
+};
+
+/** A province's ISO 3166-2 code; another name is counted as a value not read. */
+function subdivisionOf(feed: WeatherCatalogFeed, province: string | undefined): string | undefined {
+  if (province === undefined) return undefined;
+  if (!Object.hasOwn(REGIONS, province)) {
+    recordSkipped(feed.id, "unknown_value");
+    return undefined;
+  }
+  return REGIONS[province] ?? undefined;
+}
+
+/**
  * Each station's details by station id. A detail answer that cannot be read
  * is skipped as malformed and its station keeps the list's data: the details
  * are fetched one by one, and one bad answer must not cost the others.
@@ -188,9 +279,9 @@ function detailsOf(
       continue;
     }
     const names = isRecord(props["names"]) ? props["names"] : {};
-    const roadNumber = isRecord(props["roadAddress"])
-      ? textOf(props["roadAddress"]["roadNumber"])
-      : undefined;
+    const road = roadAddressOf(props["roadAddress"]);
+    const subdivision = subdivisionOf(feed, textOf(props["province"]));
+    const registryId = textOf(props["liviId"]);
     const municipality = textOf(props["municipality"]);
     const stationType = textOf(props["stationType"]);
     details.set(id, {
@@ -198,7 +289,9 @@ function detailsOf(
         const text = textOf(names[lang]);
         return text === undefined ? [] : [{ lang, text }];
       }),
-      ...(roadNumber === undefined ? {} : { roadNumber }),
+      ...road,
+      ...(subdivision === undefined ? {} : { subdivision }),
+      ...(registryId === undefined ? {} : { registryId }),
       ...(municipality === undefined ? {} : { municipality }),
       ...(stationType === undefined ? {} : { stationType }),
       sensors: listOf(props["sensors"]).flatMap((s) => {
@@ -341,7 +434,8 @@ function resultOf(sensor: DigitrafficSensor, value: number): Record<string, unkn
  * station's feature carries, and, for a value of the surface's solution, of
  * a sensor measuring a water film (not among `dry`). A value of a sensor read
  * here whose code, name or unit the publisher's tables do not hold is counted
- * as a value not read.
+ * as a value not read, and so is one of a sensor neither read nor left out
+ * on purpose (`DIGITRAFFIC_UNREAD_SENSORS`).
  */
 function readingOf(
   feed: WeatherCatalogFeed,
@@ -351,7 +445,10 @@ function readingOf(
   dry: ReadonlySet<string>,
 ): RecordDraft | undefined {
   const known = DIGITRAFFIC_SENSOR_BY_ID.get(sample.sensorId);
-  if (known === undefined) return undefined;
+  if (known === undefined) {
+    if (!DIGITRAFFIC_UNREAD_SENSORS.has(sample.sensorId)) recordSkipped(feed.id, "unknown_value");
+    return undefined;
+  }
   const sensor = sensorOf(sample);
   const result = sensor === undefined ? undefined : resultOf(sensor, sample.value);
   if (sensor === undefined || result === undefined) {
@@ -371,6 +468,10 @@ function readingOf(
   if (maxAgeSec !== undefined && ageSec > maxAgeSec) return undefined;
   const componentKey = sensor.channel === undefined ? undefined : String(sensor.id);
   if (componentKey !== undefined && !subject.channels.includes(componentKey)) return undefined;
+  // A reliability the API does not define is kept as the value's quality code, and counted.
+  if (sample.reliability !== undefined && !RELIABILITIES.has(sample.reliability)) {
+    recordSkipped(feed.id, "unknown_value");
+  }
   const windowSec =
     sample.windowStart === undefined
       ? sensor.windowSec
@@ -441,8 +542,9 @@ function sensorsOf(
  * are its own readings and whose road-surface values are each a
  * `sensor_channel` of it, keyed by the publisher's sensor id, so numbered
  * surface sensors stay separate series. The details name the station in
- * Finnish, Swedish and English and give its road and municipality; a station
- * without details keeps the list's technical name. A station's channels are
+ * Finnish, Swedish and English and give its road address (`roadAddressOf`),
+ * region, municipality and road-register id; a station without details keeps
+ * the list's technical name. A station's channels are
  * the sensors its values name, or, without values, those its details list;
  * a station whose sensors are unknown has nothing to report and is counted
  * as rejected. Values of a station the list does not name have nowhere to
@@ -467,6 +569,12 @@ export function parseDigitrafficWeather(
   const listed = new Set<string>();
   for (const station of sites.flatMap((body) => stationsOf(feed, body, listed))) {
     if (station.collectionStatus === RETIRED || index.has(station.id)) continue;
+    const unread =
+      (station.state !== undefined && !Object.hasOwn(DEVICE_STATUS, station.state) ? 1 : 0) +
+      (station.collectionStatus !== undefined && !Object.hasOwn(LIFECYCLE, station.collectionStatus)
+        ? 1
+        : 0);
+    recordSkipped(feed.id, "unknown_value", unread);
     const detail = details.get(station.id);
     const sensors = sensorsOf(detail, samples.get(station.id) ?? []);
     // A well-formed, placed station that nothing says what it measures: no
@@ -501,7 +609,14 @@ export function parseDigitrafficWeather(
         lifecycle: LIFECYCLE[station.collectionStatus ?? ""] ?? "unknown",
         country: COUNTRY,
         ...(detail?.roadNumber === undefined ? {} : { roadRef: detail.roadNumber }),
+        ...(detail?.address === undefined
+          ? {}
+          : { linear: { system: "provider", ...detail.address, authority: ROAD_ADDRESSING } }),
+        ...(detail?.subdivision === undefined ? {} : { subdivision: detail.subdivision }),
         ...(detail?.municipality === undefined ? {} : { municipality: detail.municipality }),
+        ...(detail?.registryId === undefined
+          ? {}
+          : { external: [{ system: ROAD_REGISTER, code: detail.registryId }] }),
         ...(detail?.stationType === undefined ? {} : { equipment: detail.stationType }),
         measuredProperties: [...new Set(sensors.map((s) => s.property))],
         ...(surfaceSensors.size === 0 ? {} : { surfaceSensorCount: surfaceSensors.size }),

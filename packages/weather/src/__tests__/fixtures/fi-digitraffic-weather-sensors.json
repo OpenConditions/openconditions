@@ -1,6 +1,6 @@
 {
   "dataUpdatedTime": "2026-09-30T06:05:09Z",
-  "dataLastCheckedTime": "2026-10-14T15:35:01Z",
+  "dataLastCheckedTime": "2026-10-17T03:35:00Z",
   "sensors": [
     {
       "id": 1,
@@ -13,6 +13,26 @@
       "description": "Ilman lämpötila n. 4 metrin korkeudelta",
       "descriptions": {
         "fi": "Ilman lämpötila n. 4 metrin korkeudelta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 2,
+      "name": "ILMA_DERIVAATTA",
+      "shortName": "DIlm",
+      "unit": "°C/h",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ilman lämpötilan muutos ajan suhteen (10 min)",
+      "descriptions": {
+        "fi": "Ilman lämpötilan muutos ajan suhteen (10 min)",
         "sv": null,
         "en": null
       },
@@ -43,6 +63,26 @@
       }
     },
     {
+      "id": 4,
+      "name": "TIE_1_DERIVAATTA",
+      "shortName": "DTie1",
+      "unit": "°C/h",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnan lämpötilan muutos tieanturilta 1 mitattuna",
+      "descriptions": {
+        "fi": "Tienpinnan lämpötilan muutos tieanturilta 1 mitattuna",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 5,
       "name": "TIE_2",
       "shortName": "Tie2",
@@ -53,6 +93,26 @@
       "description": "Tienpinnan lämpötila tieanturi 2:lla mitattuna",
       "descriptions": {
         "fi": "Tienpinnan lämpötila tieanturi 2:lla mitattuna",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 6,
+      "name": "TIE_2_DERIVAATTA",
+      "shortName": "DTie2",
+      "unit": "°C/h",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnan lämpötilan muutos tieanturilta 2 mitattuna",
+      "descriptions": {
+        "fi": "Tienpinnan lämpötilan muutos tieanturilta 2 mitattuna",
         "sv": null,
         "en": null
       },
@@ -163,6 +223,46 @@
       }
     },
     {
+      "id": 12,
+      "name": "RUNKO_1",
+      "shortName": "Run1",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tien rungon lämpötila n. 30 cm:n syvyydeltä",
+      "descriptions": {
+        "fi": "Tien rungon lämpötila n. 30 cm:n syvyydeltä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 13,
+      "name": "RUNKO_2",
+      "shortName": "Run2",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienrungon lampotila, jos on lisa-antureita",
+      "descriptions": {
+        "fi": "Tienrungon lampotila, jos on lisa-antureita",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 16,
       "name": "KESKITUULI",
       "shortName": "KTuuli",
@@ -223,6 +323,46 @@
       }
     },
     {
+      "id": 19,
+      "name": "ILMANPAINE",
+      "shortName": "IPaine",
+      "unit": "hPa",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ilmanpaine, muutettu merenpinnan tasoon.",
+      "descriptions": {
+        "fi": "Ilmanpaine, muutettu merenpinnan tasoon.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Ilmanpaine",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 20,
+      "name": "ILMANPAINE_DERIVAATTA",
+      "shortName": "DIPain",
+      "unit": "hPa/3h",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ilmanpaineen muutos 3 tunnin aikana",
+      "descriptions": {
+        "fi": "Ilmanpaineen muutos 3 tunnin aikana",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 21,
       "name": "ILMAN_KOSTEUS",
       "shortName": "Koste",
@@ -238,6 +378,62 @@
       },
       "presentationNames": {
         "fi": "Ilman suhteellinen kosteus",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 22,
+      "name": "SADE",
+      "shortName": "Sade",
+      "unit": "///",
+      "accuracy": 0,
+      "sensorValueDescriptions": [
+        {
+          "descriptionEn": "Dry weather",
+          "descriptionFi": "Pouta",
+          "sensorValue": 0.0
+        },
+        {
+          "descriptionEn": "Weak",
+          "descriptionFi": "Heikko",
+          "sensorValue": 1.0
+        },
+        {
+          "descriptionEn": "Moderate",
+          "descriptionFi": "Kohtalainen",
+          "sensorValue": 2.0
+        },
+        {
+          "descriptionEn": "Abundant",
+          "descriptionFi": "Runsas",
+          "sensorValue": 3.0
+        },
+        {
+          "descriptionEn": "Light snow/sleet",
+          "descriptionFi": "Heikko lumi/räntä",
+          "sensorValue": 4.0
+        },
+        {
+          "descriptionEn": "Moderate snow/sleet",
+          "descriptionFi": "Kohtalainen lumi/räntä",
+          "sensorValue": 5.0
+        },
+        {
+          "descriptionEn": "Abundant snow/sleet",
+          "descriptionFi": "Runsas lumi/räntä",
+          "sensorValue": 6.0
+        }
+      ],
+      "direction": "UNKNOWN",
+      "description": "Sataako ja miten paljon. Mitattu viimeisen 30 sekunnin ajanjaksolta.",
+      "descriptions": {
+        "fi": "Sataako ja miten paljon. Mitattu viimeisen 30 sekunnin ajanjaksolta.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
         "sv": null,
         "en": null
       }
@@ -263,6 +459,26 @@
       }
     },
     {
+      "id": 24,
+      "name": "SADESUMMA",
+      "shortName": "S-Sum",
+      "unit": "mm",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Sadesumma: nollataan aamulla kello 6.00",
+      "descriptions": {
+        "fi": "Sadesumma: nollataan aamulla kello 6.00",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 25,
       "name": "SATEEN_OLOMUOTO_PWDXX",
       "shortName": "S-Olom",
@@ -272,73 +488,93 @@
         {
           "descriptionEn": "Dry weather",
           "descriptionFi": "Pouta",
-          "sensorValue": 7
+          "sensorValue": 7.0
         },
         {
           "descriptionEn": "Very light rain, state cannot be determined",
           "descriptionFi": "Hyvin heikko sade, olomuotoa ei voida päätellä",
-          "sensorValue": 8
+          "sensorValue": 8.0
         },
         {
           "descriptionEn": "Drizzle",
           "descriptionFi": "Tihku",
-          "sensorValue": 9
+          "sensorValue": 9.0
         },
         {
           "descriptionEn": "Rain",
           "descriptionFi": "Vesisade",
-          "sensorValue": 10
+          "sensorValue": 10.0
         },
         {
           "descriptionEn": "Snowfall",
           "descriptionFi": "Lumisade",
-          "sensorValue": 11
+          "sensorValue": 11.0
         },
         {
           "descriptionEn": "Wet sleet",
           "descriptionFi": "Märkä räntä",
-          "sensorValue": 12
+          "sensorValue": 12.0
         },
         {
           "descriptionEn": "Sleet",
           "descriptionFi": "Räntä",
-          "sensorValue": 13
+          "sensorValue": 13.0
         },
         {
           "descriptionEn": "Hails",
           "descriptionFi": "Rakeita",
-          "sensorValue": 14
+          "sensorValue": 14.0
         },
         {
           "descriptionEn": "Ice crystals",
           "descriptionFi": "Jääkiteitä",
-          "sensorValue": 15
+          "sensorValue": 15.0
         },
         {
           "descriptionEn": "Snow grains",
           "descriptionFi": "Lumijyväsiä",
-          "sensorValue": 16
+          "sensorValue": 16.0
         },
         {
           "descriptionEn": "Graupel",
           "descriptionFi": "Lumirakeita",
-          "sensorValue": 17
+          "sensorValue": 17.0
         },
         {
           "descriptionEn": "Freezing drizzle",
           "descriptionFi": "Jäätävä tihku",
-          "sensorValue": 18
+          "sensorValue": 18.0
         },
         {
           "descriptionEn": "Freezing rain",
           "descriptionFi": "Jäätävä sade",
-          "sensorValue": 19
+          "sensorValue": 19.0
         }
       ],
       "direction": "UNKNOWN",
       "description": "Sateen olomuoto PWD -sade ja näkyvyysanturilta",
       "descriptions": {
         "fi": "Sateen olomuoto PWD -sade ja näkyvyysanturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 26,
+      "name": "NÄKYVYYS_KM",
+      "shortName": "Näk_km",
+      "unit": "km",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Näkyvyys PWD-sääanturilta mitattuna kilometreissä",
+      "descriptions": {
+        "fi": "Näkyvyys PWD-sääanturilta mitattuna kilometreissä",
         "sv": null,
         "en": null
       },
@@ -358,52 +594,52 @@
         {
           "descriptionEn": "The sensor has a fault",
           "descriptionFi": "Anturissa on vikaa",
-          "sensorValue": 0
+          "sensorValue": 0.0
         },
         {
           "descriptionEn": "Dry",
           "descriptionFi": "Kuiva",
-          "sensorValue": 1
+          "sensorValue": 1.0
         },
         {
           "descriptionEn": "Moist",
           "descriptionFi": "Kostea",
-          "sensorValue": 2
+          "sensorValue": 2.0
         },
         {
           "descriptionEn": "Wet",
           "descriptionFi": "Märkä",
-          "sensorValue": 3
+          "sensorValue": 3.0
         },
         {
           "descriptionEn": "Wet and salty",
           "descriptionFi": "Märkä ja suolattu",
-          "sensorValue": 4
+          "sensorValue": 4.0
         },
         {
           "descriptionEn": "Frost",
           "descriptionFi": "Kuura",
-          "sensorValue": 5
+          "sensorValue": 5.0
         },
         {
           "descriptionEn": "Snow",
           "descriptionFi": "Lumi",
-          "sensorValue": 6
+          "sensorValue": 6.0
         },
         {
           "descriptionEn": "Ice",
           "descriptionFi": "Jää",
-          "sensorValue": 7
+          "sensorValue": 7.0
         },
         {
           "descriptionEn": "Probably moist and salty",
           "descriptionFi": "Todennäköisesti kostea ja suolainen",
-          "sensorValue": 8
+          "sensorValue": 8.0
         },
         {
           "descriptionEn": "Slushy",
           "descriptionFi": "Sohjoinen",
-          "sensorValue": 9
+          "sensorValue": 9.0
         }
       ],
       "direction": "UNKNOWN",
@@ -429,58 +665,370 @@
         {
           "descriptionEn": "The sensor has a fault",
           "descriptionFi": "Anturissa on vikaa",
-          "sensorValue": 0
+          "sensorValue": 0.0
         },
         {
           "descriptionEn": "Dry",
           "descriptionFi": "Kuiva",
-          "sensorValue": 1
+          "sensorValue": 1.0
         },
         {
           "descriptionEn": "Moist",
           "descriptionFi": "Kostea",
-          "sensorValue": 2
+          "sensorValue": 2.0
         },
         {
           "descriptionEn": "Wet",
           "descriptionFi": "Märkä",
-          "sensorValue": 3
+          "sensorValue": 3.0
         },
         {
           "descriptionEn": "Wet and salty",
           "descriptionFi": "Märkä ja suolattu",
-          "sensorValue": 4
+          "sensorValue": 4.0
         },
         {
           "descriptionEn": "Frost",
           "descriptionFi": "Kuura",
-          "sensorValue": 5
+          "sensorValue": 5.0
         },
         {
           "descriptionEn": "Snow",
           "descriptionFi": "Lumi",
-          "sensorValue": 6
+          "sensorValue": 6.0
         },
         {
           "descriptionEn": "Ice",
           "descriptionFi": "Jää",
-          "sensorValue": 7
+          "sensorValue": 7.0
         },
         {
           "descriptionEn": "Probably moist and salty",
           "descriptionFi": "Todennäköisesti kostea ja suolainen",
-          "sensorValue": 8
+          "sensorValue": 8.0
         },
         {
           "descriptionEn": "Slushy",
           "descriptionFi": "Sohjoinen",
-          "sensorValue": 9
+          "sensorValue": 9.0
         }
       ],
       "direction": "UNKNOWN",
       "description": "Tiesääaseman päättelemä keliluokka 2. anturilta",
       "descriptions": {
         "fi": "Tiesääaseman päättelemä keliluokka 2. anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 29,
+      "name": "VAROITUS_1",
+      "shortName": "Varo1",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [
+        {
+          "descriptionEn": "OK",
+          "descriptionFi": "OK",
+          "sensorValue": 0.0
+        },
+        {
+          "descriptionEn": "Beware",
+          "descriptionFi": "Varo",
+          "sensorValue": 1.0
+        },
+        {
+          "descriptionEn": "Alarm",
+          "descriptionFi": "Häly",
+          "sensorValue": 2.0
+        },
+        {
+          "descriptionEn": "Frost",
+          "descriptionFi": "Kuura",
+          "sensorValue": 3.0
+        },
+        {
+          "descriptionEn": "Rain",
+          "descriptionFi": "Sade",
+          "sensorValue": 4.0
+        }
+      ],
+      "direction": "UNKNOWN",
+      "description": "Tiesääaseman päättelemä varoitustaso 1. anturilta",
+      "descriptions": {
+        "fi": "Tiesääaseman päättelemä varoitustaso 1. anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 30,
+      "name": "VAROITUS_2",
+      "shortName": "Varo2",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [
+        {
+          "descriptionEn": "OK",
+          "descriptionFi": "OK",
+          "sensorValue": 0.0
+        },
+        {
+          "descriptionEn": "Beware",
+          "descriptionFi": "Varo",
+          "sensorValue": 1.0
+        },
+        {
+          "descriptionEn": "Alarm",
+          "descriptionFi": "Häly",
+          "sensorValue": 2.0
+        },
+        {
+          "descriptionEn": "Frost",
+          "descriptionFi": "Kuura",
+          "sensorValue": 3.0
+        },
+        {
+          "descriptionEn": "Rain",
+          "descriptionFi": "Sade",
+          "sensorValue": 4.0
+        }
+      ],
+      "direction": "UNKNOWN",
+      "description": "Tiesääaseman päättelemä varoitustaso 2. anturilta",
+      "descriptions": {
+        "fi": "Tiesääaseman päättelemä varoitustaso 2. anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 31,
+      "name": "JOHTAVUUS_1",
+      "shortName": "Joht1",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Johtavuus tienpinta-anturilta 1.",
+      "descriptions": {
+        "fi": "Johtavuus tienpinta-anturilta 1.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 32,
+      "name": "JOHTAVUUS_2",
+      "shortName": "Joht2",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Johtavuus tienpinta-anturilta 2.",
+      "descriptions": {
+        "fi": "Johtavuus tienpinta-anturilta 2.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 33,
+      "name": "PINTASIGNAALI_1",
+      "shortName": "PSig1",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pintasignaali tienpinta-anturilta 1.",
+      "descriptions": {
+        "fi": "Pintasignaali tienpinta-anturilta 1.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 34,
+      "name": "PINTASIGNAALI_2",
+      "shortName": "PSig2",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pintasignaali tienpinta-anturilta 2.",
+      "descriptions": {
+        "fi": "Pintasignaali tienpinta-anturilta 2.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 35,
+      "name": "JÄÄTAAJUUS_1",
+      "shortName": "JTaaj1",
+      "unit": "Hz",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Jäätaajuus tienpinta-anturilta 1.",
+      "descriptions": {
+        "fi": "Jäätaajuus tienpinta-anturilta 1.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 36,
+      "name": "JÄÄTAAJUUS_2",
+      "shortName": "JTaaj2",
+      "unit": "Hz",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Jäätaajuus tienpinta-anturilta 2.",
+      "descriptions": {
+        "fi": "Jäätaajuus tienpinta-anturilta 2.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 37,
+      "name": "ASEMAN_STATUS_1",
+      "shortName": "Stat1",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Status1 asemalta: hälytys, sade, keli",
+      "descriptions": {
+        "fi": "Status1 asemalta: hälytys, sade, keli",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 38,
+      "name": "ASEMAN_STATUS_2",
+      "shortName": "Stat2",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Status2 asemalta: hälytys, sade, keli",
+      "descriptions": {
+        "fi": "Status2 asemalta: hälytys, sade, keli",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 41,
+      "name": "ANTURIVIKA",
+      "shortName": "AntVik",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Onko antureissa vikaa ?",
+      "descriptions": {
+        "fi": "Onko antureissa vikaa ?",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 48,
+      "name": "SADE_TILA",
+      "shortName": "S-Tila",
+      "unit": "///",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Sadetila ja pilvisyys aseman statuksesta",
+      "descriptions": {
+        "fi": "Sadetila ja pilvisyys aseman statuksesta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 49,
+      "name": "KASTEPISTE_ERO_TIE",
+      "shortName": "KpEroT",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinta- ja kastepistelämpötilojen välinen ero (tienpinta - kastepiste)",
+      "descriptions": {
+        "fi": "Tienpinta- ja kastepistelämpötilojen välinen ero (tienpinta - kastepiste)",
         "sv": null,
         "en": null
       },
@@ -531,6 +1079,46 @@
       }
     },
     {
+      "id": 52,
+      "name": "SUOLAN_MÄÄRÄ_1",
+      "shortName": "SuoMä1",
+      "unit": "g/m2",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 1",
+      "descriptions": {
+        "fi": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 1",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 53,
+      "name": "SUOLAN_MÄÄRÄ_2",
+      "shortName": "SuoMä2",
+      "unit": "g/m2",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 2",
+      "descriptions": {
+        "fi": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 2",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 54,
       "name": "SUOLAN_VÄKEVYYS_1",
       "shortName": "SuoVä1",
@@ -571,6 +1159,46 @@
       }
     },
     {
+      "id": 56,
+      "name": "TURVALLISUUSLÄMPÖ_1",
+      "shortName": "TurLä1",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+      "descriptions": {
+        "fi": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 57,
+      "name": "TURVALLISUUSLÄMPÖ_2",
+      "shortName": "TurLä2",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+      "descriptions": {
+        "fi": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 58,
       "name": "NÄKYVYYS_M",
       "shortName": "Näky_m",
@@ -591,6 +1219,366 @@
       }
     },
     {
+      "id": 60,
+      "name": "TUULEN_SUUNTA_ENNUSTE",
+      "shortName": "E-TSuu",
+      "unit": "°",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu tuulensuunta                                         ",
+      "descriptions": {
+        "fi": "Ennustettu tuulensuunta                                         ",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 61,
+      "name": "TUULEN_NOPEUS_ENNUSTE",
+      "shortName": "E-Tuul",
+      "unit": "m/s",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu tuulen nopeus                                        ",
+      "descriptions": {
+        "fi": "Ennustettu tuulen nopeus                                        ",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 62,
+      "name": "PILVISYYS_ENNUSTE",
+      "shortName": "E-Pilv",
+      "unit": "1/8",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu pilvisyys taivaankannen kahdeksasosina               ",
+      "descriptions": {
+        "fi": "Ennustettu pilvisyys taivaankannen kahdeksasosina               ",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 63,
+      "name": "SATEEN_OLOMUOTO_ENNUSTE",
+      "shortName": "E-SOlo",
+      "unit": "///",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu sateen olomuoto                                      ",
+      "descriptions": {
+        "fi": "Ennustettu sateen olomuoto                                      ",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 64,
+      "name": "SATEEN_INTENSITEETTI_ENNUSTE",
+      "shortName": "E-SInt",
+      "unit": "mm/h",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu sateen intensiteetti vetenä, mm/h",
+      "descriptions": {
+        "fi": "Ennustettu sateen intensiteetti vetenä, mm/h",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 65,
+      "name": "SATEEN_ESTOD_ENNUSTE",
+      "shortName": "E-STod",
+      "unit": "%",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu sateen todenndkvisyys                                ",
+      "descriptions": {
+        "fi": "Ennustettu sateen todenndkvisyys                                ",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 66,
+      "name": "ILMAN_LÄMPÖTILA_ENNUSTE",
+      "shortName": "E-Ilma",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu ilman lampotila",
+      "descriptions": {
+        "fi": "Ennustettu ilman lampotila",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 67,
+      "name": "TIEN_LÄMPÖTILA_ENNUSTE",
+      "shortName": "E-Tie",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu tien lampotila",
+      "descriptions": {
+        "fi": "Ennustettu tien lampotila",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 68,
+      "name": "KASTEP_LÄMPÖTILA_ENNUSTE",
+      "shortName": "E-KasP",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu kastepistelampotila",
+      "descriptions": {
+        "fi": "Ennustettu kastepistelampotila",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 71,
+      "name": "SADEMÄÄRÄ_1H_ENNUSTE",
+      "shortName": "E-SS1h",
+      "unit": "mm",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu edellisen 1 tunnin sademäärä millimetreinä",
+      "descriptions": {
+        "fi": "Ennustettu edellisen 1 tunnin sademäärä millimetreinä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 73,
+      "name": "KASTEPISTE_ERO_ILMA",
+      "shortName": "KpEroI",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ilman- ja kastepistelämpötilojen välinen ero (ilma - kastepiste)",
+      "descriptions": {
+        "fi": "Ilman- ja kastepistelämpötilojen välinen ero (ilma - kastepiste)",
+        "sv": "Ilman- ja kastepistelämpötilojen välinen ero (ilma - kastepiste)",
+        "en": "Ilman- ja kastepistelämpötilojen välinen ero (ilma - kastepiste)"
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 75,
+      "name": "KASTEPISTE_ERO_TIE_ENNUSTE",
+      "shortName": "E-KpET",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ennustettu tienpinnan- ja kastepistelämpötilan välinen ero (tienpinta - kastep.).",
+      "descriptions": {
+        "fi": "Ennustettu tienpinnan- ja kastepistelämpötilan välinen ero (tienpinta - kastep.).",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 91,
+      "name": "PWD_STATUS",
+      "shortName": "PWDsta",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "PWD sade-/näkyvyysanturin Hardware_Status.",
+      "descriptions": {
+        "fi": "PWD sade-/näkyvyysanturin Hardware_Status.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 92,
+      "name": "PWD_TILA",
+      "shortName": "PWDtil",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "PWD:n tila",
+      "descriptions": {
+        "fi": "PWD:n tila",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 93,
+      "name": "PWD_NÄK_TILA",
+      "shortName": "PWDnäk",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "PWD näkyvyysanturin tila",
+      "descriptions": {
+        "fi": "PWD näkyvyysanturin tila",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 98,
+      "name": "AURINKOUP",
+      "shortName": "Aurink",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Onko aurinko ylhäällä vai alhaalla? Kulmana -0,833°",
+      "descriptions": {
+        "fi": "Onko aurinko ylhäällä vai alhaalla? Kulmana -0,833°",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 99,
+      "name": "VALOISAA",
+      "shortName": "Valoa?",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Onko valoisaa? Aurinko ylempänä kuin -6° = ns. \"Porvarillinen hämärä\".",
+      "descriptions": {
+        "fi": "Onko valoisaa? Aurinko ylempänä kuin -6° = ns. \"Porvarillinen hämärä\".",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 100,
+      "name": "VALLITSEVA_SÄÄ",
+      "shortName": "Säätila",
+      "unit": "///",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "PWD sääanturin ilmoittama vallitseva sää WMO-luokiteltuna",
+      "descriptions": {
+        "fi": "PWD sääanturin ilmoittama vallitseva sää WMO-luokiteltuna",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 101,
       "name": "TIE_3",
       "shortName": "Tie3",
@@ -601,6 +1589,26 @@
       "description": "Tienpinnan lämpötila tieanturi 3:lta",
       "descriptions": {
         "fi": "Tienpinnan lämpötila tieanturi 3:lta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 102,
+      "name": "TIE_3_DERIVAATTA",
+      "shortName": "DTie3",
+      "unit": "°C/h",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnan lämpötilan muutos tieanturilta 3 mitattuna",
+      "descriptions": {
+        "fi": "Tienpinnan lämpötilan muutos tieanturilta 3 mitattuna",
         "sv": null,
         "en": null
       },
@@ -671,6 +1679,86 @@
       }
     },
     {
+      "id": 106,
+      "name": "VAROITUS_3",
+      "shortName": "Varo3",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tiesääaseman päättelemä varoitustaso 3. anturilta",
+      "descriptions": {
+        "fi": "Tiesääaseman päättelemä varoitustaso 3. anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 107,
+      "name": "JOHTAVUUS_3",
+      "shortName": "Joht3",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Johtavuus tienpinta-anturilta 3.",
+      "descriptions": {
+        "fi": "Johtavuus tienpinta-anturilta 3.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 108,
+      "name": "PINTASIGNAALI_3",
+      "shortName": "PSig3",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pintasignaali tienpinta-anturilta 3.",
+      "descriptions": {
+        "fi": "Pintasignaali tienpinta-anturilta 3.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 109,
+      "name": "JÄÄTAAJUUS_3",
+      "shortName": "JTaaj3",
+      "unit": "Hz",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Jäätaajuus tienpinta-anturilta 3.",
+      "descriptions": {
+        "fi": "Jäätaajuus tienpinta-anturilta 3.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 111,
       "name": "TIE_4",
       "shortName": "Tie4",
@@ -681,6 +1769,26 @@
       "description": "Tienpinnan lampotila tieanturi 4:ssd",
       "descriptions": {
         "fi": "Tienpinnan lampotila tieanturi 4:ssd",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 112,
+      "name": "TIE_4_DERIVAATTA",
+      "shortName": "DTie4",
+      "unit": "°C/h",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnan lämpötilan muutos tieanturilta 4 mitattuna",
+      "descriptions": {
+        "fi": "Tienpinnan lämpötilan muutos tieanturilta 4 mitattuna",
         "sv": null,
         "en": null
       },
@@ -751,6 +1859,466 @@
       }
     },
     {
+      "id": 116,
+      "name": "VAROITUS_4",
+      "shortName": "Varo4",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tiesääaseman päättelemä varoitustaso 4. anturilta",
+      "descriptions": {
+        "fi": "Tiesääaseman päättelemä varoitustaso 4. anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 117,
+      "name": "JOHTAVUUS_4",
+      "shortName": "Joht4",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Johtavuus tienpinta-anturilta 4.",
+      "descriptions": {
+        "fi": "Johtavuus tienpinta-anturilta 4.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 118,
+      "name": "PINTASIGNAALI_4",
+      "shortName": "PSig4",
+      "unit": "V",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pintasignaali tienpinta-anturilta 4.",
+      "descriptions": {
+        "fi": "Pintasignaali tienpinta-anturilta 4.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 119,
+      "name": "JÄÄTAAJUUS_4",
+      "shortName": "JTaaj4",
+      "unit": "Hz",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Jäätaajuus tienpinta-anturilta 4.",
+      "descriptions": {
+        "fi": "Jäätaajuus tienpinta-anturilta 4.",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 126,
+      "name": "KUURAPISTE",
+      "shortName": "KuuraP",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": "",
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 127,
+      "name": "KUURAPISTE_ERO_TIE",
+      "shortName": "KupErT",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 128,
+      "name": "KUURAPISTE_ERO_ILMA",
+      "shortName": "KupErI",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 130,
+      "name": "KUITUVASTE_PIENI_1",
+      "shortName": "KVaP1 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pienemmän kuidun vaste, tieanturi 1",
+      "descriptions": {
+        "fi": "Pienemmän kuidun vaste, tieanturi 1",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 131,
+      "name": "KUITUVASTE_PIENI_2",
+      "shortName": "KVaP2 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pienemmän kuidun vaste, tieanturi 2",
+      "descriptions": {
+        "fi": "Pienemmän kuidun vaste, tieanturi 2",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 132,
+      "name": "KUITUVASTE_SUURI_1",
+      "shortName": "KVaS1 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Suuremman kuidun vaste, tieanturi 1",
+      "descriptions": {
+        "fi": "Suuremman kuidun vaste, tieanturi 1",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 133,
+      "name": "KUITUVASTE_SUURI_2",
+      "shortName": "KVaS2 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Suuremman kuidun vaste, tieanturi 2",
+      "descriptions": {
+        "fi": "Suuremman kuidun vaste, tieanturi 2",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 135,
+      "name": "DSC_VASTAANOTTIMEN_PUHTAUS1",
+      "shortName": "DSCpu1",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "DSC-anturin status, ykkösten arvojen kertoma tilatieto",
+      "descriptions": {
+        "fi": "DSC-anturin status, ykkösten arvojen kertoma tilatieto",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "DSC anturin puhtaustieto",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 136,
+      "name": "DSC_STAT1",
+      "shortName": "DSCst1",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "DSC-anturin status, kymppiarvojen kertoma tilatieto",
+      "descriptions": {
+        "fi": "DSC-anturin status, kymppiarvojen kertoma tilatieto",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "DSC anturin hardware status",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 138,
+      "name": "PWD_VASTAANOTTIMEN_TAKAISINSIRONNAN_MUUTOS",
+      "shortName": "PWDrbc",
+      "unit": "Hz",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "PWD:n \"likaisuusarvoja\"",
+      "descriptions": {
+        "fi": "PWD:n \"likaisuusarvoja\"",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 140,
+      "name": "PWD_LÄHETTIMEN_TAKAISINSIRONNAN_MUUTOS",
+      "shortName": "PWDtbc",
+      "unit": "***",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "PWD:n \"likaisuusarvoja\"",
+      "descriptions": {
+        "fi": "PWD:n \"likaisuusarvoja\"",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "PWD Lika",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 141,
+      "name": "AURINGON_SÄTEILY_ULOS",
+      "shortName": "Sät_ul",
+      "unit": "W/m2",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Auringon säteily ulospäin",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 142,
+      "name": "AURINGON_SÄTEILY_ALAS",
+      "shortName": "Sät_al",
+      "unit": "W/m2",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Auringon säteily alaspäin",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 143,
+      "name": "AURINGON_IR_SATEILY_ULOS",
+      "shortName": "S_ir_u",
+      "unit": "W/m2",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Auringon ir säteily ulospäin",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 144,
+      "name": "AURINGON_IR_SATEILY_ALAS",
+      "shortName": "S_ir_a",
+      "unit": "W/m2",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Auringon ir säteily alaspäin",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 145,
+      "name": "NETTOSÄTEILY(ANT97)",
+      "shortName": "N_Sät",
+      "unit": "W/m2",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Nettosäteily",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 147,
+      "name": "LUMENMITTAUS_A",
+      "shortName": "Lumi_A",
+      "unit": "mm",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lumikerroksen paksuus tien reunaviivan kohdilla",
+      "descriptions": {
+        "fi": "Lumikerroksen paksuus tien reunaviivan kohdilla",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Lumen paksuus pientareella.",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 148,
+      "name": "LUMENMITTAUS_B",
+      "shortName": "Lumi_B",
+      "unit": "mm",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lumikerroksen paksuus tien ajouran kohdalla",
+      "descriptions": {
+        "fi": "Lumikerroksen paksuus tien ajouran kohdalla",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Lumen paksuus ajourassa",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 149,
+      "name": "LUMENMITTAUS_C",
+      "shortName": "Lumi_C",
+      "unit": "mm",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lumikerroksen paksuus keskemmällä tietä",
+      "descriptions": {
+        "fi": "Lumikerroksen paksuus keskemmällä tietä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Lumen paksuus ajourien välissä",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 150,
       "name": "LUMENMITTAUS_KA",
       "shortName": "LumiKA",
@@ -771,6 +2339,166 @@
       }
     },
     {
+      "id": 160,
+      "name": "NÄKYVYYS_DSC_1",
+      "shortName": "Näk_O1",
+      "unit": "m",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Näkyvyys DSC -anturilta",
+      "descriptions": {
+        "fi": "Näkyvyys DSC -anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 161,
+      "name": "NÄKYVYYS_DSC_2",
+      "shortName": "Näk_O2",
+      "unit": "m",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 162,
+      "name": "TIENPINNAN_TILA_OPT1",
+      "shortName": "TilaO1",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 163,
+      "name": "TIENPINNAN_TILA_OPT2",
+      "shortName": "TilaO2",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 167,
+      "name": "TIENPINNAN_TILA_1",
+      "shortName": "Tila1",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 168,
+      "name": "TIENPINNAN_TILA_2",
+      "shortName": "Tila2",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 169,
+      "name": "TIENPINNAN_TILA_3",
+      "shortName": "Tila3",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 170,
+      "name": "TIENPINNAN_TILA_4",
+      "shortName": "Tila4",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": null,
+      "descriptions": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 172,
       "name": "TIEN_LÄMPÖTILA_DST-ANT",
       "shortName": "TieOpt",
@@ -781,6 +2509,72 @@
       "description": "Tienpinnan lämpötila optiselta DST111-anturilta",
       "descriptions": {
         "fi": "Tienpinnan lämpötila optiselta DST111-anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 174,
+      "name": "OPTISEN_ANTURIN_KELI1",
+      "shortName": "KeliO1",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Optisen DSC-kelianturin 1. päättelemä keliluokka",
+      "descriptions": {
+        "fi": "Optisen DSC-kelianturin 1. päättelemä keliluokka",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 175,
+      "name": "OPTISEN_ANTURIN_VAROITUS1",
+      "shortName": "VaroO1",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [
+        {
+          "descriptionEn": "OK",
+          "descriptionFi": "OK",
+          "sensorValue": 0.0
+        },
+        {
+          "descriptionEn": "Beware",
+          "descriptionFi": "Varo",
+          "sensorValue": 1.0
+        },
+        {
+          "descriptionEn": "Alarm",
+          "descriptionFi": "Häly",
+          "sensorValue": 2.0
+        },
+        {
+          "descriptionEn": "Frost",
+          "descriptionFi": "Kuura",
+          "sensorValue": 3.0
+        },
+        {
+          "descriptionEn": "Rain",
+          "descriptionFi": "Sade",
+          "sensorValue": 4.0
+        }
+      ],
+      "direction": "UNKNOWN",
+      "description": "Optisen DSC-kelianturin 1. päättelemä varoitustaso",
+      "descriptions": {
+        "fi": "Optisen DSC-kelianturin 1. päättelemä varoitustaso",
         "sv": null,
         "en": null
       },
@@ -871,6 +2665,86 @@
       }
     },
     {
+      "id": 180,
+      "name": "ASEMAN_STATUS_OPT1",
+      "shortName": "StatO1",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Status1 DSC-anturilta: hälytys, keli",
+      "descriptions": {
+        "fi": "Status1 DSC-anturilta: hälytys, keli",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 181,
+      "name": "KITKA1_LUKU",
+      "shortName": "KitkL1",
+      "unit": "µ",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnan laskennallinen kitka DSC-anturista 1. Pelkkä lukuarvo!",
+      "descriptions": {
+        "fi": "Tienpinnan laskennallinen kitka DSC-anturista 1. Pelkkä lukuarvo!",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 184,
+      "name": "OPTISEN_ANTURIN_KELI2",
+      "shortName": "KeliO2",
+      "unit": "***",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Optisen DSC-kelianturin 2. päättelemä keliluokka",
+      "descriptions": {
+        "fi": "Optisen DSC-kelianturin 2. päättelemä keliluokka",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 185,
+      "name": "OPTISEN_ANTURIN_VAROITUS2",
+      "shortName": "VaroO2",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Optisen DSC-kelianturin 2. päättelemä varoitustaso",
+      "descriptions": {
+        "fi": "Optisen DSC-kelianturin 2. päättelemä varoitustaso",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 186,
       "name": "KITKA2",
       "shortName": "Kitka2",
@@ -951,6 +2825,166 @@
       }
     },
     {
+      "id": 190,
+      "name": "ASEMAN_STATUS_OPT2",
+      "shortName": "StatO2",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Status2 DSC-anturilta: hälytys, keli",
+      "descriptions": {
+        "fi": "Status2 DSC-anturilta: hälytys, keli",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 191,
+      "name": "KITKA2_LUKU",
+      "shortName": "KitkL2",
+      "unit": "µ",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnan laskennallinen kitka toisesta DSC-anturista 2. Pelkkä lukuarvo!",
+      "descriptions": {
+        "fi": "Tienpinnan laskennallinen kitka toisesta DSC-anturista 2. Pelkkä lukuarvo!",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 192,
+      "name": "KUITUVASTE_PIENI_3",
+      "shortName": "KVaP3 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pienemmän kuidun vaste, tieanturi 3",
+      "descriptions": {
+        "fi": "Pienemmän kuidun vaste, tieanturi 3",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 193,
+      "name": "KUITUVASTE_PIENI_4",
+      "shortName": "KVaP4 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Pienemmän kuidun vaste, tieanturi 4",
+      "descriptions": {
+        "fi": "Pienemmän kuidun vaste, tieanturi 4",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 194,
+      "name": "KUITUVASTE_SUURI_3",
+      "shortName": "KVaS3 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Suuremman kuidun vaste, tieanturi 3",
+      "descriptions": {
+        "fi": "Suuremman kuidun vaste, tieanturi 3",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 195,
+      "name": "KUITUVASTE_SUURI_4",
+      "shortName": "KVaS4 ",
+      "unit": "###",
+      "accuracy": 2,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Suuremman kuidun vaste, tieanturi 4",
+      "descriptions": {
+        "fi": "Suuremman kuidun vaste, tieanturi 4",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 196,
+      "name": "DSC_VASTAANOTTIMEN_PUHTAUS2",
+      "shortName": "DSCpu2",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "DSC-anturin status, ykkösten arvojen kertoma tilatieto",
+      "descriptions": {
+        "fi": "DSC-anturin status, ykkösten arvojen kertoma tilatieto",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "DSC anturin puhtaustieto",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 197,
+      "name": "DSC_STAT2",
+      "shortName": "DSCst2",
+      "unit": "???",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "DSC-anturin status, kymppiarvojen kertoma tilatieto",
+      "descriptions": {
+        "fi": "DSC-anturin status, kymppiarvojen kertoma tilatieto",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "DSC anturin hardware status",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
       "id": 198,
       "name": "KOSTEUDEN_MÄÄRÄ_3",
       "shortName": "KosMä3",
@@ -981,6 +3015,46 @@
       "description": "Tien pinnalla oleva kosteuden määrä (mm) tienpinta-anturilla 4",
       "descriptions": {
         "fi": "Tien pinnalla oleva kosteuden määrä (mm) tienpinta-anturilla 4",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 200,
+      "name": "SUOLAN_MÄÄRÄ_3",
+      "shortName": "SuoMä3",
+      "unit": "g/m2",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 3",
+      "descriptions": {
+        "fi": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 3",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 201,
+      "name": "SUOLAN_MÄÄRÄ_4",
+      "shortName": "SuoMä4",
+      "unit": "g/m2",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 4",
+      "descriptions": {
+        "fi": "Tienpinnalla olevan suolan määrä (g/m2) tienpinta-anturilla 4",
         "sv": null,
         "en": null
       },
@@ -1026,6 +3100,146 @@
       },
       "presentationNames": {
         "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 204,
+      "name": "TURVALLISUUSLÄMPÖ_3",
+      "shortName": "TurLä3",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+      "descriptions": {
+        "fi": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 205,
+      "name": "TURVALLISUUSLÄMPÖ_4",
+      "shortName": "TurLä4",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+      "descriptions": {
+        "fi": "Lämpötila, jonka yläpuolella tiellä olevan kosteuden ei pitäisi varmasti jäätyä",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 213,
+      "name": "ILMAN_LÄMPÖTILA_24H_MIN",
+      "shortName": "IlmMIN",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ilman minimilämpötila  liukuvan 24 tunnin aikana (XML-keruu)",
+      "descriptions": {
+        "fi": "Ilman minimilämpötila  liukuvan 24 tunnin aikana (XML-keruu)",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 214,
+      "name": "ILMAN_LÄMPÖTILA_24H_MAX",
+      "shortName": "IlmMAX",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Ilman maksimilämpötila liukuvan 24 tunnin aikana (XML-keruu)",
+      "descriptions": {
+        "fi": "Ilman maksimilämpötila liukuvan 24 tunnin aikana (XML-keruu)",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": null,
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 215,
+      "name": "SADESUMMA_LIUKUVA_24H",
+      "shortName": "Sad24h",
+      "unit": "mm",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Sadesumma liukuvana edellinen 24h",
+      "descriptions": {
+        "fi": "Sadesumma liukuvana edellinen 24h",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "",
+        "sv": null,
+        "en": null
+      }
+    },
+    {
+      "id": 225,
+      "name": "SADE I/O",
+      "shortName": "Sataa",
+      "unit": "///",
+      "accuracy": 0,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Sataa",
+      "descriptions": {
+        "fi": "Sataa",
+        "sv": "Sataa",
+        "en": "Sataa"
+      },
+      "presentationNames": {
+        "fi": "Sataa",
+        "sv": "Sataa",
+        "en": "Sataa"
+      }
+    },
+    {
+      "id": 226,
+      "name": "KASTEPISTE_ERO_TIE2",
+      "shortName": "KpEroT2",
+      "unit": "°C",
+      "accuracy": 1,
+      "sensorValueDescriptions": [],
+      "direction": "UNKNOWN",
+      "description": "Tienpinta- ja kastepistelämpötilojen välinen ero (tienpinta - kastepiste) Tie2 anturilta",
+      "descriptions": {
+        "fi": "Tienpinta- ja kastepistelämpötilojen välinen ero (tienpinta - kastepiste) Tie2 anturilta",
+        "sv": null,
+        "en": null
+      },
+      "presentationNames": {
+        "fi": "Kastepiste ero tie2 anturilta",
         "sv": null,
         "en": null
       }
