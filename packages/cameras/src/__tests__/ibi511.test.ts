@@ -150,8 +150,11 @@ describe("ibi511", () => {
     );
     const components = out.features[0]?.["components"] as { key: string; details: object }[];
     expect(components.map((c) => c.key)).toEqual(["51", "52"]);
-    // Two views: which of them faces north is not said.
+    // Two views: which of them faces north is not said, so the direction is the camera's.
     for (const c of components) expect(c.details).not.toHaveProperty("direction");
+    expect(out.features[0]?.["location"]).toMatchObject({
+      direction: { value: "unknown", basis: "compass", compass: "N" },
+    });
     expect(out.observations.map(componentKey)).toEqual(["51", "52"]);
 
     const georgia = parse(georgiaFeed(), "us-ga-511-cameras.json");
@@ -170,6 +173,8 @@ describe("ibi511", () => {
     expect(sr154?.["location"]).toMatchObject({
       roads: [{ name: [{ lang: "en", text: "SR154" }] }],
     });
+    // A lone view holds the direction; the camera does not repeat it.
+    expect(sr154?.["location"]).not.toHaveProperty("direction");
   });
 
   test("Idaho's disabled view reads offline while its camera stays", () => {

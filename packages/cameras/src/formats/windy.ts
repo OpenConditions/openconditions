@@ -86,7 +86,9 @@ const inCell = (point: readonly [number, number], cell: NonNullable<ParseContext
  * inside the cell stay: the next cell keeps its own. A webcam without an id
  * or a status is skipped as malformed, one with a status Windy does not
  * document as an unknown type, and one without a position as having no
- * geometry. A webcam has one view,
+ * geometry. The player embedded is the live stream where the webcam has
+ * one, else the day's timelapse; the country code and city place the
+ * webcam. A webcam has one view,
  * its current image, whose address carries a token that dies within minutes;
  * the terms let it be shown only linked to Windy's page or player.
  */
@@ -134,9 +136,12 @@ export function parseWindy(
       const urls = isRecord(webcam["urls"]) ? webcam["urls"] : {};
       const title = textOf(webcam["title"]);
       const detailUrl = textOf(urls["detail"]);
-      const embed = textOf(player["day"]) ?? textOf(player["live"]);
+      // `live` is there only for a webcam that streams; the day's timelapse otherwise.
+      const embed = textOf(player["live"]) ?? textOf(player["day"]);
       const image = textOf(current["preview"]);
       const thumbnail = textOf(current["thumbnail"]);
+      const country = textOf(location["country_code"]);
+      const city = textOf(location["city"]);
       out.features.push(
         cameraDraft(feed, dc, {
           cameraId,
@@ -145,6 +150,9 @@ export function parseWindy(
           type: typeOf(feed, webcam["categories"]),
           ...(detailUrl === undefined ? {} : { detailUrl }),
           ...(embed === undefined ? {} : { playerEmbedUrl: embed }),
+          ...(country === undefined
+            ? {}
+            : { admin: { country, ...(city === undefined ? {} : { municipality: city }) } }),
           imageRedistribution: imageRedistributionOf(feed, "link_only"),
           views: [{ key: "0" }],
         }),

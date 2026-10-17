@@ -52,6 +52,7 @@ describe("cars-cctv", () => {
       location: {
         geometry: { type: "Point", coordinates: [-78.766229, 42.940992] },
         roads: [{ name: [{ lang: "en", text: "I-90" }] }],
+        linear: { system: "provider", ref: "I-90", from: 75.12460010451436, authority: "cars" },
       },
       details: { imageRedistribution: "link_only" },
     });
@@ -63,6 +64,58 @@ describe("cars-cctv", () => {
         streamType: "hls",
       },
     });
+  });
+
+  test("every still is a view; link direction, presets and range are read", () => {
+    // Constructed from the schema (CCTV.xsd, FEU-g.xsd): the captured items carry
+    // one still each and no direction, presets or range.
+    const item = (id: string, extra: string, direction?: string) =>
+      `<inventory-item><device-id>${id}</device-id><device-name>Cam ${id}</device-name><still-images><still-image><name>Cam ${id}</name><url>https://public.carsprogram.org/cameras/NYSDOT/${id}_a.png</url></still-image><still-image><name>Looking north</name><url>https://public.carsprogram.org/cameras/NYSDOT/${id}_b.png</url></still-image></still-images><location><geo-location><latitude>42940992</latitude><longitude>-78766229</longitude></geo-location><route-designator>I-90</route-designator>${direction === undefined ? "" : `<link-direction>${direction}</link-direction>`}</location>${extra}</inventory-item>`;
+    const xml = Buffer.from(
+      `<cctvInventories><cctvInventory><owner><organization-name>NYSDOT</organization-name></owner><inventory>${[
+        item("1", "<presets><preset><preset-id>1</preset-id></preset></presets>", "ne"),
+        item("2", "<range><zoom-limit>10</zoom-limit></range>", "positive direction"),
+        item("3", "", "11"),
+        item("4", "", "not directional"),
+        item("5", "", "upstream"),
+      ].join("")}</inventory></cctvInventory></cctvInventories>`,
+    );
+    const out = camerasDomain.formats["cars-cctv"]!.parse(
+      nyFeed(),
+      { main: [xml] },
+      parseContext(FETCHED),
+    );
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+    expect(drainSkipped(nyFeed().id)).toEqual({ unknown_value: 1 });
+    const [first, second, third, fourth, fifth] = out.features;
+    expect(first?.["components"]).toEqual([
+      { key: "0", kind: "camera_view", details: expect.any(Object) },
+      {
+        key: "1",
+        kind: "camera_view",
+        name: [{ lang: "en", text: "Looking north" }],
+        details: expect.any(Object),
+      },
+    ]);
+    expect(out.observations).toHaveLength(10);
+    expect(
+      out.observations
+        .map((o) => (o["result"] as { value: { imageUrl: string } }).value.imageUrl)
+        .slice(0, 2),
+    ).toEqual([
+      "https://public.carsprogram.org/cameras/NYSDOT/1_a.png",
+      "https://public.carsprogram.org/cameras/NYSDOT/1_b.png",
+    ]);
+    const direction = (f: typeof first) =>
+      (f?.["location"] as Record<string, unknown> | undefined)?.["direction"];
+    expect(direction(first)).toEqual({ value: "unknown", basis: "compass", compass: "NE" });
+    expect(direction(second)).toEqual({ value: "positive", basis: "road_reference" });
+    expect(direction(third)).toEqual({ value: "negative", basis: "road_reference" });
+    expect(direction(fourth)).toBeUndefined();
+    expect(direction(fifth)).toBeUndefined();
+    expect(first?.["details"]).toMatchObject({ ptz: true });
+    expect(second?.["details"]).toMatchObject({ ptz: true });
+    expect(third?.["details"]).not.toHaveProperty("ptz");
   });
 
   test("names no road where the agency repeats the camera's name in its place", () => {

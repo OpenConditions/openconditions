@@ -188,6 +188,62 @@ describe("cameraDraft", () => {
     ]);
     expect(sealFailures([draft])).toEqual([]);
   });
+
+  test("the camera's place beside its point: admin areas, elevation, codes and site images", () => {
+    const base = {
+      cameraId: "1",
+      point: [-118.2, 34.1] as const,
+      names: [],
+      type: "traffic" as const,
+      imageRedistribution: "allowed" as const,
+      views: [],
+    };
+    const draft = cameraDraft(caltransLike(), context(), {
+      ...base,
+      direction: { value: "positive", basis: "road_reference" },
+      linear: { system: "milepost", ref: "I-110", from: 25.9 },
+      admin: { country: "us", subdivision: "US-CA", municipality: " " },
+      areaDescription: [{ lang: "en", text: "Cypress Park" }],
+      elevationM: 29,
+      external: [
+        { system: "us-ca:district", code: "7" },
+        { system: "us-ca:district", code: "" },
+      ],
+      images: [
+        { url: "https://example.org/a.jpg", category: "site" },
+        { url: "https://example.org/a.jpg", category: "other" },
+        { url: "ftp://example.org/b.jpg", category: "site" },
+        { url: "https://example.org/c.jpg", category: "other", thumbnail: "no url" },
+      ],
+    });
+    expect(draft["location"]).toMatchObject({
+      direction: { value: "positive", basis: "road_reference" },
+      linear: { system: "milepost", ref: "I-110", from: 25.9 },
+      // The country is upper-cased; an empty municipality is no municipality.
+      admin: { country: "US", subdivision: "US-CA" },
+      areaDescription: [{ lang: "en", text: "Cypress Park" }],
+      elevationM: 29,
+      external: [{ system: "us-ca:district", code: "7" }],
+    });
+    expect((draft["location"] as { admin: object }).admin).not.toHaveProperty("municipality");
+    // Each URL once, http(s) only; a thumbnail that is no URL is left off.
+    expect(draft["images"]).toEqual([
+      { url: "https://example.org/a.jpg", category: "site" },
+      { url: "https://example.org/c.jpg", category: "other" },
+    ]);
+    expect(sealFailures([draft])).toEqual([]);
+
+    // A country that is no ISO 3166-1 alpha-2 code places the camera in no admin area.
+    const bare = cameraDraft(caltransLike(), context(), {
+      ...base,
+      admin: { country: "Austria" },
+      elevationM: Number.NaN,
+      images: [],
+    });
+    expect(bare["location"]).not.toHaveProperty("admin");
+    expect(bare["location"]).not.toHaveProperty("elevationM");
+    expect(bare).not.toHaveProperty("images");
+  });
 });
 
 describe("imageReading", () => {

@@ -61,7 +61,11 @@ describe("hk-td", () => {
         { lang: "en", text: "Aberdeen Praya Road near Fish Market" },
         { lang: "zh-Hant", text: "香港仔海傍道近魚市場" },
       ],
-      location: { geometry: { coordinates: [114.1505, 22.24845] } },
+      location: {
+        geometry: { coordinates: [114.1505, 22.24845] },
+        admin: { country: "HK", municipality: "Southern" },
+        areaDescription: [{ lang: "en", text: "Hong Kong Island" }],
+      },
       // The department publishes that each snapshot is renewed every two minutes.
       details: { kind: "camera", v: 1, refreshSec: 120, imageRedistribution: "allowed" },
     });

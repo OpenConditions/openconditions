@@ -148,15 +148,16 @@ export function parseIbi511(
       const source = textOf(camera["Source"]);
       const sourceId = textOf(camera["SourceId"]);
       const views = viewsOf(feed, camera["Views"]);
-      // The camera's direction is a view's only where the camera has one view.
-      const direction =
-        views.length === 1 ? directionOf(feed, textOf(camera["Direction"])) : undefined;
+      // The camera's direction is a view's only where the camera has one view;
+      // with several, it is the camera's own.
+      const direction = directionOf(feed, textOf(camera["Direction"]));
+      const viewDirection = views.length === 1 ? direction : undefined;
       const viewInputs: ViewInput[] = views.map((view) => ({
         key: view.key,
         ...(view.description === undefined
           ? {}
           : { name: [{ lang: LANG, text: view.description }] }),
-        ...(direction === undefined ? {} : { direction }),
+        ...(viewDirection === undefined ? {} : { direction: viewDirection }),
       }));
       const names = name ?? location;
       out.features.push(
@@ -169,6 +170,7 @@ export function parseIbi511(
             : {}),
           type: "traffic",
           ...(roadway === undefined ? {} : { road: { name: [{ lang: LANG, text: roadway }] } }),
+          ...(direction === undefined || views.length === 1 ? {} : { direction }),
           ...(source === undefined ? {} : { provider: source }),
           ...(source === undefined || sourceId === undefined
             ? {}

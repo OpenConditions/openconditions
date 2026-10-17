@@ -107,10 +107,33 @@ function viewOf(
     key,
     ...(name === undefined ? {} : { name }),
     ...(bearing === undefined ? {} : { bearingDeg: bearing }),
-    ...(compass === undefined
+    ...(compass === undefined || compass === "none"
       ? {}
       : { direction: { value: "unknown" as const, basis: "compass" as const, compass } }),
   };
+}
+
+/** A record's fields with every text the publisher writes for a missing value removed. */
+function withoutAbsent(value: unknown, absent: ReadonlySet<string>): unknown {
+  if (typeof value === "string") return absent.has(value.trim()) ? undefined : value;
+  if (Array.isArray(value)) return value.map((v) => withoutAbsent(v, absent));
+  if (typeof value !== "object" || value === null) return value;
+  return Object.fromEntries(
+    Object.entries(value).flatMap(([k, v]) => {
+      const kept = withoutAbsent(v, absent);
+      return kept === undefined ? [] : [[k, kept]];
+    }),
+  );
+}
+
+const FEET = 0.3048;
+
+/** The camera's elevation in metres. */
+function elevationOf(fields: Record<string, unknown>, mapping: CamerasMapping) {
+  const rule = mapping.elevation;
+  const n = rule === undefined ? undefined : numberOf(fields, rule.field);
+  if (n === undefined) return undefined;
+  return rule?.unit === "ft" ? Math.round(n * FEET * 10) / 10 : n;
 }
 
 /** One record of a view: where the record places the camera, and its fields. */
@@ -132,7 +155,8 @@ const byKey = new Intl.Collator("en", { numeric: true }).compare;
  * when its position cannot be read, else as having no geometry; a placed
  * record without an id, an item that is no object and a second record of a
  * view a camera already has, as malformed. A value a map does not name
- * counts as unknown. The payloads of several URLs or pages are read as one
+ * counts as unknown; a text the mapping lists as `absent` is no value at
+ * all. The payloads of several URLs or pages are read as one
  * list.
  */
 export function parseLayout(
@@ -152,23 +176,28 @@ export function parseLayout(
   const cameras = new Map<string, Map<string, ViewRecord>>();
   const skip = (reason: RecordSkipReason) => recordSkipped(feed.id, reason);
   const unknown = () => recordSkipped(feed.id, "unknown_value");
+  const absent = new Set(mapping.absent ?? []);
   for (const body of bodies) {
     for (const row of decodeLayout(kind, body, feed.layout ?? {}, skip)) {
       if (row.point === undefined) {
         skip(row.unplaced ?? "no_geometry");
         continue;
       }
-      const cameraId = cameraIdOf(row.fields, mapping);
+      const fields =
+        absent.size === 0
+          ? row.fields
+          : (withoutAbsent(row.fields, absent) as Record<string, unknown>);
+      const cameraId = cameraIdOf(fields, mapping);
       if (cameraId === undefined) {
         skip("malformed");
         continue;
       }
       // Keys are compared as the components will carry them.
-      const key = viewKey(text(row.fields, mapping.viewKey) ?? "0");
+      const key = viewKey(text(fields, mapping.viewKey) ?? "0");
       const views = cameras.get(cameraId) ?? new Map<string, ViewRecord>();
       cameras.set(cameraId, views);
       if (views.has(key)) skip("malformed");
-      else views.set(key, { point: row.point, fields: row.fields });
+      else views.set(key, { point: row.point, fields });
     }
   }
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
@@ -177,7 +206,13 @@ export function parseLayout(
     const [firstView] = views;
     if (firstView === undefined) continue;
     const { point, fields: first } = firstView[1];
-    const road = text(first, mapping.road);
+    const roadRef = text(first, mapping.road);
+    const milepost = numberOf(first, mapping.milepost);
+    const road = {
+      ...(roadRef === undefined ? {} : { ref: roadRef }),
+      ...(milepost === undefined ? {} : { milepostFrom: milepost }),
+    };
+    const elevationM = elevationOf(first, mapping);
     const description = textOf(text(first, mapping.description), mapping.lang);
     const detailUrl = text(first, mapping.detailUrl);
     const refreshSec = refreshOf(first, mapping);
@@ -188,7 +223,8 @@ export function parseLayout(
         names: textOf(text(first, mapping.name), mapping.lang) ?? [],
         type: typeOf(first, mapping, unknown),
         ...(description === undefined ? {} : { description }),
-        ...(road === undefined ? {} : { road: { ref: road } }),
+        ...(Object.keys(road).length === 0 ? {} : { road }),
+        ...(elevationM === undefined ? {} : { elevationM }),
         ...(detailUrl === undefined ? {} : { detailUrl }),
         ...(refreshSec === undefined ? {} : { refreshSec }),
         imageRedistribution: mapping.imageRedistribution,

@@ -79,10 +79,27 @@ describe("tdx", () => {
       name: [{ lang: "zh-Hant", text: "國道1號 0K+000" }],
       location: {
         geometry: { coordinates: [121.735695, 25.1229931] },
-        roads: [{ name: [{ lang: "zh-Hant", text: "國道1號" }] }],
+        roads: [
+          {
+            name: [{ lang: "zh-Hant", text: "國道1號" }],
+            class: "motorway",
+            from: "基隆端",
+            to: "基隆交流道",
+            kmFrom: 0,
+          },
+        ],
+        external: [
+          { system: "tw:link", code: "0000100000000C" },
+          { system: "tw:road", code: "000010" },
+        ],
       },
       externalIds: [{ scheme: "provider", id: "CCTV-N1-S-0.000-M", authority: "tw-tdx-cameras" }],
-      details: { kind: "camera", v: 1, imageRedistribution: "unknown" },
+      details: { kind: "camera", v: 1, provider: "NFB-NR", imageRedistribution: "unknown" },
+    });
+    // Roadside (1) is no mounting the model holds.
+    expect(n1?.["details"]).not.toHaveProperty("mounting");
+    expect(camera(out, "CCTV-14-0620-009-002")?.["location"]).toMatchObject({
+      roads: [{ class: "trunk", kmFrom: 9.02 }],
     });
     expect(viewDetails(n1)).toEqual({
       kind: "camera_view",
@@ -137,5 +154,38 @@ describe("tdx", () => {
     );
     expect(out.features).toHaveLength(doc.CCTVs.length);
     expect(drainSkipped(tdxFeed().id)).toEqual({ unknown_value: 1 });
+  });
+
+  test("a gantry, a ramp and the reference pictures are read; undocumented codes are counted", () => {
+    // Constructed from TDX's CCTV schema: the captured records carry no
+    // gantry, ramp, reference pictures or layout sketch.
+    const doc = JSON.parse(fixture("tw-tdx-cctv-freeway.json").toString("utf8"));
+    Object.assign(doc.CCTVs[0], {
+      LocationType: 4,
+      RoadClass: 7,
+      LookingViews: [{ Bearing: "S", Image: "https://cctvn.freeway.gov.tw/ref/10000-S.jpg" }],
+      LayoutMapURL: "https://cctvn.freeway.gov.tw/layout/10000.png",
+    });
+    Object.assign(doc.CCTVs[1], { LocationType: 9, RoadClass: 8 });
+    const out = camerasDomain.formats["tdx"]!.parse(
+      tdxFeed(),
+      { main: [Buffer.from(JSON.stringify(doc))] },
+      parseContext(FETCHED, 86400),
+    );
+    expect(sealFailures(out.features)).toEqual([]);
+    expect(drainSkipped(tdxFeed().id)).toEqual({ unknown_value: 2 });
+    const [gantry, other] = out.features;
+    expect(gantry).toMatchObject({
+      details: { mounting: "gantry" },
+      location: { roads: [{ carriageway: "ramp" }] },
+      images: [
+        { url: "https://cctvn.freeway.gov.tw/ref/10000-S.jpg", category: "other" },
+        { url: "https://cctvn.freeway.gov.tw/layout/10000.png", category: "other" },
+      ],
+    });
+    expect(gantry?.["location"]).not.toHaveProperty("roads.0.class");
+    expect(other?.["details"]).not.toHaveProperty("mounting");
+    expect(other?.["location"]).toHaveProperty("roads.0.name");
+    expect(other?.["location"]).not.toHaveProperty("roads.0.class");
   });
 });

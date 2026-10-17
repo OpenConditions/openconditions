@@ -88,7 +88,8 @@ const icelandFeed = () =>
     },
   });
 
-const COMPASS = { North: "N", South: "S", East: "E", West: "W" } as const;
+/** Caltrans' documented directions; a camera on the median is on neither carriageway. */
+const COMPASS = { North: "N", South: "S", East: "E", West: "W", Median: "none" } as const;
 
 /** Caltrans' district files, one camera per record. */
 const caltransFeed = (imageHosts = ["cwwp2.dot.ca.gov"]) =>
@@ -119,15 +120,15 @@ const caltransFeed = (imageHosts = ["cwwp2.dot.ca.gov"]) =>
       lang: "en",
       type: "traffic",
       road: "cctv.location.route",
+      milepost: "cctv.location.milepost",
+      elevation: { field: "cctv.location.elevation", unit: "ft" },
       viewName: "cctv.imageData.imageDescription",
       direction: { field: "cctv.location.direction", map: COMPASS },
+      absent: ["Not Reported"],
       imageUrl: "cctv.imageData.static.currentImageURL",
       streamUrl: "cctv.imageData.streamingVideoURL",
       streamType: "hls",
-      status: {
-        field: "cctv.inService",
-        map: { true: "unknown", false: "offline", "Not Reported": "unknown" },
-      },
+      status: { field: "cctv.inService", map: { true: "unknown", false: "offline" } },
       refreshSec: { field: "cctv.imageData.static.currentImageUpdateFrequency", unit: "min" },
       imageRedistribution: "allowed",
     },
@@ -288,7 +289,12 @@ describe("layout", () => {
     expect(first).toMatchObject({
       type: "traffic",
       name: [{ lang: "en", text: "I-110 : (196) Avenue 26 Off Ramp" }],
-      location: { geometry: { coordinates: [-118.2215, 34.0837] }, roads: [{ ref: "I-110" }] },
+      location: {
+        geometry: { coordinates: [-118.2215, 34.0837] },
+        // The absolute postmile, in miles; 95 feet above sea level.
+        roads: [{ ref: "I-110", milepostFrom: 25.892 }],
+        elevationM: 29,
+      },
       details: { kind: "camera", v: 1, refreshSec: 120, imageRedistribution: "allowed" },
     });
     // The county the record names ("Alameda", in Los Angeles) is not read.
@@ -348,6 +354,23 @@ describe("layout", () => {
       v: 1,
       imageRedistribution: "allowed",
     });
+  });
+
+  test("a camera on the median has no direction, and Not Reported is no value", () => {
+    // Both documented in Caltrans' CCTV field description; the captured records carry neither.
+    const d9 = JSON.parse(fixture("us-ca-caltrans-d9.json").toString("utf8"));
+    d9.data[0].cctv.location.direction = "Median";
+    d9.data[0].cctv.inService = "Not Reported";
+    d9.data[0].cctv.imageData.static.currentImageURL = "Not Reported";
+    d9.data[0].cctv.location.elevation = "Not Reported";
+    const out = parse(caltransFeed(), Buffer.from(JSON.stringify(d9)));
+    expect(drainSkipped(caltransFeed().id)).toEqual({});
+    expect(out.rejected ?? 0).toBe(0);
+    const median = camera(out, "oc:feature:us-ca-caltrans-cameras:9:22");
+    expect(views(median)[0]?.details).not.toHaveProperty("direction");
+    expect(median?.["location"]).not.toHaveProperty("elevationM");
+    const [reading] = readingsOf(out, "oc:feature:us-ca-caltrans-cameras:9:22");
+    expect(value(reading)).toEqual({ v: 1, status: "unknown" });
   });
 
   test("an image URL off the feed's declared hosts is dropped", () => {

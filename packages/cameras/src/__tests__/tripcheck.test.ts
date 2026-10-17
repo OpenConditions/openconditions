@@ -60,6 +60,8 @@ describe("tripcheck", () => {
       location: {
         geometry: { coordinates: [-122.7205, 45.5118] },
         roads: [{ ref: "US26" }],
+        // Milepoint 71.9 of ODOT highway 47, not of the signed route.
+        linear: { system: "milepost", ref: "47", from: 71.9, authority: "odot:highway" },
       },
       details: { kind: "camera", v: 1, imageRedistribution: "allowed" },
     });

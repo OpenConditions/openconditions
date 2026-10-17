@@ -2,7 +2,9 @@ import type { ParseOutput, RecordDraft } from "@openconditions/ingest-framework"
 import {
   type DirectionRef,
   type ExternalId,
+  type IMAGE_CATEGORIES,
   type LIFECYCLES,
+  type LinearRef,
   type LocalizedText,
   observationId,
   type RoadRef,
@@ -24,7 +26,17 @@ import {
 /** The model's camera types. */
 export const CAMERA_TYPES = ["traffic", "landscape", "city", "weather", "beach", "other"] as const;
 export const STREAM_TYPES = ["hls", "rtsp", "mjpeg", "webrtc", "mp4"] as const;
-export const MOUNTINGS = ["gantry", "pole", "bridge", "vehicle", "unknown"] as const;
+export const MOUNTINGS = [
+  "gantry",
+  "pole",
+  "bridge",
+  "vehicle",
+  "wall",
+  "ceiling",
+  "building",
+  "doorbell",
+  "unknown",
+] as const;
 /** What a camera's image licence allows: republish the image, or only link to it. */
 export const IMAGE_REDISTRIBUTIONS = ["allowed", "link_only", "unknown"] as const;
 
@@ -46,6 +58,21 @@ export interface ViewInput {
   road?: RoadRef;
 }
 
+/** The administrative areas a publisher places a camera in; `country` is ISO 3166-1 alpha-2. */
+export interface AdminInput {
+  country: string;
+  /** An ISO 3166-2 code or the publisher's own name of the region. */
+  subdivision?: string;
+  municipality?: string;
+}
+
+/** A photo of the camera's site, as opposed to its live image. */
+export interface SiteImageInput {
+  url: string;
+  category: (typeof IMAGE_CATEGORIES)[number];
+  thumbnail?: string;
+}
+
 export interface CameraInput {
   /** The publisher's own id of the camera. */
   cameraId: string;
@@ -55,6 +82,17 @@ export interface CameraInput {
   type: CameraType;
   description?: LocalizedText[];
   road?: RoadRef;
+  /** The camera's own facing along its road, where the publisher gives one for the whole camera. */
+  direction?: DirectionRef;
+  /** The camera's position along its road in the publisher's own linear referencing. */
+  linear?: LinearRef;
+  admin?: AdminInput;
+  /** Where the camera is, in the publisher's words. */
+  areaDescription?: LocalizedText[];
+  elevationM?: number;
+  /** Codes of the publisher's location systems (a road link, a road-register id). */
+  external?: { system: string; code: string }[];
+  images?: SiteImageInput[];
   operator?: LocalizedText[];
   /** The system that publishes the camera, where the feed relays several. */
   provider?: string;
@@ -145,6 +183,56 @@ function viewComponent(view: ViewInput, camera: ViewCamera): Record<string, unkn
   };
 }
 
+/** The admin areas the model can hold: a country of two capital letters, with the names given. */
+function adminOf(input: AdminInput | undefined): Record<string, string> | undefined {
+  const country = clean(input?.country)?.toUpperCase();
+  if (input === undefined || country === undefined || !/^[A-Z]{2}$/.test(country)) return undefined;
+  return {
+    country,
+    ...optional("subdivision", clean(input.subdivision)),
+    ...optional("municipality", clean(input.municipality)),
+  };
+}
+
+/** The site images with an http(s) URL, each once; a thumbnail that is no URL is left off. */
+function imagesOf(list: SiteImageInput[] | undefined): Record<string, string>[] | undefined {
+  const seen = new Set<string>();
+  const kept = (list ?? []).flatMap((image) => {
+    const url = urlOf(image.url);
+    if (url === undefined || seen.has(url)) return [];
+    seen.add(url);
+    return [{ url, category: image.category, ...optional("thumbnail", urlOf(image.thumbnail)) }];
+  });
+  return kept.length === 0 ? undefined : kept;
+}
+
+/** The location fields of a camera beside its point and road. */
+function placeOf(input: CameraInput): Record<string, unknown> {
+  const external = (input.external ?? []).flatMap((e) => {
+    const system = clean(e.system);
+    const code = clean(e.code);
+    return system === undefined || code === undefined ? [] : [{ system, code }];
+  });
+  const linear =
+    input.linear !== undefined &&
+    clean(input.linear.ref) !== undefined &&
+    Number.isFinite(input.linear.from)
+      ? input.linear
+      : undefined;
+  const elevationM =
+    input.elevationM !== undefined && Number.isFinite(input.elevationM)
+      ? input.elevationM
+      : undefined;
+  return {
+    ...optional("direction", input.direction),
+    ...optional("linear", linear),
+    ...optional("admin", adminOf(input.admin)),
+    ...optional("areaDescription", texts(input.areaDescription)),
+    ...optional("elevationM", elevationM),
+    ...(external.length === 0 ? {} : { external }),
+  };
+}
+
 /**
  * A `camera` feature with its views as `camera_view` components. It carries
  * its provider id unless the input says otherwise, so two cameras of one
@@ -193,6 +281,7 @@ export function cameraDraft(
     location: {
       ...pointLocation(input.point),
       ...(input.road === undefined ? {} : { roads: [input.road] }),
+      ...placeOf(input),
     },
     provenance: provenance(feed, input.cameraId, clean(input.upstream)),
     freshness: freshness(feed, ctx.fetchedAt),
@@ -200,6 +289,7 @@ export function cameraDraft(
     ...optional("name", texts(input.names)),
     ...optional("description", texts(input.description)),
     ...(operator === undefined ? {} : { operator: { role: "operator", name: operator } }),
+    ...optional("images", imagesOf(input.images)),
     components,
     details: {
       kind: "camera",
@@ -253,6 +343,8 @@ export interface ImageReadingInput {
   cameraId: string;
   viewKey: string;
   status: CameraStatus;
+  /** The publisher's own words on the camera's state. */
+  statusText?: readonly { lang: string; text: string }[];
   imageUrl?: string;
   thumbnailUrl?: string;
   streamUrl?: string;
@@ -323,6 +415,9 @@ export function imageReading(
       value: {
         v: 1,
         status: input.status,
+        ...(input.statusText === undefined || input.statusText.length === 0
+          ? {}
+          : { statusText: input.statusText }),
         ...optional("imageUrl", imageUrl),
         ...optional("imageAt", imageAt),
         ...optional("thumbnailUrl", thumbnailUrl),

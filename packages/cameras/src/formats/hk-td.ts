@@ -14,6 +14,9 @@ import { clean, lonLat, positionSkip } from "../records.js";
 interface Image {
   /** Absent for an entry that names no camera. */
   key?: string;
+  /** The territory's part (`Hong Kong Island`, `Kowloon`, `New Territories`) and the district in it. */
+  region?: string;
+  district?: string;
   description?: string;
   latitude?: string;
   longitude?: string;
@@ -29,6 +32,8 @@ function imagesOf(body: Buffer): Image[] {
     if (!isXmlObject(image)) return [{}];
     const field = (name: string) => clean(xmlText(image[name]));
     const key = field("key");
+    const region = field("region");
+    const district = field("district");
     const description = field("description");
     const latitude = field("latitude");
     const longitude = field("longitude");
@@ -36,6 +41,8 @@ function imagesOf(body: Buffer): Image[] {
     return [
       {
         ...(key === undefined ? {} : { key }),
+        ...(region === undefined ? {} : { region }),
+        ...(district === undefined ? {} : { district }),
         ...(description === undefined ? {} : { description }),
         ...(latitude === undefined ? {} : { latitude }),
         ...(longitude === undefined ? {} : { longitude }),
@@ -60,7 +67,8 @@ const SNAPSHOT_REFRESH_SEC = 120;
  * The Transport Department's traffic snapshot cameras: the English camera
  * list (`main`), and the same list in Traditional Chinese (`names`) for the
  * Chinese names. A camera has one view, its snapshot, which the publisher
- * renews every two minutes; the list says nothing of whether it works. An
+ * renews every two minutes; the list says nothing of whether it works. Its
+ * district is the camera's municipality, and its region describes the area. An
  * entry of the English list without a key is skipped as malformed, one
  * without a position as having no geometry.
  */
@@ -102,6 +110,13 @@ export function parseHkTdCameras(
           point,
           names,
           type: "traffic",
+          admin: {
+            country: "HK",
+            ...(image.district === undefined ? {} : { municipality: image.district }),
+          },
+          ...(image.region === undefined
+            ? {}
+            : { areaDescription: [{ lang: "en", text: image.region }] }),
           refreshSec: SNAPSHOT_REFRESH_SEC,
           imageRedistribution: imageRedistributionOf(feed, "allowed"),
           views: [{ key: "0" }],

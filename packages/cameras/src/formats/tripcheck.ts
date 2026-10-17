@@ -5,7 +5,7 @@ import {
   type ParseOutput,
   recordSkipped,
 } from "@openconditions/ingest-framework";
-import type { LocalizedText, RoadRef } from "@openconditions/model";
+import type { LinearRef, LocalizedText, RoadRef } from "@openconditions/model";
 import {
   cameraDraft,
   type DraftContext,
@@ -15,12 +15,13 @@ import {
   viewKey,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, positionSkip, textOf, urlOf } from "../records.js";
+import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf, urlOf } from "../records.js";
 
 interface Device {
   point: [number, number];
   names: LocalizedText[];
   road?: RoadRef;
+  linear?: LinearRef;
   upstream?: string;
   views: { key: string; imageUrl?: string; text?: string }[];
 }
@@ -48,7 +49,8 @@ function fileKey(url: string | undefined): string {
  * that the key does not depend on the order of the rows. A row's `cctv-other`
  * says where its image looks: the camera's description when every image of
  * the device says the same, else each image's view name. A device repeated
- * in a later payload adds its views to the same camera. The inventory says
+ * in a later payload adds its views to the same camera. Its `milepoint` on
+ * its ODOT highway (`hwy-id`) places it along the road. The inventory says
  * nothing of whether a camera works, and its `last-update-time` is the row's,
  * not the image's. The images are ODOT's or a partner agency's, and the
  * terms ask the republisher to credit the agency: the inventory's
@@ -87,10 +89,23 @@ export function parseTripcheck(
       let device = devices.get(cameraId);
       if (device === undefined) {
         const route = textOf(row["route-id"]);
+        const highway = textOf(row["hwy-id"]);
+        const milepoint = numberOf(row["milepoint"]);
         device = {
           point,
           names: english(textOf(row["device-name"])),
           ...(route === undefined ? {} : { road: { ref: route } }),
+          ...(highway === undefined || milepoint === undefined
+            ? {}
+            : {
+                // ODOT counts milepoints along its own highway numbers, not the signed route.
+                linear: {
+                  system: "milepost" as const,
+                  ref: highway,
+                  from: milepoint,
+                  authority: "odot:highway",
+                },
+              }),
           ...(organisation === undefined ? {} : { upstream: organisation }),
           views: [],
         };
@@ -128,6 +143,7 @@ export function parseTripcheck(
         description: english(shared),
         type: "traffic",
         ...(device.road === undefined ? {} : { road: device.road }),
+        ...(device.linear === undefined ? {} : { linear: device.linear }),
         ...(device.upstream === undefined ? {} : { upstream: device.upstream }),
         imageRedistribution: imageRedistributionOf(feed, "allowed"),
         views,

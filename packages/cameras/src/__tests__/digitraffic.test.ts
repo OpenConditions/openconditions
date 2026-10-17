@@ -93,6 +93,9 @@ describe("digitraffic", () => {
       location: {
         geometry: { type: "Point", coordinates: [23.99616, 60.05374] },
         roads: [{ ref: "51" }],
+        linear: { system: "provider", ref: "51/14", from: 422, authority: "fi:tieosoite" },
+        admin: { country: "FI", subdivision: "FI-18", municipality: "Inkoo" },
+        external: [{ system: "fi:livi", code: "Livi1089648" }],
       },
       externalIds: [{ scheme: "provider", id: "C01503", authority: "fi-digitraffic-cameras" }],
       details: { kind: "camera", v: 1, refreshSec: 600, imageRedistribution: "allowed" },
@@ -278,8 +281,10 @@ describe("digitraffic", () => {
     delete sites.features[1].properties.id;
     sites.features[2].geometry = null;
     sites.features[0].properties.collectionStatus = "SLEEPING";
+    sites.features[0].properties.state = "DREAMING";
     const details = JSON.parse(fixture("fi-digitraffic-station-C01503.json").toString("utf8"));
     details.properties.purpose = "muu";
+    details.properties.province = "Atlantis";
     details.properties.presets[0].direction = "UPWARDS";
     const out = parse({
       ...payloads(),
@@ -290,8 +295,28 @@ describe("digitraffic", () => {
     expect(drainSkipped(digitrafficFeed().id)).toEqual({
       malformed: 2,
       no_geometry: 1,
-      unknown_value: 3,
+      unknown_value: 5,
     });
+    // An unknown province keeps the country and the municipality.
+    expect(out.features[0]?.["location"]).toMatchObject({
+      admin: { country: "FI", municipality: "Inkoo" },
+    });
+    expect(out.features[0]?.["location"]).not.toHaveProperty("admin.subdivision");
+  });
+
+  test("an airport station is on no road and in no region, and neither is counted", () => {
+    // Constructed: Finavia's airport stations give road 99999 and the province
+    // "Finavia lentokentät"; the captured stations are on roads.
+    const details = JSON.parse(fixture("fi-digitraffic-station-C01503.json").toString("utf8"));
+    details.properties.roadAddress.roadNumber = 99999;
+    details.properties.province = "Finavia lentokentät";
+    const out = parse({ ...payloads(), details: [Buffer.from(JSON.stringify(details))] });
+    expect(drainSkipped(digitrafficFeed().id)).toEqual({});
+    const location = camera(out, "C01503")?.["location"];
+    expect(location).not.toHaveProperty("roads");
+    expect(location).not.toHaveProperty("linear");
+    expect(location).toHaveProperty("admin", { country: "FI", municipality: "Inkoo" });
+    expect(sealFailures(out.features)).toEqual([]);
   });
 
   test("a status entry whose image time cannot be read is malformed in the status-only parse", () => {

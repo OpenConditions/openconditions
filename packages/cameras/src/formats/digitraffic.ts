@@ -40,11 +40,61 @@ const FAULT_STATES: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The camera type a station's stated purpose gives: road weather (`keli`)
- * or traffic (`liikenne`). Without details, or for another purpose, the
- * station is a weather camera, as the service is a weather camera service.
+ * The documented station states that say nothing of a fault: no fault, a
+ * doubted fault, a doubt cancelled, a repair done or interrupted.
  */
-const PURPOSES: Readonly<Record<string, CameraType>> = { keli: "weather", liikenne: "traffic" };
+const OTHER_STATES: ReadonlySet<string> = new Set([
+  "OK",
+  "OK_FAULT_DOUBT_CANCELLED",
+  "FAULT_DOUBT",
+  "REPAIR_MAINTENANCE_DONE",
+  "REPAIR_INTERRUPTED",
+]);
+
+/**
+ * The camera type a station's stated purpose gives: road weather (`keli`),
+ * or traffic (`liikenne`) and tunnel (`tunneli`), whose cameras watch the
+ * traffic in it. Without details, or for another purpose, the station is a
+ * weather camera, as the service is a weather camera service.
+ */
+const PURPOSES: Readonly<Record<string, CameraType>> = {
+  keli: "weather",
+  liikenne: "traffic",
+  tunneli: "traffic",
+};
+
+/**
+ * The ISO 3166-2:FI code of each region (`maakunta`) by the Finnish name the
+ * details give as `province`; ISO names the regions by their Finnish names.
+ */
+const PROVINCES: Readonly<Record<string, string>> = {
+  Ahvenanmaa: "FI-01",
+  "Ahvenanmaan maakunta": "FI-01",
+  "Etelä-Karjala": "FI-02",
+  "Etelä-Pohjanmaa": "FI-03",
+  "Etelä-Savo": "FI-04",
+  Kainuu: "FI-05",
+  "Kanta-Häme": "FI-06",
+  "Keski-Pohjanmaa": "FI-07",
+  "Keski-Suomi": "FI-08",
+  Kymenlaakso: "FI-09",
+  Lappi: "FI-10",
+  Pirkanmaa: "FI-11",
+  Pohjanmaa: "FI-12",
+  "Pohjois-Karjala": "FI-13",
+  "Pohjois-Pohjanmaa": "FI-14",
+  "Pohjois-Savo": "FI-15",
+  "Päijät-Häme": "FI-16",
+  Satakunta: "FI-17",
+  Uusimaa: "FI-18",
+  "Varsinais-Suomi": "FI-19",
+};
+
+/** The `province` of Finavia's airports, which lie in no one region. */
+const AIRPORTS = "Finavia lentokentät";
+
+/** The road number of stations on no road (airports, Åland): the address places them nowhere. */
+const NO_ROAD = "99999";
 
 /** A preset's direction along the station's road address; crossing roads and special views have none on it. */
 const DIRECTIONS: Readonly<Record<string, DirectionRef>> = {
@@ -52,11 +102,15 @@ const DIRECTIONS: Readonly<Record<string, DirectionRef>> = {
   DECREASING_DIRECTION: { value: "negative", basis: "road_reference" },
 };
 
-/** The documented preset directions that give none along the road. */
+/**
+ * The documented preset directions that give none along the station's road:
+ * an unknown one, either direction of the crossing road, and the special
+ * views (the road surface, a junction).
+ */
 const NO_DIRECTION: ReadonlySet<string> = new Set([
   "UNKNOWN",
-  "CROSSING_INCREASING_DIRECTION",
-  "CROSSING_DECREASING_DIRECTION",
+  "CROSSING_ROAD_INCREASING_DIRECTION",
+  "CROSSING_ROAD_DECREASING_DIRECTION",
   "SPECIAL_DIRECTION",
 ]);
 
@@ -98,8 +152,15 @@ interface StationDetails {
   names: LocalizedText[];
   refreshSec?: number;
   roadNumber?: string;
+  /** The road address's section and the distance from its start, in metres. */
+  roadSection?: number;
+  sectionDistanceM?: number;
   /** What the station is for, as the publisher states it (`keli`, `liikenne`). */
   purpose?: string;
+  municipality?: string;
+  province?: string;
+  /** The station's id in the road register (`Livi…`). */
+  liviId?: string;
   presets: Map<string, { name?: string; direction?: string }>;
 }
 
@@ -183,11 +244,16 @@ function detailsOf(
       continue;
     }
     const names = isRecord(props["names"]) ? props["names"] : {};
-    const road = isRecord(props["roadAddress"])
-      ? textOf(props["roadAddress"]["roadNumber"])
-      : undefined;
+    const address = isRecord(props["roadAddress"]) ? props["roadAddress"] : {};
+    const number = textOf(address["roadNumber"]);
+    const road = number === NO_ROAD ? undefined : number;
+    const roadSection = numberOf(address["roadSection"]);
+    const sectionDistanceM = numberOf(address["distanceFromRoadSectionStart"]);
     const refreshSec = numberOf(props["collectionInterval"]);
     const purpose = textOf(props["purpose"]);
+    const municipality = textOf(props["municipality"]);
+    const province = textOf(props["province"]);
+    const liviId = textOf(props["liviId"]);
     details.set(id, {
       names: NAME_LANGUAGES.flatMap((lang) => {
         const text = textOf(names[lang]);
@@ -195,7 +261,12 @@ function detailsOf(
       }),
       ...(refreshSec === undefined || refreshSec <= 0 ? {} : { refreshSec }),
       ...(road === undefined ? {} : { roadNumber: road }),
+      ...(roadSection === undefined ? {} : { roadSection }),
+      ...(sectionDistanceM === undefined ? {} : { sectionDistanceM }),
       ...(purpose === undefined ? {} : { purpose }),
+      ...(municipality === undefined ? {} : { municipality }),
+      ...(province === undefined ? {} : { province }),
+      ...(liviId === undefined ? {} : { liviId }),
       presets: new Map(
         listOf(props["presets"]).flatMap((preset) => {
           const presetId = isRecord(preset) ? textOf(preset["id"]) : undefined;
@@ -329,8 +400,9 @@ function readingsOf(
  * details (`details`, one answer per station) and the latest image time of
  * every preset (`status`). A station is a camera and each preset one of its
  * views; the details name the station in Finnish, Swedish and English, name
- * each preset and give its direction on the road and the collection
- * interval. A station without details keeps the list's technical name.
+ * each preset and give its direction on the road, the collection interval,
+ * the road address, the municipality and region, and the road-register id.
+ * A station without details keeps the list's technical name.
  */
 export function parseDigitraffic(
   feed: CamerasCatalogFeed,
@@ -351,7 +423,22 @@ export function parseDigitraffic(
     ) {
       recordSkipped(feed.id, "unknown_value");
     }
+    if (
+      station.state !== undefined &&
+      !FAULT_STATES.has(station.state) &&
+      !OTHER_STATES.has(station.state)
+    ) {
+      recordSkipped(feed.id, "unknown_value");
+    }
     if (detail?.purpose !== undefined && PURPOSES[detail.purpose] === undefined) {
+      recordSkipped(feed.id, "unknown_value");
+    }
+    const subdivision = PROVINCES[detail?.province ?? ""];
+    if (
+      detail?.province !== undefined &&
+      detail.province !== AIRPORTS &&
+      subdivision === undefined
+    ) {
       recordSkipped(feed.id, "unknown_value");
     }
     const stationOffline =
@@ -386,6 +473,31 @@ export function parseDigitraffic(
         names,
         type: PURPOSES[detail?.purpose ?? ""] ?? "weather",
         ...(detail?.roadNumber === undefined ? {} : { road: { ref: detail.roadNumber } }),
+        ...(detail?.roadNumber === undefined ||
+        detail.roadSection === undefined ||
+        detail.sectionDistanceM === undefined
+          ? {}
+          : {
+              // The Finnish road address: road, section, and metres from the section's start.
+              linear: {
+                system: "provider" as const,
+                ref: `${detail.roadNumber}/${detail.roadSection}`,
+                from: detail.sectionDistanceM,
+                authority: "fi:tieosoite",
+              },
+            }),
+        ...(detail === undefined
+          ? {}
+          : {
+              admin: {
+                country: "FI",
+                ...(subdivision === undefined ? {} : { subdivision }),
+                ...(detail.municipality === undefined ? {} : { municipality: detail.municipality }),
+              },
+            }),
+        ...(detail?.liviId === undefined
+          ? {}
+          : { external: [{ system: "fi:livi", code: detail.liviId }] }),
         ...(detail?.refreshSec === undefined ? {} : { refreshSec: detail.refreshSec }),
         imageRedistribution: imageRedistributionOf(feed, "allowed"),
         views,
