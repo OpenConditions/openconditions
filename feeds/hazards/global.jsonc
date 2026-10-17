@@ -138,8 +138,12 @@
       "terms": {
         "url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
         "reviewedAt": "2026-10-16",
-        "note": "Free, full and open use under Regulation (EU) No 1159/2013. Data that was modified is credited 'Contains modified Copernicus Sentinel data [Year]': each pixel is credited with the UTC year of its detection, and GET /sources with the current year. EUMETSAT's own Meteosat terms do not apply to Sentinel data.",
+        "note": "Free, full and open use under Regulation (EU) No 1159/2013.",
       },
+      // The notice asks modified data to be credited "Contains modified
+      // Copernicus Sentinel data [Year]": each pixel carries the UTC year of
+      // its detection, /sources the current year. EUMETSAT's own Meteosat
+      // terms do not apply to Sentinel data.
       "attribution": "Contains modified Copernicus Sentinel data {year}, processed by EUMETSAT",
       "homepage": "https://data.eumetsat.int/product/EO:EUM:DAT:0417",
       "privacyUrl": "https://www.eumetsat.int/privacy-policy",
