@@ -7,7 +7,7 @@ import type {
   MultiLineStringGeometry,
   Severity,
 } from "@openconditions/core";
-import type { LinearRef, Schedule, Text, Validity } from "@openconditions/model";
+import type { Issue, LinearRef, Schedule, Text, Validity } from "@openconditions/model";
 import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
@@ -208,8 +208,17 @@ export interface SituationHints {
   comments?: { type?: "public" | "operator" | "detour" | "internal"; text: Text }[];
   /** The severity token exactly as the source declared it. */
   severityRaw?: string;
-  /** The source's lifecycle where it says more than active or ended (DATEX `suspended`). */
+  /**
+   * The source's lifecycle where it says more than active or ended (DATEX
+   * `planned`, `suspended`, or `unknown` for a status it does not establish).
+   */
   validityStatus?: Validity["status"];
+  /**
+   * Set when the source's lifecycle status does not establish that the record
+   * is in force under its time window. Every effect read from the record
+   * carries it, so none routes or exports as active.
+   */
+  statusIssue?: Issue;
 }
 
 /**

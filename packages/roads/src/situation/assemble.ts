@@ -463,12 +463,15 @@ export function situationDrafts(
         type: c.type,
         ...(c.subtype !== undefined ? { subtype: c.subtype } : {}),
         ...(causes.length > 0 ? { causes } : {}),
-        // Planned and not yet started is scheduled; planned works under way are live.
+        // Planned and not yet started is scheduled; planned works under way are
+        // live. A source that declares the record still planned, whatever its
+        // window, has it scheduled.
         temporality: primary.isForecast
           ? "forecast"
-          : primary.isPlanned &&
-              validity.start !== undefined &&
-              Date.parse(validity.start) > Date.parse(fetchedAt)
+          : validity.status === "planned" ||
+              (primary.isPlanned &&
+                validity.start !== undefined &&
+                Date.parse(validity.start) > Date.parse(fetchedAt))
             ? "scheduled"
             : "live",
         planned: primary.isPlanned,
