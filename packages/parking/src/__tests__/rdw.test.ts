@@ -74,8 +74,10 @@ describe("rdw", () => {
     });
     expect(site(out, "300/C1")).toMatchObject({
       type: "off_street",
-      details: { capacityTotal: 50, usage: ["carpool"], heightLimit: { value: 0.12, unit: "m" } },
+      details: { capacityTotal: 50, usage: ["carpool"] },
     });
+    // "12" read as centimetres is a height no entrance has: no limit.
+    expect(site(out, "300/C1")?.["details"]).not.toHaveProperty("heightLimit");
   });
 
   test("RDW: the published 1/0 flags give presence, and a 0 is none", () => {

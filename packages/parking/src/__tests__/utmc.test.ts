@@ -34,7 +34,7 @@ const dynamic = (systemCodeNumber: string, occupancy: number | null, stateDescri
 describe("utmc", () => {
   beforeEach(() => __resetSkips());
 
-  test("UTMC: FULL is full, FAULTY is closed, occupancy above capacity clamps to 0 available", () => {
+  test("UTMC: FULL is full, FAULTY is unknown, occupancy above capacity clamps to 0 available", () => {
     const out = parse([fixture("utmc-static-sample.json")], [fixture("utmc-dynamic-sample.json")]);
     expect(readings(out, "CP1")).toEqual({
       "parking.available": 58,
@@ -57,7 +57,7 @@ describe("utmc", () => {
       "parking.occupied": 230,
       "parking.status": "almost_full",
     });
-    expect(readings(states, "CP2")).toEqual({ "parking.status": "closed" });
+    expect(readings(states, "CP2")).toEqual({ "parking.status": "unknown" });
 
     const other = parse(
       [fixture("utmc-static-sample.json")],
@@ -98,10 +98,8 @@ describe("utmc", () => {
     expect(site(out, "CP1")).toMatchObject({
       type: "off_street",
       name: [{ lang: "en", text: "Town Centre" }],
-      location: {
-        geometry: { coordinates: [-1.62522866852692, 54.9755208253257] },
-        address: { text: "Car park in Newcastle Town Centre", country: "GB" },
-      },
+      location: { geometry: { coordinates: [-1.62522866852692, 54.9755208253257] } },
+      description: [{ lang: "en", text: "Car park in Newcastle Town Centre" }],
       details: { capacityTotal: 200 },
     });
     // A dynamic record of no known site is dropped.

@@ -27,6 +27,14 @@ interface SbbProperties {
   capacities?: { categoryType?: string; total?: number | null }[];
   currentEstimatedOccupancy?: number | null;
   publicAccess?: boolean | null;
+  /** The UIC number of the station the facility serves, its stop id in the Swiss GTFS. */
+  uic?: string | number | null;
+  additionalInformationForCustomers?: {
+    deText?: string | null;
+    enText?: string | null;
+    frText?: string | null;
+    itText?: string | null;
+  } | null;
   operator?: string | null;
   address?: { addressLine?: string | null; postalCode?: string | null; city?: string | null };
   operationTime?: {
@@ -43,6 +51,8 @@ interface SbbProperties {
     monthlyTicketPriceWithPublicTransportSeasonTicketDiscount?: number | null;
     yearlyTicketPrice?: number | null;
     yearlyTicketPriceWithPublicTransportSeasonTicketDiscount?: number | null;
+    /** The longest a ticket lasts, in minutes. */
+    maximumDuration?: number | null;
   } | null;
   callToAction?: Record<string, Localized | null | undefined> | null;
 }
@@ -64,8 +74,8 @@ const CATEGORIES: Readonly<Record<string, ParkingUserGroup>> = {
   WITH_CHARGING_STATION: "ev_charging",
 };
 
-/** Capacity categories known and left unread: reservable spaces are no user group. */
-const UNREAD_CATEGORIES: ReadonlySet<string> = new Set(["RESERVABLE_PARKING_SPACE"]);
+/** Reservable spaces are no user group: their count says whether a space can be booked. */
+const RESERVABLE = "RESERVABLE_PARKING_SPACE";
 
 const DAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"];
 const OSM_DAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
@@ -106,11 +116,7 @@ function pointOf(feature: SbbFeature): [number, number] | "no_geometry" | "malfo
 const unknownCategories = (p: SbbProperties): number =>
   (p.capacities ?? []).filter((c) => {
     const category = text(c?.categoryType);
-    return (
-      category !== undefined &&
-      CATEGORIES[category] === undefined &&
-      !UNREAD_CATEGORIES.has(category)
-    );
+    return category !== undefined && CATEGORIES[category] === undefined && category !== RESERVABLE;
   }).length;
 
 /** A contiguous run of days as `Mo-Fr`, separate days as `Mo,We`. */
@@ -166,7 +172,22 @@ function areasOf(p: SbbProperties): AreaInput[] {
   });
 }
 
-function siteInput(p: SbbProperties, stationId: string, point: [number, number]): SiteInput {
+/** The facility's area, where its geometry draws one beside its point. */
+function outlineOf(feature: SbbFeature): SiteInput["outline"] {
+  const area = (feature.geometry?.geometries ?? []).find(
+    (g) => g.type === "Polygon" || g.type === "MultiPolygon",
+  );
+  return area === undefined ? undefined : { geometry: area };
+}
+
+const LANGUAGES = ["de", "fr", "it", "en"] as const;
+
+function siteInput(
+  feature: SbbFeature,
+  p: SbbProperties,
+  stationId: string,
+  point: [number, number],
+): SiteInput {
   const type = p.parkingFacilityType ?? "";
   const parkAndRide = type === "PARK_AND_RAIL";
   const areas = areasOf(p);
@@ -176,6 +197,15 @@ function siteInput(p: SbbProperties, stationId: string, point: [number, number])
   const website = websiteOf(p.callToAction);
   const hours = openingHoursOf(p.operationTime);
   const a = p.address;
+  const info = p.additionalInformationForCustomers;
+  const notes = LANGUAGES.flatMap((lang) => {
+    const t = text(info?.[`${lang}Text`]);
+    return t === undefined ? [] : [{ lang, text: t }];
+  });
+  const reservable = p.capacities?.find((c) => c?.categoryType === RESERVABLE)?.total;
+  const maxStay = p.pricingModel?.maximumDuration;
+  const uic = p.uic === undefined || p.uic === null ? undefined : text(String(p.uic));
+  const outline = outlineOf(feature);
   return {
     stationId,
     point,
@@ -194,6 +224,13 @@ function siteInput(p: SbbProperties, stationId: string, point: [number, number])
     ...(p.publicAccess === true ? { audience: "public" } : {}),
     ...(p.publicAccess === false ? { audience: "private" } : {}),
     ...(standard === undefined ? {} : { capacityTotal: standard }),
+    ...(notes.length === 0 ? {} : { notes }),
+    ...(finite(reservable) ? { reservation: reservable > 0 } : {}),
+    ...(finite(maxStay) && maxStay > 0 ? { maxStay: minutes(maxStay) } : {}),
+    ...(uic === undefined
+      ? {}
+      : { stops: [{ scheme: "gtfs:stop", id: uic, authority: "opentransportdata.swiss" }] }),
+    ...(outline === undefined ? {} : { outline }),
     areas,
   };
 }
@@ -255,8 +292,11 @@ function featuresOf(body: Buffer): SbbFeature[] {
 
 /**
  * SBB's bike-and-car-parking dataset (opentransportdata.swiss): each car
- * facility of the `main` GeoJSON is a site. The capacity categories are
- * areas, and the standard one is the site's total. The pricing model is one
+ * facility of the `main` GeoJSON is a site, with its area where the geometry
+ * draws one, the station it serves, its notes in each language and its
+ * longest ticket as the maximum stay. The capacity categories are areas,
+ * the standard one the site's total; a count of reservable spaces says
+ * whether a space can be booked. The pricing model is one
  * CHF `parking_rate`. Each price segment is a price per `viableIncrement`
  * minutes, so it is a `parking_time` element (the price per hour, billed in
  * steps of the increment) from its `startingFrom` until the next segment
@@ -301,7 +341,7 @@ export function parseSbb(
         continue;
       }
       recordSkipped(feed.id, "unknown_value", unknownCategories(p));
-      out.features.push(siteDraft(feed, siteInput(p, stationId, point), ctx.fetchedAt));
+      out.features.push(siteDraft(feed, siteInput(feature, p, stationId, point), ctx.fetchedAt));
       const rate = rateDraft(feed, stationId, 1, {
         currency: "CHF",
         rows: rowsOf(p.pricingModel),

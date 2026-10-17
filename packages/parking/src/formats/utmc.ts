@@ -31,9 +31,10 @@ interface UtmcDynamic {
   }[];
 }
 
+/** A faulty car park's counting equipment says nothing of whether it is open. */
 const STATES: Readonly<Record<string, ParkingStatus>> = {
   CLOSED: "closed",
-  FAULTY: "closed",
+  FAULTY: "unknown",
   SPACES: "spaces_available",
   "ALMOST FULL": "almost_full",
   FULL: "full",
@@ -76,14 +77,14 @@ function staticSite(record: UtmcStatic): StaticSite | "malformed" | "no_geometry
   if (!finite(lat) || !finite(lon)) return "malformed";
   const capacity = record.configurations?.[0]?.capacity;
   const counted = finite(capacity) && capacity > 0 ? capacity : undefined;
-  const address = text(definition?.longDescription);
+  const description = text(definition?.longDescription);
   return {
     input: {
       stationId,
       point: [lon, lat],
       lang: "en",
       name: text(definition?.shortDescription) ?? `Car Park ${stationId}`,
-      ...(address === undefined ? {} : { address: { text: address } }),
+      ...(description === undefined ? {} : { notes: description }),
       ...(counted === undefined ? {} : { capacityTotal: counted }),
     },
     ...(counted === undefined ? {} : { capacity: counted }),

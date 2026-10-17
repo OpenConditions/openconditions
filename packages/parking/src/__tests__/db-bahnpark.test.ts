@@ -178,15 +178,15 @@ describe("db-bahnpark skips", () => {
     expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ no_geometry: 1, malformed: 2 });
   });
 
-  test("DB BahnPark: a facility type or duration code it does not know is an unknown value", () => {
+  test("DB BahnPark: a facility type, price group or duration code it does not know is an unknown value", () => {
     const out = parse(
       json([
         {
           ...facility([
             { duration: "1hour", price: 2 },
             { duration: "1fortnight", price: 20 },
-            // Prices of other groups are not read at all.
-            { duration: "1fortnight", price: 20, group: "corporate" },
+            // A price of another group is no standard price.
+            { duration: "1hour", price: 20, group: "corporate" },
           ]),
           type: { name: "Parkdeck" },
         },
@@ -194,11 +194,11 @@ describe("db-bahnpark skips", () => {
     );
     expect(out.features).toHaveLength(1);
     expect(rows(out)).toEqual([["2.00", { value: 1, unit: "h" }, undefined]]);
-    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 2 });
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 3 });
   });
 
-  test("DB BahnPark: the sample skips nothing", () => {
+  test("DB BahnPark: the sample loses only its price of another group", () => {
     sample();
-    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({});
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 1 });
   });
 });

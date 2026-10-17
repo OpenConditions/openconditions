@@ -11,6 +11,8 @@ import { instantIn, occupancyDrafts, type SiteInput, siteDraft } from "../site.j
 /** One car park of `/v1/carpark/full-list`, in the per-facility shape of the API documentation §2.1.5. */
 interface NswFacility {
   facility_id?: string | null;
+  /** The Transit Stop Number of the station the car park serves, its GTFS stop id. */
+  tsn?: string | null;
   facility_name?: string | null;
   spots?: string | null;
   location?: {
@@ -62,8 +64,10 @@ function siteInput(
   spots: number | undefined,
 ): SiteInput {
   const name = text(f.facility_name);
-  const street = text(f.location?.address);
+  // A street or a place ("Ashfield Mall"), so the line as written.
+  const address = text(f.location?.address);
   const city = text(f.location?.suburb);
+  const tsn = text(f.tsn);
   return {
     stationId,
     point,
@@ -72,9 +76,10 @@ function siteInput(
     type: "park_and_ride",
     usage: ["park_and_ride"],
     address: {
-      ...(street === undefined ? {} : { street }),
+      ...(address === undefined ? {} : { text: address }),
       ...(city === undefined ? {} : { city }),
     },
+    ...(tsn === undefined ? {} : { stops: [{ scheme: "gtfs:stop", id: tsn, authority: "tfnsw" }] }),
     ...(spots === undefined || spots === 0 ? {} : { capacityTotal: spots }),
   };
 }
@@ -84,7 +89,8 @@ function siteInput(
  * `/carpark/full-list` call. Its swagger gives no example of the body, so
  * each entry is read in the documented per-facility shape (API documentation
  * v2.4 §2.1.5), the shape OpenMapX read one `?facility=` call at a time. Each
- * entry is a park-and-ride site at its `location`; free spaces are the spots
+ * entry is a park-and-ride site at its `location`, serving the station its
+ * `tsn` (Transport for NSW's GTFS stop id) names; free spaces are the spots
  * less the vehicles counted (`occupancy.total`), at least 0. `MessageDate` is
  * Sydney time; one it cannot read is an unknown value, the reading dated at
  * the poll. An entry without an id, or without a location, is counted as

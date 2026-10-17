@@ -166,8 +166,9 @@ function siteInput(f: BahnparkFacility, stationId: string, point: [number, numbe
 }
 
 /**
- * The standard prices as one rate; a duration code it does not know is left
- * out and counted as an unknown value.
+ * The standard prices as one rate; a price of another group, or of a
+ * duration code it does not know, is left out and counted as an unknown
+ * value.
  */
 function rateOf(
   feed: ParkingCatalogFeed,
@@ -177,7 +178,11 @@ function rateOf(
   fetchedAt: string,
 ): RecordDraft | undefined {
   const rows: RateRow[] = (f.tariff?.prices ?? []).flatMap((p) => {
-    if (p.group?.groupName !== STANDARD || !finite(p.price)) return [];
+    if (!finite(p.price)) return [];
+    if (p.group?.groupName !== STANDARD) {
+      recordSkipped(feed.id, "unknown_value");
+      return [];
+    }
     const row = DURATIONS[text(p.duration) ?? ""];
     if (row === undefined) recordSkipped(feed.id, "unknown_value");
     return row === undefined ? [] : [{ amount: p.price, ...row }];
@@ -187,8 +192,8 @@ function rateOf(
 
 /**
  * DB BahnPark (Parking Information API v2): each facility of the `main`
- * payload is a site, its standard prices one EUR `parking_rate`. P-Card,
- * long-term and reservation prices are rates for those groups. The API
+ * payload is a site, its standard prices one EUR `parking_rate`, whose
+ * P-Card, long-term and reservation durations are rows for those groups. The API
  * publishes no occupancy, so there are no readings. A facility type or a
  * standard price's duration code it does not know is an unknown value, the
  * site published without it. A facility without an

@@ -188,6 +188,27 @@ describe("sbb skips", () => {
     properties: { parkingFacilityCategory: "CAR", displayName: id, capacities },
   });
 
+  test("SBB: notes, reservation, longest stay, station and the facility's area", () => {
+    const out = parse();
+    const castione = site(out, CASTIONE);
+    expect(castione?.["description"]).toHaveLength(4);
+    expect(
+      (castione?.["description"] as { lang: string }[] | undefined)?.map((d) => d.lang),
+    ).toEqual(["de", "fr", "it", "en"]);
+    expect(castione?.["details"]).toMatchObject({
+      reservation: true,
+      maxStay: { value: 10080, unit: "min" },
+      stops: [{ scheme: "gtfs:stop", id: "8505212", authority: "opentransportdata.swiss" }],
+      outline: { geometry: { type: "Polygon" } },
+    });
+    // No reservable space: none can be booked.
+    expect(site(out, REALP)?.["details"]).toMatchObject({ reservation: false });
+    expect(site(out, DIETLIKON)?.["details"]).toMatchObject({
+      outline: { geometry: { type: "MultiPolygon" } },
+    });
+    expect(site(out, RHYHALDE)?.["details"]).not.toHaveProperty("outline");
+  });
+
   test("SBB: a car facility without a point has no geometry; a broken one is malformed", () => {
     const out = parse(
       collection([

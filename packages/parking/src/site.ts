@@ -95,7 +95,8 @@ export interface SiteInput {
   heightLimitM?: number;
   areas?: AreaInput[];
   tariffText?: string;
-  notes?: string;
+  /** Notes in the site's language, or in each language the source writes them in. */
+  notes?: string | { lang: string; text: string }[];
   amenities?: string[];
   usage?: string[];
   /** An audited lorry-park rating, in the awarding scheme's own words. */
@@ -107,6 +108,8 @@ export interface SiteInput {
   upstream?: import("@openconditions/model").MergedSource["upstream"];
   /** Pictures of the site, http(s) only. */
   images?: { url: string; category: (typeof IMAGE_CATEGORIES)[number] }[];
+  /** How to get in and out, such as outside opening hours. */
+  accessNotes?: string;
   /** How a visitor can pay; `free` follows from `free` already. */
   payment?: (typeof PAYMENT_METHODS)[number][];
   widthLimitM?: number;
@@ -358,16 +361,23 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
   const components = areaComponents(input.areas);
   const name = text(input.name);
   const operator = text(input.operator);
-  const description = text(input.notes);
+  const description = Array.isArray(input.notes)
+    ? input.notes.flatMap((n) => {
+        const t = clean(n.text);
+        return t === undefined ? [] : [{ lang: n.lang, text: t }];
+      })
+    : text(input.notes);
   const hours = openingHours(input.openingHoursOsm);
   const payment = [
     ...new Set([...(input.free === true ? ["free"] : []), ...(input.payment ?? [])]),
   ];
+  const accessNotes = text(input.accessNotes);
   const access =
-    input.audience !== undefined || payment.length > 0
+    input.audience !== undefined || payment.length > 0 || accessNotes !== undefined
       ? {
           audience: input.audience ?? "unknown",
           ...(payment.length === 0 ? {} : { payment }),
+          ...(accessNotes === undefined ? {} : { notes: accessNotes }),
         }
       : undefined;
   const images = (input.images ?? []).flatMap((image) => {
@@ -433,7 +443,7 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
       ...(input.externalIds ?? []).map((e) => ({ ...e })),
     ],
     ...(name === undefined ? {} : { name }),
-    ...(description === undefined ? {} : { description }),
+    ...(description === undefined || description.length === 0 ? {} : { description }),
     ...(operator === undefined ? {} : { operator: { role: "operator", name: operator } }),
     ...(hours === undefined ? {} : { openingHours: hours }),
     ...(access === undefined ? {} : { access }),

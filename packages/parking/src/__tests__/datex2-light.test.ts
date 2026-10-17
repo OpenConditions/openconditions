@@ -1,4 +1,4 @@
-import type { ParseOutput } from "@openconditions/ingest-framework";
+import { __resetSkips, drainSkipped, type ParseOutput } from "@openconditions/ingest-framework";
 import { type LinkableFeature, proposeLink } from "@openconditions/model";
 import { PARKING_KINDS } from "@openconditions/model-parking";
 import { describe, expect, test } from "vitest";
@@ -134,10 +134,56 @@ describe("datex2-light", () => {
     // By name, and by the bundle's park-and-ride datasets.
     expect(site(nrw(), "67[P+R Wittlaer Nord]")).toMatchObject({ type: "park_and_ride" });
     expect(site(parkride(), "park-and-ride-bonn-743457")).toMatchObject({ type: "park_and_ride" });
-    expect(site(nrw(), "32[Stadthalle]")).toMatchObject({
-      type: "off_street",
-      details: { layout: "multi_storey" },
+    // A car park is off-street, built however it is: the bundle types surface lots so too.
+    expect(site(nrw(), "32[Stadthalle]")).toMatchObject({ type: "off_street" });
+    expect(site(nrw(), "parking-apag-8621")?.["details"]).not.toHaveProperty("layout");
+    // A park-and-ride zone's IFOPT id is the stop it serves.
+    expect(site(parkride(), "park-and-ride-vrr-1201")?.["details"]).toMatchObject({
+      stops: [{ scheme: "ifopt", id: "de:05512:3337" }],
     });
+  });
+
+  test("DATEX Light: equipment lines, the road and access information", () => {
+    const out = nrw();
+    expect(site(out, "parking-contipark-de-107700")).toMatchObject({
+      amenities: ["cash_machine", "toilets"],
+      access: {
+        audience: "unknown",
+        notes: [
+          {
+            lang: "de",
+            text: "Außerhalb der Öffnungszeiten: geschlossen (Ein- und Ausfahrt für Dauerparker möglich; Zugang mit Karte).",
+          },
+        ],
+      },
+    });
+    expect(site(out, "parking-apag-8621")).toMatchObject({
+      access: { payment: ["cash", "debit_card", "credit_card"] },
+    });
+    expect(
+      (
+        site(out, "parking-apag-8621")?.["location"] as
+          | { address?: { street?: string } }
+          | undefined
+      )?.address?.street,
+    ).toBeDefined();
+  });
+
+  test("DATEX Light: a site type, user or trend DATEX does not define is an unknown value", () => {
+    __resetSkips();
+    parse(
+      mobidromFeed(),
+      Buffer.from(
+        JSON.stringify([
+          bean({
+            type: "garage",
+            occupancyTrend: "sideways",
+            assignedFor: [{ user: "pilots" }, { user: "disabled" }],
+          }),
+        ]),
+      ),
+    );
+    expect(drainSkipped(mobidromFeed().id)).toEqual({ unknown_value: 3 });
   });
 
   test("DATEX Light: a [lat, lon] record is read the right way round", () => {
