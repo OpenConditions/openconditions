@@ -26,6 +26,15 @@ export const WORKER_PRESENCE_DEFINITIONS = [
   "humans_in_right_of_way",
 ] as const;
 
+/** How large works are, as their publisher rates them (DATEX `RoadworksScaleEnum`). */
+export const ROADWORKS_SCALES = ["major", "medium", "minor"] as const;
+
+/**
+ * How long works last, as their publisher classifies them (DATEX
+ * `RoadworksDurationEnum`, snake_cased): long, medium or short term.
+ */
+export const ROADWORKS_DURATIONS = ["long_term", "medium_term", "short_term"] as const;
+
 /** A works phase as the roadworks details hold it, for its nested effects. */
 interface RoadworksPhase {
   id: string;
@@ -124,7 +133,7 @@ export const ROADS_SITUATION_KINDS = [
     class: "situation",
     code: "roadworks",
     domain: DOMAIN,
-    version: V,
+    version: "1.1",
     description: "Planned or active construction and maintenance works.",
     types: {
       works: [
@@ -174,6 +183,14 @@ export const ROADS_SITUATION_KINDS = [
        */
       startPositionVerified: z.boolean().optional(),
       endPositionVerified: z.boolean().optional(),
+      /** How large the works are, as the publisher rates them. */
+      scale: z.enum(ROADWORKS_SCALES).optional(),
+      /** How long the works last, as the publisher classifies them. */
+      durationClass: z.enum(ROADWORKS_DURATIONS).optional(),
+      /** Whether the publisher declares the works urgent. */
+      urgent: z.boolean().optional(),
+      /** Whether the works are carried out with traffic still passing them. */
+      underTraffic: z.boolean().optional(),
       phases: z
         .array(
           z.strictObject({

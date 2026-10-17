@@ -430,6 +430,27 @@
     "delay": {
       "$ref": "#/$defs/Quantity"
     },
+    "delayBand": {
+      "type": "string",
+      "enum": [
+        "negligible",
+        "up_to_ten_minutes",
+        "between_ten_minutes_and_thirty_minutes",
+        "between_thirty_minutes_and_one_hour",
+        "between_one_hour_and_three_hours",
+        "between_three_hours_and_six_hours",
+        "longer_than_six_hours"
+      ]
+    },
+    "delayType": {
+      "type": "string",
+      "enum": [
+        "delays",
+        "delays_of_uncertain_duration",
+        "long_delays",
+        "very_long_delays"
+      ]
+    },
     "queueLength": {
       "$ref": "#/$defs/Quantity"
     },

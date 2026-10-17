@@ -40,17 +40,29 @@ function impactSeverity(effects: readonly Effect[]): DerivedSeverity | undefined
   return out;
 }
 
+/** Delay bands whose every delay is at least {@link DELAY_FLOOR_SECONDS}: half an hour or more. */
+const LONG_DELAY_BANDS: ReadonlySet<string> = new Set([
+  "between_thirty_minutes_and_one_hour",
+  "between_one_hour_and_three_hours",
+  "between_three_hours_and_six_hours",
+  "longer_than_six_hours",
+]);
+
 function longDelay(effects: readonly Effect[]): boolean {
   return effects.some(
-    (e) => e.kind === "delay" && e.delay !== undefined && e.delay.value >= DELAY_FLOOR_SECONDS,
+    (e) =>
+      e.kind === "delay" &&
+      ((e.delay !== undefined && e.delay.value >= DELAY_FLOOR_SECONDS) ||
+        (e.delayBand !== undefined && LONG_DELAY_BANDS.has(e.delayBand))),
   );
 }
 
 /**
  * The roads severity rule, for a situation whose source declares none: the
  * effects decide first (a closure is major; lane closures by the share of
- * lanes closed), then the type's default; a delay of 20 minutes or more
- * raises the result to at least major, never to critical (critical would turn
+ * lanes closed), then the type's default; a delay of 20 minutes or more, or
+ * in a band of half an hour or more, raises the result to at least major,
+ * never to critical (critical would turn
  * an open road into a routing exclusion). A type without a default and
  * without impact stays unknown rather than being guessed.
  */

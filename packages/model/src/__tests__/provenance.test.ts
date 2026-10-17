@@ -40,6 +40,24 @@ describe("Provenance", () => {
     );
   });
 
+  it("keeps the informant a publisher names, and refuses an empty or malformed one", () => {
+    const informant = {
+      type: "police_patrol",
+      name: [{ lang: "nl", text: "Politie" }],
+      id: "P-12",
+      country: "NL",
+      reliable: true,
+    };
+    expect(stored.safeParse({ ...feed, informationSource: informant }).success).toBe(true);
+    expect(stored.safeParse({ ...feed, informationSource: {} }).success).toBe(false);
+    expect(
+      stored.safeParse({ ...feed, informationSource: { ...informant, country: "nl" } }).success,
+    ).toBe(false);
+    expect(stored.safeParse({ ...feed, informationSource: { type: "policePatrol" } }).success).toBe(
+      false,
+    );
+  });
+
   it("keeps a raw payload reference as a sha256", () => {
     expect(stored.safeParse({ ...feed, rawRef: { hash: "a".repeat(64) } }).success).toBe(true);
     expect(stored.safeParse({ ...feed, rawRef: { hash: "abc" } }).success).toBe(false);

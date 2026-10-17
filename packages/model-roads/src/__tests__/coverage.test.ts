@@ -2,6 +2,9 @@ import {
   buildRegistry,
   CAUSES,
   CERTAINTIES,
+  DELAY_BANDS,
+  DELAY_TYPES,
+  INFORMATION_SOURCE_TYPES,
   kernelModule,
   parseSituationCode,
   SEVERITY_LABELS,
@@ -12,8 +15,13 @@ import { CAUSE_NATURES } from "../cause-natures.js";
 import {
   DATEX2_CAUSES,
   DATEX2_CERTAINTIES,
+  DATEX2_DELAY_BANDS,
+  DATEX2_DELAY_TYPES,
+  DATEX2_ROADWORKS_DURATIONS,
+  DATEX2_ROADWORKS_SCALES,
   DATEX2_SEVERITIES,
   DATEX2_SITUATIONS,
+  DATEX2_SOURCE_TYPES,
 } from "../crosswalk/datex2.js";
 import {
   DATEX2_FAULTY_EQUIPMENT,
@@ -49,7 +57,12 @@ import {
   WZDX_WORKER_PRESENCE_DEFINITIONS,
   WZDX_WORKER_PRESENCE_METHODS,
 } from "../crosswalk/wzdx.js";
-import { WORKER_PRESENCE_DEFINITIONS, WORKER_PRESENCE_METHODS } from "../kinds.js";
+import {
+  ROADWORKS_DURATIONS,
+  ROADWORKS_SCALES,
+  WORKER_PRESENCE_DEFINITIONS,
+  WORKER_PRESENCE_METHODS,
+} from "../kinds.js";
 import { roadsModule } from "../module.js";
 import { DATEX2_V2, DATEX2_V3 } from "../vocabularies/datex2.js";
 import { GTFS_RT } from "../vocabularies/gtfs-rt.js";
@@ -110,6 +123,34 @@ describe("source crosswalk coverage", () => {
     expect(sorted(Object.keys(DATEX2_CERTAINTIES))).toEqual(
       sorted(real([...DATEX2_V3.probabilities, ...DATEX2_V2.probabilities])),
     );
+  });
+
+  it("maps every DATEX delay band, delay type, source type, roadworks scale and duration onto its model values", () => {
+    const tables: [Readonly<Record<string, string>>, readonly string[], readonly string[]][] = [
+      [DATEX2_DELAY_BANDS, [...DATEX2_V3.delayBands, ...DATEX2_V2.delayBands], DELAY_BANDS],
+      [DATEX2_DELAY_TYPES, [...DATEX2_V3.delaysTypes, ...DATEX2_V2.delaysTypes], DELAY_TYPES],
+      [
+        DATEX2_SOURCE_TYPES,
+        [...DATEX2_V3.sourceTypes, ...DATEX2_V2.sourceTypes],
+        INFORMATION_SOURCE_TYPES,
+      ],
+      [
+        DATEX2_ROADWORKS_SCALES,
+        [...DATEX2_V3.roadworksScales, ...DATEX2_V2.roadworksScales],
+        ROADWORKS_SCALES,
+      ],
+      [
+        DATEX2_ROADWORKS_DURATIONS,
+        [...DATEX2_V3.roadworksDurations, ...DATEX2_V2.roadworksDurations],
+        ROADWORKS_DURATIONS,
+      ],
+    ];
+    for (const [table, source, model] of tables) {
+      expect(sorted(Object.keys(table))).toEqual(sorted(real(source)));
+      // One model value per source value, and every model value reached.
+      expect(sorted(Object.values(table))).toEqual(sorted(model));
+      expect(Object.values(table)).toHaveLength(model.length);
+    }
   });
 
   it("maps every WZDx 4.2 event type, work type, restriction type, unit and worker presence value, and every 3.1 lane type", () => {

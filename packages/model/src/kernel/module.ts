@@ -10,6 +10,8 @@ import {
   ACTION_STATUSES,
   COMPLIANCE,
   CORE_ISSUE_CODES,
+  DELAY_BANDS,
+  DELAY_TYPES,
   KERNEL_EFFECTS,
   LOS,
   NORMALIZATION,
@@ -35,6 +37,7 @@ import {
   EVIDENCE_STATES,
   FUSION_TIERS,
   GRANT_STATES,
+  INFORMATION_SOURCE_TYPES,
   ORIGINS,
   PRIVACY_CLASSES,
   RELATIONS,
@@ -48,7 +51,7 @@ import { ENDED_REASONS, VALIDITY_STATUSES } from "./validity.js";
 import { DIMENSIONS, VEHICLE_CLASSES, VEHICLE_FUELS, VEHICLE_USAGES } from "./vehicle.js";
 
 /** The kernel version, negotiated at federation like a kind: a major bump touches every class. */
-export const KERNEL_VERSION = "1.0" as const;
+export const KERNEL_VERSION = "1.1" as const;
 
 const closed = (code: string, values: readonly string[], description: string): VocabularyEntry =>
   defineVocabulary({ code, values, extensible: false, description });
@@ -72,6 +75,11 @@ export const kernelModule: RegistryModule = {
     closed("privacy_class", PRIVACY_CLASSES, "The privacy tier a record was produced under."),
     closed("grant_state", GRANT_STATES, "A licence grant."),
     closed("source_tier", SOURCE_TIERS, "What kind of publisher a source is."),
+    closed(
+      "information_source_type",
+      INFORMATION_SOURCE_TYPES,
+      "What kind of informant supplied a record's information.",
+    ),
     closed("fusion_tier", FUSION_TIERS, "Default fusion order, highest first."),
     closed("evidence_state", EVIDENCE_STATES, "Crowd-evidence lifecycle state."),
     closed("relation", RELATIONS, "Typed links between records."),
@@ -95,6 +103,8 @@ export const kernelModule: RegistryModule = {
     closed("normalization", NORMALIZATION, "How completely a parser typed an effect."),
     closed("action_status", ACTION_STATUSES, "DATEX operator action status of an effect."),
     closed("los", LOS, "Level of service."),
+    closed("delay_band", DELAY_BANDS, "The band an expected delay falls in."),
+    closed("delay_type", DELAY_TYPES, "How a delay is described where its length is not."),
     closed("severity", SEVERITY_LABELS, "Situation severity label."),
     closed("certainty", CERTAINTIES, "Situation certainty."),
     closed("aggregation", AGGREGATIONS, "The statistic an observation reports."),

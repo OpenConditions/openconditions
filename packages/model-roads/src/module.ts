@@ -15,8 +15,11 @@ import {
 import {
   DATEX2_CAUSES,
   DATEX2_CERTAINTIES,
+  DATEX2_DELAY_BANDS,
+  DATEX2_DELAY_TYPES,
   DATEX2_SEVERITIES,
   DATEX2_SITUATIONS,
+  DATEX2_SOURCE_TYPES,
 } from "./crosswalk/datex2.js";
 import {
   GTFS_RT_CAUSE_VALUES,
@@ -202,14 +205,15 @@ const roadsProperties = withPropertyCrosswalks(
  */
 export const lanesChange = defineChangeKind({
   code: "lanes_change",
-  description: "The lanes closed or open changed.",
+  description: "The lanes closed, restricted or open changed.",
   classes: ["situation"],
   select: (r) =>
     ((r["effects"] as { kind: string }[] | undefined) ?? [])
       .filter((e) => e.kind === "lane_restriction")
       .map((e) => {
-        const { lanesTotal, lanesClosed, lanes, vehicleImpact } = e as Record<string, unknown>;
-        return { lanesTotal, lanesClosed, lanes, vehicleImpact };
+        const { lanesTotal, lanesClosed, lanesRestricted, lanesOperational, lanes, vehicleImpact } =
+          e as Record<string, unknown>;
+        return { lanesTotal, lanesClosed, lanesRestricted, lanesOperational, lanes, vehicleImpact };
       }),
 });
 
@@ -286,6 +290,21 @@ export const roadsModule: RegistryModule = {
         ...datex(DATEX2_SEVERITIES, (v) => v.severities),
         { target: "open511", table: OPEN511_SEVERITIES },
       ],
+      [],
+    ),
+    vocabularyCrosswalk(
+      "delay_band",
+      datex(DATEX2_DELAY_BANDS, (v) => v.delayBands),
+      [],
+    ),
+    vocabularyCrosswalk(
+      "delay_type",
+      datex(DATEX2_DELAY_TYPES, (v) => v.delaysTypes),
+      [],
+    ),
+    vocabularyCrosswalk(
+      "information_source_type",
+      datex(DATEX2_SOURCE_TYPES, (v) => v.sourceTypes),
       [],
     ),
     vocabularyCrosswalk(

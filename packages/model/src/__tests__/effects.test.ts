@@ -25,6 +25,38 @@ describe("effects", () => {
     ).toBe(true);
   });
 
+  it("counts restricted lanes apart from closed ones, a closed lane being a restricted one", () => {
+    const lanes = {
+      id: "x/lane_restriction",
+      kind: "lane_restriction",
+      v: 1,
+      vehicleImpact: "unknown",
+      applicability: { kind: "all" },
+      compliance: "mandatory",
+      normalization: "complete",
+      lanesTotal: 3,
+    };
+    expect(effect({ ...lanes, lanesRestricted: 2, lanesOperational: 1 }).success).toBe(true);
+    expect(effect({ ...lanes, lanesRestricted: 1, lanesClosed: 2 }).success).toBe(false);
+    expect(effect({ ...lanes, lanesOperational: 4 }).success).toBe(false);
+  });
+
+  it("keeps a delay's band and description beside or instead of its length", () => {
+    const delay = {
+      id: "x/delay",
+      kind: "delay",
+      v: 1,
+      applicability: { kind: "all" },
+      compliance: "unknown",
+      normalization: "complete",
+    };
+    expect(
+      effect({ ...delay, delayBand: "up_to_ten_minutes", delayType: "long_delays" }).success,
+    ).toBe(true);
+    expect(effect({ ...delay, delayBand: "upToTenMinutes" }).success).toBe(false);
+    expect(effect({ ...delay, delayType: "delaysOfUncertainDuration" }).success).toBe(false);
+  });
+
   it("holds dimensions to one canonical unit", () => {
     const limit = {
       id: "x/dimension_limit",

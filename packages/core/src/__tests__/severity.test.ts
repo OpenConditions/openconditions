@@ -42,9 +42,25 @@ describe("normaliseSeverity", () => {
     expect(result).toEqual({ severity: "critical", severitySource: "declared" });
   });
 
+  it("keeps a DATEX II rating of none as none, not as an unknown rating", () => {
+    const result = normaliseSeverity("none", { format: "datex2" });
+    expect(result).toEqual({ severity: "none", severitySource: "declared" });
+  });
+
   it("returns unknown for unrecognised values", () => {
     const result = normaliseSeverity("BOGUS", { format: "open511" });
     expect(result).toEqual({ severity: "unknown", severitySource: "declared" });
+  });
+
+  it("reads a token naming an inherited property as unrecognised", () => {
+    for (const [raw, format] of [
+      ["constructor", "datex2"],
+      ["toString", "datex2"],
+      ["CONSTRUCTOR", "open511"],
+      ["__proto__", "datex2"],
+    ] as const) {
+      expect(normaliseSeverity(raw, { format }).severity, raw).toBe("unknown");
+    }
   });
 });
 

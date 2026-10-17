@@ -715,8 +715,70 @@ export const DATEX2_SEVERITIES: Readonly<Record<string, string | null>> = {
   medium: "moderate",
   low: "minor",
   lowest: "minor",
-  none: null,
+  none: "none",
   unknown: "unknown",
+};
+
+/** DATEX `delays/delayBand` → the kernel delay band. */
+export const DATEX2_DELAY_BANDS: Readonly<Record<string, string>> = {
+  negligible: "negligible",
+  upToTenMinutes: "up_to_ten_minutes",
+  betweenTenMinutesAndThirtyMinutes: "between_ten_minutes_and_thirty_minutes",
+  betweenThirtyMinutesAndOneHour: "between_thirty_minutes_and_one_hour",
+  betweenOneHourAndThreeHours: "between_one_hour_and_three_hours",
+  betweenThreeHoursAndSixHours: "between_three_hours_and_six_hours",
+  longerThanSixHours: "longer_than_six_hours",
+};
+
+/** DATEX `delays/delaysType` → the kernel delay type. */
+export const DATEX2_DELAY_TYPES: Readonly<Record<string, string>> = {
+  delays: "delays",
+  delaysOfUncertainDuration: "delays_of_uncertain_duration",
+  longDelays: "long_delays",
+  veryLongDelays: "very_long_delays",
+};
+
+/** DATEX `source/sourceType` → the kernel information source type. */
+export const DATEX2_SOURCE_TYPES: Readonly<Record<string, string>> = {
+  automobileClubPatrol: "automobile_club_patrol",
+  cameraObservation: "camera_observation",
+  freightVehicleOperator: "freight_vehicle_operator",
+  inductionLoopMonitoringStation: "induction_loop_monitoring_station",
+  infraredMonitoringStation: "infrared_monitoring_station",
+  microwaveMonitoringStation: "microwave_monitoring_station",
+  mobileTelephoneCaller: "mobile_telephone_caller",
+  nonPoliceEmergencyServicePatrol: "non_police_emergency_service_patrol",
+  otherInformation: "other_information",
+  otherOfficialVehicle: "other_official_vehicle",
+  policePatrol: "police_patrol",
+  privateBreakdownService: "private_breakdown_service",
+  publicAndPrivateUtilities: "public_and_private_utilities",
+  registeredMotoristObserver: "registered_motorist_observer",
+  roadAuthorities: "road_authorities",
+  roadOperatorPatrol: "road_operator_patrol",
+  roadsideTelephoneCaller: "roadside_telephone_caller",
+  spotterAircraft: "spotter_aircraft",
+  trafficMonitoringStation: "traffic_monitoring_station",
+  transitOperator: "transit_operator",
+  vehicleProbeMeasurement: "vehicle_probe_measurement",
+  videoProcessingMonitoringStation: "video_processing_monitoring_station",
+};
+
+/** DATEX `roadworksScale` → the roadworks details' scale. */
+export const DATEX2_ROADWORKS_SCALES: Readonly<Record<string, string>> = {
+  major: "major",
+  medium: "medium",
+  minor: "minor",
+};
+
+/**
+ * DATEX `roadworksDurationClassification` (v2.3 `roadworksDuration`) → the
+ * roadworks details' duration class.
+ */
+export const DATEX2_ROADWORKS_DURATIONS: Readonly<Record<string, string>> = {
+  longTerm: "long_term",
+  mediumTerm: "medium_term",
+  shortTerm: "short_term",
 };
 
 /** DATEX `probabilityOfOccurrence` → the kernel certainty. */

@@ -198,7 +198,8 @@ export interface SeverityRuleInput {
   effects: readonly Effect[];
 }
 
-export type DerivedSeverity = Exclude<SeverityLabel, "unknown">;
+/** A label a rule derives: a rating of no impact is the source's to declare, never derived. */
+export type DerivedSeverity = Exclude<SeverityLabel, "unknown" | "none">;
 
 export type PropertyResultSpec =
   | { type: "quantity"; unit: string }

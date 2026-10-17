@@ -133,6 +133,7 @@ const PROVENANCE: Record<keyof Provenance, Role> = {
   sourceUpdatedAt: "content",
   attribution: "content",
   upstream: "content",
+  informationSource: "content",
   derivedFrom: "content",
   privacy: "content",
   rawRef: "derived",

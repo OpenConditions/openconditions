@@ -2913,6 +2913,53 @@
             "additionalProperties": false
           }
         },
+        "informationSource": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "automobile_club_patrol",
+                "camera_observation",
+                "freight_vehicle_operator",
+                "induction_loop_monitoring_station",
+                "infrared_monitoring_station",
+                "microwave_monitoring_station",
+                "mobile_telephone_caller",
+                "non_police_emergency_service_patrol",
+                "other_information",
+                "other_official_vehicle",
+                "police_patrol",
+                "private_breakdown_service",
+                "public_and_private_utilities",
+                "registered_motorist_observer",
+                "road_authorities",
+                "road_operator_patrol",
+                "roadside_telephone_caller",
+                "spotter_aircraft",
+                "traffic_monitoring_station",
+                "transit_operator",
+                "vehicle_probe_measurement",
+                "video_processing_monitoring_station"
+              ]
+            },
+            "name": {
+              "$ref": "#/$defs/Text"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "country": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            },
+            "reliable": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
         "rawRef": {
           "type": "object",
           "properties": {

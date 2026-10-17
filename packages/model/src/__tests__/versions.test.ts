@@ -13,7 +13,7 @@ const bump = (versions: string[], key: string, version: string) =>
 
 describe("schema versions", () => {
   it("lists the kernel and every kind, property, effect, selector and result schema", () => {
-    expect(local).toContain("kernel@1.0");
+    expect(local).toContain("kernel@1.1");
     expect(local).toContain("situation/incident@1.2");
     expect(local).toContain("observation/traffic.speed@1.0");
     expect(local).toContain("effect/closure@1.0");
