@@ -76,7 +76,8 @@ export const chargingModule: RegistryModule = {
     extendVocabulary({ vocabulary: "source_format", values: CHARGING_SOURCE_FORMATS }),
     // France's national register names a site's owner by its SIREN company
     // number and its commune by the INSEE code.
-    extendVocabulary({ vocabulary: "external_id_scheme", values: ["siren"] }),
+    // The Alternative Fuels Data Center's station id, which OSM tags `ref:afdc`.
+    extendVocabulary({ vocabulary: "external_id_scheme", values: ["siren", "afdc"] }),
     extendVocabulary({ vocabulary: "admin_geocode_scheme", values: ["insee"] }),
     evseStatusVocabulary,
     chargingSiteStatusVocabulary,

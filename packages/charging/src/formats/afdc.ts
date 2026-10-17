@@ -377,11 +377,13 @@ function siteOf(
             ...(website === undefined ? {} : { website }),
           },
         }),
-    ...(networkKey === undefined || stationIds.length === 0
-      ? {}
-      : {
-          externalIds: stationIds.map((id) => ({ scheme: "cpo", id, authority: networkKey })),
-        }),
+    // The station's AFDC id, which OSM tags `ref:afdc`, and its network's own ids.
+    externalIds: [
+      { scheme: "afdc", id: stationId },
+      ...(networkKey === undefined
+        ? []
+        : stationIds.map((id) => ({ scheme: "cpo", id, authority: networkKey }))),
+    ],
     ...(agency === undefined ? {} : { owner: { name: agency } }),
     address: {
       street: text(station["street_address"]),

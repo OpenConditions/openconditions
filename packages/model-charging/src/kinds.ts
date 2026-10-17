@@ -330,6 +330,7 @@ export const CHARGING_KINDS = [
         "provider",
         "ocpi:location",
         "ocm",
+        "afdc",
         "bnetza",
         "osm:node",
         "osm:way",
@@ -362,7 +363,12 @@ export const CHARGING_KINDS = [
       ],
       osm: {
         tags: ["amenity=charging_station"],
-        idTags: { "ref:EU:EVSE": "emi3:evse", "ref:ocpi": "ocpi:location" },
+        idTags: {
+          "ref:EU:EVSE": "emi3:evse",
+          "ref:ocpi": "ocpi:location",
+          "ref:ocm": "ocm",
+          "ref:afdc": "afdc",
+        },
       },
     },
   }),

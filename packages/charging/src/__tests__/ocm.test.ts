@@ -70,6 +70,8 @@ describe("ocm", () => {
     // An imported record is the provider's: its id is qualified by the provider.
     expect(neudorf?.["externalIds"]).toEqual([
       { scheme: "provider", id: "32021", authority: "ocm-charging/26" },
+      // Open Charge Map's own id, which OSM tags `ref:ocm`, links the feeds.
+      { scheme: "ocm", id: "32021" },
     ]);
     expect(neudorf).toMatchObject({
       name: [{ lang: "und", text: "Rue de Neudorf" }],
@@ -108,6 +110,7 @@ describe("ocm", () => {
     const gric = site(out, "77677");
     expect(gric?.["externalIds"]).toEqual([
       { scheme: "provider", id: "77677", authority: "ocm-charging" },
+      { scheme: "ocm", id: "77677" },
     ]);
     expect(upstreamOf(gric)).toEqual([
       {

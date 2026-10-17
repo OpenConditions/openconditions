@@ -361,6 +361,8 @@ export function parseOcm(
           feed,
           {
             stationId: id,
+            // Open Charge Map's own id of the POI, which OSM tags `ref:ocm`.
+            externalIds: [{ scheme: "ocm", id }],
             // Open Charge Map's own contributors' records are the feed's; an
             // imported record is its provider's.
             ...(providerId === undefined || providerId === "1"

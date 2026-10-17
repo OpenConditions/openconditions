@@ -845,6 +845,7 @@
             "cpo",
             "provider",
             "siren",
+            "afdc",
             "netex:line",
             "netex:stop_place",
             "irwin",

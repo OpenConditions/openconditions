@@ -205,6 +205,79 @@ describe("skips", () => {
     expect(drainSkipped(catalogFeed("osm-charging").id)).toEqual({});
   });
 
+  test("contacts, payment, roof, photo, cross-feed refs, counts per output and NACS by frequency", () => {
+    const out = parse(
+      elements([
+        {
+          type: "node",
+          id: 3,
+          lat: 49,
+          lon: 8.4,
+          tags: {
+            amenity: "charging_station",
+            operator: "Op",
+            "contact:email": "info@op.example",
+            "contact:phone": "+49 1",
+            owner: "Town",
+            description: "Behind the town hall",
+            "addr:country": "DE",
+            "addr:state": "Baden-Württemberg",
+            covered: "yes",
+            image: "https://op.example/station.jpg",
+            charge: "0.39 EUR/kWh",
+            "payment:credit_cards": "yes",
+            "payment:cash": "no",
+            "payment:enbw_mobility+": "yes",
+            "authentication:plug_and_charge": "yes",
+            "authentication:key": "yes",
+            "ref:ocm": "123",
+            "ref:afdc": "456",
+            level: "-1",
+            wheelchair: "yes",
+            frequency: "0",
+            "socket:nacs": "6;3",
+            "socket:nacs:output": "50 kW;150 kW",
+            "socket:mcs": "1",
+            "socket:j3105-1": "1",
+          },
+        },
+      ]),
+    );
+    expect(drainSkipped(catalogFeed("osm-charging").id)).toEqual({});
+    const draft = out.features[0];
+    expect(draft).toMatchObject({
+      externalIds: [
+        { scheme: "osm:node", id: "3" },
+        { scheme: "ocm", id: "123" },
+        { scheme: "afdc", id: "456" },
+      ],
+      operator: { email: "info@op.example" },
+      owner: { name: [{ text: "Town" }] },
+      description: [{ text: "Behind the town hall" }],
+      location: { address: { region: "Baden-Württemberg" } },
+      images: [{ url: "https://op.example/station.jpg", category: "site" }],
+      access: { payment: ["credit_card", "other"], authentication: ["plug_and_charge"] },
+      details: {
+        roofed: true,
+        hotline: "+49 1",
+        tariffText: [{ lang: "und", text: "0.39 EUR/kWh" }],
+      },
+    });
+    const evses = components(draft).filter((c) => c.kind === "evse") as (Component & {
+      floorLevel?: string;
+    })[];
+    expect(evses.map((e) => [e.key, e.details["quantity"], e.floorLevel])).toEqual([
+      ["j3105-1", undefined, "-1"],
+      ["mcs", undefined, "-1"],
+      ["nacs-1", 6, "-1"],
+      ["nacs-2", 3, "-1"],
+    ]);
+    expect(evses[2]?.details["wheelchairAccessible"]).toBe(true);
+    const nacs = components(draft).filter((c) => c.parentKey === "nacs-2")[0]?.details;
+    // NACS carries either current; `frequency=0` says this station's is direct.
+    expect(nacs).toMatchObject({ standard: "SAE_J3400", current: "dc", maxPowerKw: 150 });
+  });
+
   test("a positionless element, an unknown access value and an unknown socket type are reported", () => {
     const out = parse(
       elements([
