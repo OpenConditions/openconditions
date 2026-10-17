@@ -164,46 +164,79 @@
                   }
                 },
                 "pagination": {
-                  "type": "object",
-                  "properties": {
-                    "skipParam": {
-                      "type": "string"
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "skipParam": {
+                          "type": "string"
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "mode": {
+                          "type": "string",
+                          "enum": [
+                            "offset",
+                            "page"
+                          ]
+                        },
+                        "firstPage": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "recordsPath": {
+                          "type": "string"
+                        },
+                        "maxPages": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "xmlLists": {
+                          "type": "boolean",
+                          "const": true
+                        }
+                      },
+                      "required": [
+                        "skipParam",
+                        "pageSize"
+                      ],
+                      "additionalProperties": false
                     },
-                    "pageSize": {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "mode": {
-                      "type": "string",
-                      "enum": [
-                        "offset",
-                        "page"
-                      ]
-                    },
-                    "firstPage": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "recordsPath": {
-                      "type": "string"
-                    },
-                    "maxPages": {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991
-                    },
-                    "xmlLists": {
-                      "type": "boolean",
-                      "const": true
+                    {
+                      "type": "object",
+                      "properties": {
+                        "mode": {
+                          "type": "string",
+                          "const": "link"
+                        },
+                        "recordsPath": {
+                          "type": "string"
+                        },
+                        "maxPages": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "nextPath": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "totalPath": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "mode"
+                      ],
+                      "additionalProperties": false
                     }
-                  },
-                  "required": [
-                    "skipParam",
-                    "pageSize"
-                  ],
-                  "additionalProperties": false
+                  ]
                 },
                 "follow": {
                   "type": "object",

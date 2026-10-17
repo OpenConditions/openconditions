@@ -20,6 +20,7 @@ import { boundedGunzip, maxFeedBytes } from "./egress.js";
 import { decodedFromGzip, type HeldPayload, heldBuffer, holdPayload } from "./held.js";
 import { guardedImpersonatingFetch, type ImpersonationOptions } from "./impersonate.js";
 import { getPath } from "./layouts/row.js";
+import { nextLinkTarget } from "./link-header.js";
 import type { OAuthGrants } from "./oauth-grant.js";
 import { digestPayload, type PayloadDigest } from "./payload.js";
 import { feedSecretValues, redactSecrets, redactUrl } from "./redact.js";
@@ -245,7 +246,7 @@ async function fetchOne(
   state?: FetchState,
   cacheBody = false,
   redact: (s: string) => string = (s) => s,
-): Promise<{ changed: boolean; buffer: Buffer; payload: PayloadDigest }> {
+): Promise<{ changed: boolean; buffer: Buffer; payload: PayloadDigest; headers: Headers }> {
   const prior = state?.conditional.get(url);
   const headers = new Headers(init?.headers);
   if (prior?.etag) headers.set("If-None-Match", prior.etag);
@@ -261,6 +262,7 @@ async function fetchOne(
       changed: false,
       buffer,
       payload: prior.payload ?? digestPayload(redact(redactUrl(url)), buffer),
+      headers: res.headers,
     };
   }
   if (!res.ok) {
@@ -285,7 +287,7 @@ async function fetchOne(
       payload: cacheBody ? payload : undefined,
     });
   }
-  return { changed: true, buffer, payload };
+  return { changed: true, buffer, payload, headers: res.headers };
 }
 
 /** Build the RequestInit for an endpoint: method, body and headers, their `${field}`s filled. */
@@ -445,6 +447,12 @@ async function fetchAllBounded(
 /** Default ceiling on pages a single paginated feed fetches per cycle. */
 const DEFAULT_MAX_PAGES = 100;
 
+type Pagination = NonNullable<FeedEndpoint["pagination"]>;
+/** Paging by a link each page gives to the next. */
+type LinkPagination = Extract<Pagination, { mode: "link" }>;
+/** Paging by an offset or page number the client counts. */
+type CountedPagination = Exclude<Pagination, { mode: "link" }>;
+
 /**
  * Count the records at `path` (dot-separated) in a JSON page body. Throws when
  * the body is not JSON so a corrupt page fails the whole cycle (last-good
@@ -458,12 +466,22 @@ function countJsonRecords(
   path: string,
   lists: { xml: boolean; firstPage: boolean },
 ): number {
-  let doc: unknown;
+  return countRecords(parsePage(buffer), path, lists);
+}
+
+function parsePage(buffer: Buffer): unknown {
   try {
-    doc = JSON.parse(buffer.toString("utf8"));
+    return JSON.parse(buffer.toString("utf8"));
   } catch {
     throw new Error("pagination: page body is not valid JSON");
   }
+}
+
+function countRecords(
+  doc: unknown,
+  path: string,
+  lists: { xml: boolean; firstPage: boolean },
+): number {
   const emptyAllowed = lists.xml && !lists.firstPage;
   let node: unknown = doc;
   for (const key of path.split(".")) {
@@ -501,7 +519,7 @@ function withOffset(baseUrl: string, param: string, offset: number): string {
 async function fetchPaginated(
   baseUrls: string[],
   feedId: string,
-  pg: NonNullable<FeedEndpoint["pagination"]>,
+  pg: CountedPagination,
   init: RequestInit | undefined,
   fetchFn: FetchFn,
   redact: (s: string) => string,
@@ -533,6 +551,115 @@ async function fetchPaginated(
     }
     if (!reachedEnd) {
       throw new Error(`pagination: ${feedId} reached maxPages=${maxPages} without a terminal page`);
+    }
+  }
+  return { buffers: out, urls, payloads };
+}
+
+/** The total a linked page reports: the number at `totalPath`, else its `X-Total-Count`. */
+function reportedTotal(
+  doc: unknown,
+  headers: Headers,
+  totalPath: string | undefined,
+): number | undefined {
+  const value = totalPath === undefined ? headers.get("x-total-count") : getPath(doc, totalPath);
+  if (value === null || value === undefined) {
+    if (totalPath !== undefined) throw new Error(`pagination: no total at ${totalPath}`);
+    return undefined;
+  }
+  const total =
+    typeof value === "number" ? value : /^\s*\d+\s*$/.test(String(value)) ? Number(value) : NaN;
+  if (!Number.isSafeInteger(total) || total < 0) {
+    throw new Error("pagination: the reported total is not a count");
+  }
+  return total;
+}
+
+/**
+ * Paginates each base URL by the link each page gives to the next: the
+ * `rel="next"` target of its `Link` header (RFC 8288), as OCPI's transport
+ * prescribes, or the URL at `nextPath` in its body. A server may cap the page
+ * size or return fewer records than asked on any page, so neither the page
+ * size nor a short page says anything; a page that names no next page is the
+ * last. Then the records received must reach the total the last page reports
+ * (`X-Total-Count`, or the number at `totalPath`): fewer is a truncated set
+ * and fails the fetch rather than prune rows. A total that grew while paging
+ * is met by the records on the later pages. A next page on another origin, one
+ * already fetched, or a next page still named after `maxPages` fails the
+ * fetch too, all-or-nothing like the offset paging.
+ */
+async function fetchLinked(
+  baseUrls: string[],
+  feedId: string,
+  pg: LinkPagination,
+  init: RequestInit | undefined,
+  fetchFn: FetchFn,
+  redact: (s: string) => string,
+): Promise<{ buffers: Buffer[]; urls: string[]; payloads: PayloadDigest[] }> {
+  const recordsPath = pg.recordsPath ?? "data";
+  const maxPages = pg.maxPages ?? DEFAULT_MAX_PAGES;
+  const out: Buffer[] = [];
+  const urls: string[] = [];
+  const payloads: PayloadDigest[] = [];
+  const shown = (url: string) => redact(redactUrl(url));
+  for (const baseUrl of baseUrls) {
+    const origin = new URL(baseUrl).origin;
+    const fetched = new Set<string>();
+    let url: string | undefined = baseUrl;
+    let received = 0;
+    let total: number | undefined;
+    for (let page = 0; url !== undefined; page++) {
+      if (page === maxPages) {
+        throw new Error(
+          `pagination: ${feedId} reached maxPages=${maxPages} without a terminal page`,
+        );
+      }
+      fetched.add(url);
+      const { buffer, payload, headers } = await fetchOne(
+        url,
+        fetchFn,
+        init,
+        undefined,
+        false,
+        redact,
+      );
+      const doc = parsePage(buffer);
+      const count = countRecords(doc, recordsPath, { xml: false, firstPage: true });
+      if (count > 0) {
+        out.push(buffer);
+        urls.push(url);
+        payloads.push(payload);
+      }
+      received += count;
+      total = reportedTotal(doc, headers, pg.totalPath);
+      const target =
+        pg.nextPath === undefined ? nextLinkTarget(headers.get("link")) : getPath(doc, pg.nextPath);
+      if (target === undefined || target === null || target === "") {
+        url = undefined;
+        continue;
+      }
+      if (typeof target !== "string") {
+        throw new Error(`pagination: no URL at ${pg.nextPath}`);
+      }
+      let next: URL;
+      try {
+        next = new URL(target, url);
+      } catch {
+        throw new Error(`pagination: next page link is not a URL after ${shown(url)}`);
+      }
+      // The feed's credentials travel with every page: only to its own origin.
+      if (next.origin !== origin) {
+        throw new Error(`pagination: next page link leads to another origin after ${shown(url)}`);
+      }
+      if (fetched.has(next.toString())) {
+        throw new Error(`pagination: next page link repeats ${shown(next.toString())}`);
+      }
+      url = next.toString();
+    }
+    if (total !== undefined && received < total) {
+      throw new Error(
+        `pagination: ${feedId} received ${received} of the ${total} records reported`,
+      );
     }
   }
   return { buffers: out, urls, payloads };
@@ -1183,22 +1310,21 @@ async function fetchRole(
     };
   }
 
-  // Offset pagination: follow `$skip` over a single resolved URL until the last
-  // (short) page. Skips conditional-GET/`unchanged` handling (a paged resource
-  // changes each cycle, so an ETag buys nothing) — like the fan-out paths above.
+  // Pagination: follow `$skip` until the last (short) page, or each page's
+  // link to the next until a page names none. Skips conditional-GET/`unchanged`
+  // handling (a paged resource changes each cycle, so an ETag buys nothing) —
+  // like the fan-out paths above.
   if (endpoint.pagination) {
+    const pagination = endpoint.pagination;
     const baseUrls = endpointUrls();
     if (baseUrls.length === 0) {
       return { status: "no-endpoint", reason: "missing-configuration", validatedAtNetwork: false };
     }
-    const pages = await fetchPaginated(
-      baseUrls,
-      feed.id,
-      endpoint.pagination,
-      requestInit(feed, role, env, cell, at),
-      fetchFn,
-      redact,
-    );
+    const init = requestInit(feed, role, env, cell, at);
+    const pages =
+      pagination.mode === "link"
+        ? await fetchLinked(baseUrls, feed.id, pagination, init, fetchFn, redact)
+        : await fetchPaginated(baseUrls, feed.id, pagination, init, fetchFn, redact);
     return {
       status: "fetched",
       accept: () => {},

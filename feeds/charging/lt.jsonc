@@ -10,9 +10,13 @@
       // OCPI 2.3.0 with each EVSE's live status inline. The server drops
       // unpublished locations from a page after cutting it, so a page comes
       // back shorter than its limit before the end and offset paging would
-      // stop after the first; one request with a limit above the register's
-      // size (about 3,300 locations, 2,000 published) returns them all. The
-      // tariffs come unpaged. Cloudflare in front wants a User-Agent.
+      // stop after the first. Its paging headers cannot be followed either:
+      // the first page's `Link` repeats the query without an offset (the same
+      // page again), and `X-Total-Count` counts the unpublished locations
+      // too. It caps no limit (no `X-Limit`), so one request with a limit
+      // above the register's size (about 3,300 locations, 2,000 published)
+      // returns them all. The tariffs come unpaged. Cloudflare in front wants
+      // a User-Agent.
       "endpoints": {
         "main": {
           "url": "https://ev.vialietuva.lt/ocpi/2.3.0/locations?limit=10000",

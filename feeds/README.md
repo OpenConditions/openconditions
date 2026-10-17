@@ -429,7 +429,14 @@ nothing. The optional request fields are `method`, `body`, `headers`,
 `recordsPath`, `maxPages`; `mode`, `"offset"` by default, or `"page"` where
 `skipParam` carries a page number counted from `firstPage`, 1 by default;
 `xmlLists: true` for JSON converted from XML, where a list of one is the item
-itself and an empty last page has no list),
+itself and an empty last page has no list; or `mode: "link"`, where each page
+names the next and a page that names none is the last: the `rel="next"` link
+of its `Link` header as OCPI prescribes, or with `nextPath` the URL at that
+path in its body. A next page must be on the first page's origin and not one
+already fetched. The records, at `recordsPath` (`data`, OCPI's, by default),
+must reach the total the last page reports in `X-Total-Count`, or with
+`totalPath` at that path in its body, or the poll fails; a server that caps the
+page size is followed to the end),
 `follow`, `each`, `unzip`, `impersonate`, `expand` (see credentials) and `fanout`, for an
 endpoint of several URLs (`urls` or `expand`): `"all"`, the default, needs every
 URL to answer, so one failure fails the poll; with `"tolerant"` a failing URL
