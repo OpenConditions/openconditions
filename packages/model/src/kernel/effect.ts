@@ -20,6 +20,30 @@ export const LOS = [
   "unknown",
 ] as const;
 /**
+ * The band an expected delay falls in (DATEX `DelayBandEnum`, snake_cased):
+ * negligible, up to ten minutes, ten to thirty minutes, thirty minutes to an
+ * hour, one to three hours, three to six hours, longer than six hours.
+ */
+export const DELAY_BANDS = [
+  "negligible",
+  "up_to_ten_minutes",
+  "between_ten_minutes_and_thirty_minutes",
+  "between_thirty_minutes_and_one_hour",
+  "between_one_hour_and_three_hours",
+  "between_three_hours_and_six_hours",
+  "longer_than_six_hours",
+] as const;
+/**
+ * How a delay is described where its length is not (DATEX `DelaysTypeEnum`,
+ * snake_cased): delays, delays of uncertain duration, long or very long delays.
+ */
+export const DELAY_TYPES = [
+  "delays",
+  "delays_of_uncertain_duration",
+  "long_delays",
+  "very_long_delays",
+] as const;
+/**
  * DATEX OperatorActionStatus, snake_cased. requested, approved and rejected
  * actions are not in place and never route; one whose termination is only
  * requested, or under way, still is.
@@ -166,11 +190,14 @@ export const KERNEL_EFFECTS = [
   }),
   defineEffect({
     code: "lane_restriction",
-    version: "1.0",
-    description: "Lane-level impact (WZDx VehicleImpact, snake_cased).",
+    version: "1.1",
+    description:
+      "Lane-level impact (WZDx VehicleImpact, snake_cased). Lanes restricted are restricted fully or partially (DATEX numberOfLanesRestricted), so they are not all closed; lanes operational remain fully usable.",
     shape: () => ({
       lanesTotal: z.number().int().positive().optional(),
       lanesClosed: z.number().int().nonnegative().optional(),
+      lanesRestricted: z.number().int().nonnegative().optional(),
+      lanesOperational: z.number().int().nonnegative().optional(),
       lanes: z
         .array(z.strictObject({ ...LaneRef.shape, status: z.enum(LANE_STATUSES) }))
         .min(1)
@@ -180,11 +207,27 @@ export const KERNEL_EFFECTS = [
     refine: (e, ctx) => {
       const total = e["lanesTotal"] as number | undefined;
       const closed = e["lanesClosed"] as number | undefined;
+      const restricted = e["lanesRestricted"] as number | undefined;
+      const operational = e["lanesOperational"] as number | undefined;
       if (total !== undefined && closed !== undefined && closed > total) {
         ctx.addIssue({
           code: "custom",
           path: ["lanesClosed"],
           message: "more lanes closed than exist",
+        });
+      }
+      if (total !== undefined && operational !== undefined && operational > total) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lanesOperational"],
+          message: "more lanes operational than exist",
+        });
+      }
+      if (closed !== undefined && restricted !== undefined && closed > restricted) {
+        ctx.addIssue({
+          code: "custom",
+          path: ["lanesClosed"],
+          message: "a closed lane is a restricted one: more lanes closed than restricted",
         });
       }
     },
@@ -203,10 +246,13 @@ export const KERNEL_EFFECTS = [
   }),
   defineEffect({
     code: "delay",
-    version: "1.0",
-    description: "Expected delay, queue and level of service.",
+    version: "1.1",
+    description:
+      "Expected delay, queue and level of service; a delay the source gives only as a band or a description keeps that.",
     shape: () => ({
       delay: Quantity.optional(),
+      delayBand: z.enum(DELAY_BANDS).optional(),
+      delayType: z.enum(DELAY_TYPES).optional(),
       queueLength: Quantity.optional(),
       los: z.enum(LOS).optional(),
       capacityRemainingPct: z.number().min(0).max(100).optional(),

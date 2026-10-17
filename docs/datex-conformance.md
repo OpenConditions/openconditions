@@ -48,8 +48,18 @@ records carry the revision as `version`:
 - **Probability** is required on every record, so each one states the
   situation's certainty. `unlikely` has no v3 value (v2's `improbable` was
   dropped) and travels as `_extended` with `_extendedValue="improbable"`.
-- **What else describes the whole situation** — severity, headline and a
-  stated delay — travels on the leading record only.
+- **What else describes the whole situation** — severity (`none` included),
+  the informant (`source`), headline and a stated delay — travels on the
+  leading record only. A roadworks nature record states the works' duration
+  class, scale, whether they are under traffic and whether urgent.
+- **Lanes.** A lane restriction writes its restricted lanes (or, where only
+  closed lanes are known, those) as `numberOfLanesRestricted` and the lanes
+  that remain fully operational. Restricted lanes none of which is known
+  closed are an `other` lane management, not `laneClosures`.
+- **Direction of traffic.** A management record states the effect's own
+  direction as `applicableForTrafficDirection` where it is a compass heading
+  or one of the axisless DATEX directions (both ways, rings, towns); a
+  direction along a reference axis is reported as not exported.
 - **Compliance.** Network-management records (`RoadOrCarriagewayOrLaneManagement`,
   `SpeedManagement`, `ReroutingManagement`, …) must state a `complianceOption`:
   the effect's `mandatory` or `advisory`, else `_extended` with
@@ -62,10 +72,11 @@ records carry the revision as `version`:
   timezone/DST or exception rules as continuous intervals. Suspended validity is
   preserved; unknown or terminal root lifecycle is withheld.
 - **Delay supplements.** Only a temporally eligible delay at the root place with
-  the actual leading record's interval and lifecycle can supply its duration.
-  Ended/unknown delays and mismatched contexts are omitted with diagnostics.
-  Different eligible durations cannot share the one supplement and are all
-  omitted with `conflicting_effects`; equivalent durations may share it.
+  the actual leading record's interval and lifecycle can supply its band,
+  description (`delaysType`) and duration. Ended/unknown delays and mismatched
+  contexts are omitted with diagnostics. Different eligible delays cannot
+  share the one supplement and are all omitted with `conflicting_effects`;
+  equivalent delays may share it.
 - **Validity.** DATEX requires an `overallStartTime`. A situation without a
   declared start is stated valid from its record version time, the earliest
   moment it is known to hold.

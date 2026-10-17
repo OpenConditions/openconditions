@@ -90,6 +90,44 @@ const variants = [
   situation("contraflow-detour", {
     effects: [effect("contraflow", "contraflow"), effect("detour", "detour")],
   }),
+  situation("works-informant-delay-direction", {
+    severity: { label: "none", source: "declared" },
+    details: {
+      kind: "roadworks",
+      v: 1,
+      scale: "minor",
+      durationClass: "short_term",
+      urgent: true,
+      underTraffic: false,
+    },
+    provenance: {
+      sourceUpdatedAt: "2026-09-06T09:00:00Z",
+      informationSource: {
+        type: "police_patrol",
+        name: [{ lang: "de", text: "Autobahnpolizei" }],
+        id: "AP-1",
+        country: "DE",
+        reliable: false,
+      },
+    },
+    effects: [
+      effect("lanes", "lane_restriction", {
+        vehicleImpact: "unknown",
+        lanesTotal: 3,
+        lanesRestricted: 2,
+        lanesOperational: 1,
+        direction: { value: "both", basis: "text", text: "bothWays" },
+      }),
+      effect("speed", "speed_limit", {
+        limit: { value: 60, unit: "km/h" },
+        direction: { value: "unknown", basis: "compass", compass: "NE", text: "northEastBound" },
+      }),
+      effect("delay", "delay", {
+        delayBand: "between_one_hour_and_three_hours",
+        delayType: "delays_of_uncertain_duration",
+      }),
+    ],
+  }),
   situation("no-nature-record", {
     kind: "road_hazard",
     type: "hazard",

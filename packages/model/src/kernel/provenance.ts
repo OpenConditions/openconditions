@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { AttributionPublisher, creditLicensingOf, Licensing } from "./licensing.js";
-import { Iso8601, RecordRef, Sha256Hex } from "./scalars.js";
+import { Iso8601, RecordRef, Sha256Hex, Text } from "./scalars.js";
 import type { Vocab } from "./vocab.js";
 
 export const GRANT_STATES = ["yes", "no", "unknown"] as const;
@@ -215,6 +215,53 @@ export const EvidenceSummary = z.strictObject({
 
 export const Tombstone = z.strictObject({ reason: z.enum(TOMBSTONE_REASONS), at: Iso8601 });
 
+/** What kind of informant supplied a record's information (DATEX `SourceTypeEnum`, snake_cased). */
+export const INFORMATION_SOURCE_TYPES = [
+  "automobile_club_patrol",
+  "camera_observation",
+  "freight_vehicle_operator",
+  "induction_loop_monitoring_station",
+  "infrared_monitoring_station",
+  "microwave_monitoring_station",
+  "mobile_telephone_caller",
+  "non_police_emergency_service_patrol",
+  "other_information",
+  "other_official_vehicle",
+  "police_patrol",
+  "private_breakdown_service",
+  "public_and_private_utilities",
+  "registered_motorist_observer",
+  "road_authorities",
+  "road_operator_patrol",
+  "roadside_telephone_caller",
+  "spotter_aircraft",
+  "traffic_monitoring_station",
+  "transit_operator",
+  "vehicle_probe_measurement",
+  "video_processing_monitoring_station",
+] as const;
+
+/**
+ * Who or what the publisher says supplied the record's information (DATEX
+ * `source`): a police patrol, a camera, a road authority. It is the
+ * publisher's informant, not a publisher the record is credited to, which is
+ * `upstream`. `reliable` is the publisher's own judgement of the informant.
+ */
+export const InformationSource = z
+  .strictObject({
+    type: z.enum(INFORMATION_SOURCE_TYPES).optional(),
+    name: Text.optional(),
+    /** The publisher's identifier of the informant. */
+    id: z.string().min(1).optional(),
+    /** ISO 3166-1 alpha-2. */
+    country: z
+      .string()
+      .regex(/^[A-Z]{2}$/)
+      .optional(),
+    reliable: z.boolean().optional(),
+  })
+  .refine((s) => Object.keys(s).length > 0, { message: "an information source says something" });
+
 /**
  * Stored provenance carries the writing instance; a parser draft never
  * asserts it. `attribution` stands in for {@link Attribution} where the
@@ -240,6 +287,7 @@ export function provenanceSchema<A extends z.ZodType = typeof Attribution>(
       sourceUpdatedAt: Iso8601.optional(),
       attribution,
       upstream: z.array(UpstreamPublisher).min(1).optional(),
+      informationSource: InformationSource.optional(),
       rawRef: z
         .strictObject({
           hash: Sha256Hex,
@@ -305,4 +353,5 @@ export type Freshness = z.infer<typeof Freshness>;
 export type Relation = z.infer<typeof Relation>;
 export type EvidenceSummary = z.infer<typeof EvidenceSummary>;
 export type Tombstone = z.infer<typeof Tombstone>;
+export type InformationSource = z.infer<typeof InformationSource>;
 export type PrivacyClass = (typeof PRIVACY_CLASSES)[number];

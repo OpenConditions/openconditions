@@ -52,6 +52,9 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
+      "informationSource": {
+        "id": "DGT"
+      },
       "privacy": {
         "class": "authoritative"
       },
@@ -88,7 +91,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "03bbb42b9a5d9b7a94f02f5c44a96d46b978573b8b47040f0c6686e960513b7c"
+    "contentHash": "b1e09508925ceb9118cd7219fe68457c03b71b84ac736a425c0ee84eed227679"
   },
   {
     "id": "oc:situation:es-dgt-events:3343801",
@@ -143,6 +146,9 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
+      "informationSource": {
+        "id": "DGT"
+      },
       "privacy": {
         "class": "authoritative"
       },
@@ -193,7 +199,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "bbf2137726b4ab8561f4554509573ae3e10c3c45297002fee0d8b7bbf9ac3cbf"
+    "contentHash": "6f54b043582316f31df5d4f0646da46e46ce189fdd672183454d6b04868f3f15"
   },
   {
     "id": "oc:situation:es-dgt-events:8212884",
@@ -247,6 +253,9 @@
         "provider": "Dirección General de Tráfico (DGT)",
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
+      },
+      "informationSource": {
+        "id": "DGT"
       },
       "privacy": {
         "class": "authoritative"
@@ -383,7 +392,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e6793e18216e8228db2395e89ed0fe8d49d9badaf7eb56ac32025c8e77d1b3f9"
+    "contentHash": "2fae3e4d4822faa14656853964fef3fdd796575ff45f8a3086155c3a96cd0111"
   },
   {
     "id": "oc:situation:es-dgt-events:8660292",
@@ -437,6 +446,9 @@
         "provider": "Dirección General de Tráfico (DGT)",
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
+      },
+      "informationSource": {
+        "id": "DGT"
       },
       "privacy": {
         "class": "authoritative"
@@ -516,7 +528,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "db4034c6679cf259ad92df4b6b04d9066e5e0d15359dbf139c32d426c48f6094"
+    "contentHash": "15f4482cdf9ce49c5ded7f020186027922e1593d041c73c8ee15bdffef988e22"
   },
   {
     "id": "oc:situation:es-dgt-events:9479421",
@@ -571,6 +583,9 @@
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
       },
+      "informationSource": {
+        "id": "DGT"
+      },
       "privacy": {
         "class": "authoritative"
       },
@@ -607,7 +622,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f2e83f91fa87b417caeb0e6b87ced580d59c471c05b02e03e691b4da6e20193e"
+    "contentHash": "4878dc7c42728e9b3a57e90bb48cf9debbce89602b7be2e1cb722ecee161ebff"
   },
   {
     "id": "oc:situation:es-dgt-events:10852398",
@@ -670,6 +685,9 @@
         "provider": "Dirección General de Tráfico (DGT)",
         "license": "CC-BY-4.0",
         "licenseUrl": "https://nap.dgt.es"
+      },
+      "informationSource": {
+        "id": "DGT"
       },
       "privacy": {
         "class": "authoritative"
@@ -774,6 +792,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d9f2063201acf3f26664e06b016dd394e002013263fdb6e5888e6ed2361eca88"
+    "contentHash": "75d37cbc585a4dbd5b0e37b56c4bfde2dfc280605926716c4b6423ebb0a9d87f"
   }
 ]

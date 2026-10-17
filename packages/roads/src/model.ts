@@ -7,7 +7,15 @@ import type {
   MultiLineStringGeometry,
   Severity,
 } from "@openconditions/core";
-import type { Effect, Issue, LinearRef, Schedule, Text, Validity } from "@openconditions/model";
+import type {
+  Effect,
+  InformationSource,
+  Issue,
+  LinearRef,
+  Schedule,
+  Text,
+  Validity,
+} from "@openconditions/model";
 import type { RoadClassification, RoadRestrictionDetailsV1 } from "@openconditions/model-roads";
 
 /**
@@ -136,6 +144,8 @@ export const ROAD_EVENT_TYPES = [
 
 export type RoadEventType = (typeof ROAD_EVENT_TYPES)[number];
 
+type DelayEffect = Extract<Effect, { kind: "delay" }>;
+
 const ROAD_EVENT_TYPE_SET: ReadonlySet<string> = new Set(ROAD_EVENT_TYPES);
 
 /** Runtime guard: is `value` one of the canonical {@link RoadEventType} values? */
@@ -252,6 +262,13 @@ export interface SituationHints {
    * `applicableForTrafficType`), when it names any.
    */
   trafficTypes?: string[];
+  /**
+   * The directions of traffic the record's measure applies to (DATEX
+   * `applicableForTrafficDirection`), verbatim, when it names any.
+   */
+  trafficDirections?: string[];
+  /** Who or what supplied the record's information to its publisher (DATEX `source`). */
+  informationSource?: InformationSource;
   /** What a closure the record declares closes, when it is narrower than the road. */
   closureScope?: "carriageway";
   /**
@@ -311,6 +328,10 @@ export interface RoadEvent {
   lanesAffected?: {
     total?: number;
     closed?: number;
+    /** Lanes restricted fully or partially (DATEX `numberOfLanesRestricted`): not all of them closed. */
+    restricted?: number;
+    /** Lanes that remain fully operational (DATEX `numberOfOperationalLanes`). */
+    operational?: number;
     lanes?: LaneStatus[];
     vehicleImpact?: string;
   };
@@ -337,6 +358,10 @@ export interface RoadEvent {
   detourGeometry?: LineStringGeometry | MultiLineStringGeometry;
   /** Quantified impact, when the source gives it. */
   delaySeconds?: number;
+  /** The band the delay falls in, where the source gives one (DATEX `delayBand`). */
+  delayBand?: DelayEffect["delayBand"];
+  /** How the source describes the delay (DATEX `delaysType`). */
+  delayType?: DelayEffect["delayType"];
   queueLengthMeters?: number;
   /** Remaining capacity as a percentage of the road's normal capacity. */
   capacityRemainingPct?: number;
@@ -378,6 +403,17 @@ export interface RoadEvent {
   freeFlowSource?: BaselineMethod;
   /** WZDx work-zone kind. */
   workZoneType?: "static" | "moving" | "area";
+  /**
+   * What the source says of works beyond their kind (DATEX `roadworksScale`,
+   * `roadworksDurationClassification`, `urgentRoadworks`, `underTraffic`), in
+   * the roadworks details' values.
+   */
+  roadworks?: {
+    scale?: string;
+    durationClass?: string;
+    urgent?: boolean;
+    underTraffic?: boolean;
+  };
   /** Administrative areas the condition sits in (municipality/province/district). */
   regions?: string[];
   /** Related events with their relationship kind (e.g. WZDx `related_road_events`:

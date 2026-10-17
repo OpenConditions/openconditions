@@ -127,6 +127,32 @@ describe("roads severity rule", () => {
     expect(severityOf("public_event", "event", [])).toBeUndefined();
     expect(severityOf("other", "other", [delay(DELAY_FLOOR_SECONDS)])).toBe("major");
   });
+
+  it("raises a delay in a band of half an hour or more to major, and no shorter band", () => {
+    const banded = (delayBand: string) =>
+      ({ ...base, id: "R/delay", kind: "delay", delayBand }) as Effect;
+    expect(severityOf("roadworks", "works", [banded("between_thirty_minutes_and_one_hour")])).toBe(
+      "major",
+    );
+    expect(severityOf("roadworks", "works", [banded("longer_than_six_hours")])).toBe("major");
+    // Ten to thirty minutes may be under the floor.
+    expect(
+      severityOf("roadworks", "works", [banded("between_ten_minutes_and_thirty_minutes")]),
+    ).toBe("minor");
+  });
+
+  it("reads restricted lanes as no closure: only a declared lane closure raises severity", () => {
+    const restricted = {
+      ...base,
+      id: "R/lanes",
+      kind: "lane_restriction",
+      vehicleImpact: "unknown",
+      lanesTotal: 2,
+      lanesRestricted: 2,
+      lanesOperational: 0,
+    } as Effect;
+    expect(severityOf("roadworks", "works", [restricted])).toBe("minor");
+  });
 });
 
 describe("lanes_change", () => {

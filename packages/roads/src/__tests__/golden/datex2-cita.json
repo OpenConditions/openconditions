@@ -186,7 +186,8 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 0,
+        "lanesRestricted": 0,
+        "lanesOperational": 2,
         "vehicleImpact": "all_lanes_open"
       },
       {
@@ -339,7 +340,8 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 0,
+        "lanesRestricted": 0,
+        "lanesOperational": 2,
         "vehicleImpact": "all_lanes_open"
       }
     ],
@@ -351,7 +353,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "ab2618aba9c7c9f6328b3f6c8c5b44389c1a51e4bb504707995ebfaad5da87cc"
+    "contentHash": "57789e3a98f6df638b8fbbea59c7a87655de1e0826a7d9e80f2dbe61401430af"
   },
   {
     "id": "oc:situation:lu-cita-events:234859",
@@ -657,7 +659,7 @@
     "planned": true,
     "certainty": "observed",
     "severity": {
-      "label": "major",
+      "label": "minor",
       "source": "derived"
     },
     "validity": {
@@ -676,8 +678,9 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 2,
-        "vehicleImpact": "all_lanes_closed"
+        "lanesRestricted": 2,
+        "lanesOperational": 0,
+        "vehicleImpact": "unknown"
       }
     ],
     "details": {
@@ -688,7 +691,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "93958837c0852c15aa83258c88b4c0aae18ab0e7557ca79bd49e2a5f82ecf9ab"
+    "contentHash": "658cf2aed998b72cd0609892b8d9faa61047d8885be60da12c51745b9fd715cf"
   },
   {
     "id": "oc:situation:lu-cita-events:234858",
@@ -810,7 +813,7 @@
     "planned": true,
     "certainty": "observed",
     "severity": {
-      "label": "moderate",
+      "label": "minor",
       "source": "derived"
     },
     "validity": {
@@ -829,8 +832,9 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 1,
-        "vehicleImpact": "some_lanes_closed"
+        "lanesRestricted": 1,
+        "lanesOperational": 1,
+        "vehicleImpact": "unknown"
       }
     ],
     "details": {
@@ -841,7 +845,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0fbbb08615908624e6ce218175b82ea146e8ebd34621522f20c78466ac69ab60"
+    "contentHash": "630227fed3aa001265cff65b32479ee2d4f9ed4f51f1863baebbb028b1c9a918"
   },
   {
     "id": "oc:situation:lu-cita-events:234857",
@@ -929,7 +933,8 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 1,
+        "lanesRestricted": 1,
+        "lanesOperational": 1,
         "vehicleImpact": "some_lanes_closed"
       }
     ],
@@ -941,7 +946,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f3f081cd544928993e647bb1e436511e5c4c25768411a8fee9995882d4e7dc27"
+    "contentHash": "79a60a8ca5af5206a3df6919c2577460c48884c99c123df1dcbb0e10ee0a91c1"
   },
   {
     "id": "oc:situation:lu-cita-events:234810",
@@ -1028,7 +1033,8 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 0,
+        "lanesRestricted": 0,
+        "lanesOperational": 2,
         "vehicleImpact": "all_lanes_open"
       },
       {
@@ -1073,7 +1079,8 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 0,
+        "lanesRestricted": 0,
+        "lanesOperational": 2,
         "vehicleImpact": "all_lanes_open"
       }
     ],
@@ -1085,6 +1092,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "09048908cc282ee0d954f08c23460fc3cc9672c54f379e1eee0b7ef779600cbd"
+    "contentHash": "154f977c3ace472f898584d0c1dbf572ee5e91bc7f1ab4d3a51cf5438a3e4347"
   }
 ]

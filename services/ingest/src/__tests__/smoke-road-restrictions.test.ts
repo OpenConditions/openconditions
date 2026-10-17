@@ -237,11 +237,13 @@ describe("runRestrictionSmoke — nl-ndw-events", () => {
       unlocatable: 0,
       duplicates: 0,
     });
-    expect(report.restrictions.effects).toBe(4);
+    // The two lorry closures each state a delay band, read as a delay of the
+    // lorries they apply to: vehicle-specific effects beside the closures.
+    expect(report.restrictions.effects).toBe(6);
     expect(report.restrictions.kinds["height:m"]).toBe(1);
-    expect(report.restrictions.kinds["vehicle_class:truck"]).toBe(2);
+    expect(report.restrictions.kinds["vehicle_class:truck"]).toBe(4);
     expect(report.restrictions.kinds["vehicle_usage:emergency_services"]).toBe(1);
-    expect(report.restrictions.applicability["classes"]).toBe(4);
+    expect(report.restrictions.applicability["classes"]).toBe(6);
     expect(report.restrictions.unsupported).toBe(0);
     // Weight, width and length have no verified live coverage for this source.
     for (const kind of ["gross_weight:kg", "width:m", "length:m"]) {

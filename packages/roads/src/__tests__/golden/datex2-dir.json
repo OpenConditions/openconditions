@@ -47,6 +47,10 @@
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
       },
+      "informationSource": {
+        "id": "Direction interdépartementale des routes/DIR Sud-Ouest",
+        "reliable": true
+      },
       "privacy": {
         "class": "authoritative"
       },
@@ -145,7 +149,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "61494b8b469fcb3b2eb652026b206e19adab77515f6e8be8b9e26f88b9e0652a"
+    "contentHash": "decadf3f6746b199efcff7b3fc226efbb5033aaaea6d1cf4e7847b55f0e4813c"
   },
   {
     "id": "oc:situation:fr-dir-events:251022-000640",
@@ -209,6 +213,10 @@
         "provider": "DIR / Bison Futé",
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "informationSource": {
+        "id": "Direction interdépartementale des routes/DIR Ouest",
+        "reliable": true
       },
       "privacy": {
         "class": "authoritative"
@@ -278,7 +286,7 @@
         "kind": "lane_restriction",
         "v": 1,
         "lanesTotal": 2,
-        "lanesClosed": 1,
+        "lanesRestricted": 1,
         "vehicleImpact": "some_lanes_closed"
       }
     ],
@@ -290,7 +298,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "93455f2e6d3fbbc4fc6b61413a811f9cacdca950ab00d7b324d3a851413ef6f5"
+    "contentHash": "de5ea7ffc94142845be06e3fd8cb0d24305540407f20f3cc7cb070fb4cf8fe80"
   },
   {
     "id": "oc:situation:fr-dir-events:251023-001144",
@@ -334,6 +342,16 @@
         "provider": "DIR / Bison Futé",
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "informationSource": {
+        "name": [
+          {
+            "lang": "fr",
+            "text": "PC Osiris (Chambéry)"
+          }
+        ],
+        "id": "Direction interdépartementale des routes/DIR Centre-Est",
+        "reliable": true
       },
       "privacy": {
         "class": "authoritative"
@@ -407,7 +425,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a26bd6273fe28f02662e990bcda677c2947109dcc6a10ceef9077b379a19b262"
+    "contentHash": "8135187239a0672acbcd40491edcd82ebb674ccf5222d73a7cd64101c6420ee3"
   },
   {
     "id": "oc:situation:fr-dir-events:241125-001455",
@@ -462,6 +480,16 @@
         "provider": "DIR / Bison Futé",
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "informationSource": {
+        "name": [
+          {
+            "lang": "fr",
+            "text": "District Laon"
+          }
+        ],
+        "id": "Direction interdépartementale des routes/DIR Nord",
+        "reliable": true
       },
       "privacy": {
         "class": "authoritative"
@@ -520,7 +548,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "6a20db0c6eee01568018c9e5ba936423edd085759b08271572a96fe95f9d21a9"
+    "contentHash": "171982cf2b5869a33771483d1e661f37c100bd28f2d1fa7ff7838a8fb549563e"
   },
   {
     "id": "oc:situation:fr-dir-events:251209-001171",
@@ -575,6 +603,16 @@
         "provider": "DIR / Bison Futé",
         "license": "etalab-2.0",
         "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence"
+      },
+      "informationSource": {
+        "name": [
+          {
+            "lang": "fr",
+            "text": "CEI de Rostrenen"
+          }
+        ],
+        "id": "Direction interdépartementale des routes/DIR Ouest",
+        "reliable": true
       },
       "privacy": {
         "class": "authoritative"
@@ -782,12 +820,13 @@
     ],
     "details": {
       "kind": "roadworks",
-      "v": 1
+      "v": 1,
+      "scale": "medium"
     },
     "canonicalId": "434242d1d50fa425cfe4b38de04b1967cd7985f336a6df0b8a225f314814d28b",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "bd4d2e3c75b4736e0db668ac1658c2fac7bc69f30b2a451a33f67ce19ce9a346"
+    "contentHash": "f9b41336afdd8351ea987b3cf43d3fb3c75b7d584430e6f1d831560b9ae25d25"
   }
 ]

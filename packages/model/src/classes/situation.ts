@@ -3,7 +3,19 @@ import type { Kernel } from "../kernel/effect-type.js";
 import { checkRecordBase, recordBaseShape, type Stage } from "../kernel/record-base.js";
 import type { KindEntry, SelectorEntry } from "../registry/define.js";
 
-export const SEVERITY_LABELS = ["minor", "moderate", "major", "critical", "unknown"] as const;
+/**
+ * Situation severity, by its impact on traffic, mildest first. `none` is a
+ * declared rating of no impact (DATEX `none`), not a missing one: that is
+ * `unknown`.
+ */
+export const SEVERITY_LABELS = [
+  "none",
+  "minor",
+  "moderate",
+  "major",
+  "critical",
+  "unknown",
+] as const;
 export const CERTAINTIES = ["observed", "likely", "possible", "unlikely", "unknown"] as const;
 export const COMMENT_TYPES = ["public", "operator", "detour", "internal"] as const;
 /** Vocabulary `cause`; crosswalks to DATEX/Road511/GTFS-RT/TraFF are registry mappings. */

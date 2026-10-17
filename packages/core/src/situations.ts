@@ -9,7 +9,7 @@ type Rec = Record<string, unknown>;
 
 /** A severity label the reader filters by, mildest first (`unknown` is never at least anything). */
 export type SeverityLabel = (typeof SEVERITY_LABELS)[number];
-const SEVERITY_ORDER: readonly SeverityLabel[] = ["minor", "moderate", "major", "critical"];
+const SEVERITY_ORDER: readonly SeverityLabel[] = ["none", "minor", "moderate", "major", "critical"];
 
 export interface SituationQuery {
   scope: Scope;

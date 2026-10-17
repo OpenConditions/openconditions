@@ -16,6 +16,7 @@
   "effects": {
     "access": 24,
     "closure": 147,
+    "delay": 13,
     "detour": 112,
     "lane_restriction": 126,
     "speed_limit": 97,
@@ -79,6 +80,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
         },
+        "informationSource": {
+          "name": [
+            {
+              "lang": "nl",
+              "text": "RoadSafetyServices"
+            }
+          ]
+        },
         "privacy": {
           "class": "authoritative"
         },
@@ -115,7 +124,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "847eb6e0ec5a50ee5e4eb4235e327a6653e85bd333e8d2f84a75b27b3423be57"
+      "contentHash": "74682228bd721c4d2c7f710e98364fc2b9bd263bc60ddce2ab246da3fd239e52"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1146779_D2_WWA",
@@ -199,6 +208,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
         },
+        "informationSource": {
+          "name": [
+            {
+              "lang": "nl",
+              "text": "ON-Z [RWS Oost-Nederland District Zuid]"
+            }
+          ]
+        },
         "privacy": {
           "class": "authoritative"
         },
@@ -241,7 +258,8 @@
           "kind": "lane_restriction",
           "v": 1,
           "lanesTotal": 2,
-          "lanesClosed": 0,
+          "lanesRestricted": 0,
+          "lanesOperational": 2,
           "vehicleImpact": "all_lanes_open"
         }
       ],
@@ -253,7 +271,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "481727301c057ca3e919ed1e0cd86c72c635f661c3afbf04e2d37a2a460e7704"
+      "contentHash": "155e9b2311a83b069dc272a8fc8ce48e86ee7b96bbf0b73b3d503123f5a083a3"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS10_OBS0000038442",
@@ -392,6 +410,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
         },
+        "informationSource": {
+          "name": [
+            {
+              "lang": "nl",
+              "text": "RWS10"
+            }
+          ]
+        },
         "privacy": {
           "class": "authoritative"
         },
@@ -423,7 +449,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "40cc1ee223d811026d38265585355d94da83ac10dd643aef660c67ad52fa70c0"
+      "contentHash": "8cf68d0632eeaf626e3fd794a401f11776d2b0bbdecef71a5e3408d3d73ffe72"
     },
     {
       "id": "oc:situation:nl-ndw-events:NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
@@ -473,6 +499,14 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
         },
+        "informationSource": {
+          "name": [
+            {
+              "lang": "nl",
+              "text": "NDW"
+            }
+          ]
+        },
         "privacy": {
           "class": "authoritative"
         },
@@ -503,7 +537,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "84c84d9fbfbee48a9132e17c3f5bc308e5bd1aa16ddcd469e98e1a2cf7979982"
+      "contentHash": "5a488c9c9c5dbd19e6b5d94bf03484759898e46d5163ba272ffb8be6215d1777"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1148373_D2_WWA",
@@ -766,6 +800,14 @@
           "provider": "NDW / Rijkswaterstaat",
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/"
+        },
+        "informationSource": {
+          "name": [
+            {
+              "lang": "nl",
+              "text": "WNZ-N [RWS West-Nederland Zuid District Noord]"
+            }
+          ]
         },
         "privacy": {
           "class": "authoritative"
@@ -2136,7 +2178,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "0344c82242ebb94ed83b405f8913315ae735629767a3ec12fe4cce19da84683d"
+      "contentHash": "d0ee4d5a1542712f2c9ef69a23b9d1e136f3a9356638a13deeff90cf30aca7ed"
     }
   ]
 }

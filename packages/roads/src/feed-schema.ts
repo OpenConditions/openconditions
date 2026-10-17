@@ -29,7 +29,7 @@ const SITUATION_CODES = ROADS_SITUATION_KINDS.flatMap((kind) =>
 const situationCode = z.enum(SITUATION_CODES, {
   error: "not a registered roads situation code (kind.type[.subtype])",
 });
-const severity = z.enum(["low", "medium", "high", "critical", "unknown"]);
+const severity = z.enum(["none", "low", "medium", "high", "critical", "unknown"]);
 
 /** Declarative GeoJSON field mapping — mirrors GeoJsonMapping in model.ts. */
 const geoJsonMappingSchema = z

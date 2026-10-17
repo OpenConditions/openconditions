@@ -41,6 +41,7 @@ export interface AssembleOptions {
 const EFFECT_ONLY_KINDS = new Set(["closure", "restriction", "winter_operation", "other"]);
 
 const DECLARED_SEVERITY: Record<string, string> = {
+  none: "none",
   low: "minor",
   medium: "moderate",
   high: "major",
@@ -215,6 +216,7 @@ function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unkn
         ...(event.locationMethod !== undefined ? { locationMethod: event.locationMethod } : {}),
         ...(verified?.start !== undefined ? { startPositionVerified: verified.start } : {}),
         ...(verified?.end !== undefined ? { endPositionVerified: verified.end } : {}),
+        ...event.roadworks,
       };
     }
     case "restriction":
@@ -557,6 +559,9 @@ export function situationDrafts(
             : {}),
           ...(version !== null && version !== undefined ? { recordVersion: String(version) } : {}),
           ...(sourceUpdatedAt !== undefined ? { sourceUpdatedAt } : {}),
+          ...(hints?.informationSource !== undefined
+            ? { informationSource: hints.informationSource }
+            : {}),
           attribution: {
             provider: source.attribution,
             license: source.license,

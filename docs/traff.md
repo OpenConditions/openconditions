@@ -112,6 +112,13 @@ than exported as zero. Invalid, negative or unrepresentably large durations are
 also omitted with `field_not_exported`; queue length can still travel. An exact
 zero is representable as `0:00`. Canonical records retain their original seconds.
 
+A delay without an exportable duration is told by its description where it has
+one: `DELAY_UNCERTAIN_DURATION`, `DELAY_LONG_DELAY` or `DELAY_VERY_LONG_DELAY`.
+A duration keeps `DELAY_DELAY`, and a description beside it is reported as
+`field_not_exported`, as is a delay band, for which TraFF has no event or
+quantifier. A lane restriction whose lanes are restricted without any known
+closed is `RESTRICTION_RESTRICTIONS`, not `RESTRICTION_LANE_CLOSED`.
+
 Distinct duration/queue pairs remain separate events within their message;
 they are neither summed nor combined across effects. Exact duplicate pairs are
 collapsed. Each effect's location, effective validity and applicability govern export as

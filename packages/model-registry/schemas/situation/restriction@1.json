@@ -231,6 +231,7 @@
         "label": {
           "type": "string",
           "enum": [
+            "none",
             "minor",
             "moderate",
             "major",
@@ -2802,6 +2803,53 @@
             "additionalProperties": false
           }
         },
+        "informationSource": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "automobile_club_patrol",
+                "camera_observation",
+                "freight_vehicle_operator",
+                "induction_loop_monitoring_station",
+                "infrared_monitoring_station",
+                "microwave_monitoring_station",
+                "mobile_telephone_caller",
+                "non_police_emergency_service_patrol",
+                "other_information",
+                "other_official_vehicle",
+                "police_patrol",
+                "private_breakdown_service",
+                "public_and_private_utilities",
+                "registered_motorist_observer",
+                "road_authorities",
+                "road_operator_patrol",
+                "roadside_telephone_caller",
+                "spotter_aircraft",
+                "traffic_monitoring_station",
+                "transit_operator",
+                "vehicle_probe_measurement",
+                "video_processing_monitoring_station"
+              ]
+            },
+            "name": {
+              "$ref": "#/$defs/Text"
+            },
+            "id": {
+              "type": "string",
+              "minLength": 1
+            },
+            "country": {
+              "type": "string",
+              "pattern": "^[A-Z]{2}$"
+            },
+            "reliable": {
+              "type": "boolean"
+            }
+          },
+          "additionalProperties": false
+        },
         "rawRef": {
           "type": "object",
           "properties": {
@@ -5306,6 +5354,16 @@
               "minimum": 0,
               "maximum": 9007199254740991
             },
+            "lanesRestricted": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "lanesOperational": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
             "lanes": {
               "minItems": 1,
               "type": "array",
@@ -6269,6 +6327,27 @@
             },
             "delay": {
               "$ref": "#/$defs/Quantity"
+            },
+            "delayBand": {
+              "type": "string",
+              "enum": [
+                "negligible",
+                "up_to_ten_minutes",
+                "between_ten_minutes_and_thirty_minutes",
+                "between_thirty_minutes_and_one_hour",
+                "between_one_hour_and_three_hours",
+                "between_three_hours_and_six_hours",
+                "longer_than_six_hours"
+              ]
+            },
+            "delayType": {
+              "type": "string",
+              "enum": [
+                "delays",
+                "delays_of_uncertain_duration",
+                "long_delays",
+                "very_long_delays"
+              ]
             },
             "queueLength": {
               "$ref": "#/$defs/Quantity"

@@ -19,8 +19,14 @@ const DATEX2_MAP: Record<string, Severity> = {
   high: "high",
   highest: "critical",
   unknown: "unknown",
-  none: "unknown",
+  // "The situation has a severity rating of none": a declared absence of
+  // impact, which is not the same as no rating at all.
+  none: "none",
 };
+
+/** A table's own entry for a token; an inherited key such as `constructor` is none. */
+const own = (table: Record<string, Severity>, key: string): Severity | undefined =>
+  Object.hasOwn(table, key) ? table[key] : undefined;
 
 /**
  * Map a declared severity string from a feed format to the canonical Severity.
@@ -30,9 +36,9 @@ export function normaliseSeverity(raw: string, opts: { format: string }): Normal
   let severity: Severity = "unknown";
 
   if (opts.format === "open511") {
-    severity = OPEN511_MAP[raw.toUpperCase()] ?? "unknown";
+    severity = own(OPEN511_MAP, raw.toUpperCase()) ?? "unknown";
   } else if (opts.format === "datex2") {
-    severity = DATEX2_MAP[raw.toLowerCase()] ?? "unknown";
+    severity = own(DATEX2_MAP, raw.toLowerCase()) ?? "unknown";
   }
 
   return { severity, severitySource: "declared" };

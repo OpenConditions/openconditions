@@ -16,7 +16,8 @@ export interface Attribution {
   rights?: RoutingRights;
 }
 
-export type Severity = "low" | "medium" | "high" | "critical" | "unknown";
+/** A parser's severity: `none` is a declared rating of no impact on traffic, not a missing one. */
+export type Severity = "none" | "low" | "medium" | "high" | "critical" | "unknown";
 
 export type Confidence = "observed" | "likely" | "possible" | "unknown";
 
