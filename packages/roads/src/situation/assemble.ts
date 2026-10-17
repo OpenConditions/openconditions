@@ -158,10 +158,17 @@ function validityOf(event: SnapshotEvent, timeZone: string | undefined): Validit
     .filter((s): s is Schedule => typeof s.scheduleTimezone === "string")
     .map(kernelSchedule)
     .filter((s): s is Schedule => s !== undefined);
+  const hints = event.situation;
   return {
-    status: event.situation?.validityStatus ?? STATUS[event.status],
+    status: hints?.validityStatus ?? STATUS[event.status],
     ...(start !== undefined ? { start } : {}),
     ...(end !== undefined ? { end } : {}),
+    ...(start !== undefined && hints?.startVerified !== undefined
+      ? { startVerified: hints.startVerified }
+      : {}),
+    ...(end !== undefined && hints?.endVerified !== undefined
+      ? { endVerified: hints.endVerified }
+      : {}),
     ...(periods.length > 0 ? { periods: periods as Validity["periods"] } : {}),
   };
 }
@@ -177,17 +184,32 @@ function derivedFromSiteOf(event: RoadEvent) {
 function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unknown> {
   const base = { kind: c.kind, v: 1 };
   switch (c.kind) {
-    case "roadworks":
+    case "roadworks": {
+      const presence = event.workerPresence;
+      const verified = event.positionVerified;
       return {
         ...base,
-        ...(event.workersPresent !== undefined ? { workersPresent: event.workersPresent } : {}),
         ...(event.workZoneType !== undefined
           ? {
               workZoneType:
                 event.workZoneType === "area" ? "planned_moving_area" : event.workZoneType,
             }
           : {}),
+        ...(event.workersPresent !== undefined ? { workersPresent: event.workersPresent } : {}),
+        ...(presence?.confidence !== undefined
+          ? { workerPresenceConfidence: presence.confidence }
+          : {}),
+        ...(presence?.method !== undefined ? { workerPresenceMethod: presence.method } : {}),
+        ...(presence?.definition?.length ? { workerPresenceDefinition: presence.definition } : {}),
+        ...(presence?.confirmedAt !== undefined
+          ? { workerPresenceConfirmedAt: presence.confirmedAt }
+          : {}),
+        ...(event.typesOfWork?.length ? { typesOfWork: event.typesOfWork } : {}),
+        ...(event.locationMethod !== undefined ? { locationMethod: event.locationMethod } : {}),
+        ...(verified?.start !== undefined ? { startPositionVerified: verified.start } : {}),
+        ...(verified?.end !== undefined ? { endPositionVerified: verified.end } : {}),
       };
+    }
     case "restriction":
       return { ...base, basis: "temporary" };
     case "road_condition":
@@ -223,7 +245,8 @@ function severityOf(c: RoadClassification, event: RoadEvent, effects: readonly E
 /** Orders record ids as the numbers in them count, so a publisher's order of them does not show. */
 const RECORD_ORDER = new Intl.Collator("en", { numeric: true });
 
-function relationsOf(event: RoadEvent, source: SourceDescriptor, selfId: string) {
+/** The links an event states, but none to a situation in `own`: itself, or a record folded into it. */
+function relationsOf(event: RoadEvent, source: SourceDescriptor, own: ReadonlySet<string>) {
   const ref = (id: string) => ({ class: "situation", id: `oc:situation:${source.id}:${id}` });
   const typed = (event.relatedEvents ?? []).map((r) => ({
     ref: ref(r.id),
@@ -234,22 +257,45 @@ function relationsOf(event: RoadEvent, source: SourceDescriptor, selfId: string)
     .map((id) => ({ ref: ref(id), relation: "related" }))
     .filter((r) => !seen.has(r.ref.id));
   return [...typed, ...plain]
-    .filter((r) => r.ref.id !== selfId)
+    .filter((r) => !own.has(r.ref.id))
     .sort((a, b) => RECORD_ORDER.compare(a.ref.id, b.ref.id));
 }
 
-/** The event a detour names as its parent (WZDx `related_road_events`), when it is in the snapshot. */
+const lookUp = (byLocalId: ReadonlyMap<string, RoadEvent>, id: string) =>
+  byLocalId.get(id) ?? [...byLocalId.entries()].find(([local]) => local.endsWith(`:${id}`))?.[1];
+
+/**
+ * The event a detour serves, when it is in the snapshot: one the detour names
+ * (WZDx `related_road_events`), else one that names the detour as its
+ * `related-detour`.
+ */
 function parentOf(
   detour: RoadEvent,
   byLocalId: ReadonlyMap<string, RoadEvent>,
+  namedBy: ReadonlyMap<RoadEvent, RoadEvent>,
 ): RoadEvent | undefined {
   for (const related of detour.relatedEvents ?? []) {
-    const parent =
-      byLocalId.get(related.id) ??
-      [...byLocalId.entries()].find(([id]) => id.endsWith(`:${related.id}`))?.[1];
+    const parent = lookUp(byLocalId, related.id);
     if (parent !== undefined && parent !== detour && parent.type !== "detour") return parent;
   }
-  return undefined;
+  return namedBy.get(detour);
+}
+
+/** Each detour of the snapshot some other event names as its `related-detour`, with the first that does. */
+function detoursNamed(
+  events: readonly RoadEvent[],
+  byLocalId: ReadonlyMap<string, RoadEvent>,
+): Map<RoadEvent, RoadEvent> {
+  const out = new Map<RoadEvent, RoadEvent>();
+  for (const e of events) {
+    if (e.type === "detour") continue;
+    for (const related of e.relatedEvents ?? []) {
+      if (related.type !== "related-detour") continue;
+      const detour = lookUp(byLocalId, related.id);
+      if (detour?.type === "detour" && !out.has(detour)) out.set(detour, e);
+    }
+  }
+  return out;
 }
 
 /**
@@ -268,8 +314,10 @@ function groupsOf(
   const byLocalId = new Map(all.map((e) => [localIdOf(e), e]));
   const ownGroup = new Map<RoadEvent, RoadEvent[]>();
   const deferred: [RoadEvent, RoadEvent][] = [];
+  const namedBy = detoursNamed(all, byLocalId);
   for (const e of all) {
-    const parent = e.type === "detour" && !e.situationId ? parentOf(e, byLocalId) : undefined;
+    const parent =
+      e.type === "detour" && !e.situationId ? parentOf(e, byLocalId, namedBy) : undefined;
     if (parent !== undefined) {
       deferred.push([e, parent]);
       continue;
@@ -442,7 +490,11 @@ export function situationDrafts(
         (hints?.headlineFromSource === false ? undefined : text(primary.headline));
       const description = hints?.description ?? text(primary.description);
       const comments = hints?.comments?.filter((c) => c.text.length > 0) ?? [];
-      const relations = relationsOf(primary, source, id);
+      const relations = relationsOf(
+        primary,
+        source,
+        new Set([id, ...members.map((m) => `oc:situation:${source.id}:${localIdOf(m)}`)]),
+      );
       const scheme = EXTERNAL_ID_SCHEME[primary.sourceFormat];
       const externalIds =
         grouped && primary.sourceFormat === "datex2"

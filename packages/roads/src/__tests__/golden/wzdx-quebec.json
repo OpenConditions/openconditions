@@ -88,7 +88,9 @@
     "validity": {
       "status": "planned",
       "start": "2026-08-07T13:00:00Z",
-      "end": "2026-08-07T19:00:00Z"
+      "end": "2026-08-07T19:00:00Z",
+      "startVerified": false,
+      "endVerified": false
     },
     "effects": [
       {
@@ -129,13 +131,16 @@
     ],
     "details": {
       "kind": "roadworks",
-      "v": 1
+      "v": 1,
+      "locationMethod": "unknown",
+      "startPositionVerified": false,
+      "endPositionVerified": false
     },
     "canonicalId": "b1cd8567ca19ad2cd5dcafe787bff3355bf6487ac6f87a6c131b21ec4b0dfa2a",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8b3cd9f81ac47673610116f1b388556ff439d88d9bb77b41a738e164be8d5cf6"
+    "contentHash": "c421d0e2a12093203cc9f5b56e571df608088fcaa2b8e417020b2ef6288560c3"
   },
   {
     "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
@@ -238,7 +243,9 @@
     "validity": {
       "status": "active",
       "start": "2026-07-29T13:00:00Z",
-      "end": "2026-07-31T20:00:00Z"
+      "end": "2026-07-31T20:00:00Z",
+      "startVerified": false,
+      "endVerified": false
     },
     "effects": [
       {
@@ -306,6 +313,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "e9cad462d173cd5b7e6ff0482a71a3f9c45460535c5b8a84a833e83faf384498"
+    "contentHash": "d94c3a5926393144bda38092fcae4555de3f44aa960dca72060f6669d505ed25"
   }
 ]

@@ -383,15 +383,16 @@ describe("parseWzdx — extended fields", () => {
 });
 
 describe("parseWzdx — relatedEvents (relationship type)", () => {
-  it("maps related_road_events[] into relatedEvents with id and type", () => {
+  it("maps related_road_events[] into relatedEvents with type, named as the parser names events", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");
     const events = parseWzdx(json, WZDX_SOURCE);
 
     const detour = events.find((ev) => ev.subtype === "detour");
     expect(detour).toBeDefined();
+    // Neither is in the feed, so each is taken to be of the detour's own data source.
     expect(detour!.relatedEvents).toEqual([
-      { id: "a15f7570-b7e6-4367-8ad9-3a462eea65dd", type: "related-work-zone" },
-      { id: "4d151e7d-11d8-4b99-a192-51e189da0de7", type: "next-in-sequence" },
+      { id: "1:a15f7570-b7e6-4367-8ad9-3a462eea65dd", type: "related-work-zone" },
+      { id: "1:4d151e7d-11d8-4b99-a192-51e189da0de7", type: "next-in-sequence" },
     ]);
   });
 
@@ -402,9 +403,39 @@ describe("parseWzdx — relatedEvents (relationship type)", () => {
     const detour = events.find((ev) => ev.subtype === "detour");
     expect(detour).toBeDefined();
     expect(detour!.relatedIds).toEqual([
-      "a15f7570-b7e6-4367-8ad9-3a462eea65dd",
-      "4d151e7d-11d8-4b99-a192-51e189da0de7",
+      "1:a15f7570-b7e6-4367-8ad9-3a462eea65dd",
+      "1:4d151e7d-11d8-4b99-a192-51e189da0de7",
     ]);
+  });
+
+  it("names a related road event of the feed by its own data source, so its relation resolves", () => {
+    const feature = (id: string, ds: string, core: Record<string, unknown> = {}) => ({
+      id,
+      type: "Feature",
+      geometry: { type: "Point", coordinates: [-100, 40] },
+      properties: {
+        core_details: { event_type: "work-zone", data_source_id: ds, road_names: ["I-5"], ...core },
+      },
+    });
+    const events = parseWzdx(
+      {
+        type: "FeatureCollection",
+        features: [
+          feature("a", "ds1", { related_road_events: [{ id: "b", type: "related-work-zone" }] }),
+          feature("b", "ds2"),
+        ],
+      },
+      WZDX_SOURCE,
+    );
+    expect(events[0]!.relatedEvents).toEqual([{ id: "ds2:b", type: "related-work-zone" }]);
+    const [draft] = situationDrafts(events, { source: WZDX_SOURCE });
+    expect(draft!["relations"]).toEqual([
+      {
+        ref: { class: "situation", id: `oc:situation:${WZDX_SOURCE.id}:ds2:b` },
+        relation: "related_work_zone",
+      },
+    ]);
+    expect(events.map((e) => e.id)).toContain(`${WZDX_SOURCE.id}:ds2:b`);
   });
 
   it("includes entries with an id but no relationship type", () => {

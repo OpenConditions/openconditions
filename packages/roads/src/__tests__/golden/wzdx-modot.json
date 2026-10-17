@@ -99,7 +99,9 @@
     "validity": {
       "status": "active",
       "start": "2026-05-29T05:00:00.0000000Z",
-      "end": "2026-08-31T05:00:00.0000000Z"
+      "end": "2026-08-31T05:00:00.0000000Z",
+      "startVerified": false,
+      "endVerified": false
     },
     "effects": [
       {
@@ -122,13 +124,16 @@
     ],
     "details": {
       "kind": "roadworks",
-      "v": 1
+      "v": 1,
+      "locationMethod": "unknown",
+      "startPositionVerified": false,
+      "endPositionVerified": false
     },
     "canonicalId": "62ffb628dd65ba560a425e09b5a6a7794c6100eaa4ca74c02967591626fb2eaf",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c20a6d3e84e0fa5a1ce4d0358a2c7971ce934e70f0bd7e6320244adfff0c97f4"
+    "contentHash": "24d8ef49ccf5efbf5825362b931ddfd10c11c1f2d3f62f920e08e19931df462c"
   },
   {
     "id": "oc:situation:us-wzdx-events:tms_work_zone:549748",
@@ -230,7 +235,9 @@
     "validity": {
       "status": "active",
       "start": "2026-04-28T05:00:00.0000000Z",
-      "end": "2026-08-31T05:00:00.0000000Z"
+      "end": "2026-08-31T05:00:00.0000000Z",
+      "startVerified": false,
+      "endVerified": false
     },
     "effects": [
       {
@@ -273,12 +280,15 @@
     ],
     "details": {
       "kind": "roadworks",
-      "v": 1
+      "v": 1,
+      "locationMethod": "unknown",
+      "startPositionVerified": false,
+      "endPositionVerified": false
     },
     "canonicalId": "446a5a4492bc6695909d8d4762e7f008fffa2fc8851f1363288b37c4e994ed94",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8bab401cb834600da8a2b891f827f08fa6c16b0703f24dfe583124b128c8092f"
+    "contentHash": "e3cdc41cfb2ace11d6fd209287c56bd61055acc5a3306688dd3a9b7e9b1cd7d0"
   }
 ]

@@ -153,7 +153,7 @@ describe("WZDx fixtures against the schema of the version they declare", () => {
     const events = parse(readFileSync(join(FIXTURES, "quebec-v31.json"), "utf8"));
     const wz = events.find((e) => e.type === "roadworks")!;
     expect(wz.lanesAffected!.lanes).toEqual([
-      { index: 1, status: "alternating", type: "general" },
+      { index: 1, status: "alternating", type: "lane" },
       { index: 2, status: "open" },
       { index: 3, status: "open", type: "sidewalk" },
     ]);
@@ -163,8 +163,8 @@ describe("WZDx fixtures against the schema of the version they declare", () => {
   it("reads the CWZ fixture's 3.1 lane types as the general lanes 3.1 defines them as", () => {
     const [ev] = parse(readFileSync(join(FIXTURES, "cwz-pbs.json"), "utf8"));
     expect(ev!.lanesAffected!.lanes).toEqual([
-      { index: 1, status: "shift_left", type: "general" },
-      { index: 2, status: "shift_left", type: "general" },
+      { index: 1, status: "shift_left", type: "left-lane" },
+      { index: 2, status: "shift_left", type: "right-lane" },
     ]);
     expect(drainSkipped(SRC.id)).toEqual({});
   });
@@ -265,11 +265,18 @@ interface Probe {
 const CORE = { data_source_id: "ds", direction: "northbound", road_names: ["I-80"] };
 const DATES = { start_date: "2026-01-01T00:00:00Z", end_date: "2026-12-31T00:00:00Z" };
 
-/** The road event properties a version requires of an event type, before the probe's own. */
+/** An object without the keys a probe set to `undefined`, so a probe can leave out a default. */
+const defined = (o: Json): Json =>
+  Object.fromEntries(Object.entries(o).filter(([, v]) => v !== undefined));
+
+/**
+ * The road event properties a version requires of an event type, before the
+ * probe's own; a probe value of `undefined` leaves a default out.
+ */
 function eventProperties(version: Version, eventType: "work-zone" | "detour", probe: Probe): Json {
-  const core = { ...CORE, event_type: eventType, ...probe.core };
+  const core = defined({ ...CORE, event_type: eventType, ...probe.core });
   if (version === "3.1") {
-    return {
+    return defined({
       ...core,
       ...DATES,
       beginning_accuracy: "estimated",
@@ -278,7 +285,7 @@ function eventProperties(version: Version, eventType: "work-zone" | "detour", pr
       end_date_accuracy: "estimated",
       vehicle_impact: "unknown",
       ...probe.props,
-    };
+    });
   }
   const dateAccuracy =
     version === "4.0"
@@ -294,7 +301,7 @@ function eventProperties(version: Version, eventType: "work-zone" | "detour", pr
             ? { beginning_accuracy: "estimated", ending_accuracy: "estimated" }
             : { is_start_position_verified: false, is_end_position_verified: false }),
         };
-  return { core_details: core, ...DATES, ...dateAccuracy, ...workZone, ...probe.props };
+  return defined({ core_details: core, ...DATES, ...dateAccuracy, ...workZone, ...probe.props });
 }
 
 /** A one-event feed of a version, in that version's shape and header. */
@@ -419,6 +426,16 @@ const RESTRICTION_EFFECTS: Record<string, Json> = {
     applicability: { kind: "classes", include: { 0: { class: "truck" } } },
   },
   "no-parking": { kind: "access", mode: "no_parking" },
+  "hov-2": {
+    kind: "access",
+    mode: "prohibited",
+    applicability: { kind: "all", except: { 0: { hovMin: 2 } } },
+  },
+  "hov-3": {
+    kind: "access",
+    mode: "prohibited",
+    applicability: { kind: "all", except: { 0: { hovMin: 3 } } },
+  },
   "towing-prohibited": { kind: "access", mode: "towing_prohibited" },
   "permitted-oversize-loads-prohibited": { kind: "access", mode: "oversize_prohibited" },
   "local-access-only": { kind: "access", mode: "local_access_only" },
@@ -456,15 +473,10 @@ const RESTRICTION_EFFECTS: Record<string, Json> = {
 };
 
 const NO_KERNEL_RULE = {
-  "hov-2":
-    "the kernel's access rules and vehicle usages have no vehicle-occupancy requirement; " +
-    "situation/effects.ts carries it as an `unsupported` effect with the raw type",
-  "hov-3":
-    "the kernel's access rules and vehicle usages have no vehicle-occupancy requirement; " +
-    "situation/effects.ts carries it as an `unsupported` effect with the raw type",
   "travel-peak-hours-only":
-    "WZDx gives no peak hours to bound it by, and the kernel has no access rule for " +
-    "'travel in peak hours only'; it is carried as an `unsupported` effect",
+    "WZDx defines it only as 'travel restricted to travel peak hours only' and gives no " +
+    "peak hours, so there is no window to bound an access rule by; it is carried as an " +
+    "`unsupported` effect",
 };
 
 /** The restriction effect of a work zone carrying the restriction. */
@@ -476,6 +488,42 @@ const restrictionEffect = (version: Version, type: string, meant: Json) => {
   if (!read_) return false;
   const effects = effectsOf(read_.draft).filter((e) => e.kind !== "lane_restriction");
   return effects.length === 1 && matches(effects[0], meant);
+};
+
+/** A lane restriction in a version's shape: 3.1's `LaneRestriction`, 4.x's `Restriction`. */
+const laneRestriction = (version: Version, type: string, limit: Json = {}) =>
+  version === "3.1"
+    ? {
+        restriction_type: type,
+        ...(limit["value"] !== undefined
+          ? { restriction_value: limit["value"], restriction_units: limit["unit"] }
+          : {}),
+      }
+    : { type, ...limit };
+
+/** The effects of a work zone whose first lane carries the restrictions, besides its lane_restriction. */
+const laneRestrictionEffects = (version: Version, restrictions: Json[]) => {
+  const read_ = readWorkZone(version, {
+    props: {
+      lanes: [
+        { order: 1, status: "open", type: version === "3.1" ? "lane" : "general", restrictions },
+        { order: 2, status: "open", type: version === "3.1" ? "lane" : "general" },
+      ],
+    },
+  });
+  return read_ && effectsOf(read_.draft).filter((e) => e.kind !== "lane_restriction");
+};
+
+/** The restriction effect of a work zone's first lane carrying the restriction, held to that lane. */
+const laneRestrictionEffect = (version: Version, type: string, meant: Json) => {
+  const effects = laneRestrictionEffects(version, [
+    laneRestriction(version, type, RESTRICTION_PROBES[type]),
+  ]);
+  return (
+    effects?.length === 1 &&
+    matches(effects[0], meant) &&
+    JSON.stringify(effects[0]!["laneScope"]) === JSON.stringify([{ index: 1, type: "general" }])
+  );
 };
 
 /** The roads classification of a restriction road event, as the RestrictionType page defines it. */
@@ -515,6 +563,9 @@ const LANE_TYPES: Record<string, { type: string; status?: string }> = {
   "right-lane": { type: "general" },
   "middle-lane": { type: "general" },
   "center-lane": { type: "general" },
+  "right-turning-lane": { type: "turn" },
+  "left-turning-lane": { type: "turn" },
+  "hov-lane": { type: "hov" },
   "right-shoulder": { type: "shoulder" },
   "left-shoulder": { type: "shoulder" },
   "right-exit-lane": { type: "exit" },
@@ -556,6 +607,37 @@ const laneOf = (version: Version, lane: Json) => {
   const effect = read_ && effectsOf(read_.draft).find((e) => e.kind === "lane_restriction");
   return (effect?.["lanes"] as Json[] | undefined)?.[0];
 };
+
+/**
+ * Whether a work zone naming a detour of the feed as its `related-detour`
+ * gets that detour as its own detour effect, the detour folded into it.
+ */
+function namesItsDetour(version: Version): boolean {
+  const DETOUR_LINE = {
+    type: "LineString",
+    coordinates: [
+      [-93.0, 41.0],
+      [-93.02, 41.0],
+    ],
+  };
+  const feed = feedOf(version, "work-zone", {
+    core: { related_road_events: [{ type: "related-detour", id: "d1" }] },
+  });
+  (feed["features"] as Json[]).push({
+    id: "d1",
+    type: "Feature",
+    properties: eventProperties(version, "detour", {}),
+    geometry: DETOUR_LINE,
+  });
+  expect(feedValidators[version](feed)).toEqual([]);
+  const events = parse(feed);
+  if (Object.keys(drainSkipped(SRC.id)).length > 0) return false;
+  const drafts = draftsOf(events);
+  return (
+    drafts.length === 1 &&
+    effectsOf(drafts[0]!).some((e) => e.kind === "detour" && matches(e, { geometry: DETOUR_LINE }))
+  );
+}
 
 /** Each enumeration the WZDx schemas define, by the name its definition has. */
 const COVERAGE: Record<string, Coverage> = {
@@ -665,22 +747,11 @@ const COVERAGE: Record<string, Coverage> = {
     },
   }),
 
-  LaneType: (version, values) => ({
+  LaneType: (version) => ({
     "": {
       handled: meaning(LANE_TYPES, (value, meant) =>
         matches(laneOf(version, { type: value }), meant),
       ),
-      unsupported: of(values, {
-        "right-turning-lane":
-          "3.1 defines it as a lane where right turns are permissible; 4.x has no turning-lane " +
-          "type for the lane type crosswalk to map, so the lane keeps its status without a type",
-        "left-turning-lane":
-          "3.1 defines it as a lane where left turns are permissible; 4.x has no turning-lane " +
-          "type for the lane type crosswalk to map, so the lane keeps its status without a type",
-        "hov-lane":
-          "3.1 says to give HOV lanes as an hov-2 or hov-3 lane restriction, and the type does " +
-          "not say which; 4.x has no HOV lane type, so the lane keeps its status without a type",
-      }),
     },
   }),
 
@@ -723,13 +794,19 @@ const COVERAGE: Record<string, Coverage> = {
           ? Object.fromEntries(
               Object.keys(RESTRICTION_PROBES).map((type) => [
                 type,
-                "3.1 road restrictions are flags without a limit (only a 3.1 lane restriction " +
-                  "has a value, and kernel lanes carry no restrictions), so there is no " +
-                  "dimension to limit; it is carried as an `unsupported` effect",
+                "3.1 road restrictions are flags without a limit ('detailed restrictions are " +
+                  "coded to specific lanes', read below), so there is no dimension to limit; " +
+                  "the flag is carried as an `unsupported` effect",
               ]),
             )
           : {}),
       }),
+    },
+    " (lane restriction)": {
+      handled: meaning(RESTRICTION_EFFECTS, (value, meant) =>
+        laneRestrictionEffect(version, value, meant),
+      ),
+      unsupported: of(values, NO_KERNEL_RULE),
     },
     // Only 4.0 has a RestrictionRoadEvent schema to build one against.
     ...(version !== "4.0"
@@ -752,59 +829,152 @@ const COVERAGE: Record<string, Coverage> = {
         }),
   }),
 
-  UnitOfMeasurement: (version, values) => ({
-    "":
-      version === "3.1"
-        ? {
-            handled: [],
-            unsupported: Object.fromEntries(
-              values.map((unit) => [
-                unit,
-                "3.1 states units only on lane restrictions, and the kernel lane_restriction " +
-                  "lane carries no restrictions (situation/effects.ts keeps a lane's index, " +
-                  "status and type)",
-              ]),
-            ),
-          }
-        : {
-            handled: meaning(
-              {
-                feet: ["reduced-height", 14, round(14 * METRES_PER_FOOT)],
-                inches: ["reduced-height", 168, round(168 * 0.0254)],
-                centimeters: ["reduced-width", 300, 3],
-                pounds: ["reduced-weight", 20000, round(20000 * KILOGRAMS_PER_POUND)],
-                kilograms: ["reduced-weight", 9000, 9000],
-              } as Record<string, [string, number, number]>,
-              (unit, [type, value, canonical]) => {
-                const read_ = readWorkZone(version, {
-                  props: { restrictions: [{ type, value, unit }] },
-                });
-                return (
-                  read_ !== undefined &&
-                  effectsOf(read_.draft).some(
-                    (e) =>
-                      e.kind === "dimension_limit" && matches(e, { value: { value: canonical } }),
-                  )
-                );
-              },
-            ),
-            unsupported: {
-              tons:
-                "WZDx says only \"Imperial system 'tons'\", which is the long ton (2240 lb) while " +
-                "US publishers mean the short ton (2000 lb); situation/effects.ts does not guess, " +
-                "so the limit is carried as an `unsupported` effect",
-            },
-          },
+  // WZDx is a US standard and calls all of feet, inches, pounds and tons
+  // "Imperial system"; the US ton is the short ton of 2000 lb.
+  UnitOfMeasurement: (version) => ({
+    "": {
+      handled: meaning(
+        {
+          feet: ["reduced-height", 14, round(14 * METRES_PER_FOOT)],
+          inches: ["reduced-height", 168, round(168 * 0.0254)],
+          centimeters: ["reduced-width", 300, 3],
+          pounds: ["reduced-weight", 20000, round(20000 * KILOGRAMS_PER_POUND)],
+          tons: ["gross-weight-limit", 10, round(10 * 2000 * KILOGRAMS_PER_POUND)],
+          kilograms: ["reduced-weight", 9000, 9000],
+        } as Record<string, [string, number, number]>,
+        (unit, [type, value, canonical]) => {
+          // 3.1 states a unit only on a lane restriction.
+          const effects =
+            version === "3.1"
+              ? laneRestrictionEffects(version, [laneRestriction(version, type, { value, unit })])
+              : (() => {
+                  const read_ = readWorkZone(version, {
+                    props: { restrictions: [{ type, value, unit }] },
+                  });
+                  return read_ && effectsOf(read_.draft);
+                })();
+          return (
+            effects?.some(
+              (e) => e.kind === "dimension_limit" && matches(e, { value: { value: canonical } }),
+            ) ?? false
+          );
+        },
+      ),
+    },
   }),
 
   TimeVerification: (version) => ({
     "": {
-      handled: meaning({ verified: "observed", estimated: "likely" }, (value, meant) => {
+      handled: meaning(
+        { verified: ["observed", true], estimated: ["likely", false] } as Record<
+          string,
+          [string, boolean]
+        >,
+        (value, [certainty, verified]) => {
+          const read_ = readWorkZone(version, {
+            props: {
+              start_date_accuracy: value,
+              end_date_accuracy: value,
+              is_start_date_verified: undefined,
+              is_end_date_verified: undefined,
+            },
+          });
+          return (
+            read_?.draft["certainty"] === certainty &&
+            matches(read_.draft["validity"], { startVerified: verified, endVerified: verified })
+          );
+        },
+      ),
+    },
+  }),
+
+  SpatialVerification: (version) => ({
+    "": {
+      handled: meaning({ verified: true, estimated: false }, (value, verified) => {
         const read_ = readWorkZone(version, {
-          props: { start_date_accuracy: value, end_date_accuracy: value },
+          props: {
+            beginning_accuracy: value,
+            ending_accuracy: value,
+            is_start_position_verified: undefined,
+            is_end_position_verified: undefined,
+          },
         });
-        return read_?.draft["certainty"] === meant;
+        return matches(read_?.draft["details"], {
+          startPositionVerified: verified,
+          endPositionVerified: verified,
+        });
       }),
+    },
+  }),
+
+  LocationMethod: (version) => ({
+    "": {
+      handled: (value) => {
+        // 3.1 states it per data source, 4.x per work zone.
+        const feed = feedOf(
+          version,
+          "work-zone",
+          version === "3.1" ? {} : { props: { location_method: value } },
+        );
+        if (version === "3.1") {
+          const sources = (feed["road_event_feed_info"] as Json)["data_sources"] as Json[];
+          sources[0]!["location_method"] = value;
+        }
+        const read_ = read(feed, feedValidators[version]);
+        return matches(read_?.draft["details"], { locationMethod: value.replaceAll("-", "_") });
+      },
+    },
+  }),
+
+  WorkerPresenceMethod: (version) => ({
+    "": {
+      handled: (value) => {
+        const read_ = readWorkZone(version, {
+          props: { worker_presence: { are_workers_present: true, method: value } },
+        });
+        return matches(read_?.draft["details"], {
+          workersPresent: true,
+          workerPresenceMethod: value.replaceAll("-", "_"),
+        });
+      },
+    },
+  }),
+
+  WorkerPresenceDefinition: (version) => ({
+    "": {
+      handled: meaning(
+        {
+          "workers-in-work-zone-working": "workers_working",
+          "workers-in-work-zone-not-working": "workers_not_working",
+          "mobile-equipment-in-work-zone-moving": "mobile_equipment_moving",
+          "mobile-equipment-in-work-zone-not-working": "mobile_equipment_not_moving",
+          "fixed-equipment-in-work-zone": "fixed_equipment",
+          "humans-behind-barrier": "humans_behind_barrier",
+          "humans-in-right-of-way": "humans_in_right_of_way",
+        },
+        (value, meant) => {
+          const read_ = readWorkZone(version, {
+            props: { worker_presence: { are_workers_present: true, definition: [value] } },
+          });
+          const details = read_?.draft["details"] as Json | undefined;
+          return JSON.stringify(details?.["workerPresenceDefinition"]) === JSON.stringify([meant]);
+        },
+      ),
+    },
+  }),
+
+  WorkerPresenceConfidence: (version) => ({
+    "": {
+      handled: (value) => {
+        const read_ = readWorkZone(version, {
+          props: { worker_presence: { are_workers_present: true, confidence: value } },
+        });
+        // It qualifies are_workers_present only, never the work zone's certainty.
+        return (
+          matches(read_?.draft["details"], { workerPresenceConfidence: value }) &&
+          read_?.draft["certainty"] === readWorkZone(version, {})?.draft["certainty"]
+        );
+      },
     },
   }),
 
@@ -820,7 +990,7 @@ const COVERAGE: Record<string, Coverage> = {
     },
   }),
 
-  RelatedRoadEventType: (version, values) => ({
+  RelatedRoadEventType: (version) => ({
     "": {
       handled: meaning(
         {
@@ -831,83 +1001,16 @@ const COVERAGE: Record<string, Coverage> = {
           "related-work-zone": "related_work_zone",
           "planned-moving-operation": "group",
           "active-moving-operation": "group",
+          "related-detour": "detour",
         },
         (value, meant) => {
+          if (meant === "detour") return namesItsDetour(version);
           const read_ = readWorkZone(version, {
             core: { related_road_events: [{ type: value, id: "other" }] },
           });
           const relations = (read_?.draft["relations"] ?? []) as Json[];
           return relations.length === 1 && relations[0]!["relation"] === meant;
         },
-      ),
-      unsupported: of(values, {
-        "related-detour":
-          "the kernel's detour_for points from a detour to what it serves; a road event naming " +
-          "its detour has no inverse relation, so it links as plain `related`",
-      }),
-    },
-  }),
-
-  LocationMethod: (_version, values) => ({
-    "": {
-      handled: [],
-      unsupported: Object.fromEntries(
-        values.map((v) => [
-          v,
-          "how the ends of a work zone were placed (channelling devices, signs, junctions) has " +
-            "no field in the model's location",
-        ]),
-      ),
-    },
-  }),
-
-  SpatialVerification: (_version, values) => ({
-    "": {
-      handled: [],
-      unsupported: Object.fromEntries(
-        values.map((v) => [
-          v,
-          "whether the geometry's ends were measured by GPS has no field in the model's location " +
-            "(fuzziness is its resolution, not its verification)",
-        ]),
-      ),
-    },
-  }),
-
-  WorkerPresenceMethod: (_version, values) => ({
-    "": {
-      handled: [],
-      unsupported: Object.fromEntries(
-        values.map((v) => [
-          v,
-          "the roadworks details keep only whether workers are present, not how that was found",
-        ]),
-      ),
-    },
-  }),
-
-  WorkerPresenceDefinition: (_version, values) => ({
-    "": {
-      handled: [],
-      unsupported: Object.fromEntries(
-        values.map((v) => [
-          v,
-          "the roadworks details keep only whether workers are present, not what the publisher " +
-            "counts as present",
-        ]),
-      ),
-    },
-  }),
-
-  WorkerPresenceConfidence: (_version, values) => ({
-    "": {
-      handled: [],
-      unsupported: Object.fromEntries(
-        values.map((v) => [
-          v,
-          "it qualifies are_workers_present only, and the roadworks details' workersPresent " +
-            "has no confidence of its own; it is not the work zone's certainty",
-        ]),
       ),
     },
   }),
@@ -1071,6 +1174,14 @@ describe("parseWzdx — skipped records and unread values, by reason", () => {
           event_status: "ongoing",
           work_zone_type: "area",
           start_date_accuracy: "guessed",
+          beginning_accuracy: "surveyed",
+          location_method: "gps-method",
+          worker_presence: {
+            are_workers_present: true,
+            method: "radar",
+            definition: ["workers-on-break", "humans-behind-barrier"],
+            confidence: "certain",
+          },
           types_of_work: [{ type_name: "digging" }],
           restrictions: [{ type: "no-bikes" }, { type: "reduced-width", value: 3, unit: "yards" }],
           lanes: [
@@ -1085,9 +1196,12 @@ describe("parseWzdx — skipped records and unread values, by reason", () => {
     expect(ev!.status).toBe("active");
     expect(ev!.situation?.validityStatus).toBeUndefined();
     expect(ev!.confidence).toBeUndefined();
-    expect(ev!.relatedEvents).toEqual([{ id: "x" }]);
+    expect(ev!.relatedEvents).toEqual([{ id: "ds:x" }]);
     expect(ev!.lanesAffected?.lanes).toEqual([{ index: 2, status: "open" }]);
-    expect(drainSkipped(SRC.id)).toEqual({ unknown_value: 10 });
+    expect(ev!.locationMethod).toBeUndefined();
+    expect(ev!.positionVerified).toBeUndefined();
+    expect(ev!.workerPresence).toEqual({ definition: ["humans_behind_barrier"] });
+    expect(drainSkipped(SRC.id)).toEqual({ unknown_value: 15 });
   });
 
   it("counts nothing for a record whose every value is in the standard", () => {
@@ -1154,11 +1268,100 @@ describe("parseWzdx — values read as the standard defines them", () => {
       {
         index: 1,
         status: "open",
-        type: "general",
+        type: "lane",
         restrictions: [{ type: "reduced-width", value: 10, unit: "feet" }],
       },
     ]);
     expect(drainSkipped(SRC.id)).toEqual({});
+  });
+
+  it("holds a lane's restriction to that lane, beside the road's own", () => {
+    const read_ = readWorkZone("4.2", {
+      props: {
+        restrictions: [{ type: "no-trucks" }],
+        lanes: [
+          { order: 1, status: "open", type: "general" },
+          {
+            order: 2,
+            status: "open",
+            type: "general",
+            restrictions: [{ type: "reduced-height", value: 13, unit: "feet" }, { type: "hov-2" }],
+          },
+          { order: 3, status: "open", type: "shoulder", restrictions: [{ type: "no-parking" }] },
+        ],
+      },
+    });
+    const effects = effectsOf(read_!.draft).filter((e) => e.kind !== "lane_restriction");
+    expect(effects.map((e) => [e.kind, e["laneScope"]])).toEqual([
+      ["access", undefined],
+      ["dimension_limit", [{ index: 2, type: "general" }]],
+      ["access", [{ index: 2, type: "general" }]],
+      ["access", [{ index: 3, type: "shoulder" }]],
+    ]);
+    expect(effects[1]).toMatchObject({
+      dimension: "height",
+      value: { value: round(13 * METRES_PER_FOOT), unit: "m" },
+      source: { path: "lanesAffected.lanes[1].restrictions[0]" },
+    });
+  });
+
+  it("reads a work zone's worker presence, types of work and position and date verification", () => {
+    const read_ = readWorkZone("4.2", {
+      props: {
+        is_start_date_verified: true,
+        is_end_date_verified: false,
+        is_start_position_verified: true,
+        is_end_position_verified: false,
+        location_method: "sign-method",
+        types_of_work: [
+          { type_name: "surface-work", is_architectural_change: false },
+          { type_name: "roadway-relocation", is_architectural_change: true },
+        ],
+        worker_presence: {
+          are_workers_present: true,
+          method: "check-in-app",
+          definition: ["workers-in-work-zone-working", "humans-behind-barrier"],
+          worker_presence_last_confirmed_date: "2026-01-01T07:30:00Z",
+          confidence: "high",
+        },
+      },
+    })!;
+    expect(read_.draft["details"]).toEqual({
+      kind: "roadworks",
+      v: 1,
+      workersPresent: true,
+      workerPresenceConfidence: "high",
+      workerPresenceMethod: "check_in_app",
+      workerPresenceDefinition: ["workers_working", "humans_behind_barrier"],
+      workerPresenceConfirmedAt: "2026-01-01T07:30:00.000Z",
+      typesOfWork: [
+        { name: "surface_work", architecturalChange: false },
+        { name: "roadway_relocation", architecturalChange: true },
+      ],
+      locationMethod: "sign_method",
+      startPositionVerified: true,
+      endPositionVerified: false,
+    });
+    expect(read_.draft["validity"]).toMatchObject({ startVerified: true, endVerified: false });
+    expect(registry.validateDraft(read_.draft)).toMatchObject({ ok: true });
+  });
+
+  it("reads 3.1's sequence relationship as the related road events 4.1 replaced it with", () => {
+    const [ev] = parse(
+      feedOf("3.1", "work-zone", {
+        props: { relationship: { first: ["e0"], next: ["e2"], parents: ["project-7"] } },
+      }),
+    );
+    expect(ev!.relatedEvents).toEqual([
+      { id: "ds:e0", type: "first-in-sequence" },
+      { id: "ds:e2", type: "next-in-sequence" },
+    ]);
+    expect(drainSkipped(SRC.id)).toEqual({});
+  });
+
+  it("counts 3.1's total_num_lanes as the road's lanes where none is listed", () => {
+    const [ev] = parse(feedOf("3.1", "work-zone", { props: { total_num_lanes: 3 } }));
+    expect(ev!.lanesAffected).toEqual({ total: 3, vehicleImpact: "unknown" });
   });
 
   it("keeps the source's own properties as its raw record", () => {

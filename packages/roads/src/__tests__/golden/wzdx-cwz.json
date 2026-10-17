@@ -93,7 +93,9 @@
     "validity": {
       "status": "active",
       "start": "2026-07-27T18:37:19.977+00:00",
-      "end": "2026-08-28T23:00:00+00:00"
+      "end": "2026-08-28T23:00:00+00:00",
+      "startVerified": true,
+      "endVerified": true
     },
     "effects": [
       {
@@ -137,12 +139,21 @@
     "details": {
       "kind": "roadworks",
       "v": 1,
-      "workZoneType": "static"
+      "workZoneType": "static",
+      "typesOfWork": [
+        {
+          "name": "overhead_work",
+          "architecturalChange": false
+        }
+      ],
+      "locationMethod": "channel_device_method",
+      "startPositionVerified": true,
+      "endPositionVerified": true
     },
     "canonicalId": "5894fb7c3970312b2351c02a2ebce9a03e51f4aafb599cf9f5074660ce9eb3ef",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "91ff8bb83bafd9b7b6a2c53ebd394e2bc170df749092e930708d232ad2d9930c"
+    "contentHash": "73a4c6ea20085843a7bcfe48c3f06b69bbf9b851e1305304542696c792e99f29"
   }
 ]

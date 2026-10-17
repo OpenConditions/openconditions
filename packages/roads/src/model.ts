@@ -228,6 +228,9 @@ export interface SituationHints {
    * `planned`, `suspended`, or `unknown` for a status it does not establish).
    */
   validityStatus?: Validity["status"];
+  /** Whether the source confirmed that the record started (ended) when it says, rather than estimated it. */
+  startVerified?: boolean;
+  endVerified?: boolean;
   /**
    * Set when the source's lifecycle status does not establish that the record
    * is in force under its time window. Every effect read from the record
@@ -313,6 +316,28 @@ export interface RoadEvent {
   queueLengthMeters?: number;
   /** WZDx: are workers present in the zone. */
   workersPresent?: boolean;
+  /**
+   * WZDx: how the publisher found whether workers are present, what it counts
+   * as present, when presence was last confirmed and how confident it is, in
+   * the roadworks details' values.
+   */
+  workerPresence?: {
+    method?: string;
+    definition?: string[];
+    confirmedAt?: string;
+    confidence?: "low" | "medium" | "high";
+  };
+  /** WZDx: the kinds of work done (snake_cased), each with whether it changes the road's layout. */
+  typesOfWork?: { name: string; architecturalChange?: boolean }[];
+  /** WZDx: how the ends of the work zone were located (`LocationMethod`, snake_cased). */
+  locationMethod?:
+    | "channel_device_method"
+    | "sign_method"
+    | "junction_method"
+    | "other"
+    | "unknown";
+  /** WZDx: whether the first and last positions of the geometry were measured by GPS. */
+  positionVerified?: { start?: boolean; end?: boolean };
   /**
    * Provenance of the freeFlowKph baseline behind a derived congestion event
    * (copied from the flow by derivedCongestionEvent): "native" for a feed-carried

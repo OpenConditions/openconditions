@@ -4,6 +4,7 @@ import {
   type PlacedEffect,
   restrictionEffects,
   WZDX_LANE_TYPES,
+  WZDX_UNITS,
   WZDX_VEHICLE_IMPACTS,
 } from "@openconditions/model-roads";
 import type { Restriction, RoadEvent } from "../model.js";
@@ -58,8 +59,12 @@ const DIMENSIONS: Record<string, Extract<Effect, { kind: "dimension_limit" }>["d
   "axle-load-limit": "axle_load",
 };
 
-/** Source unit → [canonical unit, factor]. "tons" is ambiguous (short or metric) and not listed. */
-const UNITS: Record<string, [string, number]> = {
+/**
+ * Source unit → [canonical unit, factor]. "tons" is ambiguous across sources
+ * (short or metric) and not listed; a format that defines it says so in its
+ * own table (WZDx: {@link WZDX_UNITS}).
+ */
+const UNITS: Readonly<Record<string, readonly [string, number]>> = {
   m: ["m", 1],
   meters: ["m", 1],
   metres: ["m", 1],
@@ -77,8 +82,16 @@ const UNITS: Record<string, [string, number]> = {
   pounds: ["kg", 0.45359237],
 };
 
-const ACCESS: Record<string, { mode: string; truck?: true }> = {
+/**
+ * An access rule a restriction type names. `truck` limits it to trucks;
+ * `hovMin` exempts vehicles carrying at least that many people, so WZDx
+ * `hov-2` ("travel restricted to high occupancy vehicles of two or more") is
+ * every other vehicle prohibited.
+ */
+const ACCESS: Record<string, { mode: string; truck?: true; hovMin?: number }> = {
   "no-trucks": { mode: "prohibited", truck: true },
+  "hov-2": { mode: "prohibited", hovMin: 2 },
+  "hov-3": { mode: "prohibited", hovMin: 3 },
   "local-access-only": { mode: "local_access_only" },
   "no-passing": { mode: "no_overtaking" },
   "towing-prohibited": { mode: "towing_prohibited" },
@@ -99,9 +112,14 @@ interface Draft {
  * anything else is an `unsupported` carrier. Presence is evidence, so nothing
  * is dropped.
  */
-function legacyRestriction(r: Restriction, path: string, applicability: Applicability): Draft {
+function legacyRestriction(
+  r: Restriction,
+  path: string,
+  applicability: Applicability,
+  units: Readonly<Record<string, readonly [string, number]>> = UNITS,
+): Draft {
   const dimension = DIMENSIONS[r.type.toLowerCase()];
-  const unit = r.unit === undefined ? undefined : UNITS[r.unit.toLowerCase()];
+  const unit = r.unit === undefined ? undefined : units[r.unit.toLowerCase()];
   const source = { path, tokens: { ...r } };
   if (dimension !== undefined && r.value !== undefined && unit !== undefined) {
     const canonical = dimension === "gross_weight" || dimension === "axle_load" ? "kg" : "m";
@@ -130,7 +148,9 @@ function legacyRestriction(r: Restriction, path: string, applicability: Applicab
         mode: access.mode,
         applicability: access.truck
           ? { kind: "classes", include: [{ class: "truck" }] }
-          : applicability,
+          : access.hovMin !== undefined
+            ? { kind: "all", except: [{ hovMin: access.hovMin }], raw: [r.type] }
+            : applicability,
         compliance: "mandatory",
         normalization: "partial",
         issues: [{ code: "unsupported_type", sourcePath: path, sourceText: r.type }],
@@ -166,13 +186,17 @@ function laneImpact(event: RoadEvent): string {
   return event.roadState === "some_lanes_closed" ? "some_lanes_closed" : "unknown";
 }
 
-function lanesOf(event: RoadEvent, wzdx: boolean): Record<string, unknown>[] | undefined {
+/** A parser lane type as the kernel's; only WZDx lane types are mapped. */
+const laneTypeOf = (event: RoadEvent, type: string | undefined) =>
+  event.sourceFormat === "wzdx" && type ? WZDX_LANE_TYPES[type] : undefined;
+
+function lanesOf(event: RoadEvent): Record<string, unknown>[] | undefined {
   const lanes = event.lanesAffected?.lanes;
   if (!lanes || lanes.length === 0) return undefined;
   return lanes
     .filter((l) => Number.isInteger(l.index) && l.index >= 1)
     .map((l) => {
-      const type = wzdx && l.type ? WZDX_LANE_TYPES[l.type] : undefined;
+      const type = laneTypeOf(event, l.type);
       return { index: l.index, status: l.status, ...(type ? { type } : {}) };
     });
 }
@@ -235,7 +259,7 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     !closed &&
     (event.lanesAffected || event.roadState === "some_lanes_closed" || ctx.laneClosureNature)
   ) {
-    const lanes = event.lanesAffected ? lanesOf(event, event.sourceFormat === "wzdx") : undefined;
+    const lanes = event.lanesAffected ? lanesOf(event) : undefined;
     const figures = event.lanesAffected;
     const total = figures?.total !== undefined && figures.total > 0 ? figures.total : undefined;
     const closedLanes =
@@ -261,8 +285,25 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     });
   }
   if (event.restrictionDetails === undefined) {
+    const units = event.sourceFormat === "wzdx" ? WZDX_UNITS : UNITS;
     for (const [i, r] of (event.restrictions ?? []).entries()) {
-      drafts.push(legacyRestriction(r, `restrictions[${i}]`, applicability));
+      drafts.push(legacyRestriction(r, `restrictions[${i}]`, applicability, units));
+    }
+    // A lane's own restrictions hold on that lane only.
+    const lanes = event.lanesAffected?.lanes ?? [];
+    for (const [i, lane] of lanes.entries()) {
+      if (!lane.restrictions?.length || !Number.isInteger(lane.index) || lane.index < 1) continue;
+      const type = laneTypeOf(event, lane.type);
+      const laneScope = [{ index: lane.index, ...(type ? { type } : {}) }];
+      for (const [j, r] of lane.restrictions.entries()) {
+        const draft = legacyRestriction(
+          r,
+          `lanesAffected.lanes[${i}].restrictions[${j}]`,
+          applicability,
+          units,
+        );
+        drafts.push({ ...draft, fields: { ...draft.fields, laneScope } });
+      }
     }
   }
   // A detour event (WZDx Detour) is the diversion itself: its own line is the route.

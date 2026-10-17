@@ -116,7 +116,9 @@
     "validity": {
       "status": "active",
       "start": "2010-01-01T01:00:00Z",
-      "end": "2010-01-02T01:00:00Z"
+      "end": "2010-01-02T01:00:00Z",
+      "startVerified": false,
+      "endVerified": false
     },
     "effects": [
       {
@@ -159,13 +161,16 @@
     ],
     "details": {
       "kind": "roadworks",
-      "v": 1
+      "v": 1,
+      "locationMethod": "channel_device_method",
+      "startPositionVerified": false,
+      "endPositionVerified": false
     },
     "canonicalId": "1fa49db8401d458bfc6cdadbf2ecde93afc1c6cc62bf58029eb834e674e21cf5",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "aaeb5aa90229a1cb1b4316892b7a15e565abba9ac3ee4bf7a3c53e8fc1a0a369"
+    "contentHash": "6542bd8bab393ed9b3f9db8de0bb8bf7cfc6ad906d425d329fe1254dcb1eb314"
   },
   {
     "id": "oc:situation:us-wzdx-events:1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8",
@@ -271,7 +276,9 @@
     "validity": {
       "status": "active",
       "start": "2010-01-02T08:00:00Z",
-      "end": "2010-03-31T23:00:00Z"
+      "end": "2010-03-31T23:00:00Z",
+      "startVerified": false,
+      "endVerified": false
     },
     "effects": [
       {
@@ -418,13 +425,28 @@
     "details": {
       "kind": "roadworks",
       "v": 1,
-      "workersPresent": true
+      "workersPresent": true,
+      "workerPresenceConfidence": "low",
+      "workerPresenceMethod": "camera_monitoring",
+      "workerPresenceDefinition": [
+        "workers_working"
+      ],
+      "workerPresenceConfirmedAt": "2010-01-03T01:51:43.000Z",
+      "typesOfWork": [
+        {
+          "name": "surface_work",
+          "architecturalChange": false
+        }
+      ],
+      "locationMethod": "channel_device_method",
+      "startPositionVerified": true,
+      "endPositionVerified": false
     },
     "canonicalId": "c6127bb6b0dd84146aad3aebd4f531421103db9edb67d614fb1a4710c79b3ded",
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a410fb56c7632f347fe2b9fb2fa27a11a262fb259f15cca02de2adddf25b3fc5"
+    "contentHash": "0e8c0d3a8645f7b0a81ab1ea673de74c4ab4fa50b82d150ecc3756855586fb7c"
   },
   {
     "id": "oc:situation:us-wzdx-events:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",
@@ -514,14 +536,14 @@
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:us-wzdx-events:4d151e7d-11d8-4b99-a192-51e189da0de7"
+          "id": "oc:situation:us-wzdx-events:1:4d151e7d-11d8-4b99-a192-51e189da0de7"
         },
         "relation": "group"
       },
       {
         "ref": {
           "class": "situation",
-          "id": "oc:situation:us-wzdx-events:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
+          "id": "oc:situation:us-wzdx-events:1:a15f7570-b7e6-4367-8ad9-3a462eea65dd"
         },
         "relation": "related_work_zone"
       }
@@ -569,7 +591,9 @@
     "validity": {
       "status": "active",
       "start": "2010-01-01T01:03:01Z",
-      "end": "2010-06-30T01:00:00Z"
+      "end": "2010-06-30T01:00:00Z",
+      "startVerified": true,
+      "endVerified": false
     },
     "effects": [
       {
@@ -652,6 +676,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4e4b0f8ff98ffcd1bccb59ff74e1b2763291239f26e59b503b76b7bc6e061ce7"
+    "contentHash": "0f281997ec44acdec176a81cb85a158a2d43ac45ea083084ec571e2feb9a31ce"
   }
 ]
