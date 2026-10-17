@@ -4,6 +4,7 @@
  * {@link FlowReading}s the site assembler drafts features, readings and
  * derived congestion situations from.
  */
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { zonedWallClockToInstant } from "@openconditions/model";
 import type { LineString } from "geojson";
 import type { FlowContext } from "./flow-output.js";
@@ -20,8 +21,12 @@ export function localTimestamp(wallClock: string, timeZone: string): string | un
   return at === null ? undefined : at.toISOString();
 }
 
-function mapDigitrafficCongestionLevel(raw: unknown): Los {
+/** A Digitraffic congestion level; undefined for a value the feed is not known to publish. */
+function mapDigitrafficCongestionLevel(raw: unknown): Los | undefined {
   switch (typeof raw === "string" ? raw.toUpperCase() : "") {
+    case "":
+    case "UNKNOWN":
+      return "unknown";
     case "FREE_FLOW":
     case "LIGHT":
       return "free_flow";
@@ -34,7 +39,7 @@ function mapDigitrafficCongestionLevel(raw: unknown): Los {
     case "BLOCKED":
       return "blocked";
     default:
-      return "unknown";
+      return undefined;
   }
 }
 
@@ -43,11 +48,13 @@ function mapDigitrafficCongestionLevel(raw: unknown): Los {
  * segment, with its stated congestion level, average speed and the feed's
  * own free-flow speed. A MultiLineString segment is one site whose member
  * lines each carry the reading (and a derived congestion situation each).
- * Features without line geometry are skipped.
+ * Features without line geometry are skipped, and recorded as skipped; a
+ * congestion level the feed is not known to publish leaves the reading
+ * without a level, recorded as an unknown value.
  */
 export function parseDigitrafficFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   _sites: unknown,
   _ctx: FlowContext,
 ): FlowParse {
@@ -59,18 +66,32 @@ export function parseDigitrafficFlow(
 
   const readings: FlowReading[] = [];
   for (const rawFeature of features) {
-    if (!rawFeature || typeof rawFeature !== "object") continue;
+    if (!rawFeature || typeof rawFeature !== "object") {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
     const feature = rawFeature as Record<string, unknown>;
     const geometry = feature["geometry"] as Record<string, unknown> | null | undefined;
-    if (!geometry || typeof geometry !== "object" || !Array.isArray(geometry["coordinates"])) {
+    if (!geometry || typeof geometry !== "object") {
+      recordSkipped(src.id, "no_geometry");
       continue;
     }
     const geomType = geometry["type"];
-    if (geomType !== "LineString" && geomType !== "MultiLineString") continue;
+    // A segment is a line; any other geometry places no segment.
+    if (geomType !== "LineString" && geomType !== "MultiLineString") {
+      recordSkipped(src.id, "no_geometry");
+      continue;
+    }
+    if (!Array.isArray(geometry["coordinates"])) {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
 
     const props = (feature["properties"] ?? {}) as Record<string, unknown>;
     const featureId = typeof props["id"] === "string" ? props["id"] : `flow-${readings.length + 1}`;
-    const los = mapDigitrafficCongestionLevel(props["congestionLevel"]);
+    const stated = mapDigitrafficCongestionLevel(props["congestionLevel"]);
+    if (stated === undefined) recordSkipped(src.id, "unknown_value");
+    const los = stated ?? "unknown";
     const speedKph = typeof props["averageSpeed"] === "number" ? props["averageSpeed"] : undefined;
     const freeFlowKph =
       typeof props["freeFlowSpeed"] === "number" && props["freeFlowSpeed"] > 0

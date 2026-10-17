@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Schedule } from "@openconditions/model";
 import {
   boundRestrictionIssue,
@@ -19,7 +20,9 @@ import type { SourceDescriptor } from "./types.js";
  * contract. Only the five demonstrated structured mappings are normalized;
  * everything else is either known non-vehicle context or an explicit issue.
  * There is deliberately no interpretation of Finnish free text: a restriction
- * this module does not recognize becomes partial evidence, never a guess.
+ * this module does not recognize becomes partial evidence, never a guess. A
+ * vehicle restriction type or unit it cannot read also counts against the
+ * source as an unknown value.
  */
 
 const HELSINKI_TZ = "Europe/Helsinki";
@@ -333,6 +336,7 @@ export function digitrafficRestrictionDetails(
       const mapping = DIMENSION_TYPES[token as keyof typeof DIMENSION_TYPES];
       if (mapping === undefined) {
         if (!KNOWN_NON_VEHICLE.has(token) && looksVehicleScoped(token, hasQuantity)) {
+          recordSkipped(src.id, "unknown_value");
           issues.push({
             code: "unsupported_type",
             factId: null,
@@ -353,6 +357,7 @@ export function digitrafficRestrictionDetails(
       const factId = `${recordId}:${phaseId ?? "event"}:${scopeKind}:${sourcePath}`;
       const normalized = normalizeRestrictionDimension({ dimension, value: quantity, unit });
       if (normalized === null) {
+        if (hasQuantity) recordSkipped(src.id, "unknown_value");
         issues.push({
           code: hasQuantity ? "unsupported_unit" : "invalid_value",
           factId,

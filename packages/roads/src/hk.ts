@@ -5,6 +5,7 @@ import {
   parseXmlDocument,
   xmlText,
 } from "@openconditions/datex2";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { localTimestamp } from "./flow.js";
 import type { FlowContext, FlowSite, FlowSites } from "./flow-output.js";
 import {
@@ -81,12 +82,14 @@ const laneKey = (label: string) =>
  * falling back to an unweighted mean when no lane counts vehicles, its volume
  * the sum of the lanes' counts as an hourly rate, its occupancy their mean.
  * Geometry comes from the detector registry, joined on `detector_id`.
- * Detectors with no geometry or no valid lane are skipped; the level of
- * service is left to the baseline enrichment.
+ * Detectors with no valid lane measured nothing this period and are left
+ * out. A detector without an id is skipped as malformed, one the registry
+ * does not hold as having no geometry. The level of service is left to the
+ * baseline enrichment.
  */
 export function parseHkRawFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -122,9 +125,15 @@ export function parseHkRawFlow(
   for (const det of getXmlChildren(getXmlChild(period, "detectors") ?? period, "detector")) {
     try {
       const id = xmlText(det["detector_id"]);
-      if (!id) continue;
+      if (!id) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       const site = sites?.get(id);
-      if (!site) continue;
+      if (!site) {
+        recordSkipped(src.id, "no_geometry");
+        continue;
+      }
 
       let sumSV = 0; // Σ speed·volume
       let sumV = 0; // Σ volume
@@ -187,6 +196,7 @@ export function parseHkRawFlow(
       });
     } catch (err) {
       console.warn("[hk-flow] skipped malformed detector:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

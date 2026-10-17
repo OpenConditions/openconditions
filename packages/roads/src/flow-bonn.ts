@@ -1,4 +1,5 @@
 import { toIsoTimestamp } from "@openconditions/core";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { LineString } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import type { FlowParse, FlowReading, Los } from "./flow-reading.js";
@@ -46,7 +47,11 @@ function toLineString(ring: unknown): LineString | null {
  * phrase, and an `auswertezeit` timestamp, wall-clock time in the feed's
  * `timezone` whatever its suffix says. A MultiLineString section is one
  * site whose member lines each carry the reading (and a derived congestion
- * situation each).
+ * situation each). A section without an id, or with neither a speed nor a
+ * level of service it can read, is skipped as malformed, as is a broken line;
+ * one without a line geometry as having no geometry. A phrase it cannot read
+ * beside a speed leaves the reading without a level, recorded as an unknown
+ * value.
  */
 export function parseBonnFlow(
   input: string | Buffer,
@@ -69,7 +74,10 @@ export function parseBonnFlow(
       const geometry = raw?.geometry;
       const props = raw?.properties ?? {};
       const strecke = props["strecke_id"];
-      if (strecke == null) continue;
+      if (strecke == null) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       const streckeId = String(strecke);
 
       const geomType = geometry?.type;
@@ -83,6 +91,12 @@ export function parseBonnFlow(
       // A section Bonn cannot measure now says so and carries speed 0: no reading.
       const status = props["verkehrsstatus"];
       if (typeof status === "string" && /nicht ermittelbar/i.test(status)) continue;
+      const lines = rings.map(toLineString).filter((l): l is LineString => l != null);
+      if (lines.length === 0) {
+        // A line geometry without two usable vertices is present but broken.
+        recordSkipped(src.id, rings.length > 0 ? "malformed" : "no_geometry");
+        continue;
+      }
       const speedRaw = props["geschwindigkeit"];
       const speedKph =
         typeof speedRaw === "number" && Number.isFinite(speedRaw) && speedRaw >= 0
@@ -90,7 +104,10 @@ export function parseBonnFlow(
           : undefined;
       const los = mapVerkehrsstatus(status);
       // Nothing to say if we have neither a resolvable LOS nor a speed.
-      if (los === "unknown" && speedKph == null) continue;
+      if (los === "unknown" && speedKph == null) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       // Bonn writes its local time and marks it `Z` (08:55:00Z at 06:57 UTC).
       const stated = props["auswertezeit"];
       const at =
@@ -98,7 +115,9 @@ export function parseBonnFlow(
           ? toIsoTimestamp(stated.replace(/Z$/i, ""), src.timeZone)
           : undefined;
 
-      const lines = rings.map(toLineString).filter((l): l is LineString => l != null);
+      if (los === "unknown" && typeof status === "string" && status.trim() !== "") {
+        recordSkipped(src.id, "unknown_value");
+      }
       lines.forEach((line, i) => {
         readings.push({
           site: streckeId,
@@ -111,6 +130,7 @@ export function parseBonnFlow(
       });
     } catch (err) {
       console.warn("[bonn-flow] skipped malformed feature:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

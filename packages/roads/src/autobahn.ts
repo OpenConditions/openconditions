@@ -2,7 +2,7 @@ import type { GeoJsonGeometry } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Schedule } from "@openconditions/model";
-import { autobahnClassification } from "@openconditions/model-roads";
+import { AUTOBAHN_SITUATIONS, autobahnClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
@@ -39,19 +39,24 @@ interface AutobahnPayload {
   [service: string]: AutobahnItem[] | undefined;
 }
 
-function parseGeometry(item: AutobahnItem): GeoJsonGeometry | null {
+/**
+ * The item's geometry: null when it states no position at all, undefined when
+ * its coordinate does not parse.
+ */
+function parseGeometry(item: AutobahnItem): GeoJsonGeometry | null | undefined {
   const geo = item.geometry;
   if (geo && typeof geo === "object" && typeof geo.type === "string" && geo.coordinates != null) {
     return geo as unknown as GeoJsonGeometry;
   }
 
   const coord = item.coordinate;
-  if (coord && typeof coord === "object") {
+  if (coord && typeof coord === "object" && coord.lat != null && coord.long != null) {
     const lat = Number(coord.lat);
     const lon = Number(coord.long);
     if (!isNaN(lat) && !isNaN(lon)) {
       return { type: "Point", coordinates: [lon, lat] };
     }
+    return undefined;
   }
 
   return null;
@@ -344,7 +349,10 @@ function restrictionsFromDescription(description: string | undefined): Restricti
 
 /**
  * Parse an Autobahn GmbH JSON feed and return an array of RoadEvent observations.
- * Items lacking any usable geometry are skipped. The result is deduped before return.
+ * Items lacking any position are left out and counted as having no geometry;
+ * items whose coordinate does not parse, or that cannot be read, as malformed.
+ * A `display_type` or `abnormalTrafficType` the crosswalk does not know is
+ * counted as an unknown value. The result is deduped before return.
  *
  * Format gotchas handled:
  * - coordinate key is `long` (not `lng`/`lon`)
@@ -392,11 +400,17 @@ export function parseAutobahn(
 
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
   let localCounter = 0;
 
   for (const item of items) {
     try {
       const geometry = parseGeometry(item);
+      if (geometry === undefined) {
+        malformed++;
+        continue;
+      }
       if (!geometry) {
         skippedNoGeometry++;
         console.debug(
@@ -426,6 +440,12 @@ export function parseAutobahn(
             }
           : undefined,
       );
+      const trafficType =
+        typeof item.abnormalTrafficType === "string" ? item.abnormalTrafficType : undefined;
+      const known = isFlow
+        ? trafficType === undefined ||
+          Object.hasOwn(AUTOBAHN_SITUATIONS, `congestion:${trafficType}`)
+        : displayType === undefined || Object.hasOwn(AUTOBAHN_SITUATIONS, displayType);
       const { type, category, isPlanned } = coarseType(
         isFlow ? "congestion" : SERVICE_TYPES[resolvedService],
       );
@@ -467,7 +487,7 @@ export function parseAutobahn(
         if (typeof impact?.upper === "string") roads[0].to = impact.upper;
       }
 
-      out.push({
+      const event: RoadEvent = {
         id: `${src.id}:${rawId}`,
         source: src.id,
         sourceFormat: "autobahn",
@@ -510,8 +530,11 @@ export function parseAutobahn(
         dataUpdatedAt: validFrom ?? new Date().toISOString(),
         fetchedAt: new Date().toISOString(),
         isStale: false,
-      });
+      };
+      if (!known) unknownValues++;
+      out.push(event);
     } catch (err) {
+      malformed++;
       console.warn("[autobahn] skipped malformed item:", item?.identifier ?? item?.id, err);
     }
   }
@@ -521,6 +544,8 @@ export function parseAutobahn(
     // Also counted per source so the loss shows up in GET /feeds/status.
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
 
   return dedupeRoadEvents(out);
 }

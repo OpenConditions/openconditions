@@ -6,6 +6,13 @@
  * companion PredefinedLocations table or an inline location. Items are
  * grouped by their `predefinedLocationReference` id into one site reading;
  * a value stated for one vehicle class is also kept as a channel of the site.
+ *
+ * An item without a location reference is skipped as having no geometry, as
+ * is a site that neither carries a point nor is in the location table. A
+ * traffic status it cannot read leaves the site without a stated level,
+ * recorded as an unknown value; a site with nothing else to say is then
+ * skipped as malformed. A site with no value this interval says nothing and
+ * is left out.
  */
 import {
   getXmlChild,
@@ -17,6 +24,7 @@ import {
   xmlNodeToArray,
   xmlText,
 } from "@openconditions/datex2";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import {
@@ -26,6 +34,7 @@ import {
   type FlowParse,
   type FlowReading,
   laneIndex,
+  mapDatexTrafficStatus,
   measuredReading,
   plausibleSpeed,
   SPEED,
@@ -168,10 +177,18 @@ export function parseElaboratedFlow(
   const acc = new Map<string, SiteAcc>();
 
   for (const item of items) {
-    if (!isXmlObject(item)) continue;
+    if (!isXmlObject(item)) {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
     const basics = xmlNodeToArray(item["basicData"]).filter(isXmlObject);
+    const itemRef = locationRefId(item);
+    if (!itemRef && basics.length > 0 && basics.every((basic) => !locationRefId(basic))) {
+      recordSkipped(src.id, "no_geometry");
+      continue;
+    }
     for (const basic of basics) {
-      const siteId = locationRefId(item) ?? locationRefId(basic);
+      const siteId = itemRef ?? locationRefId(basic);
       if (!siteId) continue;
       const cur: SiteAcc = acc.get(siteId) ?? { siteId, speeds: [], flows: [], streams: new Map() };
       const type = basicDataType(basic);
@@ -256,11 +273,22 @@ export function parseElaboratedFlow(
       vehicleClass: s.vehicleClass,
       ...(lane !== undefined ? { lane } : {}),
     }));
+    const geometry = site.inlineGeom ?? meta?.geometry;
+    if (!geometry) {
+      recordSkipped(src.id, "no_geometry");
+      continue;
+    }
     const speed = siteSpeed(site.speeds);
     const volume = siteVolume(site.flows);
+    // A status the parser cannot read; "unknown" is DATEX's own word for none.
+    const unreadStatus =
+      site.trafficStatus !== undefined &&
+      site.trafficStatus.trim() !== "" &&
+      site.trafficStatus.trim().toLowerCase() !== "unknown" &&
+      mapDatexTrafficStatus(site.trafficStatus) === "unknown";
     const reading = measuredReading({
       site: site.siteId,
-      geometry: site.inlineGeom ?? meta?.geometry,
+      geometry,
       ...(site.measuredAt !== undefined ? { at: site.measuredAt } : {}),
       ...(speed !== undefined ? { speedKph: speed.speedKph } : {}),
       ...(speed?.sampleCount !== undefined ? { sampleCount: speed.sampleCount } : {}),
@@ -271,7 +299,12 @@ export function parseElaboratedFlow(
       ...(meta?.name !== undefined ? { name: meta.name } : {}),
       ...(meta?.nameLang !== undefined ? { nameLang: meta.nameLang } : {}),
     });
-    if (reading) readings.push(reading);
+    if (reading) {
+      if (unreadStatus) recordSkipped(src.id, "unknown_value");
+      readings.push(reading);
+    } else if (unreadStatus) {
+      recordSkipped(src.id, "malformed");
+    }
   }
   return { readings };
 }

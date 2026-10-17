@@ -1,6 +1,6 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
-import { ibi511Classification } from "@openconditions/model-roads";
+import { IBI511, ibi511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { CoarseType } from "./situation/classes.js";
@@ -47,6 +47,8 @@ const TYPE_BY_EVENTTYPE: Record<string, CoarseType> = {
 };
 
 const SEVERITY_MAP: Record<string, RoadEvent["severity"]> = {
+  none: "unknown",
+  unknown: "unknown",
   minor: "low",
   low: "low",
   moderate: "medium",
@@ -86,7 +88,17 @@ function decodePolyline(encoded: string): [number, number][] {
   return coords;
 }
 
-function geometryOf(ev: IbiEvent): RoadEvent["geometry"] | null {
+/** The documented event types, compared case-insensitively. */
+const EVENT_TYPES = new Set<string>(IBI511.eventTypes.map((t) => t.toLowerCase()));
+
+/** Whether a coordinate field states anything at all. */
+const stated = (v: unknown): boolean => v != null && v !== "";
+
+/**
+ * The event's geometry: null when it states no position at all, undefined
+ * when it states one that does not parse.
+ */
+function geometryOf(ev: IbiEvent): RoadEvent["geometry"] | null | undefined {
   if (typeof ev.EncodedPolyline === "string" && ev.EncodedPolyline.length > 0) {
     const pts = decodePolyline(ev.EncodedPolyline).filter(
       ([lng, lat]) => Number.isFinite(lng) && Number.isFinite(lat),
@@ -96,7 +108,8 @@ function geometryOf(ev: IbiEvent): RoadEvent["geometry"] | null {
   }
   const lat = ev.Latitude;
   const lng = ev.Longitude;
-  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null;
+  if (!stated(lat) || !stated(lng)) return null;
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return undefined;
   const lat2 = ev.LatitudeSecondary;
   const lng2 = ev.LongitudeSecondary;
   if (Number.isFinite(lat2) && Number.isFinite(lng2) && (lat2 !== lat || lng2 !== lng)) {
@@ -134,20 +147,37 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       return [];
     }
   }
-  const events = Array.isArray(data) ? (data as IbiEvent[]) : [];
+  const events = Array.isArray(data) ? (data as unknown[]) : [];
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
 
-  events.forEach((ev, index) => {
+  events.forEach((raw, index) => {
+    if (raw === null || typeof raw !== "object") {
+      malformed++;
+      return;
+    }
+    const ev = raw as IbiEvent;
     const geometry = geometryOf(ev);
-    if (!geometry) {
+    if (geometry === null) {
       skippedNoGeometry++;
       return;
     }
+    if (geometry === undefined) {
+      malformed++;
+      return;
+    }
+    const eventType = typeof ev.EventType === "string" ? ev.EventType.trim() : "";
+    if (eventType !== "" && !EVENT_TYPES.has(eventType.toLowerCase())) unknownValues++;
+    const severityToken = typeof ev.Severity === "string" ? ev.Severity.trim() : "";
+    if (severityToken !== "" && !Object.hasOwn(SEVERITY_MAP, severityToken.toLowerCase())) {
+      unknownValues++;
+    }
     const { type, category, isPlanned } = typeOf(ev);
     const localId = ev.ID != null ? String(ev.ID) : String(index);
-    const severity = ev.Severity
-      ? (SEVERITY_MAP[ev.Severity.toLowerCase()] ?? "unknown")
+    const severity = severityToken
+      ? (SEVERITY_MAP[severityToken.toLowerCase()] ?? "unknown")
       : "unknown";
     const road = typeof ev.RoadwayName === "string" && ev.RoadwayName ? ev.RoadwayName : undefined;
     const hasDescription = typeof ev.Description === "string" && !!ev.Description;
@@ -201,6 +231,8 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
 
   return dedupeRoadEvents(out);
 }
@@ -291,8 +323,9 @@ function conditionGeometry(rec: IbiConditionRecord): RoadEvent["geometry"] | und
 
 /**
  * Parse an IBI 511 road/winter-conditions payload into RoadEvents. Records whose
- * conditions are all nominal, or that carry no usable geometry, are skipped;
- * a malformed body yields [].
+ * conditions are all nominal are left out; those that carry no usable
+ * geometry are counted as such, and those that are no object as malformed. A
+ * malformed body yields [].
  */
 export function parseIbi511Conditions(
   input: string | Buffer | unknown,
@@ -306,12 +339,18 @@ export function parseIbi511Conditions(
       return [];
     }
   }
-  const records = Array.isArray(data) ? (data as IbiConditionRecord[]) : [];
+  const records = Array.isArray(data) ? (data as unknown[]) : [];
   const now = new Date().toISOString();
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
 
-  records.forEach((rec, index) => {
+  records.forEach((raw, index) => {
+    if (raw === null || typeof raw !== "object") {
+      malformed++;
+      return;
+    }
+    const rec = raw as IbiConditionRecord;
     const conditions = conditionValues(rec.Condition);
     if (conditions.length === 0) return;
     if (conditions.every((c) => NOMINAL_CONDITIONS.has(c.toLowerCase()))) return;
@@ -372,6 +411,7 @@ export function parseIbi511Conditions(
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
 
   return dedupeRoadEvents(out);
 }

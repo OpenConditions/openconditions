@@ -1,8 +1,9 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { buildRegistry, kernelModule, sealRecord } from "@openconditions/model";
 import { roadsModule } from "@openconditions/model-roads";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import { parseCarsSigns } from "../cars-signs.js";
 import { roadsDomain } from "../domain.js";
 import type { RoadFeed } from "../feed-schema.js";
@@ -41,6 +42,8 @@ const display = (o: Record<string, unknown>) =>
   (o["result"] as { value: Record<string, unknown> }).value;
 
 describe("cars-signs", () => {
+  beforeEach(() => __resetSkips());
+
   it("is the roads domain's sign format", () => {
     expect(roadsDomain.formats["cars-signs"]).toMatchObject({
       kind: "features",
@@ -52,7 +55,9 @@ describe("cars-signs", () => {
   it("reads each placed sign as a vms feature with one face and its display", () => {
     const out = parse();
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
-    expect(out.rejected).toBe(1);
+    // The fourth sign stands at the 0,0 placeholder.
+    expect(out.rejected ?? 0).toBe(0);
+    expect(drainSkipped(feed.id)).toEqual({ no_geometry: 1 });
     expect(out.features.map((f) => f["id"])).toEqual([
       "oc:feature:us-ny-511-signs:nySigns:Sample:_S-101",
       "oc:feature:us-ny-511-signs:nySigns:Sample:_S-102",
@@ -99,6 +104,40 @@ describe("cars-signs", () => {
         },
       ],
     });
+  });
+
+  it("counts a sign without an id or with an unreadable position as malformed", () => {
+    const signs = [
+      { location: { latitude: 42.7, longitude: -73.8 } },
+      { id: "a", location: { latitude: 142.7, longitude: -73.8 } },
+      { id: "b", location: { latitude: "42.7", longitude: -73.8 } },
+      null,
+      { id: "c", location: {} },
+    ];
+    const out = parseCarsSigns(
+      feed,
+      { main: [Buffer.from(JSON.stringify(signs))] },
+      { fetchedAt: FETCHED, cadenceSec: 300, reference: {} },
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 4, no_geometry: 1 });
+  });
+
+  it("counts a sign type, status or facing it cannot read as unknown values", () => {
+    const sign = {
+      id: "a",
+      status: "SMOKING",
+      location: { latitude: 42.7, longitude: -73.8, signFacingDirection: "UP" },
+      properties: { signType: "VMS_HOLOGRAM" },
+    };
+    const out = parseCarsSigns(
+      feed,
+      { main: [Buffer.from(JSON.stringify([sign]))] },
+      { fetchedAt: FETCHED, cadenceSec: 300, reference: {} },
+    );
+    expect(out.features).toHaveLength(1);
+    expect(display(out.observations[0]!)).toMatchObject({ workingStatus: "unknown" });
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 3 });
   });
 
   it("states a blank sign and a failed one with no message", () => {

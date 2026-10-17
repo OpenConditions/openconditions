@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { DirectionRef } from "@openconditions/model";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import { type FlowParse, type FlowReading, parseJson, plausibleSpeed } from "./flow-reading.js";
@@ -37,11 +38,12 @@ interface Station {
  * native free-flow constants are: the five-minute sliding average speed and
  * the five-minute sliding passing count (vehicles per hour) of that
  * direction. Geometry and name come from the station registry. The level of
- * service is left to the baseline enrichment.
+ * service is left to the baseline enrichment. A station without an id is
+ * skipped as malformed, one the registry does not hold as having no geometry.
  */
 export function parseFintrafficFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -55,9 +57,15 @@ export function parseFintrafficFlow(
   const readings: FlowReading[] = [];
   for (const raw of stations as Station[]) {
     const stationId = raw?.id != null ? String(raw.id) : null;
-    if (stationId == null) continue;
+    if (stationId == null) {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
     const station = sites?.get(stationId);
-    if (!station) continue;
+    if (!station) {
+      recordSkipped(src.id, "no_geometry");
+      continue;
+    }
     const sensors = Array.isArray(raw.sensorValues) ? (raw.sensorValues as SensorValue[]) : [];
     const timeOf = (s: SensorValue) =>
       typeof s.measuredTime === "string"

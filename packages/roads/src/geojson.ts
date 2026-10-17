@@ -89,28 +89,34 @@ function synthesizeLine(
 /**
  * What a feature's type value means under the feed's mapping: its `typeMap`
  * entry, else the feed's `defaultType`. A situation-code entry is the
- * classification, and the coarse type follows from it.
+ * classification, and the coarse type follows from it. `unmapped` is set
+ * when the mapping has a `typeMap` and the value names nothing it reads.
  */
 function resolveType(
   rawType: string | undefined,
   mapping: GeoJsonMapping,
-): CoarseType & { classification?: RoadClassification } {
+): CoarseType & { classification?: RoadClassification; unmapped?: true } {
   const mapped = rawType
     ? (mapping.typeMap?.[rawType] ?? mapping.typeMap?.[rawType.toLowerCase()])
     : undefined;
   if (mapped !== undefined && isRoadEventType(mapped)) return coarseType(mapped);
   const classification = mapped !== undefined ? registeredClassification(mapped) : undefined;
   if (classification !== undefined) return { ...coarseOf(classification), classification };
-  return coarseType(mapping.defaultType ?? "other");
+  const fallback = coarseType(mapping.defaultType ?? "other");
+  return rawType !== undefined && mapping.typeMap !== undefined
+    ? { ...fallback, unmapped: true }
+    : fallback;
 }
 
+/** A feature's severity under the feed's `severityMap`; `unmapped` when the map does not hold the value. */
 function resolveSeverity(
   raw: string | undefined,
   mapping: GeoJsonMapping,
-): { severity: Severity; severitySource: "declared" | "derived" } {
+): { severity: Severity; severitySource: "declared" | "derived"; unmapped?: true } {
   if (raw && mapping.severityMap) {
     const mapped = mapping.severityMap[raw] ?? mapping.severityMap[raw.toLowerCase()];
     if (mapped) return { severity: mapped, severitySource: "declared" };
+    return { severity: "unknown", severitySource: "derived", unmapped: true };
   }
   return { severity: "unknown", severitySource: "derived" };
 }
@@ -143,10 +149,21 @@ export function featuresToRoadEvents(
   const mapping = src.geojson ?? {};
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
   // One instant for the whole payload: duplicates the dedupe folds tie on it.
   const now = new Date().toISOString();
 
   features.forEach((feature, index) => {
+    // A feature, or its properties, that is no object has no fields to map.
+    if (
+      feature === null ||
+      typeof feature !== "object" ||
+      (feature.properties != null && typeof feature.properties !== "object")
+    ) {
+      malformed++;
+      return;
+    }
     const props = (feature.properties ?? {}) as Record<string, unknown>;
     if (!passesFilter(props, mapping)) return;
 
@@ -185,7 +202,7 @@ export function featuresToRoadEvents(
     }
 
     const rawType = str(get(props, mapping.typeField));
-    const { type, category, isPlanned, classification } = resolveType(rawType, mapping);
+    const { type, category, isPlanned, classification, unmapped } = resolveType(rawType, mapping);
     const localId =
       mapping.idFields !== undefined
         ? sha256Hex(jcs(mapping.idFields.map((field) => get(props, field) ?? null))).slice(0, 16)
@@ -196,6 +213,9 @@ export function featuresToRoadEvents(
     const updated = str(get(props, mapping.updatedField));
     const recordTime = toIsoTimestamp(updated, src.timeZone);
     const severityToken = str(get(props, mapping.severityField))?.trim();
+    const { unmapped: severityUnmapped, ...severity } = resolveSeverity(severityToken, mapping);
+    if (unmapped) unknownValues++;
+    if (severityUnmapped) unknownValues++;
 
     out.push({
       id: `${src.id}:${localId}`,
@@ -213,7 +233,7 @@ export function featuresToRoadEvents(
       subtype: rawType,
       category,
       isPlanned,
-      ...resolveSeverity(severityToken, mapping),
+      ...severity,
       status: "active",
       geometry,
       roads: road ? [{ name: road }] : [],
@@ -244,6 +264,8 @@ export function featuresToRoadEvents(
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
 
   return dedupeRoadEvents(out);
 }

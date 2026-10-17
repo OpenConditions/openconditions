@@ -5,6 +5,7 @@ import {
   parseXmlDocument,
   xmlText,
 } from "@openconditions/datex2";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import { type FlowParse, type FlowReading, plausibleSpeed } from "./flow-reading.js";
@@ -24,13 +25,15 @@ function num(raw: unknown): number | undefined {
  * TMC location the detector sits on, which two detectors can share; its
  * `offset` along that location tells them apart. The period
  * is taken to end at the document's generation time. Detectors with no
- * confidence (`accuracy=0`, published with a placeholder `speed=0`) or no
- * coordinate are skipped. The level of service is left to the baseline
- * enrichment.
+ * confidence (`accuracy=0`, published with a placeholder `speed=0`) carry no
+ * measurement this cycle and are left out. A detector without a location code,
+ * a readable accuracy or a plausible speed, or with an unreadable coordinate,
+ * is skipped as malformed, one without a coordinate as having no geometry. The
+ * level of service is left to the baseline enrichment.
  */
 export function parseTurinFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   _sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -52,18 +55,33 @@ export function parseTurinFlow(
   for (const fdt of getXmlChildren(root, "FDT_data")) {
     try {
       const lcd = xmlText(fdt["@_lcd1"]);
-      if (!lcd) continue;
+      if (!lcd) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       const offset = xmlText(fdt["@_offset"]);
       const id = offset ? `${lcd}-${offset}` : lcd;
       const accuracy = num(xmlText(fdt["@_accuracy"]));
-      if (accuracy == null || accuracy <= 0) continue; // no confident measurement this cycle
-      const lon = num(xmlText(fdt["@_lng"]));
-      const lat = num(xmlText(fdt["@_lat"]));
-      if (lon == null || lat == null) continue;
+      if (accuracy == null) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
+      if (accuracy <= 0) continue; // no confident measurement this cycle
+      const rawLon = xmlText(fdt["@_lng"]);
+      const rawLat = xmlText(fdt["@_lat"]);
+      const lon = num(rawLon);
+      const lat = num(rawLat);
+      if (lon == null || lat == null) {
+        recordSkipped(src.id, !rawLon && !rawLat ? "no_geometry" : "malformed");
+        continue;
+      }
 
       const sf = getXmlChild(fdt, "speedflow");
       const speedKph = num(xmlText(sf?.["@_speed"]));
-      if (!plausibleSpeed(speedKph)) continue;
+      if (!plausibleSpeed(speedKph)) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       const flow = num(xmlText(sf?.["@_flow"]));
       const periodMin = num(xmlText(fdt["@_period"]));
 
@@ -84,6 +102,7 @@ export function parseTurinFlow(
       });
     } catch (err) {
       console.warn("[turin-flow] skipped malformed FDT_data:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

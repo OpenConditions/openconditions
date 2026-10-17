@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { featuresToRoadEvents } from "./geojson.js";
 import type { RoadEvent } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
@@ -10,7 +11,7 @@ import type { SourceDescriptor } from "./types.js";
  * root, or `mapping.arrayPath` when nested (e.g. LTA-style `{value:[…]}`).
  */
 
-function recordsAt(data: unknown, path: string | undefined): Record<string, unknown>[] {
+function recordsAt(data: unknown, path: string | undefined): unknown[] {
   let node: unknown = data;
   if (path) {
     for (const part of path.split(".")) {
@@ -18,7 +19,7 @@ function recordsAt(data: unknown, path: string | undefined): Record<string, unkn
       else return [];
     }
   }
-  return Array.isArray(node) ? (node as Record<string, unknown>[]) : [];
+  return Array.isArray(node) ? node : [];
 }
 
 export function parseFlatJson(
@@ -33,7 +34,13 @@ export function parseFlatJson(
       return [];
     }
   }
-  const records = recordsAt(data, src.geojson?.arrayPath);
+  const rows = recordsAt(data, src.geojson?.arrayPath);
+  // A row that is no object has no fields to map.
+  const records = rows.filter(
+    (row): row is Record<string, unknown> =>
+      row !== null && typeof row === "object" && !Array.isArray(row),
+  );
+  recordSkipped(src.id, "malformed", rows.length - records.length);
   // Wrap each record as a pseudo-feature (no geometry); the reader builds the
   // point from the mapping's lonField/latField.
   const features = records.map((properties) => ({

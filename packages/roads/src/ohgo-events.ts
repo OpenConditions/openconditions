@@ -1,6 +1,6 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
-import { ohgoClassification } from "@openconditions/model-roads";
+import { OHGO_SITUATIONS, ohgoClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
@@ -66,7 +66,7 @@ const ROAD_STATE_BY_STATUS: Record<string, NonNullable<RoadEvent["roadState"]>> 
 };
 
 /** The `{ Results: [...] }` envelope, tolerating either casing. */
-function records(input: string | Buffer): Record_[] {
+function records(input: string | Buffer): unknown[] {
   let payload: unknown;
   try {
     payload = JSON.parse(Buffer.isBuffer(input) ? input.toString("utf8") : input);
@@ -75,26 +75,46 @@ function records(input: string | Buffer): Record_[] {
   }
   if (!payload || typeof payload !== "object") return [];
   const results = field(payload as Record_, "Results", "results");
-  return Array.isArray(results) ? (results as Record_[]) : [];
+  return Array.isArray(results) ? results : [];
+}
+
+/** A coordinate field: absent when the record states none, NaN when it states one that is no number. */
+function coordinate(value: unknown): number | undefined {
+  if (value == null || value === "") return undefined;
+  return typeof value === "number" || typeof value === "string" ? Number(value) : Number.NaN;
 }
 
 /**
  * Parse an OHGO `/construction` or `/incidents` payload into RoadEvents.
  * Discriminates on the record itself: a `startDate` marks a scheduled work
- * zone, everything else is an unplanned incident. Records without an id or
- * usable coordinates are skipped; a malformed envelope yields [].
+ * zone, everything else is an unplanned incident. Records without
+ * coordinates are left out as having no geometry; records that are no object,
+ * have no id or state coordinates that are no numbers as malformed. An
+ * incident category or road status the vocabularies do not hold is counted as
+ * an unknown value. A malformed envelope yields [].
  */
 export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   const now = new Date().toISOString();
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
 
-  for (const r of records(input)) {
+  for (const raw of records(input)) {
+    if (raw === null || typeof raw !== "object" || Array.isArray(raw)) {
+      malformed++;
+      continue;
+    }
+    const r = raw as Record_;
     const id = str(field(r, "id"));
-    const lon = Number(field(r, "longitude"));
-    const lat = Number(field(r, "latitude"));
-    if (!id || !Number.isFinite(lon) || !Number.isFinite(lat)) {
+    const lon = coordinate(field(r, "longitude"));
+    const lat = coordinate(field(r, "latitude"));
+    if (lon === undefined || lat === undefined) {
       skippedNoGeometry++;
+      continue;
+    }
+    if (!id || !Number.isFinite(lon) || !Number.isFinite(lat)) {
+      malformed++;
       continue;
     }
 
@@ -107,9 +127,14 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
       ? "roadworks"
       : (category && INCIDENT_TYPE_BY_CATEGORY[category.toLowerCase()]) || "other";
     const classification = ohgoClassification(category, isWorkZone);
+    // A work zone's category only refines it; an incident's is its nature.
+    if (!isWorkZone && category && !Object.hasOwn(OHGO_SITUATIONS, category.trim().toLowerCase())) {
+      unknownValues++;
+    }
 
     const roadStatus = str(field(r, "roadStatus"));
     const roadState = roadStatus ? ROAD_STATE_BY_STATUS[roadStatus.toLowerCase()] : undefined;
+    if (roadStatus && roadState === undefined) unknownValues++;
     const road = str(field(r, "routeName"));
     const direction = str(field(r, "direction"));
     const location = str(field(r, "location"));
@@ -158,6 +183,8 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
 
   return dedupeRoadEvents(out);
 }

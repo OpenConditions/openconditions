@@ -5,6 +5,7 @@ import {
   parseXmlDocument,
   xmlText,
 } from "@openconditions/datex2";
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { FlowContext, FlowSite, FlowSites } from "./flow-output.js";
 import { type FlowParse, type FlowReading, plausibleSpeed } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
@@ -77,14 +78,17 @@ export function parseMivConfig(input: string | Buffer): FlowSites {
  * the harmonic speed of the highest-intensity valid class; the per-class
  * speeds are kept as a vector, and the counts summed into an hourly volume.
  * Geometry comes from the configuration, joined on `unieke_id`. Faulty
- * (`defect`), ungeolocated, or no-vehicle points are skipped. (`geldig` is NOT
+ * (`defect`) and no-vehicle points are left out; a point without an id is
+ * skipped as malformed, one the configuration does not hold as having no
+ * geometry. A class it has no model class for leaves that class's speed out
+ * of the vector, recorded once per point as an unknown value. (`geldig` is NOT
  * a per-cycle data-validity flag — it is 0 for most live points that carry
  * real speeds — so the no-data sentinel and a positive count are the
  * validity signal.)
  */
 export function parseMivFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -105,15 +109,22 @@ export function parseMivFlow(
   for (const mp of getXmlChildren(root, "meetpunt")) {
     try {
       const id = mp["@_unieke_id"];
-      if (id == null) continue;
+      if (id == null) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       if (xmlText(mp["defect"]) === "1") continue;
       const site = sites?.get(String(id));
-      if (!site) continue;
+      if (!site) {
+        recordSkipped(src.id, "no_geometry");
+        continue;
+      }
 
       let bestIntensity = -1;
       let speedKph: number | undefined;
       let count = 0;
       const classSpeeds: Record<string, number> = {};
+      let unknownClass = false;
       for (const md of getXmlChildren(mp, "meetdata")) {
         const intensity = numNl(xmlText(md["verkeersintensiteit"]));
         const speed = numNl(xmlText(md["voertuigsnelheid_harmonisch"]));
@@ -122,12 +133,14 @@ export function parseMivFlow(
         if (intensity === 0 || !plausibleSpeed(speed)) continue;
         const vehicleClass = MIV_CLASSES[String(md["@_klasse_id"] ?? "")];
         if (vehicleClass !== undefined) classSpeeds[vehicleClass] = speed;
+        else unknownClass = true;
         if (intensity > bestIntensity) {
           bestIntensity = intensity;
           speedKph = speed;
         }
       }
       if (speedKph == null) continue;
+      if (unknownClass) recordSkipped(src.id, "unknown_value");
       const rekendata = getXmlChild(mp, "rekendata");
       const occupancy = rekendata ? numNl(xmlText(rekendata["bezettingsgraad"])) : undefined;
       const at = xmlText(mp["tijd_waarneming"]);
@@ -147,6 +160,7 @@ export function parseMivFlow(
       });
     } catch (err) {
       console.warn("[miv-flow] skipped malformed meetpunt:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

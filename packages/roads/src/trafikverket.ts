@@ -1,6 +1,6 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
-import { trafikverketClassification } from "@openconditions/model-roads";
+import { TRAFIKVERKET_SITUATIONS, trafikverketClassification } from "@openconditions/model-roads";
 import type { Geometry, Position } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
@@ -18,6 +18,10 @@ import type { SourceDescriptor } from "./types.js";
  * carry no offset, so the feed names its zone. `MessageType` is one of the
  * seven documented Swedish values; a feed may leave some of them to another
  * feed with `excludeMessageTypes`.
+ *
+ * A deviation with no geometry is counted as such; one that is no object, has
+ * no id or carries WKT that does not parse as malformed. A `MessageType` or
+ * `SeverityCode` outside the documented values is counted as an unknown value.
  */
 
 interface Deviation {
@@ -216,6 +220,8 @@ export function parseTrafikverket(
   const fetchedAt = new Date().toISOString();
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
   for (const result of results) {
     const situations = (result as { Situation?: unknown[] })?.Situation;
     if (!Array.isArray(situations)) continue;
@@ -225,19 +231,30 @@ export function parseTrafikverket(
       const deviations = sit?.Deviation;
       if (!Array.isArray(deviations)) continue;
       const sitId = text(sit.Id);
-      deviations.forEach((dev, index) => {
-        const rawType = text(dev?.MessageType) ?? "";
-        if (excluded.has(rawType.toLowerCase())) return;
-        const localId = text(dev.Id) ?? (sitId ? `${sitId}:${index}` : undefined);
-        if (!localId) return;
-        const geometry =
-          wktToGeometry(dev.Geometry?.Line?.WGS84) ??
-          wktToGeometry(dev.Geometry?.WGS84) ??
-          wktToGeometry(dev.Geometry?.Point?.WGS84);
-        if (!geometry) {
-          skippedNoGeometry++;
+      deviations.forEach((raw: unknown, index) => {
+        if (raw === null || typeof raw !== "object") {
+          malformed++;
           return;
         }
+        const dev = raw as Deviation;
+        const rawType = text(dev.MessageType) ?? "";
+        if (excluded.has(rawType.toLowerCase())) return;
+        const localId = text(dev.Id) ?? (sitId ? `${sitId}:${index}` : undefined);
+        if (!localId) {
+          malformed++;
+          return;
+        }
+        const wkts = [dev.Geometry?.Line?.WGS84, dev.Geometry?.WGS84, dev.Geometry?.Point?.WGS84];
+        const geometry = wkts.reduce<Geometry | null>((g, wkt) => g ?? wktToGeometry(wkt), null);
+        if (!geometry) {
+          if (wkts.some((wkt) => text(wkt) !== undefined)) malformed++;
+          else skippedNoGeometry++;
+          return;
+        }
+        if (rawType !== "" && !Object.hasOwn(TRAFIKVERKET_SITUATIONS, rawType.toLowerCase())) {
+          unknownValues++;
+        }
+        if (dev.SeverityCode != null && severityOf(dev.SeverityCode) === "unknown") unknownValues++;
         const { type, category, isPlanned } = coarseType(typeOf(rawType, dev));
         const classification = trafikverketClassification(rawType);
         const header = text(dev.Header);
@@ -303,6 +320,8 @@ export function parseTrafikverket(
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
 
   return dedupeRoadEvents(out);
 }

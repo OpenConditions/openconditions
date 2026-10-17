@@ -5,7 +5,7 @@ import {
   parseXmlDocument,
   xmlText,
 } from "@openconditions/datex2";
-import { reprojectorFor } from "@openconditions/ingest-framework";
+import { recordSkipped, reprojectorFor } from "@openconditions/ingest-framework";
 import type { Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import type { FlowParse, FlowReading, Los } from "./flow-reading.js";
@@ -41,11 +41,13 @@ function numEs(raw: string | undefined): number | undefined {
  * per hour) and `ocupacion` (%), with UTM (ETRS89 / EPSG:25830) `st_x`/`st_y`
  * coordinates reprojected to WGS84. The feed carries no measured speed and no
  * per-point time, so readings are dated by the poll. Points with an error
- * flag, no valid coordinate, or an unresolvable level are skipped.
+ * flag or no stated level carry nothing this cycle and are left out. A point
+ * without an id, with an unreadable coordinate or with a level off the scale
+ * is skipped as malformed, one without a coordinate as having no geometry.
  */
 export function parseMadridFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   _sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -69,16 +71,36 @@ export function parseMadridFlow(
     try {
       if (xmlText(pm["error"]) === "S") continue; // sensor fault this cycle
       const id = xmlText(pm["idelem"]);
-      if (!id) continue;
+      if (!id) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
 
-      const x = numEs(xmlText(pm["st_x"]));
-      const y = numEs(xmlText(pm["st_y"]));
-      if (x == null || y == null || !toWgs) continue;
+      const rawX = xmlText(pm["st_x"]);
+      const rawY = xmlText(pm["st_y"]);
+      if (!rawX?.trim() && !rawY?.trim()) {
+        recordSkipped(src.id, "no_geometry");
+        continue;
+      }
+      const x = numEs(rawX);
+      const y = numEs(rawY);
+      if (x == null || y == null || !toWgs) {
+        recordSkipped(src.id, x == null || y == null ? "malformed" : "no_geometry");
+        continue;
+      }
       const [lon, lat] = toWgs([x, y]);
-      if (!Number.isFinite(lon) || !Number.isFinite(lat)) continue;
+      if (!Number.isFinite(lon) || !Number.isFinite(lat)) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
 
-      const los = losFromNivel(xmlText(pm["nivelServicio"]));
-      if (los === "unknown") continue;
+      const nivel = xmlText(pm["nivelServicio"])?.trim();
+      if (!nivel) continue; // no level stated this cycle
+      const los = losFromNivel(nivel);
+      if (los === "unknown") {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       const volume = numEs(xmlText(pm["intensidad"]));
       const occupancy = numEs(xmlText(pm["ocupacion"]));
       const name = xmlText(pm["descripcion"])?.trim();
@@ -94,6 +116,7 @@ export function parseMadridFlow(
       });
     } catch (err) {
       console.warn("[madrid-flow] skipped malformed pm:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

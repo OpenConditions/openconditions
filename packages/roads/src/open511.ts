@@ -1,7 +1,7 @@
 import type { GeoJsonGeometry } from "@openconditions/core";
 import { normaliseSeverity, scheduleTimezoneForGeometry } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
-import { open511Classification } from "@openconditions/model-roads";
+import { OPEN511, open511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
@@ -212,6 +212,14 @@ const ROAD_STATE_SEVERITY: NonNullable<RoadEvent["roadState"]>[] = [
   "closed",
 ];
 
+/** How many of the roads state a `state` the vocabulary does not hold. */
+function unknownRoadStates(roads: Open511Road[] | undefined): number {
+  return (roads ?? []).filter(
+    (r) =>
+      typeof r?.state === "string" && r.state !== "" && open511RoadState(r.state) === undefined,
+  ).length;
+}
+
 function roadStateFromRoads(roads: Open511Road[] | undefined): RoadEvent["roadState"] | undefined {
   let worst: RoadEvent["roadState"] | undefined;
   for (const r of roads ?? []) {
@@ -236,25 +244,44 @@ function collectExtensionFields(ev: Open511Event): Record<string, unknown> | und
   return Object.keys(out).length > 0 ? out : undefined;
 }
 
-function open511Status(raw: string | undefined): "active" | "inactive" | "archived" | "cancelled" {
-  switch (raw?.toUpperCase()) {
-    case "ACTIVE":
-      return "active";
-    case "INACTIVE":
-      return "inactive";
-    case "ARCHIVED":
-      return "archived";
-    case "CANCELLED":
-      return "cancelled";
-    default:
-      return "active";
-  }
+const STATUSES = {
+  ACTIVE: "active",
+  INACTIVE: "inactive",
+  ARCHIVED: "archived",
+  CANCELLED: "cancelled",
+} as const;
+
+/** An event's status; one the vocabulary does not hold reads as active. */
+function open511Status(raw: string | undefined): (typeof STATUSES)[keyof typeof STATUSES] {
+  const key = raw?.toUpperCase() ?? "";
+  return Object.hasOwn(STATUSES, key) ? STATUSES[key as keyof typeof STATUSES] : "active";
+}
+
+const EVENT_TYPES = new Set<string>(OPEN511.eventTypes);
+const SEVERITIES = new Set<string>(OPEN511.severities);
+
+/**
+ * How many of an event's enumerated values the Open511 vocabularies do not
+ * hold: its status, event type, severity and each road's state. The event is
+ * published without them.
+ */
+function unknownValuesOf(ev: Open511Event): number {
+  const unknown = (raw: unknown, known: (v: string) => boolean) =>
+    typeof raw === "string" && raw.trim() !== "" && !known(raw.trim().toUpperCase()) ? 1 : 0;
+  return (
+    unknown(ev.status, (v) => Object.hasOwn(STATUSES, v)) +
+    unknown(ev.event_type, (v) => EVENT_TYPES.has(v)) +
+    unknown(ev.severity, (v) => SEVERITIES.has(v)) +
+    unknownRoadStates(Array.isArray(ev.roads) ? ev.roads : undefined)
+  );
 }
 
 /**
  * Parse an Open511 JSON feed and return an array of RoadEvent observations.
- * Events with no usable geometry are skipped. Extension fields (prefixed with
- * "+") are collected into externalRefs. The result is deduped before return.
+ * Events with no usable geometry are left out and counted as such; events
+ * with no id, or that cannot be read, as malformed. Extension fields
+ * (prefixed with "+") are collected into externalRefs. The result is deduped
+ * before return.
  */
 export function parseOpen511(json: string | Buffer | object, src: SourceDescriptor): RoadEvent[] {
   let payload: Open511Payload;
@@ -271,12 +298,20 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
 
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
 
   for (const ev of events) {
     try {
       const geometry = ev.geography ?? null;
       if (!geometry || typeof geometry !== "object" || !("type" in geometry)) {
         skippedNoGeometry++;
+        continue;
+      }
+      // The id is what every later poll names the event by; one made up per
+      // poll would publish the same event anew each time.
+      if (typeof ev.id !== "string" || ev.id.trim() === "") {
+        malformed++;
         continue;
       }
 
@@ -292,9 +327,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
       const severityRaw = typeof ev.severity === "string" ? ev.severity : "UNKNOWN";
       const { validFrom, validTo } = parseSchedule(ev.schedule);
 
-      const rawId =
-        typeof ev.id === "string" ? ev.id : `unknown-${Math.random().toString(36).slice(2)}`;
-      const eventLocalId = localId(rawId);
+      const eventLocalId = localId(ev.id);
 
       const extensionFields = collectExtensionFields(ev);
       const geonamesExternal = geonamesExternalFromAreas(ev.areas);
@@ -314,7 +347,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
 
       const hasHeadline = typeof ev.headline === "string" && !!ev.headline;
 
-      out.push({
+      const event: RoadEvent = {
         id: `${src.id}:${eventLocalId}`,
         source: src.id,
         sourceFormat: "open511",
@@ -359,8 +392,11 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         dataUpdatedAt: typeof ev.updated === "string" ? ev.updated : new Date().toISOString(),
         fetchedAt: new Date().toISOString(),
         isStale: false,
-      });
+      };
+      unknownValues += unknownValuesOf(ev);
+      out.push(event);
     } catch (err) {
+      malformed++;
       console.warn("[open511] skipped malformed event:", ev?.["id"], err);
     }
   }
@@ -370,6 +406,8 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
     // Also counted per source so the loss shows up in GET /feeds/status.
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
 
   return dedupeRoadEvents(out);
 }

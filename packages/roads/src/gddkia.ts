@@ -16,7 +16,13 @@ import type { SourceDescriptor } from "./types.js";
  * `<utrudnienia><utr>…</utr></utrudnienia>` document, WGS84 points. The coarse
  * `typ` (U/I/W) is refined by the unambiguous boolean flags (`droga_zamknieta`,
  * `awaria_mostu`); records carry no id, so a stable one is derived from content.
+ * A record with no position is counted as having no geometry, one whose
+ * position does not parse as malformed, and a `typ` outside U/I/W as an
+ * unknown value.
  */
+
+/** The documented obstruction types: roadworks, other, accident. */
+const TYPES = new Set(["U", "I", "W"]);
 
 function bool(v: string | undefined): boolean {
   return v === "true" || v === "1" || v === "T";
@@ -63,15 +69,24 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
 
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownTypes = 0;
   for (const it of getXmlChildren(root, "utr")) {
-    const lat = Number(getXmlChildText(it, "geo_lat"));
-    const lng = Number(getXmlChildText(it, "geo_long"));
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    const rawLat = getXmlChildText(it, "geo_lat")?.trim();
+    const rawLng = getXmlChildText(it, "geo_long")?.trim();
+    if (!rawLat || !rawLng) {
       skippedNoGeometry++;
+      continue;
+    }
+    const lat = Number(rawLat);
+    const lng = Number(rawLng);
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      malformed++;
       continue;
     }
 
     const typ = getXmlChildText(it, "typ");
+    if (typ?.trim() && !TYPES.has(typ.trim())) unknownTypes++;
     const road = getXmlChildText(it, "nr_drogi");
     const section = getXmlChildText(it, "nazwa_odcinka");
     const text = getXmlChildText(it, "objazd");
@@ -144,6 +159,8 @@ export function parseGddkia(input: string | Buffer, src: SourceDescriptor): Road
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownTypes);
 
   return dedupeRoadEvents(out);
 }

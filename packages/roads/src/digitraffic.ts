@@ -2,6 +2,7 @@ import type { GeoJsonGeometry, Severity } from "@openconditions/core";
 import { deriveSeverity } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import {
+  DIGITRAFFIC_SITUATIONS,
   digitrafficClassification,
   parseRestrictionInstant,
   toRestrictionInstant,
@@ -173,13 +174,21 @@ function mapDtSeverity(raw: unknown): Severity | undefined {
   }
 }
 
-/** Worst severity across the announcement's road-work phases, with the token that declared it. */
+/**
+ * Worst severity across the announcement's road-work phases, with the token
+ * that declared it. A phase severity token outside the vocabulary is counted
+ * against the source and left out.
+ */
 function severityFromPhases(
   ann: DigitrafficAnnouncement | null,
+  sourceId: string,
 ): { severity: Severity; raw: string } | undefined {
   let worst: { severity: Severity; raw: string } | undefined;
   for (const p of roadWorkPhases(ann)) {
     const s = mapDtSeverity(p.severity);
+    if (s === undefined && coerceString(p.severity) !== null) {
+      recordSkipped(sourceId, "unknown_value");
+    }
     if (
       s &&
       (worst == null || DT_SEVERITY_ORDER.indexOf(s) > DT_SEVERITY_ORDER.indexOf(worst.severity))
@@ -459,6 +468,14 @@ function buildDigitrafficEvent(
       ),
     ),
   );
+  if (
+    situationType !== "" &&
+    ![situationType, announcementType].some(
+      (t) => t !== null && Object.hasOwn(DIGITRAFFIC_SITUATIONS, normalizeDtToken(t)),
+    )
+  ) {
+    recordSkipped(src.id, "unknown_value");
+  }
   const coarse = DT_COARSE[normalizeDtToken(codeForMapping)];
   const { type, category, isPlanned } =
     coarse !== undefined ? coarseType(coarse) : coarseOf(classification);
@@ -466,12 +483,20 @@ function buildDigitrafficEvent(
   const validFrom = coerceString(ann?.timeAndDuration?.startTime) ?? null;
   const validTo = coerceString(ann?.timeAndDuration?.endTime) ?? null;
 
-  const phaseSeverity = severityFromPhases(ann);
+  const phaseSeverity = severityFromPhases(ann, src.id);
   const severity = phaseSeverity?.severity ?? deriveSeverity({});
 
   const restrictions = restrictionsFromPhases(ann) ?? restrictionsFromFeatures(ann);
   const speedLimitKph = speedLimitFromPhases(ann) ?? speedLimitFromFeatures(ann);
   const terminal = terminalStatusOf(props, ann);
+  // A record reaching here was not ended, so an early-closing value it states
+  // is one the vocabulary does not hold.
+  if (
+    terminal === undefined &&
+    [props["earlyClosing"], ann?.["earlyClosing"]].some((v) => coerceString(v) !== null)
+  ) {
+    recordSkipped(src.id, "unknown_value");
+  }
   const restrictionDetails = digitrafficRestrictionDetails(props as Record<string, unknown>, src);
 
   const dataUpdatedAt =
@@ -764,7 +789,8 @@ export function parseDigitrafficSnapshot(
 /**
  * Parse a Digitraffic (Fintraffic) traffic-message Simple GeoJSON feed and
  * return an array of RoadEvent observations. Invalid input yields an empty
- * array; per-feature problems are logged and skipped.
+ * array; per-feature problems are logged, and the features left out for them
+ * are counted as malformed.
  *
  * Records are reconciled by their own `situationId`, not by proximity: two
  * distinct situations at one coordinate are two facts, and merging them would
@@ -775,6 +801,9 @@ export function parseDigitraffic(
   src: SourceDescriptor,
 ): RoadEvent[] {
   const report = parseDigitrafficInternal(geojson, src, {}, false);
+  // A feature without a usable identity or version is left out here; the
+  // reporting entry point refuses the whole snapshot for it instead.
+  recordSkipped(src.id, "malformed", report.inputCount - report.records.length);
   if (report.errors.length > 0) {
     for (const error of report.errors) {
       console.warn(`[digitraffic] ${src.id}: ${error.code} at ${error.sourcePath}`);

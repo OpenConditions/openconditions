@@ -1,5 +1,5 @@
 import { recordSkipped } from "@openconditions/ingest-framework";
-import { ltaClassification } from "@openconditions/model-roads";
+import { LTA_SITUATIONS, ltaClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
 import type { SourceDescriptor } from "./types.js";
@@ -9,6 +9,9 @@ import type { SourceDescriptor } from "./types.js";
  * auth). The response is `{ value: [{ Type, Latitude, Longitude, Message }] }`.
  * Each record is a point incident; the LTA `Type` maps to the canonical
  * taxonomy. Records carry no id, so a stable one is derived from the content.
+ * A record with no position is counted as having no geometry, one that is no
+ * object or whose position is not numeric as malformed, and a `Type` the
+ * crosswalk does not know as an unknown value.
  */
 
 interface LtaIncident {
@@ -69,18 +72,30 @@ export function parseLtaIncidents(
     }
   }
   const value = (data as { value?: unknown })?.value;
-  const incidents = Array.isArray(value) ? (value as LtaIncident[]) : [];
+  const incidents = Array.isArray(value) ? (value as unknown[]) : [];
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownTypes = 0;
 
-  for (const ev of incidents) {
+  for (const raw of incidents) {
+    if (raw === null || typeof raw !== "object") {
+      malformed++;
+      continue;
+    }
+    const ev = raw as LtaIncident;
     const lat = ev.Latitude;
     const lng = ev.Longitude;
-    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+    if (lat == null || lng == null) {
       skippedNoGeometry++;
       continue;
     }
-    const rawType = (ev.Type ?? "").trim();
+    if (!Number.isFinite(lat) || !Number.isFinite(lng)) {
+      malformed++;
+      continue;
+    }
+    const rawType = (typeof ev.Type === "string" ? ev.Type : "").trim();
+    if (rawType !== "" && !Object.hasOwn(LTA_SITUATIONS, rawType.toLowerCase())) unknownTypes++;
     const type = TYPE_MAP[rawType.toLowerCase()] ?? "other";
     const classification = ltaClassification(rawType);
 
@@ -125,6 +140,8 @@ export function parseLtaIncidents(
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownTypes);
 
   return dedupeRoadEvents(out);
 }

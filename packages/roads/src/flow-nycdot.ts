@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { LineString } from "geojson";
 import { localTimestamp } from "./flow.js";
 import type { FlowContext, FlowSites } from "./flow-output.js";
@@ -29,11 +30,15 @@ function parseLinkPoints(raw: unknown): LineString | null {
  * Parse the NYC DOT real-time traffic-speed Socrata resource (`i4gi-tjb9.json`).
  * Speed is mph → km/h; geometry is the inline `link_points` polyline, which
  * the source publishes in lat,lon order (swapped here to GeoJSON's lon,lat).
- * The level of service is left to the baseline enrichment.
+ * The level of service is left to the baseline enrichment. A link with an
+ * absent or empty speed carries none this cycle and is left out; one without
+ * an id, with an unreadable speed or with a polyline of fewer than two
+ * readable points is skipped as malformed, one without a polyline as having
+ * no geometry.
  */
 export function parseNycDotFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   _sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -43,13 +48,24 @@ export function parseNycDotFlow(
   const readings: FlowReading[] = [];
   for (const raw of rows as Link[]) {
     const linkId = raw?.link_id != null ? String(raw.link_id) : null;
-    if (!linkId) continue;
+    if (!linkId) {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
     const geometry = parseLinkPoints(raw.link_points);
-    if (!geometry) continue;
+    if (!geometry) {
+      const stated = typeof raw.link_points === "string" && raw.link_points.trim() !== "";
+      recordSkipped(src.id, stated ? "malformed" : "no_geometry");
+      continue;
+    }
     const speedRaw = raw.speed;
-    if (typeof speedRaw === "string" && speedRaw.trim() === "") continue;
+    // An absent or empty speed is none this cycle (a null is not 0 mph).
+    if (speedRaw == null || (typeof speedRaw === "string" && speedRaw.trim() === "")) continue;
     const mph = Number(speedRaw);
-    if (!Number.isFinite(mph) || mph < 0) continue;
+    if (!Number.isFinite(mph) || mph < 0) {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
     // Socrata publishes a floating timestamp: New York wall-clock time without an offset.
     const at =
       typeof raw.data_as_of === "string"

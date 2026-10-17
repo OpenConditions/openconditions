@@ -1,14 +1,24 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { LineString, Point } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import {
   type FlowParse,
   type FlowReading,
+  mapDatexTrafficStatus,
   measuredReading,
   plausibleSpeed,
 } from "./flow-reading.js";
 import type { SourceDescriptor } from "./types.js";
 
 type FlowGeometry = Point | LineString;
+
+/** The geometry types {@link toFlowGeometry} reads a position from. */
+const READ_GEOMETRY_TYPES = new Set([
+  "Point",
+  "LineString",
+  "MultiLineString",
+  "GeometryCollection",
+]);
 
 function num(raw: unknown): number | undefined {
   if (raw == null || raw === "") return undefined;
@@ -59,9 +69,12 @@ function toFlowGeometry(geom: unknown): FlowGeometry | null {
  * single parser serves every feed that publishes features with inline
  * geometry plus flat `properties` carrying a per-segment average speed and/or
  * categorical traffic status — OpenDataSoft exports (Rennes, Bordeaux) and
- * Azure-APIM GeoJSON (Victoria Freeway Travel Time) alike. Segments with no
- * resolvable geometry, or with neither a speed nor a resolvable level of
- * service, are skipped.
+ * Azure-APIM GeoJSON (Victoria Freeway Travel Time) alike. A segment without
+ * a geometry of a type it reads is skipped as having no geometry; one whose
+ * geometry is broken, or whose status it cannot read and that has no speed, as
+ * malformed. A segment with neither a speed nor a status says nothing this
+ * cycle and is left out. A status it cannot read beside a speed leaves the
+ * reading without a level, recorded as an unknown value.
  */
 export function parseGeojsonFlow(
   input: string | Buffer,
@@ -88,13 +101,24 @@ export function parseGeojsonFlow(
   const readings: FlowReading[] = [];
   for (const feature of features) {
     try {
-      if (!feature || typeof feature !== "object") continue;
+      if (!feature || typeof feature !== "object") {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
       const props = ((feature as { properties?: unknown }).properties ?? {}) as Record<
         string,
         unknown
       >;
-      const geometry = toFlowGeometry((feature as { geometry?: unknown }).geometry);
-      if (!geometry) continue;
+      const rawGeometry = (feature as { geometry?: unknown }).geometry;
+      const geometry = toFlowGeometry(rawGeometry);
+      if (!geometry) {
+        const type = (rawGeometry as { type?: unknown } | null | undefined)?.type;
+        recordSkipped(
+          src.id,
+          typeof type === "string" && READ_GEOMETRY_TYPES.has(type) ? "malformed" : "no_geometry",
+        );
+        continue;
+      }
 
       const rawId = props[mapping.idField];
       const siteId = rawId != null && rawId !== "" ? String(rawId) : `feat-${readings.length + 1}`;
@@ -123,9 +147,22 @@ export function parseGeojsonFlow(
         ...(trafficStatus != null ? { trafficStatus } : {}),
         ...(freeFlowKph != null ? { freeFlowKph } : {}),
       });
-      if (reading) readings.push(reading);
+      // A status the feed states and the parser cannot read; "unknown" is the
+      // feeds' own word for no status this cycle.
+      const unreadStatus =
+        trafficStatus !== undefined &&
+        trafficStatus.trim() !== "" &&
+        trafficStatus.trim().toLowerCase() !== "unknown" &&
+        mapDatexTrafficStatus(trafficStatus) === "unknown";
+      if (reading) {
+        if (unreadStatus) recordSkipped(src.id, "unknown_value");
+        readings.push(reading);
+      } else if (unreadStatus) {
+        recordSkipped(src.id, "malformed");
+      }
     } catch (err) {
       console.warn("[geojson-flow] skipped malformed feature:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

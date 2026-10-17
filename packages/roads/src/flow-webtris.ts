@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import { localTimestamp } from "./flow.js";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import { type FlowParse, type FlowReading, parseJson, plausibleSpeed } from "./flow-reading.js";
@@ -31,10 +32,15 @@ const numeric = (raw: unknown) =>
  * converted to km/h) and the quarter-hour's total count as an hourly volume,
  * over the period the row covers. Geometry and name come from the `/sites`
  * registry. The level of service is left to the baseline enrichment.
+ *
+ * Rows without a value are the report's empty quarter hours and are left out,
+ * as are the rows a later one of the same site supersedes. A row whose site
+ * name holds no site number is skipped as malformed; a site the registry does
+ * not hold is skipped once, as having no geometry.
  */
 export function parseWebtrisFlow(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -47,7 +53,10 @@ export function parseWebtrisFlow(
   >();
   for (const row of payload.Rows as Row[]) {
     const token = siteToken(row["Site Name"]);
-    if (!token) continue;
+    if (!token) {
+      recordSkipped(src.id, "malformed");
+      continue;
+    }
     const mph = numeric(row["Avg mph"]);
     const speedKph = Number.isFinite(mph) && mph >= 0 ? mph * MPH_TO_KPH : undefined;
     const count = numeric(row["Total Volume"]);
@@ -72,7 +81,10 @@ export function parseWebtrisFlow(
   const readings: FlowReading[] = [];
   for (const [token, v] of latest) {
     const site = sites?.get(token);
-    if (!site) continue;
+    if (!site) {
+      recordSkipped(src.id, "no_geometry");
+      continue;
+    }
     readings.push({
       site: token,
       geometry: site.geometry,

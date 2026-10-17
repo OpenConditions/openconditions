@@ -1,3 +1,4 @@
+import { recordSkipped } from "@openconditions/ingest-framework";
 import type { LineString } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
 import type { FlowParse, FlowReading } from "./flow-reading.js";
@@ -33,10 +34,14 @@ function num(raw: unknown): number | undefined {
  * DataMall caps this resource at 500 links per call via `$skip`; the feed
  * declares `pagination` so the ingest fetch layer follows every page and this
  * parser runs once per page, its readings concatenated for full national coverage.
+ *
+ * A link without an id or a speed band is skipped as malformed, as is one with
+ * a missing or unreadable coordinate; one with no coordinate at all as having
+ * no geometry.
  */
 export function parseLtaSpeedBands(
   input: string | Buffer,
-  _src: SourceDescriptor,
+  src: SourceDescriptor,
   _sites: FlowSites | undefined,
   _ctx: FlowContext,
 ): FlowParse {
@@ -54,13 +59,22 @@ export function parseLtaSpeedBands(
   for (const raw of rows as SpeedBandRow[]) {
     try {
       const linkId = raw?.LinkID != null ? String(raw.LinkID) : null;
-      if (!linkId) continue;
+      if (!linkId) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
 
       const startLon = num(raw.StartLon);
       const startLat = num(raw.StartLat);
       const endLon = num(raw.EndLon);
       const endLat = num(raw.EndLat);
-      if (startLon == null || startLat == null || endLon == null || endLat == null) continue;
+      if (startLon == null || startLat == null || endLon == null || endLat == null) {
+        const absent = [raw.StartLon, raw.StartLat, raw.EndLon, raw.EndLat].every(
+          (v) => v == null || v === "",
+        );
+        recordSkipped(src.id, absent ? "no_geometry" : "malformed");
+        continue;
+      }
       const geometry: LineString = {
         type: "LineString",
         coordinates: [
@@ -74,7 +88,10 @@ export function parseLtaSpeedBands(
       // Band midpoint; the top band (e.g. "70"/"") is open-ended, so fall back
       // to whichever bound is present.
       const speedKph = min != null && max != null ? (min + max) / 2 : (max ?? min ?? undefined);
-      if (speedKph == null) continue;
+      if (speedKph == null) {
+        recordSkipped(src.id, "malformed");
+        continue;
+      }
 
       const name = typeof raw.RoadName === "string" ? raw.RoadName.trim() : "";
       readings.push({
@@ -86,6 +103,7 @@ export function parseLtaSpeedBands(
       });
     } catch (err) {
       console.warn("[lta-speedbands] skipped malformed row:", err);
+      recordSkipped(src.id, "malformed");
     }
   }
 

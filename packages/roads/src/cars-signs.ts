@@ -4,6 +4,7 @@ import {
   type ParseContext,
   type ParseOutput,
   type RecordDraft,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import { COMPASS_POINTS, observationId } from "@openconditions/model";
 import type { RoadFeed } from "./feed-schema.js";
@@ -83,8 +84,10 @@ function pagesOf(sign: CarsSign) {
  * message signs): each sign as a `vms` feature with its one face, and a
  * `vms.display` reading of what the face shows, as of the sign's last
  * update. A blank sign shows no message; a sign in error shows none the
- * publisher states. A sign without an id or a position is left out and
- * counted.
+ * publisher states. A sign without a position (none, or the 0,0 placeholder)
+ * is left out as having no geometry; one without an id, or whose position is
+ * no number or out of range, as malformed. A sign type, status or facing
+ * direction the vocabularies do not hold is counted as an unknown value.
  */
 export function parseCarsSigns(
   feed: RoadFeed,
@@ -97,18 +100,27 @@ export function parseCarsSigns(
     const doc: unknown = JSON.parse(body.toString("utf8"));
     if (!Array.isArray(doc)) throw new Error("the sign list is not an array");
     for (const raw of doc as CarsSign[]) {
-      const id = typeof raw?.id === "string" ? raw.id.trim() : "";
-      const lon = raw?.location?.longitude;
-      const lat = raw?.location?.latitude;
+      if (raw === null || typeof raw !== "object") {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
+      const id = typeof raw.id === "string" ? raw.id.trim() : "";
+      const lon: unknown = raw.location?.longitude;
+      const lat: unknown = raw.location?.latitude;
+      if (lon == null || lat == null || (lon === 0 && lat === 0)) {
+        recordSkipped(feed.id, "no_geometry");
+        continue;
+      }
       if (
         id === "" ||
         typeof lon !== "number" ||
         typeof lat !== "number" ||
+        !Number.isFinite(lon) ||
+        !Number.isFinite(lat) ||
         Math.abs(lon) > 180 ||
-        Math.abs(lat) > 90 ||
-        (lon === 0 && lat === 0)
+        Math.abs(lat) > 90
       ) {
-        out.rejected = (out.rejected ?? 0) + 1;
+        recordSkipped(feed.id, "malformed");
         continue;
       }
       const featureId = `oc:feature:${feed.id}:${signKey(id)}`;
@@ -117,6 +129,11 @@ export function parseCarsSigns(
         facing !== undefined && COMPASS.has(facing)
           ? { value: "unknown", basis: "compass", compass: facing }
           : undefined;
+      const unknownValues =
+        (facing && direction === undefined ? 1 : 0) +
+        (raw.properties?.signType && !Object.hasOwn(SIGN_TYPES, raw.properties.signType) ? 1 : 0) +
+        (raw.status && !Object.hasOwn(WORKING_STATUSES, raw.status) ? 1 : 0);
+      recordSkipped(feed.id, "unknown_value", unknownValues);
       const route = raw.location?.routeId?.trim();
       const location = {
         geometry: { type: "Point", coordinates: [lon, lat] },

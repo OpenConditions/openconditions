@@ -1,6 +1,10 @@
 import { type GeoJsonGeometry, scheduleTimezoneForGeometry } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
-import { carsClassification, type RoadClassification } from "@openconditions/model-roads";
+import {
+  CARS_SITUATIONS,
+  carsClassification,
+  type RoadClassification,
+} from "@openconditions/model-roads";
 import type { LaneStatus, RoadEvent } from "./model.js";
 import { buildLocalSchedule, jsDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseOf } from "./situation/classes.js";
@@ -348,6 +352,19 @@ function placeable(geometry: unknown): geometry is GeoJsonGeometry {
   return typeof g.type === "string" && Array.isArray(g.coordinates) && g.coordinates.length > 0;
 }
 
+/**
+ * Whether an event names any phrase or headline category the CARS crosswalk
+ * knows, including those it deliberately leaves unclassified. An event that
+ * names some and none known is published without a classification.
+ */
+function namesKnownPhrase(phrases: readonly string[], category: string | undefined): boolean {
+  const keys = [
+    ...phrases.map((p) => p.trim().toLowerCase()),
+    ...(category ? [`category:${category}`] : []),
+  ];
+  return keys.length === 0 || keys.some((key) => Object.hasOwn(CARS_SITUATIONS, key));
+}
+
 /** Account for one event: ended, withheld or nominal events are terminal, the rest accepted. */
 function carsRecord(
   raw: unknown,
@@ -369,15 +386,13 @@ function carsRecord(
   const category = ev.headline?.category?.trim().toLowerCase();
   const condition = category === ROAD_CONDITIONS;
   const code = ev.headline?.code?.trim().toLowerCase() ?? "";
+  const phrases = [
+    ...(ev.headline?.code ? [ev.headline.code] : []),
+    ...(detail.descriptions ?? []).flatMap((d) => (d.kind?.code ? [d.kind.code] : [])),
+  ];
   const classification = condition
     ? conditionClassification(code)
-    : carsClassification(
-        [
-          ...(ev.headline?.code ? [ev.headline.code] : []),
-          ...(detail.descriptions ?? []).flatMap((d) => (d.kind?.code ? [d.kind.code] : [])),
-        ],
-        category,
-      );
+    : carsClassification(phrases, category);
   const terminal = ENDED_STATUSES.has((ev.status ?? "").toUpperCase())
     ? "ended"
     : detail.access !== undefined && detail.access !== PUBLIC_ACCESS
@@ -408,6 +423,9 @@ function carsRecord(
     };
   }
   const event = carsEvent(ev, detail, ev.geometry, classification, condition, src, fetchedAt);
+  if (!condition && classification === undefined && !namesKnownPhrase(phrases, category)) {
+    recordSkipped(src.id, "unknown_value");
+  }
   return {
     record: {
       id,
@@ -460,11 +478,22 @@ export function parseCarsSnapshot(
   return { inputCount: data.length, records, errors };
 }
 
-/** The current events of one CARS response, for a feed that declares no complete snapshot. */
+/**
+ * The current events of one CARS response, for a feed that declares no
+ * complete snapshot. An event without an id is left out and counted as
+ * malformed; a complete snapshot refuses the whole response for it instead.
+ */
 export function parseCars(input: string | Buffer, src: SourceDescriptor): RoadEvent[] {
   const report = parseCarsSnapshot(input, src);
   for (const error of report.errors) {
     console.warn(`[cars] ${src.id}: ${error.code} at ${error.sourcePath}`);
   }
-  return reconcileRoadSnapshots([{ ...report, errors: [] }]).observations as RoadEvent[];
+  recordSkipped(src.id, "malformed", report.inputCount - report.records.length);
+  // The events left out are no longer part of what is reconciled.
+  const kept: RoadSnapshotReport = {
+    inputCount: report.records.length,
+    records: report.records,
+    errors: [],
+  };
+  return reconcileRoadSnapshots([kept]).observations as RoadEvent[];
 }

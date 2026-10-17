@@ -1,7 +1,7 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import type { Schedule } from "@openconditions/model";
-import { vicClassification } from "@openconditions/model-roads";
+import { VIC_SITUATIONS, vicClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
@@ -56,6 +56,22 @@ function str(v: unknown): string | undefined {
 
 function obj(v: unknown): Record_ | undefined {
   return v && typeof v === "object" && !Array.isArray(v) ? (v as Record_) : undefined;
+}
+
+/**
+ * Whether a record that names an event type or subtype names none the
+ * crosswalk knows, `others` being further tokens that may classify it.
+ */
+function unknownEventType(
+  named: readonly (string | undefined)[],
+  others: readonly (string | undefined)[] = [],
+): boolean {
+  return (
+    named.some((c) => c !== undefined) &&
+    ![...named, ...others].some(
+      (c) => c !== undefined && Object.hasOwn(VIC_SITUATIONS, c.trim().toLowerCase()),
+    )
+  );
 }
 
 function resolveType(...candidates: (string | undefined)[]): RoadEventType {
@@ -154,13 +170,22 @@ function baseEvent(
 function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): RoadEvent[] {
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
   for (const raw of records) {
     const r = obj(raw);
-    if (!r) continue;
+    if (!r) {
+      malformed++;
+      continue;
+    }
     const id = str(r.id) ?? str(r.disruptionId) ?? str(r.eventId);
     const geometry = unwrapGeometry(r.geometry);
-    if (!id || !geometry) {
+    if (!geometry) {
       skippedNoGeometry++;
+      continue;
+    }
+    if (!id) {
+      malformed++;
       continue;
     }
 
@@ -184,6 +209,7 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     const recordTime = toIsoTimestamp(r.lastUpdated, src.timeZone);
     const tokens = [str(r.eventSubtype), str(r.eventType), str(impact?.impactType)];
     const classification = vicClassification(...tokens);
+    if (unknownEventType(tokens.slice(0, 2), tokens.slice(2))) unknownValues++;
     out.push({
       ...baseEvent(src, id, geometry, now),
       situation: {
@@ -218,21 +244,32 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
   return out;
 }
 
 function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string): RoadEvent[] {
   const out: RoadEvent[] = [];
   let skippedNoGeometry = 0;
+  let malformed = 0;
+  let unknownValues = 0;
   for (const raw of features) {
     const f = obj(raw);
-    if (!f) continue;
+    if (!f) {
+      malformed++;
+      continue;
+    }
     const p = obj(f.properties) ?? {};
     const id = str(p.id) ?? str(f.id) ?? str(p.eventId);
     const geometry =
       obj(f.geometry) && "coordinates" in obj(f.geometry)! ? (f.geometry as Geometry) : undefined;
-    if (!id || !geometry) {
+    if (!geometry) {
       skippedNoGeometry++;
+      continue;
+    }
+    if (!id) {
+      malformed++;
       continue;
     }
 
@@ -242,6 +279,7 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     const direction = str(p.direction);
     const type = resolveType(eventSubType, eventType, str(p.status));
     const classification = vicClassification(eventSubType, eventType, str(p.status));
+    if (unknownEventType([eventSubType, eventType], [str(p.status)])) unknownValues++;
     const recordTime =
       toIsoTimestamp(p.lastUpdated, src.timeZone) ?? toIsoTimestamp(p.created, src.timeZone);
 
@@ -276,12 +314,16 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     );
     recordSkipped(src.id, "no_geometry", skippedNoGeometry);
   }
+  recordSkipped(src.id, "malformed", malformed);
+  recordSkipped(src.id, "unknown_value", unknownValues);
   return out;
 }
 
 /**
- * Parse either Victoria disruption dataset into RoadEvents. Records without an
- * id or usable geometry are skipped; a malformed body yields [].
+ * Parse either Victoria disruption dataset into RoadEvents. Records without
+ * usable geometry are left out and counted as such; records that are no
+ * object or have no id as malformed. An event type or subtype the crosswalk
+ * does not know is counted as an unknown value. A malformed body yields [].
  *
  * The planned dataset paginates by `nextPageDetails.nextPageToken`, which the
  * fetch layer's offset pagination cannot express. Rather than truncating
