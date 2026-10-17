@@ -11,7 +11,12 @@ import {
   DATEX2_V3_FUEL_GRADES,
   DATEX2_V3_FUEL_GRADES_OUT,
 } from "./crosswalk/datex2.js";
-import { FUEL_KINDS, FUEL_PROPERTIES, fuelGradeVocabulary } from "./kinds.js";
+import {
+  FUEL_KINDS,
+  FUEL_PROPERTIES,
+  FUEL_STATION_AMENITIES,
+  fuelGradeVocabulary,
+} from "./kinds.js";
 
 /** The wire formats the fuel parsers read. */
 export const FUEL_SOURCE_FORMATS = [
@@ -42,6 +47,7 @@ export const fuelModule: RegistryModule = {
     /** US regional averages are published per Petroleum Administration for Defense District. */
     extendVocabulary({ vocabulary: "admin_geocode_scheme", values: ["padd"] }),
     extendVocabulary({ vocabulary: "source_format", values: FUEL_SOURCE_FORMATS }),
+    extendVocabulary({ vocabulary: "amenity", values: FUEL_STATION_AMENITIES }),
     fuelGradeVocabulary,
     ...fuelKinds,
     ...FUEL_PROPERTIES,

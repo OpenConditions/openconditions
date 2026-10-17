@@ -409,7 +409,16 @@
           "public_transport_hub",
           "airport",
           "parking",
-          "carpool_parking"
+          "carpool_parking",
+          "compressed_air",
+          "parcel_pickup",
+          "baby_changing",
+          "bar",
+          "takeaway",
+          "bottled_gas",
+          "heating_oil",
+          "lamp_oil",
+          "fuel_additives"
         ]
       }
     },
@@ -792,6 +801,7 @@
             "netex:line",
             "netex:stop_place",
             "irwin",
+            "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
             "glide"

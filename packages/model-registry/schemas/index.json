@@ -80,7 +80,7 @@
   {
     "class": "feature",
     "code": "camera",
-    "version": "1.0",
+    "version": "1.1",
     "file": "feature/camera@1.json"
   },
   {
@@ -116,7 +116,7 @@
   {
     "class": "feature",
     "code": "fuel_station",
-    "version": "1.0",
+    "version": "1.1",
     "file": "feature/fuel_station@1.json"
   },
   {
@@ -278,13 +278,13 @@
   {
     "class": "observation",
     "code": "fuel.price_cap",
-    "version": "1.0",
+    "version": "1.1",
     "file": "observation/fuel.price_cap@1.json"
   },
   {
     "class": "observation",
     "code": "fuel.price",
-    "version": "1.0",
+    "version": "1.1",
     "file": "observation/fuel.price@1.json"
   },
   {
@@ -352,6 +352,12 @@
     "code": "road.ice_thickness",
     "version": "1.0",
     "file": "observation/road.ice_thickness@1.json"
+  },
+  {
+    "class": "observation",
+    "code": "road.salt_amount",
+    "version": "1.0",
+    "file": "observation/road.salt_amount@1.json"
   },
   {
     "class": "observation",
@@ -463,6 +469,12 @@
   },
   {
     "class": "observation",
+    "code": "weather.precipitation_amount",
+    "version": "1.0",
+    "file": "observation/weather.precipitation_amount@1.json"
+  },
+  {
+    "class": "observation",
     "code": "weather.precipitation_rate",
     "version": "1.0",
     "file": "observation/weather.precipitation_rate@1.json"
@@ -536,7 +548,7 @@
   {
     "class": "result",
     "code": "camera_image",
-    "version": "1.0",
+    "version": "1.1",
     "file": "result/camera_image@1.json"
   },
   {
@@ -596,7 +608,7 @@
   {
     "class": "situation",
     "code": "natural_hazard",
-    "version": "1.0",
+    "version": "1.1",
     "file": "situation/natural_hazard@1.json"
   },
   {

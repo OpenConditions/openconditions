@@ -116,7 +116,7 @@ export const ROADS_INFRASTRUCTURE_KINDS = [
     class: "feature",
     code: "camera",
     domain: DOMAIN,
-    version: V,
+    version: "1.1",
     description: "A traffic, weather or landscape camera publishing images or a stream.",
     types: { traffic: [], landscape: [], city: [], weather: [], beach: [], other: [] },
     components: ["camera_view"],
@@ -127,7 +127,18 @@ export const ROADS_INFRASTRUCTURE_KINDS = [
       detailUrl: z.url().optional(),
       playerEmbedUrl: z.url().optional(),
       ptz: z.boolean().optional(),
-      mounting: Mounting(["gantry", "pole", "bridge", "vehicle", "unknown"]),
+      /** What carries the camera; a wall, ceiling, building or doorbell as OpenStreetMap maps them. */
+      mounting: Mounting([
+        "gantry",
+        "pole",
+        "bridge",
+        "vehicle",
+        "wall",
+        "ceiling",
+        "building",
+        "doorbell",
+        "unknown",
+      ]),
       /** What the image licence allows: republish the image, or only link to it. */
       imageRedistribution: z.enum(["allowed", "link_only", "unknown"]),
     }),
@@ -222,10 +233,12 @@ export const ROADS_RESULT_SCHEMAS = [
   }),
   defineResultSchema({
     code: "camera_image",
-    version: V,
+    version: "1.1",
     description: "A camera's current image or stream, per view.",
     shape: (k) => ({
       status: k.vocab("camera_status"),
+      /** The publisher's own words on the camera's state (why it shows no image, when it returns). */
+      statusText: k.Text.optional(),
       imageUrl: z.url().optional(),
       imageAt: Iso8601.optional(),
       thumbnailUrl: z.url().optional(),

@@ -203,6 +203,9 @@
                     "unknown"
                   ]
                 },
+                "statusText": {
+                  "$ref": "#/$defs/Text"
+                },
                 "imageUrl": {
                   "type": "string",
                   "format": "uri"
@@ -530,6 +533,7 @@
             "netex:line",
             "netex:stop_place",
             "irwin",
+            "nwcg:unique_fire_id",
             "usgs:event",
             "gdacs:event",
             "glide"

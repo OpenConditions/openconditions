@@ -15,6 +15,9 @@
         "unknown"
       ]
     },
+    "statusText": {
+      "$ref": "#/$defs/Text"
+    },
     "imageUrl": {
       "type": "string",
       "format": "uri"
@@ -74,5 +77,33 @@
     "v",
     "status"
   ],
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "Text": {
+      "minItems": 1,
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "lang": {
+            "type": "string",
+            "pattern": "^[A-Za-z]{2,3}(?:-[A-Za-z0-9]{1,8})*$"
+          },
+          "text": {
+            "type": "string",
+            "minLength": 1
+          },
+          "machine": {
+            "type": "boolean",
+            "const": true
+          }
+        },
+        "required": [
+          "lang",
+          "text"
+        ],
+        "additionalProperties": false
+      }
+    }
+  }
 }

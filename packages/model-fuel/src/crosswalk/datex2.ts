@@ -62,11 +62,12 @@ export const DATEX2_V3_FUEL_GRADES_OUT: TargetTable = {
   h2_350: "hydrogen:gaseousHydrogen350barCar",
   h2_700: "hydrogen:gaseousHydrogen700barCar",
   cng_bio: "organicGas:biogas",
-  // No DATEX code: the premium grades, 98 octane E10, liquefied biomethane, the
-  // drop-in renewables, the blends sold by their biodiesel share, ethanol as a
-  // fuel, AdBlue and kerosene.
+  // No DATEX code: the premium grades, 98 octane E10, 100 octane petrol,
+  // liquefied biomethane, the drop-in renewables, the blends sold by their
+  // biodiesel share, ethanol as a fuel, AdBlue and kerosene.
   e5_premium: null,
   sp98_e10: null,
+  sp100: null,
   lng_bio: null,
   diesel_premium: null,
   hvo100: null,

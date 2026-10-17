@@ -6,6 +6,8 @@ const V = "1.0";
 
 /** How a wildfire started, as incident registers record it once investigated. */
 export const IGNITION_CAUSES = ["natural", "human", "undetermined"] as const;
+/** The general fire behaviour incident teams report, from least to most intense. */
+export const FIRE_BEHAVIORS = ["minimal", "moderate", "active"] as const;
 /** Satellite smoke analysts grade a plume by how much it hides the ground. */
 export const SMOKE_DENSITIES = ["light", "medium", "heavy"] as const;
 
@@ -20,7 +22,7 @@ export const naturalHazardKind = defineKind({
   class: "situation",
   code: "natural_hazard",
   domain: DOMAIN,
-  version: V,
+  version: "1.1",
   description:
     "A natural hazard event from an authority or a satellite: wildfire, flood, smoke, landslide, avalanche, earthquake, volcanic ash, dust storm, tropical cyclone, volcano, drought, sea ice.",
   types: {
@@ -47,6 +49,12 @@ export const naturalHazardKind = defineKind({
     /** When the fire's current perimeter was mapped. */
     perimeterAt: Iso8601.optional(),
     ignitionCause: z.enum(IGNITION_CAUSES).optional(),
+    /** When the incident register declared the fire contained. */
+    containedAt: Iso8601.optional(),
+    /** When the incident register declared the fire controlled, a later stage than contained. */
+    controlledAt: Iso8601.optional(),
+    /** How the incident team describes the fire's current behaviour. */
+    fireBehavior: z.enum(FIRE_BEHAVIORS).optional(),
     density: z.enum(SMOKE_DENSITIES).optional(),
     /**
      * The satellite pass or image sequence a detection comes from; a smoke
@@ -83,12 +91,18 @@ export const naturalHazardKind = defineKind({
     feltReports: z.number().int().nonnegative().optional(),
     /** The highest Modified Mercalli intensity estimated for the event. */
     mmi: z.number().min(0).max(12).optional(),
+    /** The highest intensity people reported feeling (USGS's Did You Feel It? community intensity). */
+    cdi: z.number().min(0).max(12).optional(),
     /** Whether a seismologist has reviewed the automatic solution. */
     reviewed: z.boolean().optional(),
     /** A storm's highest sustained wind. */
     maxWind: quantityIn("km/h").optional(),
     /** How many people live in the area the publisher estimates is affected. */
     populationAffected: z.number().int().nonnegative().optional(),
+    /** The deaths the publisher reports for the event so far. */
+    deaths: z.number().int().nonnegative().optional(),
+    /** The people the publisher reports displaced by the event so far. */
+    displaced: z.number().int().nonnegative().optional(),
     /** The river, estuary or sea a flood comes from. */
     waterBody: z.string().min(1).optional(),
   }),

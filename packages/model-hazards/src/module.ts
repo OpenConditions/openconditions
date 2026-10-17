@@ -71,7 +71,7 @@ export const hazardsModule: RegistryModule = {
     extendVocabulary({ vocabulary: "source_format", values: HAZARDS_SOURCE_FORMATS }),
     extendVocabulary({
       vocabulary: "external_id_scheme",
-      values: ["irwin", "usgs:event", "gdacs:event", "glide"],
+      values: ["irwin", "nwcg:unique_fire_id", "usgs:event", "gdacs:event", "glide"],
     }),
     extendVocabulary({
       vocabulary: "admin_geocode_scheme",
