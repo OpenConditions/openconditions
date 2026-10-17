@@ -575,6 +575,7 @@
             "label": {
               "type": "string",
               "enum": [
+                "none",
                 "minor",
                 "moderate",
                 "major",
