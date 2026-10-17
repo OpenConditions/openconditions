@@ -43,6 +43,8 @@ describe("oicp", () => {
 
   test("OICP: Occupied is occupied, OutOfService out_of_order, and '22.0' is 22 kW", () => {
     const out = swiss();
+    // Every value the federal file writes is one of OICP's.
+    expect(drainSkipped("ch-bfe-charging")).toEqual({});
     const category = (value: string) => ({ type: "category", value, vocabulary: "evse_status" });
     expect(statusOf(out, "CH*CCI*E20277")).toEqual(category("occupied"));
     expect(statusOf(out, "CH*CCI*E22459")).toEqual(category("out_of_order"));
