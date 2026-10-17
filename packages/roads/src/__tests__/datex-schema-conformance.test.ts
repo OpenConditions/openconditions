@@ -522,10 +522,22 @@ describe("the DATEX vocabularies the parsers map are the schemas' own", () => {
         ...("weeksOfMonth" in situation
           ? [[situation.weeksOfMonth, "WeekOfMonthEnum"] as [readonly string[], string]]
           : []),
+        [situation.delayBands, "DelayBandEnum"],
+        [situation.delaysTypes, "DelaysTypeEnum"],
+        [situation.roadworksScales, "RoadworksScaleEnum"],
+        [situation.roadworksDurations, "RoadworksDurationEnum"],
+        [situation.sourceTypes, "SourceTypeEnum"],
+        [situation.directions, "DirectionEnum"],
       ];
       for (const [values, name] of lists) {
         expect(sorted(values), name).toEqual(
-          sorted(enumIn(enums, name, [namespace("situation"), namespace("common")])),
+          sorted(
+            enumIn(enums, name, [
+              namespace("situation"),
+              namespace("common"),
+              namespace("locationReferencing"),
+            ]),
+          ),
         );
       }
     },

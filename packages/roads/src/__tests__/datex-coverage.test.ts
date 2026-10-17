@@ -1,12 +1,20 @@
 import { assertCovered } from "@openconditions/conformance";
+import type { DirectionRef, Effect } from "@openconditions/model";
 import {
+  DATEX2_DELAY_BANDS,
+  DATEX2_DELAY_TYPES,
+  DATEX2_ROADWORKS_DURATIONS,
+  DATEX2_ROADWORKS_SCALES,
+  DATEX2_SOURCE_TYPES,
   DATEX2_V2,
   DATEX2_V2_INFRASTRUCTURE,
   DATEX2_V3,
   DATEX2_V3_INFRASTRUCTURE,
 } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
-import { applicabilityOf } from "../situation/effects.js";
+import type { RoadEvent } from "../model.js";
+import { applicabilityOf, effectsOf } from "../situation/effects.js";
+import { entryOf } from "../situation/location.js";
 import {
   type DatexVersion,
   parseMeasured,
@@ -154,12 +162,15 @@ describe.each(VERSIONS)("DATEX II $label situation records", ({ version, label, 
   });
 
   it("reads every severity on the severity scale", () => {
+    // `none` is "a severity rating of none", a declared absence of impact:
+    // not the missing rating `unknown` is.
     const expected: Record<string, string> = {
       highest: "critical",
       high: "high",
       medium: "medium",
       low: "low",
       lowest: "low",
+      none: "none",
       unknown: "unknown",
     };
     assertCovered(`${label} SeverityEnum`, vocab.severities, {
@@ -174,10 +185,7 @@ describe.each(VERSIONS)("DATEX II $label situation records", ({ version, label, 
           event.situation?.severityRaw === severity
         );
       },
-      unsupported: {
-        none: "the severity scale has no level for 'a severity rating of none'; it reads as unknown, and the token stays in severityRaw",
-        ...(version === "v3" ? { _extended: EXTENDED } : {}),
-      },
+      unsupported: version === "v3" ? { _extended: EXTENDED } : {},
     });
   });
 
@@ -503,6 +511,261 @@ describe.each(VERSIONS)(
           sourceTokens: { placesAtWhichApplicable: ["inTunnels"] },
         },
       ]);
+    });
+  },
+);
+
+/** The effects of one parsed record, at a location whose direction is `direction`. */
+const effectsAt = (event: RoadEvent, direction?: DirectionRef) =>
+  effectsOf(event, {
+    recordId: "R1",
+    closureNature: false,
+    laneClosureNature: false,
+    ...(direction ? { direction } : {}),
+  }).map((p) => p.effect);
+
+/** What each `DirectionEnum` value reads as, at a location whose direction is Alert-C positive. */
+const DIRECTION: Readonly<Record<string, DirectionRef>> = {
+  allDirections: { value: "both", basis: "text", text: "allDirections" },
+  bothWays: { value: "both", basis: "text", text: "bothWays" },
+  aligned: { value: "positive", basis: "alert_c" },
+  opposite: { value: "negative", basis: "alert_c" },
+  northBound: { value: "unknown", basis: "compass", compass: "N", text: "northBound" },
+  northEastBound: { value: "unknown", basis: "compass", compass: "NE", text: "northEastBound" },
+  eastBound: { value: "unknown", basis: "compass", compass: "E", text: "eastBound" },
+  southEastBound: { value: "unknown", basis: "compass", compass: "SE", text: "southEastBound" },
+  southBound: { value: "unknown", basis: "compass", compass: "S", text: "southBound" },
+  southWestBound: { value: "unknown", basis: "compass", compass: "SW", text: "southWestBound" },
+  westBound: { value: "unknown", basis: "compass", compass: "W", text: "westBound" },
+  northWestBound: { value: "unknown", basis: "compass", compass: "NW", text: "northWestBound" },
+  // Rings, towns and `other` have no axis a direction can hold: their words stay.
+  clockwise: { value: "unknown", basis: "text", text: "clockwise" },
+  anticlockwise: { value: "unknown", basis: "text", text: "anticlockwise" },
+  innerRing: { value: "unknown", basis: "text", text: "innerRing" },
+  outerRing: { value: "unknown", basis: "text", text: "outerRing" },
+  inboundTowardsTown: { value: "unknown", basis: "text", text: "inboundTowardsTown" },
+  outboundFromTown: { value: "unknown", basis: "text", text: "outboundFromTown" },
+  other: { value: "unknown", basis: "text", text: "other" },
+  unknown: { value: "unknown", basis: "unknown" },
+};
+
+describe.each(VERSIONS)(
+  "DATEX II $label impact, roadworks and source",
+  ({ version, label, vocab }) => {
+    const delayed = (delays: string) =>
+      parseRecord(version, {
+        recordClass: "AbnormalTraffic",
+        body: "<:abnormalTrafficType>queuingTraffic</:abnormalTrafficType>",
+        impact: `<:delays>${delays}</:delays>`,
+      });
+    const delayEffect = (event: RoadEvent | undefined) =>
+      event === undefined
+        ? undefined
+        : effectsAt(event).find((e): e is Extract<Effect, { kind: "delay" }> => e.kind === "delay");
+
+    it("reads every delay band into the delay effect", () => {
+      assertCovered(`${label} DelayBandEnum`, vocab.delayBands, {
+        handled: (band) => {
+          const { event, skipped } = delayed(`<:delayBand>${band}</:delayBand>`);
+          const expected = entryOf(DATEX2_DELAY_BANDS, band);
+          return (
+            skipped.unknown_value === undefined &&
+            expected !== undefined &&
+            event?.delayBand === expected &&
+            delayEffect(event)?.delayBand === expected
+          );
+        },
+        unsupported: version === "v3" ? { _extended: `${EXTENDED}; the delay has no band` } : {},
+      });
+    });
+
+    it("reads every delays type into the delay effect", () => {
+      assertCovered(`${label} DelaysTypeEnum`, vocab.delaysTypes, {
+        handled: (type) => {
+          const { event, skipped } = delayed(`<:delaysType>${type}</:delaysType>`);
+          const expected = entryOf(DATEX2_DELAY_TYPES, type);
+          return (
+            skipped.unknown_value === undefined &&
+            expected !== undefined &&
+            delayEffect(event)?.delayType === expected
+          );
+        },
+        unsupported:
+          version === "v3" ? { _extended: `${EXTENDED}; the delay has no description` } : {},
+      });
+    });
+
+    it("keeps a delay's length, band and description together", () => {
+      const { event } = delayed(
+        "<:delayBand>betweenThirtyMinutesAndOneHour</:delayBand><:delaysType>longDelays</:delaysType><:delayTimeValue>2400</:delayTimeValue>",
+      );
+      expect(delayEffect(event)).toMatchObject({
+        delay: { value: 2400, unit: "s" },
+        delayBand: "between_thirty_minutes_and_one_hour",
+        delayType: "long_delays",
+      });
+    });
+
+    it("reads every traffic direction as the direction the measure applies in", () => {
+      const location: DirectionRef = { value: "positive", basis: "alert_c" };
+      assertCovered(`${label} DirectionEnum`, vocab.directions, {
+        handled: (direction) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "RoadOrCarriagewayOrLaneManagement",
+            body: closureBy(
+              `<:complianceOption>mandatory</:complianceOption><:applicableForTrafficDirection>${direction}</:applicableForTrafficDirection>`,
+            ),
+          });
+          const expected = DIRECTION[direction];
+          return (
+            event !== undefined &&
+            skipped.unknown_value === undefined &&
+            expected !== undefined &&
+            effectsAt(event, location).every(
+              (e) => JSON.stringify(e.direction) === JSON.stringify(expected),
+            )
+          );
+        },
+        unsupported:
+          version === "v3"
+            ? { _extended: `${EXTENDED}; the measure's direction reads as unknown` }
+            : {},
+      });
+    });
+
+    it("reads aligned and opposite as text where the location's direction has no axis", () => {
+      const { event } = parseRecord(version, {
+        recordClass: "RoadOrCarriagewayOrLaneManagement",
+        body: closureBy(
+          "<:complianceOption>mandatory</:complianceOption><:applicableForTrafficDirection>opposite</:applicableForTrafficDirection>",
+        ),
+      });
+      expect(effectsAt(event!).map((e) => e.direction)).toEqual([
+        { value: "unknown", basis: "text", text: "opposite" },
+      ]);
+      expect(
+        effectsAt(event!, { value: "both", basis: "alert_c" }).map((e) => e.direction),
+      ).toEqual([{ value: "unknown", basis: "text", text: "opposite" }]);
+    });
+
+    it("reads several traffic directions as one only when they agree", () => {
+      const measure = (directions: string[]) =>
+        parseRecord(version, {
+          recordClass: "RoadOrCarriagewayOrLaneManagement",
+          body: closureBy(
+            `<:complianceOption>mandatory</:complianceOption>${directions
+              .map((d) => `<:applicableForTrafficDirection>${d}</:applicableForTrafficDirection>`)
+              .join("")}`,
+          ),
+        }).event!;
+      expect(effectsAt(measure(["northBound", "southBound"]))[0]?.direction).toEqual({
+        value: "unknown",
+        basis: "text",
+        text: "northBound southBound",
+      });
+      expect(effectsAt(measure(["northBound", "bothWays"]))[0]?.direction).toEqual({
+        value: "both",
+        basis: "text",
+        text: "northBound bothWays",
+      });
+    });
+
+    const duration = version === "v3" ? "roadworksDurationClassification" : "roadworksDuration";
+    const works = (content: string) =>
+      parseRecord(version, {
+        recordClass: "MaintenanceWorks",
+        body: `${content}<:roadMaintenanceType>roadworks</:roadMaintenanceType>`,
+      });
+
+    it("reads every roadworks scale", () => {
+      assertCovered(`${label} RoadworksScaleEnum`, vocab.roadworksScales, {
+        handled: (scale) => {
+          const { event, skipped } = works(`<:roadworksScale>${scale}</:roadworksScale>`);
+          return (
+            skipped.unknown_value === undefined &&
+            event?.roadworks?.scale !== undefined &&
+            event.roadworks.scale === entryOf(DATEX2_ROADWORKS_SCALES, scale)
+          );
+        },
+        unsupported: version === "v3" ? { _extended: `${EXTENDED}; the works have no scale` } : {},
+      });
+    });
+
+    it("reads every roadworks duration", () => {
+      assertCovered(`${label} RoadworksDurationEnum`, vocab.roadworksDurations, {
+        handled: (value) => {
+          const { event, skipped } = works(`<:${duration}>${value}</:${duration}>`);
+          return (
+            skipped.unknown_value === undefined &&
+            event?.roadworks?.durationClass !== undefined &&
+            event.roadworks.durationClass === entryOf(DATEX2_ROADWORKS_DURATIONS, value)
+          );
+        },
+        unsupported:
+          version === "v3" ? { _extended: `${EXTENDED}; the works have no duration class` } : {},
+      });
+    });
+
+    it("reads whether works are urgent and under traffic, and counts a flag that is no boolean", () => {
+      expect(
+        works("<:underTraffic>true</:underTraffic><:urgentRoadworks>false</:urgentRoadworks>").event
+          ?.roadworks,
+      ).toEqual({ underTraffic: true, urgent: false });
+      const unreadable = works("<:urgentRoadworks>yes</:urgentRoadworks>");
+      expect(unreadable.event?.roadworks).toBeUndefined();
+      expect(unreadable.skipped.unknown_value).toBe(1);
+    });
+
+    it("reads every source type as the informant's type", () => {
+      assertCovered(`${label} SourceTypeEnum`, vocab.sourceTypes, {
+        handled: (type) => {
+          const { event, skipped } = parseRecord(version, {
+            recordClass: "Accident",
+            body: "<:accidentType>collision</:accidentType>",
+            source: `<:sourceType>${type}</:sourceType>`,
+          });
+          return (
+            skipped.unknown_value === undefined &&
+            event?.situation?.informationSource?.type !== undefined &&
+            event.situation.informationSource.type === entryOf(DATEX2_SOURCE_TYPES, type)
+          );
+        },
+        unsupported:
+          version === "v3" ? { _extended: `${EXTENDED}; the informant's type is not read` } : {},
+      });
+    });
+
+    it("reads the informant's name, id, country and reliability", () => {
+      const { event } = parseRecord(version, {
+        recordClass: "Accident",
+        body: "<:accidentType>collision</:accidentType>",
+        source: `<:sourceCountry>nl</:sourceCountry><:sourceIdentification>RWS-12</:sourceIdentification><:sourceName><:values><:value lang="nl">Verkeerscentrale</:value></:values></:sourceName><:sourceType>policePatrol</:sourceType><:reliable>true</:reliable>`,
+      });
+      expect(event?.situation?.informationSource).toEqual({
+        type: "police_patrol",
+        name: [{ lang: "nl", text: "Verkeerscentrale" }],
+        id: "RWS-12",
+        country: "NL",
+        reliable: true,
+      });
+    });
+
+    it("reads lanes restricted fully or partially as restricted, never as closed", () => {
+      const { event } = parseRecord(version, {
+        recordClass: "RoadOrCarriagewayOrLaneManagement",
+        body: "<:complianceOption>mandatory</:complianceOption><:roadOrCarriagewayOrLaneManagementType>narrowLanes</:roadOrCarriagewayOrLaneManagementType>",
+        impact:
+          "<:numberOfLanesRestricted>2</:numberOfLanesRestricted><:numberOfOperationalLanes>0</:numberOfOperationalLanes>",
+      });
+      const lanes = effectsAt(event!).find((e) => e.kind === "lane_restriction");
+      // Two narrowed lanes and none fully operational is not a closed road.
+      expect(lanes).toMatchObject({
+        lanesTotal: 2,
+        lanesRestricted: 2,
+        lanesOperational: 0,
+        vehicleImpact: "unknown",
+      });
+      expect(lanes).not.toHaveProperty("lanesClosed");
     });
   },
 );

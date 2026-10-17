@@ -1391,6 +1391,7 @@
                 "additionalProperties": {
                   "type": "string",
                   "enum": [
+                    "none",
                     "low",
                     "medium",
                     "high",

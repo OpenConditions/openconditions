@@ -383,7 +383,8 @@ describe("parseDatexSituations — road management details", () => {
       ),
       NDW_SOURCE,
     );
-    expect(ev!.lanesAffected?.closed).toBe(2);
+    // Lanes "restricted either fully or partially" are not counted as closed.
+    expect(ev!.lanesAffected).toEqual({ total: 3, restricted: 2, operational: 1 });
   });
 });
 
@@ -461,8 +462,7 @@ describe("parseDatexSituations — deeper field extraction", () => {
         meaning: "event_applies_when",
       }),
     ]);
-    expect(ev!.lanesAffected?.total).toBe(3);
-    expect(ev!.lanesAffected?.closed).toBe(1);
+    expect(ev!.lanesAffected).toEqual({ total: 3, restricted: 1 });
     expect(ev!.delaySeconds).toBe(600);
     expect(ev!.severity).toBe("medium"); // bumped: safetyRelatedMessage + no declared severity
     expect(ev!.externalRefs?.tmc?.code).toBe(7324);

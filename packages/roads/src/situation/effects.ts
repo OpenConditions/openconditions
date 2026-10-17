@@ -213,6 +213,10 @@ function laneImpact(event: RoadEvent): string {
     return "all_lanes_open";
   }
   if (lanes.closed !== undefined && lanes.closed > 0) return "some_lanes_closed";
+  // No lane restricted, not even partially, is every lane open, as no lane
+  // closed of a known total is. Restricted lanes may be narrowed or shifted
+  // rather than closed, so a count of them says neither.
+  if (lanes.closed === undefined && lanes.restricted === 0) return "all_lanes_open";
   return event.roadState === "some_lanes_closed" ? "some_lanes_closed" : "unknown";
 }
 
@@ -236,6 +240,78 @@ function restrictionBase(event: RoadEvent): BaseEffect {
   return event.roadState === "closed" || event.type === "road_closure"
     ? { kind: "closure", scope: "road" }
     : { kind: "access", mode: "prohibited" };
+}
+
+/** DATEX `DirectionEnum` compass headings. */
+const COMPASS_HEADINGS: Readonly<Record<string, NonNullable<DirectionRef["compass"]>>> = {
+  northBound: "N",
+  northEastBound: "NE",
+  eastBound: "E",
+  southEastBound: "SE",
+  southBound: "S",
+  southWestBound: "SW",
+  westBound: "W",
+  northWestBound: "NW",
+};
+
+/** DATEX `DirectionEnum` values for traffic in every direction. */
+const EVERY_DIRECTION = new Set(["allDirections", "bothWays"]);
+
+/** DATEX `DirectionEnum` values with no axis a DirectionRef can hold: rings, towns, `other`. */
+const AXISLESS = new Set([
+  "clockwise",
+  "anticlockwise",
+  "innerRing",
+  "outerRing",
+  "inboundTowardsTown",
+  "outboundFromTown",
+  "other",
+]);
+
+const FLIP: Readonly<Record<string, DirectionRef["value"]>> = {
+  positive: "negative",
+  negative: "positive",
+};
+
+/**
+ * One `applicableForTrafficDirection` value as a DirectionRef, against the
+ * direction of the record's location. Every direction is `both`; a compass
+ * heading keeps its point; `aligned` with the location's direction is that
+ * direction and `opposite` its reverse, where the location's has an axis.
+ * Rings and towns have no axis and stay as their text. `unknown`, and a value
+ * outside the enumeration, says nothing of the direction.
+ */
+function directionToken(token: string, location: DirectionRef | undefined): DirectionRef {
+  if (EVERY_DIRECTION.has(token)) return { value: "both", basis: "text", text: token };
+  const compass = entryOf(COMPASS_HEADINGS, token);
+  if (compass !== undefined) return { value: "unknown", basis: "compass", compass, text: token };
+  const flipped = location === undefined ? undefined : entryOf(FLIP, location.value);
+  if (token === "aligned" && flipped !== undefined) return location!;
+  if (token === "opposite" && flipped !== undefined) return { ...location!, value: flipped };
+  if (AXISLESS.has(token) || token === "aligned" || token === "opposite") {
+    return { value: "unknown", basis: "text", text: token };
+  }
+  return { value: "unknown", basis: "unknown" };
+}
+
+/**
+ * The direction a measure applies in (DATEX `applicableForTrafficDirection`),
+ * else the location's. Several values that agree are one direction; any for
+ * every direction makes it both; others that differ leave it unknown, with
+ * their text.
+ */
+function measureDirectionOf(
+  tokens: readonly string[] | undefined,
+  location: DirectionRef | undefined,
+): DirectionRef | undefined {
+  if (tokens === undefined || tokens.length === 0) return location;
+  const read = tokens.map((t) => directionToken(t, location));
+  const [first] = read;
+  if (read.every((d) => JSON.stringify(d) === JSON.stringify(first))) return first;
+  if (read.some((d) => d.value === "both")) {
+    return { value: "both", basis: "text", text: tokens.join(" ") };
+  }
+  return { value: "unknown", basis: "text", text: tokens.join(" ") };
 }
 
 export interface EffectContext {
@@ -270,10 +346,11 @@ export interface EffectContext {
  */
 export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] {
   const applicability = applicabilityOf(event);
+  const direction = measureDirectionOf(event.situation?.trafficDirections, ctx.direction);
   const common = {
     ...(ctx.sourceRecordRef ? { sourceRecordRef: ctx.sourceRecordRef } : {}),
     ...(ctx.location ? { location: ctx.location } : {}),
-    ...(ctx.direction ? { direction: ctx.direction } : {}),
+    ...(direction ? { direction } : {}),
     ...(ctx.validity ? { validity: ctx.validity } : {}),
   };
   const drafts: Draft[] = [];
@@ -299,9 +376,16 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     const lanes = event.lanesAffected ? lanesOf(event) : undefined;
     const figures = event.lanesAffected;
     const total = figures?.total !== undefined && figures.total > 0 ? figures.total : undefined;
+    const restricted = figures?.restricted;
     const closedLanes =
-      figures?.closed !== undefined && (total === undefined || figures.closed <= total)
+      figures?.closed !== undefined &&
+      (total === undefined || figures.closed <= total) &&
+      (restricted === undefined || figures.closed <= restricted)
         ? figures.closed
+        : undefined;
+    const operational =
+      figures?.operational !== undefined && (total === undefined || figures.operational <= total)
+        ? figures.operational
         : undefined;
     drafts.push({
       kind: "lane_restriction",
@@ -309,6 +393,8 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
         vehicleImpact: event.lanesAffected ? laneImpact(event) : "some_lanes_closed",
         ...(total !== undefined ? { lanesTotal: total } : {}),
         ...(closedLanes !== undefined ? { lanesClosed: closedLanes } : {}),
+        ...(restricted !== undefined ? { lanesRestricted: restricted } : {}),
+        ...(operational !== undefined ? { lanesOperational: operational } : {}),
         ...(lanes && lanes.length > 0 ? { lanes } : {}),
         ...measure,
       },
@@ -373,11 +459,20 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
   const delay = event.delaySeconds !== undefined && event.delaySeconds > 0;
   const queue = event.queueLengthMeters !== undefined && event.queueLengthMeters > 0;
   const capacity = event.capacityRemainingPct;
-  if (delay || queue || capacity !== undefined) {
+  const { delayBand, delayType } = event;
+  if (
+    delay ||
+    queue ||
+    capacity !== undefined ||
+    delayBand !== undefined ||
+    delayType !== undefined
+  ) {
     drafts.push({
       kind: "delay",
       fields: {
         ...(delay ? { delay: { value: event.delaySeconds!, unit: "s" } } : {}),
+        ...(delayBand !== undefined ? { delayBand } : {}),
+        ...(delayType !== undefined ? { delayType } : {}),
         ...(queue ? { queueLength: { value: event.queueLengthMeters!, unit: "m" } } : {}),
         ...(capacity !== undefined ? { capacityRemainingPct: capacity } : {}),
         applicability,

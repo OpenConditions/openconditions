@@ -32,6 +32,8 @@ export interface RecordSpec {
   timeSpec?: string;
   /** The record's `impact` content, in the situation namespace. */
   impact?: string;
+  /** The record's `source` content, written `<:sourceType>` (common namespace in v3). */
+  source?: string;
   /** Replaces the `modelBaseVersion` the document declares. */
   modelBaseVersion?: string;
   /** Omits the record's `id`. */
@@ -70,6 +72,7 @@ export function datexDocument(version: DatexVersion, spec: RecordSpec): string {
       <sit:situationRecordCreationTime>2026-09-18T08:00:00Z</sit:situationRecordCreationTime>
       <sit:situationRecordVersionTime>2026-09-18T08:00:00Z</sit:situationRecordVersionTime>
       <sit:probabilityOfOccurrence>${spec.probability ?? "certain"}</sit:probabilityOfOccurrence>
+      ${spec.source === undefined ? "" : `<sit:source>${fill("com:", spec.source)}</sit:source>`}
       <sit:validity>
         <com:validityStatus>${spec.validityStatus ?? "definedByValidityTimeSpec"}</com:validityStatus>
         ${fill("com:", spec.overrunning ?? "")}
@@ -100,6 +103,7 @@ export function datexDocument(version: DatexVersion, spec: RecordSpec): string {
         <situationRecordCreationTime>2026-09-18T08:00:00Z</situationRecordCreationTime>
         <situationRecordVersionTime>2026-09-18T08:00:00Z</situationRecordVersionTime>
         <probabilityOfOccurrence>${spec.probability ?? "certain"}</probabilityOfOccurrence>
+        ${spec.source === undefined ? "" : `<source>${fill("", spec.source)}</source>`}
         <validity>
           <validityStatus>${spec.validityStatus ?? "definedByValidityTimeSpec"}</validityStatus>
           ${fill("", spec.overrunning ?? "")}

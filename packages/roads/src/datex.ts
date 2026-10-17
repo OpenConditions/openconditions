@@ -24,8 +24,20 @@ import {
   xmlText,
 } from "@openconditions/datex2";
 import { isPlausibleWgs84, recordSkipped, reprojectorFor } from "@openconditions/ingest-framework";
-import type { Effect, Issue, Schedule, Text, Validity } from "@openconditions/model";
+import type {
+  Effect,
+  InformationSource,
+  Issue,
+  Schedule,
+  Text,
+  Validity,
+} from "@openconditions/model";
 import {
+  DATEX2_DELAY_BANDS,
+  DATEX2_DELAY_TYPES,
+  DATEX2_ROADWORKS_DURATIONS,
+  DATEX2_ROADWORKS_SCALES,
+  DATEX2_SOURCE_TYPES,
   DATEX2_V2,
   DATEX2_V3,
   datexClassification,
@@ -155,6 +167,16 @@ const CONSTRICTION_TYPES = standardValues(
 );
 const TRAFFIC_TYPES = standardValues(DATEX2_V3.trafficTypes, DATEX2_V2.trafficTypes);
 const MOBILITY_TYPES = standardValues(DATEX2_V3.mobilityTypes, DATEX2_V2.mobilityTypes);
+const DIRECTIONS = standardValues(DATEX2_V3.directions, DATEX2_V2.directions);
+const DELAY_BANDS = standardValues(DATEX2_V3.delayBands, DATEX2_V2.delayBands);
+const DELAYS_TYPES = standardValues(DATEX2_V3.delaysTypes, DATEX2_V2.delaysTypes);
+const ROADWORKS_SCALES = standardValues(DATEX2_V3.roadworksScales, DATEX2_V2.roadworksScales);
+const ROADWORKS_DURATIONS = standardValues(
+  DATEX2_V3.roadworksDurations,
+  DATEX2_V2.roadworksDurations,
+);
+const SOURCE_TYPES = standardValues(DATEX2_V3.sourceTypes, DATEX2_V2.sourceTypes);
+const XS_BOOLEANS = new Set(["true", "false", "1", "0"]);
 
 /** `OperatorActionStatusEnum` as the kernel's action statuses. */
 const ACTION_STATUS: Readonly<Record<string, NonNullable<Effect["actionStatus"]>>> = {
@@ -176,15 +198,17 @@ interface DatexMeasure {
   actionStatus?: Effect["actionStatus"];
   compliance?: Effect["compliance"];
   trafficTypes?: string[];
+  trafficDirections?: string[];
   effectIssues: Issue[];
 }
 
 /**
  * An `OperatorAction`'s `operatorActionStatus` and a `NetworkManagement`'s
- * `complianceOption`, `applicableForTrafficType` and `placesAtWhichApplicable`.
- * An action status outside the enumeration (or `_extended`) establishes
- * nothing, so the effects carry `unsupported_status` and never route; an
- * unreadable compliance is `unknown`. A measure that applies only at some
+ * `complianceOption`, `applicableForTrafficType`,
+ * `applicableForTrafficDirection` and `placesAtWhichApplicable`. An action
+ * status outside the enumeration (or `_extended`) establishes nothing, so the
+ * effects carry `unsupported_status` and never route; an unreadable
+ * compliance is `unknown`. A measure that applies only at some
  * kinds of place within its location (in tunnels, on bridges) applies under a
  * condition no effect can carry: its effects are partial, never routed as if
  * the whole location were affected.
@@ -217,6 +241,9 @@ function measureOf(rec: XmlObject): DatexMeasure {
   const trafficTypes = xmlNodeToArray(rec["applicableForTrafficType"])
     .map(text)
     .filter((v): v is string => v !== undefined);
+  const trafficDirections = xmlNodeToArray(rec["applicableForTrafficDirection"])
+    .map(text)
+    .filter((v): v is string => v !== undefined);
   const places = xmlNodeToArray(rec["placesAtWhichApplicable"])
     .map(text)
     .filter((v): v is string => v !== undefined);
@@ -231,6 +258,7 @@ function measureOf(rec: XmlObject): DatexMeasure {
     ...(actionStatus !== undefined ? { actionStatus } : {}),
     ...(compliance !== undefined ? { compliance } : {}),
     ...(trafficTypes.length > 0 ? { trafficTypes } : {}),
+    ...(trafficDirections.length > 0 ? { trafficDirections } : {}),
     effectIssues,
   };
 }
@@ -281,6 +309,88 @@ function capacityRemainingOf(rec: XmlObject): number | undefined {
   return Number.isFinite(n) && n >= 0 && n <= 100 ? n : undefined;
 }
 
+/** The record's `impact/delays`, where both versions describe a delay. */
+const delaysNode = (rec: XmlObject) => getXmlChild(getXmlChild(rec, "impact"), "delays");
+
+/**
+ * The band and the description of the record's delay (`impact/delays`
+ * `delayBand` and `delaysType`), each beside or instead of its length.
+ */
+function delayDescriptionOf(rec: XmlObject): Pick<RoadEvent, "delayBand" | "delayType"> {
+  const delays = delaysNode(rec);
+  const band = entryOf(DATEX2_DELAY_BANDS, getXmlChildText(delays, "delayBand"));
+  const type = entryOf(DATEX2_DELAY_TYPES, getXmlChildText(delays, "delaysType"));
+  return {
+    ...(band !== undefined ? { delayBand: band as RoadEvent["delayBand"] } : {}),
+    ...(type !== undefined ? { delayType: type as RoadEvent["delayType"] } : {}),
+  };
+}
+
+/** An XML Schema boolean (`true`, `false`, `1`, `0`); undefined for anything else. */
+function xsBoolean(raw: string | undefined): boolean | undefined {
+  switch (raw) {
+    case "true":
+    case "1":
+      return true;
+    case "false":
+    case "0":
+      return false;
+    default:
+      return undefined;
+  }
+}
+
+/** The works' duration class: v3's `roadworksDurationClassification`, v2.3's `roadworksDuration`. */
+const roadworksDurationTokenOf = (rec: XmlObject) =>
+  getXmlChildText(rec, "roadworksDurationClassification") ??
+  getXmlChildText(rec, "roadworksDuration");
+
+/**
+ * What a roadworks record says of the works beyond their kind: their scale,
+ * their duration class (v3 `roadworksDurationClassification`, v2.3
+ * `roadworksDuration`), whether they are urgent and whether they are carried
+ * out under traffic.
+ */
+function roadworksOf(rec: XmlObject): RoadEvent["roadworks"] {
+  const scale = entryOf(DATEX2_ROADWORKS_SCALES, getXmlChildText(rec, "roadworksScale"));
+  const durationClass = entryOf(DATEX2_ROADWORKS_DURATIONS, roadworksDurationTokenOf(rec));
+  const urgent = xsBoolean(getXmlChildText(rec, "urgentRoadworks"));
+  const underTraffic = xsBoolean(getXmlChildText(rec, "underTraffic"));
+  const out = {
+    ...(scale !== undefined ? { scale } : {}),
+    ...(durationClass !== undefined ? { durationClass } : {}),
+    ...(urgent !== undefined ? { urgent } : {}),
+    ...(underTraffic !== undefined ? { underTraffic } : {}),
+  };
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
+ * Who or what supplied the record's information (`source`): the kind of
+ * informant, its name in every language given, the publisher's id of it, its
+ * country and whether the publisher holds it reliable. A country is read when
+ * it is a two-letter code; v2.3's `other` names none.
+ */
+function informationSourceOf(rec: XmlObject): InformationSource | undefined {
+  const source = getXmlChild(rec, "source");
+  if (source === undefined) return undefined;
+  const type = entryOf(DATEX2_SOURCE_TYPES, getXmlChildText(source, "sourceType"));
+  const name = multilingualText(getXmlChild(source, "sourceName"));
+  const id = getXmlChildText(source, "sourceIdentification")?.trim();
+  const country = getXmlChildText(source, "sourceCountry")?.trim();
+  const reliable = xsBoolean(getXmlChildText(source, "reliable"));
+  const out = {
+    ...(type !== undefined ? { type: type as NonNullable<InformationSource["type"]> } : {}),
+    ...(name !== undefined ? { name } : {}),
+    ...(id ? { id } : {}),
+    ...(country !== undefined && /^[a-z]{2}$/i.test(country)
+      ? { country: country.toUpperCase() }
+      : {}),
+    ...(reliable !== undefined ? { reliable } : {}),
+  };
+  return Object.keys(out).length > 0 ? out : undefined;
+}
+
 /**
  * The overall end a record states and has overrun: DATEX `overrunning` says
  * the activity "is still in progress, overrunning its planned duration", so an
@@ -319,10 +429,12 @@ function datexModelVersion(input: string | Buffer): number | undefined {
 /**
  * How many enumerated values a kept record carries that the parser cannot
  * read: a discriminator, cause type, severity, probability, validity status,
- * operator action status, compliance, traffic constriction, traffic type,
- * mobility or recurrence day or month outside both versions' enumerations, or
- * the `_extended` placeholder, whose meaning lives in an extension schema the
- * parser does not read. Each is published without; counting them keeps a
+ * operator action status, compliance, traffic constriction, traffic type or
+ * direction, mobility, delay band or type, roadworks scale or duration,
+ * source type or recurrence day or month outside both versions'
+ * enumerations, or the `_extended` placeholder, whose meaning lives in an
+ * extension schema the parser does not read, and a roadworks or source flag
+ * that is no boolean. Each is published without; counting them keeps a
  * renamed or national value from reading as a quiet feed.
  */
 function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): number {
@@ -347,7 +459,20 @@ function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): 
   for (const value of xmlNodeToArray(rec["applicableForTrafficType"])) {
     check(text(value), TRAFFIC_TYPES);
   }
+  for (const value of xmlNodeToArray(rec["applicableForTrafficDirection"])) {
+    check(text(value), DIRECTIONS);
+  }
   check(getXmlChildText(getXmlChild(rec, "mobility"), "mobilityType"), MOBILITY_TYPES);
+  const delays = delaysNode(rec);
+  check(getXmlChildText(delays, "delayBand"), DELAY_BANDS);
+  check(getXmlChildText(delays, "delaysType"), DELAYS_TYPES);
+  check(getXmlChildText(rec, "roadworksScale"), ROADWORKS_SCALES);
+  check(roadworksDurationTokenOf(rec), ROADWORKS_DURATIONS);
+  check(getXmlChildText(rec, "urgentRoadworks"), XS_BOOLEANS);
+  check(getXmlChildText(rec, "underTraffic"), XS_BOOLEANS);
+  const source = getXmlChild(rec, "source");
+  check(getXmlChildText(source, "sourceType"), SOURCE_TYPES);
+  check(getXmlChildText(source, "reliable"), XS_BOOLEANS);
   const timeSpec = getXmlChild(getXmlChild(rec, "validity"), "validityTimeSpecification");
   for (const period of [
     ...getXmlChildren(timeSpec, "validPeriod"),
@@ -1114,29 +1239,42 @@ function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
   return entryOf(ROAD_STATES, raw);
 }
 
+/**
+ * The record's lane counts. `numberOfLanesRestricted` counts the normally
+ * usable lanes "restricted either fully or partially": a narrowed or shifted
+ * lane is restricted and still open, so the count is not of closed lanes and
+ * never reads as one. `numberOfOperationalLanes` counts the lanes that remain
+ * fully operational. The lane total is the `originalNumberOfLanes`, else the
+ * restricted and operational lanes together. The counts live under `impact`
+ * (older feeds put them on the record).
+ */
 function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
-  // Lane counts live under <impact> in v3 (older feeds put them on the record);
-  // the true lane total is the carriageway's originalNumberOfLanes when present.
   const impact = getXmlChild(rec, "impact");
-  const restrictedRaw =
-    getXmlChildText(impact, "numberOfLanesRestricted") ??
-    getXmlChildText(rec, "numberOfLanesRestricted");
-  const original = leafNumber(rec, "originalNumberOfLanes");
-  const closed = restrictedRaw != null ? parseInt(restrictedRaw, 10) : NaN;
-  if (Number.isNaN(closed) && original == null) return undefined;
-
-  const lanes: NonNullable<RoadEvent["lanesAffected"]> = {};
-  if (!Number.isNaN(closed)) lanes.closed = closed;
-  if (original != null) {
-    lanes.total = original;
-  } else {
-    const operationalRaw =
-      getXmlChildText(impact, "numberOfOperationalLanes") ??
-      getXmlChildText(rec, "numberOfOperationalLanes");
-    const operational = operationalRaw != null ? parseInt(operationalRaw, 10) : NaN;
-    if (!Number.isNaN(operational) && !Number.isNaN(closed)) lanes.total = closed + operational;
-  }
-  return lanes.closed != null || lanes.total != null ? lanes : undefined;
+  const count = (name: string): number | undefined => {
+    const raw = getXmlChildText(impact, name) ?? getXmlChildText(rec, name);
+    const n = raw === undefined || raw.trim() === "" ? Number.NaN : Number(raw);
+    return Number.isSafeInteger(n) && n >= 0 ? n : undefined;
+  };
+  const restricted = count("numberOfLanesRestricted");
+  const operational = count("numberOfOperationalLanes");
+  // v2.3 states the original lane count in the impact, v3 on the location's carriageway.
+  const declared = leafNumber(rec, "originalNumberOfLanes");
+  const original =
+    declared !== undefined && Number.isSafeInteger(declared) && declared >= 0
+      ? declared
+      : undefined;
+  const total =
+    original !== undefined && original > 0
+      ? original
+      : restricted !== undefined && operational !== undefined && restricted + operational > 0
+        ? restricted + operational
+        : undefined;
+  const lanes = {
+    ...(total !== undefined ? { total } : {}),
+    ...(restricted !== undefined ? { restricted } : {}),
+    ...(operational !== undefined ? { operational } : {}),
+  };
+  return Object.keys(lanes).length > 0 ? lanes : undefined;
 }
 
 /**
@@ -1918,6 +2056,7 @@ function parseDatexInternal(
     const closureScope =
       managementType === "carriagewayClosures" ? "carriageway" : constriction?.scope;
     const measure = measureOf(rec);
+    const informationSource = informationSourceOf(rec);
 
     const severity =
       situationSeverity || text(rec["overallSeverity"]) || text(rec["severity"]) || "";
@@ -2040,6 +2179,10 @@ function parseDatexInternal(
         ...(effectIssues.length > 0 ? { effectIssues } : {}),
         ...(measure.compliance !== undefined ? { compliance: measure.compliance } : {}),
         ...(measure.trafficTypes !== undefined ? { trafficTypes: measure.trafficTypes } : {}),
+        ...(measure.trafficDirections !== undefined
+          ? { trafficDirections: measure.trafficDirections }
+          : {}),
+        ...(informationSource !== undefined ? { informationSource } : {}),
         ...(closureScope !== undefined ? { closureScope } : {}),
         ...(overrunEnd !== undefined ? { estimatedEnd: overrunEnd } : {}),
       },
@@ -2064,9 +2207,11 @@ function parseDatexInternal(
       detour: commentByType(/route|recommend|divers|detour|umleit/i) ?? detourOf(rec),
       detourGeometry: detourGeometryOf(rec, reproject, lonFirst),
       delaySeconds: leafNumber(rec, "delayTimeValue"),
+      ...delayDescriptionOf(rec),
       queueLengthMeters: leafNumber(rec, "queueLength"),
       capacityRemainingPct: capacityRemainingOf(rec),
       workZoneType: workZoneTypeOf(rec),
+      roadworks: roadworksOf(rec),
       relatedIds: relatedRefsOf(rec),
       sourceRaw: {
         ...rec,
