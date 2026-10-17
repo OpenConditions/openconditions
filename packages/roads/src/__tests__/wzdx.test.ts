@@ -706,6 +706,41 @@ describe("parseWzdx — Québec City v3.1 feed (core fields on properties)", () 
     expect(wz.validTo).toBeTruthy();
   });
 
+  it("reads 3.1's unitless reduced speed limit in the unit the catalogue gives the feed", () => {
+    const body = (limit: unknown) => ({
+      type: "FeatureCollection",
+      road_event_feed_info: { version: "3.1" },
+      features: [
+        {
+          type: "Feature",
+          properties: {
+            data_source_id: "ds",
+            road_event_id: "e1",
+            event_type: "work-zone",
+            road_names: ["Boulevard Laurier"],
+            direction: "eastbound",
+            reduced_speed_limit: limit,
+          },
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [-71.28, 46.77],
+              [-71.27, 46.78],
+            ],
+          },
+        },
+      ],
+    });
+    const kmh = parseWzdx(body(30), { ...QC_SOURCE, speedUnit: "km/h" })[0]!;
+    expect(kmh.speedLimitKph).toBe(30);
+    const mph = parseWzdx(body(45), { ...QC_SOURCE, speedUnit: "mph" })[0]!;
+    expect(mph.speedLimitKph).toBe(72.42);
+    __resetSkips();
+    const unstated = parseWzdx(body(30), QC_SOURCE)[0]!;
+    expect(unstated.speedLimitKph).toBeUndefined();
+    expect(drainSkipped(QC_SOURCE.id)).toEqual({ unknown_value: 1 });
+  });
+
   it("leaves an already-v4 body untouched", () => {
     // The v4 fixture must classify identically after the lift is in place.
     const events = parseWzdx(readFileSync(FIXTURE_PATH, "utf8"), WZDX_SOURCE);

@@ -672,6 +672,10 @@ const COVERAGE: Record<string, Coverage> = {
           eastbound: { value: "unknown", basis: "compass", compass: "E" },
           southbound: { value: "unknown", basis: "compass", compass: "S" },
           westbound: { value: "unknown", basis: "compass", compass: "W" },
+          // The loop is named, not applied: it has no axis a consumer could
+          // put on one carriageway without knowing the ring.
+          "inner-loop": { value: "unknown", basis: "text", loop: "inner" },
+          "outer-loop": { value: "unknown", basis: "text", loop: "outer" },
           unknown: { value: "unknown" },
         } as Record<string, Json>,
         (value, meant) => {
@@ -688,13 +692,10 @@ const COVERAGE: Record<string, Coverage> = {
       unsupported: of(values, {
         undefined:
           "the road has no signed direction and the geometry's order gives the direction of " +
-          "travel; the kernel direction has no geometry-order basis, so it stays the verbatim text",
-        "inner-loop":
-          "the kernel's compass has no ring-road loop (inner: clockwise where traffic keeps " +
-          "right); it stays the verbatim text with value unknown",
-        "outer-loop":
-          "the kernel's compass has no ring-road loop (outer: counter-clockwise where traffic " +
-          "keeps right); it stays the verbatim text with value unknown",
+          "travel; the kernel direction has no geometry-order basis, and OpenMapX reads a " +
+          "positive value as the road reference's increasing direction without its basis, so " +
+          "it stays the verbatim text with value unknown (the graph binding follows the " +
+          "geometry's order regardless)",
       }),
     },
   }),

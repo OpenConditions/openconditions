@@ -1542,6 +1542,13 @@
           },
           "timezone": {
             "type": "string"
+          },
+          "speedUnit": {
+            "type": "string",
+            "enum": [
+              "km/h",
+              "mph"
+            ]
           }
         },
         "required": [
