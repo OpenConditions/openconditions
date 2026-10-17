@@ -32,6 +32,7 @@
     "@openconditions/model-weather": "workspace:*"
   },
   "devDependencies": {
+    "@openconditions/conformance": "workspace:*",
     "@openconditions/model-roads": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",

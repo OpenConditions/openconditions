@@ -1170,6 +1170,9 @@ importers:
         specifier: workspace:*
         version: link:../model-vehicles
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@openconditions/model-roads':
         specifier: workspace:*
         version: link:../model-roads
@@ -1195,6 +1198,9 @@ importers:
         specifier: workspace:*
         version: link:../model-weather
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@openconditions/model-roads':
         specifier: workspace:*
         version: link:../model-roads
