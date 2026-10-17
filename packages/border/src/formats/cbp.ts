@@ -73,6 +73,7 @@ type CbpPort = Record<string, unknown> & {
   port_name?: unknown;
   crossing_name?: unknown;
   hours?: unknown;
+  construction_notice?: unknown;
   date?: unknown;
   time?: unknown;
   port_status?: unknown;
@@ -187,7 +188,13 @@ interface Located {
  * one whose state is unknown, neither with minutes; a state CBP did not
  * write before is unknown too, and counted as a value not read. The port's
  * `port_status` is the crossing's `facility.open_status`, unknown and
- * counted alike when it is another word.
+ * counted alike when it is another word. A mode's `maximum_lanes` is the
+ * lanes in all of its queue where the mode has one queue only; with several,
+ * CBP does not say how the lanes divide. The port's opening hours are counted
+ * when `cbpOpeningHours` cannot read them, and its notice to travellers
+ * (`construction_notice`) is the crossing's description. How CBP measures a
+ * mode's wait (`*_automation_type`: manually, by Bluetooth or RFID) is not
+ * read: the wait reading has no field for it.
  *
  * Times are wall-clock times without a date, and their zone labels are
  * wrong at some ports (EST in summer, PST in Arizona), so the vendored zone
@@ -254,12 +261,15 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
     const lanes: LaneGroupInput[] = [];
     const waits: { key: string; value: WaitValue; at: string }[] = [];
     const reported = new Set<BorderMode>();
+    const maxLanes = new Map<BorderMode, number>();
     let unread = 0;
     for (const [field, mode] of MODES) {
       const group = port[field];
       if (typeof group !== "object" || group === null) continue;
       const groupFields = group as Record<string, unknown>;
-      if (count(groupFields["maximum_lanes"]) !== undefined) reported.add(mode);
+      const maximum = count(groupFields["maximum_lanes"]);
+      if (maximum !== undefined) reported.add(mode);
+      if (maximum !== undefined && maximum > 0) maxLanes.set(mode, maximum);
       for (const [name, program] of Object.entries(PROGRAMS)) {
         const lane = groupFields[name] as CbpLane | undefined;
         if (typeof lane !== "object" || lane === null) continue;
@@ -291,9 +301,20 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
       continue;
     }
 
+    // A mode's lanes in all are its one queue's where it has no other.
+    for (const lane of lanes) {
+      const total = maxLanes.get(lane.mode);
+      if (total !== undefined && lanes.filter((l) => l.mode === lane.mode).length === 1) {
+        lane.lanesTotal = total;
+      }
+    }
+
     const portName = text(port.port_name) ?? portNumber;
     const crossingName = text(port.crossing_name);
-    const openingHours = cbpOpeningHours(text(port.hours), crossing.zone);
+    const hours = text(port.hours);
+    const openingHours = cbpOpeningHours(hours, crossing.zone);
+    if (hours !== undefined && openingHours === undefined) unread++;
+    const notice = text(port.construction_notice)?.replace(/\s+/g, " ");
     const feature: CrossingDraft = crossingDraft(
       feed,
       crossing,
@@ -304,6 +325,7 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
         country: "US",
         portIds: [{ scheme: "cbp:port", id: portNumber, authority: "CBP" }],
         ...(openingHours === undefined ? {} : { openingHours }),
+        ...(notice === undefined ? {} : { description: notice }),
         lanes,
         modes,
       },

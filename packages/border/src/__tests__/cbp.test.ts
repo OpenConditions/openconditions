@@ -336,6 +336,45 @@ describe("parseCbp", () => {
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
   });
 
+  it("gives a mode's lanes in all to its queue where it has only one", () => {
+    const out = live();
+    const lanes = (id: string) =>
+      Object.fromEntries(
+        (featureOf(out.features, id)["components"] as { key: string; details: object }[]).map(
+          (c) => [c.key, (c.details as { lanesTotal?: number }).lanesTotal],
+        ),
+      );
+    // Alexandria Bay: commercial standard alone of 5 lanes; passengers queue in two of 8.
+    expect(lanes("070801")).toEqual({
+      "commercial/standard": 5,
+      "passenger/standard": undefined,
+      "passenger/trusted_traveller": undefined,
+    });
+  });
+
+  it("reads the port's notice as its description, and counts hours it cannot read", () => {
+    const out = parse(
+      JSON.stringify([
+        port({
+          // As 230201 Hidalgo wrote it on 2026-10-17.
+          construction_notice:
+            "Ready Lane is open from 6AM until MIDNIGHT seven days a week.  Ready Lane is on the far left as you approach.\r\n\r\nGo to www.GetYouHome.gov for more information.",
+          hours: "Seasonal",
+        }),
+      ]),
+    );
+    const alexandria = featureOf(out.features, "070801");
+    expect(alexandria["description"]).toEqual([
+      {
+        lang: "en",
+        text: "Ready Lane is open from 6AM until MIDNIGHT seven days a week. Ready Lane is on the far left as you approach. Go to www.GetYouHome.gov for more information.",
+      },
+    ]);
+    expect(alexandria).not.toHaveProperty("openingHours");
+    expect(drainSkipped(cbpFeed().id)).toEqual({ unknown_value: 1 });
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
   it("reads CBP's Spanish edition the same way", () => {
     const out = parse(fixture("cbp-bwtnew-es.json"), "2026-06-26T21:06:20Z");
     expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
