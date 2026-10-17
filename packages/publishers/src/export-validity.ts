@@ -1,4 +1,11 @@
-import { type Effect, effectStateAt, effectValidity, type Validity } from "@openconditions/model";
+import {
+  actionInPlace,
+  type Effect,
+  effectStateAt,
+  effectValidity,
+  type Issue,
+  type Validity,
+} from "@openconditions/model";
 
 type Rec = Record<string, unknown>;
 export interface ProjectionEffect {
@@ -46,12 +53,68 @@ export function sameInterval(a: Validity, b: Validity): boolean {
   return instant(a.start) === instant(b.start) && instant(a.end) === instant(b.end);
 }
 
-/** Source lifecycle cannot be serialized as an active XML restriction. */
-export function projectionStateAt({ effect, validity }: ProjectionEffect, at: Date) {
-  if (validity.status === "ended" || validity.status === "cancelled")
-    return { state: "ended" as const };
-  if (validity.status === "unknown") return { state: "unknown" as const };
-  return effectStateAt(effect, validity, at);
+/** Whether an issue only restates the declared lifecycle its validity already carries. */
+function restatesLifecycle(issue: Issue, validity: Validity): boolean {
+  return (
+    issue.code === "unsupported_status" &&
+    issue.sourceTokens?.["validityStatus"] === validity.status
+  );
+}
+
+export interface ProjectionState {
+  state: "active" | "scheduled" | "ended" | "unknown";
+  /** For an unknown state, what left it unknown: the lifecycle, the action status or an issue. */
+  cause?: "status" | "actionStatus" | "issues";
+}
+
+/**
+ * The state an effect is exported in at `at`. An ended or cancelled lifecycle
+ * has ended it and an unknown one establishes nothing. A format that carries
+ * the lifecycle and the operator action's status (`carriesStatus`, DATEX)
+ * exports a planned or suspended effect by its window, stating the status;
+ * one that cannot never exports such an effect, or an action that is not in
+ * place, as in force: the same effect would read as active.
+ */
+export function projectionStateAt(
+  { effect, validity }: ProjectionEffect,
+  at: Date,
+  carriesStatus = false,
+): ProjectionState {
+  if (validity.status === "ended" || validity.status === "cancelled") return { state: "ended" };
+  if (validity.status === "unknown") return { state: "unknown", cause: "status" };
+  const declared = validity.status === "planned" || validity.status === "suspended";
+  if (carriesStatus && declared) {
+    const issues = (effect.issues ?? []).filter((i) => !restatesLifecycle(i, validity));
+    const { state } = effectStateAt({ ...effect, issues }, validity, at);
+    return state === "unknown" ? { state, cause: "issues" } : { state };
+  }
+  const { state } = effectStateAt(effect, validity, at);
+  if (state === "unknown") {
+    return {
+      state,
+      cause:
+        declared && effect.issues?.some((i) => restatesLifecycle(i, validity))
+          ? "status"
+          : "issues",
+    };
+  }
+  if (state === "active" && !carriesStatus) {
+    if (declared) return { state: "unknown", cause: "status" };
+    if (!actionInPlace(effect)) return { state: "unknown", cause: "actionStatus" };
+  }
+  return { state };
+}
+
+/** The JSON pointer an omitted effect's diagnostic names. */
+export function omittedPath(
+  context: ProjectionEffect,
+  { state, cause }: ProjectionState,
+  effectPath: string,
+): string {
+  if (state !== "unknown") return context.validityPath;
+  if (cause === "status") return `${context.validityPath}/status`;
+  if (cause === "actionStatus") return `${effectPath}/actionStatus`;
+  return `${effectPath}/issues`;
 }
 
 /** Generic management classifications describe their concrete management effects,

@@ -307,3 +307,15 @@ it.each(["traff", "datex"] as const)(
     }
   },
 );
+it("never exports a planned or suspended effect inside its window, or an action not in place, as an active TraFF message", () => {
+  for (const status of ["planned", "suspended"]) {
+    const s = situation({ effects: [effect({ validity: { ...parent, status } })] });
+    expect(messages(s), status).toEqual([]);
+  }
+  for (const actionStatus of ["requested", "approved", "rejected"]) {
+    expect(messages(situation({ effects: [effect({ actionStatus })] })), actionStatus).toEqual([]);
+  }
+  expect(
+    messages(situation({ effects: [effect({ actionStatus: "being_terminated" })] })),
+  ).toHaveLength(1);
+});

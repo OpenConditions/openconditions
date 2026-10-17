@@ -64,6 +64,11 @@ export type RoutingBlocker = "applicability_unknown" | "not_normalized" | "actio
  */
 const NON_ROUTING_ACTIONS = new Set(["requested", "approved", "rejected"]);
 
+/** Whether the operator action an effect states, if any, is in place. */
+export function actionInPlace(effect: Pick<Effect, "actionStatus">): boolean {
+  return effect.actionStatus === undefined || !NON_ROUTING_ACTIONS.has(effect.actionStatus);
+}
+
 /**
  * Whether a declared lifecycle leaves an effect's window to decide when it is
  * in force: only `active` does. A planned or suspended record is not in force
@@ -87,9 +92,7 @@ export function routingBlockers(
   const blockers: RoutingBlocker[] = [];
   if (effect.applicability.kind === "unknown") blockers.push("applicability_unknown");
   if (effect.normalization !== "complete") blockers.push("not_normalized");
-  if (effect.actionStatus !== undefined && NON_ROUTING_ACTIONS.has(effect.actionStatus)) {
-    blockers.push("action_not_routable");
-  }
+  if (!actionInPlace(effect)) blockers.push("action_not_routable");
   return blockers;
 }
 

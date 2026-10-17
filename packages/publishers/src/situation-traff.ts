@@ -8,6 +8,7 @@ import {
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 import {
   definesManagementNature,
+  omittedPath,
   type ProjectionEffect,
   projectionEffects,
   projectionStateAt,
@@ -258,19 +259,16 @@ function effectEvents(
   let diversion = false;
   const byType = new Map<string, { effect: Effect; semantics: string }[]>();
   for (const context of effects) {
-    const { effect, validity, validityPath } = context;
-    const { state } = projectionStateAt(context, at);
+    const { effect, validity } = context;
+    const projected = projectionStateAt(context, at);
+    const { state } = projected;
     const path = diagnostics.effectPath(effect);
     if (state === "ended" || state === "unknown") {
       diagnostics.emit(
         state === "ended" ? "effect_ended" : "effect_time_unknown",
         "effect",
         "omitted",
-        state === "unknown"
-          ? validity.status === "unknown"
-            ? `${validityPath}/status`
-            : `${path}/issues`
-          : validityPath,
+        omittedPath(context, projected, path),
         `This effect is not exported at the evaluation instant: ${state}.`,
         effect,
       );
