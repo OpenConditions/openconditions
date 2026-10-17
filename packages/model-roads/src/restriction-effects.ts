@@ -66,8 +66,12 @@ const VALIDITY_STATUS: Readonly<Record<string, Validity["status"]>> = {
 };
 
 function validity(fact: RoadRestrictionFact): Validity {
+  const declared = fact.context.validityStatus;
   return {
-    status: VALIDITY_STATUS[fact.context.validityStatus ?? ""] ?? "unknown",
+    status:
+      declared !== null && Object.hasOwn(VALIDITY_STATUS, declared)
+        ? VALIDITY_STATUS[declared]!
+        : "unknown",
     ...(fact.validFrom !== null ? { start: fact.validFrom } : {}),
     ...(fact.validTo !== null ? { end: fact.validTo } : {}),
     ...(fact.schedule !== undefined && fact.schedule.length > 0
@@ -136,10 +140,11 @@ export function restrictionEffects(
 
   const common = (fact: RoadRestrictionFact, factIssues: Issue[]) => {
     const issues = [...factIssues, ...recordIssues];
+    const declared = fact.context.operatorActionStatus;
     const actionStatus =
-      fact.context.operatorActionStatus === null
+      declared === null || !Object.hasOwn(ACTION_STATUS, declared)
         ? undefined
-        : ACTION_STATUS[fact.context.operatorActionStatus];
+        : ACTION_STATUS[declared];
     return {
       direction: direction(fact),
       validity: validity(fact),

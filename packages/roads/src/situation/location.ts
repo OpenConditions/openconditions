@@ -6,6 +6,17 @@ import type { SourceDescriptor } from "../types.js";
 /** Language of source text whose language the parser does not know (BCP 47 "undetermined"). */
 export const UNDETERMINED = "und";
 
+/**
+ * A table's own entry for a source token. Source text is not trusted to name
+ * an entry: an inherited key such as `constructor` or `toString` is none.
+ */
+export function entryOf<T>(
+  table: Readonly<Record<string, T>>,
+  key: string | null | undefined,
+): T | undefined {
+  return key != null && Object.hasOwn(table, key) ? table[key] : undefined;
+}
+
 export function text(value: string | undefined): Text | undefined {
   const trimmed = value?.trim();
   return trimmed ? [{ lang: UNDETERMINED, text: trimmed }] : undefined;
@@ -85,7 +96,7 @@ export function directionFromText(
     const bearingDeg = Number(raw) % 360;
     return { value: "unknown", basis: "bearing", bearingDeg };
   }
-  const compass = COMPASS[lower];
+  const compass = entryOf(COMPASS, lower);
   if (compass) return { value: "unknown", basis: "compass", compass, text: raw };
   return { value: BOTH.has(lower) ? "both" : "unknown", basis: "text", text: raw };
 }
@@ -119,7 +130,7 @@ function roadRefOf(road: RoadRef): Record<string, unknown> | undefined {
     road.names ?? (trimmed ? [{ lang: road.nameLang ?? UNDETERMINED, text: trimmed }] : []);
   if (name.length > 0) out["name"] = name;
   if (road.ref) out["ref"] = road.ref;
-  const cls = road.roadClass ? ROAD_CLASSES[road.roadClass.toLowerCase()] : undefined;
+  const cls = entryOf(ROAD_CLASSES, road.roadClass?.toLowerCase());
   if (cls) out["class"] = cls;
   if (road.from?.trim()) out["from"] = road.from.trim();
   if (road.to?.trim()) out["to"] = road.to.trim();

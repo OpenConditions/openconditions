@@ -341,7 +341,9 @@ export function datexRestrictionDetails(
         }
         const rawOperator = leafText(node, "comparisonOperator");
         const operator =
-          rawOperator === null ? undefined : OPERATOR_MAP[rawOperator as "greaterThan"];
+          rawOperator === null || !Object.hasOwn(OPERATOR_MAP, rawOperator)
+            ? undefined
+            : OPERATOR_MAP[rawOperator as "greaterThan"];
         if (operator === undefined) {
           issues.push({
             code: "unsupported_operator",
@@ -381,10 +383,13 @@ export function datexRestrictionDetails(
 
       if (characteristic.name === "vehicleType" || characteristic.name === "vehicleUsage") {
         const raw = text(characteristic.node);
+        const isType = characteristic.name === "vehicleType";
         const mapped =
-          characteristic.name === "vehicleType"
-            ? TYPE_MAP[raw as "lorry"]
-            : USAGE_MAP[raw as "emergencyServices"];
+          raw === null || !Object.hasOwn(isType ? TYPE_MAP : USAGE_MAP, raw)
+            ? undefined
+            : isType
+              ? TYPE_MAP[raw as "lorry"]
+              : USAGE_MAP[raw as "emergencyServices"];
         if (raw === null || mapped === undefined) {
           issues.push({
             code: "unknown_vehicle",

@@ -7,7 +7,12 @@ import {
 } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
 import { parseEvents } from "../parse.js";
-import { type DatexVersion, datexDocument, type RecordSpec } from "./helpers/datex-records.js";
+import {
+  type DatexVersion,
+  datexDocument,
+  parseRecord,
+  type RecordSpec,
+} from "./helpers/datex-records.js";
 import { roadFeed } from "./helpers/road-feed.js";
 
 /**
@@ -174,5 +179,62 @@ describe.each(["v2", "v3"] as const)("DATEX %s measures", (version) => {
     expect(validity.estimatedEnd).toBe("2026-09-18T08:00:00Z");
     expect(lifecycleInForce(validity)).toBe(true);
     expect(state(of("closure"), FETCHED_AT)).toBe("active");
+  });
+});
+
+describe.each(["v2", "v3"] as const)("DATEX %s tokens the tables do not name", (version) => {
+  // Inherited object keys are not table entries: each must take the path of
+  // any other value outside the enumeration.
+  it.each(["constructor", "toString", "__proto__", "hasOwnProperty"])(
+    "reads %s as no action status, constriction or road state",
+    (token) => {
+      const action = parseRecord(version, {
+        ...management(`<:operatorActionStatus>${token}</:operatorActionStatus>${MANDATORY}`),
+      });
+      expect(action.event?.situation?.actionStatus).toBeUndefined();
+      expect(action.event?.situation?.effectIssues).toContainEqual(
+        expect.objectContaining({ code: "unsupported_status" }),
+      );
+      expect(action.skipped.unknown_value).toBe(1);
+
+      const element = `<:trafficConstrictionType>${token}</:trafficConstrictionType>`;
+      const blocked = parseRecord(version, {
+        recordClass: "Accident",
+        ...(version === "v3"
+          ? { body: `${element}<:accidentType>collision</:accidentType>` }
+          : { impact: element, body: "<:accidentType>collision</:accidentType>" }),
+      });
+      expect(blocked.event?.roadState).toBeUndefined();
+      expect(blocked.skipped.unknown_value).toBe(1);
+
+      const managed = parseRecord(version, management(MANDATORY, token));
+      expect(managed.event?.roadState).toBeUndefined();
+    },
+  );
+
+  it.each([
+    ["an inherited key", "<:applicableDay>constructor</:applicableDay>"],
+    ["an inherited month key", "<:applicableMonth>toString</:applicableMonth>"],
+    [
+      "one unreadable day among readable ones",
+      "<:applicableDay>monday</:applicableDay><:applicableDay>funday</:applicableDay>",
+    ],
+    [
+      "one unreadable month among readable ones",
+      "<:applicableMonth>may</:applicableMonth><:applicableMonth>maytember</:applicableMonth>",
+    ],
+  ])("leaves a recurrence naming %s unknown, never narrowed", (_label, days) => {
+    const { of, state } = draftOf(version, {
+      ...management(MANDATORY),
+      timeSpec: `<:validPeriod><:recurringDayWeekMonthPeriod>${days}</:recurringDayWeekMonthPeriod></:validPeriod>`,
+    });
+    const closure = of("closure")!;
+    expect(closure.issues).toContainEqual(
+      expect.objectContaining({
+        code: "unsupported_schedule",
+        sourceTokens: { unsupportedFields: ["recurringDayWeekMonthPeriod"] },
+      }),
+    );
+    expect(state(closure, FETCHED_AT)).toBe("unknown");
   });
 });

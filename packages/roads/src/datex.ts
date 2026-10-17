@@ -45,7 +45,7 @@ import {
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
-import { UNDETERMINED } from "./situation/location.js";
+import { entryOf, UNDETERMINED } from "./situation/location.js";
 import {
   canonicalSnapshotValue,
   compareSnapshotRank,
@@ -193,7 +193,7 @@ function measureOf(rec: XmlObject): DatexMeasure {
   const effectIssues: Issue[] = [];
   const actionNode = rec["operatorActionStatus"];
   const action = text(actionNode);
-  const actionStatus = action === undefined ? undefined : ACTION_STATUS[action];
+  const actionStatus = entryOf(ACTION_STATUS, action);
   if (action !== undefined && actionStatus === undefined) {
     const extendedValue = isXmlObject(actionNode)
       ? getXmlAttribute(actionNode, "_extendedValue")
@@ -772,9 +772,10 @@ const MONTH: Readonly<Record<string, number>> = Object.fromEntries(
  * One DATEX `Period` as schedules: within its `startOfPeriod`/`endOfPeriod`,
  * on the days and months each `recurringDayWeekMonthPeriod` names, during each
  * `recurringTimePeriodOfDay`. Several days-of-week groups or times of day are
- * alternatives, so the period is one schedule per pairing. A day or month
- * outside the enumeration is dropped from its group; a group left naming
- * neither would widen the period to every day, so it is reported instead.
+ * alternatives, so the period is one schedule per pairing. A group naming any
+ * day or month outside the enumeration (or none it can read) is reported:
+ * kept without it, the group would apply on fewer days than the source
+ * says, or on every day.
  */
 function periodSchedules(period: XmlObject, unsupported: Set<string>): LocalSchedule[] {
   const times = getXmlChildren(period, "recurringTimePeriodOfDay").map((tod) => ({
@@ -782,16 +783,13 @@ function periodSchedules(period: XmlObject, unsupported: Set<string>): LocalSche
     endTime: getXmlChildText(tod, "endTimeOfPeriod"),
   }));
   const calendars = getXmlChildren(period, "recurringDayWeekMonthPeriod").map((group) => {
-    const declared = (name: string) =>
-      xmlNodeToArray(group[name])
-        .map(text)
-        .filter((v): v is string => v !== undefined);
+    const declared = (name: string) => xmlNodeToArray(group[name]).map(text);
     if (declared("applicableWeek").length > 0) unsupported.add("applicableWeek");
     const days = declared("applicableDay");
     const months = declared("applicableMonth");
-    const byDay = days.flatMap((d) => (ICAL_DAY[d] ? [ICAL_DAY[d]] : []));
-    const byMonth = months.flatMap((m) => (MONTH[m] ? [MONTH[m]] : []));
-    if ((days.length > 0 && byDay.length === 0) || (months.length > 0 && byMonth.length === 0)) {
+    const byDay = days.flatMap((d) => entryOf(ICAL_DAY, d) ?? []);
+    const byMonth = months.flatMap((m) => entryOf(MONTH, m) ?? []);
+    if (byDay.length < days.length || byMonth.length < months.length) {
       unsupported.add("recurringDayWeekMonthPeriod");
     }
     return {
@@ -963,7 +961,10 @@ function alertCDirectionIn(location: XmlObject): AlertCDirectionRef | null {
   if (directionCoded !== null) refs["directionCoded"] = directionCoded;
   if (affectedDirection !== null) refs["affectedDirection"] = affectedDirection;
   return {
-    value: directionCoded === null ? "unknown" : (ALERT_C_DIRECTIONS[directionCoded] ?? "unknown"),
+    value:
+      directionCoded === null
+        ? "unknown"
+        : (entryOf(ALERT_C_DIRECTIONS, directionCoded) ?? "unknown"),
     directionCoded,
     affectedDirection,
     refs,
@@ -1110,7 +1111,7 @@ const ROAD_STATES: Readonly<Record<string, RoadEvent["roadState"]>> = {
 
 function roadStateOf(rec: XmlObject): RoadEvent["roadState"] | undefined {
   const raw = getXmlChildText(rec, "roadOrCarriagewayOrLaneManagementType");
-  return raw === undefined ? undefined : ROAD_STATES[raw];
+  return entryOf(ROAD_STATES, raw);
 }
 
 function lanesOf(rec: XmlObject): RoadEvent["lanesAffected"] | undefined {
@@ -1908,12 +1909,12 @@ function parseDatexInternal(
         ? coarseType("road_closure")
         : managementType === "contraflow"
           ? coarseType("contraflow")
-          : (DATEX_COARSE[recType] ?? coarseOf(classification));
+          : (entryOf(DATEX_COARSE, recType) ?? coarseOf(classification));
     // A management type declares the road's state; an unplanned event's
     // constriction says it where no management type does.
     const declaredState = roadStateOf(rec);
     const constriction =
-      declaredState === undefined ? CONSTRICTION[constrictionOf(rec) ?? ""] : undefined;
+      declaredState === undefined ? entryOf(CONSTRICTION, constrictionOf(rec)) : undefined;
     const closureScope =
       managementType === "carriagewayClosures" ? "carriageway" : constriction?.scope;
     const measure = measureOf(rec);

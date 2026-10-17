@@ -9,7 +9,7 @@ import {
 import type { Restriction, RoadEvent } from "../model.js";
 import { vehicleClassesOf } from "../routing.js";
 import { localAccessExceptionOf } from "./local-access.js";
-import { text } from "./location.js";
+import { entryOf, text } from "./location.js";
 
 type Applicability = Effect["applicability"];
 
@@ -130,8 +130,8 @@ interface Draft {
  * is dropped.
  */
 function legacyRestriction(r: Restriction, path: string, applicability: Applicability): Draft {
-  const dimension = DIMENSIONS[r.type.toLowerCase()];
-  const unit = r.unit === undefined ? undefined : UNITS[r.unit.toLowerCase()];
+  const dimension = entryOf(DIMENSIONS, r.type.toLowerCase());
+  const unit = entryOf(UNITS, r.unit?.toLowerCase());
   const source = { path, tokens: { ...r } };
   if (dimension !== undefined && r.value !== undefined && unit !== undefined) {
     const canonical = dimension === "gross_weight" || dimension === "axle_load" ? "kg" : "m";
@@ -152,7 +152,7 @@ function legacyRestriction(r: Restriction, path: string, applicability: Applicab
       };
     }
   }
-  const access = ACCESS[r.type.toLowerCase()];
+  const access = entryOf(ACCESS, r.type.toLowerCase());
   if (access !== undefined) {
     return {
       kind: "access",
@@ -184,7 +184,7 @@ function legacyRestriction(r: Restriction, path: string, applicability: Applicab
 
 function laneImpact(event: RoadEvent): string {
   const lanes = event.lanesAffected!;
-  const declared = lanes.vehicleImpact ? WZDX_VEHICLE_IMPACTS[lanes.vehicleImpact] : undefined;
+  const declared = entryOf(WZDX_VEHICLE_IMPACTS, lanes.vehicleImpact);
   if (declared !== undefined) return declared;
   if (event.roadState === "single_lane_alternating") return "alternating_one_way";
   if (lanes.total !== undefined && lanes.closed !== undefined) {
@@ -202,7 +202,7 @@ function lanesOf(event: RoadEvent, wzdx: boolean): Record<string, unknown>[] | u
   return lanes
     .filter((l) => Number.isInteger(l.index) && l.index >= 1)
     .map((l) => {
-      const type = wzdx && l.type ? WZDX_LANE_TYPES[l.type] : undefined;
+      const type = wzdx ? entryOf(WZDX_LANE_TYPES, l.type) : undefined;
       return { index: l.index, status: l.status, ...(type ? { type } : {}) };
     });
 }
