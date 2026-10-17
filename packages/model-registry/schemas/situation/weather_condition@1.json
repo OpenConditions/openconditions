@@ -433,6 +433,7 @@
             "cap",
             "gtfs:stop",
             "gtfs:route",
+            "ifopt",
             "ocm",
             "bnetza",
             "cpo",

@@ -295,6 +295,7 @@
               "cash",
               "credit_card",
               "debit_card",
+              "card",
               "contactless",
               "app",
               "rfid",
@@ -587,6 +588,7 @@
                       "coach",
                       "motorcycle",
                       "bicycle",
+                      "cargo_bike",
                       "caravan",
                       "any"
                     ]
@@ -601,6 +603,9 @@
                       "ev_charging",
                       "car_sharing",
                       "residents",
+                      "customers",
+                      "taxi",
+                      "delivery",
                       "short_term",
                       "long_term",
                       "hazmat"
@@ -610,6 +615,100 @@
                     "type": "integer",
                     "minimum": 0,
                     "maximum": 9007199254740991
+                  },
+                  "hours": {
+                    "type": "object",
+                    "properties": {
+                      "osm": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "twentyFourSeven": {
+                        "type": "boolean"
+                      },
+                      "spec": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "days": {
+                              "minItems": 1,
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "enum": [
+                                  "MO",
+                                  "TU",
+                                  "WE",
+                                  "TH",
+                                  "FR",
+                                  "SA",
+                                  "SU",
+                                  "PH"
+                                ]
+                              }
+                            },
+                            "opens": {
+                              "type": "string",
+                              "pattern": "^(?:[01]\\d|2[0-4]):[0-5]\\d$"
+                            },
+                            "closes": {
+                              "type": "string",
+                              "pattern": "^(?:[01]\\d|2[0-4]):[0-5]\\d$"
+                            }
+                          },
+                          "required": [
+                            "days",
+                            "opens",
+                            "closes"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "exceptions": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "start": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "end": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "open": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "start",
+                            "end",
+                            "open"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "chargingWhenClosed": {
+                        "type": "boolean"
+                      },
+                      "timezone": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "osm"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "maxStay": {
+                    "$ref": "#/$defs/Quantity"
                   },
                   "dimensions": {
                     "type": "object",
@@ -767,6 +866,7 @@
                       "coach",
                       "motorcycle",
                       "bicycle",
+                      "cargo_bike",
                       "caravan",
                       "any"
                     ]
@@ -781,6 +881,9 @@
                       "ev_charging",
                       "car_sharing",
                       "residents",
+                      "customers",
+                      "taxi",
+                      "delivery",
                       "short_term",
                       "long_term",
                       "hazmat"
@@ -821,6 +924,7 @@
             "single_level",
             "multi_storey",
             "underground",
+            "underground_and_multi_storey",
             "surface",
             "automated",
             "covered",
@@ -833,7 +937,31 @@
           "minimum": 0,
           "maximum": 9007199254740991
         },
+        "capacityRange": {
+          "type": "object",
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "max": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          "additionalProperties": false
+        },
+        "levels": {
+          "type": "integer",
+          "exclusiveMinimum": 0,
+          "maximum": 9007199254740991
+        },
         "heightLimit": {
+          "$ref": "#/$defs/Quantity"
+        },
+        "widthLimit": {
           "$ref": "#/$defs/Quantity"
         },
         "lengthLimit": {
@@ -908,6 +1036,7 @@
             "on_site",
             "control_centre",
             "patrol",
+            "supervised",
             "none",
             "unknown"
           ]
@@ -980,7 +1109,10 @@
                 "enum": [
                   "vehicle_entrance",
                   "vehicle_exit",
-                  "pedestrian"
+                  "pedestrian",
+                  "bicycle",
+                  "emergency_exit",
+                  "rental_car_return"
                 ]
               }
             },
@@ -997,6 +1129,323 @@
         "reservation": {
           "type": "boolean"
         },
+        "bays": {
+          "type": "object",
+          "properties": {
+            "orientation": {
+              "type": "string",
+              "enum": [
+                "parallel",
+                "diagonal",
+                "perpendicular"
+              ]
+            },
+            "position": {
+              "type": "string",
+              "enum": [
+                "lane",
+                "on_kerb",
+                "half_on_kerb",
+                "shoulder"
+              ]
+            },
+            "side": {
+              "type": "string",
+              "enum": [
+                "left",
+                "right"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "outline": {
+          "type": "object",
+          "properties": {
+            "geometry": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "Polygon"
+                    },
+                    "coordinates": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "minItems": 4,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 2,
+                              "maxItems": 2
+                            },
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "MultiPolygon"
+                    },
+                    "coordinates": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "minItems": 1,
+                        "type": "array",
+                        "items": {
+                          "minItems": 4,
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "array",
+                                "prefixItems": [
+                                  {
+                                    "type": "number",
+                                    "minimum": -180,
+                                    "maximum": 180
+                                  },
+                                  {
+                                    "type": "number",
+                                    "minimum": -90,
+                                    "maximum": 90
+                                  }
+                                ],
+                                "items": false,
+                                "minItems": 2,
+                                "maxItems": 2
+                              },
+                              {
+                                "type": "array",
+                                "prefixItems": [
+                                  {
+                                    "type": "number",
+                                    "minimum": -180,
+                                    "maximum": 180
+                                  },
+                                  {
+                                    "type": "number",
+                                    "minimum": -90,
+                                    "maximum": 90
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ],
+                                "items": false,
+                                "minItems": 3,
+                                "maxItems": 3
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "LineString"
+                    },
+                    "coordinates": {
+                      "minItems": 2,
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                              },
+                              {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 2,
+                            "maxItems": 2
+                          },
+                          {
+                            "type": "array",
+                            "prefixItems": [
+                              {
+                                "type": "number",
+                                "minimum": -180,
+                                "maximum": 180
+                              },
+                              {
+                                "type": "number",
+                                "minimum": -90,
+                                "maximum": 90
+                              },
+                              {
+                                "type": "number"
+                              }
+                            ],
+                            "items": false,
+                            "minItems": 3,
+                            "maxItems": 3
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "const": "MultiLineString"
+                    },
+                    "coordinates": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "minItems": 2,
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 2,
+                              "maxItems": 2
+                            },
+                            {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "number",
+                                  "minimum": -180,
+                                  "maximum": 180
+                                },
+                                {
+                                  "type": "number",
+                                  "minimum": -90,
+                                  "maximum": 90
+                                },
+                                {
+                                  "type": "number"
+                                }
+                              ],
+                              "items": false,
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          ]
+                        }
+                      }
+                    }
+                  },
+                  "required": [
+                    "type",
+                    "coordinates"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            },
+            "line": {
+              "type": "string",
+              "enum": [
+                "road_centre",
+                "bays_centre"
+              ]
+            }
+          },
+          "required": [
+            "geometry"
+          ],
+          "additionalProperties": false
+        },
+        "stops": {
+          "minItems": 1,
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/ExternalId"
+          }
+        },
         "usage": {
           "minItems": 1,
           "type": "array",
@@ -1004,12 +1453,19 @@
             "type": "string",
             "enum": [
               "park_and_ride",
+              "park_and_cycle",
+              "park_and_walk",
+              "kiss_and_ride",
               "carpool",
+              "car_sharing",
+              "valet",
               "truck",
               "coach",
               "customer",
               "residents",
-              "event"
+              "event",
+              "loading",
+              "overnight"
             ]
           }
         },
@@ -1022,6 +1478,10 @@
         },
         "openingHoursText": {
           "$ref": "#/$defs/Text"
+        },
+        "openingHoursUnreadable": {
+          "type": "boolean",
+          "const": true
         }
       },
       "required": [
@@ -1110,6 +1570,7 @@
             "cap",
             "gtfs:stop",
             "gtfs:route",
+            "ifopt",
             "ocm",
             "bnetza",
             "cpo",

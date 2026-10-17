@@ -25,6 +25,10 @@ interface HdbCarPark {
   y_coord?: string | number;
   car_park_type?: string;
   free_parking?: string;
+  /** When short-term (hourly) parking is offered: `WHOLE DAY`, `7AM-10.30PM`, or `NO`. */
+  short_term_parking?: string;
+  night_parking?: string;
+  car_park_decks?: number | string | null;
   gantry_height?: number | string | null;
 }
 
@@ -170,6 +174,8 @@ interface Lots {
   vehicleType: ParkingVehicleType;
   total?: number;
   available?: number;
+  /** When these lots were counted, where their entry says. */
+  at?: string;
 }
 
 interface Availability {
@@ -181,8 +187,10 @@ interface Availability {
 
 /**
  * The availability per car park: one entry per lot type, the first of a
- * repeated type winning. An entry without a car park number is counted as
- * skipped.
+ * repeated type winning, each dated by its entry's `update_datetime`, else
+ * the snapshot's `timestamp`. The feed may list a car park twice, each entry
+ * with other lot types; their lots are merged. An entry without a car park
+ * number is counted as skipped.
  */
 function availabilityOf(
   feed: ParkingCatalogFeed,
@@ -193,6 +201,7 @@ function availabilityOf(
     const doc = JSON.parse(body.toString("utf8")) as { items?: { carpark_data?: unknown }[] };
     if (!Array.isArray(doc?.items)) throw new Error("hdb: availability body has no items array");
     const data = doc.items[0]?.carpark_data;
+    const snapshot = instantIn(TIME_ZONE, (doc.items[0] as { timestamp?: unknown })?.timestamp);
     for (const carPark of (Array.isArray(data) ? data : []) as HdbAvailability[]) {
       const id =
         typeof carPark === "object" && carPark !== null ? text(carPark.carpark_number) : undefined;
@@ -200,9 +209,13 @@ function availabilityOf(
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      if (out.has(id)) continue;
-      const lots: Lots[] = [];
-      let unknownValues = 0;
+      const seen = out.get(id);
+      const lots: Lots[] = seen?.lots ?? [];
+      let unknownValues = seen?.unknownValues ?? 0;
+      // Singapore time; a time with an offset is taken as given.
+      const updated = instantIn(TIME_ZONE, carPark.update_datetime);
+      if (updated === undefined && text(carPark.update_datetime) !== undefined) unknownValues++;
+      const at = updated ?? snapshot;
       for (const info of carPark.carpark_info ?? []) {
         const lotType = text(info?.lot_type);
         const vehicleType = LOT_TYPES[lotType ?? ""];
@@ -214,12 +227,10 @@ function availabilityOf(
           vehicleType,
           ...(total === undefined ? {} : { total }),
           ...(available === undefined ? {} : { available }),
+          ...(at === undefined ? {} : { at }),
         });
       }
-      // Singapore time; a time with an offset is taken as given.
-      const at = instantIn(TIME_ZONE, carPark.update_datetime);
-      if (at === undefined && text(carPark.update_datetime) !== undefined) unknownValues++;
-      out.set(id, { ...(at === undefined ? {} : { at }), lots, unknownValues });
+      out.set(id, { ...((seen?.at ?? at) ? { at: seen?.at ?? at } : {}), lots, unknownValues });
     }
   }
   return out;
@@ -251,6 +262,30 @@ function pointOf(carPark: HdbCarPark): [number, number] | "no_geometry" | "malfo
   return [lon, lat];
 }
 
+/** A clock time of the table (`7AM`, `10.30PM`) as `HH:MM`. */
+function clock(raw: string): string | undefined {
+  const [, h, m, half] = raw.match(/^(\d{1,2})(?:[.:](\d{2}))?(AM|PM)$/) ?? [];
+  if (h === undefined || half === undefined) return undefined;
+  const hours = (Number(h) % 12) + (half === "PM" ? 12 : 0);
+  return hours > 23 ? undefined : `${String(hours).padStart(2, "0")}:${m ?? "00"}`;
+}
+
+/**
+ * The hours short-term parking is offered, in the OSM grammar: `WHOLE DAY`
+ * round the clock, `7AM-10.30PM` that span. `NO` offers none, and a value of
+ * another form is unread.
+ */
+function shortTermHours(value: string | undefined): string | "none" | "unread" | undefined {
+  const t = value?.trim().toUpperCase();
+  if (t === undefined || t === "") return undefined;
+  if (t === "NO") return "none";
+  if (t === "WHOLE DAY") return "24/7";
+  const [from, to] = t.replace(/\s+/g, "").split("-");
+  const start = from === undefined ? undefined : clock(from);
+  const end = to === undefined ? undefined : clock(to);
+  return start === undefined || end === undefined ? "unread" : `${start}-${end}`;
+}
+
 const lotsArea = (lots: Lots): AreaInput => ({
   vehicleType: lots.vehicleType,
   userGroup: "any",
@@ -269,6 +304,8 @@ function siteInput(
   const height = number(carPark.gantry_height);
   const lots = (live?.lots ?? []).filter((l) => l.total !== undefined && l.total > 0);
   const car = lots.find((l) => l.vehicleType === "car");
+  const shortTerm = shortTermHours(carPark.short_term_parking);
+  const decks = number(carPark.car_park_decks);
   return {
     stationId,
     point,
@@ -282,7 +319,15 @@ function siteInput(
       : { tariffText: `Free parking: ${free}` }),
     ...(height !== undefined && height > 0 ? { heightLimitM: height } : {}),
     ...(car?.total === undefined ? {} : { capacityTotal: car.total }),
-    areas: lots.map(lotsArea),
+    ...(decks !== undefined && Number.isInteger(decks) && decks > 0 ? { levels: decks } : {}),
+    ...(text(carPark.night_parking)?.toUpperCase() === "YES" ? { usage: ["overnight"] } : {}),
+    areas: [
+      ...lots.map(lotsArea),
+      // Hourly parking for cars, offered during these hours.
+      ...(shortTerm === undefined || shortTerm === "none" || shortTerm === "unread"
+        ? []
+        : [{ vehicleType: "car" as const, userGroup: "short_term" as const, hoursOsm: shortTerm }]),
+    ],
   };
 }
 
@@ -303,7 +348,8 @@ function readingsOf(
   if (car !== undefined) out.push(...occupancyDrafts(feed, reading, counts(car), ctx));
   for (const lots of counted) {
     const area = { vehicleType: lots.vehicleType, userGroup: "any" as const };
-    out.push(...occupancyDrafts(feed, { ...reading, area }, counts(lots), ctx));
+    const at = lots.at ?? reading.at;
+    out.push(...occupancyDrafts(feed, { ...reading, at, area }, counts(lots), ctx));
   }
   return out;
 }
@@ -314,7 +360,9 @@ function readingsOf(
  * type, the lots and the free ones. Car (`C`), motorcycle (`Y`) and
  * heavy-vehicle (`H`) lots are areas with their own readings; the car lots
  * are also the site's capacity and readings. Availability is dated by its
- * `update_datetime`, Singapore time. A car park without a number or a
+ * `update_datetime`, Singapore time, else by the snapshot's time. The hours
+ * of short-term parking are a short-term car area, night parking the
+ * overnight usage, the decks the site's levels. A car park without a number or a
  * point in Singapore is counted as skipped, and so is the availability of a
  * car park the table lacks: it has no site to place it. A lot type, car park
  * type or time it cannot read is an unknown value, the site published
@@ -346,6 +394,9 @@ export function parseHdb(
       }
       const type = text(carPark.car_park_type);
       if (type !== undefined && LAYOUTS[type.toUpperCase()] === undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
+      if (shortTermHours(carPark.short_term_parking) === "unread") {
         recordSkipped(feed.id, "unknown_value");
       }
       const live = availability.get(stationId);

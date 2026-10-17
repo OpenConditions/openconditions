@@ -1,7 +1,14 @@
 import { jsonSchemaEnums, pinnedOrUnavailable } from "@openconditions/conformance";
 import { PARKAPI_V3 as PINNED } from "@openconditions/conformance/standards/parkapi-v3";
 import { beforeAll, describe, expect, it } from "vitest";
-import { PARKAPI_RESTRICTION_AREAS, PARKAPI_SUPERVISION } from "../crosswalk/parkapi.js";
+import {
+  PARKAPI_KERB_POSITIONS,
+  PARKAPI_LINE_POSITIONS,
+  PARKAPI_ORIENTATIONS,
+  PARKAPI_RESTRICTION_AREAS,
+  PARKAPI_SIDES,
+  PARKAPI_SUPERVISION,
+} from "../crosswalk/parkapi.js";
 import { PARKAPI_V3 } from "../vocabularies/parkapi.js";
 
 const sorted = (values: Iterable<string>) => [...values].sort();
@@ -33,6 +40,11 @@ describe("ParkAPI v3 vocabularies against the OpenAPI document", () => {
       "externalIdentifierTypes",
       "ParkingSite/properties/external_identifiers/items/properties/type",
     ],
+    ["orientations", "ParkingSite/properties/orientation"],
+    ["sides", "ParkingSite/properties/side"],
+    ["parkingTypes", "ParkingSite/properties/parking_type"],
+    ["linearParkingPositions", "ParkingSite/properties/linear_parking_position"],
+    ["geometryTypes", "ParkingSite/properties/geojson/properties/type"],
     ["sourceStatuses", "Source/properties/static_status"],
     ["sourceStatuses", "Source/properties/realtime_status"],
   ] as const)("%s is the enumeration at %s", ([list, pointer], { skip }) => {
@@ -48,5 +60,15 @@ describe("ParkAPI v3 vocabularies against the OpenAPI document", () => {
     expect(sorted(Object.keys(PARKAPI_SUPERVISION))).toEqual(
       schema("ParkingSite/properties/supervision_type"),
     );
+  });
+
+  it.for([
+    ["ParkingSite/properties/orientation", PARKAPI_ORIENTATIONS],
+    ["ParkingSite/properties/side", PARKAPI_SIDES],
+    ["ParkingSite/properties/parking_type", PARKAPI_KERB_POSITIONS],
+    ["ParkingSite/properties/linear_parking_position", PARKAPI_LINE_POSITIONS],
+  ] as const)("the bay layout crosswalk names every value at %s", ([pointer, table], { skip }) => {
+    if (unavailable) skip(unavailable);
+    expect(sorted(Object.keys(table))).toEqual(schema(pointer));
   });
 });

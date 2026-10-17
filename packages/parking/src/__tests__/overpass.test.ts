@@ -174,4 +174,51 @@ describe("skips", () => {
     expect(out.features).toHaveLength(2);
     expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_type: 1, unknown_value: 2 });
   });
+  test("Overpass: owner, description, lighting, supervision, kerbside bays and customers' usage", () => {
+    const out = osm();
+    expect(site(out, "node/1725394191")?.["owner"]).toEqual({
+      role: "owner",
+      name: [{ lang: "und", text: "Aachener Grundvermögen Kapitalverwaltungsgesellschaft mbH" }],
+    });
+    expect(site(out, "way/4706466")?.["details"]).toMatchObject({
+      supervision: "none",
+      securityFeatures: ["lighting"],
+    });
+    expect(site(out, "node/1336906453")).toMatchObject({
+      description: [{ lang: "und", text: "2 Behindertenparkplätze" }],
+      access: { audience: "customers" },
+      details: { usage: ["customer"] },
+    });
+    const kerb = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [
+            {
+              type: "node",
+              id: 1,
+              lat: 49,
+              lon: 8.4,
+              tags: {
+                amenity: "parking",
+                parking: "half_on_kerb",
+                orientation: "diagonal",
+                maxwidth: "2.3",
+                "capacity:parent": "4",
+                supervised: "yes",
+              },
+            },
+          ],
+        }),
+      ),
+    );
+    expect(site(kerb, "node/1")).toMatchObject({
+      type: "on_street",
+      details: {
+        bays: { position: "half_on_kerb", orientation: "diagonal" },
+        widthLimit: { value: 2.3, unit: "m" },
+        supervision: "supervised",
+      },
+    });
+    expect(areas(kerb, "node/1")).toEqual([["car:family", 4]]);
+  });
 });

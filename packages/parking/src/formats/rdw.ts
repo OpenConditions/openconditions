@@ -52,11 +52,16 @@ function positive(value: unknown): number | undefined {
   return n > 0 ? n : undefined;
 }
 
-/** A height in metres: the datasets write centimetres, but a value below 10 is metres. */
+/**
+ * A height in metres: the datasets write centimetres, but a value below 10
+ * is metres. A height no vehicle entrance has (below a metre or above ten)
+ * is a slip, and no limit.
+ */
 function heightM(value: unknown): number | undefined {
   const n = Number.parseFloat(text(value) ?? "");
   if (!Number.isFinite(n) || n <= 0) return undefined;
-  return n < 10 ? n : Math.round(n) / 100;
+  const m = n < 10 ? n : Math.round(n) / 100;
+  return m >= 1 && m <= 10 ? m : undefined;
 }
 
 const yes = (value: unknown) => {

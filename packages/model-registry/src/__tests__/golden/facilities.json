@@ -539,7 +539,13 @@
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "admin": {
-        "country": "DE"
+        "country": "DE",
+        "geocodes": [
+          {
+            "scheme": "ars",
+            "code": "082120000000"
+          }
+        ]
       },
       "address": {
         "country": "DE",
@@ -605,7 +611,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "f98b17abb2f3d7a24b26554ebc50c1eede8ed2bfe717da844c2054cda42be64c"
+    "contentHash": "336cb581053b74d7a3422a80dccb9e5c25fa40eac13366335396c9e7b6e74257"
   },
   {
     "id": "oc:feature:de-bw-mobidata-parking:391",
@@ -629,7 +635,13 @@
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "admin": {
-        "country": "DE"
+        "country": "DE",
+        "geocodes": [
+          {
+            "scheme": "ars",
+            "code": "082120000000"
+          }
+        ]
       },
       "address": {
         "country": "DE",
@@ -695,7 +707,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "64aec14d6dc1db128dd4bf54bd12eab7efe3101b2208251843ca94748faab8fa"
+    "contentHash": "1ded20c4fc21314acb3b3ec8adc20b13342f3acf2298507911abe87978242350"
   },
   {
     "id": "oc:feature:de-bw-mobidata-parking:384",
@@ -719,7 +731,13 @@
       "geometryOrigin": "source",
       "fuzziness": "exact",
       "admin": {
-        "country": "DE"
+        "country": "DE",
+        "geocodes": [
+          {
+            "scheme": "ars",
+            "code": "081160019019"
+          }
+        ]
       },
       "address": {
         "country": "DE",
@@ -785,7 +803,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "d93de0fac3dc892ffa19727eaa49e786d9084586ad484f59a6c3509e60c56671"
+    "contentHash": "16ff2ffd89f86047615a97dca25ec5e13b9e8988010be7abce83254c81448011"
   },
   {
     "id": "oc:observation:de-bw-mobidata-parking:5dda9bd294327a42bd465b564a34bf6cf6c1d426ada6f5957ca2b3715a24776b",
@@ -1008,15 +1026,29 @@
         "guard_24h"
       ],
       "supervision": "patrol",
+      "entrances": [
+        {
+          "point": {
+            "type": "Point",
+            "coordinates": [
+              6.1081944,
+              51.390896
+            ]
+          },
+          "kind": "vehicle_entrance"
+        }
+      ],
+      "reservation": true,
       "usage": [
         "truck"
-      ]
+      ],
+      "website": "https://truckparkingvenlo.nl"
     },
     "canonicalId": "73cccaeeefc04018defc92542a05be21c5be8aab8f648e891a061bf8181e6978",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "9bd2cbc4eca743eeb8432141d27e8b9e2f8680cfd8108a9b25ed85fcca3078f3"
+    "contentHash": "c92b7164369c98a61a036ceba97c4fe1794d1894c966ad5656120eb883049bb2"
   },
   {
     "id": "oc:feature:nl-ndw-truck-parking:NL-12_8",
@@ -1104,15 +1136,28 @@
         "guard_24h"
       ],
       "supervision": "patrol",
+      "entrances": [
+        {
+          "point": {
+            "type": "Point",
+            "coordinates": [
+              5.756943,
+              51.415527
+            ]
+          },
+          "kind": "vehicle_entrance"
+        }
+      ],
       "usage": [
         "truck"
-      ]
+      ],
+      "website": "http://www.truckstopnobis.nl"
     },
     "canonicalId": "0200478309cb6addca6a0cede18635c117c0641d74f4e3cde8b7b10e61c85618",
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "47f9e85b668b2c5e06bd47992591de5c47d65fe7746208e60d47affbc1646de9"
+    "contentHash": "cd39a8af1d49087f9925a62903ebd227723e19cb3b436acaf04cb646b86efcc6"
   },
   {
     "id": "oc:observation:nl-ndw-truck-parking:f1bc0fca67255d6cae1cc3ea76ab678d9d17d904e591ec2aa506513c306988bb",
@@ -1393,6 +1438,7 @@
         ]
       }
     ],
+    "url": "https://truckparkingvenlo.nl",
     "validity": {
       "status": "active"
     },
@@ -1406,7 +1452,7 @@
     "domain": "parking",
     "revision": 1,
     "recordedAt": "2026-09-22T11:10:00Z",
-    "contentHash": "9ce0e206162de1bc1d702673352e8209a20addb9c5f7dfea227362715e381ab9"
+    "contentHash": "eccbe41f0f6b185082f962cb4763704cd46de5d8b1177582d499d8091c581670"
   },
   {
     "id": "oc:feature:de-autobahn-events:DE-SL-000009",

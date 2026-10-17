@@ -108,9 +108,91 @@ describe("opendatahub", () => {
       name: [{ lang: "de", text: "Parkhaus Meran" }],
       details: { layout: "underground" },
     });
+    // A standard name is in no language the hub states.
     expect(site(out, "BR-007")).toMatchObject({
-      name: [{ lang: "it", text: "Brixen Park" }],
+      name: [{ lang: "und", text: "Brixen Park" }],
       details: { layout: "surface" },
+    });
+  });
+
+  test("Open Data Hub: names in every language, NeTEx metadata and groups' counts", () => {
+    const station = (scode: string, smetadata: Record<string, unknown>) => ({
+      scode,
+      sname: scode,
+      scoordinate: { x: 11.3, y: 46.5, srid: 4326 },
+      smetadata,
+    });
+    const measure = (scode: string, tname: string, mvalue: number) => ({
+      scode,
+      tname,
+      mvalue,
+      mvalidtime: "2026-05-23 11:40:00.000+0000",
+    });
+    const out = parse(
+      [
+        json({
+          data: [
+            station("A", {
+              name_de: "Parkplätze Ratschings",
+              name_it: "Parcheggi Racines",
+              name_IT: "ignored",
+              mainaddress: "Viale dei Colli - Rovereto",
+              capacity: 199,
+              capacity_short_stay: 198,
+              capacity_subscribers: 1,
+              netex_parking: {
+                layout: "covered",
+                type: "parkAndRide",
+                surveillance: true,
+                reservation: "noReservations",
+              },
+            }),
+            station("B", {
+              capacità: 25,
+              netex_parking: { type: "motorwayParking", vehicletypes: "heavyGoodsVehicle" },
+            }),
+          ],
+        }),
+      ],
+      [
+        json({
+          data: [
+            measure("A", "free", 100),
+            measure("A", "free_short_stay", 99),
+            measure("A", "free_subscribers", 1),
+            measure("A", "parking-forecast-30", 80),
+          ],
+        }),
+      ],
+    );
+    expect(site(out, "A")).toMatchObject({
+      type: "park_and_ride",
+      name: [
+        { lang: "de", text: "Parkplätze Ratschings" },
+        { lang: "it", text: "Parcheggi Racines" },
+      ],
+      location: { address: { text: "Viale dei Colli - Rovereto" } },
+      details: { layout: "covered", supervision: "supervised", reservation: false },
+    });
+    expect(
+      (
+        (site(out, "A")?.["components"] ?? []) as { key: string; details: { capacity?: number } }[]
+      ).map((c) => [c.key, c.details.capacity]),
+    ).toEqual([
+      ["car:short_term", 198],
+      ["car:long_term", 1],
+    ]);
+    const byKey = Object.fromEntries(
+      out.observations.map((o) => [
+        (o["subject"] as { componentKey?: string }).componentKey ?? "site",
+        (o["result"] as { value: unknown }).value,
+      ]),
+    );
+    expect(byKey).toEqual({ site: 100, "car:short_term": 99, "car:long_term": 1 });
+    expect(site(out, "B")).toMatchObject({
+      type: "truck_parking",
+      details: { capacityTotal: 25, usage: ["truck"] },
+      components: [{ key: "truck:any", details: { capacity: 25 } }],
     });
   });
 

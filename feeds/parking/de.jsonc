@@ -25,6 +25,13 @@
           "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
           "cadenceSec": 86400,
         },
+        // Single bays, most of them disabled bays, some with a live state
+        // (Mannheim); about 4,200 car bays in 2.3 MB (October 2026). The
+        // endpoint takes no purpose filter.
+        "spots": {
+          "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-spots",
+          "cadenceSec": 300,
+        },
       },
       "freshnessWindowSec": 3600,
       "coverage": { "bbox": [5.87, 47.27, 15.04, 55.06] },

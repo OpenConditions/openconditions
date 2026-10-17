@@ -12,10 +12,12 @@ export const LIFECYCLES = [
   "decommissioned",
   "unknown",
 ] as const;
+/** `card` is a payment card where the source does not say whether credit or debit. */
 export const PAYMENT_METHODS = [
   "cash",
   "credit_card",
   "debit_card",
+  "card",
   "contactless",
   "app",
   "rfid",

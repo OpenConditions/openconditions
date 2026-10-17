@@ -6,12 +6,12 @@ import {
   type RecordDraft,
   recordSkipped,
 } from "@openconditions/ingest-framework";
-import type {
-  ParkingLayout,
-  ParkingSiteType,
-  ParkingStatus,
-  ParkingUserGroup,
-  ParkingVehicleType,
+import {
+  DATEX2_V2_PARKING,
+  type ParkingSiteType,
+  type ParkingStatus,
+  type ParkingUserGroup,
+  type ParkingVehicleType,
 } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
@@ -67,6 +67,8 @@ interface LightSite {
   assignedFor?: LightAssignment[] | null;
   locationAndDimension?: {
     locationDescriptor?: string | null;
+    roadName?: string | null;
+    specificAccessInformation?: string[] | null;
     dimension?: { height?: number | null } | null;
     coordinatesForDisplay?: LightCoordinates | null;
   } | null;
@@ -156,11 +158,17 @@ function pointOf(c: LightCoordinates | null | undefined): [number, number] | und
   return [lon, lat];
 }
 
-/** The exporter's site types, written `carPark` or `CAR_PARK`. */
-const TYPES: Readonly<Record<string, { type: ParkingSiteType; layout?: ParkingLayout }>> = {
-  carpark: { type: "off_street", layout: "multi_storey" },
+/**
+ * The exporter's site types, written `carPark` or `CAR_PARK`. A `carPark` is
+ * any off-street car park: the bundle types surface lots so as well as
+ * garages, so it says nothing of how the site is built. `other` says only
+ * that it is none of these.
+ */
+const TYPES: Readonly<Record<string, { type: ParkingSiteType; layout?: "surface" } | null>> = {
+  carpark: { type: "off_street" },
   offstreetparkingground: { type: "off_street", layout: "surface" },
   onstreet: { type: "on_street" },
+  other: null,
 };
 
 const typeKey = (value: unknown) => text(value)?.replace(/_/g, "").toLowerCase();
@@ -177,6 +185,7 @@ const USERS: Readonly<Record<string, ParkingUserGroup>> = {
   families: "family",
   family: "family",
   residents: "residents",
+  customers: "customers",
   shorttermparkers: "short_term",
   longtermparkers: "long_term",
 };
@@ -193,6 +202,28 @@ const VEHICLES: Readonly<Record<string, ParkingVehicleType>> = {
 };
 
 const CHARGING_FUELS = new Set(["battery", "electric", "electricity"]);
+
+/** Every user DATEX names, lower-cased as the exporter's spellings are compared, and those read. */
+const KNOWN_USERS: ReadonlySet<string> = new Set([
+  ...DATEX2_V2_PARKING.userTypes.map((u) => u.toLowerCase()),
+  ...Object.keys(USERS),
+]);
+
+const KNOWN_TRENDS: ReadonlySet<string> = new Set(
+  DATEX2_V2_PARKING.parkingOccupancyTrends.map((t) => t.toLowerCase()),
+);
+
+/** Equipment lines that name an amenity, a way to pay or both. */
+const EQUIPMENT: readonly [RegExp, { amenity?: string; payment?: string[] }][] = [
+  [/geldautomat/i, { amenity: "cash_machine" }],
+  [/toilette/i, { amenity: "toilets" }],
+  [/barzahlung/i, { payment: ["cash"] }],
+  [/debit/i, { payment: ["debit_card"] }],
+  [/kreditkarte/i, { payment: ["credit_card"] }],
+];
+
+/** The stop a park-and-ride zone names as `ifopt: <id>`. */
+const IFOPT = /^ifopt:\s*(\S+)$/i;
 
 /** Equipment lines that say a site has such spaces, without a count. */
 const EQUIPMENT_AREAS: readonly [RegExp, ParkingUserGroup][] = [
@@ -281,7 +312,16 @@ function siteInput(
   const tariff = lines(site.tariffDescription);
   const hours = lines(site.openingTimesDescription);
   const address = text(site.locationAndDimension?.locationDescriptor);
+  const street = text(site.locationAndDimension?.roadName);
+  const accessNotes = lines(site.locationAndDimension?.specificAccessInformation);
   const customers = (site.assignedFor ?? []).some((a) => lower(a.user) === "customers");
+  const equipment = lines(site.equipmentAndServices).flatMap((line) =>
+    EQUIPMENT.filter(([pattern]) => pattern.test(line)).map(([, meaning]) => meaning),
+  );
+  const stops = lines(site.zoneDescription).flatMap((line) => {
+    const id = line.match(IFOPT)?.[1];
+    return id === undefined ? [] : [{ scheme: "ifopt", id }];
+  });
   const optional = <K extends keyof SiteInput>(key: K, value: SiteInput[K] | undefined) =>
     value === undefined ? {} : { [key]: value };
   return {
@@ -293,7 +333,19 @@ function siteInput(
     ...optional("type", parkAndRide ? "park_and_ride" : typed?.type),
     ...optional("layout", typed?.layout),
     ...optional("website", text(site.urlLinkAddress)),
-    ...optional("address", address === undefined ? undefined : { text: address }),
+    ...optional(
+      "address",
+      address === undefined && street === undefined
+        ? undefined
+        : {
+            ...(address === undefined ? {} : { text: address }),
+            ...(street === undefined ? {} : { street }),
+          },
+    ),
+    ...optional("accessNotes", accessNotes.length === 0 ? undefined : accessNotes.join("\n")),
+    amenities: [...new Set(equipment.flatMap((e) => (e.amenity === undefined ? [] : [e.amenity])))],
+    payment: equipment.flatMap((e) => e.payment ?? []) as SiteInput["payment"],
+    stops,
     ...optional(
       "notes",
       description !== undefined && description !== name ? description : undefined,
@@ -319,6 +371,23 @@ function statusOf(site: LightSite): ParkingStatus | undefined {
   if (site.isOpenNow === false) return "closed";
   if (site.isOpenNow === true) return "open";
   return undefined;
+}
+
+/**
+ * How many enumerated values of a site go unread: a site type, an
+ * assignment's user or an occupancy trend DATEX does not define.
+ */
+function unreadValues(site: LightSite): number {
+  const type = typeKey(site.type);
+  const trend = lower(site.occupancyTrend);
+  return [
+    type !== undefined && !Object.hasOwn(TYPES, type),
+    ...(site.assignedFor ?? []).map((a) => {
+      const user = lower(a.user);
+      return user !== undefined && !KNOWN_USERS.has(user);
+    }),
+    trend !== undefined && !KNOWN_TRENDS.has(trend),
+  ].filter(Boolean).length;
 }
 
 function readingsOf(
@@ -368,9 +437,12 @@ function sitesOf(body: Buffer): { sites: LightSite[]; publishedAt?: string } {
  * The DATEX II Light JSON of the NRW Mobilithek exporter (Mobidrom): a
  * `parkingPublicationLight.parkingSite[]` publication or a bare array of
  * sites. Text is repaired where the publisher double-encoded it. Readings
- * are dated by the site's last update, else the publication time. A site
+ * are dated by the site's last update, else the publication time. A
+ * park-and-ride zone's IFOPT id is the stop it serves; equipment lines that
+ * name a cash machine, toilets or a way to pay are read as such. A site
  * without an id is counted as `malformed`, one without a placeable point as
- * `no_geometry`.
+ * `no_geometry`, and a site type, user or trend DATEX does not define as an
+ * unknown value.
  */
 export function parseDatex2Light(
   feed: ParkingCatalogFeed,
@@ -380,6 +452,7 @@ export function parseDatex2Light(
   const out = emptyParseOutput();
   let malformed = 0;
   let unplaced = 0;
+  let unknown = 0;
   for (const body of payloads["main"] ?? []) {
     const { sites, publishedAt } = sitesOf(body);
     for (const site of sites) {
@@ -393,6 +466,7 @@ export function parseDatex2Light(
         unplaced++;
         continue;
       }
+      unknown += unreadValues(site);
       out.features.push(siteDraft(feed, siteInput(feed, site, stationId, point), ctx.fetchedAt));
       const at =
         instant(site.lastUpdate) ?? instant(site.publicationTime) ?? publishedAt ?? ctx.fetchedAt;
@@ -401,5 +475,6 @@ export function parseDatex2Light(
   }
   recordSkipped(feed.id, "malformed", malformed);
   recordSkipped(feed.id, "no_geometry", unplaced);
+  recordSkipped(feed.id, "unknown_value", unknown);
   return out;
 }

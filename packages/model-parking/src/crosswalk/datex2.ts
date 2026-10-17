@@ -1,5 +1,5 @@
 import type { SourceTable, TargetTable } from "@openconditions/model";
-import type { ParkingVehicleType } from "../kinds.js";
+import type { PARKING_ENTRANCES, ParkingVehicleType } from "../kinds.js";
 
 /**
  * DATEX II parking codes → OpenConditions classifications and vocabulary
@@ -402,6 +402,57 @@ export const DATEX2_PARKING_SUPERVISION: Readonly<Record<string, string | null>>
   patrol: "patrol",
   none: "none",
   unknown: "unknown",
+  other: null,
+  _extended: null,
+};
+
+/**
+ * How a visitor can pay, from `MeansOfPaymentEnum`. A `paymentCard` is a card
+ * of either kind. `mobilePhone` may be an app, a call or a text, which the
+ * payment methods name apart; a direct cash transfer and an electronic
+ * settlement are none of them.
+ */
+export const DATEX2_PARKING_PAYMENT: Readonly<Record<string, string | null>> = {
+  cash: "cash",
+  cashCoinsOnly: "cash",
+  rfid: "rfid",
+  mobileApp: "app",
+  payBySMS: "sms",
+  paymentCard: "card",
+  mobilePhone: null,
+  directCashTransfer: null,
+  electronicSettlement: null,
+  unknown: null,
+  other: null,
+  _extended: null,
+};
+
+/** Whether a space can be booked ahead, from `ReservationTypeEnum`. */
+export const DATEX2_PARKING_RESERVATION: Readonly<Record<string, boolean | null>> = {
+  optional: true,
+  mandatory: true,
+  partly: true,
+  notAvailable: false,
+  unknown: null,
+  unspecified: null,
+  _extended: null,
+};
+
+/** The entrances a site's access of an `AccessCategoryEnum` category is. */
+export const DATEX2_PARKING_ACCESS: Readonly<
+  Record<string, readonly (typeof PARKING_ENTRANCES)[number][] | null>
+> = {
+  vehicleEntranceAndExit: ["vehicle_entrance", "vehicle_exit"],
+  vehicleEntrance: ["vehicle_entrance"],
+  vehicleExit: ["vehicle_exit"],
+  pedestrianEntranceAndExit: ["pedestrian"],
+  pedestrianEntrance: ["pedestrian"],
+  pedestrianExit: ["pedestrian"],
+  rentalCarReturn: ["rental_car_return"],
+  bicycles: ["bicycle"],
+  emergencyExit: ["emergency_exit"],
+  unspecified: null,
+  unknown: null,
   other: null,
   _extended: null,
 };

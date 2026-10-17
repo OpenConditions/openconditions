@@ -22,6 +22,21 @@ const UNDETERMINED = "und";
 /** Kerbside parking is on the street. */
 const ON_STREET = new Set(["street_side", "lane", "on_kerb", "half_on_kerb"]);
 
+/** Kerbside `parking` values that say where the bays are; `street_side` is beside the road. */
+const KERB_POSITIONS: Readonly<Record<string, "lane" | "on_kerb" | "half_on_kerb">> = {
+  lane: "lane",
+  on_kerb: "on_kerb",
+  half_on_kerb: "half_on_kerb",
+};
+
+const ORIENTATIONS = new Set(["parallel", "diagonal", "perpendicular"]);
+
+/** Whether the site is supervised: `yes` without saying how, `no` not at all. */
+const SUPERVISED: Readonly<Record<string, "supervised" | "none">> = {
+  yes: "supervised",
+  no: "none",
+};
+
 /** How the car park is built; a rooftop deck sits on a structure of several levels. */
 const LAYOUTS: Readonly<Record<string, ParkingLayout>> = {
   "multi-storey": "multi_storey",
@@ -49,6 +64,7 @@ const AREA_TAGS: readonly [string, ParkingUserGroup][] = [
   ["capacity:disabled", "disabled"],
   ["capacity:charging", "ev_charging"],
   ["capacity:women", "women"],
+  ["capacity:parent", "family"],
 ];
 
 const tag = (tags: Record<string, string>, key: string): string | undefined => {
@@ -92,9 +108,10 @@ function typeOf(tags: Record<string, string>): ParkingSiteType {
  * id is the element (`way/<id>`), and its `osm:<type>` id the only id
  * linking matches on: the node and the way of one car park may link, two
  * ways may not. OSM holds no occupancy, so there are no readings. The address
- * is kept only when its tags name the country. An `access` value, or a
- * `parking` value that is neither a layout nor kerbside, not read here counts
- * as unknown.
+ * is kept only when its tags name the country. Besides the car park's own
+ * tags, its owner, description, lighting, supervision, width limit, kerbside bay
+ * position and orientation are read. An `access` value, or a `parking` value
+ * that is neither a layout nor kerbside, not read here counts as unknown.
  */
 export function parseOverpassParking(
   feed: ParkingCatalogFeed,
@@ -118,6 +135,8 @@ export function parseOverpassParking(
         access !== undefined && Object.hasOwn(AUDIENCE, access) ? AUDIENCE[access] : undefined;
       if (access !== undefined && audience === undefined) unknown();
       const country = tag(tags, "addr:country");
+      const orientation = tag(tags, "orientation");
+      const position = parking === undefined ? undefined : KERB_POSITIONS[parking];
       const optional = <K extends keyof SiteInput>(key: K, value: SiteInput[K] | undefined) =>
         value === undefined ? {} : { [key]: value };
       const input: SiteInput = {
@@ -130,12 +149,21 @@ export function parseOverpassParking(
         ...optional("layout", layout),
         ...optional("name", tag(tags, "name")),
         ...optional("operator", tag(tags, "operator")),
+        ...optional("owner", tag(tags, "owner")),
         ...optional("website", tag(tags, "website") ?? tag(tags, "contact:website")),
         ...optional("openingHoursOsm", tag(tags, "opening_hours")),
+        ...optional("notes", tag(tags, "description")),
         ...optional("audience", audience),
+        ...optional("supervision", SUPERVISED[tag(tags, "supervised") ?? ""]),
+        ...(tag(tags, "lit") === "yes" ? { securityFeatures: ["lighting"] } : {}),
+        bays: {
+          ...(orientation !== undefined && ORIENTATIONS.has(orientation) ? { orientation } : {}),
+          ...(position === undefined ? {} : { position }),
+        } as SiteInput["bays"],
         ...(tag(tags, "fee") === "no" ? { free: true } : {}),
         ...optional("capacityTotal", count(tag(tags, "capacity"))),
         ...optional("heightLimitM", metres(tag(tags, "maxheight"))),
+        ...optional("widthLimitM", metres(tag(tags, "maxwidth"))),
         ...(country === undefined
           ? {}
           : {
@@ -148,7 +176,10 @@ export function parseOverpassParking(
               },
             }),
         areas: areasOf(tags),
-        usage: type === "park_and_ride" ? ["park_and_ride"] : [],
+        usage: [
+          ...(type === "park_and_ride" ? ["park_and_ride"] : []),
+          ...(audience === "customers" ? ["customer"] : []),
+        ],
       };
       out.features.push(siteDraft(feed, input, ctx.fetchedAt));
     }

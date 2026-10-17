@@ -118,9 +118,13 @@ describe("tfnsw", () => {
       name: [{ lang: "en", text: "Park&Ride - Tallawong P1" }],
       location: {
         geometry: { coordinates: [150.9052577, -33.69304704] },
-        address: { street: "Conferta Avenue", city: "Tallawong", country: "AU" },
+        address: { text: "Conferta Avenue", city: "Tallawong", country: "AU" },
       },
-      details: { capacityTotal: 123, usage: ["park_and_ride"] },
+      details: {
+        capacityTotal: 123,
+        usage: ["park_and_ride"],
+        stops: [{ scheme: "gtfs:stop", id: "2155384", authority: "tfnsw" }],
+      },
     });
     // Without a location there is no point: OpenMapX's table of points is not carried over.
     const unplaced = parse(json([{ ...facility([]), location: { suburb: "Tallawong" } }]));

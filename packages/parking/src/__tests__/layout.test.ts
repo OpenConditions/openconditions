@@ -149,13 +149,14 @@ describe("geojson", () => {
     expect(out.observations).toEqual([]);
   });
 
-  test("Brussels: sentinel -999 counts are no area and no height", () => {
+  test("Brussels: sentinel -999 counts are no area, no height and no width", () => {
     const out = parse(brusselsFeed(), "brussels.geojson");
     expect(site(out, "Albertine Square")).toMatchObject({
       components: [{ key: "car:disabled", details: { capacity: 15 } }],
-      details: { capacityTotal: 703, heightLimit: { value: 2, unit: "m" } },
+      details: { capacityTotal: 703, heightLimit: { value: 2, unit: "m" }, levels: 4 },
       location: { address: { text: "Place de la Justice, 16 - 1000 Bruxelles", country: "BE" } },
     });
+    expect(site(out, "Albertine Square")?.["details"]).not.toHaveProperty("widthLimit");
     expect(site(out, "Up-site")?.["components"]).toBeUndefined();
     expect(site(out, "Alhambra")?.["components"]).toBeUndefined();
     expect(site(out, "P+R HEYSEL")).toMatchObject({ type: "park_and_ride" });

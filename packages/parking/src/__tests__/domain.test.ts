@@ -69,7 +69,11 @@ test("parkingDomain registers every format with produces", () => {
     hdb: liveSites,
     opendatahub: liveSites,
     utmc: liveSites,
-    "parkapi-v3": { main: { required: true }, sources: { required: true } },
+    "parkapi-v3": {
+      main: { required: true },
+      sources: { required: true },
+      spots: { required: false },
+    },
     rdw: { specs: { required: true }, areas: { required: true } },
   };
   for (const [code, format] of Object.entries(parkingDomain.formats)) {

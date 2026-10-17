@@ -36,6 +36,22 @@ const BASE_SITE: Json = {
   realtime_free_capacity: 50,
 };
 
+/** A minimal bay of no site with every field the schema requires, and a live state. */
+const BASE_SPOT: Json = {
+  id: 9,
+  source_id: 12,
+  original_uid: "s9",
+  purpose: "CAR",
+  has_realtime_data: true,
+  realtime_status: "AVAILABLE",
+  realtime_data_updated_at: "2026-10-05T03:25:00Z",
+  static_data_updated_at: "2026-10-01T00:00:00Z",
+  lat: 49.0091,
+  lon: 8.4013,
+  created_at: "2024-12-04T06:59:56Z",
+  modified_at: "2026-10-05T03:29:44Z",
+};
+
 /** A minimal source with every field the schema requires, and a name to credit. */
 const BASE_SOURCE: Json = {
   id: 12,
@@ -69,6 +85,29 @@ function run(site: Json, source: Json = BASE_SOURCE) {
 
 type Run = ReturnType<typeof run>;
 
+/** The real parser over the base site and one bay, which stands alone as `spot/<id>`. */
+function runSpot(spot: Json) {
+  drainSkipped(FEED.id);
+  const out = parseParkApiV3(
+    FEED,
+    {
+      main: [json({ items: [BASE_SITE], total_count: 1 })],
+      sources: [json({ items: [BASE_SOURCE] })],
+      spots: [json({ items: [spot], total_count: 1 })],
+    },
+    parseContext(FETCHED),
+  );
+  expect(sealFailures([...out.features, ...out.observations, ...out.offers])).toEqual([]);
+  const skipped = drainSkipped(FEED.id);
+  const feature = out.features.find((f) => String(f["id"]).endsWith(`:spot/${spot["id"]}`));
+  const readings = Object.fromEntries(
+    out.observations
+      .filter((o) => (o["subject"] as { featureId: string }).featureId === feature?.["id"])
+      .map((o) => [o["property"], (o["result"] as { value: unknown }).value]),
+  );
+  return { out, skipped, feature, readings };
+}
+
 const without = (record: Json, field: string): Json =>
   Object.fromEntries(Object.entries(record).filter(([key]) => key !== field));
 
@@ -84,6 +123,7 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
   let validSite: JsonValidator = () => [];
   let validRestriction: JsonValidator = () => [];
   let validSource: JsonValidator = () => [];
+  let validSpot: JsonValidator = () => [];
   let enums = new Map<string, string[]>();
   /** The schema pointers of the enumerations a coverage check below has read. */
   const checked = new Set<string>();
@@ -98,6 +138,7 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
     validSite = openApiValidator(doc, "ParkingSite");
     validRestriction = openApiValidator(doc, "ParkingSiteRestriction");
     validSource = openApiValidator(doc, "Source");
+    validSpot = openApiValidator(doc, "ParkingSpot");
     enums = jsonSchemaEnums(doc);
   }, 120_000);
 
@@ -132,8 +173,23 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
     return true;
   }
 
-  /** Whether setting a field changes anything the parser makes. */
-  const changes = (fields: Json) => output(probe(fields)) !== output(BASE_SITE);
+  /** A probe bay, held to the schema. */
+  function spotProbe(fields: Json): Json {
+    const spot = { ...BASE_SPOT, ...fields };
+    expect(validSpot(spot), JSON.stringify(fields)).toEqual([]);
+    return spot;
+  }
+
+  /** Whether the parser reads a bay's value: no unread value, and the bay's site is as expected. */
+  function readsSpot(
+    fields: Json,
+    expected: (result: ReturnType<typeof runSpot>) => void,
+  ): boolean {
+    const result = runSpot(spotProbe(fields));
+    if (result.skipped.unknown_value) return false;
+    expected(result);
+    return true;
+  }
 
   describe("fixtures", () => {
     it("the parking-sites capture is a valid `/v3/parking-sites` response", ({ skip }) => {
@@ -218,13 +274,16 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
               : type === "Source"
                 ? (run(probe({})).feature?.["provenance"] as Json | undefined)?.["upstream"] !==
                   undefined
-                : false,
+                : type === "ParkingSpot"
+                  ? runSpot(spotProbe({})).feature !== undefined
+                  : type === "ParkingSpotRestriction"
+                    ? runSpot(spotProbe({ restrictions: [{ type: "DISABLED" }] })).feature?.[
+                        "components"
+                      ] !== undefined
+                    : false,
         unsupported: {
-          ParkingSpot:
-            "single bays of `/v3/parking-spots`, which the feed does not fetch: the occupancy it reads is the sites'",
-          ParkingSpotRestriction: "a part of ParkingSpot",
           ParkingSiteGroup:
-            "a grouping of sites under an upstream id; the model has no site groups, and each site stands alone",
+            "ties sites of one upstream place across purposes; the feed requests car sites only, where each group holds a single site (see the ParkingSite fields)",
           ParkingSiteHistory: "past counts of `/history`, which the feed does not fetch",
           errorResponse: "an error answer, which fails the poll before any parsing",
         },
@@ -312,6 +371,7 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
         NO: { supervision: "none" },
         ATTENDED: { supervision: "on_site" },
         VIDEO: { securityFeatures: ["cctv"] },
+        YES: { supervision: "supervised" },
       };
       assertCovered("supervision_type", values("ParkingSite/properties/supervision_type"), {
         handled: (t) =>
@@ -322,9 +382,6 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
               securityFeatures: details["securityFeatures"],
             }).toEqual({ supervision: undefined, securityFeatures: undefined, ...meaning[t] });
           }),
-        unsupported: {
-          YES: "supervised without saying how; each of the model's supervision values names how, so the value is counted as unread",
-        },
       });
     });
 
@@ -359,11 +416,14 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
         {
           handled: (type) =>
             reads({ external_identifiers: [{ type, value: value[type] }] }, ({ feature }) =>
-              expect(feature?.["externalIds"]).toContainEqual({ scheme: "osm:way", id: "4711" }),
+              type === "OSM"
+                ? expect(feature?.["externalIds"]).toContainEqual({ scheme: "osm:way", id: "4711" })
+                : // The stop a park-and-ride site serves, not the site: no linking id.
+                  expect([
+                    (feature?.["details"] as Json | undefined)?.["stops"],
+                    (feature?.["externalIds"] as Json[] | undefined)?.length,
+                  ]).toEqual([[{ scheme: "ifopt", id: "de:08212:1" }], 1]),
             ),
-          unsupported: {
-            DHID: "the stop a park-and-ride site serves, not the site; no parking_site linking scheme names stops, so the value is counted as unread",
-          },
         },
       );
     });
@@ -380,43 +440,65 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
         TRUCK: "truck:any",
         BUS: "bus:any",
         CARAVAN: "caravan:any",
+        TAXI: "car:taxi",
+        DELIVERY: "car:delivery",
+        CUSTOMER: "car:customers",
+        CARGOBIKE: "cargo_bike:any",
       };
-      const unread = (why: string) => `${why}; the restriction is counted as unread`;
       assertCovered("restrictions.type", values("ParkingSiteRestriction/properties/type"), {
         handled: (type) =>
-          type === "CUSTOMER"
-            ? // Customers are a whole site's audience, never an area's.
-              reads({ restrictions: [{ type }] }, ({ feature }) => {
-                expect(feature?.["access"]).toMatchObject({ audience: "customers" });
-                expect((feature?.["details"] as Json | undefined)?.["usage"]).toEqual(["customer"]);
-              })
-            : reads({ restrictions: [{ type, capacity: 10 }] }, ({ feature }) =>
-                expect(feature?.["components"]).toEqual([
-                  expect.objectContaining({
-                    key: area[type],
-                    details: expect.objectContaining({ capacity: 10 }),
-                  }),
-                ]),
-              ),
-        unsupported: {
-          TAXI: unread("a taxi rank; the model has no taxi user group or vehicle type"),
-          DELIVERY: unread("a loading bay; the model has no delivery user group"),
-          CARGOBIKE: unread(
-            "cargo bikes; the model's bicycle vehicle type would claim every bicycle may park there",
-          ),
-        },
+          reads({ restrictions: [{ type, capacity: 10 }] }, ({ feature }) =>
+            expect(feature?.["components"]).toEqual([
+              expect.objectContaining({
+                key: area[type],
+                details: expect.objectContaining({ capacity: 10 }),
+              }),
+            ]),
+          ) &&
+          // Customers of the whole site are its audience instead of an area.
+          (type !== "CUSTOMER" ||
+            reads({ restrictions: [{ type }] }, ({ feature }) => {
+              expect(feature?.["access"]).toMatchObject({ audience: "customers" });
+              expect((feature?.["details"] as Json | undefined)?.["usage"]).toEqual(["customer"]);
+              expect(feature?.["components"]).toBeUndefined();
+            })),
       });
     });
 
-    it("on-street layout: orientation, side, parking_type, linear_parking_position", ({ skip }) => {
+    it("bay layout: orientation, side, parking_type, linear_parking_position", ({ skip }) => {
       if (unavailable) skip(unavailable);
-      const kerbside =
-        "how bays lie along the kerb; parking_site has no kerbside layout, and the field is not read";
+      const line = {
+        type: "LineString",
+        coordinates: [
+          [8.4, 49],
+          [8.41, 49],
+        ],
+      };
+      const meaning: Readonly<Record<string, Readonly<Record<string, Json>>>> = {
+        orientation: {
+          PARALLEL: { bays: { orientation: "parallel" } },
+          DIAGONAL: { bays: { orientation: "diagonal" } },
+          PERPENDICULAR: { bays: { orientation: "perpendicular" } },
+        },
+        side: { RIGHT: { bays: { side: "right" } }, LEFT: { bays: { side: "left" } } },
+        parking_type: {
+          LANE: { bays: { position: "lane" } },
+          ON_KERB: { bays: { position: "on_kerb" } },
+          HALF_ON_KERB: { bays: { position: "half_on_kerb" } },
+          SHOULDER: { bays: { position: "shoulder" } },
+        },
+        // What the site's line runs along, read with the line.
+        linear_parking_position: {
+          ROAD_CENTER_LINE: { outline: { geometry: line, line: "road_centre" } },
+          PARKING_CENTER_LINE: { outline: { geometry: line, line: "bays_centre" } },
+        },
+      };
       for (const field of ["orientation", "side", "parking_type", "linear_parking_position"]) {
-        const list = values(`ParkingSite/properties/${field}`);
-        assertCovered(field, list, {
-          handled: (v) => changes({ [field]: v }),
-          unsupported: Object.fromEntries(list.map((v) => [v, kerbside])),
+        assertCovered(field, values(`ParkingSite/properties/${field}`), {
+          handled: (v) =>
+            reads({ [field]: v, geojson: line }, ({ feature }) =>
+              expect(feature?.["details"]).toMatchObject(meaning[field]![v]!),
+            ),
         });
       }
     });
@@ -453,15 +535,17 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
           ],
         ],
       };
-      const list = values("ParkingSite/properties/geojson/properties/type");
-      assertCovered("geojson.type", list, {
-        handled: (type) => changes({ geojson: { type, coordinates: shape[type] } }),
-        unsupported: Object.fromEntries(
-          list.map((v) => [
-            v,
-            "a site's outline; the site is placed at its lat/lon, as siteDraft writes point locations only",
-          ]),
-        ),
+      // The site stays placed at its lat/lon; the shape is its outline.
+      assertCovered("geojson.type", values("ParkingSite/properties/geojson/properties/type"), {
+        handled: (type) =>
+          reads({ geojson: { type, coordinates: shape[type] } }, ({ feature }) => {
+            expect((feature?.["location"] as Json | undefined)?.["geometry"]).toMatchObject({
+              type: "Point",
+            });
+            expect((feature?.["details"] as Json | undefined)?.["outline"]).toEqual({
+              geometry: { type, coordinates: shape[type] },
+            });
+          }),
       });
     });
 
@@ -485,14 +569,119 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
       }
     });
 
+    it("ParkingSpot enumerations", ({ skip }) => {
+      if (unavailable) skip(unavailable);
+      assertCovered("spot purpose", values("ParkingSpot/properties/purpose"), {
+        handled: (purpose) => runSpot(spotProbe({ purpose })).feature !== undefined,
+        unsupported: {
+          BIKE: "bicycle bays, left out by design as bicycle sites are",
+          MOTORCYCLE: "motorcycle bays, left out by design as motorcycle sites are",
+          ITEM: "lockers, which are no vehicle parking",
+        },
+      });
+      const kinds: Readonly<Record<string, [string, string | undefined]>> = {
+        CAR_PARK: ["off_street", "multi_storey"],
+        UNDERGROUND: ["off_street", "underground"],
+        OFF_STREET_PARKING_GROUND: ["off_street", "surface"],
+        ON_STREET: ["on_street", undefined],
+      };
+      assertCovered("spot type", values("ParkingSpot/properties/type"), {
+        handled: (type) =>
+          readsSpot({ type }, ({ feature }) =>
+            expect([
+              feature?.["type"],
+              (feature?.["details"] as { layout?: string } | undefined)?.layout,
+            ]).toEqual(kinds[type]),
+          ),
+        unsupported: {
+          LOCKERS: "a locker, which a car bay is not; counted as unread",
+          LOCKBOX: "a lockbox, which a car bay is not; counted as unread",
+        },
+      });
+      const state: Readonly<Record<string, Json>> = {
+        AVAILABLE: { "parking.available": 1 },
+        TAKEN: { "parking.available": 0 },
+        UNKNOWN: { "parking.status": "unknown" },
+      };
+      assertCovered("spot realtime_status", values("ParkingSpot/properties/realtime_status"), {
+        handled: (status) =>
+          readsSpot({ realtime_status: status }, ({ readings }) =>
+            expect(readings).toEqual(state[status]),
+          ),
+      });
+      const area: Readonly<Record<string, string>> = {
+        DISABLED: "car:disabled",
+        WOMEN: "car:women",
+        FAMILY: "car:family",
+        CHARGING: "car:ev_charging",
+        CARSHARING: "car:car_sharing",
+        RESIDENT: "car:residents",
+        TRUCK: "truck:any",
+        BUS: "bus:any",
+        CARAVAN: "caravan:any",
+        TAXI: "car:taxi",
+        DELIVERY: "car:delivery",
+        CARGOBIKE: "cargo_bike:any",
+      };
+      assertCovered("spot restrictions.type", values("ParkingSpotRestriction/properties/type"), {
+        handled: (type) =>
+          readsSpot({ restrictions: [{ type }] }, ({ feature }) =>
+            type === "CUSTOMER"
+              ? expect(feature?.["access"]).toMatchObject({ audience: "customers" })
+              : expect((feature?.["components"] as Json[] | undefined)?.[0]).toMatchObject({
+                  key: area[type],
+                }),
+          ),
+      });
+      assertCovered(
+        "spot external_identifiers.type",
+        values("ParkingSpot/properties/external_identifiers/items/properties/type"),
+        {
+          handled: (type) =>
+            readsSpot(
+              {
+                external_identifiers: [
+                  {
+                    type,
+                    value: type === "OSM" ? "https://www.openstreetmap.org/node/5" : "de:08212:1",
+                  },
+                ],
+              },
+              ({ feature }) =>
+                type === "OSM"
+                  ? expect(feature?.["externalIds"]).toContainEqual({ scheme: "osm:node", id: "5" })
+                  : expect((feature?.["details"] as Json | undefined)?.["stops"]).toEqual([
+                      { scheme: "ifopt", id: "de:08212:1" },
+                    ]),
+            ),
+        },
+      );
+      const ring = [
+        [8.4, 49],
+        [8.41, 49],
+        [8.41, 49.01],
+        [8.4, 49],
+      ];
+      const line = ring.slice(0, 2);
+      const shape: Readonly<Record<string, unknown>> = {
+        Polygon: [ring],
+        MultiPolygon: [[ring]],
+        LineString: line,
+        MultiLineString: [line],
+      };
+      assertCovered("spot geojson.type", values("ParkingSpot/properties/geojson/properties/type"), {
+        handled: (type) =>
+          readsSpot({ geojson: { type, coordinates: shape[type] } }, ({ feature }) =>
+            expect((feature?.["details"] as Json | undefined)?.["outline"]).toEqual({
+              geometry: { type, coordinates: shape[type] },
+            }),
+          ),
+      });
+    });
+
     it("every enumeration of a read record type is checked above", ({ skip }) => {
       if (unavailable) skip(unavailable);
-      const unread = [
-        "ParkingSpot",
-        "ParkingSpotRestriction",
-        "ParkingSiteGroup",
-        "ParkingSiteHistory",
-      ];
+      const unread = ["ParkingSiteGroup", "ParkingSiteHistory"];
       const all = [...enums.keys()].filter(
         (p) =>
           p.startsWith("#/components/schemas/") &&
@@ -569,31 +758,19 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
       assertCovered("ParkingSite fields", fields, {
         handled: (field) => {
           if (!(field in SAMPLES)) throw new Error(`no sample of ${field}`);
-          const rest = without(BASE_SITE, field);
+          // What a line runs along says something only of a site drawn as a line.
+          const context =
+            field === "linear_parking_position" ? { geojson: SAMPLES["geojson"] } : {};
+          const rest = without({ ...BASE_SITE, ...context }, field);
           const set = { ...rest, [field]: SAMPLES[field] };
           expect(validSite(set), field).toEqual([]);
           return output(rest) !== output(set);
         },
         unsupported: {
-          photo_url: "siteDraft takes no images, though the kernel feature has `images`",
-          max_width:
-            "the model's parking_site has height, length and weight limits but no width limit",
-          orientation: "kerbside bay layout, which parking_site has no field for",
-          side: "kerbside bay layout, which parking_site has no field for",
-          parking_type: "kerbside bay layout, which parking_site has no field for",
-          linear_parking_position: "kerbside bay layout, which parking_site has no field for",
-          capacity_min:
-            "an estimated range for on-street stretches; capacityTotal is a count, not a range",
-          capacity_max:
-            "an estimated range for on-street stretches; capacityTotal is a count, not a range",
-          related_location:
-            "a nearby place the site serves, such as a school; the model has no relation to it",
           static_data_updated_at:
-            "the model's freshness is the poll's; a static update time has no field",
-          official_region_code:
-            "derived by ParkAPI from the coordinates; siteDraft takes no admin geocodes, though the kernel has the `ars` scheme",
-          geojson: "a site's outline; siteDraft writes point locations only",
-          group: "a grouping of sites under an upstream id; the model has no site groups",
+            "when the upstream source last changed the site; a record's freshness is the poll that delivered its content, and a content change already moves it",
+          group:
+            "ties sites of one upstream place across purposes (DB BahnPark's car and bicycle parking of a station); the feed requests car sites only, where each group holds a single site, so there is no other site to relate",
           tags: "free-form source tags with no defined vocabulary",
           created_at: "ParkAPI's own database bookkeeping",
           modified_at: "ParkAPI's own database bookkeeping",
@@ -629,13 +806,58 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
           },
           unsupported: {
             parking_site_id: "the site the restriction is nested in already",
-            hours:
-              "when an audience's spaces are kept for it; parking_area has no hours. On a restriction of every audience it withholds the maximum stay (see the parser test)",
-            max_stay:
-              "an audience's own longest stay; parking_area has no maximum stay. A restriction of every audience at all hours gives the site's maxStay (see the parser test)",
           },
         },
       );
+    });
+
+    it("every ParkingSpot field is read or listed as unread", ({ skip }) => {
+      if (unavailable) skip(unavailable);
+      const samples: Json = {
+        id: 11,
+        source_id: 12,
+        // The base site: the bay becomes its space.
+        parking_site_id: 1,
+        original_uid: "s11",
+        type: "ON_STREET",
+        description: "Werktags 7.30-13 Uhr",
+        address: "Marktplatz 1, 76133 Karlsruhe",
+        lat: 49.02,
+        lon: 8.42,
+        official_region_code: "082120000000",
+        name: "Behindertenparkplatz",
+        purpose: "BIKE",
+        geojson: SAMPLES["geojson"],
+        restrictions: [{ type: "DISABLED" }],
+        has_realtime_data: false,
+        realtime_status: "TAKEN",
+        realtime_data_updated_at: "2026-10-05T03:20:00Z",
+        external_identifiers: [{ type: "OSM", value: "https://www.openstreetmap.org/node/1" }],
+        created_at: "2024-01-01T00:00:00Z",
+        modified_at: "2026-10-04T00:00:00Z",
+        static_data_updated_at: "2026-10-02T00:00:00Z",
+        tags: ["barrierefrei"],
+      };
+      const outputOf = (spot: Json) => {
+        const { out, skipped } = runSpot(spot);
+        return JSON.stringify([out.features, out.observations, skipped]);
+      };
+      assertCovered("ParkingSpot fields", Object.keys(properties("ParkingSpot")), {
+        handled: (field) => {
+          if (!(field in samples)) throw new Error(`no sample of ${field}`);
+          const rest = without(BASE_SPOT, field);
+          const set = { ...rest, [field]: samples[field] };
+          expect(validSpot(set), field).toEqual([]);
+          return outputOf(rest) !== outputOf(set);
+        },
+        unsupported: {
+          static_data_updated_at:
+            "when the upstream source last changed the bay; a record's freshness is the poll that delivered its content",
+          tags: "free-form source tags with no defined vocabulary",
+          created_at: "ParkAPI's own database bookkeeping",
+          modified_at: "ParkAPI's own database bookkeeping",
+        },
+      });
     });
 
     it("every Source field is read or listed as unread", ({ skip }) => {
@@ -677,9 +899,8 @@ describe("ParkAPI v3 against its OpenAPI document", () => {
           realtime_status: bookkeeping,
           static_parking_site_error_count: bookkeeping,
           realtime_parking_site_error_count: bookkeeping,
-          public_url: "the source's home page; an upstream publisher credit holds no URL",
-          attribution_url:
-            "the source's licence or attribution page; an upstream publisher credit holds no URL",
+          public_url:
+            "the source's home page; an upstream publisher credit names the publisher and links its licence, but holds no page of the publisher",
         },
       });
     });
@@ -721,6 +942,7 @@ describe("ParkAPI v3 skips", () => {
         supervision_type: "YES",
         external_identifiers: [
           { type: "DHID", value: "de:08212:1" },
+          { type: "GTFS", value: "1" },
           { type: "OSM", value: "https://www.openstreetmap.org/way/1" },
         ],
         restrictions: [
@@ -729,9 +951,10 @@ describe("ParkAPI v3 skips", () => {
           { type: "VALET", capacity: 1 },
           { type: "DISABLED", capacity: 3 },
         ],
+        orientation: "ANGLED",
         realtime_opening_status: "MAINTENANCE",
       }),
-    ).toEqual({ unknown_value: 8 });
+    ).toEqual({ unknown_value: 6 });
     expect(counts({ ...BASE_SITE, supervision_type: "CCTV" })).toEqual({ unknown_value: 1 });
   });
 

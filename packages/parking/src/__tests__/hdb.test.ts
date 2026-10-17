@@ -65,6 +65,7 @@ describe("hdb", () => {
     expect(areas(out, "ACB")).toEqual([
       ["car:any", 120],
       ["motorcycle:any", 10],
+      ["car:short_term", undefined],
     ]);
     expect(readings(out, "ACB")).toEqual([
       ["parking.available", "site", 45],
@@ -98,6 +99,7 @@ describe("hdb", () => {
     expect(areas(heavy, "BBB")).toEqual([
       ["car:any", 60],
       ["truck:any", 4],
+      ["car:short_term", undefined],
     ]);
     // Five free of four heavy-vehicle lots is no reading.
     expect(readings(heavy, "BBB")).toEqual([
@@ -154,16 +156,89 @@ describe("hdb", () => {
         ),
       ],
     );
-    expect(areas(out, "ACB")).toEqual([["motorcycle:any", 10]]);
+    expect(areas(out, "ACB")).toEqual([
+      ["motorcycle:any", 10],
+      ["car:short_term", undefined],
+    ]);
     expect(site(out, "ACB")?.["details"]).not.toHaveProperty("capacityTotal");
     expect(readings(out, "ACB")).toEqual([["parking.available", "motorcycle:any", 3]]);
   });
 
-  test("HDB: sites without the live payload have no areas and no readings", () => {
+  test("HDB: sites without the live payload have no lot areas and no readings", () => {
     const out = parse([fixture("singapore-static.json")], []);
     expect(out.features).toHaveLength(2);
     expect(out.observations).toEqual([]);
-    expect(site(out, "ACB")).not.toHaveProperty("components");
+    expect(areas(out, "ACB")).toEqual([["car:short_term", undefined]]);
+  });
+
+  test("HDB: a car park listed twice keeps the lots of both, each dated by its entry", () => {
+    const live = Buffer.from(
+      JSON.stringify({
+        items: [
+          {
+            timestamp: "2026-05-23T10:00:00+08:00",
+            carpark_data: [
+              {
+                carpark_number: "ACB",
+                update_datetime: "2026-05-23T09:59:30",
+                carpark_info: [{ lot_type: "C", total_lots: "120", lots_available: "45" }],
+              },
+              // No time of its own: the snapshot's.
+              {
+                carpark_number: "ACB",
+                carpark_info: [{ lot_type: "Y", total_lots: "10", lots_available: "3" }],
+              },
+            ],
+          },
+        ],
+      }),
+    );
+    const out = parse([fixture("singapore-static.json")], [live]);
+    expect(readings(out, "ACB")).toEqual([
+      ["parking.available", "site", 45],
+      ["parking.available", "car:any", 45],
+      ["parking.available", "motorcycle:any", 3],
+    ]);
+    const times = out.observations.map((o) => (o["phenomenonTime"] as { instant: string }).instant);
+    expect(times).toEqual(["2026-05-23T01:59:30Z", "2026-05-23T01:59:30Z", "2026-05-23T02:00:00Z"]);
+  });
+
+  test("HDB: short-term parking hours, night parking and decks", () => {
+    const out = parse([fixture("singapore-static.json")], []);
+    expect(site(out, "ACB")).toMatchObject({
+      components: [{ key: "car:short_term", details: { hours: { osm: "24/7" } } }],
+      details: { levels: 1, usage: ["overnight"] },
+    });
+    // A surface car park has no decks.
+    expect(site(out, "BBB")?.["details"]).not.toHaveProperty("levels");
+    const table = JSON.parse(fixture("singapore-static.json").toString("utf8"));
+    const records = table.result.records as Record<string, unknown>[];
+    __resetSkips();
+    const spans = parse(
+      [
+        Buffer.from(
+          JSON.stringify({
+            ...table,
+            result: {
+              ...table.result,
+              records: [
+                { ...records[0], short_term_parking: "7AM-10.30PM", night_parking: "NO" },
+                { ...records[1], short_term_parking: "NO" },
+              ],
+            },
+          }),
+        ),
+      ],
+      [],
+    );
+    expect(site(spans, "ACB")?.["components"]).toEqual([
+      expect.objectContaining({
+        details: expect.objectContaining({ hours: { osm: "07:00-22:30" } }),
+      }),
+    ]);
+    expect(site(spans, "ACB")?.["details"]).not.toHaveProperty("usage");
+    expect(site(spans, "BBB")).not.toHaveProperty("components");
+    expect(drainSkipped(hdbFeed().id)).toEqual({});
   });
 });
 
