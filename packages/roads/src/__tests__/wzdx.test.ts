@@ -1,7 +1,12 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { buildRegistry, kernelModule } from "@openconditions/model";
+import { roadsModule, WZDX } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
+import { situationDrafts } from "../situation/assemble.js";
 import { parseWzdx } from "../wzdx.js";
+
+const registry = buildRegistry([kernelModule, roadsModule]);
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/wzdx/feed.json");
 
@@ -698,5 +703,175 @@ describe("parseWzdx — CWZ 1.0 spike (characterisation, feed not enabled)", () 
     expect(ev!.roads?.map((r) => r.name)).toContain("US-30 E");
     expect(ev!.roadState).toBe("closed");
     expect(ev!.geometry.type).toBe("LineString");
+  });
+});
+
+describe("parseWzdx — every spec LaneStatus and VehicleImpact value", () => {
+  const feature = (properties: Record<string, unknown>) => ({
+    type: "Feature",
+    properties,
+    geometry: {
+      type: "LineString",
+      coordinates: [
+        [-93.0, 41.0],
+        [-93.01, 41.01],
+      ],
+    },
+  });
+  const v4 = (properties: Record<string, unknown>) =>
+    parseWzdx(
+      {
+        type: "FeatureCollection",
+        feed_info: { version: "4.2" },
+        features: [
+          feature({
+            core_details: { data_source_id: "ds", id: "e1", event_type: "work-zone" },
+            ...properties,
+          }),
+        ],
+      },
+      WZDX_SOURCE,
+    )[0]!;
+  const v31 = (properties: Record<string, unknown>) =>
+    parseWzdx(
+      {
+        type: "FeatureCollection",
+        road_event_feed_info: { version: "3.1" },
+        features: [
+          feature({ data_source_id: "ds", id: "e1", event_type: "work-zone", ...properties }),
+        ],
+      },
+      WZDX_SOURCE,
+    )[0]!;
+  const twoLanes = (status: string) => ({
+    lanes: [
+      { order: 1, status, type: "general" },
+      { order: 2, status: "open", type: "general" },
+    ],
+  });
+
+  // A shifted lane stays open, displaced; a merging lane tapers and ends, so
+  // it no longer carries traffic through the work zone and counts as closed.
+  const LANE_STATUSES = {
+    open: { status: "open", closed: 0 },
+    closed: { status: "closed", closed: 1 },
+    "shift-left": { status: "shift_left", closed: 0 },
+    "shift-right": { status: "shift_right", closed: 0 },
+    "merge-left": { status: "merge_left", closed: 1 },
+    "merge-right": { status: "merge_right", closed: 1 },
+    "alternating-flow": { status: "alternating", closed: 0 },
+  } as const;
+
+  it("covers the WZDx 4.2 LaneStatus enumeration", () => {
+    expect(Object.keys(LANE_STATUSES).sort()).toEqual([...WZDX.laneStatus].sort());
+  });
+
+  it.each(Object.entries(LANE_STATUSES))("reads 4.x lane status %s", (raw, expected) => {
+    const ev = v4(twoLanes(raw));
+    expect(ev.lanesAffected).toMatchObject({ total: 2, closed: expected.closed });
+    expect(ev.lanesAffected!.lanes).toEqual([
+      { index: 1, status: expected.status, type: "general" },
+      { index: 2, status: "open", type: "general" },
+    ]);
+  });
+
+  // WZDx 3.1 LaneStatus is the 4.x set plus the deprecated `alternating-one-way`,
+  // which 3.1 tells producers to replace with `alternating-flow`.
+  it.each([
+    ...Object.entries(LANE_STATUSES),
+    ["alternating-one-way", LANE_STATUSES["alternating-flow"]] as const,
+  ])("reads 3.1 lane status %s", (raw, expected) => {
+    const ev = v31(twoLanes(raw));
+    expect(ev.lanesAffected).toMatchObject({ total: 2, closed: expected.closed });
+    expect(ev.lanesAffected!.lanes![0]).toEqual({
+      index: 1,
+      status: expected.status,
+      type: "general",
+    });
+  });
+
+  it("keeps a lane with a status outside the spec out of the lane list", () => {
+    const ev = v4(twoLanes("reversed"));
+    expect(ev.lanesAffected).toMatchObject({ total: 2, closed: 0 });
+    expect(ev.lanesAffected!.lanes).toEqual([{ index: 2, status: "open", type: "general" }]);
+  });
+
+  const VEHICLE_IMPACTS = {
+    "all-lanes-closed": { roadState: "closed", severity: "high" },
+    "some-lanes-closed": { roadState: "some_lanes_closed", severity: "medium" },
+    "all-lanes-open": { roadState: undefined, severity: "unknown" },
+    "alternating-one-way": { roadState: "single_lane_alternating", severity: "medium" },
+    "some-lanes-closed-merge-left": { roadState: "some_lanes_closed", severity: "medium" },
+    "some-lanes-closed-merge-right": { roadState: "some_lanes_closed", severity: "medium" },
+    "all-lanes-open-shift-left": { roadState: undefined, severity: "unknown" },
+    "all-lanes-open-shift-right": { roadState: undefined, severity: "unknown" },
+    "some-lanes-closed-split": { roadState: "some_lanes_closed", severity: "medium" },
+    flagging: { roadState: undefined, severity: "unknown" },
+    "temporary-traffic-signal": { roadState: undefined, severity: "unknown" },
+    unknown: { roadState: undefined, severity: "unknown" },
+  } as const;
+
+  it("covers the WZDx 4.2 VehicleImpact enumeration", () => {
+    expect(Object.keys(VEHICLE_IMPACTS).sort()).toEqual([...WZDX.vehicleImpact].sort());
+  });
+
+  it.each(Object.entries(VEHICLE_IMPACTS))("reads 4.x vehicle impact %s", (raw, expected) => {
+    const ev = v4({ vehicle_impact: raw });
+    expect(ev.roadState).toBe(expected.roadState);
+    expect(ev.severity).toBe(expected.severity);
+    expect(ev.lanesAffected).toEqual({ vehicleImpact: raw });
+  });
+
+  it.each(
+    (
+      [
+        "all-lanes-closed",
+        "some-lanes-closed",
+        "all-lanes-open",
+        "alternating-one-way",
+        "unknown",
+      ] as const
+    ).map((raw) => [raw, VEHICLE_IMPACTS[raw]] as const),
+  )("reads 3.1 vehicle impact %s", (raw, expected) => {
+    const ev = v31({ vehicle_impact: raw });
+    expect(ev.roadState).toBe(expected.roadState);
+    expect(ev.severity).toBe(expected.severity);
+  });
+
+  it("reads the Québec v3.1 alternating-flow lane as alternating", () => {
+    const events = parseWzdx(
+      readFileSync(join(import.meta.dirname, "fixtures/wzdx/quebec-v31.json"), "utf8"),
+      WZDX_SOURCE,
+    );
+    const wz = events.find((e) => e.type === "roadworks")!;
+    expect(wz.lanesAffected!.lanes!.map((l) => l.status)).toEqual(["alternating", "open", "open"]);
+    expect(wz.lanesAffected).toMatchObject({ total: 3, closed: 0 });
+  });
+
+  it("carries shift and merge lanes into the situation's lane restriction", () => {
+    const ev = v4({
+      vehicle_impact: "some-lanes-closed-merge-left",
+      lanes: [
+        { order: 1, status: "open", type: "general" },
+        { order: 2, status: "merge-left", type: "general" },
+        { order: 3, status: "shift-left", type: "shoulder" },
+      ],
+    });
+    const drafts = situationDrafts([ev], { source: WZDX_SOURCE });
+    for (const d of drafts) {
+      const checked = registry.validateDraft(d);
+      expect(checked.ok ? [] : checked.issues).toEqual([]);
+    }
+    const effects = drafts.flatMap((d) => d["effects"] as Record<string, unknown>[]);
+    expect(effects.find((e) => e["kind"] === "lane_restriction")).toMatchObject({
+      vehicleImpact: "some_lanes_closed_merge_left",
+      lanesTotal: 3,
+      lanesClosed: 1,
+      lanes: [
+        { index: 1, status: "open", type: "general" },
+        { index: 2, status: "merge_left", type: "general" },
+        { index: 3, status: "shift_left", type: "shoulder" },
+      ],
+    });
   });
 });

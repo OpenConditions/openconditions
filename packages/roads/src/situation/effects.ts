@@ -6,7 +6,7 @@ import {
   WZDX_LANE_TYPES,
   WZDX_VEHICLE_IMPACTS,
 } from "@openconditions/model-roads";
-import type { LaneStatus, Restriction, RoadEvent } from "../model.js";
+import type { Restriction, RoadEvent } from "../model.js";
 import { vehicleClassesOf } from "../routing.js";
 import { localAccessExceptionOf } from "./local-access.js";
 import { text } from "./location.js";
@@ -84,12 +84,6 @@ const ACCESS: Record<string, { mode: string; truck?: true }> = {
   "towing-prohibited": { mode: "towing_prohibited" },
   "permitted-oversize-loads-prohibited": { mode: "oversize_prohibited" },
   "no-parking": { mode: "no_parking" },
-};
-
-const LANE_STATUS: Record<LaneStatus["status"], string> = {
-  open: "open",
-  closed: "closed",
-  alternating: "alternating",
 };
 
 interface Draft {
@@ -179,7 +173,7 @@ function lanesOf(event: RoadEvent, wzdx: boolean): Record<string, unknown>[] | u
     .filter((l) => Number.isInteger(l.index) && l.index >= 1)
     .map((l) => {
       const type = wzdx && l.type ? WZDX_LANE_TYPES[l.type] : undefined;
-      return { index: l.index, status: LANE_STATUS[l.status], ...(type ? { type } : {}) };
+      return { index: l.index, status: l.status, ...(type ? { type } : {}) };
     });
 }
 
