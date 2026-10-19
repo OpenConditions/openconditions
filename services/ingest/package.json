@@ -46,7 +46,7 @@
   "devDependencies": {
     "@openconditions/test-database": "workspace:*",
     "@types/node": "^26.6.5",
-    "hyparquet": "1.31.3",
+    "hyparquet": "1.31.4",
     "testcontainers": "^12.2.0",
     "tsup": "^8.5.1",
     "tsx": "^4.23.15",

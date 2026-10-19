@@ -33,7 +33,7 @@
     "@openconditions/model-roads": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "fast-xml-parser": "^5.11.2",
-    "hyparquet": "1.31.3",
+    "hyparquet": "1.31.4",
     "hyparquet-writer": "0.16.11"
   },
   "devDependencies": {
