@@ -1031,8 +1031,8 @@ importers:
         specifier: 1.31.4
         version: 1.31.4
       hyparquet-writer:
-        specifier: 0.16.11
-        version: 0.16.11
+        specifier: 0.16.12
+        version: 0.16.12
     devDependencies:
       '@openconditions/conformance':
         specifier: workspace:*
@@ -1384,8 +1384,8 @@ importers:
         specifier: ^5.12.5
         version: 5.12.7
       hyparquet-writer:
-        specifier: 0.16.11
-        version: 0.16.11
+        specifier: 0.16.12
+        version: 0.16.12
       impit:
         specifier: ^0.14.5
         version: 0.14.6
@@ -2745,11 +2745,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  hyparquet-writer@0.16.11:
-    resolution: {integrity: sha512-Q0hI/Cf0RC5PX0iV0L8k02HdnqyPBuYc0t5gq/h9HO9n8eZiu4y5Fq3/AStGKi3lLYCePTCqyrmEymGOlnm61A==}
-
-  hyparquet@1.31.3:
-    resolution: {integrity: sha512-qThDJfCrTClFdaIQuQTtFOGp33bkbOyk+y1NrwcC8YZjvr5wxjNdKz7/PUF3xfNd7ZKLsYW+fY6N8dInjjMWJg==}
+  hyparquet-writer@0.16.12:
+    resolution: {integrity: sha512-tlFRfU1TdhWCjqxxQdi8DpxL+C41SU2ebSPDvT0FLT4jFVrVEnBc7pzyFkrXpTMnwk4J2vSo6lQnlXjWmQmw6A==}
 
   hyparquet@1.31.4:
     resolution: {integrity: sha512-Qe37Nhu1lLvmnSL9bQuY/CN8suLDoNMPNhrTb6+ZXJDfiy1mHHRjkoVYIYPhf0krYpRdAxMMnuEWEHeSUCe40g==}
@@ -4764,11 +4761,9 @@ snapshots:
 
   husky@9.1.7: {}
 
-  hyparquet-writer@0.16.11:
+  hyparquet-writer@0.16.12:
     dependencies:
-      hyparquet: 1.31.3
-
-  hyparquet@1.31.3: {}
+      hyparquet: 1.31.4
 
   hyparquet@1.31.4: {}
 
