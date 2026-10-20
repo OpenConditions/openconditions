@@ -83,6 +83,13 @@ const DIMENSIONS: Record<string, Extract<Effect, { kind: "dimension_limit" }>["d
 };
 
 /**
+ * Restriction types whose value is the width of the lane, not a legal limit
+ * on the vehicle: WZDx `reduced-width` is "lane width reduced along the
+ * segment", so its value is what physically fits.
+ */
+const LANE_WIDTHS = new Set(["reduced-width"]);
+
+/**
  * Source unit → [canonical unit, factor]. "tons" is ambiguous across sources
  * (short or metric) and not listed; a format that defines it says so in its
  * own table (WZDx: {@link WZDX_UNITS}).
@@ -160,7 +167,7 @@ function legacyRestriction(
           dimension,
           value: { value: Math.round(r.value * unit[1] * 1000) / 1000, unit: canonical },
           operator: "lte",
-          meaning: "maximum_permitted",
+          meaning: LANE_WIDTHS.has(r.type.toLowerCase()) ? "physical_limit" : "maximum_permitted",
           applicability,
           compliance: "mandatory",
           normalization: "partial",

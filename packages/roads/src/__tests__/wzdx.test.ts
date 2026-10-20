@@ -460,6 +460,66 @@ describe("parseWzdx — relatedEvents (relationship type)", () => {
     expect(ev!.relatedEvents).toEqual([{ id: "evt-2" }, { id: "evt-3", type: "first-occurrence" }]);
   });
 
+  describe("4.0's deprecated relationship", () => {
+    const feature = (id: string, eventType: string, relationship: Record<string, unknown>) => ({
+      id,
+      type: "Feature",
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [-100, 40],
+          [-100.01, 40.01],
+        ],
+      },
+      properties: {
+        core_details: {
+          event_type: eventType,
+          data_source_id: "1",
+          road_names: ["I-35"],
+          direction: "northbound",
+          relationship,
+        },
+        vehicle_impact: "some-lanes-closed",
+      },
+    });
+    const parse = (...features: unknown[]) =>
+      parseWzdx(
+        { type: "FeatureCollection", road_event_feed_info: { version: "4.0" }, features },
+        WZDX_SOURCE,
+      );
+
+    it("does not relate a road event to itself, as 4.0's first road event names itself first", () => {
+      const [first] = parse(
+        feature("a", "work-zone", { first: ["a"], next: ["b"] }),
+        feature("b", "work-zone", { first: ["a"] }),
+      );
+      expect(first!.relatedEvents).toEqual([{ id: "1:b", type: "next-in-sequence" }]);
+      expect(first!.relatedIds).toEqual(["1:b"]);
+    });
+
+    it("reads the work zone's detour children and the detour's work zone parent, so the detour joins it", () => {
+      const events = parse(
+        feature("wz", "work-zone", { children: ["d1", "equipment-7"] }),
+        feature("d1", "detour", { parents: ["wz", "project-1"] }),
+      );
+      expect(events.map((e) => e.relatedEvents)).toEqual([
+        [{ id: "1:d1", type: "related-detour" }],
+        [{ id: "1:wz", type: "related-work-zone" }],
+      ]);
+      const drafts = situationDrafts(events, { source: WZDX_SOURCE });
+      expect(drafts.map((d) => d["id"])).toEqual([`oc:situation:${WZDX_SOURCE.id}:1:wz`]);
+      expect((drafts[0]!["effects"] as { id: string }[]).map((e) => e.id)).toContain("1:d1/detour");
+    });
+
+    it("relates other road events a hierarchy names without a type, and ignores ids outside the feed", () => {
+      const [parent] = parse(
+        feature("p", "work-zone", { children: ["c", "phase-2"] }),
+        feature("c", "work-zone", {}),
+      );
+      expect(parent!.relatedEvents).toEqual([{ id: "1:c" }]);
+    });
+  });
+
   it("leaves relatedEvents unset when there are no related_road_events", () => {
     const feed = {
       type: "FeatureCollection",
@@ -858,6 +918,48 @@ describe("parseWzdx — every spec LaneStatus and VehicleImpact value", () => {
     });
   });
 
+  it("counts only travel lanes towards the lanes closed and the road's total", () => {
+    const ev = v4({
+      vehicle_impact: "all-lanes-open",
+      lanes: [
+        { order: 1, status: "closed", type: "shoulder" },
+        { order: 2, status: "open", type: "general" },
+        { order: 3, status: "closed", type: "parking" },
+        { order: 4, status: "closed", type: "sidewalk" },
+        { order: 5, status: "closed", type: "bike-lane" },
+        { order: 6, status: "open", type: "two-way-center-turn-lane" },
+        { order: 7, status: "closed", type: "median" },
+      ],
+    });
+    expect(ev.lanesAffected).toMatchObject({ total: 2, closed: 0 });
+    expect(ev.lanesAffected!.lanes).toHaveLength(7);
+    expect(ev.severity).toBe("unknown");
+  });
+
+  it("numbers a lane without an order by its position, whatever its type", () => {
+    const ev = v4({
+      lanes: [
+        { status: "closed", type: "shoulder" },
+        { status: "open", type: "general" },
+      ],
+    });
+    expect(ev.lanesAffected!.lanes!.map((l) => l.index)).toEqual([1, 2]);
+  });
+
+  it("counts a verification flag given as a string as unread, not as the boolean it spells", () => {
+    __resetSkips();
+    const ev = v4({
+      is_start_position_verified: "true",
+      is_end_position_verified: false,
+      is_start_date_verified: "false",
+      worker_presence: { are_workers_present: "yes" },
+    });
+    expect(ev.positionVerified).toEqual({ end: false });
+    expect(ev.situation?.startVerified).toBeUndefined();
+    expect(ev.workersPresent).toBeUndefined();
+    expect(drainSkipped(WZDX_SOURCE.id)).toEqual({ unknown_value: 3 });
+  });
+
   it("keeps a lane with a status outside the spec out of the lane list", () => {
     const ev = v4(twoLanes("reversed"));
     expect(ev.lanesAffected).toMatchObject({ total: 2, closed: 0 });
@@ -930,7 +1032,8 @@ describe("parseWzdx — every spec LaneStatus and VehicleImpact value", () => {
     );
     const wz = events.find((e) => e.type === "roadworks")!;
     expect(wz.lanesAffected!.lanes!.map((l) => l.status)).toEqual(["alternating", "open", "open"]);
-    expect(wz.lanesAffected).toMatchObject({ total: 3, closed: 0 });
+    // The third lane is a sidewalk, no lane for traffic.
+    expect(wz.lanesAffected).toMatchObject({ total: 2, closed: 0 });
   });
 
   it("carries shift and merge lanes into the situation's lane restriction", () => {
@@ -948,9 +1051,10 @@ describe("parseWzdx — every spec LaneStatus and VehicleImpact value", () => {
       expect(checked.ok ? [] : checked.issues).toEqual([]);
     }
     const effects = drafts.flatMap((d) => d["effects"] as Record<string, unknown>[]);
+    // The shoulder is listed, but is no travel lane to count.
     expect(effects.find((e) => e["kind"] === "lane_restriction")).toMatchObject({
       vehicleImpact: "some_lanes_closed_merge_left",
-      lanesTotal: 3,
+      lanesTotal: 2,
       lanesClosed: 1,
       lanes: [
         { index: 1, status: "open", type: "general" },

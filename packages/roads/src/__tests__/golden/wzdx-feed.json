@@ -296,8 +296,8 @@
         "normalization": "complete",
         "kind": "lane_restriction",
         "v": 1,
-        "lanesTotal": 5,
-        "lanesClosed": 3,
+        "lanesTotal": 3,
+        "lanesClosed": 2,
         "lanes": [
           {
             "index": 1,
@@ -382,7 +382,7 @@
           "unit": "m"
         },
         "operator": "lte",
-        "meaning": "maximum_permitted"
+        "meaning": "physical_limit"
       },
       {
         "id": "1:8fed746d-8f4f-4e0c-8d9b-fa4db7c3c2d8/dimension_limit:2",
@@ -446,7 +446,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0e8c0d3a8645f7b0a81ab1ea673de74c4ab4fa50b82d150ecc3756855586fb7c"
+    "contentHash": "4df1e2dca02c4843b45df3b1357fe92db1d46be49bc3d8b78605ae402705c036"
   },
   {
     "id": "oc:situation:us-wzdx-events:1:cf1092ba-3b8d-4e91-81ef-daa4a98662e1",

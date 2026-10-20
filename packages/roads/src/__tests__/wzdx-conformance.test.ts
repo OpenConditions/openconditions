@@ -208,6 +208,7 @@ describe("WZDx official example feeds", () => {
   // is_end_position_verified as the strings "true"/"false"; upstream fixed
   // them after the release ("Fix Work Zone Feed example GeoJSON files (#344)").
   // The WorkZoneRoadEvent branch fails on them, so the oneOf fails as a whole.
+  // The parser does not guess at them: each is counted as an unread value.
   it("every 4.1 example deviates only by its string position-verification flags, and parses", ({
     skip,
   }) => {
@@ -223,27 +224,33 @@ describe("WZDx official example feeds", () => {
         );
       }
       const flags = features
-        .map((f) => (f["properties"] as Json)["is_start_position_verified"])
+        .flatMap((f) => [
+          (f["properties"] as Json)["is_start_position_verified"],
+          (f["properties"] as Json)["is_end_position_verified"],
+        ])
         .filter((v) => v !== undefined);
-      expect(
-        flags.some((flag) => typeof flag === "string"),
-        file.fileName,
-      ).toBe(true);
+      const strings = flags.filter((flag) => typeof flag === "string").length;
+      expect(strings, file.fileName).toBeGreaterThan(0);
       const events = parse(file.contents);
       expect(events, file.fileName).toHaveLength(features.length);
-      expect(drainSkipped(SRC.id), file.fileName).toEqual({});
+      expect(drainSkipped(SRC.id), file.fileName).toEqual({ unknown_value: strings });
       sealed(events);
     }
   });
 
-  it("skips the 3.0 examples at tag v3.1 whole, as a version it does not read", ({ skip }) => {
+  // 3.0's schema is 3.1's without what 3.1 added, so the 3.1 lift reads it.
+  // Neither example gives the unit of its reduced_speed_limit, which the
+  // catalogue states per feed, so each feature's limit is counted unread.
+  it("reads the 3.0 examples at tag v3.1 as the 3.1 lift reads 3.1", ({ skip }) => {
     if (unavailable) skip(unavailable);
     expect(examples["3.0"]!.length).toBe(2);
     for (const file of examples["3.0"]!) {
       const feed = JSON.parse(file.contents) as Json;
       expect((feed["road_event_feed_info"] as Json)["version"]).toBe("3.0");
-      expect(parse(file.contents)).toEqual([]);
-      expect(drainSkipped(SRC.id)).toEqual({ unsupported_version: featuresOf(file).length });
+      const events = parse(file.contents);
+      expect(events, file.fileName).toHaveLength(featuresOf(file).length);
+      expect(drainSkipped(SRC.id)).toEqual({ unknown_value: featuresOf(file).length });
+      sealed(events);
     }
   });
 });
@@ -1132,7 +1139,6 @@ describe("parseWzdx — skipped records and unread values, by reason", () => {
   it("counts every feature of a feed in a version it does not read", () => {
     const features = [feature(core()), feature(core(), LINE, "g")];
     for (const header of [
-      { road_event_feed_info: { version: "3.0" } },
       { road_event_feed_info: { version: "2.0" } },
       { road_event_feed_info: { version: "1.0" } },
       { feed_info: { version: "5.0" } },
@@ -1142,8 +1148,9 @@ describe("parseWzdx — skipped records and unread values, by reason", () => {
     }
   });
 
-  it("reads 3.1, every 4.x, CWZ 1.x and a feed that declares no version", () => {
+  it("reads 3.0, 3.1, every 4.x, CWZ 1.x and a feed that declares no version", () => {
     for (const header of [
+      { road_event_feed_info: { version: "3.0" } },
       { road_event_feed_info: { version: "3.1" } },
       { road_event_feed_info: { version: "4.0" } },
       { feed_info: { version: "4.1" } },

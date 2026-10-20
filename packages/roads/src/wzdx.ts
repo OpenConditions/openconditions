@@ -202,6 +202,32 @@ function laneTypeAndStatus(
   };
 }
 
+/**
+ * Kernel lane types that are no lane for traffic: WZDx defines a shoulder as
+ * "not intended for general traffic" and a parking lane as "not allowed for
+ * travel", and a sidewalk, bike lane or median carries no motor vehicles.
+ * `vehicle_impact` is "the impact to vehicular lanes", so closing one of
+ * these closes none of the road's lanes: a closed shoulder beside open
+ * travel lanes is still `all-lanes-open`.
+ */
+const NON_TRAVEL_LANES: ReadonlySet<string> = new Set([
+  "shoulder",
+  "sidewalk",
+  "bicycle",
+  "parking",
+  "median",
+]);
+
+const isTravelLane = (type: string | undefined) => {
+  const kernel = entryOf(WZDX_LANE_TYPES, type);
+  return kernel == null || !NON_TRAVEL_LANES.has(kernel);
+};
+
+/**
+ * A road event's lanes, with how many of its travel lanes there are and how
+ * many of them are closed. Every listed lane is kept with its type and
+ * status; only a travel lane counts (`NON_TRAVEL_LANES`).
+ */
 function parseLanes(
   rawLanes: WzdxLane[] | undefined,
   unread: Unread,
@@ -216,12 +242,18 @@ function parseLanes(
 
   let closed = 0;
   let total = 0;
+  let position = 0;
   const laneStatuses: LaneStatus[] = [];
 
   for (const lane of rawLanes) {
-    total++;
-    if (!lane || typeof lane !== "object") continue;
+    position++;
+    if (!lane || typeof lane !== "object") {
+      total++;
+      continue;
+    }
     const { type, status: rawStatus } = laneTypeAndStatus(lane, unread);
+    const travel = isTravelLane(type);
+    if (travel) total++;
     const status = laneStatusOf(rawStatus);
     // A lane whose status is outside the spec still counts towards the total,
     // but nothing is said about it rather than guessing it open.
@@ -231,11 +263,13 @@ function parseLanes(
     }
     // A merging lane tapers into its neighbour and ends, so like a closed lane
     // it carries no traffic through the work zone.
-    if (status === "closed" || status === "merge_left" || status === "merge_right") closed++;
+    if (travel && (status === "closed" || status === "merge_left" || status === "merge_right")) {
+      closed++;
+    }
 
     const laneRestrictions = parseRestrictions(lane.restrictions, unread);
     laneStatuses.push({
-      index: lane.order ?? total,
+      index: lane.order ?? position,
       status,
       ...(type !== undefined ? { type } : {}),
       ...(laneRestrictions ? { restrictions: laneRestrictions } : {}),
@@ -348,46 +382,104 @@ const idList = (raw: unknown): string[] =>
   Array.isArray(raw) ? raw.filter((id): id is string => typeof id === "string" && id !== "") : [];
 
 /**
- * The road events this one names: its `related_road_events`, and the
- * sequence the deprecated `relationship` gives, whose `first` and `next` 4.1
- * replaced with `first-in-sequence` and `next-in-sequence`. The
- * relationship's `parents` and `children` name projects, phases or equipment
- * that need not be road events of the feed (its own definition), so there is
- * no record for them to link to and they are not read.
+ * The road events of the feed, by the ids the feed names them by, with the
+ * `event_type` of each by the parser's id.
  */
-function relatedOf(coreDetails: WzdxCoreDetails): WzdxRelatedEvent[] {
+interface FeedIndex {
+  ids: ReadonlyMap<string, string>;
+  eventTypes: ReadonlyMap<string, unknown>;
+}
+
+/**
+ * The road events of the feed that the deprecated `relationship`'s `parents`
+ * or `children` name. Either "can but do not have to correspond to a WZDx
+ * entity": a parent may be a project or phase, a child a piece of equipment.
+ * Only an id of a road event of the same feed is read, as 4.1's
+ * `related_road_events`, which replaced them: a detour among a work zone's
+ * children is its `related-detour`, and a work zone among a detour's parents
+ * the `related-work-zone`, as the 4.1 examples restate the 4.0 ones. Any
+ * other road event they name is related without a type.
+ */
+function hierarchyOf(
+  raw: unknown,
+  ownType: unknown,
+  index: FeedIndex,
+  role: "parent" | "child",
+): WzdxRelatedEvent[] {
+  const out: WzdxRelatedEvent[] = [];
+  for (const id of idList(raw)) {
+    const parserId = index.ids.get(id);
+    if (parserId === undefined) continue;
+    const type = index.eventTypes.get(parserId);
+    const detour = role === "child" ? type : ownType;
+    const other = role === "child" ? ownType : type;
+    const typed = detour === "detour" && other !== "detour";
+    out.push({
+      id,
+      ...(typed ? { type: role === "child" ? "related-detour" : "related-work-zone" } : {}),
+    });
+  }
+  return out;
+}
+
+/**
+ * The road events this one names: its `related_road_events`, and the
+ * relationships the deprecated `relationship` gives: its `first` and `next`,
+ * which 4.1 replaced with `first-in-sequence` and `next-in-sequence`, and the
+ * road events its `parents` and `children` name ({@link hierarchyOf}). A
+ * road event is not related to itself: 4.0's first road event of a sequence
+ * names itself as `first`, which 4.1's examples drop.
+ */
+function relatedOf(
+  coreDetails: WzdxCoreDetails,
+  ownId: string,
+  idOf: (raw: string) => string,
+  index: FeedIndex,
+): { id: string; type?: string }[] {
   const listed = Array.isArray(coreDetails.related_road_events)
     ? coreDetails.related_road_events.filter(
         (r): r is WzdxRelatedEvent => !!r && typeof r.id === "string",
       )
     : [];
   const relationship = coreDetails.relationship;
-  if (!relationship || typeof relationship !== "object") return listed;
-  return [
-    ...listed,
-    ...idList(relationship.first).map((id) => ({ id, type: "first-in-sequence" })),
-    ...idList(relationship.next).map((id) => ({ id, type: "next-in-sequence" })),
-  ];
+  const all =
+    !relationship || typeof relationship !== "object"
+      ? listed
+      : [
+          ...listed,
+          ...idList(relationship.first).map((id) => ({ id, type: "first-in-sequence" })),
+          ...idList(relationship.next).map((id) => ({ id, type: "next-in-sequence" })),
+          ...hierarchyOf(relationship.parents, coreDetails.event_type, index, "parent"),
+          ...hierarchyOf(relationship.children, coreDetails.event_type, index, "child"),
+        ];
+  return all.map((r) => ({ ...r, id: idOf(r.id as string) })).filter((r) => r.id !== ownId);
 }
 
-function relatedIdsOf(
-  coreDetails: WzdxCoreDetails,
-  idOf: (raw: string) => string,
-): string[] | undefined {
-  const ids = [...new Set(relatedOf(coreDetails).map((r) => idOf(r.id as string)))];
+function relatedIdsOf(related: readonly { id: string }[]): string[] | undefined {
+  const ids = [...new Set(related.map((r) => r.id))];
   return ids.length > 0 ? ids : undefined;
 }
 
 function relatedEventsOf(
-  coreDetails: WzdxCoreDetails,
-  idOf: (raw: string) => string,
+  related: readonly { id: string; type?: string }[],
   unread: Unread,
 ): { id: string; type?: string }[] | undefined {
-  const events = relatedOf(coreDetails).map((r) => {
+  const events = related.map((r) => {
     const type = known(RELATED_TYPES, r.type, unread);
-    return { id: idOf(r.id as string), ...(type !== undefined ? { type } : {}) };
+    return { id: r.id, ...(type !== undefined ? { type } : {}) };
   });
   return events.length > 0 ? events : undefined;
+}
+
+/**
+ * A boolean flag of the standard. Any other value, such as the strings
+ * `"true"` and `"false"` tag v4.1's own examples give, is not guessed at but
+ * counted as unread.
+ */
+function flagOf(raw: unknown, unread: Unread): boolean | undefined {
+  if (typeof raw === "boolean") return raw;
+  if (raw !== undefined && raw !== null) unread.count++;
+  return undefined;
 }
 
 /**
@@ -401,7 +493,8 @@ function verifiedOf(
   unread: Unread,
 ): boolean | undefined {
   const stated = known(values, accuracy, unread);
-  if (typeof flag === "boolean") return flag;
+  const read = flagOf(flag, unread);
+  if (read !== undefined) return read;
   return stated === undefined ? undefined : stated === "verified";
 }
 
@@ -613,23 +706,27 @@ const qualified = (dataSourceId: unknown, rawId: string) =>
 
 /**
  * The parser's id of each road event of a feed, by the ids the feed names it
- * by. A related road event is named by its feature `id`, which "should
- * correspond to the id of a RoadEventFeature within the same WZDx feed".
+ * by, and each one's `event_type`. A related road event is named by its
+ * feature `id`, which "should correspond to the id of a RoadEventFeature
+ * within the same WZDx feed"; 3.0's `relationship` named it by its
+ * `road_event_id`.
  */
-function featureIdsOf(features: readonly WzdxFeature[]): Map<string, string> {
-  const out = new Map<string, string>();
+function feedIndexOf(features: readonly WzdxFeature[]): FeedIndex {
+  const ids = new Map<string, string>();
+  const eventTypes = new Map<string, unknown>();
   for (const feature of features) {
     if (!feature?.properties || typeof feature.properties !== "object") continue;
     const props = liftV3Properties(feature.properties);
     const rawId = rawIdOf(feature, props);
     if (rawId === undefined) continue;
     const id = qualified(props.core_details?.data_source_id, rawId);
-    if (typeof feature.id === "string" || typeof feature.id === "number") {
-      if (!out.has(String(feature.id))) out.set(String(feature.id), id);
-    }
-    if (!out.has(rawId)) out.set(rawId, id);
+    const names = [feature.id, rawId, props["road_event_id"]]
+      .filter((n) => typeof n === "string" || typeof n === "number")
+      .map(String);
+    for (const name of names) if (!ids.has(name)) ids.set(name, id);
+    if (!eventTypes.has(id)) eventTypes.set(id, props.core_details?.event_type);
   }
-  return out;
+  return { ids, eventTypes };
 }
 
 /**
@@ -651,24 +748,27 @@ function latestById(events: RoadEvent[]): RoadEvent[] {
 }
 
 /**
- * The version a feed declares, when the parser does not read it. WZDx 3.1 and
- * 4.x are read (3.1 through {@link liftV3Properties}); so is CWZ 1.x, the
- * standard WZDx became, which publishes the 4.2 WorkZoneFeed shape under
- * `feed_info`. WZDx 1.x to 3.0 also declared their version, under
- * `road_event_feed_info`, in shapes the lift does not cover. A feed that
- * declares no version is read by its shape.
+ * The version a feed declares, when the parser does not read it. WZDx 3.x and
+ * 4.x are read (3.x through {@link liftV3Properties}): 3.1 only added to 3.0
+ * (the bounding box, `road_names`, the feature `id`, the `license`, and lane
+ * and restriction values) and deprecated what 3.0 required in their favour,
+ * so a 3.0 road event is one the lift reads. So is CWZ 1.x, the standard WZDx
+ * became, which publishes the 4.2 WorkZoneFeed shape under `feed_info`.
+ * WZDx 1.x and 2.0 also declared their version, under `road_event_feed_info`,
+ * in shapes the lift does not cover. A feed that declares no version is read
+ * by its shape.
  */
 function unreadVersion(feed: WzdxFeed): string | undefined {
   const raw = (feed.feed_info ?? feed.road_event_feed_info)?.version;
   if (typeof raw !== "string" && typeof raw !== "number") return undefined;
   const version = String(raw).trim();
-  if (/^4(\.\d+)*$/.test(version) || /^3\.1(\.\d+)*$/.test(version)) return undefined;
+  if (/^4(\.\d+)*$/.test(version) || /^3\.[01](\.\d+)*$/.test(version)) return undefined;
   if (feed.feed_info !== undefined && /^1(\.\d+)*$/.test(version)) return undefined;
   return version;
 }
 
 /**
- * Parse a WZDx v3.1 or v4.x WorkZoneFeed or v4.0 RoadRestrictionFeed (GeoJSON
+ * Parse a WZDx v3.x or v4.x WorkZoneFeed or v4.0 RoadRestrictionFeed (GeoJSON
  * FeatureCollection) and return an array of RoadEvent observations. Severity
  * is always derived from vehicle_impact and lane data.
  *
@@ -716,7 +816,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
   };
   const unread: Unread = { count: 0 };
   let localCounter = 0;
-  const featureIds = featureIdsOf(features);
+  const index = feedIndexOf(features);
   const sourceLocationMethod = locationMethodsOf(feed);
 
   for (const feature of features) {
@@ -810,7 +910,8 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
       const featureId = qualified(dataSourceId, rawId);
       // A related road event outside the feed is taken to be the same data
       // source's.
-      const idOf = (id: string) => featureIds.get(id) ?? qualified(dataSourceId, id);
+      const idOf = (id: string) => index.ids.get(id) ?? qualified(dataSourceId, id);
+      const related = relatedOf(coreDetails, featureId, idOf, index);
 
       const roads = parseRoads(coreDetails, props);
       const recordTime =
@@ -820,7 +921,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
       const hasDescription =
         typeof coreDetails.description === "string" && !!coreDetails.description;
       const lifecycle = lifecycleOf(props.event_status, unread);
-      const workersPresent = props.worker_presence?.are_workers_present;
+      const workersPresent = flagOf(props.worker_presence?.are_workers_present, unread);
       const workerPresence = workerPresenceOf(props.worker_presence, unread);
       const typesOfWorkDone = typesOfWorkOf(props.types_of_work);
       const startVerified = verifiedOf(
@@ -890,7 +991,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         lanesAffected,
         speedLimitKph: speedLimitOf(props, src.speedUnit, unread),
         restrictions: parseRestrictions(props.restrictions, unread),
-        workersPresent: typeof workersPresent === "boolean" ? workersPresent : undefined,
+        workersPresent,
         ...(workerPresence !== undefined ? { workerPresence } : {}),
         ...(typesOfWorkDone !== undefined ? { typesOfWork: typesOfWorkDone } : {}),
         ...(locationMethod !== undefined
@@ -912,8 +1013,8 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         ...(typeof coreDetails.name === "string" && coreDetails.name
           ? { label: coreDetails.name }
           : {}),
-        relatedIds: relatedIdsOf(coreDetails, idOf),
-        relatedEvents: relatedEventsOf(coreDetails, idOf, unread),
+        relatedIds: relatedIdsOf(related),
+        relatedEvents: relatedEventsOf(related, unread),
         confidence: confidenceFrom(props),
         sourceRaw: feature.properties as Record<string, unknown>,
         headline:

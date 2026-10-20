@@ -108,7 +108,7 @@
         "normalization": "complete",
         "kind": "lane_restriction",
         "v": 1,
-        "lanesTotal": 3,
+        "lanesTotal": 2,
         "lanesClosed": 0,
         "lanes": [
           {
@@ -140,7 +140,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c421d0e2a12093203cc9f5b56e571df608088fcaa2b8e417020b2ef6288560c3"
+    "contentHash": "cb1178b7fd7c84c3204cb1c44a945ada0d923a4cade47dd609548184523dcb02"
   },
   {
     "id": "oc:situation:us-wzdx-events:TIC-Quebec/1:ABEA - 20260727 - EC - 01-D0",
