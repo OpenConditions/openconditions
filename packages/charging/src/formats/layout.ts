@@ -392,7 +392,13 @@ function siteInput(
   const completion = text(f, mapping.completion);
   const completes = completion === undefined ? undefined : completionDay(completion);
   const unbuilt = completes !== undefined && completes > fetchedAt.slice(0, 10);
-  const name = (mapping.name ?? []).map((ref) => text(f, ref)).find((n) => n !== undefined);
+  const name =
+    mapping.names === undefined
+      ? (mapping.name ?? []).map((ref) => text(f, ref)).find((n) => n !== undefined)
+      : mapping.names.flatMap((n) => {
+          const t = text(f, n.field);
+          return t === undefined ? [] : [{ lang: n.lang, text: t }];
+        });
   const hours = mapping.openingHours && text(f, mapping.openingHours.field);
   const operator = text(f, mapping.operator);
   const address = mapping.address && {

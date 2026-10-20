@@ -833,6 +833,7 @@ one site, whose own fields come from the first:
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `id`                                      | the publisher's id of the site, or a list of fields joined into one (required)                                           |
 | `name`, `lang`                            | name candidates, the first non-empty wins; the language of the texts                                                     |
+| `names`                                   | in place of `name`: `{ field, lang }` entries, each non-empty one a name in its language, the first the primary          |
 | `operator`, `website`, `address`, `notes` | site details                                                                                                             |
 | `openingHours`, `tariffText`              | opening hours (`syntax`: `osm` or `text`) and tariff text                                                                |
 | `audience`, `lifecycle`, `parkingType`    | value maps onto the site's audience, lifecycle and OCPI parking type                                                     |

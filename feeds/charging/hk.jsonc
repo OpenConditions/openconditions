@@ -26,7 +26,14 @@
       "layout": {},
       "charging": {
         "id": "LOCATION_EN",
-        "name": ["LOCATION_EN"],
+        // Each car park is named in English and in traditional and simplified
+        // Chinese. Its address is too, but an address holds one language, so
+        // the English one is kept.
+        "names": [
+          { "field": "LOCATION_EN", "lang": "en" },
+          { "field": "LOCATION_TC", "lang": "zh-Hant" },
+          { "field": "LOCATION_SC", "lang": "zh-Hans" },
+        ],
         "lang": "en",
         "address": { "text": "ADDRESS_EN" },
         "connectors": {

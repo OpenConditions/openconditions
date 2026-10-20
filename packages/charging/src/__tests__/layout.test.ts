@@ -5,7 +5,7 @@ import {
   type RecordDraft,
 } from "@openconditions/ingest-framework";
 import { beforeEach, describe, expect, test } from "vitest";
-import type { ChargingCatalogFeed } from "../feed-schema.js";
+import { type ChargingCatalogFeed, chargingMappingSchema } from "../feed-schema.js";
 import { parseLayout } from "../formats/layout.js";
 import {
   fixture,
@@ -139,7 +139,11 @@ describe("geojson", () => {
     expect(out.features).toHaveLength(3);
     const yuen = site(out, "Yuen Chau Kok Complex");
     expect(yuen).toMatchObject({
-      name: [{ lang: "en", text: "Yuen Chau Kok Complex" }],
+      name: [
+        { lang: "en", text: "Yuen Chau Kok Complex" },
+        { lang: "zh-Hant", text: "圓州角綜合大樓" },
+        { lang: "zh-Hans", text: "圆州角综合大楼" },
+      ],
       location: { address: { text: "35 Ngan Shing Street, Sha Tin", country: "HK" } },
     });
     expect(evses(yuen)).toEqual([
@@ -446,6 +450,49 @@ describe("edge records", () => {
       "UNKNOWN",
     ]);
     expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
+  });
+
+  test("names in several languages keep each non-empty one in its language, in mapping order", () => {
+    const feed: ChargingCatalogFeed = {
+      ...nswFeed(),
+      format: "json",
+      layout: { lon: "lon", lat: "lat" },
+      charging: {
+        id: "id",
+        names: [
+          { field: "fr", lang: "fr" },
+          { field: "nl", lang: "nl" },
+          { field: "de", lang: "de" },
+        ],
+        connectors: { row: {} },
+      },
+    };
+    const rows = [
+      { id: "a", lon: 4.35, lat: 50.85, fr: "Gare du Midi", nl: "Zuidstation", de: " " },
+      { id: "b", lon: 4.36, lat: 50.86 },
+    ];
+    const out = parseLayout(
+      feed,
+      { main: [Buffer.from(JSON.stringify(rows))] },
+      parseContext(FETCHED),
+    );
+    expect(sealFailures(out.features)).toEqual([]);
+    expect(site(out, "a")["name"]).toEqual([
+      { lang: "fr", text: "Gare du Midi" },
+      { lang: "nl", text: "Zuidstation" },
+    ]);
+    expect(site(out, "b")["name"]).toBeUndefined();
+  });
+
+  test("a mapping sets name or names, not both", () => {
+    const both = {
+      id: "id",
+      name: ["n"],
+      names: [{ field: "n", lang: "en" }],
+      connectors: { row: {} },
+    };
+    expect(chargingMappingSchema.safeParse(both).success).toBe(false);
+    expect(chargingMappingSchema.safeParse({ ...both, name: undefined }).success).toBe(true);
   });
 
   test("a record without a position is skipped as having no geometry", () => {
