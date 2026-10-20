@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { assertCovered, coverageGaps } from "../coverage.js";
 import {
   definitionEnum,
@@ -6,6 +6,7 @@ import {
   jsonSchemaValidator,
   openApiValidator,
 } from "../json-schema.js";
+import { download } from "../pinned.js";
 import {
   xsdComplexTypes,
   xsdEnumeration,
@@ -180,5 +181,52 @@ describe("coverage", () => {
       coverageGaps(["a", "b", "c"], { handled: ["a", "z"], unsupported: { a: "x", y: "gone" } }),
     ).toEqual({ unhandled: ["b", "c"], stale: ["y"], contradictory: ["a"] });
     expect(() => assertCovered("status", ["a", "b"], { handled: ["a"] })).toThrow(/b/);
+  });
+});
+
+describe("download", () => {
+  const answers = (...statuses: (number | Error)[]) => {
+    const fetch = vi.fn(async () => {
+      const next = statuses.shift()!;
+      if (next instanceof Error) throw next;
+      return new Response(next === 200 ? "ok" : "", { status: next });
+    });
+    vi.stubGlobal("fetch", fetch);
+    return fetch;
+  };
+  const settled = async <T>(promise: Promise<T>) => {
+    const outcome = promise.then(
+      (value) => ({ value }),
+      (error: unknown) => ({ error }),
+    );
+    await vi.runAllTimersAsync();
+    return outcome;
+  };
+
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("asks again after a busy answer or a dropped connection", async () => {
+    const fetch = answers(502, new TypeError("fetch failed"), 200);
+    const outcome = await settled(download("https://example.org/a.xsd"));
+    expect(outcome).toEqual({ value: new TextEncoder().encode("ok") });
+    expect(fetch).toHaveBeenCalledTimes(3);
+  });
+
+  it("fails at once on an answer asking again cannot change", async () => {
+    const fetch = answers(404, 200);
+    const outcome = await settled(download("https://example.org/a.xsd"));
+    expect(outcome).toEqual({ error: new Error("https://example.org/a.xsd: HTTP 404") });
+    expect(fetch).toHaveBeenCalledTimes(1);
+  });
+
+  it("gives up after its last attempt", async () => {
+    const fetch = answers(503, 503, 503, 200);
+    const outcome = await settled(download("https://example.org/a.xsd"));
+    expect(outcome).toEqual({ error: new Error("https://example.org/a.xsd: HTTP 503") });
+    expect(fetch).toHaveBeenCalledTimes(3);
   });
 });

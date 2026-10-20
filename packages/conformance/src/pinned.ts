@@ -50,13 +50,34 @@ const CACHE_ROOT = fileURLToPath(
 
 const sha256 = (bytes: Uint8Array) => createHash("sha256").update(bytes).digest("hex");
 
-async function download(url: string): Promise<Uint8Array> {
-  const res = await fetch(url, {
-    headers: { "User-Agent": "OpenConditions schema check" },
-    signal: AbortSignal.timeout(60_000),
-  });
-  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
-  return new Uint8Array(await res.arrayBuffer());
+/** Answers worth asking again for: the host was busy or briefly failing. */
+const TRANSIENT_STATUSES = new Set([429, 500, 502, 503, 504]);
+
+/**
+ * A file's bytes. The Internet Archive, which serves several pins, answers
+ * an occasional request with a 502 or drops the connection, so a transient
+ * failure is tried twice more before it fails the check.
+ */
+export async function download(url: string, attempts = 3): Promise<Uint8Array> {
+  for (let attempt = 1; ; attempt++) {
+    let res: Response | undefined;
+    let failure: unknown;
+    try {
+      res = await fetch(url, {
+        headers: { "User-Agent": "OpenConditions schema check" },
+        signal: AbortSignal.timeout(60_000),
+      });
+      if (res.ok) return new Uint8Array(await res.arrayBuffer());
+    } catch (error) {
+      failure = error;
+    }
+    if (res !== undefined && !res.ok) {
+      failure = new Error(`${url}: HTTP ${res.status}`);
+      if (!TRANSIENT_STATUSES.has(res.status)) throw failure;
+    }
+    if (attempt >= attempts) throw failure;
+    await new Promise((resolve) => setTimeout(resolve, 2_000 * attempt));
+  }
 }
 
 /** The stored or deflated members of a zip archive, by path. */
