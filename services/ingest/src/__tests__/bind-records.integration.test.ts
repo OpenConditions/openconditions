@@ -7,6 +7,7 @@ import { situationDraft, writeSituations } from "./helpers/situations.js";
 let db: TestDatabase;
 let sql: postgres.Sql;
 const NOW = "2026-09-06T10:00:00.000Z";
+type Rec = Record<string, unknown>;
 const now = () => NOW;
 
 beforeAll(async () => {
@@ -128,6 +129,148 @@ describe("bindRecords", () => {
     } finally {
       await sql`DELETE FROM conditions.road_segment WHERE segment_id = '30:f'`;
     }
+  });
+
+  describe("in the direction an effect or location states", () => {
+    // A two-way road north of the A 46: way 40 runs east (f) and west (b).
+    beforeAll(async () => {
+      await sql`INSERT INTO conditions.road_segment (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, computed_at) VALUES
+        ('40:f', 40, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(6.80 51.25, 6.82 51.25)'),4326), 'primary', 'B 9', 1400, 5, ${NOW}),
+        ('40:b', 40, 'b', ST_SetSRID(ST_GeomFromText('LINESTRING(6.82 51.25, 6.80 51.25)'),4326), 'primary', 'B 9', 1400, 5, ${NOW})`;
+    });
+    afterAll(async () => {
+      await sql`DELETE FROM conditions.road_segment WHERE way_id = 40`;
+    });
+
+    const EAST = { value: "unknown", basis: "compass", compass: "E", text: "eastbound" };
+    const onTwoWay = (local: string, geometry: Record<string, unknown>, over: Rec = {}) => {
+      const draft = situationDraft(local);
+      const closure = (draft["effects"] as Rec[])[0]!;
+      return {
+        ...draft,
+        effects: [
+          { ...closure, direction: EAST },
+          { ...closure, id: `${local}/closure:2` },
+        ],
+        location: {
+          ...(draft["location"] as Rec),
+          geometry,
+          extent: geometry["type"] === "Point" ? "point" : "linear",
+          roads: [{ ref: "B 9" }],
+        },
+        ...over,
+      };
+    };
+    const binding = async (recordId: string, effectId = "") => {
+      const [row] = await sql<
+        { status: string; direction_mode: string; reason: string | null }[]
+      >`SELECT status, direction_mode, reason FROM conditions.record_binding
+         WHERE record_id = ${recordId} AND effect_id = ${effectId}`;
+      return row;
+    };
+
+    it("binds an effect's own direction on its own, narrowing its location's binding", async () => {
+      await writeSituations(sql, "de-autobahn-events", [
+        onTwoWay("narrow", { type: "Point", coordinates: [6.81, 51.25001] }),
+      ]);
+      await bindRecords(sql, [id("narrow")], { now });
+      // The situation's point states no direction: both sides, as before.
+      expect(await binding(id("narrow"))).toMatchObject({ direction_mode: "both" });
+      expect((await spans(id("narrow"))).sort()).toEqual(["40:b", "40:f"]);
+      // The eastbound closure binds only the eastbound side, and routes.
+      expect(await binding(id("narrow"), "narrow/closure")).toMatchObject({
+        status: expect.stringMatching(/^(exact|likely)$/),
+        direction_mode: "single",
+      });
+      expect(await spans(id("narrow"), "narrow/closure")).toEqual(["40:f"]);
+      // The effect without a direction reads the situation's binding.
+      expect(await binding(id("narrow"), "narrow/closure:2")).toBeUndefined();
+      expect((await bindRecords(sql, [id("narrow")], { now })).skippedUnchanged).toBe(2);
+    });
+
+    it("drops an effect's own binding once its direction is its location's", async () => {
+      await writeSituations(sql, "de-autobahn-events", [
+        onTwoWay("same", { type: "Point", coordinates: [6.81, 51.25001] }),
+      ]);
+      await bindRecords(sql, [id("same")], { now });
+      expect(await binding(id("same"), "same/closure")).toBeDefined();
+      const draft = onTwoWay("same", { type: "Point", coordinates: [6.81, 51.25001] });
+      await writeSituations(sql, "de-autobahn-events", [
+        { ...draft, location: { ...(draft["location"] as Rec), direction: EAST } },
+      ]);
+      const r = await bindRecords(sql, [id("same")], { now });
+      expect(r.cleared).toBe(1);
+      expect(await binding(id("same"), "same/closure")).toBeUndefined();
+      // The location's own direction now narrows the situation's binding.
+      expect(await spans(id("same"))).toEqual(["40:f"]);
+    });
+
+    it("binds a location stated in its geometry's order in that order only", async () => {
+      const west = {
+        type: "LineString",
+        coordinates: [
+          [6.81009, 51.25001],
+          [6.81, 51.25001],
+        ],
+      };
+      const draft = onTwoWay("drawn", west);
+      await writeSituations(sql, "de-autobahn-events", [
+        {
+          ...draft,
+          effects: [(draft["effects"] as Rec[])[1]],
+          location: {
+            ...(draft["location"] as Rec),
+            direction: { value: "positive", basis: "geometry" },
+          },
+        },
+      ]);
+      await bindRecords(sql, [id("drawn")], { now });
+      expect(await binding(id("drawn"))).toMatchObject({ direction_mode: "single" });
+      expect(await spans(id("drawn"))).toEqual(["40:b"]);
+    });
+
+    it("keeps a single direction it cannot place off the routing statuses", async () => {
+      const draft = onTwoWay("tmc", { type: "Point", coordinates: [6.81, 51.25001] });
+      await writeSituations(sql, "de-autobahn-events", [
+        {
+          ...draft,
+          effects: [(draft["effects"] as Rec[])[1]],
+          location: {
+            ...(draft["location"] as Rec),
+            direction: { value: "positive", basis: "alert_c" },
+          },
+        },
+      ]);
+      await bindRecords(sql, [id("tmc")], { now });
+      expect(await binding(id("tmc"))).toEqual({
+        status: "ambiguous",
+        direction_mode: "unknown",
+        reason: "direction_undecided",
+      });
+    });
+
+    it("reports an effect against its one-directional location instead of binding it", async () => {
+      const draft = situationDraft("against");
+      const closure = (draft["effects"] as Rec[])[0]!;
+      await writeSituations(sql, "de-autobahn-events", [
+        {
+          ...draft,
+          effects: [{ ...closure, direction: { value: "negative", basis: "alert_c" } }],
+          location: {
+            ...(draft["location"] as Rec),
+            direction: { value: "positive", basis: "alert_c" },
+          },
+        },
+      ]);
+      await bindRecords(sql, [id("against")], { now });
+      expect(await spans(id("against"))).toEqual(["10:f", "11:f"]);
+      expect(await binding(id("against"), "against/closure")).toEqual({
+        status: "unresolved",
+        direction_mode: "unknown",
+        reason: "conflicting_direction",
+      });
+      expect(await spans(id("against"), "against/closure")).toEqual([]);
+    });
   });
 
   it("skips an unchanged situation and rebinds a new revision", async () => {

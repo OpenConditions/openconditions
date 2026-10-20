@@ -9,7 +9,9 @@ import {
   expandBbox,
   RESOLVER_VERSION,
   type SpineSegment,
+  type StatedDirection,
   toBindInput,
+  travelDirectionOf,
 } from "@openconditions/roads";
 import type postgres from "postgres";
 import { loadOsmRegions } from "./osm-import.js";
@@ -160,7 +162,14 @@ interface SituationRow {
   geojson: string | null;
   location: Rec | null;
   effect_kinds: string[];
-  overrides: { effectId: string; geojson: GeoJsonGeometry; location: Rec }[];
+  overrides: {
+    effectId: string;
+    geojson: GeoJsonGeometry;
+    location: Rec;
+    direction: StatedDirection | null;
+  }[];
+  /** Effects without a location of their own whose direction differs from the situation's. */
+  directed: { effectId: string; direction: StatedDirection }[];
 }
 
 interface ExistingRow {
@@ -209,22 +218,40 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
     .update("|")
     .update(input.direction ?? "")
     .update("|")
+    .update(JSON.stringify(input.travel ?? null))
+    .update("|")
     .update([...effectKinds].sort().join(","))
     .digest("hex");
 }
 
-/** A situation's binding targets: its own location, then each effect that names its own geometry. */
+/**
+ * A situation's binding targets: its own location, then each effect that
+ * names its own geometry, then each effect that applies at the situation's
+ * location in a direction of its own. An effect's direction is the more
+ * specific statement, so it binds on its own rather than reading a binding
+ * made for its location's direction.
+ */
 function targetsOf(row: SituationRow): Target[] {
-  const target = (effectId: string, geometry: GeoJsonGeometry, location: Rec | null): Target => {
+  const target = (
+    effectId: string,
+    geometry: GeoJsonGeometry,
+    location: Rec | null,
+    effectDirection?: StatedDirection | null,
+  ): Target => {
     const roads = roadsOf(location);
     const direction = directionOf(location);
     const precise = location?.["fuzziness"] === undefined || location["fuzziness"] === "exact";
+    const travel = travelDirectionOf(
+      location?.["direction"] as StatedDirection | undefined,
+      effectDirection ?? undefined,
+    );
     const input = toBindInput({
       id: effectId === "" ? row.id : `${row.id}#${effectId}`,
       geometry,
       type: row.kind,
       roads,
       ...(direction !== undefined ? { direction } : {}),
+      ...(travel !== undefined ? { travel } : {}),
     });
     return {
       recordId: row.id,
@@ -237,13 +264,15 @@ function targetsOf(row: SituationRow): Target[] {
       precise,
     };
   };
-  const own =
-    row.geojson === null
-      ? []
-      : [target("", JSON.parse(row.geojson) as GeoJsonGeometry, row.location)];
+  const geometry = row.geojson === null ? null : (JSON.parse(row.geojson) as GeoJsonGeometry);
   return [
-    ...own,
-    ...row.overrides.map((o) => target(o.effectId, o.geojson, { ...row.location, ...o.location })),
+    ...(geometry === null ? [] : [target("", geometry, row.location)]),
+    ...row.overrides.map((o) =>
+      target(o.effectId, o.geojson, { ...row.location, ...o.location }, o.direction),
+    ),
+    ...(geometry === null
+      ? []
+      : row.directed.map((d) => target(d.effectId, geometry, row.location, d.direction))),
   ];
 }
 
@@ -383,13 +412,23 @@ export async function bindRecords(
                       WHERE e.situation_id = s.id), '[]'::jsonb) AS effect_kinds,
            COALESCE((SELECT jsonb_agg(jsonb_build_object(
                               'effectId', e.effect_id, 'geojson', ST_AsGeoJSON(e.geom)::jsonb,
-                              'location', e.value -> 'location')
+                              'location', e.value -> 'location', 'direction', e.value -> 'direction')
                             ORDER BY e.effect_id)
                        FROM conditions.situation_effect e
                       WHERE e.situation_id = s.id AND e.geom IS NOT NULL
                         AND (jsonb_typeof(e.value #> '{location,geometry}') = 'object'
                           OR e.value -> 'location' ? 'fuzziness')),
-                    '[]'::jsonb) AS overrides
+                    '[]'::jsonb) AS overrides,
+           -- The same effects readSegmentConditionRows reads an own binding
+           -- for although they name no location: a missing one fails closed.
+           COALESCE((SELECT jsonb_agg(jsonb_build_object(
+                              'effectId', e.effect_id, 'direction', e.value -> 'direction')
+                            ORDER BY e.effect_id)
+                       FROM conditions.situation_effect e
+                      WHERE e.situation_id = s.id AND e.value -> 'location' IS NULL
+                        AND e.value ? 'direction'
+                        AND e.value -> 'direction' IS DISTINCT FROM s.record #> '{location,direction}'),
+                    '[]'::jsonb) AS directed
       FROM conditions.situation s
      WHERE s.id = ANY(${ids as string[]}::text[]) AND s.tombstoned_at IS NULL
        AND s.domain = 'roads'`;
@@ -410,6 +449,17 @@ export async function bindRecords(
   // a failed write is simply redone by the next pass.
   const retry = new Set<string>();
   const unfinished = new Set<string>();
+  // An effect bound for its direction often reads as its location does (its
+  // direction narrows nothing more): targets with the same inputs resolve once.
+  const resolved = new Map<string, Promise<BindResult>>();
+  const resolveOnce = (t: Target): Promise<BindResult> => {
+    let pending = resolved.get(t.hash);
+    if (pending === undefined) {
+      pending = resolveBinding(sql, t.input, regions, opts.maxOffsetM);
+      resolved.set(t.hash, pending);
+    }
+    return pending;
+  };
   let cursor = 0;
   const worker = async (): Promise<void> => {
     while (cursor < targets.length) {
@@ -428,9 +478,7 @@ export async function bindRecords(
       result.attempted++;
       let r: BindResult;
       try {
-        r = t.precise
-          ? await resolveBinding(sql, t.input, regions, opts.maxOffsetM)
-          : failure("unresolved", "location_not_exact");
+        r = t.precise ? await resolveOnce(t) : failure("unresolved", "location_not_exact");
       } catch (err) {
         console.warn(`[bind] ${t.input.id}: resolver error`, err);
         r = failure("unresolved", "resolver_error");

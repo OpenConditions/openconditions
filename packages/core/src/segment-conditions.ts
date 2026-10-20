@@ -92,10 +92,13 @@ export interface SegmentConditionQuery {
  * of a routing kind, and every effect that is restriction evidence (listed,
  * never routed). Only `exact` and `likely` bindings on the active graph
  * generation are read; an effect with its own location reads its own
- * binding, an effect without one the situation's. An effect whose own
- * location has no geometry (only a description) applies somewhere the
- * situation's binding does not establish, so it is not read at all. Ordered
- * by situation, then effect.
+ * binding, an effect without one the situation's. An effect that states a
+ * direction other than its situation's location reads its own binding too,
+ * made for that direction: the situation's may cover a carriageway the
+ * effect does not apply to, so it is never read in its place. An effect
+ * whose own location has no geometry (only a description) applies somewhere
+ * the situation's binding does not establish, so it is not read at all.
+ * Ordered by situation, then effect.
  */
 export async function readSegmentConditionRows(
   db: QueryRunner,
@@ -129,6 +132,10 @@ export async function readSegmentConditionRows(
        JOIN conditions.record_binding b ON b.record_class = 'situation' AND b.record_id = s.id
         AND b.effect_id = CASE WHEN jsonb_typeof(e.value #> '{location,geometry}') = 'object'
                                  OR e.value -> 'location' ? 'fuzziness'
+                               THEN e.effect_id
+                               WHEN e.value -> 'location' IS NULL AND e.value ? 'direction'
+                                 AND e.value -> 'direction'
+                                     IS DISTINCT FROM s.record #> '{location,direction}'
                                THEN e.effect_id
                                WHEN e.value -> 'location' IS NULL THEN '' END
        JOIN conditions.road_graph_state graph ON graph.singleton AND graph.status = 'ready'

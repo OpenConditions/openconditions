@@ -603,7 +603,8 @@ export function registerApiRoutes(
     const [record] = egress(await servable(live, scope), scope);
     if (record === undefined) return reply.status(404).send({ error: "no such situation" });
     // The situation's place binds as effect '', and each effect with a place
-    // of its own binds on its own: that binding is the one routing reads.
+    // or a direction of its own binds on its own: that binding is the one
+    // routing reads.
     const bindings = await sql<
       {
         effect_id: string;

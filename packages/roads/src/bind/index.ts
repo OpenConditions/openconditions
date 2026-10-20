@@ -1,4 +1,5 @@
 export * from "./bind-event.js";
+export * from "./direction.js";
 export * from "./geo.js";
 export * from "./graph.js";
 export * from "./refs.js";

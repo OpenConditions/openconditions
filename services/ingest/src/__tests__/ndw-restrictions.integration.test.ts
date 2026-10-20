@@ -216,6 +216,22 @@ async function effect(conditionId: string): Promise<Record<string, unknown> | un
   return row?.value;
 }
 
+/**
+ * The roadworks' bindings at `revision`: its own location's, and one for each
+ * conditional effect, which states the Alert-C direction its location does
+ * not and so binds on its own at the same place.
+ */
+const roadworksBindings = (revision: number) =>
+  ["", effectIdOf(EMERGENCY), effectIdOf(HEIGHT)].map((effect_id) => ({
+    effect_id,
+    status: "ambiguous",
+    record_revision: revision,
+  }));
+
+function effectIdOf(conditionId: string): string {
+  return conditionId.split("#")[1]!;
+}
+
 async function ownBinding(id: string) {
   return sql<{ effect_id: string; status: string; record_revision: number }[]>`
     SELECT effect_id, status, record_revision FROM conditions.record_binding
@@ -294,9 +310,7 @@ describe("ndw record lifecycle against a real database", () => {
     await seed();
     const first = await stored(ROADWORKS_ID);
     expect(first!.revision).toBe(1);
-    expect(await ownBinding(ROADWORKS_ID)).toEqual([
-      { effect_id: "", status: "ambiguous", record_revision: 1 },
-    ]);
+    expect(await ownBinding(ROADWORKS_ID)).toEqual(roadworksBindings(1));
 
     // Synthetic: the publisher raises the conditioned height to 4.7 m.
     const raised = xml
@@ -318,9 +332,7 @@ describe("ndw record lifecycle against a real database", () => {
     });
     // No binding may stay current against the superseded content: the stored
     // binding tracks the new revision, so nothing routes on the 4.5 m version.
-    expect(await ownBinding(ROADWORKS_ID)).toEqual([
-      { effect_id: "", status: "ambiguous", record_revision: 2 },
-    ]);
+    expect(await ownBinding(ROADWORKS_ID)).toEqual(roadworksBindings(2));
 
     // An accepted unchanged 200 leaves content and the queue alone.
     await sql`DELETE FROM conditions.binding_queue`;
@@ -469,14 +481,20 @@ describe("ndw binding and publication through the real graph and routes", () => 
 
   it("binds the height situation ambiguously and establishes no restriction extent", async () => {
     await seedAndBind();
-    // Only the situation's own location is placed, and only ambiguously; no
-    // conditional effect gets a binding of its own.
-    expect(await ownBinding(ROADWORKS_ID)).toEqual([
-      { effect_id: "", status: "ambiguous", record_revision: 1 },
-    ]);
+    // Only the situation's own location is placed, and only ambiguously. A
+    // conditional effect binds on its own only for its direction, at that
+    // same location: no restriction extent of its own, and nothing routes.
+    expect(await ownBinding(ROADWORKS_ID)).toEqual(roadworksBindings(1));
+    const spans = await sql<{ effect_id: string; spans: string[] }[]>`
+      SELECT effect_id, array_agg(segment_id ORDER BY seq) AS spans
+        FROM conditions.record_segment
+       WHERE record_class = 'situation' AND record_id = ${ROADWORKS_ID}
+       GROUP BY effect_id ORDER BY effect_id`;
+    for (const { spans: own } of spans) expect(own).toEqual(spans[0]!.spans);
     const [{ n }] = await sql<{ n: number }[]>`
       SELECT count(*)::int AS n FROM conditions.record_binding
-       WHERE record_class = 'situation' AND effect_id <> ''`;
+       WHERE record_class = 'situation' AND effect_id <> ''
+         AND status IN ('exact', 'likely')`;
     expect(n).toBe(0);
   }, 180_000);
 

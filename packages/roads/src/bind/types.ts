@@ -6,10 +6,11 @@
 
 import type { BindingStatus, DirectionMode, SegmentSpan } from "@openconditions/core";
 import type { Geometry } from "geojson";
+import type { TravelDirection } from "./direction.js";
 import type { LngLat } from "./geo.js";
 
 /** Bumped whenever the resolver's inputs or maths change a stored binding. */
-export const RESOLVER_VERSION = "2.1.0";
+export const RESOLVER_VERSION = "2.2.0";
 
 export const BIND_DEFAULTS = {
   /** Candidate search radius around a sample, in metres. */
@@ -48,7 +49,14 @@ export interface BindInput {
   type: string;
   /** Already normalized (see refs.ts). */
   refs: string[];
+  /** The source's direction as text; kept for inspection, not interpreted. */
   direction?: string;
+  /**
+   * The direction of travel the location applies to (`travelDirectionOf`).
+   * It narrows a binding to one carriageway, or keeps it from routing where
+   * the geometry cannot place it; absent, the geometry alone decides.
+   */
+  travel?: TravelDirection;
   roadState?: string;
 }
 

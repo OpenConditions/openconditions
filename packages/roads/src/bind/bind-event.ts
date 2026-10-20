@@ -12,6 +12,7 @@
 
 import type { BindingStatus, DirectionMode, SegmentSpan } from "@openconditions/core";
 import type { Geometry, LineString, MultiLineString, MultiPoint, Point } from "geojson";
+import type { TravelDirection } from "./direction.js";
 import {
   bearingDeg,
   bearingDelta,
@@ -62,6 +63,7 @@ export function toBindInput(ev: {
   type: string;
   roads?: Array<{ ref?: string; name?: string }>;
   direction?: string;
+  travel?: TravelDirection;
   roadState?: string;
 }): BindInput {
   const refs = normalizeRefs((ev.roads ?? []).flatMap((r) => [r.ref, r.name]));
@@ -71,6 +73,7 @@ export function toBindInput(ev: {
     type: ev.type,
     refs,
     ...(ev.direction ? { direction: ev.direction } : {}),
+    ...(ev.travel ? { travel: ev.travel } : {}),
     ...(ev.roadState ? { roadState: ev.roadState } : {}),
   };
 }
@@ -556,6 +559,140 @@ function bindLine(
   };
 }
 
+/** How far a carriageway's heading may lie from a stated heading and still run along it, in degrees. */
+const HEADING_TOLERANCE_DEG = 60;
+/** How far a drawn line's heading must lie from a stated heading to contradict it, in degrees. */
+const HEADING_CONFLICT_DEG = 120;
+/** A drawn line shorter than this, in metres, has no order a heading can be read from. */
+const MIN_DRAWN_HEADING_M = 5;
+
+const DIRECTION_WEIGHT: Readonly<Record<DirectionMode, number>> = {
+  single: 1,
+  both: 0.5,
+  unknown: 0,
+};
+
+/**
+ * The heading a shape is drawn in, first point to last. `null` for a point,
+ * a line too short to have an order, or one that bends back so far that its
+ * ends say little about where it runs.
+ */
+function drawnHeading(shape: Shape): number | null {
+  const coords =
+    shape.kind === "endpoints"
+      ? [shape.start, shape.end]
+      : shape.kind === "line"
+        ? shape.coords
+        : [];
+  if (coords.length < 2) return null;
+  const first = coords[0]!;
+  const last = coords[coords.length - 1]!;
+  const straightM = polylineLengthM([first, last]);
+  if (straightM < MIN_DRAWN_HEADING_M || straightM < 0.5 * polylineLengthM(coords)) return null;
+  return bearingDeg(first, last);
+}
+
+function anchorOf(shape: Shape): LngLat | undefined {
+  switch (shape.kind) {
+    case "point":
+      return shape.point;
+    case "endpoints":
+      return shape.start;
+    case "line":
+      return shape.coords[0];
+    default:
+      return undefined;
+  }
+}
+
+/** A binding whose stated direction contradicts its geometry: reported, never bound. */
+function conflicting(r: BindResult): BindResult {
+  return failure("unresolved", "conflicting_direction", r.candidateCount, r.debug.samples);
+}
+
+/** The same binding with another direction mode and spans, rescored for it. */
+function redirected(
+  r: BindResult,
+  directionMode: DirectionMode,
+  segments: SegmentSpan[],
+  reason?: string,
+): BindResult {
+  const ambiguity = r.debug.ambiguity ?? 0;
+  const raw =
+    (r.confidence ?? 0) +
+    0.1 * (DIRECTION_WEIGHT[directionMode] - DIRECTION_WEIGHT[r.directionMode]);
+  const confidence =
+    directionMode === "unknown" ? Math.min(raw, UNKNOWN_DIRECTION_CONFIDENCE) : raw;
+  return {
+    ...r,
+    status: statusOf(confidence, ambiguity),
+    confidence,
+    directionMode,
+    alternativeConfidence: r.alternativeConfidence === null ? null : ambiguity * confidence,
+    ...(reason !== undefined ? { reason } : {}),
+    segments,
+  };
+}
+
+/**
+ * Holds a binding against the direction its record states. A drawn line or
+ * endpoint pair already runs one way; it stays unless a stated heading points
+ * the other way, or the record says the opposite of what the location
+ * states, and either contradiction is reported instead of bound. Where the
+ * geometry has no heading and both directions of a way were bound, a stated
+ * heading (or, for a line drawn in the stated order, its own) keeps the
+ * carriageway running that way. A single direction that cannot be placed
+ * on either carriageway leaves the direction unknown, so routing never
+ * closes a guessed side.
+ */
+function oriented(
+  r: BindResult,
+  travel: TravelDirection | undefined,
+  shape: Shape,
+  spine: SpineSubgraph,
+): BindResult {
+  if (travel === undefined || r.segments.length === 0) return r;
+  if (travel.kind === "against") return conflicting(r);
+  if (r.directionMode === "unknown") return r;
+  if (r.directionMode === "single") {
+    if (travel.kind !== "heading") return r;
+    const drawn = drawnHeading(shape);
+    return drawn !== null && bearingDelta(drawn, travel.bearingDeg) > HEADING_CONFLICT_DEG
+      ? conflicting(r)
+      : r;
+  }
+  const target =
+    travel.kind === "heading"
+      ? travel.bearingDeg
+      : travel.kind === "along"
+        ? drawnHeading(shape)
+        : null;
+  if (target === null) return redirected(r, "unknown", r.segments, "direction_undecided");
+  // Where the location starts: each carriageway's heading is read there.
+  const at = anchorOf(shape);
+  const byId = new Map(spine.segments.map((s) => [s.segmentId, s]));
+  const kept = r.segments.filter((span) => {
+    const s = byId.get(span.segmentId);
+    return (
+      at !== undefined &&
+      s !== undefined &&
+      s.coords.length > 1 &&
+      bearingDelta(projectOntoPolyline(at, s.coords).bearing, target) <= HEADING_TOLERANCE_DEG
+    );
+  });
+  // Every way must keep exactly one of its directions; a way none of whose
+  // directions runs the stated way says the heading does not fit this road.
+  const dirs = new Map<number, Set<string>>();
+  for (const span of kept) dirs.set(span.wayId, (dirs.get(span.wayId) ?? new Set()).add(span.dir));
+  const decided =
+    kept.length > 0 &&
+    new Set(r.segments.map((span) => span.wayId)).size === dirs.size &&
+    [...dirs.values()].every((d) => d.size === 1);
+  return decided
+    ? redirected(r, "single", kept)
+    : redirected(r, "unknown", r.segments, "direction_undecided");
+}
+
 /** Bind one event to the spine: geometry and stated refs in, directed spans out. */
 export function bindEvent(
   input: BindInput,
@@ -581,10 +718,12 @@ export function bindEvent(
   const onRef = (s: SpineSegment): boolean =>
     input.refs.length === 0 || refScore(input.refs, s.ref) !== 0;
 
-  if (shape.kind === "point") return bindPoint(shape.point, input, grid, maxOffsetM);
-  if (shape.kind === "endpoints")
-    return bindEndpoints(shape.start, shape.end, input, grid, graph, onRef, maxOffsetM);
-  if (shape.coords.length === 0) return failure("unresolved", "no_candidates");
-  if (shape.coords.length === 1) return bindPoint(shape.coords[0]!, input, grid, maxOffsetM);
-  return bindLine(shape.coords, input, spine, grid, graph, onRef, maxOffsetM, spacingM);
+  let result: BindResult;
+  if (shape.kind === "point") result = bindPoint(shape.point, input, grid, maxOffsetM);
+  else if (shape.kind === "endpoints")
+    result = bindEndpoints(shape.start, shape.end, input, grid, graph, onRef, maxOffsetM);
+  else if (shape.coords.length === 0) return failure("unresolved", "no_candidates");
+  else if (shape.coords.length === 1) result = bindPoint(shape.coords[0]!, input, grid, maxOffsetM);
+  else result = bindLine(shape.coords, input, spine, grid, graph, onRef, maxOffsetM, spacingM);
+  return oriented(result, input.travel, shape, spine);
 }

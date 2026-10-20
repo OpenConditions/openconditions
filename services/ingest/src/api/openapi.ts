@@ -101,7 +101,7 @@ export const API_ROUTES: readonly ApiRoute[] = [
     path: "/situations/{id}",
     operationId: "getSituation",
     summary:
-      "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place of its own (`effectBindings`, by effect id).",
+      "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place or a direction of its own (`effectBindings`, by effect id).",
     query: AtQuery,
     params: { id: RecordId },
     produces: ["application/json"],

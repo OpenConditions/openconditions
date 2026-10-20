@@ -1199,7 +1199,7 @@
     "/situations/{id}": {
       "get": {
         "operationId": "getSituation",
-        "summary": "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place of its own (`effectBindings`, by effect id).",
+        "summary": "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place or a direction of its own (`effectBindings`, by effect id).",
         "parameters": [
           {
             "name": "id",

@@ -30,11 +30,17 @@ The binder places live (not tombstoned) situations of the `roads` domain
 - **Each effect that names a geometry of its own** in `effect.location`: a
   roadworks phase closing a different stretch, a detour, a lane closure the
   source located separately. Its binding is keyed by the effect's id.
+- **Each effect without a location that states a direction of its own**, one
+  that differs from its situation's `location.direction`: a closure of one
+  carriageway of a situation located on both. It is bound at the situation's
+  geometry in the effect's direction (see [Stated direction](#stated-direction))
+  and keyed by the effect's id.
 
-An effect without a `location` applies where its situation does and reads the
-situation's binding. An effect whose own location has only a description and no
-geometry applies somewhere the situation's binding does not establish, so it
-reads no binding at all and never reaches the routing outputs.
+An effect without a `location` whose direction is absent or its location's
+applies where its situation does and reads the situation's binding. An effect
+whose own location has only a description and no geometry applies somewhere the
+situation's binding does not establish, so it reads no binding at all and never
+reaches the routing outputs.
 
 ## The tables
 
@@ -52,7 +58,7 @@ row the binder writes, and `effect_id` is `''` for a record's own location.
 | `direction_mode`         | `single` / `both` / `unknown`                                                                                                                                                                   |
 | `candidate_count`        | spine segments the resolver considered: distinct segments for a line or a point, but the sum of the start and end candidates for an endpoint pair (a segment matched at both ends counts twice) |
 | `alternative_confidence` | the confidence the runner-up would have carried, `NULL` if uncontested                                                                                                                          |
-| `reason`                 | short machine reason on a non-binding outcome                                                                                                                                                   |
+| `reason`                 | short machine reason on a non-binding outcome, or on a binding its stated direction kept off routing                                                                                            |
 | `resolver_version`       | `RESOLVER_VERSION` at the time of writing                                                                                                                                                       |
 | `geom_hash`              | hash of the resolver inputs, used for change detection                                                                                                                                          |
 | `record_revision`        | the record revision the binding was computed from                                                                                                                                               |
@@ -91,9 +97,11 @@ opts)` and `toBindInput(location)`, both exported from `@openconditions/roads`.
 
 The binder (`services/ingest/src/pipeline/bind-records.ts`) builds one input per
 location: the location's geometry, the situation's `kind` as `type`, the refs
-and first names of `location.roads`, and the direction (the axis value
-`positive` / `negative` when the location states one, else the source's text).
-An effect's own location is resolved with the situation's roads and direction.
+and first names of `location.roads`, the direction as text (the axis value
+`positive` / `negative` when the location states one, else the source's text),
+and the direction of travel it applies to (`travelDirectionOf`, below). An
+effect's own location is resolved with the fields it names, the situation's
+otherwise, and the effect's own direction.
 
 Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
 
@@ -196,19 +204,21 @@ never rivals.
 
 ### Statuses
 
-| status           | reason               | meaning                                                                                                 |
-| ---------------- | -------------------- | ------------------------------------------------------------------------------------------------------- |
-| `exact`          | —                    | confidence ≥ 0.9 and ambiguity < 0.8; safe for routing                                                  |
-| `likely`         | —                    | confidence ≥ 0.7 and ambiguity < 0.9; safe for routing                                                  |
-| `ambiguous`      | —                    | a path was found but it is contested or weakly supported; published for the map and QA, not for routing |
-| `unresolved`     | `no_candidates`      | inside a region but nothing within `maxOffsetM` — typically a road class the spine does not import      |
-| `unresolved`     | `no_path`            | both endpoints matched but no connected route between them                                              |
-| `unresolved`     | `subgraph_too_large` | the spine subgraph exceeded `maxSubgraphSegments`                                                       |
-| `unresolved`     | `resolver_error`     | the resolver threw; recorded rather than retried, never fatal                                           |
-| `no_coverage`    | `outside_regions`    | the location's bbox is outside every configured spine region                                            |
-| `not_applicable` | `area_type`          | `weather_condition`, `public_event`, `authority`, `security`                                            |
-| `not_applicable` | `polygon_geometry`   | Polygon / MultiPolygon geometry                                                                         |
-| `obsolete`       | —                    | computed on a graph that is being rebuilt or replaced, or by a forced rebind; waiting to be re-resolved |
+| status           | reason                  | meaning                                                                                                 |
+| ---------------- | ----------------------- | ------------------------------------------------------------------------------------------------------- |
+| `exact`          | —                       | confidence ≥ 0.9 and ambiguity < 0.8; safe for routing                                                  |
+| `likely`         | —                       | confidence ≥ 0.7 and ambiguity < 0.9; safe for routing                                                  |
+| `ambiguous`      | —                       | a path was found but it is contested or weakly supported; published for the map and QA, not for routing |
+| `unresolved`     | `no_candidates`         | inside a region but nothing within `maxOffsetM` — typically a road class the spine does not import      |
+| `unresolved`     | `no_path`               | both endpoints matched but no connected route between them                                              |
+| `unresolved`     | `subgraph_too_large`    | the spine subgraph exceeded `maxSubgraphSegments`                                                       |
+| `unresolved`     | `resolver_error`        | the resolver threw; recorded rather than retried, never fatal                                           |
+| `unresolved`     | `conflicting_direction` | the stated direction contradicts the geometry or the location's own direction; no spans are stored      |
+| `ambiguous`      | `direction_undecided`   | one direction is stated, but the geometry cannot tell which carriageway it is; spans kept for the map   |
+| `no_coverage`    | `outside_regions`       | the location's bbox is outside every configured spine region                                            |
+| `not_applicable` | `area_type`             | `weather_condition`, `public_event`, `authority`, `security`                                            |
+| `not_applicable` | `polygon_geometry`      | Polygon / MultiPolygon geometry                                                                         |
+| `obsolete`       | —                       | computed on a graph that is being rebuilt or replaced, or by a forced rebind; waiting to be re-resolved |
 
 The routing outputs read only `exact` and `likely`. `ambiguous` exists so that a
 human, a map layer or a QA pass can see what the resolver was unsure about
@@ -226,10 +236,51 @@ order (the `b` geometry is stored reversed, so both run in travel direction).
 | mode      | when                                                                                                                                                                                                                                                                                                                |
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `single`  | one carriageway, decided — either uncontested, or the chosen segment's heading fits at least 30° better than every rival's at every sample. An endpoint pair (MultiPoint of 2) is always reported `single`: the Dijkstra path between the two matched endpoints fixes the travel direction, so no bearing test runs |
-| `both`    | a bidirectional way with no usable heading: a point, or a line under 20 m. Both directions are bound, two spans per way                                                                                                                                                                                             |
-| `unknown` | contested and undecidable: a bearing-less line, or a point whose nearest carriageway has a rival. The nearest one still wins, but confidence is capped at 0.69 so routing never closes a guessed side                                                                                                               |
+| `both`    | a bidirectional way with no usable heading and no stated direction: a point, or a line under 20 m. Both directions are bound, two spans per way                                                                                                                                                                     |
+| `unknown` | contested and undecidable: a bearing-less line, a point whose nearest carriageway has a rival, or a stated direction neither side of a two-way way fits. The nearest one still wins, but confidence is capped at 0.69 so routing never closes a guessed side                                                        |
 
-The location's `direction` is part of the change hash but is not interpreted.
+### Stated direction
+
+The geometry places the location on the road; the record's direction says
+which way of it is affected. `travelDirectionOf` in
+`packages/roads/src/bind/direction.ts` reads the direction that applies: the
+effect's own `direction` where it says something, else its location's. An
+effect's direction is the more specific statement, so it narrows its
+location's; one that says nothing (value `unknown` with only text, a ring
+road's loop, a direction left unparsed) never narrows anything, and the
+location's stands. A direction `both` narrows nothing either.
+
+| stated                                                                                                        | reads as  |
+| ------------------------------------------------------------------------------------------------------------- | --------- |
+| none, `both`, or `unknown` without a compass point or bearing                                                 | —         |
+| basis `compass` or `bearing`                                                                                  | `heading` |
+| basis `geometry`, `positive`                                                                                  | `along`   |
+| basis `geometry`, `negative`; or the effect on the other side of the axis its one-directional location states | `against` |
+| `positive` / `negative` on another axis (`road_reference`, `alert_c`, `openlr`)                               | `one`     |
+
+The resolver then holds its binding against it:
+
+- **`against`** contradicts the drawn location: the binding is `unresolved` /
+  `conflicting_direction` with no spans, reported instead of bound to the
+  carriageway the geometry was drawn on.
+- **A drawn line or endpoint pair** (`single`) already runs one way. It stays
+  as it is, unless a stated `heading` lies more than 120° from the line's own,
+  first point to last, which is a `conflicting_direction` as well. A signed
+  direction is coarse (a northbound route may head east for a while), so
+  anything nearer keeps the geometry's order.
+- **A point or short line on a two-way road** (`both`): a `heading` keeps the
+  side whose heading lies within 60° of it, and `along` keeps the side running
+  in the order the line is drawn. That turns the binding `single`, one span
+  per way. A heading that fits neither side, and a single direction that
+  cannot be placed at all (`one` or `along` on a point), leave the direction
+  `unknown` with reason `direction_undecided`: confidence is capped at 0.69,
+  so routing never closes a guessed side.
+- A binding already `unknown` stays so.
+
+The stated direction is part of the change hash. A WZDx road event with
+direction `undefined` (no signed direction) reads as basis `geometry`,
+`positive`: per the specification, its geometry runs in the direction of
+travel it affects.
 
 ## When binding runs
 
@@ -312,7 +363,11 @@ A condition is read when all of these hold:
   evidence (its vehicles are unknown or it is not fully normalized).
 - The location it applies to has an `exact` or `likely` binding computed by the
   current `RESOLVER_VERSION` on the active, `ready` graph generation. That is the
-  effect's own binding when it names its own geometry, else the situation's.
+  effect's own binding when it names its own geometry or states a direction
+  other than its situation's location, else the situation's. An effect that
+  needs its own binding never falls back to the situation's, which may cover
+  a carriageway the effect does not apply to: until its own is written, the
+  effect is not listed.
 - The effect is in force at `at`: `effectStateAt` evaluates the effect's own
   validity, else its situation's, including any schedule, in the schedule's own
   timezone. A roadworks phase is therefore listed only during its phase, and a
@@ -457,8 +512,8 @@ at most 90 s.
 
 `GET /situations/{id}` returns the situation's own binding beside the record:
 `{ status, confidence, directionMode, boundAt }`, or `null` when it has none,
-and in `effectBindings` the binding of each effect with a place of its own,
-keyed by effect id (empty when no effect has one). Routing reads an effect's
+and in `effectBindings` the binding of each effect with a place or a direction
+of its own, keyed by effect id (empty when no effect has one). Routing reads an effect's
 own binding where it has one, so a consumer judging an effect reads it there.
 The collections and the TraFF, DATEX II and SSE outputs carry no bindings.
 
