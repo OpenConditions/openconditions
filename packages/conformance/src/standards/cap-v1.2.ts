@@ -26,6 +26,44 @@ export const CAP_V1_2: PinnedSet = {
   ],
 };
 
+/**
+ * The four messages of the standard's Appendix A, as OASIS publishes them
+ * beside the standard in https://docs.oasis-open.org/emergency/cap/v1.2/os/:
+ * A.1 the Homeland Security Advisory System alert (`example1.xml`), A.2 the
+ * severe thunderstorm warning (`example2.xml`), A.3 the earthquake report, an
+ * Update (`example3.xml`), and A.4 the AMBER alert in English and Spanish
+ * (`example4.xml`). Retrieved 2026-10-21. They are part of the standard and
+ * under its Notices, like the schema, so they are fetched, not vendored.
+ *
+ * Two deviate from the standard: A.1's resource has no `mimeType`, which
+ * CAP 1.2 requires, and A.4 declares UTF-8 but is written in ISO-8859-1.
+ */
+export const CAP_V1_2_EXAMPLES: PinnedSet = {
+  id: "cap-v1.2-examples",
+  files: [
+    {
+      name: "example1.xml",
+      url: "https://docs.oasis-open.org/emergency/cap/v1.2/os/example1.xml",
+      sha256: "fa15416611bd82259ba7a5eaa059091cf2646c34c2b9c3cc93202dc93a5c85ae",
+    },
+    {
+      name: "example2.xml",
+      url: "https://docs.oasis-open.org/emergency/cap/v1.2/os/example2.xml",
+      sha256: "6050ed6e13ea4fbd04de0447a6fe8d3c57082de23a3a322102d7656a3b794d22",
+    },
+    {
+      name: "example3.xml",
+      url: "https://docs.oasis-open.org/emergency/cap/v1.2/os/example3.xml",
+      sha256: "11742bbd4df161e97e866686f872cbd0437e6493e9a8bd82f304b60d16f804f7",
+    },
+    {
+      name: "example4.xml",
+      url: "https://docs.oasis-open.org/emergency/cap/v1.2/os/example4.xml",
+      sha256: "2d2e46c451fa2335772d917ac3fed71b4ef290b01638b07e44e22114affcab2e",
+    },
+  ],
+};
+
 /** The root schema of a CAP 1.2 `alert` document. */
 export const CAP_SCHEMA = "CAP-v1.2.xsd";
 

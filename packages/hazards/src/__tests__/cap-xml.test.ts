@@ -93,4 +93,36 @@ describe("readCapXml", () => {
       "y",
     );
   });
+
+  describe("decodes the text as the document is encoded", () => {
+    const message = (declaration: string) =>
+      `${declaration}<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2"><identifier>x</identifier><info><event>Abducción de Niño</event></info></alert>`;
+    const eventOf = (body: Buffer) => readCapXml(body).info![0]!.event;
+
+    test("in UTF-8, declared or not", () => {
+      expect(eventOf(Buffer.from(message('<?xml version="1.0" encoding="UTF-8"?>')))).toBe(
+        "Abducción de Niño",
+      );
+      expect(eventOf(Buffer.from(`﻿${message("")}`))).toBe("Abducción de Niño");
+    });
+
+    test("in the single-byte encoding its declaration names", () => {
+      const latin1 = Buffer.from(message("<?xml version='1.0' encoding='ISO-8859-1'?>"), "latin1");
+      expect(eventOf(latin1)).toBe("Abducción de Niño");
+    });
+
+    test("in UTF-16, by its byte-order mark", () => {
+      const le = Buffer.from(`﻿${message('<?xml version="1.0" encoding="UTF-16"?>')}`, "utf16le");
+      expect(eventOf(le)).toBe("Abducción de Niño");
+    });
+
+    // OASIS's CAP 1.2 example A.4 is written so.
+    test("as Windows-1252 where bytes declared UTF-8 are no UTF-8", () => {
+      const mislabelled = Buffer.from(
+        message('<?xml version = "1.0" encoding = "UTF-8"?>'),
+        "latin1",
+      );
+      expect(eventOf(mislabelled)).toBe("Abducción de Niño");
+    });
+  });
 });

@@ -223,7 +223,9 @@ function capLocation(
   });
   return {
     geometry: shape.geometry,
-    extent: "area",
+    // A circle of radius zero, as OASIS's earthquake example gives its
+    // epicentre, is a point.
+    extent: shape.geometry?.type === "Point" ? "point" : "area",
     geometryOrigin: shape.geometry === null ? "none" : shape.derived ? "derived" : "source",
     fuzziness: "exact",
     ...(country === undefined
@@ -415,17 +417,28 @@ function verticalExtent(areas: readonly CapArea[]) {
 /**
  * The files the info blocks point to, each once: one with a link by its
  * link, one without by its description. A resource without the description
- * and MIME type CAP requires is left out, and content CAP embeds
+ * and MIME type CAP 1.2 requires (OASIS's own first example gives none) is
+ * left out, and so is a link that is no web address; each is counted as
+ * unread once, however many languages repeat it. Content CAP embeds
  * (`derefUri`) is not kept.
  */
-function resourcesOf(infos: readonly CapInfo[]) {
+function resourcesOf(infos: readonly CapInfo[]): {
+  resources: Record<string, unknown>[];
+  unread: number;
+} {
   const seen = new Set<string>();
+  const unread = new Set<string>();
   const out: Record<string, unknown>[] = [];
   for (const r of infos.flatMap((i) => list(i.resource))) {
     const description = string(r?.resourceDesc);
     const mimeType = string(r?.mimeType);
-    if (description === undefined || mimeType === undefined) continue;
+    const rawUri = string(r?.uri);
+    if (description === undefined || mimeType === undefined) {
+      unread.add(JSON.stringify([r?.resourceDesc, r?.mimeType, r?.uri]));
+      continue;
+    }
     const uri = webOf(r.uri);
+    if (uri === undefined && rawUri !== undefined) unread.add(rawUri);
     const key = uri ?? `${mimeType}\u0000${description}`;
     if (seen.has(key)) continue;
     seen.add(key);
@@ -438,7 +451,7 @@ function resourcesOf(infos: readonly CapInfo[]) {
       ...optional("digest", string(r.digest)),
     });
   }
-  return out;
+  return { resources: out, unread: unread.size };
 }
 
 /** The known tokens of a repeatable CAP field as the vocabulary's values, and how many it does not know. */
@@ -459,7 +472,8 @@ function tokens(vocabulary: string, raw: unknown): { values: string[]; unknown: 
  * does not read: a header, urgency, severity or certainty token CAP 1.2 does
  * not define, no category it defines, no event, or a shape out of range; the
  * message's other hazards are kept. A category or response type CAP does not
- * define is left out of a hazard that is kept, as `unknown_value`.
+ * define, and a resource the model cannot hold, is left out of a hazard that
+ * is kept, as `unknown_value`.
  */
 export function capDrafts(
   alert: CapAlert,
@@ -519,7 +533,8 @@ export function capDrafts(
     }
     const parameters = pairs(info.parameter);
     const vtec = vtecEvents(parameters);
-    const unknown = categories.unknown + responses.unknown + vtec.unread;
+    const { resources, unread: unreadResources } = resourcesOf(infos);
+    const unknown = categories.unknown + responses.unknown + vtec.unread + unreadResources;
     if (unknown > 0) skipped.unknown_value = (skipped.unknown_value ?? 0) + unknown;
     // The first hazard keeps the message's id, so a reference to the message names a record.
     const localId = n === 0 ? alert.identifier : `${alert.identifier}#${n + 1}`;
@@ -540,7 +555,6 @@ export function capDrafts(
     const audience = text(infos, (i) => i.audience);
     const senderName = text(infos, (i) => i.senderName);
     const contact = text(infos, (i) => i.contact);
-    const resources = resourcesOf(infos);
     drafts.push({
       id: situationId(feed, localId),
       class: "situation",

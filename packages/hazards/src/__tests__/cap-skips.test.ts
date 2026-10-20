@@ -117,6 +117,29 @@ describe("the cap format", () => {
     expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
   });
 
+  test("a resource the model cannot hold is left out of the alert that is kept, once per message", () => {
+    const feed = dwdFeed();
+    const resources = [
+      "<resource><resourceDesc>Map</resourceDesc><mimeType>image/png</mimeType><uri>https://example.org/map.png</uri></resource>",
+      // CAP 1.2 requires a MIME type, which OASIS's example A.1 leaves out.
+      "<resource><resourceDesc>Image file (GIF)</resourceDesc><uri>http://example.org/a.gif</uri></resource>",
+      // A link that is no web address.
+      "<resource><resourceDesc>Audio</resourceDesc><mimeType>audio/mpeg</mimeType><uri>ftp://example.org/a.mp3</uri></resource>",
+    ].join("");
+    const out = parse(
+      "cap",
+      feed,
+      { alerts: [variant("m", [/<area>/, `${resources}<area>`])] },
+      AT,
+    );
+    const cap = (out.situations[0]!["details"] as { cap: Record<string, unknown> }).cap;
+    expect(cap["resources"]).toEqual([
+      { description: "Map", mimeType: "image/png", uri: "https://example.org/map.png" },
+      { description: "Audio", mimeType: "audio/mpeg" },
+    ]);
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
+  });
+
   test("an alert in no category CAP defines is malformed", () => {
     const feed = dwdFeed();
     const out = parse(
