@@ -81,9 +81,11 @@ const BOTH = new Set([
  * TMC-located event basis `alert_c`, a ring road's inner or outer loop its
  * `loop` beside the verbatim text; anything else stays verbatim text with
  * value `unknown` (or `both` when it says so). Only an Alert-C direction
- * carries an axis, so only it may be positive or negative.
+ * carries an axis, so only it may be positive or negative. A direction the
+ * parser already read from a coded value (`directionRef`) is taken as it is.
  */
 export function directionOf(event: RoadEvent): DirectionRef | undefined {
+  if (event.directionRef !== undefined) return event.directionRef;
   return directionFromText(event.direction, event.externalRefs?.tmc !== undefined);
 }
 

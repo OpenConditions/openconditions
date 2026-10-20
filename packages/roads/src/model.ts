@@ -8,6 +8,7 @@ import type {
   Severity,
 } from "@openconditions/core";
 import type {
+  DirectionRef,
   Effect,
   InformationSource,
   Issue,
@@ -323,6 +324,11 @@ export interface RoadEvent {
   description?: string;
   isPlanned: boolean;
   direction?: string;
+  /**
+   * The direction as the parser read it from a coded value, where its text
+   * alone would not say it; it replaces what `direction` would read as.
+   */
+  directionRef?: DirectionRef;
   roads: RoadRef[];
   roadState?: "open" | "some_lanes_closed" | "single_lane_alternating" | "closed";
   lanesAffected?: {

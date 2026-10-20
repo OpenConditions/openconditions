@@ -109,6 +109,8 @@ export function snapshotFingerprint(event: SnapshotEvent): string {
     description: e["description"] ?? null,
     geometry: e["geometry"] ?? null,
     direction: e["direction"] ?? null,
+    // Only where a parser sets it, so records without one keep their fingerprints.
+    ...(e["directionRef"] !== undefined ? { directionRef: e["directionRef"] } : {}),
     roads: e["roads"] ?? null,
     roadState: e["roadState"] ?? null,
     lanesAffected: e["lanesAffected"] ?? null,

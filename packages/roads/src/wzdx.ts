@@ -880,6 +880,11 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         status: lifecycle.status,
         geometry: geometry as GeoJsonGeometry,
         direction: typeof coreDetails.direction === "string" ? coreDetails.direction : undefined,
+        // `undefined` is a road without a signed direction, where the
+        // geometry's order is the direction of travel.
+        ...(coreDetails.direction === "undefined"
+          ? { directionRef: { value: "positive" as const, basis: "geometry" as const } }
+          : {}),
         roads,
         roadState: derivedRoadState,
         lanesAffected,

@@ -664,7 +664,7 @@ const COVERAGE: Record<string, Coverage> = {
     },
   }),
 
-  Direction: (_version, values) => ({
+  Direction: (_version) => ({
     "": {
       handled: meaning(
         {
@@ -677,6 +677,8 @@ const COVERAGE: Record<string, Coverage> = {
           "inner-loop": { value: "unknown", basis: "text", loop: "inner" },
           "outer-loop": { value: "unknown", basis: "text", loop: "outer" },
           unknown: { value: "unknown" },
+          // No signed direction: the geometry's order is the direction of travel.
+          undefined: { value: "positive", basis: "geometry" },
         } as Record<string, Json>,
         (value, meant) => {
           const read_ = readWorkZone(_version, { core: { direction: value } });
@@ -689,14 +691,6 @@ const COVERAGE: Record<string, Coverage> = {
           );
         },
       ),
-      unsupported: of(values, {
-        undefined:
-          "the road has no signed direction and the geometry's order gives the direction of " +
-          "travel; the kernel direction has no geometry-order basis, and OpenMapX reads a " +
-          "positive value as the road reference's increasing direction without its basis, so " +
-          "it stays the verbatim text with value unknown (the graph binding follows the " +
-          "geometry's order regardless)",
-      }),
     },
   }),
 
