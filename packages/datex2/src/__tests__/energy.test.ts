@@ -135,6 +135,24 @@ describe("parseDatexEnergyTable", () => {
     expect(si[2]!.openingHours).toBeUndefined();
   });
 
+  test("a word in a free-text timetable naming an inherited property is no day", () => {
+    const xml = `<EnergyInfrastructureTablePublication xmlns="http://datex2.eu/schema/3/energyInfrastructure"
+        xmlns:fac="http://datex2.eu/schema/3/facilities">
+      <energyInfrastructureTable id="t" version="1">
+        <energyInfrastructureSite id="s" version="1">
+          <fac:operatingHours id="h">
+            <fac:label>constructor (09:00 - 21:30) toString (09:00 - 21:30) __proto__ (09:00 - 21:30) Lunes (09:00 - 21:30)</fac:label>
+          </fac:operatingHours>
+        </energyInfrastructureSite>
+      </energyInfrastructureTable>
+    </EnergyInfrastructureTablePublication>`;
+    const [site] = parseDatexEnergyTable(parseXmlDocument(xml));
+    expect(site!.openingHours).toEqual({
+      twentyFourSeven: false,
+      periods: [{ days: ["monday"], from: "09:00", to: "21:30" }],
+    });
+  });
+
   test("a weekly period with hours that are not the whole day is not 24/7", () => {
     const xml = `<EnergyInfrastructureTablePublication xmlns="http://datex2.eu/schema/3/energyInfrastructure"
         xmlns:fac="http://datex2.eu/schema/3/facilities" xmlns:com="http://datex2.eu/schema/3/common">

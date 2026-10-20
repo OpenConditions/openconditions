@@ -10,6 +10,7 @@ import type { ParkingLayout, ParkingVehicleType } from "@openconditions/model-pa
 import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
+  entryOf,
   instantIn,
   occupancyDrafts,
   type ReadingInput,
@@ -218,7 +219,7 @@ function availabilityOf(
       const at = updated ?? snapshot;
       for (const info of carPark.carpark_info ?? []) {
         const lotType = text(info?.lot_type);
-        const vehicleType = LOT_TYPES[lotType ?? ""];
+        const vehicleType = entryOf(LOT_TYPES, lotType);
         if (vehicleType === undefined && lotType !== undefined) unknownValues++;
         if (vehicleType === undefined || lots.some((l) => l.vehicleType === vehicleType)) continue;
         const total = number(info.total_lots);

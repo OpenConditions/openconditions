@@ -17,6 +17,7 @@ import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
   areaKey,
+  entryOf,
   occupancyDrafts,
   type ParkingTrend,
   type ReadingInput,
@@ -244,7 +245,7 @@ function areasOf(site: LightSite): AreaInput[] {
   for (const a of site.assignedFor ?? []) {
     const user = lower(a.user);
     const userGroup =
-      (user === undefined ? undefined : USERS[user]) ??
+      entryOf(USERS, user) ??
       (CHARGING_FUELS.has(lower(a.fuelType) ?? "") ? "ev_charging" : undefined);
     if (userGroup === undefined) continue;
     const counted = finite(a.availableSpaces);
@@ -253,7 +254,7 @@ function areasOf(site: LightSite): AreaInput[] {
     }
     const vehicle = lower(a.vehicleType);
     out.push({
-      vehicleType: (vehicle === undefined ? undefined : VEHICLES[vehicle]) ?? "car",
+      vehicleType: entryOf(VEHICLES, vehicle) ?? "car",
       userGroup,
       ...(counted ? { capacity: a.availableSpaces as number } : {}),
     });
@@ -304,7 +305,7 @@ function siteInput(
   point: [number, number],
 ): SiteInput {
   const prefix = upstreamPrefix(stationId);
-  const typed = TYPES[typeKey(site.type) ?? ""];
+  const typed = entryOf(TYPES, typeKey(site.type));
   const parkAndRide = isParkAndRide(site, stationId);
   const name = text(site.name) ?? text(site.description);
   const description = text(site.description);
@@ -409,7 +410,7 @@ function readingsOf(
   ];
   const status = statusOf(site);
   if (status !== undefined) out.push(statusDraft(feed, { ...reading, status }, ctx));
-  const trend = TRENDS[lower(site.occupancyTrend) ?? ""];
+  const trend = entryOf(TRENDS, lower(site.occupancyTrend));
   if (trend !== undefined) out.push(trendDraft(feed, { ...reading, trend }, ctx));
   return out.filter((d): d is RecordDraft => d !== undefined);
 }

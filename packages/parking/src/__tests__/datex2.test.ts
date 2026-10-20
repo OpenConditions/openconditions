@@ -273,6 +273,26 @@ describe("datex2", () => {
     );
     expect(readings(parse(citaFeed(), fixture("cita-static.xml"), v2), "G-MB-B")).toEqual({});
   });
+
+  test("DATEX: a code naming an inherited property reads as any unknown one", () => {
+    const table = (word: string) =>
+      Buffer.from(
+        `<d2LogicalModel xmlns="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="2"><payloadPublication xsi:type="ParkingTablePublication" lang="en"><publicationTime>2026-10-05T00:00:00Z</publicationTime><parkingTable id="t" version="1"><parkingRecord xsi:type="UrbanParkingSite" id="r" version="1"><parkingRecordVersionTime>2026-10-05T00:00:00Z</parkingRecordVersionTime><parkingLocation xsi:type="Point"><pointByCoordinates><pointCoordinates><latitude>51.4</latitude><longitude>6.1</longitude></pointCoordinates></pointByCoordinates></parkingLocation><groupOfParkingSpaces groupIndex="0"><parkingSpaceBasics xsi:type="GroupOfParkingSpaces"><parkingNumberOfSpaces>5</parkingNumberOfSpaces><assignedParkingAmongOthers><applicableForUser>${word}</applicableForUser><vehicleCharacteristics><vehicleType>${word}</vehicleType></vehicleCharacteristics></assignedParkingAmongOthers></parkingSpaceBasics></groupOfParkingSpaces><parkingStandardsAndSecurity><parkingSupervision>${word}</parkingSupervision></parkingStandardsAndSecurity><urbanParkingSiteType>offStreetParking</urbanParkingSiteType></parkingRecord></parkingTable></payloadPublication></d2LogicalModel>`,
+      );
+    const shape = (feature: RecordDraft | undefined) => ({
+      type: feature?.["type"],
+      details: feature?.["details"],
+      components: feature?.["components"],
+    });
+    __resetSkips();
+    const unknown = site(parse(ndwFeed(), table("sideways"), undefined), "r");
+    const counted = drainSkipped(ndwFeed().id);
+    expect(counted).toHaveProperty("unknown_value");
+    for (const word of ["constructor", "toString", "__proto__"]) {
+      expect(shape(site(parse(ndwFeed(), table(word), undefined), "r"))).toEqual(shape(unknown));
+      expect(drainSkipped(ndwFeed().id)).toEqual(counted);
+    }
+  });
   /** A v2.3 site with these opening times, and what the parser makes of them. */
   function hoursOf(validity: string, extra = "") {
     __resetSkips();

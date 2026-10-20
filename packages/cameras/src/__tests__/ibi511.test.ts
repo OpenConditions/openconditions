@@ -246,6 +246,32 @@ describe("ibi511", () => {
     expect(drainSkipped(georgiaFeed().id)).toEqual({ malformed: 1, unknown_value: 2 });
   });
 
+  test("a direction or view status naming an inherited property is an unknown value", () => {
+    const body = Buffer.from(
+      JSON.stringify([
+        {
+          Id: 9,
+          Latitude: 33.7,
+          Longitude: -84.4,
+          Direction: "constructor",
+          Views: [
+            { Id: 1, Status: "toString" },
+            { Id: 2, Status: "__proto__" },
+          ],
+        },
+      ]),
+    );
+    const out = camerasDomain.formats["ibi511"]!.parse(
+      georgiaFeed(),
+      { main: [body] },
+      parseContext(FETCHED),
+    );
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+    expect(out.features).toHaveLength(1);
+    expect(out.features[0]).not.toHaveProperty("location.direction");
+    expect(drainSkipped(georgiaFeed().id)).toEqual({ unknown_value: 3 });
+  });
+
   test("every camera and reading seals", () => {
     for (const [feed, name] of [
       [ontarioFeed(), "ca-on-511-cameras.json"],

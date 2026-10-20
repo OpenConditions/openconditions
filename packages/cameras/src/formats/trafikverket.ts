@@ -14,7 +14,7 @@ import {
   imageRedistributionOf,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
+import { entryOf, isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
 
 /** Trafikverket names and describes its cameras in Swedish. */
 const LANG = "sv";
@@ -157,7 +157,9 @@ export function parseTrafikverketCameras(
       const description = textOf(camera["Description"]);
       const location = textOf(camera["Location"]);
       const type = textOf(camera["Type"]);
-      if (type !== undefined && TYPES[type] === undefined) recordSkipped(feed.id, "unknown_value");
+      if (type !== undefined && entryOf(TYPES, type) === undefined) {
+        recordSkipped(feed.id, "unknown_value");
+      }
       const status = textOf(camera["Status"]);
       if (status !== undefined && status !== AVAILABLE) recordSkipped(feed.id, "unknown_value");
       const subdivision = countyOf(feed, camera["CountyNo"]);
@@ -183,7 +185,7 @@ export function parseTrafikverketCameras(
             : { areaDescription: [{ lang: LANG, text: location }] }),
           admin: { country: "SE", ...(subdivision === undefined ? {} : { subdivision }) },
           ...(sketch === undefined ? {} : { images: [{ url: sketch, category: "other" }] }),
-          type: TYPES[type ?? ""] ?? "traffic",
+          type: entryOf(TYPES, type) ?? "traffic",
           imageRedistribution: imageRedistributionOf(feed, "allowed"),
           views: [{ key: "0", ...(bearingDeg === undefined ? {} : { bearingDeg }) }],
         }),

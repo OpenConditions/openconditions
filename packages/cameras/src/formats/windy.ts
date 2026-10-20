@@ -14,7 +14,7 @@ import {
   imageRedistributionOf,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
+import { entryOf, isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
 
 /** An active webcam renews its image at least daily; one that did not is stale. */
 const ACTIVE_WITHIN_MS = 24 * 3600 * 1000;
@@ -49,7 +49,7 @@ const TYPES: Readonly<Record<string, CameraType>> = {
 function typeOf(feed: CamerasCatalogFeed, categories: unknown): CameraType {
   const list = Array.isArray(categories) ? categories : [];
   for (const category of list) {
-    const type = isRecord(category) ? TYPES[textOf(category["id"]) ?? ""] : undefined;
+    const type = isRecord(category) ? entryOf(TYPES, textOf(category["id"])) : undefined;
     if (type !== undefined) return type;
   }
   if (list.length > 0) recordSkipped(feed.id, "unknown_value");

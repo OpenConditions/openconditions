@@ -19,7 +19,7 @@ import type { RoadSnapshotRecord, SnapshotEvent } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
 import { classificationOf } from "./classes.js";
 import { effectsOf } from "./effects.js";
-import { locationOf, text } from "./location.js";
+import { entryOf, locationOf, text } from "./location.js";
 
 /**
  * A situation draft: the parser-side record the write seam (`sealRecord`)
@@ -222,12 +222,12 @@ function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unkn
     case "restriction":
       return { ...base, basis: "temporary" };
     case "road_condition":
-      return { ...base, surface: [SURFACE[c.subtype ?? ""] ?? "unknown"] };
+      return { ...base, surface: [entryOf(SURFACE, c.subtype) ?? "unknown"] };
     case "congestion": {
       const site = derivedFromSiteOf(event);
       return {
         ...base,
-        los: LOS[c.subtype ?? ""] ?? "unknown",
+        los: entryOf(LOS, c.subtype) ?? "unknown",
         ...(site !== undefined ? { derivedFrom: site } : {}),
         ...(event.freeFlowSource !== undefined ? { freeFlowSource: event.freeFlowSource } : {}),
       };

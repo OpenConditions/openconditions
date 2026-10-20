@@ -166,6 +166,23 @@ describe("trafikverket", () => {
     }
   });
 
+  test("a Type naming an inherited property is an unknown value, not a camera type", () => {
+    const doc = JSON.parse(fixture("se-trafikverket-cameras.json").toString("utf8"));
+    doc.RESPONSE.RESULT[0].Camera[0].Type = "constructor";
+    doc.RESPONSE.RESULT[0].Camera[1].Type = "toString";
+    doc.RESPONSE.RESULT[0].Camera[2].Type = "__proto__";
+    const out = parse(Buffer.from(JSON.stringify(doc)));
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+    expect(drainSkipped(trafikverketFeed().id)).toEqual({ unknown_value: 3 });
+    for (const id of [
+      "SE_STA_CAMERA_Orion_386",
+      "SE_STA_CAMERA_Orion_387",
+      "SE_STA_CAMERA_Orion_388",
+    ]) {
+      expect(camera(out, id)?.["type"]).toBe("traffic");
+    }
+  });
+
   test("an error answer fails the parse, and a deleted camera is left out", () => {
     const error = Buffer.from(
       JSON.stringify({

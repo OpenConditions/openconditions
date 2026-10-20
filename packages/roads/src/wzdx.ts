@@ -19,6 +19,7 @@ import {
   type SituationHints,
 } from "./model.js";
 import { coarseOf, coarseType } from "./situation/classes.js";
+import { entryOf } from "./situation/location.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface WzdxLane {
@@ -161,7 +162,7 @@ const isLaneStatus = (s: string | undefined): s is LaneStatus["status"] =>
 
 /** A WZDx 4.x `LaneStatus` value as a model lane status, through the WZDx crosswalk. */
 function laneStatusOf(raw: string | undefined): LaneStatus["status"] | undefined {
-  const status = raw === undefined ? undefined : WZDX_LANE_STATUSES[raw.toLowerCase()];
+  const status = entryOf(WZDX_LANE_STATUSES, raw?.toLowerCase());
   return isLaneStatus(status) ? status : undefined;
 }
 
@@ -190,7 +191,7 @@ function laneTypeAndStatus(
   const raw = typeof lane.type === "string" ? lane.type : undefined;
   const status = typeof lane.status === "string" ? lane.status : undefined;
   if (raw === undefined) return { status };
-  if (!(raw in WZDX_LANE_TYPES)) {
+  if (!Object.hasOwn(WZDX_LANE_TYPES, raw)) {
     unread.count++;
     return { status };
   }

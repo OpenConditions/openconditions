@@ -174,6 +174,42 @@ describe("skips", () => {
     expect(out.features).toHaveLength(2);
     expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_type: 1, unknown_value: 2 });
   });
+
+  test("tags naming an inherited property give no layout, kerb position or supervision", () => {
+    drainSkipped(osmParkingFeed().id);
+    const out = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [
+            {
+              type: "node",
+              id: 1,
+              lat: 49,
+              lon: 8.4,
+              tags: { amenity: "parking", parking: "constructor", supervised: "toString" },
+            },
+            {
+              type: "node",
+              id: 2,
+              lat: 49,
+              lon: 8.4,
+              tags: { amenity: "parking", parking: "__proto__", supervised: "__proto__" },
+            },
+          ],
+        }),
+      ),
+    );
+    expect(out.features).toHaveLength(2);
+    for (const element of ["node/1", "node/2"]) {
+      const details = site(out, element)?.["details"];
+      expect(details).not.toHaveProperty("layout");
+      expect(details).not.toHaveProperty("supervision");
+      expect(details).not.toHaveProperty("bays.position");
+    }
+    // Each parking value is one the tables do not hold.
+    expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
   test("Overpass: owner, description, lighting, supervision, kerbside bays and customers' usage", () => {
     const out = osm();
     expect(site(out, "node/1725394191")?.["owner"]).toEqual({

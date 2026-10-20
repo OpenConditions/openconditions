@@ -9,7 +9,14 @@ import {
 import type { Quantity } from "@openconditions/model";
 import type { ParkingLayout } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { type AreaInput, type RateRow, rateDraft, type SiteInput, siteDraft } from "../site.js";
+import {
+  type AreaInput,
+  entryOf,
+  type RateRow,
+  rateDraft,
+  type SiteInput,
+  siteDraft,
+} from "../site.js";
 
 /** One facility of DB BahnPark's Parking Information API v2, as far as it is read. */
 interface BahnparkFacility {
@@ -162,7 +169,7 @@ const capacityOf = (f: BahnparkFacility, type: string) => {
 function siteInput(f: BahnparkFacility, stationId: string, point: [number, number]): SiteInput {
   const typeName = text(f.type?.name);
   const parkAndRide = typeName === PARK_AND_RIDE;
-  const layout = typeName === undefined ? undefined : LAYOUTS[typeName];
+  const layout = entryOf(LAYOUTS, typeName);
   const total = capacityOf(f, "PARKING");
   const disabled = capacityOf(f, "HANDICAPPED_PARKING");
   const areas: AreaInput[] = [
@@ -234,7 +241,7 @@ function rateOf(
       recordSkipped(feed.id, "unknown_value");
       return [];
     }
-    const row = DURATIONS[text(p.duration) ?? ""];
+    const row = entryOf(DURATIONS, text(p.duration));
     if (row === undefined) recordSkipped(feed.id, "unknown_value");
     return row === undefined ? [] : [{ amount: p.price, ...row }];
   });
@@ -267,7 +274,11 @@ export function parseDbBahnpark(
       }
       const { stationId, point } = site;
       const typeName = text(f.type?.name);
-      if (typeName !== undefined && typeName !== PARK_AND_RIDE && LAYOUTS[typeName] === undefined) {
+      if (
+        typeName !== undefined &&
+        typeName !== PARK_AND_RIDE &&
+        entryOf(LAYOUTS, typeName) === undefined
+      ) {
         recordSkipped(feed.id, "unknown_value");
       }
       out.features.push(siteDraft(feed, siteInput(f, stationId, point), ctx.fetchedAt));

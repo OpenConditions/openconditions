@@ -110,7 +110,10 @@ function toDraft(
   const mmi = finite(p["mmi"]);
   const cdi = finite(p["cdi"]);
   const status = text(p["status"]);
-  const reviewed = status === undefined ? undefined : REVIEW_STATUS[status];
+  const reviewed =
+    status !== undefined && Object.hasOwn(REVIEW_STATUS, status)
+      ? REVIEW_STATUS[status]
+      : undefined;
   if (status !== undefined && reviewed === undefined) recordSkipped(feed.id, "unknown_value");
   const tsunami = p["tsunami"];
   if (tsunami != null && tsunami !== 0 && tsunami !== 1) recordSkipped(feed.id, "unknown_value");

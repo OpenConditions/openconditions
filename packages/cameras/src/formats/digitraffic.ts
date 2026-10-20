@@ -20,7 +20,7 @@ import {
   type ViewInput,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
+import { entryOf, isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
 
 /** Where every preset's still is served; the list and the details name the preset only. */
 const IMAGES = "https://weathercam.digitraffic.fi";
@@ -430,10 +430,10 @@ export function parseDigitraffic(
     ) {
       recordSkipped(feed.id, "unknown_value");
     }
-    if (detail?.purpose !== undefined && PURPOSES[detail.purpose] === undefined) {
+    if (detail?.purpose !== undefined && entryOf(PURPOSES, detail.purpose) === undefined) {
       recordSkipped(feed.id, "unknown_value");
     }
-    const subdivision = PROVINCES[detail?.province ?? ""];
+    const subdivision = entryOf(PROVINCES, detail?.province);
     if (
       detail?.province !== undefined &&
       detail.province !== AIRPORTS &&
@@ -446,7 +446,7 @@ export function parseDigitraffic(
       FAULT_STATES.has(station.state ?? "");
     const views: ViewInput[] = station.presets.map((preset) => {
       const own = detail?.presets.get(preset.id);
-      const direction = DIRECTIONS[own?.direction ?? ""];
+      const direction = entryOf(DIRECTIONS, own?.direction);
       if (
         own?.direction !== undefined &&
         direction === undefined &&
@@ -471,7 +471,7 @@ export function parseDigitraffic(
         cameraId: station.id,
         point: station.point,
         names,
-        type: PURPOSES[detail?.purpose ?? ""] ?? "weather",
+        type: entryOf(PURPOSES, detail?.purpose) ?? "weather",
         ...(detail?.roadNumber === undefined ? {} : { road: { ref: detail.roadNumber } }),
         ...(detail?.roadNumber === undefined ||
         detail.roadSection === undefined ||

@@ -14,7 +14,7 @@ import {
   type SiteImageInput,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
+import { entryOf, isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
 
 /** TDX's road names and descriptions are in Traditional Chinese. */
 const LANG = "zh-Hant";
@@ -77,7 +77,7 @@ function roadOf(feed: CamerasCatalogFeed, cctv: Record<string, unknown>): RoadRe
   const from = textOf(section["Start"]);
   const to = textOf(section["End"]);
   const km = kilometresOf(textOf(cctv["LocationMile"]));
-  const mapped = ROAD_CLASSES[roadClass ?? ""];
+  const mapped = entryOf(ROAD_CLASSES, roadClass);
   if (roadClass !== undefined && mapped === undefined && roadClass !== RAMP) {
     recordSkipped(feed.id, "unknown_value");
   }

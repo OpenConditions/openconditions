@@ -41,6 +41,7 @@ import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
   areaKey,
+  entryOf,
   occupancyDrafts,
   occupancyPctDraft,
   type ParkingTrend,
@@ -310,10 +311,10 @@ function groupAreas(record: DatexParkingRecord): Map<string, GroupArea> {
   const out = new Map<string, GroupArea>();
   for (const group of record.groups) {
     if (group.spaces === 0) continue;
-    const typed = group.vehicleTypes.map((v) => VEHICLE_TYPES[v]).find(Boolean);
+    const typed = group.vehicleTypes.map((v) => entryOf(VEHICLE_TYPES, v)).find(Boolean);
     if (typed === undefined && group.characterised) continue;
     const vehicleType = typed ?? "any";
-    const userGroup = group.userGroups.map((u) => USER_GROUPS[u]).find(Boolean) ?? "any";
+    const userGroup = group.userGroups.map((u) => entryOf(USER_GROUPS, u)).find(Boolean) ?? "any";
     const area: AreaInput = {
       vehicleType,
       userGroup,
@@ -446,8 +447,7 @@ function siteInput(
           ...(c.phone === undefined ? {} : { phone: c.phone }),
           ...(c.email === undefined ? {} : { email: c.email }),
         };
-  const supervision =
-    record.supervision === undefined ? undefined : DATEX2_PARKING_SUPERVISION[record.supervision];
+  const supervision = entryOf(DATEX2_PARKING_SUPERVISION, record.supervision);
   return {
     stationId: record.id,
     point,

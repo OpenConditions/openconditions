@@ -291,6 +291,26 @@ describe("the usgs format over merged and altered features", () => {
     expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
   });
 
+  test("a review status or PAGER level naming an inherited property is unknown and counted", () => {
+    const day = collection("usgs-all-day.geojson");
+    const base = feature(day, "us6000u0xi");
+    for (const word of ["constructor", "toString", "__proto__"]) {
+      const out = parse({
+        recent: [
+          buffer({
+            features: [{ ...base, properties: { ...base.properties, status: word, alert: word } }],
+          }),
+        ],
+        window: [],
+      });
+      expect(sealFailures(out.situations)).toEqual([]);
+      const situation = byId(out, "us6000u0xi");
+      expect(situation["details"]).not.toHaveProperty("reviewed");
+      expect(situation["severity"]).toEqual({ label: "unknown" });
+      expect(drainSkipped(feed.id)).toEqual({ unknown_value: 2 });
+    }
+  });
+
   test("a quiet poll is an accounted zero", () => {
     const out = parse({ recent: [buffer({ features: [] })], window: [buffer({ features: [] })] });
     expect(out.situations).toEqual([]);

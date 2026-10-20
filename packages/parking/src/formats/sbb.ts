@@ -10,6 +10,7 @@ import type { ParkingUserGroup } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
+  entryOf,
   occupancyPctDraft,
   type RateRow,
   rateDraft,
@@ -116,7 +117,11 @@ function pointOf(feature: SbbFeature): [number, number] | "no_geometry" | "malfo
 const unknownCategories = (p: SbbProperties): number =>
   (p.capacities ?? []).filter((c) => {
     const category = text(c?.categoryType);
-    return category !== undefined && CATEGORIES[category] === undefined && category !== RESERVABLE;
+    return (
+      category !== undefined &&
+      entryOf(CATEGORIES, category) === undefined &&
+      category !== RESERVABLE
+    );
   }).length;
 
 /** A contiguous run of days as `Mo-Fr`, separate days as `Mo,We`. */
@@ -164,7 +169,7 @@ function websiteOf(cta: SbbProperties["callToAction"]): string | undefined {
 
 function areasOf(p: SbbProperties): AreaInput[] {
   return (p.capacities ?? []).flatMap((c) => {
-    const userGroup = CATEGORIES[c.categoryType ?? ""];
+    const userGroup = entryOf(CATEGORIES, c.categoryType);
     const total = c.total;
     return userGroup !== undefined && finite(total) && Number.isInteger(total) && total > 0
       ? [{ vehicleType: "car" as const, userGroup, capacity: total }]

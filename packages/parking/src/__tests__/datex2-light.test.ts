@@ -225,6 +225,29 @@ describe("datex2-light", () => {
     expect(reading?.["phenomenonTime"]).toEqual({ instant: "2026-10-05T03:24:54.954Z" });
   });
 
+  test("DATEX Light: a value naming an inherited property reads as any unknown one", () => {
+    const body = (word: string) =>
+      Buffer.from(
+        JSON.stringify([
+          bean({
+            type: word,
+            occupancyTrend: word,
+            assignedFor: [{ user: word, vehicleType: word, availableSpaces: 2 }],
+          }),
+        ]),
+      );
+    __resetSkips();
+    const unknown = parse(mobidromFeed(), body("sideways"));
+    const counted = drainSkipped(mobidromFeed().id);
+    for (const word of ["constructor", "toString", "__proto__"]) {
+      const out = parse(mobidromFeed(), body(word));
+      expect(drainSkipped(mobidromFeed().id)).toEqual(counted);
+      expect(site(out, "test-1")?.["type"]).toBe(site(unknown, "test-1")?.["type"]);
+      expect(areas(out, "test-1")).toEqual([]);
+      expect(readings(out, "test-1")).toEqual(readings(unknown, "test-1"));
+    }
+  });
+
   test("DATEX Light: assignments are areas, with a count only where one is given", () => {
     const out = nrw();
     expect(areas(out, "32[Stadthalle]")).toEqual([

@@ -28,6 +28,7 @@ import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
   areaKey,
+  entryOf,
   occupancyDrafts,
   type ReadingInput,
   type SiteInput,
@@ -273,7 +274,8 @@ type RestrictionArea = AreaInput & { restriction: ParkApiRestriction };
  * customers' car park has no customers' area: the site is theirs.
  */
 function areasOf(site: ParkApiSite, lorryPark: boolean, customers: boolean): RestrictionArea[] {
-  const vehicleType = (PARKAPI_VEHICLE_TYPES[site.purpose ?? "CAR"] ?? "car") as ParkingVehicleType;
+  const vehicleType = (entryOf(PARKAPI_VEHICLE_TYPES, site.purpose ?? "CAR") ??
+    "car") as ParkingVehicleType;
   const seen = new Set<string>();
   return restrictionsOf(site).flatMap((restriction) => {
     const { type } = restriction;
@@ -423,7 +425,7 @@ function siteInput(
 ): SiteInput {
   const sourceUid = source?.uid ?? text(site.source_uid);
   const type = typeOf(site, truck);
-  const built = site.type === undefined ? undefined : LAYOUTS[site.type];
+  const built = entryOf(LAYOUTS, site.type);
   // A roofed lot or kerbside stretch; a garage is covered already.
   const layout = site.is_covered === true && (built ?? "surface") === "surface" ? "covered" : built;
   const supervision =
@@ -734,7 +736,7 @@ export function parseParkApiV3(
     const customers = isCustomerPark(site);
     const areas = areasOf(site, truck, customers);
     const input = siteInput(feed, site, stationId, point, source, truck, customers, areas);
-    const vehicleType = (PARKAPI_VEHICLE_TYPES[site.purpose ?? "CAR"] ??
+    const vehicleType = (entryOf(PARKAPI_VEHICLE_TYPES, site.purpose ?? "CAR") ??
       "car") as ParkingVehicleType;
     input.spaces = bays.map(({ spot, id, point: at }) => {
       const restriction = restrictionsOf(spot).find(

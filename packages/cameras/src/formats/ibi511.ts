@@ -15,7 +15,7 @@ import {
   type ViewInput,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
+import { entryOf, isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
 
 /** The IBI 511 systems OpenConditions reads publish in English. */
 const LANG = "en";
@@ -46,7 +46,7 @@ function directionOf(
   value: string | undefined,
 ): DirectionRef | undefined {
   if (value === undefined || NO_DIRECTION.has(value)) return undefined;
-  const compass = COMPASS[value];
+  const compass = entryOf(COMPASS, value);
   if (compass !== undefined) return compass;
   if (WORDS.has(value)) return { value: "unknown", basis: "text", text: value };
   recordSkipped(feed.id, "unknown_value");
@@ -86,7 +86,7 @@ function viewsOf(feed: CamerasCatalogFeed, value: unknown): View[] {
     const videoUrl = textOf(view["VideoUrl"]);
     const description = textOf(view["Description"]);
     const status = textOf(view["Status"]);
-    if (status !== undefined && VIEW_STATUSES[status] === undefined) {
+    if (status !== undefined && entryOf(VIEW_STATUSES, status) === undefined) {
       recordSkipped(feed.id, "unknown_value");
     }
     return [
@@ -95,7 +95,7 @@ function viewsOf(feed: CamerasCatalogFeed, value: unknown): View[] {
         ...(sortId === undefined ? {} : { sortId }),
         ...(url === undefined ? {} : { url }),
         ...(videoUrl === undefined ? {} : { videoUrl }),
-        status: VIEW_STATUSES[status ?? ""] ?? "unknown",
+        status: entryOf(VIEW_STATUSES, status) ?? "unknown",
         ...(description === undefined ? {} : { description }),
       },
     ];

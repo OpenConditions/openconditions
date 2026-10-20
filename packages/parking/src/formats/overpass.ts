@@ -14,7 +14,7 @@ import type {
   ParkingUserGroup,
 } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { type AreaInput, type SiteInput, siteDraft } from "../site.js";
+import { type AreaInput, entryOf, type SiteInput, siteDraft } from "../site.js";
 
 /** OSM text is in whatever language the mapper wrote it. */
 const UNDETERMINED = "und";
@@ -136,7 +136,7 @@ export function parseOverpassParking(
       if (access !== undefined && audience === undefined) unknown();
       const country = tag(tags, "addr:country");
       const orientation = tag(tags, "orientation");
-      const position = parking === undefined ? undefined : KERB_POSITIONS[parking];
+      const position = entryOf(KERB_POSITIONS, parking);
       const optional = <K extends keyof SiteInput>(key: K, value: SiteInput[K] | undefined) =>
         value === undefined ? {} : { [key]: value };
       const input: SiteInput = {
@@ -154,7 +154,7 @@ export function parseOverpassParking(
         ...optional("openingHoursOsm", tag(tags, "opening_hours")),
         ...optional("notes", tag(tags, "description")),
         ...optional("audience", audience),
-        ...optional("supervision", SUPERVISED[tag(tags, "supervised") ?? ""]),
+        ...optional("supervision", entryOf(SUPERVISED, tag(tags, "supervised"))),
         ...(tag(tags, "lit") === "yes" ? { securityFeatures: ["lighting"] } : {}),
         bays: {
           ...(orientation !== undefined && ORIENTATIONS.has(orientation) ? { orientation } : {}),

@@ -864,6 +864,23 @@ describe("parseWzdx — every spec LaneStatus and VehicleImpact value", () => {
     expect(ev.lanesAffected!.lanes).toEqual([{ index: 2, status: "open", type: "general" }]);
   });
 
+  it("reads a lane type or status naming an inherited property as any unknown one", () => {
+    const lanes = (word: string) => ({
+      lanes: [
+        { order: 1, status: "closed", type: word },
+        { order: 2, status: word, type: "general" },
+      ],
+    });
+    __resetSkips();
+    const unknown = v4(lanes("teleport")).lanesAffected;
+    const counted = drainSkipped(WZDX_SOURCE.id);
+    expect(counted).toHaveProperty("unknown_value");
+    for (const word of ["constructor", "toString", "__proto__"]) {
+      expect(v4(lanes(word)).lanesAffected).toEqual(unknown);
+      expect(drainSkipped(WZDX_SOURCE.id)).toEqual(counted);
+    }
+  });
+
   const VEHICLE_IMPACTS = {
     "all-lanes-closed": { roadState: "closed", severity: "high" },
     "some-lanes-closed": { roadState: "some_lanes_closed", severity: "medium" },

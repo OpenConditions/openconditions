@@ -235,7 +235,9 @@ function labelPeriods(label: string): DatexEnergyOpeningPeriod[] {
   for (const m of label.matchAll(
     /([\p{L}]+)\s*\(\s*(\d{1,2}:\d{2})\s*-\s*(\d{1,2}:\d{2})\s*\)/gu,
   )) {
-    const day = SPANISH_WEEKDAYS[withoutAccents(m[1] ?? "").toLowerCase()];
+    const name = withoutAccents(m[1] ?? "").toLowerCase();
+    // Only the table's own days: a word such as "constructor" names none.
+    const day = Object.hasOwn(SPANISH_WEEKDAYS, name) ? SPANISH_WEEKDAYS[name] : undefined;
     const from = clock(m[2]);
     const to = clock(m[3]);
     if (day === undefined || from === undefined || to === undefined) continue;

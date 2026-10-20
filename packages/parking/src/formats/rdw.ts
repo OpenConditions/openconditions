@@ -7,7 +7,7 @@ import {
 } from "@openconditions/ingest-framework";
 import type { ParkingSiteType } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { type AreaInput, type SiteInput, siteDraft } from "../site.js";
+import { type AreaInput, entryOf, type SiteInput, siteDraft } from "../site.js";
 
 /** One row of SPECIFICATIES PARKEERGEBIED (`b3us-f26s`); every value is a string. */
 interface RdwSpecs {
@@ -108,7 +108,7 @@ function siteInput(
   stationId: string,
   point: [number, number],
 ): SiteInput {
-  const usage = USAGES[text(area.usageid) ?? "GARAGEP"] ?? { type: "off_street" };
+  const usage = entryOf(USAGES, text(area.usageid) ?? "GARAGEP") ?? { type: "off_street" };
   const fromSpecs = <T>(read: (v: unknown) => T | undefined, spec: unknown, own: unknown) =>
     specs === undefined || text(spec) === undefined ? read(own) : read(spec);
   const capacity = fromSpecs(positive, specs?.capacity, area.aantal_parkeer_plaatsen);
@@ -177,7 +177,7 @@ export function parseRdw(
       if (seen.has(stationId)) continue;
       seen.add(stationId);
       const usage = text(area.usageid);
-      if (usage !== undefined && USAGES[usage] === undefined) {
+      if (usage !== undefined && entryOf(USAGES, usage) === undefined) {
         recordSkipped(feed.id, "unknown_value");
       }
       const input = siteInput(area, specs.get(stationId), stationId, point);

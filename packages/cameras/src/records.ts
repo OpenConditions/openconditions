@@ -20,6 +20,17 @@ export type CamerasFeed = Pick<
   cameras?: { imageHosts?: readonly string[]; imageRedistribution?: ImageRedistribution };
 };
 
+/**
+ * A code table's own entry for a publisher's token; an inherited key such as
+ * `constructor` or `toString` is none, like any token the table lacks.
+ */
+export function entryOf<T>(
+  table: Readonly<Record<string, T>>,
+  key: string | null | undefined,
+): T | undefined {
+  return key != null && Object.hasOwn(table, key) ? table[key] : undefined;
+}
+
 /** An instant in UTC at second precision, as the drafts carry it. */
 export function utcInstant(at: Date): string {
   return at.toISOString().replace(/\.000Z$/, "Z");
