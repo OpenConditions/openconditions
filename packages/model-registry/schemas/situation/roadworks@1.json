@@ -1826,6 +1826,7 @@
             "road_reference",
             "alert_c",
             "openlr",
+            "geometry",
             "bearing",
             "compass",
             "text",

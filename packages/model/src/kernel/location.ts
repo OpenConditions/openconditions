@@ -27,6 +27,7 @@ export const DIRECTION_BASES = [
   "road_reference",
   "alert_c",
   "openlr",
+  "geometry",
   "bearing",
   "compass",
   "text",
@@ -80,7 +81,9 @@ export const FUZZINESS = [
 /**
  * DirectionRef.value is read against `basis`: road_reference → positive =
  * increasing milepost/km; alert_c → TMC positive direction; openlr → along the
- * reference. bearing/compass/text carry no axis, so `value` stays "both" or
+ * reference; geometry → positive = the order the geometry of the location it
+ * applies to is drawn in, first coordinate to last, which a point does not
+ * have. bearing/compass/text carry no axis, so `value` stays "both" or
  * "unknown" unless ingest resolved it against a road reference. `loop` names
  * the loop of a ring road the direction is on; it is no axis either, so a
  * consumer that does not know the ring cannot apply it to one carriageway.
