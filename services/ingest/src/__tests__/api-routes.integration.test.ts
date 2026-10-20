@@ -603,7 +603,7 @@ describe("GET /situations/{id}", () => {
     const { body } = await get(url);
     expect(body).toMatchObject({
       record: { id: "oc:situation:de-autobahn-events:one" },
-      binding: { status: "exact", confidence: 0.9, directionMode: "single" },
+      binding: { status: "exact", confidence: 0.9, directionMode: "single", reason: null },
       effectBindings: {},
     });
     // An effect with a place of its own is bound on its own: shown per effect.
@@ -625,6 +625,44 @@ describe("GET /situations/{id}", () => {
     expect(
       (await get("/situations/oc%3Asituation%3Ade-autobahn-events%3Anone")).res.statusCode,
     ).toBe(404);
+  });
+
+  it("says why a binding was kept off routing, for the situation and each effect", async () => {
+    const recordId = "oc:situation:de-autobahn-events:directed";
+    await writeSituations(sql, "de-autobahn-events", [at("directed", 6.81, 51.2)]);
+    const current = { generation: "g", resolverVersion: "2.0.0" };
+    await bindSituation(sql, recordId, {
+      ...current,
+      status: "ambiguous",
+      confidence: 0.69,
+      directionMode: "unknown",
+      reason: "direction_undecided",
+    });
+    await bindSituation(sql, recordId, {
+      ...current,
+      effectId: "directed/closure",
+      status: "unresolved",
+      directionMode: "unknown",
+      reason: "conflicting_direction",
+    });
+    const { res, body } = await get(`/situations/${encodeURIComponent(recordId)}`);
+    expect(res.statusCode).toBe(200);
+    expect(body["binding"]).toEqual({
+      status: "ambiguous",
+      confidence: 0.69,
+      directionMode: "unknown",
+      reason: "direction_undecided",
+      boundAt: expect.any(String),
+    });
+    expect(body["effectBindings"]).toEqual({
+      "directed/closure": {
+        status: "unresolved",
+        confidence: null,
+        directionMode: "unknown",
+        reason: "conflicting_direction",
+        boundAt: expect.any(String),
+      },
+    });
   });
 });
 

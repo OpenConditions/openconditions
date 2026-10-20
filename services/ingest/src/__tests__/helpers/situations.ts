@@ -88,6 +88,8 @@ export async function bindSituation(
     confidence?: number;
     spans?: readonly TestSpan[];
     effectId?: string;
+    directionMode?: string;
+    reason?: string;
     revision?: number;
     generation: string;
     resolverVersion: string;
@@ -97,10 +99,10 @@ export async function bindSituation(
   await sql`
     INSERT INTO conditions.record_binding
       (record_class, record_id, effect_id, status, confidence, direction_mode, candidate_count,
-       resolver_version, geom_hash, record_revision, graph_generation, bound_at)
+       reason, resolver_version, geom_hash, record_revision, graph_generation, bound_at)
     VALUES ('situation', ${recordId}, ${effectId}, ${binding.status}, ${binding.confidence ?? null},
-      'single', 1, ${binding.resolverVersion}, ${`hash-${recordId}`}, ${binding.revision ?? 1},
-      ${binding.generation}, ${FETCHED_AT})`;
+      ${binding.directionMode ?? "single"}, 1, ${binding.reason ?? null}, ${binding.resolverVersion},
+      ${`hash-${recordId}`}, ${binding.revision ?? 1}, ${binding.generation}, ${FETCHED_AT})`;
   for (const [seq, span] of (binding.spans ?? []).entries()) {
     await sql`
       INSERT INTO conditions.record_segment

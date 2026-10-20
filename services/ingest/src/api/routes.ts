@@ -611,17 +611,21 @@ export function registerApiRoutes(
         status: string;
         confidence: number | null;
         direction_mode: string;
+        reason: string | null;
         bound_at: Date;
       }[]
     >`
-      SELECT effect_id, status, confidence, direction_mode, bound_at
+      SELECT effect_id, status, confidence, direction_mode, reason, bound_at
         FROM conditions.record_binding
        WHERE record_class = 'situation' AND record_id = ${id}
        ORDER BY effect_id`;
+    // `reason` says why a location was not bound, or why a binding was kept
+    // off routing; null on a binding that needs no explaining.
     const shown = (b: (typeof bindings)[number]) => ({
       status: b.status,
       confidence: b.confidence,
       directionMode: b.direction_mode,
+      reason: b.reason,
       boundAt: b.bound_at.toISOString(),
     });
     const situationBinding = bindings.find((b) => b.effect_id === "");

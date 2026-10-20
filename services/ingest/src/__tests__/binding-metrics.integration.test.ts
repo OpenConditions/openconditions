@@ -93,6 +93,7 @@ describe("binding metrics on GET /feeds/status", () => {
         unresolved: 1,
         noCoverage: 0,
         notApplicable: 0,
+        reasons: [],
       });
       const ndw = body.feeds.find((f) => f.id === "nl-ndw-events");
       expect(ndw).toBeTruthy();
@@ -127,6 +128,7 @@ describe("binding metrics on GET /feeds/status", () => {
         unresolved: 1,
         noCoverage: 0,
         notApplicable: 0,
+        reasons: [],
       });
     });
 
@@ -146,6 +148,7 @@ describe("binding metrics on GET /feeds/status", () => {
       unresolved: 1,
       noCoverage: 0,
       notApplicable: 0,
+      reasons: [],
     });
   });
 
@@ -168,6 +171,7 @@ describe("binding metrics on GET /feeds/status", () => {
       unresolved: 1,
       noCoverage: 0,
       notApplicable: 0,
+      reasons: [],
     });
     await sql`UPDATE conditions.situation SET tombstoned_at = now(), tombstone_reason = 'withdrawn'
       WHERE id = ${id("de-autobahn-events", "weird")}`;
@@ -202,6 +206,64 @@ describe("binding metrics on GET /feeds/status", () => {
       exact: 1,
     });
     expect(metrics!.activeEvents).toBe(metrics!.attemptedCurrent + metrics!.unattemptedOrObsolete);
+  });
+
+  it("counts current bindings by status and reason, situations' and effects' apart", async () => {
+    const source = "nl-ndw-events";
+    const bind = (local: string, binding: Parameters<typeof bindSituation>[2]) =>
+      bindSituation(sql, id(source, local), binding);
+    const current = { generation: "graph-current", resolverVersion: RESOLVER_VERSION };
+    await insertSituation("dir", source);
+    await bind("dir", {
+      ...current,
+      status: "ambiguous",
+      directionMode: "unknown",
+      reason: "direction_undecided",
+    });
+    await bind("dir", {
+      ...current,
+      effectId: "dir/closure",
+      status: "unresolved",
+      directionMode: "unknown",
+      reason: "conflicting_direction",
+    });
+    await bind("dir", {
+      ...current,
+      effectId: "dir/closure:2",
+      status: "ambiguous",
+      directionMode: "unknown",
+      reason: "direction_undecided",
+    });
+    // Neither a binding of another graph nor one of an older revision counts.
+    await bind("dir", {
+      ...current,
+      generation: "graph-previous",
+      effectId: "dir/closure:3",
+      status: "unresolved",
+      reason: "no_candidates",
+    });
+    await bind("dir", {
+      ...current,
+      revision: 0,
+      effectId: "dir/closure:4",
+      status: "unresolved",
+      reason: "no_path",
+    });
+    const expected = [
+      { status: "ambiguous", reason: "direction_undecided", situations: 1, effects: 1 },
+      { status: "unresolved", reason: "conflicting_direction", situations: 0, effects: 1 },
+    ];
+    const metrics = (await createBindingMetricsReader(sql, 0)()).get(source);
+    expect(metrics?.reasons).toEqual(expected);
+    expect(metrics).toMatchObject({ activeEvents: 2, attemptedCurrent: 1, ambiguous: 1 });
+
+    // The route serves them as read, with no schema to drop them.
+    await withApp(async (app) => {
+      const res = await app.inject({ method: "GET", url: "/feeds/status" });
+      const feeds = (res.json() as { feeds: { id: string; binding?: { reasons?: unknown } }[] })
+        .feeds;
+      expect(feeds.find((f) => f.id === source)?.binding?.reasons).toEqual(expected);
+    });
   });
 
   it("leaves a withdrawn situation out of the cohort", async () => {

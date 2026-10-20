@@ -528,11 +528,16 @@ at most 90 s.
 ## Bindings on the record API
 
 `GET /situations/{id}` returns the situation's own binding beside the record:
-`{ status, confidence, directionMode, boundAt }`, or `null` when it has none,
-and in `effectBindings` the binding of each effect with a place or a direction
-of its own, keyed by effect id (empty when no effect has one). Routing reads an effect's
-own binding where it has one, so a consumer judging an effect reads it there.
-The collections and the TraFF, DATEX II and SSE outputs carry no bindings.
+`{ status, confidence, directionMode, reason, boundAt }`, or `null` when it has
+none, and in `effectBindings` the binding of each effect with a place or a
+direction of its own, keyed by effect id (empty when no effect has one).
+`reason` is the stored machine reason of [Statuses](#statuses), or `null`: it
+tells a binding kept off routing for its direction (`direction_undecided`,
+`conflicting_direction`) from one the geometry could not place. Routing reads
+an effect's own binding where it has one, so a consumer judging an effect reads
+it there. A binding is served in both scopes, beside a record the scope may
+read. The collections and the TraFF, DATEX II and SSE outputs carry no
+bindings.
 
 The OpenMapX integration (built into OpenMapX) reads situations from
 `GET /situations` and their routing evidence from `/segments/conditions.json`,
@@ -562,7 +567,27 @@ binding of each situation's own location:
     "ambiguous": 61,
     "unresolved": 20,
     "noCoverage": 12,
-    "notApplicable": 0
+    "notApplicable": 0,
+    "reasons": [
+      {
+        "status": "ambiguous",
+        "reason": "direction_undecided",
+        "situations": 4,
+        "effects": 9
+      },
+      {
+        "status": "unresolved",
+        "reason": "conflicting_direction",
+        "situations": 0,
+        "effects": 2
+      },
+      {
+        "status": "unresolved",
+        "reason": "no_candidates",
+        "situations": 18,
+        "effects": 1
+      }
+    ]
   }
 }
 ```
@@ -573,9 +598,14 @@ recognise, so it stays truthful if the resolver ever grows an outcome.
 `attemptedCurrent` is the share computed at the situation's current revision on
 the active graph; only those are split by status. A binding that is `obsolete`,
 or was computed for an older revision or another graph, counts as `obsolete`.
-The counts come from one `GROUP BY` cached for 60 s, so polling the status page
-is cheap. A failed metrics read is logged and degrades the whole endpoint to no
-`binding` keys rather than failing it.
+`reasons` counts the current bindings that carry a reason, by status and reason,
+ordered by both: `situations` the situations' own locations (part of the counts
+above), `effects` the bindings of effects with a place or a direction of their
+own (not counted above). The counts come from two `GROUP BY`s cached for 60 s,
+so polling the status page is cheap. A failed metrics read is logged and
+degrades the whole endpoint to no `binding` keys rather than failing it. Like
+the rest of `/feeds/status`, the metrics are served without the operator token:
+they count bindings and name no record.
 
 The ratio to watch is `unresolved / attemptedCurrent`. A sudden rise usually
 means the feed started publishing on a road class the spine does not import
