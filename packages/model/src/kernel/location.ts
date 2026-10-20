@@ -83,7 +83,10 @@ export const FUZZINESS = [
  * increasing milepost/km; alert_c → TMC positive direction; openlr → along the
  * reference; geometry → positive = the order the geometry of the location it
  * applies to is drawn in, first coordinate to last, which a point does not
- * have. bearing/compass/text carry no axis, so `value` stays "both" or
+ * have; unknown → positive or negative is one direction of an axis the source
+ * did not identify, which no consumer can apply to a carriageway (a DATEX
+ * measure `aligned` or `opposite` at a location stating no direction).
+ * bearing/compass/text carry no axis, so `value` stays "both" or
  * "unknown" unless ingest resolved it against a road reference. `loop` names
  * the loop of a ring road the direction is on; it is no axis either, so a
  * consumer that does not know the ring cannot apply it to one carriageway.

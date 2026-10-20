@@ -271,6 +271,65 @@ describe("bindRecords", () => {
       });
       expect(await spans(id("against"), "against/closure")).toEqual([]);
     });
+
+    it("keeps a measure opposite to a location without an axis off routing", async () => {
+      // DATEX pointByCoordinates with a bearing east, and a measure on the
+      // opposite side of a flow the location never names.
+      const draft = onTwoWay("opposite", { type: "Point", coordinates: [6.81, 51.25001] });
+      const closure = (draft["effects"] as Rec[])[1]!;
+      await writeSituations(sql, "de-autobahn-events", [
+        {
+          ...draft,
+          effects: [
+            { ...closure, direction: { value: "negative", basis: "unknown", text: "opposite" } },
+          ],
+          location: {
+            ...(draft["location"] as Rec),
+            direction: { value: "unknown", basis: "bearing", bearingDeg: 90 },
+          },
+        },
+      ]);
+      await bindRecords(sql, [id("opposite")], { now });
+      // The location's bearing still narrows the situation's own binding ...
+      expect(await spans(id("opposite"))).toEqual(["40:f"]);
+      // ... but not the measure's, which may lie on either side.
+      expect(await binding(id("opposite"), "opposite/closure:2")).toEqual({
+        status: "ambiguous",
+        direction_mode: "unknown",
+        reason: "direction_undecided",
+      });
+      expect((await spans(id("opposite"), "opposite/closure:2")).sort()).toEqual(["40:b", "40:f"]);
+    });
+
+    it("does not read a measure aligned with no stated direction as a drawn line's order", async () => {
+      const east = {
+        type: "LineString",
+        coordinates: [
+          [6.805, 51.25001],
+          [6.815, 51.25001],
+        ],
+      };
+      const draft = onTwoWay("aligned", east);
+      const closure = (draft["effects"] as Rec[])[1]!;
+      await writeSituations(sql, "de-autobahn-events", [
+        {
+          ...draft,
+          effects: [
+            { ...closure, direction: { value: "positive", basis: "unknown", text: "aligned" } },
+          ],
+        },
+      ]);
+      await bindRecords(sql, [id("aligned")], { now });
+      expect(await binding(id("aligned"))).toMatchObject({
+        status: expect.stringMatching(/^(exact|likely)$/),
+        direction_mode: "single",
+      });
+      expect(await binding(id("aligned"), "aligned/closure:2")).toEqual({
+        status: "ambiguous",
+        direction_mode: "unknown",
+        reason: "direction_undecided",
+      });
+    });
   });
 
   it("skips an unchanged situation and rebinds a new revision", async () => {

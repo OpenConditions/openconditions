@@ -17,11 +17,16 @@
  *   as it always has been; a point cannot tell which way it is.
  * - `heading`: a compass point or bearing, held against each carriageway's
  *   own heading.
+ * - `unplaced`: a single direction along an axis nobody identified (basis
+ *   `unknown`), such as a DATEX measure `aligned` with or `opposite` to a
+ *   location that states no direction to be aligned with. No geometry can
+ *   tell which carriageway it is, a drawn line included.
  */
 export type TravelDirection =
   | { kind: "along" }
   | { kind: "against" }
   | { kind: "one" }
+  | { kind: "unplaced" }
   | { kind: "heading"; bearingDeg: number };
 
 /** A model `DirectionRef` as stored, read defensively: any field may be missing or malformed. */
@@ -72,6 +77,7 @@ function fromStated(d: StatedDirection | undefined): TravelDirection | undefined
   const heading = headingOf(d);
   if (heading !== undefined) return { kind: "heading", bearingDeg: heading };
   if (d.basis === "geometry") return { kind: d.value === "positive" ? "along" : "against" };
+  if (d.basis === "unknown") return { kind: "unplaced" };
   return { kind: "one" };
 }
 
@@ -80,8 +86,9 @@ function fromStated(d: StatedDirection | undefined): TravelDirection | undefined
  * the more specific statement and replaces its location's, unless it says
  * nothing (unknown, text only), in which case the location's stands. An
  * effect on the opposite side of the axis its one-directional location
- * states is `against` it. `undefined` means nothing narrows the binding: no
- * direction, both directions, or none the resolver can relate to a road.
+ * states is `against` it; two directions on an unidentified axis cannot be
+ * compared. `undefined` means nothing narrows the binding: no direction, both
+ * directions, or none the resolver can relate to a road.
  */
 export function travelDirectionOf(
   location: StatedDirection | undefined,
@@ -91,6 +98,7 @@ export function travelDirectionOf(
   if (
     onAxis(effect) &&
     onAxis(location) &&
+    effect.basis !== "unknown" &&
     effect.basis === location.basis &&
     effect.value !== location.value
   ) {

@@ -643,7 +643,8 @@ function redirected(
  * heading (or, for a line drawn in the stated order, its own) keeps the
  * carriageway running that way. A single direction that cannot be placed
  * on either carriageway leaves the direction unknown, so routing never
- * closes a guessed side.
+ * closes a guessed side. A direction on an axis nobody identified cannot be
+ * placed whatever the geometry, a drawn line's order included.
  */
 function oriented(
   r: BindResult,
@@ -653,6 +654,9 @@ function oriented(
 ): BindResult {
   if (travel === undefined || r.segments.length === 0) return r;
   if (travel.kind === "against") return conflicting(r);
+  if (travel.kind === "unplaced") {
+    return redirected(r, "unknown", r.segments, "direction_undecided");
+  }
   if (r.directionMode === "unknown") return r;
   if (r.directionMode === "single") {
     if (travel.kind !== "heading") return r;

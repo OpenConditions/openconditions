@@ -250,16 +250,20 @@ location's; one that says nothing (value `unknown` with only text, a ring
 road's loop, a direction left unparsed) never narrows anything, and the
 location's stands. A direction `both` narrows nothing either.
 
-| stated                                                                                                        | reads as  |
-| ------------------------------------------------------------------------------------------------------------- | --------- |
-| none, `both`, or `unknown` without a compass point or bearing                                                 | —         |
-| basis `compass` or `bearing`                                                                                  | `heading` |
-| basis `geometry`, `positive`                                                                                  | `along`   |
-| basis `geometry`, `negative`; or the effect on the other side of the axis its one-directional location states | `against` |
-| `positive` / `negative` on another axis (`road_reference`, `alert_c`, `openlr`)                               | `one`     |
+| stated                                                                                                        | reads as   |
+| ------------------------------------------------------------------------------------------------------------- | ---------- |
+| none, `both`, or `unknown` without a compass point or bearing                                                 | —          |
+| basis `compass` or `bearing`                                                                                  | `heading`  |
+| basis `geometry`, `positive`                                                                                  | `along`    |
+| basis `geometry`, `negative`; or the effect on the other side of the axis its one-directional location states | `against`  |
+| `positive` / `negative` on another axis (`road_reference`, `alert_c`, `openlr`)                               | `one`      |
+| `positive` / `negative` on basis `unknown`, an axis nobody identified                                         | `unplaced` |
 
 The resolver then holds its binding against it:
 
+- **`unplaced`** names one direction but no axis to find it on, so no geometry
+  can place it, a drawn line's order included: the binding keeps its spans for
+  the map, with direction `unknown` and reason `direction_undecided`.
 - **`against`** contradicts the drawn location: the binding is `unresolved` /
   `conflicting_direction` with no spans, reported instead of bound to the
   carriageway the geometry was drawn on.
@@ -281,6 +285,19 @@ The stated direction is part of the change hash. A WZDx road event with
 direction `undefined` (no signed direction) reads as basis `geometry`,
 `positive`: per the specification, its geometry runs in the direction of
 travel it affects.
+
+A DATEX measure's `applicableForTrafficDirection` `aligned` or `opposite` is
+defined against "the normal direction of flow at this point on the road
+network" (`DirectionEnum`). Where the location states that direction (an
+Alert-C direction), the measure reads as it or its reverse on the same axis, so
+`opposite` is `against`. Where it does not (a point or line given by
+coordinates, a bearing, a road name, or a direction both ways), nothing in the
+location says which way that flow runs: the order of a GML line's points is the
+direction of the geographic feature, not of traffic, and DATEX relates
+`aligned` to a linear element's own order only in `LinearDirectionEnum`, which
+this attribute does not use. The effect's direction is then basis `unknown`,
+`positive` for `aligned` and `negative` for `opposite`, with the token as its
+text, and reads as `unplaced`.
 
 ## When binding runs
 

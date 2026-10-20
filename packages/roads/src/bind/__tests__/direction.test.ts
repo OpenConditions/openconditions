@@ -72,6 +72,19 @@ describe("travelDirectionOf", () => {
     ).toBeUndefined();
   });
 
+  it("reads a single direction on an unidentified axis as one nothing can place", () => {
+    const opposite = { value: "negative", basis: "unknown", text: "opposite" };
+    expect(travelDirectionOf(undefined, opposite)).toEqual({ kind: "unplaced" });
+    // It replaces a location's heading, which says nothing of which way it lies.
+    expect(
+      travelDirectionOf({ value: "unknown", basis: "compass", compass: "E" }, opposite),
+    ).toEqual({ kind: "unplaced" });
+    // Two unidentified axes cannot be compared, so neither contradicts the other.
+    expect(travelDirectionOf({ value: "positive", basis: "unknown" }, opposite)).toEqual({
+      kind: "unplaced",
+    });
+  });
+
   it("reads an effect on the other side of its location's axis as against it", () => {
     expect(travelDirectionOf(alertC("positive"), alertC("negative"))).toEqual({
       kind: "against",
@@ -232,6 +245,30 @@ describe("binding in the stated direction of travel", () => {
     expect(bind(pair).segments.map((s) => s.segmentId)).toEqual(["30:b"]);
     expect(bind(pair, { kind: "heading", bearingDeg: 270 }).segments).toHaveLength(1);
     expect(bind(pair, { kind: "heading", bearingDeg: 90 }).reason).toBe("conflicting_direction");
+  });
+
+  it("does not place a direction on an unidentified axis, not even along a drawn line", () => {
+    for (const geometry of [POINT, EAST]) {
+      const r = bind(geometry, { kind: "unplaced" });
+      expect(r.directionMode).toBe("unknown");
+      expect(r.status).toBe("ambiguous");
+      expect(r.reason).toBe("direction_undecided");
+      expect(r.confidence).toBeLessThan(0.7);
+      // Kept for the map, never routed.
+      expect(r.segments.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("binds a DATEX measure opposite to a location without an axis undecided", () => {
+    // pointByCoordinates with a bearing: the measure is not on that heading's side.
+    const travel = travelDirectionOf(
+      { value: "unknown", basis: "bearing", bearingDeg: 90 },
+      { value: "negative", basis: "unknown", text: "opposite" },
+    );
+    const r = bind(POINT, travel);
+    expect(r.reason).toBe("direction_undecided");
+    expect(r.segments.map((s) => s.segmentId).sort()).toEqual(["30:b", "30:f"]);
+    expect(ROUTED).not.toContain(r.status);
   });
 
   it("leaves a failure as it is", () => {

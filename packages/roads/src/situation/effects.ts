@@ -278,19 +278,30 @@ const FLIP: Readonly<Record<string, DirectionRef["value"]>> = {
  * direction of the record's location. Every direction is `both`; a compass
  * heading keeps its point; `aligned` with the location's direction is that
  * direction and `opposite` its reverse, where the location's has an axis.
- * Rings and towns have no axis and stay as their text. `unknown`, and a value
- * outside the enumeration, says nothing of the direction.
+ * DATEX defines both against "the normal direction of flow at this point on
+ * the road network", not against the order of a location's coordinates, so
+ * at a location without an axis (coordinates, a bearing, a road name, a
+ * direction both ways) they still name one direction, but on an axis nobody
+ * identified: basis `unknown`, with the token as text. Rings and towns have
+ * no axis and stay as their text. `unknown`, and a value outside the
+ * enumeration, says nothing of the direction.
  */
 function directionToken(token: string, location: DirectionRef | undefined): DirectionRef {
   if (EVERY_DIRECTION.has(token)) return { value: "both", basis: "text", text: token };
   const compass = entryOf(COMPASS_HEADINGS, token);
   if (compass !== undefined) return { value: "unknown", basis: "compass", compass, text: token };
   const flipped = location === undefined ? undefined : entryOf(FLIP, location.value);
-  if (token === "aligned" && flipped !== undefined) return location!;
-  if (token === "opposite" && flipped !== undefined) return { ...location!, value: flipped };
-  if (AXISLESS.has(token) || token === "aligned" || token === "opposite") {
-    return { value: "unknown", basis: "text", text: token };
+  if (token === "aligned" || token === "opposite") {
+    if (flipped === undefined) {
+      return {
+        value: token === "aligned" ? "positive" : "negative",
+        basis: "unknown",
+        text: token,
+      };
+    }
+    return token === "aligned" ? location! : { ...location!, value: flipped };
   }
+  if (AXISLESS.has(token)) return { value: "unknown", basis: "text", text: token };
   return { value: "unknown", basis: "unknown" };
 }
 

@@ -12,6 +12,7 @@ import {
   DATEX2_V3_INFRASTRUCTURE,
 } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
+import { travelDirectionOf } from "../bind/direction.js";
 import type { RoadEvent } from "../model.js";
 import { applicabilityOf, effectsOf } from "../situation/effects.js";
 import { entryOf } from "../situation/location.js";
@@ -633,19 +634,34 @@ describe.each(VERSIONS)(
       });
     });
 
-    it("reads aligned and opposite as text where the location's direction has no axis", () => {
-      const { event } = parseRecord(version, {
-        recordClass: "RoadOrCarriagewayOrLaneManagement",
-        body: closureBy(
-          "<:complianceOption>mandatory</:complianceOption><:applicableForTrafficDirection>opposite</:applicableForTrafficDirection>",
-        ),
-      });
-      expect(effectsAt(event!).map((e) => e.direction)).toEqual([
-        { value: "unknown", basis: "text", text: "opposite" },
-      ]);
+    it("reads aligned and opposite on no identified axis where the location's direction has none", () => {
+      const measure = (direction: string) =>
+        parseRecord(version, {
+          recordClass: "RoadOrCarriagewayOrLaneManagement",
+          body: closureBy(
+            `<:complianceOption>mandatory</:complianceOption><:applicableForTrafficDirection>${direction}</:applicableForTrafficDirection>`,
+          ),
+        }).event!;
+      const opposite = { value: "negative", basis: "unknown", text: "opposite" };
+      const aligned = { value: "positive", basis: "unknown", text: "aligned" };
+      // The token stays as the text a consumer shows.
+      expect(effectsAt(measure("opposite")).map((e) => e.direction)).toEqual([opposite]);
+      expect(effectsAt(measure("aligned")).map((e) => e.direction)).toEqual([aligned]);
+      for (const location of [
+        { value: "both", basis: "alert_c" },
+        { value: "unknown", basis: "bearing", bearingDeg: 90 },
+        { value: "unknown", basis: "compass", compass: "N", text: "north" },
+        { value: "unknown", basis: "text", text: "Köln" },
+      ] as DirectionRef[]) {
+        expect(effectsAt(measure("opposite"), location).map((e) => e.direction)).toEqual([
+          opposite,
+        ]);
+      }
+      // The binder can place neither on any carriageway, whatever the location says.
       expect(
-        effectsAt(event!, { value: "both", basis: "alert_c" }).map((e) => e.direction),
-      ).toEqual([{ value: "unknown", basis: "text", text: "opposite" }]);
+        travelDirectionOf({ value: "unknown", basis: "bearing", bearingDeg: 90 }, opposite),
+      ).toEqual({ kind: "unplaced" });
+      expect(travelDirectionOf(undefined, aligned)).toEqual({ kind: "unplaced" });
     });
 
     it("reads several traffic directions as one only when they agree", () => {
