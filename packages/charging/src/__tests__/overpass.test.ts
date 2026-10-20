@@ -92,6 +92,42 @@ describe("overpass", () => {
     expect(out.offers).toEqual([]);
   });
 
+  test("Overpass: name:<lang> tags are names in their languages; name:left and the like are not", () => {
+    const out = parse(
+      elements([
+        {
+          type: "node",
+          id: 5,
+          lat: 22.28,
+          lon: 114.16,
+          tags: {
+            amenity: "charging_station",
+            "socket:type2": "1",
+            name: "中環碼頭 Central Pier",
+            "name:zh-Hant": "中環碼頭",
+            "name:en": "Central Pier",
+            "name:left": "West",
+            "name:etymology": "pier",
+            "name:fr": " ",
+          },
+        },
+        {
+          type: "node",
+          id: 6,
+          lat: 22.29,
+          lon: 114.16,
+          tags: { amenity: "charging_station", "socket:type2": "1", "name:en": "Pier 2" },
+        },
+      ]),
+    );
+    expect(site(out, "node/5")?.["name"]).toEqual([
+      { lang: "und", text: "中環碼頭 Central Pier" },
+      { lang: "en", text: "Central Pier" },
+      { lang: "zh-Hant", text: "中環碼頭" },
+    ]);
+    expect(site(out, "node/6")?.["name"]).toEqual([{ lang: "en", text: "Pier 2" }]);
+  });
+
   test("Overpass: a ref that is no eMI3 id is no EVSE id", () => {
     const out = parse(
       elements([

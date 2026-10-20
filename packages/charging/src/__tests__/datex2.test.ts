@@ -239,6 +239,28 @@ describe("datex2", () => {
     });
   });
 
+  test("DATEX: a site named in several languages keeps each name in its language", () => {
+    const table = `<?xml version="1.0" encoding="UTF-8"?>
+<d2:payload xmlns:d2="http://datex2.eu/schema/3/d2Payload" xmlns:egi="http://datex2.eu/schema/3/energyInfrastructure" xmlns:fac="http://datex2.eu/schema/3/facilities" xmlns:loc="http://datex2.eu/schema/3/locationReferencing" xmlns:com="http://datex2.eu/schema/3/common" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="egi:EnergyInfrastructureTablePublication" modelBaseVersion="3">
+  <egi:energyInfrastructureTable id="t">
+    <egi:energyInfrastructureSite id="S1">
+      <fac:name><com:values><com:value lang="ca">Estació del Nord</com:value><com:value lang="es">Estación del Norte</com:value></com:values></fac:name>
+      <fac:locationReference xsi:type="loc:PointLocation"><loc:coordinatesForDisplay><loc:latitude>39.47</loc:latitude><loc:longitude>-0.38</loc:longitude></loc:coordinatesForDisplay></fac:locationReference>
+      <egi:energyInfrastructureStation id="ST1">
+        <egi:refillPoint xsi:type="egi:ElectricChargingPoint" id="0"><egi:connector><egi:connectorType>iec62196T2</egi:connectorType></egi:connector></egi:refillPoint>
+      </egi:energyInfrastructureStation>
+    </egi:energyInfrastructureSite>
+  </egi:energyInfrastructureTable>
+</d2:payload>`;
+    const out = parse(catalogFeed("es-dgt-charging"), { main: [Buffer.from(table)] });
+    expect(byId(out.features, "oc:feature:es-dgt-charging:S1")).toMatchObject({
+      name: [
+        { lang: "ca", text: "Estació del Nord" },
+        { lang: "es", text: "Estación del Norte" },
+      ],
+    });
+  });
+
   test("DATEX: a status reading lands on its refill point, joined on site, station and point", () => {
     // Lithuania numbers its refill points within a station: `0` is a point of
     // every station, so a status names its site and station too.

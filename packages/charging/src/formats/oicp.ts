@@ -431,7 +431,8 @@ function lookup<T>(
 
 function siteOf(stationId: string, pool: Pool, unread: Unread): SiteInput {
   const [first] = pool.records as [Raw, ...Raw[]];
-  const [named] = infoTexts(field(first, "ChargingStationNames"));
+  const names = infoTexts(field(first, "ChargingStationNames"));
+  const [named] = names;
   const address = field(first, "Address");
   const audience = lookup(AUDIENCE, textOf(first, "Accessibility"), unread);
   const parkingType = lookup(PARKING, textOf(first, "AccessibilityLocation"), unread);
@@ -474,7 +475,7 @@ function siteOf(stationId: string, pool: Pool, unread: Unread): SiteInput {
   return {
     stationId,
     point: pool.point,
-    ...(named === undefined ? {} : { name: named.text, lang: named.lang }),
+    ...(named === undefined ? {} : { name: names, lang: named.lang }),
     ...(pool.operator === undefined ? {} : { operator: { name: pool.operator } }),
     ...(suboperator === undefined ? {} : { suboperator: { name: suboperator } }),
     address: {

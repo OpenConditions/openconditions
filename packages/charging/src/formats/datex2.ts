@@ -601,7 +601,9 @@ export function parseDatex2(
     const input: SiteInput = {
       stationId,
       point,
-      ...(name === undefined ? {} : { name: name.value, lang: name.lang }),
+      ...(name === undefined
+        ? {}
+        : { name: site.names.map((n) => ({ lang: n.lang, text: n.value })), lang: name.lang }),
       ...(site.operator?.name === undefined ? {} : { operator: { name: site.operator.name } }),
       ...(site.brand === undefined ? {} : { brand: site.brand }),
       ...(site.address === undefined ? {} : { address: site.address }),

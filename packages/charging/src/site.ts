@@ -174,7 +174,11 @@ export interface SiteInput {
   providerId?: false;
   /** `[lon, lat]`. */
   point: [number, number];
-  name?: string;
+  /**
+   * The site's name in `lang`, or its names each in its own language, the
+   * source's primary one first.
+   */
+  name?: string | readonly TextInput[];
   /** The language of the source's texts (BCP 47); `und` when unknown. */
   lang?: string;
   /** Ids beside the provider id that linking matches on (`ocpi:location`, `osm:node`). */
@@ -346,6 +350,23 @@ function texts(list: readonly TextInput[] | undefined) {
   const out = (list ?? []).flatMap((t) => {
     const text = clean(t.text);
     return text === undefined ? [] : [{ lang: clean(t.lang)?.toLowerCase() || "und", text }];
+  });
+  return out.length === 0 ? undefined : out;
+}
+
+/**
+ * Names in several languages as the model holds them, the blank ones and a
+ * repeated language left out; undefined for none. A language keeps the case
+ * the source gives it, as a single name's does.
+ */
+function namesOf(list: readonly TextInput[] | undefined) {
+  const seen = new Set<string>();
+  const out = (list ?? []).flatMap((t) => {
+    const text = clean(t.text);
+    const lang = clean(t.lang) ?? "und";
+    if (text === undefined || seen.has(lang.toLowerCase())) return [];
+    seen.add(lang.toLowerCase());
+    return [{ lang, text }];
   });
   return out.length === 0 ? undefined : out;
 }
@@ -592,7 +613,7 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
     ),
     ...bays,
   ];
-  const name = text(input.name);
+  const name = typeof input.name === "string" ? text(input.name) : namesOf(input.name);
   const notes = clean(input.notes);
   const description =
     notes === undefined ? undefined : [{ lang: clean(input.notesLang) ?? lang, text: notes }];

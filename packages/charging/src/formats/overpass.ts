@@ -17,6 +17,7 @@ import {
   parsePowerKw,
   type SiteInput,
   siteDraft,
+  type TextInput,
 } from "../site.js";
 
 /** OSM text is in whatever language the mapper wrote it. */
@@ -130,6 +131,29 @@ const tag = (tags: Record<string, string>, key: string): string | undefined => {
   const value = tags[key]?.trim();
   return value ? value : undefined;
 };
+
+/** A `name:<lang>` key whose suffix is a language tag (`name:zh-Hant`), not a kind of name (`name:left`). */
+const LOCALISED_NAME = /^name:([a-z]{2,3}(?:-[A-Za-z0-9]{1,8})*)$/;
+
+/**
+ * A feature's names: `name` in whatever language the mapper wrote it, then
+ * each `name:<lang>` in the order of its key. Undefined for none.
+ */
+function namesOf(tags: Record<string, string>): TextInput[] | undefined {
+  const local = tag(tags, "name");
+  const localised = Object.keys(tags)
+    .sort()
+    .flatMap((key) => {
+      const lang = key.match(LOCALISED_NAME)?.[1];
+      const text = lang === undefined ? undefined : tag(tags, key);
+      return lang === undefined || text === undefined ? [] : [{ lang, text }];
+    });
+  const names = [
+    ...(local === undefined ? [] : [{ lang: UNDETERMINED, text: local }]),
+    ...localised,
+  ];
+  return names.length === 0 ? undefined : names;
+}
 
 const SOCKET_COUNT = /^socket:([a-z0-9_-]+)$/;
 
@@ -322,7 +346,7 @@ export function parseOverpassCharging(
         point: [element.lon, element.lat],
         lang: UNDETERMINED,
         externalIds: [{ scheme: `osm:${element.type}`, id: String(element.id) }, ...crossFeed],
-        ...optional("name", tag(tags, "name")),
+        ...optional("name", namesOf(tags)),
         ...optional(
           "operator",
           operator === undefined

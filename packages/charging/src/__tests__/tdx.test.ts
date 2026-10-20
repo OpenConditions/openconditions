@@ -191,6 +191,24 @@ describe("tdx", () => {
     ]);
   });
 
+  test("TDX: a station named in Chinese and English keeps both names, the Chinese first", () => {
+    const stations = JSON.parse(fixture("tdx-station.json").toString("utf8")) as {
+      Stations: { StationID: string; StationName: Record<string, string> }[];
+    };
+    const ntu = stations.Stations.find((s) => s.StationID === "TPE0201U03")!;
+    ntu.StationName = { ...ntu.StationName, En: "NTU Xinnan Underground Car Park" };
+    const english = stations.Stations.find((s) => s.StationID === "33029464-STP6360001")!;
+    english.StationName = { En: "Zhongshan Junior High School" };
+    const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(stations))] });
+    expect(site(out, "TPE0201U03")?.["name"]).toEqual([
+      { lang: "zh-TW", text: "國立臺灣大學新南地下停車場" },
+      { lang: "en", text: "NTU Xinnan Underground Car Park" },
+    ]);
+    expect(site(out, "33029464-STP6360001")?.["name"]).toEqual([
+      { lang: "en", text: "Zhongshan Junior High School" },
+    ]);
+  });
+
   test("TDX: live states alone, through the full parse's index, give the full parse's readings", () => {
     const { full, status } = fullAndStatus(
       "tdx",

@@ -57,6 +57,29 @@ const components = (draft: RecordDraft) => draft["components"] as Component[];
 const component = (draft: RecordDraft, key: string) => components(draft).find((c) => c.key === key);
 
 describe("siteDraft", () => {
+  test("a name is in the site's language; names in several languages keep their own", () => {
+    expect(site({ name: " Marktplatz ", lang: "de" })["name"]).toEqual([
+      { lang: "de", text: "Marktplatz" },
+    ]);
+    const named = site({
+      lang: "en",
+      name: [
+        { lang: "en", text: "Central Pier" },
+        { lang: "zh-Hant", text: "中環碼頭" },
+        { lang: "zh-hant", text: "中環碼頭 (二)" },
+        { lang: "zh-Hans", text: " " },
+        { lang: "", text: "Pier" },
+      ],
+    });
+    // A blank name is left out, and a language named twice keeps its first.
+    expect(named["name"]).toEqual([
+      { lang: "en", text: "Central Pier" },
+      { lang: "zh-Hant", text: "中環碼頭" },
+      { lang: "und", text: "Pier" },
+    ]);
+    expect(site({ name: [{ lang: "en", text: "  " }] })["name"]).toBeUndefined();
+  });
+
   test("states the same site whichever order the register lists its charge points in", () => {
     const evses = [
       {

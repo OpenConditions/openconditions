@@ -488,13 +488,17 @@ export function parseTdx(
 
     const name = isRecord(station["StationName"]) ? station["StationName"] : {};
     const zh = text(name["Zh_tw"]);
+    const en = text(name["En"]);
     out.features.push(
       siteDraft(
         feed,
         {
           stationId,
           point,
-          name: zh ?? text(name["En"]),
+          name: [
+            ...(zh === undefined ? [] : [{ lang: "zh-TW", text: zh }]),
+            ...(en === undefined ? [] : [{ lang: "en", text: en }]),
+          ],
           lang: zh === undefined ? "en" : "zh-TW",
           ...(operatorName === undefined
             ? {}

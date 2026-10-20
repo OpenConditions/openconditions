@@ -196,6 +196,13 @@ describe("oicp", () => {
       (f) => f["id"] === "oc:feature:ch-bfe-charging:46.23432,6.05560",
     );
     expect(components(cern).filter((c) => c.kind === "evse")).toHaveLength(5);
+    // The station's name is written in each of the four languages the file lists.
+    expect(cern?.["name"]).toEqual(
+      ["en", "fr", "de", "it"].map((lang) => ({
+        lang,
+        text: "SIG CERN Esplanade des Particules",
+      })),
+    );
     expect(out.features).toHaveLength(6);
   });
 
