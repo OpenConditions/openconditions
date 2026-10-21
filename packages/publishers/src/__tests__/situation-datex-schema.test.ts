@@ -262,6 +262,42 @@ const variants = [
       tmc: { country: "8", table: 6, version: "6.13.A", code: 22370 },
     },
   }),
+  situation("alert-c-linear", {
+    location: {
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [4.900625, 52.33224],
+          [4.890899, 52.337415],
+        ],
+      },
+      tmc: {
+        country: "8",
+        table: 6,
+        version: "6.13.A",
+        code: 7201,
+        secondary: 7194,
+        direction: 0,
+        affectedDirection: "aligned",
+        method: 4,
+        primaryOffsetM: 85,
+        secondaryOffsetM: 1597,
+      },
+    },
+  }),
+  situation("alert-c-point-on-line", {
+    location: {
+      geometry: {
+        type: "LineString",
+        coordinates: [
+          [4.900625, 52.33224],
+          [4.890899, 52.337415],
+        ],
+      },
+      tmc: { country: "8", table: 6, version: "6.13.A", code: 7201, direction: 1, method: 2 },
+      roads: [ROAD],
+    },
+  }),
   situation("bridge", {
     kind: "closure",
     type: "closure",

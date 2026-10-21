@@ -120,17 +120,8 @@ const CANNOT_EXPRESS: Record<string, { reason: string; fixtures: string[] }> = {
   },
   "/location/tmc": {
     reason:
-      "An Alert-C reference must state its direction coded along the table's axis (`alertCDirection`), and a linear one its secondary location; pass 1 keeps only the primary code, with a bearing or no direction.",
-    fixtures: ["dir", "flanders", "ndw", "ndw-restrictions"],
-  },
-  "/effects/*/location/tmc": {
-    reason: "As /location/tmc, for an effect's own place.",
-    fixtures: ["dir", "ndw"],
-  },
-  "/effects/*/location": {
-    reason:
-      "An effect's own place that differs from the situation's only by its Alert-C code (see /location/tmc) reads back as the situation's place.",
-    fixtures: ["ndw"],
+      "An Alert-C reference coded both ways (DATEX v2 `both`): the model's direction bit and DATEX v3's `alertCDirectionCoded` hold only positive or negative, and the reference cannot be written without one.",
+    fixtures: ["dir"],
   },
   "/effects/contraflow/sourceRecordRef": {
     reason:

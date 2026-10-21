@@ -187,8 +187,17 @@ export function locationOf(
                 ? {}
                 : { version: String(tmc.table) }),
             code: tmc.code,
+            ...(tmc.secondary !== undefined ? { secondary: tmc.secondary } : {}),
             ...(tmc.direction === 0 || tmc.direction === 1 ? { direction: tmc.direction } : {}),
+            ...(tmc.affectedDirection !== undefined
+              ? { affectedDirection: tmc.affectedDirection }
+              : {}),
             ...(tmc.extent !== undefined ? { extent: tmc.extent } : {}),
+            ...(tmc.method !== undefined ? { method: tmc.method } : {}),
+            ...(tmc.primaryOffsetM !== undefined ? { primaryOffsetM: tmc.primaryOffsetM } : {}),
+            ...(tmc.secondaryOffsetM !== undefined
+              ? { secondaryOffsetM: tmc.secondaryOffsetM }
+              : {}),
           },
         }
       : {}),

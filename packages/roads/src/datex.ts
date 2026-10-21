@@ -1579,18 +1579,22 @@ function hasElement(node: unknown, name: string): boolean {
  * `groupOfLocations` while v3 uses `locationReference`; both are searched
  * because the German feeds are precisely the ones this exists to resolve.
  */
-function alertCRefOf(rec: XmlObject): VildReference | undefined {
+function alertCBlockOf(rec: XmlObject): XmlObject | undefined {
   const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return undefined;
-
   // Either a nested `alertCPoint`/`alertCLinear` element, or — where the
   // location element is itself declared an Alert-C type — the same fields
   // inline on it, with no wrapper. Both are valid DATEX and publishers differ.
   const inline = /^AlertC/i.test(stripXmlNamespace(getXmlAttribute(locRef, "type") ?? ""));
-  const alertC =
+  return (
     findFirst(locRef, "alertCPoint") ??
     findFirst(locRef, "alertCLinear") ??
-    (inline ? locRef : undefined);
+    (inline ? locRef : undefined)
+  );
+}
+
+function alertCRefOf(rec: XmlObject): VildReference | undefined {
+  const alertC = alertCBlockOf(rec);
   if (!alertC) return undefined;
 
   // A missing/placeholder primary is reported as `no-reference` by the resolver
@@ -1690,7 +1694,24 @@ function locationShapeOf(rec: XmlObject): string {
   return `${head}{${[...leaves].sort().join(",")}}${detail}`;
 }
 
-/** Alert-C/TMC reference (country + table + primary specific-location code). */
+/** Alert-C `alertCDirectionCoded` as the TMC direction bit. */
+const ALERT_C_DIRECTION_BITS: Readonly<Record<string, 0 | 1>> = { positive: 0, negative: 1 };
+/** `alertCAffectedDirection` values that say which way is affected; `unknown` says none. */
+const ALERT_C_AFFECTED = new Set(["aligned", "opposite", "both"]);
+
+/** The distance of a method-4 point from its location, in metres. */
+function offsetOf(wrapper: XmlObject | undefined): number | undefined {
+  const node = getXmlChild(wrapper, "offsetDistance");
+  const raw = getXmlChildText(node, "offsetDistance") ?? text(node);
+  const metres = raw === undefined || raw.trim() === "" ? Number.NaN : Number(raw);
+  return Number.isFinite(metres) && metres >= 0 ? metres : undefined;
+}
+
+/**
+ * Alert-C/TMC reference: country, table and primary location, and where the
+ * record states them, its secondary location, coded and affected direction,
+ * method and the method-4 offsets, kept beside any coordinates.
+ */
 function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | undefined {
   const ref = alertCRefOf(rec);
   if (!ref?.country || !ref.table || ref.primary === undefined) return undefined;
@@ -1700,7 +1721,30 @@ function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | 
   const version = Number.isInteger(table)
     ? ref.version
     : [ref.table, ref.version].filter(Boolean).join(".");
-  return { country: ref.country, table, ...(version ? { version } : {}), code: ref.primary };
+  const block = alertCBlockOf(rec);
+  const coded = getXmlChildText(getXmlChild(block, "alertCDirection"), "alertCDirectionCoded");
+  const affected = getXmlChildText(
+    getXmlChild(block, "alertCDirection"),
+    "alertCAffectedDirection",
+  );
+  const method = /Method([24])/.exec(ref.type ?? "")?.[1];
+  const primaryOffset = offsetOf(findFirst(block, "alertCMethod4PrimaryPointLocation"));
+  const secondaryOffset = offsetOf(findFirst(block, "alertCMethod4SecondaryPointLocation"));
+  const direction = entryOf(ALERT_C_DIRECTION_BITS, coded);
+  return {
+    country: ref.country,
+    table,
+    ...(version ? { version } : {}),
+    code: ref.primary,
+    ...(ref.secondary !== undefined ? { secondary: ref.secondary } : {}),
+    ...(direction !== undefined ? { direction } : {}),
+    ...(affected !== undefined && ALERT_C_AFFECTED.has(affected)
+      ? { affectedDirection: affected as "aligned" | "opposite" | "both" | "unknown" }
+      : {}),
+    ...(method !== undefined ? { method: Number(method) as 2 | 4 } : {}),
+    ...(primaryOffset !== undefined ? { primaryOffsetM: primaryOffset } : {}),
+    ...(secondaryOffset !== undefined ? { secondaryOffsetM: secondaryOffset } : {}),
+  };
 }
 
 /** Provider external location code (NDW's `externalReferencing`, e.g. RIS-index). */

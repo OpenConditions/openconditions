@@ -28,7 +28,9 @@
         "country": "F",
         "table": 32,
         "version": "11.0",
-        "code": 17389
+        "code": 17389,
+        "method": 4,
+        "primaryOffsetM": 804
       },
       "admin": {
         "country": "FR"
@@ -149,7 +151,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "decadf3f6746b199efcff7b3fc226efbb5033aaaea6d1cf4e7847b55f0e4813c"
+    "contentHash": "162846271b95dc03bdf30d59daeea47afbefbc5ddde98c8f8200140a8c915e59"
   },
   {
     "id": "oc:situation:fr-dir-events:251022-000640",
@@ -186,7 +188,12 @@
         "country": "F",
         "table": 32,
         "version": "11.0",
-        "code": 47221
+        "code": 47221,
+        "secondary": 47222,
+        "direction": 1,
+        "method": 4,
+        "primaryOffsetM": 2359,
+        "secondaryOffsetM": 447
       },
       "admin": {
         "country": "FR"
@@ -298,7 +305,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "de5ea7ffc94142845be06e3fd8cb0d24305540407f20f3cc7cb070fb4cf8fe80"
+    "contentHash": "1207dc10a25e1fd59935206bbd1d1a2795e71b9763051053da79671981a79132"
   },
   {
     "id": "oc:situation:fr-dir-events:251023-001144",
@@ -324,7 +331,10 @@
         "country": "F",
         "table": 32,
         "version": "11.0",
-        "code": 33202
+        "code": 33202,
+        "direction": 0,
+        "method": 4,
+        "primaryOffsetM": 19
       },
       "admin": {
         "country": "FR"
@@ -425,7 +435,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "8135187239a0672acbcd40491edcd82ebb674ccf5222d73a7cd64101c6420ee3"
+    "contentHash": "16c9eb909a9009a1b299124fbe391c1a00adf9bde4178f6ac3131e8974d1044e"
   },
   {
     "id": "oc:situation:fr-dir-events:241125-001455",
@@ -462,7 +472,11 @@
         "country": "F",
         "table": 32,
         "version": "11.0",
-        "code": 27203
+        "code": 27203,
+        "secondary": 27202,
+        "method": 4,
+        "primaryOffsetM": 995,
+        "secondaryOffsetM": 4559
       },
       "admin": {
         "country": "FR"
@@ -548,7 +562,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "171982cf2b5869a33771483d1e661f37c100bd28f2d1fa7ff7838a8fb549563e"
+    "contentHash": "efa56038ea2073690a971d652ba6c88b0c938944b714d2ef079c5aaae88ee46e"
   },
   {
     "id": "oc:situation:fr-dir-events:251209-001171",
@@ -585,7 +599,11 @@
         "country": "F",
         "table": 32,
         "version": "11.0",
-        "code": 63443
+        "code": 63443,
+        "secondary": 47621,
+        "method": 4,
+        "primaryOffsetM": 5460,
+        "secondaryOffsetM": 2879
       },
       "admin": {
         "country": "FR"
@@ -713,7 +731,12 @@
             "country": "F",
             "table": 32,
             "version": "11.0",
-            "code": 47622
+            "code": 47622,
+            "secondary": 47621,
+            "direction": 0,
+            "method": 4,
+            "primaryOffsetM": 3121,
+            "secondaryOffsetM": 3074
           },
           "admin": {
             "country": "FR"
@@ -758,7 +781,12 @@
             "country": "F",
             "table": 32,
             "version": "11.0",
-            "code": 47622
+            "code": 47622,
+            "secondary": 47621,
+            "direction": 0,
+            "method": 4,
+            "primaryOffsetM": 3121,
+            "secondaryOffsetM": 3074
           },
           "admin": {
             "country": "FR"
@@ -801,7 +829,12 @@
             "country": "F",
             "table": 32,
             "version": "11.0",
-            "code": 47621
+            "code": 47621,
+            "secondary": 47622,
+            "direction": 1,
+            "method": 4,
+            "primaryOffsetM": 3637,
+            "secondaryOffsetM": 2501
           },
           "admin": {
             "country": "FR"
@@ -827,6 +860,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f9b41336afdd8351ea987b3cf43d3fb3c75b7d584430e6f1d831560b9ae25d25"
+    "contentHash": "5047a1dfc38db9de3d7109b9d6c1dd10f1411881578545ed74730d700fd4bded"
   }
 ]

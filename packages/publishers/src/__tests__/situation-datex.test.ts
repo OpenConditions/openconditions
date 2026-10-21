@@ -842,7 +842,7 @@ describe("DATEX II round-trip through the ingest parser", () => {
   });
 
   it("states a place a location table gave as its Alert-C point, which the reader looks up again", () => {
-    const tmc = { country: "8", table: 6, version: "6.13.A", code: 22370 };
+    const tmc = { country: "8", table: 6, version: "6.13.A", code: 22370, direction: 0, method: 2 };
     const vild = {
       geometry: { type: "Point", coordinates: [5.717227, 50.8408564] },
       extent: "point",
@@ -878,8 +878,56 @@ describe("DATEX II round-trip through the ingest parser", () => {
     const { admin: _, ...read } = reread([placed])[0]!["location"] as Rec;
     expect(read).toEqual(vild);
     // A coarse place DATEX cannot state by its reference is still withheld.
-    const coarse = closure({ location: { ...vild, direction: undefined } });
+    const { direction: _bit, ...undirected } = tmc;
+    const coarse = closure({ location: { ...vild, direction: undefined, tmc: undirected } });
     expect(datexRecordsOf(coarse, AT)).toEqual([]);
+  });
+
+  it("re-ingests a line's Alert-C reference: linear with its offsets, or a point on the line", () => {
+    const geometry = {
+      type: "LineString",
+      coordinates: [
+        [4.900625, 52.33224],
+        [4.890899, 52.337415],
+      ],
+    };
+    const linear = {
+      country: "8",
+      table: 6,
+      version: "6.13.A",
+      code: 7201,
+      secondary: 7194,
+      direction: 0,
+      affectedDirection: "aligned",
+      method: 4,
+      primaryOffsetM: 85,
+      secondaryOffsetM: 1597,
+    };
+    const lined = closure({ location: { geometry, tmc: linear } });
+    expect(datexRecordsOf(lined, AT)[0]!["sit:locationReference"]).toMatchObject({
+      "@_xsi:type": "loc:SingleRoadLinearLocation",
+      "loc:alertCLinear": {
+        "@_xsi:type": "loc:AlertCMethod4Linear",
+        "loc:alertCMethod4SecondaryPointLocation": {
+          "loc:alertCLocation": { "loc:specificLocation": 7194 },
+          "loc:offsetDistance": { "loc:offsetDistance": 1597 },
+        },
+      },
+    });
+    expect(reread([lined])[0]!["location"]).toMatchObject({ geometry, tmc: linear });
+    const point = {
+      country: "8",
+      table: 6,
+      version: "6.13.A",
+      code: 7201,
+      direction: 1,
+      method: 2,
+    };
+    const pointed = closure({ location: { geometry, tmc: point } });
+    expect(datexRecordsOf(pointed, AT)[0]!["sit:locationReference"]).toMatchObject({
+      "@_xsi:type": "loc:ItineraryByIndexedLocations",
+    });
+    expect(reread([pointed])[0]!["location"]).toMatchObject({ geometry, tmc: point });
   });
 
   it("re-ingests periods and exceptions in the zone of the record's place", () => {

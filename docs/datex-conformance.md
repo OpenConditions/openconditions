@@ -85,11 +85,15 @@ records carry the revision as `version`:
   (latitude first); a place a location table gave (`geometryOrigin`
   `tmc_table`) is its `AlertCMethod2Point` alone, which the reader looks up
   again, so such a coarse place is no longer withheld; any other geometry is a
-  `PointLocation` at its first coordinate, with its bearing and its Alert-C
-  point where it has an Alert-C direction. External location codes travel as
-  `externalReferencing`. An Alert-C code without an Alert-C direction, or with
-  an offset, extent or second location, cannot be written (`alertCDirection`
-  is required) and is reported.
+  `PointLocation` at its first coordinate, with its bearing. The Alert-C
+  reference travels beside the coordinates, as the reader keeps it (`tmc`:
+  primary and secondary location, coded and affected direction, method and
+  method-4 offsets): a point's on its point location, a linear one's on a
+  `SingleRoadLinearLocation`, and a point code on a line as an
+  `ItineraryByIndexedLocations` of the line and the point. External location
+  codes travel as `externalReferencing`. A reference with no coded direction
+  (a v2 `both` has none in v3), an extent, or offsets that are not whole
+  metres cannot be written (`alertCDirection` is required) and is reported.
 - **Compliance.** Network-management records (`RoadOrCarriagewayOrLaneManagement`,
   `SpeedManagement`, `ReroutingManagement`, …) must state a `complianceOption`:
   the effect's `mandatory` or `advisory`, else `_extended` with

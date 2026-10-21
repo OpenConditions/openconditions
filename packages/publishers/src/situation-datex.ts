@@ -214,7 +214,7 @@ function statesDirection(location: Rec): boolean {
   if (geometry?.type === "LineString") return false;
   const direction = location["direction"] as DirectionRef | undefined;
   return (
-    alertCPointOf(location) !== undefined ||
+    (direction?.basis === "alert_c" && alertCOf(location, false) !== undefined) ||
     (direction?.basis === "bearing" &&
       direction.bearingDeg !== undefined &&
       representativePoint(geometry) !== null)
@@ -317,38 +317,62 @@ function alertCTable(tmc: AlertC & { version: string }): { table: string; versio
     : { table: String(tmc.table), version: tmc.version };
 }
 
+/** The TMC direction bit as DATEX `alertCDirectionCoded`. */
+const CODED_DIRECTION = ["positive", "negative"] as const;
+
 /**
- * The location's Alert-C point, when DATEX can state it: a location code of a
- * named table edition with its direction along the table's axis, which an
- * Alert-C point must state. A code with an offset, an extent or a direction
- * flag of its own says more than a point at the location does.
+ * The location's Alert-C reference, when DATEX can state it: a point on a
+ * point location, a primary and secondary location on a linear one, of a
+ * named table edition, with the direction along the table's axis an Alert-C
+ * reference must state (its own, else the place's Alert-C direction), and,
+ * by method 4, the whole metres each lies from its location. An extent, a
+ * second location on a point or none on a line say what the reference cannot.
  */
-function alertCPointOf(location: Rec): Rec | undefined {
+function alertCOf(location: Rec, linear: boolean): Rec | undefined {
   const tmc = location["tmc"] as AlertC | undefined;
-  const direction = location["direction"] as DirectionRef | undefined;
-  if (tmc?.version === undefined || direction?.basis !== "alert_c") return undefined;
-  if (direction.value !== "positive" && direction.value !== "negative") return undefined;
-  if (tmc["extent"] !== undefined || tmc["direction"] !== undefined || tmc["method"] === 4)
-    return undefined;
+  if (tmc?.version === undefined || tmc["extent"] !== undefined) return undefined;
+  const place = location["direction"] as DirectionRef | undefined;
+  const coded =
+    typeof tmc["direction"] === "number"
+      ? CODED_DIRECTION[tmc["direction"]]
+      : place?.basis === "alert_c" && (place.value === "positive" || place.value === "negative")
+        ? place.value
+        : undefined;
+  const secondary = tmc["secondary"] as number | undefined;
+  if (coded === undefined || linear !== (secondary !== undefined)) return undefined;
+  const offsets = [tmc["primaryOffsetM"], ...(linear ? [tmc["secondaryOffsetM"]] : [])];
+  const method = tmc["method"] ?? (offsets.some((o) => o !== undefined) ? 4 : 2);
+  if (method === 4 && !offsets.every((o) => Number.isSafeInteger(o))) return undefined;
+  if (method === 2 && offsets.some((o) => o !== undefined)) return undefined;
   const { table, version } = alertCTable(tmc as AlertC & { version: string });
+  const at = (code: number, offset: unknown) => ({
+    "loc:alertCLocation": { "loc:specificLocation": code },
+    ...(method === 4 ? { "loc:offsetDistance": { "loc:offsetDistance": offset } } : {}),
+  });
   return {
-    "@_xsi:type": "loc:AlertCMethod2Point",
+    "@_xsi:type": `loc:AlertCMethod${method}${linear ? "Linear" : "Point"}`,
     "loc:alertCLocationCountryCode": tmc.country,
     "loc:alertCLocationTableNumber": table,
     "loc:alertCLocationTableVersion": version,
     "loc:alertCDirection": {
-      "loc:alertCDirectionCoded": direction.value,
-      "loc:alertCAffectedDirection": "unknown",
+      "loc:alertCDirectionCoded": coded,
+      "loc:alertCAffectedDirection": tmc["affectedDirection"] ?? "unknown",
     },
-    "loc:alertCMethod2PrimaryPointLocation": {
-      "loc:alertCLocation": { "loc:specificLocation": tmc.code },
-    },
+    [`loc:alertCMethod${method}PrimaryPointLocation`]: at(tmc.code, tmc["primaryOffsetM"]),
+    ...(linear
+      ? {
+          [`loc:alertCMethod${method}SecondaryPointLocation`]: at(
+            secondary as number,
+            tmc["secondaryOffsetM"],
+          ),
+        }
+      : {}),
   };
 }
 
 /** Whether DATEX states a place a location table gave as the table reference it came from. */
 export function datexStatesTablePlace(location: Rec | undefined): boolean {
-  return location?.["geometryOrigin"] === "tmc_table" && alertCPointOf(location) !== undefined;
+  return location?.["geometryOrigin"] === "tmc_table" && alertCOf(location, false) !== undefined;
 }
 
 /**
@@ -370,9 +394,15 @@ function buildLocation(
   const geometry = location["geometry"] as { type?: string; coordinates?: unknown } | undefined;
   const line =
     geometry?.type === "LineString" ? (geometry.coordinates as [number, number][]) : undefined;
-  const alertC = line ? undefined : alertCPointOf(location);
+  const alertC = alertCOf(location, line !== undefined);
   const direction = location["direction"] as DirectionRef | undefined;
-  const loc: Rec = { "@_xsi:type": line ? "loc:LinearLocation" : "loc:PointLocation" };
+  const loc: Rec = {
+    "@_xsi:type": line
+      ? alertC
+        ? "loc:SingleRoadLinearLocation"
+        : "loc:LinearLocation"
+      : "loc:PointLocation",
+  };
   const external = (location["external"] as { system: string; code: string }[] | undefined) ?? [];
   if (external.length > 0) {
     loc["loc:externalReferencing"] = external.map((e) => ({
@@ -424,17 +454,34 @@ function buildLocation(
       };
     }
   }
-  if (alertC) loc["loc:alertCPoint"] = alertC;
+  // A line whose Alert-C reference is a point: the line, then the point, as
+  // the publishers who place a line by a point code write them. The
+  // itinerary is no location of its own, so it holds no external codes.
+  const pointOnLine =
+    line && !alertC && external.length === 0 ? alertCOf(location, false) : undefined;
+  let reference: Rec = loc;
+  if (alertC) loc[line ? "loc:alertCLinear" : "loc:alertCPoint"] = alertC;
+  else if (pointOnLine)
+    reference = {
+      "@_xsi:type": "loc:ItineraryByIndexedLocations",
+      "loc:locationContainedInItinerary": [
+        { "@_index": 0, "loc:location": loc },
+        {
+          "@_index": 1,
+          "loc:location": { "@_xsi:type": "loc:PointLocation", "loc:alertCPoint": pointOnLine },
+        },
+      ],
+    };
   else if (location["tmc"] !== undefined)
     diagnostics.emit(
       "field_not_exported",
       "field",
       "omitted",
       `${path}/tmc`,
-      "An Alert-C point needs its table edition and a direction along the table's axis, and states no offset, extent or second location.",
+      "An Alert-C reference needs its table edition, a direction along the table's axis, a second location on a line and none on a point, whole-metre offsets for method 4, and no extent.",
       effect,
     );
-  if (direction !== undefined && !bearing && !alertC)
+  if (direction !== undefined && !bearing && !(alertC && direction.basis === "alert_c" && !line))
     diagnostics.emit(
       "direction_not_exported",
       "field",
@@ -443,7 +490,7 @@ function buildLocation(
       "DATEX states a location's direction as a point's bearing or an Alert-C direction; this location has neither.",
       effect,
     );
-  return loc;
+  return reference;
 }
 
 /**

@@ -648,6 +648,33 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
     expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.headline).toBe("Roadworks ahead");
   });
 
+  it("keeps a linear Alert-C reference's second location, direction and offsets beside its coordinates", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="SingleRoadLinearLocation">` +
+        `<gmlLineString><posList>52.0 13.0 52.1 13.1</posList></gmlLineString>` +
+        `<alertCLinear xsi:type="AlertCMethod4Linear"><alertCLocationCountryCode>8</alertCLocationCountryCode>` +
+        `<alertCLocationTableNumber>6.13</alertCLocationTableNumber><alertCLocationTableVersion>A</alertCLocationTableVersion>` +
+        `<alertCDirection><alertCDirectionCoded>negative</alertCDirectionCoded><alertCAffectedDirection>aligned</alertCAffectedDirection></alertCDirection>` +
+        `<alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>7201</specificLocation></alertCLocation><offsetDistance><offsetDistance>85</offsetDistance></offsetDistance></alertCMethod4PrimaryPointLocation>` +
+        `<alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>7194</specificLocation></alertCLocation><offsetDistance><offsetDistance>1597</offsetDistance></offsetDistance></alertCMethod4SecondaryPointLocation>` +
+        `</alertCLinear></locationReference>`,
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toMatchObject({ type: "LineString" });
+    expect(ev!.externalRefs?.tmc).toEqual({
+      country: "8",
+      table: 6.13,
+      version: "6.13.A",
+      code: 7201,
+      secondary: 7194,
+      direction: 1,
+      affectedDirection: "aligned",
+      method: 4,
+      primaryOffsetM: 85,
+      secondaryOffsetM: 1597,
+    });
+  });
+
   it("extracts the external location reference (NDW RIS-index)", () => {
     const xml = v3Record(
       `<locationReference xsi:type="PointLocation">` +

@@ -28,7 +28,11 @@
         "country": "8",
         "table": 6,
         "version": "6.13.A",
-        "code": 21321
+        "code": 21321,
+        "direction": 0,
+        "affectedDirection": "aligned",
+        "method": 4,
+        "primaryOffsetM": 94
       },
       "admin": {
         "country": "NL"
@@ -100,7 +104,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "82ff0a6c3b8d2e2868e956d44bef71586c01379b6127da366cb0b515d282a885"
+    "contentHash": "831aadd010e1a2d6517b69f296811313b0a42df12214e5daca7b13282b5e7a32"
   },
   {
     "id": "oc:situation:nl-ndw-events:RWS01_SM1080891_D2_WWA",
@@ -132,7 +136,13 @@
         "country": "8",
         "table": 6,
         "version": "6.13.A",
-        "code": 10439
+        "code": 10439,
+        "secondary": 10436,
+        "direction": 0,
+        "affectedDirection": "aligned",
+        "method": 4,
+        "primaryOffsetM": 0,
+        "secondaryOffsetM": 850
       },
       "admin": {
         "country": "NL"
@@ -311,7 +321,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "d3638d4a39818a58fc1f896b8726c40e76ae0ce829c80e67387de04ed76b2ac6"
+    "contentHash": "357f8c2f35b9e4c192a97f3a35ea5bb11dc1d3c0f2b20660ae8317adf2884fea"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005382945",
@@ -375,7 +385,13 @@
         "country": "8",
         "table": 6,
         "version": "6.13.A",
-        "code": 8318
+        "code": 8318,
+        "secondary": 8316,
+        "direction": 0,
+        "affectedDirection": "aligned",
+        "method": 4,
+        "primaryOffsetM": 100,
+        "secondaryOffsetM": 200
       },
       "admin": {
         "country": "NL"
@@ -527,7 +543,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4565ea321ff61beec0650e4bbe2e4b0866438abd52e841b0885fb7a1bf5e1073"
+    "contentHash": "0f90b7cda28cbf388cf992c3f4956bbdb9a5bade5d5b1eb6b33f81a41a4931ca"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005406494",
@@ -599,7 +615,13 @@
         "country": "8",
         "table": 6,
         "version": "6.13.A",
-        "code": 8316
+        "code": 8316,
+        "secondary": 8318,
+        "direction": 1,
+        "affectedDirection": "aligned",
+        "method": 4,
+        "primaryOffsetM": 0,
+        "secondaryOffsetM": 0
       },
       "admin": {
         "country": "NL"
@@ -751,6 +773,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "097c290a44c5f95489e72de4ad73d5c05ac59724a6fab867dd001ab5e43ab3eb"
+    "contentHash": "997e98046bbe5425203f2bfde0424f24e206e2c8f13923d866cc431cd2567f38"
   }
 ]
