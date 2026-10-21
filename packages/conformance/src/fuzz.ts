@@ -653,7 +653,10 @@ export function draftProblems(drafts: readonly unknown[]): string[] {
         ("coordinates" in o || "geometries" in o)
       )
         out.push(...geometryProblems(o, at));
-      for (const [k, x] of Object.entries(o)) walk(x, `${at}.${k}`, k);
+      for (const [k, x] of Object.entries(o)) {
+        // A JSON-LD context maps the record's terms to IRIs; it holds no values.
+        if (k !== "@context") walk(x, `${at}.${k}`, k);
+      }
     }
   };
   for (const [i, d] of drafts.entries()) {
