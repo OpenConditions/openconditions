@@ -149,4 +149,22 @@ describe("digitraffic", () => {
     // A status without its EVSE id is malformed.
     expect(drainSkipped("fi-digitraffic-charging")).toEqual({ malformed: 1 });
   });
+
+  test("Digitraffic: a tariff without a currency is skipped as malformed, not the poll failed", () => {
+    const page = JSON.parse(ocpiFixture("digitraffic-tariffs.json").toString("utf8")) as {
+      tariffs: Record<string, unknown>[];
+    };
+    page.tariffs[0]!["currency"] = null;
+    __resetSkips();
+    const out = chargingDomain.formats["digitraffic"]!.parse(
+      catalogFeed("fi-digitraffic-charging"),
+      {
+        main: [ocpiFixture("digitraffic-locations.json")],
+        tariffs: [Buffer.from(JSON.stringify(page))],
+      },
+      parseContext(FETCHED),
+    );
+    expect(out.features).toHaveLength(5);
+    expect(drainSkipped("fi-digitraffic-charging")["malformed"]).toBe(1);
+  });
 });

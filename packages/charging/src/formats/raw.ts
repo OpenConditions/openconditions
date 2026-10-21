@@ -19,10 +19,10 @@ export const positiveNumber = (value: unknown): number | undefined => {
   return Number.isFinite(n) && n > 0 ? n : undefined;
 };
 
-/** A positive whole number written as a number or as text. */
+/** A positive whole number written as a number or as text, one a double holds exactly. */
 export const positiveInteger = (value: unknown): number | undefined => {
   const n = positiveNumber(value);
-  return n !== undefined && Number.isInteger(n) ? n : undefined;
+  return n !== undefined && Number.isSafeInteger(n) ? n : undefined;
 };
 
 /** A `[lon, lat]` the model can place: inside the globe and not the null island. */

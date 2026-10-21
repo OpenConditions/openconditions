@@ -68,7 +68,9 @@ export function parseDigitraffic(
     }
   }
   const statuses = statusesOf(feed.id, payloads["status"] ?? []);
-  const tariffs = (payloads["tariffs"] ?? []).flatMap(digitrafficTariffs);
+  const tariffs = (payloads["tariffs"] ?? []).flatMap((body) =>
+    digitrafficTariffs(body, () => recordSkipped(feed.id, "malformed")),
+  );
   return mapOcpi(feed, { locations, rejected: 0, statuses, tariffs }, ctx);
 }
 

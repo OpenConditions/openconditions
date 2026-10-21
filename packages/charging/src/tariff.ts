@@ -10,12 +10,13 @@ import {
   type ChargingFeed,
   clean,
   freshness,
+  languageOf,
   own,
   pointLocation,
   provenance,
   siteId,
   type Upstream,
-  utcInstant,
+  utcInstantOf,
   webUrl,
 } from "./records.js";
 
@@ -51,7 +52,10 @@ export function tariffKeys(ids: Iterable<string>): Map<string, string> {
 }
 
 /** A decimal string of a price, without a float's tail. */
-const money = (amount: number) => amount.toFixed(6).replace(/\.?0+$/, "");
+// `toFixed` writes an amount from 1e21 on in exponent form; a double that
+// large is a whole number, which BigInt writes out in full.
+const money = (amount: number) =>
+  Math.abs(amount) >= 1e21 ? BigInt(amount).toString() : amount.toFixed(6).replace(/\.?0+$/, "");
 
 /** What a priced unit of each component type is: a kilowatt-hour, an hour. */
 const UNITS: Readonly<Record<string, string>> = {
@@ -154,7 +158,9 @@ function elementsOf(tariff: OcpiTariff): Record<string, unknown>[] | null {
           ...(vat !== undefined && Number.isFinite(vat) && vat >= 0 && vat <= 100
             ? { vatPct: vat }
             : {}),
-          ...(step !== undefined && Number.isInteger(step) && step > 0 ? { stepSize: step } : {}),
+          ...(step !== undefined && Number.isSafeInteger(step) && step > 0
+            ? { stepSize: step }
+            : {}),
           ...(UNITS[type] === undefined ? {} : { unit: UNITS[type] }),
         },
       ];
@@ -248,13 +254,11 @@ export function tariffDraft(
   const tariffType = own(OCPI_TARIFF_TYPES, tariff.type);
   const altText = (tariff.tariff_alt_text ?? []).flatMap((t) => {
     const text = clean(t.text);
-    return text === undefined ? [] : [{ lang: clean(t.language)?.toLowerCase() ?? "und", text }];
+    return text === undefined ? [] : [{ lang: languageOf(t.language).toLowerCase(), text }];
   });
   const url = webUrl(tariff.tariff_alt_url);
-  const instant = (value: string | undefined) => {
-    const ms = value === undefined ? Number.NaN : Date.parse(value);
-    return Number.isFinite(ms) ? utcInstant(new Date(ms)) : undefined;
-  };
+  const instant = (value: string | undefined) =>
+    utcInstantOf(value === undefined ? Number.NaN : Date.parse(value));
   const start = instant(tariff.start_date_time);
   const end = instant(tariff.end_date_time);
   const energyMix = energyMixDraft(ocpiEnergyMix(tariff.energy_mix, () => {}));

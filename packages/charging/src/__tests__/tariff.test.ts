@@ -343,6 +343,51 @@ describe("tariffDraft", () => {
     ).toBeUndefined();
   });
 
+  test("a price from 1e21 on is written out in full, not in exponent form", () => {
+    const draft = offer({
+      id: "HUGE",
+      elements: [{ price_components: [{ type: "FLAT", price: 1e21 }] }],
+    });
+    expect(draft).toMatchObject({
+      elements: [{ components: [{ price: { amount: "1000000000000000000000" } }] }],
+    });
+  });
+
+  test("a step size a double does not hold exactly is not read", () => {
+    const draft = offer({
+      id: "STEP",
+      elements: [{ price_components: [{ type: "TIME", price: 2, step_size: 2 ** 53 }] }],
+    });
+    expect(draft).toMatchObject({ elements: [{ components: [{ type: "time" }] }] });
+    const [element] = (draft?.["elements"] ?? []) as { components: Record<string, unknown>[] }[];
+    expect(element?.components[0]).not.toHaveProperty("stepSize");
+  });
+
+  test("a validity time past year 9999 is not read", () => {
+    const draft = offer({
+      id: "FAR",
+      start_date_time: "+012026-10-20T10:00:00Z",
+      end_date_time: "2027-01-01T00:00:00Z",
+      elements: [{ price_components: [{ type: "ENERGY", price: 0.3 }] }],
+    });
+    expect(draft?.["validity"]).toEqual({ status: "active", end: "2027-01-01T00:00:00Z" });
+  });
+
+  test("an alternative text in a malformed language is kept as undetermined", () => {
+    const draft = offer({
+      id: "LANG",
+      tariff_alt_text: [
+        { language: "en--gb", text: "Flat fee" },
+        { language: "de", text: "Pauschal" },
+      ],
+      elements: [{ price_components: [{ type: "FLAT", price: 1 }] }],
+    });
+    expect(draft?.["altText"]).toEqual([
+      { lang: "und", text: "Flat fee" },
+      { lang: "de", text: "Pauschal" },
+    ]);
+  });
+
   test("the offer id reduces the tariff id to safe characters", () => {
     expect(tariffOfferId(FEED, "LOC1", "AC tariff/2 (€)")).toBe(
       "oc:offer:de-test-charging:LOC1:AC_tariff_2____",
