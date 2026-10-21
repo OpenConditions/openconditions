@@ -25,7 +25,7 @@ import {
   siteDraft,
   statusDraft,
   trendDraft,
-  utcInstant,
+  zonedInstant,
 } from "../site.js";
 
 /** One assignment of a site's spaces to a user group, fuel or vehicle. */
@@ -234,6 +234,12 @@ const EQUIPMENT_AREAS: readonly [RegExp, ParkingUserGroup][] = [
 
 const lower = (value: unknown) => text(value)?.toLowerCase();
 
+/** A site's assignments that are objects; a null entry assigns nothing. */
+const assignments = (site: LightSite): LightAssignment[] =>
+  Array.isArray(site.assignedFor)
+    ? site.assignedFor.filter((a) => typeof a === "object" && a !== null)
+    : [];
+
 /**
  * The site's areas: one per assignment to a user group or to charging, and
  * one per equipment line that names such spaces. A published count of 0
@@ -242,7 +248,7 @@ const lower = (value: unknown) => text(value)?.toLowerCase();
  */
 function areasOf(site: LightSite): AreaInput[] {
   const out: AreaInput[] = [];
-  for (const a of site.assignedFor ?? []) {
+  for (const a of assignments(site)) {
     const user = lower(a.user);
     const userGroup =
       entryOf(USERS, user) ??
@@ -279,7 +285,7 @@ function isParkAndRide(site: LightSite, stationId: string): boolean {
   return (
     named ||
     PARK_AND_RIDE_DATASET.test(stationId) ||
-    (site.assignedFor ?? []).some((a) => lower(a.user) === "parkandrideusers")
+    assignments(site).some((a) => lower(a.user) === "parkandrideusers")
   );
 }
 
@@ -315,7 +321,7 @@ function siteInput(
   const address = text(site.locationAndDimension?.locationDescriptor);
   const street = text(site.locationAndDimension?.roadName);
   const accessNotes = lines(site.locationAndDimension?.specificAccessInformation);
-  const customers = (site.assignedFor ?? []).some((a) => lower(a.user) === "customers");
+  const customers = assignments(site).some((a) => lower(a.user) === "customers");
   const equipment = lines(site.equipmentAndServices).flatMap((line) =>
     EQUIPMENT.filter(([pattern]) => pattern.test(line)).map(([, meaning]) => meaning),
   );
@@ -383,7 +389,7 @@ function unreadValues(site: LightSite): number {
   const trend = lower(site.occupancyTrend);
   return [
     type !== undefined && !Object.hasOwn(TYPES, type),
-    ...(site.assignedFor ?? []).map((a) => {
+    ...assignments(site).map((a) => {
       const user = lower(a.user);
       return user !== undefined && !KNOWN_USERS.has(user);
     }),
@@ -415,10 +421,7 @@ function readingsOf(
   return out.filter((d): d is RecordDraft => d !== undefined);
 }
 
-const instant = (value: unknown): string | undefined => {
-  const t = text(value);
-  return t !== undefined && Number.isFinite(Date.parse(t)) ? utcInstant(new Date(t)) : undefined;
-};
+const instant = (value: unknown): string | undefined => zonedInstant(text(value));
 
 /** The sites of a body and its publication time: the light publication, or a bare array. */
 function sitesOf(body: Buffer): { sites: LightSite[]; publishedAt?: string } {
@@ -457,6 +460,10 @@ export function parseDatex2Light(
   for (const body of payloads["main"] ?? []) {
     const { sites, publishedAt } = sitesOf(body);
     for (const site of sites) {
+      if (typeof site !== "object" || site === null) {
+        malformed++;
+        continue;
+      }
       const stationId = text(site.id) ?? text(site.externalId);
       const point = pointOf(site.locationAndDimension?.coordinatesForDisplay);
       if (stationId === undefined) {

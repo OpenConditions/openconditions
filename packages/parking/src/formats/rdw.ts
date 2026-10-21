@@ -7,7 +7,7 @@ import {
 } from "@openconditions/ingest-framework";
 import type { ParkingSiteType } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { type AreaInput, entryOf, type SiteInput, siteDraft } from "../site.js";
+import { type AreaInput, entryOf, lonLat, type SiteInput, siteDraft } from "../site.js";
 
 /** One row of SPECIFICATIES PARKEERGEBIED (`b3us-f26s`); every value is a string. */
 interface RdwSpecs {
@@ -93,7 +93,7 @@ function pointOf(area: RdwArea): [number, number] | "no_geometry" | "malformed" 
   const lat = Number.parseFloat(latText);
   const lon = Number.parseFloat(lonText);
   if (!Number.isFinite(lat) || !Number.isFinite(lon)) return "malformed";
-  return lat === 0 && lon === 0 ? "no_geometry" : [lon, lat];
+  return lat === 0 && lon === 0 ? "no_geometry" : (lonLat(lon, lat) ?? "malformed");
 }
 
 const isRow = (row: unknown): boolean => typeof row === "object" && row !== null;

@@ -187,6 +187,31 @@ describe("datex2-light", () => {
     expect(drainSkipped(mobidromFeed().id)).toEqual({ unknown_value: 3 });
   });
 
+  test("DATEX Light: a null site is malformed and a null assignment assigns nothing", () => {
+    drainSkipped(mobidromFeed().id);
+    const out = parse(
+      mobidromFeed(),
+      Buffer.from(JSON.stringify([null, bean({ assignedFor: [null, { user: "disabled" }] })])),
+    );
+    expect(out.features).toHaveLength(1);
+    expect(drainSkipped(mobidromFeed().id)).toEqual({ malformed: 1 });
+  });
+
+  test("DATEX Light: a last update without a zone gives way to the publication time", () => {
+    const out = parse(
+      mobidromFeed(),
+      Buffer.from(
+        JSON.stringify({
+          parkingPublicationLight: {
+            publicationTime: "2026-10-05T03:29:00Z",
+            parkingSite: [bean({ lastUpdate: "2026-03-29T02:30:00", availableSpaces: 3 })],
+          },
+        }),
+      ),
+    );
+    expect(out.observations[0]?.["phenomenonTime"]).toEqual({ instant: "2026-10-05T03:29:00Z" });
+  });
+
   test("DATEX Light: a [lat, lon] record is read the right way round", () => {
     const point = site(parkride(), "park-and-ride-vrr-1201")?.["location"] as {
       geometry: { coordinates: number[] };

@@ -239,6 +239,30 @@ describe("sbb skips", () => {
     expect(drainSkipped(sbbFeed().id)).toEqual({ unknown_value: 1 });
   });
 
+  test("SBB: a point off the globe is malformed; null capacities, segments and geometries name nothing", () => {
+    const point = { type: "Point", coordinates: [7.4, 46.9] };
+    const out = parse(
+      collection([
+        car("H", { type: "Point", coordinates: [7.4, 146.9] }),
+        {
+          ...car("I", { type: "GeometryCollection", geometries: [null, point] }, [
+            null,
+            { categoryType: "STANDARD", total: 10 },
+          ]),
+          properties: {
+            parkingFacilityCategory: "CAR",
+            displayName: "I",
+            capacities: [null, { categoryType: "STANDARD", total: 10 }],
+            pricingModel: { priceSegments: [null] },
+          },
+        },
+      ]),
+    );
+    expect(out.features.map((f) => String(f["id"]).split(":").pop())).toEqual(["I"]);
+    expect(areas(out, "I")).toEqual([["car:any", 10]]);
+    expect(drainSkipped(sbbFeed().id)).toEqual({ malformed: 1 });
+  });
+
   test("SBB: the fixture skips nothing", () => {
     parse();
     expect(drainSkipped(sbbFeed().id)).toEqual({});

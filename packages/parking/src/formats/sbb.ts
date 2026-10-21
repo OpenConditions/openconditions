@@ -11,9 +11,11 @@ import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
   entryOf,
+  lonLat,
   occupancyPctDraft,
   type RateRow,
   rateDraft,
+  readRecord,
   type SiteInput,
   siteDraft,
 } from "../site.js";
@@ -103,10 +105,11 @@ const finite = (v: unknown): v is number => typeof v === "number" && Number.isFi
 function pointOf(feature: SbbFeature): [number, number] | "no_geometry" | "malformed" {
   const g = feature.geometry;
   const points =
-    g?.type === "Point" ? [g] : (g?.geometries ?? []).filter((p) => p.type === "Point");
+    g?.type === "Point" ? [g] : (g?.geometries ?? []).filter((p) => p?.type === "Point");
   for (const p of points) {
     const c = p.coordinates;
-    if (Array.isArray(c) && c.length >= 2 && finite(c[0]) && finite(c[1])) return [c[0], c[1]];
+    const point = Array.isArray(c) ? lonLat(c[0], c[1]) : undefined;
+    if (point !== undefined) return point;
   }
   return points.some((p) => p.coordinates !== undefined && p.coordinates !== null)
     ? "malformed"
@@ -169,8 +172,8 @@ function websiteOf(cta: SbbProperties["callToAction"]): string | undefined {
 
 function areasOf(p: SbbProperties): AreaInput[] {
   return (p.capacities ?? []).flatMap((c) => {
-    const userGroup = entryOf(CATEGORIES, c.categoryType);
-    const total = c.total;
+    const userGroup = entryOf(CATEGORIES, c?.categoryType);
+    const total = c?.total;
     return userGroup !== undefined && finite(total) && Number.isInteger(total) && total > 0
       ? [{ vehicleType: "car" as const, userGroup, capacity: total }]
       : [];
@@ -180,7 +183,7 @@ function areasOf(p: SbbProperties): AreaInput[] {
 /** The facility's area, where its geometry draws one beside its point. */
 function outlineOf(feature: SbbFeature): SiteInput["outline"] {
   const area = (feature.geometry?.geometries ?? []).find(
-    (g) => g.type === "Polygon" || g.type === "MultiPolygon",
+    (g) => g?.type === "Polygon" || g?.type === "MultiPolygon",
   );
   return area === undefined ? undefined : { geometry: area };
 }
@@ -252,7 +255,7 @@ function rowsOf(pricing: SbbProperties["pricingModel"]): RateRow[] {
   const segments =
     finite(increment) && increment > 0
       ? (pricing.priceSegments ?? [])
-          .filter((s) => finite(s.startingFrom) && finite(s.price))
+          .filter((s) => finite(s?.startingFrom) && finite(s?.price))
           .sort((x, y) => (x.startingFrom as number) - (y.startingFrom as number))
       : [];
   // Each segment's price per increment holds from its start until the next segment starts.
@@ -340,27 +343,34 @@ export function parseSbb(
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      const point = pointOf(feature);
-      if (!Array.isArray(point)) {
-        recordSkipped(feed.id, point);
-        continue;
-      }
-      recordSkipped(feed.id, "unknown_value", unknownCategories(p));
-      out.features.push(siteDraft(feed, siteInput(feature, p, stationId, point), ctx.fetchedAt));
-      const rate = rateDraft(feed, stationId, 1, {
-        currency: "CHF",
-        rows: rowsOf(p.pricingModel),
-        point,
-        fetchedAt: ctx.fetchedAt,
-      });
-      if (rate !== undefined) out.offers.push(rate);
-      const share = p.currentEstimatedOccupancy;
-      if (finite(share)) {
-        const pct = Number((share * 100).toPrecision(12));
-        const reading = { stationId, at: ctx.fetchedAt, point, pct, validForSec: ESTIMATE_SEC };
-        const draft: RecordDraft | undefined = occupancyPctDraft(feed, reading, ctx);
-        if (draft !== undefined) out.observations.push(draft);
-      }
+      readRecord(
+        feed.id,
+        () => {
+          const point = pointOf(feature);
+          if (!Array.isArray(point)) {
+            recordSkipped(feed.id, point);
+            return;
+          }
+          const site = siteDraft(feed, siteInput(feature, p, stationId, point), ctx.fetchedAt);
+          const rate = rateDraft(feed, stationId, 1, {
+            currency: "CHF",
+            rows: rowsOf(p.pricingModel),
+            point,
+            fetchedAt: ctx.fetchedAt,
+          });
+          recordSkipped(feed.id, "unknown_value", unknownCategories(p));
+          out.features.push(site);
+          if (rate !== undefined) out.offers.push(rate);
+          const share = p.currentEstimatedOccupancy;
+          if (finite(share)) {
+            const pct = Number((share * 100).toPrecision(12));
+            const reading = { stationId, at: ctx.fetchedAt, point, pct, validForSec: ESTIMATE_SEC };
+            const draft: RecordDraft | undefined = occupancyPctDraft(feed, reading, ctx);
+            if (draft !== undefined) out.observations.push(draft);
+          }
+        },
+        out,
+      );
     }
   }
   return out;

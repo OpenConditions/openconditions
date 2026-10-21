@@ -161,6 +161,18 @@ describe("tfnsw skips", () => {
     expect(drainSkipped(tfnswFeed().id)).toEqual({ malformed: 2 });
   });
 
+  test("TfNSW: a coordinate off the globe is malformed, not a site placed there", () => {
+    const off = { ...facility([]), location: { latitude: "-95.5", longitude: "150.90" } };
+    expect(parse(json([off])).features).toEqual([]);
+    expect(drainSkipped(tfnswFeed().id)).toEqual({ malformed: 1 });
+  });
+
+  test("TfNSW: a MessageDate with a six-digit year is an unknown value", () => {
+    const out = parse(json([{ ...facility([]), MessageDate: "+012026-10-20T10:00:00Z" }]));
+    expect(out.observations[0]?.["phenomenonTime"]).toEqual({ instant: FETCHED });
+    expect(drainSkipped(tfnswFeed().id)).toEqual({ unknown_value: 1 });
+  });
+
   test("TfNSW: an unreadable MessageDate is an unknown value, the reading dated at the poll", () => {
     const out = parse(json([{ ...facility([]), MessageDate: "yesterday" }]));
     expect(out.observations[0]?.["phenomenonTime"]).toEqual({ instant: FETCHED });

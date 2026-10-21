@@ -1,17 +1,23 @@
+import { __resetSkips, drainSkipped, type RecordDraft } from "@openconditions/ingest-framework";
 import { type LinkableFeature, proposeLink } from "@openconditions/model";
 import { PARKING_KINDS } from "@openconditions/model-parking";
 import { describe, expect, test } from "vitest";
 import {
   availableDraft,
+  instantIn,
+  lonLat,
   occupancyDrafts,
   occupancyPctDraft,
   occupiedDraft,
   type ParkingFeed,
   rateDraft,
+  readRecord,
   type SiteInput,
   siteDraft,
   statusDraft,
   trendDraft,
+  validCount,
+  zonedInstant,
 } from "../site.js";
 import { baselFeed, bnlsFeed, parseContext, viennaFeed } from "./helpers/parking-feed.js";
 import { sealFailures } from "./helpers/seal.js";
@@ -409,5 +415,83 @@ describe("rateDraft", () => {
         fetchedAt: FETCHED,
       }),
     ).toBeUndefined();
+  });
+
+  test("a price too large to write in decimals and a step past the safe integers are left out", () => {
+    expect(
+      rateDraft(bnlsFeed(), "1", 1, {
+        currency: "EUR",
+        rows: [{ amount: 2e142 }],
+        fetchedAt: FETCHED,
+      }),
+    ).toBeUndefined();
+    const rate = rateDraft(bnlsFeed(), "1", 1, {
+      currency: "EUR",
+      rows: [{ amount: 2, component: "parking_time", stepSizeSec: 1e265 }],
+      fetchedAt: FETCHED,
+    })!;
+    expect(rate["elements"]).toEqual([
+      { components: [{ type: "parking_time", price: { amount: "2.00", currency: "EUR" } }] },
+    ]);
+    expect(sealFailures([rate])).toEqual([]);
+  });
+});
+
+describe("values past what a draft can hold", () => {
+  test("a count or level count past the safe integers is no count", () => {
+    expect(validCount(1e308)).toBe(false);
+    expect(validCount(Number.MAX_SAFE_INTEGER)).toBe(true);
+    const site = siteDraft(viennaFeed(), { ...SITE, capacityTotal: 1e308, levels: 3e43 }, FETCHED);
+    expect(site["details"]).not.toHaveProperty("capacityTotal");
+    expect(site["details"]).not.toHaveProperty("levels");
+    expect(sealFailures([site])).toEqual([]);
+  });
+
+  test("a position off the globe is none", () => {
+    expect(lonLat(8.4, 49)).toEqual([8.4, 49]);
+    expect(lonLat(8.4, 180.0000001)).toBeUndefined();
+    expect(lonLat(-977133835, 49)).toBeUndefined();
+    expect(lonLat(Number.NaN, 49)).toBeUndefined();
+  });
+
+  test("a time with a six-digit year or without a zone is no instant", () => {
+    expect(instantIn("Europe/Vienna", "+012026-10-20T10:00:00Z")).toBeUndefined();
+    expect(zonedInstant("+012026-10-20T10:00:00Z")).toBeUndefined();
+    expect(zonedInstant("2026-03-29T02:30:00")).toBeUndefined();
+    expect(zonedInstant("2026-10-05T05:30:00+0200")).toBe("2026-10-05T03:30:00Z");
+  });
+
+  test("a reading whose validity would end past the year 9999 is none", () => {
+    const late = { stationId: "1", at: "9999-12-31T23:59:59Z", pct: 40 };
+    expect(occupancyPctDraft(baselFeed(), late, ctx)).toBeUndefined();
+  });
+
+  test("a site id with a line break is percent-encoded into a record id the model accepts", () => {
+    const site = siteDraft(baselFeed(), { ...SITE, stationId: "22\r\n6" }, FETCHED);
+    expect(site["id"]).toBe("oc:feature:ch-bs-basel-parking:22%0D%0A6");
+    expect(sealFailures([site])).toEqual([]);
+  });
+});
+
+describe("readRecord", () => {
+  test("a record whose field has another JSON type is counted malformed and leaves nothing", () => {
+    __resetSkips();
+    const out = { features: [] as RecordDraft[], observations: [] as RecordDraft[], offers: [] };
+    readRecord(
+      "f",
+      () => {
+        out.features.push({ id: "half" });
+        (42 as unknown as string).trim();
+      },
+      out,
+    );
+    readRecord("f", () => out.features.push({ id: "whole" }), out);
+    expect(out.features).toEqual([{ id: "whole" }]);
+    expect(drainSkipped("f")).toEqual({ malformed: 1 });
+    expect(() =>
+      readRecord("f", () => {
+        throw new Error("not a record's shape");
+      }),
+    ).toThrow("not a record's shape");
   });
 });

@@ -205,6 +205,25 @@ describe("db-bahnpark skips", () => {
     expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ unknown_value: 3 });
   });
 
+  test("DB BahnPark: a point off the globe is malformed; null names, prices and capacities name nothing", () => {
+    const base = facility([{ duration: "1hour", price: 2 }]);
+    const out = parse(
+      json([
+        { ...facility([]), id: "off", address: { location: { latitude: 50.1, longitude: 180.5 } } },
+        {
+          ...base,
+          name: [null, ...base.name],
+          tariff: { prices: [null, ...base.tariff.prices] },
+          capacity: [null, { type: "PARKING", total: 40 }],
+        },
+      ]),
+    );
+    expect(out.features.map((f) => String(f["id"]).split(":").pop())).toEqual(["500"]);
+    expect(out.features[0]?.["name"]).toEqual([{ lang: "de", text: "Test P1" }]);
+    expect(rows(out)).toEqual([["2.00", { value: 1, unit: "h" }, undefined]]);
+    expect(drainSkipped(dbBahnparkFeed().id)).toEqual({ malformed: 1 });
+  });
+
   test("DB BahnPark: the sample skips nothing", () => {
     sample();
     expect(drainSkipped(dbBahnparkFeed().id)).toEqual({});

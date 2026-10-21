@@ -29,13 +29,14 @@ import {
   type AreaInput,
   areaKey,
   entryOf,
+  lonLat,
   occupancyDrafts,
   type ReadingInput,
   type SiteInput,
   siteDraft,
   statusDraft,
-  utcInstant,
   validCount,
+  zonedInstant,
 } from "../site.js";
 
 /**
@@ -179,9 +180,16 @@ function items<T>(body: Buffer): T[] {
   return list as T[];
 }
 
+/** A site's external identifiers that are objects; a null entry names nothing. */
+function externalIdentifiers(site: ParkApiSite): { type?: string; value?: string }[] {
+  return Array.isArray(site.external_identifiers)
+    ? site.external_identifiers.filter((e) => typeof e === "object" && e !== null)
+    : [];
+}
+
 /** An OpenStreetMap element a site names as itself, as a linking id. */
 function osmIds(site: ParkApiSite): ExternalId[] {
-  return (site.external_identifiers ?? []).flatMap((e) => {
+  return externalIdentifiers(site).flatMap((e) => {
     if (e.type !== "OSM" || typeof e.value !== "string") return [];
     const [, type, id] = e.value.match(/openstreetmap\.org\/(node|way|relation)\/(\d+)/) ?? [];
     return type && id ? [{ scheme: `osm:${type}`, id }] : [];
@@ -356,7 +364,7 @@ function unreadValues(site: ParkApiSite): number {
     unread(PARKAPI_SIDES, site.side),
     unread(PARKAPI_KERB_POSITIONS, site.parking_type),
     unread(PARKAPI_LINE_POSITIONS, site.linear_parking_position),
-    ...(site.external_identifiers ?? []).map((e) => !EXTERNAL_ID_TYPES.has(e.type ?? "")),
+    ...externalIdentifiers(site).map((e) => !EXTERNAL_ID_TYPES.has(e.type ?? "")),
     ...restrictionsOf(site).map(
       (r) => r.type !== undefined && !Object.hasOwn(PARKAPI_RESTRICTION_AREAS, r.type),
     ),
@@ -365,7 +373,7 @@ function unreadValues(site: ParkApiSite): number {
 
 /** The stops a site names by their DHID, the German form of an IFOPT id. */
 function stopsOf(site: ParkApiSite): ExternalId[] {
-  return (site.external_identifiers ?? []).flatMap((e) =>
+  return externalIdentifiers(site).flatMap((e) =>
     e.type === "DHID" && typeof e.value === "string" && e.value.trim() !== ""
       ? [{ scheme: "ifopt", id: e.value.trim() }]
       : [],
@@ -391,26 +399,46 @@ function upstreamOf(
   const publisher = text(source?.attribution_contributor) ?? text(source?.name);
   if (publisher === undefined) return undefined;
   const written = text(source?.attribution_license);
-  const license = written === undefined ? undefined : licenseId(written);
+  const id = written === undefined ? undefined : licenseId(written);
+  // A licence the model cannot hold (more than 1000 characters of text) is left out.
+  const license = id !== undefined && id.length <= 1000 ? id : undefined;
+  if (id !== undefined && license === undefined) recordSkipped(feed.id, "unknown_value");
   const licenseUrl = webUrl(source?.attribution_url);
   const recordId = text(site.original_uid);
+  const licensing =
+    licenseUrl === undefined ? undefined : licensingOf(feed, publisher, license, licenseUrl);
   return [
     {
       publisher,
       ...(recordId === undefined ? {} : { recordId }),
       ...(license === undefined ? {} : { license }),
-      ...(licenseUrl === undefined
-        ? {}
-        : {
-            licensing: captureLicensing({
-              id: feed.id,
-              name: publisher,
-              license: license ?? "NOASSERTION",
-              licenseUrl,
-            }),
-          }),
+      ...(licensing === undefined ? {} : { licensing }),
     },
   ];
+}
+
+/**
+ * The licensing record of an upstream source with a licence page; undefined,
+ * and counted as unread, when the model cannot hold it (a publisher name
+ * longer than its 1000 characters), so one source cannot fail the poll.
+ */
+function licensingOf(
+  feed: ParkingCatalogFeed,
+  publisher: string,
+  license: string | undefined,
+  licenseUrl: string,
+) {
+  try {
+    return captureLicensing({
+      id: feed.id,
+      name: publisher,
+      license: license ?? "NOASSERTION",
+      licenseUrl,
+    });
+  } catch {
+    recordSkipped(feed.id, "unknown_value");
+    return undefined;
+  }
 }
 
 function siteInput(
@@ -520,11 +548,11 @@ function readingsOf(
   areas: readonly RestrictionArea[],
 ): RecordDraft[] {
   if (site.has_realtime_data === false) return [];
-  const updated = site.realtime_data_updated_at;
-  if (updated === undefined || !Number.isFinite(Date.parse(updated))) return [];
+  const updated = zonedInstant(site.realtime_data_updated_at);
+  if (updated === undefined) return [];
   const reading: ReadingInput = {
     stationId,
-    at: utcInstant(new Date(updated)),
+    at: updated,
     point,
     ...(upstream === undefined ? {} : { upstream }),
   };
@@ -575,7 +603,7 @@ const idOf = (value: unknown) =>
 function pointOf(record: { lat?: unknown; lon?: unknown }): [number, number] | undefined {
   const lon = coordinate(record.lon);
   const lat = coordinate(record.lat);
-  return lon === undefined || lat === undefined ? undefined : [lon, lat];
+  return lonLat(lon, lat);
 }
 
 /** A placed car bay of the spots payload. */
@@ -635,15 +663,15 @@ function spaceReadings(
   upstream: SiteInput["upstream"],
 ): RecordDraft[] {
   const state = spot.realtime_status;
-  const updated = spot.realtime_data_updated_at;
+  const updated = zonedInstant(spot.realtime_data_updated_at);
   if (spot.has_realtime_data === false || typeof state !== "string") return [];
-  if (updated === undefined || !Number.isFinite(Date.parse(updated))) return [];
+  if (updated === undefined) return [];
   const meaning = Object.hasOwn(SPOT_STATES, state) ? SPOT_STATES[state] : undefined;
   if (meaning === undefined) return [];
   const reading: ReadingInput = {
     stationId,
     spaceKey: spaceKey(id),
-    at: utcInstant(new Date(updated)),
+    at: updated,
     point,
     ...(upstream === undefined ? {} : { upstream }),
   };
@@ -710,7 +738,9 @@ export function parseParkApiV3(
   const byId = new Map<number, ParkApiSource>();
   const byUid = new Map<string, ParkApiSource>();
   for (const body of sources) {
-    for (const source of items<ParkApiSource>(body)) {
+    for (const source of items<ParkApiSource | null>(body)) {
+      // An entry that is no object names no source to credit.
+      if (typeof source !== "object" || source === null) continue;
       if (typeof source.id === "number") byId.set(source.id, source);
       if (typeof source.uid === "string") byUid.set(source.uid, source);
     }

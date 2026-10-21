@@ -8,7 +8,15 @@ import {
 } from "@openconditions/ingest-framework";
 import type { ParkingLayout, ParkingUserGroup } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { type AreaInput, instantIn, occupancyDrafts, type SiteInput, siteDraft } from "../site.js";
+import {
+  type AreaInput,
+  instantIn,
+  lonLat,
+  occupancyDrafts,
+  readRecord,
+  type SiteInput,
+  siteDraft,
+} from "../site.js";
 
 /** One `ParkingStation` of the Open Data Hub mobility API's flat view. */
 interface OdhStation {
@@ -228,24 +236,26 @@ function countsOf(
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      const [, kind, group = ""] = (m.tname ?? "").match(MEASUREMENT) ?? [];
-      if (kind !== "free" && kind !== "occupied") continue;
-      const scode = text(m.scode);
-      const at = instantIn(TIME_ZONE, m.mvalidtime);
-      if (scode === undefined || at === undefined || !finite(m.mvalue)) {
-        recordSkipped(feed.id, "malformed");
-        continue;
-      }
-      if (Date.parse(at) < oldest) continue;
-      const counts = out.get(scode) ?? { groups: new Map(), measured: 0 };
-      counts.measured++;
-      const own = counts.groups.get(group) ?? {};
-      const held = own[kind];
-      if (held === undefined || Date.parse(at) > Date.parse(held.at)) {
-        own[kind] = { value: m.mvalue, at };
-      }
-      counts.groups.set(group, own);
-      out.set(scode, counts);
+      readRecord(feed.id, () => {
+        const [, kind, group = ""] = (text(m.tname) ?? "").match(MEASUREMENT) ?? [];
+        if (kind !== "free" && kind !== "occupied") return;
+        const scode = text(m.scode);
+        const at = instantIn(TIME_ZONE, m.mvalidtime);
+        if (scode === undefined || at === undefined || !finite(m.mvalue)) {
+          recordSkipped(feed.id, "malformed");
+          return;
+        }
+        if (Date.parse(at) < oldest) return;
+        const counts = out.get(scode) ?? { groups: new Map(), measured: 0 };
+        counts.measured++;
+        const own = counts.groups.get(group) ?? {};
+        const held = own[kind];
+        if (held === undefined || Date.parse(at) > Date.parse(held.at)) {
+          own[kind] = { value: m.mvalue, at };
+        }
+        counts.groups.set(group, own);
+        out.set(scode, counts);
+      });
     }
   }
   return out;
@@ -302,7 +312,9 @@ function pointOf(station: OdhStation): [number, number] | "no_geometry" | "malfo
   const absent = (v: unknown) => v === undefined || v === null;
   if (absent(c?.x) || absent(c?.y)) return "no_geometry";
   if (!finite(c?.x) || !finite(c?.y)) return "malformed";
-  return c.srid === undefined || c.srid === 4326 ? [c.x, c.y] : "no_geometry";
+  return c.srid === undefined || c.srid === 4326
+    ? (lonLat(c.x, c.y) ?? "malformed")
+    : "no_geometry";
 }
 
 /**
@@ -337,23 +349,29 @@ export function parseOpendatahub(
         continue;
       }
       named.add(stationId);
-      const point = pointOf(station);
-      if (!Array.isArray(point)) {
-        recordSkipped(feed.id, point);
-        continue;
-      }
-      if (seen.has(stationId)) continue;
-      seen.add(stationId);
-      const layout = text(station.smetadata?.netex_parking?.layout)?.toLowerCase();
-      if (layout !== undefined && !NETEX_LAYOUTS.has(layout)) {
-        recordSkipped(feed.id, "unknown_value");
-      }
-      const input = siteInput(feed, station, stationId, point);
-      out.features.push(siteDraft(feed, input, ctx.fetchedAt));
-      const live = counts.get(stationId);
-      if (live !== undefined) {
-        out.observations.push(...readingsOf(feed, stationId, point, input, live, ctx));
-      }
+      readRecord(
+        feed.id,
+        () => {
+          const point = pointOf(station);
+          if (!Array.isArray(point)) {
+            recordSkipped(feed.id, point);
+            return;
+          }
+          if (seen.has(stationId)) return;
+          seen.add(stationId);
+          const layout = text(station.smetadata?.netex_parking?.layout)?.toLowerCase();
+          if (layout !== undefined && !NETEX_LAYOUTS.has(layout)) {
+            recordSkipped(feed.id, "unknown_value");
+          }
+          const input = siteInput(feed, station, stationId, point);
+          out.features.push(siteDraft(feed, input, ctx.fetchedAt));
+          const live = counts.get(stationId);
+          if (live !== undefined) {
+            out.observations.push(...readingsOf(feed, stationId, point, input, live, ctx));
+          }
+        },
+        out,
+      );
     }
   }
   for (const [scode, c] of counts) {

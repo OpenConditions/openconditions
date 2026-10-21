@@ -6,7 +6,7 @@ import {
   recordSkipped,
 } from "@openconditions/ingest-framework";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { instantIn, occupancyDrafts, type SiteInput, siteDraft } from "../site.js";
+import { instantIn, lonLat, occupancyDrafts, type SiteInput, siteDraft } from "../site.js";
 
 /** One car park of `/v1/carpark/full-list`, in the per-facility shape of the API documentation §2.1.5. */
 interface NswFacility {
@@ -47,7 +47,7 @@ function pointOf(f: NswFacility): [number, number] | "no_geometry" | "malformed"
   if (latText === undefined || lonText === undefined) return "no_geometry";
   const lat = Number.parseFloat(latText);
   const lon = Number.parseFloat(lonText);
-  return Number.isFinite(lat) && Number.isFinite(lon) ? [lon, lat] : "malformed";
+  return lonLat(lon, lat) ?? "malformed";
 }
 
 /** The car parks of a body: a bare array. */
