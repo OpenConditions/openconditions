@@ -425,8 +425,8 @@
             "daynight",
             "scan",
             "track",
-            "frpUncertaintyMW",
-            "channel"
+            "channel",
+            "version"
           ],
           "license": "LicenseRef-Copernicus-Sentinel-Data",
           "licenseUrl": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
@@ -618,7 +618,7 @@
           "tier": "authoritative",
           "endpoints": {
             "perimeters": {
-              "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_FireCause,attr_FireCauseGeneral&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
+              "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_POOFips,attr_FireCause,attr_FireCauseGeneral,attr_FireBehaviorGeneral,attr_FireBehaviorGeneral1,attr_FireBehaviorGeneral2,attr_FireBehaviorGeneral3,attr_IncidentShortDescription,attr_CpxID&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
               "pagination": {
                 "skipParam": "resultOffset",
                 "pageSize": 2000,
@@ -628,7 +628,7 @@
               "cadenceSec": 600
             },
             "incidents": {
-              "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,FireCause,FireCauseGeneral&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
+              "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,POOFips,FireCause,FireCauseGeneral,FireBehaviorGeneral,FireBehaviorGeneral1,FireBehaviorGeneral2,FireBehaviorGeneral3,IncidentShortDescription,CpxID&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
               "pagination": {
                 "skipParam": "resultOffset",
                 "pageSize": 2000,
@@ -1246,8 +1246,8 @@
         "daynight",
         "scan",
         "track",
-        "frpUncertaintyMW",
-        "channel"
+        "channel",
+        "version"
       ],
       "license": "LicenseRef-Copernicus-Sentinel-Data",
       "licenseUrl": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
@@ -1512,7 +1512,7 @@
       "tier": "authoritative",
       "endpoints": {
         "perimeters": {
-          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_FireCause,attr_FireCauseGeneral&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
+          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Interagency_Perimeters_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,poly_IncidentName,poly_GISAcres,poly_DateCurrent,poly_PolygonDateTime,poly_IRWINID,poly_FeatureCategory,poly_MapMethod,attr_IrwinID,attr_UniqueFireIdentifier,attr_IncidentName,attr_IncidentTypeCategory,attr_IncidentTypeKind,attr_IncidentSize,attr_PercentContained,attr_FireDiscoveryDateTime,attr_ContainmentDateTime,attr_ControlDateTime,attr_FireOutDateTime,attr_ModifiedOnDateTime_dt,attr_POOState,attr_POOCounty,attr_POOFips,attr_FireCause,attr_FireCauseGeneral,attr_FireBehaviorGeneral,attr_FireBehaviorGeneral1,attr_FireBehaviorGeneral2,attr_FireBehaviorGeneral3,attr_IncidentShortDescription,attr_CpxID&outSR=4326&f=geojson&geometryPrecision=5&maxAllowableOffset=0.0001&orderByFields=OBJECTID&resultRecordCount=2000",
           "pagination": {
             "skipParam": "resultOffset",
             "pageSize": 2000,
@@ -1522,7 +1522,7 @@
           "cadenceSec": 600
         },
         "incidents": {
-          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,FireCause,FireCauseGeneral&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
+          "url": "https://services3.arcgis.com/T4QMspbfLg3qTGWY/arcgis/rest/services/WFIGS_Incident_Locations_Current/FeatureServer/0/query?where=1%3D1&outFields=OBJECTID,IrwinID,UniqueFireIdentifier,IncidentName,IncidentTypeCategory,IncidentTypeKind,IncidentSize,PercentContained,FireDiscoveryDateTime,ContainmentDateTime,ControlDateTime,FireOutDateTime,ModifiedOnDateTime_dt,POOState,POOCounty,POOFips,FireCause,FireCauseGeneral,FireBehaviorGeneral,FireBehaviorGeneral1,FireBehaviorGeneral2,FireBehaviorGeneral3,IncidentShortDescription,CpxID&outSR=4326&f=geojson&orderByFields=OBJECTID&resultRecordCount=2000",
           "pagination": {
             "skipParam": "resultOffset",
             "pageSize": 2000,

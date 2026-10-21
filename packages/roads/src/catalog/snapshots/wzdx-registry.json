@@ -294,27 +294,6 @@
     "selectionState": "discovered"
   },
   {
-    "qualifier": "d16873081377dbe4",
-    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
-    "endpoints": {
-      "main": {
-        "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
-        "cadenceSec": 300
-      }
-    },
-    "snapshot": {
-      "completeness": "complete",
-      "recordsPath": "features"
-    },
-    "license": "NOASSERTION",
-    "attribution": "Kentucky Transportation Cabinet",
-    "terms": {
-      "reviewedAt": "2026-09-11",
-      "note": "WZDx registry metadata (no dataset grant verified)"
-    },
-    "selectionState": "discovered"
-  },
-  {
     "qualifier": "e59bcc8615abf686",
     "name": "WZDx — New Jersey Institute of Technology (new jersey)",
     "endpoints": {
@@ -329,6 +308,27 @@
     },
     "license": "NOASSERTION",
     "attribution": "New Jersey Institute of Technology",
+    "terms": {
+      "reviewedAt": "2026-09-11",
+      "note": "WZDx registry metadata (no dataset grant verified)"
+    },
+    "selectionState": "discovered"
+  },
+  {
+    "qualifier": "d16873081377dbe4",
+    "name": "WZDx — Kentucky Transportation Cabinet (kentucky)",
+    "endpoints": {
+      "main": {
+        "url": "https://storage.googleapis.com/kytc-its-2020-openrecords/public/feeds/WZDx/kytc_wzdx_v4.1.geojson",
+        "cadenceSec": 300
+      }
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "license": "NOASSERTION",
+    "attribution": "Kentucky Transportation Cabinet",
     "terms": {
       "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
@@ -418,6 +418,7 @@
       "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
+    "speedUnit": "km/h",
     "selectionState": "discovered"
   },
   {
