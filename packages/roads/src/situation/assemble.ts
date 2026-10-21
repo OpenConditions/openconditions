@@ -1,6 +1,7 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import {
   type Effect,
+  Iso8601,
   localDateInZone,
   localTimeInZone,
   type Schedule,
@@ -82,13 +83,16 @@ const EXTERNAL_ID_SCHEME: Record<string, string> = {
 
 /**
  * An instant with a zone designator, or undefined when the value is not one.
- * A value with a designator is kept as written; one without is read in the
- * publisher's `timeZone`, else as UTC.
+ * A value the model reads as an instant is kept as written; any other is
+ * read in the publisher's `timeZone`, else as UTC, so a time without
+ * seconds is completed and one past the clock (hour 25), or past year 9999,
+ * is none.
  */
 function instant(value: string | null | undefined, timeZone?: string): string | undefined {
   if (!value) return undefined;
-  if (/T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?(?:Z|[+-]\d{2}:\d{2})$/.test(value)) return value;
-  return toIsoTimestamp(value, timeZone);
+  if (Iso8601.safeParse(value).success) return value;
+  const read = toIsoTimestamp(value, timeZone);
+  return read !== undefined && Iso8601.safeParse(read).success ? read : undefined;
 }
 
 /** {@link instant} in epoch milliseconds; NaN when the value is not one. */
@@ -98,6 +102,13 @@ function localIdOf(event: SnapshotEvent): string {
   const prefix = `${event.source}:`;
   return event.id.startsWith(prefix) ? event.id.slice(prefix.length) : event.id;
 }
+
+/**
+ * The record id of a source's situation by its local id. A line break, which
+ * a record id cannot hold, is written percent-encoded.
+ */
+const situationIdOf = (source: SourceDescriptor, localId: string) =>
+  `oc:situation:${source.id}:${localId.replace(/[\n\r\p{Zl}\p{Zp}]/gu, encodeURIComponent)}`;
 
 /** A positive span in milliseconds as an ISO 8601 duration of days, hours, minutes and seconds. */
 function isoDuration(ms: number): string {
@@ -140,7 +151,12 @@ function kernelSchedule(s: Schedule): Schedule | undefined {
   const out: Schedule = { ...s };
   for (const key of ["startDate", "endDate"] as const) {
     const value = s[key];
-    if (value === undefined || !value.includes("T")) continue;
+    if (value === undefined) continue;
+    // A bound that is neither an instant nor a local date cannot be evaluated.
+    if (!value.includes("T")) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+      continue;
+    }
     const ms = instantMs(value, s.scheduleTimezone);
     if (!Number.isFinite(ms)) return undefined;
     out[key] = localDateInZone(new Date(ms), s.scheduleTimezone);
@@ -256,7 +272,7 @@ const RECORD_ORDER = new Intl.Collator("en", { numeric: true });
 
 /** The links an event states, but none to a situation in `own`: itself, or a record folded into it. */
 function relationsOf(event: RoadEvent, source: SourceDescriptor, own: ReadonlySet<string>) {
-  const ref = (id: string) => ({ class: "situation", id: `oc:situation:${source.id}:${id}` });
+  const ref = (id: string) => ({ class: "situation", id: situationIdOf(source, id) });
   const typed = (event.relatedEvents ?? []).map((r) => ({
     ref: ref(r.id),
     relation: (r.type ? WZDX_RELATIONS[r.type] : undefined) ?? "related",
@@ -427,7 +443,7 @@ export function situationDrafts(
     for (const { primary, members, nature } of parts) {
       const localId =
         group.situationId !== undefined && !split ? group.situationId : localIdOf(primary);
-      const id = `oc:situation:${source.id}:${localId}`;
+      const id = situationIdOf(source, localId);
       const c = nature ?? classificationOf(primary);
       const location = locationOf(primary, source);
       const validity = validityOf(primary, source.timeZone);
@@ -502,7 +518,7 @@ export function situationDrafts(
       const relations = relationsOf(
         primary,
         source,
-        new Set([id, ...members.map((m) => `oc:situation:${source.id}:${localIdOf(m)}`)]),
+        new Set([id, ...members.map((m) => situationIdOf(source, localIdOf(m)))]),
       );
       const scheme = EXTERNAL_ID_SCHEME[primary.sourceFormat];
       const externalIds =

@@ -153,12 +153,14 @@ function legacyRestriction(
   const source = { path, tokens: { ...r } };
   if (dimension !== undefined && r.value !== undefined && unit !== undefined) {
     const canonical = dimension === "gross_weight" || dimension === "axle_load" ? "kg" : "m";
-    if (unit[0] === canonical) {
+    // A value too large to hold once converted is carried as unsupported.
+    const value = Math.round(r.value * unit[1] * 1000) / 1000;
+    if (unit[0] === canonical && Number.isFinite(value)) {
       return {
         kind: "dimension_limit",
         fields: {
           dimension,
-          value: { value: Math.round(r.value * unit[1] * 1000) / 1000, unit: canonical },
+          value: { value, unit: canonical },
           operator: "lte",
           meaning: "maximum_permitted",
           applicability,
@@ -385,18 +387,24 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
     (event.lanesAffected || event.roadState === "some_lanes_closed" || ctx.laneClosureNature)
   ) {
     const lanes = event.lanesAffected ? lanesOf(event) : undefined;
+    // A count of lanes that is no whole number from 0 says nothing.
+    const count = (n: unknown) =>
+      Number.isSafeInteger(n) && (n as number) >= 0 ? (n as number) : undefined;
     const figures = event.lanesAffected;
-    const total = figures?.total !== undefined && figures.total > 0 ? figures.total : undefined;
-    const restricted = figures?.restricted;
+    const stated = count(figures?.total);
+    const total = stated !== undefined && stated > 0 ? stated : undefined;
+    const restricted = count(figures?.restricted);
+    const closedCount = count(figures?.closed);
     const closedLanes =
-      figures?.closed !== undefined &&
-      (total === undefined || figures.closed <= total) &&
-      (restricted === undefined || figures.closed <= restricted)
-        ? figures.closed
+      closedCount !== undefined &&
+      (total === undefined || closedCount <= total) &&
+      (restricted === undefined || closedCount <= restricted)
+        ? closedCount
         : undefined;
+    const operationalCount = count(figures?.operational);
     const operational =
-      figures?.operational !== undefined && (total === undefined || figures.operational <= total)
-        ? figures.operational
+      operationalCount !== undefined && (total === undefined || operationalCount <= total)
+        ? operationalCount
         : undefined;
     drafts.push({
       kind: "lane_restriction",

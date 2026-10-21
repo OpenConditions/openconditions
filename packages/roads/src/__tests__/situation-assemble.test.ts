@@ -55,6 +55,55 @@ function assemble(events: RoadEvent[]): SituationDraft[] {
 
 const effects = (d: SituationDraft) => d["effects"] as Record<string, unknown>[];
 
+describe("situationDrafts — source values the model cannot hold", () => {
+  it("drops a time past the clock or the year 9999, and completes one without seconds", () => {
+    const [d] = assemble([
+      event("T1", {
+        validFrom: "2026-10-20T10:00Z",
+        validTo: "+012026-10-20T10:00:00Z",
+        situation: { sourceUpdatedAt: "2026-10-20T25:00:00Z" },
+      }),
+    ]);
+    expect(d!["validity"]).toMatchObject({ start: "2026-10-20T10:00:00.000Z" });
+    expect(d!["validity"]).not.toHaveProperty("end");
+    expect(d!["provenance"]).not.toHaveProperty("sourceUpdatedAt");
+  });
+
+  it("encodes a line break in a source's record id", () => {
+    const [d] = assemble([event(`a\nb${String.fromCharCode(0x2028)}c`)]);
+    expect(d!["id"]).toBe("oc:situation:nl-ndw-events:a%0Ab%E2%80%A8c");
+  });
+
+  it("leaves out a period whose bound is neither an instant nor a date", () => {
+    const [d] = assemble([
+      event("P1", {
+        schedule: [
+          {
+            scheduleTimezone: "Europe/Amsterdam",
+            startDate: "!",
+            startTime: "22:00",
+            repeatFrequency: "P1D",
+          },
+        ],
+      }),
+    ]);
+    expect(d!["validity"]).not.toHaveProperty("periods");
+  });
+
+  it("leaves out lane counts that are no whole numbers, and a limit too large to convert", () => {
+    const [d] = assemble([
+      event("L1", {
+        lanesAffected: { closed: 5e-324, total: Number.NaN },
+        restrictions: [{ type: "weight", value: 1e308, unit: "t" }],
+      }),
+    ]);
+    const lanes = effects(d!).find((e) => e["kind"] === "lane_restriction")!;
+    expect(lanes).not.toHaveProperty("lanesClosed");
+    expect(lanes).not.toHaveProperty("lanesTotal");
+    expect(effects(d!)).toContainEqual(expect.objectContaining({ kind: "unsupported" }));
+  });
+});
+
 describe("situationDrafts — closures except for local access", () => {
   it("closes the road to all but local access when the text says so", () => {
     const [d] = assemble([

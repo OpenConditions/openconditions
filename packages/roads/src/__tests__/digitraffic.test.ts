@@ -474,6 +474,33 @@ describe("parseDigitraffic — description from phase comments", () => {
   });
 });
 
+describe("parseDigitraffic — values the model cannot hold", () => {
+  // biome-ignore lint/suspicious/noExplicitAny: the tests reach into a message's nested JSON.
+  type Rec = Record<string, any>;
+  const messages = () => JSON.parse(readFileSync(FIXTURE_PATH, "utf8")) as { features: Rec[] };
+  const announcement = (doc: { features: Rec[] }, i: number) =>
+    doc.features[i]!["properties"]["announcements"][0];
+
+  it("leaves a location code or table that is no whole number from 0 out of the TMC reference", () => {
+    const doc = messages();
+    announcement(doc, 0)["locationDetails"]["roadAddressLocation"]["primaryPoint"][
+      "alertCLocation"
+    ]["locationCode"] = -1;
+    announcement(doc, 1)["location"]["locationTableNumber"] = 1.5;
+    const events = parseDigitraffic(JSON.stringify(doc), DIGITRAFFIC_SOURCE);
+    expect(events.find((e) => e.id.includes("GUID50465894"))!.externalRefs).toBeUndefined();
+    expect(events.find((e) => e.id.includes("GUID50465931"))!.externalRefs?.tmc).toBeUndefined();
+  });
+
+  it("holds a message whose geometry is no valid GeoJSON as having none", () => {
+    const doc = messages();
+    const count = parseDigitraffic(JSON.stringify(doc), DIGITRAFFIC_SOURCE).length;
+    delete doc.features[0]!["geometry"]["coordinates"];
+    doc.features[1]!["geometry"] = { type: "Point", coordinates: [-181, 60] };
+    expect(parseDigitraffic(JSON.stringify(doc), DIGITRAFFIC_SOURCE)).toHaveLength(count - 2);
+  });
+});
+
 describe("parseDigitraffic — TMC / Alert-C external reference", () => {
   it("sets externalRefs.tmc from countryCode + locationTableNumber + alertC locationCode", () => {
     const events = parseDigitraffic(readFileSync(FIXTURE_PATH, "utf8"), DIGITRAFFIC_SOURCE);

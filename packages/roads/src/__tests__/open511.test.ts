@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseOpen511 } from "../open511.js";
+import { situationDrafts } from "../situation/assemble.js";
 
 const FIXTURE_PATH = join(import.meta.dirname, "fixtures/drivebc/events.json");
 
@@ -12,6 +13,26 @@ const DRIVEBC_SOURCE = {
   license: "LicenseRef-OGL-BC",
   licenseUrl: "https://www2.gov.bc.ca/gov/content/data/open-data/open-government-licence-bc",
 } as const;
+
+describe("parseOpen511 — values of the wrong shape", () => {
+  const events = () =>
+    JSON.parse(readFileSync(FIXTURE_PATH, "utf8")) as { events: Record<string, unknown>[] };
+
+  it("leaves out an event whose geography is no valid geometry", () => {
+    const doc = events();
+    const count = parseOpen511(JSON.stringify(doc), DRIVEBC_SOURCE).length;
+    doc.events[0]!["geography"] = { type: "LineString", coordinates: [[-123, 49]] };
+    expect(parseOpen511(JSON.stringify(doc), DRIVEBC_SOURCE)).toHaveLength(count - 1);
+  });
+
+  it("reads a road's name, ends and direction only when they are text", () => {
+    const doc = events();
+    doc.events[0]!["roads"] = [{ name: 7, from: { at: 1 }, to: "Exit 4", direction: true }];
+    const [first] = parseOpen511(JSON.stringify(doc), DRIVEBC_SOURCE);
+    expect(first!.roads).toEqual([{ name: "", to: "Exit 4" }]);
+    expect(() => situationDrafts([first!], { source: DRIVEBC_SOURCE })).not.toThrow();
+  });
+});
 
 describe("parseOpen511 — DriveBC fixture", () => {
   it("parses at least one RoadEvent with a GeoJSON geometry", () => {

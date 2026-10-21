@@ -6,6 +6,7 @@ import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadRef } from "./model.js";
 import { buildLocalSchedule, isoDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseOf } from "./situation/classes.js";
+import { usableGeometry } from "./situation/location.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface Open511Road {
@@ -179,11 +180,16 @@ function parseSchedule(schedule: Open511Schedule | undefined): {
 function parseRoads(roads: Open511Road[] | undefined): RoadRef[] {
   if (!roads || roads.length === 0) return [];
 
+  // A field of another type than the text Open511 gives it says nothing.
+  const textOf = (value: unknown) => (typeof value === "string" ? value : undefined);
   return roads.map((r) => {
-    const ref: RoadRef = { name: r.name ?? "" };
-    if (r.from != null) ref.from = r.from;
-    if (r.to != null) ref.to = r.to;
-    if (r.direction != null) ref.direction = r.direction;
+    const ref: RoadRef = { name: textOf(r?.name) ?? "" };
+    const from = textOf(r?.from);
+    const to = textOf(r?.to);
+    const direction = textOf(r?.direction);
+    if (from !== undefined) ref.from = from;
+    if (to !== undefined) ref.to = to;
+    if (direction !== undefined) ref.direction = direction;
     return ref;
   });
 }
@@ -303,8 +309,8 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
 
   for (const ev of events) {
     try {
-      const geometry = ev.geography ?? null;
-      if (!geometry || typeof geometry !== "object" || !("type" in geometry)) {
+      const geometry = usableGeometry(ev.geography);
+      if (geometry === undefined) {
         skippedNoGeometry++;
         continue;
       }
@@ -367,7 +373,7 @@ export function parseOpen511(json: string | Buffer | object, src: SourceDescript
         isPlanned,
         ...normaliseSeverity(severityRaw, { format: "open511" }),
         status: open511Status(ev.status),
-        geometry: geometry as GeoJsonGeometry,
+        geometry,
         direction: directionFromRoads(ev.roads),
         roads,
         roadState: roadStateFromRoads(ev.roads),

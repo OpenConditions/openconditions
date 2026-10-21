@@ -14,6 +14,27 @@ const SRC: SourceDescriptor = {
 const load = (name: string) =>
   readFileSync(join(import.meta.dirname, `fixtures/ohgo-oh/${name}.json`), "utf8");
 
+describe("parseOhgoEvents — source values it cannot read", () => {
+  const incident = (fields: Record<string, unknown>) =>
+    JSON.stringify({
+      results: [{ id: "OH-1", latitude: 39.1, longitude: -84.5, category: "Crash", ...fields }],
+    });
+
+  it("does not take a category or road status for an inherited key", () => {
+    const [ev] = parseOhgoEvents(
+      incident({ category: "constructor", roadStatus: "toString" }),
+      SRC,
+    );
+    expect(ev!.type).toBe("other");
+    expect(ev!.roadState).toBeUndefined();
+  });
+
+  it("leaves out a record whose coordinates are off the earth", () => {
+    expect(parseOhgoEvents(incident({ latitude: -91 }), SRC)).toEqual([]);
+    expect(parseOhgoEvents(incident({ longitude: 1e308 }), SRC)).toEqual([]);
+  });
+});
+
 describe("parseOhgoEvents — construction", () => {
   it("maps a work zone to planned roadworks with its validity window", () => {
     const [ev] = parseOhgoEvents(load("construction"), SRC);

@@ -960,3 +960,71 @@ describe("parseWzdx — every spec LaneStatus and VehicleImpact value", () => {
     });
   });
 });
+
+describe("parseWzdx — values of the wrong shape", () => {
+  // biome-ignore lint/suspicious/noExplicitAny: the tests reach into a feed's nested JSON.
+  type Rec = Record<string, any>;
+  const base = () => JSON.parse(readFileSync(FIXTURE_PATH, "utf8")) as { features: Rec[] };
+  const core = (feed: { features: Rec[] }) => feed.features[0]!["properties"]["core_details"];
+  const draftsOf = (feed: object) =>
+    situationDrafts(parseWzdx(feed, WZDX_SOURCE), { source: WZDX_SOURCE });
+  const invalid = (feed: object) =>
+    draftsOf(feed)
+      .filter((d) => !registry.validateDraft(d).ok)
+      .map((d) => d["id"]);
+
+  it("counts a road event whose geometry is no valid GeoJSON as having none", () => {
+    __resetSkips();
+    const feed = base();
+    feed.features[1]!["geometry"] = { type: null, coordinates: [[-93.7, 41.6]] };
+    feed.features[2]!["geometry"] = {
+      type: "LineString",
+      coordinates: [
+        [-193.7, 41.6],
+        [0, 0],
+      ],
+    };
+    expect(parseWzdx(feed, WZDX_SOURCE)).toHaveLength(1);
+    expect(drainSkipped(WZDX_SOURCE.id)).toMatchObject({ no_geometry: 2 });
+    expect(invalid(feed)).toEqual([]);
+  });
+
+  it("reads past a road name, direction or id that is no text", () => {
+    const feed = base();
+    core(feed)["road_names"] = [7, "I-80"];
+    core(feed)["direction"] = { bound: "north" };
+    core(feed)["data_source_id"] = { id: 1 };
+    feed.features[0]!["id"] = " ";
+    const [first] = parseWzdx(feed, WZDX_SOURCE);
+    expect(first!.roads?.map((r) => r.name)).toEqual(["I-80"]);
+    expect(first!.id).toMatch(/^test-dot:wzdx-\d+$/);
+    expect(invalid(feed)).toEqual([]);
+  });
+
+  it("does not trip over a 3.1 lane status that is no text", () => {
+    const feed = JSON.parse(
+      readFileSync(join(import.meta.dirname, "fixtures/wzdx/quebec-v31.json"), "utf8"),
+    ) as { features: Rec[] };
+    feed.features[0]!["properties"]["lanes"][0]["status"] = ["closed"];
+    expect(() => parseWzdx(feed, WZDX_SOURCE)).not.toThrow();
+    expect(invalid(feed)).toEqual([]);
+  });
+
+  it("leaves out a blank restriction type or unit, and a lane order no lane could have", () => {
+    __resetSkips();
+    const feed = base();
+    feed.features[0]!["properties"]["restrictions"] = [
+      { type: "" },
+      { type: "no-trucks", unit: " " },
+    ];
+    feed.features[0]!["properties"]["lanes"] = [
+      { order: 2 ** 53, status: "closed", type: "general" },
+      { order: 0.5, status: "open", type: "general" },
+    ];
+    const [first] = parseWzdx(feed, WZDX_SOURCE);
+    expect(first!.restrictions).toEqual([{ type: "no-trucks" }]);
+    expect(first!.lanesAffected?.lanes?.map((l) => l.index)).toEqual([1, 2]);
+    expect(drainSkipped(WZDX_SOURCE.id)).toMatchObject({ unknown_value: 2 });
+    expect(invalid(feed)).toEqual([]);
+  });
+});

@@ -11,6 +11,7 @@ import { digitrafficRestrictionDetails } from "./digitraffic-restrictions.js";
 import { normalizeDtToken } from "./digitraffic-token.js";
 import type { Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
 import { coarseOf, coarseType } from "./situation/classes.js";
+import { usableGeometry } from "./situation/location.js";
 import {
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
@@ -391,13 +392,16 @@ function externalRefsFromAnnouncement(
       | { roadAddressLocation?: { primaryPoint?: { alertCLocation?: { locationCode?: unknown } } } }
       | undefined
   )?.roadAddressLocation;
-  const codeNum = ral?.primaryPoint?.alertCLocation?.locationCode;
-  if (typeof codeNum !== "number") return undefined;
+  const code = ral?.primaryPoint?.alertCLocation?.locationCode;
+  // Alert-C location codes and table numbers are whole numbers from 0.
+  const whole = (value: unknown) =>
+    typeof value === "number" && Number.isSafeInteger(value) && value >= 0 ? value : undefined;
+  const codeNum = whole(code);
+  if (codeNum === undefined) return undefined;
 
   const country =
     typeof location?.countryCode === "number" ? String(location.countryCode) : undefined;
-  const table =
-    typeof location?.locationTableNumber === "number" ? location.locationTableNumber : undefined;
+  const table = whole(location?.locationTableNumber);
 
   if (country && table != null) {
     return { tmc: { country, table, code: codeNum } };
@@ -647,12 +651,7 @@ function digitrafficSnapshotRecord(
       }
     }
     const terminal = terminalStatusOf(props, ann);
-    const geometry = feature.geometry;
-    const hasGeometry =
-      geometry != null &&
-      typeof geometry === "object" &&
-      "type" in (geometry as object) &&
-      (geometry as { type?: unknown }).type != null;
+    const geometry = usableGeometry(feature.geometry);
 
     if (terminal) {
       // Checked before localization, so an explicitly ended record can still
@@ -668,7 +667,7 @@ function digitrafficSnapshotRecord(
       };
     }
 
-    if (!hasGeometry) {
+    if (geometry === undefined) {
       return {
         record: {
           id,
@@ -683,7 +682,7 @@ function digitrafficSnapshotRecord(
 
     const event = buildDigitrafficEvent(
       props,
-      geometry as GeoJsonGeometry,
+      geometry,
       situationId,
       src,
       fetchedAt,
