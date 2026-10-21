@@ -205,6 +205,27 @@ describe("the eonet format over altered events", () => {
     expect(out.records).toMatchObject({ inputCount: 2, accepted: 1, terminal: 0 });
   });
 
+  test("a polygon whose ring is not closed rejects the record, not the payload", () => {
+    const bad = flood();
+    const ring = (bad.events[0]!.geometry[0]!.coordinates as number[][][])[0]!;
+    ring.pop();
+    const out = parse({ open: [Buffer.from('{"events":[]}')], closed: [buffer(bad)] });
+    expect(out.situations).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
+  });
+
+  test("an area too large for a number is left out and counted", () => {
+    const { events: list } = events("eonet-open.json");
+    const iceberg = list.find((e) => e.id === "EONET_6288")!;
+    for (const g of iceberg.geometry) {
+      (g as { magnitudeValue?: number }).magnitudeValue = 1e308;
+    }
+    const out = parse({ open: [buffer({ events: [iceberg] })] });
+    expect(byId(out, "EONET_6288")["details"]).not.toHaveProperty("areaHa");
+    expect(sealFailures(out.situations)).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
+  });
+
   test("an event with no geometry, no dated geometry or no id is skipped", () => {
     const volcano = events("eonet-open.json").events.find((e) => e.id === "EONET_20710")!;
     const out = parse({

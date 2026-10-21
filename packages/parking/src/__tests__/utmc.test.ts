@@ -90,6 +90,15 @@ describe("utmc", () => {
     expect(local.observations[0]?.["phenomenonTime"]).toEqual({ instant: "2012-07-14T09:05:00Z" });
   });
 
+  test("UTMC: a point off the globe is malformed; a null dynamic holds no reading", () => {
+    const sites = JSON.parse(fixture("utmc-static-sample.json").toString("utf8"));
+    sites[1].definitions[0].point.latitude = 1e308;
+    const out = parse([json(sites)], [json([{ systemCodeNumber: "CP1", dynamics: [null] }])]);
+    expect(out.features.map((f) => String(f["id"]).split(":").pop())).toEqual(["CP1"]);
+    expect(readings(out, "CP1")).toEqual({});
+    expect(drainSkipped(utmcFeed().id)).toEqual({ malformed: 1, no_geometry: 1 });
+  });
+
   test("UTMC: the static table gives the site; a record without a definition is skipped", () => {
     const out = parse([fixture("utmc-static-sample.json")], [fixture("utmc-dynamic-sample.json")]);
     expect(out.features).toHaveLength(2);

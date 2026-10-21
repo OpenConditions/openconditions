@@ -187,4 +187,16 @@ describe("tankerkoenig", () => {
     expect(features).toHaveLength(3);
     expect(sealFailures([...features, ...observations])).toEqual([]);
   });
+
+  test("a null station is malformed; a price too large to write is none", () => {
+    const answer = JSON.parse(fixture("tankerkoenig-list.json").toString("utf8")) as {
+      stations: (Record<string, unknown> | null)[];
+    };
+    answer.stations[0]!["diesel"] = 1e21;
+    answer.stations.push(null);
+    const { features, observations } = parse(Buffer.from(JSON.stringify(answer)));
+    expect(features).toHaveLength(3);
+    expect(sealFailures([...features, ...observations])).toEqual([]);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1 });
+  });
 });

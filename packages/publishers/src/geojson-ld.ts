@@ -39,7 +39,12 @@ export function geoJsonLdContext(terms: Readonly<Record<string, TermDefinition>>
   ];
 }
 
-/** The IRI a record is identified by in GeoJSON-LD. */
+/**
+ * The IRI a record is identified by in GeoJSON-LD. An id holding a lone
+ * surrogate, which UTF-8 and so percent-encoding cannot carry, has it
+ * replaced with U+FFFD rather than fail the whole collection.
+ */
 export function recordIri(id: unknown): string {
-  return `https://openconditions.org/id/${encodeURIComponent(String(id))}`;
+  const wellFormed = String(id).replace(/\p{Cs}/gu, String.fromCharCode(0xfffd));
+  return `https://openconditions.org/id/${encodeURIComponent(wellFormed)}`;
 }

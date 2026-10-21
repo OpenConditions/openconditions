@@ -1,4 +1,5 @@
 import type { RecordDraft, SkipCounts } from "@openconditions/ingest-framework";
+import { Bcp47, Iso8601 } from "@openconditions/model";
 import {
   type CapPair,
   capCircle,
@@ -13,7 +14,14 @@ import {
 } from "@openconditions/model-hazards";
 import type { Geometry, Position } from "geojson";
 import { pointInRing } from "../geometry.js";
-import { freshness, type HazardsFeed, provenance, situationId, UNLOCATED } from "../records.js";
+import {
+  freshness,
+  type HazardsFeed,
+  isRecord,
+  provenance,
+  situationId,
+  UNLOCATED,
+} from "../records.js";
 import { capToken } from "./messages.js";
 import type { CapAlert, CapArea, CapInfo } from "./types.js";
 
@@ -97,6 +105,37 @@ function countryOf(alert: CapAlert, feed: HazardsFeed): string | undefined {
 const string = (value: unknown): string | undefined =>
   typeof value === "string" ? value.trim() || undefined : undefined;
 
+/**
+ * A CAP time as the model holds it: a date and time with its zone, as CAP
+ * 1.2's `dateTime` requires. Undefined for anything else, which names no
+ * instant (a time without a zone is local to nobody knows where).
+ */
+export function capInstant(raw: unknown): string | undefined {
+  const s = string(raw);
+  return s !== undefined && Iso8601.safeParse(s).success && Number.isFinite(Date.parse(s))
+    ? s
+    : undefined;
+}
+
+/** The times of an info block that are written but name no instant. */
+const unreadTimes = (info: CapInfo) =>
+  [info.effective, info.onset, info.expires, info.ends].filter(
+    (t) => string(t) !== undefined && capInstant(t) === undefined,
+  ).length;
+
+/**
+ * An info block's language as a tag the model holds; CAP's default `en-US`
+ * when it names none, and `und` when it names one that is no such tag
+ * (CAP's `xs:language` also allows `i-` and `x-` tags).
+ */
+const languageOf = (info: CapInfo): string => {
+  const tag = string(info.language) ?? "en-US";
+  return Bcp47.safeParse(tag).success ? tag : "und";
+};
+
+const unreadLanguage = (info: CapInfo) =>
+  string(info.language) !== undefined && languageOf(info) === "und" ? 1 : 0;
+
 const list = <T>(value: T[] | undefined): T[] => (Array.isArray(value) ? value : []);
 
 /** A CAP pair list with every entry the model can hold: a name, and a string value. */
@@ -112,7 +151,7 @@ const pairs = (value: CapPair[] | undefined): CapPair[] =>
 function text(infos: readonly CapInfo[], pick: (i: CapInfo) => unknown) {
   const parts = infos.flatMap((i) => {
     const value = string(pick(i));
-    return value === undefined ? [] : [{ lang: string(i.language) ?? "en-US", text: value }];
+    return value === undefined ? [] : [{ lang: languageOf(i), text: value }];
   });
   return parts.length > 0 ? parts : undefined;
 }
@@ -255,21 +294,20 @@ const signature = (i: CapInfo) =>
     i.effective,
     i.onset,
     i.expires,
-    list(i.area).map((a) => [
-      a.polygon,
-      a.circle,
-      a.geocode,
-      decimal(a.altitude),
-      decimal(a.ceiling),
-    ]),
+    list(i.area).map((a) =>
+      isRecord(a) ? [a.polygon, a.circle, a.geocode, decimal(a.altitude), decimal(a.ceiling)] : a,
+    ),
   ]);
 
-/** When a hazard stops being in force: the format's end if it states one, the message's `expires` otherwise. */
+/**
+ * When a hazard stops being in force: the format's end if it states one, the
+ * message's `expires` otherwise; undefined when that names no instant.
+ */
 export function capEnd(
   info: CapInfo,
   endOf: CapSituationOptions["endOf"] | undefined,
 ): string | undefined {
-  return string(endOf === undefined ? info.expires : endOf(info));
+  return capInstant(endOf === undefined ? info.expires : endOf(info));
 }
 
 /** Why a warning a message still describes is no longer in force. */
@@ -289,7 +327,7 @@ function capValidity(
   ending: Ending | undefined,
   end: string | undefined,
 ) {
-  let start = string(info.effective) ?? string(alert.sent)!;
+  let start = capInstant(info.effective) ?? string(alert.sent)!;
   if (end !== undefined && Date.parse(start) > Date.parse(end)) start = end;
   const reason = capToken(alert.msgType) === "Cancel" ? "cancelled" : ending;
   return {
@@ -376,7 +414,7 @@ function localizedWeb(infos: readonly CapInfo[]) {
   const byLanguage = new Map<string, string>();
   for (const i of infos) {
     const url = webOf(i.web);
-    const lang = string(i.language) ?? "en-US";
+    const lang = languageOf(i);
     if (url !== undefined && !byLanguage.has(lang)) byLanguage.set(lang, url);
   }
   return new Set(byLanguage.values()).size > 1
@@ -470,22 +508,36 @@ function tokens(vocabulary: string, raw: unknown): { values: string[]; unknown: 
  * A message's situations, and why any of its hazards, or any value of one,
  * went unread. A hazard is skipped as `malformed` when a field CAP requires
  * does not read: a header, urgency, severity or certainty token CAP 1.2 does
- * not define, no category it defines, no event, or a shape out of range; the
- * message's other hazards are kept. A category or response type CAP does not
- * define, and a resource the model cannot hold, is left out of a hazard that
- * is kept, as `unknown_value`.
+ * not define, no category it defines, no event, a shape out of range, or an
+ * info block or area that is no element; the message's other hazards are
+ * kept. A category or response type CAP does not define, a resource the model
+ * cannot hold, a time that names no instant and a language that is no tag are
+ * left out of a hazard that is kept, as `unknown_value`.
  */
 export function capDrafts(
   alert: CapAlert,
   feed: HazardsFeed,
   opts: CapSituationOptions,
 ): { drafts: RecordDraft[]; skipped: SkipCounts } {
+  const drafts: RecordDraft[] = [];
+  const skipped: { malformed?: number; unknown_value?: number } = {};
+  // An info block or area that is no element (an empty `<info/>`, a JSON
+  // null) describes no hazard or place: that hazard does not read.
+  const infos = list(alert.info).filter((info) => {
+    if (isRecord(info) && list(info.area).every(isRecord)) return true;
+    skipped.malformed = (skipped.malformed ?? 0) + 1;
+    return false;
+  });
   const groups = new Map<string, CapInfo[]>();
-  for (const info of list(alert.info)) {
+  for (const info of infos) {
     const key = signature(info);
     groups.set(key, [...(groups.get(key) ?? []), info]);
   }
   const references = typeof alert.references === "string" ? capReferences(alert.references) : [];
+  // A reference still names the message it relates to when its time does not
+  // read, but only one sent at an instant is kept among the details.
+  const timedReferences = references.filter((r) => capInstant(r.sent) !== undefined);
+  const untimedReferences = references.length - timedReferences.length;
   // MeteoAlarm's hub writes each message's type into `incidents`; that names no incident.
   const incidents = (
     typeof alert.incidents === "string" ? capGroupList(alert.incidents) : []
@@ -494,14 +546,14 @@ export function capDrafts(
   const relation = Object.hasOwn(RELATION_OF, msgType) ? RELATION_OF[msgType]! : "related";
   const country = opts.countryOf?.(alert) ?? countryOf(alert, feed);
   const sent = string(alert.sent)!;
+  // An empty `<code/>` names no profile.
+  const codes = list(alert.code).flatMap((c) => string(c) ?? []);
   // Every hazard of a message is one warning: the first VTEC event of any of them names it.
   const groupId =
     vtecGroup(
-      list(alert.info).flatMap((i) => vtecEvents(pairs(i.parameter)).events),
+      infos.flatMap((i) => vtecEvents(pairs(i.parameter)).events),
       sent,
     ) ?? opts.groupId;
-  const drafts: RecordDraft[] = [];
-  const skipped: { malformed?: number; unknown_value?: number } = {};
   [...groups.values()].forEach((infos, n) => {
     const info = infos[0]!;
     const categories = tokens("cap_category", info.category);
@@ -534,7 +586,15 @@ export function capDrafts(
     const parameters = pairs(info.parameter);
     const vtec = vtecEvents(parameters);
     const { resources, unread: unreadResources } = resourcesOf(infos);
-    const unknown = categories.unknown + responses.unknown + vtec.unread + unreadResources;
+    // A time or language that does not read is left out, the hazard kept.
+    const unknown =
+      categories.unknown +
+      responses.unknown +
+      vtec.unread +
+      unreadResources +
+      untimedReferences +
+      unreadTimes(info) +
+      infos.reduce((sum, i) => sum + unreadLanguage(i), 0);
     if (unknown > 0) skipped.unknown_value = (skipped.unknown_value ?? 0) + unknown;
     // The first hazard keeps the message's id, so a reference to the message names a record.
     const localId = n === 0 ? alert.identifier : `${alert.identifier}#${n + 1}`;
@@ -546,7 +606,7 @@ export function capDrafts(
     const ending =
       vtecEnding(vtec.events) ?? (responseType.includes("all_clear") ? "source_ended" : undefined);
     const validity = capValidity(alert, info, ending, end);
-    const onset = string(info.onset);
+    const onset = capInstant(info.onset);
     const expiresAt = opts.expiresAt === undefined ? end : opts.expiresAt(end);
     const eventCodes = pairs(info.eventCode);
     const headline = text(infos, (i) => i.headline);
@@ -598,8 +658,8 @@ export function capDrafts(
           status: cap.status,
           msgType: cap.msgType,
           scope: cap.scope,
-          ...(references.length > 0 ? { references } : {}),
-          ...(list(alert.code).length === 0 ? {} : { codes: list(alert.code) }),
+          ...(timedReferences.length > 0 ? { references: timedReferences } : {}),
+          ...(codes.length === 0 ? {} : { codes }),
           category,
           event,
           ...(eventCodes.length === 0 ? {} : { eventCodes }),
@@ -608,10 +668,10 @@ export function capDrafts(
           severity: cap.severity,
           certainty: cap.certainty,
           ...optional("audience", audience),
-          ...optional("effective", string(info.effective)),
+          ...optional("effective", capInstant(info.effective)),
           ...optional("onset", onset),
-          ...optional("expires", string(info.expires)),
-          ...optional("ends", string(info.ends)),
+          ...optional("expires", capInstant(info.expires)),
+          ...optional("ends", capInstant(info.ends)),
           ...(parameters.length === 0 ? {} : { parameters }),
           ...(vtec.events.length === 0 ? {} : { vtec: vtec.events }),
           ...optional("web", webOf(info.web)),

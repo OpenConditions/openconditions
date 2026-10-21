@@ -1,4 +1,5 @@
 import type { CatalogFeed } from "@openconditions/ingest-framework";
+import { Bcp47 } from "@openconditions/model";
 
 /** What a charging record takes from its feed. */
 export type ChargingFeed = Pick<
@@ -12,6 +13,20 @@ export type Upstream = NonNullable<import("@openconditions/model").MergedSource[
 /** An instant in UTC at second precision, as the drafts carry it. */
 export function utcInstant(at: Date): string {
   return at.toISOString().replace(/\.000Z$/, "Z");
+}
+
+/** 0000-01-01T00:00:00Z and the last millisecond of 9999: the instants RFC 3339's four-digit years reach. */
+const FIRST_INSTANT_MS = -62_167_219_200_000;
+const LAST_INSTANT_MS = 253_402_300_799_999;
+
+/**
+ * {@link utcInstant} of a time in milliseconds; undefined for one that is
+ * not a time, or whose year RFC 3339 cannot write (a source's `+012026`).
+ */
+export function utcInstantOf(ms: number): string | undefined {
+  return Number.isFinite(ms) && ms >= FIRST_INSTANT_MS && ms <= LAST_INSTANT_MS
+    ? utcInstant(new Date(ms))
+    : undefined;
 }
 
 /** The id of a site's feature. */
@@ -88,6 +103,16 @@ export const clean = (value: string | undefined): string | undefined => {
   const text = value?.trim();
   return text ? text : undefined;
 };
+
+/**
+ * A source's language tag as the model holds it: a well-formed BCP 47 tag,
+ * else `und`. A malformed tag says nothing about the text's language, and
+ * the text is still worth keeping.
+ */
+export function languageOf(value: string | undefined): string {
+  const tag = clean(value);
+  return tag !== undefined && Bcp47.safeParse(tag).success ? tag : "und";
+}
 
 /** A web page the model can hold: http(s) only, a bare `www.` host taken as https. */
 export function webUrl(value: string | undefined): string | undefined {

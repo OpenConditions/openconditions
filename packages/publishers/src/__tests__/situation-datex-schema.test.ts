@@ -5,7 +5,7 @@ import {
 } from "@openconditions/conformance/standards/datex2-v3";
 import { DATEX2_RECORDS } from "@openconditions/model-roads";
 import { beforeAll, describe, expect, it } from "vitest";
-import { situationsToDatex } from "../situation-datex.js";
+import { datexRecordsOf, situationsToDatex } from "../situation-datex.js";
 
 type Rec = Record<string, unknown>;
 
@@ -294,6 +294,37 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
     );
     expect(xml).toMatch(/^[\t\n\r\u0020-\uD7FF\uE000-\uFFFD\u{10000}-\u{10FFFF}]*$/u);
     expect(xml).toContain("Bauarbeiten\tA 46\r\n\uFFFD");
+    expect(await validate(xml)).toEqual([]);
+  }, 60_000);
+
+  it("cuts text past the 1024 characters a DATEX string holds, and says so", async ({ skip }) => {
+    if (unavailable) skip(unavailable);
+    // Counted in characters: an astral character is one, though two UTF-16 units.
+    const long = (c: string) => c.repeat(1025);
+    const record = situation("long-text", {
+      headline: [{ lang: "de", text: long(String.fromCodePoint(0x1f6a7)) }],
+      location: {
+        geometry: { type: "Point", coordinates: [6.81, 51.2] },
+        roads: [{ ref: long("A"), name: [{ lang: "de", text: long("B") }] }],
+      },
+      provenance: {
+        sourceUpdatedAt: "2026-09-06T09:00:00Z",
+        informationSource: { id: long("C"), name: [{ lang: "de", text: long("D") }] },
+      },
+    });
+    const diagnostics: { code: string; path: string }[] = [];
+    datexRecordsOf(record, AT, (d) => diagnostics.push(d));
+    expect(
+      diagnostics.filter((d) => d.code === "field_precision_reduced").map((d) => d.path),
+    ).toEqual([
+      "/provenance/informationSource/id",
+      "/provenance/informationSource/name/0/text",
+      "/headline/0/text",
+      "/location/roads/0/name/0/text",
+      "/location/roads/0/ref",
+    ]);
+    const xml = situationsToDatex([record], AT, { ...INFO, attribution: long("E") }, "de");
+    expect(xml).toContain(`<loc:roadNumber>${"A".repeat(1024)}</loc:roadNumber>`);
     expect(await validate(xml)).toEqual([]);
   }, 60_000);
 

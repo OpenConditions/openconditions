@@ -111,7 +111,8 @@ function typeOf(tags: Record<string, string>): ParkingSiteType {
  * is kept only when its tags name the country. Besides the car park's own
  * tags, its owner, description, lighting, supervision, width limit, kerbside bay
  * position and orientation are read. An `access` value, or a `parking` value
- * that is neither a layout nor kerbside, not read here counts as unknown.
+ * that is neither a layout nor kerbside, not read here counts as unknown. An
+ * element that is no `amenity=parking` is skipped as an unknown type.
  */
 export function parseOverpassParking(
   feed: ParkingCatalogFeed,
@@ -124,7 +125,11 @@ export function parseOverpassParking(
   for (const payload of payloads["main"] ?? []) {
     for (const element of decodeOverpass(payload, skip)) {
       const { tags } = element;
-      if (tags["amenity"] !== "parking") continue;
+      // The query asks for car parks only, so anything else is a type not read here.
+      if (tags["amenity"] !== "parking") {
+        skip("unknown_type");
+        continue;
+      }
       const type = typeOf(tags);
       const parking = tag(tags, "parking");
       const layout =

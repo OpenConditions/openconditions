@@ -12,8 +12,10 @@ import type { ParkingCatalogFeed } from "../feed-schema.js";
 import {
   type AreaInput,
   entryOf,
+  lonLat,
   type RateRow,
   rateDraft,
+  readRecord,
   type SiteInput,
   siteDraft,
 } from "../site.js";
@@ -132,7 +134,7 @@ type Placed =
 
 /**
  * A facility's id and point, or why it gives no site: `malformed` without an
- * id or with a coordinate that is no number, `no_geometry` without one.
+ * id or with a coordinate that is no number in range, `no_geometry` without one.
  */
 function placed(f: BahnparkFacility): Placed {
   if (typeof f !== "object" || f === null) return { skip: "malformed" };
@@ -143,7 +145,8 @@ function placed(f: BahnparkFacility): Placed {
   if (lat === undefined || lat === null || lon === undefined || lon === null) {
     return { skip: "no_geometry" };
   }
-  return finite(lat) && finite(lon) ? { stationId, point: [lon, lat] } : { skip: "malformed" };
+  const point = lonLat(lon, lat);
+  return point === undefined ? { skip: "malformed" } : { stationId, point };
 }
 
 /** The facilities of a body: a bare array, or a HAL envelope with `_embedded` as the array. */
@@ -156,13 +159,13 @@ function facilitiesOf(body: Buffer): BahnparkFacility[] {
 }
 
 function nameOf(f: BahnparkFacility): string | undefined {
-  const byContext = (context: string) => text(f.name?.find((n) => n.context === context)?.name);
+  const byContext = (context: string) => text(f.name?.find((n) => n?.context === context)?.name);
   return byContext("DISPLAY") ?? byContext("NAME");
 }
 
 /** A capacity of the given type above zero; the first of a repeated type wins. */
 const capacityOf = (f: BahnparkFacility, type: string) => {
-  const n = integer(f.capacity?.find((c) => c.type === type)?.total);
+  const n = integer(f.capacity?.find((c) => c?.type === type)?.total);
   return n !== undefined && n > 0 ? n : undefined;
 };
 
@@ -236,7 +239,7 @@ function rateOf(
   fetchedAt: string,
 ): RecordDraft | undefined {
   const rows: RateRow[] = (f.tariff?.prices ?? []).flatMap((p) => {
-    if (!finite(p.price)) return [];
+    if (!finite(p?.price)) return [];
     if (p.group?.groupName !== STANDARD) {
       recordSkipped(feed.id, "unknown_value");
       return [];
@@ -267,23 +270,29 @@ export function parseDbBahnpark(
   const out = emptyParseOutput();
   for (const body of payloads["main"] ?? []) {
     for (const f of facilitiesOf(body)) {
-      const site = placed(f);
-      if ("skip" in site) {
-        recordSkipped(feed.id, site.skip);
-        continue;
-      }
-      const { stationId, point } = site;
-      const typeName = text(f.type?.name);
-      if (
-        typeName !== undefined &&
-        typeName !== PARK_AND_RIDE &&
-        entryOf(LAYOUTS, typeName) === undefined
-      ) {
-        recordSkipped(feed.id, "unknown_value");
-      }
-      out.features.push(siteDraft(feed, siteInput(f, stationId, point), ctx.fetchedAt));
-      const rate = rateOf(feed, f, stationId, point, ctx.fetchedAt);
-      if (rate !== undefined) out.offers.push(rate);
+      readRecord(
+        feed.id,
+        () => {
+          const site = placed(f);
+          if ("skip" in site) {
+            recordSkipped(feed.id, site.skip);
+            return;
+          }
+          const { stationId, point } = site;
+          const typeName = text(f.type?.name);
+          if (
+            typeName !== undefined &&
+            typeName !== PARK_AND_RIDE &&
+            entryOf(LAYOUTS, typeName) === undefined
+          ) {
+            recordSkipped(feed.id, "unknown_value");
+          }
+          out.features.push(siteDraft(feed, siteInput(f, stationId, point), ctx.fetchedAt));
+          const rate = rateOf(feed, f, stationId, point, ctx.fetchedAt);
+          if (rate !== undefined) out.offers.push(rate);
+        },
+        out,
+      );
     }
   }
   return out;

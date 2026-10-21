@@ -14,6 +14,7 @@ import {
   instantIn,
   occupancyDrafts,
   type ReadingInput,
+  readRecord,
   type SiteInput,
   siteDraft,
 } from "../site.js";
@@ -211,12 +212,17 @@ function availabilityOf(
         continue;
       }
       const seen = out.get(id);
-      const lots: Lots[] = seen?.lots ?? [];
       let unknownValues = seen?.unknownValues ?? 0;
       // Singapore time; a time with an offset is taken as given.
       const updated = instantIn(TIME_ZONE, carPark.update_datetime);
       if (updated === undefined && text(carPark.update_datetime) !== undefined) unknownValues++;
       const at = updated ?? snapshot;
+      const lots: Lots[] = [...(seen?.lots ?? [])];
+      // A lot list that is no list is a malformed record.
+      if (carPark.carpark_info !== undefined && !Array.isArray(carPark.carpark_info)) {
+        recordSkipped(feed.id, "malformed");
+        continue;
+      }
       for (const info of carPark.carpark_info ?? []) {
         const lotType = text(info?.lot_type);
         const vehicleType = entryOf(LOT_TYPES, lotType);
@@ -388,28 +394,35 @@ export function parseHdb(
         continue;
       }
       named.add(stationId);
-      const point = pointOf(carPark);
-      if (!Array.isArray(point)) {
-        recordSkipped(feed.id, point);
-        continue;
-      }
-      const type = text(carPark.car_park_type);
-      if (type !== undefined && LAYOUTS[type.toUpperCase()] === undefined) {
-        recordSkipped(feed.id, "unknown_value");
-      }
-      if (shortTermHours(carPark.short_term_parking) === "unread") {
-        recordSkipped(feed.id, "unknown_value");
-      }
-      const live = availability.get(stationId);
-      if (live !== undefined) {
-        // Counted once, should the table repeat the car park.
-        recordSkipped(feed.id, "unknown_value", live.unknownValues);
-        live.unknownValues = 0;
-      }
-      out.features.push(siteDraft(feed, siteInput(carPark, stationId, point, live), ctx.fetchedAt));
-      if (live === undefined) continue;
-      const reading = { stationId, at: live.at ?? ctx.fetchedAt, point };
-      out.observations.push(...readingsOf(feed, reading, live, ctx));
+      readRecord(
+        feed.id,
+        () => {
+          const point = pointOf(carPark);
+          if (!Array.isArray(point)) {
+            recordSkipped(feed.id, point);
+            return;
+          }
+          const type = text(carPark.car_park_type);
+          if (type !== undefined && LAYOUTS[type.toUpperCase()] === undefined) {
+            recordSkipped(feed.id, "unknown_value");
+          }
+          if (shortTermHours(carPark.short_term_parking) === "unread") {
+            recordSkipped(feed.id, "unknown_value");
+          }
+          const live = availability.get(stationId);
+          const draft = siteDraft(feed, siteInput(carPark, stationId, point, live), ctx.fetchedAt);
+          if (live !== undefined) {
+            // Counted once, should the table repeat the car park.
+            recordSkipped(feed.id, "unknown_value", live.unknownValues);
+            live.unknownValues = 0;
+          }
+          out.features.push(draft);
+          if (live === undefined) return;
+          const reading = { stationId, at: live.at ?? ctx.fetchedAt, point };
+          out.observations.push(...readingsOf(feed, reading, live, ctx));
+        },
+        out,
+      );
     }
   }
   for (const id of availability.keys()) {

@@ -198,6 +198,25 @@ describe("datex2", () => {
     ]);
   });
 
+  test("DATEX: a currency that is no ISO 4217 code gives no rate and is counted", () => {
+    __resetSkips();
+    const table = fixture("ndw-truck-table.xml")
+      .toString("utf8")
+      .replace("<chargeCurrency>eur<", "<chargeCurrency>valueOf<");
+    const out = parse(ndwFeed(), Buffer.from(table), undefined);
+    expect(out.offers).toEqual([]);
+    expect(drainSkipped(ndwFeed().id)).toMatchObject({ unknown_value: 1 });
+  });
+
+  test("DATEX: a status time without a zone is read as the poll's", () => {
+    const status = fixture("ndw-truck-status.xml")
+      .toString("utf8")
+      .replace(/(<ns2:parkingStatusOriginTime>)[^<]*/g, "$12026-03-29T02:30:00");
+    const out = parse(ndwFeed(), fixture("ndw-truck-table.xml"), Buffer.from(status));
+    const times = new Set(out.observations.map((o) => JSON.stringify(o["phenomenonTime"])));
+    expect([...times]).toEqual([JSON.stringify({ instant: FETCHED })]);
+  });
+
   test("DATEX: a status for an unknown record is dropped", () => {
     const out = ndw();
     const ids = new Set(out.features.map((f) => f["id"]));

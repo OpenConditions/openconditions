@@ -10,9 +10,11 @@ import type { FuelGrade } from "../grades.js";
 import { type Interval, interval, osmOpeningHours } from "../hours.js";
 import {
   type FuelFeed,
+  isObject,
   openStatusDraft,
   type ProductInput,
   priceDraft,
+  priceText,
   stationDraft,
   stationPosition,
 } from "../station.js";
@@ -58,7 +60,7 @@ function openingHoursOf(station: Station, feedId: string): string | undefined {
   if (!Array.isArray(days) || days.length === 0) return undefined;
   // The day's intervals; undefined when unreadable, null when the day is not listed.
   const dayHours = (code: string): Interval[] | undefined | null => {
-    const day = days.find((d) => d.day === code);
+    const day = days.find((d) => isObject(d) && d.day === code);
     if (day === undefined) return null;
     if (day.from === "00:00" && day.to === "00:00") return [];
     const read =
@@ -140,7 +142,7 @@ export function parseEcontrol(
     if (!Array.isArray(answer)) throw new Error("econtrol: the answer is not a list of stations");
     for (const station of answer as Station[]) {
       const id =
-        typeof station.id === "number" || typeof station.id === "string"
+        isObject(station) && (typeof station.id === "number" || typeof station.id === "string")
           ? String(station.id)
           : undefined;
       if (id === undefined) {
@@ -149,17 +151,20 @@ export function parseEcontrol(
       }
       const entry = stations.get(id) ?? { station, prices: new Map<FuelGrade, string>() };
       stations.set(id, entry);
-      for (const price of station.prices ?? []) {
+      for (const price of Array.isArray(station.prices) ? station.prices : []) {
         const grade =
-          typeof price.fuelType === "string" && Object.hasOwn(GRADES, price.fuelType)
+          isObject(price) &&
+          typeof price.fuelType === "string" &&
+          Object.hasOwn(GRADES, price.fuelType)
             ? GRADES[price.fuelType]
             : undefined;
         if (grade === undefined) {
           recordSkipped(feed.id, "unknown_value");
           continue;
         }
-        if (typeof price.amount !== "number" || !(price.amount > 0)) continue;
-        if (!entry.prices.has(grade)) entry.prices.set(grade, price.amount.toFixed(3));
+        const amount = priceText(price.amount);
+        if (amount === undefined) continue;
+        if (!entry.prices.has(grade)) entry.prices.set(grade, amount);
       }
     }
   }

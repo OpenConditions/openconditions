@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
+import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { describe, expect, it, vi } from "vitest";
 import type { SourceDescriptor } from "../types.js";
 import { parseVicDisruptions } from "../vic-disruptions.js";
@@ -14,6 +15,38 @@ const UNPLANNED: SourceDescriptor = { ...PLANNED, id: "au-vic-transportvic-unpla
 
 const load = (name: string) =>
   readFileSync(join(import.meta.dirname, `fixtures/vic-au/${name}.json`), "utf8");
+
+describe("parseVicDisruptions — values the model cannot hold", () => {
+  type Rec = Record<string, unknown>;
+  const planned = () => JSON.parse(load("planned")) as { disruptions: Rec[] };
+
+  it("keeps only the nested geometries that are valid ones", () => {
+    const doc = planned();
+    (doc.disruptions[1]!["geometry"] as { geometries: Rec[] }).geometries[0]!["type"] = 1;
+    const ev = parseVicDisruptions(JSON.stringify(doc), PLANNED).find((e) =>
+      e.id.endsWith("PLN-90002"),
+    );
+    expect(ev!.geometry).toEqual({ type: "Point", coordinates: [144.9801, -37.8422] });
+  });
+
+  it("does not take an event type for an inherited key", () => {
+    const doc = planned();
+    doc.disruptions[0]!["eventType"] = "constructor";
+    doc.disruptions[0]!["eventSubtype"] = "toString";
+    const [ev] = parseVicDisruptions(JSON.stringify(doc), PLANNED);
+    expect(ev!.type).toBe("other");
+  });
+
+  it("leaves out and counts a recurrence whose duration is no ISO 8601 duration", () => {
+    __resetSkips();
+    const doc = planned();
+    const duration = doc.disruptions[0]!["duration"] as { recurrences: Rec[] };
+    duration.recurrences[0]!["duration"] = "eight hours";
+    const [ev] = parseVicDisruptions(JSON.stringify(doc), PLANNED);
+    expect(ev!.schedule ?? []).toEqual([]);
+    expect(drainSkipped(PLANNED.id)).toMatchObject({ unknown_value: 1 });
+  });
+});
 
 describe("parseVicDisruptions — planned v1", () => {
   it("maps a planned disruption to roadworks with its validity window and impact", () => {

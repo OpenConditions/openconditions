@@ -11,6 +11,35 @@ export function utcInstant(at: Date): string {
   return at.toISOString().replace(/\.000Z$/, "Z");
 }
 
+/** An RFC 3339 date, with a time of day or without, and an offset or none. */
+const RFC3339 = /^\d{4}-\d\d-\d\d(?:T\d\d:\d\d(?::\d\d(?:\.\d+)?)?(Z|[+-]\d\d:?\d\d)?)?$/i;
+
+/**
+ * Whether a time's `YYYY-MM-DD` names a day of the calendar: Date.parse rolls
+ * a day the month does not have into the next (30 February is 2 March).
+ */
+function isCalendarDate(value: string): boolean {
+  const [year, month, day] = [value.slice(0, 4), value.slice(5, 7), value.slice(8, 10)].map(Number);
+  const at = new Date(Date.UTC(2000, month! - 1, day));
+  at.setUTCFullYear(year!);
+  return at.getUTCMonth() === month! - 1 && at.getUTCDate() === day;
+}
+
+/**
+ * A publisher's time as a UTC instant, or undefined when it is not one a
+ * record can carry. A time written without an offset is read as UTC, never in
+ * the host's zone, so every instance reads a payload alike.
+ */
+export function instantOf(value: string | undefined): string | undefined {
+  if (value === undefined) return undefined;
+  const match = RFC3339.exec(value);
+  if (match === null || !isCalendarDate(value)) return undefined;
+  const offsetless = value.includes("T") && match[1] === undefined;
+  const at = new Date(Date.parse(offsetless ? `${value}Z` : value));
+  const year = at.getUTCFullYear();
+  return Number.isFinite(at.getTime()) && year >= 0 && year <= 9999 ? utcInstant(at) : undefined;
+}
+
 /**
  * A publisher's station id as a feature id takes it: every character outside
  * `[A-Za-z0-9._:-]` becomes `_`.

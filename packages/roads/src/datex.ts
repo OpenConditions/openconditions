@@ -1058,8 +1058,10 @@ function alertCDirectionIn(location: XmlObject): AlertCDirectionRef | null {
   const block = getXmlChild(location, "alertCLinear") ?? getXmlChild(location, "alertCPoint");
   if (!block) return null;
   const direction = getXmlChild(block, "alertCDirection");
-  const directionCoded = getXmlChildText(direction, "alertCDirectionCoded") ?? null;
-  const affectedDirection = getXmlChildText(direction, "alertCAffectedDirection") ?? null;
+  // An empty element states no direction.
+  const filled = (value: string | undefined) => (value?.trim() ? value : null);
+  const directionCoded = filled(getXmlChildText(direction, "alertCDirectionCoded"));
+  const affectedDirection = filled(getXmlChildText(direction, "alertCAffectedDirection"));
   const refs: Record<string, unknown> = { scheme: "alert_c" };
   const put = (key: string, value: string | undefined) => {
     if (value !== undefined) refs[key] = value;

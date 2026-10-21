@@ -19,7 +19,7 @@ import {
   type SituationHints,
 } from "./model.js";
 import { coarseOf, coarseType } from "./situation/classes.js";
-import { entryOf } from "./situation/location.js";
+import { entryOf, usableGeometry } from "./situation/location.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface WzdxLane {
@@ -269,7 +269,11 @@ function parseLanes(
 
     const laneRestrictions = parseRestrictions(lane.restrictions, unread);
     laneStatuses.push({
-      index: lane.order ?? position,
+      // An order that is no whole number a lane could have is the lane's place in the list.
+      index:
+        typeof lane.order === "number" && Number.isSafeInteger(lane.order) && lane.order >= 1
+          ? lane.order
+          : position,
       status,
       ...(type !== undefined ? { type } : {}),
       ...(laneRestrictions ? { restrictions: laneRestrictions } : {}),
@@ -338,12 +342,14 @@ function vehicleImpactToRoadState(
 }
 
 function parseRoads(coreDetails: WzdxCoreDetails, props: WzdxProperties): RoadRef[] {
-  const names = Array.isArray(coreDetails.road_names) ? coreDetails.road_names : [];
+  const names = Array.isArray(coreDetails.road_names)
+    ? coreDetails.road_names.filter((name): name is string => typeof name === "string")
+    : [];
   if (names.length === 0) return [];
 
   return names.map((name) => {
     const ref: RoadRef = { name };
-    if (coreDetails.direction != null) ref.direction = coreDetails.direction;
+    if (typeof coreDetails.direction === "string") ref.direction = coreDetails.direction;
     if (typeof props.beginning_cross_street === "string") ref.from = props.beginning_cross_street;
     if (typeof props.ending_cross_street === "string") ref.to = props.ending_cross_street;
     if (typeof props.beginning_milepost === "number") ref.milepostFrom = props.beginning_milepost;
@@ -355,7 +361,7 @@ function parseRoads(coreDetails: WzdxCoreDetails, props: WzdxProperties): RoadRe
 /**
  * A road or lane's `Restriction` list. A type or unit outside the standard is
  * kept as the source gave it, so the restriction still shows as evidence, and
- * counted as unread.
+ * counted as unread. A blank type or unit shows nothing and is only counted.
  */
 function parseRestrictions(
   raw: WzdxRestriction[] | undefined,
@@ -366,11 +372,12 @@ function parseRestrictions(
   for (const r of raw) {
     if (r && typeof r.type === "string") {
       known(RESTRICTION_TYPES, r.type, unread);
+      if (r.type.trim() === "") continue;
       const item: Restriction = { type: r.type };
       if (typeof r.value === "number") item.value = r.value;
       if (typeof r.unit === "string") {
         known(UNITS, r.unit, unread);
-        item.unit = r.unit;
+        if (r.unit.trim() !== "") item.unit = r.unit;
       }
       out.push(item);
     }
@@ -663,7 +670,9 @@ function liftV3Properties(props: WzdxProperties): WzdxProperties {
     ? props.lanes.map((lane) => {
         if (!lane || typeof lane !== "object") return lane;
         const status =
-          lane.status?.toLowerCase() === "alternating-one-way" ? "alternating-flow" : lane.status;
+          typeof lane.status === "string" && lane.status.toLowerCase() === "alternating-one-way"
+            ? "alternating-flow"
+            : lane.status;
         return {
           ...lane,
           ...(status !== undefined ? { status } : {}),
@@ -694,15 +703,17 @@ function liftV3Properties(props: WzdxProperties): WzdxProperties {
  * `id`, else 3.1's deprecated `road_event_id`.
  */
 function rawIdOf(feature: WzdxFeature, props: WzdxProperties): string | undefined {
-  const own = props.core_details?.id;
-  if (typeof own === "string" || typeof own === "number") return String(own);
-  if (typeof feature.id === "string" || typeof feature.id === "number") return String(feature.id);
-  return typeof props["road_event_id"] === "string" ? props["road_event_id"] : undefined;
+  // A blank id names nothing, so the next one is read.
+  const named = (id: unknown) =>
+    (typeof id === "string" && id.trim() !== "") || typeof id === "number" ? String(id) : undefined;
+  return named(props.core_details?.id) ?? named(feature.id) ?? named(props["road_event_id"]);
 }
 
 /** A road event's id, qualified by its data source as the parser names events. */
 const qualified = (dataSourceId: unknown, rawId: string) =>
-  dataSourceId != null ? `${dataSourceId}:${rawId}` : rawId;
+  typeof dataSourceId === "string" || typeof dataSourceId === "number"
+    ? `${dataSourceId}:${rawId}`
+    : rawId;
 
 /**
  * The parser's id of each road event of a feed, by the ids the feed names it
@@ -773,7 +784,7 @@ function unreadVersion(feed: WzdxFeed): string | undefined {
  * is always derived from vehicle_impact and lane data.
  *
  * What is left out is counted per source: a feed in a version the parser does
- * not read (`unsupported_version`), a feature with no geometry
+ * not read (`unsupported_version`), a feature with no valid geometry
  * (`no_geometry`), one without the required `event_type` or that cannot be
  * read (`malformed`), and one whose `event_type` is not a WZDx road event type
  * (`unknown_type`). An enumerated value outside the standard is left out of
@@ -825,8 +836,8 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         skip("malformed");
         continue;
       }
-      const geometry = feature.geometry ?? null;
-      if (!geometry || typeof geometry !== "object" || !("type" in geometry)) {
+      const geometry = usableGeometry(feature.geometry);
+      if (geometry === undefined) {
         skip("no_geometry");
         continue;
       }
@@ -979,7 +990,7 @@ export function parseWzdx(geojson: string | Buffer | object, src: SourceDescript
         severity,
         severitySource: "derived",
         status: lifecycle.status,
-        geometry: geometry as GeoJsonGeometry,
+        geometry,
         direction: typeof coreDetails.direction === "string" ? coreDetails.direction : undefined,
         // `undefined` is a road without a signed direction, where the
         // geometry's order is the direction of travel.

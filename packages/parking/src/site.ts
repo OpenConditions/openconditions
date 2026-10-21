@@ -1,4 +1,10 @@
-import type { CatalogFeed, ParseContext, RecordDraft } from "@openconditions/ingest-framework";
+import {
+  type CatalogFeed,
+  type ParseContext,
+  type ParseOutput,
+  type RecordDraft,
+  recordSkipped,
+} from "@openconditions/ingest-framework";
 import {
   type AUDIENCES,
   type ExternalId,
@@ -196,9 +202,26 @@ export type ReadingContext = Pick<ParseContext, "fetchedAt" | "cadenceSec">;
 /** Every reading stays current for at least half an hour. */
 const MIN_VALIDITY_SEC = 1800;
 
-/** A count a source can mean: a whole number of spaces, zero or more. */
+/**
+ * A count a source can mean: a whole number of spaces, zero or more, and no
+ * larger than a number counts exactly (`1e308` is an integer to JavaScript).
+ */
 export function validCount(value: number | undefined): value is number {
-  return value !== undefined && Number.isInteger(value) && value >= 0;
+  return value !== undefined && Number.isSafeInteger(value) && value >= 0;
+}
+
+/**
+ * A publisher's position as `[lon, lat]` when both are finite and in range
+ * (longitude −180..180, latitude −90..90); undefined otherwise, so a site
+ * is never placed off the globe.
+ */
+export function lonLat(lon: unknown, lat: unknown): [number, number] | undefined {
+  return typeof lon === "number" &&
+    typeof lat === "number" &&
+    Math.abs(lon) <= 180 &&
+    Math.abs(lat) <= 90
+    ? [lon, lat]
+    : undefined;
 }
 
 /**
@@ -217,13 +240,22 @@ export function utcInstant(at: Date): string {
   return at.toISOString().replace(/\.000Z$/, "Z");
 }
 
+/**
+ * Whether an instant has a four-digit year, which RFC 3339 requires:
+ * JavaScript reads and writes years past 9999 and before 0 with a sign and
+ * six digits (`+012026-…`), which no reader of the drafts accepts.
+ */
+const writable = (ms: number) =>
+  ms >= Date.parse("0000-01-01T00:00:00Z") && ms < Date.parse("+010000-01-01T00:00:00Z");
+
 const WALL_CLOCK = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2})?)(\.\d+)?$/;
 
 /**
  * The UTC instant of a publisher's timestamp. A time with an offset (`Z`,
  * `+01:00`, or `+0100` as some feeds write it) is taken as given; a time
  * without one is wall-clock time in the publisher's `timeZone`, fractional
- * seconds kept. A space may stand for the `T`. Undefined when unreadable.
+ * seconds kept. A space may stand for the `T`. Undefined when unreadable,
+ * and for a year RFC 3339 cannot write (before 0000 or after 9999).
  */
 export function instantIn(timeZone: string, value: unknown): string | undefined {
   const t = typeof value === "string" ? value.trim() : "";
@@ -232,13 +264,25 @@ export function instantIn(timeZone: string, value: unknown): string | undefined 
     .replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
   if (/(?:Z|[+-]\d{2}:\d{2})$/i.test(iso)) {
     const ms = Date.parse(iso);
-    return Number.isFinite(ms) ? utcInstant(new Date(ms)) : undefined;
+    return writable(ms) ? utcInstant(new Date(ms)) : undefined;
   }
   const m = iso.match(WALL_CLOCK);
   const at = m?.[1] === undefined ? null : zonedWallClockToInstant(timeZone, m[1]);
   if (at === null) return undefined;
   const fraction = m?.[2] === undefined ? 0 : Math.round(Number(`0${m[2]}`) * 1000);
-  return utcInstant(new Date(at.getTime() + fraction));
+  const ms = at.getTime() + fraction;
+  return writable(ms) ? utcInstant(new Date(ms)) : undefined;
+}
+
+/**
+ * The UTC instant of a time that states its zone (`Z` or an offset), as an
+ * RFC 3339 date-time must; undefined for one that does not. A time without
+ * a zone is local to a zone the format does not name, which `Date.parse`
+ * would read in the zone of whatever machine parses it.
+ */
+export function zonedInstant(value: unknown): string | undefined {
+  const t = typeof value === "string" ? value.trim() : "";
+  return /(?:Z|[+-]\d{2}:?\d{2})$/i.test(t) ? instantIn("UTC", t) : undefined;
 }
 
 /** The key of an area component: `<vehicleType>:<userGroup>`. */
@@ -246,9 +290,43 @@ export function areaKey(area: { vehicleType: string; userGroup: string }): strin
   return `${area.vehicleType}:${area.userGroup}`;
 }
 
+/**
+ * Reads one source record with `read`. A field of another JSON type than the
+ * format gives it (a number for a name, a string for a list) makes reading it
+ * throw a TypeError; that record is then counted as malformed and whatever it
+ * had added to `out` taken back, so it cannot fail the poll or leave half a
+ * site. Any other error still fails the parse.
+ */
+export function readRecord(
+  feedId: string,
+  read: () => void,
+  out?: Pick<ParseOutput, "features" | "observations" | "offers">,
+): void {
+  const lengths = out && [out.features.length, out.observations.length, out.offers.length];
+  try {
+    read();
+  } catch (error) {
+    if (!(error instanceof TypeError)) throw error;
+    if (out && lengths) {
+      out.features.length = lengths[0]!;
+      out.observations.length = lengths[1]!;
+      out.offers.length = lengths[2]!;
+    }
+    recordSkipped(feedId, "malformed");
+  }
+}
+
+/**
+ * A publisher's site id as a record id's local part: a line break or other
+ * line terminator, which a record id cannot hold, is percent-encoded, so the
+ * site keeps an id of its own instead of being refused at the write seam.
+ */
+const localId = (stationId: string): string =>
+  stationId.replace(/[\n\r\p{Zl}\p{Zp}]/gu, encodeURIComponent);
+
 /** The id of a site's feature. */
 export function siteId(feed: Pick<ParkingFeed, "id">, stationId: string): string {
-  return `oc:feature:${feed.id}:${stationId}`;
+  return `oc:feature:${feed.id}:${localId(stationId)}`;
 }
 
 /** The country a feed's region names; none for `eu` and `global`. */
@@ -559,7 +637,7 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
       ...(input.layout === undefined ? {} : { layout: input.layout }),
       ...(validCount(input.capacityTotal) ? { capacityTotal: input.capacityTotal } : {}),
       ...(Object.keys(range).length === 0 ? {} : { capacityRange: range }),
-      ...(input.levels !== undefined && Number.isInteger(input.levels) && input.levels > 0
+      ...(input.levels !== undefined && Number.isSafeInteger(input.levels) && input.levels > 0
         ? { levels: input.levels }
         : {}),
       ...(heightLimitM !== undefined && Number.isFinite(heightLimitM) && heightLimitM > 0
@@ -600,7 +678,8 @@ const CHANGE_ONLY = new Set(
  * reading of a change-only property (a count, a status, a trend) states no
  * validity: it is written when it changes and holds while the feed polls,
  * which the read computes from the source's last successful poll. Undefined
- * when the measuring time is unreadable.
+ * when the measuring time is unreadable or so late that its validity would
+ * end past the year 9999.
  */
 function readingDraft(
   feed: ParkingFeed,
@@ -613,6 +692,8 @@ function readingDraft(
   if (!Number.isFinite(at)) return undefined;
   const polled = (feed.accessMode ?? "bulk") === "bulk" && CHANGE_ONLY.has(property);
   const validitySec = r.validForSec ?? Math.max(MIN_VALIDITY_SEC, 2 * (ctx.cadenceSec ?? 0));
+  const until = at + validitySec * 1000;
+  if (!polled && !writable(until)) return undefined;
   const draft = {
     class: "observation",
     kind: "observation",
@@ -632,7 +713,7 @@ function readingDraft(
     },
     result,
     phenomenonTime: { instant: r.at },
-    ...(polled ? {} : { validUntil: new Date(at + validitySec * 1000).toISOString() }),
+    ...(polled ? {} : { validUntil: new Date(until).toISOString() }),
     aggregation: "instantaneous",
   };
   return { id: observationId(feed.id, draft as never), ...draft };
@@ -763,8 +844,9 @@ const money = (amount: number) => amount.toFixed(4).replace(/0{1,2}$/, "");
 
 /**
  * A `parking_rate` offer for a site: one element per priced row. Rows
- * without a finite price of zero or more are left out; undefined when none
- * is left.
+ * without a finite price of zero or more, or with one too large to write in
+ * decimals (`toFixed` turns to exponents from 1e21), are left out; undefined
+ * when none is left.
  */
 export function rateDraft(
   feed: ParkingFeed,
@@ -785,7 +867,7 @@ export function rateDraft(
   },
 ): RecordDraft | undefined {
   const elements = input.rows
-    .filter((row) => Number.isFinite(row.amount) && row.amount >= 0)
+    .filter((row) => Number.isFinite(row.amount) && row.amount >= 0 && row.amount < 1e21)
     .map((row) => {
       const restrictions = {
         ...(row.minDuration === undefined ? {} : { minDuration: { ...row.minDuration } }),
@@ -800,7 +882,9 @@ export function rateDraft(
           {
             type: row.component ?? "flat",
             price: { amount: money(row.amount), currency: input.currency },
-            ...(step !== undefined && Number.isInteger(step) && step > 0 ? { stepSize: step } : {}),
+            ...(step !== undefined && Number.isSafeInteger(step) && step > 0
+              ? { stepSize: step }
+              : {}),
           },
         ],
         ...(Object.keys(restrictions).length === 0 ? {} : { restrictions }),
@@ -810,7 +894,7 @@ export function rateDraft(
   const text = clean(input.text);
   const url = webUrl(input.url);
   return {
-    id: `oc:offer:${feed.id}:${stationId}:${n}`,
+    id: `oc:offer:${feed.id}:${localId(stationId)}:${n}`,
     class: "offer",
     kind: "parking_rate",
     temporality: "static",

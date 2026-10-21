@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
-import { isRoadRestrictionDetails } from "@openconditions/model-roads";
+import { buildRegistry, kernelModule } from "@openconditions/model";
+import { isRoadRestrictionDetails, roadsModule } from "@openconditions/model-roads";
 import { describe, expect, it } from "vitest";
-import { parseDatexSnapshot } from "../datex.js";
+import { parseDatexSituations, parseDatexSnapshot } from "../datex.js";
+import { situationDrafts } from "../situation/assemble.js";
 import { reconcileRoadSnapshots } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
 
@@ -46,6 +48,20 @@ function withHeightApplicability(replacement: string): string {
   if (!xml.includes(original)) throw new Error("fixture height applicability group moved");
   return xml.replace(original, replacement);
 }
+
+describe("an Alert-C direction left empty", () => {
+  it("states no direction, so every draft still validates", () => {
+    const registry = buildRegistry([kernelModule, roadsModule]);
+    const empty = xml.replaceAll(
+      ">aligned</loc:alertCAffectedDirection>",
+      "></loc:alertCAffectedDirection>",
+    );
+    expect(empty).not.toBe(xml);
+    const drafts = situationDrafts(parseDatexSituations(empty, ndwSource), { source: ndwSource });
+    expect(drafts.length).toBeGreaterThan(0);
+    expect(drafts.filter((d) => !registry.validateDraft(d).ok).map((d) => d["id"])).toEqual([]);
+  });
+});
 
 describe("ndw applicability extraction from the real capture", () => {
   it("keeps every distinct source id, including the collocated records", () => {

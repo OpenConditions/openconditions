@@ -119,6 +119,35 @@ describe("parkapi-v3", () => {
     },
   );
 
+  test("ParkAPI v3: a licence text longer than the model holds is left out and counted", () => {
+    drainSkipped(mobidataFeed().id);
+    const doc = JSON.parse(fixture("parkapi-v3-sources.json").toString("utf8"));
+    for (const source of doc.items)
+      if (source.uid === "karlsruhe") source.attribution_license = "x".repeat(1001);
+    const out = parse(fixture("parkapi-v3-sites.json"), Buffer.from(JSON.stringify(doc)));
+    expect(site(out, "19780")?.["provenance"]).toMatchObject({
+      upstream: [{ publisher: expect.any(String) }],
+    });
+    const provenance = site(out, "19780")?.["provenance"] as { upstream: object[] } | undefined;
+    expect(provenance?.upstream[0]).not.toHaveProperty("license");
+    // Once for each of the source's two sites.
+    expect(drainSkipped(mobidataFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
+  test("ParkAPI v3: a publisher name too long for a licensing record leaves it out, not the poll", () => {
+    drainSkipped(mobidataFeed().id);
+    const doc = JSON.parse(fixture("parkapi-v3-sources.json").toString("utf8"));
+    for (const source of doc.items) {
+      if (source.uid !== "karlsruhe") continue;
+      source.attribution_contributor = "x".repeat(1001);
+      source.attribution_url = "https://example.org/licence";
+    }
+    const out = parse(fixture("parkapi-v3-sites.json"), Buffer.from(JSON.stringify(doc)));
+    const provenance = site(out, "19780")?.["provenance"] as { upstream: object[] } | undefined;
+    expect(provenance?.upstream[0]).not.toHaveProperty("licensing");
+    expect(drainSkipped(mobidataFeed().id)).toEqual({ unknown_value: 2 });
+  });
+
   test("ParkAPI v3: a source without a contributor is credited by its name and licence text", () => {
     const out = both();
     expect(site(out, "16590")?.["provenance"]).toMatchObject({
@@ -259,6 +288,30 @@ describe("parkapi-v3", () => {
     expect(out.features.map((f) => f["id"])).toEqual(["oc:feature:de-bw-mobidata-parking:2"]);
     // The bicycle site is left out by design; the unplaceable one is skipped.
     expect(drainSkipped(mobidataFeed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  test("ParkAPI v3: a site off the globe has no geometry, and null entries name nothing", () => {
+    drainSkipped(mobidataFeed().id);
+    const sources = JSON.parse(fixture("parkapi-v3-sources.json").toString("utf8"));
+    const out = parse(
+      sitesWith((items) => [
+        { ...items[1], id: 1, lat: 180.0000001 },
+        { ...items[1], id: 2, external_identifiers: [null, { type: "DHID", value: "de:1" }] },
+      ]),
+      Buffer.from(JSON.stringify({ ...sources, items: [null, ...sources.items] })),
+    );
+    expect(out.features.map((f) => f["id"])).toEqual(["oc:feature:de-bw-mobidata-parking:2"]);
+    expect(drainSkipped(mobidataFeed().id)).toEqual({ no_geometry: 1 });
+  });
+
+  test("ParkAPI v3: a live state at a time without a zone is no reading", () => {
+    const out = parse(
+      sitesWith((items) => [
+        { ...items[1], id: 1, realtime_data_updated_at: "2026-03-29T02:30:00" },
+      ]),
+      fixture("parkapi-v3-sources.json"),
+    );
+    expect(readings(out, "1")).toEqual({});
   });
 
   const maxStay = (restrictions: unknown[], extra: Record<string, unknown> = {}) => {

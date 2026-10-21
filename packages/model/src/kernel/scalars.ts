@@ -79,9 +79,13 @@ const LineCoordinates = z.array(Position).min(2);
 const Ring = z
   .array(Position)
   .min(4)
-  .refine((ring) => ring[0]!.every((value, i) => value === ring[ring.length - 1]![i]), {
-    message: "a polygon ring must be closed",
-  });
+  // Zod runs the refinement even when `min(4)` failed, so an empty ring must
+  // not be read: its length issue is the one reported.
+  .refine(
+    (ring) =>
+      ring.length === 0 || ring[0]!.every((value, i) => value === ring[ring.length - 1]![i]),
+    { message: "a polygon ring must be closed" },
+  );
 const PolygonCoordinates = z.array(Ring).min(1);
 
 export const PointGeometry = z.strictObject({ type: z.literal("Point"), coordinates: Position });

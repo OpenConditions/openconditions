@@ -1,5 +1,5 @@
 import { contentHash } from "../content-hash.js";
-import { canonicalIdOf, parseRecordId } from "../kernel/identity.js";
+import { canonicalIdOf, parseRecordId, wellFormed } from "../kernel/identity.js";
 import type { Registry, ValidationResult } from "./build.js";
 
 interface SealOptions {
@@ -52,7 +52,8 @@ function sealChecked(
   opts: SealOptions,
 ): ValidationResult {
   if (!checked.ok) return checked;
-  const rec = checked.value;
+  // Stored as hashed: an unpaired surrogate in source text becomes U+FFFD.
+  const rec = wellFormed(checked.value);
   const parts = parseRecordId(rec["id"] as string)!;
   const cls = rec["class"] as "feature" | "situation" | "observation" | "offer";
   const domain =

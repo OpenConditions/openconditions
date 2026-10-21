@@ -217,6 +217,14 @@ describe("normaliseTariff", () => {
     expect(weekly?.tariff_alt_text).toEqual([{ language: "en", text: "0.392EURperKWH" }]);
   });
 
+  test("a currency that is no ISO 4217 code refuses the tariff; a lower-case code is read", () => {
+    expect(() => normaliseTariff({ id: "t", currency: "valueOf", elements: [] })).toThrow(
+      /ISO 4217/,
+    );
+    expect(() => normaliseTariff({ id: "t", currency: "€", elements: [] })).toThrow(/ISO 4217/);
+    expect(normaliseTariff({ id: "t", currency: "eur", elements: [] }).currency).toBe("EUR");
+  });
+
   test("NDW: a tariff id shared by two parties stays distinguishable", () => {
     const shared = tariffs("ndw-tariffs.json").filter((t) => t.id === "238");
     expect(shared.map((t) => `${t.country_code}/${t.party_id}`)).toEqual(["NL/CKE", "NL/QWC"]);

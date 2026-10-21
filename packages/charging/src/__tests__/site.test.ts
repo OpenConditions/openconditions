@@ -80,6 +80,21 @@ describe("siteDraft", () => {
     expect(site({ name: [{ lang: "en", text: "  " }] })["name"]).toBeUndefined();
   });
 
+  test("a malformed language tag leaves its text undetermined rather than the site unsealable", () => {
+    const draft = site({
+      lang: "en--gb",
+      name: [
+        { lang: "-en", text: "Pier" },
+        { lang: "i-klingon", text: "Quay" },
+      ],
+      operator: { name: "Operator" },
+      notes: "Behind the station",
+      notesLang: "valueOf",
+    });
+    expect(draft["name"]).toEqual([{ lang: "und", text: "Pier" }]);
+    expect(draft["description"]).toEqual([{ lang: "und", text: "Behind the station" }]);
+  });
+
   test("states the same site whichever order the register lists its charge points in", () => {
     const evses = [
       {
@@ -225,6 +240,13 @@ describe("siteDraft", () => {
     });
     expect(component(draft, "type2")?.details).toMatchObject({ quantity: 4 });
     expect(component(draft, "single")?.details).not.toHaveProperty("quantity");
+    // A count a double does not hold exactly is no count.
+    const huge = site({
+      evses: [
+        { key: "many", quantity: 1e308, connectors: [{ id: "1", standard: "IEC_62196_T2" }] },
+      ],
+    });
+    expect(component(huge, "many")?.details).not.toHaveProperty("quantity");
     // A count register (Hong Kong) gives grouped charge points and no status.
     const out = parseLayout(
       hongKongFeed(),
@@ -426,5 +448,7 @@ describe("status readings", () => {
     expect(at(undefined)).toEqual({ instant: "2026-10-06T06:00:00Z" });
     expect(at("yesterday")).toEqual({ instant: "2026-10-06T06:00:00Z" });
     expect(at("2026-10-06T06:05:00Z")).toEqual({ instant: "2026-10-06T06:00:00Z" });
+    // A year RFC 3339 cannot write is no time either.
+    expect(at("-012026-10-06T05:00:00Z")).toEqual({ instant: "2026-10-06T06:00:00Z" });
   });
 });

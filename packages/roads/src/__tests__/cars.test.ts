@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { parseCars, parseCarsSnapshot } from "../cars.js";
+import { situationDrafts } from "../situation/assemble.js";
 import type { SourceDescriptor } from "../types.js";
 
 const SRC: SourceDescriptor = {
@@ -16,6 +17,39 @@ const load = (name: string) =>
   readFileSync(join(import.meta.dirname, `fixtures/cars-ny/${name}.json`));
 
 const FETCHED = "2026-10-14T00:00:00.000Z";
+
+describe("CARS events with values of the wrong shape", () => {
+  type Rec = Record<string, unknown>;
+  const events = () => JSON.parse(load("events").toString("utf8")) as Rec[];
+  const locationOf = (ev: Rec) => ((ev["details"] as Rec[])[0]!["locations"] as Rec[])[0] as Rec;
+
+  it("counts an event whose fields are of other JSON types as malformed, not the response", () => {
+    const doc = events();
+    doc[1]!["status"] = 3;
+    const report = parseCarsSnapshot(JSON.stringify(doc), SRC, { fetchedAt: FETCHED });
+    expect(report.inputCount).toBe(7);
+    expect(report.records).toHaveLength(6);
+    expect(report.errors).toEqual([{ code: "malformed_record", id: null, sourcePath: "$[1]" }]);
+  });
+
+  it("reads a route designator only as text, and never as an inherited key", () => {
+    const doc = events();
+    locationOf(doc[1]!)["route-designator"] = 87;
+    locationOf(doc[2]!)["route-designator"] = "constructor";
+    locationOf(doc[2]!)["link-alignment"] = "toString";
+    const read = parseCars(JSON.stringify(doc), SRC);
+    expect(read.find((e) => e.id.endsWith("TEST-1002"))!.roads).toEqual([]);
+    expect(read.find((e) => e.id.endsWith("TEST-1003"))!.roads?.[0]?.direction).toBeUndefined();
+    expect(() => situationDrafts(read, { source: SRC })).not.toThrow();
+  });
+
+  it("holds an event whose geometry is no valid GeoJSON as unlocatable", () => {
+    const doc = events();
+    doc[1]!["geometry"] = { type: "Point", coordinates: [-73.78, 142.85] };
+    const report = parseCarsSnapshot(JSON.stringify(doc), SRC, { fetchedAt: FETCHED });
+    expect(report.records.find((r) => r.id.endsWith("TEST-1002"))!.disposition).toBe("unlocatable");
+  });
+});
 
 describe("parseCarsSnapshot", () => {
   it("accounts for every event: ended and withheld ones are terminal, one without a place unlocatable", () => {

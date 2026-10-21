@@ -9,8 +9,10 @@ import type { FuelGrade } from "../grades.js";
 import {
   availabilityDraft,
   type FuelFeed,
+  isObject,
   openStatusDraft,
   priceDraft,
+  priceText,
   stationDraft,
   stationPosition,
 } from "../station.js";
@@ -69,7 +71,7 @@ export function parseTankerkoenig(
       throw new Error("tankerkoenig: the answer has no stations");
     }
     for (const station of answer.stations as Station[]) {
-      const stationId = text(station["id"]);
+      const stationId = isObject(station) ? text(station["id"]) : undefined;
       if (stationId === undefined) {
         recordSkipped(feed.id, "malformed");
         continue;
@@ -83,8 +85,8 @@ export function parseTankerkoenig(
       const grades = GRADES.flatMap((grade): { grade: FuelGrade; price: string | undefined }[] => {
         const value = station[grade];
         if (value === false) return [{ grade, price: undefined }];
-        if (typeof value === "number" && value > 0) return [{ grade, price: value.toFixed(3) }];
-        return [];
+        const price = priceText(value);
+        return price === undefined ? [] : [{ grade, price }];
       });
       const name = text(station["name"]);
       const brand = text(station["brand"]);

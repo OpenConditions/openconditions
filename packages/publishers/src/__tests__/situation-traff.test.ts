@@ -1,6 +1,6 @@
 import { productionRegistry } from "@openconditions/model-registry";
 import { TRAFF } from "@openconditions/model-roads";
-import { XMLParser } from "fast-xml-parser";
+import { XMLParser, XMLValidator } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import { validateXML } from "xmllint-wasm";
 import { situationsToTraff, traffEventsOf } from "../situation-traff.js";
@@ -631,6 +631,59 @@ describe("TraFF direction and reader compatibility", () => {
       "@_start_time": "2026-09-06T08:00:00Z",
       "@_end_time": "2026-09-07T08:00:00Z",
     });
+  });
+
+  it("holds an end past the year 9999 in UTC at the last second a four-digit year has", () => {
+    const record = situation({
+      validity: {
+        status: "active",
+        start: "2026-09-06T08:00:00Z",
+        end: "9999-12-31T23:59:59-05:00",
+      },
+    });
+    expect(parser.parse(situationsToTraff(registry, [record], AT)).feed.message).toMatchObject({
+      "@_expiration_time": "9999-12-31T23:59:59Z",
+      "@_end_time": "9999-12-31T23:59:59Z",
+    });
+  });
+
+  it("writes a forecast's flag with its value, so the feed stays well-formed XML", () => {
+    const xml = situationsToTraff(registry, [situation({ temporality: "forecast" })], AT);
+    expect(xml).toContain('forecast="true"');
+    expect(XMLValidator.validate(xml)).toBe(true);
+  });
+
+  it("writes coordinates within 1e-6 of zero as decimals, not in exponent notation", () => {
+    const record = situation({
+      location: { geometry: { type: "Point", coordinates: [-1e-7, 5e-324] } },
+    });
+    expect(
+      parser.parse(situationsToTraff(registry, [record], AT)).feed.message.location,
+    ).toMatchObject({ at: "+0 -0.0000001" });
+  });
+
+  it("leaves out a speed or a queue length TraFF cannot write as a whole number", () => {
+    const diagnostics: { code: string; path: string }[] = [];
+    const events = traffEventsOf(
+      registry,
+      situation({
+        effects: [
+          effect("x/speed", "speed_limit", { limit: { value: 1e21, unit: "km/h" } }),
+          effect("x/delay", "delay", { queueLength: { value: -5, unit: "m" } }),
+        ],
+      }),
+      AT,
+      (d) => diagnostics.push(d),
+    );
+    expect(events).toEqual([
+      { cls: "CONSTRUCTION", type: "CONSTRUCTION_ROADWORKS" },
+      { cls: "RESTRICTION", type: "RESTRICTION_SPEED_LIMIT" },
+      { cls: "DELAY", type: "DELAY_DELAY" },
+    ]);
+    expect(diagnostics).toEqual([
+      expect.objectContaining({ code: "field_not_exported", path: "/effects/0/limit" }),
+      expect.objectContaining({ code: "field_not_exported", path: "/effects/1/queueLength" }),
+    ]);
   });
 });
 

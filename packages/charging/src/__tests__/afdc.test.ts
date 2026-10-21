@@ -283,4 +283,9 @@ describe("afdc", () => {
     });
     expect(drainSkipped("us-afdc-charging")).toEqual({ unknown_value: 4 });
   });
+
+  test("AFDC: a station of another fuel is no site and is counted as a record of an unknown type", () => {
+    expect(parse({ main: [station({ fuel_type_code: "CNG" })] }).features).toEqual([]);
+    expect(drainSkipped("us-afdc-charging")).toEqual({ unknown_type: 1 });
+  });
 });

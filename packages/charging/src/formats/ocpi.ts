@@ -41,7 +41,7 @@ import { colocateSites } from "../colocate.js";
 import { ocpiEnergyMix } from "../energy-mix.js";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
 import { osmOpeningHours } from "../hours.js";
-import { own, type Upstream } from "../records.js";
+import { languageOf, own, type Upstream } from "../records.js";
 import {
   type BayInput,
   type BayPosition,
@@ -155,7 +155,7 @@ const logoOf = (details: OcpiLocation["operator"], category: ImageCategory): Ima
       ];
 
 const displayTexts = (list: readonly { language: string; text: string }[] | undefined) =>
-  (list ?? []).map((t) => ({ lang: t.language === "" ? "und" : t.language, text: t.text }));
+  (list ?? []).map((t) => ({ lang: languageOf(t.language), text: t.text }));
 
 /** A length OCPI gives in centimetres, in metres. */
 const centimetres = (cm: number | undefined) =>

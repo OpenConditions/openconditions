@@ -43,11 +43,25 @@ export function toIsoTimestamp(value: unknown, timeZone?: string): string | unde
       const ms = fraction === undefined ? 0 : Math.round(Number(`0${fraction}`) * 1000);
       return new Date(at.getTime() + ms).toISOString();
     }
+    // Date.parse rolls a day the month does not have over into the next
+    // month (30 February is 2 March); a changed date is worse than none.
+    const date = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+    if (date !== null && !isCalendarDate(Number(date[1]), Number(date[2]), Number(date[3]))) {
+      return undefined;
+    }
     const ms = Date.parse(s);
     return Number.isNaN(ms) ? undefined : new Date(ms).toISOString();
   }
 
   return undefined;
+}
+
+/** Whether a year, month and day name a day of the proleptic Gregorian calendar. */
+function isCalendarDate(year: number, month: number, day: number): boolean {
+  if (month < 1 || month > 12 || day < 1) return false;
+  const at = new Date(Date.UTC(2000, month - 1, day));
+  at.setUTCFullYear(year);
+  return at.getUTCMonth() === month - 1 && at.getUTCDate() === day;
 }
 
 function fromEpoch(n: number): string | undefined {

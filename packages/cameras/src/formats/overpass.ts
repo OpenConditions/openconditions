@@ -155,7 +155,12 @@ export function parseOverpassCameras(
       const { tags } = element;
       const address = WEBCAM_TAGS.map((key) => tag(tags, key)).find((v) => v !== undefined);
       const isWebcam = tag(tags, "surveillance:type") === "webcam";
-      if (address === undefined && !isWebcam) continue;
+      // The query asks for webcams only, so an element without a webcam
+      // address or tag holds a blank one: it is counted, not dropped unseen.
+      if (address === undefined && !isWebcam) {
+        skip("malformed");
+        continue;
+      }
       const url = urlOf(address);
       const isImage = url !== undefined && IMAGE_PATH.test(new URL(url).pathname);
       const description = tag(tags, "description");

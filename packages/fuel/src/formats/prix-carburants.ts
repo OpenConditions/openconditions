@@ -12,7 +12,9 @@ import { type Interval, interval, osmOpeningHours } from "../hours.js";
 import {
   availabilityDraft,
   type FuelFeed,
+  isObject,
   priceDraft,
+  priceText,
   stationDraft,
   stationPosition,
   utcInstant,
@@ -154,15 +156,19 @@ function openingHoursOf(station: Station, feedId: string): string | undefined {
   if (station["horaires_automate_24_24"] === "Oui") return "24/7";
   const raw = station["horaires"];
   if (typeof raw !== "string" || raw.trim() === "") return undefined;
-  let horaires: { "@automate-24-24"?: unknown; jour?: unknown };
+  let horaires: unknown;
   try {
-    horaires = JSON.parse(raw) as typeof horaires;
+    horaires = JSON.parse(raw);
   } catch {
+    horaires = undefined;
+  }
+  // The hours are an object of days; `null` or any other JSON value is not read.
+  if (!isObject(horaires)) {
     recordSkipped(feedId, "unknown_value");
     return undefined;
   }
   if (horaires["@automate-24-24"] === "1") return "24/7";
-  const days = Array.isArray(horaires.jour) ? (horaires.jour as Day[]) : [];
+  const days = Array.isArray(horaires["jour"]) ? (horaires["jour"].filter(isObject) as Day[]) : [];
   const week: Interval[][] = [];
   for (let id = 1; id <= 7; id++) {
     const day = days.find((d) => d["@id"] === String(id));
@@ -220,7 +226,8 @@ export function parsePrixCarburants(
     if (!Array.isArray(stations)) throw new Error("prix-carburants: the export is not a list");
     for (const station of stations as Station[]) {
       const stationId =
-        typeof station["id"] === "number" || typeof station["id"] === "string"
+        isObject(station) &&
+        (typeof station["id"] === "number" || typeof station["id"] === "string")
           ? String(station["id"])
           : undefined;
       if (stationId === undefined) {
@@ -253,8 +260,8 @@ export function parsePrixCarburants(
           recordSkipped(feed.id, "unknown_value");
         }
         const outOfStock = rupture !== undefined;
-        const amount = station[`${field}_prix`];
-        const listed = typeof amount === "number" && amount > 0;
+        const amount = priceText(station[`${field}_prix`]);
+        const listed = amount !== undefined;
         // The lists name all six grades: one unavailable without a rupture is not sold.
         if (!outOfStock && !listed && !available.has(name)) continue;
         // A price is a reading only with the time it was set: undated, it says
@@ -263,9 +270,7 @@ export function parsePrixCarburants(
         products.push({
           grade,
           inStock: !outOfStock,
-          ...(!outOfStock && listed && at !== undefined
-            ? { price: { amount: (amount as number).toFixed(3), at } }
-            : {}),
+          ...(!outOfStock && listed && at !== undefined ? { price: { amount, at } } : {}),
         });
       }
       const services = servicesOf(station, feed.id);

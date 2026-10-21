@@ -172,8 +172,13 @@ function toDraft(
   const area = unit !== undefined && Object.hasOwn(AREA_HA, unit) ? AREA_HA[unit] : undefined;
   // A kept event's magnitude in a unit that is no area (a wind speed, a seismic scale) is not read.
   if (unit !== undefined && area === undefined) recordSkipped(feed.id, "unknown_value");
-  const hectares =
-    last.magnitude === undefined || area === undefined ? undefined : last.magnitude.value * area;
+  const product =
+    last.magnitude === undefined || area === undefined
+      ? undefined
+      : round2(last.magnitude.value * area);
+  // An area too large for a number (a magnitude near the largest double) is not read.
+  const hectares = product !== undefined && Number.isFinite(product) ? product : undefined;
+  if (product !== undefined && hectares === undefined) recordSkipped(feed.id, "unknown_value");
   const volcanoes = volcanoNumbersOf(event);
   recordSkipped(feed.id, "unknown_value", volcanoes.unread);
   return {
@@ -210,7 +215,7 @@ function toDraft(
       v: 1,
       ...(title === undefined ? {} : { name: [{ lang: "en", text: title }] }),
       ...(link === undefined ? {} : { detailUrl: link }),
-      ...(hectares === undefined || hectares < 0 ? {} : { areaHa: round2(hectares) }),
+      ...(hectares === undefined || hectares < 0 ? {} : { areaHa: hectares }),
     },
   };
 }

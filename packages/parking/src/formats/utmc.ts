@@ -8,7 +8,14 @@ import {
 } from "@openconditions/ingest-framework";
 import type { ParkingStatus } from "@openconditions/model-parking";
 import type { ParkingCatalogFeed } from "../feed-schema.js";
-import { instantIn, occupancyDrafts, type SiteInput, siteDraft, statusDraft } from "../site.js";
+import {
+  instantIn,
+  lonLat,
+  occupancyDrafts,
+  type SiteInput,
+  siteDraft,
+  statusDraft,
+} from "../site.js";
 
 /** One car park of the UTMC static feed (Tyne and Wear Open Data Services §5.4). */
 interface UtmcStatic {
@@ -63,7 +70,7 @@ interface StaticSite {
 
 /**
  * The site of a static record, or why it gives none: `malformed` without
- * an id or with a coordinate that is no number, `no_geometry` without a
+ * an id or with a coordinate that is no number in range, `no_geometry` without a
  * definition or a point.
  */
 function staticSite(record: UtmcStatic): StaticSite | "malformed" | "no_geometry" {
@@ -74,14 +81,15 @@ function staticSite(record: UtmcStatic): StaticSite | "malformed" | "no_geometry
   const lat = definition?.point?.latitude;
   const lon = definition?.point?.longitude;
   if (lat === undefined || lat === null || lon === undefined || lon === null) return "no_geometry";
-  if (!finite(lat) || !finite(lon)) return "malformed";
+  const point = lonLat(lon, lat);
+  if (point === undefined) return "malformed";
   const capacity = record.configurations?.[0]?.capacity;
   const counted = finite(capacity) && capacity > 0 ? capacity : undefined;
   const description = text(definition?.longDescription);
   return {
     input: {
       stationId,
-      point: [lon, lat],
+      point,
       lang: "en",
       name: text(definition?.shortDescription) ?? `Car Park ${stationId}`,
       ...(description === undefined ? {} : { notes: description }),
@@ -98,7 +106,8 @@ function readingsOf(
   ctx: ParseContext,
 ): RecordDraft[] {
   const dynamic = record.dynamics?.[0];
-  if (dynamic === undefined) return [];
+  // A null entry, like no entry, holds no reading.
+  if (typeof dynamic !== "object" || dynamic === null) return [];
   // The feed writes its offset without a colon (`+0000`).
   const at = instantIn(TIME_ZONE, dynamic.lastUpdated);
   if (at === undefined && text(dynamic.lastUpdated) !== undefined) {

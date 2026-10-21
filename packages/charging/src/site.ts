@@ -28,12 +28,14 @@ import {
   type ChargingFeed,
   clean,
   freshness,
+  languageOf,
   pointLocation,
   provenance,
   siteId,
   UNLOCATED,
   type Upstream,
   utcInstant,
+  utcInstantOf,
   webUrl,
 } from "./records.js";
 import { tariffOfferId } from "./tariff.js";
@@ -277,15 +279,12 @@ export function instantIn(timeZone: string, value: unknown): string | undefined 
   const iso = t
     .replace(/^(\d{4}-\d{2}-\d{2}) (?=\d)/, "$1T")
     .replace(/([+-]\d{2})(\d{2})$/, "$1:$2");
-  if (/(?:Z|[+-]\d{2}:\d{2})$/i.test(iso)) {
-    const ms = Date.parse(iso);
-    return Number.isFinite(ms) ? utcInstant(new Date(ms)) : undefined;
-  }
+  if (/(?:Z|[+-]\d{2}:\d{2})$/i.test(iso)) return utcInstantOf(Date.parse(iso));
   const m = iso.match(WALL_CLOCK);
   const at = m?.[1] === undefined ? null : zonedWallClockToInstant(timeZone, m[1]);
   if (at === null) return undefined;
   const fraction = m?.[2] === undefined ? 0 : Math.round(Number(`0${m[2]}`) * 1000);
-  return utcInstant(new Date(at.getTime() + fraction));
+  return utcInstantOf(at.getTime() + fraction);
 }
 
 /**
@@ -349,7 +348,7 @@ const positive = (n: number | undefined) =>
 function texts(list: readonly TextInput[] | undefined) {
   const out = (list ?? []).flatMap((t) => {
     const text = clean(t.text);
-    return text === undefined ? [] : [{ lang: clean(t.lang)?.toLowerCase() || "und", text }];
+    return text === undefined ? [] : [{ lang: languageOf(t.lang).toLowerCase(), text }];
   });
   return out.length === 0 ? undefined : out;
 }
@@ -363,7 +362,7 @@ function namesOf(list: readonly TextInput[] | undefined) {
   const seen = new Set<string>();
   const out = (list ?? []).flatMap((t) => {
     const text = clean(t.text);
-    const lang = clean(t.lang) ?? "und";
+    const lang = languageOf(t.lang);
     if (text === undefined || seen.has(lang.toLowerCase())) return [];
     seen.add(lang.toLowerCase());
     return [{ lang, text }];
@@ -381,7 +380,7 @@ function imagesOf(list: readonly ImageInput[] | undefined) {
     const thumbnail = webUrl(image.thumbnail);
     const format = clean(image.format)?.toLowerCase();
     const size = (n: number | undefined) =>
-      n !== undefined && Number.isInteger(n) && n > 0 ? n : undefined;
+      n !== undefined && Number.isSafeInteger(n) && n > 0 ? n : undefined;
     const width = size(image.width);
     const height = size(image.height);
     return [
@@ -515,7 +514,7 @@ function evseComponents(
         v: 1,
         ...(evseId === undefined ? {} : { evseId }),
         ...(clean(evse.uid) === undefined ? {} : { uid: clean(evse.uid) }),
-        ...(quantity !== undefined && Number.isInteger(quantity) && quantity >= 2
+        ...(quantity !== undefined && Number.isSafeInteger(quantity) && quantity >= 2
           ? { quantity }
           : {}),
         ...(capabilities.length === 0 ? {} : { capabilities }),
@@ -596,7 +595,7 @@ function bayComponents(bays: readonly BayInput[]): RecordDraft[] {
  * operational.
  */
 export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: string): RecordDraft {
-  const lang = input.lang ?? "und";
+  const lang = languageOf(input.lang);
   const text = (value: string | undefined) => {
     const t = clean(value);
     return t === undefined ? undefined : [{ lang, text: t }];
@@ -616,7 +615,14 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
   const name = typeof input.name === "string" ? text(input.name) : namesOf(input.name);
   const notes = clean(input.notes);
   const description =
-    notes === undefined ? undefined : [{ lang: clean(input.notesLang) ?? lang, text: notes }];
+    notes === undefined
+      ? undefined
+      : [
+          {
+            lang: clean(input.notesLang) === undefined ? lang : languageOf(input.notesLang),
+            text: notes,
+          },
+        ];
   const operator = organisation(input.operator, "operator", lang);
   const owner = organisation(input.owner, "owner", lang);
   const suboperator = organisation(input.suboperator, "suboperator", lang);
@@ -755,8 +761,9 @@ function statusReading(
   ctx: ReadingContext,
 ): RecordDraft {
   const fetched = Date.parse(ctx.fetchedAt);
+  // A stated time RFC 3339 cannot write is no time the reading was taken at.
   const stated = r.at === undefined ? Number.NaN : Date.parse(r.at);
-  const at = Number.isFinite(stated) ? Math.min(stated, fetched) : fetched;
+  const at = utcInstantOf(stated) !== undefined ? Math.min(stated, fetched) : fetched;
   const draft = {
     class: "observation",
     kind: "observation",

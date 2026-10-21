@@ -210,6 +210,22 @@ describe("skips", () => {
     expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_value: 2 });
   });
 
+  test("an element that is no car park is counted as an unknown type, not dropped unseen", () => {
+    drainSkipped(osmParkingFeed().id);
+    const out = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [
+            { type: "node", id: 1, lat: 49, lon: 8.4, tags: null },
+            { type: "node", id: 2, lat: 49, lon: 8.4, tags: { amenity: "fuel" } },
+          ],
+        }),
+      ),
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(osmParkingFeed().id)).toEqual({ unknown_type: 2 });
+  });
+
   test("Overpass: owner, description, lighting, supervision, kerbside bays and customers' usage", () => {
     const out = osm();
     expect(site(out, "node/1725394191")?.["owner"]).toEqual({

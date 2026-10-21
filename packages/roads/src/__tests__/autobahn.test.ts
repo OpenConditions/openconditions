@@ -13,6 +13,25 @@ const AUTOBAHN_SOURCE = {
   licenseUrl: "https://www.govdata.de/dl-de/by-2-0",
 } as const;
 
+describe("parseAutobahn — values of the wrong shape", () => {
+  const warnings = () =>
+    JSON.parse(readFileSync(FIXTURE_PATH, "utf8")) as { warning: Record<string, unknown>[] };
+
+  it("leaves out an item whose geometry or coordinate is no position", () => {
+    const doc = warnings();
+    const count = parseAutobahn(JSON.stringify(doc), AUTOBAHN_SOURCE, "warning").length;
+    doc.warning[0]!["geometry"] = { type: "Point", coordinates: [200, 49] };
+    expect(parseAutobahn(JSON.stringify(doc), AUTOBAHN_SOURCE, "warning")).toHaveLength(count - 1);
+  });
+
+  it("reads past a blank identifier", () => {
+    const doc = warnings();
+    doc.warning[0]!["identifier"] = "";
+    const ids = parseAutobahn(JSON.stringify(doc), AUTOBAHN_SOURCE, "warning").map((e) => e.id);
+    expect(ids.every((id) => !id.endsWith(":"))).toBe(true);
+  });
+});
+
 describe("parseAutobahn — warning fixture", () => {
   it("parses at least one RoadEvent", () => {
     const json = readFileSync(FIXTURE_PATH, "utf8");

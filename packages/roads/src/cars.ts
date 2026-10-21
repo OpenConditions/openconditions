@@ -8,6 +8,7 @@ import {
 import type { LaneStatus, RoadEvent } from "./model.js";
 import { buildLocalSchedule, jsDayToICal, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseOf } from "./situation/classes.js";
+import { entryOf, usableGeometry } from "./situation/location.js";
 import {
   type RoadSnapshotRecord,
   type RoadSnapshotReport,
@@ -177,10 +178,9 @@ function directionOf(location: CarsLocation): string | undefined {
   const link = location["link-direction"];
   if (link === "BOTH_DIRECTIONS") return "both directions";
   if (link !== "POSITIVE_DIRECTION" && link !== "NEGATIVE_DIRECTION") return undefined;
-  const route = location["route-designator"];
   const positive =
-    ALIGNMENT[location["link-alignment"] ?? ""] ??
-    (route === undefined ? undefined : POSITIVE[route]);
+    entryOf(ALIGNMENT, location["link-alignment"]) ??
+    entryOf(POSITIVE, location["route-designator"]);
   if (positive === undefined) return undefined;
   return BOUND[link === "POSITIVE_DIRECTION" ? positive : OPPOSITE[positive]!];
 }
@@ -279,7 +279,7 @@ function carsEvent(
   const links = (detail.locations ?? []).filter((l) => l["location-type"] === "LinkLocation");
   const roads = links.flatMap((l) => {
     const name = l["route-designator"];
-    if (!name) return [];
+    if (typeof name !== "string" || name === "") return [];
     const direction = directionOf(l);
     return [{ name, ...(direction === undefined ? {} : { direction }) }];
   });
@@ -345,13 +345,6 @@ function carsEvent(
   };
 }
 
-/** Whether a geometry is GeoJSON this parser can place. */
-function placeable(geometry: unknown): geometry is GeoJsonGeometry {
-  if (geometry === null || typeof geometry !== "object") return false;
-  const g = geometry as { type?: unknown; coordinates?: unknown };
-  return typeof g.type === "string" && Array.isArray(g.coordinates) && g.coordinates.length > 0;
-}
-
 /**
  * Whether an event names any phrase or headline category the CARS crosswalk
  * knows, including those it deliberately leaves unclassified. An event that
@@ -411,7 +404,8 @@ function carsRecord(
       },
     };
   }
-  if (!placeable(ev.geometry)) {
+  const geometry = usableGeometry(ev.geometry);
+  if (geometry === undefined) {
     return {
       record: {
         id,
@@ -422,7 +416,7 @@ function carsRecord(
       },
     };
   }
-  const event = carsEvent(ev, detail, ev.geometry, classification, condition, src, fetchedAt);
+  const event = carsEvent(ev, detail, geometry, classification, condition, src, fetchedAt);
   if (!condition && classification === undefined && !namesKnownPhrase(phrases, category)) {
     recordSkipped(src.id, "unknown_value");
   }
@@ -469,9 +463,17 @@ export function parseCarsSnapshot(
   const records: RoadSnapshotRecord[] = [];
   const errors: RoadSnapshotReport["errors"] = [];
   data.forEach((raw, index) => {
-    const outcome = carsRecord(raw, `$[${index}]`, src, fetchedAt);
-    if (outcome.error) errors.push(outcome.error);
-    if (outcome.record) records.push(outcome.record);
+    const sourcePath = `$[${index}]`;
+    try {
+      const outcome = carsRecord(raw, sourcePath, src, fetchedAt);
+      if (outcome.error) errors.push(outcome.error);
+      if (outcome.record) records.push(outcome.record);
+    } catch {
+      // A field of another JSON type than CARS gives it (a number for a
+      // status, null for a description) makes the event unreadable, not the
+      // response.
+      errors.push({ code: "malformed_record", id: null, sourcePath });
+    }
   });
   const unlocatable = records.filter((r) => r.disposition === "unlocatable").length;
   if (unlocatable > 0) recordSkipped(src.id, "no_geometry", unlocatable);

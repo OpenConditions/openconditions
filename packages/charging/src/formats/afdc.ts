@@ -436,7 +436,11 @@ export function parseAfdc(
         recordSkipped(feed.id, "malformed");
         continue;
       }
-      if (station["fuel_type_code"] !== undefined && station["fuel_type_code"] !== "ELEC") continue;
+      // A station of another fuel is no charging site, but it is a record of the answer.
+      if (station["fuel_type_code"] !== undefined && station["fuel_type_code"] !== "ELEC") {
+        recordSkipped(feed.id, "unknown_type");
+        continue;
+      }
       const id = text(station["id"]);
       if (id === undefined || seen.has(id)) {
         recordSkipped(feed.id, "malformed");

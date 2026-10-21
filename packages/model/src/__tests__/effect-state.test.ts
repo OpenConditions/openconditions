@@ -35,6 +35,18 @@ describe("effectStateAt", () => {
     });
   });
 
+  it("keeps an end past the year 9999 in UTC in the form it was written in", () => {
+    const openEnded: Validity = { status: "active", end: "9999-12-31T23:59:59-05:00" };
+    expect(effectStateAt(effect(), openEnded, at("2026-09-18T12:00:00Z"))).toEqual({
+      state: "active",
+      nextTransitionAt: "9999-12-31T23:59:59-05:00",
+    });
+    const sameDay: Validity = { status: "active", end: "9999-12-31T23:59:59+01:00" };
+    expect(effectStateAt(effect(), sameDay, at("2026-09-18T12:00:00Z")).nextTransitionAt).toBe(
+      "9999-12-31T22:59:59.000Z",
+    );
+  });
+
   it("prefers the effect's own validity", () => {
     const own = effect({ validity: { status: "active", start: "2026-09-18T13:00:00Z" } });
     expect(effectStateAt(own, window, at("2026-09-18T12:00:00Z")).state).toBe("scheduled");

@@ -320,4 +320,17 @@ describe("prix-carburants", () => {
     expect(features).toHaveLength(5);
     expect(sealFailures([...features, ...observations])).toEqual([]);
   });
+
+  test("a null station is malformed, hours of `null` are not read, a price too large to write is none", () => {
+    const stations = JSON.parse(fixture("prix-carburants.json").toString("utf8")) as Record<
+      string,
+      unknown
+    >[];
+    stations[0]!["horaires"] = "null";
+    stations[0]!["gazole_prix"] = 1e21;
+    const { features, observations } = parse(Buffer.from(JSON.stringify([null, ...stations])));
+    expect(features).toHaveLength(5);
+    expect(sealFailures([...features, ...observations])).toEqual([]);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1, unknown_value: 1 });
+  });
 });

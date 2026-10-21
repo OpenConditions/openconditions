@@ -8,7 +8,7 @@ import {
 import type { COMPASS_POINTS, DirectionRef } from "@openconditions/model";
 import { cameraDraft, type DraftContext, imageReading, imageRedistributionOf } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
+import { entryOf, isRecord, jsonOf, lonLat, positionSkip, textOf } from "../records.js";
 
 /** TfL says its images refresh every three minutes. */
 const REFRESH_SEC = 180;
@@ -59,7 +59,7 @@ function directionOf(view: string): DirectionRef {
     .replace(/\([^)]*\)/g, " ")
     .match(/[a-z]+/g)
     ?.filter((word) => !FILLER.has(word));
-  const compass = words === undefined ? undefined : COMPASS[words.join("")];
+  const compass = words === undefined ? undefined : entryOf(COMPASS, words.join(""));
   return compass === undefined
     ? { value: "unknown", basis: "text", text: view }
     : { value: "unknown", basis: "compass", compass };

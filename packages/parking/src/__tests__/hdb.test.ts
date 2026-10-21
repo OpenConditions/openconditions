@@ -311,4 +311,15 @@ describe("hdb skips", () => {
     both();
     expect(drainSkipped(hdbFeed().id)).toEqual({});
   });
+
+  test("HDB: a car park or lot list of another JSON type is malformed, not a failed poll", () => {
+    const table = JSON.parse(fixture("singapore-static.json").toString("utf8"));
+    table.result.records[0].short_term_parking = 7;
+    const live = JSON.parse(fixture("singapore-live.json").toString("utf8"));
+    live.items[0].carpark_data[0].carpark_info = 3;
+    const out = parse([Buffer.from(JSON.stringify(table))], [Buffer.from(JSON.stringify(live))]);
+    expect(out.features).toHaveLength(both().features.length - 1);
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+    expect(drainSkipped(hdbFeed().id)).toEqual({ malformed: 2 });
+  });
 });

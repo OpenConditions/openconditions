@@ -8,9 +8,9 @@ import {
   type SkipReason,
 } from "@openconditions/ingest-framework";
 import { CAP_1_2 } from "@openconditions/model-hazards";
-import type { HazardsFeed } from "../records.js";
+import { type HazardsFeed, isRecord } from "../records.js";
 import { capToken, currentMessages } from "./messages.js";
-import { type CapSituationOptions, capDrafts, capEnd } from "./situations.js";
+import { type CapSituationOptions, capDrafts, capEnd, capInstant } from "./situations.js";
 import type { CapAlert } from "./types.js";
 
 export type CapOutputOptions = Omit<CapSituationOptions, "groupId"> & {
@@ -28,12 +28,12 @@ const isToken = (values: readonly string[], value: unknown) => values.includes(c
 
 /**
  * Whether a message carries the header every situation of it needs: each
- * field present, `sent` a time, and `status`, `msgType` and `scope` CAP 1.2
+ * field present, `sent` a time with its zone, and `status`, `msgType` and `scope` CAP 1.2
  * tokens, which are case-sensitive.
  */
 const readable = (alert: CapAlert) =>
   HEADER.every((field) => capToken(alert[field]) !== "") &&
-  !Number.isNaN(Date.parse(alert.sent)) &&
+  capInstant(alert.sent) !== undefined &&
   isToken(CAP_1_2.status, alert.status) &&
   isToken(CAP_1_2.msgType, alert.msgType) &&
   isToken(CAP_1_2.scope, alert.scope);
@@ -56,7 +56,7 @@ function expiredAt(
   endOf: CapSituationOptions["endOf"],
 ): boolean {
   const at = Date.parse(fetchedAt);
-  const infos = Array.isArray(alert.info) ? alert.info : [];
+  const infos = (Array.isArray(alert.info) ? alert.info : []).filter(isRecord);
   return (
     infos.length > 0 &&
     infos.every((i) => {

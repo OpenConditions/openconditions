@@ -7,6 +7,7 @@ import { dedupeRoadEvents } from "./dedupe.js";
 import type { LaneStatus, Restriction, RoadEvent, RoadEventType, RoadRef } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
 import { coarseType } from "./situation/classes.js";
+import { usableGeometry } from "./situation/location.js";
 import type { SourceDescriptor } from "./types.js";
 
 interface AutobahnCoordinate {
@@ -41,22 +42,17 @@ interface AutobahnPayload {
 
 /**
  * The item's geometry: null when it states no position at all, undefined when
- * its coordinate does not parse.
+ * its geometry or coordinate is not a valid one.
  */
 function parseGeometry(item: AutobahnItem): GeoJsonGeometry | null | undefined {
   const geo = item.geometry;
   if (geo && typeof geo === "object" && typeof geo.type === "string" && geo.coordinates != null) {
-    return geo as unknown as GeoJsonGeometry;
+    return usableGeometry(geo);
   }
 
   const coord = item.coordinate;
   if (coord && typeof coord === "object" && coord.lat != null && coord.long != null) {
-    const lat = Number(coord.lat);
-    const lon = Number(coord.long);
-    if (!isNaN(lat) && !isNaN(lon)) {
-      return { type: "Point", coordinates: [lon, lat] };
-    }
-    return undefined;
+    return usableGeometry({ type: "Point", coordinates: [Number(coord.long), Number(coord.lat)] });
   }
 
   return null;
@@ -420,12 +416,9 @@ export function parseAutobahn(
       }
 
       localCounter++;
-      const rawId =
-        typeof item.identifier === "string"
-          ? item.identifier
-          : typeof item.id === "string"
-            ? item.id
-            : `autobahn-${localCounter}`;
+      // A blank id names nothing, so the next one is read.
+      const named = (id: unknown) => (typeof id === "string" && id.trim() !== "" ? id : undefined);
+      const rawId = named(item.identifier) ?? named(item.id) ?? `autobahn-${localCounter}`;
 
       const isFlow = hasFlowFields(item);
 

@@ -3,6 +3,7 @@ import { recordSkipped } from "@openconditions/ingest-framework";
 import { OHGO_SITUATIONS, ohgoClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { entryOf } from "./situation/location.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -88,7 +89,8 @@ function coordinate(value: unknown): number | undefined {
  * Parse an OHGO `/construction` or `/incidents` payload into RoadEvents.
  * Discriminates on the record itself: a `startDate` marks a scheduled work
  * zone, everything else is an unplanned incident. Records without
- * coordinates are left out as having no geometry; records that are no object,
+ * coordinates, or with ones off the earth, are left out as having no
+ * geometry; records that are no object,
  * have no id or state coordinates that are no numbers as malformed. An
  * incident category or road status the vocabularies do not hold is counted as
  * an unknown value. A malformed envelope yields [].
@@ -117,6 +119,11 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
       malformed++;
       continue;
     }
+    // Numbers that are no position on the earth place nothing.
+    if (Math.abs(lon) > 180 || Math.abs(lat) > 90) {
+      skippedNoGeometry++;
+      continue;
+    }
 
     const category = str(field(r, "category"));
     const validFrom = toIsoTimestamp(field(r, "startDate"), src.timeZone);
@@ -125,7 +132,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
 
     const type: RoadEventType = isWorkZone
       ? "roadworks"
-      : (category && INCIDENT_TYPE_BY_CATEGORY[category.toLowerCase()]) || "other";
+      : entryOf(INCIDENT_TYPE_BY_CATEGORY, category?.toLowerCase()) || "other";
     const classification = ohgoClassification(category, isWorkZone);
     // A work zone's category only refines it; an incident's is its nature.
     if (!isWorkZone && category && !Object.hasOwn(OHGO_SITUATIONS, category.trim().toLowerCase())) {
@@ -133,7 +140,7 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     }
 
     const roadStatus = str(field(r, "roadStatus"));
-    const roadState = roadStatus ? ROAD_STATE_BY_STATUS[roadStatus.toLowerCase()] : undefined;
+    const roadState = entryOf(ROAD_STATE_BY_STATUS, roadStatus?.toLowerCase());
     if (roadStatus && roadState === undefined) unknownValues++;
     const road = str(field(r, "routeName"));
     const direction = str(field(r, "direction"));

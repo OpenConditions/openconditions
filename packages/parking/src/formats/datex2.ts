@@ -52,7 +52,7 @@ import {
   siteDraft,
   statusDraft,
   trendDraft,
-  utcInstant,
+  zonedInstant,
 } from "../site.js";
 
 type Target = Extract<MappingTarget, "datex2_v2" | "datex2_v3">;
@@ -512,7 +512,8 @@ function siteInput(
 /**
  * The record's charge bands as one rate, in the first band's currency. A
  * charge per interval is a time charge: its price per hour, billed in steps
- * of the interval. A charge without an interval is one flat price.
+ * of the interval. A charge without an interval is one flat price. A
+ * currency that is no ISO 4217 code gives no rate, counted as unknown.
  */
 function rateOf(
   feed: ParkingCatalogFeed,
@@ -523,6 +524,11 @@ function rateOf(
   const { tariffs } = site.record;
   const currency = tariffs[0]?.currency;
   if (currency === undefined) return undefined;
+  // A currency that is no ISO 4217 code prices nothing a reader can use.
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    recordSkipped(feed.id, "unknown_value");
+    return undefined;
+  }
   const rows: RateRow[] = tariffs
     .filter((t) => t.currency === currency)
     .map((t) =>
@@ -584,10 +590,7 @@ function readingsOf(
   target: Target,
   ctx: ParseContext,
 ): RecordDraft[] {
-  const at =
-    status.at !== undefined && Number.isFinite(Date.parse(status.at))
-      ? utcInstant(new Date(status.at))
-      : ctx.fetchedAt;
+  const at = zonedInstant(status.at) ?? ctx.fetchedAt;
   const reading: ReadingInput = { stationId: site.record.id, at, point: site.point };
   // The spaces the status says the site has now stand in for the table's.
   const capacity = status.capacity ?? site.record.totalSpaces;

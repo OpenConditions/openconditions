@@ -1,10 +1,39 @@
-import type { DirectionRef, Geometry, Text } from "@openconditions/model";
+import { type DirectionRef, Geometry, type Text } from "@openconditions/model";
 import type { RoadEvent, RoadRef } from "../model.js";
 import type { SnapshotEvent } from "../snapshot.js";
 import type { SourceDescriptor } from "../types.js";
 
 /** Language of source text whose language the parser does not know (BCP 47 "undetermined"). */
 export const UNDETERMINED = "und";
+
+/**
+ * A published GeoJSON geometry the model can hold, reduced to its shape:
+ * a known type, coordinates within range, lines of two positions and
+ * closed rings. Members beside the shape, such as a `bbox`, are dropped.
+ * Undefined for anything else, which places nothing.
+ */
+export function usableGeometry(value: unknown): Geometry | undefined {
+  if (value === null || typeof value !== "object") return undefined;
+  const g = value as Record<string, unknown>;
+  const shape =
+    g["type"] === "GeometryCollection"
+      ? {
+          type: g["type"],
+          geometries: Array.isArray(g["geometries"])
+            ? g["geometries"].map((m: unknown) =>
+                m !== null && typeof m === "object"
+                  ? {
+                      type: (m as Record<string, unknown>)["type"],
+                      coordinates: (m as Record<string, unknown>)["coordinates"],
+                    }
+                  : m,
+              )
+            : g["geometries"],
+        }
+      : { type: g["type"], coordinates: g["coordinates"] };
+  const parsed = Geometry.safeParse(shape);
+  return parsed.success ? parsed.data : undefined;
+}
 
 /**
  * A table's own entry for a source token. Source text is not trusted to name

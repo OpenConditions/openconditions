@@ -126,6 +126,23 @@ export function stationPosition(
   return placeable(lon, lat) ? { lon, lat } : { skip: "malformed" };
 }
 
+/**
+ * A JSON object: what a station record, and each price or day in it, must be
+ * to be read. A `null` or a bare value in a station list is a malformed
+ * record, not a reason to fail the poll.
+ */
+export const isObject = (value: unknown): value is Record<string, unknown> =>
+  typeof value === "object" && value !== null && !Array.isArray(value);
+
+/**
+ * A price as the decimal text a money result carries, to the tenth of a
+ * cent; undefined for a number that is no price: not positive, or so large
+ * that it would print in exponent form, which no money amount is written in.
+ */
+export function priceText(value: unknown): string | undefined {
+  return typeof value === "number" && value > 0 && value < 1e21 ? value.toFixed(3) : undefined;
+}
+
 /** An instant in UTC at second precision, as the drafts carry it. */
 export function utcInstant(at: Date): string {
   return at.toISOString().replace(/\.000Z$/, "Z");

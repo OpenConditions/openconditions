@@ -244,16 +244,25 @@ const inRange = (p: unknown): p is Position =>
   Math.abs(p[0]) <= 180 &&
   Math.abs(p[1]) <= 90;
 
+/** A position of a shape kept as drawn: in range, with at most a finite altitude besides (RFC 7946, 3.1.1). */
+const shapePosition = (p: unknown): p is Position =>
+  inRange(p) && p.length <= 3 && (p.length === 2 || Number.isFinite(p[2]));
+
+/** A linear ring in range: four or more positions, the last the first again (RFC 7946, 3.1.6). */
 const ringInRange = (ring: unknown) =>
-  Array.isArray(ring) && ring.length >= 4 && ring.every(inRange);
+  Array.isArray(ring) &&
+  ring.length >= 4 &&
+  ring.every(shapePosition) &&
+  ring[0].length === ring[ring.length - 1].length &&
+  ring[0].every((value: number, i: number) => value === ring[ring.length - 1][i]);
 const polygonInRange = (rings: unknown) =>
   Array.isArray(rings) && rings.length > 0 && rings.every(ringInRange);
 
 /**
- * A polygon or multi-polygon a publisher drew, as it is, when every ring has
- * at least four positions in range; null otherwise (a point, a line, an
- * out-of-range or collapsed ring), so a record with a bad shape is rejected
- * rather than stored.
+ * A polygon or multi-polygon a publisher drew, as it is, when every ring is
+ * closed and has at least four positions in range; null otherwise (a point,
+ * a line, an open, out-of-range or collapsed ring), so a record with a bad
+ * shape is rejected rather than stored.
  */
 export function polygonalGeometry(value: unknown): Polygon | MultiPolygon | null {
   if (typeof value !== "object" || value === null) return null;

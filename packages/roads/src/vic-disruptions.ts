@@ -1,10 +1,11 @@
 import { toIsoTimestamp } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
-import type { Schedule } from "@openconditions/model";
+import { type Schedule, Schedule as ScheduleSchema } from "@openconditions/model";
 import { VIC_SITUATIONS, vicClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
 import { dedupeRoadEvents } from "./dedupe.js";
 import type { RoadEvent, RoadEventType } from "./model.js";
+import { entryOf, usableGeometry } from "./situation/location.js";
 import type { SourceDescriptor } from "./types.js";
 
 /**
@@ -77,7 +78,7 @@ function unknownEventType(
 function resolveType(...candidates: (string | undefined)[]): RoadEventType {
   for (const c of candidates) {
     if (!c) continue;
-    const hit = TYPE_BY_EVENT[c.toLowerCase()];
+    const hit = entryOf(TYPE_BY_EVENT, c.toLowerCase());
     if (hit) return hit;
   }
   return "other";
@@ -93,19 +94,25 @@ function unwrapGeometry(raw: unknown): Geometry | undefined {
   if (!g) return undefined;
   const nested = g.geometries;
   if (Array.isArray(nested)) {
-    const shapes = nested.filter((n): n is Geometry => !!obj(n) && "coordinates" in (n as Record_));
+    const shapes = nested.map(usableGeometry).filter((n) => n !== undefined);
     if (shapes.length === 0) return undefined;
     return shapes.length === 1 ? shapes[0] : { type: "GeometryCollection", geometries: shapes };
   }
-  return "coordinates" in g ? (g as unknown as Geometry) : undefined;
+  return usableGeometry(g);
 }
 
 /**
  * Map one `duration.recurrences[]` entry to the canonical Schedule. The feed
  * gives a first day plus a span in days, which becomes the `byDay` set; times
- * stay local to Melbourne, as the canonical model expects.
+ * stay local to Melbourne, as the canonical model expects. Undefined when the
+ * entry states no recurrence, null when it states one in values the model
+ * cannot hold (a time of day or duration that is none).
  */
-function toSchedule(raw: Record_, startDate?: string, endDate?: string): Schedule | undefined {
+function toSchedule(
+  raw: Record_,
+  startDate?: string,
+  endDate?: string,
+): Schedule | null | undefined {
   const startDay = Number(raw.startDay);
   const days = Number(raw.daysDuration);
   const byDay: string[] = [];
@@ -117,7 +124,7 @@ function toSchedule(raw: Record_, startDate?: string, endDate?: string): Schedul
   const duration = str(raw.duration);
   const allDay = raw.allDay === true;
   if (byDay.length === 0 && !startTime && !duration && !allDay) return undefined;
-  return {
+  const schedule: Schedule = {
     scheduleTimezone: TIMEZONE,
     ...(byDay.length > 0 ? { byDay } : {}),
     ...(startDate ? { startDate: startDate.slice(0, 10) } : {}),
@@ -126,6 +133,7 @@ function toSchedule(raw: Record_, startDate?: string, endDate?: string): Schedul
     ...(!allDay && startTime ? { startTime } : {}),
     ...(!allDay && duration ? { duration } : {}),
   };
+  return ScheduleSchema.safeParse(schedule).success ? schedule : null;
 }
 
 function baseEvent(
@@ -193,11 +201,11 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     const validFrom = toIsoTimestamp(duration?.start, src.timeZone);
     const validTo = toIsoTimestamp(duration?.end, src.timeZone);
     const recurrences = Array.isArray(duration?.recurrences) ? duration.recurrences : [];
-    const schedule = recurrences
-      .map((rec) =>
-        obj(rec) ? toSchedule(obj(rec)!, str(duration?.start), str(duration?.end)) : undefined,
-      )
-      .filter((s): s is Schedule => s !== undefined);
+    const read = recurrences.map((rec) =>
+      obj(rec) ? toSchedule(obj(rec)!, str(duration?.start), str(duration?.end)) : undefined,
+    );
+    unknownValues += read.filter((s) => s === null).length;
+    const schedule = read.filter((s): s is Schedule => s != null);
 
     const impact = obj(r.impact);
     const lanesClosed = Number(impact?.numberLanesImpacted);
@@ -262,8 +270,7 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
     }
     const p = obj(f.properties) ?? {};
     const id = str(p.id) ?? str(f.id) ?? str(p.eventId);
-    const geometry =
-      obj(f.geometry) && "coordinates" in obj(f.geometry)! ? (f.geometry as Geometry) : undefined;
+    const geometry = usableGeometry(f.geometry);
     if (!geometry) {
       skippedNoGeometry++;
       continue;
@@ -323,7 +330,8 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
  * Parse either Victoria disruption dataset into RoadEvents. Records without
  * usable geometry are left out and counted as such; records that are no
  * object or have no id as malformed. An event type or subtype the crosswalk
- * does not know is counted as an unknown value. A malformed body yields [].
+ * does not know, and a recurrence in values the model cannot hold, is counted
+ * as an unknown value. A malformed body yields [].
  *
  * The planned dataset paginates by `nextPageDetails.nextPageToken`, which the
  * fetch layer's offset pagination cannot express. Rather than truncating

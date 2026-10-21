@@ -61,9 +61,58 @@ export function canonicalIdOf(namespace: string, localId: string): string {
     .digest("hex");
 }
 
-/** RFC 8785 (JCS) canonical JSON text. */
+/** A UTF-16 surrogate without its pair: with the `u` flag a paired one is a single code point. */
+const LONE_SURROGATE = /\p{Surrogate}/u;
+const LONE_SURROGATES = /\p{Surrogate}/gu;
+
+/**
+ * A JSON value with every unpaired surrogate in its strings and keys
+ * replaced by U+FFFD, as `String.prototype.toWellFormed` replaces it. Source
+ * text carries them now and then (a truncated emoji, a `\udc00` escape); JCS
+ * and PostgreSQL refuse them, so one such string would otherwise fail the
+ * hash of its record and with it the write of a whole poll. A value without
+ * any is returned as it is, so the common case copies nothing.
+ */
+export function wellFormed<T>(value: T): T {
+  if (typeof value === "string") {
+    return (LONE_SURROGATE.test(value) ? value.replace(LONE_SURROGATES, "�") : value) as T;
+  }
+  if (typeof value !== "object" || value === null) return value;
+  if (Array.isArray(value)) {
+    let out: unknown[] | undefined;
+    for (let i = 0; i < value.length; i++) {
+      const item = wellFormed(value[i]);
+      if (item === value[i]) continue;
+      out ??= [...value];
+      out[i] = item;
+    }
+    return (out ?? value) as T;
+  }
+  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
+    return value;
+  }
+  let out: Record<string, unknown> | undefined;
+  for (const [key, item] of Object.entries(value)) {
+    const fixedKey = wellFormed(key);
+    const fixed = wellFormed(item);
+    if (fixedKey === key && fixed === item) continue;
+    const copy: Record<string, unknown> = out ?? { ...(value as Record<string, unknown>) };
+    out = copy;
+    if (fixedKey !== key) delete copy[key];
+    // Defined, not assigned: a source key `__proto__` stays an own member.
+    Object.defineProperty(copy, fixedKey, {
+      value: fixed,
+      enumerable: true,
+      writable: true,
+      configurable: true,
+    });
+  }
+  return (out ?? value) as T;
+}
+
+/** RFC 8785 (JCS) canonical JSON text, of the value's well-formed text ({@link wellFormed}). */
 export function jcs(value: unknown): string {
-  const text = canonicalize(value);
+  const text = canonicalize(wellFormed(value));
   if (text === undefined) throw new TypeError("value is not JSON-serializable");
   return text;
 }
