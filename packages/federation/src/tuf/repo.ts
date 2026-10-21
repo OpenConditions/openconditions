@@ -120,8 +120,12 @@ export async function signRegistry(options: SignRegistryOptions): Promise<Signed
   const now = options.now ?? new Date().toISOString();
   const version = options.version ?? 1;
   const rootVersion = options.rootVersion ?? 1;
-  const expiresFor = (role: TufRoleName): string =>
-    options.expires?.[role] ?? tufDate(now, DEFAULT_EXPIRY_DAYS[role]);
+  // An override is written in the TUF format too: other clients (python-tuf)
+  // refuse fractional seconds or a non-Z offset.
+  const expiresFor = (role: TufRoleName): string => {
+    const override = options.expires?.[role];
+    return override === undefined ? tufDate(now, DEFAULT_EXPIRY_DAYS[role]) : tufDate(override, 0);
+  };
 
   const metadataDir = join(options.repoDir, "metadata");
   const targetsDir = join(options.repoDir, "targets");

@@ -73,6 +73,14 @@ ruff check .
 python -m pytest
 ```
 
+Independent implementations (CI's `interop` job; JDK 17+, Python 3.14 and network
+access, after `pnpm build`):
+
+```bash
+bash scripts/traff-interop/check.sh # TraFF feeds through the pinned libtraff reader
+bash scripts/tuf-interop/check.sh   # registry TUF repositories through python-tuf, both ways
+```
+
 Production dependency audits (after installing both sets of development dependencies):
 
 ```bash

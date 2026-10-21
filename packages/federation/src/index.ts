@@ -33,6 +33,7 @@ export type {
 } from "./http-signature.js";
 export {
   CLOCK_SKEW_SEC,
+  contentDigest,
   EXPIRES_WINDOW_SEC,
   FEDERATION_REASON_HEADER,
   FEDERATION_TAG,
@@ -40,6 +41,7 @@ export {
   InMemoryNonceStore,
   NONCE_TTL_SEC,
   signMessage,
+  verifyContentDigest,
   verifyMessage,
 } from "./http-signature.js";
 export type { InstanceKey } from "./keys.js";

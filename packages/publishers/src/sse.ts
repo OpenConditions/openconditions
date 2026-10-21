@@ -13,13 +13,26 @@ export interface SseMessage {
   data: unknown;
 }
 
-/** Serialise a message to the `text/event-stream` wire format (one frame). */
+/** Any of the three line endings the `text/event-stream` grammar accepts. */
+const LINE_BREAK = /\r\n|\r|\n/;
+
+/**
+ * Serialise a message to the `text/event-stream` wire format (one frame).
+ * Data spanning several lines is sent as one `data:` field per line, which a
+ * client joins back with line feeds (CR and CRLF arrive as LF). An id with a
+ * line break or NUL is left out: a line break would end the field, and the
+ * EventSource algorithm ignores an id holding NUL.
+ */
 export function sseFrame(msg: SseMessage): string {
   const lines: string[] = [];
-  if (msg.id) lines.push(`id: ${msg.id}`);
-  if (msg.event) lines.push(`event: ${msg.event}`);
-  const data = typeof msg.data === "string" ? msg.data : JSON.stringify(msg.data);
-  lines.push(`data: ${data}`);
+  if (msg.id && !/[\r\n\0]/.test(msg.id)) lines.push(`id: ${msg.id}`);
+  if (msg.event) {
+    if (LINE_BREAK.test(msg.event))
+      throw new TypeError("an SSE event name cannot hold a line break");
+    lines.push(`event: ${msg.event}`);
+  }
+  const data = typeof msg.data === "string" ? msg.data : (JSON.stringify(msg.data) ?? "null");
+  for (const line of data.split(LINE_BREAK)) lines.push(`data: ${line}`);
   return `${lines.join("\n")}\n\n`;
 }
 

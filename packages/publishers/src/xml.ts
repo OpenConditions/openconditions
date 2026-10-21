@@ -21,6 +21,9 @@ const builder = new XMLBuilder({
   attributeNamePrefix: "@_",
   format: true,
   suppressEmptyNode: true,
+  // The builder's default writes an attribute whose value is "true" as a bare
+  // name (`forecast`), which is HTML, not XML: keep every value.
+  suppressBooleanAttributes: false,
   tagValueProcessor: sanitize,
   attributeValueProcessor: sanitize,
 });

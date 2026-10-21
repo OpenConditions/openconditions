@@ -1,4 +1,5 @@
 import { productionRegistry } from "@openconditions/model-registry";
+import { TRAFF } from "@openconditions/model-roads";
 import { XMLParser } from "fast-xml-parser";
 import { describe, expect, it } from "vitest";
 import { validateXML } from "xmllint-wasm";
@@ -138,14 +139,14 @@ describe("traffEventsOf", () => {
     expect(xml).not.toContain('speed="80"');
   });
 
-  it("carries a speed limit and a queue length as quantifiers, and a detour as a diversion", () => {
+  it("carries a speed limit and a queue length as quantifiers, and a signed detour as a diversion", () => {
     const events = traffEventsOf(
       registry,
       situation({
         effects: [
           effect("x/speed", "speed_limit", { limit: { value: 59.6, unit: "km/h" } }),
           effect("x/delay", "delay", { queueLength: { value: 2400, unit: "m" } }),
-          effect("x/detour", "detour"),
+          effect("x/detour", "detour", { signed: true }),
         ],
       }),
       AT,
@@ -155,6 +156,38 @@ describe("traffEventsOf", () => {
       { cls: "RESTRICTION", type: "RESTRICTION_SPEED_LIMIT", quantifiers: { speed: 60 } },
       { cls: "DELAY", type: "DELAY_DELAY", quantifiers: { length: 2400 } },
     ]);
+    const xml = situationsToTraff(
+      registry,
+      [situation({ effects: [effect("x/detour", "detour", { signed: true })] })],
+      AT,
+    );
+    expect(parser.parse(xml).feed.message.events.event.supplementary_info).toEqual({
+      "@_class": "DIVERSION",
+      "@_type": "S_DIVERSION_FOLLOW_DIVERSION_SIGNS",
+    });
+  });
+
+  it("reports a detour not stated to be signed instead of inventing a diversion note", () => {
+    const diagnostics: { code: string; path: string }[] = [];
+    const events = traffEventsOf(
+      registry,
+      situation({ effects: [effect("x/detour", "detour")] }),
+      AT,
+      (d) => diagnostics.push(d),
+    );
+    expect(events).toEqual([{ cls: "CONSTRUCTION", type: "CONSTRUCTION_ROADWORKS" }]);
+    expect(diagnostics).toContainEqual(
+      expect.objectContaining({ code: "field_not_exported", path: "/effects/0/signed" }),
+    );
+  });
+
+  it("writes bridge and tunnel closures as closures, which TraFF 0.8 has no own event for", () => {
+    for (const scope of ["bridge", "tunnel"]) {
+      expect(types(situation({ effects: [effect("x", "closure", { scope })] }))).toEqual([
+        "CONSTRUCTION_ROADWORKS",
+        "RESTRICTION_CLOSED",
+      ]);
+    }
   });
 
   it.each([
@@ -451,6 +484,76 @@ describe("situationsToTraff", () => {
     expect(parser.parse(xml).feed.message.location["@_road_name"]).toBe(
       `Autobahn 46${"\uFFFD".repeat(8)}`,
     );
+  });
+
+  it("marks a forecast with an attribute value, keeping the feed well-formed", async () => {
+    const xml = situationsToTraff(registry, [situation({ temporality: "forecast" })], AT);
+    const result = await validateXML({
+      xml: [{ fileName: "traff.xml", contents: xml }],
+      normalization: "format",
+    });
+    expect(result.errors).toEqual([]);
+    expect(parser.parse(xml).feed.message["@_forecast"]).toBe("true");
+  });
+
+  it("writes only TraFF 0.8 event types, each in its class, including compound class names", () => {
+    // The event classes of the TraFF 0.8 specification's event list.
+    const classes = new Set([
+      "ACTIVITY",
+      "AUDIO_BROADCAST",
+      "AUTHORITY",
+      "CARPOOL",
+      "CONGESTION",
+      "CONSTRUCTION",
+      "DELAY",
+      "ENVIRONMENT",
+      "EQUIPMENT_STATUS",
+      "HAZARD",
+      "INCIDENT",
+      "PARKING",
+      "RESTRICTION",
+      "SECURITY",
+      "SERVICE",
+      "TRANSPORT",
+      "TRAVEL_TIME",
+      "WEATHER",
+    ]);
+    const seen = new Map<string, string>();
+    for (const kind of registry.kinds("situation")) {
+      for (const [type, subtypes] of Object.entries(kind.types ?? {})) {
+        for (const subtype of [undefined, ...subtypes]) {
+          const s = situation({ kind: kind.code, type, ...(subtype ? { subtype } : {}) });
+          for (const e of traffEventsOf(registry, { ...s, effects: [] }, AT)) {
+            seen.set(e.type, e.cls);
+          }
+        }
+      }
+    }
+    const effects: Rec[] = [
+      ...["road", "carriageway", "ramp", "bridge", "tunnel"].map((scope) =>
+        effect(scope, "closure", { scope }),
+      ),
+      ...["all_lanes_closed", "some_lanes_closed", "unknown"].map((vehicleImpact) =>
+        effect(vehicleImpact, "lane_restriction", { vehicleImpact }),
+      ),
+      effect("contraflow", "contraflow"),
+      effect("speed", "speed_limit", { limit: { value: 60, unit: "km/h" } }),
+      effect("delay", "delay", { delay: { value: 600, unit: "s" } }),
+      ...["delays_of_uncertain_duration", "long_delays", "very_long_delays"].map((delayType) =>
+        effect(delayType, "delay", { delayType }),
+      ),
+    ];
+    for (const e of effects) {
+      for (const event of traffEventsOf(registry, situation({ effects: [e] }), AT)) {
+        seen.set(event.type, event.cls);
+      }
+    }
+    expect(seen.get("EQUIPMENT_STATUS_TRAFFIC_LIGHTS_NOT_WORKING")).toBe("EQUIPMENT_STATUS");
+    for (const [type, cls] of seen) {
+      expect(TRAFF.eventTypes as readonly string[], type).toContain(type);
+      expect(classes.has(cls), `${type} has class ${cls}`).toBe(true);
+      expect(type.startsWith(`${cls}_`), `${type} has class ${cls}`).toBe(true);
+    }
   });
 });
 

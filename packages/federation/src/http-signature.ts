@@ -213,9 +213,14 @@ function findHeader(headers: Record<string, string>, name: string): string | und
   return entry?.[1];
 }
 
-async function contentDigestValue(body: Uint8Array): Promise<string> {
-  const digest = await globalThis.crypto.subtle.digest("SHA-256", body as BufferSource);
-  return `sha-256=:${Buffer.from(digest).toString("base64")}:`;
+/** An RFC 9530 Content-Digest field value for `body` with one algorithm (default sha-256). */
+export async function contentDigest(
+  body: Uint8Array,
+  algorithm: "sha-256" | "sha-512" = "sha-256",
+): Promise<string> {
+  const webCryptoName = SUPPORTED_DIGESTS[algorithm] as string;
+  const digest = await globalThis.crypto.subtle.digest(webCryptoName, body as BufferSource);
+  return `${algorithm}=:${Buffer.from(digest).toString("base64")}:`;
 }
 
 /**
@@ -240,7 +245,7 @@ export async function signMessage(p: SignParams): Promise<{ headers: Record<stri
 
   const headers: Record<string, string> = { ...p.headers };
   const hasBody = p.body !== undefined && p.body.byteLength > 0;
-  if (hasBody) headers["Content-Digest"] = await contentDigestValue(p.body as Uint8Array);
+  if (hasBody) headers["Content-Digest"] = await contentDigest(p.body as Uint8Array);
 
   const fields = p.isResponse ? ["@status"] : ["@method", "@target-uri"];
   if (hasBody) {
@@ -286,7 +291,13 @@ export async function signMessage(p: SignParams): Promise<{ headers: Record<stri
   return { headers: flattened };
 }
 
-async function digestMatchesBody(headerValue: string, body: Uint8Array): Promise<boolean> {
+/**
+ * Whether an RFC 9530 Content-Digest field value matches `body`: every
+ * sha-256 and sha-512 member must match, and at least one must be present.
+ * Other algorithms (including the insecure md5, sha and checksums the
+ * registry lists) are ignored, so they alone never satisfy the check.
+ */
+export async function verifyContentDigest(headerValue: string, body: Uint8Array): Promise<boolean> {
   let dictionary: ReturnType<typeof parseDictionary>;
   try {
     dictionary = parseDictionary(headerValue);
@@ -409,10 +420,16 @@ export async function verifyMessage(p: VerifyParams): Promise<VerifyResult> {
   const now = p.now ?? Math.floor(Date.now() / 1000);
   const hasBody = p.body !== undefined && p.body.byteLength > 0;
 
-  if (hasBody) {
-    const digestHeader = findHeader(p.headers, "content-digest");
-    if (digestHeader === undefined) return fail("bad-digest");
-    if (!(await digestMatchesBody(digestHeader, p.body as Uint8Array))) return fail("bad-digest");
+  // A Content-Digest is checked whenever one is sent, empty content included:
+  // otherwise stripping the body of a signed message would go unnoticed, since
+  // the signature still covers the untouched digest header.
+  const digestHeader = findHeader(p.headers, "content-digest");
+  if (hasBody && digestHeader === undefined) return fail("bad-digest");
+  if (
+    digestHeader !== undefined &&
+    !(await verifyContentDigest(digestHeader, p.body ?? new Uint8Array()))
+  ) {
+    return fail("bad-digest");
   }
 
   const signatureInputHeader = findHeader(p.headers, "signature-input");

@@ -95,7 +95,9 @@ const CONTEXT = geoJsonLdContext({
   certainty: "oc:certainty",
   validity: "oc:validity",
   effects: "oc:effects",
-  effectStates: "oc:effectStates",
+  // Keyed by effect id: each state names its effect (`oc:effect`) rather than
+  // a property. The index is a term, which processors compact back to a key.
+  effectStates: { "@id": "oc:effectStates", "@container": "@index", "@index": "effect" },
   headline: "schema:headline",
   description: "schema:description",
   provenance: "oc:provenance",
