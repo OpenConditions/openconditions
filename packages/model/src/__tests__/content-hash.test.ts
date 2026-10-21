@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { contentHash, contentOf } from "../content-hash.js";
+import { contentHash, contentHasher, contentOf } from "../content-hash.js";
+import { jcs, wellFormed } from "../kernel/identity.js";
 import { sealRecord } from "../registry/seal.js";
 import { incidentDraft, registry, stored } from "./fixtures.js";
 
@@ -64,5 +65,35 @@ describe("sealRecord", () => {
     expect(sealed.value).toEqual(computed.value);
     const marked = sealRecord(registry, incidentDraft(), { ...opts, contentHash: "f".repeat(64) });
     expect(marked.ok && marked.value["contentHash"]).toBe("f".repeat(64));
+  });
+
+  it("stores and hashes an unpaired surrogate in source text as U+FFFD", () => {
+    const opts = {
+      instanceId: "maps.example.org",
+      revision: 1,
+      recordedAt: "2026-09-18T10:00:01Z",
+    };
+    const draft = { ...incidentDraft(), headline: [{ lang: "en", text: "Crash \uD83D at km 3" }] };
+    const clean = { ...incidentDraft(), headline: [{ lang: "en", text: "Crash � at km 3" }] };
+    expect(contentHash(draft)).toBe(contentHash(clean));
+    expect(contentHasher()(draft)).toBe(contentHash(clean));
+    const sealed = sealRecord(registry, draft, opts);
+    expect(sealed.ok).toBe(true);
+    if (!sealed.ok) return;
+    expect(sealed.value["headline"]).toEqual(clean.headline);
+    expect(sealed.value["contentHash"]).toBe(contentHash(clean));
+    expect(sealed.value).toEqual((sealRecord(registry, clean, opts) as { value: unknown }).value);
+  });
+});
+
+describe("wellFormed", () => {
+  it("replaces unpaired surrogates in strings and keys, keeps pairs, and copies nothing else", () => {
+    const value = { a: ["x\uDC00", "😀"], "k\uD800": 1, keep: { b: "ok" } };
+    const fixed = wellFormed(value);
+    expect(fixed).toEqual({ a: ["x�", "😀"], "k�": 1, keep: { b: "ok" } });
+    expect(fixed.keep).toBe(value.keep);
+    const clean = { a: ["😀"] };
+    expect(wellFormed(clean)).toBe(clean);
+    expect(jcs(["\uD800"])).toBe('["�"]');
   });
 });

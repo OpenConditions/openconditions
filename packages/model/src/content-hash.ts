@@ -1,11 +1,14 @@
-import canonicalize from "canonicalize";
+import jcsText from "canonicalize";
 import type { z } from "zod";
 import type { featureSchema } from "./classes/feature.js";
 import type { observationSchema } from "./classes/observation.js";
 import type { offerSchema } from "./classes/offer.js";
 import type { situationSchema } from "./classes/situation.js";
 import type { KernelBase } from "./kernel/build.js";
-import { jcs, sha256Hex } from "./kernel/identity.js";
+import { jcs, sha256Hex, wellFormed } from "./kernel/identity.js";
+
+/** JCS of a value's well-formed text, as {@link jcs} hashes it; undefined for no JSON value. */
+const canonicalize = (value: unknown): string | undefined => jcsText(wellFormed(value));
 
 export type Situation = z.output<ReturnType<typeof situationSchema>>;
 export type Feature = z.output<ReturnType<typeof featureSchema>>;
