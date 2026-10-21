@@ -88,13 +88,25 @@ export class ProjectionDiagnostics {
   }
 
   /** Shared whole-situation gates. Even an ended effect can trigger these:
-   * that is the exporters' existing conservative policy, before time filtering. */
-  blocked(format: "traff" | "datex"): boolean {
+   * that is the exporters' existing conservative policy, before time filtering.
+   * A format that can state some periods and exceptions says which
+   * (`states.timing`, given the effect a validity is its own, if any), and one
+   * that can state a place a location table gave says which (`states.place`). */
+  blocked(
+    format: "traff" | "datex",
+    states: {
+      timing?: (validity: Validity, effect?: Effect) => boolean;
+      place?: (location: Rec) => boolean;
+    } = {},
+  ): boolean {
     let blocked = false;
     const timing = (validity: Validity, path: string, effect?: Effect) => {
       const fields: string[] = [];
-      if (validity.periods?.length) fields.push("periods");
-      if (validity.exceptions?.length) fields.push("exceptions");
+      const recurrent = !!validity.periods?.length || !!validity.exceptions?.length;
+      if (recurrent && !states.timing?.(validity, effect)) {
+        if (validity.periods?.length) fields.push("periods");
+        if (validity.exceptions?.length) fields.push("exceptions");
+      }
       if (
         (path === "/validity" && ["unknown", "ended", "cancelled"].includes(validity.status)) ||
         (format === "traff" && validity.status === "suspended")
@@ -117,7 +129,11 @@ export class ProjectionDiagnostics {
       if (context.validityPath !== "/validity")
         timing(context.validity, context.validityPath, context.effect);
     const coarse = (location: Rec | undefined, path: string, effect?: Effect) => {
-      if (location?.["fuzziness"] !== undefined && location["fuzziness"] !== "exact") {
+      if (
+        location?.["fuzziness"] !== undefined &&
+        location["fuzziness"] !== "exact" &&
+        !states.place?.(location)
+      ) {
         blocked = true;
         this.emit(
           "coarse_location",

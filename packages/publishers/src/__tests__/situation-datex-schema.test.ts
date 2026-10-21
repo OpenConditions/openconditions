@@ -5,7 +5,7 @@ import {
 } from "@openconditions/conformance/standards/datex2-v3";
 import { DATEX2_RECORDS } from "@openconditions/model-roads";
 import { beforeAll, describe, expect, it } from "vitest";
-import { situationsToDatex } from "../situation-datex.js";
+import { datexRecordsOf, situationsToDatex } from "../situation-datex.js";
 
 type Rec = Record<string, unknown>;
 
@@ -197,6 +197,106 @@ const variants = [
       roads: [{ name: [{ lang: "de", text: "Hauptstraße" }] }, ROAD],
     },
   }),
+  situation("text-cause-relation-unknowns", {
+    certainty: "unknown",
+    severity: { label: "unknown", declaredRaw: "unknown" },
+    causes: [{ type: "maintenance" }],
+    description: [{ lang: "de", text: "Fahrbahnerneuerung" }],
+    comments: [{ type: "public", text: [{ lang: "de", text: "Umleitung ausgeschildert" }] }],
+    provenance: {
+      sourceUpdatedAt: "2026-09-06T09:00:00Z",
+      sourceId: "test",
+      sourceFormat: "datex2",
+    },
+    relations: [{ ref: { class: "situation", id: "oc:situation:test:M1" }, relation: "related" }],
+  }),
+  situation("description-as-cause", { description: [{ lang: "de", text: "Bauarbeiten A 46" }] }),
+  situation("queue", {
+    kind: "congestion",
+    type: "congestion",
+    subtype: "queuing",
+    effects: [
+      effect("delay", "delay", {
+        compliance: "unknown",
+        queueLength: { value: 2616, unit: "m" },
+        capacityRemainingPct: 50,
+        delayBand: "up_to_ten_minutes",
+      }),
+    ],
+  }),
+  situation("diversion-open-lanes-shared-record", {
+    effects: [
+      effect("detour", "detour", {
+        compliance: "advisory",
+        description: [{ lang: "nl", text: "Volg route A" }],
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [6.8, 51.2],
+            [6.85, 51.25],
+          ],
+        },
+      }),
+      effect("open", "lane_restriction", {
+        vehicleImpact: "all_lanes_open",
+        lanesTotal: 2,
+        sourceRecordRef: "R-1/3",
+      }),
+      effect("contraflow", "contraflow", { sourceRecordRef: "R-1/3" }),
+    ],
+  }),
+  situation("bearing-external", {
+    location: {
+      geometry: { type: "Point", coordinates: [5.05293, 52.110115] },
+      direction: { value: "unknown", basis: "bearing", bearingDeg: 308 },
+      external: [{ system: "RIS-index", code: "NLTNZ001300522000264" }],
+      roads: [ROAD],
+    },
+  }),
+  situation("alert-c", {
+    location: {
+      geometry: { type: "Point", coordinates: [5.717227, 50.8408564] },
+      geometryOrigin: "tmc_table",
+      fuzziness: "low_res",
+      direction: { value: "positive", basis: "alert_c" },
+      tmc: { country: "8", table: 6, version: "6.13.A", code: 22370 },
+    },
+  }),
+  situation("bridge", {
+    kind: "closure",
+    type: "closure",
+    subtype: "bridge",
+    effects: [effect("closure", "closure", { scope: "road" })],
+  }),
+  situation("periods", {
+    validity: {
+      status: "active",
+      start: "2026-09-01T00:00:00Z",
+      end: "2026-10-01T00:00:00Z",
+      periods: [
+        {
+          repeatFrequency: "P1W",
+          startDate: "2026-09-01",
+          endDate: "2026-09-30",
+          startTime: "20:00:00",
+          endTime: "05:00:00",
+          duration: "PT9H",
+          byDay: ["MO", "TU"],
+          byMonth: [9],
+          scheduleTimezone: "Europe/Berlin",
+        },
+      ],
+      exceptions: [
+        {
+          startDate: "2026-09-15",
+          endDate: "2026-09-15",
+          startTime: "22:00:00",
+          duration: "PT2H",
+          scheduleTimezone: "Europe/Berlin",
+        },
+      ],
+    },
+  }),
   situation("collection", {
     location: {
       geometry: {
@@ -268,6 +368,8 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
     ],
   ])("validates %s", { timeout: 60_000 }, async ([, situations], { skip }) => {
     if (unavailable) skip(unavailable);
+    // Every situation is written, so the schema checks what each one adds.
+    expect(situations.filter((s) => datexRecordsOf(s, AT).length === 0)).toEqual([]);
     const xml = situationsToDatex(situations, AT, INFO, "de");
     expect(xml).toContain("<sit:situationRecord");
     expect(await validate(xml)).toEqual([]);
