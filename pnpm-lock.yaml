@@ -1049,6 +1049,9 @@ importers:
       '@types/jsonld':
         specifier: ^1.5.15
         version: 1.5.15
+      eventsource-parser:
+        specifier: 4.1.2
+        version: 4.1.2
       jsonld:
         specifier: ^9.0.0
         version: 9.0.0
@@ -1414,6 +1417,9 @@ importers:
       '@types/node':
         specifier: ^26.6.5
         version: 26.6.5
+      eventsource:
+        specifier: 5.1.3
+        version: 5.1.3
       hyparquet:
         specifier: 1.31.4
         version: 1.31.4
@@ -2652,6 +2658,14 @@ packages:
   events@3.3.0:
     resolution: {integrity: sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==}
     engines: {node: '>=0.8.x'}
+
+  eventsource-parser@4.1.2:
+    resolution: {integrity: sha512-N9b0EvATDJfZj+Szg3m8WwqseQhei/mtTd6V0rCciGbI/yG24o3yBk0YVyfOZZsLVMZHWs++Zk3Aqd2y2EztnQ==}
+    engines: {node: '>=22.12'}
+
+  eventsource@5.1.3:
+    resolution: {integrity: sha512-rkZZeKloVPdaZ9tj/AoUPxp7Oz4iGC+8ZIxnauSTZZm6vAMSKX0YjrueNBDHVq5oTsUf/Q9Q/PEzGokVxRBkJg==}
+    engines: {node: '>=22.12.0'}
 
   expect-type@1.4.0:
     resolution: {integrity: sha512-KfYbmpRm0VbLjEvVa9yGwCi9GI34xvi7A/HXYWQO65CSD2u3MczUJSuwXKFIxlGsgBQizV9q5J9NHj4VG0n+pA==}
@@ -4651,6 +4665,12 @@ snapshots:
       - bare-abort-controller
 
   events@3.3.0: {}
+
+  eventsource-parser@4.1.2: {}
+
+  eventsource@5.1.3:
+    dependencies:
+      eventsource-parser: 4.1.2
 
   expect-type@1.4.0: {}
 
