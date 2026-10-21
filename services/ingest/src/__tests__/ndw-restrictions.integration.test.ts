@@ -537,7 +537,7 @@ describe("ndw binding and publication through the real graph and routes", () => 
     ]);
   }, 180_000);
 
-  it("emits no conditional record into segments, Valhalla, DATEX or TraFF", async () => {
+  it("routes no conditional record, and exports one only with its condition stated", async () => {
     await seedAndBind();
     const instance = await app();
     try {
@@ -564,14 +564,31 @@ describe("ndw binding and publication through the real graph and routes", () => 
       expect(body.speed_caps).toEqual([]);
       expectNoConditionalRouted(body.routing_evidence);
 
-      for (const url of [`/datex2/situations.xml?bbox=${NL_BBOX}`, `/traff.xml?bbox=${NL_BBOX}`]) {
-        const res = await instance.inject({ method: "GET", url });
-        expect(res.statusCode).toBe(200);
-        for (const id of ["RWS01_M1080891_NARROW_LANES_D2_WWA", "NLRWS_0005382945_1"]) {
-          expect(res.body, `${url} ${id}`).not.toContain(id);
-        }
-        expect(res.body, url).not.toContain("Verbod voor vrachtverkeer");
+      // DATEX states each closure with the vehicles it applies to, as the
+      // source does, so neither is an unconditional closure there; TraFF has
+      // no way to say so and leaves them out.
+      const datex = await instance.inject({
+        method: "GET",
+        url: `/datex2/situations.xml?bbox=${NL_BBOX}`,
+      });
+      expect(datex.statusCode).toBe(200);
+      const record = (id: string) =>
+        new RegExp(
+          `<sit:situationRecord[^>]*id="${id}"[^>]*>[\\s\\S]*?</sit:situationRecord>`,
+        ).exec(datex.body)?.[0];
+      expect(record("RWS01_M1080891_NARROW_LANES_D2_WWA")).toMatch(
+        /<sit:forVehiclesWithCharacteristicsOf>\s*<com:heightCharacteristic>\s*<com:comparisonOperator>greaterThan<\/com:comparisonOperator>\s*<com:vehicleHeight>4\.5<\/com:vehicleHeight>/,
+      );
+      expect(record("NLRWS_0005382945_1")).toMatch(
+        /<sit:forVehiclesWithCharacteristicsOf>\s*<com:vehicleType>lorry<\/com:vehicleType>\s*<\/sit:forVehiclesWithCharacteristicsOf>\s*<sit:roadOrCarriagewayOrLaneManagementType>roadClosed</,
+      );
+
+      const traff = await instance.inject({ method: "GET", url: `/traff.xml?bbox=${NL_BBOX}` });
+      expect(traff.statusCode).toBe(200);
+      for (const id of ["RWS01_M1080891_NARROW_LANES_D2_WWA", "NLRWS_0005382945_1"]) {
+        expect(traff.body, id).not.toContain(id);
       }
+      expect(traff.body).not.toContain("Verbod voor vrachtverkeer");
     } finally {
       await instance.close();
     }
