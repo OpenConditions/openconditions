@@ -21,6 +21,14 @@ describe("toIsoTimestamp", () => {
     expect(toIsoTimestamp("2026-06-26T13:54:00+0200")).toBe("2026-06-26T11:54:00.000Z");
   });
 
+  it("refuses a day the month does not have instead of rolling it into the next", () => {
+    expect(toIsoTimestamp("2026-02-30T10:00:00Z")).toBeUndefined();
+    expect(toIsoTimestamp("2026-04-31T00:00:00+02:00")).toBeUndefined();
+    expect(toIsoTimestamp("2026-13-01T00:00:00Z")).toBeUndefined();
+    expect(toIsoTimestamp("2026-02-29T00:00:00Z")).toBeUndefined();
+    expect(toIsoTimestamp("2024-02-29T00:00:00Z")).toBe("2024-02-29T00:00:00.000Z");
+  });
+
   it("reads a time without an offset in its publisher's zone, else as UTC", () => {
     expect(toIsoTimestamp("2026-07-14T09:34:00", "America/Toronto")).toBe(
       "2026-07-14T13:34:00.000Z",
