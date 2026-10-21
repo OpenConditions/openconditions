@@ -831,7 +831,7 @@ changed:
 
 <!-- generated:registry:start -->
 
-Kernel version `1.1`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parking`, `charging`, `fuel`, `facilities`, `border`, `maritime`, `hazards`.
+Kernel version `1.2`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parking`, `charging`, `fuel`, `facilities`, `border`, `maritime`, `hazards`.
 
 ### Domains
 

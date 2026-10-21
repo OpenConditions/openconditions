@@ -146,7 +146,7 @@ describe("federation enabled", () => {
         stream: "https://conditions.example.org/peer/stream",
       });
       expect(doc).not.toHaveProperty("supportedTypes");
-      expect(doc.capabilities.schemaVersions).toContain("kernel@1.1");
+      expect(doc.capabilities.schemaVersions).toContain("kernel@1.2");
       expect(doc.capabilities.schemaVersions).toContain("situation/alert@1.1");
 
       const rows = await sql`SELECT key_id FROM conditions.federation_instance_key`;

@@ -45,7 +45,7 @@ describe("negotiateCapabilities", () => {
     });
     const peer = caps({
       schemaVersions: [
-        "kernel@1.1",
+        "kernel@1.2",
         "situation/incident@1.0",
         "observation/fuel.price@2.0",
         "situation/alert@1.0",

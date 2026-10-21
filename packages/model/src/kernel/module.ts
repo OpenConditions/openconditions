@@ -52,7 +52,7 @@ import { ENDED_REASONS, VALIDITY_STATUSES } from "./validity.js";
 import { DIMENSIONS, VEHICLE_CLASSES, VEHICLE_FUELS, VEHICLE_USAGES } from "./vehicle.js";
 
 /** The kernel version, negotiated at federation like a kind: a major bump touches every class. */
-export const KERNEL_VERSION = "1.1" as const;
+export const KERNEL_VERSION = "1.2" as const;
 
 const closed = (code: string, values: readonly string[], description: string): VocabularyEntry =>
   defineVocabulary({ code, values, extensible: false, description });
