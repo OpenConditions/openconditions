@@ -20,7 +20,10 @@ records carry the revision as `version`:
   in `@openconditions/model-roads` (`packages/model-roads/src/crosswalk/emitters.ts`):
   the subtype's entry, else the type's. A coverage test holds that table to
   every registered type (a code or an explicit `null`), every code to the
-  DATEX II v3 vocabulary, and every code to reading back as the same kind. The
+  DATEX II v3 vocabulary, and every code to reading back as the same kind, and
+  as the very classification except where DATEX has no record for it (a vehicle
+  hazard or a fire in general, roadworks of no stated kind, a closure of no
+  stated scope, a speed measure of no stated kind; each with its reason). The
   inbound DATEX crosswalk is not used for export: several DATEX codes map to one
   type there, and the first one is not always the right one to write. A class
   whose schema requires its discriminator (`accidentType`,
@@ -35,7 +38,9 @@ records carry the revision as `version`:
   contraflow, speed limits (`SpeedManagement` with the limit) and diversions
   (`ReroutingManagement`). Ended effects and effects of unknown state are left
   out. Only the first effect whose record repeats the nature at the same place is
-  folded into it, retaining that effect's validity, compliance and fields. Further
+  folded into it, retaining that effect's validity, compliance and fields; a
+  road closure folds into a nature record the reader takes as a closure in
+  itself (a movable bridge open, traffic held). Further
   matching effects remain independent records; fields are never combined across
   effects to synthesize a restriction.
   A nature without a record of its own leads with its first effect's record.
@@ -43,46 +48,97 @@ records carry the revision as `version`:
   including scoped closures and speed records with different discriminators;
   they never add a second restriction with the parent's broader validity.
 - **Record ids.** A record keeps the DATEX record id it was parsed from
-  (`effect.sourceRecordRef`); the nature record carries the situation id; any
-  other record is `<situation id>#<effect id>`.
+  (`effect.sourceRecordRef`, without the `/<version>` the assembler appends);
+  the nature record carries the situation id, or the source record id of the
+  effect folded into it; any other record, and a second effect read from one
+  source record, is `<situation id>#<effect id>`, so no two records share an id.
 - **Probability** is required on every record, so each one states the
   situation's certainty. `unlikely` has no v3 value (v2's `improbable` was
-  dropped) and travels as `_extended` with `_extendedValue="improbable"`.
-- **What else describes the whole situation** — severity (`none` included),
-  the informant (`source`), headline and a stated delay — travels on the
-  leading record only. A roadworks nature record states the works' duration
-  class, scale, whether they are under traffic and whether urgent.
+  dropped) and travels as `_extended` with `_extendedValue="improbable"`; a
+  certainty nobody stated travels as `_extended` `unknown`, never as `certain`.
+- **What else describes the whole situation** travels on the leading record
+  only: severity (`none` included, and `unknown` where a source declared it
+  so), the informant (`source`), the first cause as `cause/causeType`
+  (`DATEX2_CAUSE_TYPES`), and the text as public comments in the order the
+  reader takes them back: headline, description, every other public comment.
+  The description states its `commentType` (`description`), which the reader
+  reads, so it comes back even where it repeats the headline; operator and
+  internal comments are not published. The reader, for its part, leaves a
+  comment typed `internalNote` or `dataProcessingNote` unread, and never reads
+  `nonGeneralPublicComment`: nothing downstream withholds a comment once it is
+  in the model. A roadworks nature record states
+  the works' duration class, scale, whether they are under traffic and whether
+  urgent.
 - **Lanes.** A lane restriction writes its restricted lanes (or, where only
-  closed lanes are known, those) as `numberOfLanesRestricted` and the lanes
-  that remain fully operational. Restricted lanes none of which is known
-  closed are an `other` lane management, not `laneClosures`.
+  closed lanes are known, those) as `numberOfLanesRestricted`, the lanes that
+  remain fully operational where stated, and the lane total as the location's
+  carriageway `originalNumberOfLanes` (an `unspecifiedCarriageway`). Restricted
+  lanes none of which is known closed are an `other` lane management, not
+  `laneClosures`; a lane closure with every lane open is `laneClosures` with no
+  lane restricted, as the publishers who report one write it.
+- **Related situations.** A plain relation to another situation is the
+  situation's `relatedSituation`, referring to that situation's id in the
+  publication; the reader reads `relatedSituation` (and a record's
+  `situationRecordCreationReference`) as relations. A relation of any other
+  kind (a detour for, a cause of) has no DATEX form and is reported.
+- **Diversions** state their description (`reroutingItineraryDescription`) and
+  a line route as their `alternativeRoute`.
 - **Direction of traffic.** A management record states the effect's own
   direction as `applicableForTrafficDirection` where it is a compass heading
   or one of the axisless DATEX directions (both ways, rings, towns); a
-  direction along a reference axis is reported as not exported.
+  direction it shares with its place travels with the place (a bearing, an
+  Alert-C direction); any other direction is reported as not exported.
+- **Locations.** A `LineString` is a `LinearLocation` with its `gmlLineString`
+  (latitude first); a place a location table gave (`geometryOrigin`
+  `tmc_table`) is its `AlertCMethod2Point` alone, which the reader looks up
+  again, so such a coarse place is no longer withheld; any other geometry is a
+  `PointLocation` at its first coordinate, with its bearing. The Alert-C
+  reference travels beside the coordinates, as the reader keeps it (`tmc`:
+  primary and secondary location, coded and affected direction, method and
+  method-4 offsets): a point's on its point location, a linear one's on a
+  `SingleRoadLinearLocation`, and a point code on a line as an
+  `ItineraryByIndexedLocations` of the line and the point. External location
+  codes travel as `externalReferencing`. A reference with no coded direction
+  (a v2 `both` has none in v3), an extent, or offsets that are not whole
+  metres cannot be written (`alertCDirection` is required) and is reported.
 - **Compliance.** Network-management records (`RoadOrCarriagewayOrLaneManagement`,
   `SpeedManagement`, `ReroutingManagement`, …) must state a `complianceOption`:
   the effect's `mandatory` or `advisory`, else `_extended` with
   `_extendedValue="unknown"` rather than a guess.
 - **Timing fidelity.** Simple effect intervals use effect → phase → situation
   fallback. A filtered or own-place management effect cannot be recreated by a
-  broader root nature record. The current emitter withholds situations containing
-  recurring periods or exceptions with `unsupported_timing`; this is an emitter
-  limitation, not a limitation of DATEX II. It does not approximate overnight,
-  timezone/DST or exception rules as continuous intervals. Suspended validity is
-  preserved; unknown or terminal root lifecycle is withheld.
-- **Delay supplements.** Only a temporally eligible delay at the root place with
-  the actual leading record's interval and lifecycle can supply its band,
-  description (`delaysType`) and duration. Ended/unknown delays and mismatched
-  contexts are omitted with diagnostics. Different eligible delays cannot
-  share the one supplement and are all omitted with `conflicting_effects`;
-  equivalent delays may share it.
+  broader root nature record. Periods and exceptions are written as
+  `validPeriod` and `exceptionPeriod`: one window as its start and end
+  instants, a period that only starts (with no overall end) as its start
+  instant, a daily or weekly recurrence as its times of day, days and months
+  from the start of its first occurrence to the end of its last. The reader
+  keeps a period's instants to the second: a window as its start and length,
+  a period that only starts as days overlapping from that instant, and a
+  recurrence's bounds as the first and last occurrence they admit; a bound
+  inside an occurrence (one the overall window does not already cut) cuts it
+  short in a way no local date can say, and is reported as
+  `unsupported_schedule`, leaving the record's time unknown rather than
+  widened. DATEX times of day carry no zone and the
+  reader places them in the zone of the record's location, so a schedule in
+  another zone, or of a shape the reader would take back differently (a count
+  of occurrences, days of the month, excepted dates, a length longer than its
+  times of day), still withholds the situation with `unsupported_timing`. The
+  emitter does not approximate such rules as continuous intervals. Suspended
+  validity is preserved; unknown or terminal root lifecycle is withheld.
+- **Delay supplements.** A temporally eligible delay supplements the record of
+  the source record it was read with, else the leading record, when its place,
+  interval and lifecycle agree with that record's: its band, description
+  (`delaysType`), duration, the capacity that remains and, on an
+  `AbnormalTraffic` record only, the queue length. Ended/unknown delays and
+  mismatched contexts are omitted with diagnostics. Different eligible delays
+  cannot share one record's supplement and are all omitted with
+  `conflicting_effects`; equivalent delays may share it.
 - **Validity.** DATEX requires an `overallStartTime`. A situation without a
   declared start is stated valid from its record version time, the earliest
   moment it is known to hold.
 - **Road name and number** travel in the location's
   `supplementaryPositionalDescription/roadInformation`, the only place v3
-  allows them on a `PointLocation`, one `roadInformation` per road. The roads
+  allows them on a point or plain linear location, one `roadInformation` per road. The roads
   reader takes the first back from there, as it does for DGT and CITA, which
   name their roads in the same place. `roadName` is a plain string there, not
   a multilingual one, so the export writes a road's first name only, and a
@@ -94,10 +150,24 @@ records carry the revision as `version`:
   name is in, `mul` when they differ, `und` when there is none. Every headline
   value also states its own language.
 
-A situation is **omitted entirely** when any of its effects is vehicle-specific
-or restriction evidence. DATEX output cannot carry an effect's vehicle
-conditions faithfully, and exporting such a closure without them would widen it
-to every vehicle. A situation with no record DATEX can write is omitted as well.
+**Vehicles.** A management record states the vehicles its effect applies to as
+one `forVehiclesWithCharacteristicsOf` group (`packages/publishers/src/datex-vehicles.ts`):
+the vehicle class as its `vehicleType` (a truck is a `lorry`), the usage, the
+fuel and a Euro emission class where DATEX has a value of the same meaning,
+and each dimension condition with its comparison operator (height, width,
+length, gross weight as `maximumPermitted`, laden weight as `actual`, axle
+load, axle count). A ban on some vehicles is the road closed to them
+(`roadClosed`), which the reader takes back as a closure for them. A delay
+supplements a record only when it applies to the same vehicles.
+
+A situation is **omitted entirely** when any of its effects is restriction
+evidence, or applies to vehicles DATEX cannot state exactly: several
+selectors (DATEX defines no AND/OR between groups), an exception (every
+vehicle but some, which DATEX has no form for), a class, usage or fuel with no
+DATEX value of the same meaning, an occupancy or hazardous-goods condition, or
+a vehicle rule that is an effect of its own (a dimension limit, hazardous
+goods). Exporting such a measure without its vehicles would widen it. A
+situation with no record DATEX can write is omitted as well.
 
 ## Current status: base-schema valid, not profile-conformant
 
@@ -107,6 +177,17 @@ re-ingests through our own parser as the same situations: a full closure stays a
 full closure with its validity and place, and roadworks with a lane closure and
 a speed limit stay one situation with both effects
 ([`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)).
+[`datex-roundtrip.test.ts`](../packages/publishers/src/__tests__/datex-roundtrip.test.ts)
+does the same for every real DATEX situation fixture (DGT, DIR, CITA,
+Flanders, Hrvatske ceste, NDW's full snapshot, restrictions and VILD-placed
+records): it parses the fixture, exports it at its publication time,
+validates the export against the schemas below, reads it back and compares
+both passes field by field. Its `CANNOT_EXPRESS` list names, with reasons,
+every difference left (situations withheld for vehicles the reader could not
+name or restriction evidence, an Alert-C reference coded both ways, the
+reader's derived `planned` flag and severity source, roadworks of no stated
+kind, a ban on some vehicles read back as a closure for them, record ids DATEX
+cannot share), so a regression or an improvement shows up there.
 That proves internal consistency. Like the TraFF emitter, it replaces characters
 XML 1.0 cannot carry (C0 controls other than tab, line feed and carriage return,
 unpaired surrogates, U+FFFE, U+FFFF) with U+FFFD in every text and attribute
@@ -130,7 +211,10 @@ It writes one situation for every classification `DATEX2_RECORDS` has a record
 for, and a set covering every effect record, the folded and leading-effect
 cases, an effect at its own place, every certainty, unknown compliance, a
 missing start, a fault with named equipment, and `Point`, `LineString`,
-`Polygon` and `GeometryCollection` locations with and without road names.
+`Polygon` and `GeometryCollection` locations with and without road names, an
+Alert-C table place, a bearing and external codes, periods and exceptions,
+causes, comments and relations, a queue, a diversion route, and two effects of
+one source record.
 
 The schemas are **not vendored**: datex2.eu publishes them with no licence or
 redistribution terms (only "Copyright © DATEX II"), which does not permit
@@ -169,23 +253,20 @@ this page.
 
 One thing this export gets right, and must keep getting right: **a point
 sensor's `Point` geometry is never buffered into a fabricated linear or area
-location.** `buildLocation()` always emits `loc:PointLocation` for the
-situation's location, whatever its geometry — `Point`, `LineString`, `Polygon`,
-`GeometryCollection` — by taking a representative first coordinate (see
-`representativePoint()`). Every record of a situation carries that same
-location, including the record of an effect that has a location of its own.
-There is no code path anywhere in `packages/publishers` or `packages/roads`
-that grows a point into a synthetic segment, buffered polygon, or invented
-linear reference. Precise linear/OpenLR location references for extended
-(non-point) situations are a real gap — see "What full conformance requires"
-below — but the fix for that gap is to add a correctly-modeled linear
-location, never to fabricate one by buffering a point.
+location.** `buildLocation()` writes a `LineString` the situation already has
+as a `loc:LinearLocation` of exactly its coordinates, and every other geometry
+— `Point`, `Polygon`, `GeometryCollection` — as a `loc:PointLocation` at a
+representative first coordinate (see `representativePoint()`). A record of an
+effect with a location of its own carries that location. There is no code path
+anywhere in `packages/publishers` or `packages/roads` that grows a point into a
+synthetic segment, buffered polygon, or invented linear reference. Areas and
+OpenLR references remain a gap — see "What full conformance requires" below —
+whose fix is a correctly-modeled location, never one fabricated from a point.
 
 The tests in
 [`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)
-round-trip `Point` locations and assert that a `LineString` location is
-written as a `loc:PointLocation` at its first point, without a
-`linearLocation` or `area` element.
+round-trip `Point` and `LineString` locations and assert that a `LineString`
+is written as a `loc:LinearLocation` of its own coordinates.
 
 `loc:PointLocation` is a valid DATEX II v3 location type for a point sensor and
 needs no linear geometry. Only CIFS (not built) has an open, undecided question

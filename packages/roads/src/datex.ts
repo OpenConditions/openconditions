@@ -49,13 +49,16 @@ import {
   toRestrictionInstant,
 } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
+import { zonedPeriods } from "./datex-periods.js";
 import {
   type DatexRestrictionContext,
   datexApplicabilityVehicles,
   datexRestrictionDetails,
+  isNonPublicComment,
+  NON_PUBLIC_COMMENT_TYPES,
 } from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
-import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
+import { buildLocalSchedule, type LocalSchedule } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { entryOf, UNDETERMINED } from "./situation/location.js";
 import {
@@ -449,6 +452,9 @@ function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): 
   }
   for (const cause of getXmlChildren(rec, "cause")) {
     check(getXmlChildText(cause, "causeType"), CAUSE_TYPES);
+  }
+  for (const comment of getXmlChildren(rec, "generalPublicComment")) {
+    check(getXmlChildText(comment, "commentType"), COMMENT_TYPES);
   }
   check(severity.trim() || undefined, SEVERITIES);
   check(getXmlChildText(rec, "probabilityOfOccurrence"), PROBABILITIES);
@@ -1000,17 +1006,21 @@ function timeSpecOf(timeSpec: XmlObject | undefined): {
 function restrictionScheduleOf(
   timeSpec: XmlObject | undefined,
   geometry: Geometry | null,
-): Schedule[] | undefined {
-  if (!timeSpec) return undefined;
+): { schedule?: Schedule[]; inexact: boolean } {
+  if (!timeSpec) return { inexact: false };
   const recurring = getXmlChildren(timeSpec, "validPeriod").some(
     (period) =>
       getXmlChildren(period, "recurringTimePeriodOfDay").length > 0 ||
       getXmlChildren(period, "recurringDayWeekMonthPeriod").length > 0,
   );
-  if (!recurring || !geometry) return undefined;
+  if (!recurring || !geometry) return { inexact: false };
   const timezone = scheduleTimezoneForGeometry(geometry);
-  if (!timezone) return undefined;
-  return withTimezone(timeSpecOf(timeSpec).periods, timezone);
+  if (!timezone) return { inexact: false };
+  const { schedules, inexact } = zonedPeriods(timeSpecOf(timeSpec).periods, timezone, {
+    start: text(timeSpec["overallStartTime"]),
+    end: text(timeSpec["overallEndTime"]),
+  });
+  return { ...(schedules ? { schedule: schedules } : {}), inexact };
 }
 
 function directionOf(rec: XmlObject): string | undefined {
@@ -1322,21 +1332,48 @@ function causeDescriptionOf(rec: XmlObject): string | undefined {
  * still resolve. Handles both a single element and a repeated array — the latter
  * is what broke the old single-node `multilingual()` lookup (it returned the
  * default headline for every multi-comment record).
+ *
+ * Without that extension, the comment's own `commentType` (v2 and v3) names
+ * what it is where it says: a description, the works' name. A comment the
+ * publisher marks as an internal or data-processing note is not for the
+ * public; nothing downstream withholds a comment, so it is not read at all.
  */
 function publicComments(rec: XmlObject, lang = "en"): PublicComment[] {
   const out: PublicComment[] = [];
   for (const gpc of getXmlChildren(rec, "generalPublicComment")) {
+    const declared = getXmlChildText(gpc, "commentType");
+    if (isNonPublicComment(gpc)) continue;
     const t = multilingual(gpc, lang);
     const all = multilingualText(gpc);
     if (!t || !all) continue;
-    const type = getXmlChildText(
-      getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
-      "commentType2",
-    );
+    const type =
+      getXmlChildText(
+        getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
+        "commentType2",
+      ) ?? entryOf(COMMENT_ROLES, declared);
     out.push(type ? { type, text: t, all } : { text: t, all });
   }
   return out;
 }
+
+/**
+ * DATEX `commentType` values (v2 and v3) as the role the headline and
+ * description choice reads; the other public ones are plain comments.
+ */
+const COMMENT_ROLES: Readonly<Record<string, string>> = {
+  description: "description",
+  roadworksName: "roadworksName",
+};
+/** Every `commentType` this reader knows, public or not. */
+const COMMENT_TYPES = new Set([
+  "description",
+  "roadworksName",
+  "locationDescriptor",
+  "warning",
+  "other",
+  "abnormalLoadMovementNote",
+  ...NON_PUBLIC_COMMENT_TYPES,
+]);
 
 /** One `generalPublicComment`: its best-language text, and every language it carries. */
 interface PublicComment {
@@ -1361,9 +1398,11 @@ function detourOf(rec: XmlObject): string | undefined {
   );
 }
 
-function relatedRefsOf(rec: XmlObject): string[] | undefined {
+/** The record's creation reference and the situations its situation names as related. */
+function relatedRefsOf(rec: XmlObject, situations: readonly string[] = []): string[] | undefined {
   const ref = getXmlChildText(rec, "situationRecordCreationReference");
-  return ref ? [ref] : undefined;
+  const out = [...new Set([...(ref ? [ref] : []), ...situations])];
+  return out.length > 0 ? out : undefined;
 }
 
 function confidenceOf(rec: XmlObject): Confidence | undefined {
@@ -1576,18 +1615,22 @@ function hasElement(node: unknown, name: string): boolean {
  * `groupOfLocations` while v3 uses `locationReference`; both are searched
  * because the German feeds are precisely the ones this exists to resolve.
  */
-function alertCRefOf(rec: XmlObject): VildReference | undefined {
+function alertCBlockOf(rec: XmlObject): XmlObject | undefined {
   const locRef = getXmlChild(rec, "locationReference") ?? getXmlChild(rec, "groupOfLocations");
   if (!locRef) return undefined;
-
   // Either a nested `alertCPoint`/`alertCLinear` element, or — where the
   // location element is itself declared an Alert-C type — the same fields
   // inline on it, with no wrapper. Both are valid DATEX and publishers differ.
   const inline = /^AlertC/i.test(stripXmlNamespace(getXmlAttribute(locRef, "type") ?? ""));
-  const alertC =
+  return (
     findFirst(locRef, "alertCPoint") ??
     findFirst(locRef, "alertCLinear") ??
-    (inline ? locRef : undefined);
+    (inline ? locRef : undefined)
+  );
+}
+
+function alertCRefOf(rec: XmlObject): VildReference | undefined {
+  const alertC = alertCBlockOf(rec);
   if (!alertC) return undefined;
 
   // A missing/placeholder primary is reported as `no-reference` by the resolver
@@ -1687,7 +1730,24 @@ function locationShapeOf(rec: XmlObject): string {
   return `${head}{${[...leaves].sort().join(",")}}${detail}`;
 }
 
-/** Alert-C/TMC reference (country + table + primary specific-location code). */
+/** Alert-C `alertCDirectionCoded` as the TMC direction bit. */
+const ALERT_C_DIRECTION_BITS: Readonly<Record<string, 0 | 1>> = { positive: 0, negative: 1 };
+/** `alertCAffectedDirection` values that say which way is affected; `unknown` says none. */
+const ALERT_C_AFFECTED = new Set(["aligned", "opposite", "both"]);
+
+/** The distance of a method-4 point from its location, in metres. */
+function offsetOf(wrapper: XmlObject | undefined): number | undefined {
+  const node = getXmlChild(wrapper, "offsetDistance");
+  const raw = getXmlChildText(node, "offsetDistance") ?? text(node);
+  const metres = raw === undefined || raw.trim() === "" ? Number.NaN : Number(raw);
+  return Number.isFinite(metres) && metres >= 0 ? metres : undefined;
+}
+
+/**
+ * Alert-C/TMC reference: country, table and primary location, and where the
+ * record states them, its secondary location, coded and affected direction,
+ * method and the method-4 offsets, kept beside any coordinates.
+ */
 function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | undefined {
   const ref = alertCRefOf(rec);
   if (!ref?.country || !ref.table || ref.primary === undefined) return undefined;
@@ -1697,7 +1757,30 @@ function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | 
   const version = Number.isInteger(table)
     ? ref.version
     : [ref.table, ref.version].filter(Boolean).join(".");
-  return { country: ref.country, table, ...(version ? { version } : {}), code: ref.primary };
+  const block = alertCBlockOf(rec);
+  const coded = getXmlChildText(getXmlChild(block, "alertCDirection"), "alertCDirectionCoded");
+  const affected = getXmlChildText(
+    getXmlChild(block, "alertCDirection"),
+    "alertCAffectedDirection",
+  );
+  const method = /Method([24])/.exec(ref.type ?? "")?.[1];
+  const primaryOffset = offsetOf(findFirst(block, "alertCMethod4PrimaryPointLocation"));
+  const secondaryOffset = offsetOf(findFirst(block, "alertCMethod4SecondaryPointLocation"));
+  const direction = entryOf(ALERT_C_DIRECTION_BITS, coded);
+  return {
+    country: ref.country,
+    table,
+    ...(version ? { version } : {}),
+    code: ref.primary,
+    ...(ref.secondary !== undefined ? { secondary: ref.secondary } : {}),
+    ...(direction !== undefined ? { direction } : {}),
+    ...(affected !== undefined && ALERT_C_AFFECTED.has(affected)
+      ? { affectedDirection: affected as "aligned" | "opposite" | "both" | "unknown" }
+      : {}),
+    ...(method !== undefined ? { method: Number(method) as 2 | 4 } : {}),
+    ...(primaryOffset !== undefined ? { primaryOffsetM: primaryOffset } : {}),
+    ...(secondaryOffset !== undefined ? { secondaryOffsetM: secondaryOffset } : {}),
+  };
 }
 
 /** Provider external location code (NDW's `externalReferencing`, e.g. RIS-index). */
@@ -1720,6 +1803,7 @@ interface SituationRecord {
   situationSeverity: string;
   publicationTime?: string;
   situationId?: string;
+  relatedSituations?: string[];
 }
 
 function listSituationRecords(doc: XmlObject): SituationRecord[] {
@@ -1767,12 +1851,27 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
   return situations.flatMap((sit) => {
     const sitSeverity = text(sit["overallSeverity"]) ?? "";
     const situationId = situationIdOf(sit);
+    const relatedSituations = relatedSituationsOf(sit);
     return getXmlChildren(sit, "situationRecord").map((rec) => ({
       rec,
       situationSeverity: sitSeverity,
       publicationTime,
       ...(situationId ? { situationId } : {}),
+      ...(relatedSituations.length > 0 ? { relatedSituations } : {}),
     }));
+  });
+}
+
+/**
+ * The situations a situation names as related (`relatedSituation`): v3 refers
+ * to each by its `objectReference`, v2 by the reference's own `id`.
+ */
+function relatedSituationsOf(sit: XmlObject): string[] {
+  return getXmlChildren(sit, "relatedSituation").flatMap((related) => {
+    const id =
+      getXmlAttribute(getXmlChild(related, "objectReference"), "id") ??
+      getXmlAttribute(related, "id");
+    return id?.trim() ? [id.trim()] : [];
   });
 }
 
@@ -1863,7 +1962,13 @@ function parseDatexInternal(
   /** Table editions publishers named that we do not hold. */
   const mismatchVersions = new Map<string, number>();
 
-  for (const { rec: rawRec, situationSeverity, situationId, publicationTime } of sourceRecords) {
+  for (const {
+    rec: rawRec,
+    situationSeverity,
+    situationId,
+    publicationTime,
+    relatedSituations,
+  } of sourceRecords) {
     const { body: rec, className } = recordBody(rawRec);
     const recordId = recId(rec);
     const prefixedId = `${src.id}:${recordId}`;
@@ -2080,15 +2185,22 @@ function parseDatexInternal(
     const causeDesc = causeDescriptionOf(rec);
     // Prefer a name/title-typed comment as the headline; the work-type or any
     // other comment as the description; a route/diversion comment as the detour.
+    // A comment that only says it is a description still leads, in document
+    // order, where nothing names the situation.
     const headlineComment =
-      typed(/name|title|head/i) ?? comments.find((c) => !c.type) ?? comments[0];
+      typed(/name|title|head/i) ??
+      comments.find((c) => !c.type || c.type === "description") ??
+      comments[0];
     const sourceHeadline =
       headlineComment?.text ?? multilingual(fallbackComment, "en") ?? causeDesc;
     const headlineAll =
       headlineComment?.all ?? (multilingual(fallbackComment, "en") ? fallbackAll : causeAll);
     const headlineText = sourceHeadline ?? defaultHeadline(type);
     const descriptionComment =
-      typed(/type|description|desc/i) ?? comments.find((c) => c.text !== headlineText);
+      comments.find(
+        (c) =>
+          c !== headlineComment && c.type !== undefined && /type|description|desc/i.test(c.type),
+      ) ?? comments.find((c) => c !== headlineComment && c.text !== headlineText);
     const descriptionText =
       descriptionComment?.text ?? multilingual(fallbackComment, "en") ?? causeDesc;
     const descriptionAll =
@@ -2105,33 +2217,47 @@ function parseDatexInternal(
     const sourceDirection = restrictionDirectionOf(rec);
     const calendar = timeSpecOf(timeSpec);
     const timeZone = geometry ? scheduleTimezoneForGeometry(geometry) : null;
+    const rawEnd = text(timeSpec?.["overallEndTime"]);
+    const overall = { start: text(timeSpec?.["overallStartTime"]), end: rawEnd };
+    const periods = zonedPeriods(calendar.periods, timeZone, overall);
+    const exceptions = zonedPeriods(calendar.exceptions, timeZone, overall);
     const scheduleIssues: Issue[] =
-      calendar.unsupported.length > 0
+      periods.inexact || exceptions.inexact
         ? [
             {
+              // A bound inside an occurrence cuts it short; no local date says so.
               code: "unsupported_schedule",
               sourcePath: "situationRecord.validity.validityTimeSpecification",
-              sourceTokens: { unsupportedFields: calendar.unsupported },
+              sourceTokens: { boundWithinOccurrence: true },
             },
           ]
-        : (calendar.periods || calendar.exceptions) && !timeZone
+        : calendar.unsupported.length > 0
           ? [
               {
-                // Local recurrences cannot be placed in time without the
-                // zone of where they apply.
                 code: "unsupported_schedule",
                 sourcePath: "situationRecord.validity.validityTimeSpecification",
-                sourceTokens: { unresolvedTimeZone: true },
+                sourceTokens: { unsupportedFields: calendar.unsupported },
               },
             ]
-          : [];
+          : (calendar.periods || calendar.exceptions) && !timeZone
+            ? [
+                {
+                  // Local recurrences cannot be placed in time without the
+                  // zone of where they apply.
+                  code: "unsupported_schedule",
+                  sourcePath: "situationRecord.validity.validityTimeSpecification",
+                  sourceTokens: { unresolvedTimeZone: true },
+                },
+              ]
+            : [];
     // The restriction contract has no place for exception periods.
     const droppedScheduleFields = [
       ...calendar.unsupported,
       ...(getXmlChildren(timeSpec, "exceptionPeriod").length > 0 ? ["exceptionPeriod"] : []),
     ];
-    const restrictionSchedule = restrictionScheduleOf(timeSpec, geometry);
-    const rawEnd = text(timeSpec?.["overallEndTime"]);
+    const restriction = restrictionScheduleOf(timeSpec, geometry);
+    if (restriction.inexact) droppedScheduleFields.push("validPeriod");
+    const restrictionSchedule = restriction.schedule;
     const overrunEnd = overrunEndOf(validity, rawEnd, versionTime ?? dataUpdatedAt);
     const effectIssues = [...measure.effectIssues, ...scheduleIssues];
     const restrictionDetails = restrictionDetailsFor(rec, src, {
@@ -2214,7 +2340,7 @@ function parseDatexInternal(
       capacityRemainingPct: capacityRemainingOf(rec),
       workZoneType: workZoneTypeOf(rec),
       roadworks: roadworksOf(rec),
-      relatedIds: relatedRefsOf(rec),
+      relatedIds: relatedRefsOf(rec, relatedSituations),
       sourceRaw: {
         ...rec,
         ...(versionTime === null && dataUpdatedAt !== null
@@ -2244,8 +2370,8 @@ function parseDatexInternal(
           geometry,
           // Local schedule times are stamped with the zone of the closure's
           // location (resolved from geometry), so the recurrence is unambiguous.
-          schedule: withTimezone(calendar.periods, timeZone),
-          scheduleExceptions: withTimezone(calendar.exceptions, timeZone),
+          schedule: periods.schedules,
+          scheduleExceptions: exceptions.schedules,
           externalRefs: externalRefsOf(rec),
           ...(locationTable ? { locationTable } : {}),
           ...(locationTable?.ref === "VILD" ? { fuzziness: "low_res" as const } : {}),

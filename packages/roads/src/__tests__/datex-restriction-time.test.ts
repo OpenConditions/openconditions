@@ -237,10 +237,25 @@ describe("ndw conservative restriction validity", () => {
     expect(view.state).toBe("unknown");
   });
 
-  it("carries a fully represented nightly recurrence in the Amsterdam zone", () => {
+  it("reports a nightly recurrence whose period begins inside a night", () => {
+    // 2026-09-01T00:00Z is 02:00 in Amsterdam, inside the night of 31 August:
+    // no first local date says that night counts from 02:00 only.
     const details = heightOf(
       withHeightValidity(
-        "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime><com:overallEndTime>2027-03-30T21:59:00Z</com:overallEndTime><com:validPeriod><com:startOfPeriod>2026-09-01T00:00:00Z</com:startOfPeriod><com:endOfPeriod>2026-10-01T00:00:00Z</com:endOfPeriod><com:recurringTimePeriodOfDay><com:startTimeOfPeriod>21:00:00</com:startTimeOfPeriod><com:endTimeOfPeriod>05:00:00</com:endTimeOfPeriod></com:recurringTimePeriodOfDay></com:validPeriod></com:validityTimeSpecification></sit:validity>",
+        "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime><com:validPeriod><com:startOfPeriod>2026-09-01T00:00:00Z</com:startOfPeriod><com:recurringTimePeriodOfDay><com:startTimeOfPeriod>21:00:00</com:startTimeOfPeriod><com:endTimeOfPeriod>05:00:00</com:endTimeOfPeriod></com:recurringTimePeriodOfDay></com:validPeriod></com:validityTimeSpecification></sit:validity>",
+      ),
+    ).restrictionDetails;
+    expect(details.issues).toContainEqual(
+      expect.objectContaining({ code: "unsupported_schedule" }),
+    );
+  });
+
+  it("carries a fully represented nightly recurrence in the Amsterdam zone", () => {
+    // Bounds at noon in Amsterdam, between nights: the first night is
+    // 1 September's, the last 30 September's.
+    const details = heightOf(
+      withHeightValidity(
+        "<sit:validity><com:validityStatus>definedByValidityTimeSpec</com:validityStatus><com:validityTimeSpecification><com:overallStartTime>2025-09-05T22:59:03Z</com:overallStartTime><com:overallEndTime>2027-03-30T21:59:00Z</com:overallEndTime><com:validPeriod><com:startOfPeriod>2026-09-01T10:00:00Z</com:startOfPeriod><com:endOfPeriod>2026-10-01T10:00:00Z</com:endOfPeriod><com:recurringTimePeriodOfDay><com:startTimeOfPeriod>21:00:00</com:startTimeOfPeriod><com:endTimeOfPeriod>05:00:00</com:endTimeOfPeriod></com:recurringTimePeriodOfDay></com:validPeriod></com:validityTimeSpecification></sit:validity>",
       ),
     ).restrictionDetails;
     expect(details.issues).not.toContainEqual(
@@ -248,6 +263,8 @@ describe("ndw conservative restriction validity", () => {
     );
     expect(details.facts[0].schedule).toEqual([
       expect.objectContaining({
+        startDate: "2026-09-01",
+        endDate: "2026-09-30",
         startTime: "21:00:00",
         endTime: "05:00:00",
         repeatFrequency: "P1D",

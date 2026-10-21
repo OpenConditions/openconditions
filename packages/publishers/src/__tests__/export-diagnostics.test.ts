@@ -28,6 +28,24 @@ const location = {
     ],
   },
 };
+/** A place each format reduces: TraFF a line to its ends, DATEX an area to a point. */
+const reducedBy = {
+  traff: location,
+  datex: {
+    fuzziness: "exact",
+    geometry: {
+      type: "Polygon",
+      coordinates: [
+        [
+          [6, 51],
+          [6.1, 51.2],
+          [6.2, 51],
+          [6, 51],
+        ],
+      ],
+    },
+  },
+};
 const situation = (over: Rec = {}): Rec => ({
   id: "example",
   kind: "roadworks",
@@ -150,7 +168,7 @@ describe.each(["traff", "datex"] as const)("%s exporter decisions", (format) => 
     );
   });
   it("reports geometry reduction only for emitted locations", () => {
-    expect(project(situation(), format).diagnostics).toContainEqual(
+    expect(project(situation({ location: reducedBy[format] }), format).diagnostics).toContainEqual(
       expect.objectContaining({
         code: format === "traff" ? "geometry_to_endpoints" : "geometry_to_point",
         path: "/location/geometry",
@@ -185,11 +203,11 @@ it("distinguishes TraFF direction refusal from DATEX direction omission", () => 
   );
 });
 it("attributes own-location reductions to their effect, not the parent", () => {
-  const s = situation({
-    location: { geometry: { type: "Point", coordinates: [6, 51] } },
-    effects: [effect({ location })],
-  });
   for (const format of ["traff", "datex"] as const) {
+    const s = situation({
+      location: { geometry: { type: "Point", coordinates: [6, 51] } },
+      effects: [effect({ location: reducedBy[format] })],
+    });
     expect(project(s, format).diagnostics.filter((d) => d.code.startsWith("geometry_"))).toEqual([
       expect.objectContaining({ path: "/effects/0/location/geometry", effectId: "closure" }),
     ]);

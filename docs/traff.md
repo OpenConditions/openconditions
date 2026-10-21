@@ -50,7 +50,8 @@ until a resolver can establish valid travel-ordered reference points. Raw prose
 is not exported as a compass code. The same rule applies to an effect's explicit
 direction; a situation with such an unsupported effect is withheld rather than
 widening its restriction. Read canonical `/situations` records for that richer
-information. Vehicle-specific and incomplete restrictions remain withheld.
+information. Vehicle-specific and incomplete restrictions remain withheld, as
+does a measure for every vehicle but some (an exception TraFF cannot state).
 
 Locations of effects with their own geometry are still emitted as separate
 messages. This change does not provide full geometry fidelity: lines use

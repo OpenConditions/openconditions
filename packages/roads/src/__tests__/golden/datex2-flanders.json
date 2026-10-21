@@ -541,7 +541,12 @@
         "country": "BE",
         "table": 601,
         "version": "3.8",
-        "code": 11104
+        "code": 11104,
+        "secondary": 11102,
+        "direction": 1,
+        "method": 4,
+        "primaryOffsetM": 1993,
+        "secondaryOffsetM": 2397
       },
       "admin": {
         "country": "BE"
@@ -608,7 +613,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "67899b9755640f9961e129a2c19955a796ac7d7fd9805c3e614d189bfa2a8e14"
+    "contentHash": "713f20e9bf3f7743762444723dd18e85d5244ca3dc73006897d75fa4f30d52d4"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290721",
@@ -876,7 +881,12 @@
         "country": "BE",
         "table": 601,
         "version": "3.8",
-        "code": 13424
+        "code": 13424,
+        "secondary": 13422,
+        "direction": 1,
+        "method": 4,
+        "primaryOffsetM": 1001,
+        "secondaryOffsetM": 1110
       },
       "admin": {
         "country": "BE"
@@ -928,7 +938,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f4d3498335b22a09b50a6ffbed82acbfd56f749f9a209906cc8e2ef2ce1c3b0b"
+    "contentHash": "a0ab8434271d1a754f7b547bd8148c74dfcef018ea2ac2c5512dc3151cc6c1a8"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290752",
@@ -1004,7 +1014,12 @@
         "country": "BE",
         "table": 601,
         "version": "3.8",
-        "code": 29634
+        "code": 29634,
+        "secondary": 29633,
+        "direction": 1,
+        "method": 4,
+        "primaryOffsetM": 506,
+        "secondaryOffsetM": 539
       },
       "admin": {
         "country": "BE"
@@ -1068,7 +1083,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "21d1bb08b09dced850622e17876fb931b6384c10d34832398866d8ed4198839a"
+    "contentHash": "7a658551b9bc952b0d7336ee6ebaf8e30798adcc7b1b0419abca5c69e7aa8905"
   },
   {
     "id": "oc:situation:be-flanders-events:EVT22290563",
@@ -1424,7 +1439,12 @@
         "country": "BE",
         "table": 601,
         "version": "3.8",
-        "code": 23005
+        "code": 23005,
+        "secondary": 23009,
+        "direction": 0,
+        "method": 4,
+        "primaryOffsetM": 30,
+        "secondaryOffsetM": 4261
       },
       "admin": {
         "country": "BE"
@@ -1474,6 +1494,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "f0bc57d93d298633ad29b415c4acda0727970b4d8eb4083746a2573cd24ea1e3"
+    "contentHash": "02a6940092c1fc13f8221c67e4b059ed994ede6ef751bd68f01dc109dd01414b"
   }
 ]

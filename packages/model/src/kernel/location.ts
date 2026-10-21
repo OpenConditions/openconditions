@@ -122,14 +122,26 @@ export const LaneRef = z.strictObject({
   type: z.enum(LANE_TYPES).optional(),
 });
 
+/**
+ * An Alert-C (TMC) location reference. `code` is the primary location; a
+ * linear reference also names its `secondary` location. `direction` is the
+ * coded direction along the table's axis (0 positive, 1 negative) and
+ * `affectedDirection` which way of the road it affects relative to the
+ * location's own (DATEX `alertCAffectedDirection`). Method 4 places a
+ * location some metres from its point (`primaryOffsetM`, `secondaryOffsetM`).
+ */
 export const AlertCRef = z.strictObject({
   country: z.string().min(1),
   table: z.number().int().nonnegative(),
   version: z.string().min(1).optional(),
   code: z.number().int().nonnegative(),
+  secondary: z.number().int().nonnegative().optional(),
   direction: z.union([z.literal(0), z.literal(1)]).optional(),
+  affectedDirection: z.enum(["aligned", "opposite", "both", "unknown"]).optional(),
   extent: z.number().int().nonnegative().optional(),
   method: z.union([z.literal(2), z.literal(4)]).optional(),
+  primaryOffsetM: z.number().nonnegative().optional(),
+  secondaryOffsetM: z.number().nonnegative().optional(),
 });
 
 /** A position along a referenced linear feature: a road number or a waterway name. */

@@ -127,19 +127,19 @@ describe("offline feed inspection", () => {
 it("exposes publisher loss paths alongside actual outputs, including successful partial projections", () => {
   const bytes = readFileSync(
     new URL(
-      "../../../../packages/roads/src/__tests__/fixtures/cita-lu/situations.xml",
+      "../../../../packages/roads/src/__tests__/fixtures/dir-fr/situations.xml",
       import.meta.url,
     ),
   );
-  const report = inspectFeed(repoFeed("lu-cita-events"), [bytes], at);
+  const report = inspectFeed(repoFeed("fr-dir-events"), [bytes], at);
   expect(report.schemaVersion).toBe(2);
-  const emitted = report.records.find((r) => r.projection.datex.records > 0)!;
-  expect(emitted.projection.datex.diagnostics).toEqual(
+  const emitted = report.records.filter((r) => r.projection.datex.records > 0);
+  expect(emitted.flatMap((r) => r.projection.datex.diagnostics)).toEqual(
     expect.arrayContaining([
       expect.objectContaining({
-        code: "geometry_to_point",
-        disposition: "reduced",
-        path: expect.stringContaining("/geometry"),
+        code: "field_not_exported",
+        disposition: "omitted",
+        path: expect.stringContaining("/tmc"),
       }),
     ]),
   );
@@ -178,7 +178,7 @@ it("does not run XML diagnostics on records blocked before projection", () => {
   }
 });
 
-it("explains coarse VILD location refusal through the real parser and keeps GeoJSON", () => {
+it("explains coarse VILD location refusal in TraFF, writes its Alert-C point to DATEX and keeps GeoJSON", () => {
   const bytes = readFileSync(
     new URL(
       "../../../../packages/roads/src/__tests__/fixtures/vild/ndw-method2-points.xml",
@@ -191,14 +191,10 @@ it("explains coarse VILD location refusal through the real parser and keeps GeoJ
   expect(coarse.length).toBeGreaterThan(0);
   for (const record of coarse) {
     expect(record.projection.traff.messages).toBe(0);
-    expect(record.projection.datex.records).toBe(0);
-    expect(record.projection.datex.diagnostics).toContainEqual(
-      expect.objectContaining({
-        code: "coarse_location",
-        path: "/location/fuzziness",
-        scope: "situation",
-        disposition: "withheld",
-      }),
+    // DATEX states the place by the Alert-C point the location table was read with.
+    expect(record.projection.datex.records).toBeGreaterThan(0);
+    expect(record.projection.datex.diagnostics).not.toContainEqual(
+      expect.objectContaining({ code: "coarse_location" }),
     );
   }
   expect(report.exports.geojson.features.length).toBeGreaterThan(0);

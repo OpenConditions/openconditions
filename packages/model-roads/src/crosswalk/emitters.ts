@@ -284,10 +284,13 @@ export const GTFS_RT_CAUSE_VALUES: Readonly<Record<string, string>> = {
  */
 export const DATEX2_RECORDS: Readonly<Record<string, string | null>> = {
   "incident.accident": "Accident:accident",
-  "incident.breakdown": "VehicleObstruction:brokenDownVehicle",
+  "incident.breakdown": "VehicleObstruction:other",
+  "incident.breakdown.disabled_vehicle": "VehicleObstruction:brokenDownVehicle",
+  "incident.breakdown.abandoned_vehicle": "VehicleObstruction:abandonedVehicle",
   "incident.vehicle_hazard": "VehicleObstruction:other",
   "incident.obstruction": "GeneralObstruction:obstructionOnTheRoad",
   "incident.obstruction.animal": "AnimalPresenceObstruction:animalsOnTheRoad",
+  "incident.obstruction.rockfall": "EnvironmentalObstruction:rockfalls",
   "incident.obstruction.infrastructure_damage": "InfrastructureDamageObstruction:other",
   "incident.fire": "GeneralObstruction:other",
   "incident.fire.vehicle_fire": "VehicleObstruction:vehicleOnFire",
@@ -298,7 +301,11 @@ export const DATEX2_RECORDS: Readonly<Record<string, string | null>> = {
   "closure.closure.lane": "RoadOrCarriagewayOrLaneManagement:laneClosures",
   "closure.closure.ramp": "ReroutingManagement:doNotUseExit",
   "closure.closure.intermittent": "GeneralNetworkManagement:trafficHeld",
+  "closure.closure.bridge": "GeneralNetworkManagement:bridgeSwingInOperation",
   "restriction.dimension": null,
+  "restriction.dimension.height": "RoadOrCarriagewayOrLaneManagement:heightRestrictionInOperation",
+  "restriction.dimension.width": "RoadOrCarriagewayOrLaneManagement:narrowLanes",
+  "restriction.dimension.weight": "RoadOrCarriagewayOrLaneManagement:weightRestrictionInOperation",
   "restriction.access": null,
   "restriction.speed": "SpeedManagement",
   "restriction.speed.variable": "SpeedManagement:activeSpeedControlInOperation",
@@ -339,4 +346,43 @@ export const DATEX2_FAULTY_EQUIPMENT: Readonly<Record<string, string>> = {
   "equipment_fault.fault.level_crossing": "levelCrossing",
   "equipment_fault.fault.toll_system": "automatedTollSystem",
   "equipment_fault.fault.power": "roadsidePowerSystem",
+};
+
+/**
+ * Situation cause → the DATEX II v3 `causeType` an emitter writes for it.
+ * Several DATEX cause types read as one cause; the emitter writes the most
+ * general of them, and each reads back as the same cause. `null` marks a
+ * cause DATEX has no cause type for.
+ */
+export const DATEX2_CAUSE_TYPES: Readonly<Record<string, string | null>> = {
+  accident: "accident",
+  breakdown: "vehicleObstruction",
+  debris: null,
+  spill: null,
+  fire: null,
+  police_activity: "authorityOperation",
+  animal: "animalPresence",
+  congestion: "abnormalTraffic",
+  hazard: "drivingConditions",
+  weather: "poorEnvironment",
+  roadworks: null,
+  maintenance: "roadMaintenance",
+  construction: "constructionWork",
+  public_event: "publicEvent",
+  security: "disturbance",
+  infrastructure_failure: "infrastructureDamageObstruction",
+  equipment_failure: "equipmentOrSystemFault",
+  flooding: null,
+  landslide: null,
+  avalanche: null,
+  wildfire: null,
+  strike: null,
+  demonstration: null,
+  medical_emergency: null,
+  obstruction: "obstruction",
+  abnormal_load: null,
+  military: null,
+  customs: "problemsAtCustomPost",
+  unknown: null,
+  other: "other",
 };

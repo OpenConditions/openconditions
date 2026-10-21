@@ -139,10 +139,20 @@ function characteristicsOf(group: XmlObject): Characteristic[] {
   return out;
 }
 
+/** DATEX `commentType` values (v2 and v3) of notes not meant for the public. */
+export const NON_PUBLIC_COMMENT_TYPES = ["internalNote", "dataProcessingNote"] as const;
+
+/** Whether a public comment's own type says it is a note not meant for the public. */
+export function isNonPublicComment(comment: XmlObject): boolean {
+  const type = getXmlChildText(comment, "commentType");
+  return type !== undefined && (NON_PUBLIC_COMMENT_TYPES as readonly string[]).includes(type);
+}
+
 function commentsOf(rec: XmlObject): Array<{ text: string; language: string | null }> | undefined {
   const out: Array<{ text: string; language: string | null }> = [];
   const seen = new Set<string>();
   for (const gpc of getXmlChildren(rec, "generalPublicComment")) {
+    if (isNonPublicComment(gpc)) continue;
     for (const comment of [gpc, ...getXmlChildren(gpc, "comment")]) {
       for (const values of getXmlChildren(comment, "values")) {
         for (const value of xmlNodeToArray(childByLocalName(values, "value"))) {

@@ -633,6 +633,11 @@
               "minimum": 0,
               "maximum": 9007199254740991
             },
+            "secondary": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
             "direction": {
               "anyOf": [
                 {
@@ -643,6 +648,15 @@
                   "type": "number",
                   "const": 1
                 }
+              ]
+            },
+            "affectedDirection": {
+              "type": "string",
+              "enum": [
+                "aligned",
+                "opposite",
+                "both",
+                "unknown"
               ]
             },
             "extent": {
@@ -661,6 +675,14 @@
                   "const": 4
                 }
               ]
+            },
+            "primaryOffsetM": {
+              "type": "number",
+              "minimum": 0
+            },
+            "secondaryOffsetM": {
+              "type": "number",
+              "minimum": 0
             }
           },
           "required": [

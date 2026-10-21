@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
+import { isValidityInEffectAt } from "@openconditions/model";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseDatexSituations } from "../datex.js";
 import type { SourceDescriptor } from "../types.js";
@@ -594,14 +595,78 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.validFrom).toBe("2026-06-01T00:00:00Z");
     expect(ev!.validTo).toBe("2026-07-01T00:00:00Z");
+    // One window: its start and length, to the second, in the zone of its place.
     expect(ev!.schedule).toEqual([
       {
-        repeatFrequency: "P1D",
-        startDate: "2026-06-10T06:00:00Z",
-        endDate: "2026-06-10T18:00:00Z",
+        startDate: "2026-06-10",
+        endDate: "2026-06-10",
+        startTime: "08:00:00",
+        duration: "PT12H",
         scheduleTimezone: "Europe/Berlin",
       },
     ]);
+  });
+
+  it("keeps the time of a period that only starts, rather than its whole first day", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3"><payload xsi:type="SituationPublication"><situation id="S"><situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+<situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+<validity><validityStatus>definedByValidityTimeSpec</validityStatus><validityTimeSpecification>
+<overallStartTime>2026-06-01T00:00:00Z</overallStartTime>
+<validPeriod><startOfPeriod>2026-06-10T16:21:35Z</startOfPeriod></validPeriod>
+</validityTimeSpecification></validity>
+${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.schedule).toEqual([
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-06-10",
+        startTime: "18:21:35",
+        duration: "PT25H",
+        scheduleTimezone: "Europe/Berlin",
+      },
+    ]);
+    // The period's first day before its start is not in it.
+    expect(
+      isValidityInEffectAt(
+        { status: "active", start: "2026-06-01T00:00:00Z", periods: ev!.schedule as never },
+        new Date("2026-06-10T10:00:00Z"),
+      ),
+    ).toBe(false);
+    expect(
+      isValidityInEffectAt(
+        { status: "active", start: "2026-06-01T00:00:00Z", periods: ev!.schedule as never },
+        new Date("2026-06-20T10:00:00Z"),
+      ),
+    ).toBe(true);
+  });
+
+  it("reads the situations a situation names as related, beside the record's creation reference", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3"><payload xsi:type="SituationPublication"><situation id="S"><situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+<situationRecordCreationReference>R_FIRST</situationRecordCreationReference>
+<situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+${POINT_LOC}</situationRecord><relatedSituation><objectReference targetClass="sit:Situation" id="S_OTHER"/></relatedSituation></situation></payload></messageContainer>`;
+    expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.relatedIds).toEqual(["R_FIRST", "S_OTHER"]);
+  });
+
+  it("reads a comment's own type, and leaves notes not for the public unread", () => {
+    const gpc = (text: string, type?: string) =>
+      `<generalPublicComment><comment><values><value lang="nl">${text}</value></values></comment>${type ? `<commentType>${type}</commentType>` : ""}</generalPublicComment>`;
+    const xml = v3Record(
+      gpc("Interne notitie", "internalNote") +
+        gpc("Werkzaamheden A2") +
+        gpc("Rijstrook dicht", "description") +
+        gpc("Let op", "warning") +
+        POINT_LOC,
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.situation?.headline).toEqual([{ lang: "nl", text: "Werkzaamheden A2" }]);
+    expect(ev!.situation?.description).toEqual([{ lang: "nl", text: "Rijstrook dicht" }]);
+    expect(ev!.situation?.comments).toEqual([
+      { type: "public", text: [{ lang: "nl", text: "Let op" }] },
+    ]);
+    expect(JSON.stringify(ev!.situation)).not.toContain("Interne notitie");
   });
 
   it("uses causeDescription as a headline fallback when there is no public comment", () => {
@@ -609,6 +674,33 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
       `<cause><causeDescription><values><value lang="en">Roadworks ahead</value></values></causeDescription></cause>${POINT_LOC}`,
     );
     expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.headline).toBe("Roadworks ahead");
+  });
+
+  it("keeps a linear Alert-C reference's second location, direction and offsets beside its coordinates", () => {
+    const xml = v3Record(
+      `<locationReference xsi:type="SingleRoadLinearLocation">` +
+        `<gmlLineString><posList>52.0 13.0 52.1 13.1</posList></gmlLineString>` +
+        `<alertCLinear xsi:type="AlertCMethod4Linear"><alertCLocationCountryCode>8</alertCLocationCountryCode>` +
+        `<alertCLocationTableNumber>6.13</alertCLocationTableNumber><alertCLocationTableVersion>A</alertCLocationTableVersion>` +
+        `<alertCDirection><alertCDirectionCoded>negative</alertCDirectionCoded><alertCAffectedDirection>aligned</alertCAffectedDirection></alertCDirection>` +
+        `<alertCMethod4PrimaryPointLocation><alertCLocation><specificLocation>7201</specificLocation></alertCLocation><offsetDistance><offsetDistance>85</offsetDistance></offsetDistance></alertCMethod4PrimaryPointLocation>` +
+        `<alertCMethod4SecondaryPointLocation><alertCLocation><specificLocation>7194</specificLocation></alertCLocation><offsetDistance><offsetDistance>1597</offsetDistance></offsetDistance></alertCMethod4SecondaryPointLocation>` +
+        `</alertCLinear></locationReference>`,
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.geometry).toMatchObject({ type: "LineString" });
+    expect(ev!.externalRefs?.tmc).toEqual({
+      country: "8",
+      table: 6.13,
+      version: "6.13.A",
+      code: 7201,
+      secondary: 7194,
+      direction: 1,
+      affectedDirection: "aligned",
+      method: 4,
+      primaryOffsetM: 85,
+      secondaryOffsetM: 1597,
+    });
   });
 
   it("extracts the external location reference (NDW RIS-index)", () => {

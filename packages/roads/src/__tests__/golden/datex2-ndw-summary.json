@@ -52,7 +52,11 @@
           "country": "8",
           "table": 6,
           "version": "6.13.A",
-          "code": 7995
+          "code": 7995,
+          "direction": 0,
+          "affectedDirection": "aligned",
+          "method": 4,
+          "primaryOffsetM": 565
         },
         "admin": {
           "country": "NL"
@@ -124,7 +128,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "74682228bd721c4d2c7f710e98364fc2b9bd263bc60ddce2ab246da3fd239e52"
+      "contentHash": "743e62410b942bd1772469aae3ca2b15ff46b240b16f69483804f305f7d51fbc"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1146779_D2_WWA",
@@ -180,7 +184,13 @@
           "country": "8",
           "table": 6,
           "version": "6.13.A",
-          "code": 7324
+          "code": 7324,
+          "secondary": 7324,
+          "direction": 0,
+          "affectedDirection": "aligned",
+          "method": 4,
+          "primaryOffsetM": 400,
+          "secondaryOffsetM": 500
         },
         "admin": {
           "country": "NL"
@@ -191,6 +201,13 @@
           "ref": {
             "class": "situation",
             "id": "oc:situation:nl-ndw-events:RWS01_M1146779_CLOSED_LANES_D2"
+          },
+          "relation": "related"
+        },
+        {
+          "ref": {
+            "class": "situation",
+            "id": "oc:situation:nl-ndw-events:RWS01_SM1146779_D2"
           },
           "relation": "related"
         }
@@ -271,7 +288,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "155e9b2311a83b069dc272a8fc8ce48e86ee7b96bbf0b73b3d503123f5a083a3"
+      "contentHash": "9d274ab94239f8de897bcf8b5b019d114f28a905530363df1c0f05b71181bf45"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS10_OBS0000038442",
@@ -391,7 +408,13 @@
           "country": "8",
           "table": 6,
           "version": "6.13.A",
-          "code": 7201
+          "code": 7201,
+          "secondary": 7194,
+          "direction": 0,
+          "affectedDirection": "aligned",
+          "method": 4,
+          "primaryOffsetM": 85,
+          "secondaryOffsetM": 1597
         },
         "admin": {
           "country": "NL"
@@ -449,7 +472,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "8cf68d0632eeaf626e3fd794a401f11776d2b0bbdecef71a5e3408d3d73ffe72"
+      "contentHash": "6789e378359c53f7bef23525f17ec365705aa5459dca72b2858ab0532ffc71c1"
     },
     {
       "id": "oc:situation:nl-ndw-events:NDW06_632fac64-2081-46da-96b3-7c4df763c6fb",
@@ -480,7 +503,11 @@
           "country": "8",
           "table": 6,
           "version": "6.13.A",
-          "code": 29033
+          "code": 29033,
+          "direction": 0,
+          "affectedDirection": "aligned",
+          "method": 4,
+          "primaryOffsetM": 1366
         },
         "admin": {
           "country": "NL"
@@ -537,7 +564,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "5a488c9c9c5dbd19e6b5d94bf03484759898e46d5163ba272ffb8be6215d1777"
+      "contentHash": "a952d93ef0453eb22e30681f8d17f643d1ea8597204b6f30318742745f31bbbf"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1148373_D2_WWA",
@@ -773,7 +800,10 @@
           "country": "8",
           "table": 6,
           "version": "6.13.A",
-          "code": 7272
+          "code": 7272,
+          "direction": 1,
+          "affectedDirection": "aligned",
+          "method": 2
         },
         "admin": {
           "country": "NL"
@@ -784,6 +814,13 @@
           "ref": {
             "class": "situation",
             "id": "oc:situation:nl-ndw-events:RWS01_M1148373_CLOSED_LANES_D2"
+          },
+          "relation": "related"
+        },
+        {
+          "ref": {
+            "class": "situation",
+            "id": "oc:situation:nl-ndw-events:RWS01_SM1148373_D2"
           },
           "relation": "related"
         }
@@ -902,7 +939,11 @@
               "country": "8",
               "table": 6,
               "version": "6.13.A",
-              "code": 7258
+              "code": 7258,
+              "direction": 1,
+              "affectedDirection": "aligned",
+              "method": 4,
+              "primaryOffsetM": 0
             },
             "admin": {
               "country": "NL"
@@ -2178,7 +2219,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "d0ee4d5a1542712f2c9ef69a23b9d1e136f3a9356638a13deeff90cf30aca7ed"
+      "contentHash": "145ff446d8f372520b56758ef85991e76437e822ee0c4798ae746e185c15a95e"
     }
   ]
 }

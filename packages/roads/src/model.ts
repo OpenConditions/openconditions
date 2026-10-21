@@ -437,8 +437,13 @@ export interface RoadEvent {
       table: number;
       version?: string;
       code: number;
+      secondary?: number;
       direction?: number;
+      affectedDirection?: "aligned" | "opposite" | "both" | "unknown";
       extent?: number;
+      method?: 2 | 4;
+      primaryOffsetM?: number;
+      secondaryOffsetM?: number;
     };
     /** A provider-specific external location code (e.g. NDW's RIS-index, the
      * Dutch road-register reference) — the closest thing some feeds give to a
