@@ -35,6 +35,25 @@ describe("signRegistry", () => {
     expect(root.signed["consistent_snapshot"]).toBe(false);
   });
 
+  it("writes expiry overrides in the TUF date format other clients require", async () => {
+    const registryDir = writeRegistryDir([sampleEntry("openmapx-de")]);
+    const repo = await buildRepo({
+      registryDir,
+      expires: { timestamp: "2026-10-20T12:34:56.789+02:00", root: "2027-01-01T00:00:00Z" },
+    });
+    const expires = (file: string) =>
+      (
+        JSON.parse(readFileSync(join(repo.metadataDir, file), "utf8")) as {
+          signed: { expires: string };
+        }
+      ).signed.expires;
+    expect(expires("timestamp.json")).toBe("2026-10-20T10:34:56Z");
+    expect(expires("1.root.json")).toBe("2027-01-01T00:00:00Z");
+    for (const file of ["snapshot.json", "targets.json"]) {
+      expect(expires(file)).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/);
+    }
+  });
+
   it("is deterministic: identical inputs produce byte-identical metadata", async () => {
     const registryDir = writeRegistryDir([sampleEntry("openmapx-de")]);
     const keys = await makeRepoKeys();
