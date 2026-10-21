@@ -72,6 +72,20 @@ updates:
         patterns:
           - "*"
 
+  # The Python openlr library the OpenLR encoder is cross-checked against in CI.
+  - package-ecosystem: pip
+    directory: "/packages/openlr/python"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+    commit-message:
+      prefix: chore
+      include: scope
+
   - package-ecosystem: docker
     # Cover every Dockerfile so the digest-pinned base images get bumped (a
     # frozen digest only stays secure if something keeps it current).

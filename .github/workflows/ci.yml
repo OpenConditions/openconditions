@@ -37,6 +37,17 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      # The OpenLR encoder's output is cross-checked against the Python
+      # openlr library (packages/openlr/src/__tests__/python-openlr.test.ts).
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: packages/openlr/python/requirements.txt
+
+      - name: Install the OpenLR cross-check library
+        run: pip install --require-hashes -r packages/openlr/python/requirements.txt
+
       - name: Restore Turbo cache
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
@@ -65,6 +76,8 @@ jobs:
 
       - name: Test
         run: pnpm test
+        env:
+          OPENLR_CROSSCHECK: required
 
   python-ci:
     if: github.event_name != 'schedule'
