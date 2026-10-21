@@ -56,6 +56,24 @@ describe("what the decoders cannot read is counted under the feed", () => {
     expect(drainSkipped(FEED)).toEqual({ malformed: 6 });
   });
 
+  test("energy table: a rate in a currency that is no ISO 4217 code is not read", () => {
+    const rates = `<rates xsi:type="RateTable"><applicableCurrency>isPrototypeOf</applicableCurrency><rateLineCollection><rateLine><rateLineType>flatRate</rateLineType><value>1</value></rateLine></rateLineCollection></rates>
+      <energyProduct><energyRate><applicableCurrency>eur</applicableCurrency><energyPrice><priceType>pricePerKWh</priceType><value>0.3</value></energyPrice></energyRate></energyProduct>`;
+    const sites = parseDatexEnergyTable(
+      payload(
+        "EnergyInfrastructureTablePublication",
+        `<energyInfrastructureTable id="t" version="1"><energyInfrastructureSite id="s" version="1"><energyInfrastructureStation id="st" version="1">
+          <refillPoint xsi:type="ElectricChargingPoint" id="p"><connector><connectorType>iec62196T2</connectorType></connector>${rates}</refillPoint>
+        </energyInfrastructureStation></energyInfrastructureSite></energyInfrastructureTable>`,
+      ),
+      options,
+    );
+    const [point] = sites.flatMap((s) => s.stations.flatMap((st) => st.points));
+    // The lower-case code is read as the code it is.
+    expect(point?.rates.map((r) => r.currency)).toEqual(["EUR"]);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1 });
+  });
+
   test("energy status: a status naming no refill point or no status", () => {
     const statuses = parseDatexEnergyStatus(
       payload(

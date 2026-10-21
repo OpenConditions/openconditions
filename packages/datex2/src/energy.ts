@@ -342,10 +342,12 @@ function ratesOf(point: XmlObject, options: DatexDecodeOptions): DatexEnergyRate
   for (const table of localChildren(point, "rates")) {
     if (elementType(table) !== "RateTable") continue;
     const collections = localChildren(table, "rateLineCollection");
-    const currency = (
+    const currency = isoCurrency(
       localChildText(table, "applicableCurrency") ??
-      collections.map((c) => localChildText(c, "applicableCurrency")).find((c) => c !== undefined)
-    )?.toUpperCase();
+        collections
+          .map((c) => localChildText(c, "applicableCurrency"))
+          .find((c) => c !== undefined),
+    );
     const lines: DatexEnergyRateLine[] = [];
     let unreadable = currency === undefined;
     for (const collection of collections) {
@@ -437,6 +439,12 @@ function lineTimes(line: XmlObject, relative: boolean): Partial<DatexEnergyRateL
   return out;
 }
 
+/** An ISO 4217 currency code, upper-cased; undefined for anything else, which no price can be in. */
+function isoCurrency(raw: string | undefined): string | undefined {
+  const code = raw?.trim().toUpperCase();
+  return code !== undefined && /^[A-Z]{3}$/.test(code) ? code : undefined;
+}
+
 function amount(raw: string | undefined): number | undefined {
   const value = raw === undefined ? Number.NaN : Number(raw);
   return Number.isFinite(value) ? value : undefined;
@@ -447,7 +455,7 @@ function amount(raw: string | undefined): number | undefined {
  * currency or a price lacks its type or value.
  */
 function energyRateOf(rate: XmlObject): DatexEnergyRate | undefined {
-  const currency = localChildText(rate, "applicableCurrency")?.toUpperCase();
+  const currency = isoCurrency(localChildText(rate, "applicableCurrency"));
   if (currency === undefined) return undefined;
   const lines: DatexEnergyRateLine[] = [];
   for (const price of localChildren(rate, "energyPrice")) {
