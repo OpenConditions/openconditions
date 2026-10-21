@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
+import { isValidityInEffectAt } from "@openconditions/model";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseDatexSituations } from "../datex.js";
 import type { SourceDescriptor } from "../types.js";
@@ -594,14 +595,50 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
     const [ev] = parseDatexSituations(xml, NDW_SOURCE);
     expect(ev!.validFrom).toBe("2026-06-01T00:00:00Z");
     expect(ev!.validTo).toBe("2026-07-01T00:00:00Z");
+    // One window: its start and length, to the second, in the zone of its place.
     expect(ev!.schedule).toEqual([
       {
-        repeatFrequency: "P1D",
-        startDate: "2026-06-10T06:00:00Z",
-        endDate: "2026-06-10T18:00:00Z",
+        startDate: "2026-06-10",
+        endDate: "2026-06-10",
+        startTime: "08:00:00",
+        duration: "PT12H",
         scheduleTimezone: "Europe/Berlin",
       },
     ]);
+  });
+
+  it("keeps the time of a period that only starts, rather than its whole first day", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3"><payload xsi:type="SituationPublication"><situation id="S"><situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+<situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+<validity><validityStatus>definedByValidityTimeSpec</validityStatus><validityTimeSpecification>
+<overallStartTime>2026-06-01T00:00:00Z</overallStartTime>
+<validPeriod><startOfPeriod>2026-06-10T16:21:35Z</startOfPeriod></validPeriod>
+</validityTimeSpecification></validity>
+${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.schedule).toEqual([
+      {
+        repeatFrequency: "P1D",
+        startDate: "2026-06-10",
+        startTime: "18:21:35",
+        duration: "PT25H",
+        scheduleTimezone: "Europe/Berlin",
+      },
+    ]);
+    // The period's first day before its start is not in it.
+    expect(
+      isValidityInEffectAt(
+        { status: "active", start: "2026-06-01T00:00:00Z", periods: ev!.schedule as never },
+        new Date("2026-06-10T10:00:00Z"),
+      ),
+    ).toBe(false);
+    expect(
+      isValidityInEffectAt(
+        { status: "active", start: "2026-06-01T00:00:00Z", periods: ev!.schedule as never },
+        new Date("2026-06-20T10:00:00Z"),
+      ),
+    ).toBe(true);
   });
 
   it("uses causeDescription as a headline fallback when there is no public comment", () => {

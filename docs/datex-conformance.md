@@ -98,8 +98,16 @@ records carry the revision as `version`:
   fallback. A filtered or own-place management effect cannot be recreated by a
   broader root nature record. Periods and exceptions are written as
   `validPeriod` and `exceptionPeriod`: one window as its start and end
-  instants, a daily or weekly recurrence as its times of day, days and months
-  within its first and last day. DATEX times of day carry no zone and the
+  instants, a period that only starts (with no overall end) as its start
+  instant, a daily or weekly recurrence as its times of day, days and months
+  from the start of its first occurrence to the end of its last. The reader
+  keeps a period's instants to the second: a window as its start and length,
+  a period that only starts as days overlapping from that instant, and a
+  recurrence's bounds as the first and last occurrence they admit; a bound
+  inside an occurrence (one the overall window does not already cut) cuts it
+  short in a way no local date can say, and is reported as
+  `unsupported_schedule`, leaving the record's time unknown rather than
+  widened. DATEX times of day carry no zone and the
   reader places them in the zone of the record's location, so a schedule in
   another zone, or of a shape the reader would take back differently (a count
   of occurrences, days of the month, excepted dates, a length longer than its

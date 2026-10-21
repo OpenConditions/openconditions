@@ -913,8 +913,9 @@ describe("DATEX II round-trip through the ingest parser", () => {
     expect((record!["sit:validity"] as Rec)["com:validityTimeSpecification"]).toMatchObject({
       "com:validPeriod": [
         {
-          "com:startOfPeriod": "2026-08-31T22:00:00.000Z",
-          "com:endOfPeriod": "2026-09-30T21:59:59.000Z",
+          // From the first night's start to the last night's end.
+          "com:startOfPeriod": "2026-09-01T18:00:00.000Z",
+          "com:endOfPeriod": "2026-10-01T03:00:00.000Z",
           "com:recurringTimePeriodOfDay": {
             "com:startTimeOfPeriod": "20:00:00",
             "com:endTimeOfPeriod": "05:00:00",
@@ -931,15 +932,24 @@ describe("DATEX II round-trip through the ingest parser", () => {
     });
     const [draft] = reread([nightly]);
     expect(draft!["validity"]).toMatchObject({ periods: [weekly], exceptions: [once] });
-    // A period with only its start is every day from that day on.
+    // A period that only starts is the time from its start on, to the second.
     const from = {
       repeatFrequency: "P1D",
       startDate: "2026-09-01",
+      startTime: "18:21:35",
+      duration: "PT25H",
       scheduleTimezone: "Europe/Berlin",
     };
     const open = closure({
       validity: { status: "active", start: "2026-09-01T00:00:00Z", periods: [from] },
     });
+    expect(
+      (
+        (datexRecordsOf(open, AT)[0]!["sit:validity"] as Rec)[
+          "com:validityTimeSpecification"
+        ] as Rec
+      )["com:validPeriod"],
+    ).toEqual([{ "com:startOfPeriod": "2026-09-01T16:21:35.000Z" }]);
     expect(reread([open])[0]!["validity"]).toMatchObject({ periods: [from] });
     // Times of day in another zone than the place's cannot be stated.
     const elsewhere = closure({

@@ -445,6 +445,8 @@
         {
           "repeatFrequency": "P1D",
           "startDate": "2026-08-16",
+          "startTime": "07:15:13",
+          "duration": "PT25H",
           "scheduleTimezone": "Europe/Amsterdam"
         }
       ]
@@ -525,7 +527,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "989dd6772c3f8f01a7f80e91b0d68adf77865e4414375afa37e403ffacd50000"
+    "contentHash": "4565ea321ff61beec0650e4bbe2e4b0866438abd52e841b0885fb7a1bf5e1073"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005406494",
@@ -667,6 +669,8 @@
         {
           "repeatFrequency": "P1D",
           "startDate": "2026-09-02",
+          "startTime": "17:59:46",
+          "duration": "PT25H",
           "scheduleTimezone": "Europe/Amsterdam"
         }
       ]
@@ -747,6 +751,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "854ec684c197dd8f3585d0d16dc9dd95f2109357ee6544c2848152984a618b4a"
+    "contentHash": "097c290a44c5f95489e72de4ad73d5c05ac59724a6fab867dd001ab5e43ab3eb"
   }
 ]

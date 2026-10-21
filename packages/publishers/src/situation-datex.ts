@@ -457,7 +457,9 @@ function buildValidity(validity: Validity, since: string, geometry: unknown): Re
     geometry as Parameters<typeof scheduleTimezoneForGeometry>[0],
   );
   const periods = (schedules: Schedule[] | undefined) =>
-    (schedules ?? []).map((s) => periodOf(s, zone)).filter((p): p is Rec => p !== undefined);
+    (schedules ?? [])
+      .map((s) => periodOf(s, zone, validity.end === undefined))
+      .filter((p): p is Rec => p !== undefined);
   const valid = periods(validity.periods);
   const exceptions = periods(validity.exceptions);
   if (valid.length > 0) spec["com:validPeriod"] = valid;
@@ -516,7 +518,11 @@ function dayPeriodLength(start: string, end: string): string {
  * length) is its start and end instants; a daily or weekly recurrence is its
  * times of day, days and months, within its first and last day.
  */
-function periodOf(s: Schedule, zone: string | null): Rec | undefined {
+/** The local date after `date`. */
+const nextDay = (date: string) =>
+  new Date(Date.parse(`${date}T00:00:00Z`) + 86_400_000).toISOString().slice(0, 10);
+
+function periodOf(s: Schedule, zone: string | null, openEnded: boolean): Rec | undefined {
   if (
     s.scheduleTimezone !== zone ||
     s.repeatCount !== undefined ||
@@ -544,20 +550,28 @@ function periodOf(s: Schedule, zone: string | null): Rec | undefined {
       "com:endOfPeriod": new Date(from.getTime() + length).toISOString(),
     };
   }
+  // Days overlapping from a start, which the reader makes of a period that
+  // only starts, in a validity that does not end: the time from then on.
+  if (
+    s.repeatFrequency === "P1D" &&
+    s.duration === "PT25H" &&
+    openEnded &&
+    s.startDate !== undefined &&
+    start !== undefined &&
+    s.endDate === undefined &&
+    s.endTime === undefined &&
+    s.byDay === undefined &&
+    s.byMonth === undefined
+  ) {
+    const from = at(s.startDate, start);
+    return from === null ? undefined : { "com:startOfPeriod": from.toISOString() };
+  }
   const weekly = s.repeatFrequency === "P1W";
   if ((!weekly && s.repeatFrequency !== "P1D") || weekly !== (s.byDay !== undefined))
     return undefined;
   if (start === undefined && (s.startTime ?? s.endTime ?? s.duration) !== undefined)
     return undefined;
-  // A daily rule of days alone is its first or last day; with both, the reader
-  // takes the period for one window.
-  if (
-    start === undefined &&
-    s.byDay === undefined &&
-    s.byMonth === undefined &&
-    (s.startDate === undefined) === (s.endDate === undefined)
-  )
-    return undefined;
+  if (start === undefined && s.byDay === undefined && s.byMonth === undefined) return undefined;
   const end = start === undefined ? undefined : timeOfDay(s.endTime);
   // The reader takes an occurrence's length from its times of day.
   if (
@@ -569,8 +583,15 @@ function periodOf(s: Schedule, zone: string | null): Rec | undefined {
   const days = (s.byDay ?? []).map((d) => ownEntry(DAY_NAMES, d));
   const months = (s.byMonth ?? []).map((m) => MONTH_NAMES[m - 1]);
   if (days.some((d) => d === undefined) || months.some((m) => m === undefined)) return undefined;
-  const first = s.startDate === undefined ? null : at(s.startDate, "00:00:00");
-  const last = s.endDate === undefined ? null : at(s.endDate, "23:59:59");
+  // The period runs from the start of its first occurrence to the end of its
+  // last, so neither bound cuts an occurrence short.
+  const first = s.startDate === undefined ? null : at(s.startDate, start ?? "00:00:00");
+  const last =
+    s.endDate === undefined
+      ? null
+      : start === undefined || end === undefined
+        ? at(nextDay(s.endDate), "00:00:00")
+        : at(end <= start ? nextDay(s.endDate) : s.endDate, end);
   if ((s.startDate !== undefined && first === null) || (s.endDate !== undefined && last === null))
     return undefined;
   return {
@@ -601,7 +622,7 @@ export function datexStatesTiming(validity: Validity, geometry: unknown): boolea
     geometry as Parameters<typeof scheduleTimezoneForGeometry>[0],
   );
   return [...(validity.periods ?? []), ...(validity.exceptions ?? [])].every(
-    (s) => periodOf(s, zone) !== undefined,
+    (s) => periodOf(s, zone, validity.end === undefined) !== undefined,
   );
 }
 

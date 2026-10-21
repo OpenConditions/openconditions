@@ -49,13 +49,14 @@ import {
   toRestrictionInstant,
 } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
+import { zonedPeriods } from "./datex-periods.js";
 import {
   type DatexRestrictionContext,
   datexApplicabilityVehicles,
   datexRestrictionDetails,
 } from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
-import { buildLocalSchedule, type LocalSchedule, withTimezone } from "./schedule.js";
+import { buildLocalSchedule, type LocalSchedule } from "./schedule.js";
 import { type CoarseType, coarseOf, coarseType } from "./situation/classes.js";
 import { entryOf, UNDETERMINED } from "./situation/location.js";
 import {
@@ -1000,17 +1001,21 @@ function timeSpecOf(timeSpec: XmlObject | undefined): {
 function restrictionScheduleOf(
   timeSpec: XmlObject | undefined,
   geometry: Geometry | null,
-): Schedule[] | undefined {
-  if (!timeSpec) return undefined;
+): { schedule?: Schedule[]; inexact: boolean } {
+  if (!timeSpec) return { inexact: false };
   const recurring = getXmlChildren(timeSpec, "validPeriod").some(
     (period) =>
       getXmlChildren(period, "recurringTimePeriodOfDay").length > 0 ||
       getXmlChildren(period, "recurringDayWeekMonthPeriod").length > 0,
   );
-  if (!recurring || !geometry) return undefined;
+  if (!recurring || !geometry) return { inexact: false };
   const timezone = scheduleTimezoneForGeometry(geometry);
-  if (!timezone) return undefined;
-  return withTimezone(timeSpecOf(timeSpec).periods, timezone);
+  if (!timezone) return { inexact: false };
+  const { schedules, inexact } = zonedPeriods(timeSpecOf(timeSpec).periods, timezone, {
+    start: text(timeSpec["overallStartTime"]),
+    end: text(timeSpec["overallEndTime"]),
+  });
+  return { ...(schedules ? { schedule: schedules } : {}), inexact };
 }
 
 function directionOf(rec: XmlObject): string | undefined {
@@ -2103,33 +2108,47 @@ function parseDatexInternal(
     const sourceDirection = restrictionDirectionOf(rec);
     const calendar = timeSpecOf(timeSpec);
     const timeZone = geometry ? scheduleTimezoneForGeometry(geometry) : null;
+    const rawEnd = text(timeSpec?.["overallEndTime"]);
+    const overall = { start: text(timeSpec?.["overallStartTime"]), end: rawEnd };
+    const periods = zonedPeriods(calendar.periods, timeZone, overall);
+    const exceptions = zonedPeriods(calendar.exceptions, timeZone, overall);
     const scheduleIssues: Issue[] =
-      calendar.unsupported.length > 0
+      periods.inexact || exceptions.inexact
         ? [
             {
+              // A bound inside an occurrence cuts it short; no local date says so.
               code: "unsupported_schedule",
               sourcePath: "situationRecord.validity.validityTimeSpecification",
-              sourceTokens: { unsupportedFields: calendar.unsupported },
+              sourceTokens: { boundWithinOccurrence: true },
             },
           ]
-        : (calendar.periods || calendar.exceptions) && !timeZone
+        : calendar.unsupported.length > 0
           ? [
               {
-                // Local recurrences cannot be placed in time without the
-                // zone of where they apply.
                 code: "unsupported_schedule",
                 sourcePath: "situationRecord.validity.validityTimeSpecification",
-                sourceTokens: { unresolvedTimeZone: true },
+                sourceTokens: { unsupportedFields: calendar.unsupported },
               },
             ]
-          : [];
+          : (calendar.periods || calendar.exceptions) && !timeZone
+            ? [
+                {
+                  // Local recurrences cannot be placed in time without the
+                  // zone of where they apply.
+                  code: "unsupported_schedule",
+                  sourcePath: "situationRecord.validity.validityTimeSpecification",
+                  sourceTokens: { unresolvedTimeZone: true },
+                },
+              ]
+            : [];
     // The restriction contract has no place for exception periods.
     const droppedScheduleFields = [
       ...calendar.unsupported,
       ...(getXmlChildren(timeSpec, "exceptionPeriod").length > 0 ? ["exceptionPeriod"] : []),
     ];
-    const restrictionSchedule = restrictionScheduleOf(timeSpec, geometry);
-    const rawEnd = text(timeSpec?.["overallEndTime"]);
+    const restriction = restrictionScheduleOf(timeSpec, geometry);
+    if (restriction.inexact) droppedScheduleFields.push("validPeriod");
+    const restrictionSchedule = restriction.schedule;
     const overrunEnd = overrunEndOf(validity, rawEnd, versionTime ?? dataUpdatedAt);
     const effectIssues = [...measure.effectIssues, ...scheduleIssues];
     const restrictionDetails = restrictionDetailsFor(rec, src, {
@@ -2242,8 +2261,8 @@ function parseDatexInternal(
           geometry,
           // Local schedule times are stamped with the zone of the closure's
           // location (resolved from geometry), so the recurrence is unambiguous.
-          schedule: withTimezone(calendar.periods, timeZone),
-          scheduleExceptions: withTimezone(calendar.exceptions, timeZone),
+          schedule: periods.schedules,
+          scheduleExceptions: exceptions.schedules,
           externalRefs: externalRefsOf(rec),
           ...(locationTable ? { locationTable } : {}),
           ...(locationTable?.ref === "VILD" ? { fuzziness: "low_res" as const } : {}),
