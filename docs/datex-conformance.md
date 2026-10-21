@@ -183,10 +183,11 @@ Flanders, Hrvatske ceste, NDW's full snapshot, restrictions and VILD-placed
 records): it parses the fixture, exports it at its publication time,
 validates the export against the schemas below, reads it back and compares
 both passes field by field. Its `CANNOT_EXPRESS` list names, with reasons,
-every difference left (vehicle-specific and restriction-evidence situations
-withheld, Alert-C codes without an Alert-C direction, the reader's derived
-`planned` flag and severity source, roadworks of no stated kind, record ids
-DATEX cannot share), so a regression or an improvement shows up there.
+every difference left (situations withheld for vehicles the reader could not
+name or restriction evidence, an Alert-C reference coded both ways, the
+reader's derived `planned` flag and severity source, roadworks of no stated
+kind, a ban on some vehicles read back as a closure for them, record ids DATEX
+cannot share), so a regression or an improvement shows up there.
 That proves internal consistency. Like the TraFF emitter, it replaces characters
 XML 1.0 cannot carry (C0 controls other than tab, line feed and carriage return,
 unpaired surrogates, U+FFFE, U+FFFF) with U+FFFD in every text and attribute

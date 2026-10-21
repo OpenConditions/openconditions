@@ -71,7 +71,7 @@ function occurrences(s: LocalSchedule, timeZone: string) {
     on: (date: string) => {
       const day = new Date(`${date}T00:00:00Z`);
       return (
-        (s.byDay === undefined || s.byDay.includes(ICAL_DAYS[day.getUTCDay()]!)) &&
+        (s.byDay === undefined || s.byDay.includes(ICAL_DAYS[day.getUTCDay()] ?? "")) &&
         (s.byMonth === undefined || s.byMonth.includes(day.getUTCMonth() + 1))
       );
     },

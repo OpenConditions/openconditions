@@ -134,7 +134,7 @@ function groupOf(selector: VehicleSelector): Rec | null {
     emission !== undefined &&
     (emission.scheme !== "euro" ||
       emission.values.length !== 1 ||
-      !EURO_CLASSES.has(emission.values[0]!))
+      !emission.values.every((v) => EURO_CLASSES.has(v)))
   )
     return null;
   const characteristics: [string, Rec][] = [];
@@ -182,8 +182,9 @@ export function vehicleCharacteristicsOf(effect: Effect): Rec | null | undefined
   const a = effect.applicability;
   if (a.except !== undefined && a.except.length > 0) return null;
   if (a.kind === "all") return undefined;
-  if (a.kind !== "classes" || a.include?.length !== 1) return null;
-  return groupOf(a.include[0]!);
+  const [only, ...more] = a.include ?? [];
+  if (a.kind !== "classes" || only === undefined || more.length > 0) return null;
+  return groupOf(only);
 }
 
 /** Effect kinds that are a vehicle rule in themselves, which no measure here states. */
