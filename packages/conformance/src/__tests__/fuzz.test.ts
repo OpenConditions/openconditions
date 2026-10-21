@@ -79,12 +79,18 @@ describe("draftProblems", () => {
         id: "x",
         f: Object.prototype.toString,
         n: Number.NaN,
-        at: "2026-10-20T25:00:00Z",
+        fetchedAt: "2026-10-20T25:00:00Z",
         geometry: { type: "LineString", coordinates: [[200, 0]] },
       },
     ]);
     expect(problems).toHaveLength(4);
-    expect(draftProblems([{ at: "2026-10-20T10:00:00.5+02:00" }])).toEqual([]);
+    expect(draftProblems([{ validity: { start: "2026-10-20T10:00:00.5+02:00" } }])).toEqual([]);
+  });
+
+  it("holds only the model's time fields to be instants", () => {
+    expect(draftProblems([{ name: "2026-10-20T99 road works", end: "soon" }])).toEqual([
+      '[0].end: not an instant "soon"',
+    ]);
   });
 
   it("finds characters XML cannot carry", () => {

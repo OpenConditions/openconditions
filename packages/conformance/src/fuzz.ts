@@ -565,6 +565,8 @@ export function mutateXml(
   return { xml: xmlBuilder.build(tree) as string, applied };
 }
 
+/** The model's time fields: `fetchedAt`, `expiresAt` and the like, and the bounds of a period. */
+const TIME_FIELD = /^(?:\w+At|start|end|instant)$/;
 const ISO_INSTANT = /^\d{4}-\d\d-\d\dT\d\d:\d\d(?::\d\d(?:\.\d+)?)?(?:Z|[+-]\d\d:\d\d)$/;
 const GEOMETRY_TYPES = new Set([
   "Point",
@@ -627,21 +629,20 @@ export function geometryProblems(g: Record<string, unknown>, at = "geometry"): s
 /**
  * What is wrong with a parser's drafts beyond what sealing checks: values
  * JSON cannot carry (a function looked up through a prototype, a non-finite
- * number), timestamps that are not RFC 3339 instants, and geometries that
- * are not valid GeoJSON. Empty when nothing is.
+ * number), times in the model's time fields that are not RFC 3339 instants,
+ * and geometries that are not valid GeoJSON. Empty when nothing is. Only the
+ * model's time fields are held to be instants: ids, names and source values
+ * are the publisher's words, which may begin with a date without being one.
  */
 export function draftProblems(drafts: readonly unknown[]): string[] {
   const out: string[] = [];
-  const walk = (v: unknown, at: string): void => {
+  const walk = (v: unknown, at: string, key = ""): void => {
     if (typeof v === "function") out.push(`${at}: a function`);
     else if (typeof v === "number" && !Number.isFinite(v)) out.push(`${at}: ${v}`);
     else if (typeof v === "string") {
-      if (
-        /^[+-]?\d{4,6}-\d\d-\d\dT/.test(v) &&
-        (!ISO_INSTANT.test(v) || !Number.isFinite(Date.parse(v)))
-      )
+      if (TIME_FIELD.test(key) && (!ISO_INSTANT.test(v) || !Number.isFinite(Date.parse(v))))
         out.push(`${at}: not an instant ${JSON.stringify(v)}`);
-    } else if (Array.isArray(v)) for (const [i, x] of v.entries()) walk(x, `${at}[${i}]`);
+    } else if (Array.isArray(v)) for (const [i, x] of v.entries()) walk(x, `${at}[${i}]`, key);
     else if (typeof v === "object" && v !== null) {
       if (Object.getPrototypeOf(v) !== Object.prototype && Object.getPrototypeOf(v) !== null)
         out.push(`${at}: a ${(v as object).constructor?.name ?? "non-plain"} object`);
@@ -652,7 +653,7 @@ export function draftProblems(drafts: readonly unknown[]): string[] {
         ("coordinates" in o || "geometries" in o)
       )
         out.push(...geometryProblems(o, at));
-      for (const [k, x] of Object.entries(o)) walk(x, `${at}.${k}`);
+      for (const [k, x] of Object.entries(o)) walk(x, `${at}.${k}`, k);
     }
   };
   for (const [i, d] of drafts.entries()) {
