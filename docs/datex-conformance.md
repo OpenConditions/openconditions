@@ -144,6 +144,16 @@ re-ingests through our own parser as the same situations: a full closure stays a
 full closure with its validity and place, and roadworks with a lane closure and
 a speed limit stay one situation with both effects
 ([`packages/publishers/src/__tests__/situation-datex.test.ts`](../packages/publishers/src/__tests__/situation-datex.test.ts)).
+[`datex-roundtrip.test.ts`](../packages/publishers/src/__tests__/datex-roundtrip.test.ts)
+does the same for every real DATEX situation fixture (DGT, DIR, CITA,
+Flanders, Hrvatske ceste, NDW's full snapshot, restrictions and VILD-placed
+records): it parses the fixture, exports it at its publication time,
+validates the export against the schemas below, reads it back and compares
+both passes field by field. Its `CANNOT_EXPRESS` list names, with reasons,
+every difference left (vehicle-specific and restriction-evidence situations
+withheld, Alert-C codes without an Alert-C direction, the reader's derived
+`planned` flag and severity source, roadworks of no stated kind, record ids
+DATEX cannot share), so a regression or an improvement shows up there.
 That proves internal consistency. Like the TraFF emitter, it replaces characters
 XML 1.0 cannot carry (C0 controls other than tab, line feed and carriage return,
 unpaired surrogates, U+FFFE, U+FFFF) with U+FFFD in every text and attribute
