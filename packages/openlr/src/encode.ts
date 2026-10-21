@@ -4,6 +4,7 @@ import {
   Offsets,
   RawLineLocationReference,
 } from "openlr-js";
+import type { LrpPoint } from "./decode.js";
 
 // openlr-js does not re-export its FunctionalRoadClass / FormOfWay enums from
 // its public entrypoint, so we recover the exact parameter types straight from
@@ -128,11 +129,15 @@ function pointAtCumDistance(dense: DensePoint[], targetDistance: number): LonLat
 }
 
 /**
- * Bearing for the LRP at `lrpIndices[i]`: for every LRP but the last, the
- * direction of travel over the first ~20 m of geometry after it; for the last
- * LRP, the direction of travel over the ~20 m of geometry arriving into it
- * (OpenLR's convention — a bearing is always the direction of travel, not a
- * "look-back" reversal).
+ * Bearing for the LRP at `lrpIndices[i]`: from the LRP to the point ~20 m
+ * (BEARDIST) along the line its attributes describe (whitepaper v1.5 rev 2,
+ * 5.2.4). Every LRP but the last describes the line leaving it, so its
+ * bearing is the direction of travel. The last describes the line arriving
+ * at it (5.4.2), and ~20 m along that line from the LRP lies behind it, so
+ * its bearing points back against the direction of travel: TomTom's
+ * reference encoder computes it `AGAINST_DIRECTION`, and the decoders
+ * (`openlr-dereferencer`, which the resolver runs) compare it with the
+ * reversed incoming line.
  */
 function bearingAtLrp(dense: DensePoint[], lrpIndices: number[], i: number): number {
   const idx = lrpIndices[i]!;
@@ -147,7 +152,68 @@ function bearingAtLrp(dense: DensePoint[], lrpIndices: number[], i: number): num
 
   const prevCum = dense[lrpIndices[i - 1]!]!.cumDistance;
   const sample = pointAtCumDistance(dense, Math.max(cum - BEARING_SAMPLE_METERS, prevCum));
-  return initialBearing(sample, dense[idx]!.point);
+  return initialBearing(dense[idx]!.point, sample);
+}
+
+/** One location reference point to encode: the decoder's {@link LrpPoint} without what its position implies. */
+export type OpenLrLrpInput = Omit<LrpPoint, "sequenceNumber" | "isLast">;
+
+/** A line location to encode, offsets in metres as {@link decodeOpenLrBinary} returns them. */
+export interface OpenLrLineInput {
+  points: OpenLrLrpInput[];
+  positiveOffset?: number;
+  negativeOffset?: number;
+}
+
+/**
+ * The physical layer: a line location's LRPs and offsets as OpenLR binary
+ * version 3, base64-encoded. Coordinates, bearing sectors, DNP intervals and
+ * offset buckets are packed by `openlr-js`, which writes TomTom's reference
+ * encoder's vectors byte for byte. The last LRP carries no LFRCNP; an offset
+ * longer than its LRP length fails, as it does in the reference encoder.
+ */
+export function encodeOpenLrBinary(location: OpenLrLineInput): string {
+  const { points, positiveOffset = 0, negativeOffset = 0 } = location;
+  if (points.length < 2) {
+    throw new Error("an OpenLR line location needs at least two LRPs");
+  }
+  const lrps = points.map((p, i) => {
+    const isLast = i === points.length - 1;
+    if (!isLast && p.lfrcnp === null) {
+      throw new Error(`OpenLR LRP ${i + 1} needs the lowest FRC to the next point`);
+    }
+    return LocationReferencePoint.fromValues(
+      i + 1,
+      p.frc as FrcParam,
+      p.fow as FowParam,
+      p.longitude,
+      p.latitude,
+      p.bearing,
+      isLast ? 0 : p.distanceToNext,
+      isLast ? null : (p.lfrcnp as FrcParam),
+      isLast,
+    );
+  });
+
+  const raw = RawLineLocationReference.fromLineValues(
+    "openconditions",
+    lrps,
+    Offsets.fromValues(positiveOffset, negativeOffset),
+  );
+  const locationReference = new BinaryEncoder().encodeDataFromRLR(raw);
+
+  if (!locationReference.isValid()) {
+    throw new Error(
+      `OpenLR encode failed (return code ${locationReference.getReturnCode() ?? "null"})`,
+    );
+  }
+
+  const data = locationReference.getLocationReferenceData();
+  if (data === null) {
+    throw new Error("OpenLR encode produced no binary data");
+  }
+
+  return data.toString("base64");
 }
 
 export interface EncodeOpenlrLineInput {
@@ -168,9 +234,10 @@ export interface EncodeOpenlrLineInput {
  * the distance to the next LRP would otherwise exceed the 15,000 m cap (Rule
  * 1). FRC/FOW are constant for the whole line (a segment is always one way
  * with one classification); bearing is sampled from the first ~20 m of
- * geometry after each LRP (or the ~20 m arriving into the last one); DNP is
- * the geodesic length of geometry to the next LRP. The binary packing itself
- * is delegated entirely to `openlr-js` (physical layer).
+ * geometry after each LRP, and for the last one back along the ~20 m arriving
+ * into it ({@link bearingAtLrp}); DNP is the geodesic length of geometry to
+ * the next LRP. The binary packing is {@link encodeOpenLrBinary} (physical
+ * layer).
  *
  * Known limitation: a spec-complete encoder additionally validates that the
  * shortest path between consecutive LRPs actually reproduces the input
@@ -189,47 +256,20 @@ export function encodeOpenlrLine(input: EncodeOpenlrLineInput): string {
   }
 
   const { dense, lrpIndices } = buildDensePolyline(coords);
-  const frcValue = frc as FrcParam;
-  const fowValue = fow as FowParam;
 
   const points = lrpIndices.map((idx, i) => {
     const isLast = i === lrpIndices.length - 1;
-    const bearing = bearingAtLrp(dense, lrpIndices, i);
-    const distanceToNext = isLast
-      ? 0
-      : dense[lrpIndices[i + 1]!]!.cumDistance - dense[idx]!.cumDistance;
-    const [lon, lat] = dense[idx]!.point;
-
-    return LocationReferencePoint.fromValues(
-      i + 1,
-      frcValue,
-      fowValue,
-      lon,
-      lat,
-      bearing,
-      distanceToNext,
-      isLast ? null : frcValue,
-      isLast,
-    );
+    const [longitude, latitude] = dense[idx]!.point;
+    return {
+      longitude,
+      latitude,
+      frc,
+      fow,
+      bearing: bearingAtLrp(dense, lrpIndices, i),
+      distanceToNext: isLast ? 0 : dense[lrpIndices[i + 1]!]!.cumDistance - dense[idx]!.cumDistance,
+      lfrcnp: isLast ? null : frc,
+    };
   });
 
-  const raw = RawLineLocationReference.fromLineValues(
-    "openconditions",
-    points,
-    Offsets.fromValues(0, 0),
-  );
-  const locationReference = new BinaryEncoder().encodeDataFromRLR(raw);
-
-  if (!locationReference.isValid()) {
-    throw new Error(
-      `OpenLR encode failed (return code ${locationReference.getReturnCode() ?? "null"})`,
-    );
-  }
-
-  const data = locationReference.getLocationReferenceData();
-  if (data === null) {
-    throw new Error("OpenLR encode produced no binary data");
-  }
-
-  return data.toString("base64");
+  return encodeOpenLrBinary({ points });
 }

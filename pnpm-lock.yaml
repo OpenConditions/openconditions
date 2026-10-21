@@ -929,6 +929,9 @@ importers:
         specifier: ^3.4.0
         version: 3.4.0
     devDependencies:
+      '@openconditions/conformance':
+        specifier: workspace:*
+        version: link:../conformance
       '@types/geojson':
         specifier: ^7946.0.16
         version: 7946.0.16

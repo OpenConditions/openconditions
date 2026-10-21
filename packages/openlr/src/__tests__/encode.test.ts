@@ -34,6 +34,25 @@ describe("encodeOpenlrLine", () => {
     }
   });
 
+  // Whitepaper v1.5 rev 2, 5.2.4 and 5.4.2: an LRP's bearing points BEARDIST
+  // (20 m) along the line its attributes describe. The last LRP describes the
+  // line arriving at it, so its bearing points back the way the line came,
+  // as TomTom's reference encoder computes it (AGAINST_DIRECTION).
+  it("points the first LRP's bearing along the line and the last LRP's back along it", () => {
+    // Due east, then due south into the end.
+    const corner: [number, number][] = [
+      [4.9, 52.37],
+      [4.902, 52.37],
+      [4.902, 52.368],
+    ];
+    const [first, last] = decodeOpenLrBinary(
+      encodeOpenlrLine({ coords: corner, frc: 3, fow: 3 }),
+    ).points;
+    // Sectors of 11.25°, read back as their midpoints.
+    expect(first!.bearing).toBe(84.375);
+    expect(last!.bearing).toBe(5.625);
+  });
+
   it("marks the last decoded LRP as last, first as not", () => {
     const base64 = encodeOpenlrLine({ coords: MOTORWAY_LINE, frc: 2, fow: 3 });
     const decoded = decodeOpenLrBinary(base64);
