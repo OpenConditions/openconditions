@@ -49,7 +49,7 @@
     "@openconditions/parking": "workspace:*",
     "@openconditions/weather": "workspace:*",
     "fast-xml-parser": "^5.11.2",
-    "tsup": "^8.5.1",
+    "tsup": "^9.0.0",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
   }
