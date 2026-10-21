@@ -82,6 +82,13 @@ describe("parseCbp", () => {
     expect(out.features.some((f) => (f["id"] as string).endsWith(":240221"))).toBe(false);
   });
 
+  it("counts a port entry that is no object as malformed instead of failing the poll", () => {
+    const ports = JSON.parse(fixture("cbp-bwtnew.json").toString("utf8")) as unknown[];
+    const out = parse(JSON.stringify([null, 7, ...ports]));
+    expect(out.features).toHaveLength(10);
+    expect(drainSkipped(cbpFeed().id)).toEqual({ malformed: 2 });
+  });
+
   it("skips a port the crossing table lacks as unplaced once it states a queue", () => {
     const pending = { operational_status: "Update Pending" };
     const unknownPort = (lanes: Record<string, Record<string, unknown>>) =>

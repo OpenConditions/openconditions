@@ -214,7 +214,11 @@ export function parseCbp(feed: BorderFeed, payloads: FeedPayloads, ctx: ParseCon
     const answer = JSON.parse(payload.toString("utf8").replace(/^﻿/, "")) as unknown;
     if (!Array.isArray(answer)) throw new Error("cbp: the answer is not a list of ports");
     for (const port of answer as CbpPort[]) {
-      const portNumber = text(port.port_number);
+      // A list entry that is no object (a `null`) is a malformed port, not a failed poll.
+      const portNumber =
+        typeof port === "object" && port !== null && !Array.isArray(port)
+          ? text(port.port_number)
+          : undefined;
       const crossing = portNumber === undefined ? undefined : crossingOfCbpPort(portNumber);
       if (portNumber === undefined) {
         recordSkipped(feed.id, "malformed");
