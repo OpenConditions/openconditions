@@ -366,4 +366,26 @@ describe("the digitraffic format's edges", () => {
     expect(r!["phenomenonTime"]).toEqual({ instant: FETCHED });
     expect(r!["freshness"]).toEqual({ fetchedAt: FETCHED, expiresAt: "2026-10-14T23:34:56Z" });
   });
+
+  test("a time without an offset is UTC, whatever the host's zone; an impossible one is malformed", () => {
+    const times = ["2026-10-14T23:21:54", "2026-10-14T25:00:00Z", "2026-09-31T23:00:00Z"];
+    const bodies = times.map((time, id) =>
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          {
+            type: "Feature",
+            properties: { id, time, tasks: ["SALTING"] },
+            geometry: { type: "Point", coordinates: [24.94, 60.17, 0] },
+          },
+        ],
+      }),
+    );
+    __resetSkips();
+    const out = parse(bodies);
+    expect(out.observations.map((o) => o["phenomenonTime"])).toEqual([
+      { instant: "2026-10-14T23:21:54Z" },
+    ]);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 2 });
+  });
 });

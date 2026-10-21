@@ -9,6 +9,7 @@ import {
 import type { VEHICLE_ACTIVITIES } from "@openconditions/model-vehicles";
 import type { VehiclesCatalogFeed } from "../feed-schema.js";
 import {
+  epochOf,
   isRecord,
   jsonOf,
   lonLat,
@@ -233,9 +234,8 @@ function routesOf(feed: VehiclesCatalogFeed, bodies: readonly Buffer[]) {
     for (const feature of doc["features"]) {
       const props = isRecord(feature) ? feature["properties"] : undefined;
       const id = isRecord(props) ? idOf(props["id"]) : undefined;
-      const endTime = isRecord(props) ? props["endTime"] : undefined;
-      const endAt = Date.parse(typeof endTime === "string" ? endTime : "");
-      if (!isRecord(feature) || !isRecord(props) || id === undefined || !Number.isFinite(endAt)) {
+      const endAt = isRecord(props) ? epochOf(props["endTime"]) : undefined;
+      if (!isRecord(feature) || !isRecord(props) || id === undefined || endAt === undefined) {
         recordSkipped(feed.id, "malformed");
         continue;
       }
@@ -369,14 +369,13 @@ export function parseDigitrafficMaintenance(
     for (const feature of doc["features"]) {
       const props = isRecord(feature) ? feature["properties"] : undefined;
       const id = isRecord(props) ? props["id"] : undefined;
-      const stated = isRecord(props) && typeof props["time"] === "string" ? props["time"] : "";
-      const time = Date.parse(stated);
+      const time = isRecord(props) ? epochOf(props["time"]) : undefined;
       if (
         !isRecord(feature) ||
         !isRecord(props) ||
         (typeof id !== "number" && typeof id !== "string") ||
         String(id).trim() === "" ||
-        !Number.isFinite(time)
+        time === undefined
       ) {
         recordSkipped(feed.id, "malformed");
         continue;
