@@ -12,14 +12,21 @@ export function effectValidity(effect: Pick<Effect, "validity">, situation: Vali
   return effect.validity ?? situation;
 }
 
+/**
+ * The earliest of some instants, in UTC. One past the year 9999 in UTC (an
+ * open-ended `9999-12-31T23:59:59-05:00`) has no RFC 3339 form there, so it
+ * keeps the form it was written in.
+ */
 function earliest(instants: (string | null | undefined)[]): string | null {
-  let best: number | null = null;
+  let best: { t: number; value: string } | null = null;
   for (const value of instants) {
     if (value == null) continue;
     const t = Date.parse(value);
-    if (Number.isFinite(t) && (best === null || t < best)) best = t;
+    if (Number.isFinite(t) && (best === null || t < best.t)) best = { t, value };
   }
-  return best === null ? null : new Date(best).toISOString();
+  if (best === null) return null;
+  const utc = new Date(best.t).toISOString();
+  return /^\d{4}-/.test(utc) ? utc : best.value;
 }
 
 /**
