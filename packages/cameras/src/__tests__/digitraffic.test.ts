@@ -304,6 +304,16 @@ describe("digitraffic", () => {
     expect(out.features[0]?.["location"]).not.toHaveProperty("admin.subdivision");
   });
 
+  test("a preset whose id holds an unpaired surrogate names no still: it is skipped as malformed", () => {
+    const sites = JSON.parse(fixture("fi-digitraffic-stations.json").toString("utf8"));
+    const presets = sites.features[0].properties.presets as { id: string }[];
+    presets[0]!.id = "C01503\uD80001";
+    const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(sites))] });
+    expect(out.features).toHaveLength(3);
+    expect(drainSkipped(digitrafficFeed().id)).toEqual({ malformed: 1 });
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
   test("an airport station is on no road and in no region, and neither is counted", () => {
     // Constructed: Finavia's airport stations give road 99999 and the province
     // "Finavia lentokentät"; the captured stations are on roads.
@@ -335,5 +345,18 @@ describe("digitraffic", () => {
     expect(status.rejected).toBe(0);
     expect(status.observations).toHaveLength(full.observations.length);
     expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
+  });
+
+  test("an image time without an offset is UTC, whatever the host's zone", () => {
+    const feed = digitrafficFeed();
+    const data = JSON.parse(fixture("fi-digitraffic-data.json").toString("utf8"));
+    data.stations[0].presets[0].measuredTime = "2026-10-08T07:13:44";
+    const out = format.parse(
+      feed,
+      { ...payloads(), status: [Buffer.from(JSON.stringify(data))] },
+      parseContext(FETCHED, 600),
+    );
+    const preset = data.stations[0].presets[0].id as string;
+    expect(value(reading(out, preset))).toMatchObject({ imageAt: "2026-10-08T07:13:44Z" });
   });
 });

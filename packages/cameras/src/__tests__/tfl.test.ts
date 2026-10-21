@@ -132,6 +132,18 @@ describe("tfl", () => {
     }
   });
 
+  test("a view naming a key every object inherits is text, not a compass point", () => {
+    const doc = list();
+    property(doc[0], "view").value = "constructor";
+    const out = parse({ main: [body(doc)] });
+    expect(view(out, "00002.00876").details["direction"]).toEqual({
+      value: "unknown",
+      basis: "text",
+      text: "constructor",
+    });
+    expect(sealFailures(out.features)).toEqual([]);
+  });
+
   test("no camera claims ptz: the view text is not a statement of it", () => {
     const out = parse({ main: [fixture("gb-eng-tfl-jamcams.json")] });
     for (const f of out.features) expect(f["details"]).not.toHaveProperty("ptz");

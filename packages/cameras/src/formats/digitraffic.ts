@@ -20,7 +20,16 @@ import {
   type ViewInput,
 } from "../camera.js";
 import type { CamerasCatalogFeed } from "../feed-schema.js";
-import { entryOf, isRecord, jsonOf, lonLat, numberOf, positionSkip, textOf } from "../records.js";
+import {
+  entryOf,
+  instantOf,
+  isRecord,
+  jsonOf,
+  lonLat,
+  numberOf,
+  positionSkip,
+  textOf,
+} from "../records.js";
 
 /** Where every preset's still is served; the list and the details name the preset only. */
 const IMAGES = "https://weathercam.digitraffic.fi";
@@ -166,6 +175,9 @@ interface StationDetails {
 
 const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
 
+/** A UTF-16 surrogate without its pair, which no URL can encode. */
+const UNPAIRED_SURROGATE = /\p{Surrogate}/u;
+
 /**
  * The stations of the `sites` list; one without an id or a place is skipped,
  * and so is a preset without an id.
@@ -201,7 +213,8 @@ function stationsOf(feed: CamerasCatalogFeed, body: Buffer): Station[] {
         ...(state === undefined ? {} : { state }),
         presets: listOf(props["presets"]).flatMap((preset) => {
           const presetId = isRecord(preset) ? textOf(preset["id"]) : undefined;
-          if (presetId === undefined) {
+          // The id names the preset's still, so one that is no well-formed text names none.
+          if (presetId === undefined || UNPAIRED_SURROGATE.test(presetId)) {
             recordSkipped(feed.id, "malformed");
             return [];
           }
@@ -325,9 +338,10 @@ function imageTimesOf(
           recordSkipped(feed.id, "malformed");
           continue;
         }
-        const at = textOf((preset as Record<string, unknown>)["measuredTime"]);
-        if (at === undefined) continue;
-        if (!Number.isFinite(Date.parse(at))) {
+        const stated = textOf((preset as Record<string, unknown>)["measuredTime"]);
+        if (stated === undefined) continue;
+        const at = instantOf(stated);
+        if (at === undefined) {
           recordSkipped(feed.id, "malformed");
           continue;
         }

@@ -361,4 +361,16 @@ describe("skips", () => {
     expect(out.features).toHaveLength(1);
     expect(drainSkipped(osmFeed().id)).toEqual({ malformed: 1, unknown_value: 2 });
   });
+
+  test("an element whose webcam tag is blank is counted as malformed", () => {
+    const out = parse(
+      Buffer.from(
+        JSON.stringify({
+          elements: [{ type: "node", id: 1, lat: 47, lon: 11, tags: { webcam: " " } }],
+        }),
+      ),
+    );
+    expect(out.features).toEqual([]);
+    expect(drainSkipped(osmFeed().id)).toEqual({ malformed: 1 });
+  });
 });
