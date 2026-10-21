@@ -88,8 +88,40 @@ const GENERATED: Record<string, string> = {
 const CANNOT_EXPRESS: Record<string, { reason: string; fixtures: string[] }> = {
   "withheld:vehicle_specific_effect": {
     reason:
-      "The emitter has no mapping from the kernel's vehicle applicability to DATEX `forVehiclesWithCharacteristicsOf`; exporting the effect without it would widen it to every vehicle, so the situation is withheld.",
-    fixtures: ["dgt", "dir", "ndw", "ndw-restrictions"],
+      "Vehicles DATEX cannot state exactly: an applicability the reader could not name (unknown), or a vehicle rule that is an effect of its own (a dimension limit). Writing the measure without them would widen it to every vehicle, so the situation is withheld.",
+    fixtures: ["dgt", "dir", "ndw"],
+  },
+  "/effects/-access": {
+    reason:
+      "A ban on some vehicles is DATEX's road closure to vehicles with those characteristics (`roadClosed`), which the reader takes back as a closure for them.",
+    fixtures: ["ndw", "ndw-restrictions"],
+  },
+  "/effects/+closure": {
+    reason: "The closure the reader makes of a ban on some vehicles (see /effects/-access).",
+    fixtures: ["ndw", "ndw-restrictions"],
+  },
+  "/effects/closure/source/tokens/heightCharacteristic/vehicleHeight": {
+    reason:
+      "The restriction contract's source tokens keep the source's own spelling of a value (`5.0`); the export writes the value (`5`).",
+    fixtures: ["ndw"],
+  },
+  "/effects/closure/source/tokens/locationRefs/primaryLocation": {
+    reason:
+      "A record placed by both an Alert-C point and a linear Alert-C reference: the model keeps one (the point), so the contract's tokens read back from it.",
+    fixtures: ["ndw"],
+  },
+  "/effects/closure/source/tokens/locationRefs/secondaryLocation": {
+    reason: "As /effects/closure/source/tokens/locationRefs/primaryLocation.",
+    fixtures: ["ndw"],
+  },
+  "/validity/periods": {
+    reason:
+      "A nature record an effect folds into states the effect's validity. The restriction contract gives its effects their own validity (to the millisecond, without the record's start-only period), so the situation's reads back as the effect's.",
+    fixtures: ["ndw-restrictions"],
+  },
+  "/validity/start": {
+    reason: "As /validity/periods.",
+    fixtures: ["ndw-restrictions"],
   },
   "withheld:restriction_evidence": {
     reason:
@@ -104,7 +136,7 @@ const CANNOT_EXPRESS: Record<string, { reason: string; fixtures: string[] }> = {
   "/planned": {
     reason:
       "No DATEX element: the reader derives it from the leading record's class. Pass 1 led with a management record, the export leads with the nature record (MaintenanceWorks reads as planned).",
-    fixtures: ["dgt", "flanders", "ndw", "vild"],
+    fixtures: ["dgt", "flanders", "ndw", "ndw-restrictions", "vild"],
   },
   "/severity/source": {
     reason:
@@ -363,13 +395,13 @@ describe("DATEX II round trip of the real situation fixtures", () => {
         },
         "ndw": {
           "accepted": 853,
-          "exported": 394,
+          "exported": 428,
           "situations": 435,
           "sourceRecords": 853,
         },
         "ndw-restrictions": {
           "accepted": 6,
-          "exported": 1,
+          "exported": 4,
           "situations": 4,
           "sourceRecords": 6,
         },

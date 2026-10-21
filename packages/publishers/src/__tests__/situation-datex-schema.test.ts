@@ -298,6 +298,37 @@ const variants = [
       roads: [ROAD],
     },
   }),
+  situation("vehicles", {
+    effects: [
+      effect("heavy", "closure", {
+        scope: "road",
+        applicability: {
+          kind: "classes",
+          include: [
+            {
+              class: "truck",
+              usage: "military",
+              fuel: "diesel",
+              emission: { scheme: "euro", values: ["euroVI"] },
+              when: [
+                { dimension: "gross_weight", operator: "gt", value: { value: 7500, unit: "kg" } },
+                { dimension: "laden_weight", operator: "lte", value: { value: 40000, unit: "kg" } },
+                { dimension: "height", operator: "gte", value: { value: 4, unit: "m" } },
+                { dimension: "length", operator: "gt", value: { value: 12, unit: "m" } },
+                { dimension: "width", operator: "gt", value: { value: 2.55, unit: "m" } },
+                { dimension: "axle_load", operator: "gt", value: { value: 10000, unit: "kg" } },
+                { dimension: "axle_count", operator: "gte", value: { value: 3, unit: "1" } },
+              ],
+            },
+          ],
+        },
+      }),
+      effect("ban", "access", {
+        mode: "prohibited",
+        applicability: { kind: "classes", include: [{ usage: "emergency_services" }] },
+      }),
+    ],
+  }),
   situation("bridge", {
     kind: "closure",
     type: "closure",

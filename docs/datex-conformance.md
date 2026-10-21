@@ -150,10 +150,24 @@ records carry the revision as `version`:
   name is in, `mul` when they differ, `und` when there is none. Every headline
   value also states its own language.
 
-A situation is **omitted entirely** when any of its effects is vehicle-specific
-or restriction evidence. DATEX output cannot carry an effect's vehicle
-conditions faithfully, and exporting such a closure without them would widen it
-to every vehicle. A situation with no record DATEX can write is omitted as well.
+**Vehicles.** A management record states the vehicles its effect applies to as
+one `forVehiclesWithCharacteristicsOf` group (`packages/publishers/src/datex-vehicles.ts`):
+the vehicle class as its `vehicleType` (a truck is a `lorry`), the usage, the
+fuel and a Euro emission class where DATEX has a value of the same meaning,
+and each dimension condition with its comparison operator (height, width,
+length, gross weight as `maximumPermitted`, laden weight as `actual`, axle
+load, axle count). A ban on some vehicles is the road closed to them
+(`roadClosed`), which the reader takes back as a closure for them. A delay
+supplements a record only when it applies to the same vehicles.
+
+A situation is **omitted entirely** when any of its effects is restriction
+evidence, or applies to vehicles DATEX cannot state exactly: several
+selectors (DATEX defines no AND/OR between groups), an exception (every
+vehicle but some, which DATEX has no form for), a class, usage or fuel with no
+DATEX value of the same meaning, an occupancy or hazardous-goods condition, or
+a vehicle rule that is an effect of its own (a dimension limit, hazardous
+goods). Exporting such a measure without its vehicles would widen it. A
+situation with no record DATEX can write is omitted as well.
 
 ## Current status: base-schema valid, not profile-conformant
 

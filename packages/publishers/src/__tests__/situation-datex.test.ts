@@ -226,11 +226,52 @@ describe("datexRecordsOf", () => {
   });
 
   it("leaves out a situation it cannot tell without widening a vehicle condition", () => {
-    const hgv = effect("x", "closure", {
+    // DATEX states one group of characteristics, and no exception to it.
+    for (const applicability of [
+      { kind: "classes", include: [{ class: "hgv" }, { class: "bus" }] },
+      { kind: "all", except: [{ usage: "local_access" }] },
+      { kind: "classes", include: [{ hovMin: 2 }] },
+      { kind: "classes", include: [{ fuel: "cng" }] },
+    ]) {
+      const closed = effect("x", "closure", { scope: "road", applicability });
+      expect(datexRecordsOf(situation({ effects: [closed] }), AT)).toEqual([]);
+    }
+  });
+
+  it("states the vehicles a measure applies to as one group of characteristics", () => {
+    const heavy = effect("x", "closure", {
       scope: "road",
-      applicability: { kind: "classes", include: [{ class: "hgv" }] },
+      applicability: {
+        kind: "classes",
+        include: [
+          {
+            class: "truck",
+            fuel: "diesel",
+            emission: { scheme: "euro", values: ["euro5"] },
+            when: [
+              { dimension: "gross_weight", operator: "gt", value: { value: 7500, unit: "kg" } },
+              { dimension: "height", operator: "gte", value: { value: 4, unit: "m" } },
+            ],
+          },
+        ],
+      },
     });
-    expect(datexRecordsOf(situation({ effects: [hgv] }), AT)).toEqual([]);
+    const [, record] = datexRecordsOf(situation({ effects: [heavy] }), AT);
+    expect(record!["sit:forVehiclesWithCharacteristicsOf"]).toEqual({
+      "com:fuelType": "diesel",
+      "com:vehicleType": "lorry",
+      "com:grossWeightCharacteristic": [
+        {
+          "com:comparisonOperator": "greaterThan",
+          "com:grossVehicleWeight": 7.5,
+          "com:typeOfWeight": "maximumPermitted",
+        },
+      ],
+      "com:heightCharacteristic": [
+        { "com:comparisonOperator": "greaterThanOrEqualTo", "com:vehicleHeight": 4 },
+      ],
+      "com:emissions": { "com:emissionClassificationEuro": "euro5" },
+    });
   });
 
   it("names every road, each by its first name", () => {
@@ -346,7 +387,7 @@ describe("situationsToDatex — publication language", () => {
     expect(langOf([])).toBe("und");
     const hgv = effect("x", "closure", {
       scope: "road",
-      applicability: { kind: "classes", include: [{ class: "hgv" }] },
+      applicability: { kind: "classes", include: [{ class: "hgv" }, { class: "bus" }] },
     });
     const english = situation({
       headline: [{ lang: "en", text: "Closed to lorries" }],
@@ -877,6 +918,28 @@ describe("DATEX II round-trip through the ingest parser", () => {
     const { direction: _bit, ...undirected } = tmc;
     const coarse = closure({ location: { ...vild, direction: undefined, tmc: undirected } });
     expect(datexRecordsOf(coarse, AT)).toEqual([]);
+  });
+
+  it("re-ingests a closure for lorries as one for trucks, and a ban on them as a closure for them", () => {
+    const lorries = { kind: "classes", include: [{ class: "truck" }] };
+    const closed = closure({
+      effects: [effect("c/closure", "closure", { scope: "road", applicability: lorries })],
+    });
+    const [record] = datexRecordsOf(closed, AT);
+    expect(record).toMatchObject({
+      "sit:roadOrCarriagewayOrLaneManagementType": "roadClosed",
+      "sit:forVehiclesWithCharacteristicsOf": { "com:vehicleType": "lorry" },
+    });
+    expect(reread([closed])[0]!["effects"]).toEqual([
+      expect.objectContaining({ kind: "closure", applicability: { ...lorries, raw: ["lorry"] } }),
+    ]);
+    const banned = situation({
+      effects: [effect("b/access", "access", { mode: "prohibited", applicability: lorries })],
+    });
+    expect(datexRecordsOf(banned, AT)[1]).toMatchObject({
+      "sit:roadOrCarriagewayOrLaneManagementType": "roadClosed",
+      "sit:forVehiclesWithCharacteristicsOf": { "com:vehicleType": "lorry" },
+    });
   });
 
   it("re-ingests a line's Alert-C reference: linear with its offsets, or a point on the line", () => {

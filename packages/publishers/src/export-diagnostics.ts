@@ -91,12 +91,15 @@ export class ProjectionDiagnostics {
    * that is the exporters' existing conservative policy, before time filtering.
    * A format that can state some periods and exceptions says which
    * (`states.timing`, given the effect a validity is its own, if any), and one
-   * that can state a place a location table gave says which (`states.place`). */
+   * that can state a place a location table gave says which (`states.place`),
+   * and one that can state which vehicles an effect applies to, which
+   * (`states.vehicles`). */
   blocked(
     format: "traff" | "datex",
     states: {
       timing?: (validity: Validity, effect?: Effect) => boolean;
       place?: (location: Rec) => boolean;
+      vehicles?: (effect: Effect) => boolean;
     } = {},
   ): boolean {
     let blocked = false;
@@ -149,13 +152,16 @@ export class ProjectionDiagnostics {
     for (const effect of situationEffects(this.situation)) {
       const path = this.effectPath(effect);
       coarse(effect.location as Rec | undefined, `${path}/location`, effect);
-      if (isVehicleSpecific(effect)) {
+      // Every vehicle but some is a vehicle condition too: writing it as
+      // every vehicle would widen it to those it excepts.
+      const excepting = (effect.applicability.except?.length ?? 0) > 0;
+      if ((isVehicleSpecific(effect) || excepting) && !states.vehicles?.(effect)) {
         blocked = true;
         this.emit(
           "vehicle_specific_effect",
           "situation",
           "withheld",
-          `${path}/${effect.applicability.kind === "all" ? "kind" : "applicability"}`,
+          `${path}/${effect.applicability.kind === "all" && !excepting ? "kind" : "applicability"}`,
           "The whole situation is withheld: vehicle conditions cannot be represented faithfully.",
           effect,
         );

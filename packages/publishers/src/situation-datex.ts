@@ -14,8 +14,10 @@ import {
   DATEX2_CAUSE_TYPES,
   DATEX2_FAULTY_EQUIPMENT,
   DATEX2_RECORDS,
+  DATEX2_SEVERITIES,
   datexDiscriminator,
 } from "@openconditions/model-roads";
+import { datexStatesVehicles, vehicleCharacteristicsOf } from "./datex-vehicles.js";
 import { type ExportDiagnosticSink, ProjectionDiagnostics } from "./export-diagnostics.js";
 import {
   definesManagementNature,
@@ -79,9 +81,22 @@ function ownEntry<T>(table: Readonly<Record<string, T>>, key: string | undefined
  */
 function severityOf(severity: Rec | undefined): string | undefined {
   const label = String(severity?.["label"]);
-  if (label === "unknown") return severity?.["declaredRaw"] !== undefined ? "unknown" : undefined;
+  const raw = severity?.["declaredRaw"];
+  // A value a source declared in DATEX's own words is written as it was:
+  // `lowest` and `low` are both a minor rating.
+  if (
+    severity?.["source"] === "declared" &&
+    typeof raw === "string" &&
+    DATEX_SEVERITIES.has(raw) &&
+    ownEntry(DATEX2_SEVERITIES, raw) === label
+  )
+    return raw;
+  if (label === "unknown") return raw !== undefined ? "unknown" : undefined;
   return ownEntry(SEVERITY, label);
 }
+
+/** DATEX II v3 `SeverityEnum` values. */
+const DATEX_SEVERITIES = new Set(["highest", "high", "medium", "low", "lowest", "none", "unknown"]);
 
 /**
  * v3 dropped v2's `improbable`; it travels as an extended value. The record
@@ -178,6 +193,12 @@ function effectCode(effect: Effect): string | undefined {
       return "SpeedManagement:speedRestrictionInOperation";
     case "detour":
       return "ReroutingManagement:followDiversionSigns";
+    // "The road is closed to vehicles with the specified characteristics":
+    // DATEX's form of a ban on some vehicles.
+    case "access":
+      return effect.mode === "prohibited"
+        ? "RoadOrCarriagewayOrLaneManagement:roadClosed"
+        : undefined;
     default:
       return undefined;
   }
@@ -691,6 +712,8 @@ interface RecordHeader {
   version: string;
   time: string;
   probability: string | Rec;
+  /** The situation's informant, which every record states as its own source. */
+  source?: Rec;
 }
 
 interface RecordBody {
@@ -699,13 +722,11 @@ interface RecordBody {
   /** The geometry of the record's place, whose zone the reader reads its periods' times of day in. */
   geometry: unknown;
   /**
-   * What only the leading record carries: severity, the informant, the cause,
-   * and the public comments (the headline, then the description and any
-   * other comment).
+   * What only the leading record carries: severity, the cause, and the public
+   * comments (the headline, then the description and any other comment).
    */
   lead?: {
     severity?: string;
-    source?: Rec;
     cause?: string;
     comments: Comment[];
   };
@@ -716,6 +737,8 @@ interface RecordBody {
   actionStatus?: Effect["actionStatus"];
   /** A network management measure's `applicableForTrafficDirection`. */
   trafficDirection?: string;
+  /** The vehicles a network management measure applies to, when not every vehicle. */
+  vehicles?: Rec;
   /** What roadworks say of the works before their discriminator. */
   works?: Rec;
   detail?: Rec;
@@ -748,7 +771,7 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
     "sit:situationRecordVersionTime": header.time,
     "sit:probabilityOfOccurrence": header.probability,
     ...(lead?.severity ? { "sit:severity": lead.severity } : {}),
-    ...(lead?.source ? { "sit:source": lead.source } : {}),
+    ...(header.source ? { "sit:source": header.source } : {}),
     "sit:validity": buildValidity(body.validity, header.time, body.geometry),
     ...(Object.keys(impact).length > 0 ? { "sit:impact": impact } : {}),
     ...(lead?.cause ? { "sit:cause": { "sit:causeType": lead.cause } } : {}),
@@ -762,6 +785,9 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
           "sit:complianceOption": COMPLIANCE[body.compliance ?? "unknown"] ?? COMPLIANCE["unknown"],
           ...(body.trafficDirection !== undefined
             ? { "sit:applicableForTrafficDirection": body.trafficDirection }
+            : {}),
+          ...(body.vehicles !== undefined
+            ? { "sit:forVehiclesWithCharacteristicsOf": body.vehicles }
             : {}),
         }
       : {}),
@@ -996,6 +1022,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
             ].every((place) => datexStatesTiming(validity, place["geometry"]))
           : datexStatesTiming(validity, placeOf(effect)["geometry"]),
       place: datexStatesTablePlace,
+      vehicles: datexStatesVehicles,
     })
   )
     return [];
@@ -1019,6 +1046,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     return built;
   };
   const probability = PROBABILITY[String(situation["certainty"])] ?? extended("unknown");
+  const source = sourceOf(provenance);
 
   // What the situation says as a whole travels on its leading record. A
   // record has one cause; any other is reported.
@@ -1035,7 +1063,6 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
       );
   const lead = {
     severity: severityOf(situation["severity"] as Rec | undefined),
-    source: sourceOf(provenance),
     ...(causeType ? { cause: causeType } : {}),
     ...publicCommentsOf(situation, diagnostics),
   };
@@ -1150,7 +1177,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     pending.push({
       code,
       context,
-      header: { id: recordIdOf(effect), version, time, probability },
+      header: { id: recordIdOf(effect), version, time, probability, source },
       body: {
         validity: effectWindow,
         geometry: (place ?? root)["geometry"],
@@ -1169,6 +1196,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         compliance: effect.compliance,
         actionStatus: effect.actionStatus,
         trafficDirection: trafficDirectionOf(effect),
+        vehicles: vehicleCharacteristicsOf(effect) ?? undefined,
         detail: effectDetail(effect),
       },
     });
@@ -1186,7 +1214,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     ? [
         {
           code: natureCode!,
-          header: { id: natureId, version, time, probability },
+          header: { id: natureId, version, time, probability, source },
           context: folded,
           body: {
             validity: folded?.validity ?? validity,
@@ -1198,6 +1226,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
             compliance: folded?.effect.compliance,
             actionStatus: folded?.effect.actionStatus,
             trafficDirection: folded ? trafficDirectionOf(folded.effect) : undefined,
+            vehicles: folded ? (vehicleCharacteristicsOf(folded.effect) ?? undefined) : undefined,
             works: worksOf(situation["details"] as Rec | undefined),
             detail: {
               ...natureDetail(classification, natureCode!),
@@ -1235,14 +1264,16 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         target.context && ownPlace(situation, target.context.effect),
       ) ||
       !sameInterval(delayWindow, target.body.validity) ||
-      delayWindow.status !== target.body.validity.status
+      delayWindow.status !== target.body.validity.status ||
+      vehicleCharacteristicsOf(effect) === null ||
+      !sameJson(vehicleCharacteristicsOf(effect), target.body.vehicles)
     ) {
       diagnostics.emit(
         "field_not_exported",
         "field",
         "omitted",
         `${path}/delay`,
-        "This delay cannot supplement its record: its place, interval or lifecycle differs, or no record is available.",
+        "This delay cannot supplement its record: its place, interval, lifecycle or vehicles differ, or no record is available.",
         effect,
       );
     } else if (effect.kind === "delay") {
