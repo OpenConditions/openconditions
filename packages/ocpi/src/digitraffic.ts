@@ -151,7 +151,23 @@ export function digitrafficStatuses(
   return statuses;
 }
 
-/** The tariffs of one page of the `tariffs` endpoint, with their real `tariffAltText`. */
-export function digitrafficTariffs(payload: Buffer): OcpiTariff[] {
-  return listIn(payload, "tariffs").map((tariff) => normaliseTariff(snakeKeys(tariff)));
+/**
+ * The tariffs of one page of the `tariffs` endpoint, with their real
+ * `tariffAltText`; a tariff the decoder refuses is passed to `malformed`
+ * rather than failing the page.
+ */
+export function digitrafficTariffs(
+  payload: Buffer,
+  malformed: () => void = () => {},
+): OcpiTariff[] {
+  const tariffs: OcpiTariff[] = [];
+  for (const tariff of listIn(payload, "tariffs")) {
+    try {
+      tariffs.push(normaliseTariff(snakeKeys(tariff)));
+    } catch (error) {
+      if (!(error instanceof OcpiDecodeError)) throw error;
+      malformed();
+    }
+  }
+  return tariffs;
 }

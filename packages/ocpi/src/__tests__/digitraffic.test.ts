@@ -169,4 +169,15 @@ describe("digitrafficTariffs", () => {
     ]);
     expect(tesla?.elements[0]?.price_components[0]?.type).toBe("CONGESTION_TIME");
   });
+
+  test("a tariff the decoder refuses is reported and the page's others are kept", () => {
+    const page = JSON.parse(fixture("digitraffic-tariffs.json").toString("utf8")) as {
+      tariffs: Record<string, unknown>[];
+    };
+    page.tariffs[0]!["currency"] = null;
+    let malformed = 0;
+    const read = digitrafficTariffs(Buffer.from(JSON.stringify(page)), () => malformed++);
+    expect(malformed).toBe(1);
+    expect(read).toHaveLength(tariffs.length - 1);
+  });
 });

@@ -551,6 +551,10 @@ export function normaliseTariff(raw: unknown): OcpiTariff {
   if (id === undefined) throw new OcpiDecodeError("a tariff has no id");
   const currency = text(raw.currency)?.toUpperCase();
   if (currency === undefined) throw new OcpiDecodeError(`tariff ${id} has no currency`);
+  // An ISO 4217 code: a price in any other unit cannot be stated or compared.
+  if (!/^[A-Z]{3}$/.test(currency)) {
+    throw new OcpiDecodeError(`tariff ${id} has no ISO 4217 currency`);
+  }
   return drop({
     country_code: text(raw.country_code)?.toUpperCase(),
     party_id: text(raw.party_id)?.toUpperCase(),
