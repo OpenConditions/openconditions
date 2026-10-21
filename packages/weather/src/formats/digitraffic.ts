@@ -12,7 +12,7 @@ import {
 import type { LIFECYCLES, LocalizedText } from "@openconditions/model";
 import { WEATHER_PROPERTIES } from "@openconditions/model-weather";
 import type { WeatherCatalogFeed } from "../feed-schema.js";
-import { isRecord, jsonOf, listOf, lonLat, numberOf, textOf } from "../records.js";
+import { instantOf, isRecord, jsonOf, listOf, lonLat, numberOf, textOf } from "../records.js";
 import { type ChannelInput, reading, stationDraft } from "../station.js";
 import {
   DIGITRAFFIC_SENSOR_BY_ID,
@@ -163,7 +163,7 @@ function stationsOf(feed: WeatherCatalogFeed, body: Buffer, listed: Set<string>)
     const name = textOf(props["name"]);
     const collectionStatus = textOf(props["collectionStatus"]);
     const state = textOf(props["state"]);
-    const updatedAt = textOf(props["dataUpdatedTime"]);
+    const updatedAt = instantOf(textOf(props["dataUpdatedTime"]));
     return [
       {
         id,
@@ -171,7 +171,7 @@ function stationsOf(feed: WeatherCatalogFeed, body: Buffer, listed: Set<string>)
         ...(name === undefined ? {} : { name }),
         ...(collectionStatus === undefined ? {} : { collectionStatus }),
         ...(state === undefined ? {} : { state }),
-        ...(isInstant(updatedAt) ? { updatedAt } : {}),
+        ...(updatedAt === undefined ? {} : { updatedAt }),
       },
     ];
   });
@@ -303,13 +303,11 @@ function detailsOf(
   return details;
 }
 
-const isInstant = (value: string | undefined): value is string =>
-  value !== undefined && Number.isFinite(Date.parse(value));
-
 /**
  * Each station's values from the `status` data document, by station id. A
  * station entry that is not an object or has no id is skipped as malformed;
- * a value without a sensor id or a numeric value is not one. A malformed
+ * a value without a sensor id or a numeric value is not one, and one with no
+ * time it was measured at is skipped as malformed. A malformed
  * document fails the read, unless `tolerant`: the hourly full parse still has
  * its stations to write, so there the document is skipped as malformed and
  * the stations are read without values.
@@ -343,11 +341,17 @@ function samplesOf(
         if (!isRecord(v)) return [];
         const sensorId = numberOf(v["id"]);
         const value = numberOf(v["value"]);
-        const measuredAt = textOf(v["timeWindowEnd"]) ?? textOf(v["measuredTime"]) ?? updated;
-        if (sensorId === undefined || value === undefined || !isInstant(measuredAt)) return [];
+        if (sensorId === undefined || value === undefined) return [];
+        const measuredAt = instantOf(
+          textOf(v["timeWindowEnd"]) ?? textOf(v["measuredTime"]) ?? updated,
+        );
+        if (measuredAt === undefined) {
+          recordSkipped(feed.id, "malformed");
+          return [];
+        }
         const name = textOf(v["name"]);
         const unit = textOf(v["unit"]);
-        const windowStart = textOf(v["timeWindowStart"]);
+        const windowStart = instantOf(textOf(v["timeWindowStart"]));
         const reliability = textOf(v["reliability"]);
         return [
           {
@@ -356,7 +360,7 @@ function samplesOf(
             measuredAt,
             ...(name === undefined ? {} : { name }),
             ...(unit === undefined ? {} : { unit }),
-            ...(isInstant(windowStart) ? { windowStart } : {}),
+            ...(windowStart === undefined ? {} : { windowStart }),
             ...(reliability === undefined ? {} : { reliability }),
           },
         ];
@@ -606,7 +610,10 @@ export function parseDigitrafficWeather(
         stationId: station.id,
         point: station.point,
         names,
-        lifecycle: LIFECYCLE[station.collectionStatus ?? ""] ?? "unknown",
+        lifecycle:
+          (Object.hasOwn(LIFECYCLE, station.collectionStatus ?? "")
+            ? LIFECYCLE[station.collectionStatus ?? ""]
+            : undefined) ?? "unknown",
         country: COUNTRY,
         ...(detail?.roadNumber === undefined ? {} : { roadRef: detail.roadNumber }),
         ...(detail?.address === undefined

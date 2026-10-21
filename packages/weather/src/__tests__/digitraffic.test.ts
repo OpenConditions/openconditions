@@ -6,6 +6,7 @@ import {
   type ParseOutput,
   type RecordDraft,
 } from "@openconditions/ingest-framework";
+import { sealRecord } from "@openconditions/model";
 import { beforeEach, describe, expect, test } from "vitest";
 import { weatherDomain } from "../domain.js";
 import {
@@ -336,6 +337,39 @@ describe("digitraffic-weather", () => {
     expect(drainSkipped(feed().id)).toEqual({ no_geometry: 1, unknown_value: 2 });
   });
 
+  test("a collection status naming a key every object inherits is an unknown lifecycle", () => {
+    const list = JSON.parse(fixture("fi-digitraffic-weather-stations.json").toString("utf8")) as {
+      features: { properties: Record<string, unknown> }[];
+    };
+    list.features.find((f) => f.properties["id"] === 1001)!.properties["collectionStatus"] =
+      "__proto__";
+    const out = parse({ ...payloads(), sites: [Buffer.from(JSON.stringify(list))] });
+    expect(station(out, 1001)).toMatchObject({ lifecycle: "unknown" });
+    expect(sealFailures(out.features)).toEqual([]);
+  });
+
+  test("a station name with an unpaired surrogate is written with U+FFFD in its place", () => {
+    const details = JSON.parse(
+      fixture("fi-digitraffic-weather-station-1001.json").toString("utf8"),
+    ) as { properties: { names: Record<string, string> } };
+    details.properties.names["en"] = "Road 1 Espoo\uDC00";
+    const p = payloads();
+    const out = parse({
+      ...p,
+      details: [Buffer.from(JSON.stringify(details)), ...p.details!.slice(1)],
+    });
+    const sealed = sealRecord(weatherRegistry(), station(out, 1001)!, {
+      instanceId: "weather.example",
+      revision: 1,
+      recordedAt: "2026-10-14T23:25:19Z",
+    });
+    expect(sealed.ok && sealed.value["name"]).toContainEqual({
+      lang: "en",
+      text: "Road 1 Espoo�",
+    });
+    expect(sealFailures([...out.features, ...out.observations])).toEqual([]);
+  });
+
   test("numbered surface sensors stay separate series", () => {
     const surface = readings(parse(), 1001, "road.surface_temperature");
     expect(surface.map((r) => subjectOf(r).componentKey)).toEqual(["3", "5"]);
@@ -492,6 +526,19 @@ describe("digitraffic-weather", () => {
         aggregation: "mean",
       });
       expect(out.observations[1]).toMatchObject({ phenomenonTime: { instant: FETCHED } });
+    });
+
+    test("a time without an offset is UTC, and a value with an unreadable time is counted", () => {
+      const out = read([
+        value(1, 9.9, { measuredTime: "2026-10-14T23:19:55" }),
+        value(3, 4.1, { measuredTime: "2026-10-14T25:00:00Z" }),
+        value(5, 4.2, { measuredTime: "2026-09-31T23:00:00Z" }),
+      ]);
+      expect(out.observations).toHaveLength(1);
+      expect(out.observations[0]).toMatchObject({
+        phenomenonTime: { instant: "2026-10-14T23:19:55Z" },
+      });
+      expect(drainSkipped(feed().id)).toEqual({ malformed: 2 });
     });
 
     test("a precipitation form is read through the present-weather table", () => {
