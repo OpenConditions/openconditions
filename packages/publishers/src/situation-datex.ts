@@ -299,9 +299,21 @@ function multilingual(text: Text): Rec {
   };
 }
 
+/**
+ * A coordinate as a plain decimal. A `posList` takes no exponent, which
+ * JavaScript writes for a number closer to zero than 1e-6, so such a
+ * coordinate is written out in full.
+ */
+function decimal(n: number): string {
+  const abs = Math.abs(n);
+  if (abs === 0 || abs >= 1e-6) return String(n === 0 ? 0 : n);
+  const digits = abs.toFixed(20).replace(/\.?0+$/, "");
+  return n < 0 && digits !== "0" ? `-${digits}` : digits;
+}
+
 /** GML coordinates as DATEX writes them: latitude before longitude. */
 const posList = (coordinates: readonly [number, number][]) =>
-  coordinates.map(([lon, lat]) => `${lat} ${lon}`).join(" ");
+  coordinates.map(([lon, lat]) => `${decimal(lat)} ${decimal(lon)}`).join(" ");
 
 /** First coordinate of any geometry, as [lon, lat]. */
 function representativePoint(geometry: unknown): [number, number] | null {
@@ -512,7 +524,19 @@ function buildLocation(
           "DATEX exports this geometry as its first representative coordinate only.",
           effect,
         );
-      const bearingDeg = direction?.basis === "bearing" ? direction.bearingDeg : undefined;
+      // DATEX states a bearing in whole degrees, 0 to 359.
+      const stated = direction?.basis === "bearing" ? direction.bearingDeg : undefined;
+      const bearingDeg =
+        stated === undefined ? undefined : ((Math.round(stated) % 360) + 360) % 360;
+      if (stated !== undefined && bearingDeg !== stated)
+        diagnostics.emit(
+          "field_precision_reduced",
+          "field",
+          "reduced",
+          `${directionPath}/direction/bearingDeg`,
+          "DATEX states a bearing in whole degrees from 0 to 359; it is rounded.",
+          effect,
+        );
       bearing = bearingDeg !== undefined;
       loc["loc:pointByCoordinates"] = {
         ...(bearingDeg !== undefined ? { "loc:bearing": bearingDeg } : {}),

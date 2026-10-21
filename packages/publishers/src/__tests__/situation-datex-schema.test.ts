@@ -253,6 +253,13 @@ const variants = [
       roads: [ROAD],
     },
   }),
+  situation("bearing-fractional", {
+    location: {
+      geometry: { type: "Point", coordinates: [5.05293, 52.110115] },
+      direction: { value: "unknown", basis: "bearing", bearingDeg: 359.6 },
+      roads: [ROAD],
+    },
+  }),
   situation("alert-c", {
     location: {
       geometry: { type: "Point", coordinates: [5.717227, 50.8408564] },

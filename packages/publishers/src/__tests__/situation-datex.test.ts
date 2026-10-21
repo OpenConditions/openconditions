@@ -203,6 +203,23 @@ describe("datexRecordsOf", () => {
     });
   });
 
+  it("writes a line's coordinates near zero as decimals, which a posList requires", () => {
+    const line = situation({
+      location: {
+        geometry: {
+          type: "LineString",
+          coordinates: [
+            [-1e-7, 0],
+            [5e-324, -0],
+          ],
+        },
+      },
+    });
+    expect(datexRecordsOf(line, AT)[0]!["sit:locationReference"]).toMatchObject({
+      "loc:gmlLineString": { "loc:posList": "0 -0.0000001 0 0" },
+    });
+  });
+
   it("places an effect with its own location there, not at its situation", () => {
     const elsewhere = effect("a46/speed", "speed_limit", {
       limit: { value: 60, unit: "km/h" },
