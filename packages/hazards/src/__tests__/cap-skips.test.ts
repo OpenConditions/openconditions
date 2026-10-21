@@ -15,6 +15,7 @@ import {
   nwsFeed,
   parseContext,
 } from "./helpers/hazards-feed.js";
+import { sealFailures } from "./helpers/seal.js";
 
 /**
  * What the CAP parsers leave unread, counted by reason in the feed's skip
@@ -134,6 +135,60 @@ describe("the cap format", () => {
     parse("cap", feed, { alerts: [variant("kept")] }, AT);
     expect(drainSkipped(feed.id)).toEqual({});
   });
+
+  test("a time that names no instant and a language that is no tag are left out of the alert", () => {
+    const feed = dwdFeed();
+    const out = parse(
+      "cap",
+      feed,
+      {
+        alerts: [
+          variant(
+            "m",
+            ["<onset>2026-09-29T07:01:00+02:00", "<onset>2026-09-29T07:01:00"],
+            ["<effective>2026-09-29T07:01:00+02:00", "<effective>toString"],
+            ["<language>de-DE", "<language>x-private"],
+            [/<code>[^<]*<\/code>/, "<code></code>"],
+          ),
+        ],
+      },
+      AT,
+    );
+    const situation = out.situations[0]!;
+    const cap = (situation["details"] as { cap: Record<string, unknown> }).cap;
+    expect(cap).not.toHaveProperty("onset");
+    expect(cap).not.toHaveProperty("effective");
+    expect(cap).not.toHaveProperty("codes");
+    // The warning is in force from when it was sent.
+    expect(situation["validity"]).toMatchObject({ start: "2026-09-29T07:01:00+02:00" });
+    expect((situation["headline"] as { lang: string }[])[0]!.lang).toBe("und");
+    expect(sealFailures(out.situations)).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 3 });
+  });
+
+  test("a message sent at a time without a zone is malformed", () => {
+    const feed = dwdFeed();
+    const out = parse(
+      "cap",
+      feed,
+      {
+        alerts: [
+          variant("kept"),
+          variant("local", ["<sent>2026-09-29T07:01:00+02:00", "<sent>2026-09-29T07:01:00"]),
+        ],
+      },
+      AT,
+    );
+    expect(out.situations).toHaveLength(1);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
+  });
+
+  test("an empty info block is a hazard that does not read, not a failed parse", () => {
+    const feed = dwdFeed();
+    const out = parse("cap", feed, { alerts: [variant("m", ["<info>", "<info/><info>"])] }, AT);
+    expect(out.situations).toHaveLength(1);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
+  });
 });
 
 describe("the nws format", () => {
@@ -165,6 +220,20 @@ describe("the nws format", () => {
     expect(out.rejected).toBeUndefined();
     // The six captured features: five published, the stray Test message terminal.
     expect(out.records).toMatchObject({ inputCount: 10, terminal: 1, accepted: 6 });
+  });
+
+  test("a reference sent at no instant still relates the alert but is left out of its details", () => {
+    const feed = nwsFeed();
+    const c = snapshot();
+    const warning = c.features.find((f) => f.properties?.["event"] === "Flash Flood Warning")!;
+    const reference = { sender: "w-nws.webmaster@noaa.gov", identifier: "urn:x", sent: "soon" };
+    c.features = [{ ...warning, properties: { ...warning.properties, references: [reference] } }];
+    const out = parse("nws", feed, { alerts: [Buffer.from(JSON.stringify(c))] }, AT);
+    const situation = out.situations[0]!;
+    expect((situation["details"] as { cap: object }).cap).not.toHaveProperty("references");
+    expect(situation["relations"]).toHaveLength(1);
+    expect(sealFailures(out.situations)).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
   });
 });
 
@@ -208,6 +277,31 @@ describe("the meteoalarm format", () => {
     expect(drainSkipped(feed.id)).toEqual({ malformed: 3, unknown_value: 1 });
     expect(out.rejected).toBeUndefined();
     expect(out.records).toMatchObject({ inputCount: 5, uniqueCount: 5, terminal: 0, accepted: 2 });
+  });
+
+  test("a null info block or area is a hazard that does not read, not a failed parse", () => {
+    const feed = meteoalarmFeed();
+    const ireland = JSON.parse(fixture("meteoalarm-ireland.json").toString("utf8")) as {
+      warnings: { alert: { identifier: string; info: Record<string, unknown>[] } }[];
+    };
+    const warning = ireland.warnings[0]!;
+    const info = warning.alert.info[0]!;
+    const broken = {
+      ...warning,
+      alert: {
+        ...warning.alert,
+        identifier: `${warning.alert.identifier}.broken`,
+        info: [null, { ...info, area: [null] }],
+      },
+    };
+    const out = parse(
+      "meteoalarm",
+      feed,
+      { alerts: [Buffer.from(JSON.stringify({ warnings: [warning, broken] }))] },
+      AT,
+    );
+    expect(out.situations.length).toBeGreaterThan(0);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 2 });
   });
 });
 

@@ -1,6 +1,11 @@
 import type { Polygon, Position } from "geojson";
 import { describe, expect, test } from "vitest";
-import { representativePoint, simplifyGeometry, unionPolygons } from "../geometry.js";
+import {
+  polygonalGeometry,
+  representativePoint,
+  simplifyGeometry,
+  unionPolygons,
+} from "../geometry.js";
 
 /** A closed square ring of side `size` at `[x, y]`, with `steps` positions per side. */
 function square(x: number, y: number, size: number, steps = 1): Position[] {
@@ -164,5 +169,23 @@ describe("representativePoint", () => {
       type: "Point",
       coordinates: [3, 4],
     });
+  });
+});
+
+describe("polygonalGeometry", () => {
+  test("keeps a closed ring of positions in range", () => {
+    const polygon = { type: "Polygon", coordinates: [square(0, 0, 1)] };
+    expect(polygonalGeometry(polygon)).toEqual(polygon);
+  });
+
+  test("rejects an open ring and a position of more than three numbers", () => {
+    const open = square(0, 0, 1).slice(0, 4);
+    open.push([0.5, 0.5]);
+    expect(polygonalGeometry({ type: "Polygon", coordinates: [open] })).toBeNull();
+    const ring = square(0, 0, 1);
+    ring[1] = [1, 0, 0, 0];
+    expect(polygonalGeometry({ type: "Polygon", coordinates: [ring] })).toBeNull();
+    ring[1] = [1, 0, Number.NaN];
+    expect(polygonalGeometry({ type: "Polygon", coordinates: [ring] })).toBeNull();
   });
 });

@@ -259,6 +259,50 @@ describe("the usgs format over merged and altered features", () => {
     expect(out.records).toMatchObject({ inputCount: 5, uniqueCount: 5, accepted: 1 });
   });
 
+  test("an origin time past the year 9999 is malformed; such an update time is left out and counted", () => {
+    const day = collection("usgs-all-day.geojson");
+    const base = feature(day, "us6000u0xi");
+    const out = parse({
+      recent: [
+        buffer({
+          features: [
+            { ...base, id: "far", properties: { ...base.properties, time: 1e15 } },
+            { ...base, properties: { ...base.properties, updated: 3.6e263 } },
+          ],
+        }),
+      ],
+      window: [],
+    });
+    expect(out.situations).toHaveLength(1);
+    expect(sealFailures(out.situations)).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ malformed: 1, unknown_value: 1 });
+  });
+
+  test("a depth too large to write in metres and a felt count past the safe integers are left out", () => {
+    const day = collection("usgs-all-day.geojson");
+    const base = feature(day, "us6000u0xi");
+    const [lon, lat] = (base.geometry as { coordinates: number[] }).coordinates;
+    const out = parse({
+      recent: [
+        buffer({
+          features: [
+            {
+              ...base,
+              geometry: { type: "Point", coordinates: [lon, lat, -1e308] },
+              properties: { ...base.properties, felt: 2 ** 53 },
+            },
+          ],
+        }),
+      ],
+      window: [],
+    });
+    const details = byId(out, "us6000u0xi")["details"];
+    expect(details).not.toHaveProperty("depth");
+    expect(details).not.toHaveProperty("feltReports");
+    expect(sealFailures(out.situations)).toEqual([]);
+    expect(drainSkipped(feed.id)).toEqual({ unknown_value: 1 });
+  });
+
   test("a PAGER level it does not know leaves the severity unknown and is counted", () => {
     const day = collection("usgs-all-day.geojson");
     const base = feature(day, "us6000u0xi");

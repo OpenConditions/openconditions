@@ -42,6 +42,19 @@ interface Quake {
 const finite = (value: unknown): number | undefined =>
   typeof value === "number" && Number.isFinite(value) ? value : undefined;
 
+/**
+ * Epoch milliseconds of a time an RFC 3339 instant can write: a year from
+ * 0000 to 9999, where JavaScript writes others with a sign and six digits.
+ */
+const epochMs = (value: unknown): number | undefined => {
+  const ms = finite(value);
+  return ms !== undefined &&
+    ms >= Date.parse("0000-01-01T00:00:00Z") &&
+    ms < Date.parse("+010000-01-01T00:00:00Z")
+    ? ms
+    : undefined;
+};
+
 const text = (value: unknown): string | undefined =>
   typeof value === "string" && value.trim() !== "" ? value.trim() : undefined;
 
@@ -58,7 +71,7 @@ function featuresOf(body: Buffer): unknown[] {
  * feature with no geometry is `no_geometry`; one with no id or origin time,
  * or a position that is no point in range, is `malformed`.
  */
-function quakeOf(feature: unknown): Quake | RecordSkipReason {
+function quakeOf(feature: unknown, feedId: string): Quake | RecordSkipReason {
   if (!isRecord(feature)) return "malformed";
   const properties = feature["properties"];
   const id = text(feature["id"]);
@@ -66,13 +79,17 @@ function quakeOf(feature: unknown): Quake | RecordSkipReason {
   const geometry = feature["geometry"];
   if (geometry == null) return "no_geometry";
   const point = pointGeometry(geometry);
-  const time = finite(properties["time"]);
-  if (point === null || time === undefined || Number.isNaN(new Date(time).getTime())) {
-    return "malformed";
+  const time = epochMs(properties["time"]);
+  if (point === null || time === undefined) return "malformed";
+  // An update time that is no date is left out: the origin time stands for it.
+  const updated = epochMs(properties["updated"]);
+  if (properties["updated"] != null && updated === undefined) {
+    recordSkipped(feedId, "unknown_value");
   }
-  const depthKm = finite(
-    isRecord(geometry) ? (geometry["coordinates"] as unknown[])[2] : undefined,
-  );
+  const depth = finite(isRecord(geometry) ? (geometry["coordinates"] as unknown[])[2] : undefined);
+  // A depth too large to write in metres is left out.
+  const depthKm = depth !== undefined && Number.isFinite(depth * 1e6) ? depth : undefined;
+  if (depth !== undefined && depthKm === undefined) recordSkipped(feedId, "unknown_value");
   const listed = (text(properties["ids"]) ?? "").split(",").filter((part) => part !== "");
   return {
     id,
@@ -81,7 +98,7 @@ function quakeOf(feature: unknown): Quake | RecordSkipReason {
     point,
     ...(depthKm === undefined ? {} : { depthKm }),
     time,
-    updated: finite(properties["updated"]) ?? time,
+    updated: updated ?? time,
   };
 }
 
@@ -148,7 +165,9 @@ function toDraft(
         ? {}
         : { depth: { value: Math.round(quake.depthKm * 1e6) / 1e3, unit: "m" } }),
       ...(tsunami === 0 || tsunami === 1 ? { tsunamiFlag: tsunami === 1 } : {}),
-      ...(felt === undefined || felt < 0 || !Number.isInteger(felt) ? {} : { feltReports: felt }),
+      ...(felt === undefined || felt < 0 || !Number.isSafeInteger(felt)
+        ? {}
+        : { feltReports: felt }),
       ...(mmi === undefined || mmi < 0 || mmi > 12 ? {} : { mmi }),
       ...(cdi === undefined || cdi < 0 || cdi > 12 ? {} : { cdi }),
       ...(reviewed === undefined ? {} : { reviewed }),
@@ -173,8 +192,8 @@ function toDraft(
  * above sea level stays negative, and the tsunami flag is the publisher's
  * oceanic-region flag, not a warning; a PAGER level other than green,
  * yellow, orange or red leaves the severity unknown, and a review status
- * other than automatic or reviewed, or a tsunami flag other than 0 or 1, is
- * left out (`unknown_value`). The highest intensity people reported
+ * other than automatic or reviewed, a tsunami flag other than 0 or 1, or an
+ * update time outside the years 0000–9999, is left out (`unknown_value`). The highest intensity people reported
  * (`cdi`) is kept beside the estimated one (`mmi`). A
  * feature with no geometry is skipped as `no_geometry`, one with no id,
  * point or origin time as `malformed`; a body that is no feature collection
@@ -193,7 +212,7 @@ export function parseUsgs(
     for (const body of payloads[role] ?? []) {
       for (const feature of featuresOf(body)) {
         inputCount++;
-        const quake = quakeOf(feature);
+        const quake = quakeOf(feature, feed.id);
         if (typeof quake === "string") {
           recordSkipped(feed.id, quake);
           continue;
