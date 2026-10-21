@@ -650,6 +650,25 @@ ${POINT_LOC}</situationRecord><relatedSituation><objectReference targetClass="si
     expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.relatedIds).toEqual(["R_FIRST", "S_OTHER"]);
   });
 
+  it("reads a comment's own type, and leaves notes not for the public unread", () => {
+    const gpc = (text: string, type?: string) =>
+      `<generalPublicComment><comment><values><value lang="nl">${text}</value></values></comment>${type ? `<commentType>${type}</commentType>` : ""}</generalPublicComment>`;
+    const xml = v3Record(
+      gpc("Interne notitie", "internalNote") +
+        gpc("Werkzaamheden A2") +
+        gpc("Rijstrook dicht", "description") +
+        gpc("Let op", "warning") +
+        POINT_LOC,
+    );
+    const [ev] = parseDatexSituations(xml, NDW_SOURCE);
+    expect(ev!.situation?.headline).toEqual([{ lang: "nl", text: "Werkzaamheden A2" }]);
+    expect(ev!.situation?.description).toEqual([{ lang: "nl", text: "Rijstrook dicht" }]);
+    expect(ev!.situation?.comments).toEqual([
+      { type: "public", text: [{ lang: "nl", text: "Let op" }] },
+    ]);
+    expect(JSON.stringify(ev!.situation)).not.toContain("Interne notitie");
+  });
+
   it("uses causeDescription as a headline fallback when there is no public comment", () => {
     const xml = v3Record(
       `<cause><causeDescription><values><value lang="en">Roadworks ahead</value></values></causeDescription></cause>${POINT_LOC}`,

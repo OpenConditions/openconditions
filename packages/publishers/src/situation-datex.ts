@@ -673,13 +673,16 @@ export function datexStatesTiming(validity: Validity, geometry: unknown): boolea
   );
 }
 
-function comment(text: Text): Rec {
+/** A public comment: its text and, where it says what it is, its DATEX `commentType`. */
+interface Comment {
+  text: Text;
+  type?: string;
+}
+
+function comment({ text, type }: Comment): Rec {
   return {
-    "sit:comment": {
-      "com:values": {
-        "com:value": text.map((t) => ({ "@_lang": t.lang, "#text": t.text })),
-      },
-    },
+    "sit:comment": multilingual(text),
+    ...(type !== undefined ? { "sit:commentType": type } : {}),
   };
 }
 
@@ -704,8 +707,7 @@ interface RecordBody {
     severity?: string;
     source?: Rec;
     cause?: string;
-    causeDescription?: Text;
-    comments: Text[];
+    comments: Comment[];
   };
   impact?: Rec;
   /** A delay's supplement to the leading record: its impact and, on abnormal traffic, its queue. */
@@ -749,16 +751,7 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
     ...(lead?.source ? { "sit:source": lead.source } : {}),
     "sit:validity": buildValidity(body.validity, header.time, body.geometry),
     ...(Object.keys(impact).length > 0 ? { "sit:impact": impact } : {}),
-    ...(lead?.cause || lead?.causeDescription
-      ? {
-          "sit:cause": {
-            ...(lead.causeDescription
-              ? { "sit:causeDescription": multilingual(lead.causeDescription) }
-              : {}),
-            ...(lead.cause ? { "sit:causeType": lead.cause } : {}),
-          },
-        }
-      : {}),
+    ...(lead?.cause ? { "sit:cause": { "sit:causeType": lead.cause } } : {}),
     ...(lead?.comments.length ? { "sit:generalPublicComment": lead.comments.map(comment) } : {}),
     "sit:locationReference": body.location,
     ...(OPERATOR_ACTIONS.has(cls) && body.actionStatus !== undefined
@@ -933,18 +926,17 @@ function natureDetail(c: SituationClass, code: string): Rec {
 function publicCommentsOf(
   situation: Rec,
   diagnostics: ProjectionDiagnostics,
-): { comments: Text[]; causeDescription?: Text } {
+): { comments: Comment[] } {
   const headline = situation["headline"] as Text | undefined;
   const description = situation["description"] as Text | undefined;
   const comments = (situation["comments"] as { type?: string; text: Text }[] | undefined) ?? [];
-  const out: Text[] = headline?.length ? [headline] : [];
+  const out: Comment[] = headline?.length ? [{ text: headline }] : [];
   const omit = (path: string, reason: string) =>
     diagnostics.emit("field_not_exported", "field", "omitted", path, reason);
-  // A comment repeating the headline is not read as the description; the
-  // cause's description is, where no comment is.
-  const repeated = description !== undefined && sameJson(description, headline);
-  if (description?.length && !repeated) {
-    if (out.length > 0) out.push(description);
+  // The description says what it is (`commentType`), so it reads back as one
+  // even where it repeats the headline.
+  if (description?.length) {
+    if (out.length > 0) out.push({ text: description, type: "description" });
     else omit("/description", "Without a headline, the description would be read back as one.");
   }
   for (const [i, c] of comments.entries()) {
@@ -955,9 +947,9 @@ function publicCommentsOf(
         `/comments/${i}`,
         "Without a headline and a description of their own, a comment would be read back as one of them.",
       );
-    else out.push(c.text);
+    else out.push({ text: c.text });
   }
-  return { comments: out, ...(repeated ? { causeDescription: description } : {}) };
+  return { comments: out };
 }
 
 type Relation = { ref: { class?: string; id?: string }; relation: string };

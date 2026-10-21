@@ -61,8 +61,12 @@ records carry the revision as `version`:
   so), the informant (`source`), the first cause as `cause/causeType`
   (`DATEX2_CAUSE_TYPES`), and the text as public comments in the order the
   reader takes them back: headline, description, every other public comment.
-  A description repeating the headline is the cause's description; operator
-  and internal comments are not published. A roadworks nature record states
+  The description states its `commentType` (`description`), which the reader
+  reads, so it comes back even where it repeats the headline; operator and
+  internal comments are not published. The reader, for its part, leaves a
+  comment typed `internalNote` or `dataProcessingNote` unread, and never reads
+  `nonGeneralPublicComment`: nothing downstream withholds a comment once it is
+  in the model. A roadworks nature record states
   the works' duration class, scale, whether they are under traffic and whether
   urgent.
 - **Lanes.** A lane restriction writes its restricted lanes (or, where only

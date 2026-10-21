@@ -683,17 +683,13 @@ describe("DATEX II round-trip through the ingest parser", () => {
     });
   });
 
-  it("states a description repeating the headline as the cause's description", () => {
+  it("states the description's comment type, so one repeating the headline reads back as it", () => {
     const repeated = situation({ description: situation()["headline"] });
     const [lead] = datexRecordsOf(repeated, AT);
-    expect(lead!["sit:generalPublicComment"]).toHaveLength(1);
-    expect(lead).toMatchObject({
-      "sit:cause": {
-        "sit:causeDescription": {
-          "com:values": { "com:value": [{ "@_lang": "de", "#text": "Bauarbeiten A 46" }] },
-        },
-      },
-    });
+    expect(lead!["sit:generalPublicComment"]).toEqual([
+      expect.not.objectContaining({ "sit:commentType": expect.anything() }),
+      expect.objectContaining({ "sit:commentType": "description" }),
+    ]);
     const [draft] = reread([repeated]);
     expect(draft).toMatchObject({
       headline: repeated["headline"],

@@ -54,6 +54,8 @@ import {
   type DatexRestrictionContext,
   datexApplicabilityVehicles,
   datexRestrictionDetails,
+  isNonPublicComment,
+  NON_PUBLIC_COMMENT_TYPES,
 } from "./datex-restrictions.js";
 import type { Restriction, RoadEvent, UnresolvedRoadEvent } from "./model.js";
 import { buildLocalSchedule, type LocalSchedule } from "./schedule.js";
@@ -450,6 +452,9 @@ function unreadValuesOf(rec: XmlObject, recordClass: string, severity: string): 
   }
   for (const cause of getXmlChildren(rec, "cause")) {
     check(getXmlChildText(cause, "causeType"), CAUSE_TYPES);
+  }
+  for (const comment of getXmlChildren(rec, "generalPublicComment")) {
+    check(getXmlChildText(comment, "commentType"), COMMENT_TYPES);
   }
   check(severity.trim() || undefined, SEVERITIES);
   check(getXmlChildText(rec, "probabilityOfOccurrence"), PROBABILITIES);
@@ -1325,21 +1330,48 @@ function causeDescriptionOf(rec: XmlObject): string | undefined {
  * still resolve. Handles both a single element and a repeated array — the latter
  * is what broke the old single-node `multilingual()` lookup (it returned the
  * default headline for every multi-comment record).
+ *
+ * Without that extension, the comment's own `commentType` (v2 and v3) names
+ * what it is where it says: a description, the works' name. A comment the
+ * publisher marks as an internal or data-processing note is not for the
+ * public; nothing downstream withholds a comment, so it is not read at all.
  */
 function publicComments(rec: XmlObject, lang = "en"): PublicComment[] {
   const out: PublicComment[] = [];
   for (const gpc of getXmlChildren(rec, "generalPublicComment")) {
+    const declared = getXmlChildText(gpc, "commentType");
+    if (isNonPublicComment(gpc)) continue;
     const t = multilingual(gpc, lang);
     const all = multilingualText(gpc);
     if (!t || !all) continue;
-    const type = getXmlChildText(
-      getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
-      "commentType2",
-    );
+    const type =
+      getXmlChildText(
+        getXmlChild(getXmlChild(gpc, "commentExtension"), "commentExtended"),
+        "commentType2",
+      ) ?? entryOf(COMMENT_ROLES, declared);
     out.push(type ? { type, text: t, all } : { text: t, all });
   }
   return out;
 }
+
+/**
+ * DATEX `commentType` values (v2 and v3) as the role the headline and
+ * description choice reads; the other public ones are plain comments.
+ */
+const COMMENT_ROLES: Readonly<Record<string, string>> = {
+  description: "description",
+  roadworksName: "roadworksName",
+};
+/** Every `commentType` this reader knows, public or not. */
+const COMMENT_TYPES = new Set([
+  "description",
+  "roadworksName",
+  "locationDescriptor",
+  "warning",
+  "other",
+  "abnormalLoadMovementNote",
+  ...NON_PUBLIC_COMMENT_TYPES,
+]);
 
 /** One `generalPublicComment`: its best-language text, and every language it carries. */
 interface PublicComment {
@@ -2151,15 +2183,22 @@ function parseDatexInternal(
     const causeDesc = causeDescriptionOf(rec);
     // Prefer a name/title-typed comment as the headline; the work-type or any
     // other comment as the description; a route/diversion comment as the detour.
+    // A comment that only says it is a description still leads, in document
+    // order, where nothing names the situation.
     const headlineComment =
-      typed(/name|title|head/i) ?? comments.find((c) => !c.type) ?? comments[0];
+      typed(/name|title|head/i) ??
+      comments.find((c) => !c.type || c.type === "description") ??
+      comments[0];
     const sourceHeadline =
       headlineComment?.text ?? multilingual(fallbackComment, "en") ?? causeDesc;
     const headlineAll =
       headlineComment?.all ?? (multilingual(fallbackComment, "en") ? fallbackAll : causeAll);
     const headlineText = sourceHeadline ?? defaultHeadline(type);
     const descriptionComment =
-      typed(/type|description|desc/i) ?? comments.find((c) => c.text !== headlineText);
+      comments.find(
+        (c) =>
+          c !== headlineComment && c.type !== undefined && /type|description|desc/i.test(c.type),
+      ) ?? comments.find((c) => c !== headlineComment && c.text !== headlineText);
     const descriptionText =
       descriptionComment?.text ?? multilingual(fallbackComment, "en") ?? causeDesc;
     const descriptionAll =

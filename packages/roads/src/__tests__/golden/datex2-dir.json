@@ -654,25 +654,16 @@
     "headline": [
       {
         "lang": "fr",
-        "text": "Travaux de construction"
+        "text": "DIR Ouest/District de Saint-Brieuc/CEI de Rostrenen"
       }
     ],
     "description": [
       {
         "lang": "fr",
-        "text": "DIR Ouest/District de Saint-Brieuc/CEI de Rostrenen"
+        "text": "Arrêté SR033-9"
       }
     ],
     "comments": [
-      {
-        "type": "public",
-        "text": [
-          {
-            "lang": "fr",
-            "text": "Arrêté SR033-9"
-          }
-        ]
-      },
       {
         "type": "public",
         "text": [
@@ -860,6 +851,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "5047a1dfc38db9de3d7109b9d6c1dd10f1411881578545ed74730d700fd4bded"
+    "contentHash": "b2c6084abea255d7a02a1db18a8d743ae893686a18d5426fe64dc7329309a7f1"
   }
 ]
