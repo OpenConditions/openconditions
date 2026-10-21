@@ -130,6 +130,13 @@ describe("GeoJSON-LD emitters", () => {
     expect(triples).toContain(`${props} <${SOSA}hosts> ${channel} .`);
   });
 
+  it("identify a record whose id holds a lone surrogate rather than fail the collection", () => {
+    const lone = { ...situation, id: `oc:situation:test:a${String.fromCharCode(0xd800)}b` };
+    expect(situationsToJsonLd([lone]).features[0]!.id).toBe(
+      "https://openconditions.org/id/oc%3Asituation%3Atest%3Aa%EF%BF%BDb",
+    );
+  });
+
   it("keep each feature valid GeoJSON: type Feature and a string id", () => {
     const [situationFeature] = situationsToJsonLd([situation]).features;
     const [siteFeature] = featuresToJsonLd([site]).features;

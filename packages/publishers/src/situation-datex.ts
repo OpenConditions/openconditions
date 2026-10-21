@@ -199,6 +199,37 @@ function representativePoint(geometry: unknown): [number, number] | null {
 /** A road's name, plain in `roadInformation`, so only its first language. */
 const roadName = (road: Rec) => (road["name"] as Text | undefined)?.[0];
 
+/** The characters a DATEX `String` or `MultilingualStringValue` holds at most. */
+const DATEX_STRING_LENGTH = 1024;
+
+/** Text cut to what a DATEX string holds, counted in characters as XML Schema counts them. */
+function datexString(
+  value: string,
+  diagnostics: ProjectionDiagnostics | undefined,
+  path: string,
+  effect?: Effect,
+): string {
+  const chars = Array.from(value);
+  if (chars.length <= DATEX_STRING_LENGTH) return value;
+  diagnostics?.emit(
+    "field_precision_reduced",
+    "field",
+    "reduced",
+    path,
+    `DATEX strings hold at most ${DATEX_STRING_LENGTH} characters; the text is cut there.`,
+    effect,
+  );
+  return chars.slice(0, DATEX_STRING_LENGTH).join("");
+}
+
+/** Localised text with each value cut to what a DATEX string holds. */
+const datexText = (
+  text: Text,
+  diagnostics: ProjectionDiagnostics | undefined,
+  path: string,
+): Text =>
+  text.map((t, i) => ({ ...t, text: datexString(t.text, diagnostics, `${path}/${i}/text`) }));
+
 function buildLocation(
   location: Rec,
   diagnostics: ProjectionDiagnostics,
@@ -207,11 +238,25 @@ function buildLocation(
   directionPath = path,
 ): Rec {
   const loc: Rec = { "@_xsi:type": "loc:PointLocation" };
-  const roads = ((location["roads"] as Rec[] | undefined) ?? []).flatMap((road) => {
+  const roads = ((location["roads"] as Rec[] | undefined) ?? []).flatMap((road, i) => {
     const info: Rec = {};
     const name = roadName(road)?.text;
-    if (name) info["loc:roadName"] = name;
-    if (typeof road["ref"] === "string") info["loc:roadNumber"] = road["ref"];
+    if (name) {
+      info["loc:roadName"] = datexString(
+        name,
+        diagnostics,
+        `${path}/roads/${i}/name/0/text`,
+        effect,
+      );
+    }
+    if (typeof road["ref"] === "string") {
+      info["loc:roadNumber"] = datexString(
+        road["ref"],
+        diagnostics,
+        `${path}/roads/${i}/ref`,
+        effect,
+      );
+    }
     return Object.keys(info).length > 0 ? [info] : [];
   });
   if (roads.length > 0) {
@@ -391,17 +436,26 @@ function worksOf(details: Rec | undefined): Rec {
 }
 
 /** The situation's informant as DATEX `source`, in schema order. */
-function sourceOf(provenance: Rec | undefined): Rec | undefined {
+function sourceOf(
+  provenance: Rec | undefined,
+  diagnostics: ProjectionDiagnostics,
+): Rec | undefined {
   const s = provenance?.["informationSource"] as InformationSource | undefined;
   if (s === undefined) return undefined;
+  const path = "/provenance/informationSource";
   const out: Rec = {
     ...(s.country !== undefined ? { "com:sourceCountry": s.country.toLowerCase() } : {}),
-    ...(s.id !== undefined ? { "com:sourceIdentification": s.id } : {}),
+    ...(s.id !== undefined
+      ? { "com:sourceIdentification": datexString(s.id, diagnostics, `${path}/id`) }
+      : {}),
     ...(s.name !== undefined
       ? {
           "com:sourceName": {
             "com:values": {
-              "com:value": s.name.map((t) => ({ "@_lang": t.lang, "#text": t.text })),
+              "com:value": datexText(s.name, diagnostics, `${path}/name`).map((t) => ({
+                "@_lang": t.lang,
+                "#text": t.text,
+              })),
             },
           },
         }
@@ -482,10 +536,11 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
   const probability = PROBABILITY[String(situation["certainty"])] ?? "certain";
 
   // What the situation says as a whole travels on its leading record.
+  const headline = situation["headline"] as Text | undefined;
   const lead = {
     severity: SEVERITY[String((situation["severity"] as Rec | undefined)?.["label"])],
-    source: sourceOf(provenance),
-    headline: situation["headline"] as Text | undefined,
+    source: sourceOf(provenance, diagnostics),
+    headline: headline && datexText(headline, diagnostics, "/headline"),
   };
   const classification = situation as unknown as SituationClass;
   const natureCode = natureRecordCode(classification);
@@ -720,7 +775,7 @@ export function situationsToDatex(
   const time = info.timestamp ?? at.toISOString();
   const creator = {
     "com:country": country,
-    "com:nationalIdentifier": info.attribution ?? "OpenConditions",
+    "com:nationalIdentifier": datexString(info.attribution ?? "OpenConditions", undefined, ""),
   };
   const exported = situations.flatMap((situation) => {
     const records = datexRecordsOf(situation, at);

@@ -21,6 +21,9 @@ const builder = new XMLBuilder({
   attributeNamePrefix: "@_",
   format: true,
   suppressEmptyNode: true,
+  // The builder would write an attribute whose value is "true" as a bare
+  // name, which is HTML, not XML: TraFF's `forecast="true"` must keep its value.
+  suppressBooleanAttributes: false,
   tagValueProcessor: sanitize,
   attributeValueProcessor: sanitize,
 });

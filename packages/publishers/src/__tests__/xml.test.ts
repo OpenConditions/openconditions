@@ -71,4 +71,14 @@ describe("buildXmlDocument", () => {
     expect(xml).toContain('n="7"');
     expect(xml).toContain("<count>3</count>");
   });
+
+  it("writes an attribute whose value is true with its value, as XML requires", async () => {
+    const xml = buildXmlDocument({ message: { "@_forecast": "true", "@_flag": true } });
+    expect(xml).toContain('<message forecast="true" flag="true"');
+    const result = await validateXML({
+      xml: [{ fileName: "doc.xml", contents: xml }],
+      normalization: "format",
+    });
+    expect(result.errors).toEqual([]);
+  });
 });

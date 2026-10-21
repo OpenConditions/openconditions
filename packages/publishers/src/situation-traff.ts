@@ -97,6 +97,30 @@ function delayDuration(effect: Effect, diagnostics: ProjectionDiagnostics): stri
   return `${Math.floor(minutes / 60)}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
+/**
+ * A speed or a length as TraFF quantifies it: a whole non-negative number. A
+ * value the model holds but TraFF cannot write as one (negative, or so large
+ * JavaScript writes it with an exponent) is left out of the event.
+ */
+function wholeQuantifier(
+  value: number,
+  effect: Effect,
+  diagnostics: ProjectionDiagnostics,
+  path: string,
+): number | undefined {
+  const n = Math.round(value);
+  if (Number.isSafeInteger(n) && n >= 0) return n;
+  diagnostics.emit(
+    "field_not_exported",
+    "field",
+    "omitted",
+    path,
+    "TraFF quantifies with whole non-negative numbers; this value is not exported.",
+    effect,
+  );
+  return undefined;
+}
+
 /** The TraFF event an effect states, if it restricts traffic. */
 function effectEvent(effect: Effect, diagnostics: ProjectionDiagnostics): TraffEvent | undefined {
   switch (effect.kind) {
@@ -113,11 +137,17 @@ function effectEvent(effect: Effect, diagnostics: ProjectionDiagnostics): TraffE
       return event("RESTRICTION_LANE_CLOSED");
     case "contraflow":
       return event("RESTRICTION_CONTRAFLOW");
-    case "speed_limit":
-      return event("RESTRICTION_SPEED_LIMIT", { speed: Math.round(effect.limit.value) });
+    case "speed_limit": {
+      const path = `${diagnostics.effectPath(effect)}/limit`;
+      const speed = wholeQuantifier(effect.limit.value, effect, diagnostics, path);
+      return event("RESTRICTION_SPEED_LIMIT", speed !== undefined ? { speed } : {});
+    }
     case "delay": {
       const duration = delayDuration(effect, diagnostics);
       const path = diagnostics.effectPath(effect);
+      const length =
+        effect.queueLength &&
+        wholeQuantifier(effect.queueLength.value, effect, diagnostics, `${path}/queueLength`);
       // TraFF has an event for each way of describing delays, but only a
       // length quantifies DELAY_DELAY: a stated length keeps it, and the
       // description goes; none of TraFF's events says a band.
@@ -144,7 +174,7 @@ function effectEvent(effect: Effect, diagnostics: ProjectionDiagnostics): TraffE
           effect,
         );
       return event(described ?? "DELAY_DELAY", {
-        ...(effect.queueLength ? { length: Math.round(effect.queueLength.value) } : {}),
+        ...(length !== undefined ? { length } : {}),
         ...(duration !== undefined ? { q_duration: duration } : {}),
       });
     }
@@ -168,9 +198,16 @@ const ROAD_CLASSES: Record<string, string> = {
   tertiary: "TERTIARY",
 };
 
-/** Signed decimal with explicit "+" for non-negatives, matching the TraFF examples. */
+/**
+ * Signed decimal with explicit "+" for non-negatives, matching the TraFF
+ * examples. JavaScript writes a number closer to zero than 1e-6 in exponent
+ * notation, which is not a decimal TraFF readers take, so such a coordinate
+ * is written out in full.
+ */
 function fmtNum(n: number): string {
-  return n >= 0 ? `+${n}` : `${n}`;
+  const abs = Math.abs(n);
+  const digits = abs > 0 && abs < 1e-6 ? abs.toFixed(20).replace(/\.?0+$/, "") : String(abs);
+  return `${n < 0 && digits !== "0" ? "-" : "+"}${digits}`;
 }
 
 function coordText([lon, lat]: [number, number]): string {
@@ -450,8 +487,19 @@ function messagesOf(
   return out;
 }
 
-/** The Java TraFF reader accepts second-resolution ISO timestamps only. */
-const wireTime = (value: string) => new Date(value).toISOString().replace(/\.\d{3}Z$/, "Z");
+/** The first and last seconds an ISO timestamp with a four-digit year can name in UTC. */
+const FIRST_WIRE_TIME = Date.parse("0000-01-01T00:00:00Z");
+const LAST_WIRE_TIME = Date.parse("9999-12-31T23:59:59Z");
+
+/**
+ * The Java TraFF reader accepts second-resolution ISO timestamps only. A
+ * source's open-ended `9999-12-31T23:59:59-05:00` falls in the year 10000 in
+ * UTC, which has no four-digit year, so it is held at the last second that has.
+ */
+const wireTime = (value: string) =>
+  new Date(Math.min(Math.max(Date.parse(value), FIRST_WIRE_TIME), LAST_WIRE_TIME))
+    .toISOString()
+    .replace(/\.\d{3}Z$/, "Z");
 
 function buildMessage(
   situation: Rec,
