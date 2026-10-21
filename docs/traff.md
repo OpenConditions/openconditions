@@ -130,11 +130,30 @@ the emitted duration attributes with the JDK XML parser, then verifies reader
 acceptance and preservation of event count and queue length. It does not claim
 that this reader can display the delay duration.
 
+## Event types
+
+Only event types released in TraFF 0.8 are written: the event list entries
+whose "Since" column names a version. The list also holds unreleased and
+reserved types (bridge and tunnel closures, avalanche risk, several equipment
+faults, the carpool-lane and low-emission-zone restrictions); the reference
+reader takes those as `INVALID`. Bridge and tunnel closures are therefore
+`RESTRICTION_CLOSED`, an HOV restriction is `CARPOOL_LANE_OPERATIONAL`, and a
+subtype without a released event takes its type's event (or none). Each event
+is written in its class, including the compound `EQUIPMENT_STATUS` class. A
+detour is noted only when it is stated to be signed, as
+`S_DIVERSION_FOLLOW_DIVERSION_SIGNS`; TraFF 0.8 has no note that a diversion is
+merely in operation, so an unsigned detour is reported as `field_not_exported`.
+A forecast message carries `forecast="true"`.
+
 ## Independent reader check
 
-The optional check exercises the actual upstream `TraffFeed.read` with emitted
-bidirectional points/lines, canonical fractional/offset timestamps, empty and
-withheld feeds, future effect intervals, and 5,001 distinct messages:
+CI runs this check in the `interop` job. It exercises the actual upstream
+`TraffFeed.read` with emitted bidirectional points/lines, canonical
+fractional/offset timestamps, empty and withheld feeds, future effect intervals,
+5,001 distinct messages, one message per event type the registry crosswalk can
+name (each read back as its own type and class, never `INVALID`), and every
+effect event with its quantifiers, diversion note, forecast flag, urgency and
+escaped road attributes:
 
 ```bash
 pnpm install --frozen-lockfile

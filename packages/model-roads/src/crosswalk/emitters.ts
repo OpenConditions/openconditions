@@ -1,8 +1,9 @@
 /**
  * Roads classification → emitter vocabularies. Keys are situation codes
  * `kind.type[.subtype]`; an emitter takes the most specific entry (subtype,
- * then type). Every registered `kind.type` has an entry; `null` marks a type
- * the target cannot represent, which that emitter then leaves out.
+ * then type). Every registered `kind.type` has an entry; `null` marks a code
+ * the target cannot represent: a subtype then takes its type's code, and a
+ * type is left out by that emitter.
  */
 export const TRAFF_EVENTS: Readonly<Record<string, string | null>> = {
   "incident.accident": "INCIDENT_ACCIDENT",
@@ -50,8 +51,8 @@ export const TRAFF_EVENTS: Readonly<Record<string, string | null>> = {
   "closure.closure.carriageway": "RESTRICTION_CARRIAGEWAY_CLOSED",
   "closure.closure.ramp": "RESTRICTION_RAMP_CLOSED",
   "closure.closure.lane": "RESTRICTION_LANE_CLOSED",
-  "closure.closure.bridge": "RESTRICTION_BRIDGE_CLOSED",
-  "closure.closure.tunnel": "RESTRICTION_TUNNEL_CLOSED",
+  "closure.closure.bridge": "RESTRICTION_CLOSED",
+  "closure.closure.tunnel": "RESTRICTION_CLOSED",
   "closure.closure.intermittent": "RESTRICTION_INTERMITTENT_CLOSURES",
   "restriction.dimension": "RESTRICTION_RESTRICTIONS",
   "restriction.dimension.height": "RESTRICTION_MAX_HEIGHT",
@@ -61,9 +62,9 @@ export const TRAFF_EVENTS: Readonly<Record<string, string | null>> = {
   "restriction.dimension.axle_load": "RESTRICTION_MAX_AXLE_LOAD",
   "restriction.access": "RESTRICTION_RESTRICTIONS",
   "restriction.access.no_overtaking": "RESTRICTION_NO_OVERTAKING",
-  "restriction.access.low_emission_zone": "RESTRICTION_LOW_EMISSION_ZONE",
+  "restriction.access.low_emission_zone": null,
   "restriction.access.convoy": "RESTRICTION_CONVOY_SERVICE_REQUIRED",
-  "restriction.access.hov": "RESTRICTION_USE_CARPOOL_LANE",
+  "restriction.access.hov": "CARPOOL_LANE_OPERATIONAL",
   "restriction.speed": "RESTRICTION_SPEED_LIMIT",
   "restriction.seasonal_load": "RESTRICTION_MAX_WEIGHT",
   "winter_operation.chain_control": "RESTRICTION_RESTRICTIONS",
@@ -103,7 +104,7 @@ export const TRAFF_EVENTS: Readonly<Record<string, string | null>> = {
   "road_condition.driving_condition.fair": "HAZARD_PASSABLE_WITH_CARE",
   "road_condition.driving_condition.good": "HAZARD_PASSABLE",
   "road_hazard.hazard": "HAZARD_HAZARDOUS_CONDITIONS",
-  "road_hazard.hazard.avalanche_risk": "HAZARD_AVALANCHE_RISK",
+  "road_hazard.hazard.avalanche_risk": null,
   "road_hazard.hazard.flooding": "HAZARD_FLOODING",
   "road_hazard.hazard.high_water": "HAZARD_FLOODING",
   "road_hazard.hazard.wildfire_near_road": "HAZARD_FOREST_FIRE",
@@ -127,12 +128,12 @@ export const TRAFF_EVENTS: Readonly<Record<string, string | null>> = {
   "authority.operation.military_convoy": "HAZARD_MILITARY_CONVOY",
   "equipment_fault.fault": null,
   "equipment_fault.fault.traffic_signal": "EQUIPMENT_STATUS_TRAFFIC_LIGHTS_NOT_WORKING",
-  "equipment_fault.fault.vms": "EQUIPMENT_STATUS_MESSAGE_SIGNS_NOT_WORKING",
-  "equipment_fault.fault.tunnel_system": "EQUIPMENT_STATUS_TUNNEL_VENTILATION_NOT_WORKING",
+  "equipment_fault.fault.vms": null,
+  "equipment_fault.fault.tunnel_system": null,
   "equipment_fault.fault.emergency_phone": "EQUIPMENT_STATUS_EMERGENCY_PHONES_NOT_WORKING",
   "equipment_fault.fault.level_crossing": "EQUIPMENT_STATUS_LEVEL_CROSSING_NOT_WORKING",
   "equipment_fault.fault.toll_system": "EQUIPMENT_STATUS_AUTOMATIC_TOLL_SYSTEM_NOT_WORKING",
-  "equipment_fault.fault.power": "EQUIPMENT_STATUS_POWER_FAILURE",
+  "equipment_fault.fault.power": null,
   "security.incident": "SECURITY_INCIDENT",
   "security.incident.bomb_alert": "SECURITY_BOMB_ALERT",
   "security.incident.evacuation": "SECURITY_EVACUATION",

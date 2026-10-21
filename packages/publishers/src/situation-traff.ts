@@ -37,21 +37,31 @@ export interface TraffEvent {
   cls: string;
   type: string;
   quantifiers?: Record<string, number | string>;
-  /** A diversion is in operation (a detour effect), as supplementary info. */
+  /** A signed detour: follow the diversion signs, as supplementary info. */
   diversion?: true;
 }
 
+/** TraFF 0.8 event classes whose names contain an underscore themselves. */
+const COMPOUND_CLASSES = ["AUDIO_BROADCAST", "EQUIPMENT_STATUS", "TRAVEL_TIME"] as const;
+
+/** The class an event type belongs to: the type's prefix (`EQUIPMENT_STATUS_TRAFFIC_LIGHTS_NOT_WORKING`). */
+const traffEventClass = (type: string): string =>
+  COMPOUND_CLASSES.find((cls) => type.startsWith(`${cls}_`)) ?? type.slice(0, type.indexOf("_"));
+
 const event = (type: string, quantifiers?: Record<string, number | string>): TraffEvent => ({
-  cls: type.slice(0, type.indexOf("_")),
+  cls: traffEventClass(type),
   type,
   ...(quantifiers && Object.keys(quantifiers).length > 0 ? { quantifiers } : {}),
 });
 
+/**
+ * Closures with an event of their own in TraFF 0.8. The event list also names
+ * bridge and tunnel closures, but no released version includes them and the
+ * reference reader takes them as invalid, so those are plain closures.
+ */
 const CLOSURE_BY_SCOPE: Readonly<Record<string, string>> = {
   carriageway: "RESTRICTION_CARRIAGEWAY_CLOSED",
   ramp: "RESTRICTION_RAMP_CLOSED",
-  bridge: "RESTRICTION_BRIDGE_CLOSED",
-  tunnel: "RESTRICTION_TUNNEL_CLOSED",
 };
 
 /** The kernel's delay descriptions as TraFF's delay events. */
@@ -313,7 +323,18 @@ function effectEvents(
       );
       continue;
     }
-    if (effect.kind === "detour") diversion = true;
+    // TraFF 0.8 has no note that a diversion is merely in operation; it can
+    // only tell drivers to follow the diversion signs.
+    if (effect.kind === "detour" && effect.signed === true) diversion = true;
+    else if (effect.kind === "detour")
+      diagnostics.emit(
+        "field_not_exported",
+        "field",
+        "omitted",
+        `${path}/signed`,
+        "TraFF 0.8 can only tell drivers to follow diversion signs; this detour is not stated to be signed.",
+        effect,
+      );
     const e = effectEvent(effect, diagnostics);
     if (!e && effect.kind !== "detour")
       diagnostics.emit(
@@ -488,7 +509,7 @@ function buildMessage(
           ? {
               supplementary_info: {
                 "@_class": "DIVERSION",
-                "@_type": "S_DIVERSION_IN_OPERATION",
+                "@_type": "S_DIVERSION_FOLLOW_DIVERSION_SIGNS",
               },
             }
           : {}),
