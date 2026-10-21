@@ -32,6 +32,11 @@ describe("scalars", () => {
     };
     expect(ok(Geometry, nested)).toBe(false);
   });
+
+  it("rejects an empty polygon ring instead of throwing", () => {
+    expect(ok(Geometry, { type: "Polygon", coordinates: [[]] })).toBe(false);
+    expect(ok(Geometry, { type: "MultiPolygon", coordinates: [[[]]] })).toBe(false);
+  });
 });
 
 describe("location", () => {
