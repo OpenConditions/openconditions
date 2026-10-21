@@ -641,6 +641,15 @@ ${POINT_LOC}</situationRecord></situation></payload></messageContainer>`;
     ).toBe(true);
   });
 
+  it("reads the situations a situation names as related, beside the record's creation reference", () => {
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3"><payload xsi:type="SituationPublication"><situation id="S"><situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+<situationRecordCreationReference>R_FIRST</situationRecordCreationReference>
+<situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
+${POINT_LOC}</situationRecord><relatedSituation><objectReference targetClass="sit:Situation" id="S_OTHER"/></relatedSituation></situation></payload></messageContainer>`;
+    expect(parseDatexSituations(xml, NDW_SOURCE)[0]!.relatedIds).toEqual(["R_FIRST", "S_OTHER"]);
+  });
+
   it("uses causeDescription as a headline fallback when there is no public comment", () => {
     const xml = v3Record(
       `<cause><causeDescription><values><value lang="en">Roadworks ahead</value></values></causeDescription></cause>${POINT_LOC}`,

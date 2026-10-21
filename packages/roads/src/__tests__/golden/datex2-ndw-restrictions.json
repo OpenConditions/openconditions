@@ -155,6 +155,13 @@
           "id": "oc:situation:nl-ndw-events:RWS01_M1080891_NARROW_LANES_D2"
         },
         "relation": "related"
+      },
+      {
+        "ref": {
+          "class": "situation",
+          "id": "oc:situation:nl-ndw-events:RWS01_SM1080891_D2"
+        },
+        "relation": "related"
       }
     ],
     "provenance": {
@@ -321,7 +328,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "357f8c2f35b9e4c192a97f3a35ea5bb11dc1d3c0f2b20660ae8317adf2884fea"
+    "contentHash": "3932093b37b14d1fd49c630150f1012291322d32793bce15632e95de201d3f4b"
   },
   {
     "id": "oc:situation:nl-ndw-events:NLRWS_0005382945",

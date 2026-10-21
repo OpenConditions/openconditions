@@ -1033,20 +1033,27 @@ describe("DATEX II round-trip through the ingest parser", () => {
     expect(reread([rockfall])[0]).toMatchObject({ subtype: "rockfall" });
   });
 
-  it("gives back the record a DATEX situation's original supplier created first", () => {
+  it("re-ingests a related situation as a relation to it, and reports any other kind", () => {
+    const other = `oc:situation:${feed.id}:M1_D2`;
     const related = closure({
-      provenance: {
-        sourceUpdatedAt: "2026-09-06T09:00:00Z",
-        sourceId: feed.id,
-        sourceFormat: "datex2",
-      },
       relations: [
-        { ref: { class: "situation", id: `oc:situation:${feed.id}:M1_D2` }, relation: "related" },
+        { ref: { class: "situation", id: other }, relation: "related" },
+        { ref: { class: "situation", id: `${other}-detour` }, relation: "detour_for" },
       ],
     });
-    expect(datexRecordsOf(related, AT)[0]).toMatchObject({
-      "sit:situationRecordCreationReference": "M1_D2",
+    const xml = situationsToDatex([related], AT);
+    expect(parser.parse(xml).messageContainer.payload["sit:situation"]).toMatchObject({
+      "sit:relatedSituation": {
+        "sit:objectReference": { "@_targetClass": "sit:Situation", "@_id": other },
+      },
     });
-    expect(reread([related])[0]!["relations"]).toEqual(related["relations"]);
+    const diagnostics: string[] = [];
+    datexRecordsOf(related, AT, (d) => diagnostics.push(`${d.code} ${d.path}`));
+    expect(diagnostics).toContain("field_not_exported /relations/1");
+    // The related situation's id in the export is its OpenConditions id, which
+    // a re-ingest prefixes with its source as it does every situation id.
+    expect(reread([related])[0]!["relations"]).toEqual([
+      { ref: { class: "situation", id: `oc:situation:${feed.id}:${other}` }, relation: "related" },
+    ]);
   });
 });

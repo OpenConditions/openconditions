@@ -59,9 +59,7 @@ records carry the revision as `version`:
 - **What else describes the whole situation** travels on the leading record
   only: severity (`none` included, and `unknown` where a source declared it
   so), the informant (`source`), the first cause as `cause/causeType`
-  (`DATEX2_CAUSE_TYPES`), the record the original DATEX supplier created first
-  (`situationRecordCreationReference`, which the reader keeps as the
-  situation's relation), and the text as public comments in the order the
+  (`DATEX2_CAUSE_TYPES`), and the text as public comments in the order the
   reader takes them back: headline, description, every other public comment.
   A description repeating the headline is the cause's description; operator
   and internal comments are not published. A roadworks nature record states
@@ -74,6 +72,11 @@ records carry the revision as `version`:
   lanes none of which is known closed are an `other` lane management, not
   `laneClosures`; a lane closure with every lane open is `laneClosures` with no
   lane restricted, as the publishers who report one write it.
+- **Related situations.** A plain relation to another situation is the
+  situation's `relatedSituation`, referring to that situation's id in the
+  publication; the reader reads `relatedSituation` (and a record's
+  `situationRecordCreationReference`) as relations. A relation of any other
+  kind (a detour for, a cause of) has no DATEX form and is reported.
 - **Diversions** state their description (`reroutingItineraryDescription`) and
   a line route as their `alternativeRoute`.
 - **Direction of traffic.** A management record states the effect's own

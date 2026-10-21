@@ -1364,9 +1364,11 @@ function detourOf(rec: XmlObject): string | undefined {
   );
 }
 
-function relatedRefsOf(rec: XmlObject): string[] | undefined {
+/** The record's creation reference and the situations its situation names as related. */
+function relatedRefsOf(rec: XmlObject, situations: readonly string[] = []): string[] | undefined {
   const ref = getXmlChildText(rec, "situationRecordCreationReference");
-  return ref ? [ref] : undefined;
+  const out = [...new Set([...(ref ? [ref] : []), ...situations])];
+  return out.length > 0 ? out : undefined;
 }
 
 function confidenceOf(rec: XmlObject): Confidence | undefined {
@@ -1767,6 +1769,7 @@ interface SituationRecord {
   situationSeverity: string;
   publicationTime?: string;
   situationId?: string;
+  relatedSituations?: string[];
 }
 
 function listSituationRecords(doc: XmlObject): SituationRecord[] {
@@ -1814,12 +1817,27 @@ function listSituationRecords(doc: XmlObject): SituationRecord[] {
   return situations.flatMap((sit) => {
     const sitSeverity = text(sit["overallSeverity"]) ?? "";
     const situationId = situationIdOf(sit);
+    const relatedSituations = relatedSituationsOf(sit);
     return getXmlChildren(sit, "situationRecord").map((rec) => ({
       rec,
       situationSeverity: sitSeverity,
       publicationTime,
       ...(situationId ? { situationId } : {}),
+      ...(relatedSituations.length > 0 ? { relatedSituations } : {}),
     }));
+  });
+}
+
+/**
+ * The situations a situation names as related (`relatedSituation`): v3 refers
+ * to each by its `objectReference`, v2 by the reference's own `id`.
+ */
+function relatedSituationsOf(sit: XmlObject): string[] {
+  return getXmlChildren(sit, "relatedSituation").flatMap((related) => {
+    const id =
+      getXmlAttribute(getXmlChild(related, "objectReference"), "id") ??
+      getXmlAttribute(related, "id");
+    return id?.trim() ? [id.trim()] : [];
   });
 }
 
@@ -1910,7 +1928,13 @@ function parseDatexInternal(
   /** Table editions publishers named that we do not hold. */
   const mismatchVersions = new Map<string, number>();
 
-  for (const { rec: rawRec, situationSeverity, situationId, publicationTime } of sourceRecords) {
+  for (const {
+    rec: rawRec,
+    situationSeverity,
+    situationId,
+    publicationTime,
+    relatedSituations,
+  } of sourceRecords) {
     const { body: rec, className } = recordBody(rawRec);
     const recordId = recId(rec);
     const prefixedId = `${src.id}:${recordId}`;
@@ -2275,7 +2299,7 @@ function parseDatexInternal(
       capacityRemainingPct: capacityRemainingOf(rec),
       workZoneType: workZoneTypeOf(rec),
       roadworks: roadworksOf(rec),
-      relatedIds: relatedRefsOf(rec),
+      relatedIds: relatedRefsOf(rec, relatedSituations),
       sourceRaw: {
         ...rec,
         ...(versionTime === null && dataUpdatedAt !== null

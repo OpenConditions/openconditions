@@ -696,14 +696,13 @@ interface RecordBody {
   /** The geometry of the record's place, whose zone the reader reads its periods' times of day in. */
   geometry: unknown;
   /**
-   * What only the leading record carries: severity, the informant, the record
-   * the original supplier created first, the cause, and the public comments
-   * (the headline, then the description and any other comment).
+   * What only the leading record carries: severity, the informant, the cause,
+   * and the public comments (the headline, then the description and any
+   * other comment).
    */
   lead?: {
     severity?: string;
     source?: Rec;
-    creationReference?: string;
     cause?: string;
     causeDescription?: Text;
     comments: Text[];
@@ -743,9 +742,6 @@ function record(code: string, header: RecordHeader, body: RecordBody): Rec {
     "@_xsi:type": `sit:${cls}`,
     "@_id": header.id,
     "@_version": header.version,
-    ...(lead?.creationReference
-      ? { "sit:situationRecordCreationReference": lead.creationReference }
-      : {}),
     "sit:situationRecordCreationTime": header.time,
     "sit:situationRecordVersionTime": header.time,
     "sit:probabilityOfOccurrence": header.probability,
@@ -964,36 +960,32 @@ function publicCommentsOf(
   return { comments: out, ...(repeated ? { causeDescription: description } : {}) };
 }
 
+type Relation = { ref: { class?: string; id?: string }; relation: string };
+
+/** Whether DATEX states a relation: one to a situation that says only that it is related. */
+const isRelatedSituation = (r: Relation) =>
+  r.relation === "related" && r.ref.class === "situation" && typeof r.ref.id === "string";
+
 /**
- * The record a DATEX situation's original supplier created first, which the
- * reader keeps as the situation's one relation of its own source. Only a
- * situation read from DATEX has one to give back.
+ * The situations a situation is related to, as DATEX `relatedSituation`
+ * references to their ids in the publication. A relation of any other kind
+ * has no DATEX form and is reported.
  */
-function creationReferenceOf(
-  situation: Rec,
-  diagnostics: ProjectionDiagnostics,
-): { creationReference?: string } {
-  const provenance = situation["provenance"] as Rec;
-  const relations = (situation["relations"] as { ref: Rec; relation: string }[] | undefined) ?? [];
-  const prefix = `oc:situation:${String(provenance["sourceId"])}:`;
-  const [only, ...more] = relations;
-  const target = String(only?.ref["id"]);
-  if (
-    provenance["sourceFormat"] === "datex2" &&
-    more.length === 0 &&
-    only?.relation === "related" &&
-    target.startsWith(prefix)
-  )
-    return { creationReference: target.slice(prefix.length) };
-  for (const i of relations.keys())
-    diagnostics.emit(
-      "field_not_exported",
-      "field",
-      "omitted",
-      `/relations/${i}`,
-      "DATEX states no relation between situations that the reader takes back.",
-    );
-  return {};
+export function relatedSituationsOf(situation: Rec, report?: ExportDiagnosticSink): Rec[] {
+  const relations = (situation["relations"] as Relation[] | undefined) ?? [];
+  for (const [i, r] of relations.entries())
+    if (!isRelatedSituation(r))
+      report?.({
+        situationId: String(situation["id"]),
+        code: "field_not_exported",
+        scope: "field",
+        disposition: "omitted",
+        path: `/relations/${i}`,
+        message: "DATEX relates situations without saying how; only a plain relation is written.",
+      });
+  return relations.filter(isRelatedSituation).map((r) => ({
+    "sit:objectReference": { "@_targetClass": "sit:Situation", "@_id": r.ref.id },
+  }));
 }
 
 /** The DATEX records of a situation at `at`; none when DATEX cannot tell it truthfully. */
@@ -1015,6 +1007,8 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
     })
   )
     return [];
+  // Relations travel on the situation; only the ones DATEX cannot state are reported here.
+  relatedSituationsOf(situation, report);
   const id = situation["id"] as string;
   const version = String(situation["revision"] ?? 1);
   const validity = situation["validity"] as Validity;
@@ -1050,7 +1044,6 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
   const lead = {
     severity: severityOf(situation["severity"] as Rec | undefined),
     source: sourceOf(provenance),
-    ...creationReferenceOf(situation, diagnostics),
     ...(causeType ? { cause: causeType } : {}),
     ...publicCommentsOf(situation, diagnostics),
   };
@@ -1358,6 +1351,7 @@ export function situationsToDatex(
     "com:publicationTime": time,
     "com:publicationCreator": creator,
   };
+  const related = (situation: Rec) => relatedSituationsOf(situation);
   payload["sit:situation"] = exported.map(({ situation, records }) => ({
     "@_id": situation["id"],
     "sit:headerInformation": {
@@ -1365,6 +1359,7 @@ export function situationsToDatex(
       "com:informationStatus": "real",
     },
     "sit:situationRecord": records,
+    ...(related(situation).length > 0 ? { "sit:relatedSituation": related(situation) } : {}),
   }));
   const doc = {
     messageContainer: {

@@ -73,6 +73,8 @@ const GENERATED: Record<string, string> = {
   "/canonicalId": "Derived from the id.",
   "/contentHash": "Derived from the whole record.",
   "/freshness": "The fetch time of each pass.",
+  "/relations/*/ref/id prefix":
+    "A relation refers to the related situation's OpenConditions id, prefixed again like /id (compared so).",
   "/effects/*/sourceRecordRef version":
     "A record keeps its source id; its version is the situation's revision (compared without it).",
 };
@@ -200,14 +202,25 @@ function pairs(first: Rec[], second: Rec[]): [Rec | undefined, Rec | undefined][
 }
 
 /** What pass 2 changed of one pass-1 situation. */
-function situationDifferences(first: Rec, second: Rec): Set<string> {
+function situationDifferences(first: Rec, second: Rec, sourceId: string): Set<string> {
   const out = new Set<string>();
   const without = (s: Rec) => {
     const details = s["details"] as Rec | undefined;
     const { phases: _, ...rest } = details ?? {};
     return { ...s, effects: undefined, details: details && { ...rest } };
   };
-  differences(without(first), without(second), "", out);
+  // A related situation is referred to by its id in the export, which pass 2
+  // prefixes again, as it does the situation's own id.
+  const relations = ((first["relations"] as Rec[] | undefined) ?? []).map((r) => {
+    const ref = r["ref"] as Rec;
+    return { ...r, ref: { ...ref, id: `oc:situation:${sourceId}:${String(ref["id"])}` } };
+  });
+  differences(
+    without({ ...first, ...(relations.length > 0 ? { relations } : {}) }),
+    without(second),
+    "",
+    out,
+  );
   for (const [e, f] of pairs(effectsOf(first), effectsOf(second))) {
     if (!e) out.add(`/effects/+${String(f!["kind"])}`);
     else if (!f) out.add(`/effects/-${String(e["kind"])}`);
@@ -290,7 +303,7 @@ describe("DATEX II round trip of the real situation fixtures", () => {
           for (const d of own) note(`missing:${d.code}`);
         } else {
           exported++;
-          for (const key of situationDifferences(s, back)) note(key);
+          for (const key of situationDifferences(s, back, feedId)) note(key);
         }
       }
       // Pass 2 holds no situation pass 1 did not.
