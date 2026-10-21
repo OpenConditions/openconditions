@@ -330,4 +330,14 @@ describe("MINETUR", () => {
     const { features, observations } = parse();
     expect(sealFailures([...features, ...observations])).toEqual([]);
   });
+
+  test("a null station is malformed, not a failed poll", () => {
+    const file = JSON.parse(fixture("minetur-stations.json").toString("utf8")) as {
+      ListaEESSPrecio: unknown[];
+    };
+    file.ListaEESSPrecio.push(null);
+    const { features } = parse(Buffer.from(JSON.stringify(file)));
+    expect(features).toHaveLength(parse().features.length);
+    expect(drainSkipped(FEED)).toMatchObject({ malformed: 1 });
+  });
 });

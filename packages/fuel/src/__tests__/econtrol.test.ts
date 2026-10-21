@@ -309,4 +309,18 @@ describe("econtrol", () => {
     const { features, observations } = parse();
     expect(sealFailures([...features, ...observations])).toEqual([]);
   });
+
+  test("a null station is malformed; a null price or day and a price too large to write are not read", () => {
+    const stations = JSON.parse(patchedDiesel(6083, {}).toString("utf8")) as Draft[];
+    const first = stations[0]!;
+    first["prices"] = [null, { fuelType: "DIE", amount: 1e21 }];
+    first["openingHours"] = [null];
+    const { features, observations } = parse([
+      Buffer.from(JSON.stringify([null, ...stations])),
+      ...ANSWERS.slice(1),
+    ]);
+    expect(features).toHaveLength(parse().features.length);
+    expect(sealFailures([...features, ...observations])).toEqual([]);
+    expect(drainSkipped(FEED)).toEqual({ malformed: 1, unknown_value: 1 });
+  });
 });

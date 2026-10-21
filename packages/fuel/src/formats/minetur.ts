@@ -10,6 +10,7 @@ import type { FuelGrade } from "../grades.js";
 import { type Interval, interval, osmOpeningHours } from "../hours.js";
 import {
   type FuelFeed,
+  isObject,
   type ProductInput,
   priceDraft,
   stationDraft,
@@ -370,7 +371,7 @@ export function parseMinetur(
     }
     const at = publicationTime(file.Fecha);
     for (const station of file.ListaEESSPrecio as Station[]) {
-      const stationId = text(station["IDEESS"]);
+      const stationId = isObject(station) ? text(station["IDEESS"]) : undefined;
       if (stationId === undefined) {
         recordSkipped(feed.id, "malformed");
         continue;
