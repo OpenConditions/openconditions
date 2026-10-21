@@ -48,7 +48,29 @@
               "field": "Charger_Type",
               "map": {
                 "Upcoming": "planned"
-              }
+              },
+              "ignore": [
+                "AC",
+                "DC"
+              ]
+            },
+            "parkingType": {
+              "field": "Source",
+              "map": {
+                "Kerbside Charging R1": "on_street"
+              },
+              "ignore": [
+                "Existing Destination Chargers",
+                "Destination Charging R1",
+                "Destination Charging R2",
+                "Existing Fast Chargers",
+                "ARENA - Driving the Nation",
+                "Fast Charging R1",
+                "Fast Charging R2",
+                "Fast Charging R3",
+                "TfNSW Regional",
+                "TfNSW Commuter Car Parks"
+              ]
             },
             "connectors": {
               "list": {
@@ -60,7 +82,10 @@
                   "map": {
                     "AC": "ac",
                     "DC": "dc"
-                  }
+                  },
+                  "ignore": [
+                    "Upcoming"
+                  ]
                 }
               }
             }
@@ -169,13 +194,24 @@
             "address": {
               "street": "adres",
               "postalCode": "postcode",
-              "city": "gemeente"
+              "city": "gemeente",
+              "region": {
+                "field": "provincie",
+                "pattern": "^(?:PROVINCIE\\s+)?(.+)$"
+              }
+            },
+            "twentyFourSeven": {
+              "field": "toegankelijkheid",
+              "values": [
+                "publiek"
+              ]
             },
             "audience": {
               "field": "toegankelijkheid",
               "map": {
                 "publiek": "public",
-                "semi-publiek": "restricted"
+                "semi-publiek": "public",
+                "andere niet-privaat": "unknown"
               }
             },
             "evse": {
@@ -233,7 +269,8 @@
             "address": {
               "street": "ADRESSE",
               "postalCode": "CODE_POSTAL",
-              "city": "VILLE"
+              "city": "VILLE",
+              "region": "PROVINCE"
             },
             "audience": {
               "field": "TYPE_ACCES",
@@ -255,7 +292,19 @@
               }
             },
             "evse": {
-              "key": "CONNECTEUR_ID"
+              "key": "CONNECTEUR_ID",
+              "parkingRestrictions": {
+                "field": "RESTRICTIONS_EMPLACEMENT",
+                "json": true,
+                "map": {
+                  "ONLY_CUSTOMERS": "customers",
+                  "ONLY_2_WHEELERS": "motorcycles"
+                },
+                "ignore": [
+                  "TIME_RESTRICTED",
+                  "ONLY_BRAND"
+                ]
+              }
             },
             "connectors": {
               "row": {
@@ -373,29 +422,32 @@
             "main": {
               "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/locations?exclude_source_uid=opendata_swiss&limit=5000",
               "pagination": {
-                "skipParam": "offset",
-                "pageSize": 5000,
-                "recordsPath": "items"
+                "mode": "link",
+                "recordsPath": "items",
+                "nextPath": "next_path",
+                "totalPath": "total_count"
               },
               "cadenceSec": 86400
             },
             "status": {
               "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
               "pagination": {
-                "skipParam": "offset",
-                "pageSize": 1000,
+                "mode": "link",
                 "recordsPath": "items",
-                "maxPages": 300
+                "maxPages": 300,
+                "nextPath": "next_path",
+                "totalPath": "total_count"
               },
               "cadenceSec": 3600
             },
             "changes": {
               "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
               "pagination": {
-                "skipParam": "offset",
-                "pageSize": 1000,
+                "mode": "link",
                 "recordsPath": "items",
-                "maxPages": 300
+                "maxPages": 300,
+                "nextPath": "next_path",
+                "totalPath": "total_count"
               },
               "cadenceSec": 300,
               "changesSince": {
@@ -405,18 +457,20 @@
             "tariffs": {
               "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
               "pagination": {
-                "skipParam": "offset",
-                "pageSize": 1000,
-                "recordsPath": "items"
+                "mode": "link",
+                "recordsPath": "items",
+                "nextPath": "next_path",
+                "totalPath": "total_count"
               },
               "cadenceSec": 86400
             },
             "associations": {
               "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/3.0/tariff-associations?limit=1000",
               "pagination": {
-                "skipParam": "offset",
-                "pageSize": 1000,
-                "recordsPath": "items"
+                "mode": "link",
+                "recordsPath": "items",
+                "nextPath": "next_path",
+                "totalPath": "total_count"
               },
               "cadenceSec": 86400
             },
@@ -709,8 +763,19 @@
           "layout": {},
           "charging": {
             "id": "LOCATION_EN",
-            "name": [
-              "LOCATION_EN"
+            "names": [
+              {
+                "field": "LOCATION_EN",
+                "lang": "en"
+              },
+              {
+                "field": "LOCATION_TC",
+                "lang": "zh-Hant"
+              },
+              {
+                "field": "LOCATION_SC",
+                "lang": "zh-Hans"
+              }
             ],
             "lang": "en",
             "address": {
@@ -1337,6 +1402,10 @@
             "main": {
               "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1.json?fuel_type=ELEC&country=all&status=E,P&access=public&limit=all",
               "cadenceSec": 86400
+            },
+            "networks": {
+              "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1/electric-networks.json",
+              "cadenceSec": 604800
             }
           },
           "credentials": {
@@ -1455,7 +1524,29 @@
           "field": "Charger_Type",
           "map": {
             "Upcoming": "planned"
-          }
+          },
+          "ignore": [
+            "AC",
+            "DC"
+          ]
+        },
+        "parkingType": {
+          "field": "Source",
+          "map": {
+            "Kerbside Charging R1": "on_street"
+          },
+          "ignore": [
+            "Existing Destination Chargers",
+            "Destination Charging R1",
+            "Destination Charging R2",
+            "Existing Fast Chargers",
+            "ARENA - Driving the Nation",
+            "Fast Charging R1",
+            "Fast Charging R2",
+            "Fast Charging R3",
+            "TfNSW Regional",
+            "TfNSW Commuter Car Parks"
+          ]
         },
         "connectors": {
           "list": {
@@ -1467,7 +1558,10 @@
               "map": {
                 "AC": "ac",
                 "DC": "dc"
-              }
+              },
+              "ignore": [
+                "Upcoming"
+              ]
             }
           }
         }
@@ -1613,13 +1707,24 @@
         "address": {
           "street": "adres",
           "postalCode": "postcode",
-          "city": "gemeente"
+          "city": "gemeente",
+          "region": {
+            "field": "provincie",
+            "pattern": "^(?:PROVINCIE\\s+)?(.+)$"
+          }
+        },
+        "twentyFourSeven": {
+          "field": "toegankelijkheid",
+          "values": [
+            "publiek"
+          ]
         },
         "audience": {
           "field": "toegankelijkheid",
           "map": {
             "publiek": "public",
-            "semi-publiek": "restricted"
+            "semi-publiek": "public",
+            "andere niet-privaat": "unknown"
           }
         },
         "evse": {
@@ -1699,7 +1804,8 @@
         "address": {
           "street": "ADRESSE",
           "postalCode": "CODE_POSTAL",
-          "city": "VILLE"
+          "city": "VILLE",
+          "region": "PROVINCE"
         },
         "audience": {
           "field": "TYPE_ACCES",
@@ -1721,7 +1827,19 @@
           }
         },
         "evse": {
-          "key": "CONNECTEUR_ID"
+          "key": "CONNECTEUR_ID",
+          "parkingRestrictions": {
+            "field": "RESTRICTIONS_EMPLACEMENT",
+            "json": true,
+            "map": {
+              "ONLY_CUSTOMERS": "customers",
+              "ONLY_2_WHEELERS": "motorcycles"
+            },
+            "ignore": [
+              "TIME_RESTRICTED",
+              "ONLY_BRAND"
+            ]
+          }
         },
         "connectors": {
           "row": {
@@ -1908,29 +2026,32 @@
         "main": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/locations?exclude_source_uid=opendata_swiss&limit=5000",
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 5000,
-            "recordsPath": "items"
+            "mode": "link",
+            "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count"
           },
           "cadenceSec": 86400
         },
         "status": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 1000,
+            "mode": "link",
             "recordsPath": "items",
-            "maxPages": 300
+            "maxPages": 300,
+            "nextPath": "next_path",
+            "totalPath": "total_count"
           },
           "cadenceSec": 3600
         },
         "changes": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/evses?exclude_source_uid=opendata_swiss&statuses=AVAILABLE,BLOCKED,CHARGING,INOPERATIVE,OUTOFORDER,PLANNED,RESERVED,REMOVED,UNKNOWN&limit=1000",
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 1000,
+            "mode": "link",
             "recordsPath": "items",
-            "maxPages": 300
+            "maxPages": 300,
+            "nextPath": "next_path",
+            "totalPath": "total_count"
           },
           "cadenceSec": 300,
           "changesSince": {
@@ -1940,18 +2061,20 @@
         "tariffs": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/2.2/tariffs?limit=1000",
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 1000,
-            "recordsPath": "items"
+            "mode": "link",
+            "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count"
           },
           "cadenceSec": 86400
         },
         "associations": {
           "url": "https://api.mobidata-bw.de/ocpdb/api/public/ocpi/3.0/tariff-associations?limit=1000",
           "pagination": {
-            "skipParam": "offset",
-            "pageSize": 1000,
-            "recordsPath": "items"
+            "mode": "link",
+            "recordsPath": "items",
+            "nextPath": "next_path",
+            "totalPath": "total_count"
           },
           "cadenceSec": 86400
         },
@@ -2328,8 +2451,19 @@
       "layout": {},
       "charging": {
         "id": "LOCATION_EN",
-        "name": [
-          "LOCATION_EN"
+        "names": [
+          {
+            "field": "LOCATION_EN",
+            "lang": "en"
+          },
+          {
+            "field": "LOCATION_TC",
+            "lang": "zh-Hant"
+          },
+          {
+            "field": "LOCATION_SC",
+            "lang": "zh-Hans"
+          }
         ],
         "lang": "en",
         "address": {
@@ -3127,6 +3261,10 @@
         "main": {
           "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1.json?fuel_type=ELEC&country=all&status=E,P&access=public&limit=all",
           "cadenceSec": 86400
+        },
+        "networks": {
+          "url": "https://developer.nlr.gov/api/alt-fuel-stations/v1/electric-networks.json",
+          "cadenceSec": 604800
         }
       },
       "credentials": {

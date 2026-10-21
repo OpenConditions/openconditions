@@ -773,6 +773,11 @@
             "lang": "en",
             "type": "traffic",
             "road": "cctv.location.route",
+            "milepost": "cctv.location.milepost",
+            "elevation": {
+              "field": "cctv.location.elevation",
+              "unit": "ft"
+            },
             "viewName": "cctv.imageData.imageDescription",
             "direction": {
               "field": "cctv.location.direction",
@@ -780,9 +785,13 @@
                 "North": "N",
                 "South": "S",
                 "East": "E",
-                "West": "W"
+                "West": "W",
+                "Median": "none"
               }
             },
+            "absent": [
+              "Not Reported"
+            ],
             "imageUrl": "cctv.imageData.static.currentImageURL",
             "streamUrl": "cctv.imageData.streamingVideoURL",
             "streamType": "hls",
@@ -790,8 +799,7 @@
               "field": "cctv.inService",
               "map": {
                 "true": "unknown",
-                "false": "offline",
-                "Not Reported": "unknown"
+                "false": "offline"
               }
             },
             "refreshSec": {
@@ -1431,7 +1439,7 @@
         "se-trafikverket": {
           "api_key": {
             "title": "Trafikverket key (Sweden)",
-            "description": "Authentication key: sent as ?authenticationkey= to the DATEX II situation feed and in the POST request body to the traffic-flow feed.",
+            "description": "Authentication key: sent as ?authenticationkey= to the DATEX II situation feed and in the POST request body to the object-API feeds (situations, traffic flow, cameras).",
             "setup": {
               "url": "https://data.trafikverket.se/oauth2/Account/register",
               "urlLabel": "Sign up at Trafikverket",
@@ -2440,6 +2448,11 @@
         "lang": "en",
         "type": "traffic",
         "road": "cctv.location.route",
+        "milepost": "cctv.location.milepost",
+        "elevation": {
+          "field": "cctv.location.elevation",
+          "unit": "ft"
+        },
         "viewName": "cctv.imageData.imageDescription",
         "direction": {
           "field": "cctv.location.direction",
@@ -2447,9 +2460,13 @@
             "North": "N",
             "South": "S",
             "East": "E",
-            "West": "W"
+            "West": "W",
+            "Median": "none"
           }
         },
+        "absent": [
+          "Not Reported"
+        ],
         "imageUrl": "cctv.imageData.static.currentImageURL",
         "streamUrl": "cctv.imageData.streamingVideoURL",
         "streamType": "hls",
@@ -2457,8 +2474,7 @@
           "field": "cctv.inService",
           "map": {
             "true": "unknown",
-            "false": "offline",
-            "Not Reported": "unknown"
+            "false": "offline"
           }
         },
         "refreshSec": {

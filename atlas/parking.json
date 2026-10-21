@@ -285,6 +285,11 @@
               "field": "maxheight",
               "unit": "m"
             },
+            "widthLimit": {
+              "field": "maxwidth",
+              "unit": "m"
+            },
+            "levels": "floors",
             "areas": [
               {
                 "vehicleType": "car",
@@ -389,6 +394,10 @@
             "sources": {
               "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
               "cadenceSec": 86400
+            },
+            "spots": {
+              "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-spots",
+              "cadenceSec": 300
             }
           },
           "freshnessWindowSec": 3600,
@@ -864,7 +873,8 @@
               "field": "p_hus_type",
               "map": {
                 "1": "multi_storey",
-                "2": "underground"
+                "2": "underground",
+                "3": "underground"
               }
             },
             "capacity": "antal_pladser",
@@ -1835,6 +1845,11 @@
           "field": "maxheight",
           "unit": "m"
         },
+        "widthLimit": {
+          "field": "maxwidth",
+          "unit": "m"
+        },
+        "levels": "floors",
         "areas": [
           {
             "vehicleType": "car",
@@ -1995,6 +2010,10 @@
         "sources": {
           "url": "https://api.mobidata-bw.de/park-api/api/public/v3/sources",
           "cadenceSec": 86400
+        },
+        "spots": {
+          "url": "https://api.mobidata-bw.de/park-api/api/public/v3/parking-spots",
+          "cadenceSec": 300
         }
       },
       "freshnessWindowSec": 3600,
@@ -2633,7 +2652,8 @@
           "field": "p_hus_type",
           "map": {
             "1": "multi_storey",
-            "2": "underground"
+            "2": "underground",
+            "3": "underground"
           }
         },
         "capacity": "antal_pladser",
