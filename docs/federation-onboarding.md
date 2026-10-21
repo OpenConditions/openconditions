@@ -92,6 +92,15 @@ What TUF gives the registry:
   threshold and its own is accepted by existing clients; a rotation that does
   not satisfy the old threshold is rejected. This is exercised in CI
   (`packages/federation/src/__tests__/tuf-registry.test.ts`).
+- **A second implementation.** The CI `interop` job runs
+  `scripts/tuf-interop/check.sh`: python-tuf 7.0.1 (hash-locked in
+  `scripts/tuf-interop/requirements.txt`, installed into a disposable
+  environment) reads repositories `signRegistry` writes, and
+  `verifyRegistryMetadata` reads repositories python-tuf's Metadata API writes.
+  Both directions cover a valid release, a 2-of-3 threshold met and missed, root
+  rotation with and without the old root's signatures, expiry, snapshot and
+  target tampering, and rollback against a retained cache. Run it locally with
+  Python 3.14 after `pnpm build`.
 
 ### Honesty about what secures what
 
