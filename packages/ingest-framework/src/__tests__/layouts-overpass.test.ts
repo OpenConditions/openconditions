@@ -55,6 +55,22 @@ describe("decodeOverpass", () => {
     expect(reasons).toEqual(["malformed", "unknown_type", "malformed", "no_geometry", "malformed"]);
   });
 
+  test("decodeOverpass skips a position off the globe as malformed", () => {
+    const reasons: string[] = [];
+    const elements = decodeOverpass(
+      body({
+        elements: [
+          { type: "node", id: 1, lat: 49, lon: -583229989 },
+          { type: "way", id: 2, center: { lat: -90.5, lon: 8 } },
+          { type: "node", id: 3, lat: -90, lon: 180 },
+        ],
+      }),
+      (reason) => reasons.push(reason),
+    );
+    expect(elements.map((e) => e.id)).toEqual([3]);
+    expect(reasons).toEqual(["malformed", "malformed"]);
+  });
+
   test("another remark is not an error", () => {
     expect(decodeOverpass(body({ elements: [], remark: "note" }))).toEqual([]);
   });

@@ -19,9 +19,10 @@ const isOsmId = (v: unknown): v is number => Number.isSafeInteger(v) && (v as nu
 /**
  * The elements of an Overpass JSON answer. A way or relation is placed at its
  * `center`. An element that is no object, of another type, whose id is not a
- * positive safe integer, or without a numeric position is left out and
- * reported to `onSkip`: an unknown type as `unknown_type`, no position at all
- * as `no_geometry`, anything else as `malformed`. Throws on a body that is
+ * positive safe integer, or without a numeric position within the longitude
+ * and latitude ranges is left out and reported to `onSkip`: an unknown type
+ * as `unknown_type`, no position at all as `no_geometry`, anything else as
+ * `malformed`. Throws on a body that is
  * not JSON and on a `runtime error` remark (a timeout or memory limit), whose
  * elements are an incomplete answer.
  */
@@ -62,6 +63,11 @@ export function decodeOverpass(
     if (!isNumber(lat) || !isNumber(lon)) {
       const positioned = [raw.lat, raw.lon, centre.lat, centre.lon].some((v) => v != null);
       onSkip?.(positioned ? "malformed" : "no_geometry");
+      continue;
+    }
+    // A position off the globe is no place to put the element.
+    if (Math.abs(lat) > 90 || Math.abs(lon) > 180) {
+      onSkip?.("malformed");
       continue;
     }
     out.push({
