@@ -24,6 +24,7 @@ import {
   DATEX2_SOURCE_TYPES,
 } from "../crosswalk/datex2.js";
 import {
+  DATEX2_CAUSE_TYPES,
   DATEX2_FAULTY_EQUIPMENT,
   DATEX2_RECORDS,
   GTFS_RT_CAUSE_VALUES,
@@ -287,6 +288,50 @@ describe("emitter crosswalk coverage", () => {
       const own = DATEX2_SITUATIONS[record];
       const read = own === null ? DATEX2_SITUATIONS[cls] : own;
       expect(read && parseSituationCode(read).kind, record).toBe(parseSituationCode(code).kind);
+    }
+  });
+
+  it("gives every classification a DATEX record that reads back as itself, unless DATEX has none", () => {
+    // Where DATEX has no record for the classification itself, the nearest one
+    // reads back as something narrower or broader, for the reason given.
+    const unequal: Record<string, [reads: string, reason: string]> = {
+      "incident.vehicle_hazard": [
+        "incident.breakdown",
+        "VehicleObstruction has no value for a vehicle hazard in general; `other` reads as the class",
+      ],
+      "incident.fire": [
+        "incident.obstruction",
+        "DATEX has no record for a fire in general; GeneralObstruction:other reads as the class",
+      ],
+      "roadworks.works": [
+        "roadworks.works.maintenance",
+        "Roadworks is abstract; its MaintenanceWorks reads as maintenance",
+      ],
+      "closure.closure": [
+        "closure.closure.full",
+        "the road closure DATEX states is a full closure",
+      ],
+      "restriction.speed": [
+        "restriction.speed.temporary",
+        "a DATEX speed management measure is a temporary one",
+      ],
+    };
+    const read = Object.entries(DATEX2_RECORDS).flatMap(([code, record]) => {
+      if (record === null) return [];
+      const own = DATEX2_SITUATIONS[record];
+      return [[code, own ?? DATEX2_SITUATIONS[record.split(":")[0]!]] as const];
+    });
+    expect(Object.fromEntries(read.filter(([code, back]) => back !== code))).toEqual(
+      Object.fromEntries(Object.entries(unequal).map(([code, [reads]]) => [code, reads])),
+    );
+  });
+
+  it("gives every cause a DATEX cause type that reads back as the same cause, or an explicit null", () => {
+    expect(sorted(Object.keys(DATEX2_CAUSE_TYPES))).toEqual(sorted(CAUSES));
+    for (const [cause, type] of Object.entries(DATEX2_CAUSE_TYPES)) {
+      if (type === null) continue;
+      expect(DATEX2_V3.causeTypes as readonly string[], type).toContain(type);
+      expect(DATEX2_CAUSES[type], type).toBe(cause);
     }
   });
 
