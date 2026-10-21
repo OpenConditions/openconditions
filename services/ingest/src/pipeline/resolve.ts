@@ -52,7 +52,9 @@ function placed(draft: RecordDraft, geometry: GeoJsonGeometry): RecordDraft {
  * - A draft with geometry passes through unchanged.
  * - A draft with `location.openlr` and no geometry is resolved through the
  *   map-match client; on success it carries the decoded geometry
- *   (`geometryOrigin: openlr_decoded`), on a miss it is dropped and counted.
+ *   (`geometryOrigin: openlr_decoded`), on a miss it is dropped and counted,
+ *   as is one whose reference does not decode as a line location (a DATEX
+ *   `OpenlrPointAlongLine`, corrupt bytes).
  *   A transport or validation failure also counts in `failed`: the caller
  *   must keep its last good snapshot rather than publish a partial one.
  * - Without a client (`OPENLR_RESOLVER_URL` unset) such drafts are dropped.
@@ -104,8 +106,21 @@ export async function resolveOpenLr(
   async function resolveOne(openlr: string, id: string): Promise<GeoJsonGeometry | null> {
     const inProgress = inFlight.get(openlr);
     if (inProgress !== undefined) return inProgress;
+    // A reference that does not decode as a line (a point along a line, or
+    // corrupt bytes) is this situation's data, not a failure of the run: it
+    // cannot be placed and is dropped like a miss.
+    let location: ReturnType<typeof decodeOpenLrBinary>;
+    try {
+      location = decodeOpenLrBinary(openlr);
+    } catch (err) {
+      console.warn(
+        `[resolve] OpenLR of situation ${id} does not decode as a line — dropped:`,
+        err instanceof Error ? err.message : err,
+      );
+      return null;
+    }
     const promise = (async (): Promise<GeoJsonGeometry | null> => {
-      const geom = await client!.resolve(decodeOpenLrBinary(openlr));
+      const geom = await client!.resolve(location);
       if (geom === null) {
         console.warn(`[resolve] no map-match for OpenLR situation ${id} — dropped`);
         return null;

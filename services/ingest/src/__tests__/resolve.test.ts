@@ -123,6 +123,26 @@ describe("resolveOpenLr", () => {
     expect(unlocatable).toEqual(["oc:situation:nl-ndw-events:c"]);
   });
 
+  it("drops a reference that does not decode as a line, without failing the others", async () => {
+    // The whitepaper's point along a line (13.2), as a DATEX OpenlrPointAlongLine carries it.
+    const { decodeOpenLrBinary } =
+      await vi.importActual<typeof import("@openconditions/openlr")>("@openconditions/openlr");
+    const { decodeOpenLrBinary: mocked } = await import("@openconditions/openlr");
+    vi.mocked(mocked).mockImplementationOnce(decodeOpenLrBinary);
+    const point = {
+      ...openLrDraft("point"),
+      location: { ...locationOf(openLrDraft("point")), openlr: "KwRboCNGfhJRAf/O/7SSQ00=" },
+    };
+    const client = fakeClient(LINE_GEOM);
+    const { resolved, failed, unlocatable } = await resolveOpenLr(
+      [point, openLrDraft("line")],
+      client,
+    );
+    expect(failed).toBe(0);
+    expect(unlocatable).toEqual(["oc:situation:nl-ndw-events:point"]);
+    expect(resolved.map((d) => d["id"])).toEqual(["oc:situation:nl-ndw-events:line"]);
+  });
+
   it("caches a successful resolution — client called only once for a repeated reference", async () => {
     const client = fakeClient(LINE_GEOM);
     const { resolved } = await resolveOpenLr([openLrDraft("d1"), openLrDraft("d2")], client);
