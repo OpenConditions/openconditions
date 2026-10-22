@@ -6,6 +6,7 @@
  * closed rather than serving a half-formed identity.
  */
 import { readFileSync } from "node:fs";
+import { BlockList, isIP } from "node:net";
 import { resolveInstanceId } from "@openconditions/core/server";
 import {
   type ActorConfig,
@@ -31,6 +32,8 @@ export interface FederationSettings {
    * when this process terminates TLS itself.
    */
   clientCertHeader?: string;
+  /** The addresses the client certificate header is taken from; any, when absent. */
+  trustedProxies?: BlockList;
 }
 
 export interface RegistrySettings {
@@ -111,6 +114,13 @@ export function resolveFederationSettings(
         `pins its certificate fingerprints: ${unpinned.map((p) => p.instanceId).join(", ")} does not`,
     );
   }
+  const trustedProxies = resolveProxies(env["OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES"]);
+  if (trustedProxies !== undefined && !clientCertHeader) {
+    throw new Error(
+      "OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES names the proxies of " +
+        "OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER, which is not set",
+    );
+  }
   return {
     enabled: true,
     actor,
@@ -118,7 +128,35 @@ export function resolveFederationSettings(
     archiveUrl,
     ...(registry ? { registry } : {}),
     ...(clientCertHeader ? { clientCertHeader } : {}),
+    ...(trustedProxies ? { trustedProxies } : {}),
   };
+}
+
+/** The proxies' addresses (`10.0.0.2`, `172.18.0.0/16`, `fd00::/8`); undefined when none are named. */
+function resolveProxies(raw: string | undefined): BlockList | undefined {
+  const entries = (raw ?? "")
+    .split(",")
+    .map((entry) => entry.trim())
+    .filter((entry) => entry !== "");
+  if (entries.length === 0) return undefined;
+  const list = new BlockList();
+  for (const entry of entries) {
+    const [address = "", prefix] = entry.split("/");
+    const family = isIP(address) === 4 ? "ipv4" : isIP(address) === 6 ? "ipv6" : undefined;
+    const bits = prefix === undefined ? undefined : Number(prefix);
+    const max = family === "ipv4" ? 32 : 128;
+    if (
+      family === undefined ||
+      (bits !== undefined && !(Number.isInteger(bits) && bits >= 0 && bits <= max))
+    ) {
+      throw new Error(
+        `OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES: "${entry}" is not an address or subnet`,
+      );
+    }
+    if (bits === undefined) list.addAddress(address, family);
+    else list.addSubnet(address, bits, family);
+  }
+  return list;
 }
 
 /** The registry settings; undefined when none is configured, a throw when half is. */

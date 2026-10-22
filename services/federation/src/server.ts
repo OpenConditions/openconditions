@@ -94,7 +94,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const mtlsContextFor =
     options.mtlsContextFor ??
     (settings.clientCertHeader !== undefined
-      ? proxyMtlsContext(settings.clientCertHeader)
+      ? proxyMtlsContext(settings.clientCertHeader, settings.trustedProxies)
       : undefined);
 
   const app = Fastify({ logger: options.logger ?? true });

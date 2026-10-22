@@ -433,6 +433,9 @@ maps.example.org {
 and `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER=X-Client-Cert-Sha256`.
 Behind a proxy, every peer with `mtlsRequired` must pin `mtlsFingerprints`
 (the boot fails otherwise), and a header sent twice names no certificate.
+`OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES` (comma-separated addresses or
+subnets, `172.18.0.0/16`) takes the header only from those, so another
+container on the network cannot set it.
 Fingerprints match however they are written (`AB:CD:…` or `abcd…`). A peer
 without `mtlsRequired` is unaffected; mTLS never replaces the signature.
 

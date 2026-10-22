@@ -115,6 +115,13 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES": {
+        "type": "string",
+        "title": "Trusted proxies",
+        "description": "With a client certificate header: the comma-separated addresses or subnets (10.0.0.2, 172.18.0.0/16) the header is taken from. Empty: from any connection, so the proxy must be the only way to the service.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_FETCH_TIMEOUT_MS": {
         "type": "string",
         "title": "Peer request timeout (ms)",

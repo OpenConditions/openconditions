@@ -588,6 +588,33 @@ describe("POST /peer/inbox — mTLS a TLS-terminating proxy verified", () => {
     ).toBe("mtls-required");
   }, 30_000);
 
+  it("takes the header only from the proxies named, when they are", async () => {
+    const from = async (proxies: string, local: string) => {
+      const app = await build({
+        sql,
+        env: { ...env(), OPENCONDITIONS_FEDERATION_TRUSTED_PROXIES: proxies },
+        logger: false,
+      });
+      try {
+        const page = pageOf([{ seq: 1, txid: "141", record: peerSituation("peer-mtls", local) }]);
+        const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
+        // An injected request comes from 127.0.0.1.
+        return await app.inject({
+          method: "POST",
+          url: "/peer/inbox",
+          headers: { ...req.headers, "x-client-cert-sha256": "aabbccdd" },
+          payload: req.payload,
+        });
+      } finally {
+        await app.close();
+      }
+    };
+    expect((await from("10.0.0.2, fd00::/8", "p5")).headers["federation-reason"]).toBe(
+      "mtls-required",
+    );
+    expect((await from("127.0.0.0/8", "p6")).statusCode).toBe(200);
+  }, 30_000);
+
   it("fails the boot for a peer that requires mutual TLS but pins no certificate", async () => {
     const peers = JSON.parse(enabledEnv["OPENCONDITIONS_FEDERATION_PEERS"]!) as Record<
       string,

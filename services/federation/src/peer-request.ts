@@ -5,6 +5,7 @@
  * instance's CONFIGURED baseUrl (not the request Host), so a peer signs the
  * logical actor URL and the check is independent of proxies/loopback sockets.
  */
+import { type BlockList, isIPv4 } from "node:net";
 import type { TLSSocket } from "node:tls";
 import {
   authenticatePeerRequest,
@@ -69,10 +70,16 @@ export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined 
  * none, and a header sent twice none either. Sound only where the proxy
  * verifies the certificate, sets the header itself whatever the client sent,
  * and is the only way to reach the service; the peer's signature is required
- * all the same.
+ * all the same. With `proxies`, the header counts only on a connection from
+ * one of their addresses.
  */
-export function proxyMtlsContext(header: string) {
+export function proxyMtlsContext(header: string, proxies?: BlockList) {
   return (req: FastifyRequest): MtlsContext | undefined => {
+    if (proxies !== undefined) {
+      const address = (req.socket.remoteAddress ?? "").replace(/^::ffff:(?=\d+\.)/, "");
+      const family = isIPv4(address) ? "ipv4" : "ipv6";
+      if (address === "" || !proxies.check(address, family)) return undefined;
+    }
     const value = req.headers[header];
     if (typeof value !== "string" || value.includes(",")) return undefined;
     const fingerprint = value.trim();
