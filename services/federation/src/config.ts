@@ -101,6 +101,16 @@ export function resolveFederationSettings(
   if (clientCertHeader && !/^[a-z0-9-]+$/.test(clientCertHeader)) {
     throw new Error("OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER must be an HTTP header name");
   }
+  // A proxy's header names a certificate; only a pinned one says whose.
+  const unpinned = peers.filter(
+    (peer) => peer.mtlsRequired === true && (peer.mtlsFingerprints ?? []).length === 0,
+  );
+  if (clientCertHeader && unpinned.length > 0) {
+    throw new Error(
+      `with OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER, a peer that requires mutual TLS ` +
+        `pins its certificate fingerprints: ${unpinned.map((p) => p.instanceId).join(", ")} does not`,
+    );
+  }
   return {
     enabled: true,
     actor,

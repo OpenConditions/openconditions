@@ -66,13 +66,16 @@ export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined 
 /**
  * Reads the client-certificate verdict a TLS-terminating proxy passes on: a
  * fingerprint in `header` is a certificate the proxy verified, its absence
- * none. Sound only where the proxy verifies the certificate, sets the header
- * itself whatever the client sent, and is the only way to reach the service.
+ * none, and a header sent twice none either. Sound only where the proxy
+ * verifies the certificate, sets the header itself whatever the client sent,
+ * and is the only way to reach the service; the peer's signature is required
+ * all the same.
  */
 export function proxyMtlsContext(header: string) {
   return (req: FastifyRequest): MtlsContext | undefined => {
     const value = req.headers[header];
-    const fingerprint = (Array.isArray(value) ? value[0] : value)?.trim();
+    if (typeof value !== "string" || value.includes(",")) return undefined;
+    const fingerprint = value.trim();
     return fingerprint ? { authorized: true, fingerprint } : undefined;
   };
 }

@@ -582,6 +582,27 @@ describe("POST /peer/inbox — mTLS a TLS-terminating proxy verified", () => {
     expect(
       (await post("p3", { "x-client-cert-sha256": "eeff" })).headers["federation-reason"],
     ).toBe("mtls-fingerprint-mismatch");
+    // Sent twice, it names no certificate the proxy alone could have set.
+    expect(
+      (await post("p4", { "x-client-cert-sha256": "aabbccdd, eeff" })).headers["federation-reason"],
+    ).toBe("mtls-required");
+  }, 30_000);
+
+  it("fails the boot for a peer that requires mutual TLS but pins no certificate", async () => {
+    const peers = JSON.parse(enabledEnv["OPENCONDITIONS_FEDERATION_PEERS"]!) as Record<
+      string,
+      unknown
+    >[];
+    const unpinned = peers.map((p) =>
+      p["instanceId"] === "peer-mtls" ? { ...p, mtlsFingerprints: [] } : p,
+    );
+    await expect(
+      build({
+        sql,
+        env: { ...env(), OPENCONDITIONS_FEDERATION_PEERS: JSON.stringify(unpinned) },
+        logger: false,
+      }),
+    ).rejects.toThrow(/peer-mtls does not/);
   }, 30_000);
 });
 
