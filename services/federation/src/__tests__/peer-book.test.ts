@@ -23,14 +23,15 @@ describe("the peers a registry sync found", () => {
     book.discover(
       [
         peer("a.example.org", [a2!], { trustTier: 0 }),
-        peer("b.example.org", [b!]),
+        peer("b.example.org", [b!], { trustTier: 2 }),
         peer("me.example.org", [self!]),
       ],
       "me.example.org",
     );
+    // A peer only the registry names is served the public tier, whatever its entry says.
     expect(book.all().map((p) => [p.instanceId, p.trustTier, p.pinnedKeys])).toEqual([
       ["a.example.org", 2, [a, a2]],
-      ["b.example.org", 1, [b]],
+      ["b.example.org", 0, [b]],
     ]);
     expect(book.discovered().map((p) => p.instanceId)).toEqual(["a.example.org", "b.example.org"]);
 

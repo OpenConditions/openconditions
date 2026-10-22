@@ -48,7 +48,9 @@ export class PeerBook {
 
   /**
    * Takes the peers a verified registry sync found, `self` (this instance's
-   * own entry) left out.
+   * own entry) left out. A peer only the registry names is served the public
+   * tier, whatever tier its entry states: a wider window is the operator's
+   * to grant, by configuring the peer.
    */
   discover(discovered: readonly PeerRecord[], self: string): void {
     const pinnedBy = new Map<string, string>();
@@ -59,6 +61,7 @@ export class PeerBook {
       .filter((peer) => peer.instanceId !== self)
       .map((peer) => ({
         ...peer,
+        trustTier: 0 as const,
         pinnedKeys: peer.pinnedKeys.filter(
           (key) => (pinnedBy.get(key) ?? peer.instanceId) === peer.instanceId,
         ),
