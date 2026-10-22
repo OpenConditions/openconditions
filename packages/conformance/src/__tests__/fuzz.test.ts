@@ -38,6 +38,19 @@ describe("mutateJson", () => {
     expect(JSON.stringify(item)).toContain('"__proto__":"x"');
   });
 
+  it("turns an object with its own toString key into a string", () => {
+    const { doc, applied } = mutateJson(
+      DOC,
+      [
+        { at: 0, op: { kind: "inherited-key", key: "toString" } },
+        { at: 0, op: { kind: "retype", to: "string" } },
+      ],
+      { within: (path) => path.length === 2 },
+    );
+    expect(applied).toEqual(["items.0: add key toString", "items.0: retype string"]);
+    expect(JSON.parse((doc as { items: string[] }).items[0]!)).toMatchObject({ toString: "x" });
+  });
+
   it("swaps a value for one its property enumerates", () => {
     const enums = enumsByProperty(
       new Map([["#/components/schemas/Site/properties/status", ["OPEN", "CLOSED"]]]),

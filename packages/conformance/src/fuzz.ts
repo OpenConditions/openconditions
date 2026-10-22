@@ -366,7 +366,10 @@ export function mutateJson(
       case "retype": {
         const to: Json =
           op.to === "string"
-            ? String(current)
+            ? // An object given its own `toString` key has no string conversion of its own.
+              typeof current === "object" && current !== null
+              ? JSON.stringify(current)
+              : String(current)
             : op.to === "number"
               ? 1
               : op.to === "boolean"
