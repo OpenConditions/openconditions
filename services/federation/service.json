@@ -108,6 +108,13 @@
         "default": "",
         "x-openmapx-secret": false
       },
+      "OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER": {
+        "type": "string",
+        "title": "Client certificate header",
+        "description": "For peers that require mutual TLS behind a TLS-terminating proxy: the request header the proxy puts a verified client certificate's SHA-256 fingerprint in. The proxy must set it itself and be the only way to the service. Empty: the service reads client certificates off its own TLS connections.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "OPENCONDITIONS_FETCH_TIMEOUT_MS": {
         "type": "string",
         "title": "Peer request timeout (ms)",
