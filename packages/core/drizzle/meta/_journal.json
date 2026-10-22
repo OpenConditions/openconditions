@@ -610,6 +610,13 @@
       "when": 1792700328884,
       "tag": "0086_archive_file",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1792700972377,
+      "tag": "0087_federation_peer_cadence",
+      "breakpoints": true
     }
   ]
 }

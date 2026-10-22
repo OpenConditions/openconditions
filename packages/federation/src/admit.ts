@@ -32,7 +32,15 @@ export type InboundEntry =
           revision?: number;
         }
     ))
-  | { seq: number; txid: string; operation: "liveness"; sourceId: string; polledAt: string };
+  | {
+      seq: number;
+      txid: string;
+      operation: "liveness";
+      sourceId: string;
+      polledAt: string;
+      /** How often the peer polls the source, in seconds, when it says. */
+      cadenceSec?: number;
+    };
 
 const isString = (v: unknown): v is string => typeof v === "string" && v.length > 0;
 
@@ -43,7 +51,7 @@ const isString = (v: unknown): v is string => typeof v === "string" && v.length 
  * carries one says two things at once and is refused. A retraction's reason
  * outside the model's vocabulary reads as `withdrawn`. The record itself is
  * checked on admission ({@link admitFederatedRecord}). A liveness entry
- * names a source and when the peer polled it.
+ * names a source, when the peer polled it and, when it says, how often.
  */
 export function readInboundEntry(
   wire: unknown,
@@ -62,6 +70,7 @@ export function readInboundEntry(
     ) {
       return { ok: false, reason: "malformed liveness entry" };
     }
+    const cadenceSec = e["cadenceSec"];
     return {
       ok: true,
       entry: {
@@ -70,6 +79,9 @@ export function readInboundEntry(
         operation: "liveness",
         sourceId: e["sourceId"],
         polledAt: new Date(polledAt).toISOString(),
+        ...(typeof cadenceSec === "number" && Number.isSafeInteger(cadenceSec) && cadenceSec > 0
+          ? { cadenceSec }
+          : {}),
       },
     };
   }

@@ -1,4 +1,5 @@
 import { generateReporterKey, type ReporterKey } from "@openconditions/contrib-core";
+import { withPolledValidity } from "@openconditions/core";
 import { observationId, schemaVersions } from "@openconditions/model";
 import {
   ensureObservationPartitions,
@@ -214,6 +215,48 @@ describe("landing a peer's records", () => {
     expect(
       await ingestFederatedPage(sql, page({ ...liveness(polled, 5), polledAt: "soon" }), ctx()),
     ).toMatchObject({ liveness: 0, skipped: [{ reason: "malformed liveness entry" }] });
+  });
+
+  it("holds a peer's reading as long as the polling the peer states keeps it current", async () => {
+    // A source this catalogue does not poll: only the peer says how often it is.
+    const source = "es-minetur-fuel";
+    const at = "2026-07-12T08:00:00.000Z";
+    const liveness = (seq: number, cadenceSec?: number) => ({
+      seq,
+      txid: "41",
+      operation: "liveness",
+      sourceId: source,
+      domain: "fuel",
+      polledAt: at,
+      createdAt: at,
+      ...(cadenceSec === undefined ? {} : { cadenceSec }),
+    });
+    await ingestFederatedPage(sql, page(liveness(1, 3600)), ctx(at));
+    // A liveness that does not say keeps what the peer said.
+    await ingestFederatedPage(sql, page(liveness(2)), ctx(at));
+    const [{ cadence_sec }] = await sql<{ cadence_sec: number }[]>`
+      SELECT cadence_sec FROM conditions.federation_source_receipt
+       WHERE peer_instance_id = ${PEER} AND source_id = ${source}`;
+    expect(cadence_sec).toBe(3600);
+
+    const reading: Rec = {
+      class: "observation",
+      property: "fuel.price",
+      provenance: {
+        origin: "feed",
+        accessMode: "bulk",
+        sourceId: source,
+        instanceId: PEER,
+        originChain: [{ instanceId: PEER, viaPeer: PEER, receivedAt: at }],
+      },
+    };
+    const db = {
+      execute: async <T>(query: string, params?: unknown[]) =>
+        (await sql.unsafe(query, params as never)) as T,
+    };
+    const [held] = await withPolledValidity(db, registry, [reading]);
+    // Two of the peer's hourly polls, not the 30 minutes a source unknown here gets.
+    expect(held!["validUntil"]).toBe("2026-07-12T10:00:00.000Z");
   });
 
   it("lands a peer's ended reading with the validity it states", async () => {

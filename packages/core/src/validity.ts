@@ -84,8 +84,9 @@ const peerKey = (peer: string, source: string) => `${peer}\u0000${source}`;
  * reading {@link validWhilePolled} is current until its source's last
  * successful poll finished plus `max(30 min, two of its shortest data
  * cadences)`; one a peer sent, until this instance last received its source
- * from that peer plus that window (`federation_source_receipt`; 30 min where
- * the source is not in this catalogue); a fused reading of a change-only
+ * from that peer plus that window of the cadence the peer states it polls
+ * the source at (`federation_source_receipt`), else of this catalogue's (30
+ * min where neither says); a fused reading of a change-only
  * property until the latest such instant of its contributing feeds. A source
  * that has not polled successfully yet, or arrived from no peer, gives none.
  * Every other record is returned as it is. At most two statements, whatever
@@ -126,7 +127,8 @@ export async function withPolledValidity<T extends Rec>(
     >(
       `SELECT r.peer_instance_id, r.source_id,
               r.last_received_at + make_interval(
-                secs => GREATEST(${MIN_POLLED_VALIDITY_SEC}, 2 * COALESCE(s.cadence_sec, 0))) AS valid_until
+                secs => GREATEST(${MIN_POLLED_VALIDITY_SEC},
+                                 2 * COALESCE(r.cadence_sec, s.cadence_sec, 0))) AS valid_until
          FROM conditions.federation_source_receipt r
          LEFT JOIN conditions.source s ON s.id = r.source_id
         WHERE r.source_id = ANY($1::text[])`,

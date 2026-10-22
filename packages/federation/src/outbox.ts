@@ -158,7 +158,7 @@ interface JournalRow {
   kind: string;
   domain: string;
   property: string | null;
-  snapshot: FederatedRecord | { sourceId: string; polledAt: string } | null;
+  snapshot: FederatedRecord | { sourceId: string; polledAt: string; cadenceSec?: number } | null;
   tombstone_reason: string | null;
   revision: number | null;
   created_at: Date;
@@ -174,7 +174,7 @@ interface JournalRow {
  */
 function rowToEntry(row: JournalRow): OutboxEntry | undefined {
   if (row.operation === "liveness") {
-    const stated = row.snapshot as { sourceId: string; polledAt: string };
+    const stated = row.snapshot as { sourceId: string; polledAt: string; cadenceSec?: number };
     return row.restricted === false
       ? {
           seq: Number(row.seq),
@@ -183,6 +183,7 @@ function rowToEntry(row: JournalRow): OutboxEntry | undefined {
           sourceId: row.record_id,
           domain: row.domain,
           polledAt: new Date(stated.polledAt).toISOString(),
+          ...(typeof stated.cadenceSec === "number" ? { cadenceSec: stated.cadenceSec } : {}),
           createdAt: row.created_at.toISOString(),
         }
       : undefined;

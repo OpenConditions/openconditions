@@ -79,6 +79,8 @@ export interface SourceLivenessEntry {
   /** The source's domain. */
   domain: string;
   polledAt: string;
+  /** How often this instance polls the source, in seconds. */
+  cadenceSec?: number;
   createdAt: string;
 }
 

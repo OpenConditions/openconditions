@@ -960,6 +960,8 @@ describe("source liveness", () => {
       sourceId: FLOW,
       domain: "roads",
       polledAt: expect.stringMatching(/^\d{4}-\d{2}-\d{2}T.*Z$/),
+      // How often this instance polls it, so a peer holds the readings as long.
+      cadenceSec: 60,
       createdAt: expect.any(String),
     });
     expect(plain.highWaterMark).toBe(asked.highWaterMark);

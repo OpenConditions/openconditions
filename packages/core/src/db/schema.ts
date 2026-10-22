@@ -533,6 +533,13 @@ export const federationSourceReceipt = conditionsSchema.table(
      * once it falls silent (`federation_lapsed_copy`).
      */
     livenessAt: timestamp("liveness_at", { withTimezone: true }),
+    /**
+     * How often the peer said it polls the source, in seconds; null until it
+     * said. A reading of the source holds, and a copy stays, as long as the
+     * peer's polling keeps them current, not this instance's own of the
+     * source, which it may poll less often or not at all.
+     */
+    cadenceSec: integer("cadence_sec"),
   },
   (t) => [primaryKey({ columns: [t.peerInstanceId, t.sourceId] })],
 );

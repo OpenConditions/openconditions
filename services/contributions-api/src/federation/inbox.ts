@@ -127,8 +127,8 @@ export async function ingestFederatedPage(
     const held = received.get(sourceId);
     if (held === undefined || Date.parse(at) > Date.parse(held)) received.set(sourceId, at);
   };
-  /** The sources whose liveness this page carried. */
-  const alive = new Set<string>();
+  /** The sources whose liveness this page carried, each with the cadence the peer stated. */
+  const alive = new Map<string, number | null>();
 
   for (const item of page["orderedItems"]) {
     // Advance the processed frontier over EVERY entry that carries a usable
@@ -155,7 +155,7 @@ export async function ingestFederatedPage(
         entry.sourceId,
         Date.parse(entry.polledAt) < Date.parse(ctx.now) ? entry.polledAt : ctx.now,
       );
-      alive.add(entry.sourceId);
+      alive.set(entry.sourceId, entry.cadenceSec ?? alive.get(entry.sourceId) ?? null);
       result.liveness += 1;
       continue;
     }
@@ -178,7 +178,7 @@ export async function ingestFederatedPage(
   await recordReceipts(sql, ctx, received, alive);
   // The peer polls these sources again: what the sweep ended of them for
   // the peer's silence is live again, after this page's own retractions.
-  for (const sourceId of alive) {
+  for (const sourceId of alive.keys()) {
     await sql.begin(async (tx) => {
       await tx`SELECT pg_advisory_xact_lock(hashtext(${sourceId}))`;
       await restoreLapsedCopies(tx, ctx.registry, ctx.peerInstanceId, sourceId, {
@@ -194,27 +194,32 @@ export async function ingestFederatedPage(
 /**
  * Notes when each source arrived from the peer: its readings hold while it
  * keeps arriving (`withPolledValidity`). A receipt never moves back. A source
- * whose liveness arrived is noted as one the peer says it polls: its copies
- * end should the peer fall silent about it.
+ * whose liveness arrived is noted as one the peer says it polls, at the
+ * cadence it states: its readings hold, and its copies stay, as long as that
+ * polling keeps them current, and they end should the peer fall silent.
  */
 async function recordReceipts(
   sql: Sql,
   ctx: InboxContext,
   sources: ReadonlyMap<string, string>,
-  alive: ReadonlySet<string>,
+  alive: ReadonlyMap<string, number | null>,
 ): Promise<void> {
   if (sources.size === 0) return;
   const keys = [...sources.keys()];
   await sql`
     INSERT INTO conditions.federation_source_receipt
-      (peer_instance_id, source_id, last_received_at, liveness_at)
-    SELECT ${ctx.peerInstanceId}, s, at, CASE WHEN s = ANY(${[...alive]}::text[]) THEN at END
+      (peer_instance_id, source_id, last_received_at, liveness_at, cadence_sec)
+    SELECT ${ctx.peerInstanceId}, r.s, r.at, CASE WHEN l.s IS NOT NULL THEN r.at END, l.cadence
       FROM unnest(${keys}::text[], ${[...sources.values()]}::timestamptz[]) AS r(s, at)
+      LEFT JOIN unnest(${[...alive.keys()]}::text[], ${[...alive.values()]}::int[])
+        AS l(s, cadence) ON l.s = r.s
     ON CONFLICT (peer_instance_id, source_id) DO UPDATE
       SET last_received_at = GREATEST(conditions.federation_source_receipt.last_received_at,
                                       excluded.last_received_at),
           liveness_at = GREATEST(conditions.federation_source_receipt.liveness_at,
-                                 excluded.liveness_at)`;
+                                 excluded.liveness_at),
+          cadence_sec = COALESCE(excluded.cadence_sec,
+                                 conditions.federation_source_receipt.cadence_sec)`;
 }
 
 async function landRecord(

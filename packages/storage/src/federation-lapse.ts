@@ -17,8 +17,9 @@ const CLASSES: readonly RevisionedClass[] = ["situation", "feature", "offer"];
 /**
  * A live copy, without an expiry of its own, of a peer that sends liveness of
  * its source and has been silent about it past the lapse window: the larger
- * of `$3` seconds and four of the source's cadences, where this catalogue
- * knows it. ($1 = now, $2 = this instance's id, $3 = the lapse window)
+ * of `$3` seconds and four of the source's cadences, as the peer states it
+ * or else as this catalogue knows it. ($1 = now, $2 = this instance's id, $3
+ * = the lapse window)
  */
 export const PEER_LAPSED = `r.tombstoned_at IS NULL AND r.instance_id <> $2
   AND r.access_mode = 'bulk' AND r.expires_at IS NULL
@@ -28,7 +29,8 @@ export const PEER_LAPSED = `r.tombstoned_at IS NULL AND r.instance_id <> $2
      WHERE fr.peer_instance_id = r.instance_id AND fr.source_id = r.source_id
        AND fr.liveness_at IS NOT NULL
        AND fr.last_received_at < $1::timestamptz
-             - make_interval(secs => GREATEST($3::int, 4 * COALESCE(s.cadence_sec, 0))))`;
+             - make_interval(secs => GREATEST($3::int,
+                                              4 * COALESCE(fr.cadence_sec, s.cadence_sec, 0))))`;
 
 /**
  * Notes the copies of `cls` the sweep just ended for their peer's silence, at

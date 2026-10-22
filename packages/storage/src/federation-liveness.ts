@@ -14,7 +14,9 @@ export const SOURCE_LIVENESS_INTERVAL_SEC = 600;
  * so a peer holding a quiet source's readings learns from this entry that
  * they still hold. Written in the poll's transaction, after its changes, so
  * a peer never takes the source as polled before it has the poll's
- * readings. A restricted or on-demand source journals none, nor does a
+ * readings. The entry states how often this instance polls the source, so a
+ * peer holds the readings as long as this instance's polling keeps them
+ * current. A restricted or on-demand source journals none, nor does a
  * source journalled less than {@link SOURCE_LIVENESS_INTERVAL_SEC} ago.
  * Returns whether an entry was written.
  */
@@ -23,7 +25,8 @@ export async function journalSourceLiveness(tx: Sql, sourceId: string): Promise<
     INSERT INTO conditions.federation_outbox
       (operation, record_class, record_id, kind, domain, snapshot)
     SELECT 'liveness', 'observation', s.id, 'liveness', s.domain,
-           jsonb_build_object('sourceId', s.id, 'polledAt', clock_timestamp())
+           jsonb_build_object('sourceId', s.id, 'polledAt', clock_timestamp(),
+                              'cadenceSec', s.cadence_sec)
       FROM conditions.source s
      WHERE s.id = ${sourceId} AND NOT s.restricted AND s.access_mode = 'bulk'
        AND EXISTS (
