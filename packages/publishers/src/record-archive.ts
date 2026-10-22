@@ -335,16 +335,25 @@ export async function* readRecordArchive(
 ): AsyncGenerator<Record<string, unknown>[]> {
   const file = await asyncBufferFromFile(filePath);
   const metadata = await parquetMetadataAsync(file);
+  let grouped = 0n;
   for (const group of metadata.row_groups) {
+    const chunks = group.columns.reduce(
+      (sum, chunk) => sum + (chunk.meta_data?.total_uncompressed_size ?? 0n),
+      0n,
+    );
+    const bytes = chunks > group.total_byte_size ? chunks : group.total_byte_size;
     if (
       group.num_rows > BigInt(ARCHIVE_READ_MAX_GROUP_ROWS) ||
-      group.total_byte_size > BigInt(ARCHIVE_READ_MAX_GROUP_BYTES)
+      bytes > BigInt(ARCHIVE_READ_MAX_GROUP_BYTES)
     ) {
       throw new RangeError(
-        `a row group of ${group.num_rows} rows and ${group.total_byte_size} bytes is larger ` +
-          `than an archive's`,
+        `a row group of ${group.num_rows} rows and ${bytes} bytes is larger than an archive's`,
       );
     }
+    grouped += group.num_rows;
+  }
+  if (grouped !== metadata.num_rows) {
+    throw new RangeError(`the file states ${metadata.num_rows} rows, its row groups ${grouped}`);
   }
   const rows = Number(metadata.num_rows);
   for (let start = 0; start < rows; start += ROW_GROUP_SIZE) {
