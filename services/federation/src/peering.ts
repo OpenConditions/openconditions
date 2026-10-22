@@ -42,11 +42,12 @@ export async function refreshPeers(
   const local = { ...actor.capabilities, schemaVersions: schemaVersions(productionRegistry()) };
   const inboxUrl = `${actor.baseUrl.replace(/\/$/, "")}/peer/inbox`;
   const results: PeerUpkeep[] = [];
-  for (const peer of peers.all()) {
+  for (const peer of peers.configured()) {
     const capabilities = await refreshPeerCapabilities(sql, peer, {
       local,
       fetchImpl: opts.fetchImpl,
       now: opts.now,
+      learned: peers.learned(peer.instanceId),
     }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
     const result: PeerUpkeep = { peer: peer.instanceId, capabilities };
     if (peer.subscribe !== undefined || peer.pull !== undefined) {

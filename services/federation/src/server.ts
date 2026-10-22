@@ -123,7 +123,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   const registry = productionRegistry();
   const advertisedSchemaVersions = schemaVersions(registry);
   const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
-  await maintainInstanceKey(sql, now());
+  await maintainInstanceKey(sql, now(), actorConfig.instanceId);
 
   /** The keys valid now, rotating first when none is (a process that
    *  outlived its keys): keys are read per request, so a rotation shows up
@@ -131,7 +131,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   async function activeKeys(): Promise<InstanceKey[]> {
     const keys = await loadActiveKeys(sql, now());
     if (keys.length > 0) return keys;
-    await maintainInstanceKey(sql, now());
+    await maintainInstanceKey(sql, now(), actorConfig.instanceId);
     return loadActiveKeys(sql, now());
   }
 

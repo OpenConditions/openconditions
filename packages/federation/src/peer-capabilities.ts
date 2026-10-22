@@ -11,7 +11,7 @@
 import type postgres from "postgres";
 import type { ActorDocument } from "./actor.js";
 import { type NegotiableCapabilities, negotiateCapabilities } from "./capabilities.js";
-import { chainedActorKeys, storeLearnedKeys } from "./peer-keys.js";
+import { chainedActorKeys, type KeyAnchors, storeLearnedKeys, trustedKeys } from "./peer-keys.js";
 import { type PeerRecord, verifyActorAgainstPin } from "./peers.js";
 
 type Sql = postgres.Sql;
@@ -20,29 +20,31 @@ export type PeerVersions =
   | {
       ok: true;
       schemaVersions: string[];
-      /** The served keys that chain to the peer's pins ({@link chainedActorKeys}). */
-      keys: string[];
+      /** The served keys that chain to the peer's pins, with their anchors ({@link chainedActorKeys}). */
+      keys: KeyAnchors;
     }
   | { ok: false; reason: string };
 
 /**
  * The schema versions a fetched actor document advertises, once it is the
  * pinned peer's own document and the two instances can federate at all. The
- * document must serve a key that chains to one `peer` trusts.
+ * document must serve a key that chains to one `peer` (as configured) pins,
+ * directly or through its `learned` keys.
  */
 export async function peerVersionsFromActor(
   actor: unknown,
   peer: PeerRecord,
   local: NegotiableCapabilities,
+  learned?: KeyAnchors,
 ): Promise<PeerVersions> {
   if (actor === null || typeof actor !== "object") {
     return { ok: false, reason: "the actor document is not an object" };
   }
   const document = actor as ActorDocument;
-  const keys = await chainedActorKeys(document, new Set(peer.pinnedKeys));
+  const keys = await chainedActorKeys(document, peer.instanceId, trustedKeys(peer, learned));
   const pin = verifyActorAgainstPin(document, {
     ...peer,
-    pinnedKeys: keys.length > 0 ? keys : peer.pinnedKeys,
+    pinnedKeys: keys.size > 0 ? [...keys.keys()] : peer.pinnedKeys,
   });
   if (!pin.ok) return { ok: false, reason: pin.reason ?? "the actor document fails its pin" };
   const capabilities = document.capabilities as NegotiableCapabilities | undefined;
@@ -54,7 +56,7 @@ export async function peerVersionsFromActor(
   } catch (err) {
     return { ok: false, reason: (err as Error).message };
   }
-  return { ok: true, schemaVersions: [...capabilities.schemaVersions], keys: pin.matchedKeys };
+  return { ok: true, schemaVersions: [...capabilities.schemaVersions], keys };
 }
 
 /** Keeps a peer's advertised schema versions. */
@@ -85,14 +87,21 @@ export async function loadPeerVersions(
 
 /**
  * Fetches a peer's actor document, verifies and negotiates it, and keeps
- * what it advertises and the keys it serves that chain to the peer's pins
- * (`federation_peer_key`). A document that fails leaves both as they were,
- * so a peer's brief outage never stops its records landing.
+ * what it advertises and the keys beyond `peer`'s configured pins that it
+ * serves chained to them (`federation_peer_key`). A document that fails
+ * leaves both as they were, so a peer's brief outage never stops its records
+ * landing.
  */
 export async function refreshPeerCapabilities(
   sql: Sql,
   peer: PeerRecord,
-  opts: { local: NegotiableCapabilities; fetchImpl: typeof fetch; now: string },
+  opts: {
+    local: NegotiableCapabilities;
+    fetchImpl: typeof fetch;
+    now: string;
+    /** The keys learned of the peer so far. */
+    learned?: KeyAnchors;
+  },
 ): Promise<PeerVersions> {
   let actor: unknown;
   try {
@@ -104,10 +113,11 @@ export async function refreshPeerCapabilities(
   } catch (err) {
     return { ok: false, reason: `the actor document could not be fetched: ${String(err)}` };
   }
-  const versions = await peerVersionsFromActor(actor, peer, opts.local);
+  const versions = await peerVersionsFromActor(actor, peer, opts.local, opts.learned);
   if (versions.ok) {
     await storePeerVersions(sql, peer.instanceId, versions.schemaVersions, opts.now);
-    await storeLearnedKeys(sql, peer.instanceId, versions.keys, opts.now);
+    const learned = [...versions.keys].filter(([keyId]) => !peer.pinnedKeys.includes(keyId));
+    await storeLearnedKeys(sql, peer.instanceId, new Map(learned), opts.now);
   }
   return versions;
 }

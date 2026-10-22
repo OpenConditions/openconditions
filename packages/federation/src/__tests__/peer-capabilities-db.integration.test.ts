@@ -7,6 +7,7 @@ import {
   type ActorConfig,
   buildActorDocument,
   chainedActorKeys,
+  endorsementMessage,
   generateInstanceKey,
   type InstanceKey,
   loadLearnedKeys,
@@ -70,7 +71,7 @@ describe("a peer's capabilities", () => {
     expect(await peerVersionsFromActor(actor, peer(), local)).toEqual({
       ok: true,
       schemaVersions: versions,
-      keys: [key.keyId],
+      keys: new Map([[key.keyId, key.keyId]]),
     });
   });
 
@@ -105,62 +106,93 @@ describe("a peer's capabilities", () => {
 });
 
 describe("a peer's rotated key", () => {
+  const PEER = "peer.example.net";
+  const endorsedBy = (endorser: InstanceKey, instanceId = PEER) =>
+    generateInstanceKey(LATER, 6, { key: endorser, instanceId });
+  const pinned = () => new Map([[key.keyId, key.keyId]]);
+  const chained = async (keys: InstanceKey[], instanceId = PEER) => [
+    ...(
+      await chainedActorKeys(buildActorDocument(CONFIG, keys, versions), instanceId, pinned())
+    ).keys(),
+  ];
+
   it("is trusted once the pinned key endorsed it, and its successor once it did", async () => {
-    const next = await generateInstanceKey(LATER, 6, key);
+    const next = await endorsedBy(key);
     const overlap = buildActorDocument(CONFIG, [next, key], versions);
-    expect(await peerVersionsFromActor(overlap, peer(), local)).toMatchObject({
+    const verified = await peerVersionsFromActor(overlap, peer(), local);
+    expect(verified).toMatchObject({
       ok: true,
-      keys: [next.keyId, key.keyId],
+      keys: new Map([
+        [next.keyId, key.keyId],
+        [key.keyId, key.keyId],
+      ]),
     });
     await refreshPeerCapabilities(sql, peer(), { local, fetchImpl: serving(overlap), now: LATER });
-    const learned = (await loadLearnedKeys(sql)).get("peer.example.net");
-    expect(learned?.sort()).toEqual([next.keyId, key.keyId].sort());
+    const learned = (await loadLearnedKeys(sql)).get(PEER);
+    expect(learned).toEqual(new Map([[next.keyId, key.keyId]]));
 
     // A rotation later, neither the pinned key nor its endorsement is served:
     // the learned key carries the trust, and the retired one is dropped.
-    const third = await generateInstanceKey(LATER, 6, next);
+    const third = await endorsedBy(next);
     const after = buildActorDocument(CONFIG, [third], versions);
     expect(await peerVersionsFromActor(after, peer(), local)).toMatchObject({ ok: false });
-    const trusting = withLearnedKeys(peer(), learned);
     expect(
-      await refreshPeerCapabilities(sql, trusting, {
+      await refreshPeerCapabilities(sql, peer(), {
         local,
         fetchImpl: serving(after),
         now: LATER,
+        learned,
       }),
-    ).toMatchObject({ ok: true, keys: [third.keyId] });
-    expect((await loadLearnedKeys(sql)).get("peer.example.net")).toEqual([third.keyId]);
+    ).toMatchObject({ ok: true, keys: new Map([[third.keyId, key.keyId]]) });
+    const relearned = (await loadLearnedKeys(sql)).get(PEER);
+    expect(relearned).toEqual(new Map([[third.keyId, key.keyId]]));
+    expect(withLearnedKeys(peer(), relearned).pinnedKeys).toEqual([key.keyId, third.keyId]);
+
+    // The operator removing the pin revokes every key it led to.
+    const repinned = { ...peer(), pinnedKeys: [(await generateInstanceKey(NOW)).keyId] };
+    expect(withLearnedKeys(repinned, relearned).pinnedKeys).toEqual(repinned.pinnedKeys);
   });
 
-  it("is not trusted on an endorsement that signs another key or comes from an unpinned one", async () => {
-    const next = await generateInstanceKey(LATER, 6, key);
+  it("is not trusted on an endorsement of another key, instance, or by an unpinned key", async () => {
+    const next = await endorsedBy(key);
     const impostor = await generateInstanceKey(LATER);
-    const stolen = { ...impostor, endorsement: next.endorsement! };
-    expect(
-      await chainedActorKeys(
-        buildActorDocument(CONFIG, [stolen, key], versions),
-        new Set([key.keyId]),
-      ),
-    ).toEqual([key.keyId]);
+    expect(await chained([{ ...impostor, endorsement: next.endorsement! }, key])).toEqual([
+      key.keyId,
+    ]);
+
+    // Another instance's key, endorsed by that instance, is not this peer's.
+    const elsewhere = await endorsedBy(key, "other.example.net");
+    expect(await chained([elsewhere, key])).toEqual([key.keyId]);
+
+    // A peer that endorses a key it does not hold: its own signature holds,
+    // the key's proof cannot.
+    const victim = await generateInstanceKey(LATER);
+    const message = endorsementMessage(PEER, victim.keyId);
+    const sign = async (privateKey: CryptoKey) =>
+      Buffer.from(
+        await globalThis.crypto.subtle.sign(
+          { name: "Ed25519" },
+          privateKey,
+          message as BufferSource,
+        ),
+      ).toString("base64url");
+    const forged = {
+      ...victim,
+      endorsement: {
+        by: key.keyId,
+        signature: await sign(key.privateKey),
+        proof: await sign(impostor.privateKey),
+      },
+    };
+    expect(await chained([forged, key])).toEqual([key.keyId]);
 
     const stranger = await generateInstanceKey(NOW);
-    const vouched = await generateInstanceKey(LATER, 6, stranger);
-    expect(
-      await chainedActorKeys(
-        buildActorDocument(CONFIG, [vouched, stranger, key], versions),
-        new Set([key.keyId]),
-      ),
-    ).toEqual([key.keyId]);
+    expect(await chained([await endorsedBy(stranger), stranger, key])).toEqual([key.keyId]);
   });
 
   it("is trusted along a chain the document serves", async () => {
-    const second = await generateInstanceKey(LATER, 6, key);
-    const third = await generateInstanceKey(LATER, 6, second);
-    expect(
-      await chainedActorKeys(
-        buildActorDocument(CONFIG, [third, second], versions),
-        new Set([key.keyId]),
-      ),
-    ).toEqual([third.keyId, second.keyId]);
+    const second = await endorsedBy(key);
+    const third = await endorsedBy(second);
+    expect(await chained([third, second])).toEqual([third.keyId, second.keyId]);
   });
 });

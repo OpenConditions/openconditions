@@ -44,7 +44,7 @@ export {
   verifyContentDigest,
   verifyMessage,
 } from "./http-signature.js";
-export type { InstanceKey, KeyEndorsement, KeyMaintenance } from "./keys.js";
+export type { Endorser, InstanceKey, KeyEndorsement, KeyMaintenance } from "./keys.js";
 export {
   endorsementMessage,
   generateInstanceKey,
@@ -113,8 +113,10 @@ export {
 } from "./peer-health.js";
 export {
   chainedActorKeys,
+  type KeyAnchors,
   loadLearnedKeys,
   storeLearnedKeys,
+  trustedKeys,
   withLearnedKeys,
 } from "./peer-keys.js";
 export type {

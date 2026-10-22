@@ -94,6 +94,8 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
   }
 
   const seen = new Set<string>();
+  /** Which peer pins each key: a key is one instance's, never two. */
+  const pinnedBy = new Map<string, string>();
   return value.map((entry, index) => {
     if (entry === null || typeof entry !== "object" || Array.isArray(entry)) {
       fail(index, "must be an object");
@@ -128,6 +130,11 @@ export function loadPeers(source: string | unknown): PeerRecord[] {
           `pinned key ${JSON.stringify(pin)} is not an Ed25519 multikey: ${(err as Error).message}`,
         );
       }
+      const other = pinnedBy.get(pin);
+      if (other !== undefined && other !== instanceId) {
+        fail(index, `pinned key ${JSON.stringify(pin)} is pinned for "${other}" too`);
+      }
+      pinnedBy.set(pin, instanceId);
     }
 
     const result: PeerRecord = {

@@ -124,7 +124,11 @@ async function boot() {
   if (settings.enabled) {
     const maintainKey = async () => {
       try {
-        const kept = await maintainInstanceKey(sql, new Date().toISOString());
+        const kept = await maintainInstanceKey(
+          sql,
+          new Date().toISOString(),
+          settings.actor!.instanceId,
+        );
         if (kept.status !== "current") {
           const signsFrom = new Date(
             kept.key.notBefore.getTime() + KEY_PUBLICATION_LEAD_DAYS * 86_400_000,

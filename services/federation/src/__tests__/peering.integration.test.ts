@@ -181,9 +181,9 @@ beforeAll(async () => {
   sqlC = postgres(`${server}/c`, { max: 4, onnotice: () => {} });
 
   const now = new Date().toISOString();
-  await maintainInstanceKey(sqlA, now);
-  await maintainInstanceKey(sqlB, now);
-  await maintainInstanceKey(sqlC, now);
+  await maintainInstanceKey(sqlA, now, A);
+  await maintainInstanceKey(sqlB, now, B);
+  await maintainInstanceKey(sqlC, now, C);
   [keyA] = (await loadActiveKeys(sqlA, now)) as [InstanceKey];
   const [keyB] = (await loadActiveKeys(sqlB, now)) as [InstanceKey];
   [keyC] = (await loadActiveKeys(sqlC, now)) as [InstanceKey];
@@ -482,7 +482,7 @@ describe("a peer that pulls", () => {
 describe("a peer that rotates its key", () => {
   it("is followed by its pins: the key it rotated to verifies once its peers read it", async () => {
     const now = new Date().toISOString();
-    const rotated = await rotateInstanceKey(sqlA, now);
+    const rotated = await rotateInstanceKey(sqlA, now, A);
     expect(rotated.endorsement?.by).toBe(keyA.keyId);
     // Push a new entry under the new key before B has read A's actor document.
     await writeSnapshot(
@@ -501,7 +501,13 @@ describe("a peer that rotates its key", () => {
     expect(await push()).toMatchObject({ delivered: 0, failed: 2 });
 
     const [upkeep] = await refreshPeers(sqlB, settingsB, peersB, { fetchImpl, now });
-    expect(upkeep!.capabilities).toMatchObject({ ok: true, keys: [rotated.keyId, keyA.keyId] });
+    expect(upkeep!.capabilities).toMatchObject({
+      ok: true,
+      keys: new Map([
+        [rotated.keyId, keyA.keyId],
+        [keyA.keyId, keyA.keyId],
+      ]),
+    });
     expect(peersB.find(A)?.pinnedKeys).toContain(rotated.keyId);
     await sqlA`UPDATE conditions.federation_subscription SET push_failures = 0`;
     // B read A's document; C has not yet.

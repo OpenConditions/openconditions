@@ -1,6 +1,6 @@
 import { tombstoneRecords } from "@openconditions/storage";
 import type postgres from "postgres";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
 import { type InstanceKey, loadActiveKeys, maintainInstanceKey } from "../keys.js";
 import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
@@ -149,13 +149,18 @@ async function webhookSubFromNow(opts: {
 beforeAll(async () => {
   db = await startDatabase();
   sql = db.sql;
-  await maintainInstanceKey(sql, NOW);
+  await maintainInstanceKey(sql, NOW, "oc-test");
   [signingKey] = await loadActiveKeys(sql, NOW);
 }, 120_000);
 
 afterAll(async () => {
   await db?.close();
 }, 30_000);
+
+// A peer holds one webhook per inbox: each test subscribes afresh.
+beforeEach(async () => {
+  await sql`DELETE FROM conditions.federation_subscription`;
+});
 
 describe("deliverWebhook — signed page, cursor advance, priority gating", () => {
   it("POSTs a signed page and advances the cursor to the page frontier on 2xx", async () => {
@@ -312,6 +317,8 @@ describe("deliverWebhook — priorityRestricted self-describing marker", () => {
   it("the pull /peer/outbox page NEVER sets priorityRestricted (it is complete)", async () => {
     const bbox: [number, number, number, number] = [44.0, 51.0, 45.0, 53.0];
     const filter = { bbox };
+    // The capture journals while a subscription wants the record.
+    await createSubscription(sql, PEER_ID, { deliveryMode: "pull", filter }, NOW);
     const start = encodeOutboxCursor(await frontier());
     await insertEvent("mark-pull", { kind: "incident", lon: 44.5 });
 

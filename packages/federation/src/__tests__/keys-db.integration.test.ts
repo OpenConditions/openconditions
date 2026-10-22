@@ -15,6 +15,7 @@ import {
 let db: TestDatabase;
 let sql: postgres.Sql;
 
+const ME = "oc-test";
 const T_BOOTSTRAP = "2026-01-01T00:00:00.000Z";
 const T_QUIET = "2026-05-15T00:00:00.000Z";
 const T_ROTATE = "2026-06-05T00:00:00.000Z";
@@ -65,6 +66,7 @@ describe("federation_instance_key", () => {
         "created_at",
         "endorsed_by",
         "endorsement",
+        "endorsement_proof",
       ]),
     );
   }, 30_000);
@@ -75,8 +77,8 @@ describe("instance key lifecycle", () => {
   let second: InstanceKey;
 
   it("creates exactly one key on first boot, unendorsed", async () => {
-    expect(await maintainInstanceKey(sql, T_BOOTSTRAP)).toMatchObject({ status: "created" });
-    expect(await maintainInstanceKey(sql, T_BOOTSTRAP)).toMatchObject({ status: "current" });
+    expect(await maintainInstanceKey(sql, T_BOOTSTRAP, ME)).toMatchObject({ status: "created" });
+    expect(await maintainInstanceKey(sql, T_BOOTSTRAP, ME)).toMatchObject({ status: "current" });
     const active = await loadActiveKeys(sql, T_BOOTSTRAP);
     expect(active).toHaveLength(1);
     first = active[0]!;
@@ -98,27 +100,30 @@ describe("instance key lifecycle", () => {
   }, 30_000);
 
   it("keeps the key while more than the rotation lead is left", async () => {
-    expect(await maintainInstanceKey(sql, T_QUIET)).toEqual({
+    expect(await maintainInstanceKey(sql, T_QUIET, ME)).toEqual({
       status: "current",
       expiresAt: first.notAfter,
     });
   }, 30_000);
 
   it("rotates within the lead, to a key the old one endorses, keeping both valid", async () => {
-    const kept = await maintainInstanceKey(sql, T_ROTATE);
+    const kept = await maintainInstanceKey(sql, T_ROTATE, ME);
     expect(kept.status).toBe("rotated");
     second = (kept as { key: InstanceKey }).key;
     expect(second.notBefore.toISOString()).toBe(T_ROTATE);
     expect(second.notAfter.toISOString()).toBe("2026-12-05T00:00:00.000Z");
     expect(second.endorsement?.by).toBe(first.keyId);
-    expect(await verifyEndorsement(second.keyId, second.endorsement!)).toBe(true);
-    expect(await verifyEndorsement(first.keyId, second.endorsement!)).toBe(false);
+    expect(await verifyEndorsement(ME, second.keyId, second.endorsement!)).toBe(true);
+    expect(await verifyEndorsement(ME, first.keyId, second.endorsement!)).toBe(false);
+    expect(await verifyEndorsement("other.example.org", second.keyId, second.endorsement!)).toBe(
+      false,
+    );
 
     const active = await loadActiveKeys(sql, T_ROTATE);
     expect(active.map((k) => k.keyId)).toEqual([second.keyId, first.keyId]);
     expect(active[0]!.endorsement).toEqual(second.endorsement);
     expect(active[1]!.notAfter.toISOString()).toBe("2026-07-05T00:00:00.000Z");
-    expect(await maintainInstanceKey(sql, T_ROTATE)).toMatchObject({ status: "current" });
+    expect(await maintainInstanceKey(sql, T_ROTATE, ME)).toMatchObject({ status: "current" });
   }, 30_000);
 
   it("signs with the old key until the new one has been served a week", async () => {
@@ -150,7 +155,7 @@ describe("instance key lifecycle", () => {
   }, 30_000);
 
   it("never shortens an old key that already outlives the overlap window", async () => {
-    await rotateInstanceKey(sql, "2026-07-27T00:00:00.000Z");
+    await rotateInstanceKey(sql, "2026-07-27T00:00:00.000Z", ME);
     const rows = await sql<{ not_after: Date }[]>`
       SELECT not_after FROM conditions.federation_instance_key WHERE key_id = ${second.keyId}`;
     expect(rows[0]!.not_after.toISOString()).toBe("2026-12-05T00:00:00.000Z");
@@ -161,11 +166,11 @@ describe("instance key lifecycle", () => {
     expect(await loadActiveKeys(sql, t)).toHaveLength(0);
     const [{ key_id: last }] = await sql<{ key_id: string }[]>`
       SELECT key_id FROM conditions.federation_instance_key ORDER BY not_before DESC LIMIT 1`;
-    const kept = await maintainInstanceKey(sql, t);
+    const kept = await maintainInstanceKey(sql, t, ME);
     expect(kept.status).toBe("rotated");
     const key = (kept as { key: InstanceKey }).key;
     expect(key.endorsement?.by).toBe(last);
-    expect(await verifyEndorsement(key.keyId, key.endorsement!)).toBe(true);
+    expect(await verifyEndorsement(ME, key.keyId, key.endorsement!)).toBe(true);
     expect(signingKeyOf(await loadActiveKeys(sql, t), t)?.keyId).toBe(key.keyId);
   }, 30_000);
 });

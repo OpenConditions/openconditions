@@ -78,6 +78,17 @@ describe("loadPeers", () => {
     expect(() => loadPeers([{ ...valid, pinnedKeys: ["not-a-multikey"] }])).toThrow(TypeError);
   });
 
+  it("rejects a key pinned for two peers: a key is one instance's", async () => {
+    const key = await generateInstanceKey(NOW);
+    const peer = (instanceId: string) => ({
+      instanceId,
+      actorUrl: ACTOR_URL,
+      trustTier: 1,
+      pinnedKeys: [key.publicKeyMultibase],
+    });
+    expect(() => loadPeers([peer("a"), peer("b")])).toThrow(/is pinned for "a" too/);
+  });
+
   it("rejects bad instanceId, actorUrl, trustTier, and duplicate instanceIds", async () => {
     const key = await generateInstanceKey(NOW);
     const valid = {

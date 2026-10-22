@@ -11,8 +11,8 @@
  *
  * A key is valid for {@link INSTANCE_KEY_VALIDITY_MONTHS}; once the newest
  * has less than {@link KEY_ROTATION_LEAD_DAYS} left, {@link maintainInstanceKey}
- * rotates it. The new key is ENDORSED by the key before it, which signs the new
- * key's id ({@link verifyEndorsement}), so a peer that pinned only the old key
+ * rotates it. The new key is ENDORSED by the key before it: both sign that it
+ * is this instance's next key ({@link verifyEndorsement}), so a peer that pinned only the old key
  * learns the new one from the Actor document, which serves every key valid
  * now with its endorsement. The new key is served for
  * {@link KEY_PUBLICATION_LEAD_DAYS} before it signs ({@link signingKeyOf}), so
@@ -38,12 +38,17 @@ export const KEY_PUBLICATION_LEAD_DAYS = 7;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** The previous key's signature over a key's id. */
+/**
+ * The previous key's statement that a key is the instance's next, and the
+ * key's own signature of the same, so no other instance can claim the key.
+ */
 export interface KeyEndorsement {
   /** The endorsing key's id (its publicKeyMultibase). */
   by: string;
-  /** Its Ed25519 signature over {@link endorsementMessage}, base64url. */
+  /** The endorsing key's Ed25519 signature over {@link endorsementMessage}, base64url. */
   signature: string;
+  /** The endorsed key's Ed25519 signature over the same message, base64url. */
+  proof: string;
 }
 
 /** A federated instance signing identity. */
@@ -73,6 +78,7 @@ interface InstanceKeyRow {
   not_after: Date;
   endorsed_by: string | null;
   endorsement: Buffer | null;
+  endorsement_proof: Buffer | null;
 }
 
 /** Calendar-month addition in UTC (JS Date end-of-month overflow semantics). */
@@ -84,33 +90,62 @@ function addMonths(base: Date, months: number): Date {
 
 const ED25519 = { name: "Ed25519" } as const;
 
-/** The bytes an endorsement signs: a fixed context and the endorsed key's id. */
-export function endorsementMessage(keyId: string): Uint8Array {
-  return new TextEncoder().encode(`openconditions-federation key endorsement\n${keyId}`);
+/** The bytes an endorsement signs: a fixed context, the instance and the endorsed key. */
+export function endorsementMessage(instanceId: string, keyId: string): Uint8Array {
+  return new TextEncoder().encode(
+    `openconditions-federation key endorsement\n${instanceId}\n${keyId}`,
+  );
 }
 
-/** Whether `endorsement` is its key's valid signature over `keyId`. */
+async function verifiedBy(keyId: string, signature: string, message: Uint8Array) {
+  const key = await globalThis.crypto.subtle.importKey(
+    "raw",
+    rawEd25519FromMultibase(keyId) as BufferSource,
+    ED25519,
+    false,
+    ["verify"],
+  );
+  return globalThis.crypto.subtle.verify(
+    ED25519,
+    key,
+    Buffer.from(signature, "base64url"),
+    message as BufferSource,
+  );
+}
+
+/**
+ * Whether `endorsement` says, under the endorsing key and under `keyId`
+ * itself, that `keyId` is `instanceId`'s next key.
+ */
 export async function verifyEndorsement(
+  instanceId: string,
   keyId: string,
   endorsement: KeyEndorsement,
 ): Promise<boolean> {
+  const message = endorsementMessage(instanceId, keyId);
   try {
-    const endorser = await globalThis.crypto.subtle.importKey(
-      "raw",
-      rawEd25519FromMultibase(endorsement.by) as BufferSource,
-      ED25519,
-      false,
-      ["verify"],
-    );
-    return await globalThis.crypto.subtle.verify(
-      ED25519,
-      endorser,
-      Buffer.from(endorsement.signature, "base64url"),
-      endorsementMessage(keyId) as BufferSource,
+    return (
+      (await verifiedBy(endorsement.by, endorsement.signature, message)) &&
+      (await verifiedBy(keyId, endorsement.proof, message))
     );
   } catch {
     return false;
   }
+}
+
+async function signed(privateKey: CryptoKey, message: Uint8Array): Promise<string> {
+  const signature = await globalThis.crypto.subtle.sign(
+    ED25519,
+    privateKey,
+    message as BufferSource,
+  );
+  return Buffer.from(signature).toString("base64url");
+}
+
+/** The key that endorses a new one, and the instance both belong to. */
+export interface Endorser {
+  key: Pick<InstanceKey, "keyId" | "privateKey">;
+  instanceId: string;
 }
 
 /**
@@ -121,7 +156,7 @@ export async function verifyEndorsement(
 export async function generateInstanceKey(
   now: string,
   validityMonths = INSTANCE_KEY_VALIDITY_MONTHS,
-  endorser?: Pick<InstanceKey, "keyId" | "privateKey">,
+  endorser?: Endorser,
 ): Promise<InstanceKey> {
   if (Number.isNaN(new Date(now).getTime())) {
     throw new TypeError(`now must be a valid ISO 8601 timestamp, got ${JSON.stringify(now)}`);
@@ -148,14 +183,11 @@ export async function generateInstanceKey(
     notAfter: addMonths(notBefore, validityMonths),
   };
   if (endorser !== undefined) {
-    const signature = await globalThis.crypto.subtle.sign(
-      ED25519,
-      endorser.privateKey,
-      endorsementMessage(key.keyId) as BufferSource,
-    );
+    const message = endorsementMessage(endorser.instanceId, key.keyId);
     key.endorsement = {
-      by: endorser.keyId,
-      signature: Buffer.from(signature).toString("base64url"),
+      by: endorser.key.keyId,
+      signature: await signed(endorser.key.privateKey, message),
+      proof: await signed(pair.privateKey, message),
     };
   }
   return key;
@@ -169,15 +201,16 @@ async function insertInstanceKey(
   const privatePkcs8 = new Uint8Array(
     await globalThis.crypto.subtle.exportKey("pkcs8", key.privateKey),
   );
-  const endorsement =
-    key.endorsement === undefined ? null : Buffer.from(key.endorsement.signature, "base64url");
+  const bytes = (base64url: string | undefined) =>
+    base64url === undefined ? null : Buffer.from(base64url, "base64url");
   await sql`
     INSERT INTO conditions.federation_instance_key
       (key_id, public_key, private_key, multibase, not_before, not_after, created_at,
-       endorsed_by, endorsement)
+       endorsed_by, endorsement, endorsement_proof)
     VALUES (${key.keyId}, ${Buffer.from(key.publicKeyRaw)}, ${Buffer.from(privatePkcs8)},
             ${key.publicKeyMultibase}, ${key.notBefore}, ${key.notAfter}, ${new Date(createdAt)},
-            ${key.endorsement?.by ?? null}, ${endorsement})
+            ${key.endorsement?.by ?? null}, ${bytes(key.endorsement?.signature)},
+            ${bytes(key.endorsement?.proof)})
     ON CONFLICT (key_id) DO NOTHING
   `;
 }
@@ -217,11 +250,12 @@ async function keyOfRow(row: InstanceKeyRow): Promise<InstanceKey> {
     privateKey,
     notBefore: row.not_before,
     notAfter: row.not_after,
-    ...(row.endorsed_by !== null && row.endorsement !== null
+    ...(row.endorsed_by !== null && row.endorsement !== null && row.endorsement_proof !== null
       ? {
           endorsement: {
             by: row.endorsed_by,
             signature: Buffer.from(row.endorsement).toString("base64url"),
+            proof: Buffer.from(row.endorsement_proof).toString("base64url"),
           },
         }
       : {}),
@@ -229,7 +263,7 @@ async function keyOfRow(row: InstanceKeyRow): Promise<InstanceKey> {
 }
 
 const KEY_COLUMNS = `key_id, public_key, private_key, multibase, not_before, not_after,
-  endorsed_by, endorsement`;
+  endorsed_by, endorsement, endorsement_proof`;
 
 /**
  * Loads every instance key valid at `now` (newest first). During a rotation
@@ -278,10 +312,15 @@ export async function loadSigningKey(
 async function rotateIn(
   tx: postgres.TransactionSql,
   now: string,
+  instanceId: string,
   validityMonths: number,
 ): Promise<InstanceKey> {
-  const endorser = await loadLatestKey(tx);
-  const key = await generateInstanceKey(now, validityMonths, endorser);
+  const latest = await loadLatestKey(tx);
+  const key = await generateInstanceKey(
+    now,
+    validityMonths,
+    latest === undefined ? undefined : { key: latest, instanceId },
+  );
   await insertInstanceKey(tx, key, now);
   const at = new Date(now);
   const overlapEnd = new Date(at.getTime() + ROTATION_OVERLAP_DAYS * DAY_MS);
@@ -301,20 +340,21 @@ const lockKeys = (tx: postgres.TransactionSql) =>
 
 /**
  * Rotates the instance key: persists a fresh key valid [now, now + 6 months),
- * endorsed by the newest stored key, and extends every currently active old
- * key's not_after to at least now + {@link ROTATION_OVERLAP_DAYS} days, so old
- * and new stay co-valid (and co-served in the Actor document) through the
- * overlap window. An old key already valid past that point keeps its later
- * expiry. Returns the new key.
+ * endorsed by the newest stored key as `instanceId`'s, and extends every
+ * currently active old key's not_after to at least now +
+ * {@link ROTATION_OVERLAP_DAYS} days, so old and new stay co-valid (and
+ * co-served in the Actor document) through the overlap window. An old key
+ * already valid past that point keeps its later expiry. Returns the new key.
  */
 export async function rotateInstanceKey(
   sql: postgres.Sql,
   now: string,
+  instanceId: string,
   validityMonths = INSTANCE_KEY_VALIDITY_MONTHS,
 ): Promise<InstanceKey> {
   return sql.begin(async (tx) => {
     await lockKeys(tx);
-    return rotateIn(tx, now, validityMonths);
+    return rotateIn(tx, now, instanceId, validityMonths);
   }) as Promise<InstanceKey>;
 }
 
@@ -323,12 +363,16 @@ export type KeyMaintenance =
   | { status: "created" | "rotated"; key: InstanceKey };
 
 /**
- * Keeps the instance's keys current: the first key on first boot, a rotation
+ * Keeps `instanceId`'s keys current: the first key on first boot, a rotation
  * once the newest key has less than {@link KEY_ROTATION_LEAD_DAYS} left or
  * none is valid, and nothing otherwise. Idempotent and safe to run from
  * several processes at once.
  */
-export async function maintainInstanceKey(sql: postgres.Sql, now: string): Promise<KeyMaintenance> {
+export async function maintainInstanceKey(
+  sql: postgres.Sql,
+  now: string,
+  instanceId: string,
+): Promise<KeyMaintenance> {
   return sql.begin(async (tx) => {
     await lockKeys(tx);
     const [newest] = await loadActiveKeys(tx, now);
@@ -343,6 +387,9 @@ export async function maintainInstanceKey(sql: postgres.Sql, now: string): Promi
       await insertInstanceKey(tx, key, now);
       return { status: "created", key };
     }
-    return { status: "rotated", key: await rotateIn(tx, now, INSTANCE_KEY_VALIDITY_MONTHS) };
+    return {
+      status: "rotated",
+      key: await rotateIn(tx, now, instanceId, INSTANCE_KEY_VALIDITY_MONTHS),
+    };
   }) as Promise<KeyMaintenance>;
 }
