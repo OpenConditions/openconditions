@@ -7,6 +7,7 @@ import {
   jcs,
   normalizeNamespace,
   parseRecordId,
+  recordLocalId,
 } from "../kernel/identity.js";
 
 describe("record ids", () => {
@@ -18,6 +19,13 @@ describe("record ids", () => {
       namespace: "de-ndw",
       localId: "NDW01:SRA:1",
     });
+  });
+
+  it("writes a publisher id's line breaks percent-encoded and keeps the rest", () => {
+    const local = recordLocalId("FI*TSL*\n\r\u2028\u2029 \u00e4:1");
+    expect(local).toBe("FI*TSL*%0A%0D%E2%80%A8%E2%80%A9 \u00e4:1");
+    expect(parseRecordId(`oc:feature:fi-x:${local}`)?.localId).toBe(local);
+    expect(recordLocalId(local)).toBe(local);
   });
 
   it("accepts hostname instance ids as namespaces and rejects colons", () => {

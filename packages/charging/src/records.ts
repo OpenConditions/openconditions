@@ -1,5 +1,5 @@
 import type { CatalogFeed } from "@openconditions/ingest-framework";
-import { Bcp47 } from "@openconditions/model";
+import { Bcp47, recordLocalId } from "@openconditions/model";
 
 /** What a charging record takes from its feed. */
 export type ChargingFeed = Pick<
@@ -31,7 +31,7 @@ export function utcInstantOf(ms: number): string | undefined {
 
 /** The id of a site's feature. */
 export function siteId(feed: Pick<ChargingFeed, "id">, stationId: string): string {
-  return `oc:feature:${feed.id}:${stationId}`;
+  return `oc:feature:${feed.id}:${recordLocalId(stationId)}`;
 }
 
 /**

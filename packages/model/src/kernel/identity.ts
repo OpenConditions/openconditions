@@ -30,6 +30,14 @@ export function formatRecordId(parts: RecordIdParts): string {
   return `oc:${parts.class}:${parts.namespace}:${parts.localId}`;
 }
 
+/**
+ * A publisher's own id as the local part of a record id. A line break, which
+ * a record id cannot hold, is written percent-encoded; every other character
+ * is kept.
+ */
+export const recordLocalId = (id: string): string =>
+  id.replace(/[\n\r\p{Zl}\p{Zp}]/gu, encodeURIComponent);
+
 /** Splits on the first three ":"; null when the id is not a record id. */
 export function parseRecordId(id: string): RecordIdParts | null {
   const m = RECORD_ID_PATTERN.exec(id);

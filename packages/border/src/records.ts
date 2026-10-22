@@ -1,5 +1,5 @@
 import type { CatalogFeed, RecordDraft } from "@openconditions/ingest-framework";
-import { observationId } from "@openconditions/model";
+import { observationId, recordLocalId } from "@openconditions/model";
 import type {
   BORDER_MODES,
   BORDER_PROGRAMS,
@@ -96,7 +96,7 @@ export function crossingDraft(
   }));
   const portIds = input.portIds ?? [];
   return {
-    id: `oc:feature:${feed.id}:${input.localId}`,
+    id: `oc:feature:${feed.id}:${recordLocalId(input.localId)}`,
     class: "feature",
     kind: "border_crossing",
     temporality: "static",

@@ -1,6 +1,6 @@
 import { normaliseTariff } from "@openconditions/ocpi";
 import { describe, expect, test } from "vitest";
-import type { ChargingFeed } from "../site.js";
+import { type ChargingFeed, siteId } from "../site.js";
 import { tariffDraft, tariffOfferId, unreadableTariff } from "../tariff.js";
 import { sealFailures } from "./helpers/seal.js";
 
@@ -392,5 +392,12 @@ describe("tariffDraft", () => {
     expect(tariffOfferId(FEED, "LOC1", "AC tariff/2 (€)")).toBe(
       "oc:offer:de-test-charging:LOC1:AC_tariff_2____",
     );
+  });
+
+  test("the offer and site ids write a station id's line breaks percent-encoded", () => {
+    expect(tariffOfferId(FEED, "FI*TSL*\n\u2028", "T1")).toBe(
+      "oc:offer:de-test-charging:FI*TSL*%0A%E2%80%A8:T1",
+    );
+    expect(siteId(FEED, "FI*\r1")).toBe("oc:feature:de-test-charging:FI*%0D1");
   });
 });

@@ -13,6 +13,7 @@ import {
   observationId,
   type PAYMENT_METHODS,
   type Quantity,
+  recordLocalId,
   zonedWallClockToInstant,
 } from "@openconditions/model";
 import {
@@ -316,17 +317,9 @@ export function readRecord(
   }
 }
 
-/**
- * A publisher's site id as a record id's local part: a line break or other
- * line terminator, which a record id cannot hold, is percent-encoded, so the
- * site keeps an id of its own instead of being refused at the write seam.
- */
-const localId = (stationId: string): string =>
-  stationId.replace(/[\n\r\p{Zl}\p{Zp}]/gu, encodeURIComponent);
-
 /** The id of a site's feature. */
 export function siteId(feed: Pick<ParkingFeed, "id">, stationId: string): string {
-  return `oc:feature:${feed.id}:${localId(stationId)}`;
+  return `oc:feature:${feed.id}:${recordLocalId(stationId)}`;
 }
 
 /** The country a feed's region names; none for `eu` and `global`. */
@@ -894,7 +887,7 @@ export function rateDraft(
   const text = clean(input.text);
   const url = webUrl(input.url);
   return {
-    id: `oc:offer:${feed.id}:${localId(stationId)}:${n}`,
+    id: `oc:offer:${feed.id}:${recordLocalId(stationId)}:${n}`,
     class: "offer",
     kind: "parking_rate",
     temporality: "static",

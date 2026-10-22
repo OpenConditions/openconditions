@@ -4,6 +4,7 @@ import {
   Iso8601,
   localDateInZone,
   localTimeInZone,
+  recordLocalId,
   type Schedule,
   situationCode,
   type Validity,
@@ -103,12 +104,9 @@ function localIdOf(event: SnapshotEvent): string {
   return event.id.startsWith(prefix) ? event.id.slice(prefix.length) : event.id;
 }
 
-/**
- * The record id of a source's situation by its local id. A line break, which
- * a record id cannot hold, is written percent-encoded.
- */
+/** The record id of a source's situation by its local id. */
 const situationIdOf = (source: SourceDescriptor, localId: string) =>
-  `oc:situation:${source.id}:${localId.replace(/[\n\r\p{Zl}\p{Zp}]/gu, encodeURIComponent)}`;
+  `oc:situation:${source.id}:${recordLocalId(localId)}`;
 
 /** A positive span in milliseconds as an ISO 8601 duration of days, hours, minutes and seconds. */
 function isoDuration(ms: number): string {
@@ -202,7 +200,7 @@ function derivedFromSiteOf(event: RoadEvent) {
   const site = event.situation?.derivedFromSite;
   return site === undefined
     ? undefined
-    : { class: "feature" as const, id: `oc:feature:${event.source}:${site}` };
+    : { class: "feature" as const, id: `oc:feature:${event.source}:${recordLocalId(site)}` };
 }
 
 function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unknown> {

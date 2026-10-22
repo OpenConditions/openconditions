@@ -1,4 +1,4 @@
-import { type DirectionRef, observationId } from "@openconditions/model";
+import { type DirectionRef, observationId, recordLocalId } from "@openconditions/model";
 import type { LineString, MultiLineString, Point } from "geojson";
 import type { FlowContext, FlowOutput } from "../flow-output.js";
 import {
@@ -100,7 +100,8 @@ function geometryOf(lines: readonly (Point | LineString)[]): Point | LineString 
   };
 }
 
-const featureIdOf = (source: SourceDescriptor, site: string) => `oc:feature:${source.id}:${site}`;
+const featureIdOf = (source: SourceDescriptor, site: string) =>
+  `oc:feature:${source.id}:${recordLocalId(site)}`;
 
 function provenanceOf(source: SourceDescriptor, format: string, recordId: string) {
   return {
@@ -162,7 +163,10 @@ export function congestionDrafts(
   const events: RoadEvent[] = bases.map((b) => {
     const local = b.line ?? b.site;
     if (b.directionRef !== undefined)
-      directions.set(`oc:situation:${source.id}:${local}:congestion`, b.directionRef);
+      directions.set(
+        `oc:situation:${source.id}:${recordLocalId(local)}:congestion`,
+        b.directionRef,
+      );
     return {
       id: `${source.id}:${local}:congestion`,
       source: source.id,

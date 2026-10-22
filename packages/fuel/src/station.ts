@@ -6,6 +6,7 @@ import {
   observationId,
   type PAYMENT_METHODS,
   type ROAD_CLASSES,
+  recordLocalId,
 } from "@openconditions/model";
 import { type FuelGrade, type FuelUnit, GRADE_UNIT } from "./grades.js";
 
@@ -218,7 +219,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
     },
   }));
   return {
-    id: `oc:feature:${feed.id}:${input.stationId}`,
+    id: `oc:feature:${feed.id}:${recordLocalId(input.stationId)}`,
     class: "feature",
     kind: "fuel_station",
     temporality: "static",

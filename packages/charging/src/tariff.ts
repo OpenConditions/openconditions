@@ -1,4 +1,5 @@
 import type { RecordDraft } from "@openconditions/ingest-framework";
+import { recordLocalId } from "@openconditions/model";
 import {
   OCPI_DAYS,
   OCPI_TARIFF_DIMENSIONS,
@@ -29,7 +30,7 @@ export function tariffOfferId(
   stationId: string,
   tariffId: string,
 ): string {
-  return `oc:offer:${feed.id}:${stationId}:${tariffId.replace(/[^A-Za-z0-9._-]/g, "_")}`;
+  return `oc:offer:${feed.id}:${recordLocalId(stationId)}:${tariffId.replace(/[^A-Za-z0-9._-]/g, "_")}`;
 }
 
 /**
