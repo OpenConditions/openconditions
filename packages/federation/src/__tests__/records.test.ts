@@ -368,7 +368,7 @@ describe("reading a peer's outbox entry", () => {
     });
   });
 
-  it("refuses a retraction without the revision it ended at", () => {
+  it("refuses a retraction without the revision it ended at, but never an erasure", () => {
     for (const revision of [undefined, 0, 1.5, "2"]) {
       expect(
         readInboundEntry({ ...head, operation: "delete", reason: "withdrawn", revision }),
@@ -377,6 +377,9 @@ describe("reading a peer's outbox entry", () => {
         recordId: head.recordId,
         reason: "a delete carries the revision the record ended at",
       });
+      expect(
+        readInboundEntry({ ...head, operation: "delete", reason: "rights_revoked", revision }),
+      ).toEqual({ ok: true, entry: { ...head, operation: "delete", reason: "rights_revoked" } });
     }
   });
 

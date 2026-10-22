@@ -347,8 +347,8 @@ async function runCrowdHooks(
  * A copy another instance wrote is left alone and reported; one already
  * ended, one newer than the retraction (a later change that arrived first,
  * by push), or none held, is a retraction that changes nothing (`stale`). An
- * erasure records its fact whether or not a copy is held, so the record
- * cannot arrive later.
+ * erasure ends the copy whatever its revision, and records its fact whether
+ * or not a copy is held, so the record cannot arrive later.
  */
 async function applyRetraction(
   sql: Sql,
@@ -357,7 +357,7 @@ async function applyRetraction(
     recordId: string;
     canonicalId: string | null;
     reason: string;
-    revision: number;
+    revision?: number;
   },
   ctx: InboxContext,
 ): Promise<"tombstoned" | "stale" | string> {
@@ -386,8 +386,10 @@ async function applyRetraction(
     // it out), or the retraction arrives a second time, by push and by pull.
     if (row === undefined) return "stale";
     if (row.instance_id !== ctx.peerInstanceId) return "the record is not the peer's";
-    // The peer changed the record since: that change arrived first.
-    if (row.revision > entry.revision) return "stale";
+    // The peer changed the record since: that change arrived first. An
+    // erasure ends every revision of it.
+    const erasure = entry.reason === ERASURE_REASON;
+    if (!erasure && row.revision > entry.revision!) return "stale";
     // An erasure still applies to a copy that ended here: ending it kept its
     // content, and the rights to that content are gone.
     // A copy the sweep ended for the peer's silence is still the peer's to
@@ -404,7 +406,9 @@ async function applyRetraction(
       registry: ctx.registry,
       now: ctx.now,
       byOwner: true,
-      ownerRevision: entry.revision,
+      ...(entry.revision !== undefined && entry.revision >= row.revision
+        ? { ownerRevision: entry.revision }
+        : {}),
     });
     await leaveCanonicalView(tx, ctx.registry, { class: cls, id: entry.recordId }, row.source_id, {
       instanceId: ctx.localInstanceId,

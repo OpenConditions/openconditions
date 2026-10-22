@@ -560,6 +560,28 @@ describe("a peer's retractions", () => {
     expect(await rowOf(id)).toMatchObject({ revision: 1, tombstone_reason: null });
   });
 
+  it("erases a copy whatever revision the erasure says or does not say", async () => {
+    const newer = peerSituation("o-4", 3);
+    await ingestFederatedPage(sql, page(change(newer, 1)), ctx());
+    await ingestFederatedPage(
+      sql,
+      page(retraction(peerSituation("o-4", 1), "rights_revoked", 2, "20", 2)),
+      ctx(LATER),
+    );
+    expect(await rowOf(newer["id"] as string)).toMatchObject({
+      tombstone_reason: "rights_revoked",
+    });
+
+    const bare = peerSituation("o-5");
+    await ingestFederatedPage(sql, page(change(bare, 1)), ctx());
+    const { revision: _revision, ...unordered } = retraction(bare, "rights_revoked", 2);
+    expect(await ingestFederatedPage(sql, page(unordered), ctx(LATER))).toMatchObject({
+      tombstoned: 1,
+      skipped: [],
+    });
+    expect(await erasureFacts(bare["canonicalId"] as string)).toHaveLength(1);
+  });
+
   it("skips a retraction that does not say the revision it ended at", async () => {
     const own = peerSituation("o-3");
     await ingestFederatedPage(sql, page(change(own, 1)), ctx());
