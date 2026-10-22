@@ -1,6 +1,11 @@
 import { type EgressRecord, publicRecords } from "@openconditions/ingest-framework";
 import { federationEligible, type RecordClass, subjectKey } from "@openconditions/model";
-import { asyncBufferFromFile, parquetMetadataAsync, parquetReadObjects } from "hyparquet";
+import {
+  asyncBufferFromFile,
+  parquetMetadataAsync,
+  parquetReadObjects,
+  snappyUncompress,
+} from "hyparquet";
 import type { ColumnSource, Writer } from "hyparquet-writer";
 import { geojsonToWkb, parquetWriteBuffer, parquetWriteRows } from "hyparquet-writer";
 
@@ -327,28 +332,29 @@ export const ARCHIVE_READ_MAX_GROUP_BYTES = 256 * 1024 ** 2;
 
 /**
  * The records of one class's archive file, a bounded row group at a time. A
- * file whose row groups are larger than this writer's bounds by far (a
- * file from elsewhere) is refused before any is read.
+ * file whose row groups say they are larger than this writer's bounds by far
+ * (a file from elsewhere) is refused before any is read, and each read
+ * decompresses no more than {@link ARCHIVE_READ_MAX_GROUP_BYTES} whatever the
+ * file says: every page is checked against what is left before it is
+ * allocated. A codec other than Snappy is not read at all.
  */
 export async function* readRecordArchive(
   filePath: string,
 ): AsyncGenerator<Record<string, unknown>[]> {
   const file = await asyncBufferFromFile(filePath);
   const metadata = await parquetMetadataAsync(file);
+  const max = BigInt(ARCHIVE_READ_MAX_GROUP_BYTES);
+  const bounded = (n: bigint | undefined) => n !== undefined && n >= 0n && n <= max;
   let grouped = 0n;
   for (const group of metadata.row_groups) {
-    const chunks = group.columns.reduce(
-      (sum, chunk) => sum + (chunk.meta_data?.total_uncompressed_size ?? 0n),
-      0n,
-    );
-    const bytes = chunks > group.total_byte_size ? chunks : group.total_byte_size;
+    const chunks = group.columns.map((c) => c.meta_data);
     if (
+      group.num_rows < 0n ||
       group.num_rows > BigInt(ARCHIVE_READ_MAX_GROUP_ROWS) ||
-      bytes > BigInt(ARCHIVE_READ_MAX_GROUP_BYTES)
+      !bounded(group.total_byte_size) ||
+      !chunks.every((c) => bounded(c?.total_uncompressed_size) && bounded(c?.total_compressed_size))
     ) {
-      throw new RangeError(
-        `a row group of ${group.num_rows} rows and ${bytes} bytes is larger than an archive's`,
-      );
+      throw new RangeError(`a row group of ${group.num_rows} rows is larger than an archive's`);
     }
     grouped += group.num_rows;
   }
@@ -357,12 +363,24 @@ export async function* readRecordArchive(
   }
   const rows = Number(metadata.num_rows);
   for (let start = 0; start < rows; start += ROW_GROUP_SIZE) {
+    let budget = ARCHIVE_READ_MAX_GROUP_BYTES;
     const page = await parquetReadObjects({
       file,
       metadata,
       columns: ["record"],
       rowStart: start,
       rowEnd: Math.min(start + ROW_GROUP_SIZE, rows),
+      compressors: {
+        SNAPPY: (input: Uint8Array, length: number) => {
+          if (!Number.isSafeInteger(length) || length < 0 || length > budget) {
+            throw new RangeError("a page decompresses to more than an archive's row group");
+          }
+          budget -= length;
+          const output = new Uint8Array(length);
+          snappyUncompress(input, output);
+          return output;
+        },
+      },
     });
     yield page.map((row) => JSON.parse(row["record"] as string) as Record<string, unknown>);
   }
