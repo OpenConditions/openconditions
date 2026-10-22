@@ -7,11 +7,12 @@
 import { runMigrations } from "@openconditions/core/server";
 import {
   createInMemoryRateLimiter,
-  ensureInstanceKey,
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
+  maintainInstanceKey,
   type RecordFilter,
+  rotateInstanceKey,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import {
@@ -25,6 +26,7 @@ import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { type FederationSettings, resolveFederationSettings } from "../config.js";
+import { PeerBook } from "../peer-book.js";
 import { refreshPeers } from "../peering.js";
 import { pullPeer } from "../puller.js";
 import { build } from "../server.js";
@@ -48,6 +50,9 @@ let appC: FastifyInstance;
 let settingsA: FederationSettings;
 let settingsB: FederationSettings;
 let settingsC: FederationSettings;
+let peersA: PeerBook;
+let peersB: PeerBook;
+let peersC: PeerBook;
 
 const actor = (instanceId: string) => ({
   instanceId,
@@ -176,9 +181,9 @@ beforeAll(async () => {
   sqlC = postgres(`${server}/c`, { max: 4, onnotice: () => {} });
 
   const now = new Date().toISOString();
-  await ensureInstanceKey(sqlA, now);
-  await ensureInstanceKey(sqlB, now);
-  await ensureInstanceKey(sqlC, now);
+  await maintainInstanceKey(sqlA, now);
+  await maintainInstanceKey(sqlB, now);
+  await maintainInstanceKey(sqlC, now);
   [keyA] = (await loadActiveKeys(sqlA, now)) as [InstanceKey];
   const [keyB] = (await loadActiveKeys(sqlB, now)) as [InstanceKey];
   [keyC] = (await loadActiveKeys(sqlC, now)) as [InstanceKey];
@@ -201,7 +206,8 @@ beforeAll(async () => {
     ]),
   };
   settingsC = resolveFederationSettings(envC);
-  appC = await build({ sql: sqlC, env: envC, logger: false });
+  peersC = await PeerBook.load(sqlC, settingsC.peers);
+  appC = await build({ sql: sqlC, env: envC, logger: false, peers: peersC });
   const envB = {
     OPENCONDITIONS_FEDERATION_ENABLED: "true",
     OPENCONDITIONS_INSTANCE_ID: B,
@@ -210,8 +216,10 @@ beforeAll(async () => {
   };
   settingsA = resolveFederationSettings(envA);
   settingsB = resolveFederationSettings(envB);
-  appA = await build({ sql: sqlA, env: envA, logger: false });
-  appB = await build({ sql: sqlB, env: envB, logger: false });
+  peersA = await PeerBook.load(sqlA, settingsA.peers);
+  peersB = await PeerBook.load(sqlB, settingsB.peers);
+  appA = await build({ sql: sqlA, env: envA, logger: false, peers: peersA });
+  appB = await build({ sql: sqlB, env: envB, logger: false, peers: peersB });
 
   await syncSources(sqlA, [
     {
@@ -254,7 +262,7 @@ const subscriptionsAtA = () =>
 
 describe("two peered instances", () => {
   it("subscribes B at A from B's peers config, once", async () => {
-    const [upkeep] = await refreshPeers(sqlB, settingsB, {
+    const [upkeep] = await refreshPeers(sqlB, settingsB, peersB, {
       fetchImpl,
       now: new Date().toISOString(),
     });
@@ -271,13 +279,13 @@ describe("two peered instances", () => {
         priority_only: false,
       },
     ]);
-    const [again] = await refreshPeers(sqlB, settingsB, {
+    const [again] = await refreshPeers(sqlB, settingsB, peersB, {
       fetchImpl,
       now: new Date().toISOString(),
     });
     expect(again!.subscription).toMatchObject({ ok: true, status: "unchanged" });
     // A subscribes to nobody.
-    const [fromA] = await refreshPeers(sqlA, settingsA, {
+    const [fromA] = await refreshPeers(sqlA, settingsA, peersA, {
       fetchImpl,
       now: new Date().toISOString(),
     });
@@ -328,7 +336,7 @@ describe("two peered instances", () => {
 
   it("resumes a push A disabled at B's next upkeep", async () => {
     await sqlA`UPDATE conditions.federation_subscription SET status = 'push_disabled'`;
-    const [upkeep] = await refreshPeers(sqlB, settingsB, {
+    const [upkeep] = await refreshPeers(sqlB, settingsB, peersB, {
       fetchImpl,
       now: new Date().toISOString(),
     });
@@ -361,7 +369,7 @@ describe("a peer that pulls", () => {
     ).map((r) => r.id.slice(r.id.lastIndexOf(":") + 1));
 
   it("keeps a priority push and a pull subscription at A from its config", async () => {
-    const [upkeep] = await refreshPeers(sqlC, settingsC, {
+    const [upkeep] = await refreshPeers(sqlC, settingsC, peersC, {
       fetchImpl,
       now: new Date().toISOString(),
     });
@@ -440,5 +448,39 @@ describe("a peer that pulls", () => {
       pages: 0,
       error: "the page does not carry the peer's signature",
     });
+  }, 60_000);
+});
+
+describe("a peer that rotates its key", () => {
+  it("is followed by its pins: the key it rotated to verifies once its peers read it", async () => {
+    const now = new Date().toISOString();
+    const rotated = await rotateInstanceKey(sqlA, now);
+    expect(rotated.endorsement?.by).toBe(keyA.keyId);
+    // Push a new entry under the new key before B has read A's actor document.
+    await writeSnapshot(
+      sqlA,
+      SOURCE,
+      { situations: [situationDraft("before-1"), situationDraft("rotated-1")] },
+      { registry, instanceId: A, now, complete: false },
+    );
+    const push = () =>
+      runWebhookDeliveryCycle(sqlA, {
+        signingKey: rotated,
+        fetchImpl,
+        partOf: `https://${A}/peer/outbox`,
+      });
+    // B and C both refuse it.
+    expect(await push()).toMatchObject({ delivered: 0, failed: 2 });
+
+    const [upkeep] = await refreshPeers(sqlB, settingsB, peersB, { fetchImpl, now });
+    expect(upkeep!.capabilities).toMatchObject({ ok: true, keys: [rotated.keyId, keyA.keyId] });
+    expect(peersB.find(A)?.pinnedKeys).toContain(rotated.keyId);
+    await sqlA`UPDATE conditions.federation_subscription SET push_failures = 0`;
+    // B read A's document; C has not yet.
+    expect(await push()).toMatchObject({ delivered: 1, failed: 1 });
+    const [landed] = await sqlB<{ n: number }[]>`
+      SELECT count(*)::int AS n FROM conditions.situation
+       WHERE id = ${`oc:situation:${SOURCE}:rotated-1`}`;
+    expect(landed!.n).toBe(1);
   }, 60_000);
 });

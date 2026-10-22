@@ -3,10 +3,11 @@
  * instance serves at `/.well-known/openconditions/actor.json` (as
  * `application/activity+json`). Pure builder: route wiring lives in the
  * federation service. The document carries every instance key valid "now" as
- * a Multikey entry, so peers keep verifying through a rotation overlap.
+ * a Multikey entry with the previous key's endorsement of it, so peers keep
+ * verifying through a rotation overlap and learn the new key from the old.
  * Private key material never appears here by construction.
  */
-import type { InstanceKey } from "./keys.js";
+import type { InstanceKey, KeyEndorsement } from "./keys.js";
 
 export interface ActorCoverage {
   iso3166?: string[];
@@ -54,6 +55,8 @@ export interface ActorPublicKey {
   owner: string;
   type: "Multikey";
   publicKeyMultibase: string;
+  /** The previous key's signature over this key's id; absent on the first key. */
+  endorsement?: KeyEndorsement;
 }
 
 export interface ActorDocument {
@@ -112,6 +115,7 @@ export function buildActorDocument(
       owner: actorId,
       type: "Multikey",
       publicKeyMultibase: key.publicKeyMultibase,
+      ...(key.endorsement === undefined ? {} : { endorsement: key.endorsement }),
     })),
     outbox: `${base}/peer/outbox`,
     inbox: `${base}/peer/inbox`,

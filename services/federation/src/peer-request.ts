@@ -15,14 +15,14 @@ import {
   isPeerBlocked,
   type MtlsContext,
   type NonceStore,
-  type PeerRecord,
 } from "@openconditions/federation";
 import type { FastifyReply, FastifyRequest } from "fastify";
 import type postgres from "postgres";
+import type { PeerBook } from "./peer-book.js";
 
 export interface PeerRequestContext {
-  /** The pinned peers registry (settings.peers). */
-  peers: PeerRecord[];
+  /** The pinned peers, as they are trusted now. */
+  peers: PeerBook;
   /** The instance's configured base URL — the authority the signed target-uri uses. */
   baseUrl: string;
   /** Per-peer replay cache shared across the authenticated routes. */
@@ -99,7 +99,7 @@ export async function requirePeer(
   body?: Uint8Array,
 ): Promise<string | null> {
   const auth = await authenticatePeerRequest(
-    { peers: ctx.peers, nonceStore: ctx.nonceStore },
+    { peers: ctx.peers.all(), nonceStore: ctx.nonceStore },
     {
       method: req.method,
       url: `${ctx.baseUrl}${req.url}`,
@@ -126,7 +126,7 @@ export async function requirePeer(
   // `mtlsRequired` peer must ALSO present a TLS-verified client cert. A
   // non-mTLS peer is unaffected. The gate runs only after the signature check
   // passes, so mTLS never substitutes for signing.
-  const peer = ctx.peers.find((p) => p.instanceId === auth.peerId);
+  const peer = ctx.peers.find(auth.peerId);
   if (peer !== undefined) {
     const cert =
       ctx.mtlsContextFor !== undefined ? ctx.mtlsContextFor(req) : socketMtlsContext(req);

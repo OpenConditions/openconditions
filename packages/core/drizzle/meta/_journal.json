@@ -568,6 +568,13 @@
       "when": 1792273708229,
       "tag": "0080_situation_severity_none",
       "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1792697825341,
+      "tag": "0081_federation_key_endorsement",
+      "breakpoints": true
     }
   ]
 }

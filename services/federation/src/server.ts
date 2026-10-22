@@ -14,16 +14,17 @@ import {
   ACTOR_WELL_KNOWN_PATH,
   buildActorDocument,
   createInMemoryRateLimiter,
-  ensureInstanceKey,
   InMemoryNonceStore,
   type InstanceKey,
   loadActiveKeys,
   type MtlsContext,
+  maintainInstanceKey,
   OUTBOX_DEFAULT_LIMIT,
   OUTBOX_MAX_LIMIT,
   outboxEtag,
   PEERS_WELL_KNOWN_PATH,
   type RateLimiter,
+  signingKeyOf,
   signMessage,
 } from "@openconditions/federation";
 import { schemaVersions } from "@openconditions/model";
@@ -39,6 +40,7 @@ import { registerBackfillRoutes } from "./backfill-routes.js";
 import { resolveFederationSettings } from "./config.js";
 import { registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
+import { PeerBook } from "./peer-book.js";
 import { optionalPeer, respondIfBlocked } from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
@@ -75,6 +77,8 @@ export interface BuildOptions {
   mtlsContextFor?: (req: FastifyRequest) => MtlsContext | undefined;
   /** Called once a peer created or changed a subscription (main seeds the journal). */
   onSubscribed?: () => void;
+  /** The peers as main's upkeep keeps them; defaults to the configured ones and their learned keys. */
+  peers?: PeerBook;
 }
 
 export async function build(options: BuildOptions): Promise<FastifyInstance> {
@@ -118,37 +122,33 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   // The running registry, not the operator, says which schemas this instance accepts.
   const registry = productionRegistry();
   const advertisedSchemaVersions = schemaVersions(registry);
-  await ensureInstanceKey(sql, now());
+  const peers = options.peers ?? (await PeerBook.load(sql, settings.peers));
+  await maintainInstanceKey(sql, now());
 
-  /** The newest active signing key, self-healing an all-expired table (same
-   *  rationale as the actor route: keys are read per request so a rotation
-   *  shows up without a restart). */
+  /** The keys valid now, rotating first when none is (a process that
+   *  outlived its keys): keys are read per request, so a rotation shows up
+   *  without a restart. */
+  async function activeKeys(): Promise<InstanceKey[]> {
+    const keys = await loadActiveKeys(sql, now());
+    if (keys.length > 0) return keys;
+    await maintainInstanceKey(sql, now());
+    return loadActiveKeys(sql, now());
+  }
+
+  /** The key this instance signs with now. */
   async function signingKey(): Promise<InstanceKey> {
-    let keys = await loadActiveKeys(sql, now());
-    if (keys.length === 0) {
-      await ensureInstanceKey(sql, now());
-      keys = await loadActiveKeys(sql, now());
-    }
-    return keys[0]!;
+    return signingKeyOf(await activeKeys(), now())!;
   }
 
   app.get(ACTOR_WELL_KNOWN_PATH, async (_req, reply) => {
-    // Keys are read per request so a rotation shows up without a restart.
-    // Self-heal an all-expired table (e.g. a very long-lived process that
-    // never rotated) instead of serving an actor document with no keys.
-    let keys = await loadActiveKeys(sql, now());
-    if (keys.length === 0) {
-      await ensureInstanceKey(sql, now());
-      keys = await loadActiveKeys(sql, now());
-    }
-    const doc = buildActorDocument(actorConfig, keys, advertisedSchemaVersions);
+    const doc = buildActorDocument(actorConfig, await activeKeys(), advertisedSchemaVersions);
     return reply.type(ACTIVITY_JSON).send(JSON.stringify(doc));
   });
 
   // What this instance subscribes to or pulls at a peer is its own business.
-  const publicPeers = settings.peers.map(({ subscribe: _subscribe, pull: _pull, ...peer }) => peer);
   app.get(PEERS_WELL_KNOWN_PATH, async (_req, reply) => {
-    return reply.send({ peers: publicPeers });
+    const listed = peers.all().map(({ subscribe: _subscribe, pull: _pull, ...peer }) => peer);
+    return reply.send({ peers: listed });
   });
 
   // One NonceStore guards replay across every signed peer request (the
@@ -168,7 +168,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     // exfiltrate history past the floor (that is /peer/backfill + the archive).
     const auth = await optionalPeer(
       {
-        peers: settings.peers,
+        peers,
         baseUrl: actorConfig.baseUrl,
         nonceStore,
         ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
@@ -181,10 +181,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     if (auth.peerId !== null && (await respondIfBlocked(sql, auth.peerId, reply))) {
       return reply;
     }
-    const tier: 0 | 1 | 2 =
-      auth.peerId !== null
-        ? (settings.peers.find((p) => p.instanceId === auth.peerId)?.trustTier ?? 0)
-        : 0;
+    const tier: 0 | 1 | 2 = auth.peerId !== null ? (peers.find(auth.peerId)?.trustTier ?? 0) : 0;
 
     let parsed: ReturnType<typeof parseOutboxQuery>;
     try {
@@ -262,7 +259,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   registerSubscriptionRoutes(app, {
     sql,
-    peers: settings.peers,
+    peers,
     baseUrl: actorConfig.baseUrl,
     nonceStore,
     ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
@@ -273,7 +270,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
   registerInboxRoutes(app, {
     sql,
     registry,
-    peers: settings.peers,
+    peers,
     baseUrl: actorConfig.baseUrl,
     localInstanceId: actorConfig.instanceId,
     nonceStore,
@@ -284,7 +281,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   registerBackfillRoutes(app, {
     sql,
-    peers: settings.peers,
+    peers,
     baseUrl: actorConfig.baseUrl,
     nonceStore,
     rateLimiter,

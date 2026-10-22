@@ -21,8 +21,8 @@ import type { PeerRecord } from "./peers.js";
 const ED25519 = { name: "Ed25519" } as const;
 
 export interface PeerAuthContext {
-  /** The pinned peers registry (settings.peers). */
-  peers: PeerRecord[];
+  /** The pinned peers, each trusting its pinned and learned keys. */
+  peers: readonly PeerRecord[];
   /** Per-peer replay cache, keyed by keyid. */
   nonceStore: NonceStore;
   /** Verification clock in Unix seconds; defaults to now. */

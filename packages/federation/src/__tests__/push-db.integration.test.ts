@@ -2,7 +2,7 @@ import { tombstoneRecords } from "@openconditions/storage";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { InMemoryNonceStore, verifyMessage } from "../http-signature.js";
-import { ensureInstanceKey, type InstanceKey, loadActiveKeys } from "../keys.js";
+import { type InstanceKey, loadActiveKeys, maintainInstanceKey } from "../keys.js";
 import { encodeOutboxCursor, type OutboxCursor, readOutbox } from "../outbox.js";
 import { blockPeer, unblockPeer } from "../peer-blocklist.js";
 import { deliverWebhook, PUSH_FAILURE_THRESHOLD, runWebhookDeliveryCycle } from "../push.js";
@@ -149,7 +149,7 @@ async function webhookSubFromNow(opts: {
 beforeAll(async () => {
   db = await startDatabase();
   sql = db.sql;
-  await ensureInstanceKey(sql, NOW);
+  await maintainInstanceKey(sql, NOW);
   [signingKey] = await loadActiveKeys(sql, NOW);
 }, 120_000);
 

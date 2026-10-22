@@ -11,26 +11,39 @@
 import type postgres from "postgres";
 import type { ActorDocument } from "./actor.js";
 import { type NegotiableCapabilities, negotiateCapabilities } from "./capabilities.js";
+import { chainedActorKeys, storeLearnedKeys } from "./peer-keys.js";
 import { type PeerRecord, verifyActorAgainstPin } from "./peers.js";
 
 type Sql = postgres.Sql;
 
-export type PeerVersions = { ok: true; schemaVersions: string[] } | { ok: false; reason: string };
+export type PeerVersions =
+  | {
+      ok: true;
+      schemaVersions: string[];
+      /** The served keys that chain to the peer's pins ({@link chainedActorKeys}). */
+      keys: string[];
+    }
+  | { ok: false; reason: string };
 
 /**
  * The schema versions a fetched actor document advertises, once it is the
- * pinned peer's own document and the two instances can federate at all.
+ * pinned peer's own document and the two instances can federate at all. The
+ * document must serve a key that chains to one `peer` trusts.
  */
-export function peerVersionsFromActor(
+export async function peerVersionsFromActor(
   actor: unknown,
   peer: PeerRecord,
   local: NegotiableCapabilities,
-): PeerVersions {
+): Promise<PeerVersions> {
   if (actor === null || typeof actor !== "object") {
     return { ok: false, reason: "the actor document is not an object" };
   }
   const document = actor as ActorDocument;
-  const pin = verifyActorAgainstPin(document, peer);
+  const keys = await chainedActorKeys(document, new Set(peer.pinnedKeys));
+  const pin = verifyActorAgainstPin(document, {
+    ...peer,
+    pinnedKeys: keys.length > 0 ? keys : peer.pinnedKeys,
+  });
   if (!pin.ok) return { ok: false, reason: pin.reason ?? "the actor document fails its pin" };
   const capabilities = document.capabilities as NegotiableCapabilities | undefined;
   if (!Array.isArray(capabilities?.schemaVersions)) {
@@ -41,7 +54,7 @@ export function peerVersionsFromActor(
   } catch (err) {
     return { ok: false, reason: (err as Error).message };
   }
-  return { ok: true, schemaVersions: [...capabilities.schemaVersions] };
+  return { ok: true, schemaVersions: [...capabilities.schemaVersions], keys: pin.matchedKeys };
 }
 
 /** Keeps a peer's advertised schema versions. */
@@ -72,8 +85,9 @@ export async function loadPeerVersions(
 
 /**
  * Fetches a peer's actor document, verifies and negotiates it, and keeps
- * what it advertises. A document that fails leaves the stored versions as
- * they were, so a peer's brief outage never stops its records landing.
+ * what it advertises and the keys it serves that chain to the peer's pins
+ * (`federation_peer_key`). A document that fails leaves both as they were,
+ * so a peer's brief outage never stops its records landing.
  */
 export async function refreshPeerCapabilities(
   sql: Sql,
@@ -90,7 +104,10 @@ export async function refreshPeerCapabilities(
   } catch (err) {
     return { ok: false, reason: `the actor document could not be fetched: ${String(err)}` };
   }
-  const versions = peerVersionsFromActor(actor, peer, opts.local);
-  if (versions.ok) await storePeerVersions(sql, peer.instanceId, versions.schemaVersions, opts.now);
+  const versions = await peerVersionsFromActor(actor, peer, opts.local);
+  if (versions.ok) {
+    await storePeerVersions(sql, peer.instanceId, versions.schemaVersions, opts.now);
+    await storeLearnedKeys(sql, peer.instanceId, versions.keys, opts.now);
+  }
   return versions;
 }

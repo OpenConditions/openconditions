@@ -34,13 +34,13 @@ import {
   type MtlsContext,
   type NonceStore,
   type PeerHealthFailure,
-  type PeerRecord,
   type RateLimiter,
   recordPeerFailure,
 } from "@openconditions/federation";
 import type { Registry } from "@openconditions/model";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
+import type { PeerBook } from "./peer-book.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const INBOX_PATH = "/peer/inbox";
@@ -52,8 +52,8 @@ export interface InboxRouteContext {
   sql: postgres.Sql;
   /** The running registry peer records are admitted against. */
   registry: Registry;
-  /** The pinned peers registry (settings.peers). */
-  peers: PeerRecord[];
+  /** The pinned peers, as they are trusted now. */
+  peers: PeerBook;
   /** The instance's configured base URL — the authority the signed target-uri uses. */
   baseUrl: string;
   /** This instance's own id (threaded into the ingest's local-row ownership rules). */
@@ -88,8 +88,8 @@ export function healthFailureForReason(reason: FederationFailureReason): PeerHea
   }
 }
 
-function tierForPeer(peers: PeerRecord[], peerId: string): 0 | 1 | 2 {
-  return peers.find((p) => p.instanceId === peerId)?.trustTier ?? 0;
+function tierForPeer(peers: PeerBook, peerId: string): 0 | 1 | 2 {
+  return peers.find(peerId)?.trustTier ?? 0;
 }
 
 export function registerInboxRoutes(app: FastifyInstance, ctx: InboxRouteContext): void {

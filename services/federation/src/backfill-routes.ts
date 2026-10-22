@@ -16,7 +16,6 @@ import {
   type InstanceKey,
   type MtlsContext,
   type NonceStore,
-  type PeerRecord,
   type RateLimiter,
   recordPeerFailure,
   signMessage,
@@ -25,14 +24,15 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import { readBackfill } from "./backfill.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
+import type { PeerBook } from "./peer-book.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 
 const BACKFILL_PATH = "/peer/backfill";
 
 export interface BackfillRouteContext {
   sql: postgres.Sql;
-  /** The pinned peers registry (settings.peers) — the tier authority. */
-  peers: PeerRecord[];
+  /** The pinned peers — the tier authority. */
+  peers: PeerBook;
   /** The instance's configured base URL — the authority the signed target-uri uses. */
   baseUrl: string;
   /** Per-peer replay cache shared across the authenticated routes. */
@@ -60,7 +60,7 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
 
     // The tier is read from the PINNED peer record the auth resolved, never the
     // request — a peer cannot claim a wider window by asserting a higher tier.
-    const peer = ctx.peers.find((p) => p.instanceId === peerId);
+    const peer = ctx.peers.find(peerId);
     if (peer === undefined) {
       return reply.status(401).send({ error: "authenticated peer is not in the registry" });
     }

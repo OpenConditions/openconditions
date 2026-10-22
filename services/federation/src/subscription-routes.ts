@@ -25,7 +25,6 @@ import {
   listSubscriptions,
   type MtlsContext,
   type NonceStore,
-  type PeerRecord,
   readOutbox,
   SubscriptionValidationError,
   type UpdateSubscriptionInput,
@@ -34,6 +33,7 @@ import {
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import type postgres from "postgres";
 import { backfillFloorIso } from "./backfill.js";
+import type { PeerBook } from "./peer-book.js";
 import { requirePeer, respondIfBlocked } from "./peer-request.js";
 import { SseStreamPump } from "./stream-pump.js";
 
@@ -49,8 +49,8 @@ const STREAM_TICK_LIMIT = 500;
 
 export interface SubscriptionRouteContext {
   sql: postgres.Sql;
-  /** The pinned peers registry (settings.peers). */
-  peers: PeerRecord[];
+  /** The pinned peers, as they are trusted now. */
+  peers: PeerBook;
   /** The instance's configured base URL — the authority the signed target-uri uses. */
   baseUrl: string;
   /** Per-peer replay cache shared across the authenticated routes. */
@@ -199,7 +199,7 @@ export function registerSubscriptionRoutes(
     // and /peer/backfill. The minCreatedAt floor is the effective start-cursor
     // clamp — even from a stored cursor of 0.0, an entry older than the window is
     // never scanned, so a Tier-0 peer cannot replay pre-24h history over SSE.
-    const tier = ctx.peers.find((p) => p.instanceId === peerId)?.trustTier ?? 0;
+    const tier = ctx.peers.find(peerId)?.trustTier ?? 0;
 
     reply.hijack();
     reply.raw.writeHead(200, {

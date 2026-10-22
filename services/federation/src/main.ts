@@ -8,7 +8,9 @@ import { assertStoredCodesRegistered, runMigrations } from "@openconditions/core
 import {
   createInMemoryRateLimiter,
   InMemoryNonceStore,
-  loadActiveKeys,
+  KEY_PUBLICATION_LEAD_DAYS,
+  loadSigningKey,
+  maintainInstanceKey,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
   runWebhookDeliveryCycle,
@@ -19,6 +21,7 @@ import { seedFederation } from "@openconditions/storage";
 import postgres from "postgres";
 import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
+import { PeerBook } from "./peer-book.js";
 import { refreshPeers } from "./peering.js";
 import { pullPeer } from "./puller.js";
 import { build } from "./server.js";
@@ -37,6 +40,9 @@ const SEED_RETRY_MS = 5 * 60 * 1000;
 
 /** How often each pinned peer's capabilities are re-verified and its subscriptions mended. */
 const CAPABILITIES_CYCLE_MS = 60 * 60 * 1000;
+
+/** How often the instance key is checked for rotation. */
+const KEY_CYCLE_MS = 6 * 60 * 60 * 1000;
 
 /** How often the peers this instance pulls are read. */
 const PULL_CYCLE_MS = 30_000;
@@ -95,8 +101,32 @@ async function boot() {
   // One per-peer limiter for what a peer may send: its pushes to the inbox
   // and the pages this instance pulls from it.
   const rateLimiter = createInMemoryRateLimiter();
-  const app = await build({ sql, rateLimiter, onSubscribed: () => void seed() });
+  const peers = await PeerBook.load(sql, settings.peers);
+  const app = await build({ sql, rateLimiter, peers, onSubscribed: () => void seed() });
   if (settings.enabled) void seed();
+
+  // Key upkeep: the instance key is rotated well before it expires, the new
+  // one endorsed by the old so peers follow it.
+  let keyTimer: NodeJS.Timeout | undefined;
+  if (settings.enabled) {
+    const maintainKey = async () => {
+      try {
+        const kept = await maintainInstanceKey(sql, new Date().toISOString());
+        if (kept.status !== "current") {
+          const signsFrom = new Date(
+            kept.key.notBefore.getTime() + KEY_PUBLICATION_LEAD_DAYS * 86_400_000,
+          );
+          console.info(
+            `[federation-api] instance key ${kept.status}: ${kept.key.keyId}, valid until ` +
+              `${kept.key.notAfter.toISOString()}, signing from ${signsFrom.toISOString()}`,
+          );
+        }
+      } catch (err) {
+        console.error("[federation-api] instance key upkeep failed:", err);
+      }
+    };
+    keyTimer = setInterval(() => void maintainKey(), KEY_CYCLE_MS);
+  }
 
   // Webhook push cron: a latency optimization over pull. Egress is SSRF-guarded
   // (guardedFetch), and a run only advances a subscription's cursor on a 2xx —
@@ -107,9 +137,8 @@ async function boot() {
     const egress = guardedFetch();
     // A subscriber is pushed its pinned tier's window, as it is served
     // everywhere else, and nothing once it is no longer pinned.
-    const tiers = new Map(settings.peers.map((peer) => [peer.instanceId, peer.trustTier]));
     const floorFor = (peerId: string) => {
-      const tier = tiers.get(peerId);
+      const tier = peers.find(peerId)?.trustTier;
       return tier === undefined ? null : backfillFloorIso(tier, new Date().toISOString());
     };
     // An inbox that asked to retry later is left alone that long.
@@ -122,7 +151,7 @@ async function boot() {
       if (cycleRunning) return;
       cycleRunning = true;
       try {
-        const [signingKey] = await loadActiveKeys(sql, new Date().toISOString());
+        const signingKey = await loadSigningKey(sql, new Date().toISOString());
         if (!signingKey) return;
         await runWebhookDeliveryCycle(sql, {
           signingKey,
@@ -177,7 +206,7 @@ async function boot() {
       if (upkeepRunning) return;
       upkeepRunning = true;
       try {
-        const results = await refreshPeers(sql, settings, {
+        const results = await refreshPeers(sql, settings, peers, {
           fetchImpl: egress,
           now: new Date().toISOString(),
         });
@@ -211,8 +240,7 @@ async function boot() {
   // Pull: each peer this instance pulls is read from its own cursor, so what
   // arrives is complete whatever the push carries. Single-flight.
   let pullTimer: NodeJS.Timeout | undefined;
-  const pulled = settings.peers.filter((peer) => peer.pull !== undefined);
-  if (settings.enabled && pulled.length > 0) {
+  if (settings.enabled && settings.peers.some((peer) => peer.pull !== undefined)) {
     const egress = guardedFetch();
     const nonceStore = new InMemoryNonceStore();
     const registry = productionRegistry();
@@ -221,9 +249,10 @@ async function boot() {
       if (pullRunning) return;
       pullRunning = true;
       try {
-        const [signingKey] = await loadActiveKeys(sql, new Date().toISOString());
+        const signingKey = await loadSigningKey(sql, new Date().toISOString());
         if (!signingKey) return;
-        for (const peer of pulled) {
+        for (const peer of peers.all()) {
+          if (peer.pull === undefined) continue;
           const result = await pullPeer(
             sql,
             { ...peer, pull: peer.pull! },
@@ -250,6 +279,7 @@ async function boot() {
 
   const close = async () => {
     if (webhookTimer) clearInterval(webhookTimer);
+    if (keyTimer) clearInterval(keyTimer);
     if (capabilitiesTimer) clearInterval(capabilitiesTimer);
     if (pullTimer) clearInterval(pullTimer);
     clearInterval(pruneTimer);

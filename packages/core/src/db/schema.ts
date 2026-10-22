@@ -629,6 +629,9 @@ export const issuerKey = conditionsSchema.table("issuer_key", {
  * form — an operator secret that is never served, logged, or federated.
  * Rotation keeps the old and new key's [not_before, not_after) windows
  * overlapping (≥30 days) so peers keep verifying while the new key propagates.
+ * Every key but the first is endorsed by the key before it: `endorsed_by` is
+ * that key's id and `endorsement` its Ed25519 signature over the new key's
+ * id, which a peer that trusts the old key checks before it trusts the new.
  */
 export const federationInstanceKey = conditionsSchema.table("federation_instance_key", {
   keyId: text("key_id").primaryKey(),
@@ -638,7 +641,25 @@ export const federationInstanceKey = conditionsSchema.table("federation_instance
   notBefore: timestamp("not_before", { withTimezone: true }).notNull(),
   notAfter: timestamp("not_after", { withTimezone: true }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  endorsedBy: text("endorsed_by"),
+  endorsement: bytea("endorsement"),
 });
+
+/**
+ * The keys of a pinned peer this instance trusts beyond its configured pins:
+ * the keys its actor document served, endorsed by a key already trusted,
+ * when this instance last verified that document. Replaced at each
+ * verification, so a key the peer retired is trusted no longer.
+ */
+export const federationPeerKey = conditionsSchema.table(
+  "federation_peer_key",
+  {
+    peerInstanceId: text("peer_instance_id").notNull(),
+    keyId: text("key_id").notNull(),
+    learnedAt: timestamp("learned_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.peerInstanceId, t.keyId] })],
+);
 
 /**
  * Per-peer OPERATIONS (health) counters — a TRANSPORT-plane signal only. It

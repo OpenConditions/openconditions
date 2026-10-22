@@ -44,14 +44,20 @@ export {
   verifyContentDigest,
   verifyMessage,
 } from "./http-signature.js";
-export type { InstanceKey } from "./keys.js";
+export type { InstanceKey, KeyEndorsement, KeyMaintenance } from "./keys.js";
 export {
-  ensureInstanceKey,
+  endorsementMessage,
   generateInstanceKey,
   INSTANCE_KEY_VALIDITY_MONTHS,
+  KEY_PUBLICATION_LEAD_DAYS,
+  KEY_ROTATION_LEAD_DAYS,
   loadActiveKeys,
+  loadSigningKey,
+  maintainInstanceKey,
   ROTATION_OVERLAP_DAYS,
   rotateInstanceKey,
+  signingKeyOf,
+  verifyEndorsement,
 } from "./keys.js";
 export type { MtlsContext, MtlsResult } from "./mtls.js";
 export { checkMtls } from "./mtls.js";
@@ -105,6 +111,12 @@ export {
   recordPeerFailure,
   setEffectiveTierUntil,
 } from "./peer-health.js";
+export {
+  chainedActorKeys,
+  loadLearnedKeys,
+  storeLearnedKeys,
+  withLearnedKeys,
+} from "./peer-keys.js";
 export type {
   EnsureSubscriptionOutcome,
   PeerPull,

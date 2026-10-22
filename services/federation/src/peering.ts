@@ -9,7 +9,7 @@
 import {
   type EnsureSubscriptionOutcome,
   ensurePeerSubscription,
-  loadActiveKeys,
+  loadSigningKey,
   type PeerVersions,
   refreshPeerCapabilities,
 } from "@openconditions/federation";
@@ -17,6 +17,7 @@ import { schemaVersions } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
 import type { FederationSettings } from "./config.js";
+import type { PeerBook } from "./peer-book.js";
 
 export interface PeerUpkeep {
   peer: string;
@@ -27,17 +28,21 @@ export interface PeerUpkeep {
   pullSubscription?: EnsureSubscriptionOutcome;
 }
 
-/** Refreshes every pinned peer once; one peer's failure never stops the others. */
+/**
+ * Refreshes every pinned peer once; one peer's failure never stops the
+ * others. The keys a peer was seen to rotate to are trusted from then on.
+ */
 export async function refreshPeers(
   sql: postgres.Sql,
   settings: FederationSettings,
+  peers: PeerBook,
   opts: { fetchImpl: typeof fetch; now: string },
 ): Promise<PeerUpkeep[]> {
   const actor = settings.actor!;
   const local = { ...actor.capabilities, schemaVersions: schemaVersions(productionRegistry()) };
   const inboxUrl = `${actor.baseUrl.replace(/\/$/, "")}/peer/inbox`;
   const results: PeerUpkeep[] = [];
-  for (const peer of settings.peers) {
+  for (const peer of peers.all()) {
     const capabilities = await refreshPeerCapabilities(sql, peer, {
       local,
       fetchImpl: opts.fetchImpl,
@@ -45,7 +50,7 @@ export async function refreshPeers(
     }).catch((err: unknown) => ({ ok: false as const, reason: String(err) }));
     const result: PeerUpkeep = { peer: peer.instanceId, capabilities };
     if (peer.subscribe !== undefined || peer.pull !== undefined) {
-      const [signingKey] = await loadActiveKeys(sql, opts.now);
+      const signingKey = await loadSigningKey(sql, opts.now);
       const keep = (want: Parameters<typeof ensurePeerSubscription>[1]) =>
         signingKey === undefined
           ? Promise.resolve({
@@ -72,5 +77,6 @@ export async function refreshPeers(
     }
     results.push(result);
   }
+  await peers.reload(sql);
   return results;
 }
