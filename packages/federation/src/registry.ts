@@ -9,6 +9,7 @@
  * at all). Parsing is strict and fail-closed: a malformed entry throws
  * instead of degrading into an unpinned peer.
  */
+import { isInstanceId } from "@openconditions/model";
 import { parse } from "yaml";
 import type { ActorCoverage } from "./actor.js";
 import { rawEd25519FromMultibase } from "./multibase.js";
@@ -21,7 +22,7 @@ export interface RegistryOperator {
 }
 
 export interface RegistryEntry {
-  /** Instance slug; doubles as the TUF target file name (`<id>.yaml`). */
+  /** The instance's id (`OPENCONDITIONS_INSTANCE_ID`); doubles as the TUF target file name (`<id>.yaml`). */
   id: string;
   /** The instance's Actor document URL. */
   actor: string;
@@ -31,12 +32,6 @@ export interface RegistryEntry {
   /** TUF-authorized Ed25519 publicKeyMultibase values for this instance. */
   keys: string[];
 }
-
-/**
- * Registry ids are lowercase slugs because they double as target file names
- * inside the TUF repository — no path separators, dots, or case games.
- */
-const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 function fail(message: string): never {
   throw new TypeError(`invalid registry entry: ${message}`);
@@ -134,9 +129,11 @@ export function parseRegistryEntry(yamlText: string): RegistryEntry {
   }
   const raw = value as Record<string, unknown>;
 
+  // The entry's id is the instance's id, which every record it federates
+  // carries, and its target file's name: lower case, no path separators.
   const id = raw["id"];
-  if (typeof id !== "string" || !ID_PATTERN.test(id)) {
-    fail("id must be a lowercase slug ([a-z0-9-])");
+  if (typeof id !== "string" || !isInstanceId(id)) {
+    fail("id must be an instance id ([a-z0-9.-], starting and ending with a letter or digit)");
   }
   if (!isHttpUrl(raw["actor"])) fail("actor must be an http(s) URL");
 

@@ -44,6 +44,11 @@ describe("parseRegistryEntry", () => {
     expect(entry.keys).toEqual(object["keys"]);
   });
 
+  it("takes an instance's own id, as its records carry it", () => {
+    const entry = parseRegistryEntry(stringify(sampleEntryObject({ id: "maps.example.org" })));
+    expect(entry.id).toBe("maps.example.org");
+  });
+
   it("accepts coverage with only iso3166 or only bbox", () => {
     const iso = parseRegistryEntry(stringify(sampleEntryObject({ coverage: { iso3166: ["NL"] } })));
     expect(iso.coverage.bbox).toBeUndefined();
@@ -73,6 +78,7 @@ describe("parseRegistryEntry", () => {
     ["missing id", { id: undefined }],
     ["empty id", { id: "" }],
     ["id with path characters", { id: "../evil" }],
+    ["id with a slash", { id: "maps.example.org/x" }],
     ["id with uppercase", { id: "OpenMapX" }],
     ["non-url actor", { actor: "not a url" }],
     ["non-http actor", { actor: "ftp://example.org/actor.json" }],

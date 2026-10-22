@@ -15,7 +15,9 @@
     "networkAliases": ["openconditions-federation"],
     "environment": {
       "PORT": "4300",
-      "HOST": "0.0.0.0"
+      "HOST": "0.0.0.0",
+      "OPENCONDITIONS_FEDERATION_REGISTRY_CACHE": "/data/registry",
+      "TMPDIR": "/data"
     },
     "memory": "${OPENCONDITIONS_FEDERATION_MEMORY:-512m}",
     "restart": "unless-stopped",
@@ -35,6 +37,14 @@
       "startPeriod": "30s"
     }
   },
+  "volumes": [
+    {
+      "name": "openmapx-openconditions-federation-data",
+      "mountAt": "/data",
+      "backup": false,
+      "readOnly": false
+    }
+  ],
   "provides": ["openconditions/federation"],
   "ownsSchema": "conditions",
   "ui": {
@@ -81,6 +91,20 @@
         "type": "string",
         "title": "Archive URL",
         "description": "Where peers fetch the static archive of history beyond their live window, an http(s) URL the operator serves the ingest's archive directory at. Empty: <baseUrl>/archive.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FEDERATION_REGISTRY_URL": {
+        "type": "string",
+        "title": "Registry URL",
+        "description": "Where the federation registry is served, an http(s) URL with its TUF metadata under /metadata and its instance entries under /targets. The instances it lists, verified daily, join the configured peers. Empty: no registry.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "OPENCONDITIONS_FEDERATION_REGISTRY_ROOT": {
+        "type": "string",
+        "title": "Registry root",
+        "description": "Required with a registry URL. The registry's trusted root metadata (root.json), obtained out of band, as inline JSON or a path to the file.",
         "default": "",
         "x-openmapx-secret": false
       },

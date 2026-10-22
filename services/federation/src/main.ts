@@ -13,6 +13,7 @@ import {
   maintainInstanceKey,
   OUTBOX_PRUNE_INTERVAL_HOURS,
   pruneOutbox,
+  REGISTRY_SYNC_INTERVAL_HOURS,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
 import {
@@ -30,6 +31,7 @@ import { PeerBook } from "./peer-book.js";
 import { refreshPeers } from "./peering.js";
 import { holdProcessLock } from "./process-lock.js";
 import { pullPeer } from "./puller.js";
+import { REGISTRY_RETRY_MS, syncRegistryPeers } from "./registry.js";
 import { build } from "./server.js";
 
 const PORT = parseInt(process.env["PORT"] || "4300", 10);
@@ -221,6 +223,7 @@ async function boot() {
   // inbox delivery. A peer this instance subscribes to is kept pushing to its
   // inbox: a subscription missing, changed or disabled there is mended.
   let capabilitiesTimer: NodeJS.Timeout | undefined;
+  let registryTimer: NodeJS.Timeout | undefined;
   if (settings.enabled) {
     const egress = guardedFetch();
     let upkeepRunning = false;
@@ -257,6 +260,40 @@ async function boot() {
     };
     void refreshAll();
     capabilitiesTimer = setInterval(() => void refreshAll(), CAPABILITIES_CYCLE_MS);
+
+    // Registry discovery: daily, and an hour after a sync that failed. The
+    // peers a verified sync found are verified and kept up like the
+    // configured ones from then on.
+    const registry = settings.registry;
+    if (registry !== undefined) {
+      const syncRegistryNow = async () => {
+        let next = REGISTRY_SYNC_INTERVAL_HOURS * 60 * 60 * 1000;
+        try {
+          const synced = await syncRegistryPeers(
+            peers,
+            registry,
+            settings.actor!.instanceId,
+            new Date().toISOString(),
+          );
+          const { added, removed, changed } = synced;
+          if (added.length + removed.length + changed.length > 0) {
+            console.info(
+              `[federation-api] registry: added ${added.join(", ") || "none"}, ` +
+                `removed ${removed.join(", ") || "none"}, changed ${changed.join(", ") || "none"}`,
+            );
+            void refreshAll();
+          }
+        } catch (err) {
+          next = REGISTRY_RETRY_MS;
+          console.error(
+            "[federation-api] registry sync failed; the peers of the last verified sync stay:",
+            err,
+          );
+        }
+        registryTimer = setTimeout(() => void syncRegistryNow(), next);
+      };
+      void syncRegistryNow();
+    }
   }
 
   // Pull: each peer this instance pulls is read from its own cursor, so what
@@ -317,6 +354,7 @@ async function boot() {
     if (webhookTimer) clearInterval(webhookTimer);
     if (keyTimer) clearInterval(keyTimer);
     if (capabilitiesTimer) clearInterval(capabilitiesTimer);
+    if (registryTimer) clearTimeout(registryTimer);
     if (pullTimer) clearInterval(pullTimer);
     clearInterval(pruneTimer);
     await app.close();

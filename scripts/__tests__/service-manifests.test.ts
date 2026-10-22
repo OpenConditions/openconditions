@@ -320,7 +320,13 @@ describe("service manifests on OpenMapX's config model", () => {
 
   test("federation: off by default, its database URL the only secret", () => {
     const m = manifest("federation");
-    expect(m.container.environment).toEqual({ PORT: "4300", HOST: "0.0.0.0" });
+    // Its registry cache and a peer's archive files while they land live on its volume.
+    expect(m.container.environment).toEqual({
+      PORT: "4300",
+      HOST: "0.0.0.0",
+      OPENCONDITIONS_FEDERATION_REGISTRY_CACHE: "/data/registry",
+      TMPDIR: "/data",
+    });
     expect(secrets(m)).toEqual(["DATABASE_URL"]);
     expect(properties(m)["OPENCONDITIONS_FEDERATION_ENABLED"]?.default).toBe("");
   });

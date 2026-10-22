@@ -42,7 +42,7 @@ export async function refreshPeers(
   const local = { ...actor.capabilities, schemaVersions: schemaVersions(productionRegistry()) };
   const inboxUrl = `${actor.baseUrl.replace(/\/$/, "")}/peer/inbox`;
   const results: PeerUpkeep[] = [];
-  for (const peer of peers.configured()) {
+  for (const peer of peers.pinned()) {
     const capabilities = await refreshPeerCapabilities(sql, peer, {
       local,
       fetchImpl: opts.fetchImpl,
