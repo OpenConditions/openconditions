@@ -3,6 +3,7 @@ import {
   type FeedDefinition,
   type FeedFormat,
   type IngestDomain,
+  recordSkipped,
 } from "@openconditions/ingest-framework";
 import {
   CAMERAS_MAPPING_FIELDS,
@@ -39,6 +40,39 @@ const PRODUCES = {
 } as const;
 
 /**
+ * A parse whose cameras each keep a feature id of their own. Two publisher
+ * ids a feature id writes alike (`a b` and `a/b` are both `a_b`) would make
+ * one camera overwrite the other unseen: the first keeps the id, with its
+ * images, and every later one is counted as malformed.
+ */
+function distinctCameras(
+  parse: FeedFormat<CamerasCatalogFeed>["parse"],
+): FeedFormat<CamerasCatalogFeed>["parse"] {
+  return (feed, payloads, ctx) => {
+    const out = parse(feed, payloads, ctx);
+    const owner = new Map<unknown, unknown>();
+    const recordOf = (draft: Record<string, unknown>) =>
+      (draft["provenance"] as { recordId?: unknown } | undefined)?.recordId;
+    const features = out.features.filter((f) => {
+      const id = f["id"];
+      if (!owner.has(id)) {
+        owner.set(id, recordOf(f));
+        return true;
+      }
+      if (owner.get(id) === recordOf(f)) return true;
+      recordSkipped(feed.id, "malformed");
+      return false;
+    });
+    if (features.length === out.features.length) return out;
+    const observations = out.observations.filter((o) => {
+      const featureId = (o["subject"] as { featureId?: unknown } | undefined)?.featureId;
+      return !owner.has(featureId) || owner.get(featureId) === recordOf(o);
+    });
+    return { ...out, features, observations };
+  };
+}
+
+/**
  * A format of cameras, read from one `main` payload unless it names its
  * roles; one with a live status role reads that role alone too.
  */
@@ -54,7 +88,7 @@ function cameras(
     products: CAMERAS_PRODUCTS,
     produces: PRODUCES,
     endpoints,
-    parse,
+    parse: distinctCameras(parse),
     ...(parseStatus === undefined ? {} : { parseStatus }),
   };
 }

@@ -111,4 +111,18 @@ describe("hk-td", () => {
     expect(out.rejected ?? 0).toBe(0);
     expect(drainSkipped(hkFeed().id)).toEqual({ malformed: 1, no_geometry: 1 });
   });
+
+  test("of two keys one feature id writes alike, the first keeps it and the other is counted", () => {
+    const image = (key: string, url: string) =>
+      `<image><key>${key}</key><latitude>22.3</latitude><longitude>114.1</longitude><url>${url}</url></image>`;
+    const xml = Buffer.from(
+      `<image-list>${image("A B", "https://tdcctv.data.one.gov.hk/1.jpg")}${image("A/B", "https://tdcctv.data.one.gov.hk/2.jpg")}</image-list>`,
+    );
+    const out = parse({ main: [xml] });
+    expect(out.features.map((f) => f["id"])).toEqual(["oc:feature:hk-td-cameras:A_B"]);
+    expect(out.observations.map((o) => value(o)?.["imageUrl"])).toEqual([
+      "https://tdcctv.data.one.gov.hk/1.jpg",
+    ]);
+    expect(drainSkipped(hkFeed().id)).toEqual({ malformed: 1 });
+  });
 });
