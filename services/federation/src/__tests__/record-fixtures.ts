@@ -3,9 +3,10 @@
  * stored situations for the outbox suites. Test-only: no runtime module
  * imports this file.
  */
-import { sealRecord } from "@openconditions/model";
+import { type RecordClass, sealRecord } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import type postgres from "postgres";
+import type { ArchiveFile, ArchiveManifest } from "../archive.js";
 
 type Rec = Record<string, unknown>;
 
@@ -206,6 +207,29 @@ export async function subscribeAll(sql: postgres.Sql, id: string): Promise<void>
       (id, peer_id, delivery_mode, created_at, updated_at)
     VALUES (${id}, ${`peer-${id}`}, 'pull', now(), now())
     ON CONFLICT (id) DO NOTHING`;
+}
+
+/**
+ * Notes a night's archive built at `builtAt`, as the ingest's build does, and
+ * returns it as a page under `baseUrl` names it.
+ */
+export async function noteArchive(
+  sql: postgres.Sql,
+  baseUrl: string,
+  builtAt: string,
+): Promise<ArchiveManifest> {
+  const day = builtAt.slice(0, 10);
+  const files = {} as Record<RecordClass, ArchiveFile>;
+  for (const cls of ["situation", "feature", "offer", "observation"] as const) {
+    const name = `archive-${cls}-${day}.parquet`;
+    await sql`
+      INSERT INTO conditions.archive_file (record_class, file_name, sha256, bytes, built_at)
+      VALUES (${cls}, ${name}, ${"ab".repeat(32)}, 10, ${builtAt})
+      ON CONFLICT (record_class) DO UPDATE SET
+        file_name = excluded.file_name, built_at = excluded.built_at`;
+    files[cls] = { url: `${baseUrl}/${name}`, sha256: "ab".repeat(32), bytes: 10 };
+  }
+  return { builtAt, files };
 }
 
 /** Backdates a record's journal entries to `msAgo` before `now`. */

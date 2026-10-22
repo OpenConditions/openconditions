@@ -15,7 +15,10 @@
  * `highWaterMark` only once the page landed, so a failed page is read again
  * and none is skipped. A cursor that has not reached the live tail reads
  * `/peer/backfill`, the catch-up route; the live tail is read from
- * `/peer/outbox`.
+ * `/peer/outbox`. A page that says the cursor is beyond the peer's window
+ * names the peer's archive, which lands first (`importArchive`): a new peer,
+ * or one that was away longer than its window, starts from the archive's
+ * night and the pages carry the rest.
  */
 import { ingestFederatedPage } from "@openconditions/contributions-api/federation/inbox";
 import {
@@ -37,6 +40,8 @@ import {
 } from "@openconditions/federation";
 import type { Registry } from "@openconditions/model";
 import type postgres from "postgres";
+import { readArchiveManifest } from "./archive.js";
+import { importArchive } from "./archive-import.js";
 
 /** The most pages one pull of a peer reads before it yields. */
 export const PULL_MAX_PAGES = 20;
@@ -55,6 +60,8 @@ export interface PullContext {
   maxPages?: number;
   /** How long a page may take; default {@link PULL_PAGE_TIMEOUT_MS}. */
   pageTimeoutMs?: number;
+  /** Fetches the peer's archive files; default `fetchImpl`. Its size cap must allow them. */
+  archiveFetch?: typeof fetch;
 }
 
 export interface PullResult {
@@ -68,6 +75,8 @@ export interface PullResult {
   cursor: string;
   /** The peer's history before this instance's window lives only in its archive. */
   beyondWindow?: true;
+  /** What the peer's archive landed, when the pull read it. */
+  archive?: { accepted: number; stale: number; skipped: number };
   /** Why the pull stopped short, when it did. */
   error?: string;
 }
@@ -225,6 +234,7 @@ export async function pullPeer(
       highWaterMark?: unknown;
       next?: unknown;
       beyondWindow?: unknown;
+      archive?: unknown;
       orderedItems?: unknown;
     };
     try {
@@ -257,6 +267,35 @@ export async function pullPeer(
     if (!rate.ok) {
       return { ...result, error: "the peer's pages exceed the rate its tier is admitted" };
     }
+    if (page.beyondWindow === true) {
+      result.beyondWindow = true;
+      // What the window no longer holds lands from the archive first; the
+      // pages after it carry what changed since.
+      if (page.archive !== undefined && result.archive === undefined) {
+        const manifest = readArchiveManifest(page.archive);
+        if (manifest === null) return refuse("schema", "the page names a malformed archive");
+        const imported = await importArchive(sql, peer, manifest, {
+          registry: ctx.registry,
+          localInstanceId: ctx.localInstanceId,
+          peerVersions,
+          fetchImpl: ctx.archiveFetch ?? ctx.fetchImpl,
+          now: ctx.now,
+        });
+        if (!imported.ok) {
+          return imported.forged === true
+            ? refuse("signature", imported.error)
+            : { ...result, error: imported.error };
+        }
+        const { ok: _ok, ...archived } = imported;
+        result.archive = archived;
+        result.accepted += archived.accepted;
+        result.stale += archived.stale;
+        result.skipped += archived.skipped;
+        if (archived.skipped > 0) {
+          await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now(), archived.skipped);
+        }
+      }
+    }
     const landed = await ingestFederatedPage(sql, page, {
       registry: ctx.registry,
       localInstanceId: ctx.localInstanceId,
@@ -273,7 +312,6 @@ export async function pullPeer(
     if (landed.skipped.length > 0) {
       await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now(), landed.skipped.length);
     }
-    if (page.beyondWindow === true) result.beyondWindow = true;
     if (!after(result.cursor, frontier)) break;
     await storeCursor(sql, peer.instanceId, frontier, ctx.now());
     result.cursor = frontier;

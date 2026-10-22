@@ -1,8 +1,12 @@
+import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import { parquetMetadata, parquetReadObjects } from "hyparquet";
 import { describe, expect, it } from "vitest";
 import {
   type ArchivableRecord,
   publishedRecords,
+  readRecordArchive,
   recordArchiveBuffer,
   recordArchiveColumns,
 } from "../record-archive.js";
@@ -81,6 +85,14 @@ describe("the archive of model records", () => {
         crowd("corroborated", "2026-10-01T11:59:00Z"),
         crowd("corroborated"),
         record({ id: "oc:feature:x:1", class: "feature" }),
+        // A peer's copy is that peer's to federate.
+        record({
+          id: "copy",
+          provenance: {
+            ...record().provenance,
+            originChain: [{ instanceId: "peer.example.org", viaPeer: "peer.example.org" }],
+          } as never,
+        }),
       ],
       NOW,
     );
@@ -123,6 +135,21 @@ describe("the archive of model records", () => {
     });
     expect(JSON.parse(rows[1]!["record"] as string).provenance.reporter).toBeUndefined();
     expect(new TextDecoder().decode(buffer)).not.toContain(SECRET_KEY);
+  });
+
+  it("reads a written file back as the records it holds", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-read-"));
+    try {
+      const records = Array.from({ length: 1500 }, (_, i) => record({ id: `sit-${i}` }));
+      const file = path.join(dir, "archive-situation.parquet");
+      await writeFile(file, recordArchiveBuffer("situation", records, NOW));
+      const read: Record<string, unknown>[] = [];
+      for await (const page of readRecordArchive(file)) read.push(...page);
+      expect(read.map((r) => r["id"])).toEqual(records.map((r) => r.id));
+      expect(read[0]).toEqual(JSON.parse(JSON.stringify(records[0])));
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 
   it("archives a feature that has no position with an empty geometry", async () => {

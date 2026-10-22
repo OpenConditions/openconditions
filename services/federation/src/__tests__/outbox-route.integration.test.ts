@@ -15,8 +15,10 @@ import {
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { ArchiveManifest } from "../archive.js";
 import { build } from "../server.js";
 import {
+  noteArchive,
   type OwnSituationOptions,
   ownSituation,
   setOutboxAge,
@@ -487,6 +489,11 @@ describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
     await setOutboxAge(sql, situationId("snap-fresh"), 2 * HOUR, NOW);
     await setOutboxAge(sql, situationId("snap-2day"), 2 * DAY, NOW);
 
+    const archive = await noteArchive(
+      sql,
+      ARCHIVE_URL,
+      new Date(Date.parse(NOW) - HOUR).toISOString(),
+    );
     const env = { ...ENABLED_ENV, OPENCONDITIONS_FEDERATION_ARCHIVE_URL: ARCHIVE_URL };
     const app = await build({ sql, env, logger: false, now: () => NOW });
     try {
@@ -494,20 +501,16 @@ describe("GET /peer/outbox — the tier-bounded public snapshot", () => {
       expect(res.statusCode).toBe(200);
       const page = res.json() as OutboxPage & {
         beyondWindow?: boolean;
-        archiveUrl?: Record<string, string>;
+        archive?: ArchiveManifest;
       };
       // A within-24h entry is always served; the 2-day-old one is beyond the floor.
       expect(ids(page)).toContain(situationId("snap-fresh"));
       expect(ids(page)).not.toContain(situationId("snap-2day"));
       expect(page.beyondWindow).toBe(true);
-      expect(page.archiveUrl).toEqual({
-        situation: `${ARCHIVE_URL}/archive-situation.parquet`,
-        feature: `${ARCHIVE_URL}/archive-feature.parquet`,
-        offer: `${ARCHIVE_URL}/archive-offer.parquet`,
-        observation: `${ARCHIVE_URL}/archive-observation.parquet`,
-      });
+      expect(page.archive).toEqual(archive);
     } finally {
       await app.close();
+      await sql`DELETE FROM conditions.archive_file`;
     }
   }, 30_000);
 

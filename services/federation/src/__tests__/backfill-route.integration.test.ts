@@ -13,6 +13,7 @@ import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 import {
+  noteArchive,
   ownSituation,
   setOutboxAge,
   situationId,
@@ -28,12 +29,6 @@ let stranger: InstanceKey;
 
 const BASE_URL = "https://conditions.example.org";
 const ARCHIVE_URL = "https://conditions.example.org/archive";
-const ARCHIVE_FILES = {
-  situation: `${ARCHIVE_URL}/archive-situation.parquet`,
-  feature: `${ARCHIVE_URL}/archive-feature.parquet`,
-  offer: `${ARCHIVE_URL}/archive-offer.parquet`,
-  observation: `${ARCHIVE_URL}/archive-observation.parquet`,
-};
 const NOW = "2026-07-13T12:00:00.000Z";
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
@@ -191,6 +186,11 @@ describe("GET /peer/backfill", () => {
   it("serves a Tier-1 peer a signed page within 30 days, redirecting older to the archive", async () => {
     await seed("bf-route-recent", 10 * DAY);
     await seed("bf-route-old", 45 * DAY);
+    const archive = await noteArchive(
+      sql,
+      ARCHIVE_URL,
+      new Date(Date.parse(NOW) - HOUR).toISOString(),
+    );
 
     const app = await build({ sql, env: enabledEnv, logger: false, now: () => NOW });
     try {
@@ -209,7 +209,8 @@ describe("GET /peer/backfill", () => {
       expect(recent).toMatchObject({ recordClass: "situation", operation: "create" });
       expect(recent.record.id).toBe(situationId("bf-route-recent"));
       expect(page.beyondWindow).toBe(true);
-      expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
+      // Signed with the page: each file's hash and size.
+      expect(page.archive).toEqual(archive);
 
       const [key] = await loadActiveKeys(sql, NOW);
       const verified = await verifyMessage({
@@ -225,12 +226,18 @@ describe("GET /peer/backfill", () => {
       expect(verified).toEqual({ ok: true, keyId: key!.keyId });
     } finally {
       await app.close();
+      await sql`DELETE FROM conditions.archive_file`;
     }
   }, 30_000);
 
   it("takes the tier from the pinned record: a Tier-0 peer only gets the last 24 hours", async () => {
     await seed("bf-route-t0-fresh", 2 * HOUR);
     await seed("bf-route-t0-2day", 2 * DAY);
+    const archive = await noteArchive(
+      sql,
+      ARCHIVE_URL,
+      new Date(Date.parse(NOW) - HOUR).toISOString(),
+    );
 
     const app = await build({ sql, env: enabledEnv, logger: false, now: () => NOW });
     try {
@@ -244,9 +251,10 @@ describe("GET /peer/backfill", () => {
       expect(ids(page)).toContain(situationId("bf-route-t0-fresh"));
       expect(ids(page)).not.toContain(situationId("bf-route-t0-2day"));
       expect(page.beyondWindow).toBe(true);
-      expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
+      expect(page.archive).toEqual(archive);
     } finally {
       await app.close();
+      await sql`DELETE FROM conditions.archive_file`;
     }
   }, 30_000);
 

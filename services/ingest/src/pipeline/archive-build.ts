@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
 import { link, mkdir, readdir, rename, rm, stat } from "node:fs/promises";
 import path from "node:path";
 import { type QueryRunner, withPolledValidity } from "@openconditions/core";
@@ -138,6 +139,11 @@ export async function pruneErasedArchives(sql: Sql, dir: string, now: string): P
         await link(file, aliasTemp);
         await rename(aliasTemp, alias);
       }
+      // The file peers fetch is checked against what it holds now.
+      const { size } = await stat(file);
+      await sql`
+        UPDATE conditions.archive_file SET sha256 = ${await sha256Of(file)}, bytes = ${size}
+         WHERE file_name = ${name}`;
       removed += dropped;
       console.info(`[archive] removed ${dropped} erased record(s) from ${file}`);
     } catch (err) {
@@ -182,6 +188,41 @@ async function pruneOldNights(dir: string, keepNights: number): Promise<void> {
   }
 }
 
+/** The SHA-256 (hex) of a file's bytes. */
+async function sha256Of(file: string): Promise<string> {
+  const hash = createHash("sha256");
+  for await (const chunk of createReadStream(file)) hash.update(chunk as Buffer);
+  return hash.digest("hex");
+}
+
+/**
+ * Notes the night's files as the archive a peer fetches (`archive_file`):
+ * each class's dated file, its SHA-256 and size, and when the build began.
+ */
+async function recordArchiveFiles(
+  sql: Sql,
+  result: ArchiveBuildResult,
+  builtAt: string,
+): Promise<void> {
+  const files = await Promise.all(
+    ARCHIVE_CLASSES.map(async (cls) => ({
+      cls,
+      name: path.basename(result[cls].path),
+      sha256: await sha256Of(result[cls].path),
+      bytes: result[cls].bytes,
+    })),
+  );
+  await sql`
+    INSERT INTO conditions.archive_file (record_class, file_name, sha256, bytes, built_at)
+    SELECT c, n, h, b, ${builtAt}
+      FROM unnest(${files.map((f) => f.cls)}::text[], ${files.map((f) => f.name)}::text[],
+                  ${files.map((f) => f.sha256)}::text[], ${files.map((f) => f.bytes)}::bigint[])
+        AS f(c, n, h, b)
+    ON CONFLICT (record_class) DO UPDATE SET
+      file_name = excluded.file_name, sha256 = excluded.sha256, bytes = excluded.bytes,
+      built_at = excluded.built_at`;
+}
+
 async function sameFile(a: string, b: string): Promise<boolean> {
   try {
     const [sa, sb] = await Promise.all([stat(a), stat(b)]);
@@ -195,10 +236,11 @@ async function sameFile(a: string, b: string): Promise<boolean> {
  * Builds the nightly static archive: one GeoParquet file per record class
  * (`archive-<class>-YYYY-MM-DD.parquet`), the live situations, features and
  * offers and the latest reading of every series, and points the class's
- * stable name (`archive-<class>.parquet`) at it. All four read one
- * repeatable-read snapshot. The writer applies the published view
- * (`publishedRecords`: no on-demand answers, fused rows or restricted
- * sources, nothing tombstoned or out of date, crowd records only once
+ * stable name (`archive-<class>.parquet`) at it, and notes the dated files
+ * with their SHA-256 as the archive peers fetch (`archive_file`). All four
+ * read one repeatable-read snapshot. The writer applies the published view
+ * (`publishedRecords`: no peer's copies, on-demand answers, fused rows or
+ * restricted sources, nothing tombstoned or out of date, crowd records only once
  * corroborated, public licences, reporters stripped, a source's extras only
  * when the source federates them), so the artifact carries what a peer may
  * receive. A polled feed's change-only reading is dated by its source's
@@ -254,6 +296,7 @@ export async function buildDailyArchive(
       await link(result[cls].path, aliasTemp);
       await rename(aliasTemp, alias);
     }
+    await recordArchiveFiles(sql, result, nowIso);
     for (const cls of ARCHIVE_CLASSES) {
       console.info(`[archive] wrote ${result[cls].path} (${result[cls].bytes} bytes)`);
     }

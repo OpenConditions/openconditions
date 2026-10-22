@@ -19,6 +19,7 @@
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@openconditions/model-registry": "workspace:*",
+    "@openconditions/publishers": "workspace:*",
     "@openconditions/storage": "workspace:*",
     "fastify": "^5.12.5",
     "postgres": "^3.4.9"

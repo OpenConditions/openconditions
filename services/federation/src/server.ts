@@ -35,6 +35,7 @@ import Fastify, {
   type FastifyServerOptions,
 } from "fastify";
 import type postgres from "postgres";
+import { loadArchive } from "./archive.js";
 import { readBackfill } from "./backfill.js";
 import { registerBackfillRoutes } from "./backfill-routes.js";
 import { resolveFederationSettings } from "./config.js";
@@ -211,7 +212,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       ...(parsed.filter !== undefined ? { filter: parsed.filter } : {}),
       ...(parsed.nextParams !== undefined ? { nextParams: parsed.nextParams } : {}),
       partOf,
-      archiveUrl: settings.archiveUrl!,
+      archive: await loadArchive(sql, settings.archiveUrl!),
       now: now(),
     });
     const etag = outboxEtag(page.highWaterMark, parsed.after, limit, parsed.filter, tier);

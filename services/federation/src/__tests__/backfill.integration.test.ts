@@ -9,6 +9,7 @@ import {
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import type { ArchiveManifest } from "../archive.js";
 import {
   BACKFILL_WINDOW_TIER_0_SEC,
   BACKFILL_WINDOW_TIER_1_SEC,
@@ -27,16 +28,27 @@ let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
 
 const NOW = "2026-07-13T12:00:00.000Z";
-const ARCHIVE_URL = "https://conditions.example.org/archive";
-/** The archive's latest file of each class, which a beyond-window page names. */
-const ARCHIVE_FILES = {
-  situation: `${ARCHIVE_URL}/archive-situation.parquet`,
-  feature: `${ARCHIVE_URL}/archive-feature.parquet`,
-  offer: `${ARCHIVE_URL}/archive-offer.parquet`,
-  observation: `${ARCHIVE_URL}/archive-observation.parquet`,
-};
 const HOUR = 3_600_000;
 const DAY = 24 * HOUR;
+/** The latest archive, built an hour ago, which a beyond-window page names. */
+const ARCHIVE: ArchiveManifest = archiveBuiltAt(new Date(Date.parse(NOW) - HOUR).toISOString());
+
+function archiveBuiltAt(builtAt: string): ArchiveManifest {
+  const file = (cls: string) => ({
+    url: `https://conditions.example.org/archive/archive-${cls}-${builtAt.slice(0, 10)}.parquet`,
+    sha256: "0".repeat(64),
+    bytes: 1,
+  });
+  return {
+    builtAt,
+    files: {
+      situation: file("situation"),
+      feature: file("feature"),
+      offer: file("offer"),
+      observation: file("observation"),
+    },
+  };
+}
 
 /** The current maximum committed composite `(txid, seq)` cursor. */
 async function frontier(): Promise<OutboxCursor> {
@@ -110,7 +122,7 @@ describe("readBackfill — the tier-bounded time floor", () => {
       after: base,
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(ids(page)).toContain(situationId("bf-t1-recent"));
@@ -118,7 +130,7 @@ describe("readBackfill — the tier-bounded time floor", () => {
     expect(page.orderedItems[0]).toMatchObject({ recordClass: "situation", operation: "create" });
     // The 40-day entry is beyond the window ⇒ redirect to the static archive.
     expect(page.beyondWindow).toBe(true);
-    expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
+    expect(page.archive).toEqual(ARCHIVE);
   }, 30_000);
 
   it("serves a Tier-0 peer only the last 24 hours", async () => {
@@ -130,13 +142,13 @@ describe("readBackfill — the tier-bounded time floor", () => {
       after: base,
       tier: 0,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(ids(page)).toContain(situationId("bf-t0-fresh"));
     expect(ids(page)).not.toContain(situationId("bf-t0-stale"));
     expect(page.beyondWindow).toBe(true);
-    expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
+    expect(page.archive).toEqual(ARCHIVE);
   }, 30_000);
 
   it("within the window returns the SAME composite-cursor entries as the outbox (gap-free)", async () => {
@@ -149,7 +161,7 @@ describe("readBackfill — the tier-bounded time floor", () => {
       after: base,
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     const outbox = await readOutbox(sql, { after: base, limit: 500 });
@@ -159,7 +171,7 @@ describe("readBackfill — the tier-bounded time floor", () => {
     expect(backfill.highWaterMark).toBe(outbox.highWaterMark);
     // Nothing before the floor after this cursor ⇒ no archive redirect.
     expect(backfill.beyondWindow).toBeUndefined();
-    expect(backfill.archiveUrl).toBeUndefined();
+    expect(backfill.archive).toBeUndefined();
   }, 30_000);
 
   it("narrows a backfill page with the subscriber's record filter", async () => {
@@ -186,22 +198,36 @@ describe("readBackfill — the tier-bounded time floor", () => {
       after: base,
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(ids(page)).not.toContain(situationId("bf-before-floor"));
     expect(page.beyondWindow).toBe(true);
-    expect(page.archiveUrl).toEqual(ARCHIVE_FILES);
+    expect(page.archive).toEqual(ARCHIVE);
 
     // Advancing the cursor PAST the pre-floor entry drops the redirect.
     const advanced = await readBackfill(sql, {
       after: encodeOutboxCursor(await frontier()),
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(advanced.beyondWindow).toBeUndefined();
+  }, 30_000);
+
+  it("reaches back to the archive's night when that is before the tier's floor", async () => {
+    const base = await frontier();
+    await seed("bf-since-archive", 26 * HOUR);
+    await seed("bf-before-archive", 31 * HOUR);
+    const archive = archiveBuiltAt(new Date(Date.parse(NOW) - 30 * HOUR).toISOString());
+
+    // A Tier-0 floor is 24 hours back; the archive was built 30 hours back,
+    // so what changed since lands live and nothing falls between the two.
+    const page = await readBackfill(sql, { after: base, tier: 0, now: NOW, archive, limit: 500 });
+    expect(ids(page)).toContain(situationId("bf-since-archive"));
+    expect(ids(page)).not.toContain(situationId("bf-before-archive"));
+    expect(page.archive).toEqual(archive);
   }, 30_000);
 
   it("includes an entry exactly ON the floor (created_at == now - window, consistent with the >= scan)", async () => {
@@ -213,7 +239,7 @@ describe("readBackfill — the tier-bounded time floor", () => {
       after: base,
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(ids(page)).toContain(situationId("bf-on-floor"));
@@ -253,7 +279,7 @@ describe("readBackfill — the archive redirect survives the retention prune", (
       after: base,
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(before.beyondWindow).toBe(true);
@@ -272,10 +298,10 @@ describe("readBackfill — the archive redirect survives the retention prune", (
       after: base,
       tier: 1,
       now: NOW,
-      archiveUrl: ARCHIVE_URL,
+      archive: ARCHIVE,
       limit: 500,
     });
     expect(after.beyondWindow).toBe(true);
-    expect(after.archiveUrl).toEqual(ARCHIVE_FILES);
+    expect(after.archive).toEqual(ARCHIVE);
   }, 30_000);
 });

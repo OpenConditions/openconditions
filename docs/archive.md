@@ -70,22 +70,37 @@ The archive is also the **deep-past tier of federation backfill**. A peer catche
 up over `GET /peer/backfill` — the same composite `(txid, seq)` cursor as the live
 pull, but bounded to a lower time floor set by the caller's trust tier (Tier 0 →
 24 h, Tier 1 → 30 days, Tier 2 → ≥ 30 days). A backfill request whose range
-reaches _before_ that floor gets `beyondWindow: true` and an `archiveUrl` naming
-the latest file of each class in the signed page:
+reaches _before_ that floor gets `beyondWindow: true` and an `archive` naming
+the latest night's file of each class, with its SHA-256 and size, in the signed
+page:
 
 ```json
-"archiveUrl": {
-  "situation": "https://conditions.example.org/archive/archive-situation.parquet",
-  "feature": "https://conditions.example.org/archive/archive-feature.parquet",
-  "offer": "https://conditions.example.org/archive/archive-offer.parquet",
-  "observation": "https://conditions.example.org/archive/archive-observation.parquet"
+"archive": {
+  "builtAt": "2026-09-07T03:30:00.000Z",
+  "files": {
+    "situation": {
+      "url": "https://conditions.example.org/archive/archive-situation-2026-09-07.parquet",
+      "sha256": "9f2c…",
+      "bytes": 48213
+    },
+    "feature": { "url": "…", "sha256": "…", "bytes": 0 },
+    "offer": { "url": "…", "sha256": "…", "bytes": 0 },
+    "observation": { "url": "…", "sha256": "…", "bytes": 0 }
+  }
 }
 ```
 
 There is **no protocol** for the pre-floor history — the peer fetches these
-static files directly (HTTP Range), then resumes the live cursor at the window
-edge. The base URL is `OPENCONDITIONS_FEDERATION_ARCHIVE_URL` (default
-`<baseUrl>/archive`); the operator serves the archive directory there.
+static files directly, from the instance or any mirror, and lands nothing of a
+file whose size or SHA-256 differs from what the signed page states. It lands
+the publisher's own records of each file that its pull's filter keeps, features
+first, then the page: the pages carry what changed since the archive's night,
+and the window reaches back to that night at least, so nothing falls between the
+two. The nightly build notes the files in `conditions.archive_file`; an archive
+is named once a night noted every class. The base URL is
+`OPENCONDITIONS_FEDERATION_ARCHIVE_URL` (default `<baseUrl>/archive`); the
+operator serves the archive directory there. The pulling instance keeps each
+file in its temporary directory while it lands it, up to 32 GiB a file.
 
 ## Nightly build
 

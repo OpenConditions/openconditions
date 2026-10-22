@@ -2,8 +2,9 @@
  * GET /peer/backfill — the authenticated, tier-bounded history read. It is the
  * pull outbox with a LOWER TIME FLOOR: same RFC-9421-signed page, same composite
  * `(txid, seq)` cursor, but bounded to the caller's trust-tier window. Beyond the
- * window the page carries `beyondWindow: true` + the static `archiveUrl` (no
- * protocol — the peer fetches the GeoParquet archive directly over HTTP Range).
+ * window the page carries `beyondWindow: true` + the static `archive` (no
+ * protocol — the peer fetches the GeoParquet files directly and checks each
+ * against the SHA-256 the signed page states).
  *
  * The tier is authoritative from the PINNED peer record (T1), derived from the
  * signature's key — never a client-supplied field. An unsigned, bad-signature,
@@ -22,6 +23,7 @@ import {
 } from "@openconditions/federation";
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type postgres from "postgres";
+import { loadArchive } from "./archive.js";
 import { readBackfill } from "./backfill.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import type { PeerBook } from "./peer-book.js";
@@ -37,7 +39,7 @@ export interface BackfillRouteContext {
   baseUrl: string;
   /** Per-peer replay cache shared across the authenticated routes. */
   nonceStore: NonceStore;
-  /** The static archive URL served for beyond-window ranges. */
+  /** The base URL the static archive's files are served at, for beyond-window ranges. */
   archiveUrl: string;
   /** Loads the newest active signing key (self-healing a rotation). */
   signingKey: () => Promise<InstanceKey>;
@@ -96,7 +98,7 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
       after: parsed.after,
       tier: peer.trustTier,
       partOf,
-      archiveUrl: ctx.archiveUrl,
+      archive: await loadArchive(ctx.sql, ctx.archiveUrl),
       now: ctx.now(),
       ...(parsed.filter !== undefined ? { filter: parsed.filter } : {}),
       ...(parsed.limit !== undefined ? { limit: parsed.limit } : {}),
@@ -106,8 +108,9 @@ export function registerBackfillRoutes(app: FastifyInstance, ctx: BackfillRouteC
         : {}),
     });
 
-    // The whole body — beyondWindow/archiveUrl and highWaterMark included — is
-    // covered by the signed Content-Digest, so the redirect and cursor are signed.
+    // The whole body — beyondWindow/archive and highWaterMark included — is
+    // covered by the signed Content-Digest, so the redirect, the archive's
+    // file hashes and the cursor are signed.
     const key = await ctx.signingKey();
     const body = Buffer.from(JSON.stringify(page));
     const signed = await signMessage({

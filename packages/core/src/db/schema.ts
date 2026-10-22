@@ -573,6 +573,22 @@ export const archiveErasure = conditionsSchema.table("archive_erasure", {
 });
 
 /**
+ * The latest nightly archive, one file per record class, as a peer fetches
+ * it: the dated file's name under the archive's URL, its SHA-256 (hex) and
+ * size, and when the night's build began. A peer catching up from beyond its
+ * live window is served these in a signed page and checks each file it
+ * fetches against them. Kept in the database, not beside the files, because
+ * the archive directory is served as it is.
+ */
+export const archiveFile = conditionsSchema.table("archive_file", {
+  recordClass: text("record_class").primaryKey(),
+  fileName: text("file_name").notNull(),
+  sha256: text("sha256").notNull(),
+  bytes: bigint("bytes", { mode: "number" }).notNull(),
+  builtAt: timestamp("built_at", { withTimezone: true }).notNull(),
+});
+
+/**
  * The cells of on-demand sources this instance has fetched: a `fresh` cell
  * is not fetched again before `expires_at`, a `failed` one not before
  * `retry_at`. A cell is the id of a fixed grid square of the source's cell

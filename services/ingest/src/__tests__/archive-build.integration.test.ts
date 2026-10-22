@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdtemp, readdir, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -36,6 +37,19 @@ type Rec = Record<string, unknown>;
 async function bufferOf(file: string): Promise<ArrayBuffer> {
   const buf = await readFile(file);
   return buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+}
+
+async function sha256Of(file: string): Promise<string> {
+  return createHash("sha256")
+    .update(await readFile(file))
+    .digest("hex");
+}
+
+async function notedFiles() {
+  return sql<
+    { record_class: string; file_name: string; sha256: string; bytes: number; built_at: Date }[]
+  >`SELECT record_class, file_name, sha256, bytes::int AS bytes, built_at
+      FROM conditions.archive_file ORDER BY record_class`;
 }
 
 async function readIds(file: string): Promise<string[]> {
@@ -79,6 +93,18 @@ describe("nightly static archive", () => {
         "oc:situation:de-autobahn-events:open",
       ]);
       expect(await readIds(result!.feature.path)).toEqual([]);
+      // The files a peer fetches, as the signed page will state them.
+      expect(await notedFiles()).toEqual(
+        await Promise.all(
+          (["feature", "observation", "offer", "situation"] as const).map(async (cls) => ({
+            record_class: cls,
+            file_name: `archive-${cls}-2026-09-07.parquet`,
+            sha256: await sha256Of(result![cls].path),
+            bytes: result![cls].bytes,
+            built_at: new Date("2026-09-07T03:30:00Z"),
+          })),
+        ),
+      );
     } finally {
       await rm(dir, { recursive: true, force: true });
     }
@@ -240,6 +266,11 @@ describe("nightly static archive", () => {
       const dated = path.join(dir, "archive-situation-2026-09-07.parquet");
       expect(await readIds(latest)).toEqual(["oc:situation:de-autobahn-events:kept"]);
       expect((await stat(latest)).ino).toBe((await stat(dated)).ino);
+      // A peer checks the rewritten file against what it holds now.
+      expect((await notedFiles()).find((f) => f.record_class === "situation")).toMatchObject({
+        sha256: await sha256Of(dated),
+        bytes: (await stat(dated)).size,
+      });
       expect(await pruneErasedArchives(sql, dir, "2026-09-07T10:00:00Z")).toBe(0);
     } finally {
       await sql`TRUNCATE conditions.federation_tombstone`;

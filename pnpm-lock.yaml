@@ -1340,6 +1340,9 @@ importers:
       '@openconditions/model-registry':
         specifier: workspace:*
         version: link:../../packages/model-registry
+      '@openconditions/publishers':
+        specifier: workspace:*
+        version: link:../../packages/publishers
       '@openconditions/storage':
         specifier: workspace:*
         version: link:../../packages/storage

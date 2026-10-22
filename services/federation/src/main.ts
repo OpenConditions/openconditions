@@ -15,10 +15,15 @@ import {
   pruneOutbox,
   runWebhookDeliveryCycle,
 } from "@openconditions/federation";
-import { guardedFetch, requireCredential } from "@openconditions/ingest-framework";
+import {
+  guardedFetch,
+  guardOptionsFromEnv,
+  requireCredential,
+} from "@openconditions/ingest-framework";
 import { productionRegistry } from "@openconditions/model-registry";
 import { seedFederation } from "@openconditions/storage";
 import postgres from "postgres";
+import { ARCHIVE_FILE_MAX_BYTES, ARCHIVE_FILE_TIMEOUT_MS } from "./archive-import.js";
 import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
 import { PeerBook } from "./peer-book.js";
@@ -259,6 +264,12 @@ async function boot() {
   let pullTimer: NodeJS.Timeout | undefined;
   if (settings.enabled && settings.peers.some((peer) => peer.pull !== undefined)) {
     const egress = guardedFetch();
+    // A peer's archive files are far larger and slower than its pages.
+    const archiveEgress = guardedFetch(undefined, {
+      ...guardOptionsFromEnv(),
+      maxBytes: ARCHIVE_FILE_MAX_BYTES,
+      timeoutMs: ARCHIVE_FILE_TIMEOUT_MS,
+    });
     const nonceStore = new InMemoryNonceStore();
     const registry = productionRegistry();
     let pullRunning = false;
@@ -278,6 +289,7 @@ async function boot() {
               localInstanceId: settings.actor!.instanceId,
               signingKey,
               fetchImpl: egress,
+              archiveFetch: archiveEgress,
               nonceStore,
               rateLimiter,
               now: () => new Date().toISOString(),
@@ -285,6 +297,13 @@ async function boot() {
           ).catch((err: unknown) => ({ error: String(err) }) as const);
           if (result.error !== undefined) {
             console.warn(`[federation-api] pull of ${peer.instanceId}: ${result.error}`);
+          }
+          if ("archive" in result && result.archive !== undefined) {
+            const { accepted, stale, skipped } = result.archive;
+            console.info(
+              `[federation-api] archive of ${peer.instanceId}: ${accepted} landed, ` +
+                `${stale} stale, ${skipped} skipped`,
+            );
           }
         }
       } finally {

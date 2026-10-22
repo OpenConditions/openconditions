@@ -1,6 +1,6 @@
 import { type EgressRecord, publicRecords } from "@openconditions/ingest-framework";
 import { federationEligible, type RecordClass, subjectKey } from "@openconditions/model";
-import { asyncBufferFromFile, parquetReadObjects } from "hyparquet";
+import { asyncBufferFromFile, parquetMetadataAsync, parquetReadObjects } from "hyparquet";
 import type { ColumnSource, Writer } from "hyparquet-writer";
 import { geojsonToWkb, parquetWriteBuffer, parquetWriteRows } from "hyparquet-writer";
 
@@ -23,6 +23,8 @@ export interface ArchivableRecord extends EgressRecord {
     accessMode: string;
     attribution: { provider: string; license: string; url?: string };
     privacy: { class: string };
+    /** Set on a peer's copy: the instances it came through. */
+    originChain?: unknown[];
   };
   freshness: { expiresAt?: string };
   tombstone?: unknown;
@@ -60,8 +62,9 @@ export interface ArchiveOptions {
 
 /**
  * The records the archive may mirror, in one class: records a peer could
- * receive (no on-demand answers, no fused rows, nothing of a restricted
- * source), not tombstoned, current for their class, and — for crowd records
+ * receive (this instance's own — a peer's copy is that peer's to federate —
+ * no on-demand answers, no fused rows, nothing of a restricted source), not
+ * tombstoned, current for their class, and — for crowd records
  * — corroborated or better and not yet decayed, as the federation's default
  * filter asks. Then the public projection: records whose licence is not
  * public out, reporters stripped, and a source's allow-listed extras
@@ -76,6 +79,7 @@ export function publishedRecords<T extends ArchivableRecord>(
 ): T[] {
   const kept = records.filter((r) => {
     if (r.class !== cls || !federationEligible(r) || r.tombstone !== undefined) return false;
+    if ((r.provenance.originChain?.length ?? 0) > 0) return false;
     if (opts.restricted?.(r.provenance.sourceId)) return false;
     const crowd =
       r.provenance.origin === "crowd" || r.provenance.privacy.class === "crowd_pseudonym";
@@ -313,6 +317,25 @@ export async function writeRecordArchive(
     }
   }
   await writeArchiveRows(cls, rows(), writer);
+}
+
+/** The records of one class's archive file, a bounded row group at a time. */
+export async function* readRecordArchive(
+  filePath: string,
+): AsyncGenerator<Record<string, unknown>[]> {
+  const file = await asyncBufferFromFile(filePath);
+  const metadata = await parquetMetadataAsync(file);
+  const rows = Number(metadata.num_rows);
+  for (let start = 0; start < rows; start += ROW_GROUP_SIZE) {
+    const page = await parquetReadObjects({
+      file,
+      metadata,
+      columns: ["record"],
+      rowStart: start,
+      rowEnd: Math.min(start + ROW_GROUP_SIZE, rows),
+    });
+    yield page.map((row) => JSON.parse(row["record"] as string) as Record<string, unknown>);
+  }
 }
 
 /** The keys of an archive row an erasure is matched by. */

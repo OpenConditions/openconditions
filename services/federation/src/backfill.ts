@@ -9,11 +9,14 @@
  *
  * WITHIN the window backfill is identical to the outbox pull: same cursor, same
  * gap-freeness, same signed page. BEYOND the window there is no protocol — a
- * request whose range reaches before the floor gets `beyondWindow: true` and an
- * `archiveUrl` naming the static GeoParquet archive's latest file of each
- * record class (docs/archive.md), which the peer fetches directly over HTTP
- * Range. So the live exchange stays bounded and the deep past is served by
- * four mirrorable files.
+ * request whose range reaches before the floor gets `beyondWindow: true` and
+ * the `archive`: the static GeoParquet archive's latest file of each record
+ * class (docs/archive.md) with its SHA-256 and size, which the peer fetches
+ * and checks against the signed page before it lands the page. So the live
+ * exchange stays bounded and the deep past is served by four mirrorable
+ * files. The archive holds what was current when its night's build began,
+ * so the window reaches back to then at least: what changed between the
+ * build and the tier's floor is served live, and nothing falls between.
  *
  * The floor is applied as an ADDITIONAL `WHERE created_at >= now - windowSec` on
  * the readOutbox query (via its `minCreatedAt`), composed with the composite
@@ -29,8 +32,8 @@ import {
   type RecordFilter,
   readOutbox,
 } from "@openconditions/federation";
-import type { RecordClass } from "@openconditions/model";
 import type postgres from "postgres";
+import type { ArchiveManifest } from "./archive.js";
 
 /** Tier 0 (public) serves the last 24 hours. */
 export const BACKFILL_WINDOW_TIER_0_SEC = 86_400;
@@ -94,8 +97,8 @@ export interface BackfillQuery {
   /** The window instant (ISO 8601); defaults to the real clock. */
   now?: string;
   limit?: number;
-  /** The static archive's base URL, whose class files a page names when the request reaches before the window. */
-  archiveUrl?: string;
+  /** The latest static archive, which a page names when the request reaches before the window. */
+  archive?: ArchiveManifest;
   /** The collection URL this page is part of; default "/peer/backfill". */
   partOf?: string;
   /** Extra (already-encoded) query-string appended to the `next` link. */
@@ -104,23 +107,12 @@ export interface BackfillQuery {
   governanceWindowSec?: number;
 }
 
-/** The archive's classes; the nightly build writes one file per class. */
-const ARCHIVE_CLASSES: readonly RecordClass[] = ["situation", "feature", "offer", "observation"];
-
-/** The latest archive file of every class under the archive's base URL. */
-export function archiveFileUrls(baseUrl: string): Record<RecordClass, string> {
-  const base = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-  return Object.fromEntries(
-    ARCHIVE_CLASSES.map((cls) => [cls, `${base}/archive-${cls}.parquet`]),
-  ) as Record<RecordClass, string>;
-}
-
 /** An outbox page plus the beyond-window redirect: when the request's range
- *  reaches before the tier floor, `beyondWindow` is set and `archiveUrl` names
- *  the static archive's file of each class, which covers the pre-floor history. */
+ *  reaches before the floor, `beyondWindow` is set and `archive` names the
+ *  static archive's file of each class, which covers the pre-floor history. */
 export interface BackfillPage extends OutboxPage {
   beyondWindow?: boolean;
-  archiveUrl?: Record<RecordClass, string>;
+  archive?: ArchiveManifest;
 }
 
 function normalizeCursor(after: OutboxCursor | string | undefined): OutboxCursor {
@@ -154,14 +146,19 @@ async function hasPreFloorEntries(
 
 /**
  * Reads one backfill page: the same composite-cursor outbox page, floored to the
- * peer's tier window. When the request's range reaches before the floor, the
- * page carries `beyondWindow: true` + the `archiveUrl` (the peer fetches the
- * static archive for the deep past); the live page still serves the in-window
- * entries after the cursor, gap-free.
+ * peer's tier window, or to when the archive was built where that is earlier.
+ * When the request's range reaches before the floor, the page carries
+ * `beyondWindow: true` + the `archive` (the peer fetches the static archive
+ * for the deep past); the live page still serves the in-window entries after
+ * the cursor, gap-free.
  */
 export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise<BackfillPage> {
   const nowIso = q.now ?? new Date().toISOString();
-  const floorIso = backfillFloorIso(q.tier, nowIso, q.governanceWindowSec);
+  const tierFloor = backfillFloorIso(q.tier, nowIso, q.governanceWindowSec);
+  const floorIso =
+    q.archive !== undefined && Date.parse(q.archive.builtAt) < Date.parse(tierFloor)
+      ? q.archive.builtAt
+      : tierFloor;
   const after = normalizeCursor(q.after);
 
   const page = await readOutbox(sql, {
@@ -177,7 +174,7 @@ export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise
   const result: BackfillPage = { ...page };
   if (await hasPreFloorEntries(sql, after, floorIso)) {
     result.beyondWindow = true;
-    if (q.archiveUrl !== undefined) result.archiveUrl = archiveFileUrls(q.archiveUrl);
+    if (q.archive !== undefined) result.archive = q.archive;
   }
   return result;
 }
