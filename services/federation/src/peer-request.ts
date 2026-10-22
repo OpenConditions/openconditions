@@ -64,6 +64,20 @@ export function socketMtlsContext(req: FastifyRequest): MtlsContext | undefined 
 }
 
 /**
+ * Reads the client-certificate verdict a TLS-terminating proxy passes on: a
+ * fingerprint in `header` is a certificate the proxy verified, its absence
+ * none. Sound only where the proxy verifies the certificate, sets the header
+ * itself whatever the client sent, and is the only way to reach the service.
+ */
+export function proxyMtlsContext(header: string) {
+  return (req: FastifyRequest): MtlsContext | undefined => {
+    const value = req.headers[header];
+    const fingerprint = (Array.isArray(value) ? value[0] : value)?.trim();
+    return fingerprint ? { authorized: true, fingerprint } : undefined;
+  };
+}
+
+/**
  * Enforces the operator federation block list. When `peerId` is blocked, sends a
  * 403 and returns true (the route returns immediately). A block is a TRANSPORT
  * control — it stops future requests and never re-judges the peer's already-

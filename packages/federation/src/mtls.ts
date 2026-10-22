@@ -12,7 +12,9 @@
  * the TLS layer's verdict. Actually requesting and verifying client certs is
  * OPERATOR infra — the Tier-1 bilateral link's HTTPS server must be configured
  * with `requestCert: true` and a trusted `ca: [...]` so the socket carries an
- * authorized peer certificate for this gate to read.
+ * authorized peer certificate for this gate to read, or a reverse proxy that
+ * verifies it passes its fingerprint on in a header the service is told of
+ * (`OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER`).
  */
 
 /** The TLS layer's verdict on a request's client certificate. */
@@ -46,9 +48,20 @@ export function checkMtls(
   if (cert === undefined || !cert.authorized) return { ok: false, reason: "mtls-required" };
   const pins = peer.mtlsFingerprints;
   if (pins !== undefined && pins.length > 0) {
-    if (cert.fingerprint === undefined || !pins.includes(cert.fingerprint)) {
+    if (
+      cert.fingerprint === undefined ||
+      !pins.map(normalizeFingerprint).includes(normalizeFingerprint(cert.fingerprint))
+    ) {
       return { ok: false, reason: "mtls-fingerprint-mismatch" };
     }
   }
   return { ok: true };
+}
+
+/**
+ * A certificate fingerprint as hex digits alone, in lower case: Node writes
+ * `AB:CD:…`, a proxy often `abcd…`, and either names the same certificate.
+ */
+export function normalizeFingerprint(fingerprint: string): string {
+  return fingerprint.replace(/[^0-9a-f]/gi, "").toLowerCase();
 }

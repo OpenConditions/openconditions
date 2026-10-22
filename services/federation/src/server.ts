@@ -42,7 +42,7 @@ import { resolveFederationSettings } from "./config.js";
 import { registerInboxRoutes } from "./inbox-routes.js";
 import { OutboxQueryError, parseOutboxQuery } from "./outbox-query.js";
 import { PeerBook } from "./peer-book.js";
-import { optionalPeer, respondIfBlocked } from "./peer-request.js";
+import { optionalPeer, proxyMtlsContext, respondIfBlocked } from "./peer-request.js";
 import { registerSubscriptionRoutes } from "./subscription-routes.js";
 
 /** The pull-side peer exchange path the Actor document advertises as `outbox`. */
@@ -89,6 +89,13 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
 
   // Throws (failing the boot closed) when enabled with a bad config.
   const settings = resolveFederationSettings(env);
+  // Who verified a peer's client certificate: the injected resolver, a
+  // TLS-terminating proxy's header, or else this process's own socket.
+  const mtlsContextFor =
+    options.mtlsContextFor ??
+    (settings.clientCertHeader !== undefined
+      ? proxyMtlsContext(settings.clientCertHeader)
+      : undefined);
 
   const app = Fastify({ logger: options.logger ?? true });
 
@@ -172,7 +179,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
         peers,
         baseUrl: actorConfig.baseUrl,
         nonceStore,
-        ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
+        ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
       },
       req,
       reply,
@@ -271,7 +278,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     peers,
     baseUrl: actorConfig.baseUrl,
     nonceStore,
-    ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
+    ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
     ...(options.onSubscribed !== undefined ? { onSubscribed: options.onSubscribed } : {}),
     now,
   });
@@ -284,7 +291,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     localInstanceId: actorConfig.instanceId,
     nonceStore,
     rateLimiter,
-    ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
+    ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
     now,
   });
 
@@ -296,7 +303,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     rateLimiter,
     archiveUrl: settings.archiveUrl!,
     signingKey,
-    ...(options.mtlsContextFor !== undefined ? { mtlsContextFor: options.mtlsContextFor } : {}),
+    ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
     now,
   });
 

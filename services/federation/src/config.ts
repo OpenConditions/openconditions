@@ -25,6 +25,12 @@ export interface FederationSettings {
   archiveUrl?: string;
   /** The registry peers are discovered in, when one is configured. */
   registry?: RegistrySettings;
+  /**
+   * The request header a TLS-terminating proxy puts a verified client
+   * certificate's fingerprint in, for peers that require mutual TLS; absent
+   * when this process terminates TLS itself.
+   */
+  clientCertHeader?: string;
 }
 
 export interface RegistrySettings {
@@ -89,7 +95,20 @@ export function resolveFederationSettings(
   }
 
   const registry = resolveRegistry(env);
-  return { enabled: true, actor, peers, archiveUrl, ...(registry ? { registry } : {}) };
+  const clientCertHeader = env["OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER"]
+    ?.trim()
+    .toLowerCase();
+  if (clientCertHeader && !/^[a-z0-9-]+$/.test(clientCertHeader)) {
+    throw new Error("OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER must be an HTTP header name");
+  }
+  return {
+    enabled: true,
+    actor,
+    peers,
+    archiveUrl,
+    ...(registry ? { registry } : {}),
+    ...(clientCertHeader ? { clientCertHeader } : {}),
+  };
 }
 
 /** The registry settings; undefined when none is configured, a throw when half is. */

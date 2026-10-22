@@ -47,4 +47,13 @@ describe("checkMtls", () => {
       checkMtls({ mtlsRequired: true, mtlsFingerprints: ["11:22"] }, { authorized: true }),
     ).toEqual({ ok: false, reason: "mtls-fingerprint-mismatch" });
   });
+
+  it("matches a fingerprint however it is written: Node's AB:CD and a proxy's abcd alike", () => {
+    expect(
+      checkMtls(
+        { mtlsRequired: true, mtlsFingerprints: ["AA:BB:CC"] },
+        { authorized: true, fingerprint: "aabbcc" },
+      ),
+    ).toEqual({ ok: true });
+  });
 });

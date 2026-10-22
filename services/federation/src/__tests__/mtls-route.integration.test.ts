@@ -550,6 +550,41 @@ describe("GET /peer/outbox — the optionalPeer mTLS gate is threaded (proxy-awa
   }, 30_000);
 });
 
+describe("POST /peer/inbox — mTLS a TLS-terminating proxy verified", () => {
+  const env = () => ({
+    ...enabledEnv,
+    OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER: "X-Client-Cert-Sha256",
+  });
+  const post = async (local: string, headers: Record<string, string>) => {
+    const app = await build({ sql, env: env(), logger: false });
+    try {
+      const page = pageOf([{ seq: 1, txid: "140", record: peerSituation("peer-mtls", local) }]);
+      const req = await signed(mtlsPeer, "POST", "/peer/inbox", page);
+      return await app.inject({
+        method: "POST",
+        url: "/peer/inbox",
+        headers: { ...req.headers, ...headers },
+        payload: req.payload,
+      });
+    } finally {
+      await app.close();
+    }
+  };
+
+  it("accepts the pinned certificate the proxy names, however it writes it", async () => {
+    const res = await post("p1", { "x-client-cert-sha256": "aabbccdd" });
+    expect(res.statusCode).toBe(200);
+    expect(await countRows("p1")).toBe(1);
+  }, 30_000);
+
+  it("refuses a request the proxy names no certificate for, or another one", async () => {
+    expect((await post("p2", {})).headers["federation-reason"]).toBe("mtls-required");
+    expect(
+      (await post("p3", { "x-client-cert-sha256": "eeff" })).headers["federation-reason"],
+    ).toBe("mtls-fingerprint-mismatch");
+  }, 30_000);
+});
+
 async function countRows(local: string): Promise<number> {
   const rows = await sql<{ n: string }[]>`
     SELECT count(*)::text AS n FROM conditions.situation
