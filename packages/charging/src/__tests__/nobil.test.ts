@@ -221,6 +221,12 @@ describe("nobil", () => {
     odd.chargerstations[0]!.attr.conn["1"]["5"] = attribute("5", "toString");
     parse({ main: [Buffer.from(JSON.stringify(odd))] });
     expect(drainSkipped("no-nobil-charging")).toEqual({ unknown_value: 3 });
+    // A photo name with half a surrogate pair names no file a URL can reach.
+    const broken = structuredClone(doc);
+    broken.chargerstations[0]!.csmd.Image = "7\uD800.jpg";
+    const kept = site(parse({ main: [Buffer.from(JSON.stringify(broken))] }), "NOR_00007");
+    expect(kept?.["images"]).toBeUndefined();
+    expect(drainSkipped("no-nobil-charging")).toEqual({ unknown_value: 1 });
   });
 
   test("NOBIL: a datadump wrapped in a list, and a station without a position, are read as documented", () => {

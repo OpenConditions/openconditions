@@ -379,6 +379,9 @@ function lifecycleOf(csmd: Raw, unread: Unread): Lifecycle {
 /** NOBIL hosts a station's photo by its file name. */
 const IMAGES = "https://nobil.no/img/ladestasjonbilder/";
 
+/** A UTF-16 surrogate without its pair, which no URL can encode. */
+const UNPAIRED_SURROGATE = /\p{Surrogate}/u;
+
 function siteOf(
   csmd: Raw,
   attr: Raw,
@@ -408,7 +411,11 @@ function siteOf(
   const open24h = valued(st, ATTR.open24h, YES_NO, unread);
   const realTime = valued(st, ATTR.realTime, YES_NO, unread);
   const owner = text(csmd["Owned_by"]);
-  const image = text(csmd["Image"]);
+  let image = text(csmd["Image"]);
+  if (image !== undefined && UNPAIRED_SURROGATE.test(image)) {
+    unread();
+    image = undefined;
+  }
   const directions = text(csmd["Description_of_location"]);
   return {
     stationId,
