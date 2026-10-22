@@ -589,6 +589,20 @@
       "when": 1792698690643,
       "tag": "0083_federation_key_anchor",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1792699202715,
+      "tag": "0084_federation_delete_revision",
+      "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1792699203457,
+      "tag": "0085_federation_journal_delete_revision",
+      "breakpoints": true
     }
   ]
 }

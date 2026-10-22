@@ -19,6 +19,7 @@ import {
   journalSourceLiveness,
   seedFederation,
   syncSources,
+  tombstoneRecords,
   writeSnapshot,
 } from "@openconditions/storage";
 import type { FastifyInstance } from "fastify";
@@ -476,6 +477,48 @@ describe("a peer that pulls", () => {
     await sqlC`
       UPDATE conditions.federation_peer_cursor SET cursor = ${result.cursor}
        WHERE peer_instance_id = ${A}`;
+  }, 60_000);
+
+  it("keeps the newer copy a push brought when its pull replays an older retraction", async () => {
+    const id = `oc:situation:${SOURCE}:flip`;
+    const write = (n: number) =>
+      writeSnapshot(
+        sqlA,
+        SOURCE,
+        {
+          situations: [
+            { ...situationDraft("flip"), headline: [{ lang: "en", text: `flip ${n}` }] },
+          ],
+        },
+        { registry, instanceId: A, now: new Date().toISOString(), complete: false },
+      );
+    await write(1);
+    await pullA();
+    // A's feed drops the incident, then lists it again: revisions 2 and 3.
+    await sqlA.begin((tx) =>
+      tombstoneRecords(tx, "situation", [id], "withdrawn", {
+        registry,
+        now: new Date().toISOString(),
+      }),
+    );
+    await write(2);
+    // The priority push carries both to C ahead of its pull.
+    await runWebhookDeliveryCycle(sqlA, {
+      signingKey: keyA,
+      fetchImpl,
+      partOf: `https://${A}/peer/outbox`,
+    });
+    const atC = async () =>
+      (
+        await sqlC<{ revision: number; tombstone_reason: string | null }[]>`
+          SELECT revision, tombstone_reason FROM conditions.situation WHERE id = ${id}`
+      )[0];
+    expect(await atC()).toEqual({ revision: 3, tombstone_reason: null });
+
+    const replayed = await pullA();
+    expect(replayed).toMatchObject({ tombstoned: 0, skipped: 0 });
+    expect(replayed.stale).toBeGreaterThanOrEqual(2);
+    expect(await atC()).toEqual({ revision: 3, tombstone_reason: null });
   }, 60_000);
 });
 

@@ -343,14 +343,22 @@ async function runCrowdHooks(
 
 /**
  * A peer retracts one of its records: the local copy is tombstoned with the
- * peer's reason when the peer owns it. A copy another instance wrote is left
- * alone and reported; one already ended, or none held, is a retraction that
- * changes nothing (`stale`). An erasure records its fact whether or not a copy
- * is held, so the record cannot arrive later.
+ * peer's reason, at the revision the peer ended it at, when the peer owns it.
+ * A copy another instance wrote is left alone and reported; one already
+ * ended, one newer than the retraction (a later change that arrived first,
+ * by push), or none held, is a retraction that changes nothing (`stale`). An
+ * erasure records its fact whether or not a copy is held, so the record
+ * cannot arrive later.
  */
 async function applyRetraction(
   sql: Sql,
-  entry: { recordClass: string; recordId: string; canonicalId: string | null; reason: string },
+  entry: {
+    recordClass: string;
+    recordId: string;
+    canonicalId: string | null;
+    reason: string;
+    revision: number;
+  },
   ctx: InboxContext,
 ): Promise<"tombstoned" | "stale" | string> {
   return sql.begin(async (tx) => {
@@ -363,14 +371,23 @@ async function applyRetraction(
     }
     const cls = entry.recordClass as RevisionedClass;
     const [row] = await tx.unsafe<
-      { source_id: string; instance_id: string; tombstone_reason: string | null }[]
-    >(`SELECT source_id, instance_id, tombstone_reason FROM conditions.${cls} WHERE id = $1`, [
-      entry.recordId,
-    ]);
+      {
+        source_id: string;
+        instance_id: string;
+        tombstone_reason: string | null;
+        revision: number;
+      }[]
+    >(
+      `SELECT source_id, instance_id, tombstone_reason, revision
+         FROM conditions.${cls} WHERE id = $1`,
+      [entry.recordId],
+    );
     // Nothing to end: the record never reached this instance (a filter kept
     // it out), or the retraction arrives a second time, by push and by pull.
     if (row === undefined) return "stale";
     if (row.instance_id !== ctx.peerInstanceId) return "the record is not the peer's";
+    // The peer changed the record since: that change arrived first.
+    if (row.revision > entry.revision) return "stale";
     // An erasure still applies to a copy that ended here: ending it kept its
     // content, and the rights to that content are gone.
     // A copy the sweep ended for the peer's silence is still the peer's to
@@ -387,6 +404,7 @@ async function applyRetraction(
       registry: ctx.registry,
       now: ctx.now,
       byOwner: true,
+      ownerRevision: entry.revision,
     });
     await leaveCanonicalView(tx, ctx.registry, { class: cls, id: entry.recordId }, row.source_id, {
       instanceId: ctx.localInstanceId,

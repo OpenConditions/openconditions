@@ -705,7 +705,11 @@ export async function tombstoneRecords(
   cls: RevisionedClass,
   ids: readonly string[],
   reason: string,
-  ctx: Pick<WriteContext, "registry" | "now"> & { byOwner?: boolean },
+  ctx: Pick<WriteContext, "registry" | "now"> & {
+    byOwner?: boolean;
+    /** With `byOwner`: the revision the owner ended the record at. */
+    ownerRevision?: number;
+  },
   summary?: WriteSummary,
 ): Promise<void> {
   if (ids.length === 0) return;
@@ -715,13 +719,17 @@ export async function tombstoneRecords(
   for (const id of ids) {
     const prev = previous.get(id);
     if (prev === undefined) continue;
+    const prevRevision = prev["revision"] as number;
     const keepRevision = ctx.byOwner !== true && isPeerCopy(prev);
-    const revision = (prev["revision"] as number) + (keepRevision ? 0 : 1);
+    const revision =
+      ctx.byOwner === true && ctx.ownerRevision !== undefined
+        ? ctx.ownerRevision
+        : prevRevision + (keepRevision ? 0 : 1);
     const recordedAt = keepRevision ? (prev["recordedAt"] as string) : ctx.now;
     const kept = reason === ERASURE_REASON ? erasedStub(prev) : prev;
     const next = { ...kept, tombstone: { reason, at: ctx.now }, revision, recordedAt };
     if (
-      !keepRevision &&
+      revision !== prevRevision &&
       historyEligible(prev as unknown as Parameters<typeof historyEligible>[0])
     ) {
       revisions.push(revisionRow(cls, next, computeChangeKinds(ctx.registry, prev, next)));

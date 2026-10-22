@@ -27,6 +27,7 @@ export const DEFAULT_MIN_EVIDENCE_TIER = "corroborated";
 export interface FederatedRecord extends EgressRecord {
   id: string;
   class: RecordClass;
+  revision?: number;
   kind: string;
   domain: string;
   property?: string;
@@ -61,6 +62,8 @@ export interface RecordOutboxEntry<R extends FederatedRecord = FederatedRecord> 
   record?: R;
   tombstone?: true;
   reason?: string;
+  /** On a delete: the revision the record ended at. */
+  revision?: number;
 }
 
 /**
@@ -206,6 +209,7 @@ export function applyRecordFilter<E extends OutboxEntry>(
         operation: "delete",
         tombstone: true,
         reason: record.evidence?.state === "expired" ? "expired" : "withdrawn",
+        ...(record.revision === undefined ? {} : { revision: record.revision }),
       } as E);
       continue;
     }

@@ -441,6 +441,7 @@ describe("readOutbox maps journal rows to record entries", () => {
       recordId: id,
       tombstone: true,
       reason: "withdrawn",
+      revision: 2,
     });
     expect(del).not.toHaveProperty("record");
   });

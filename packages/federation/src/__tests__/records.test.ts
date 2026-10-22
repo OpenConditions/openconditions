@@ -342,19 +342,42 @@ describe("reading a peer's outbox entry", () => {
     canonicalId: "c".repeat(64),
   };
 
-  it("reads a change with its record and a retraction with its reason", () => {
+  it("reads a change with its record and a retraction with its reason and revision", () => {
     const record = feedClosure();
     expect(readInboundEntry({ ...head, operation: "update", record })).toEqual({
       ok: true,
       entry: { ...head, operation: "update", record },
     });
     expect(
-      readInboundEntry({ ...head, operation: "delete", tombstone: true, reason: "withdrawn" }),
-    ).toEqual({ ok: true, entry: { ...head, operation: "delete", reason: "withdrawn" } });
-    expect(readInboundEntry({ ...head, operation: "delete", reason: "erased" })).toEqual({
+      readInboundEntry({
+        ...head,
+        operation: "delete",
+        tombstone: true,
+        reason: "withdrawn",
+        revision: 4,
+      }),
+    ).toEqual({
       ok: true,
-      entry: { ...head, operation: "delete", reason: "withdrawn" },
+      entry: { ...head, operation: "delete", reason: "withdrawn", revision: 4 },
     });
+    expect(
+      readInboundEntry({ ...head, operation: "delete", reason: "erased", revision: 1 }),
+    ).toEqual({
+      ok: true,
+      entry: { ...head, operation: "delete", reason: "withdrawn", revision: 1 },
+    });
+  });
+
+  it("refuses a retraction without the revision it ended at", () => {
+    for (const revision of [undefined, 0, 1.5, "2"]) {
+      expect(
+        readInboundEntry({ ...head, operation: "delete", reason: "withdrawn", revision }),
+      ).toEqual({
+        ok: false,
+        recordId: head.recordId,
+        reason: "a delete carries the revision the record ended at",
+      });
+    }
   });
 
   it("refuses a retraction that carries a record, a change without one, and a malformed entry", () => {

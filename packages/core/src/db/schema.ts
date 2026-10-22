@@ -425,7 +425,9 @@ export const blockList = conditionsSchema.table("block_list", {
  * journalled atomically. The columns say what an entry is without reading it
  * (class, id, kind, domain, property, priority); `snapshot` is the stored
  * record with its evidence summary, the reporter stripped at read. A
- * tombstone appends a `delete` entry with its reason and no snapshot. A
+ * tombstone appends a `delete` entry with its reason, the revision the record
+ * ended at (`revision`, so a subscriber orders it against the record's
+ * changes), and no snapshot. A
  * successful poll of a public source appends a `liveness` entry (class
  * `observation`, the source's id as `record_id`, `{ sourceId, polledAt }` as
  * snapshot), at most one per source per ten minutes and only while a
@@ -458,6 +460,7 @@ export const federationOutbox = conditionsSchema.table(
     priority: boolean("priority").notNull().default(false),
     snapshot: jsonb("snapshot"),
     tombstoneReason: text("tombstone_reason"),
+    revision: integer("revision"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     txid: xid8("txid").notNull().default(sql`pg_current_xact_id()`),
   },

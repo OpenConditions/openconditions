@@ -66,7 +66,14 @@ function change(record: Rec, seq: number, txid = "10"): Rec {
   };
 }
 
-function retraction(record: Rec, reason: string, seq: number, txid = "20"): Rec {
+/** The peer's retraction of `record`, at the revision after it unless `revision` says. */
+function retraction(
+  record: Rec,
+  reason: string,
+  seq: number,
+  txid = "20",
+  revision = (record["revision"] as number) + 1,
+): Rec {
   return {
     seq,
     txid,
@@ -79,6 +86,7 @@ function retraction(record: Rec, reason: string, seq: number, txid = "20"): Rec 
     createdAt: NOW,
     tombstone: true,
     reason,
+    revision,
   };
 }
 
@@ -514,6 +522,54 @@ describe("a peer's retractions", () => {
     expect(await rowOf(own["id"] as string)).toMatchObject({ tombstone_reason: "cancelled" });
     expect(await rowOf(local)).toMatchObject({ tombstone_reason: null, instance_id: INSTANCE });
     expect(await erasureFacts(own["canonicalId"] as string)).toEqual([]);
+  });
+
+  it("ends the copy at the peer's revision, leaving a newer copy that arrived first", async () => {
+    const id = peerSituation("o-1")["id"] as string;
+    // By push, the peer's later change arrived before its earlier retraction.
+    await ingestFederatedPage(sql, page(change(peerSituation("o-1", 3), 1)), ctx());
+    expect(
+      await ingestFederatedPage(
+        sql,
+        page(retraction(peerSituation("o-1", 1), "cancelled", 2, "20", 2)),
+        ctx(LATER),
+      ),
+    ).toMatchObject({ tombstoned: 0, stale: 1, skipped: [] });
+    expect(await rowOf(id)).toMatchObject({ revision: 3, tombstone_reason: null });
+
+    // A copy behind the peer ends at the revision the peer ended it at.
+    await ingestFederatedPage(
+      sql,
+      page(retraction(peerSituation("o-1", 3), "cancelled", 3, "20", 5)),
+      ctx(LATER),
+    );
+    expect(await rowOf(id)).toMatchObject({ revision: 5, tombstone_reason: "cancelled" });
+  });
+
+  it("brings back a copy the peer withdrew unchanged once it sends it again", async () => {
+    const own = peerSituation("o-2");
+    const id = own["id"] as string;
+    await ingestFederatedPage(sql, page(change(own, 1)), ctx());
+    // The peer's source turned restricted: withdrawn at the revision it has.
+    await ingestFederatedPage(sql, page(retraction(own, "withdrawn", 2, "20", 1)), ctx(LATER));
+    expect(await rowOf(id)).toMatchObject({ revision: 1, tombstone_reason: "withdrawn" });
+    // It turned public again: the same revision comes back.
+    expect(await ingestFederatedPage(sql, page(change(own, 3)), ctx(LATER))).toMatchObject({
+      accepted: 1,
+    });
+    expect(await rowOf(id)).toMatchObject({ revision: 1, tombstone_reason: null });
+  });
+
+  it("skips a retraction that does not say the revision it ended at", async () => {
+    const own = peerSituation("o-3");
+    await ingestFederatedPage(sql, page(change(own, 1)), ctx());
+    const { revision: _revision, ...bare } = retraction(own, "cancelled", 2);
+    expect(await ingestFederatedPage(sql, page(bare), ctx(LATER))).toMatchObject({
+      tombstoned: 0,
+      skipped: [
+        { recordId: own["id"], reason: "a delete carries the revision the record ended at" },
+      ],
+    });
   });
 
   it("reads a reason outside the model's vocabulary as withdrawn", async () => {

@@ -169,6 +169,18 @@ export async function writeRecordIn(
           return { status: "restored", class: cls, id: id!, revision: existing.revision };
         }
       }
+      // The peer withdrew the record at this revision without changing it
+      // (its source turned restricted, or the crowd withdrew a report) and
+      // sends it again: the copy is live again as it was.
+      if (
+        existing.revision === sealed["revision"] &&
+        existing.tombstone_reason === "withdrawn" &&
+        sealed["tombstone"] === undefined
+      ) {
+        await storeRecords(tx, cls, [sealed], ctx.registry);
+        await relinkFeature(tx, cls, sealed, ctx);
+        return { status: "restored", class: cls, id: id!, revision: existing.revision };
+      }
       return { status: "stale", class: cls, id: id!, revision: existing.revision };
     }
   }

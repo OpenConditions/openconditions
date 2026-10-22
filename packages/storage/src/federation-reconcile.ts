@@ -40,13 +40,14 @@ const lastEntry = (cls: string, id: string) => `
  * turned restricted (its entries may have been pruned). A record stored
  * since, by a poll before or during the reconcile, is never journalled. An
  * ended record's delete carries its own reason; a live one's is
- * `withdrawn`. An erasure removes the record's earlier changes, as its
- * capture does.
+ * `withdrawn`, at the revision it stays at here, which its creates carry
+ * again should the source turn public. An erasure removes the record's
+ * earlier changes, as its capture does.
  */
 async function retract(tx: Sql, cls: RevisionedClass, ids: readonly string[]): Promise<number> {
   const [row] = await tx.unsafe<{ n: number }[]>(
     `WITH due AS (
-       SELECT r.id, r.canonical_id, r.kind, r.domain,
+       SELECT r.id, r.canonical_id, r.kind, r.domain, r.revision,
               COALESCE(r.tombstone_reason, 'withdrawn') AS reason
          FROM conditions.${cls} r ${lastEntry(cls, "r.id")}
         WHERE r.id = ANY($1::text[])
@@ -55,8 +56,9 @@ async function retract(tx: Sql, cls: RevisionedClass, ids: readonly string[]): P
           AND conditions.federation_was_shared('${cls}', r.id, r.created_at, r.source_id)
      ), journalled AS (
        INSERT INTO conditions.federation_outbox
-         (operation, record_class, record_id, canonical_id, kind, domain, tombstone_reason)
-       SELECT 'delete', '${cls}', id, canonical_id, kind, domain, reason FROM due
+         (operation, record_class, record_id, canonical_id, kind, domain, tombstone_reason,
+          revision)
+       SELECT 'delete', '${cls}', id, canonical_id, kind, domain, reason, revision FROM due
        RETURNING record_id, tombstone_reason
      ), erased AS (
        DELETE FROM conditions.federation_outbox o USING journalled j

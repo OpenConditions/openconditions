@@ -12,7 +12,7 @@
  * (`federatedSnapshot`: the reporter stripped, extras only from a source that
  * federates them; nothing of a source now restricted) and only what the
  * subscriber's filter keeps (`applyRecordFilter`). Delete entries carry the
- * reason and no record. A liveness entry says a source was polled
+ * reason and the revision the record ended at, and no record. A liveness entry says a source was polled
  * successfully (`journalSourceLiveness`); only a subscriber that asks for
  * them is served these, and none of a source now restricted.
  *
@@ -160,6 +160,7 @@ interface JournalRow {
   property: string | null;
   snapshot: FederatedRecord | { sourceId: string; polledAt: string } | null;
   tombstone_reason: string | null;
+  revision: number | null;
   created_at: Date;
   extras_federate: boolean | null;
   restricted: boolean | null;
@@ -203,6 +204,7 @@ function rowToEntry(row: JournalRow): OutboxEntry | undefined {
       operation: "delete",
       tombstone: true,
       ...(row.tombstone_reason === null ? {} : { reason: row.tombstone_reason }),
+      ...(row.revision === null ? {} : { revision: row.revision }),
     };
   }
   const record =
@@ -253,7 +255,7 @@ export async function readOutbox(sql: postgres.Sql, q: OutboxQuery): Promise<Out
   const rows = await sql<JournalRow[]>`
     SELECT o.seq::text AS seq, o.txid::text AS txid, o.operation, o.record_class, o.record_id,
            o.canonical_id, o.kind, o.domain, o.property, o.snapshot, o.tombstone_reason,
-           o.created_at, src.extras_federate, src.restricted
+           o.revision, o.created_at, src.extras_federate, src.restricted
     FROM conditions.federation_outbox o
     LEFT JOIN conditions.source src ON src.id = CASE o.operation
       WHEN 'liveness' THEN o.record_id ELSE o.snapshot #>> '{provenance,sourceId}' END

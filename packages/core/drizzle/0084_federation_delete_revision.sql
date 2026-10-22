@@ -1,0 +1,1 @@
+ALTER TABLE "conditions"."federation_outbox" ADD COLUMN "revision" integer;

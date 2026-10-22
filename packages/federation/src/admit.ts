@@ -25,7 +25,12 @@ export type InboundEntry =
       canonicalId: string | null;
     } & (
       | { operation: "create" | "update"; record: unknown }
-      | { operation: "delete"; reason: (typeof TOMBSTONE_REASONS)[number] }
+      | {
+          operation: "delete";
+          reason: (typeof TOMBSTONE_REASONS)[number];
+          /** The revision the record ended at. */
+          revision: number;
+        }
     ))
   | { seq: number; txid: string; operation: "liveness"; sourceId: string; polledAt: string };
 
@@ -33,8 +38,9 @@ const isString = (v: unknown): v is string => typeof v === "string" && v.length 
 
 /**
  * Reads one entry of a peer's outbox page: a change carries the record, a
- * retraction carries a reason and never a record — a delete that also
- * carries one says two things at once and is refused. A retraction's reason
+ * retraction carries a reason and the revision the record ended at, and never
+ * a record — a delete that also carries one says two things at once and is
+ * refused. A retraction's reason
  * outside the model's vocabulary reads as `withdrawn`. The record itself is
  * checked on admission ({@link admitFederatedRecord}). A liveness entry
  * names a source and when the peer polled it.
@@ -92,10 +98,14 @@ export function readInboundEntry(
     if (e["record"] !== undefined) {
       return { ok: false, recordId, reason: "a delete carries no record" };
     }
+    const revision = e["revision"];
+    if (typeof revision !== "number" || !Number.isSafeInteger(revision) || revision < 1) {
+      return { ok: false, recordId, reason: "a delete carries the revision the record ended at" };
+    }
     const reason = (TOMBSTONE_REASONS as readonly unknown[]).includes(e["reason"])
       ? (e["reason"] as (typeof TOMBSTONE_REASONS)[number])
       : "withdrawn";
-    return { ok: true, entry: { ...head, operation, reason } };
+    return { ok: true, entry: { ...head, operation, reason, revision } };
   }
   if (operation === "create" || operation === "update") {
     if (e["record"] === undefined) {
