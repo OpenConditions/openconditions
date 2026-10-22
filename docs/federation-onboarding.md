@@ -166,7 +166,9 @@ The TUF registry becomes the **scaled** trust anchor later: once an instance
 is in the verified registry, its registry `keys` are merged into the pinned
 set (`mergePeerRecords`), so a runtime key is trusted if it matches the
 bilateral pin **or** chains to a TUF-authorized key. The operator's own
-bilateral configuration always outranks registry-discovered values.
+bilateral configuration always outranks registry-discovered values. A peer
+only the registry names is served the public tier (Tier 0) whatever its entry
+states; a wider window is granted by configuring the peer.
 
 ## 4. Sample peering MoU
 
@@ -213,11 +215,11 @@ technical deletion machinery can and cannot promise.
 >    good-faith technical step, not proof that every copy is gone.
 > 6. **Security and key exchange.** The parties exchange their instances'
 >    Ed25519 `publicKeyMultibase` fingerprints in Annex 1 over an
->    authenticated channel and pin them bilaterally. Key rotations are
->    announced at least [14] days in advance through the signed key-rotation
->    event and confirmed out-of-band; a suspected key compromise is reported
->    to the other party within [24] hours and the affected pins removed
->    immediately.
+>    authenticated channel and pin them bilaterally. Each instance rotates its
+>    key every six months, the old key endorsing the new one, which the other
+>    party's instance follows without a new pin; a suspected key compromise is
+>    reported to the other party within [24] hours and the affected pins
+>    removed immediately.
 > 7. **Service expectations.** Exchange is best-effort; neither party
 >    guarantees availability. Rate limits and capability negotiation follow
 >    the federation protocol. Abuse-resistance actions (rate downgrades,
@@ -290,6 +292,18 @@ these not being right:
 | `OPENCONDITIONS_FEDERATION_PEERS`       | The peers config (inline JSON array or a path): one record per peer with its `instanceId`, `actorUrl`, `trustTier` and `pinnedKeys` (§3), and none naming this instance.               |
 | `OPENCONDITIONS_FEDERATION_ARCHIVE_URL` | Where peers fetch the static archive (default `<baseUrl>/archive`, which the operator serves; see [archive.md](./archive.md)).                                                         |
 
+Optional:
+
+| Variable                                       | Meaning                                                                                                                                                                                                            |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `OPENCONDITIONS_FEDERATION_REGISTRY_URL`       | A federation registry (TUF metadata under `/metadata`, entries under `/targets`) whose verified instances join the peers, daily (§5). Needs `…_REGISTRY_ROOT`.                                                     |
+| `OPENCONDITIONS_FEDERATION_REGISTRY_ROOT`      | The registry's trusted `root.json`, obtained out of band (inline JSON or a path).                                                                                                                                  |
+| `OPENCONDITIONS_FEDERATION_REGISTRY_CACHE`     | Where verified registry metadata is kept between syncs, for rollback protection (default `./data/registry`; `/data/registry` on the service's volume under OpenMapX).                                              |
+| `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER` | For peers with `mtlsRequired` behind a TLS-terminating proxy: the header the proxy puts a verified client certificate's SHA-256 fingerprint in (see _Mutual TLS_ below).                                           |
+| `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`          | Comma-separated host names the service may reach although they resolve to private addresses: a peer, archive or inbox on the same private network. Every other private, loopback or link-local address is refused. |
+| `OPENCONDITIONS_FETCH_TIMEOUT_MS`              | How long a request to a peer may take (default 60000). A peer's archive files have an hour each.                                                                                                                   |
+| `OPENCONDITIONS_MAX_REDIRECTS`                 | How many redirects a request to a peer follows (default 5); each hop is checked as the first.                                                                                                                      |
+
 A peer record with `subscribe` makes this instance a subscriber of that peer:
 
 ```json
@@ -345,8 +359,82 @@ must lie after the cursor asked for and up to its own high-water mark, and a
 page that moves the cursor nowhere ends the pull. A page lands through
 the same inbox as a pushed one, and advances the cursor only once it landed;
 what both the push and the pull deliver lands once (the second delivery is
-`stale`). History before the window lives in the peer's archive, which the
-service does not read.
+`stale`), and a retraction carries the revision the record ended at, so one
+that arrives after a later change leaves the change. History before the
+window lives in the peer's archive: a page that says the cursor is beyond the
+window names the archive's files with their SHA-256 in its signed body, and
+the service lands those first, checked against the page, then the page (see
+[archive.md](./archive.md)). A new peer, or one away longer than its window,
+starts so; an archive is landed once per night it was built, and not within a
+day of the last.
+
+### Keys and rotation
+
+The service creates its Ed25519 instance key on first boot and keeps it in
+the database. A key is valid for six months; 30 days before it expires the
+service rotates it: the old key endorses the new one (both sign that the new
+key is this instance's next), and the actor document serves both, with the
+endorsement, until the old one expires. The new key signs only once it has
+been served for a week, so every peer has read it. A peer trusts a served key
+that a key it pins, or learned this way, endorsed, and keeps it
+(`conditions.federation_peer_key`): operators pin each other once, and the
+pins carry through every rotation. A learned key is trusted only while the pin
+it leads back to stays configured, so removing a pin revokes what it led to.
+A peer that does not read the actor document for longer than a key lives (six
+months) has to be pinned again. A key pinned for two peers fails the boot.
+
+### One process
+
+Run one federation service per database. Its replay cache, rate limits and
+the single flight of its pull, push and upkeep are its own, so it holds a
+database advisory lock while it runs: a second one (a replica, or a new
+container started before the old one stopped) waits until the first ends,
+and one that loses the lock's connection stops. A peer holds one pull
+subscription and one webhook per inbox here; a second is refused with `409`
+naming the one held, which the peer patches.
+
+### Peers on a private network
+
+Requests to peers, their archives and their inboxes go through the egress
+guard: a host that resolves to a private, loopback or link-local address is
+refused, also after a redirect. A peer on the same private network (a second
+instance of one operator, or a test pair) is reached by naming its host in
+`OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`, on each side that reaches the other.
+
+### Mutual TLS
+
+A peer record with `"mtlsRequired": true` (and optionally
+`"mtlsFingerprints": ["AB:CD:…"]`) must, besides its signature, arrive over
+TLS with a client certificate that was verified. Where a reverse proxy
+terminates TLS, the proxy verifies the certificate and passes its fingerprint
+on in a header the service is told of with
+`OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER`. The header is believed as it
+arrives, so the proxy must set it itself, whatever the client sent, and must
+be the only way to the service. With Caddy:
+
+```text
+maps.example.org {
+	tls {
+		client_auth {
+			mode verify_if_given
+			trust_pool file /etc/caddy/peer-ca.pem
+		}
+	}
+	handle /peer/* {
+		reverse_proxy openconditions-federation:4300 {
+			header_up -X-Client-Cert-Sha256
+			header_up X-Client-Cert-Sha256 {http.request.tls.client.fingerprint}
+			flush_interval -1
+		}
+	}
+}
+```
+
+and `OPENCONDITIONS_FEDERATION_CLIENT_CERT_HEADER=X-Client-Cert-Sha256`.
+Behind a proxy, every peer with `mtlsRequired` must pin `mtlsFingerprints`
+(the boot fails otherwise), and a header sent twice names no certificate.
+Fingerprints match however they are written (`AB:CD:…` or `abcd…`). A peer
+without `mtlsRequired` is unaffected; mTLS never replaces the signature.
 
 ### Deploying it
 
@@ -381,8 +469,11 @@ services:
       OPENCONDITIONS_FEDERATION_ENABLED: "true"
       OPENCONDITIONS_FEDERATION_ACTOR: /config/actor.json
       OPENCONDITIONS_FEDERATION_PEERS: /config/peers.json
+      OPENCONDITIONS_FEDERATION_REGISTRY_CACHE: /data/registry
+      TMPDIR: /data
     volumes:
       - ./federation:/config:ro
+      - openconditions-federation-data:/data
     networks: [openmapx]
 
   openconditions-archive:
@@ -400,6 +491,7 @@ networks:
 volumes:
   openmapx-openconditions-ingest-data:
     external: true
+  openconditions-federation-data:
 ```
 
 and the public reverse proxy routes the paths, for example with Caddy:
@@ -422,5 +514,6 @@ maps.example.org {
 
 Use the network and volume names of the install (`docker network ls`,
 `docker volume ls`), and set the same `OPENCONDITIONS_INSTANCE_ID` on the
-ingest and contributions services. The service writes nothing to disk: its
-signing keys live in the database.
+ingest and contributions services. Its signing keys live in the database; its
+volume holds the registry's verified metadata and a peer's archive files while
+they land, up to 32 GiB a file.
