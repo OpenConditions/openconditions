@@ -3,7 +3,8 @@ import { type CanonicalComponent, landClaim } from "@openconditions/model";
 import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { rekeyCrowdSeries } from "../canonical-view.js";
+import { rekeyCrowdSeries, relinkFeatures } from "../canonical-view.js";
+import { LOCK_SPACES, lockKeys } from "../fused-rows.js";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { sweepRecords } from "../sweep.js";
 import { writeRecord } from "../write-record.js";
@@ -80,6 +81,204 @@ const canonicalOf = async (featureId: string) => {
      WHERE ${featureId} = ANY(member_ids)`;
   return row;
 };
+
+interface StoredCanonical {
+  canonical_feature_id: string;
+  survivor_id: string;
+  member_ids: string[];
+  merged_sources: { source: string; recordId: string }[];
+  components: CanonicalComponent[];
+  computed_at: Date;
+}
+
+const storedCanonical = async (tx: postgres.Sql | postgres.TransactionSql, member: string) => {
+  const [row] = await tx<StoredCanonical[]>`
+    SELECT canonical_feature_id, survivor_id, member_ids, merged_sources, components, computed_at
+      FROM conditions.feature_canonical WHERE ${member} = ANY(member_ids)`;
+  return row!;
+};
+
+/** Real row-trigger events distinguish replacement from a metadata-only update. */
+async function auditCanonical(tx: postgres.TransactionSql) {
+  await tx`CREATE TEMP TABLE canonical_changes
+    (event text, before_row jsonb, after_row jsonb) ON COMMIT DROP`;
+  await tx.unsafe(`CREATE FUNCTION pg_temp.capture_canonical_change() RETURNS trigger
+    LANGUAGE plpgsql AS $$ BEGIN
+      INSERT INTO pg_temp.canonical_changes VALUES (TG_OP, to_jsonb(OLD), to_jsonb(NEW));
+      RETURN NULL;
+    END $$`);
+  await tx.unsafe(`CREATE TRIGGER capture_canonical_change AFTER INSERT OR UPDATE OR DELETE
+    ON conditions.feature_canonical FOR EACH ROW EXECUTE FUNCTION pg_temp.capture_canonical_change()`);
+  await tx`CREATE TEMP TABLE canonical_semantic_writes (canonical_feature_id text) ON COMMIT DROP`;
+  await tx.unsafe(`CREATE FUNCTION pg_temp.capture_canonical_semantic_write() RETURNS trigger
+    LANGUAGE plpgsql AS $$ BEGIN
+      INSERT INTO pg_temp.canonical_semantic_writes VALUES (NEW.canonical_feature_id);
+      RETURN NULL;
+    END $$`);
+  await tx.unsafe(`CREATE TRIGGER capture_canonical_semantic_write
+    AFTER UPDATE OF survivor_id, member_ids, merged_sources, components
+    ON conditions.feature_canonical FOR EACH ROW EXECUTE FUNCTION pg_temp.capture_canonical_semantic_write()`);
+}
+
+/** Each characterization rolls back its fixture edits and temporary trigger together. */
+async function rollbackCase(test: (tx: postgres.TransactionSql) => Promise<void>) {
+  const rolledBack = new Error("characterization complete");
+  try {
+    await sql.begin(async (tx) => {
+      await auditCanonical(tx);
+      await test(tx);
+      throw rolledBack;
+    });
+  } catch (error) {
+    if (error !== rolledBack) throw error;
+  }
+}
+
+const semantic = ({ computed_at: _clock, ...row }: StoredCanonical) => row;
+const recomputedAt = "2026-09-22T12:01:00.000Z";
+const single = "oc:feature:es-minetur-fuel:15493";
+
+describe("canonical recomputation writes", () => {
+  it("advances computed_at without deleting, inserting or rewriting unchanged semantic columns", async () => {
+    await rollbackCase(async (tx) => {
+      const before = await storedCanonical(tx, single);
+      const result = await relinkFeatures(tx, registry, {
+        featureIds: [single],
+        instanceId: INSTANCE,
+        now: recomputedAt,
+      });
+      expect(result.vanished).toEqual([]);
+      expect(await storedCanonical(tx, single)).toEqual({
+        ...before,
+        computed_at: new Date(recomputedAt),
+      });
+      const events = await tx<{ event: string; before_row: Rec; after_row: Rec }[]>`
+        SELECT * FROM canonical_changes`;
+      expect(events.map((r) => r.event)).toEqual(["UPDATE"]);
+      expect(await tx`SELECT * FROM canonical_semantic_writes`).toEqual([]);
+      for (const row of events) {
+        const { computed_at: _before, ...oldSemantic } = row.before_row;
+        const { computed_at: _after, ...newSemantic } = row.after_row;
+        expect(newSemantic).toEqual(oldSemantic);
+      }
+    });
+  });
+
+  it("persists a merged_sources-only correction without replacing the canonical row", async () => {
+    await rollbackCase(async (tx) => {
+      const expected = await storedCanonical(tx, single);
+      await tx`UPDATE conditions.feature_canonical SET merged_sources = '[]'::jsonb
+        WHERE canonical_feature_id = ${expected.canonical_feature_id}`;
+      await tx`TRUNCATE canonical_changes`;
+      await relinkFeatures(tx, registry, {
+        featureIds: [single],
+        instanceId: INSTANCE,
+        now: recomputedAt,
+      });
+      expect(await storedCanonical(tx, single)).toEqual({
+        ...expected,
+        computed_at: new Date(recomputedAt),
+      });
+      expect(
+        (await tx<{ event: string }[]>`SELECT event FROM canonical_changes`).map((r) => r.event),
+      ).toEqual(["UPDATE"]);
+    });
+  });
+
+  it("rolls back failure after old-state capture and failure after an earlier canonical write", async () => {
+    await rollbackCase(async (tx) => {
+      const other = "oc:feature:es-minetur-fuel:3119";
+      const original = await storedCanonical(tx, single);
+      await tx`UPDATE conditions.feature_canonical SET merged_sources = '[]'::jsonb
+        WHERE canonical_feature_id = ${original.canonical_feature_id}`;
+      const snapshot = async () => ({
+        canonical:
+          await tx`SELECT * FROM conditions.feature_canonical ORDER BY canonical_feature_id`,
+        links: await tx`SELECT * FROM conditions.feature_link ORDER BY a_id, b_id`,
+        crowd:
+          await tx`SELECT * FROM conditions.observation_latest WHERE source_id = 'crowd' ORDER BY series_id`,
+      });
+      const before = await snapshot();
+      const otherId = (await storedCanonical(tx, other)).canonical_feature_id;
+      await tx`CREATE TEMP SEQUENCE canonical_successful_writes`;
+
+      for (const failOn of [original.canonical_feature_id, otherId]) {
+        await tx`SELECT setval('pg_temp.canonical_successful_writes', 1, false)`;
+        await expect(
+          tx.savepoint(async (inner) => {
+            await inner`SELECT set_config('canonical_probe.fail_on', ${failOn}, true)`;
+            await inner.unsafe(`CREATE FUNCTION pg_temp.reject_canonical_write() RETURNS trigger
+            LANGUAGE plpgsql AS $$ BEGIN
+              IF COALESCE(NEW.canonical_feature_id, OLD.canonical_feature_id)
+                   = current_setting('canonical_probe.fail_on') THEN
+                RAISE EXCEPTION 'injected canonical write failure';
+              END IF;
+              PERFORM nextval('pg_temp.canonical_successful_writes');
+              RETURN COALESCE(NEW, OLD);
+            END $$`);
+            await inner.unsafe(`CREATE TRIGGER reject_canonical_write BEFORE INSERT OR UPDATE OR DELETE
+            ON conditions.feature_canonical FOR EACH ROW EXECUTE FUNCTION pg_temp.reject_canonical_write()`);
+            await relinkFeatures(inner, registry, {
+              featureIds: [single, other],
+              instanceId: INSTANCE,
+              now: recomputedAt,
+            });
+          }),
+        ).rejects.toMatchObject({ code: "P0001", message: "injected canonical write failure" });
+        expect(await snapshot()).toEqual(before);
+        const [writes] = await tx<{ last_value: string; is_called: boolean }[]>`
+          SELECT last_value::text, is_called FROM pg_temp.canonical_successful_writes`;
+        expect(writes).toEqual({ last_value: "1", is_called: failOn === otherId });
+      }
+    });
+  });
+
+  it("serializes overlapping recomputations under the existing feature-kind advisory lock", async () => {
+    const before = await storedCanonical(sql, single);
+    let unlock!: () => void;
+    let acquired!: () => void;
+    const locked = new Promise<void>((resolve) => {
+      acquired = resolve;
+    });
+    const release = new Promise<void>((resolve) => {
+      unlock = resolve;
+    });
+    const first = sql.begin(async (tx) => {
+      await lockKeys(tx, LOCK_SPACES.featureLink, ["fuel_station"]);
+      await relinkFeatures(tx, registry, {
+        featureIds: [single],
+        instanceId: INSTANCE,
+        now: recomputedAt,
+      });
+      acquired();
+      await release;
+    });
+    await locked;
+    const later = "2026-09-22T12:02:00.000Z";
+    const second = sql.begin((tx) =>
+      relinkFeatures(tx, registry, {
+        featureIds: [single],
+        instanceId: INSTANCE,
+        now: later,
+      }),
+    );
+    try {
+      await expect
+        .poll(async () => {
+          const [{ count }] = await sql<{ count: number }[]>`
+          SELECT count(*)::int AS count FROM pg_locks
+           WHERE locktype = 'advisory' AND NOT granted`;
+          return count;
+        })
+        .toBeGreaterThan(0);
+    } finally {
+      unlock();
+      await Promise.all([first, second]);
+    }
+    expect(semantic(await storedCanonical(sql, single))).toEqual(semantic(before));
+    expect((await storedCanonical(sql, single)).computed_at).toEqual(new Date(later));
+  });
+});
 
 describe("the canonical view of the golden facilities", () => {
   it("holds every feature in exactly one canonical row", async () => {
@@ -245,6 +444,46 @@ describe("a station two sources describe", () => {
     ]);
     expect(await canonicalOf(twin.id)).toEqual(canonical);
   });
+
+  it.each(["survivor", "member order", "components"] as const)(
+    "updates a changed %s while retaining the canonical ID and full old snapshot",
+    async (change) => {
+      await rollbackCase(async (tx) => {
+        const expected = await storedCanonical(tx, twin.id);
+        if (change === "survivor") {
+          await tx`UPDATE conditions.feature_canonical SET survivor_id = ${station["id"] as string}
+            WHERE canonical_feature_id = ${expected.canonical_feature_id}`;
+        } else if (change === "member order") {
+          await tx`UPDATE conditions.feature_canonical SET member_ids = ${[...expected.member_ids].reverse()}::text[]
+            WHERE canonical_feature_id = ${expected.canonical_feature_id}`;
+        } else {
+          await tx`UPDATE conditions.feature_canonical SET components = ${JSON.stringify([])}::jsonb
+            WHERE canonical_feature_id = ${expected.canonical_feature_id}`;
+        }
+        await tx`TRUNCATE canonical_changes`;
+        await tx`UPDATE conditions.feature_link SET decided_by = 'reviewer'
+          WHERE a_id = ${twin.id} AND b_id = ${station["id"] as string}`;
+        const now = "2026-09-22T12:06:00.000Z";
+        const result = await relinkFeatures(tx, registry, {
+          featureIds: [twin.id, station["id"] as string],
+          instanceId: INSTANCE,
+          now,
+        });
+        expect(result.vanished).toEqual([]);
+        expect(await storedCanonical(tx, twin.id)).toEqual({
+          ...expected,
+          computed_at: new Date(now),
+        });
+        expect(
+          (await tx<{ event: string }[]>`SELECT event FROM canonical_changes`).map((r) => r.event),
+        ).toEqual(["UPDATE"]);
+        expect(
+          await tx`SELECT decided_by, status FROM conditions.feature_link
+          WHERE a_id = ${twin.id} AND b_id = ${station["id"] as string}`,
+        ).toEqual([{ decided_by: "reviewer", status: "accepted" }]);
+      });
+    },
+  );
 
   it("fuses the price both publish into one row, under the stricter of their rights", async () => {
     const canonical = await canonicalOf(station["id"] as string);
