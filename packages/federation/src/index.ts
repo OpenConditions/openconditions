@@ -179,6 +179,7 @@ export {
   filterIsBounded,
   getSubscription,
   listSubscriptions,
+  SubscriptionConflictError,
   SubscriptionValidationError,
   updateSubscription,
   validateSubscriptionShape,

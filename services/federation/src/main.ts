@@ -23,6 +23,7 @@ import { backfillFloorIso } from "./backfill.js";
 import { resolveFederationSettings } from "./config.js";
 import { PeerBook } from "./peer-book.js";
 import { refreshPeers } from "./peering.js";
+import { holdProcessLock } from "./process-lock.js";
 import { pullPeer } from "./puller.js";
 import { build } from "./server.js";
 
@@ -52,6 +53,18 @@ async function boot() {
   console.info("[federation-api] applying database migrations…");
   await runMigrations(url);
   console.info("[federation-api] migrations applied");
+
+  let waiting = false;
+  const lock = await holdProcessLock(url, {
+    onWait: () => {
+      if (!waiting) console.info("[federation-api] another federation process runs; waiting");
+      waiting = true;
+    },
+    onLost: (reason) => {
+      console.error("[federation-api] lost the single-process lock; stopping:", reason);
+      process.exit(1);
+    },
+  });
 
   // Requests and batched crons only: a statement past 30 s or a lock wait past
   // 10 s fails rather than holding one of the five connections. Startup
@@ -285,6 +298,7 @@ async function boot() {
     clearInterval(pruneTimer);
     await app.close();
     await sql.end();
+    await lock.release();
   };
   process.on("SIGTERM", close);
   process.on("SIGINT", close);

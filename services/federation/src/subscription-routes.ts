@@ -26,6 +26,7 @@ import {
   type MtlsContext,
   type NonceStore,
   readOutbox,
+  SubscriptionConflictError,
   SubscriptionValidationError,
   type UpdateSubscriptionInput,
   updateSubscription,
@@ -81,6 +82,27 @@ function parseJsonBody(reply: FastifyReply, body: Buffer): Record<string, unknow
   }
 }
 
+/**
+ * Answers a create or update the subscription rules refuse: 422 for a
+ * filter or target that is not allowed, 409 naming the subscription the peer
+ * already holds for the target. False for any other error.
+ */
+function sendRefusal(reply: FastifyReply, err: unknown): boolean {
+  if (err instanceof SubscriptionConflictError) {
+    void reply.status(409).send({ error: err.message, existingId: err.existingId });
+    return true;
+  }
+  if (err instanceof SubscriptionValidationError) {
+    void reply.status(422).send({
+      error: err.message,
+      code: err.code,
+      ...(err.recommended !== undefined ? { recommended: err.recommended } : {}),
+    });
+    return true;
+  }
+  return false;
+}
+
 export function registerSubscriptionRoutes(
   app: FastifyInstance,
   ctx: SubscriptionRouteContext,
@@ -104,13 +126,7 @@ export function registerSubscriptionRoutes(
       ctx.onSubscribed?.();
       return reply.status(201).send(subscription);
     } catch (err) {
-      if (err instanceof SubscriptionValidationError) {
-        return reply.status(422).send({
-          error: err.message,
-          code: err.code,
-          ...(err.recommended !== undefined ? { recommended: err.recommended } : {}),
-        });
-      }
+      if (sendRefusal(reply, err)) return reply;
       throw err;
     }
   });
@@ -152,13 +168,7 @@ export function registerSubscriptionRoutes(
       ctx.onSubscribed?.();
       return reply.send(updated);
     } catch (err) {
-      if (err instanceof SubscriptionValidationError) {
-        return reply.status(422).send({
-          error: err.message,
-          code: err.code,
-          ...(err.recommended !== undefined ? { recommended: err.recommended } : {}),
-        });
-      }
+      if (sendRefusal(reply, err)) return reply;
       throw err;
     }
   });

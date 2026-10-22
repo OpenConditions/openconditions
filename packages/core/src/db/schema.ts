@@ -763,6 +763,11 @@ export const federationSubscription = conditionsSchema.table(
   },
   (t) => [
     index("idx_federation_subscription_peer").on(t.peerId),
+    // A peer holds one pull subscription and one webhook per inbox, which it
+    // patches to what it wants; a second would push or journal twice.
+    uniqueIndex("uq_federation_subscription_target")
+      .on(t.peerId, t.deliveryMode, sql`coalesce(${t.inboxUrl}, '')`)
+      .where(sql`${t.deliveryMode} <> 'sse'`),
     check(
       "federation_subscription_delivery_mode_enum",
       sql`${t.deliveryMode} IN ('pull','webhook','sse')`,

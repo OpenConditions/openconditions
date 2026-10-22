@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "uq_federation_subscription_target" ON "conditions"."federation_subscription" USING btree ("peer_id","delivery_mode",coalesce("inbox_url", '')) WHERE "conditions"."federation_subscription"."delivery_mode" <> 'sse';

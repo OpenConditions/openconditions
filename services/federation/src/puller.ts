@@ -92,6 +92,7 @@ async function readCursor(sql: postgres.Sql, peerId: string): Promise<string> {
   return row?.cursor ?? "0.0";
 }
 
+/** Moves the cursor to `cursor`, never back past one stored meanwhile. */
 async function storeCursor(
   sql: postgres.Sql,
   peerId: string,
@@ -99,10 +100,13 @@ async function storeCursor(
   now: string,
 ): Promise<void> {
   await sql`
-    INSERT INTO conditions.federation_peer_cursor (peer_instance_id, cursor, updated_at)
+    INSERT INTO conditions.federation_peer_cursor AS held (peer_instance_id, cursor, updated_at)
     VALUES (${peerId}, ${cursor}, ${now})
     ON CONFLICT (peer_instance_id) DO UPDATE
-      SET cursor = excluded.cursor, updated_at = excluded.updated_at`;
+      SET cursor = excluded.cursor, updated_at = excluded.updated_at
+      WHERE (split_part(held.cursor, '.', 1)::numeric, split_part(held.cursor, '.', 2)::numeric)
+          < (split_part(excluded.cursor, '.', 1)::numeric,
+             split_part(excluded.cursor, '.', 2)::numeric)`;
 }
 
 /** Whether the cursor `b` is past `a` in the journal's `(txid, seq)` order. */

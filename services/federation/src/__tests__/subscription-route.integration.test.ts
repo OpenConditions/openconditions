@@ -7,7 +7,7 @@ import {
 } from "@openconditions/federation";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { build } from "../server.js";
 import {
   type OwnSituationOptions,
@@ -182,6 +182,10 @@ describe("POST /peer/subscriptions — authentication", () => {
 });
 
 describe("subscription CRUD and ownership", () => {
+  beforeEach(async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+  });
+
   it("creates a subscription and returns its id", async () => {
     const app = await build({ sql, env: enabledEnv, logger: false });
     try {
@@ -676,6 +680,81 @@ describe("PATCH re-enables a push_disabled subscription (recovery)", () => {
       expect(res.json().status).toBe("active");
       expect(res.json().pushFailures).toBe(0);
       expect(res.json().inboxUrl).toBe("https://peer-a.example.net/inbox-recovered");
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+});
+
+describe("one subscription per delivery target", () => {
+  beforeEach(async () => {
+    await sql`DELETE FROM conditions.federation_subscription`;
+  });
+
+  const post = async (
+    app: Awaited<ReturnType<typeof build>>,
+    key: InstanceKey,
+    input: Record<string, unknown>,
+  ) => {
+    const req = await signed(key, "POST", "/peer/subscriptions", input);
+    return app.inject({
+      method: "POST",
+      url: "/peer/subscriptions",
+      headers: req.headers,
+      payload: req.payload,
+    });
+  };
+  const webhook = (inboxUrl: string) => ({
+    deliveryMode: "webhook",
+    inboxUrl,
+    filter: { bbox: [4, 50, 6, 54] },
+  });
+
+  it("refuses a second pull or a second webhook to one inbox, naming the one held", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const pull = await createSub(app, peerA, { deliveryMode: "pull" });
+      const again = await post(app, peerA, {
+        deliveryMode: "pull",
+        filter: { bbox: [4, 50, 5, 51] },
+      });
+      expect(again.statusCode).toBe(409);
+      expect(again.json().existingId).toBe(pull);
+
+      const hook = await createSub(app, peerA, webhook("https://peer-a.example.net/inbox"));
+      const twice = await post(app, peerA, webhook("https://peer-a.example.net/inbox"));
+      expect(twice.statusCode).toBe(409);
+      expect(twice.json().existingId).toBe(hook);
+
+      // Another inbox, another peer's pull, and streams are each their own.
+      expect((await post(app, peerA, webhook("https://peer-a.example.net/other"))).statusCode).toBe(
+        201,
+      );
+      expect((await post(app, peerB, { deliveryMode: "pull" })).statusCode).toBe(201);
+      const sse = { deliveryMode: "sse", filter: { bbox: [4, 50, 6, 54], kinds: ["incident"] } };
+      expect((await post(app, peerA, sse)).statusCode).toBe(201);
+      expect((await post(app, peerA, sse)).statusCode).toBe(201);
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
+
+  it("refuses a patch onto the target of another subscription", async () => {
+    const app = await build({ sql, env: enabledEnv, logger: false });
+    try {
+      const first = await createSub(app, peerA, webhook("https://peer-a.example.net/inbox"));
+      const second = await createSub(app, peerA, webhook("https://peer-a.example.net/other"));
+      const patch = await signed(peerA, "PATCH", `/peer/subscriptions/${second}`, {
+        inboxUrl: "https://peer-a.example.net/inbox",
+      });
+      const res = await app.inject({
+        method: "PATCH",
+        url: `/peer/subscriptions/${second}`,
+        headers: patch.headers,
+        payload: patch.payload,
+      });
+      expect(res.statusCode).toBe(409);
+      expect(res.json().existingId).toBe(first);
     } finally {
       await app.close();
     }

@@ -449,6 +449,34 @@ describe("a peer that pulls", () => {
       error: "the page does not carry the peer's signature",
     });
   }, 60_000);
+
+  it("never moves its cursor back behind one stored meanwhile", async () => {
+    await writeSnapshot(
+      sqlA,
+      SOURCE,
+      { situations: [situationDraft("race-1", "roadworks")] },
+      { registry, instanceId: A, now: new Date().toISOString(), complete: false },
+    );
+    const ahead = "999999999999.1";
+    const racing = (async (input: string | URL | Request, init?: RequestInit) => {
+      await sqlC`
+        UPDATE conditions.federation_peer_cursor SET cursor = ${ahead}
+         WHERE peer_instance_id = ${A}`;
+      return fetchImpl(input, init);
+    }) as typeof fetch;
+    const result = await pullPeer(
+      sqlC,
+      { ...settingsC.peers[0]!, pull: { filter: PULL_FILTER } },
+      { ...pullCtx(), fetchImpl: racing },
+    );
+    expect(result).toMatchObject({ pages: 1, accepted: 1 });
+    const [stored] = await sqlC<{ cursor: string }[]>`
+      SELECT cursor FROM conditions.federation_peer_cursor WHERE peer_instance_id = ${A}`;
+    expect(stored!.cursor).toBe(ahead);
+    await sqlC`
+      UPDATE conditions.federation_peer_cursor SET cursor = ${result.cursor}
+       WHERE peer_instance_id = ${A}`;
+  }, 60_000);
 });
 
 describe("a peer that rotates its key", () => {

@@ -89,6 +89,14 @@ export class SubscriptionValidationError extends Error {
   }
 }
 
+/** The peer already holds a subscription with this target: `existingId`. */
+export class SubscriptionConflictError extends Error {
+  constructor(readonly existingId: string) {
+    super("the peer already holds a subscription with this delivery target");
+    this.name = "SubscriptionConflictError";
+  }
+}
+
 /** What a push channel is meant for — closures and incidents: a narrower
  *  `kinds` recommendation handed back when a webhook/sse filter is over-broad. */
 const RECOMMENDED_NARROW_KINDS = ["closure", "incident"];
@@ -318,7 +326,9 @@ function rowToSubscription(row: SubscriptionRow): FederationSubscription {
 /**
  * Creates a subscription for `peerId`. Validates the shape first (throws
  * {@link SubscriptionValidationError} on an over-broad/invalid request), then
- * inserts a fresh row at the journal-start cursor `"0.0"`.
+ * inserts a fresh row at the journal-start cursor `"0.0"`. A pull
+ * subscription, or a webhook to an inbox, the peer already holds is refused
+ * with {@link SubscriptionConflictError}: the peer patches that one.
  */
 export async function createSubscription(
   sql: postgres.Sql,
@@ -341,8 +351,13 @@ export async function createSubscription(
        created_at, updated_at)
     VALUES (${id}, ${peerId}, ${sql.json(filter as never)}, ${deliveryMode}, ${inboxUrl},
             '0.0', ${priorityOnly}, 'active', ${at}, ${at})
+    ON CONFLICT DO NOTHING
     RETURNING *`;
-  return rowToSubscription(row!);
+  if (row === undefined) {
+    const held = await heldTarget(sql, peerId, deliveryMode, inboxUrl);
+    throw new SubscriptionConflictError(held ?? "");
+  }
+  return rowToSubscription(row);
 }
 
 /** Lists a peer's own subscriptions, newest first. */
@@ -396,6 +411,8 @@ export async function updateSubscription(
     const inboxUrl = patch.inboxUrl !== undefined ? patch.inboxUrl : current.inbox_url;
     const priorityOnly = patch.priorityOnly ?? current.priority_only;
     validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly });
+    const held = await heldTarget(tx, current.peer_id, deliveryMode, inboxUrl, current.id);
+    if (held !== undefined) throw new SubscriptionConflictError(held);
     const [row] = await tx<SubscriptionRow[]>`
       UPDATE conditions.federation_subscription
       SET filter = ${tx.json(filter as never)}, delivery_mode = ${deliveryMode},
@@ -405,6 +422,26 @@ export async function updateSubscription(
       WHERE id = ${current.id} RETURNING *`;
     return rowToSubscription(row!);
   });
+}
+
+/**
+ * The peer's subscription that already pushes to `inboxUrl` (a webhook) or
+ * journals for its pull, other than `except`; undefined when none does. SSE
+ * subscriptions are not counted: each is its own stream.
+ */
+async function heldTarget(
+  sql: postgres.Sql | postgres.TransactionSql,
+  peerId: string,
+  deliveryMode: DeliveryMode,
+  inboxUrl: string | null,
+  except = "",
+): Promise<string | undefined> {
+  if (deliveryMode === "sse") return undefined;
+  const [row] = await sql<{ id: string }[]>`
+    SELECT id FROM conditions.federation_subscription
+    WHERE peer_id = ${peerId} AND delivery_mode = ${deliveryMode}
+      AND coalesce(inbox_url, '') = ${inboxUrl ?? ""} AND id <> ${except}`;
+  return row?.id;
 }
 
 /** Deletes a subscription by id; returns whether a row was removed. */
