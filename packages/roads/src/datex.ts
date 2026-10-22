@@ -1753,7 +1753,9 @@ function tmcOf(rec: XmlObject): NonNullable<RoadEvent["externalRefs"]>["tmc"] | 
   if (!ref?.country || !ref.table || ref.primary === undefined) return undefined;
   if (!/^\d+(?:\.\d+)?$/.test(ref.table)) return undefined;
   const table = Number(ref.table);
-  if (!Number.isFinite(table)) return undefined;
+  // Alert-C table numbers are small whole numbers; past the safe integers a
+  // number is no table, and it would not survive being written back.
+  if (!Number.isSafeInteger(Math.trunc(table))) return undefined;
   const version = Number.isInteger(table)
     ? ref.version
     : [ref.table, ref.version].filter(Boolean).join(".");

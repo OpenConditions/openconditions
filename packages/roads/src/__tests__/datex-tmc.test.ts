@@ -160,6 +160,20 @@ describe("DATEX records carrying only an Alert-C location", () => {
     expect(event!.locationTable).toBeUndefined();
     expect(event!.geometry).toBeDefined();
   });
+
+  it("keeps no Alert-C reference whose table number is past the safe integers", () => {
+    const huge = `${LINEAR.replace(
+      "<alertCLocationTableNumber>1<",
+      "<alertCLocationTableNumber>9007199254740992<",
+    )}<linearExtension><extendedLinear><linearByCoordinates>
+      <intermediate index="1"><pointCoordinates><latitude>48.62</latitude><longitude>10.21</longitude></pointCoordinates></intermediate>
+      <intermediate index="2"><pointCoordinates><latitude>48.63</latitude><longitude>10.22</longitude></pointCoordinates></intermediate>
+    </linearByCoordinates></extendedLinear></linearExtension>`;
+
+    const [event] = parseDatexSituations(alertCOnly(huge), SOURCE);
+    expect(event!.geometry).toBeDefined();
+    expect(event!.externalRefs?.tmc).toBeUndefined();
+  });
 });
 
 /**
