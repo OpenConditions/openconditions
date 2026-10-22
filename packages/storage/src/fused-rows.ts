@@ -489,22 +489,24 @@ async function refreshCanonical(
     const k = heldKey(sourceId, key.subjectKey, key.property, key.qualifierKey);
     keep.add(k);
     const prev = held.get(k);
+    const sameValue = prev !== undefined && jcs(prev.record["result"]) === jcs(record["result"]);
+    const sinceAt = sameValue
+      ? prev.since_at.toISOString()
+      : new Date(Date.parse(startOf(record))).toISOString();
+    // Compared as stored: the stored record carries its `sinceAt`.
+    const stored = { ...record, sinceAt };
     if (
       prev !== undefined &&
       prev.fused_public === fusedPublic &&
-      comparable(prev.record) === comparable(record)
+      comparable(prev.record) === comparable(stored)
     ) {
       counts.unchanged++;
       return;
     }
     const property = registry.property(group.property)!;
-    const sameValue = prev !== undefined && jcs(prev.record["result"]) === jcs(record["result"]);
-    const sinceAt = sameValue
-      ? prev.since_at.toISOString()
-      : new Date(Date.parse(startOf(record))).toISOString();
     const sourceOf = new Map(group.candidates.map((g) => [g.candidate, g.row.source_id]));
     writes.push({
-      ...seriesRowOf({ ...record, sinceAt }, property, undefined, ctx.now),
+      ...seriesRowOf(stored, property, undefined, ctx.now),
       fused_from: fusion.contributors.map((c) => c.observation.id),
       fused_sources: [...new Set(fusion.contributors.map((c) => sourceOf.get(c)!))],
       fused_public: fusedPublic,

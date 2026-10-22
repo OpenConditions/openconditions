@@ -195,6 +195,49 @@ const refresh = async () => {
   );
 };
 
+describe("a refresh that finds nothing new", () => {
+  test("writes no fused row again, however much later it runs", async () => {
+    const canonical = await canonicalId();
+    const before = await sql<{ series_id: string; updated_at: Date }[]>`
+      SELECT series_id::text AS series_id, updated_at FROM conditions.observation_latest
+       WHERE source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})
+         AND feature_id = ${canonical}
+       ORDER BY series_id`;
+    expect(before.length).toBeGreaterThan(0);
+    for (const now of [LATER, "2026-09-22T12:10:00.000Z"]) {
+      const counts = await sql.begin((tx) =>
+        refreshFused(tx, registry, [{ featureId: canonical }], { instanceId: INSTANCE, now }),
+      );
+      expect(counts, now).toEqual({ written: 0, unchanged: before.length, deleted: 0 });
+    }
+    const after = await sql<{ series_id: string; updated_at: Date }[]>`
+      SELECT series_id::text AS series_id, updated_at FROM conditions.observation_latest
+       WHERE source_id IN (${FUSED_SOURCE_ID}, ${FUSED_PUBLIC_SOURCE_ID})
+         AND feature_id = ${canonical}
+       ORDER BY series_id`;
+    expect(after).toEqual(before);
+  });
+
+  test("writes a fusion whose contributors change, and keeps when its value began", async () => {
+    const [before] = await fusedOf("sp98");
+    expect(before!.fused_from).toHaveLength(2);
+    // The relay goes stale: the register's equal price stands alone.
+    await polled(sql, RELAY, "2026-09-22T11:00:00.000Z");
+    try {
+      const counts = await refresh();
+      expect(counts.written).toBe(1);
+      const [after] = await fusedOf("sp98");
+      expect(after!.fused_from).toEqual([priceOf("sp98")["id"]]);
+      expect(after!.record["result"]).toEqual(before!.record["result"]);
+      expect(after!.record["sinceAt"]).toBe(before!.record["sinceAt"]);
+    } finally {
+      await polled(sql, RELAY, LATER);
+      await refresh();
+    }
+    expect((await fusedOf("sp98"))[0]).toEqual(before);
+  });
+});
+
 describe("a contributor's source going stale, or fresh again", () => {
   const full = async () => (await fusedOf("e5")).find((r) => r.source_id === FUSED_SOURCE_ID)!;
   const flips = (from: string, to: string) =>
