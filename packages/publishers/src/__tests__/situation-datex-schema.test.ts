@@ -487,6 +487,7 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
         sourceUpdatedAt: "2026-09-06T09:00:00Z",
         informationSource: { id: long("C"), name: [{ lang: "de", text: long("D") }] },
       },
+      effects: [effect("detour", "detour", { description: [{ lang: "de", text: long("F") }] })],
     });
     const diagnostics: { code: string; path: string }[] = [];
     datexRecordsOf(record, AT, (d) => diagnostics.push(d));
@@ -498,6 +499,7 @@ describe("situationsToDatex against the DATEX II v3 schemas", () => {
       "/headline/0/text",
       "/location/roads/0/name/0/text",
       "/location/roads/0/ref",
+      "/effects/0/description/0/text",
     ]);
     const xml = situationsToDatex([record], AT, { ...INFO, attribution: long("E") }, "de");
     expect(xml).toContain(`<loc:roadNumber>${"A".repeat(1024)}</loc:roadNumber>`);

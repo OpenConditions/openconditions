@@ -267,13 +267,21 @@ function effectImpact(effect: Effect): Rec {
  * What an effect adds after its record's discriminator: a speed, or a
  * diversion's description and route.
  */
-function effectDetail(effect: Effect): Rec {
+function effectDetail(effect: Effect, diagnostics: ProjectionDiagnostics): Rec {
   if (effect.kind === "speed_limit") return { "sit:temporarySpeedLimit": effect.limit.value };
   if (effect.kind !== "detour") return {};
   const route = effect.geometry?.type === "LineString" ? effect.geometry.coordinates : undefined;
   return {
     ...(effect.description?.length
-      ? { "sit:reroutingItineraryDescription": multilingual(effect.description) }
+      ? {
+          "sit:reroutingItineraryDescription": multilingual(
+            datexText(
+              effect.description,
+              diagnostics,
+              `${diagnostics.effectPath(effect)}/description`,
+            ),
+          ),
+        }
       : {}),
     ...(route
       ? {
@@ -1281,7 +1289,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
         actionStatus: effect.actionStatus,
         trafficDirection: trafficDirectionOf(effect),
         vehicles: vehicleCharacteristicsOf(effect) ?? undefined,
-        detail: effectDetail(effect),
+        detail: effectDetail(effect, diagnostics),
       },
     });
   }
@@ -1314,7 +1322,7 @@ export function datexRecordsOf(situation: Rec, at: Date, report?: ExportDiagnost
             works: worksOf(situation["details"] as Rec | undefined),
             detail: {
               ...natureDetail(classification, natureCode!),
-              ...(folded ? effectDetail(folded.effect) : {}),
+              ...(folded ? effectDetail(folded.effect, diagnostics) : {}),
             },
           } as RecordBody,
         },
