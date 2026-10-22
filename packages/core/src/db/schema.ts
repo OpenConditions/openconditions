@@ -739,6 +739,13 @@ export const federationPeerCursor = conditionsSchema.table("federation_peer_curs
   peerInstanceId: text("peer_instance_id").primaryKey(),
   cursor: text("cursor").notNull().default("0.0"),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  /**
+   * The night of the peer's archive last landed whole, and when: an archive
+   * no newer is not landed again, nor any within a day of the last, however
+   * often the peer's pages name one.
+   */
+  archiveBuiltAt: timestamp("archive_built_at", { withTimezone: true }),
+  archiveLandedAt: timestamp("archive_landed_at", { withTimezone: true }),
 });
 
 /**

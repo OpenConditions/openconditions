@@ -118,6 +118,46 @@ async function storeCursor(
              split_part(excluded.cursor, '.', 2)::numeric)`;
 }
 
+/** The least time between two archives of one peer landed here. */
+export const ARCHIVE_RELAND_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Whether the peer's archive of `builtAt` is to land: one no newer than the
+ * last landed is not, nor any within {@link ARCHIVE_RELAND_MS} of it, however
+ * often the peer's pages name one.
+ */
+async function archiveDue(
+  sql: postgres.Sql,
+  peerId: string,
+  builtAt: string,
+  now: string,
+): Promise<boolean> {
+  const [row] = await sql<{ archive_built_at: Date | null; archive_landed_at: Date | null }[]>`
+    SELECT archive_built_at, archive_landed_at FROM conditions.federation_peer_cursor
+     WHERE peer_instance_id = ${peerId}`;
+  if (row?.archive_built_at == null || row.archive_landed_at == null) return true;
+  return (
+    row.archive_built_at.getTime() < Date.parse(builtAt) &&
+    row.archive_landed_at.getTime() <= Date.parse(now) - ARCHIVE_RELAND_MS
+  );
+}
+
+/** Notes that the peer's archive of `builtAt` landed whole. */
+async function noteArchiveLanded(
+  sql: postgres.Sql,
+  peerId: string,
+  builtAt: string,
+  now: string,
+): Promise<void> {
+  await sql`
+    INSERT INTO conditions.federation_peer_cursor
+      (peer_instance_id, updated_at, archive_built_at, archive_landed_at)
+    VALUES (${peerId}, ${now}, ${builtAt}, ${now})
+    ON CONFLICT (peer_instance_id) DO UPDATE
+      SET archive_built_at = excluded.archive_built_at,
+          archive_landed_at = excluded.archive_landed_at`;
+}
+
 /** Whether the cursor `b` is past `a` in the journal's `(txid, seq)` order. */
 function after(a: string, b: string): boolean {
   const x = decodeOutboxCursor(a) ?? OUTBOX_CURSOR_START;
@@ -267,34 +307,39 @@ export async function pullPeer(
     if (!rate.ok) {
       return { ...result, error: "the peer's pages exceed the rate its tier is admitted" };
     }
-    if (page.beyondWindow === true) {
-      result.beyondWindow = true;
-      // What the window no longer holds lands from the archive first; the
-      // pages after it carry what changed since.
-      if (page.archive !== undefined && result.archive === undefined) {
-        const manifest = readArchiveManifest(page.archive);
-        if (manifest === null) return refuse("schema", "the page names a malformed archive");
-        const imported = await importArchive(sql, peer, manifest, {
-          registry: ctx.registry,
-          localInstanceId: ctx.localInstanceId,
-          peerVersions,
-          fetchImpl: ctx.archiveFetch ?? ctx.fetchImpl,
-          now: ctx.now,
-        });
-        if (!imported.ok) {
-          return imported.forged === true
-            ? refuse("signature", imported.error)
-            : { ...result, error: imported.error };
-        }
-        const { ok: _ok, ...archived } = imported;
-        result.archive = archived;
-        result.accepted += archived.accepted;
-        result.stale += archived.stale;
-        result.skipped += archived.skipped;
-        if (archived.skipped > 0) {
-          await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now(), archived.skipped);
-        }
+    if (page.beyondWindow === true) result.beyondWindow = true;
+    // What the window no longer holds lands from the archive first; the
+    // pages after it carry what changed since.
+    const manifest =
+      page.beyondWindow === true && page.archive !== undefined && result.archive === undefined
+        ? readArchiveManifest(page.archive)
+        : undefined;
+    if (manifest === null) return refuse("schema", "the page names a malformed archive");
+    if (
+      manifest !== undefined &&
+      (await archiveDue(sql, peer.instanceId, manifest.builtAt, ctx.now()))
+    ) {
+      const imported = await importArchive(sql, peer, manifest, {
+        registry: ctx.registry,
+        localInstanceId: ctx.localInstanceId,
+        peerVersions,
+        fetchImpl: ctx.archiveFetch ?? ctx.fetchImpl,
+        now: ctx.now,
+      });
+      if (!imported.ok) {
+        return imported.forged === true
+          ? refuse("signature", imported.error)
+          : { ...result, error: imported.error };
       }
+      const { ok: _ok, ...archived } = imported;
+      result.archive = archived;
+      result.accepted += archived.accepted;
+      result.stale += archived.stale;
+      result.skipped += archived.skipped;
+      if (archived.skipped > 0) {
+        await recordPeerFailure(sql, peer.instanceId, "schema", ctx.now(), archived.skipped);
+      }
+      await noteArchiveLanded(sql, peer.instanceId, manifest.builtAt, ctx.now());
     }
     const landed = await ingestFederatedPage(sql, page, {
       registry: ctx.registry,

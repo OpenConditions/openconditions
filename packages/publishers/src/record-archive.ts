@@ -319,12 +319,33 @@ export async function writeRecordArchive(
   await writeArchiveRows(cls, rows(), writer);
 }
 
-/** The records of one class's archive file, a bounded row group at a time. */
+/** The most rows a row group of an archive file read here may hold. */
+export const ARCHIVE_READ_MAX_GROUP_ROWS = 10_000;
+
+/** The most bytes a row group of an archive file read here may hold, uncompressed. */
+export const ARCHIVE_READ_MAX_GROUP_BYTES = 256 * 1024 ** 2;
+
+/**
+ * The records of one class's archive file, a bounded row group at a time. A
+ * file whose row groups are larger than this writer's bounds by far (a
+ * file from elsewhere) is refused before any is read.
+ */
 export async function* readRecordArchive(
   filePath: string,
 ): AsyncGenerator<Record<string, unknown>[]> {
   const file = await asyncBufferFromFile(filePath);
   const metadata = await parquetMetadataAsync(file);
+  for (const group of metadata.row_groups) {
+    if (
+      group.num_rows > BigInt(ARCHIVE_READ_MAX_GROUP_ROWS) ||
+      group.total_byte_size > BigInt(ARCHIVE_READ_MAX_GROUP_BYTES)
+    ) {
+      throw new RangeError(
+        `a row group of ${group.num_rows} rows and ${group.total_byte_size} bytes is larger ` +
+          `than an archive's`,
+      );
+    }
+  }
   const rows = Number(metadata.num_rows);
   for (let start = 0; start < rows; start += ROW_GROUP_SIZE) {
     const page = await parquetReadObjects({

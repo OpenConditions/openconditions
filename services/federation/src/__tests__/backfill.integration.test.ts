@@ -230,6 +230,23 @@ describe("readBackfill — the tier-bounded time floor", () => {
     expect(page.archive).toEqual(archive);
   }, 30_000);
 
+  it("reaches back for an archive no more than a night and a half", async () => {
+    const base = await frontier();
+    await seed("bf-within-reach", 59 * HOUR);
+    await seed("bf-out-of-reach", 61 * HOUR);
+    // An archive that stopped being built a week ago opens the journal no further.
+    const stale = archiveBuiltAt(new Date(Date.parse(NOW) - 7 * DAY).toISOString());
+    const page = await readBackfill(sql, {
+      after: base,
+      tier: 0,
+      now: NOW,
+      archive: stale,
+      limit: 500,
+    });
+    expect(ids(page)).toContain(situationId("bf-within-reach"));
+    expect(ids(page)).not.toContain(situationId("bf-out-of-reach"));
+  }, 30_000);
+
   it("includes an entry exactly ON the floor (created_at == now - window, consistent with the >= scan)", async () => {
     const base = await frontier();
     // Exactly at the Tier-1 floor: now - 30 days.

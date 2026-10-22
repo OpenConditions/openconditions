@@ -617,6 +617,13 @@
       "when": 1792700972377,
       "tag": "0087_federation_peer_cadence",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1792701448079,
+      "tag": "0088_federation_archive_landed",
+      "breakpoints": true
     }
   ]
 }

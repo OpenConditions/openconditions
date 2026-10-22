@@ -44,6 +44,9 @@ export type InboundEntry =
 
 const isString = (v: unknown): v is string => typeof v === "string" && v.length > 0;
 
+/** The longest polling cadence a peer's liveness entry is taken at; a longer one is ignored. */
+export const MAX_STATED_CADENCE_SEC = 7 * 86_400;
+
 /**
  * Reads one entry of a peer's outbox page: a change carries the record, a
  * retraction carries a reason and the revision the record ended at (an
@@ -79,7 +82,10 @@ export function readInboundEntry(
         operation: "liveness",
         sourceId: e["sourceId"],
         polledAt: new Date(polledAt).toISOString(),
-        ...(typeof cadenceSec === "number" && Number.isSafeInteger(cadenceSec) && cadenceSec > 0
+        ...(typeof cadenceSec === "number" &&
+        Number.isSafeInteger(cadenceSec) &&
+        cadenceSec > 0 &&
+        cadenceSec <= MAX_STATED_CADENCE_SEC
           ? { cadenceSec }
           : {}),
       },

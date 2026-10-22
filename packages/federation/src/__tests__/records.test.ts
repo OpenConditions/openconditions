@@ -427,4 +427,23 @@ describe("reading a peer's outbox entry", () => {
       expect(readInboundEntry(broken)).toEqual({ ok: false, reason: "malformed liveness entry" });
     }
   });
+
+  it("reads the cadence a liveness states, and ignores one it cannot hold", () => {
+    const liveness = {
+      seq: 8,
+      txid: "813",
+      operation: "liveness",
+      sourceId: "nl-ndw-flow",
+      polledAt: "2026-10-01T08:00:00.000Z",
+    };
+    expect(readInboundEntry({ ...liveness, cadenceSec: 3600 })).toMatchObject({
+      ok: true,
+      entry: { cadenceSec: 3600 },
+    });
+    for (const cadenceSec of [0, -60, 1.5, "60", 8 * 86_400, 2 ** 40]) {
+      const read = readInboundEntry({ ...liveness, cadenceSec });
+      expect(read.ok).toBe(true);
+      expect((read as { entry: object }).entry).not.toHaveProperty("cadenceSec");
+    }
+  });
 });

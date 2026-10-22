@@ -307,7 +307,8 @@ function sortedCanonical(value: unknown): unknown {
  * ETag (a different `limit` is a different representation, not a false 304). The
  * requester's tier is folded in too: an anonymous (Tier-0) and an authenticated
  * (Tier-1/2) request see a different time-floored window at the same cursor and
- * must never collide on one ETag.
+ * must never collide on one ETag. So is the night of the archive a page names,
+ * which moves the floor and the archive the page states.
  */
 export function outboxEtag(
   height: string,
@@ -315,6 +316,7 @@ export function outboxEtag(
   limit: number,
   filter: RecordFilter | undefined,
   tier?: 0 | 1 | 2,
+  archiveBuiltAt?: string,
 ): string {
   const canon = JSON.stringify(
     sortedCanonical({
@@ -322,6 +324,7 @@ export function outboxEtag(
       limit,
       filter: filter ?? null,
       tier: tier ?? null,
+      archive: archiveBuiltAt ?? null,
     }),
   );
   const hash = createHash("sha256").update(canon).digest("hex").slice(0, 16);

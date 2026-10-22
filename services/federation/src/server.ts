@@ -205,6 +205,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     // representation, not a false 304. The page is the tier-bounded live tail —
     // the SAME composite-cursor primitive as /peer/backfill (shared tier floor);
     // an after-cursor before the floor redirects to the static archive.
+    const archive = await loadArchive(sql, settings.archiveUrl!);
     const page = await readBackfill(sql, {
       after: parsed.after,
       tier,
@@ -212,10 +213,17 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
       ...(parsed.filter !== undefined ? { filter: parsed.filter } : {}),
       ...(parsed.nextParams !== undefined ? { nextParams: parsed.nextParams } : {}),
       partOf,
-      archive: await loadArchive(sql, settings.archiveUrl!),
+      ...(archive !== undefined ? { archive } : {}),
       now: now(),
     });
-    const etag = outboxEtag(page.highWaterMark, parsed.after, limit, parsed.filter, tier);
+    const etag = outboxEtag(
+      page.highWaterMark,
+      parsed.after,
+      limit,
+      parsed.filter,
+      tier,
+      archive?.builtAt,
+    );
 
     if (req.headers["if-none-match"] === etag) {
       // A 304 has no body (no content-digest), so the ETag is the only thing to

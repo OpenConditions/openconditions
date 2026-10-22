@@ -15,8 +15,9 @@
  * and checks against the signed page before it lands the page. So the live
  * exchange stays bounded and the deep past is served by four mirrorable
  * files. The archive holds what was current when its night's build began,
- * so the window reaches back to then at least: what changed between the
- * build and the tier's floor is served live, and nothing falls between.
+ * so the window reaches back to then, by {@link ARCHIVE_MAX_REACH_MS} at
+ * most: what changed between the build and the tier's floor is served live,
+ * and nothing falls between.
  *
  * The floor is applied as an ADDITIONAL `WHERE created_at >= now - windowSec` on
  * the readOutbox query (via its `minCreatedAt`), composed with the composite
@@ -107,6 +108,21 @@ export interface BackfillQuery {
   governanceWindowSec?: number;
 }
 
+/**
+ * How far before a tier's floor the window reaches for the archive's night:
+ * a night and a half, so a night whose build failed still leaves no gap, and
+ * an archive that stopped being built never opens the journal further.
+ */
+export const ARCHIVE_MAX_REACH_MS = 36 * 60 * 60 * 1000;
+
+/** The floor served: the tier's, or the archive's night where that is earlier, within reach. */
+export function servedFloorIso(tierFloor: string, archive: ArchiveManifest | undefined): string {
+  if (archive === undefined) return tierFloor;
+  const floor = Date.parse(tierFloor);
+  const reach = Math.max(Date.parse(archive.builtAt), floor - ARCHIVE_MAX_REACH_MS);
+  return reach < floor ? new Date(reach).toISOString() : tierFloor;
+}
+
 /** An outbox page plus the beyond-window redirect: when the request's range
  *  reaches before the floor, `beyondWindow` is set and `archive` names the
  *  static archive's file of each class, which covers the pre-floor history. */
@@ -154,11 +170,10 @@ async function hasPreFloorEntries(
  */
 export async function readBackfill(sql: postgres.Sql, q: BackfillQuery): Promise<BackfillPage> {
   const nowIso = q.now ?? new Date().toISOString();
-  const tierFloor = backfillFloorIso(q.tier, nowIso, q.governanceWindowSec);
-  const floorIso =
-    q.archive !== undefined && Date.parse(q.archive.builtAt) < Date.parse(tierFloor)
-      ? q.archive.builtAt
-      : tierFloor;
+  const floorIso = servedFloorIso(
+    backfillFloorIso(q.tier, nowIso, q.governanceWindowSec),
+    q.archive,
+  );
   const after = normalizeCursor(q.after);
 
   const page = await readOutbox(sql, {

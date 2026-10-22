@@ -1,0 +1,2 @@
+ALTER TABLE "conditions"."federation_peer_cursor" ADD COLUMN "archive_built_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "conditions"."federation_peer_cursor" ADD COLUMN "archive_landed_at" timestamp with time zone;

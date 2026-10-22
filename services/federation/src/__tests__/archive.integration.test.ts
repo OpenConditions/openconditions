@@ -315,4 +315,13 @@ describe("a peer beyond the publisher's window", () => {
     expect(again.error).toBeUndefined();
     expect(again.archive).toBeUndefined();
   }, 60_000);
+
+  it("does not land an archive it landed already, however often a page names it", async () => {
+    await sqlD`UPDATE conditions.federation_peer_cursor SET cursor = '0.0'`;
+    const replayed = await pull(archiveServer(() => Buffer.from("not read")));
+    expect(replayed.error).toBeUndefined();
+    expect(replayed.beyondWindow).toBe(true);
+    expect(replayed.archive).toBeUndefined();
+    expect(await atD()).toMatchObject({ ancient: [1, null], changed: [2, null] });
+  }, 60_000);
 });

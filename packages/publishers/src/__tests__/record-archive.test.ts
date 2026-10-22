@@ -152,6 +152,23 @@ describe("the archive of model records", () => {
     }
   });
 
+  it("refuses a file whose row groups are larger than an archive's", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "oc-archive-read-"));
+    try {
+      // A first row group of 1,000 and one of the rest, as no archive is written.
+      const records = Array.from({ length: 12_000 }, (_, i) => record({ id: `sit-${i}` }));
+      const file = path.join(dir, "archive-situation.parquet");
+      await writeFile(file, recordArchiveBuffer("situation", records, NOW));
+      await expect(async () => {
+        for await (const _ of readRecordArchive(file)) {
+          // never reached
+        }
+      }).rejects.toThrow(/larger than an archive's/);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
   it("archives a feature that has no position with an empty geometry", async () => {
     const plough = record({
       id: "oc:feature:us-ia-dot:plow-1",
