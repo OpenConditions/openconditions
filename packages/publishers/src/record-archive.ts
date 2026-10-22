@@ -352,7 +352,12 @@ export async function* readRecordArchive(
       group.num_rows < 0n ||
       group.num_rows > BigInt(ARCHIVE_READ_MAX_GROUP_ROWS) ||
       !bounded(group.total_byte_size) ||
-      !chunks.every((c) => bounded(c?.total_uncompressed_size) && bounded(c?.total_compressed_size))
+      !chunks.every(
+        (c) =>
+          c?.codec === "SNAPPY" &&
+          bounded(c.total_uncompressed_size) &&
+          bounded(c.total_compressed_size),
+      )
     ) {
       throw new RangeError(`a row group of ${group.num_rows} rows is larger than an archive's`);
     }
