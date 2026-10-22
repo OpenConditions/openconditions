@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 import {
+  fieldId,
   fieldRef,
   fieldText,
   lookupField,
@@ -57,6 +58,16 @@ describe("field readers", () => {
     expect(fieldText(record, { field: "name", pattern: "Hellis" })).toBe("Hellis");
     expect(fieldText(record, { field: "name", pattern: "^x" })).toBeUndefined();
     expect(fieldText(record, undefined)).toBeUndefined();
+  });
+
+  it("reads an id from text or a number, never from a boolean", () => {
+    const row = { id: 7001, key: " a1 ", flag: true, url: "/cam/true.jpg" };
+    expect(fieldId(row, "id")).toBe("7001");
+    expect(fieldId(row, "key")).toBe("a1");
+    expect(fieldId(row, "flag")).toBeUndefined();
+    expect(fieldId(row, { field: "flag", pattern: "true" })).toBeUndefined();
+    expect(fieldId(row, { field: "url", pattern: "/([^/]+)\\.jpg$" })).toBe("true");
+    expect(fieldId(row, undefined)).toBeUndefined();
   });
 
   it("keeps a raw value without a pattern", () => {

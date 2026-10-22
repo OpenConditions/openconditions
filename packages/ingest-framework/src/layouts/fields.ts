@@ -78,6 +78,19 @@ export function fieldText(
 }
 
 /**
+ * A field's value as an id: its text, when the field holds text or a number.
+ * A boolean names nothing, so a record whose id field holds one has no id.
+ */
+export function fieldId(
+  fields: Record<string, unknown>,
+  ref: FieldRef | undefined,
+): string | undefined {
+  if (ref === undefined) return undefined;
+  const raw = getPath(fields, typeof ref === "string" ? ref : ref.field);
+  return typeof raw === "boolean" ? undefined : fieldText(fields, ref);
+}
+
+/**
  * The vocabulary value a value map gives a field's text; undefined for a
  * value it does not name, whose text goes to `onUnknown`.
  */

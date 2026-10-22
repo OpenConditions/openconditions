@@ -3,6 +3,7 @@ import {
   emptyParseOutput,
   type FeedPayloads,
   type FieldRef,
+  fieldId,
   lookupField as lookup,
   type ParseContext,
   type ParseOutput,
@@ -39,8 +40,8 @@ function numberOf(fields: Record<string, unknown>, ref: FieldRef | undefined): n
  */
 function cameraIdOf(fields: Record<string, unknown>, mapping: CamerasMapping) {
   const ref = mapping.groupBy ?? mapping.id;
-  if (!Array.isArray(ref)) return text(fields, ref);
-  const parts = ref.map((part) => text(fields, part));
+  if (!Array.isArray(ref)) return fieldId(fields, ref);
+  const parts = ref.map((part) => fieldId(fields, part));
   return parts.every((p) => p !== undefined) ? parts.join(":") : undefined;
 }
 

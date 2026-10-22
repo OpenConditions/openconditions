@@ -269,6 +269,18 @@ describe("layout", () => {
     );
   });
 
+  test("Vegagerðin rows whose station number is a boolean have no station, and are counted", () => {
+    const rows = JSON.parse(fixture("is-vegagerdin.json").toString("utf8")) as Record<
+      string,
+      unknown
+    >[];
+    rows[3]!["Maelist_nr"] = true;
+    rows[4]!["Maelist_nr"] = true;
+    const out = parse(icelandFeed(), Buffer.from(JSON.stringify(rows)));
+    expect(out.features.map((f) => f["id"])).toEqual(["oc:feature:is-vegagerdin-cameras:7001"]);
+    expect(drainSkipped(icelandFeed().id)).toEqual({ malformed: 2 });
+  });
+
   test("Caltrans reads every district file, refresh in minutes, road direction as a compass", () => {
     const out = parse(
       caltransFeed(),

@@ -3,6 +3,7 @@ import {
   emptyParseOutput,
   type FeedPayloads,
   type FieldRef,
+  fieldId,
   type LayoutRow,
   type ParseContext,
   type ParseOutput,
@@ -97,8 +98,8 @@ function kept(fields: Record<string, unknown>, mapping: ChargingMapping): boolea
 
 /** The site id: one field, or the parts of a composite id joined with `,`. */
 function stationIdOf(fields: Record<string, unknown>, mapping: ChargingMapping) {
-  if (!Array.isArray(mapping.id)) return text(fields, mapping.id);
-  const parts = mapping.id.map((ref) => text(fields, ref));
+  if (!Array.isArray(mapping.id)) return fieldId(fields, mapping.id);
+  const parts = mapping.id.map((ref) => fieldId(fields, ref));
   return parts.every((p) => p !== undefined) ? parts.join(",") : undefined;
 }
 

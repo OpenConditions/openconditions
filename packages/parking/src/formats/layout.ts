@@ -3,6 +3,7 @@ import {
   emptyParseOutput,
   type FeedPayloads,
   type FieldRef,
+  fieldId,
   type LayoutRow,
   lookupField as lookup,
   type ParseContext,
@@ -224,7 +225,7 @@ export function parseLayout(
         skip(row.unplaced ?? "no_geometry");
         continue;
       }
-      const stationId = text(row.fields, mapping.id);
+      const stationId = fieldId(row.fields, mapping.id);
       if (stationId === undefined) {
         skip("malformed");
         continue;
