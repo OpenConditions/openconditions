@@ -27,6 +27,7 @@ import {
   signingKeyOf,
   signMessage,
 } from "@openconditions/federation";
+import { parseAllowedHosts } from "@openconditions/ingest-framework";
 import { schemaVersions } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import Fastify, {
@@ -273,6 +274,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     (_req, body, done) => done(null, body),
   );
 
+  const allowedHosts = parseAllowedHosts(env["OPENCONDITIONS_EGRESS_ALLOWED_HOSTS"]);
   registerSubscriptionRoutes(app, {
     sql,
     peers,
@@ -280,6 +282,7 @@ export async function build(options: BuildOptions): Promise<FastifyInstance> {
     nonceStore,
     ...(mtlsContextFor !== undefined ? { mtlsContextFor } : {}),
     ...(options.onSubscribed !== undefined ? { onSubscribed: options.onSubscribed } : {}),
+    ...(allowedHosts !== undefined ? { allowedHosts } : {}),
     now,
   });
 

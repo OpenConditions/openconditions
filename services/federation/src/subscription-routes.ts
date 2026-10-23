@@ -64,6 +64,8 @@ export interface SubscriptionRouteContext {
   governanceWindowSec?: number;
   /** Called once a subscription was created or changed: what it wants may need journalling. */
   onSubscribed?: () => void;
+  /** Private hosts this instance may reach (OPENCONDITIONS_EGRESS_ALLOWED_HOSTS): a webhook inbox may be one. */
+  allowedHosts?: ReadonlySet<string>;
 }
 
 /** Parses the request's buffered body as JSON, or 400s. Returns undefined on failure. */
@@ -122,6 +124,7 @@ export function registerSubscriptionRoutes(
         peerId,
         parsed as CreateSubscriptionInput,
         ctx.now(),
+        ctx.allowedHosts,
       );
       ctx.onSubscribed?.();
       return reply.status(201).send(subscription);
@@ -164,6 +167,7 @@ export function registerSubscriptionRoutes(
         owned,
         parsed as UpdateSubscriptionInput,
         ctx.now(),
+        ctx.allowedHosts,
       );
       ctx.onSubscribed?.();
       return reply.send(updated);

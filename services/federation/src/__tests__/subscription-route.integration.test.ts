@@ -462,6 +462,31 @@ describe("subscription validation (422)", () => {
       await app.close();
     }
   }, 30_000);
+
+  it("accepts a webhook to an inbox on a host the operator allowed", async () => {
+    const app = await build({
+      sql,
+      env: { ...enabledEnv, OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: "peer-a.internal" },
+      logger: false,
+    });
+    try {
+      const req = await signed(peerA, "POST", "/peer/subscriptions", {
+        deliveryMode: "webhook",
+        inboxUrl: "http://peer-a.internal:4300/peer/inbox",
+        filter: { bbox: [4, 50, 6, 54] },
+      });
+      const res = await app.inject({
+        method: "POST",
+        url: "/peer/subscriptions",
+        headers: req.headers,
+        payload: req.payload,
+      });
+      expect(res.statusCode).toBe(201);
+      await sql`DELETE FROM conditions.federation_subscription WHERE id = ${res.json().id}`;
+    } finally {
+      await app.close();
+    }
+  }, 30_000);
 });
 
 describe("GET /peer/stream — authenticated SSE THROUGH the subscription model", () => {

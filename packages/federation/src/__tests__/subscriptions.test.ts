@@ -145,6 +145,32 @@ describe("validateSubscriptionShape", () => {
     }
   });
 
+  it("accepts an inbox on a host the operator allowed, over http too", () => {
+    const allowed = new Set(["localhost", "peer.internal"]);
+    for (const inboxUrl of ["http://localhost:4302/peer/inbox", "https://peer.internal/inbox"]) {
+      expect(
+        () =>
+          validateSubscriptionShape(
+            shape({ deliveryMode: "webhook", inboxUrl, filter: { kinds: ["closure"] } }),
+            allowed,
+          ),
+        inboxUrl,
+      ).not.toThrow();
+    }
+    expect(
+      caught(() =>
+        validateSubscriptionShape(
+          shape({
+            deliveryMode: "webhook",
+            inboxUrl: "http://10.0.0.5/inbox",
+            filter: { kinds: ["closure"] },
+          }),
+          allowed,
+        ),
+      ).code,
+    ).toBe("inbox-not-public");
+  });
+
   it("SSRF-checks an inbox even in a non-webhook mode when one is supplied", () => {
     expect(() =>
       validateSubscriptionShape(

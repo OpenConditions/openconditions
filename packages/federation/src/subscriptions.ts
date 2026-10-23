@@ -222,15 +222,19 @@ export function filterIsBounded(filter: RecordFilter): boolean {
 
 /**
  * Normalizes and validates a create/patch request. Push modes (webhook/sse)
- * require a bounded filter; webhook additionally requires a public https inbox.
+ * require a bounded filter; webhook additionally requires a public https inbox,
+ * or one on a host in `allowedHosts` (the operator's private network).
  * Throws {@link SubscriptionValidationError} the route turns into 422.
  */
-export function validateSubscriptionShape(input: {
-  filter: RecordFilter;
-  deliveryMode: DeliveryMode;
-  inboxUrl: string | null;
-  priorityOnly: boolean;
-}): void {
+export function validateSubscriptionShape(
+  input: {
+    filter: RecordFilter;
+    deliveryMode: DeliveryMode;
+    inboxUrl: string | null;
+    priorityOnly: boolean;
+  },
+  allowedHosts?: ReadonlySet<string>,
+): void {
   if (!DELIVERY_MODES.includes(input.deliveryMode)) {
     throw new SubscriptionValidationError(
       "invalid-delivery-mode",
@@ -261,28 +265,31 @@ export function validateSubscriptionShape(input: {
         "a webhook subscription requires an inboxUrl",
       );
     }
-    assertInboxUrl(input.inboxUrl);
+    assertInboxUrl(input.inboxUrl, allowedHosts);
   } else if (input.inboxUrl !== null && input.inboxUrl.length > 0) {
     // A non-webhook mode still gets its inbox SSRF-checked if one is supplied,
     // so a later PATCH to webhook cannot smuggle a private target in unchecked.
-    assertInboxUrl(input.inboxUrl);
+    assertInboxUrl(input.inboxUrl, allowedHosts);
   }
 }
 
 /** Rejects a non-public or non-https inbox target (the webhook POST egress
- *  re-guards through guardedFetch, but the target is refused up front too). */
-function assertInboxUrl(inboxUrl: string): void {
+ *  re-guards through guardedFetch, but the target is refused up front too).
+ *  A host the operator allowed may be private and plain http, as its egress is. */
+function assertInboxUrl(inboxUrl: string, allowedHosts?: ReadonlySet<string>): void {
   let parsed: URL;
   try {
     parsed = new URL(inboxUrl);
   } catch {
     throw new SubscriptionValidationError("inbox-not-public", "inboxUrl is not a valid URL");
   }
-  if (parsed.protocol !== "https:") {
+  const host = parsed.hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
+  const allowed = allowedHosts?.has(host) ?? false;
+  if (parsed.protocol !== "https:" && !(allowed && parsed.protocol === "http:")) {
     throw new SubscriptionValidationError("inbox-not-public", "inboxUrl must be an https URL");
   }
   try {
-    assertPublicUrl(inboxUrl);
+    assertPublicUrl(inboxUrl, allowedHosts);
   } catch {
     throw new SubscriptionValidationError(
       "inbox-not-public",
@@ -335,13 +342,14 @@ export async function createSubscription(
   peerId: string,
   input: CreateSubscriptionInput,
   now: string,
+  allowedHosts?: ReadonlySet<string>,
 ): Promise<FederationSubscription> {
   const filter = input.filter ?? {};
   const deliveryMode = input.deliveryMode ?? "pull";
   const inboxUrl = input.inboxUrl ?? null;
   const priorityOnly = input.priorityOnly ?? true;
 
-  validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly });
+  validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, allowedHosts);
 
   const id = globalThis.crypto.randomUUID();
   const at = new Date(now);
@@ -400,6 +408,7 @@ export async function updateSubscription(
   existing: FederationSubscription,
   patch: UpdateSubscriptionInput,
   now: string,
+  allowedHosts?: ReadonlySet<string>,
 ): Promise<FederationSubscription | null> {
   return sql.begin(async (tx) => {
     const [current] = await tx<SubscriptionRow[]>`
@@ -410,7 +419,7 @@ export async function updateSubscription(
     const deliveryMode = patch.deliveryMode ?? current.delivery_mode;
     const inboxUrl = patch.inboxUrl !== undefined ? patch.inboxUrl : current.inbox_url;
     const priorityOnly = patch.priorityOnly ?? current.priority_only;
-    validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly });
+    validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, allowedHosts);
     const held = await heldTarget(tx, current.peer_id, deliveryMode, inboxUrl, current.id);
     if (held !== undefined) throw new SubscriptionConflictError(held);
     const [row] = await tx<SubscriptionRow[]>`
