@@ -400,8 +400,10 @@ guard: a host that resolves to a private, loopback or link-local address is
 refused, also after a redirect. A peer on the same private network (a second
 instance of one operator, or a test pair) is reached by naming its host in
 `OPENCONDITIONS_EGRESS_ALLOWED_HOSTS`, on each side that reaches the other.
-A webhook inbox must otherwise be public https; one on a host named there may
-be private and plain http, like the service's other requests to that host.
+A webhook inbox must otherwise be public https; one on the subscribing peer's
+own host (that of its `actorUrl`), named there, may be private and plain http,
+like the service's other requests to that host. An inbox on any other host
+named there is refused.
 
 ### Mutual TLS
 

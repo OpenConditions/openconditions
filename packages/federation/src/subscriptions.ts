@@ -223,8 +223,9 @@ export function filterIsBounded(filter: RecordFilter): boolean {
 /**
  * Normalizes and validates a create/patch request. Push modes (webhook/sse)
  * require a bounded filter; webhook additionally requires a public https inbox,
- * or one on a host in `allowedHosts` (the operator's private network).
- * Throws {@link SubscriptionValidationError} the route turns into 422.
+ * or one on the subscribing peer's own allowed private host (see
+ * {@link InboxHosts}). Throws {@link SubscriptionValidationError} the route
+ * turns into 422.
  */
 export function validateSubscriptionShape(
   input: {
@@ -233,7 +234,7 @@ export function validateSubscriptionShape(
     inboxUrl: string | null;
     priorityOnly: boolean;
   },
-  allowedHosts?: ReadonlySet<string>,
+  inboxHosts?: InboxHosts,
 ): void {
   if (!DELIVERY_MODES.includes(input.deliveryMode)) {
     throw new SubscriptionValidationError(
@@ -265,31 +266,59 @@ export function validateSubscriptionShape(
         "a webhook subscription requires an inboxUrl",
       );
     }
-    assertInboxUrl(input.inboxUrl, allowedHosts);
+    assertInboxUrl(input.inboxUrl, inboxHosts);
   } else if (input.inboxUrl !== null && input.inboxUrl.length > 0) {
     // A non-webhook mode still gets its inbox SSRF-checked if one is supplied,
     // so a later PATCH to webhook cannot smuggle a private target in unchecked.
-    assertInboxUrl(input.inboxUrl, allowedHosts);
+    assertInboxUrl(input.inboxUrl, inboxHosts);
   }
 }
 
+/**
+ * The private hosts this instance reaches (OPENCONDITIONS_EGRESS_ALLOWED_HOSTS)
+ * and the subscribing peer's pinned actor URL. A webhook inbox on the peer's
+ * own host, where that is allowed, may be private and plain http, as the
+ * service's other requests to it are; one on any other allowed host is
+ * refused, since the push egress would reach it.
+ */
+export interface InboxHosts {
+  allowedHosts: ReadonlySet<string>;
+  actorUrl?: string;
+}
+
+/** A URL's host as the egress guard compares it: lower case, IPv6 unbracketed. */
+function hostOf(url: URL): string {
+  return url.hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
+}
+
 /** Rejects a non-public or non-https inbox target (the webhook POST egress
- *  re-guards through guardedFetch, but the target is refused up front too).
- *  A host the operator allowed may be private and plain http, as its egress is. */
-function assertInboxUrl(inboxUrl: string, allowedHosts?: ReadonlySet<string>): void {
+ *  re-guards through guardedFetch, but the target is refused up front too). */
+function assertInboxUrl(inboxUrl: string, inboxHosts?: InboxHosts): void {
   let parsed: URL;
   try {
     parsed = new URL(inboxUrl);
   } catch {
     throw new SubscriptionValidationError("inbox-not-public", "inboxUrl is not a valid URL");
   }
-  const host = parsed.hostname.replace(/^\[(.*)\]$/, "$1").toLowerCase();
-  const allowed = allowedHosts?.has(host) ?? false;
-  if (parsed.protocol !== "https:" && !(allowed && parsed.protocol === "http:")) {
+  const host = hostOf(parsed);
+  const actorUrl = inboxHosts?.actorUrl;
+  const allowed = inboxHosts?.allowedHosts.has(host) ?? false;
+  const own =
+    allowed &&
+    actorUrl !== undefined &&
+    URL.canParse(actorUrl) &&
+    hostOf(new URL(actorUrl)) === host;
+  if (allowed && !own) {
+    throw new SubscriptionValidationError(
+      "inbox-not-public",
+      "inboxUrl on a private host must be on the subscribing peer's own host",
+    );
+  }
+  if (parsed.protocol !== "https:" && !(own && parsed.protocol === "http:")) {
     throw new SubscriptionValidationError("inbox-not-public", "inboxUrl must be an https URL");
   }
   try {
-    assertPublicUrl(inboxUrl, allowedHosts);
+    assertPublicUrl(inboxUrl, own ? new Set([host]) : undefined);
   } catch {
     throw new SubscriptionValidationError(
       "inbox-not-public",
@@ -342,14 +371,14 @@ export async function createSubscription(
   peerId: string,
   input: CreateSubscriptionInput,
   now: string,
-  allowedHosts?: ReadonlySet<string>,
+  inboxHosts?: InboxHosts,
 ): Promise<FederationSubscription> {
   const filter = input.filter ?? {};
   const deliveryMode = input.deliveryMode ?? "pull";
   const inboxUrl = input.inboxUrl ?? null;
   const priorityOnly = input.priorityOnly ?? true;
 
-  validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, allowedHosts);
+  validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, inboxHosts);
 
   const id = globalThis.crypto.randomUUID();
   const at = new Date(now);
@@ -408,7 +437,7 @@ export async function updateSubscription(
   existing: FederationSubscription,
   patch: UpdateSubscriptionInput,
   now: string,
-  allowedHosts?: ReadonlySet<string>,
+  inboxHosts?: InboxHosts,
 ): Promise<FederationSubscription | null> {
   return sql.begin(async (tx) => {
     const [current] = await tx<SubscriptionRow[]>`
@@ -419,7 +448,7 @@ export async function updateSubscription(
     const deliveryMode = patch.deliveryMode ?? current.delivery_mode;
     const inboxUrl = patch.inboxUrl !== undefined ? patch.inboxUrl : current.inbox_url;
     const priorityOnly = patch.priorityOnly ?? current.priority_only;
-    validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, allowedHosts);
+    validateSubscriptionShape({ filter, deliveryMode, inboxUrl, priorityOnly }, inboxHosts);
     const held = await heldTarget(tx, current.peer_id, deliveryMode, inboxUrl, current.id);
     if (held !== undefined) throw new SubscriptionConflictError(held);
     const [row] = await tx<SubscriptionRow[]>`

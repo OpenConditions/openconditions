@@ -463,26 +463,32 @@ describe("subscription validation (422)", () => {
     }
   }, 30_000);
 
-  it("accepts a webhook to an inbox on a host the operator allowed", async () => {
+  it("takes a private inbox only on the peer's own allowed host", async () => {
     const app = await build({
       sql,
-      env: { ...enabledEnv, OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: "peer-a.internal" },
+      env: { ...enabledEnv, OPENCONDITIONS_EGRESS_ALLOWED_HOSTS: "a.example.net,b.example.net" },
       logger: false,
     });
-    try {
+    const subscribe = async (inboxUrl: string) => {
       const req = await signed(peerA, "POST", "/peer/subscriptions", {
         deliveryMode: "webhook",
-        inboxUrl: "http://peer-a.internal:4300/peer/inbox",
+        inboxUrl,
         filter: { bbox: [4, 50, 6, 54] },
       });
-      const res = await app.inject({
+      return app.inject({
         method: "POST",
         url: "/peer/subscriptions",
         headers: req.headers,
         payload: req.payload,
       });
-      expect(res.statusCode).toBe(201);
-      await sql`DELETE FROM conditions.federation_subscription WHERE id = ${res.json().id}`;
+    };
+    try {
+      const own = await subscribe("http://a.example.net:4300/peer/inbox");
+      expect(own.statusCode).toBe(201);
+      await sql`DELETE FROM conditions.federation_subscription WHERE id = ${own.json().id}`;
+      const other = await subscribe("https://b.example.net/peer/inbox");
+      expect(other.statusCode).toBe(422);
+      expect(other.json().code).toBe("inbox-not-public");
     } finally {
       await app.close();
     }

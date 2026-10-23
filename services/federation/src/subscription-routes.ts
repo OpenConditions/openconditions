@@ -22,6 +22,7 @@ import {
   encodeOutboxCursor,
   type FederationSubscription,
   getSubscription,
+  type InboxHosts,
   listSubscriptions,
   type MtlsContext,
   type NonceStore,
@@ -64,8 +65,16 @@ export interface SubscriptionRouteContext {
   governanceWindowSec?: number;
   /** Called once a subscription was created or changed: what it wants may need journalling. */
   onSubscribed?: () => void;
-  /** Private hosts this instance may reach (OPENCONDITIONS_EGRESS_ALLOWED_HOSTS): a webhook inbox may be one. */
+  /** Private hosts this instance may reach (OPENCONDITIONS_EGRESS_ALLOWED_HOSTS): a
+   *  peer's webhook inbox may be on its own one. */
   allowedHosts?: ReadonlySet<string>;
+}
+
+/** Where `peerId`'s webhook inbox may sit among the private hosts: on its own. */
+function inboxHostsOf(ctx: SubscriptionRouteContext, peerId: string): InboxHosts | undefined {
+  if (ctx.allowedHosts === undefined) return undefined;
+  const actorUrl = ctx.peers.find(peerId)?.actorUrl;
+  return { allowedHosts: ctx.allowedHosts, ...(actorUrl !== undefined ? { actorUrl } : {}) };
 }
 
 /** Parses the request's buffered body as JSON, or 400s. Returns undefined on failure. */
@@ -124,7 +133,7 @@ export function registerSubscriptionRoutes(
         peerId,
         parsed as CreateSubscriptionInput,
         ctx.now(),
-        ctx.allowedHosts,
+        inboxHostsOf(ctx, peerId),
       );
       ctx.onSubscribed?.();
       return reply.status(201).send(subscription);
@@ -167,7 +176,7 @@ export function registerSubscriptionRoutes(
         owned,
         parsed as UpdateSubscriptionInput,
         ctx.now(),
-        ctx.allowedHosts,
+        inboxHostsOf(ctx, peerId),
       );
       ctx.onSubscribed?.();
       return reply.send(updated);

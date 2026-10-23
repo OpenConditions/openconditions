@@ -145,27 +145,55 @@ describe("validateSubscriptionShape", () => {
     }
   });
 
-  it("accepts an inbox on a host the operator allowed, over http too", () => {
-    const allowed = new Set(["localhost", "peer.internal"]);
-    for (const inboxUrl of ["http://localhost:4302/peer/inbox", "https://peer.internal/inbox"]) {
+  const hosts = {
+    allowedHosts: new Set(["peer.internal", "overpass.internal", "10.0.0.5"]),
+    actorUrl: "http://peer.internal:4302/.well-known/openconditions/actor.json",
+  };
+
+  it("accepts an inbox on the peer's own allowed private host, over http too", () => {
+    for (const inboxUrl of [
+      "http://peer.internal:4302/peer/inbox",
+      "https://peer.internal/inbox",
+    ]) {
       expect(
         () =>
           validateSubscriptionShape(
             shape({ deliveryMode: "webhook", inboxUrl, filter: { kinds: ["closure"] } }),
-            allowed,
+            hosts,
           ),
         inboxUrl,
       ).not.toThrow();
     }
+  });
+
+  it("refuses an inbox on another allowed host, which the push egress would reach", () => {
+    for (const inboxUrl of [
+      "https://overpass.internal/inbox",
+      "http://overpass.internal/inbox",
+      "https://10.0.0.5/inbox",
+    ]) {
+      expect(
+        caught(() =>
+          validateSubscriptionShape(
+            shape({ deliveryMode: "webhook", inboxUrl, filter: { kinds: ["closure"] } }),
+            hosts,
+          ),
+        ).code,
+        inboxUrl,
+      ).toBe("inbox-not-public");
+    }
+  });
+
+  it("refuses a private inbox of a peer whose own host is not allowed", () => {
     expect(
       caught(() =>
         validateSubscriptionShape(
           shape({
             deliveryMode: "webhook",
-            inboxUrl: "http://10.0.0.5/inbox",
+            inboxUrl: "http://peer.internal/inbox",
             filter: { kinds: ["closure"] },
           }),
-          allowed,
+          { ...hosts, actorUrl: "https://peer.example.org/.well-known/openconditions/actor.json" },
         ),
       ).code,
     ).toBe("inbox-not-public");

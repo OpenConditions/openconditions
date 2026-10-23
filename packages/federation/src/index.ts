@@ -180,6 +180,7 @@ export {
   deleteSubscription,
   filterIsBounded,
   getSubscription,
+  type InboxHosts,
   listSubscriptions,
   SubscriptionConflictError,
   SubscriptionValidationError,
