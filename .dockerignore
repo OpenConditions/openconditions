@@ -21,3 +21,11 @@ LICENSES
 biome.json
 .prettierignore
 .prettierrc.json
+
+# Release descriptors are consumed by the host, not by these image builds.
+/extension.json
+/services/*/service.json
+/docs/release-notes/
+# Local planning material is never an image input.
+/advisor-plans/
+/plans/
