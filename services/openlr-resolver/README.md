@@ -183,8 +183,9 @@ The application metadata still supports Python 3.12 and newer; the compiler/CI l
 An install or runtime claim applies only to the interpreter and platform actually checked.
 
 CI installs the wheel-only build-tool lock first, then verifies runtime/dev distributions with
-`--require-hashes --no-build-isolation`. This builds `openlr` using the pinned tools without pip
-fetching an unpinned isolated backend. Do not require wheels for the runtime lock: `openlr` has no
+`--no-cache-dir --require-hashes --no-build-isolation`. Bypassing the locally built wheel cache makes
+this rebuild `openlr` using the pinned tools without pip fetching an unpinned isolated backend.
+Do not require wheels for the runtime lock: `openlr` has no
 wheel. Hashes authenticate the downloaded source or wheel, not a reproducible native build.
 The build-tool audit reads every pin from the complete build lock with pip-audit's
 `--strict --require-hashes --disable-pip` mode; clean installs and `pip check` separately
