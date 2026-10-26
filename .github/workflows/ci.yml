@@ -140,6 +140,8 @@ jobs:
 
       - name: Test
         run: python -m pytest
+        env:
+          OPENLR_POSTGIS_TESTS: required
 
   interop:
     needs: source

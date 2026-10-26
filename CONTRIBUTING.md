@@ -86,8 +86,14 @@ Python (the resolver):
 ```bash
 cd services/openlr-resolver
 ruff check .
-python -m pytest
+OPENLR_POSTGIS_TESTS=required python -m pytest
 ```
+
+This matches CI and requires Docker plus the resolver's locked development dependencies.
+PostGIS tests use their own disposable PostgreSQL 16 server, never an operator database.
+Local `python -m pytest` defaults to optional database availability; missing Docker or
+Testcontainers skips the database cases. Required mode fails if those cases are skipped
+or omitted. Use optional mode for focused non-database tests; unknown mode values fail.
 
 Independent implementations (CI's `interop` job; JDK 17+, Python 3.14 and network
 access, after `pnpm build`):
