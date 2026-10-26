@@ -21,12 +21,21 @@ ROOT = Path(__file__).resolve().parents[1]
 POSTGIS = "tests/test_postgis_reader.py"
 
 
-def run_pytest(tmp_path, *, mode="required", block=None, args=None, docker_host=None, plugin=""):
+def run_pytest(tmp_path, *, mode="required", block=None, args=None, docker_host=None,
+               plugin="", configured_host=None):
     env = os.environ.copy()
-    for key in ("DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH", "TC_HOST", "PYTEST_ADDOPTS"):
-        env.pop(key, None)
+    for key in tuple(env):
+        if key.startswith("TESTCONTAINERS_") or key in (
+            "DOCKER_TLS_VERIFY", "DOCKER_CERT_PATH", "DOCKER_CONTEXT", "TC_HOST", "PYTEST_ADDOPTS",
+            "HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "http_proxy", "https_proxy", "all_proxy",
+        ):
+            env.pop(key)
+    docker_config = tmp_path / "docker-config"
+    docker_config.mkdir()
+    (docker_config / "config.json").write_text("{}")
     env.update({
         "DOCKER_HOST": docker_host or f"unix://{tmp_path / 'absent.sock'}",
+        "DOCKER_CONFIG": str(docker_config),
         "PYTEST_DISABLE_PLUGIN_AUTOLOAD": "1",
         "PYTHONPATH": str(tmp_path),
         "TESTCONTAINERS_RYUK_DISABLED": "true",
@@ -47,7 +56,28 @@ def run_pytest(tmp_path, *, mode="required", block=None, args=None, docker_host=
             "   raise ModuleNotFoundError('deliberately unavailable dependency: ' + fullname)\n"
             "sys.meta_path.insert(0, Block())\n"
         )
-    command = [sys.executable, "-m", "pytest", "-q", "-o", f"cache_dir={tmp_path / 'cache'}",
+    # Scope configuration discovery to this child; never alter HOME or user files.
+    config_dir = tmp_path / "testcontainers-config"
+    config_dir.mkdir()
+    (config_dir / ".testcontainers.properties").write_text(
+        f"tc.host={configured_host}\n" if configured_host else ""
+    )
+    bootstrap = (
+        "import os, runpy, sys\n"
+        "from pathlib import Path\n"
+        "from unittest.mock import patch\n"
+        "try:\n"
+        f" with patch.object(Path, 'home', return_value=Path({str(config_dir)!r})):\n"
+        "  from testcontainers.core.config import testcontainers_config\n"
+        "except ImportError:\n"
+        " pass  # Let the real fixture diagnose missing optional/required imports.\n"
+        "else:\n"
+        " # Pin the private endpoint after discovery, including conflicting tc.host.\n"
+        " testcontainers_config.tc_properties = {'tc.host': os.environ['DOCKER_HOST']}\n"
+        "sys.argv = ['pytest'] + sys.argv[1:]\n"
+        "runpy.run_module('pytest', run_name='__main__')\n"
+    )
+    command = [sys.executable, "-c", bootstrap, "-q", "-o", f"cache_dir={tmp_path / 'cache'}",
                f"--junitxml={tmp_path / 'results.xml'}"]
     if plugin:
         (tmp_path / "gate_probe.py").write_text(plugin)
@@ -90,6 +120,20 @@ def test_required_mode_rejects_deselected_postgis_module(tmp_path):
     result = run_pytest(tmp_path, args=[POSTGIS, "-k", "no_such_case"])
     assert result.returncode == 1, result.stdout + result.stderr
     assert "PostGIS coverage incomplete" in result.stdout + result.stderr
+
+
+@pytest.mark.parametrize("selector, expected", [("::test_first", 1), ("", 0)])
+def test_required_inventory_precedes_explicit_node_selection(tmp_path, selector, expected):
+    # Run the actual conftest hooks against an independent, parametrized module.
+    # Database behavior is covered separately by the real PostGIS suite.
+    (tmp_path / "conftest.py").write_bytes((ROOT / "tests/conftest.py").read_bytes())
+    module = tmp_path / "test_postgis_reader.py"
+    module.write_text("import pytest\ndef test_first(): pass\n"
+                      "@pytest.mark.parametrize('value', [1, 2])\n"
+                      "def test_rest(value): assert value > 0\n")
+    result = run_pytest(tmp_path, args=["-c", str(ROOT / "pyproject.toml"), str(module) + selector])
+    assert result.returncode == expected, result.stdout + result.stderr
+    assert ("PostGIS coverage incomplete" in result.stdout + result.stderr) == bool(expected)
 
 
 def test_required_database_import_failure_is_not_a_skip(tmp_path):
@@ -179,3 +223,13 @@ def test_container_startup_failure_is_red_and_cleans_up(tmp_path, mode):
     assert "deliberate container startup failure" in result.stdout + result.stderr
     assert any(method == "POST" and "/start" in path for method, path in requests), requests
     assert any(method == "DELETE" and "/containers/" in path for method, path in requests), requests
+
+
+def test_conflicting_testcontainers_host_cannot_redirect_private_endpoint(tmp_path):
+    with docker_start_failure() as (private_host, private_requests):
+        with docker_start_failure() as (conflicting_host, conflicting_requests):
+            result = run_pytest(tmp_path, docker_host=private_host, configured_host=conflicting_host)
+    assert result.returncode != 0, result.stdout + result.stderr
+    assert not conflicting_requests, conflicting_requests
+    assert any(method == "POST" and "/start" in path for method, path in private_requests)
+    assert any(method == "DELETE" for method, _ in private_requests)

@@ -40,10 +40,15 @@ def pytest_configure(config):
     config.stash[POSTGIS_PASSED] = set()
 
 
-def pytest_itemcollected(item):
-    # Observe before -k/--deselect can remove cases from the execution list.
-    if item.path == POSTGIS_MODULE:
-        item.config.stash[POSTGIS_COLLECTED].add(item.nodeid)
+@pytest.hookimpl(hookwrapper=True)
+def pytest_pycollect_makeitem(collector, name, obj):
+    # Function generation precedes explicit ::node selection as well as -k.
+    # Use pytest's generated inventory, including parametrized cases.
+    result = (yield).get_result()
+    if collector.path == POSTGIS_MODULE:
+        for item in result if isinstance(result, list) else [result]:
+            if isinstance(item, pytest.Function):
+                collector.config.stash[POSTGIS_COLLECTED].add(item.nodeid)
 
 
 @pytest.hookimpl(hookwrapper=True)
