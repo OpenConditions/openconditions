@@ -25,12 +25,34 @@ import {
 } from "@openconditions/test-database/profile";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
-import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { PULL_PAGE_LIMIT, type PullContext, pullPeer } from "../puller.js";
 import { peerSituation, registry } from "./record-fixtures.js";
 
 const PEER = "peer.example.org";
 const LOCAL = "local.example.org";
+
+const setupOrder = vi.hoisted(() => [] as string[]);
+vi.mock("@openconditions/core/server", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@openconditions/core/server")>();
+  return {
+    ...original,
+    runMigrations: async (...args: Parameters<typeof original.runMigrations>) => {
+      setupOrder.push("migrate");
+      return original.runMigrations(...args);
+    },
+  };
+});
+vi.mock("@openconditions/test-database/profile", async (importOriginal) => {
+  const original = await importOriginal<typeof import("@openconditions/test-database/profile")>();
+  return {
+    ...original,
+    assertPostgisProfile: async (...args: Parameters<typeof original.assertPostgisProfile>) => {
+      setupOrder.push("verify");
+      return original.assertPostgisProfile(...args);
+    },
+  };
+});
 
 let sql: postgres.Sql;
 let containerStop: () => Promise<unknown>;
@@ -136,12 +158,12 @@ beforeAll(async () => {
     .start();
   containerStop = () => container.stop();
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
-  await runMigrations(url);
   sql = postgres(url, { max: 4, onnotice: () => {} });
   await assertPostgisProfile(sql, profile, {
     fixture: "puller.integration.test",
     containerId: container.getId(),
   });
+  await runMigrations(url);
   const now = new Date().toISOString();
   peerKey = await generateInstanceKey(now);
   localKey = await generateInstanceKey(now);
@@ -160,6 +182,10 @@ beforeEach(async () => {
 });
 
 describe("pulling a peer", () => {
+  it("checks the physical major before applying migrations", () => {
+    expect(setupOrder).toEqual(["verify", "migrate"]);
+  });
+
   it("lands a signed page through the inbox and advances its cursor", async () => {
     const { fetchImpl, asked } = fakePeer([
       async () => signed(json(pageOf([entry(peerSituation(PEER, "ok-1"), 10, 1)], "10.1"))),
