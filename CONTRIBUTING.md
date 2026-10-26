@@ -224,6 +224,12 @@ fix(ingest): keep last-good rows when the site table fetch fails
 docs(readme): document the public emitter feeds
 ```
 
+## Repository protection
+
+Changes to `main` go through a pull request and the required checks. Independent human approval is optional; all review conversations must be resolved. Merge with squash using the PR title and body. Required checks use loose freshness, with no merge queue. Keep the PR title conventional and its description useful as the resulting commit message.
+
+The [repository guardrails runbook](docs/repository-guardrails.md) lists the required check producers, Actions protections and the maintainer-only emergency process. An agent never has standing authority to bypass checks or push directly to `main`. Report vulnerabilities privately using [SECURITY.md](SECURITY.md).
+
 ## Pull request workflow
 
 1. Fork and create a feature branch off `main`.

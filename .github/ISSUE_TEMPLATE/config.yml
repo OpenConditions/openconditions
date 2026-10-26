@@ -5,4 +5,4 @@ contact_links:
     about: For usage questions, feed-source ideas, and general discussion, please use Discussions instead of opening an issue.
   - name: 🔒 Security vulnerability
     url: https://github.com/openconditions/openconditions/security/advisories/new
-    about: Report security issues privately via a draft GitHub Security Advisory. See SECURITY.md for the full process.
+    about: Use GitHub private vulnerability reporting (sign-in required). Do not file a public issue; see SECURITY.md for the email fallback.
