@@ -2,43 +2,23 @@
 
 ## Reporting a vulnerability
 
-If you find a security vulnerability in OpenConditions, please report it privately.
+If you find a security vulnerability in OpenConditions, please report it privately. **Do not open a public issue.**
 
-**Do not open a public issue.** Public issues are read by everyone, and a
-vulnerability report becomes a free attack guide before a fix is shipped.
-
-Use one of:
-
-1. **GitHub Security Advisory** (preferred) — open a draft advisory at
-   <https://github.com/openconditions/openconditions/security/advisories/new>.
-   This keeps the report private and lets us collaborate on a fix and a
-   coordinated disclosure in one place.
-2. **Email** — write to **security@openconditions.org**. If you wish to encrypt
-   your report, ask for our PGP key in your first message.
+1. **GitHub private vulnerability reporting (preferred)** — use [Report a vulnerability](https://github.com/OpenConditions/openconditions/security/advisories/new), also available from the repository's [Security page](https://github.com/OpenConditions/openconditions/security). Sign in to GitHub to submit a private report. Maintainers with advisory permissions use the same route to create a draft advisory.
+2. **Email fallback** — write to **security@openconditions.org** if you cannot use GitHub. Mailbox monitoring and delivery have not been independently verified; GitHub reporting is preferred. If you wish to encrypt your report, ask for our PGP key in your first message.
 
 When reporting, please include:
 
 - A description of the vulnerability and its impact.
-- Steps to reproduce, ideally with a minimal proof of concept.
-- The affected component (`services/ingest`, `services/openlr-resolver`, a
-  specific `@openconditions/*` package) and the
-  version / commit SHA.
-- Whether the issue requires a specific feed to be configured, the public
-  emitter feeds to be reachable, or a particular deployment topology.
+- Steps to reproduce, ideally with a minimal proof of concept tested only on your own deployment.
+- The affected service, integration or `@openconditions/*` package and the version or commit SHA.
+- Any feed configuration, public API exposure, authentication scope or deployment topology needed to reproduce the issue.
 
-## Our commitment
+## Response and disclosure
 
-- **Acknowledgement** within **3 business days** of your report.
-- **Triage and an initial assessment** (including severity and a fix plan)
-  within **10 business days**.
-- We will keep you informed of progress, credit you in the advisory and release
-  notes (unless you prefer to remain anonymous), and coordinate the public
-  disclosure date with you.
-- Our target is to ship a fix within **90 days** of triage; complex issues may
-  take longer, and we will say so.
+Maintainers aim, on a best-effort basis, to acknowledge reports within **7 calendar days** and provide an initial triage assessment within **14 calendar days**. These are targets, not guaranteed response times or a promise to provide a fix by a fixed deadline.
 
-If you have not received an acknowledgement within 6 business days, please send a
-brief follow-up in case the original report was missed.
+We aim to keep you informed of progress and coordinate the public disclosure date with you. We will offer credit in the advisory and relevant release notes unless you prefer to remain anonymous. Timing depends on severity, affected versions and maintainer availability. If the acknowledgement target has passed, a brief follow-up through the private reporting channel is appropriate.
 
 ## Supported versions
 
@@ -49,15 +29,12 @@ tagged release receive security fixes. Older releases are not patched.
 
 In scope:
 
-- `services/ingest` — the Fastify ingest service, including the public,
-  rate-limited record API and emitter feeds (`/situations`, `/features`,
-  `/offers`, `/observations/latest`, `/observations`, `/traff.xml`,
-  `/datex2/situations.xml`, `/valhalla/exclusions.json`, `/stream`, …).
-- `services/openlr-resolver` — the Python OpenLR map-matcher.
-- The published `@openconditions/*` packages (`core`, `roads`, `publishers`,
-  `openlr`).
-- The `openconditions-ingest` service manifest / Dockerfiles / default deployment
-  configuration.
+- `services/ingest` and `services/ingest-heavy` — feed ingestion, scheduling, record APIs, streaming and public emitter projections.
+- `services/contributions-api` — community submissions, moderation, contributor receipts and authentication/authorization boundaries.
+- `services/federation` — peer exchange, registry trust and federation APIs.
+- `services/openlr-resolver` — the Python OpenLR map-matcher and its service API.
+- The `@openconditions/*` workspace packages, including parsers, publishers, model modules, persistence, cryptography and integrations. Inclusion here does not imply that a package has been publicly published.
+- Service manifests, Dockerfiles and default deployment configuration maintained in this repository, including interactions with a host platform.
 
 Out of scope (report upstream instead):
 
