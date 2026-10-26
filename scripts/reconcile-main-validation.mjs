@@ -67,7 +67,7 @@ export function createGithubApi(token, adapter = {}) {
   };
 }
 
-export async function reconcileMainValidation({ api, repository }) {
+export async function reconcileMainValidation({ api, repository, now = Date.now }) {
   assert(/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository), "invalid repository");
   const root = `/repos/${repository}`;
   const repo = await api(root);
@@ -215,11 +215,9 @@ export async function reconcileMainValidation({ api, repository }) {
     const run = validateRun(await api(`${root}/actions/runs/${listed.id}`), listed.id);
     if (await qualified(run)) return receipt("qualified", run);
     if (activeStatuses.has(run.status)) pending = run;
-    if (
-      run.event === "workflow_dispatch" &&
-      run.display_title === recoveryTitle &&
-      run.actor?.login === "github-actions[bot]"
-    )
+    // The reserved title consumes the budget even if actor metadata is absent
+    // or unexpected. Only explicit dispatch without expected_main_sha is manual.
+    if (run.event === "workflow_dispatch" && run.display_title === recoveryTitle)
       recoveryAttempt = run;
   }
   if (pending) return receipt("pending", pending);
@@ -228,6 +226,25 @@ export async function reconcileMainValidation({ api, repository }) {
     `main ${sha}: automatic recovery already attempted (run ${recoveryAttempt?.id}, attempt ${recoveryAttempt?.run_attempt}); inspect the red run and use explicit maintainer CI dispatch`,
   );
   assert((await currentSha()) === sha, "main advanced before dispatch; retry reconciliation");
+
+  // GitHub can expire run history after one day. A verified GitHub-created
+  // commit gives an immutable server-generated lower bound on every recovery's
+  // creation time. Stop an hour early; a new trigger must never renew the window.
+  const source = await api(`${root}/commits/${sha}`);
+  const committedAt = source?.commit?.committer?.date;
+  const sourceAge = now() - Date.parse(committedAt);
+  assert(
+    source?.sha === sha &&
+      source.committer?.login === "web-flow" &&
+      source.commit?.verification?.verified === true &&
+      source.commit.verification.reason === "valid" &&
+      typeof committedAt === "string" &&
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/.test(committedAt) &&
+      Number.isFinite(sourceAge) &&
+      sourceAge >= 0 &&
+      sourceAge < 23 * 60 * 60 * 1000,
+    `main ${sha}: recovery history may have expired or source age is untrusted; use explicit maintainer CI dispatch`,
+  );
 
   // The returned ID is read back through a fixed API route. Never follow URLs
   // from event payloads, artifacts, or even the dispatch response.

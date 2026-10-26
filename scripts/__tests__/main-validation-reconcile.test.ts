@@ -9,6 +9,15 @@ const repo = "OpenConditions/openconditions";
 const sha = "a".repeat(40);
 const other = "b".repeat(40);
 const prefix = `/repos/${repo}`;
+const wallClock = Date.parse("2026-10-26T12:00:00Z");
+const sourceCommit = {
+  sha,
+  committer: { login: "web-flow" },
+  commit: {
+    committer: { date: "2026-10-26T11:00:00Z" },
+    verification: { verified: true, reason: "valid" },
+  },
+};
 const coverage = [
   "validate CI source",
   "typecheck / test",
@@ -49,6 +58,8 @@ function jobs(attempt = 1, runId = 11): Row[] {
   }));
 }
 interface Fixture {
+  commit?: Row;
+  wallClock?: number;
   runs?: Row[];
   jobs?: Row[];
   detail?: Row;
@@ -101,6 +112,7 @@ async function fixture(options: Fixture = {}) {
         ref: "refs/heads/main",
         object: { type: "commit", sha: options.advance && refs++ > 0 ? other : sha },
       });
+    if (url.pathname === `${prefix}/commits/${sha}`) return send(options.commit ?? sourceCommit);
     if (url.pathname === `${prefix}/actions/workflows/ci.yml`)
       return send({
         id: 7,
@@ -167,14 +179,15 @@ async function fixture(options: Fixture = {}) {
     `import { createGithubApi, reconcileMainValidation } from ${JSON.stringify(helper)};
 let elapsed = 0;
 const api = createGithubApi('fixture-token', { fetch: (url, init) => fetch(url.replace('https://api.github.com', ${JSON.stringify(base)}), init), sleep: async (ms) => { elapsed += ms; }, now: () => elapsed });
-try { console.log(JSON.stringify(await reconcileMainValidation({ api, repository: '${repo}' }))); }
+try { console.log(JSON.stringify(await reconcileMainValidation({ api, repository: '${repo}', now: () => Number(process.env.FIXTURE_NOW) }))); }
 catch (error) { console.error(error.message); process.exitCode = 1; }
 `,
   );
-  async function execute() {
+  async function execute(at = options.wallClock ?? wallClock) {
     const child = spawn(process.execPath, [bootstrap], {
       env: {
         ...process.env,
+        FIXTURE_NOW: String(at),
         GITHUB_EVENT_NAME: "workflow_run",
         GITHUB_EVENT_PATH: path.join(dir, "untrusted.json"),
       },
@@ -205,6 +218,91 @@ catch (error) { console.error(error.message); process.exitCode = 1; }
 }
 
 describe("trusted main reconciliation command adapter", () => {
+  it.each([undefined, null, {}, { login: "maintainer" }, { login: 42 }])(
+    "never resets a retained recovery budget for ambiguous actor %j",
+    async (actor) => {
+      const f = await fixture({
+        runs: [
+          run({
+            event: "workflow_dispatch",
+            display_title: `Main validation recovery ${sha}`,
+            actor,
+            conclusion: "failure",
+          }),
+        ],
+      });
+      for (let i = 0; i < 2; i++) {
+        const out = await f.execute();
+        expect(out.status).toBe(1);
+        expect(out.stderr).toContain("automatic recovery already attempted");
+      }
+      expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(0);
+    },
+  );
+  it.each([{ runs: [] }, { runs: [run({ event: "schedule" })] }])(
+    "fails closed when expired recovery history leaves only %j",
+    async ({ runs }) => {
+      const f = await fixture({ runs, wallClock: wallClock + 24 * 60 * 60 * 1000 });
+      for (let i = 0; i < 2; i++) {
+        const out = await f.execute();
+        expect(out.status).toBe(1);
+        expect(out.stderr).toContain("recovery history may have expired");
+      }
+      expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(0);
+    },
+  );
+  it("allows recent first recovery but does not refresh its budget after history expires", async () => {
+    const f = await fixture();
+    expect((await f.execute()).status).toBe(0);
+    f.state.length = 0;
+    // An immutable commit date, rather than a fresh workflow event/run, anchors the window.
+    expect((await f.execute(wallClock + 24 * 60 * 60 * 1000)).status).toBe(1);
+    expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(1);
+  });
+  it.each([
+    { ...sourceCommit, sha: other },
+    { ...sourceCommit, committer: { login: "maintainer" } },
+    {
+      ...sourceCommit,
+      commit: {
+        committer: { date: "2026-10-26T11:00:00Z" },
+        verification: { verified: false, reason: "unsigned" },
+      },
+    },
+    {
+      ...sourceCommit,
+      commit: {
+        committer: { date: "2026-10-27T11:00:00Z" },
+        verification: { verified: true, reason: "valid" },
+      },
+    },
+    {
+      ...sourceCommit,
+      commit: { committer: { date: "invalid" }, verification: { verified: true, reason: "valid" } },
+    },
+  ])("fails closed without a trustworthy recent source timestamp: %j", async (commit) => {
+    const f = await fixture({ commit });
+    expect((await f.execute()).status).toBe(1);
+    expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(0);
+  });
+  it.each([
+    { advance: 21 * 60 * 60 * 1000 + 59 * 60 * 1000, status: 0 },
+    { advance: 22 * 60 * 60 * 1000, status: 1 },
+  ])("enforces the conservative pre-retention boundary: %j", async ({ advance, status }) => {
+    const f = await fixture({ wallClock: wallClock + advance });
+    expect((await f.execute()).status).toBe(status);
+    expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(status === 0 ? 1 : 0);
+  });
+  it("still accepts retained full qualification and active manual retries for old main", async () => {
+    for (const candidate of [
+      run(),
+      run({ event: "workflow_dispatch", status: "queued", conclusion: null }),
+    ]) {
+      const f = await fixture({ runs: [candidate], wallClock: wallClock + 24 * 60 * 60 * 1000 });
+      expect((await f.execute()).status).toBe(0);
+      expect(f.requests.filter((r) => r.method === "POST")).toHaveLength(0);
+    }
+  });
   it("fails schema errors in listed run metadata instead of dispatching from incomplete evidence", async () => {
     const f = await fixture({ runs: [{}] });
     expect((await f.execute()).status).toBe(1);

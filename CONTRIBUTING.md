@@ -128,13 +128,23 @@ before installing dependencies. Native Dependabot auto-merge is unchanged.
 
 The dispatcher deduplicates pending full runs and successful, fully qualified
 run attempts. It permits one automatic recovery per SHA, identified by the
-`Main validation recovery <sha>` run title and Actions bot actor. A failed
-recovery stays visibly red: inspect its exact run and attempt, repair the cause,
+reserved `Main validation recovery <sha>` run title; ambiguous or missing actor
+metadata still consumes that budget. A failed recovery stays visibly red: inspect its exact run and attempt, repair the cause,
 and use **Actions → CI → Run workflow**, select **main**, and leave
 `expected_main_sha` empty for an explicit maintainer retry. A failed or ambiguous
 dispatch request is not retried in the same invocation; the next backstop reads
 retained runs before deciding. API reads have at most three transient retries
 within a 60-second request budget. No new credentials are required.
+
+Run history can expire under GitHub's [retention policy](https://docs.github.com/en/organizations/managing-organization-settings/configuring-the-retention-period-for-github-actions-artifacts-and-logs-in-your-organization).
+To keep expiration from resetting the recovery budget, automatic dispatch is
+limited to the first 23 hours after a verified GitHub-created commit (the
+`web-flow` committer). The immutable signed commit time anchors this window;
+new runs, triggers and schedules cannot extend it. Older, unsigned, non-GitHub
+or unverifiable commits fail closed and require the explicit main dispatch
+above. Retained successful full qualification and already pending full runs
+remain valid independently of that automatic-dispatch cutoff. This limits
+recovery availability when scheduling is delayed; it does not relax any gate.
 
 The backstop validates the current main commit, so intermediate auto-merges can
 be coalesced. Its recovery target is the next nominal half-hour interval plus
