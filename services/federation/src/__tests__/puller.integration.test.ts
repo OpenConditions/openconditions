@@ -18,6 +18,11 @@ import {
   unblockPeer,
 } from "@openconditions/federation";
 import { schemaVersions } from "@openconditions/model";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -119,7 +124,8 @@ const cursor = async () =>
   )[0]?.cursor;
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
     .withEnvironment({
       POSTGRES_DB: "conditions_test",
       POSTGRES_USER: "oc",
@@ -132,6 +138,10 @@ beforeAll(async () => {
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   await runMigrations(url);
   sql = postgres(url, { max: 4, onnotice: () => {} });
+  await assertPostgisProfile(sql, profile, {
+    fixture: "puller.integration.test",
+    containerId: container.getId(),
+  });
   const now = new Date().toISOString();
   peerKey = await generateInstanceKey(now);
   localKey = await generateInstanceKey(now);

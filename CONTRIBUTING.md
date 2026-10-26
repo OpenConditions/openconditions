@@ -178,13 +178,21 @@ Tests run from one root `vitest.config.ts`, with `unit` and `integration`
 projects covering packages, services, integrations, and scripts. The
 integration project runs after the unit project, two files at a time, against
 one PostGIS container its global setup starts and migrates as a template
-(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Run
+(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Dedicated
+federation/storage servers and the disposable restriction smoke honor the same
+profile while keeping their own containers and transaction horizons. Each checks
+and logs its physical server major before migrations; an invalid profile fails
+before container startup. The opt-in public-stream benchmark keeps its PG16
+baseline, and the opt-in client-attribution experiment deliberately uses PG18.
+Explicit PG18 runs qualify that cohort only; ordinary CI and the support policy
+remain unchanged. Run
 from the repo root:
 
 ```bash
 pnpm test                                  # build, then both projects
 pnpm test:unit                             # build, then tests without Docker
 pnpm test:integration                      # build, then disposable database tests
+OC_TEST_POSTGIS_PROFILE=pg18 pnpm test:integration # explicit PG18 cohort
 pnpm exec vitest run --project unit packages/core # targeted run after building
 pnpm test:coverage                         # V8 coverage report (written to coverage/)
 ```
