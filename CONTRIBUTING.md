@@ -62,6 +62,11 @@ TypeScript / Node:
 ```bash
 pnpm lint        # Biome + the import-boundary gate
 pnpm typecheck   # tsc across the workspace (turbo)
+pnpm check-credentials
+pnpm check:model
+pnpm check:feed-schemas
+pnpm feeds:lint
+pnpm check:ci    # CI outcome and main reconciliation command fixtures
 pnpm test        # build workspace dependencies, then all Vitest projects
 ```
 
@@ -102,6 +107,42 @@ Git hooks enforce a two-stage local gate (Husky):
 CI re-runs lint, typecheck, the full suite, the Python lint/tests, and both
 production dependency audits on every push and PR. The audits also run weekly
 so newly published advisories fail without waiting for a source change.
+
+### Main validation and required checks
+
+CI reports `required CI` after checking every applicable outcome: source
+validation, TypeScript, Python, independent interop and production audits. A
+failed, cancelled, missing or unexpectedly skipped job fails the aggregate.
+The weekly CI schedule intentionally runs only the production audit and source
+validation; its skipped ordinary jobs are allowed only on that event.
+
+`full main qualification` additionally requires successful execution of all
+coverage and the aggregate on an exact main push or main manual dispatch. A
+successful weekly audit or PR run cannot qualify main.
+
+`Reconcile main validation` checks current main after CI/Dependabot completion
+and at minutes 17 and 47 each hour. It runs trusted default-branch code without
+installing dependencies or reading PR artifacts. The Actions token can dispatch
+CI, with an independently read `expected_main_sha`; CI rejects a stale SHA
+before installing dependencies. Native Dependabot auto-merge is unchanged.
+
+The dispatcher deduplicates pending full runs and successful, fully qualified
+run attempts. It permits one automatic recovery per SHA, identified by the
+`Main validation recovery <sha>` run title and Actions bot actor. A failed
+recovery stays visibly red: inspect its exact run and attempt, repair the cause,
+and use **Actions → CI → Run workflow**, select **main**, and leave
+`expected_main_sha` empty for an explicit maintainer retry. A failed or ambiguous
+dispatch request is not retried in the same invocation; the next backstop reads
+retained runs before deciding. API reads have at most three transient retries
+within a 60-second request budget. No new credentials are required.
+
+The backstop validates the current main commit, so intermediate auto-merges can
+be coalesced. Its recovery target is the next nominal half-hour interval plus
+GitHub queue/run time, not a wall-clock guarantee. Only exact commits with the
+full marker are qualified. Source fixtures, PR CI, and actual post-merge bot-path
+qualification are separate evidence. Required-check settings are migrated only
+after the new producers have real successful PR evidence; keep existing check
+coverage until that migration is read back.
 
 ### Testing
 

@@ -27,7 +27,8 @@
     "road-conditions:readiness": "pnpm --filter @openconditions/ingest exec tsx src/ops/road-conditions-readiness.ts",
     "prepare": "husky",
     "test:unit": "pnpm build && vitest run --project unit",
-    "test:integration": "pnpm build && vitest run --project integration"
+    "test:integration": "pnpm build && vitest run --project integration",
+    "check:ci": "vitest run --project unit scripts/__tests__/ci-results.test.ts scripts/__tests__/main-validation-reconcile.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
