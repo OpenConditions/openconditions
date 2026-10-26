@@ -164,6 +164,29 @@ describe("staged checker command", () => {
     expect(result.output).toContain("configuration must be a regular file");
     unchanged(root, result.index);
   });
+  it("checks a regular file replacing a symlink and never follows the reverse change", () => {
+    const { root, scratch } = fixture();
+    symlinkSync("/never/read", join(root, "changed.ts"));
+    command(root, ["add", "changed.ts"]);
+    command(root, ["commit", "-qm", "fixture"]);
+    rmSync(join(root, "changed.ts"));
+    stage(root, "changed.ts", "export const broken = ;\n");
+    expect(command(root, ["diff", "--cached", "--name-status"])).toContain("T\tchanged.ts");
+    const bad = run(root, scratch);
+    expect(bad.status, bad.output).toBe(1);
+    unchanged(root, bad.index);
+    stage(root, "changed.ts", "export const valid = 1;\n");
+    const good = run(root, scratch);
+    expect(good.status, good.output).toBe(0);
+    unchanged(root, good.index);
+    command(root, ["commit", "-qm", "fixture"]);
+    rmSync(join(root, "changed.ts"));
+    symlinkSync("/still/never/read", join(root, "changed.ts"));
+    command(root, ["add", "changed.ts"]);
+    const link = run(root, scratch);
+    expect(link.status, link.output).toBe(0);
+    unchanged(root, link.index);
+  });
   it("reads an explicitly selected alternate index without touching the default index", () => {
     const { root, scratch } = fixture();
     stage(root, "file.ts", "export const value = 1;\n");

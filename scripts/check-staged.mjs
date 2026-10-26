@@ -62,7 +62,7 @@ function main() {
     const changed = new Set(
       decode(
         git(
-          ["diff", "--cached", "--name-only", "--no-renames", "--diff-filter=ACM", "-z"],
+          ["diff", "--cached", "--name-only", "--no-renames", "--diff-filter=ACMT", "-z"],
           root,
           env,
         ),
