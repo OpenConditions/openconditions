@@ -7,6 +7,8 @@
     "dev": "turbo run dev",
     "clean": "turbo run clean && rm -rf node_modules",
     "typecheck": "turbo run typecheck && tsc -p scripts/tsconfig.json",
+    "check:staged": "node scripts/check-staged.mjs",
+    "verify:full": "pnpm lint && pnpm typecheck && pnpm check-credentials && pnpm check:model && pnpm check:feed-schemas && pnpm feeds:lint && pnpm test",
     "lint": "biome check . && prettier --check \"**/*.{md,yml,yaml}\" && pnpm check-import-boundaries",
     "format": "biome format --write . && prettier --write \"**/*.{md,yml,yaml}\"",
     "check-import-boundaries": "tsx scripts/check-import-boundaries.ts",

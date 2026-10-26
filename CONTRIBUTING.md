@@ -68,7 +68,18 @@ pnpm check:feed-schemas
 pnpm feeds:lint
 pnpm check:ci    # CI outcome and main reconciliation command fixtures
 pnpm test        # build workspace dependencies, then all Vitest projects
+pnpm verify:full # new explicit command: all deterministic Node checks above
 ```
+
+`verify:full` includes lint/import boundaries, workspace and script types, generated credentials,
+model artifacts, feed schemas, feed lint and the full Node suite. It needs Docker/PostGIS for database
+tests. For the same OpenLR cross-check as CI, install the hash-pinned
+`packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set
+`OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent
+interop or dependency audits below, or prove live provider/deployment behavior. For a docs-only change,
+use scoped Prettier checks; for Node behavior, run focused tests while iterating and `verify:full` before
+review. Resolver, wire-format/federation and dependency changes also need their corresponding checks
+below. CI retains every applicable gate on every PR.
 
 Python (the resolver):
 
@@ -92,17 +103,24 @@ Production dependency audits (after installing both sets of development dependen
 pnpm audit:production # pnpm audit + pip-audit, with zero findings required
 ```
 
-Git hooks enforce a two-stage local gate (Husky):
+Git hooks check staged work (Husky):
 
-- **pre-commit** — fast checks only: `pnpm lint` + `pnpm typecheck`. No Docker
-  required.
+- **pre-commit** — `node scripts/check-staged.mjs` checks staged TS/JS/JSON/JSONC with Biome and
+  Markdown/YAML with Prettier, using staged configuration and existing ignore rules. Feed JSONC keeps
+  its trailing-comma override; Python remains owned by its own tooling. Empty commits do not start
+  pnpm or resolve formatters. Only locally installed tools run; missing tools fail with an explicit
+  install instruction. No hook downloads dependencies.
 - **commit-msg** — validates the message against Conventional Commits
   (commitlint).
-- **pre-push** — the full test suite (`pnpm test`). The ingest's pipeline/sweep
-  suites use testcontainers and need Docker. Use `pnpm test:unit` for a local
-  check without Docker; the push gate and CI still run the full suite. Pushes
-  on one machine take turns on `${TMPDIR:-/tmp}/pre-push.lock`, so parallel
-  pushes from several worktrees do not run their suites at once.
+- **pre-push** — no automatic workspace checks, builds, tests or Docker. Run the appropriate explicit
+  commands before review; CI enforces the full checks. No shared push lock is used.
+
+The staged helper reads an isolated index snapshot and never formats source files or updates the
+index. Partially staged files are checked as they would be committed, even when the working copy is
+different. If a check fails, format/fix the working file, inspect the diff and stage only the intended
+hunks (`git add -p`). An index or HEAD change during checking fails and requires a retry; concurrent
+changes are preserved. Added/renamed regular files are checked; deleted files, symlinks and files
+owned by other tooling are not followed or checked. Run `pnpm check:staged` to repeat the hook manually.
 
 CI re-runs lint, typecheck, the full suite, the Python lint/tests, and both
 production dependency audits on every push and PR. The audits also run weekly
