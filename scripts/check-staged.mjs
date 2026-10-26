@@ -1,5 +1,14 @@
 import { spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import {
+  closeSync,
+  fstatSync,
+  mkdirSync,
+  mkdtempSync,
+  openSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
@@ -16,15 +25,20 @@ function git(args, cwd = process.cwd(), env = process.env) {
   return result.stdout;
 }
 function identity(path) {
+  let descriptor;
   try {
-    const stat = statSync(path, { bigint: true });
-    return {
-      bytes: readFileSync(path),
-      stamp: `${stat.ino}:${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`,
-    };
+    descriptor = openSync(path, "r");
+    const stamp = (stat) => `${stat.dev}:${stat.ino}:${stat.size}:${stat.mtimeNs}:${stat.ctimeNs}`;
+    const before = stamp(fstatSync(descriptor, { bigint: true }));
+    const bytes = readFileSync(descriptor);
+    if (before !== stamp(fstatSync(descriptor, { bigint: true })))
+      throw new Error("Git index changed while reading it. Review the index and retry.");
+    return { bytes, stamp: before };
   } catch (error) {
     if (error.code === "ENOENT") return { bytes: null, stamp: "absent" };
     throw error;
+  } finally {
+    if (descriptor !== undefined) closeSync(descriptor);
   }
 }
 function tool(module, args, cwd) {

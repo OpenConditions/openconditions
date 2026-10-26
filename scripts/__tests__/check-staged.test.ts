@@ -1,13 +1,16 @@
 import { spawnSync } from "node:child_process";
 import {
+  closeSync,
   copyFileSync,
   existsSync,
+  fstatSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
-  statSync,
   symlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -55,6 +58,14 @@ function run(root: string, scratch: string, script = helper) {
 }
 function unchanged(root: string, index: Buffer) {
   expect(readFileSync(join(root, ".git/index"))).toEqual(index);
+}
+function fileState(path: string) {
+  const descriptor = openSync(path, "r");
+  try {
+    return { bytes: readFileSync(descriptor), stat: fstatSync(descriptor, { bigint: true }) };
+  } finally {
+    closeSync(descriptor);
+  }
 }
 function localHelper(root: string, body?: string) {
   const script = join(root, "scripts/check-staged.mjs");
@@ -239,8 +250,7 @@ describe("staged checker command", () => {
     const { root, scratch } = fixture();
     stage(root, "file.ts", "export const value = 1;\n");
     const config = join(root, ".git/config");
-    const before = statSync(config, { bigint: true });
-    const bytes = readFileSync(config);
+    const before = fileState(config);
     const index = readFileSync(join(root, ".git/index"));
     const result = spawnSync(process.execPath, [helper], {
       cwd: root,
@@ -248,8 +258,11 @@ describe("staged checker command", () => {
       env: { ...process.env, TMPDIR: scratch, GIT_DIR: join(root, ".git"), GIT_WORK_TREE: root },
     });
     expect(result.status, result.stderr).toBe(0);
-    expect(statSync(config, { bigint: true }).ctimeNs).toBe(before.ctimeNs);
-    expect(readFileSync(config)).toEqual(bytes);
+    const after = fileState(config);
+    expect(after.stat.dev).toBe(before.stat.dev);
+    expect(after.stat.ino).toBe(before.stat.ino);
+    expect(after.stat.ctimeNs).toBe(before.stat.ctimeNs);
+    expect(after.bytes).toEqual(before.bytes);
     unchanged(root, index);
     expect(readdirSync(scratch)).toEqual([]);
   });
@@ -298,4 +311,62 @@ describe("staged checker command", () => {
     unchanged(root, result.index);
     expect(readFileSync(join(root, "concurrent.txt"), "utf8")).toBe("keep unstaged");
   });
+  it.each(["replace", "overwrite"])(
+    "keeps index bytes and identity coherent during a read-time %s",
+    (operation) => {
+      const { root: temporaryRoot, scratch } = fixture();
+      const root = realpathSync(temporaryRoot);
+      stage(root, "file.ts", "export const broken = ;\n");
+      const index = join(root, ".git/index");
+      const replacement = join(root, "replacement-index");
+      copyFileSync(index, replacement);
+      writeFileSync(join(root, "file.ts"), "export const valid = 1;\n");
+      const added = spawnSync("git", ["add", "file.ts"], {
+        cwd: root,
+        env: { ...process.env, GIT_INDEX_FILE: replacement },
+      });
+      expect(added.status).toBe(0);
+      const replacementBytes = readFileSync(replacement);
+      const observed = join(root, "observed-staged-bytes");
+      const closed = join(root, "closed-index-descriptor");
+      const script = localHelper(
+        root,
+        `const fs=require('node:fs');
+        fs.writeFileSync(${JSON.stringify(observed)},fs.readFileSync(process.argv.at(-1)));`,
+      );
+      const preload = join(root, "read-race.cjs");
+      writeFileSync(
+        preload,
+        `const fs=require('node:fs');
+        const index=${JSON.stringify(index)}, replacement=${JSON.stringify(replacement)};
+        const open=fs.openSync, read=fs.readFileSync, close=fs.closeSync;
+        let descriptor, changed=false;
+        fs.openSync=function(path,...args){const fd=open.call(fs,path,...args);if(path===index)descriptor=fd;return fd;};
+        fs.readFileSync=function(file,...args){
+          if(!changed&&(file===index||file===descriptor)){
+            changed=true;
+            ${operation === "replace" ? "fs.renameSync(index,index+'.previous');fs.renameSync(replacement,index);" : "fs.writeFileSync(index,read.call(fs,replacement));"}
+          }
+          return read.call(fs,file,...args);
+        };
+        fs.closeSync=function(fd){const result=close.call(fs,fd);
+          if(fd===descriptor){descriptor=undefined;let released=false;try{fs.fstatSync(fd);}catch(error){released=error.code==='EBADF';}
+            if(released)fs.writeFileSync(${JSON.stringify(closed)},'closed');}
+          return result;
+        };require('node:module').syncBuiltinESMExports();`,
+      );
+      const result = spawnSync(process.execPath, ["--require", preload, script], {
+        cwd: root,
+        encoding: "utf8",
+        env: { ...process.env, TMPDIR: scratch },
+      });
+      expect(result.status, result.stderr).toBe(1);
+      expect(result.stderr).toMatch(/index changed/i);
+      expect(readFileSync(index)).toEqual(replacementBytes);
+      expect(readFileSync(join(root, "file.ts"), "utf8")).toBe("export const valid = 1;\n");
+      expect(existsSync(observed)).toBe(false);
+      expect(readFileSync(closed, "utf8")).toBe("closed");
+      expect(readdirSync(scratch)).toEqual([]);
+    },
+  );
 });
