@@ -290,6 +290,21 @@ process.exit(result.status ?? 91);
     if (staged) git(f.root, ["add", "."]);
     expect(f.run().status).not.toBe(0);
   });
+  it("rejects staged changes canceled only in the working tree", () => {
+    const f = fixture();
+    const path = join(f.root, "feeds/roads/nl.jsonc");
+    const original = readFileSync(path);
+    writeFileSync(path, "staged bytes\n");
+    git(f.root, ["add", "--", "feeds/roads/nl.jsonc"]);
+    writeFileSync(path, original);
+    expect(git(f.root, ["diff", "--quiet", "HEAD", "--"])).toBe("");
+    expect(
+      spawnSync("git", ["diff", "--cached", "--quiet", "HEAD", "--"], { cwd: f.root }).status,
+    ).toBe(1);
+    const result = f.run();
+    expect(result.status, result.output).not.toBe(0);
+    expect(result.stdout).toBe("");
+  });
   it("rejects an untracked catalogue input instead of checking different bytes", () => {
     const f = fixture();
     put(f.root, "feeds/roads/untracked.jsonc");

@@ -62,8 +62,14 @@ function cleanCheckout(expected) {
   if (git(["rev-parse", "--verify", "HEAD"]).text.trim() !== expected) {
     throw new Error("Checked-out HEAD does not match the event merge SHA");
   }
+  if (
+    git(["diff", "--no-ext-diff", "--no-textconv", "--cached", "--quiet", "HEAD", "--"], [0, 1])
+      .status
+  ) {
+    throw new Error("Tracked index differs from the event checkout");
+  }
   if (git(["diff", "--no-ext-diff", "--no-textconv", "--quiet", "HEAD", "--"], [0, 1]).status) {
-    throw new Error("Tracked working tree/index differs from the event checkout");
+    throw new Error("Tracked working tree differs from the event checkout");
   }
   if (git(["ls-files", "--others", "-z", "--", "feeds"]).text !== "") {
     throw new Error("Untracked catalogue files differ from the event checkout");
