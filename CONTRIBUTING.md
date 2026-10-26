@@ -50,7 +50,9 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
 
 # Work on the Python resolver:
 cd services/openlr-resolver
-pip install -r requirements.txt -r requirements-dev.txt
+python scripts/check_dependencies.py
+python -m pip install --require-hashes --only-binary=:all: -r requirements-build.txt
+python -m pip install --require-hashes --no-build-isolation -r requirements-dev.txt
 ```
 
 ## Quality bar

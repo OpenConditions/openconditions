@@ -149,13 +149,52 @@ python -m scripts.build_graph --pbf netherlands-latest.osm.pbf --database-url "$
 
 ```sh
 python3 -m venv .venv && . .venv/bin/activate
-pip install -r requirements-dev.txt
+python scripts/check_dependencies.py
+python -m pip install --require-hashes --only-binary=:all: -r requirements-build.txt
+python -m pip install --require-hashes --no-build-isolation -r requirements-dev.txt
 pytest                 # unit + PostGIS-testcontainer integration tests
 python -m app          # run the service (PORT defaults to 4200)
 ```
 
 The PostGIS integration tests require Docker and are skipped automatically when
 it is unavailable.
+
+### Dependency inputs and hash locks
+
+`requirements.in` owns the exact runtime pins. `requirements-build.in` owns the build tools for
+`openlr`, which is distributed only as source. `requirements-dev.in` includes the runtime hash lock
+and adds the test, lint and audit tools. The corresponding `pyproject.toml` dependency groups must
+match these direct inputs. `python scripts/check_dependencies.py` checks their parity offline,
+including requested extras, SHA256 records and matching runtime versions in the dev lock. It rejects
+unsupported requirement syntax instead of silently ignoring it; it does not replace dependency
+resolution, clean installs or audits.
+
+Regenerate with Python 3.14, pip-tools 7.6.2 and pip 26.2.1. The wrapper checks these versions, compiles
+build/runtime/dev locks in order, retains existing compatible resolutions and does not request a
+general upgrade. One way to obtain that isolated compiler environment is:
+
+```sh
+uv tool run --from pip-tools==7.6.2 --with pip==26.2.1 --python 3.14 python -m scripts.lock_dependencies
+```
+
+Review the resulting version changes, rerun parity, install both runtime and dev locks into clean
+environments using the commands above, run `python -m pip check`, Ruff, pytest and production audits.
+The application metadata still supports Python 3.12 and newer; the compiler/CI line is Python 3.14.
+An install or runtime claim applies only to the interpreter and platform actually checked.
+
+CI installs the wheel-only build-tool lock first, then verifies runtime/dev distributions with
+`--require-hashes --no-build-isolation`. This builds `openlr` using the pinned tools without pip
+fetching an unpinned isolated backend. Do not require wheels for the runtime lock: `openlr` has no
+wheel. Hashes authenticate the downloaded source or wheel, not a reproducible native build.
+The build-tool audit reads every pin from the complete build lock with pip-audit's
+`--strict --require-hashes --disable-pip` mode; clean installs and `pip check` separately
+validate its dependency closure. This also avoids pip's resolver omitting already-present build tools
+from its audit report. The existing production audits remain unchanged.
+
+The Alpine image also compiles osmium, which has no musllinux wheel and needs scikit-build-core,
+pybind11 and native build prerequisites. That image builder is unchanged here; its isolated build
+dependencies and actual image qualification remain a separate task. This CI build-tool lock does not
+claim to cover the Alpine osmium build chain.
 
 ## Docker
 
