@@ -101,9 +101,6 @@ jobs:
       - name: Credential guide up to date
         run: pnpm check-credentials
 
-      - name: Model artifacts up to date
-        run: pnpm check:model
-
       - name: Test
         run: pnpm test
         env:

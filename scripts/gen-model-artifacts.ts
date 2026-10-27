@@ -10,7 +10,8 @@ import * as prettier from "prettier";
  * packages/model-registry/schemas/ and the generated registry section of
  * docs/model.md, both rendered from the production registry. `--write`
  * regenerates them; without it the script lists stale files and exits 1
- * (pre-commit and the artifacts test).
+ * for the standalone `check:model` command. CI and `verify:full` use the
+ * same check through the artifacts test after the workspace build.
  */
 
 const ROOT = fileURLToPath(new URL("../", import.meta.url));
