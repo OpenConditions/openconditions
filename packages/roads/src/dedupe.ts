@@ -81,6 +81,9 @@ function textsCompatible(a: RoadEvent, b: RoadEvent): boolean {
 
 const norm = (s: string | undefined) => s?.trim().toLowerCase() || undefined;
 
+/** A description as text to compare, whatever its spacing and case. */
+const descriptionKey = (s: string | undefined) => norm(s?.replace(/\s+/g, " "));
+
 /** The direction an event states, on itself or, failing that, on its roads. */
 function directionOf(e: RoadEvent): string | undefined {
   const own = norm(e.direction);
@@ -111,12 +114,20 @@ const json = (v: unknown) => JSON.stringify(v);
  * Whether two events say different things about the road, so are two events
  * even at one place with one text: opposite directions of a carriageway, two
  * occurrences of a recurring closure, different lanes, vehicles, limits or
- * roads. A fact only one of them states is no difference: the other may
- * simply be the sparser copy.
+ * roads, or descriptions that say different things. A fact only one of them
+ * states is no difference: the other may simply be the sparser copy.
+ *
+ * Descriptions must match, not merely resemble: an on-ramp and an off-ramp
+ * closure of one junction differ by a word, while a copy's text can differ
+ * wholesale, so no similarity measure separates them. A follow-up that
+ * rewrites its incident's text therefore stays apart from it too, unless the
+ * feed marks its follow-ups ({@link dropSupersededRoadEvents}): a second
+ * marker costs less than a dropped closure.
  */
 function distinct(a: RoadEvent, b: RoadEvent): boolean {
   const differ = <T>(x: T | undefined, y: T | undefined) =>
     x !== undefined && y !== undefined && x !== y;
+  if (differ(descriptionKey(a.description), descriptionKey(b.description))) return true;
   if (differ(directionOf(a), directionOf(b))) return true;
   if (differ(instantKey(a.validFrom), instantKey(b.validFrom))) return true;
   if (differ(instantKey(a.validTo), instantKey(b.validTo))) return true;
@@ -157,6 +168,45 @@ function newestByDataUpdatedAt(cluster: RoadEvent[]): RoadEvent {
     }
   }
   return best;
+}
+
+/** When an event was last updated, as epoch milliseconds, or NaN when it does not say. */
+const updatedMs = (e: RoadEvent) => Date.parse(e.situation?.sourceUpdatedAt ?? e.dataUpdatedAt);
+
+/**
+ * Drops the events a feed's follow-ups replace. Some publishers write an
+ * incident's progress ("the car was moved") as a new record beside the
+ * original rather than revising it, so its text differs and the fold keeps
+ * both. A follow-up replaces every event of its type (and the source's own
+ * type, where both state one) within the fold distance that was updated
+ * before it, earlier follow-ups included, so only the latest word on an
+ * incident stays; an original updated at the same instant is replaced too,
+ * a follow-up is not. An event that does not say when it was updated is
+ * never replaced, nor replaces one.
+ */
+export function dropSupersededRoadEvents(
+  events: RoadEvent[],
+  isFollowUp: (event: RoadEvent) => boolean,
+): RoadEvent[] {
+  const followUps = events.filter(isFollowUp);
+  if (followUps.length === 0) return events;
+  const replaced = (e: RoadEvent) => {
+    const at = updatedMs(e);
+    if (!Number.isFinite(at)) return false;
+    const pt = representativePoint(e.geometry);
+    const ownFollowUp = isFollowUp(e);
+    return followUps.some((f) => {
+      if (f === e || f.type !== e.type) return false;
+      // A feed's own types are finer than the coarse type many of them map to.
+      if (f.subtype !== undefined && e.subtype !== undefined && f.subtype !== e.subtype) {
+        return false;
+      }
+      const fAt = updatedMs(f);
+      if (!Number.isFinite(fAt) || fAt < at || (fAt === at && ownFollowUp)) return false;
+      return haversineMeters(representativePoint(f.geometry), pt) <= MERGE_DISTANCE_M;
+    });
+  };
+  return events.filter((e) => !replaced(e));
 }
 
 /**

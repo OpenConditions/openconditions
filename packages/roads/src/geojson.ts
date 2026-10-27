@@ -7,7 +7,7 @@ import {
 import { jcs, sha256Hex } from "@openconditions/model";
 import { type RoadClassification, registeredClassification } from "@openconditions/model-roads";
 import type { Geometry } from "geojson";
-import { dedupeRoadEvents } from "./dedupe.js";
+import { dedupeRoadEvents, dropSupersededRoadEvents } from "./dedupe.js";
 import {
   type GeoJsonMapping,
   isRoadEventType,
@@ -121,6 +121,13 @@ function resolveSeverity(
   return { severity: "unknown", severitySource: "derived" };
 }
 
+/** Whether the feed marks a feature as a follow-up of an earlier record (see `followUp`). */
+function isFollowUp(props: Record<string, unknown>, mapping: GeoJsonMapping): boolean {
+  if (!mapping.followUp) return false;
+  const marker = str(get(props, mapping.followUp.field));
+  return marker !== undefined && mapping.followUp.prefixes.some((p) => marker.startsWith(p));
+}
+
 function defaultHeadline(type: RoadEventType): string {
   return type === "other"
     ? "Traffic information"
@@ -148,6 +155,7 @@ export function featuresToRoadEvents(
 ): RoadEvent[] {
   const mapping = src.geojson ?? {};
   const out: RoadEvent[] = [];
+  const followUps = new Set<RoadEvent>();
   let skippedNoGeometry = 0;
   let malformed = 0;
   let unknownValues = 0;
@@ -216,8 +224,9 @@ export function featuresToRoadEvents(
     const { unmapped: severityUnmapped, ...severity } = resolveSeverity(severityToken, mapping);
     if (unmapped) unknownValues++;
     if (severityUnmapped) unknownValues++;
+    const followUp = isFollowUp(props, mapping);
 
-    out.push({
+    const event: RoadEvent = {
       id: `${src.id}:${localId}`,
       source: src.id,
       sourceFormat: format,
@@ -255,7 +264,9 @@ export function featuresToRoadEvents(
       dataUpdatedAt: updated ?? now,
       fetchedAt: now,
       isStale: false,
-    });
+    };
+    out.push(event);
+    if (followUp) followUps.add(event);
   });
 
   if (skippedNoGeometry > 0) {
@@ -267,5 +278,5 @@ export function featuresToRoadEvents(
   recordSkipped(src.id, "malformed", malformed);
   recordSkipped(src.id, "unknown_value", unknownValues);
 
-  return dedupeRoadEvents(out);
+  return dedupeRoadEvents(dropSupersededRoadEvents(out, (e) => followUps.has(e)));
 }

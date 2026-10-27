@@ -426,6 +426,39 @@ describe("parseGeoJson — validity dates", () => {
   });
 });
 
+describe("parseGeoJson — follow-ups", () => {
+  const FOLLOW_UPS: SourceDescriptor = {
+    ...SRC,
+    timeZone: "Asia/Bangkok",
+    geojson: {
+      idField: "id",
+      descriptionField: "text",
+      updatedField: "start",
+      followUp: { field: "title", prefixes: ["คืบหน้า"] },
+    },
+  };
+  const record = (id: string, title: string, start: string, text: string) => ({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [100.96647, 13.86298] },
+    properties: { id, title, start, text },
+  });
+  const original = record("1", "อุบัติเหตุ", "2026-06-26 01:17:46", "Accident blocking lanes");
+  const progress = record("3", "คืบหน้าอุบัติเหตุ", "2026-06-26 01:21:48", "Car was moved");
+
+  it("keeps only the follow-up of an incident whose text it rewrote", () => {
+    expect(parseGeoJson(fc([original, progress]), FOLLOW_UPS).map((e) => e.id)).toEqual([
+      "test-gj:3",
+    ]);
+  });
+
+  it("keeps both records when the feed declares no follow-ups", () => {
+    const { followUp: _, ...mapping } = FOLLOW_UPS.geojson!;
+    expect(
+      parseGeoJson(fc([original, progress]), { ...FOLLOW_UPS, geojson: mapping }),
+    ).toHaveLength(2);
+  });
+});
+
 describe("parseGeoJson — record filter", () => {
   const point = (props: Record<string, unknown>) => ({
     type: "Feature",

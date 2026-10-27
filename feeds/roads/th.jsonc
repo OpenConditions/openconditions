@@ -24,6 +24,10 @@
         "headlineField": "title_en",
         "descriptionField": "description_en",
         "updatedField": "start",
+        // An incident's progress ("the car was moved") is a new record beside
+        // the original, its Thai title opening คืบหน้า ("progress"); the English
+        // text marks only some of them.
+        "followUp": { "field": "title", "prefixes": ["คืบหน้า"] },
       },
       "freshnessWindowSec": 900,
       "license": "CC-BY-4.0",

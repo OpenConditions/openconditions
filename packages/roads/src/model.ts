@@ -94,6 +94,12 @@ export interface GeoJsonMapping {
    */
   filter?: GeoJsonRecordFilter[];
   /**
+   * How a publisher that writes an incident's progress as a new record marks
+   * it: a record whose `field` starts with one of `prefixes` replaces the
+   * earlier records of its type around it (see `dropSupersededRoadEvents`).
+   */
+  followUp?: GeoJsonFollowUp;
+  /**
    * When the feature carries no usable geometry and all four parse to finite
    * numbers, synthesise `LineString [[startLon,startLat],[endLon,endLat]]`.
    * Values must already be WGS84 — properties are never reprojected, unlike the
@@ -103,6 +109,12 @@ export interface GeoJsonMapping {
   startLatField?: string;
   endLonField?: string;
   endLatField?: string;
+}
+
+/** {@link GeoJsonMapping.followUp}. */
+export interface GeoJsonFollowUp {
+  field: string;
+  prefixes: string[];
 }
 
 /** One clause of {@link GeoJsonMapping.filter}. */

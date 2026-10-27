@@ -64,6 +64,10 @@ const geoJsonMappingSchema = z
           .strict(),
       )
       .optional(),
+    followUp: z
+      .object({ field: z.string(), prefixes: z.array(z.string().min(1)).nonempty() })
+      .strict()
+      .optional(),
     startLonField: z.string().optional(),
     startLatField: z.string().optional(),
     endLonField: z.string().optional(),

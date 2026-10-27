@@ -1448,6 +1448,27 @@
                   "additionalProperties": false
                 }
               },
+              "followUp": {
+                "type": "object",
+                "properties": {
+                  "field": {
+                    "type": "string"
+                  },
+                  "prefixes": {
+                    "minItems": 1,
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  }
+                },
+                "required": [
+                  "field",
+                  "prefixes"
+                ],
+                "additionalProperties": false
+              },
               "startLonField": {
                 "type": "string"
               },
