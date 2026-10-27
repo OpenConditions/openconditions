@@ -283,6 +283,13 @@ class CandidateTests(unittest.TestCase):
             def do_GET(self):
                 owner.calls.append((self.path, self.headers.get("Authorization")))
                 status, headers, body = owner.response(self.path)
+                if any(
+                    "\r" in item or "\n" in item
+                    for pair in headers.items()
+                    for item in pair
+                ):
+                    self.send_error(500, "Invalid fixture response header")
+                    return
                 self.send_response(status)
                 for name, value in headers.items():
                     self.send_header(name, value)
@@ -373,11 +380,13 @@ class CandidateTests(unittest.TestCase):
             if artifact and len(part) == 1:
                 value = artifact
             elif artifact and part[1:] == ["zip"]:
+                if not M.positive(artifact["id"]):
+                    return 400, {}, b"invalid fixture artifact ID"
                 return (
                     302,
                     {
                         "Location": "https://fixture.blob.core.windows.net/blob/"
-                        + part[0]
+                        + str(int(artifact["id"]))
                     },
                     b"",
                 )
@@ -595,6 +604,21 @@ class CandidateTests(unittest.TestCase):
         artifact.update(digest="sha256:" + Q.sha(value), size_in_bytes=len(value))
         with self.assertRaisesRegex(ValueError, "candidate"):
             M.validate(self.api, SHA, 123, 2, now=NOW)
+
+    def test_http_fixture_rejects_response_header_newlines(self):
+        for headers in [
+            {"Location": "https://fixture.invalid/\r\nInjected: yes"},
+            {"Location": "https://fixture.invalid/\nInjected: yes"},
+            {"Safe\r\nInjected": "yes"},
+            {"Safe\nInjected": "yes"},
+        ]:
+            with self.subTest(headers=headers):
+                self.response = lambda route: (302, headers, b"")
+                with self.api.request(
+                    "https://api.github.com/header-boundary", {}, 5
+                ) as response:
+                    self.assertEqual(response.status, 500)
+                    self.assertIsNone(response.headers.get("Injected"))
 
     def test_redirect_cannot_exfiltrate_token_and_api_errors_fail(self):
         original = self.response
