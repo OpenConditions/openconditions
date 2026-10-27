@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync } from "node:fs";
 import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -11,6 +12,7 @@ import {
   type Env,
   type FeedPayloads,
   type FetchFn,
+  feedCredentialNames,
   feedSecretValues,
   fetchEndpoint,
   guardedFetch,
@@ -50,6 +52,7 @@ export interface FeedCheck {
   feed: CatalogFeed;
   feedId: string;
   level: "ok" | "skipped" | "warning" | "error";
+  skipReason?: "keyed" | "disabled" | "configuration";
   message?: string;
   /** Records the feed parsed into, when it was fetched. */
   records?: number;
@@ -76,6 +79,11 @@ export interface FeedsCheckOptions {
   fetch?: FetchFn;
   /** Where credentials are read; defaults to `process.env`. */
   env?: Env;
+  /** Monitoring excludes every configured credential/auth feed, even if an env value exists. */
+  keylessOnly?: boolean;
+  onProgress?: (
+    event: { kind: "plan"; feeds: CatalogFeed[] } | { kind: "result"; result: FeedCheck },
+  ) => void;
 }
 
 function errorText(err: unknown): string {
@@ -127,7 +135,12 @@ function dataRoles(feed: CatalogFeed): string[] {
   return [...roles.filter((r) => sources.has(r)), ...roles.filter((r) => !sources.has(r))];
 }
 
-async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promise<FeedCheck> {
+async function checkFeed(
+  feed: CatalogFeed,
+  baseFetch: FetchFn,
+  env: Env,
+  keylessOnly = false,
+): Promise<FeedCheck> {
   const result = (
     level: FeedCheck["level"],
     message?: string,
@@ -142,11 +155,25 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
     ...stats,
   });
 
-  if (feed.disabled) return result("skipped", `disabled: ${feed.disabled.reason}`);
+  if (feed.disabled)
+    return { ...result("skipped", `disabled: ${feed.disabled.reason}`), skipReason: "disabled" };
+  if (keylessOnly && (feed.auth || feedCredentialNames(feed).some((name) => !name.setting))) {
+    return {
+      ...result("skipped", "keyless mode: configured credentials/auth are not tested"),
+      skipReason: "keyed",
+    };
+  }
   const missing = missingCredentials(feed, env);
-  if (missing.length > 0) return result("skipped", `missing configuration: ${missing.join(", ")}`);
+  if (missing.length > 0)
+    return {
+      ...result("skipped", `missing configuration: ${missing.join(", ")}`),
+      skipReason: "keyed",
+    };
   if (feed.auth?.kind === "oauth2-authorization-code") {
-    return result("skipped", "reads an OAuth2 grant, which only the ingest service holds");
+    return {
+      ...result("skipped", "reads an OAuth2 grant, which only the ingest service holds"),
+      skipReason: "keyed",
+    };
   }
 
   let format: ReturnType<typeof formatOf>;
@@ -216,7 +243,10 @@ async function checkFeed(feed: CatalogFeed, baseFetch: FetchFn, env: Env): Promi
         ...(eachSourceUrls ? { eachSourceUrls } : {}),
       });
       if (fetched.status === "no-endpoint") {
-        return result("skipped", `endpoint ${role} resolves to no URL (missing configuration)`);
+        return {
+          ...result("skipped", `endpoint ${role} resolves to no URL (missing configuration)`),
+          skipReason: "configuration",
+        };
       }
       if (fetched.status === "not-modified") continue;
       if (fetched.status === "partial") {
@@ -313,7 +343,12 @@ export async function checkFeeds(opts: FeedsCheckOptions): Promise<FeedCheck[]> 
   );
   const baseFetch = opts.fetch ?? guardedFetch();
   const results: FeedCheck[] = [];
-  for (const feed of feeds) results.push(await checkFeed(feed, baseFetch, env));
+  opts.onProgress?.({ kind: "plan", feeds });
+  for (const feed of feeds) {
+    const result = await checkFeed(feed, baseFetch, env, opts.keylessOnly);
+    results.push(result);
+    opts.onProgress?.({ kind: "result", result });
+  }
   return results;
 }
 
@@ -341,11 +376,11 @@ function formatResult(r: FeedCheck, annotate: boolean): string {
 }
 
 /**
- * `feeds:check [files…] [--report <path>]`: checks the feeds of the given
+ * `feeds:check [files…] [--keyless] [--report <path>] [--result <path>]`: checks the feeds of the given
  * region files (every file when none is given) and returns the exit code, 1 on
  * a catalogue, parse or format error or a file that is no region file, 2 on a
- * usage error. `--report` writes the liveness report of the failing feeds and,
- * on GitHub Actions, sets the `found` step output.
+ * usage error. Reports include completion/coverage and retain failing-feed diagnostics;
+ * `--result` writes machine evidence. A failing-feed report also sets the legacy `found` output.
  */
 export async function runFeedsCheck(
   argv: readonly string[],
@@ -354,29 +389,52 @@ export async function runFeedsCheck(
   const env = deps.env ?? process.env;
   const files: string[] = [];
   let report: string | undefined;
+  let resultFile: string | undefined;
+  let keylessOnly = false;
   for (let i = 0; i < argv.length; i++) {
-    if (argv[i] !== "--report") {
+    if (argv[i] === "--keyless") {
+      keylessOnly = true;
+      continue;
+    }
+    if (argv[i] !== "--report" && argv[i] !== "--result") {
       files.push(argv[i] as string);
       continue;
     }
-    report = argv[++i];
-    if (report === undefined || report.startsWith("--")) {
-      console.error("usage: feeds:check [files…] [--report <path>]");
+    const option = argv[i];
+    const value = argv[++i];
+    if (value === undefined || value.startsWith("--")) {
+      console.error("usage: feeds:check [files…] [--keyless] [--report <path>] [--result <path>]");
       return 2;
     }
+    if (option === "--report") report = value;
+    else resultFile = value;
+  }
+  if (report && resultFile && path.resolve(report) === path.resolve(resultFile)) {
+    console.error("report and result paths must differ");
+    return 2;
   }
 
-  let results: FeedCheck[];
+  const startedAt = new Date().toISOString();
+  const results: FeedCheck[] = [];
+  let planned: CatalogFeed[] | undefined;
+  let checksComplete = false;
+  let failureStage: "catalogue" | "checker" | "report" | null = null;
   try {
-    results = await checkFeeds({
+    await checkFeeds({
       feedsDir: deps.feedsDir ?? FEEDS_DIR,
       ...(files.length > 0 ? { files } : {}),
       ...(deps.fetch ? { fetch: deps.fetch } : {}),
       env,
+      keylessOnly,
+      onProgress: (event) => {
+        if (event.kind === "plan") planned = event.feeds;
+        else results.push(event.result);
+      },
     });
+    checksComplete = true;
   } catch (err) {
     console.error(`error    ${errorText(err)}`);
-    return 1;
+    failureStage = planned ? "checker" : "catalogue";
   }
 
   const annotate = env["GITHUB_ACTIONS"] === "true";
@@ -391,14 +449,118 @@ export async function runFeedsCheck(
       ? [{ feed: r.feed, level: r.level, ...(r.message ? { message: r.message } : {}) }]
       : [],
   );
-  if (report !== undefined && failures.length > 0) {
-    await mkdir(path.dirname(report), { recursive: true });
-    await writeFile(report, renderReport(failures), "utf8");
-    console.log(`feeds:check: wrote the report of ${failures.length} failing feed(s) to ${report}`);
-    const output = env["GITHUB_OUTPUT"];
-    if (output) await appendFile(output, "found=true\n");
+  const value = (key: string, pattern: RegExp) => {
+    const text = env[key];
+    return text && pattern.test(text) ? text : null;
+  };
+  const context = {
+    sourceSha: value("GITHUB_SHA", /^[a-f0-9]{40}$/),
+    repository: value("GITHUB_REPOSITORY", /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/),
+    runId: value("GITHUB_RUN_ID", /^[1-9]\d*$/),
+    runAttempt: value("GITHUB_RUN_ATTEMPT", /^[1-9]\d*$/),
+  };
+  const coverage = {
+    planned: planned?.length ?? null,
+    completed: results.length,
+    checked: results.filter((r) => r.level !== "skipped").length,
+    skipped: {
+      keyed: results.filter((r) => r.skipReason === "keyed").length,
+      disabled: results.filter((r) => r.skipReason === "disabled").length,
+      configuration: results.filter((r) => r.skipReason === "configuration").length,
+    },
+    onDemandProbes: results.filter((r) => r.level !== "skipped" && r.feed.onDemand).length,
+  };
+  const outcomes = {
+    ok: count("ok"),
+    warning: count("warning"),
+    error: count("error"),
+    skipped: count("skipped"),
+  };
+  const applicableComplete =
+    checksComplete &&
+    coverage.planned === coverage.completed &&
+    coverage.skipped.configuration === 0;
+  const providerOutcome = !checksComplete
+    ? "unknown"
+    : failures.length
+      ? "unhealthy"
+      : coverage.checked > 0
+        ? "healthy"
+        : "not-assessed";
+  const checkedAt = new Date().toISOString();
+  let reportComplete = report === undefined;
+  let reportSha256: string | null = null;
+  if (report !== undefined) {
+    const header = [
+      "<!-- openconditions:feed-liveness:v1 -->",
+      keylessOnly ? "# Keyless feed liveness evidence" : "# Feed liveness evidence",
+      "",
+      `Source SHA: \`${context.sourceSha ?? "unavailable"}\`. Repository: \`${context.repository ?? "unavailable"}\`. Run: ${context.runId ?? "unavailable"}; attempt: ${context.runAttempt ?? "unavailable"}.`,
+      "",
+      `Started: ${startedAt}. Checked: ${checkedAt}. Checker execution: ${checksComplete ? "complete" : "INCOMPLETE"}. Applicable coverage: ${applicableComplete ? "complete within the selected scope" : "PARTIAL/UNKNOWN"}. Selection: ${files.length ? "selected files" : "whole catalogue"}. Provider outcome among checked feeds: ${providerOutcome}.`,
+      "",
+      `Coverage: ${coverage.completed}/${coverage.planned ?? "unknown"} outcomes; ${coverage.checked} checked; ${coverage.skipped.keyed} keyed, ${coverage.skipped.disabled} disabled and ${coverage.skipped.configuration} configuration skips. On-demand feeds use only their configured probe cell (${coverage.onDemandProbes} checked).`,
+      "",
+      `${keylessOnly ? "Keyed and skipped feeds were not assessed." : "Configured credentials were permitted; skipped feeds were not assessed."} No automatic issue state change is performed. A healthy applicable run permits maintainer review of an earlier report against the checked IDs and scope; it does not prove recovery of disabled, removed or untested feeds.`,
+      "",
+      ...(!applicableComplete
+        ? [
+            "This is incomplete/partial evidence and must not replace a complete monitoring report.",
+            "",
+          ]
+        : []),
+      ...(failures.length
+        ? [renderReport(failures)]
+        : ["No failing feed outcomes were recorded in the completed portion of this check.", ""]),
+    ].join("\n");
+    try {
+      await mkdir(path.dirname(report), { recursive: true });
+      await writeFile(report, header, "utf8");
+      reportSha256 = createHash("sha256").update(header).digest("hex");
+      reportComplete = true;
+      if (failures.length > 0 && env["GITHUB_OUTPUT"])
+        await appendFile(env["GITHUB_OUTPUT"], "found=true\n");
+    } catch (err) {
+      console.error(`error    report: ${errorText(err)}`);
+      failureStage ??= "report";
+    }
   }
-  return count("error") > 0 ? 1 : 0;
+  const complete = checksComplete && reportComplete && failureStage === null;
+  if (resultFile) {
+    const receipt = {
+      version: 1,
+      context,
+      startedAt,
+      checkedAt,
+      finishedAt: new Date().toISOString(),
+      selection: files.length ? "selected" : "catalogue",
+      keylessOnly,
+      complete,
+      checksComplete,
+      reportComplete,
+      failureStage,
+      applicableComplete,
+      providerOutcome,
+      coverage,
+      outcomes,
+      reportSha256,
+      recoveryReview:
+        complete && applicableComplete && files.length === 0 && providerOutcome === "healthy",
+      results: results.map((r) => ({
+        feedId: r.feedId,
+        level: r.level,
+        ...(r.skipReason ? { skipReason: r.skipReason } : {}),
+      })),
+    };
+    try {
+      await mkdir(path.dirname(resultFile), { recursive: true });
+      await writeFile(resultFile, `${JSON.stringify(receipt, null, 2)}\n`, "utf8");
+    } catch (err) {
+      console.error(`error    result: ${errorText(err)}`);
+      return 1;
+    }
+  }
+  return !complete || count("error") > 0 ? 1 : 0;
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {

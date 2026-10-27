@@ -8,53 +8,55 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: feed-liveness
+  cancel-in-progress: false
+
 jobs:
   liveness:
     name: check keyless feeds are alive
+    if: github.repository == 'OpenConditions/openconditions' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    # Retain the previous Actions default; the observed 42m56 run cannot justify 15m.
+    timeout-minutes: 360
     permissions:
       contents: read
-      issues: write # to open the failing-feed issue
+      issues: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        id: checkout
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+        id: pnpm
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        id: node
         with:
           node-version-file: .nvmrc
-      - run: pnpm install --frozen-lockfile
-      - name: Check keyless feeds
-        id: liveness
-        # Keyless feeds only: the runner holds no feed secrets, so every keyed
-        # feed is skipped. When a feed fails, the check writes ./liveness/out.md
-        # and sets found=true, and we report via an issue below. A parse error
-        # also exits 1; the job carries on to open the issue (non-gating).
-        continue-on-error: true
-        run: pnpm feeds:check --report liveness/out.md
-      - name: Find existing failing-feed issue
-        id: find-issue
-        if: steps.liveness.outputs.found == 'true'
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+      - name: Install, build, check and report with completion evidence
+        id: execution
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/run-feed-liveness.mjs
+      - name: Record setup and execution outcome
+        if: always()
+        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          PNPM_OUTCOME: ${{ steps.pnpm.outcome }}
+          NODE_OUTCOME: ${{ steps.node.outcome }}
+          EXECUTION_OUTCOME: ${{ steps.execution.outcome }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFileSync } from 'node:fs';
+          const env = process.env;
+          const evidence = { sourceSha: env.GITHUB_SHA, runId: env.GITHUB_RUN_ID, runAttempt: env.GITHUB_RUN_ATTEMPT, observedAt: new Date().toISOString(), setup: { checkout: env.CHECKOUT_OUTCOME, pnpm: env.PNPM_OUTCOME, node: env.NODE_OUTCOME }, executionStep: env.EXECUTION_OUTCOME, coverage: 'Only the validated liveness/check.json establishes checked coverage; missing receipt means incomplete, never zero failures.' };
+          appendFileSync(env.GITHUB_STEP_SUMMARY, `## Feed liveness step outcomes\n\n\`\`\`json\n${JSON.stringify(evidence, null, 2)}\n\`\`\`\n`);
+          JS
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
         with:
-          script: |
-            const title = 'Keyless feed liveness check found failing feeds';
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              per_page: 100,
-            });
-            const existingIssue = issues.find(
-              (issue) => !issue.pull_request && issue.title === title,
-            );
-
-            if (existingIssue) {
-              core.setOutput('issue-number', String(existingIssue.number));
-            }
-      - name: Open an issue for failing feeds
-        if: steps.liveness.outputs.found == 'true'
-        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
-        with:
-          title: Keyless feed liveness check found failing feeds
-          content-filepath: ./liveness/out.md
-          issue-number: ${{ steps.find-issue.outputs.issue-number }}
-          labels: feed
+          name: feed-liveness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: liveness/
+          if-no-files-found: warn
+          retention-days: 3

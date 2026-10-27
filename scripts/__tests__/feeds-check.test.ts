@@ -94,6 +94,204 @@ const quiet = () => {
 };
 
 describe("feeds:check", () => {
+  it("keeps explicitly configured manual checks distinct from keyless monitoring", async () => {
+    quiet();
+    const { dir } = catalogue([
+      feed(
+        "keyed",
+        "https://keyed.example.org/feed",
+        '"credentials": { "api_key": { "title": "Key" } }, "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },',
+      ),
+    ]);
+    const report = join(dir, "manual.md");
+    const result = join(dir, "manual.json");
+    expect(
+      await runFeedsCheck(["--report", report, "--result", result], {
+        feedsDir: dir,
+        fetch: stubFetch,
+        env: { LU_KEYED_EVENTS_API_KEY: "fixture-key" },
+      }),
+    ).toBe(0);
+    expect(JSON.parse(readFileSync(result, "utf8"))).toMatchObject({
+      keylessOnly: false,
+      coverage: { checked: 1, skipped: { keyed: 0 } },
+    });
+    expect(readFileSync(report, "utf8")).not.toContain("Keyed and skipped feeds were not assessed");
+  });
+  it("keyless mode excludes shared secrets used in URL templates without changing public settings", async () => {
+    quiet();
+    const { dir } = catalogue([
+      feed("keyed", `https://keyed.example.org/?key=\${@account.api_key}`),
+      feed("keyed2", `https://keyed2.example.org/?key=\${@account.api_key}`),
+      feed("public", `\${@public.url}`, '"homepage": "https://good.example.org/",'),
+    ]);
+    writeFileSync(
+      join(dir, "credentials.jsonc"),
+      JSON.stringify({
+        credentials: {
+          account: { api_key: { title: "Key" } },
+          public: { url: { title: "URL", default: "https://good.example.org/feed" } },
+        },
+      }),
+    );
+    const requests: string[] = [];
+    const fetchFn = (async (input: string | URL | Request) => {
+      requests.push(String(input));
+      return stubFetch(input);
+    }) as typeof fetch;
+    const code = await runFeedsCheck(["--keyless"], {
+      feedsDir: dir,
+      fetch: fetchFn,
+      env: { ACCOUNT_API_KEY: "NEVER_USE_THIS_KEY" },
+    });
+    expect(console.error).not.toHaveBeenCalled();
+    expect(code).toBe(0);
+    expect(requests).toEqual(["https://good.example.org/feed"]);
+  });
+  it("records complete healthy coverage and provenance even without failing feeds", async () => {
+    quiet();
+    const { dir } = catalogue([feed("good", "https://good.example.org/feed")]);
+    const result = join(dir, "check.json");
+    const report = join(dir, "report.md");
+    const env = {
+      GITHUB_SHA: "a".repeat(40),
+      GITHUB_REPOSITORY: "OpenConditions/openconditions",
+      GITHUB_RUN_ID: "123",
+      GITHUB_RUN_ATTEMPT: "2",
+    };
+    expect(
+      await runFeedsCheck(["--keyless", "--report", report, "--result", result], {
+        feedsDir: dir,
+        fetch: stubFetch,
+        env,
+      }),
+    ).toBe(0);
+    expect(JSON.parse(readFileSync(result, "utf8"))).toMatchObject({
+      version: 1,
+      complete: true,
+      checksComplete: true,
+      reportComplete: true,
+      selection: "catalogue",
+      keylessOnly: true,
+      providerOutcome: "healthy",
+      recoveryReview: true,
+      context: {
+        sourceSha: "a".repeat(40),
+        repository: "OpenConditions/openconditions",
+        runId: "123",
+        runAttempt: "2",
+      },
+      coverage: {
+        planned: 1,
+        completed: 1,
+        checked: 1,
+        skipped: { keyed: 0, disabled: 0, configuration: 0 },
+      },
+    });
+    expect(readFileSync(report, "utf8")).toContain("No automatic issue state change");
+  });
+
+  it("leaves catalogue failure explicitly incomplete rather than a missing found output", async () => {
+    quiet();
+    const { dir, file } = catalogue([]);
+    writeFileSync(file, "{invalid");
+    const result = join(dir, "check.json");
+    expect(
+      await runFeedsCheck(["--report", join(dir, "report.md"), "--result", result], {
+        feedsDir: dir,
+        env: {},
+      }),
+    ).toBe(1);
+    expect(JSON.parse(readFileSync(result, "utf8"))).toMatchObject({
+      complete: false,
+      checksComplete: false,
+      failureStage: "catalogue",
+      providerOutcome: "unknown",
+      recoveryReview: false,
+      coverage: { planned: null, completed: 0 },
+    });
+  });
+
+  it("records report filesystem failure separately from healthy provider results", async () => {
+    quiet();
+    const { dir } = catalogue([feed("good", "https://good.example.org/feed")]);
+    const report = join(dir, "roads");
+    const result = join(dir, "check.json");
+    expect(
+      await runFeedsCheck(["--report", report, "--result", result], {
+        feedsDir: dir,
+        fetch: stubFetch,
+        env: {},
+      }),
+    ).toBe(1);
+    expect(JSON.parse(readFileSync(result, "utf8"))).toMatchObject({
+      complete: false,
+      checksComplete: true,
+      reportComplete: false,
+      failureStage: "report",
+      providerOutcome: "healthy",
+      recoveryReview: false,
+    });
+  });
+
+  it("explicit keyless mode never fetches keyed feeds even when a credential is present", async () => {
+    quiet();
+    const key =
+      '"credentials": { "api_key": { "title": "Key" } }, "auth": { "kind": "query-key", "param": "key", "credential": "api_key" },';
+    const { dir } = catalogue([
+      feed("good", "https://good.example.org/feed"),
+      feed("keyed", "https://keyed.example.org/feed", key),
+    ]);
+    const result = join(dir, "check.json");
+    const requests: string[] = [];
+    const fetchFn = (async (input: string | URL | Request) => {
+      requests.push(String(input));
+      return stubFetch(input);
+    }) as typeof fetch;
+    expect(
+      await runFeedsCheck(["--keyless", "--result", result], {
+        feedsDir: dir,
+        fetch: fetchFn,
+        env: { LU_KEYED_EVENTS_API_KEY: "do-not-use-or-report-this-value" },
+      }),
+    ).toBe(0);
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).not.toContain("keyed");
+    expect(readFileSync(result, "utf8")).not.toContain("do-not-use-or-report-this-value");
+    expect(JSON.parse(readFileSync(result, "utf8"))).toMatchObject({
+      complete: true,
+      coverage: { planned: 2, completed: 2, checked: 1, skipped: { keyed: 1 } },
+    });
+  });
+
+  it("complete warnings stay nonfatal while parse failures remain fatal and diagnostics survive", async () => {
+    quiet();
+    const { dir } = catalogue([
+      feed("down", "https://down.example.org/feed"),
+      feed("bad", "https://bad.example.org/feed"),
+    ]);
+    const result = join(dir, "check.json");
+    const report = join(dir, "report.md");
+    expect(
+      await runFeedsCheck(["--report", report, "--result", result], {
+        feedsDir: dir,
+        fetch: stubFetch,
+        env: {},
+      }),
+    ).toBe(1);
+    expect(JSON.parse(readFileSync(result, "utf8"))).toMatchObject({
+      complete: true,
+      checksComplete: true,
+      providerOutcome: "unhealthy",
+      outcomes: { warning: 1, error: 1 },
+      recoveryReview: false,
+    });
+    expect(readFileSync(report, "utf8")).toContain(
+      "Automated feed-liveness check found 2 failing feed(s).",
+    );
+    expect(readFileSync(report, "utf8")).toContain("@ada");
+  });
+
   it("fails on a parse error and warns on a network error", async () => {
     quiet();
     const { dir, file } = catalogue([
