@@ -561,3 +561,88 @@ p=Path(sys.argv[2]);m.runtime_smoke('ingest',json.loads((p/'identity.json').read
     },
   );
 });
+
+describe("scanner filesystem ownership", () => {
+  it.each([false, true])(
+    "uses the invoking UID/GID and a writable cache; scanner failure=%s",
+    (fail) => {
+      const f = fixture();
+      const output = join(f.root, "output");
+      const work = join(f.root, "work");
+      const bin = join(f.root, "bin");
+      for (const dir of [output, work, bin]) mkdirSync(dir, { mode: 0o700 });
+      const state = join(f.root, "scanner-calls.json");
+      put(
+        join(bin, "docker"),
+        `#!${process.execPath}
+const fs=require('node:fs'),path=require('node:path');
+const a=process.argv.slice(2),state=process.env.OC_SCAN_STATE;
+const calls=fs.existsSync(state)?JSON.parse(fs.readFileSync(state,'utf8')):[];
+calls.push(a);fs.writeFileSync(state,JSON.stringify(calls));
+if(a[0]==='container'&&a[1]==='inspect'){
+ process.stderr.write('Error: No such container: '+a[2]);process.exit(1);
+}
+if(a[0]!=='run')throw Error('unexpected Docker command');
+const value=k=>a[a.indexOf(k)+1];
+if(!a.includes('--user')||value('--user')!==process.getuid()+':'+process.getgid()){
+ process.stderr.write('mkdir /root/.cache/trivy/db: permission denied');process.exit(1);
+}
+const mounts=a.filter((v,i)=>a[i-1]==='--mount').map(v=>Object.fromEntries(v.split(',').filter(p=>p.includes('=')).map(p=>p.split('='))));
+const cache=mounts.find(m=>m.dst===value('--cache-dir'));
+if(!cache||cache.dst==='/root/.cache/trivy')throw Error('cache path inaccessible to non-root scanner');
+if(process.env.OC_SCAN_FAIL==='1'){process.stderr.write('scanner failure retained');process.exit(1);}
+const out=mounts.find(m=>m.dst==='/output');
+fs.mkdirSync(path.join(cache.src,'db'),{recursive:true});
+fs.writeFileSync(path.join(cache.src,'db/metadata.json'),JSON.stringify({Version:2,fixture:true}));
+fs.writeFileSync(path.join(out.src,path.basename(value('--output'))),JSON.stringify({format:value('--format')}));
+`,
+      );
+      chmodSync(join(bin, "docker"), 0o755);
+      const code = `import importlib.util,sys
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('qualification',sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+m.scan_image(*map(Path,sys.argv[2:]))`;
+      const result = spawnSync("python3", ["-c", code, script, f.layout, output, work], {
+        encoding: "utf8",
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          OC_SCAN_STATE: state,
+          OC_SCAN_FAIL: fail ? "1" : "0",
+        },
+      });
+      if (fail) {
+        expect(result.status).not.toBe(0);
+        expect(readFileSync(join(output, "scan.json.log"), "utf8")).toContain(
+          "scanner failure retained",
+        );
+        expect(existsSync(join(output, "scanner-db.json"))).toBe(false);
+        expect(existsSync(join(output, "sbom.cdx.json"))).toBe(false);
+      } else {
+        expect(result.status, result.stderr).toBe(0);
+        expect(JSON.parse(readFileSync(join(output, "scanner-db.json"), "utf8"))).toEqual({
+          Version: 2,
+          fixture: true,
+        });
+        expect(JSON.parse(readFileSync(join(output, "sbom.cdx.json"), "utf8"))).toEqual({
+          format: "cyclonedx",
+        });
+      }
+      expect(statSync(output).mode & 0o777).toBe(0o700);
+      expect(statSync(join(work, "trivy-cache")).mode & 0o022).toBe(0);
+      expect(existsSync(join(output, "qualified.json"))).toBe(false);
+      const calls = JSON.parse(readFileSync(state, "utf8")) as string[][];
+      for (const call of calls.filter((a) => a[0] === "run")) {
+        expect(call).toContain("--read-only");
+        expect(call.slice(call.indexOf("--cap-drop"), call.indexOf("--cap-drop") + 2)).toEqual([
+          "--cap-drop",
+          "ALL",
+        ]);
+        expect(call).toContain("no-new-privileges");
+        expect(call).toContain("UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL");
+        if (call[call.indexOf("--format") + 1] === "json")
+          expect(call.slice(-2)).toEqual(["--exit-code", "1"]);
+      }
+    },
+  );
+});

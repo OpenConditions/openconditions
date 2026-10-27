@@ -866,6 +866,10 @@ def scan_image(layout, output, work):
                 "2",
                 "--memory",
                 "2g",
+                # Bind mounts retain runner ownership on Linux. With all
+                # capabilities dropped, container root cannot bypass their DAC.
+                "--user",
+                f"{os.geteuid()}:{os.getegid()}",
                 "--cap-drop",
                 "ALL",
                 "--security-opt",
@@ -878,9 +882,11 @@ def scan_image(layout, output, work):
                 "--mount",
                 f"type=bind,src={output},dst=/output",
                 "--mount",
-                f"type=bind,src={cache},dst=/root/.cache/trivy",
+                f"type=bind,src={cache},dst=/cache",
                 TRIVY,
                 "image",
+                "--cache-dir",
+                "/cache",
                 "--input",
                 "/input",
                 "--config",

@@ -39,7 +39,9 @@ count as confirmed cleanup. Cleanup failure prevents qualification. Build caches
 ## Scan and artifact identity
 
 The pinned Trivy 0.76.1 container scans the verified OCI layout without a Docker socket. It receives
-only the read-only layout, a disposable DB cache and its output directory. Scanner errors fail, all
+only the read-only layout, a disposable DB cache and its output directory. It runs with the invoking
+numeric UID/GID and an explicit `/cache` path so Linux bind mounts remain writable with all capabilities
+dropped. Scanner errors fail, all
 severities including low/unknown are blocking, and no ignore file, configuration override or unfixed
 exception is loaded. The vulnerability DB identity/timestamps are retained and must be current at scan
 time. Separate OS and language package inventories are required. CycloneDX generation alone cannot
