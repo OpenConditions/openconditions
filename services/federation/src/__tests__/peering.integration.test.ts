@@ -22,6 +22,11 @@ import {
   tombstoneRecords,
   writeSnapshot,
 } from "@openconditions/storage";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import type { FastifyInstance } from "fastify";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -163,7 +168,8 @@ function situationDraft(local: string, kind: "incident" | "roadworks" = "inciden
 
 beforeAll(async () => {
   // A server of its own: the outbox fence reads the server-wide xmin horizon.
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
     .withEnvironment({ POSTGRES_DB: "a", POSTGRES_USER: "oc", POSTGRES_PASSWORD: "oc" })
     .withExposedPorts(5432)
     .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
@@ -171,9 +177,16 @@ beforeAll(async () => {
   containerStop = () => container.stop();
   const server = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}`;
   const admin = postgres(`${server}/a`, { max: 1 });
-  await admin.unsafe("CREATE DATABASE b");
-  await admin.unsafe("CREATE DATABASE c");
-  await admin.end();
+  try {
+    await assertPostgisProfile(admin, profile, {
+      fixture: "peering.integration.test.ts",
+      containerId: container.getId(),
+    });
+    await admin.unsafe("CREATE DATABASE b");
+    await admin.unsafe("CREATE DATABASE c");
+  } finally {
+    await admin.end();
+  }
   await runMigrations(`${server}/a`);
   await runMigrations(`${server}/b`);
   await runMigrations(`${server}/c`);

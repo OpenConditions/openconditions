@@ -50,7 +50,9 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
 
 # Work on the Python resolver:
 cd services/openlr-resolver
-pip install -r requirements.txt -r requirements-dev.txt
+python scripts/check_dependencies.py
+python -m pip install --require-hashes --only-binary=:all: -r requirements-build.txt
+python -m pip install --require-hashes --no-build-isolation -r requirements-dev.txt
 ```
 
 ## Quality bar
@@ -86,8 +88,14 @@ Python (the resolver):
 ```bash
 cd services/openlr-resolver
 ruff check .
-python -m pytest
+OPENLR_POSTGIS_TESTS=required python -m pytest
 ```
+
+This matches CI and requires Docker plus the resolver's locked development dependencies.
+PostGIS tests use their own disposable PostgreSQL 16 server, never an operator database.
+Local `python -m pytest` defaults to optional database availability; missing Docker or
+Testcontainers skips the database cases. Required mode fails if those cases are skipped
+or omitted. Use optional mode for focused non-database tests; unknown mode values fail.
 
 Independent implementations (CI's `interop` job; JDK 17+, Python 3.14 and network
 access, after `pnpm build`):
@@ -183,13 +191,21 @@ Tests run from one root `vitest.config.ts`, with `unit` and `integration`
 projects covering packages, services, integrations, and scripts. The
 integration project runs after the unit project, two files at a time, against
 one PostGIS container its global setup starts and migrates as a template
-(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Run
+(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Dedicated
+federation/storage servers and the disposable restriction smoke honor the same
+profile while keeping their own containers and transaction horizons. Each checks
+and logs its physical server major before migrations; an invalid profile fails
+before container startup. The opt-in public-stream benchmark keeps its PG16
+baseline, and the opt-in client-attribution experiment deliberately uses PG18.
+Explicit PG18 runs qualify that cohort only; ordinary CI and the support policy
+remain unchanged. Run
 from the repo root:
 
 ```bash
 pnpm test                                  # build, then both projects
 pnpm test:unit                             # build, then tests without Docker
 pnpm test:integration                      # build, then disposable database tests
+OC_TEST_POSTGIS_PROFILE=pg18 pnpm test:integration # explicit PG18 cohort
 pnpm exec vitest run --project unit packages/core # targeted run after building
 pnpm test:coverage                         # V8 coverage report (written to coverage/)
 ```

@@ -69,6 +69,7 @@ beforeEach(() => {
   state.port.mockReturnValue(54321);
   state.postgres.mockReturnValue(state.sql);
   state.start.mockResolvedValue({
+    getId: () => "unit-test-container",
     getHost: state.host,
     getMappedPort: state.port,
     stop: state.stop,

@@ -15,10 +15,68 @@ fail against rather than an empty one.
 
 from __future__ import annotations
 
+import os
+from pathlib import Path
+
 import pytest
 
 from app.maps.memory import InMemoryMap, NodeSpec, LineSpec
 from app.frc_fow import Frc, Fow
+
+POSTGIS_REQUIRED = pytest.StashKey[bool]()
+POSTGIS_COLLECTED = pytest.StashKey[set[str]]()
+POSTGIS_PASSED = pytest.StashKey[set[str]]()
+POSTGIS_MODULE = Path(__file__).with_name("test_postgis_reader.py")
+
+
+def pytest_configure(config):
+    mode = os.environ.get("OPENLR_POSTGIS_TESTS", "optional")
+    if mode not in ("optional", "required"):
+        raise pytest.UsageError(
+            f"OPENLR_POSTGIS_TESTS must be 'optional' or 'required'; got {mode!r}"
+        )
+    config.stash[POSTGIS_REQUIRED] = mode == "required"
+    config.stash[POSTGIS_COLLECTED] = set()
+    config.stash[POSTGIS_PASSED] = set()
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_pycollect_makeitem(collector, name, obj):
+    # Function generation precedes explicit ::node selection as well as -k.
+    # Use pytest's generated inventory, including parametrized cases.
+    result = (yield).get_result()
+    if collector.path == POSTGIS_MODULE:
+        for item in result if isinstance(result, list) else [result]:
+            if isinstance(item, pytest.Function):
+                collector.config.stash[POSTGIS_COLLECTED].add(item.nodeid)
+
+
+@pytest.hookimpl(hookwrapper=True)
+def pytest_runtest_makereport(item, call):
+    report = (yield).get_result()
+    if item.path == POSTGIS_MODULE and report.when == "call" and report.passed:
+        item.config.stash[POSTGIS_PASSED].add(item.nodeid)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    config = session.config
+    if not config.stash[POSTGIS_REQUIRED] or exitstatus not in (0, 5):
+        return
+    collected = config.stash[POSTGIS_COLLECTED]
+    missing = collected - config.stash[POSTGIS_PASSED]
+    if not collected or missing:
+        session.exitstatus = pytest.ExitCode.TESTS_FAILED
+        terminal = config.pluginmanager.get_plugin("terminalreporter")
+        if terminal:
+            terminal.write_sep("=", "PostGIS coverage incomplete (OPENLR_POSTGIS_TESTS=required)",
+                               red=True)
+            terminal.write_line("Run every test in tests/test_postgis_reader.py without skips "
+                                "or deselection; Docker and the locked dev dependencies are required.")
+
+
+@pytest.fixture(scope="module")
+def postgis_required(request):
+    return request.config.stash[POSTGIS_REQUIRED]
 
 
 # Roughly 270 m apart at this latitude per ~0.0027 degrees of longitude.
