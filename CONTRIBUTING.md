@@ -13,11 +13,7 @@ covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Ways to contribute
 
-- **New feed sources** — the highest-leverage contribution. A parser + a
-  `FeedSource` entry in [`@openconditions/roads`](packages/roads) turns a public
-  open-data feed (DATEX II, Open511, GeoJSON, …) into situation drafts of the
-  [data model](docs/model.md). Link the open-data portal and its license in
-  your PR.
+- Feed additions use the [multi-domain catalogue](feeds/README.md). For a supported format, add or update a regional JSONC entry under `feeds/<domain>/`; a new format may also need parser and domain-adapter work. The ingest service's domain list is in [`services/ingest/src/domains.ts`](services/ingest/src/domains.ts). Link source documentation, reuse terms and required attribution.
 - **Emitters** — outbound projections to standard wire formats live in
   [`@openconditions/publishers`](packages/publishers) (GeoJSON, JSON-LD, TraFF,
   DATEX II, SSE, Valhalla exclusions).
@@ -50,7 +46,9 @@ DATABASE_URL=postgres://postgres:postgres@localhost:5432/openconditions \
 
 # Work on the Python resolver:
 cd services/openlr-resolver
-pip install -r requirements.txt -r requirements-dev.txt
+python scripts/check_dependencies.py
+python -m pip install --require-hashes --only-binary=:all: -r requirements-build.txt
+python -m pip install --require-hashes --no-build-isolation -r requirements-dev.txt
 ```
 
 ## Quality bar
@@ -76,18 +74,31 @@ model artifacts, feed schemas, feed lint and the full Node suite. It needs Docke
 tests. For the same OpenLR cross-check as CI, install the hash-pinned
 `packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set
 `OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent
-interop or dependency audits below, or prove live provider/deployment behavior. For a docs-only change,
+interop, dependency audits or container qualification below, or prove live provider/deployment behavior. For a docs-only change,
 use scoped Prettier checks; for Node behavior, run focused tests while iterating and `verify:full` before
 review. Resolver, wire-format/federation and dependency changes also need their corresponding checks
 below. CI retains every applicable gate on every PR.
+
+Model artifact drift is checked once in CI and `verify:full`, by
+`scripts/__tests__/model-artifacts.test.ts` during `pnpm test`. That command builds the workspace
+first. The test compares all generated schema and registry Markdown bytes and rejects missing or
+obsolete schema files; model and domain tests retain schema semantics and determinism coverage.
+Use `pnpm check:model` for the standalone check, or `pnpm gen:model` to regenerate artifacts after
+changing the registry. Neither commit nor push hooks run these workspace checks.
 
 Python (the resolver):
 
 ```bash
 cd services/openlr-resolver
 ruff check .
-python -m pytest
+OPENLR_POSTGIS_TESTS=required python -m pytest
 ```
+
+This matches CI and requires Docker plus the resolver's locked development dependencies.
+PostGIS tests use their own disposable PostgreSQL 16 server, never an operator database.
+Local `python -m pytest` defaults to optional database availability; missing Docker or
+Testcontainers skips the database cases. Required mode fails if those cases are skipped
+or omitted. Use optional mode for focused non-database tests; unknown mode values fail.
 
 Independent implementations (CI's `interop` job; JDK 17+, Python 3.14 and network
 access, after `pnpm build`):
@@ -102,6 +113,13 @@ Production dependency audits (after installing both sets of development dependen
 ```bash
 pnpm audit:production # pnpm audit + pip-audit, with zero findings required
 ```
+
+Container images are separately built, exercised with disposable PostGIS/native runtime probes,
+scanned at every severity and bound to OCI/SBOM artifacts in CI. See
+[container qualification](docs/container-qualification.md) for the explicit local command, supported
+qualification platform, cleanup and acceptance limits. `verify:full` does not build these images.
+Full owning-main CI can also retain [API-bound image evidence](docs/trusted-main-image-evidence.md).
+PR artifacts and these factual receipts grant no release or publication authority.
 
 Git hooks check staged work (Husky):
 
@@ -129,7 +147,7 @@ so newly published advisories fail without waiting for a source change.
 ### Main validation and required checks
 
 CI reports `required CI` after checking every applicable outcome: source
-validation, TypeScript, Python, independent interop and production audits. A
+validation, TypeScript, Python, independent interop, production audits and container image qualification. A
 failed, cancelled, missing or unexpectedly skipped job fails the aggregate.
 The weekly CI schedule intentionally runs only the production audit and source
 validation; its skipped ordinary jobs are allowed only on that event.
@@ -178,13 +196,21 @@ Tests run from one root `vitest.config.ts`, with `unit` and `integration`
 projects covering packages, services, integrations, and scripts. The
 integration project runs after the unit project, two files at a time, against
 one PostGIS container its global setup starts and migrates as a template
-(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Run
+(`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Dedicated
+federation/storage servers and the disposable restriction smoke honor the same
+profile while keeping their own containers and transaction horizons. Each checks
+and logs its physical server major before migrations; an invalid profile fails
+before container startup. The opt-in public-stream benchmark keeps its PG16
+baseline, and the opt-in client-attribution experiment deliberately uses PG18.
+Explicit PG18 runs qualify that cohort only; ordinary CI and the support policy
+remain unchanged. Run
 from the repo root:
 
 ```bash
 pnpm test                                  # build, then both projects
 pnpm test:unit                             # build, then tests without Docker
 pnpm test:integration                      # build, then disposable database tests
+OC_TEST_POSTGIS_PROFILE=pg18 pnpm test:integration # explicit PG18 cohort
 pnpm exec vitest run --project unit packages/core # targeted run after building
 pnpm test:coverage                         # V8 coverage report (written to coverage/)
 ```
@@ -248,15 +274,17 @@ Changes to `main` go through a pull request and the required checks. Independent
 
 The [repository guardrails runbook](docs/repository-guardrails.md) lists the required check producers, Actions protections and the maintainer-only emergency process. An agent never has standing authority to bypass checks or push directly to `main`. Report vulnerabilities privately using [SECURITY.md](SECURITY.md).
 
-## Pull request workflow
+## Issues and pull requests
 
-1. Fork and create a feature branch off `main`.
-2. Open an issue first if the change is non-trivial — saves rework when scope or
-   approach needs alignment.
-3. Push your branch and open a PR. Fill out the PR template.
-4. CI runs lint, typecheck, and tests (Node + Python). Iterate until green.
-5. A maintainer reviews. Squash-merge is the default; we keep the merged PR's
-   title and summary as the squash commit message, so make both accurate.
+Use the Bug, Feature, Feed or Task form to describe observations and the desired outcome. Reproduction attempts, intermittent failures and unknown details are useful; you do not need a diagnosis or the latest main checkout. For installed software, identify its image digest, package version or release asset when possible. A local git HEAD identifies only that checkout.
+
+For a change with uncertain scope, discuss it in an issue or [Discussions](https://github.com/openconditions/openconditions/discussions) before implementation. Small, well-defined changes can go directly to a PR. Start from `main`, use a Conventional Commit title, and explain what changed and why. Link related work when useful.
+
+Record relevant verification, actual results and remaining limits. Keep local tests, hosted CI, deployed behavior and untested assumptions distinct. Note known release or upgrade impact, including migration or configuration work. Docs, backend and catalogue changes need no screenshots. Include visual evidence when it helps assess a visible change.
+
+Write natural paragraphs without manual prose hard wrapping. Preserve tables, code, diagnostic logs, attribution and intentional Markdown breaks. Authors remain responsible for factual claims and verification, including assisted work. Remove unused PR-template sections.
+
+Maintainers use [issue triage](docs/issue-triage.md) to classify work and request missing information. The runbook tracks label migration and native form acceptance; both remain separate activation checks. Required checks must pass and review conversations must be resolved before merging.
 
 ## Licensing and the CLA
 

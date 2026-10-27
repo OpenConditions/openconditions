@@ -5,6 +5,11 @@ import {
   type RecordOutboxEntry,
   signMessage,
 } from "@openconditions/federation";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -68,7 +73,8 @@ async function signed(
 beforeAll(async () => {
   // A server of its own: the outbox fence reads the server-wide xmin horizon,
   // which another suite's open transaction on a shared server would hold back.
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
     .withEnvironment({
       POSTGRES_DB: "conditions_test",
       POSTGRES_USER: "oc",
@@ -80,6 +86,10 @@ beforeAll(async () => {
   containerStop = () => container.stop();
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   sql = postgres(url, { max: 4 });
+  await assertPostgisProfile(sql, profile, {
+    fixture: "subscription-route.integration.test",
+    containerId: container.getId(),
+  });
   await runMigrations(url);
 
   const now = new Date().toISOString();

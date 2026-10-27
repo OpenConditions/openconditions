@@ -34,7 +34,7 @@ describe("renderReport", () => {
     expect(md).toContain("2 failing");
     expect(md).toContain("## NDW (Netherlands) (`nl-ndw-events`)");
     expect(md).toContain("- Region file: `feeds/roads/nl.jsonc`");
-    expect(md).toContain("- Failure: fetch (network or HTTP)");
+    expect(md).toContain("- Failure: warning (provider, reference or empty result)");
     expect(md).toContain("HTTP 503");
     expect(md).toContain("@ada @torvalds");
     // A feed with no maintainers gets the nudge, not an empty mention line.

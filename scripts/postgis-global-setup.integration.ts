@@ -1,5 +1,9 @@
 import { runMigrations } from "@openconditions/core/server";
-import { POSTGIS_IMAGES, postgisProfile, runsProfile } from "@openconditions/test-database";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database";
 import postgres from "postgres";
 import { GenericContainer, type StartedTestContainer, Wait } from "testcontainers";
 import type { TestProject } from "vitest/node";
@@ -19,10 +23,10 @@ export default async function setup(project: TestProject): Promise<() => Promise
     const adminUrl = `${server}/postgres`;
     const admin = postgres(adminUrl, { max: 1, onnotice: () => {} });
     try {
-      const [{ server_version_num } = {}] = await admin`SHOW server_version_num`;
-      if (!runsProfile(server_version_num, profile)) {
-        throw new Error(`Unexpected PostgreSQL version for ${profile}`);
-      }
+      await assertPostgisProfile(admin, profile, {
+        fixture: "postgis-global-setup.integration.ts",
+        containerId: container.getId(),
+      });
       await runMigrations(`${server}/${TEMPLATE}`);
       // Cloning needs the template free of sessions; refusing them keeps it so.
       await admin.unsafe(
