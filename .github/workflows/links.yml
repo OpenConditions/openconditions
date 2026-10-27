@@ -15,8 +15,10 @@ concurrency:
 jobs:
   lychee:
     name: check links in docs
+    if: github.repository == 'OpenConditions/openconditions' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     # Keep the existing 360-minute runner bound; no measured short-timeout claim.
+    timeout-minutes: 360
     permissions:
       contents: read
       issues: write # supplied only to the reporting parent below
@@ -24,7 +26,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         id: checkout
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.workflow_sha }}
           persist-credentials: false
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         id: setup
