@@ -115,6 +115,8 @@ Container images are separately built, exercised with disposable PostGIS/native 
 scanned at every severity and bound to OCI/SBOM artifacts in CI. See
 [container qualification](docs/container-qualification.md) for the explicit local command, supported
 qualification platform, cleanup and acceptance limits. `verify:full` does not build these images.
+Full owning-main CI can also retain [API-bound image evidence](docs/trusted-main-image-evidence.md).
+PR artifacts and these factual receipts grant no release or publication authority.
 
 Git hooks check staged work (Husky):
 
