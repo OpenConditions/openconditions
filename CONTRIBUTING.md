@@ -81,6 +81,13 @@ use scoped Prettier checks; for Node behavior, run focused tests while iterating
 review. Resolver, wire-format/federation and dependency changes also need their corresponding checks
 below. CI retains every applicable gate on every PR.
 
+Model artifact drift is checked once in CI and `verify:full`, by
+`scripts/__tests__/model-artifacts.test.ts` during `pnpm test`. That command builds the workspace
+first. The test compares all generated schema and registry Markdown bytes and rejects missing or
+obsolete schema files; model and domain tests retain schema semantics and determinism coverage.
+Use `pnpm check:model` for the standalone check, or `pnpm gen:model` to regenerate artifacts after
+changing the registry. Neither commit nor push hooks run these workspace checks.
+
 Python (the resolver):
 
 ```bash
