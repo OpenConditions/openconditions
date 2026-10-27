@@ -1,0 +1,22 @@
+name: Task
+description: Propose a bounded piece of repository work.
+type: Task
+labels: [needs-triage]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the work and how completion could be checked.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope and constraints
+      description: State known boundaries or dependencies. Leave uncertain scope and estimates for triage.
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and attempts
+      description: Link related work and record relevant evidence or what you have already tried. Omit credentials and personal data.

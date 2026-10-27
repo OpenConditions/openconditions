@@ -2,7 +2,7 @@ blank_issues_enabled: false
 contact_links:
   - name: 💬 Question or discussion
     url: https://github.com/openconditions/openconditions/discussions
-    about: For usage questions, feed-source ideas, and general discussion, please use Discussions instead of opening an issue.
+    about: Use Discussions for usage questions and open-ended design discussion. Request a specific feed through the Feed request form.
   - name: 🔒 Security vulnerability
     url: https://github.com/openconditions/openconditions/security/advisories/new
     about: Use GitHub private vulnerability reporting (sign-in required). Do not file a public issue; see SECURITY.md for the email fallback.

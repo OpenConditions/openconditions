@@ -57,4 +57,4 @@ jobs:
           title: Keyless feed liveness check found failing feeds
           content-filepath: ./liveness/out.md
           issue-number: ${{ steps.find-issue.outputs.issue-number }}
-          labels: feed-issue
+          labels: feed

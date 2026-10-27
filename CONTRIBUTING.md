@@ -13,11 +13,7 @@ covered by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Ways to contribute
 
-- **New feed sources** — the highest-leverage contribution. A parser + a
-  `FeedSource` entry in [`@openconditions/roads`](packages/roads) turns a public
-  open-data feed (DATEX II, Open511, GeoJSON, …) into situation drafts of the
-  [data model](docs/model.md). Link the open-data portal and its license in
-  your PR.
+- Feed additions use the [multi-domain catalogue](feeds/README.md). For a supported format, add or update a regional JSONC entry under `feeds/<domain>/`; a new format may also need parser and domain-adapter work. The ingest service's domain list is in [`services/ingest/src/domains.ts`](services/ingest/src/domains.ts). Link source documentation, reuse terms and required attribution.
 - **Emitters** — outbound projections to standard wire formats live in
   [`@openconditions/publishers`](packages/publishers) (GeoJSON, JSON-LD, TraFF,
   DATEX II, SSE, Valhalla exclusions).
@@ -278,15 +274,17 @@ Changes to `main` go through a pull request and the required checks. Independent
 
 The [repository guardrails runbook](docs/repository-guardrails.md) lists the required check producers, Actions protections and the maintainer-only emergency process. An agent never has standing authority to bypass checks or push directly to `main`. Report vulnerabilities privately using [SECURITY.md](SECURITY.md).
 
-## Pull request workflow
+## Issues and pull requests
 
-1. Fork and create a feature branch off `main`.
-2. Open an issue first if the change is non-trivial — saves rework when scope or
-   approach needs alignment.
-3. Push your branch and open a PR. Fill out the PR template.
-4. CI runs lint, typecheck, and tests (Node + Python). Iterate until green.
-5. A maintainer reviews. Squash-merge is the default; we keep the merged PR's
-   title and summary as the squash commit message, so make both accurate.
+Use the Bug, Feature, Feed or Task form to describe observations and the desired outcome. Reproduction attempts, intermittent failures and unknown details are useful; you do not need a diagnosis or the latest main checkout. For installed software, identify its image digest, package version or release asset when possible. A local git HEAD identifies only that checkout.
+
+For a change with uncertain scope, discuss it in an issue or [Discussions](https://github.com/openconditions/openconditions/discussions) before implementation. Small, well-defined changes can go directly to a PR. Start from `main`, use a Conventional Commit title, and explain what changed and why. Link related work when useful.
+
+Record relevant verification, actual results and remaining limits. Keep local tests, hosted CI, deployed behavior and untested assumptions distinct. Note known release or upgrade impact, including migration or configuration work. Docs, backend and catalogue changes need no screenshots. Include visual evidence when it helps assess a visible change.
+
+Write natural paragraphs without manual prose hard wrapping. Preserve tables, code, diagnostic logs, attribution and intentional Markdown breaks. Authors remain responsible for factual claims and verification, including assisted work. Remove unused PR-template sections.
+
+Maintainers use [issue triage](docs/issue-triage.md) to classify work and request missing information. The runbook tracks label migration and native form acceptance; both remain separate activation checks. Required checks must pass and review conversations must be resolved before merging.
 
 ## Licensing and the CLA
 
