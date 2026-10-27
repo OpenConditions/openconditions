@@ -1,6 +1,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import {
   chmodSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
@@ -18,6 +19,7 @@ import { afterEach, expect, test } from "vitest";
 
 const moduleUrl = new URL("../run-feed-liveness.mjs", import.meta.url).href;
 const checkerUrl = new URL("../feeds-check.ts", import.meta.url).href;
+const fixtureSource = fileURLToPath(new URL("./fixtures/feed-liveness/", import.meta.url));
 const require = createRequire(import.meta.url);
 const tsx = join(dirname(require.resolve("tsx/package.json")), "dist/cli.mjs");
 const cleanup: (() => Promise<void>)[] = [];
@@ -172,37 +174,15 @@ async function fixture(mode = "healthy", existing = "none", previousBody?: strin
         }),
   );
   writeFileSync(join(dir, "package.json"), '{"type":"module"}\n');
-  const mutation =
-    mode === "partial"
-      ? "x.coverage.completed=0;x.results=[];"
-      : mode === "wrong-source"
-        ? "x.context.sourceSha='b'.repeat(40);"
-        : mode === "wrong-run"
-          ? "x.context.runId='999';"
-          : mode === "wrong-attempt"
-            ? "x.context.runAttempt='9';"
-            : mode === "wrong-hash"
-              ? "x.reportSha256='b'.repeat(64);"
-              : "";
+  const realGit = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
+  const fixtureData = join(dir, "fixture-data.json");
   writeFileSync(
-    join(dir, "scripts/feeds-check.ts"),
-    `import {runFeedsCheck} from ${JSON.stringify(checkerUrl)};import{readFileSync,writeFileSync,mkdirSync}from'node:fs';
-if(${JSON.stringify(mode)}==='checker-crash')process.exit(1);
-if(${JSON.stringify(mode)}==='report-generation')mkdirSync('liveness/out.md');
-const testFetch=(input,init)=>{const u=new URL(String(input));if(u.hostname!=='provider.example.org')throw Error('unexpected fixture provider');return globalThis.fetch(${JSON.stringify(origin)}+u.pathname+u.search,init)};
-const code=await runFeedsCheck(process.argv.slice(2),{feedsDir:${JSON.stringify(join(dir, "feeds"))},fetch:testFetch,env:process.env});
-${mutation ? `const x=JSON.parse(readFileSync('liveness/check.json','utf8'));${mutation}writeFileSync('liveness/check.json',JSON.stringify(x));` : ""}
-process.exitCode=code;`,
+    fixtureData,
+    JSON.stringify({ origin, mode, checkerUrl, feedsDir: join(dir, "feeds"), tsx, realGit }),
   );
+  copyFileSync(join(fixtureSource, "checker.mjs"), join(dir, "scripts/feeds-check.ts"));
   const shim = join(dir, "bin/pnpm");
-  writeFileSync(
-    shim,
-    `#!${process.execPath}\nimport{appendFileSync}from'node:fs';import{spawn}from'node:child_process';const a=process.argv.slice(2);appendFileSync('commands.jsonl',JSON.stringify(a)+'\\n');
-if(process.env.GITHUB_TOKEN||process.env.GH_TOKEN)throw Error('writer token reached provider child');
-if(a[0]==='install')process.exit(${mode === "install-error" ? 1 : 0});
-if(a[0]==='build:domains')process.exit(${mode === "build-error" ? 1 : 0});
-const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',...a.slice(3)],{stdio:'inherit',env:process.env});c.on('exit',code=>process.exit(code??1));`,
-  );
+  copyFileSync(join(fixtureSource, "pnpm.mjs"), shim);
   chmodSync(shim, 0o755);
   const git = (args: string[]) =>
     execFileSync("git", args, {
@@ -213,7 +193,7 @@ const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',
       .toString()
       .trim();
   git(["init", "-q"]);
-  git(["add", "package.json", "feeds", "scripts"]);
+  git(["add", "package.json", "feeds", "scripts", "fixture-data.json"]);
   git([
     "-c",
     "user.name=Fixture",
@@ -224,17 +204,14 @@ const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',
     "fixture",
   ]);
   const sha = git(["rev-parse", "HEAD"]);
-  const realGit = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
   const gitShim = join(dir, "bin/git");
-  writeFileSync(
-    gitShim,
-    `#!${process.execPath}\nimport{appendFileSync}from'node:fs';import{spawnSync}from'node:child_process';const tokenPresent=Boolean(process.env.GITHUB_TOKEN||process.env.GH_TOKEN);appendFileSync('git-env-checks.jsonl',JSON.stringify({tokenPresent,args:process.argv.slice(2)})+'\\n');if(tokenPresent){console.error('reporting token reached Git');process.exit(7)}const result=spawnSync(${JSON.stringify(realGit)},process.argv.slice(2),{env:process.env,stdio:'inherit'});process.exit(result.status??1);`,
-  );
+  copyFileSync(join(fixtureSource, "git.mjs"), gitShim);
   chmodSync(gitShim, 0o755);
   if (mode === "stale-output") mkdirSync(join(dir, "liveness"));
   if (mode === "summary-error") mkdirSync(join(dir, "summary-directory"));
   const env = {
     PATH: [join(dir, "bin"), dirname(process.execPath), "/usr/bin", "/bin"].join(":"),
+    OC_LIVENESS_FIXTURE_DATA: fixtureData,
     GITHUB_REPOSITORY: "OpenConditions/openconditions",
     GITHUB_REPOSITORY_ID: "1276024943",
     GITHUB_REF: "refs/heads/main",
@@ -254,10 +231,7 @@ const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',
   if (mode === "wrong-ref") env.GITHUB_REF = "refs/heads/topic";
   if (mode === "dirty-source") writeFileSync(join(dir, "package.json"), '{"type":"module"}\n\n');
   const transport = join(dir, "api-fixture.mjs");
-  writeFileSync(
-    transport,
-    `const realFetch=globalThis.fetch;globalThis.fetch=(input,init)=>{const u=new URL(String(input));if(u.origin!=='https://api.github.com')throw Error('unexpected fixture API origin');return realFetch(${JSON.stringify(origin)}+u.pathname+u.search,init)};`,
-  );
+  copyFileSync(join(fixtureSource, "api-transport.mjs"), transport);
   const child = spawn(process.execPath, ["--import", transport, fileURLToPath(moduleUrl)], {
     cwd: dir,
     env,
