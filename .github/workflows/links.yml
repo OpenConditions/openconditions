@@ -8,103 +8,71 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: link-check-report
+  cancel-in-progress: false
+
 jobs:
   lychee:
     name: check links in docs
     runs-on: ubuntu-latest
+    # Keep the existing 360-minute runner bound; no measured short-timeout claim.
     permissions:
       contents: read
-      issues: write # to open/update the broken-links issue
+      issues: write # supplied only to the reporting parent below
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        id: checkout
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        id: setup
+        with:
+          node-version-file: .nvmrc
+      - name: Prepare execution evidence
+        id: prepare
+        run: node scripts/run-link-check.mjs prepare
       - name: Check links
         id: lychee
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
-          # Markdown across the repo; node_modules and other gitignored paths are
-          # skipped automatically. Tune ignored URLs in .lycheeignore.
+          # Same Markdown scope, Git ignore behavior, URL exclusions and cache.
           args: >-
             --no-progress --cache --max-cache-age 1d
             './**/*.md'
-          fail: false # don't fail the run; we report via an issue instead
+          lycheeVersion: v0.24.2
+          format: json
+          output: lychee/out.json
+          checkbox: false
+          jobSummary: false
+          token: "" # no reporting token reaches lychee or its child tools
+          fail: false # the finalizer distinguishes broken links from execution failure
+      - name: Record installed checker version
+        id: version
+        if: steps.lychee.outcome == 'success' && (steps.lychee.outputs.exit_code == '0' || steps.lychee.outputs.exit_code == '2')
+        run: lychee --version > lychee/version.txt
       - name: Check npm registry metadata
-        id: npm-registry
-        shell: bash
+        id: registry
+        if: steps.lychee.outcome == 'success' && (steps.lychee.outputs.exit_code == '0' || steps.lychee.outputs.exit_code == '2')
+        run: node scripts/run-link-check.mjs registry
+      - name: Validate completion and report
+        if: always()
         env:
-          NPM_REGISTRY_URLS: |
-            https://registry.npmjs.org/hyparquet-writer
-            https://registry.npmjs.org/@divviup%2Fprio3
-            https://registry.npmjs.org/@divviup%2Fvdaf
-        run: |
-          set -euo pipefail
-          failed=0
-          report=./lychee/npm-out.md
-          {
-            printf '# npm registry metadata check\n\n'
-            printf 'Registry endpoints are checked directly so package JSON is not recursively parsed as a document.\n\n'
-            printf '## Errors per input\n\n'
-            while IFS= read -r url; do
-              if [[ -z "$url" ]]; then
-                continue
-              fi
-              if http_code="$(curl --silent --show-error --location --retry 2 --connect-timeout 10 --max-time 30 --output /dev/null --write-out '%{http_code}' "$url")"; then
-                if [[ "$http_code" =~ ^2[0-9][0-9]$ ]]; then
-                  printf '* [%s] <%s>\n' "$http_code" "$url"
-                else
-                  failed=1
-                  printf '* [%s] <%s> | Rejected status code\n' "$http_code" "$url"
-                fi
-              else
-                failed=1
-                printf '* [000] <%s> | Request failed\n' "$url"
-              fi
-            done <<< "$NPM_REGISTRY_URLS"
-          } > "$report"
-          printf 'exit_code=%s\n' "$failed" >> "$GITHUB_OUTPUT"
-      - name: Combine link-check reports
-        if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
-        shell: bash
-        env:
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          SETUP_OUTCOME: ${{ steps.setup.outcome }}
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+          LYCHEE_OUTCOME: ${{ steps.lychee.outcome }}
           LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
-          NPM_REGISTRY_EXIT_CODE: ${{ steps.npm-registry.outputs.exit_code }}
-        run: |
-          set -euo pipefail
-          {
-            if [[ "$LYCHEE_EXIT_CODE" != "0" ]]; then
-              cat ./lychee/out.md
-            fi
-            if [[ "$NPM_REGISTRY_EXIT_CODE" != "0" ]]; then
-              if [[ "$LYCHEE_EXIT_CODE" != "0" ]]; then
-                printf '\n\n'
-              fi
-              cat ./lychee/npm-out.md
-            fi
-          } > ./lychee/combined-out.md
-      - name: Find existing broken-links issue
-        id: find-issue
-        if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
-        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+          VERSION_OUTCOME: ${{ steps.version.outcome }}
+          REGISTRY_OUTCOME: ${{ steps.registry.outcome }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node scripts/run-link-check.mjs finish
+      - name: Retain completion evidence and diagnostics
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          script: |
-            const title = 'Broken links found by lychee';
-            const issues = await github.paginate(github.rest.issues.listForRepo, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              per_page: 100,
-            });
-            const existingIssue = issues.find(
-              (issue) => !issue.pull_request && issue.title === title,
-            );
-
-            if (existingIssue) {
-              core.setOutput('issue-number', String(existingIssue.number));
-            }
-      - name: Open an issue on broken links
-        if: steps.lychee.outputs.exit_code != 0 || steps.npm-registry.outputs.exit_code != 0
-        uses: peter-evans/create-issue-from-file@fca9117c27cdc29c6c4db3b86c48e4115a786710 # v6.0.0
-        with:
-          title: Broken links found by lychee
-          content-filepath: ./lychee/combined-out.md
-          issue-number: ${{ steps.find-issue.outputs.issue-number }}
-          labels: documentation, broken-link
+          name: link-check-${{ github.run_id }}-${{ github.run_attempt }}
+          path: lychee/
+          retention-days: 3
+          if-no-files-found: warn

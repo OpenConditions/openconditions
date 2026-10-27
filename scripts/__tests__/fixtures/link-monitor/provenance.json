@@ -1,0 +1,15 @@
+{
+  "tool": "lychee 0.24.2",
+  "tag": "lychee-v0.24.2",
+  "action": "e7477775783ea5526144ba13e8db5eec57747ce8",
+  "platform": "aarch64-apple-darwin",
+  "archiveSha256": "c9d3740ea2d891854d37116c9fba840f37b6e7c89d330e7db84ac333631c4977",
+  "scope": "owned loopback HTTP/temp files; no live providers",
+  "exits": {
+    "healthy": 0,
+    "unhealthy": 2,
+    "empty": 0,
+    "missing-input": 1,
+    "config-error": 3
+  }
+}
