@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 360
     permissions:
       contents: read
-      issues: write # supplied only to the reporting parent below
+      issues: write # token supplied only to github-script reporting
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         id: checkout
@@ -32,9 +32,6 @@ jobs:
         id: setup
         with:
           node-version-file: .nvmrc
-      - name: Prepare execution evidence
-        id: prepare
-        run: node scripts/run-link-check.mjs prepare
       - name: Check links
         id: lychee
         uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
@@ -57,20 +54,27 @@ jobs:
       - name: Check npm registry metadata
         id: registry
         if: steps.lychee.outcome == 'success' && (steps.lychee.outputs.exit_code == '0' || steps.lychee.outputs.exit_code == '2')
-        run: node scripts/run-link-check.mjs registry
-      - name: Validate completion and report
+        run: node scripts/link-monitor.mjs registry
+      - name: Validate completed checks
+        id: validate
         if: always()
         env:
-          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
-          SETUP_OUTCOME: ${{ steps.setup.outcome }}
-          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
-          LYCHEE_OUTCOME: ${{ steps.lychee.outcome }}
+          CHECKS_OUTCOME: ${{ steps.checkout.outcome == 'success' && steps.setup.outcome == 'success' && steps.lychee.outcome == 'success' && steps.version.outcome == 'success' && steps.registry.outcome == 'success' && 'success' || 'failure' }}
           LYCHEE_EXIT_CODE: ${{ steps.lychee.outputs.exit_code }}
-          VERSION_OUTCOME: ${{ steps.version.outcome }}
-          REGISTRY_OUTCOME: ${{ steps.registry.outcome }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: node scripts/run-link-check.mjs finish
-      - name: Retain completion evidence and diagnostics
+        run: node scripts/link-monitor.mjs validate
+      - name: Report broken links
+        if: steps.validate.outcome == 'success'
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          retries: 0 # never repeat an uncertain issue write
+          script: |
+            const { readFileSync } = require('node:fs');
+            const { pathToFileURL } = require('node:url');
+            const { publish } = await import(pathToFileURL(`${process.env.GITHUB_WORKSPACE}/scripts/link-monitor.mjs`));
+            const report = JSON.parse(readFileSync('lychee/report.json', 'utf8'));
+            await publish(github, report);
+            await core.summary.addRaw('\nReporting completed. Healthy recovery requires manual resolution review.\n').write();
+      - name: Retain checker outputs and diagnostics
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:

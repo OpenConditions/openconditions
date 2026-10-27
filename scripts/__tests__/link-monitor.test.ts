@@ -1,433 +1,276 @@
-import { execFileSync, spawn } from "node:child_process";
+import { spawnSync } from "node:child_process";
 import {
   chmodSync,
   copyFileSync,
-  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   rmSync,
   writeFileSync,
 } from "node:fs";
-import { createServer } from "node:http";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-import { afterEach, expect, test } from "vitest";
+import { join } from "node:path";
+import { afterEach, expect, test, vi } from "vitest";
 
-const script = fileURLToPath(new URL("../run-link-check.mjs", import.meta.url));
-const fixtures = fileURLToPath(new URL("./fixtures/link-monitor/", import.meta.url));
-const cleanups: (() => Promise<void>)[] = [];
-afterEach(async () => {
-  for (const fn of cleanups.splice(0).reverse()) await fn();
-});
-async function fixture(mode = "healthy") {
-  const dir = mkdtempSync(join(tmpdir(), "oc-link-monitor-"));
-  cleanups.push(async () => rmSync(dir, { recursive: true, force: true }));
-  const writes: { method: string; body: Record<string, unknown> }[] = [];
-  let issue: Record<string, unknown> | null =
-    mode.startsWith("existing") || mode === "human"
-      ? {
-          id: 55,
-          number: 7,
-          node_id: "I_7",
-          state: "open",
-          title: "Broken links found by lychee",
-          body: "Earlier diagnostics\n\n```text\n404 preserved exactly\n```\n",
-          updated_at: "2026-01-01T00:00:00Z",
-          user: {
-            id: mode === "human" ? 1 : 41898282,
-            login: mode === "human" ? "human" : "github-actions[bot]",
-            type: mode === "human" ? "User" : "Bot",
-          },
-        }
-      : null;
-  let issueReads = 0;
-  const server = createServer(async (req, res) => {
-    const path = req.url ?? "";
-    if (!path.startsWith("/repos/")) {
-      res.writeHead(mode === "registry-broken" ? 404 : 200);
-      res.end("metadata");
-      return;
-    }
-    let body = "";
-    for await (const chunk of req) body += chunk.toString();
-    let result: unknown;
-    let status = 200;
-    if (req.method === "POST" || req.method === "PATCH") {
-      const data = JSON.parse(body);
-      writes.push({ method: req.method, body: data });
-      issue = {
-        id: 55,
-        number: 7,
-        node_id: "I_7",
-        state: "open",
-        title: "Broken links found by lychee",
-        user: { id: 41898282, login: "github-actions[bot]", type: "Bot" },
-        updated_at: "2026-01-02T00:00:00Z",
-        body: data.body,
-      };
-      if (mode === "unknown-write") {
-        req.socket.destroy();
-        return;
-      }
-      result = issue;
-    } else if (path === "/repos/OpenConditions/openconditions") {
-      result = {
-        id: 1276024943,
-        full_name: "OpenConditions/openconditions",
-        default_branch: "main",
-      };
-      if (mode === "api-error") {
-        status = 503;
-        result = {};
-      }
-    } else if (path.includes("/labels?"))
-      result = mode === "missing-label" ? [] : [{ id: 1, name: "documentation" }];
-    else if (path.includes("/issues?")) result = issue ? [issue] : [];
-    else if (path.endsWith("/issues/7")) {
-      issueReads++;
-      result =
-        mode === "existing-concurrent" && issueReads === 2
-          ? { ...issue, body: "human change" }
-          : mode === "readback-error"
-            ? { ...issue, body: "unexpected" }
-            : issue;
-    } else {
-      status = 404;
-      result = {};
-    }
-    res.writeHead(status, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(result));
-  });
-  await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
-  cleanups.push(
-    () =>
-      new Promise<void>((resolve, reject) => {
-        server.close((e) => (e ? reject(e) : resolve()));
-        server.closeAllConnections();
-      }),
+// @ts-expect-error Node module is also loaded directly by github-script.
+import { checkRegistry, publish, validate } from "../link-monitor.mjs";
+
+const fixture = (name: string) =>
+  JSON.parse(
+    readFileSync(new URL(`./fixtures/link-monitor/${name}.json`, import.meta.url), "utf8"),
   );
-  const address = server.address();
-  if (!address || typeof address === "string") throw new Error("fixture server");
-  const origin = `http://127.0.0.1:${address.port}`;
-  const git = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
-  const curl = execFileSync("which", ["curl"], { encoding: "utf8" }).trim();
-  mkdirSync(join(dir, "bin"));
-  for (const name of ["git", "curl"]) {
-    copyFileSync(join(fixtures, `${name}.mjs`), join(dir, "bin", name));
-    chmodSync(join(dir, "bin", name), 0o755);
+const endpoints = [
+  "https://registry.npmjs.org/hyparquet-writer",
+  "https://registry.npmjs.org/@divviup%2Fprio3",
+  "https://registry.npmjs.org/@divviup%2Fvdaf",
+];
+const rows = () => endpoints.map((url) => ({ url, exit: 0, status: "200" }));
+const inputs = (name = "healthy", exit = "0") => ({
+  stats: fixture(name),
+  exit,
+  version: "lychee 0.24.2",
+  registry: rows(),
+});
+const dirs: string[] = [];
+afterEach(() => {
+  for (const dir of dirs.splice(0)) rmSync(dir, { recursive: true, force: true });
+});
+
+test("classifies complete healthy, cached and broken-link results", () => {
+  expect(validate(inputs()).unhealthy).toBe(false);
+  expect(validate(inputs("cached")).body).toContain("cached: 1");
+  const broken = validate(inputs("unhealthy", "2"));
+  expect(broken.unhealthy).toBe(true);
+  expect(broken.body).toContain("Rejected status code: 404");
+});
+test.each(["", "1", "3", "127"])("rejects checker execution exit %s", (exit) =>
+  expect(() => validate(inputs("healthy", exit))).toThrow(/execution/),
+);
+test("rejects empty, partial, contradictory, missing diagnostic and wrong-version output", () => {
+  for (const stats of [
+    null,
+    {},
+    { ...fixture("healthy"), total: 0 },
+    { ...fixture("healthy"), unknown: 1 },
+    { ...fixture("healthy"), errors: 1 },
+    { ...fixture("unhealthy"), error_map: {} },
+  ])
+    expect(() => validate({ ...inputs(), stats })).toThrow();
+  expect(() => validate(inputs("unhealthy"))).toThrow(/exit/);
+  expect(() => validate({ ...inputs(), version: "lychee 0.25.0" })).toThrow(/version/);
+});
+test("requires exactly the three fixed registry results; provider failures are unhealthy", () => {
+  for (const registry of [
+    [],
+    rows().slice(1),
+    [...rows(), rows()[0]],
+    rows().map((row) => ({ ...row, url: "https://other.test" })),
+  ])
+    expect(() => validate({ ...inputs(), registry })).toThrow(/registry/);
+  expect(
+    validate({ ...inputs(), registry: rows().map((row) => ({ ...row, status: "503" })) }).unhealthy,
+  ).toBe(true);
+  expect(
+    validate({ ...inputs(), registry: rows().map((row) => ({ ...row, exit: 28, status: "000" })) })
+      .unhealthy,
+  ).toBe(true);
+  expect(() =>
+    validate({ ...inputs(), registry: rows().map((row) => ({ ...row, exit: 2 })) }),
+  ).toThrow(/registry/);
+});
+test("registry uses bounded direct curl calls without writer credentials and stops on tool failure", () => {
+  const run = vi.fn(() => ({ status: 0, signal: null, stdout: "200", stderr: "" }));
+  const result = checkRegistry({ GITHUB_TOKEN: "private", GH_TOKEN: "private", PATH: "/bin" }, run);
+  expect(result).toEqual(rows());
+  expect(run).toHaveBeenCalledTimes(3);
+  for (const [command, args, options] of run.mock.calls as unknown as [
+    string,
+    string[],
+    { env: Record<string, string> },
+  ][]) {
+    expect(command).toBe("curl");
+    expect(args).toEqual(
+      expect.arrayContaining(["--retry", "2", "--connect-timeout", "10", "--max-time", "30"]),
+    );
+    expect(options.env).toEqual({ PATH: "/bin" });
   }
-  const data = join(dir, "fixture.json");
-  writeFileSync(data, JSON.stringify({ mode, origin, git, curl }));
-  writeFileSync(join(dir, "README.md"), "# Fixture\n");
-  writeFileSync(join(dir, ".lycheeignore"), "# preserved exclusions\n");
-  execFileSync(git, ["init", "-q"], { cwd: dir });
-  execFileSync(git, ["add", "."], { cwd: dir });
-  execFileSync(
-    git,
-    [
-      "-c",
-      "user.name=Fixture",
-      "-c",
-      "user.email=fixture@example.invalid",
-      "-c",
-      "commit.gpgsign=false",
-      "commit",
-      "-qm",
-      "fixture",
-    ],
-    { cwd: dir },
-  );
-  const sha = execFileSync(git, ["rev-parse", "HEAD"], { cwd: dir, encoding: "utf8" }).trim();
-  const env: Record<string, string> = {
-    PATH: [join(dir, "bin"), dirname(process.execPath), "/usr/bin", "/bin"].join(":"),
-    OC_LINK_FIXTURE_DATA: data,
-    GITHUB_REPOSITORY: "OpenConditions/openconditions",
-    GITHUB_REPOSITORY_ID: "1276024943",
-    GITHUB_REF: "refs/heads/main",
-    GITHUB_SHA: sha,
-    GITHUB_WORKFLOW_SHA: sha,
-    GITHUB_WORKFLOW_REF:
-      "OpenConditions/openconditions/.github/workflows/links.yml@refs/heads/main",
-    GITHUB_EVENT_NAME: "schedule",
-    GITHUB_RUN_ID: "123",
-    GITHUB_RUN_ATTEMPT: "1",
-    GITHUB_TOKEN: "fixture-writer",
-    GH_TOKEN: "fixture-alternative",
-    GITHUB_STEP_SUMMARY: join(dir, "summary.md"),
-    CHECKOUT_OUTCOME: "success",
-    SETUP_OUTCOME: "success",
-    PREPARE_OUTCOME: "success",
-    LYCHEE_OUTCOME: "success",
-    VERSION_OUTCOME: "success",
-    REGISTRY_OUTCOME: "success",
-    LYCHEE_EXIT_CODE: mode === "healthy" ? "0" : "2",
-  };
-  const run = (command: string) =>
-    new Promise<{ code: number | null; output: string }>((resolve, reject) => {
-      const child = spawn(
-        process.execPath,
-        ["--import", join(fixtures, "transport.mjs"), script, command],
-        { cwd: dir, env, stdio: ["ignore", "pipe", "pipe"] },
-      );
-      let output = "";
-      child.stdout.on("data", (x) => (output += x));
-      child.stderr.on("data", (x) => (output += x));
-      child.on("error", reject);
-      child.on("close", (code) => resolve({ code, output }));
-    });
-  const result = () => JSON.parse(readFileSync(join(dir, "lychee/execution.json"), "utf8"));
-  const raw = (name: string) => {
-    copyFileSync(join(fixtures, `${name}.json`), join(dir, "lychee/out.json"));
-    writeFileSync(join(dir, "lychee/version.txt"), "lychee 0.24.2\n");
-  };
-  return {
-    dir,
-    env,
-    run,
-    result,
-    raw,
-    writes,
-    previous: issue?.body,
-    setBody: (body: string) => {
-      if (!issue) throw new Error("issue missing");
-      issue.body = body;
+  expect(() => checkRegistry({}, () => ({ status: 127, stderr: "missing" }))).toThrow(/tool/);
+});
+test.each([
+  "missing",
+  "malformed",
+  "early-failure",
+  "registry-missing",
+  "summary-failure",
+  "report-failure",
+  "healthy",
+  "unhealthy",
+])("real validator CLI handles %s without silently passing missing evidence", (mode) => {
+  const dir = mkdtempSync(join(tmpdir(), "oc-links-"));
+  dirs.push(dir);
+  const output = join(dir, "lychee");
+  mkdirSync(output);
+  if (mode !== "missing")
+    writeFileSync(
+      join(output, "out.json"),
+      mode === "malformed"
+        ? "{"
+        : JSON.stringify(fixture(mode === "unhealthy" ? "unhealthy" : "healthy")),
+    );
+  writeFileSync(join(output, "registry.json"), JSON.stringify(rows()));
+  writeFileSync(join(output, "version.txt"), "lychee 0.24.2\n");
+  if (mode === "registry-missing") rmSync(join(output, "registry.json"));
+  if (mode === "report-failure") mkdirSync(join(output, "report.json"));
+  const script = new URL("../link-monitor.mjs", import.meta.url);
+  const result = spawnSync(process.execPath, [script.pathname, "validate"], {
+    cwd: dir,
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      GITHUB_STEP_SUMMARY: mode === "summary-failure" ? dir : join(dir, "summary.md"),
+      CHECKS_OUTCOME: mode === "early-failure" ? "failure" : "success",
+      LYCHEE_EXIT_CODE: mode === "unhealthy" ? "2" : "0",
     },
+  });
+  expect(result.status).toBe(["healthy", "unhealthy"].includes(mode) ? 0 : 1);
+  if (result.status === 0)
+    expect(JSON.parse(readFileSync(join(output, "report.json"), "utf8")).unhealthy).toBe(
+      mode === "unhealthy",
+    );
+});
+
+function client(body = "Human introduction\n\nOld diagnostic bytes\n") {
+  let issue = {
+    id: 1,
+    number: 9,
+    node_id: "issue9",
+    title: "Broken links found by lychee",
+    state: "open",
+    body,
+    updated_at: "one",
+    user: { login: "github-actions[bot]", id: 41898282, type: "Bot" },
   };
-}
-async function prepared(mode = "healthy") {
-  const f = await fixture(mode);
-  expect(await f.run("prepare")).toMatchObject({ code: 0 });
-  f.raw(mode === "healthy" ? "healthy" : "unhealthy");
-  expect(await f.run("registry")).toMatchObject({ code: 0 });
-  return f;
-}
-test("complete healthy coverage records recovery review without any issue mutation", async () => {
-  const f = await prepared();
-  expect(await f.run("finish")).toMatchObject({ code: 0 });
-  expect(f.result()).toMatchObject({
-    complete: true,
-    outcome: "healthy",
-    reporting: { attempted: false, recoveryReview: true },
-    coverage: { total: 1, successful: 1, registryChecked: 3 },
+  const get = vi.fn(async () => ({ data: structuredClone(issue) }));
+  const update = vi.fn(async (params: { body: string }) => {
+    issue = { ...issue, body: params.body, updated_at: "two" };
+    return { data: structuredClone(issue) };
   });
-  expect(f.writes).toEqual([]);
+  const create = vi.fn(async (params: { body: string }) => {
+    issue = { ...issue, body: params.body };
+    return { data: structuredClone(issue) };
+  });
+  const listForRepo = vi.fn();
+  const github = {
+    rest: { issues: { get, update, create, listForRepo } },
+    paginate: vi.fn(async () => [structuredClone(issue)]),
+  };
+  return { github, get, update, create };
+}
+const report = () => validate(inputs("unhealthy", "2"));
+test("healthy recovery performs no issue API requests", async () => {
+  const c = client();
+  await publish(c.github, validate(inputs()));
+  expect(c.github.paginate).not.toHaveBeenCalled();
 });
-test.each(["unhealthy", "registry-broken", "curl-error"])(
-  "complete %s reports diagnostics without changing issue lifecycle",
-  async (mode) => {
-    const f = await prepared(mode);
-    expect(await f.run("finish")).toMatchObject({ code: 0 });
-    expect(f.result().complete).toBe(true);
-    expect(f.writes).toHaveLength(1);
-    expect(f.writes[0].body).not.toHaveProperty("state");
-    expect(f.writes[0].body).toHaveProperty("labels", ["documentation"]);
-  },
-);
-test("all real Git and curl subprocesses reject both reporting tokens", async () => {
-  const f = await prepared("unhealthy");
-  expect(await f.run("finish")).toMatchObject({ code: 0 });
-  const rows = readFileSync(join(f.dir, "git-checks.jsonl"), "utf8")
-    .trim()
-    .split("\n")
-    .map((x) => JSON.parse(x));
-  expect(rows.length).toBeGreaterThanOrEqual(9);
-  expect(rows.every((x) => !x.tokenPresent)).toBe(true);
-  expect(readFileSync(join(f.dir, "curl-checks.jsonl"), "utf8").trim().split("\n")).toHaveLength(3);
+test("updates only bot-owned fixed-title body, preserving legacy and outside text", async () => {
+  const c = client();
+  await publish(c.github, report());
+  const first = c.update.mock.calls[0][0].body;
+  expect(first).toContain("Human introduction\n\nOld diagnostic bytes\n");
+  const second = client(`Before\n${first}\nAfter`);
+  await publish(second.github, report());
+  expect(second.update.mock.calls[0][0].body).toBe(`Before\n${first}\nAfter`);
+  expect(Object.keys(c.update.mock.calls[0][0]).sort()).toEqual([
+    "body",
+    "issue_number",
+    "owner",
+    "repo",
+  ]);
 });
-test.each([
-  "CHECKOUT_OUTCOME",
-  "SETUP_OUTCOME",
-  "PREPARE_OUTCOME",
-  "LYCHEE_OUTCOME",
-  "VERSION_OUTCOME",
-  "REGISTRY_OUTCOME",
-])("%s failure cannot become healthy or report", async (key) => {
-  const f = await prepared();
-  f.env[key] = "failure";
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.result().complete).toBe(false);
-  expect(f.writes).toEqual([]);
+test("creates one report with documentation label, without state or comment writes", async () => {
+  const c = client();
+  c.github.paginate.mockResolvedValue([]);
+  await publish(c.github, report());
+  expect(c.create).toHaveBeenCalledOnce();
+  expect(c.create.mock.calls[0][0]).toMatchObject({ labels: ["documentation"] });
 });
-test.each(["", "1", "3", "137", "unknown"])(
-  "lychee exit %s rejects even a plausible result",
-  async (exit) => {
-    const f = await prepared();
-    f.env.LYCHEE_EXIT_CODE = exit;
-    expect((await f.run("finish")).code).toBe(1);
-    expect(f.writes).toEqual([]);
-  },
-);
-test.each(["missing", "partial", "empty", "count-drift", "exit-drift", "unknown-status"])(
-  "%s lychee evidence never means zero failures",
-  async (mode) => {
-    const f = await prepared();
-    const path = join(f.dir, "lychee/out.json");
-    const value = JSON.parse(readFileSync(path, "utf8"));
-    if (mode === "missing") rmSync(path);
-    else if (mode === "partial") writeFileSync(path, '{"total":');
-    else if (mode === "empty") f.raw("empty");
-    else {
-      if (mode === "count-drift") value.total++;
-      if (mode === "unknown-status") {
-        value.successful = 0;
-        value.unknown = 1;
-      }
-      if (mode === "exit-drift") f.env.LYCHEE_EXIT_CODE = "2";
-      writeFileSync(path, JSON.stringify(value));
-    }
-    expect((await f.run("finish")).code).toBe(1);
-    expect(f.writes).toEqual([]);
-  },
-);
-test.each([
-  "GITHUB_REPOSITORY",
-  "GITHUB_REF",
-  "GITHUB_SHA",
-  "GITHUB_WORKFLOW_SHA",
-  "GITHUB_RUN_ID",
-  "GITHUB_RUN_ATTEMPT",
-  "GITHUB_WORKFLOW_REF",
-  "GITHUB_EVENT_NAME",
-])("rejects wrong %s authority before mutation", async (key) => {
-  const f = await prepared("unhealthy");
-  f.env[key] = "wrong";
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.writes).toEqual([]);
+test("refuses human-owned, duplicate and edited managed diagnostics", async () => {
+  const human = client();
+  human.github.paginate.mockResolvedValue([
+    { ...(await human.get()).data, user: { login: "someone", id: 7, type: "User" } },
+  ]);
+  await expect(publish(human.github, report())).rejects.toThrow(/ownership/);
+  const duplicate = client();
+  const issue = (await duplicate.get()).data;
+  duplicate.github.paginate.mockResolvedValue([issue, issue]);
+  await expect(publish(duplicate.github, report())).rejects.toThrow(/ambiguous/);
+  const initial = client();
+  await publish(initial.github, report());
+  const edited = client(initial.update.mock.calls[0][0].body.replace("404", "403"));
+  await expect(publish(edited.github, report())).rejects.toThrow(/edited/);
+  expect(edited.update).not.toHaveBeenCalled();
 });
-test.each([
-  "missing-label",
-  "human",
-  "existing-concurrent",
-  "api-error",
-  "unknown-write",
-  "readback-error",
-])("%s stops reporting visibly without repeated mutation", async (mode) => {
-  const f = await prepared(mode);
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.result().complete).toBe(false);
-  expect(f.writes.length).toBe(mode === "unknown-write" || mode === "readback-error" ? 1 : 0);
-});
-test("bot-owned legacy diagnostics are retained byte-for-byte and no lifecycle keys are sent", async () => {
-  const f = await prepared("existing");
-  expect((await f.run("finish")).code).toBe(0);
-  expect(String(f.writes[0].body.body)).toContain(f.previous);
-  expect(Object.keys(f.writes[0].body)).toEqual(["body"]);
-});
-test("missing registry receipt cannot turn into healthy", async () => {
-  const f = await prepared();
-  rmSync(join(f.dir, "lychee/registry.json"));
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.writes).toEqual([]);
-});
-test("missing curl executable is infrastructure failure, not a provider warning", async () => {
-  const f = await fixture();
-  expect((await f.run("prepare")).code).toBe(0);
-  rmSync(join(f.dir, "bin/curl"));
-  f.env.PATH = `${join(f.dir, "bin")}:${dirname(process.execPath)}`;
-  expect((await f.run("registry")).code).toBe(1);
-  expect(existsSync(join(f.dir, "lychee/registry.json"))).toBe(false);
+test("API errors, competing edits and unknown writes stop without retries or rollback", async () => {
+  const denied = client();
+  denied.github.paginate.mockRejectedValue(new Error("403"));
+  await expect(publish(denied.github, report())).rejects.toThrow("403");
+  expect(denied.update).not.toHaveBeenCalled();
+  const changed = client();
+  changed.get.mockImplementation(async () => ({
+    data: { ...(await client().get()).data, body: "Changed" },
+  }));
+  await expect(publish(changed.github, report())).rejects.toThrow(/changed/);
+  expect(changed.update).not.toHaveBeenCalled();
+  const unknown = client();
+  unknown.update.mockRejectedValue(new Error("connection lost"));
+  await expect(publish(unknown.github, report())).rejects.toThrow("connection lost");
+  expect(unknown.update).toHaveBeenCalledOnce();
+  const readback = client();
+  readback.get.mockRejectedValueOnce(new Error("GET failed"));
+  await expect(publish(readback.github, report())).rejects.toThrow("GET failed");
 });
 
-test("check completion is separate from report API failure", async () => {
-  const f = await prepared("api-error");
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.result()).toMatchObject({ checksComplete: true, complete: false, outcome: "unhealthy" });
-});
-test("curl configuration failure cannot masquerade as a broken provider", async () => {
-  const f = await fixture("curl-config");
-  expect((await f.run("prepare")).code).toBe(0);
-  expect((await f.run("registry")).code).toBe(1);
-  expect(existsSync(join(f.dir, "lychee/registry.json"))).toBe(false);
-});
-test("malformed curl output is infrastructure failure", async () => {
-  const f = await fixture("curl-malformed");
-  expect((await f.run("prepare")).code).toBe(0);
-  expect((await f.run("registry")).code).toBe(1);
-});
-test("registry-only failures retain healthy lychee coverage and report", async () => {
-  const f = await prepared("registry-broken");
-  f.raw("healthy");
-  f.env.LYCHEE_EXIT_CODE = "0";
-  expect((await f.run("finish")).code).toBe(0);
-  expect(f.result()).toMatchObject({
-    outcome: "unhealthy",
-    coverage: { errors: 0, registryChecked: 3 },
-  });
-});
-test.each(["context", "partial", "time", "row"])("rejects %s registry evidence", async (mode) => {
-  const f = await prepared();
-  const path = join(f.dir, "lychee/registry.json");
-  const data = JSON.parse(readFileSync(path, "utf8"));
-  if (mode === "context") data.context.runAttempt = "2";
-  if (mode === "partial") data.rows.pop();
-  if (mode === "time") data.finishedAt = "1970-01-01T00:00:00Z";
-  if (mode === "row") data.rows[0].url = "https://untrusted.invalid";
-  writeFileSync(path, JSON.stringify(data));
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.writes).toEqual([]);
-});
-test("a subsequent managed refresh preserves human outside text and legacy bytes", async () => {
-  const first = await prepared("existing");
-  expect((await first.run("finish")).code).toBe(0);
-  const second = await prepared("existing");
-  second.setBody(`Human before\n${first.writes[0].body.body}\nHuman after`);
-  expect((await second.run("finish")).code).toBe(0);
-  const body = String(second.writes[0].body.body);
-  expect(body.startsWith("Human before\n")).toBe(true);
-  expect(body.endsWith("\nHuman after")).toBe(true);
-  expect(body).toContain(first.previous);
-});
-test("edited managed diagnostics are preserved for human review, never overwritten", async () => {
-  const first = await prepared("existing");
-  expect((await first.run("finish")).code).toBe(0);
-  const second = await prepared("existing");
-  second.setBody(String(first.writes[0].body.body).replace("# Link check", "# Human edited"));
-  expect((await second.run("finish")).code).toBe(1);
-  expect(second.writes).toEqual([]);
-});
-test("report generation failure cannot reach the API", async () => {
-  const f = await prepared("unhealthy");
-  mkdirSync(join(f.dir, "lychee/combined-out.md"));
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.writes).toEqual([]);
-});
-test("summary failure remains incomplete even after healthy checks", async () => {
-  const f = await prepared();
-  mkdirSync(join(f.dir, "summary-directory"));
-  f.env.GITHUB_STEP_SUMMARY = join(f.dir, "summary-directory");
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.result().complete).toBe(false);
-  expect(f.writes).toEqual([]);
-});
-test("pre-existing output cannot be reused as new run evidence", async () => {
-  const f = await fixture();
-  mkdirSync(join(f.dir, "lychee"));
-  expect((await f.run("prepare")).code).toBe(1);
-});
-test("changed tracked source fails before reporting", async () => {
-  const f = await prepared("unhealthy");
-  writeFileSync(join(f.dir, "README.md"), "changed source");
-  expect((await f.run("finish")).code).toBe(1);
-  expect(f.writes).toEqual([]);
+test("rejects changed write responses and post-write readback failure without repeating a write", async () => {
+  const drift = client();
+  const before = (await drift.get()).data;
+  drift.get
+    .mockResolvedValueOnce({ data: before })
+    .mockResolvedValueOnce({ data: { ...before, body: "Human edit" } });
+  await expect(publish(drift.github, report())).rejects.toThrow(/readback/);
+  expect(drift.update).toHaveBeenCalledOnce();
+  const unavailable = client();
+  unavailable.get
+    .mockResolvedValueOnce({ data: (await client().get()).data })
+    .mockRejectedValueOnce(new Error("readback unavailable"));
+  await expect(publish(unavailable.github, report())).rejects.toThrow("readback unavailable");
+  expect(unavailable.update).toHaveBeenCalledOnce();
+  const wrong = client();
+  wrong.update.mockResolvedValue({ data: { ...before, id: 77 } });
+  await expect(publish(wrong.github, report())).rejects.toThrow(/uncertain/);
+  expect(wrong.update).toHaveBeenCalledOnce();
 });
 
-test.each(["missing", "wrong"])(
-  "%s runtime tool version cannot qualify its output",
-  async (mode) => {
-    const f = await prepared();
-    const path = join(f.dir, "lychee/version.txt");
-    if (mode === "missing") rmSync(path);
-    else writeFileSync(path, "lychee 999.0.0\n");
-    expect((await f.run("finish")).code).toBe(1);
-    expect(f.writes).toEqual([]);
-  },
-);
-test("cached output exposes its limitation instead of claiming fresh network coverage", async () => {
-  const f = await prepared();
-  f.raw("cached");
-  expect((await f.run("finish")).code).toBe(0);
-  expect(f.result().coverage.cached).toBe(1);
-  expect(f.result().cache).toContain("need not be freshly requested");
+test("real registry CLI strips reporting tokens before executing every curl child", () => {
+  const dir = mkdtempSync(join(tmpdir(), "oc-links-child-"));
+  dirs.push(dir);
+  copyFileSync(new URL("./fixtures/link-monitor/curl.sh", import.meta.url), join(dir, "curl"));
+  chmodSync(join(dir, "curl"), 0o700);
+  const result = spawnSync(
+    process.execPath,
+    [new URL("../link-monitor.mjs", import.meta.url).pathname, "registry"],
+    {
+      cwd: dir,
+      encoding: "utf8",
+      env: {
+        ...process.env,
+        PATH: dir,
+        GITHUB_TOKEN: "private",
+        GH_TOKEN: "private",
+        GITHUB_OUTPUT: "private",
+        GITHUB_STEP_SUMMARY: "private",
+      },
+    },
+  );
+  expect(result.status, result.stderr).toBe(0);
+  expect(JSON.parse(readFileSync(join(dir, "lychee/registry.json"), "utf8"))).toEqual(rows());
 });
