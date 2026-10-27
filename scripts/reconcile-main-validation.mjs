@@ -8,6 +8,7 @@ const coverage = [
   "python lint / test (openlr-resolver)",
   "interop (libtraff, python-tuf)",
   "production dependency audit",
+  "container image qualification",
   "required CI",
   "full main qualification",
 ];

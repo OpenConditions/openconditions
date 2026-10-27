@@ -3,6 +3,11 @@ import { join } from "node:path";
 import { scheduleTimezoneForGeometry } from "@openconditions/core";
 import { runMigrations } from "@openconditions/core/server";
 import type { OsmWay, SpineSegment } from "@openconditions/roads";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { loadIngestCatalog } from "../domains.js";
@@ -108,7 +113,8 @@ export async function runRestrictionSmokeWithDatabase(
 
   await mkdir(options.outputDir, { recursive: true });
 
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
     .withEnvironment({
       POSTGRES_DB: "conditions_smoke",
       POSTGRES_USER: "oc",
@@ -122,6 +128,10 @@ export async function runRestrictionSmokeWithDatabase(
   const sql = postgres(url, { max: 3 });
 
   try {
+    await assertPostgisProfile(sql, profile, {
+      fixture: "smoke-road-restrictions-database.integration.ts",
+      containerId: container.getId(),
+    });
     await runMigrations(url);
     await importOsmRoads(sql, {
       source: { fetchRegion: async () => spineToWays(spine.segments!) },

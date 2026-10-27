@@ -1,28 +1,17 @@
-<!--
-Thanks for the PR!
+<!-- Use a Conventional Commit title. Follow CONTRIBUTING.md for relevant checks and CLA.md for contribution terms. Remove sections that do not apply. -->
 
-Title: Conventional Commits format (e.g. `feat(roads): add the Open511 parser for the BC feed`).
-The `pr-title` GitHub Action will reject non-conformant titles.
+## What changed and why
 
-For anything non-trivial, please open an issue first so we can align on approach.
-Mark the PR as a Draft if it isn't ready for review yet.
+<!-- Describe the problem and the resulting behavior. -->
 
-Before opening, make sure the checks CI runs pass locally:
-  pnpm lint && pnpm typecheck && pnpm test
-  (Python: cd services/openlr-resolver && ruff check . && python -m pytest)
+## Related work
 
-See CONTRIBUTING.md for the full workflow. The CLA bot will prompt on your
-first PR (see CLA.md).
--->
+<!-- Link issues or PRs when useful. Use closing keywords only for issues this PR resolves. -->
 
-## Summary
+## Verification and limits
 
-<!-- What does this change, and why? 1–3 bullets. -->
+<!-- Record the checks you ran, results and important limits. Distinguish local, hosted and runtime evidence. Docs, backend and catalogue changes need no screenshots; include visual evidence only when it helps assess a visible change. -->
 
--
+## Release and upgrade impact
 
-## Related issues
-
-<!-- Link issues this addresses. "Fixes #123" auto-closes them on merge. -->
-
-Fixes #
+<!-- Describe known migration, configuration, compatibility or operator impact, including unresolved questions. -->

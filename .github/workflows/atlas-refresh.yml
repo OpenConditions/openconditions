@@ -75,9 +75,9 @@ jobs:
             exit 1
           fi
           echo "Feed counts healthy."
-      # Opens/updates a PR ONLY when the atlas or a snapshot actually changed; a
-      # no-op run creates no PR. Uses a PAT if provided (so required CI runs on the
-      # PR and it can auto-merge); otherwise the default token (PR opens, merge by hand).
+      # Opens/updates a PR only when the atlas or a snapshot changed.
+      # Uses configured ATLAS_PAT when present, otherwise GITHUB_TOKEN.
+      # PR/check acceptance still depends on the existing token and repository permissions.
       - name: Open a refresh PR if the atlas changed
         id: cpr
         uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
@@ -91,15 +91,11 @@ jobs:
           commit-message: "chore(feeds): refresh feed atlas + catalog snapshots"
           title: "chore(feeds): weekly atlas + catalog-snapshot refresh"
           body: |
-            Automated weekly regeneration of `atlas/<domain>.json` and the vendored
-            catalog snapshots (`packages/<domain>/src/catalog/snapshots/*.json`) from
-            the live WZDx registry + Autobahn index. Feed counts passed the drop guard.
+            Refreshes `atlas/<domain>.json` and vendored catalogue snapshots (`packages/<domain>/src/catalog/snapshots/*.json`) from the WZDx registry and Autobahn index.
 
-            Generated artifact — auto-merges once required CI is green. The refreshed
-            snapshots reach production on the next image build/deploy.
-          labels: automated, atlas
-      # Auto-merge a healthy refresh once required CI passes (the drop guard already
-      # ran; a PAT-authored PR triggers the required checks so this is protected).
+            The feed-count drop guard passed in [this workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}). The workflow requests squash auto-merge; required checks must pass. Deployment remains a separate operation.
+          labels: feed
+      # Request native auto-merge; GitHub's required checks determine eligibility.
       - name: Enable auto-merge on the refresh PR
         if: steps.cpr.outputs.pull-request-number
         env:

@@ -1,82 +1,82 @@
-name: 🛰️ New feed source
-description: Request (or propose to build) support for a new live-conditions feed source
-title: "[Feed]: "
-labels: [enhancement, feed-source, needs-triage]
+name: Feed request
+description: Request a feed or propose a catalogue addition.
+type: Feature
+labels: [needs-triage, feed]
 body:
   - type: markdown
     attributes:
       value: |
-        OpenConditions turns public open-data feeds (road incidents, roadworks, closures, hazards,
-        congestion) into canonical observations. Use this form to request a new feed source, or to
-        propose building it yourself.
+        OpenConditions uses a [multi-domain feed catalogue](https://github.com/openconditions/openconditions/tree/main/feeds). A supported format may need only a regional JSONC entry; other formats need parser work. You do not need to decide which before reporting a source.
 
-        Helpful background: a feed source is a parser plus a `FeedSource` entry in
-        [`@openconditions/roads`](https://github.com/openconditions/openconditions/tree/main/packages/roads).
+        Unknown details are welcome for triage. Feed activation still requires confirmed reuse rights and access conditions. Never include key values, passwords, tokens or credential-bearing URLs.
   - type: input
-    id: feed-name
+    id: name
     attributes:
-      label: Feed name
-      placeholder: "e.g. NDW (Netherlands), DriveBC Open511, US Work Zone Data Exchange"
+      label: Feed or publisher name
     validations:
       required: true
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Domain
+      options:
+        - Not sure
+        - Roads
+        - Fuel
+        - Parking
+        - Charging
+        - Cameras
+        - Hazards
+        - Weather
+        - Vehicles
+        - Border
   - type: input
     id: coverage
     attributes:
-      label: Country / region
-      description: Which country or region does this feed cover?
-      placeholder: "e.g. Netherlands, British Columbia (CA), United States"
+      label: Geographic coverage
+      description: Country, region or area covered. Say unknown if necessary.
     validations:
       required: true
-  - type: input
-    id: portal-url
+  - type: textarea
+    id: endpoint
     attributes:
-      label: Open-data portal URL
-      description: Link to the feed endpoint or the open-data portal page describing it.
-      placeholder: "https://…"
+      label: Endpoint or source page
+      description: Link the public endpoint, data portal or documentation. Say unknown if it is not yet available; omit credential values and private URLs.
     validations:
       required: true
   - type: dropdown
     id: format
     attributes:
       label: Data format
-      description: What wire format does the feed publish?
       options:
+        - Unknown
         - DATEX II
         - Open511
-        - WZDx (Work Zone Data Exchange)
+        - WZDx
         - GeoJSON
+        - JSON
+        - XML
+        - CSV
         - Other
-    validations:
-      required: true
   - type: textarea
-    id: license
+    id: rights
     attributes:
-      label: Data license & attribution
-      description: |
-        **Important.** OpenConditions is built on open data and tracks attribution per source. What
-        license or terms of use govern this feed, and what attribution does it require? Link the
-        license if you can.
-      placeholder: "e.g. CC-BY-4.0 (requires '© …'), public domain, proprietary ToS at …"
+      label: License, terms and attribution
+      description: Link the license or terms and describe required attribution or reuse restrictions. Unknown is acceptable at intake.
     validations:
       required: true
   - type: dropdown
-    id: api-key
+    id: access
     attributes:
-      label: Does it require an API key?
+      label: Access requirements
       options:
-        - "No — fully open, no key required"
-        - "Yes — free API key / registration required"
-        - "Yes — paid / metered API key required"
         - Unknown
-    validations:
-      required: true
-  - type: dropdown
-    id: contribution
+        - Public without registration
+        - Registration or free key
+        - Paid or metered access
+        - Other restrictions
+  - type: textarea
+    id: context
     attributes:
-      label: Would you like to build it?
-      options:
-        - "Yes — I'd like to open a PR"
-        - "Maybe, with some guidance"
-        - "No — just requesting"
-    validations:
-      required: true
+      label: Access details and other context
+      description: Link public access instructions or known rate limits, describe the intended use, and name related catalogue entries if known. Do not provide secret values.

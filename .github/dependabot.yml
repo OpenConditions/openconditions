@@ -62,12 +62,12 @@ updates:
       time: "06:00"
       timezone: Europe/Berlin
     open-pull-requests-limit: 5
-    labels: [dependencies, python]
+    labels: [dependencies]
     commit-message:
       prefix: chore
       include: scope
     groups:
-      # The dormant resolver's deps arrive as one PR instead of one-per-package.
+      # Group resolver dependencies into one PR.
       python-deps:
         patterns:
           - "*"
@@ -81,7 +81,7 @@ updates:
       time: "06:00"
       timezone: Europe/Berlin
     open-pull-requests-limit: 5
-    labels: [dependencies, python]
+    labels: [dependencies]
     commit-message:
       prefix: chore
       include: scope
@@ -91,6 +91,8 @@ updates:
     # frozen digest only stays secure if something keeps it current).
     directories:
       - "/services/ingest"
+      - "/services/contributions-api"
+      - "/services/federation"
       - "/services/openlr-resolver"
     schedule:
       interval: weekly
@@ -111,3 +113,16 @@ updates:
         # Python 3.14→3.15 is a "minor" bump in semver terms; ignore minor too so
         # the base stays on 3.14 (== the CI test runtime) until bumped on purpose.
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+
+  - package-ecosystem: pip
+    directory: "/scripts/tuf-interop"
+    schedule:
+      interval: weekly
+      day: monday
+      time: "06:00"
+      timezone: Europe/Berlin
+    open-pull-requests-limit: 5
+    labels: [dependencies, python]
+    commit-message:
+      prefix: chore
+      include: scope

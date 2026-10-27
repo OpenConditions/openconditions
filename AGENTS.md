@@ -16,3 +16,7 @@ Use focused tests while iterating and `pnpm verify:full` for deterministic Node 
 review (Docker/PostGIS required). Python lint/tests, independent interop and production audits are
 separate commands and remain required CI coverage; see CONTRIBUTING.md. Do not add workspace builds,
 typechecks, tests or downloads back to commit/push hooks.
+
+For contributor-facing writing, use natural paragraphs without manual prose hard wrapping. Preserve legal/CLA text, provider rights, attribution, diagnostic bytes and intentional Markdown. Use the current [Humanizer guidance](https://github.com/blader/humanizer/blob/main/SKILL.md) for authorized prose rewrites, record its revision in task receipts, and keep project facts and user instructions authoritative. Do not install or execute that repository's scripts.
+
+For docs, forms and label-reference-only changes, use scoped formatting, YAML/schema and producer-reference validation. New automation logic needs causal tests; Node behavior still needs the applicable full verification. Follow [issue triage](docs/issue-triage.md), distinguish source readiness from live taxonomy/native acceptance, and keep live metadata or historical writing within the task's execution scope. Preserve monitoring behavior unless its lifecycle is explicitly in scope.

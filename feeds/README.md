@@ -1022,3 +1022,14 @@ feed of the given files (every file when none is given); a parse or format error
 or a file that is no region file, fails it, a network or HTTP failure is
 reported as a warning, and a feed whose credentials are not set is skipped as
 `missing configuration`, naming the variables to set.
+
+The PR feed workflow selects changed region candidates from the exact event's
+base commit to its checked-out merge snapshot. It verifies the event's base/head
+parents and rejects stale identities, failed Git commands and a changed checkout
+before parsing NUL-delimited paths. Filenames remain literal arguments to the
+checker. Deleted regions and renames out of the catalogue have nothing to fetch;
+genuine empty or non-region changes are reported explicitly. Shared credentials,
+schemas or documentation changes alone do not fan out live requests; regular CI
+still lints the complete catalogue. Parser errors remain gating, network failures
+remain warnings, and unavailable keyed feeds remain skipped. This workflow uses
+unprivileged PR execution without provider secrets; it is not a new required check.

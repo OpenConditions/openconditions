@@ -1,0 +1,8 @@
+# Copyright the OpenConditions authors.
+# SPDX-License-Identifier: Apache-2.0
+
+# Build openlr's source distribution without unpinned isolated build downloads.
+# Regenerate with Python 3.14, pip-tools 7.6.2 and pip 26.2.1:
+#   python -m scripts.lock_dependencies
+setuptools==84.2.1
+wheel==0.48.0
