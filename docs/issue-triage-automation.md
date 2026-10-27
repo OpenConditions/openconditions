@@ -1,10 +1,10 @@
 # Issue triage automation
 
-The lifecycle source is inactive until coordinated taxonomy activation. It does not migrate history, assign issue types or change organization fields. The contribution forms and triage guidance in PR259 remain a separate source batch; reconcile that runbook after both PRs merge.
+The guarded issue label lifecycle is enabled with the reconciled ten-label taxonomy. It does not migrate history, assign issue types or change organization fields. See [issue triage](issue-triage.md) for intake, metadata and maintainer decisions.
 
 ## Activation and scope
 
-After producers merge, reconcile their label references, including PR251's TUF updater, and verify the ten target labels exist. Review activation before setting the repository variable `ISSUE_TRIAGE_LIFECYCLE_ENABLED` to `true`. This PR sets no variable and performs no live issue or label writes. Validate native behavior on legitimate future issue events; do not create test issues or dispatch the workflow to manufacture acceptance.
+The repository variable `ISSUE_TRIAGE_LIFECYCLE_ENABLED` is set to `true`. Producer label references, including the TUF updater, are reconciled and all ten target labels exist. For any later reactivation, verify current producers, label identities, trusted main qualification and effective repository/organization variables before enabling the guard. Validate native behavior on legitimate future issue events; activation and source tests alone do not establish that acceptance. Do not create test issues or dispatch the workflow to manufacture it.
 
 Only `issues` opened, reopened and closed events are eligible. A fresh new/reopened issue receives needs-triage; a closed issue loses needs-triage, needs-info and blocked. Operations add one label or remove one owned label at a time. Other labels, types, priority, effort, bodies, comments, state and closure reasons are untouched. Comments do not resolve a question or blocker. There is no stale closure, locking or automated comment.
 
