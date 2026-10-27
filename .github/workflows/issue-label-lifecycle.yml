@@ -1,0 +1,41 @@
+name: Issue label lifecycle
+
+on:
+  issues:
+    types: [opened, reopened, closed]
+
+permissions: {}
+
+concurrency:
+  group: issue-label-lifecycle-${{ github.repository_id }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  activation:
+    if: vars.ISSUE_TRIAGE_LIFECYCLE_ENABLED != 'true'
+    runs-on: ubuntu-latest
+    permissions: {}
+    steps:
+      - name: Record blocked activation
+        run: echo 'Issue label lifecycle is disabled. Merge producers, reconcile taxonomy and review activation before enabling ISSUE_TRIAGE_LIFECYCLE_ENABLED.' >> "$GITHUB_STEP_SUMMARY"
+  lifecycle:
+    if: github.repository == 'OpenConditions/openconditions' && github.ref == 'refs/heads/main' && !github.event.issue.pull_request && vars.ISSUE_TRIAGE_LIFECYCLE_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      # issues uses the default branch. Never check out an issue/PR-selected ref.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.workflow_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+      - name: Apply bounded issue-only lifecycle
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_TRIAGE_LIFECYCLE_ENABLED: ${{ vars.ISSUE_TRIAGE_LIFECYCLE_ENABLED }}
+        run: node scripts/issue-triage.mjs lifecycle
