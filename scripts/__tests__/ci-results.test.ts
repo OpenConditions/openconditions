@@ -6,6 +6,7 @@ const jobs = {
   ci: { result: "success" },
   "python-ci": { result: "success" },
   interop: { result: "success" },
+  images: { result: "success" },
   "production-audit": { result: "success" },
 };
 function run(
@@ -55,6 +56,7 @@ describe("required CI command", () => {
       ci: { result: "skipped" },
       "python-ci": { result: "skipped" },
       interop: { result: "skipped" },
+      images: { result: "skipped" },
     };
     expect(run("results", { GITHUB_EVENT_NAME: "schedule" }, scheduled).status).toBe(0);
     expect(

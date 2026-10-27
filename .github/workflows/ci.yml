@@ -142,7 +142,7 @@ jobs:
           python -m pip install --no-cache-dir --require-hashes --no-build-isolation -r requirements-dev.txt
 
       - name: Lint
-        run: ruff check .
+        run: ruff check . ../../scripts/qualify-container-images.py
 
       - name: Test
         run: python -m pytest
@@ -250,10 +250,81 @@ jobs:
         working-directory: services/openlr-resolver
         run: python -m pip_audit --strict --require-hashes --disable-pip -r requirements-build.txt
 
+  build-images:
+    needs: source
+    if: github.event_name != 'schedule'
+    name: image (${{ matrix.image }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        image: [ingest, contributions-api, federation, openlr-resolver]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      # OCI import semantics match the qualified local Docker 29 toolchain.
+      # This daemon belongs only to this disposable, read-only-token PR job.
+      - uses: docker/setup-docker-action@7ec28a010822b4626af4874f9448a4b05ac6f3e5 # v5.6.0
+        with:
+          version: v29.9.2
+          daemon-config: '{"features":{"containerd-snapshotter":true}}'
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+        with:
+          version: v0.38.1
+          driver: docker
+      - name: Build, smoke, scan and bind image evidence
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: >-
+          python scripts/qualify-container-images.py qualify
+          --image "$IMAGE" --source "$GITHUB_SHA"
+          --output "$RUNNER_TEMP/qualified-image"
+      - name: Retain qualification or failure evidence
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: image-${{ matrix.image }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/qualified-image/
+          if-no-files-found: error
+          retention-days: 3
+          compression-level: 0
+
+  images:
+    name: container image qualification
+    if: always() && github.event_name != 'schedule'
+    needs: [source, build-images]
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          pattern: image-*-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/image-evidence
+      - name: Require every exact-source image and artifact
+        env:
+          IMAGE_BUILD_RESULT: ${{ needs.build-images.result }}
+        run: >-
+          python scripts/qualify-container-images.py collect
+          --source "$GITHUB_SHA" --directory "$RUNNER_TEMP/image-evidence"
+
   required-ci:
     name: required CI
     if: always()
-    needs: [source, ci, python-ci, interop, production-audit]
+    needs: [source, ci, python-ci, interop, production-audit, images]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -274,7 +345,7 @@ jobs:
     if: >-
       always() && github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
-    needs: [source, ci, python-ci, interop, production-audit, required-ci]
+    needs: [source, ci, python-ci, interop, production-audit, images, required-ci]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
