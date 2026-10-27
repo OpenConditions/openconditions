@@ -2,7 +2,7 @@ import type { CatalogFeed } from "@openconditions/ingest-framework";
 
 export interface FeedFailure {
   feed: Pick<CatalogFeed, "id" | "name" | "domain" | "region" | "maintainers">;
-  /** `error`: the feed's payload did not parse; `warning`: it could not be fetched. */
+  /** Errors are parse/format failures; warnings include provider, reference and empty results. */
   level: "error" | "warning";
   message?: string;
 }
@@ -41,8 +41,7 @@ export function renderReport(failures: FeedFailure[]): string {
   const lines: string[] = [
     `Automated feed-liveness check found ${failures.length} failing feed(s).`,
     "",
-    "Each feed below could not be fetched or did not parse. Errors are redacted",
-    "(query-string secrets stripped). Feeds whose credentials are not set are not checked.",
+    "Warnings include provider/network, unavailable reference and empty-result conditions. Errors identify parse/format failures. Diagnostics are redacted; skipped feeds were not assessed.",
     "",
   ];
   for (const f of failures) {
@@ -55,7 +54,7 @@ export function renderReport(failures: FeedFailure[]): string {
       `## ${name} (\`${f.feed.id}\`)`,
       "",
       `- Region file: \`feeds/${f.feed.domain}/${f.feed.region}.jsonc\``,
-      `- Failure: ${f.level === "error" ? "parse" : "fetch (network or HTTP)"}`,
+      `- Failure: ${f.level === "error" ? "parse or format" : "warning (provider, reference or empty result)"}`,
       `- Error: ${message}`,
       `- Maintainers: ${maintainersLine}`,
       "",
