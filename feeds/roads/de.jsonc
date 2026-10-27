@@ -727,6 +727,12 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Bundesstadt Bonn",
       "privacyUrl": "https://www.bonn.de/datenschutz.php",
+      // Polled last on 2026-10-21 17:05 UTC; the portal still lists this URL
+      // (catalogue entry modified 2026-10-26). Re-enable once it serves features.
+      "disabled": {
+        "reason": "the endpoint answers an empty object ({}) or drops the connection",
+        "since": "2026-10-21",
+      },
     },
     {
       // Autobahn GmbH BAB detector speed (v) + volume (q), per-minute, Niederlassung
