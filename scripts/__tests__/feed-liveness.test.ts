@@ -224,6 +224,13 @@ const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',
     "fixture",
   ]);
   const sha = git(["rev-parse", "HEAD"]);
+  const realGit = execFileSync("which", ["git"], { encoding: "utf8" }).trim();
+  const gitShim = join(dir, "bin/git");
+  writeFileSync(
+    gitShim,
+    `#!${process.execPath}\nimport{appendFileSync}from'node:fs';import{spawnSync}from'node:child_process';const tokenPresent=Boolean(process.env.GITHUB_TOKEN||process.env.GH_TOKEN);appendFileSync('git-env-checks.jsonl',JSON.stringify({tokenPresent,args:process.argv.slice(2)})+'\\n');if(tokenPresent){console.error('reporting token reached Git');process.exit(7)}const result=spawnSync(${JSON.stringify(realGit)},process.argv.slice(2),{env:process.env,stdio:'inherit'});process.exit(result.status??1);`,
+  );
+  chmodSync(gitShim, 0o755);
   if (mode === "stale-output") mkdirSync(join(dir, "liveness"));
   if (mode === "summary-error") mkdirSync(join(dir, "summary-directory"));
   const env = {
@@ -240,6 +247,7 @@ const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',
     GITHUB_EVENT_NAME: "schedule",
     ...(mode === "summary-error" ? { GITHUB_STEP_SUMMARY: join(dir, "summary-directory") } : {}),
     GITHUB_TOKEN: "fixture-token",
+    GH_TOKEN: "fixture-alternative-token",
     LU_KEYED_EVENTS_API_KEY: "NEVER_RECORD_THIS_KEY",
   };
   if (mode === "wrong-authority") env.GITHUB_REPOSITORY_ID = "1";
@@ -271,6 +279,18 @@ const c=spawn(process.execPath,[${JSON.stringify(tsx)},'scripts/feeds-check.ts',
 }
 const writes = (f: Awaited<ReturnType<typeof fixture>>) =>
   f.requests.filter((x) => x.method !== "GET" && !x.path.startsWith("/feed/"));
+
+test("all Git and pnpm children are isolated from both reporting tokens", async () => {
+  const f = await fixture();
+  expect(f.code, f.output).toBe(0);
+  const rows = readFileSync(join(f.dir, "git-env-checks.jsonl"), "utf8")
+    .trim()
+    .split("\n")
+    .map((line) => JSON.parse(line));
+  expect(rows).toHaveLength(9);
+  expect(rows.every((row) => row.tokenPresent === false)).toBe(true);
+  expect(readFileSync(join(f.dir, "commands.jsonl"), "utf8").trim().split("\n")).toHaveLength(3);
+});
 
 test("healthy complete keyless run records scope/provenance and never changes issues", async () => {
   const f = await fixture();

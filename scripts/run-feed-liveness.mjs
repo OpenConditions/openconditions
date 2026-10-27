@@ -315,6 +315,9 @@ function runProcess(command, args, { cwd, env, log }) {
   });
 }
 export async function runLiveness({ cwd = process.cwd(), env = process.env } = {}) {
+  const childEnv = { ...env };
+  for (const key of ["GITHUB_TOKEN", "GH_TOKEN", "GITHUB_OUTPUT", "GITHUB_STEP_SUMMARY"])
+    delete childEnv[key];
   let output;
   let context;
   let stage = "authority";
@@ -330,14 +333,11 @@ export async function runLiveness({ cwd = process.cwd(), env = process.env } = {
   };
   let code = 1;
   try {
-    context = contextOf(cwd, env);
+    context = contextOf(cwd, childEnv);
     execution.context = context;
     const directory = join(cwd, "liveness");
     mkdirSync(directory, { mode: 0o700 });
     output = directory;
-    const childEnv = { ...env };
-    for (const key of ["GITHUB_TOKEN", "GH_TOKEN", "GITHUB_OUTPUT", "GITHUB_STEP_SUMMARY"])
-      delete childEnv[key];
     stage = "install";
     const install = await runProcess("pnpm", ["install", "--frozen-lockfile"], {
       cwd,
@@ -352,7 +352,7 @@ export async function runLiveness({ cwd = process.cwd(), env = process.env } = {
       log: join(output, "build.log"),
     });
     assert(build === 0, "domain build failed");
-    contextOf(cwd, env);
+    contextOf(cwd, childEnv);
     stage = "checker";
     const exit = await runProcess(
       "pnpm",
@@ -373,7 +373,7 @@ export async function runLiveness({ cwd = process.cwd(), env = process.env } = {
     stage = "validation";
     const report = readRegular(join(output, "out.md"));
     validateChecker(raw, context, execution.startedAt, report, exit);
-    contextOf(cwd, env);
+    contextOf(cwd, childEnv);
     execution.checkerValidated = true;
     if (raw.providerOutcome === "unhealthy") {
       stage = "report";
