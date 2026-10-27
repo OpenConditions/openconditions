@@ -131,9 +131,15 @@ jobs:
           cache-dependency-path: |
             services/openlr-resolver/requirements.txt
             services/openlr-resolver/requirements-dev.txt
+            services/openlr-resolver/requirements-build.txt
+
+      - name: Verify Python dependency parity
+        run: python scripts/check_dependencies.py
 
       - name: Install dependencies
-        run: pip install -r requirements.txt -r requirements-dev.txt
+        run: |
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-build.txt
+          python -m pip install --no-cache-dir --require-hashes --no-build-isolation -r requirements-dev.txt
 
       - name: Lint
         run: >-
@@ -143,6 +149,8 @@ jobs:
 
       - name: Test
         run: python -m pytest
+        env:
+          OPENLR_POSTGIS_TESTS: required
 
   interop:
     needs: source
@@ -225,16 +233,25 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
-          cache-dependency-path: services/openlr-resolver/requirements-dev.txt
+          cache-dependency-path: |
+            services/openlr-resolver/requirements-dev.txt
+            services/openlr-resolver/requirements-build.txt
 
       - run: pnpm install --frozen-lockfile
 
       - name: Install Python audit tool
         working-directory: services/openlr-resolver
-        run: pip install --require-hashes -r requirements-dev.txt
+        run: |
+          python scripts/check_dependencies.py
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-build.txt
+          python -m pip install --no-cache-dir --require-hashes --no-build-isolation -r requirements-dev.txt
 
       - name: Require clean production dependency audits
         run: pnpm audit:production
+
+      - name: Audit Python build prerequisites
+        working-directory: services/openlr-resolver
+        run: python -m pip_audit --strict --require-hashes --disable-pip -r requirements-build.txt
 
   build-images:
     needs: source

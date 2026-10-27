@@ -4,6 +4,9 @@ on:
   pull_request:
     paths:
       - "feeds/**"
+      - ".github/workflows/feed-pr-check.yml"
+      - "scripts/check-changed-feeds.mjs"
+      - "scripts/__tests__/check-changed-feeds.test.ts"
 
 concurrency:
   group: feed-pr-check-${{ github.workflow }}-${{ github.ref }}
@@ -19,12 +22,12 @@ jobs:
     timeout-minutes: 15
     env:
       TURBO_TELEMETRY_DISABLED: 1
-      # fetch-depth:0 checks out all branches, so origin/<base_ref> resolves.
-      BASE_REF: origin/${{ github.base_ref }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          fetch-depth: 0 # full history + all branches so the base-ref diff resolves
+          ref: ${{ github.sha }}
+          fetch-depth: 0 # exact event base/head objects and merge parents must be available
+          persist-credentials: false
 
       # Version comes from package.json "packageManager" (single source of truth).
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
@@ -34,20 +37,22 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
 
-      - run: pnpm install --frozen-lockfile
+      - name: Select changed region files from the exact PR event
+        id: selection
+        run: node scripts/check-changed-feeds.mjs select
+
+      - if: steps.selection.outputs.selected == 'true'
+        run: pnpm install --frozen-lockfile
 
       # The checker loads every ingest domain, even for a single region file.
-      - run: pnpm build:domains
+      - if: steps.selection.outputs.selected == 'true'
+        run: pnpm build:domains
 
       # Gating: a feed whose payload does not parse fails the check; a network or
       # HTTP failure is only a warning annotation, and a feed whose credentials
       # this runner does not hold (every keyed feed) is skipped. Deleted files
-      # have nothing to fetch, so the diff keeps added and modified ones.
+      # have nothing to fetch. Git/event errors fail before selection is parsed;
+      # the runner revalidates the immutable checkout before invoking the checker.
       - name: Check the feeds of changed region files
-        run: |
-          mapfile -t files < <(git diff --name-only --diff-filter=ACMRT "${BASE_REF}...HEAD" -- 'feeds/*/*.jsonc')
-          if [ "${#files[@]}" -eq 0 ]; then
-            echo "No region file changed."
-            exit 0
-          fi
-          pnpm exec tsx scripts/feeds-check.ts "${files[@]}"
+        if: steps.selection.outputs.selected == 'true'
+        run: node scripts/check-changed-feeds.mjs run
