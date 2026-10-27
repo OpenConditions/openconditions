@@ -500,3 +500,64 @@ print(m.snapshot(Path(sys.argv[2]),sys.argv[3],Path(sys.argv[4])))`;
     expect(git(["replace", "-l"])).toBe(a);
   });
 });
+
+describe("image ownership uncertainty", () => {
+  it.each(["transient daemon API error", "permission denied"])(
+    "aborts before loading/deleting a pre-existing image after %s then recovery",
+    (message) => {
+      const f = fixture();
+      const inspected = call(["inspect", "--archive", f.archive]);
+      expect(inspected.status, inspected.stderr).toBe(0);
+      put(join(f.root, "identity.json"), inspected.stdout);
+      const bin = join(f.root, "bin");
+      mkdirSync(bin);
+      const state = join(f.root, "state.json");
+      const body = `#!${process.execPath}
+const fs=require('node:fs');
+const path=process.env.OC_FAKE_STATE;
+const i=JSON.parse(fs.readFileSync(process.env.OC_FAKE_IDENTITY,'utf8'));
+let s;try{s=JSON.parse(fs.readFileSync(path,'utf8'));}catch{s={calls:[],inspections:0};}
+const a=process.argv.slice(2);s.calls.push(a);
+function end(code,out='',err=''){fs.writeFileSync(path,JSON.stringify(s));if(out)process.stdout.write(out);if(err)process.stderr.write(err);process.exit(code);}
+if(a[0]==='image'&&a[1]==='inspect'){
+ s.inspections++;
+ if(s.inspections===1){s.first=a[2];end(1,'',process.env.OC_FAKE_ERROR);}
+ if(s.removed&&a[2]===s.first)end(1,'','Error response from daemon: No such image: '+a[2]);
+ end(0,JSON.stringify([{Id:a[2],Descriptor:{digest:a[2]},Architecture:'amd64',Os:'linux',RootFS:{Layers:i.diffIds},Config:{User:'1001'}}]));
+}
+if(a[0]==='load')end(0,'Loaded image ID: '+s.first+'\\n');
+if(a[0]==='network'&&a[1]==='create')end(19,'','stop after recovered daemon');
+if(a[0]==='image'&&a[1]==='rm'){s.removed=true;end(0);}
+if(a[0]==='container'&&a[1]==='inspect')end(1,'','Error response from daemon: No such container: '+a[2]);
+if(a[0]==='network'&&a[1]==='inspect')end(1,'','Error response from daemon: network '+a[2]+' not found');
+end(20,'','unexpected test command');
+`;
+      put(join(bin, "docker"), body);
+      chmodSync(join(bin, "docker"), 0o755);
+      const code = `import importlib.util,sys,json
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('qualification',sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+p=Path(sys.argv[2]);m.runtime_smoke('ingest',json.loads((p/'identity.json').read_text()),p,p)`;
+      const r = spawnSync("python3", ["-c", code, script, f.root], {
+        encoding: "utf8",
+        timeout: 30_000,
+        env: {
+          ...process.env,
+          PATH: `${bin}:${process.env.PATH}`,
+          OC_FAKE_STATE: state,
+          OC_FAKE_IDENTITY: join(f.root, "identity.json"),
+          OC_FAKE_ERROR: message,
+        },
+      });
+      expect(r.status).toBe(1);
+      const observed = JSON.parse(readFileSync(state, "utf8"));
+      expect(
+        observed.calls.some((a: string[]) => a[0] === "load"),
+        JSON.stringify(observed),
+      ).toBe(false);
+      expect(observed.calls.some((a: string[]) => a[0] === "image" && a[1] === "rm")).toBe(false);
+      expect(observed.removed).not.toBe(true);
+      expect(r.stderr).toContain("image presence");
+    },
+  );
+});

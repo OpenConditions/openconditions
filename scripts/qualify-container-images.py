@@ -592,11 +592,14 @@ def runtime_smoke(image, identity, source, output):
         identity["configDigest"],
         f"sha256:{identity['ociIndexContentSha256']}",
     }
-    existing = {
-        value
-        for value in possible
-        if command(["docker", "image", "inspect", value], check=False).returncode == 0
-    }
+    confirmed_absent = set()
+    for value in sorted(possible):
+        inspection = command(["docker", "image", "inspect", value], check=False)
+        if inspection.returncode == 0:
+            continue
+        if not absent(inspection, "image", value):
+            fail("cannot confirm image presence; refusing to load or claim ownership")
+        confirmed_absent.add(value)
     loaded = None
     record = {"identity": identity, "passed": False, "cleanup": [], "checks": {}}
     try:
@@ -800,7 +803,7 @@ def runtime_smoke(image, identity, source, output):
                         (logs.stdout or "") + (logs.stderr or "")
                     )
             record["cleanup"].append(remove_owned(kind, name, label))
-        if loaded and loaded not in existing:
+        if loaded in confirmed_absent:
             removed = command(["docker", "image", "rm", loaded], check=False)
             missing = command(["docker", "image", "inspect", loaded], check=False)
             record["loadedImageCleanup"] = {
