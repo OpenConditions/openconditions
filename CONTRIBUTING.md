@@ -76,7 +76,7 @@ model artifacts, feed schemas, feed lint and the full Node suite. It needs Docke
 tests. For the same OpenLR cross-check as CI, install the hash-pinned
 `packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set
 `OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent
-interop or dependency audits below, or prove live provider/deployment behavior. For a docs-only change,
+interop, dependency audits or container qualification below, or prove live provider/deployment behavior. For a docs-only change,
 use scoped Prettier checks; for Node behavior, run focused tests while iterating and `verify:full` before
 review. Resolver, wire-format/federation and dependency changes also need their corresponding checks
 below. CI retains every applicable gate on every PR.
@@ -102,6 +102,11 @@ Production dependency audits (after installing both sets of development dependen
 ```bash
 pnpm audit:production # pnpm audit + pip-audit, with zero findings required
 ```
+
+Container images are separately built, exercised with disposable PostGIS/native runtime probes,
+scanned at every severity and bound to OCI/SBOM artifacts in CI. See
+[container qualification](docs/container-qualification.md) for the explicit local command, supported
+qualification platform, cleanup and acceptance limits. `verify:full` does not build these images.
 
 Git hooks check staged work (Husky):
 
@@ -129,7 +134,7 @@ so newly published advisories fail without waiting for a source change.
 ### Main validation and required checks
 
 CI reports `required CI` after checking every applicable outcome: source
-validation, TypeScript, Python, independent interop and production audits. A
+validation, TypeScript, Python, independent interop, production audits and container image qualification. A
 failed, cancelled, missing or unexpectedly skipped job fails the aggregate.
 The weekly CI schedule intentionally runs only the production audit and source
 validation; its skipped ordinary jobs are allowed only on that event.

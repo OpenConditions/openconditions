@@ -1,7 +1,7 @@
 import { fileURLToPath } from "node:url";
 
-const requiredJobs = ["source", "ci", "python-ci", "interop", "production-audit"];
-const ordinaryJobs = new Set(["ci", "python-ci", "interop"]);
+const requiredJobs = ["source", "ci", "python-ci", "interop", "production-audit", "images"];
+const ordinaryJobs = new Set(["ci", "python-ci", "interop", "images"]);
 
 function object(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
