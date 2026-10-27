@@ -122,7 +122,7 @@ updates:
       time: "06:00"
       timezone: Europe/Berlin
     open-pull-requests-limit: 5
-    labels: [dependencies, python]
+    labels: [dependencies]
     commit-message:
       prefix: chore
       include: scope
