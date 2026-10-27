@@ -18,6 +18,11 @@ import {
   retentionClasses,
   writeRecord,
 } from "@openconditions/storage";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
 import { admitFederatedRecord } from "../admit.js";
@@ -40,7 +45,8 @@ export async function startDatabase(): Promise<{
 }> {
   // A server of its own: the outbox fence reads the server-wide xmin horizon,
   // which another suite's open transaction on a shared server would hold back.
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
     .withEnvironment({
       POSTGRES_DB: "conditions_test",
       POSTGRES_USER: "oc",
@@ -51,21 +57,34 @@ export async function startDatabase(): Promise<{
     .start();
   const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
   const sql = postgres(url, { max: 4, onnotice: () => {} });
-  await runMigrations(url);
-  await ensureObservationPartitions(sql, {
-    classes: retentionClasses(registry),
-    now: new Date(FETCHED_AT),
-  });
-  return {
-    sql,
-    async close() {
-      try {
-        await sql.end();
-      } finally {
-        await container.stop();
-      }
-    },
-  };
+  try {
+    await assertPostgisProfile(sql, profile, {
+      fixture: "record-fixtures.integration.ts",
+      containerId: container.getId(),
+    });
+    await runMigrations(url);
+    await ensureObservationPartitions(sql, {
+      classes: retentionClasses(registry),
+      now: new Date(FETCHED_AT),
+    });
+    return {
+      sql,
+      async close() {
+        try {
+          await sql.end();
+        } finally {
+          await container.stop();
+        }
+      },
+    };
+  } catch (error) {
+    try {
+      await sql.end();
+    } finally {
+      await container.stop();
+    }
+    throw error;
+  }
 }
 
 /** Adds a subscription with the given filter: what gates the capture. */

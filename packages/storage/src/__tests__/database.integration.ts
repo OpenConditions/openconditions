@@ -1,5 +1,9 @@
 import { runMigrations } from "@openconditions/core/server";
-import { POSTGIS_IMAGES, postgisProfile, runsProfile } from "@openconditions/test-database";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database";
 import postgres from "postgres";
 import { GenericContainer, type StartedTestContainer, Wait } from "testcontainers";
 
@@ -54,10 +58,10 @@ export async function createDedicatedTestDatabase(): Promise<{
     const url = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}/conditions_test`;
     const pool = postgres(url, { max: 4, onnotice: () => {} });
     sql = pool;
-    const [{ server_version_num } = {}] = await pool`SHOW server_version_num`;
-    if (!runsProfile(server_version_num, profile)) {
-      throw new Error(`Unexpected PostgreSQL version for ${profile}`);
-    }
+    await assertPostgisProfile(pool, profile, {
+      fixture: "database.integration.ts",
+      containerId: container.getId(),
+    });
     await runMigrations(url);
     return {
       sql: pool,

@@ -24,6 +24,11 @@ import {
   tombstoneRecords,
   writeSnapshot,
 } from "@openconditions/storage";
+import {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  postgisProfile,
+} from "@openconditions/test-database/profile";
 import type { FastifyInstance } from "fastify";
 import postgres from "postgres";
 import { GenericContainer, Wait } from "testcontainers";
@@ -173,7 +178,8 @@ async function buildArchive(builtAt: string): Promise<void> {
 }
 
 beforeAll(async () => {
-  const container = await new GenericContainer("postgis/postgis:16-3.4")
+  const profile = postgisProfile();
+  const container = await new GenericContainer(POSTGIS_IMAGES[profile])
     .withEnvironment({ POSTGRES_DB: "a", POSTGRES_USER: "oc", POSTGRES_PASSWORD: "oc" })
     .withExposedPorts(5432)
     .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
@@ -181,8 +187,15 @@ beforeAll(async () => {
   containerStop = () => container.stop();
   const server = `postgres://oc:oc@${container.getHost()}:${container.getMappedPort(5432)}`;
   const admin = postgres(`${server}/a`, { max: 1 });
-  await admin.unsafe("CREATE DATABASE d");
-  await admin.end();
+  try {
+    await assertPostgisProfile(admin, profile, {
+      fixture: "archive.integration.test.ts",
+      containerId: container.getId(),
+    });
+    await admin.unsafe("CREATE DATABASE d");
+  } finally {
+    await admin.end();
+  }
   await runMigrations(`${server}/a`);
   await runMigrations(`${server}/d`);
   sqlA = postgres(`${server}/a`, { max: 4, onnotice: () => {} });

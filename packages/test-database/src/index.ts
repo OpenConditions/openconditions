@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import postgres from "postgres";
 import { inject } from "vitest";
+import type { PostgisProfile } from "./profile.js";
 
 /**
  * Disposable databases for the integration suites. One PostGIS server per run
@@ -9,32 +10,13 @@ import { inject } from "vitest";
  * Test-only: no runtime module imports this package.
  */
 
-export type PostgisProfile = "pg16" | "pg18";
-
-/** The image each `OC_TEST_POSTGIS_PROFILE` runs. */
-export const POSTGIS_IMAGES: Record<PostgisProfile, string> = {
-  pg16: "postgis/postgis:16-3.4",
-  pg18: "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
-};
-
-/** The profile `OC_TEST_POSTGIS_PROFILE` selects, PG16 when unset. */
-export function postgisProfile(): PostgisProfile {
-  const profile = process.env["OC_TEST_POSTGIS_PROFILE"] ?? "pg16";
-  if (profile !== "pg16" && profile !== "pg18") {
-    throw new Error(`Unsupported OC_TEST_POSTGIS_PROFILE: ${profile}`);
-  }
-  return profile;
-}
-
-/** Whether `server_version_num` is the major version `profile` runs. */
-export function runsProfile(serverVersionNum: unknown, profile: PostgisProfile): boolean {
-  return (
-    typeof serverVersionNum === "string" &&
-    /^\d+$/.test(serverVersionNum) &&
-    Number.isSafeInteger(Number(serverVersionNum)) &&
-    Math.floor(Number(serverVersionNum) / 10000) === (profile === "pg18" ? 18 : 16)
-  );
-}
+export {
+  assertPostgisProfile,
+  POSTGIS_IMAGES,
+  type PostgisProfile,
+  postgisProfile,
+  runsProfile,
+} from "./profile.js";
 
 /** The shared server, as the global setup provides it to every suite. */
 export interface SharedPostgis {
