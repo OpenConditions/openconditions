@@ -156,8 +156,17 @@ pytest                 # unit + PostGIS-testcontainer integration tests
 python -m app          # run the service (PORT defaults to 4200)
 ```
 
-The PostGIS integration tests require Docker and are skipped automatically when
-it is unavailable.
+The PostGIS integration tests use their own disposable PostgreSQL 16/PostGIS container;
+they never use the service's `DATABASE_URL`. Locally, `OPENLR_POSTGIS_TESTS=optional`
+(the default) skips those tests if Docker or Testcontainers is unavailable. Container
+startup failures still fail the run.
+
+CI runs `OPENLR_POSTGIS_TESTS=required python -m pytest`: missing dependencies, an
+unreachable daemon, failed startup, skipped PostGIS cases or incomplete selection fail
+the job. Required mode must execute every case in `tests/test_postgis_reader.py`;
+use optional mode for focused non-database tests. Only `optional` and `required` are
+accepted; empty or unknown values are errors. `--junitxml=results.xml` also records
+the actual PostgreSQL and PostGIS server versions.
 
 ### Dependency inputs and hash locks
 

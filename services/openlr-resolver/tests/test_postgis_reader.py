@@ -6,7 +6,7 @@
 Spins up a real PostGIS container, builds the graph from the tiny OSM fixture
 via ``scripts/build_graph.py``, then map-matches a known reference through
 ``PostgisMapReader``. This proves the database reader is wired correctly end to
-end, not just the in-memory one. Skipped when Docker is unavailable.
+end, not just the in-memory one. Docker is optional locally and required in CI.
 """
 
 from __future__ import annotations
@@ -15,12 +15,6 @@ import math
 from pathlib import Path
 
 import pytest
-
-docker_available = True
-try:
-    from testcontainers.community.postgres import PostgresContainer
-except Exception:  # pragma: no cover - import guard
-    docker_available = False
 
 from openlr import Coordinates, FRC, FOW, LineLocationReference, LocationReferencePoint
 from openlr_dereferencer import Config
@@ -40,25 +34,26 @@ def _bearing_deg(a, b) -> float:
     return math.degrees(wgs_bearing(Coordinates(*a), Coordinates(*b))) % 360
 
 
-def _is_docker_running() -> bool:
-    if not docker_available:
-        return False
+@pytest.fixture(scope="module")
+def pg_reader(postgis_required, record_testsuite_property):
+    unavailable = pytest.fail if postgis_required else pytest.skip
+    context = "OPENLR_POSTGIS_TESTS=required" if postgis_required else "optional PostGIS tests"
     try:
         import docker
+        from testcontainers.community.postgres import PostgresContainer
+    except ImportError as error:
+        unavailable(f"{context}: install the locked requirements-dev.txt dependencies: {error}")
 
-        docker.from_env().ping()
-        return True
-    except Exception:
-        return False
+    client = None
+    try:
+        client = docker.from_env()
+        client.ping()
+    except Exception as error:
+        unavailable(f"{context}: Docker is unavailable; start a disposable-capable daemon: {error}")
+    finally:
+        if client is not None:
+            client.close()
 
-
-pytestmark = pytest.mark.skipif(
-    not _is_docker_running(), reason="Docker not available for PostGIS testcontainer"
-)
-
-
-@pytest.fixture(scope="module")
-def pg_reader():
     from app.maps.postgis import PostgisMapReader
     from psycopg_pool import ConnectionPool
     from scripts.build_graph import build_graph, load_into_postgis
@@ -71,6 +66,13 @@ def pg_reader():
 
         pool = ConnectionPool(url, min_size=1, max_size=3, open=True)
         try:
+            with pool.connection() as conn:
+                version = int(conn.execute("SHOW server_version_num").fetchone()[0])
+                assert version // 10000 == 16, f"Expected PostgreSQL 16, got {version}"
+                record_testsuite_property("postgis_server_version_num", version)
+                record_testsuite_property("postgis_version", conn.execute(
+                    "SELECT PostGIS_Version()"
+                ).fetchone()[0])
             yield PostgisMapReader(pool)
         finally:
             pool.close()
