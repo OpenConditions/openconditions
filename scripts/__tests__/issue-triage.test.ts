@@ -479,7 +479,7 @@ test.each(["disabled", "wrong-ref", "wrong-workflow", "wrong-repository", "wrong
       GITHUB_WORKFLOW_REF: `${repo.full_name}/.github/workflows/issue-label-lifecycle.yml@refs/heads/main`,
       GITHUB_WORKFLOW_SHA: "a".repeat(40),
       GITHUB_EVENT_NAME: "issues",
-      ISSUE_TRIAGE_LIFECYCLE_ENABLED: "false",
+      ISSUE_TRIAGE_LIFECYCLE_ENABLED: kind === "disabled" ? "false" : "true",
       GITHUB_TOKEN: "fixture-token",
     };
     if (kind === "wrong-ref") env.GITHUB_REF = "refs/heads/feature";
@@ -496,7 +496,14 @@ test.each(["disabled", "wrong-ref", "wrong-workflow", "wrong-repository", "wrong
     });
     const code = await new Promise((resolve) => child.on("exit", resolve));
     expect(code).toBe(1);
-    expect(stderr).toMatch(/blocked|required|unexpected|usage/);
+    const expected = {
+      disabled: "issue lifecycle activation blocked",
+      "wrong-ref": "trusted owning main required",
+      "wrong-workflow": "unexpected trusted workflow identity",
+      "wrong-repository": "trusted owning main required",
+      "wrong-mode": "usage: node scripts/issue-triage.mjs lifecycle|drift",
+    }[kind];
+    expect(stderr.trim()).toBe(expected);
   },
 );
 
