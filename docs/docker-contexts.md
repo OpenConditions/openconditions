@@ -35,6 +35,7 @@ node scripts/check-docker-contexts.mjs --image-source <40-character-SHA-A> --rel
 ```
 
 The command validates the four producer context/recipe mappings, archives the exact Git commits,
+and disables object replacement for every Git read, including custom replacement namespaces. It
 checks archived bytes against Git blob identities and preserves Git executable modes. It rejects
 symlinks, submodules, unsafe paths and archives altered by export attributes. Neither the working tree
 nor the index is modified. Untracked files, local secrets and build scratch never enter these archived

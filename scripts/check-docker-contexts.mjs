@@ -42,7 +42,10 @@ export const images = Object.freeze([
 ]);
 const sha256 = (bytes) => createHash("sha256").update(bytes).digest("hex");
 function command(cwd, executable, args) {
-  const r = spawnSync(executable, args, {
+  // Supplied SHAs must name their immutable objects, including when a caller
+  // selects a custom GIT_REPLACE_REF_BASE. Apply this to every Git operation.
+  const commandArgs = executable === "git" ? ["--no-replace-objects", ...args] : args;
+  const r = spawnSync(executable, commandArgs, {
     cwd,
     encoding: "utf8",
     timeout: 120_000,
