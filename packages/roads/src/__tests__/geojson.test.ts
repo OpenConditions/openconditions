@@ -419,6 +419,52 @@ describe("parseGeoJson — validity dates", () => {
     expect(ev!.validTo).toBeNull();
   });
 
+  describe("calendar dates", () => {
+    const DATES: SourceDescriptor = {
+      ...SRC,
+      timeZone: "Europe/Berlin",
+      geojson: { ...DATED.geojson, validityDates: true },
+    };
+
+    it("runs from the start of the first day to the end of the last, in the feed's zone", () => {
+      // GeoServer's xsd:date form; 1 November is after the change to CET.
+      const [ev] = parseGeoJson(
+        fc([point({ id: "e", debut: "2026-10-05Z", fin: "2026-11-01Z" })]),
+        DATES,
+      );
+      expect(ev!.validFrom).toBe("2026-10-04T22:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-11-01T23:00:00.000Z");
+    });
+
+    it("ends a record dated to the last day of a month or year on the next day", () => {
+      const [ev] = parseGeoJson(fc([point({ id: "f", debut: "2026-12-31", fin: "2026-12-31" })]), {
+        ...DATES,
+        timeZone: undefined,
+      });
+      expect(ev!.validFrom).toBe("2026-12-31T00:00:00.000Z");
+      expect(ev!.validTo).toBe("2027-01-01T00:00:00.000Z");
+    });
+
+    it("reads a value with a time of day as an instant", () => {
+      const [ev] = parseGeoJson(
+        fc([point({ id: "g", debut: "2026-10-05T10:00:00Z", fin: "2026-11-01T11:00:00Z" })]),
+        DATES,
+      );
+      expect(ev!.validFrom).toBe("2026-10-05T10:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-11-01T11:00:00.000Z");
+    });
+
+    it("emits null for a day the month does not have", () => {
+      const [ev] = parseGeoJson(fc([point({ id: "h", debut: "2026-02-30Z" })]), DATES);
+      expect(ev!.validFrom).toBeNull();
+    });
+
+    it("leaves a date-only end at its own midnight without the option", () => {
+      const [ev] = parseGeoJson(fc([point({ id: "i", fin: "2026-11-01" })]), DATED);
+      expect(ev!.validTo).toBe("2026-11-01T00:00:00.000Z");
+    });
+  });
+
   it("leaves validity unset when the mapping declares no date fields", () => {
     const [ev] = parseGeoJson(fc([point({ id: "d", debut: 1680840000 })]), SRC);
     expect(ev!.validFrom).toBeUndefined();

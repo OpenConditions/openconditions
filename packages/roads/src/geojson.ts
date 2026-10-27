@@ -128,6 +128,29 @@ function isFollowUp(props: Record<string, unknown>, mapping: GeoJsonMapping): bo
   return marker !== undefined && mapping.followUp.prefixes.some((p) => marker.startsWith(p));
 }
 
+/** A calendar date alone, with the zone GeoServer appends to an `xsd:date`. */
+const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})Z?$/;
+
+/**
+ * One end of a feature's validity. Under `validityDates` a calendar date is a
+ * day in the feed's zone, and an end date names the last day the record
+ * applies, so it ends at the next midnight.
+ */
+function validityInstant(
+  value: unknown,
+  end: boolean,
+  mapping: GeoJsonMapping,
+  timeZone: string | undefined,
+): string | null {
+  const date = mapping.validityDates && typeof value === "string" && CALENDAR_DATE.exec(value);
+  if (!date) return toIsoTimestamp(value, timeZone) ?? null;
+  const day = new Date(Date.UTC(Number(date[1]), Number(date[2]) - 1, Number(date[3])));
+  // A day the month does not have is no date, rather than one Date.UTC rolls over.
+  if (day.getUTCDate() !== Number(date[3])) return null;
+  if (end) day.setUTCDate(day.getUTCDate() + 1);
+  return toIsoTimestamp(day.toISOString().slice(0, 10), timeZone) ?? null;
+}
+
 function defaultHeadline(type: RoadEventType): string {
   return type === "other"
     ? "Traffic information"
@@ -251,10 +274,19 @@ export function featuresToRoadEvents(
       // Only projected when the mapping declares the fields, so feeds without
       // dates keep emitting no validity at all rather than an explicit null.
       ...(mapping.validFromField
-        ? { validFrom: toIsoTimestamp(get(props, mapping.validFromField), src.timeZone) ?? null }
+        ? {
+            validFrom: validityInstant(
+              get(props, mapping.validFromField),
+              false,
+              mapping,
+              src.timeZone,
+            ),
+          }
         : {}),
       ...(mapping.validToField
-        ? { validTo: toIsoTimestamp(get(props, mapping.validToField), src.timeZone) ?? null }
+        ? {
+            validTo: validityInstant(get(props, mapping.validToField), true, mapping, src.timeZone),
+          }
         : {}),
       sourceRaw: props,
       origin: {

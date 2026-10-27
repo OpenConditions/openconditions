@@ -13,6 +13,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { roadsDomain } from "../domain.js";
+import type { GeoJsonMapping } from "../model.js";
 
 const repoFeedsDir = path.resolve(import.meta.dirname, "../../../../feeds");
 
@@ -65,10 +66,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 89 roads feeds under their new ids", () => {
+  test("the catalogue holds the 90 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(89);
+    expect(ids).toHaveLength(90);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -125,6 +126,7 @@ describe("the roads catalogue", () => {
         "de-nw-duesseldorf-events",
         "de-nw-koeln-events",
         "de-nw-unna-events",
+        "de-nw-aachen-events",
         "de-nw-mobidrom-events",
         "de-by-mobilithek-events",
         "de-bw-mobilithek-events",
@@ -892,6 +894,19 @@ describe("one feed per publisher", () => {
     expect(f.auth).toBeUndefined();
     expect(main(f.id).url).toContain("geodienste.hamburg.de/wfs_verkehrsinformation");
     expect(f.geojson?.typeField).toBe("art");
+  });
+
+  test("Stadt Aachen's roadworks are a keyless GeoJSON feed of calendar-dated points", () => {
+    const f = feed("de-nw-aachen-events") as CatalogFeed & { geojson?: GeoJsonMapping };
+    expect(f.format).toBe("geojson");
+    expect(f.country).toBe("DE");
+    expect(f.license).toBe("DL-DE-BY-2.0");
+    expect(f.attribution).toBe("Stadt Aachen");
+    expect(f.auth).toBeUndefined();
+    expect(main(f.id).url).toContain("bsis.aachen.de/geoserver/ows");
+    expect(main(f.id).url).toContain("typeNames=BSIS:PUNKTE_ALLE");
+    expect(f.geojson?.validityDates).toBe(true);
+    expect(f.geojson?.filter?.[0]?.exclude?.every((s) => s.endsWith(" - abgelaufen"))).toBe(true);
   });
 
   test("NYC DOT speeds are a keyless flow feed", () => {

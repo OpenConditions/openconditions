@@ -53,6 +53,7 @@ const geoJsonMappingSchema = z
     latField: z.string().optional(),
     validFromField: z.string().optional(),
     validToField: z.string().optional(),
+    validityDates: z.boolean().optional(),
     filter: z
       .array(
         z

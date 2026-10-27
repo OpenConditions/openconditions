@@ -1421,6 +1421,9 @@
               "validToField": {
                 "type": "string"
               },
+              "validityDates": {
+                "type": "boolean"
+              },
               "filter": {
                 "type": "array",
                 "items": {

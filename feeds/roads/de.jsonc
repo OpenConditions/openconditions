@@ -213,6 +213,80 @@
       "privacyUrl": "https://mobilithek.info/datenschutz",
     },
     {
+      // The city's roadworks information system (BSIS), which publishes each
+      // measure three times: as points, street lines and work areas, joined by
+      // sdatenid. Only the point layer carries the measure's description and
+      // restriction text, and it holds every measure, so the feed reads it
+      // alone. Its von/bis are calendar dates (the line layer's times are not
+      // in it); `date` is the day of the extract, the same on every record.
+      // `symbol` combines the restriction with a status the city updates daily.
+      // A full closure stays a roadworks record: its text often lets cyclists
+      // and pedestrians through or names only part of a street.
+      "subdivision": "nw",
+      "operator": "aachen",
+      "product": "events",
+      "name": "Stadt Aachen roadworks (BSIS)",
+      "homepage": "https://offenedaten.aachen.de/dataset/baustellen-stadtgebiet-aachen",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://bsis.aachen.de/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=BSIS:PUNKTE_ALLE&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "sdatenid",
+        "typeField": "art",
+        "typeMap": {
+          "Strassenbau": "roadworks",
+          "Autokran+Arbeitsbühne": "roadworks.works",
+          "Bauzaun": "roadworks",
+          "Baumateriallagerung": "roadworks",
+          "Container über 10 cbm": "roadworks",
+          "Absperrung einer Fläche": "roadworks",
+          "Begrünung": "roadworks.works.tree_work",
+          "Beschilderung+Markierung": "roadworks.works.line_marking",
+          "Elektrotankstellen": "roadworks.works.construction",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "name",
+        "descriptionField": "einschraen",
+        "roadField": "strassen",
+        "severityField": "symbol",
+        "severityMap": {
+          "Vollsperrung - aktuell": "high",
+          "Vollsperrung - zukünftig": "high",
+          "Teilsperrung - aktuell": "medium",
+          "Teilsperrung - zukünftig": "medium",
+          "starke Verkehrsbehinderung - aktuell": "medium",
+          "starke Verkehrsbehinderung - zukünftig": "medium",
+          "Verkehrsbehinderung - aktuell": "low",
+          "Verkehrsbehinderung - zukünftig": "low",
+        },
+        "validFromField": "von",
+        "validToField": "bis",
+        "validityDates": true,
+        "filter": [
+          {
+            "field": "symbol",
+            "exclude": [
+              "Vollsperrung - abgelaufen",
+              "Teilsperrung - abgelaufen",
+              "starke Verkehrsbehinderung - abgelaufen",
+              "Verkehrsbehinderung - abgelaufen",
+            ],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Stadt Aachen",
+      "privacyUrl": "https://www.aachen.de/datenschutz",
+    },
+    {
       // NRW.Mobidrom bundled roadworks — CC-BY-SA (ShareAlike), kept in its own feed
       // so it never folds into a more permissive source.
       "subdivision": "nw",

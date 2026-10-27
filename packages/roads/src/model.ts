@@ -87,6 +87,15 @@ export interface GeoJsonMapping {
   validFromField?: string;
   validToField?: string;
   /**
+   * The validity fields hold calendar dates, days in the feed's `timezone`:
+   * the record applies from the start of its first day to the end of its
+   * last, so a date-only `validTo` ends at the following midnight rather than
+   * a day early. GeoServer writes an `xsd:date` with the server's zone
+   * (`2026-11-01Z`); that suffix is ignored. A value carrying a time of day is
+   * read as usual.
+   */
+  validityDates?: boolean;
+  /**
    * Drop records the feed publishes but the overlay shouldn't carry — e.g.
    * Iceland's ~1,300 "Easily passable" baseline segments. A feature must
    * satisfy EVERY entry. Values compare as strings; a missing value passes an
