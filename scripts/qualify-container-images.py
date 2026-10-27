@@ -26,7 +26,10 @@ IMAGES = {
     "openlr-resolver": ("services/openlr-resolver", 4200),
 }
 TRIVY = "aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
-POSTGIS = "postgis/postgis:16-3.4@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5"
+POSTGIS = (
+    "postgis/postgis:16-3.4@sha256:"
+    "44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5"
+)
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 
 
@@ -526,7 +529,8 @@ def absent(result, kind, name):
     text = result.stderr or ""
     return result.returncode != 0 and bool(
         re.search(
-            rf"No such (?:container|object|image|network):?\s*{re.escape(name)}|network {re.escape(name)} not found",
+            rf"No such (?:container|object|image|network):?\s*{re.escape(name)}"
+            rf"|network {re.escape(name)} not found",
             text,
             re.IGNORECASE,
         )
@@ -573,7 +577,8 @@ url='http://127.0.0.1:4200/resolve'
 r=urllib.request.Request(url,json.dumps({'openlr':binary_encode(LineLocationReference([f,l],0.,0.))}).encode(),{'Content-Type':'application/json'})
 x=json.load(urllib.request.urlopen(r,timeout=20))
 assert x['geometry']['type']=='LineString' and x['confidence']>0.5,x
-assert abs(x['geometry']['coordinates'][0][0]-8.)<.001 and abs(x['geometry']['coordinates'][-1][0]-8.0054)<.001,x
+assert abs(x['geometry']['coordinates'][0][0]-8.)<.001 and \
+abs(x['geometry']['coordinates'][-1][0]-8.0054)<.001,x
 try:
  urllib.request.urlopen(urllib.request.Request(url,b'{"openlr":"***"}',{'Content-Type':'application/json'}),timeout=10)
  raise AssertionError('invalid reference accepted')
@@ -720,7 +725,8 @@ def runtime_smoke(image, identity, source, output):
         if image in ("ingest", "openlr-resolver"):
             args += [
                 "--mount",
-                f"type=bind,src={source / 'services/openlr-resolver/tests/fixtures/tiny_roads.osm'},dst=/fixture.osm,readonly",
+                f"type=bind,src={source / 'services/openlr-resolver/tests/fixtures/tiny_roads.osm'},"
+                "dst=/fixture.osm,readonly",
             ]
         command([*args, loaded])
         deadline = time.monotonic() + 180
@@ -742,7 +748,18 @@ def runtime_smoke(image, identity, source, output):
             )
         else:
             port = IMAGES[image][1]
-            code = f"const r=await fetch('http://127.0.0.1:{port}/status');const x=await r.json();if(r.status!==200||x.status!=='ok')throw Error('bad status');const k=await crypto.subtle.generateKey({{name:'ECDSA',namedCurve:'P-384'}},true,['sign','verify']);const b=new TextEncoder().encode('fixture');const s=await crypto.subtle.sign({{name:'ECDSA',hash:'SHA-384'}},k.privateKey,b);if(!await crypto.subtle.verify({{name:'ECDSA',hash:'SHA-384'}},k.publicKey,s,b))throw Error('native crypto');console.log(JSON.stringify(x));"
+            code = (
+                f"const r=await fetch('http://127.0.0.1:{port}/status');"
+                f"const x=await r.json();"
+                f"if(r.status!==200||x.status!=='ok')throw Error('bad status');"
+                f"const k=await crypto.subtle.generateKey({{name:'ECDSA',namedCurve:'P-384'}},true,"
+                f"['sign','verify']);"
+                f"const b=new TextEncoder().encode('fixture');"
+                f"const s=await crypto.subtle.sign({{name:'ECDSA',hash:'SHA-384'}},k.privateKey,b);"
+                f"if(!await crypto.subtle.verify({{name:'ECDSA',hash:'SHA-384'}},k.publicKey,s,"
+                f"b))throw Error('native crypto');"
+                f"console.log(JSON.stringify(x));"
+            )
             record["checks"]["httpNativeCrypto"] = decode(
                 command(
                     ["docker", "exec", app, "node", "--input-type=module", "-e", code]
@@ -780,7 +797,14 @@ def runtime_smoke(image, identity, source, output):
                 if info.get("data", {}).get("count", {}).get("nodes", 0) < 5:
                     fail("osmium did not parse the fixture")
                 record["checks"]["osmiumFileInfo"] = info
-                code = f"import fs from 'node:fs';import {{Impit}} from 'impit';if(!fs.readFileSync('dist/feeds/credentials.jsonc').length||!fs.readFileSync('dist/drizzle/meta/_journal.json').length)throw Error('missing bundled inputs');const r=await new Impit({{browser:'chrome'}}).fetch('http://127.0.0.1:{port}/status');if(r.status!==200)throw Error('native impit');"
+                code = (
+                    f"import fs from 'node:fs';import {{Impit}} from 'impit';"
+                    f"if(!fs.readFileSync('dist/feeds/credentials.jsonc').length||"
+                    f"!fs.readFileSync('dist/drizzle/meta/_journal.json').length)"
+                    f"throw Error('missing bundled inputs');"
+                    f"const r=await new Impit({{browser:'chrome'}}).fetch('http://127.0.0.1:{port}/status');"
+                    f"if(r.status!==200)throw Error('native impit');"
+                )
                 command(
                     ["docker", "exec", app, "node", "--input-type=module", "-e", code]
                 )
