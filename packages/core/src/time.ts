@@ -186,16 +186,18 @@ export function calendarDayOf(value: unknown, times: SourceTimes = {}): string |
     else if (midnight?.[1]) ymd = [Number(midnight[1]), Number(midnight[2]), Number(midnight[3])];
     else if (midnight?.[4]) ymd = [Number(midnight[6]), Number(midnight[5]), Number(midnight[4])];
   }
-  if (!ymd || !isCalendarDate(...ymd)) return undefined;
+  // A year a timestamp cannot hold (an epoch far out of range) is no day.
+  if (!ymd || ymd[0] < 1 || ymd[0] > 9999 || !isCalendarDate(...ymd)) return undefined;
   const [y, m, d] = ymd;
   return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-/** The day after a `YYYY-MM-DD` day. */
-export function nextDay(day: string): string {
+/** The day after a `YYYY-MM-DD` day; undefined for no day, or past 9999. */
+export function nextDay(day: string): string | undefined {
   const at = new Date(`${day}T00:00:00Z`);
+  if (Number.isNaN(at.getTime())) return undefined;
   at.setUTCDate(at.getUTCDate() + 1);
-  return at.toISOString().slice(0, 10);
+  return at.getUTCFullYear() > 9999 ? undefined : at.toISOString().slice(0, 10);
 }
 
 /**
@@ -212,5 +214,6 @@ export function validityBound(
 ): string | undefined {
   const day = calendarDayOf(asWritten(value, times), times);
   if (day === undefined) return sourceTimestamp(value, times);
-  return toIsoTimestamp(bound === "end" ? nextDay(day) : day, times.timeZone);
+  const at = bound === "end" ? nextDay(day) : day;
+  return at === undefined ? undefined : toIsoTimestamp(at, times.timeZone);
 }

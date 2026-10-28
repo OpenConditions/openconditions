@@ -146,6 +146,17 @@ describe("validityBound", () => {
     expect(sourceTimestamp("2026-10-28T08:55:00Z", berlin)).toBe("2026-10-28T08:55:00.000Z");
   });
 
+  it("reads no day, rather than throwing, for a year a timestamp cannot hold", () => {
+    const days = { daysAtMidnight: true };
+    // Not a day: read as the instant toIsoTimestamp reads (assembly drops years past 9999).
+    for (const epoch of [8_640_000_000_000_000, -8_640_000_000_000_000]) {
+      expect(validityBound(epoch, "end", days)).toBe(toIsoTimestamp(epoch));
+    }
+    expect(validityBound("9999-12-31", "end")).toBeUndefined();
+    expect(validityBound("9999-12-31", "start")).toBe("9999-12-31T00:00:00.000Z");
+    expect(nextDay("not a day")).toBeUndefined();
+  });
+
   it("refuses a day the month does not have", () => {
     expect(validityBound("2026-02-30", "end")).toBeUndefined();
     expect(validityBound("31.04.2026", "start")).toBeUndefined();
