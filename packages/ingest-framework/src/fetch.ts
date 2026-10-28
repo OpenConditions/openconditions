@@ -391,8 +391,8 @@ async function fetchFanout(
         failures++;
         failed.add(url);
         console.warn(
-          `[ingest] sub-feed fetch failed (${redact(url)}):`,
-          err instanceof Error ? err.message : err,
+          `[ingest] sub-feed fetch failed (${redact(redactUrl(url))}):`,
+          redact(err instanceof Error ? err.message : String(err)),
         );
       }
     }
@@ -832,7 +832,7 @@ async function fetchSlots(
         failures++;
         console.warn(
           `[ingest] item fetch failed (${redact(redactUrl(urls[i]!))}):`,
-          err instanceof Error ? err.message : err,
+          redact(err instanceof Error ? err.message : String(err)),
         );
       }
     }
