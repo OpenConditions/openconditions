@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import type { RecordDraft } from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { parseLayout } from "../formats/layout.js";
@@ -5,6 +6,7 @@ import {
   type ChargingFeed,
   connectorStatusDraft,
   evseStatusDraft,
+  parsePowerKw,
   type SiteInput,
   siteDraft,
 } from "../site.js";
@@ -450,5 +452,47 @@ describe("status readings", () => {
     expect(at("2026-10-06T06:05:00Z")).toEqual({ instant: "2026-10-06T06:00:00Z" });
     // A year RFC 3339 cannot write is no time either.
     expect(at("-012026-10-06T05:00:00Z")).toEqual({ instant: "2026-10-06T06:00:00Z" });
+  });
+});
+
+describe("power text", () => {
+  test.each([
+    [" \t22,5\u00a0KW\r\n", 22.5],
+    ["\uFEFF11000\tW\u2028", 11],
+    ["22000\n", 22000],
+    ["22\nkw", 22],
+    ["22 k w", undefined],
+    ["22 kW extra", undefined],
+    ["-22 kW", undefined],
+    [".5 kW", undefined],
+    ["22. kW", undefined],
+    ["22,5.0 kW", undefined],
+    ["0 kW", undefined],
+  ])("preserves the grammar for %j", (value, expected) => {
+    expect(parsePowerKw(value)).toBe(expected);
+  });
+
+  test("malformed power whitespace completes within a bounded subprocess", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `
+          import assert from "node:assert/strict";
+          const { parsePowerKw } = await import(process.argv[1]);
+          assert.equal(parsePowerKw("1" + " ".repeat(100_000) + "!"), undefined);
+          console.log("decoded");
+        `,
+        new URL("../site.ts", import.meta.url).href,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("decoded");
   });
 });

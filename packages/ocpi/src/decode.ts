@@ -101,7 +101,8 @@ const WEEKDAYS = ["MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATUR
 function parseWatts(value: unknown): number | undefined {
   if (typeof value === "number") return Number.isFinite(value) && value > 0 ? value : undefined;
   if (typeof value !== "string") return undefined;
-  const match = /^\s*(\d+(?:[.,]\d+)?)\s*(kw|w)?\s*$/i.exec(value);
+  // Trim boundary whitespace once so an absent unit cannot repartition it.
+  const match = /^(\d+(?:[.,]\d+)?)(?:\s*(kw|w))?$/i.exec(value.trim());
   if (!match) return undefined;
   const amount = Number(match[1]?.replace(",", "."));
   const watts = match[2]?.toLowerCase() === "kw" ? amount * 1000 : amount;

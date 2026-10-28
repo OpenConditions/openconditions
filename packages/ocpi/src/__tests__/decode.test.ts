@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import {
@@ -185,6 +186,52 @@ describe("connector power", () => {
     expect(power({ max_electric_power: "11000 W" })).toBe(11);
     expect(power({ max_electric_power: "22 kW" })).toBe(22);
     expect(power({ max_electric_power: "22000" })).toBe(22);
+  });
+
+  test.each([
+    [" \t22,5\u00a0KW\r\n", 22.5],
+    ["\uFEFF11000\tW\u2028", 11],
+    ["22000\n", 22],
+    ["22\nkw", 22],
+    ["22 k w", undefined],
+    ["22 kW extra", undefined],
+    ["-22 kW", undefined],
+    [".5 kW", undefined],
+    ["22. kW", undefined],
+    ["22,5.0 kW", undefined],
+    ["0 kW", undefined],
+  ])("power grammar preserves %j", (value, expected) => {
+    expect(power({ max_electric_power: value })).toBe(expected);
+  });
+
+  test("malformed power whitespace completes within a bounded subprocess", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `
+          import assert from "node:assert/strict";
+          const { normaliseLocation } = await import(process.argv[1]);
+          const location = normaliseLocation({
+            id: "bounded", coordinates: { latitude: 1, longitude: 2 },
+            evses: [{ uid: "e", connectors: [{
+              id: "c", max_electric_power: "1" + " ".repeat(100_000) + "!",
+            }] }],
+          });
+          assert.equal(location.evses[0].connectors[0].max_electric_power, undefined);
+          console.log("decoded");
+        `,
+        new URL("../decode.ts", import.meta.url).href,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("decoded");
   });
 
   test("a missing power is voltage times amperage times phases", () => {
