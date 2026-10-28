@@ -40,6 +40,7 @@ import { enrichReadings } from "@openconditions/roads";
 import { isDbTimeout, noteShrink, type WriteSummary } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
+import { feedErrorMessage } from "../feed-error.js";
 import type { RawArchive } from "../raw/archive.js";
 import { archivingTee, digestOnlyTee, type StreamTeeFactory } from "../raw/stream-tee.js";
 import { rawTierFor } from "../raw/tiers.js";
@@ -447,9 +448,12 @@ export async function runSource(src: CatalogFeed, deps: RunDeps): Promise<RunRes
         outcome: "error",
         attemptAt,
         attemptId: attempt.id,
-        error: err instanceof Error ? err.message : String(err),
+        error: feedErrorMessage(src, err, deps.env),
       }).catch((closeErr) =>
-        console.error(`[ingest] ${src.id}: could not close poll attempt ${attempt.id}`, closeErr),
+        console.error(
+          `[ingest] ${src.id}: could not close poll attempt ${attempt.id}`,
+          feedErrorMessage(src, closeErr, deps.env),
+        ),
       );
     }
     throw err;
@@ -604,8 +608,8 @@ async function runAttempt(
       captureEvidence = true;
       steps.lap("stream");
     } catch (err) {
-      const error = err instanceof Error ? err.message : String(err);
-      console.error(`[ingest] stream failed for source ${src.id}:`, err);
+      const error = feedErrorMessage(src, err, env);
+      console.error(`[ingest] stream failed for source ${src.id}:`, error);
       await recordStatus({
         freshnessWindowSec: src.freshnessWindowSec,
         outcome: "error",
@@ -766,7 +770,7 @@ async function runAttempt(
             },
           );
         } catch (err) {
-          const reason = err instanceof Error ? err.message : String(err);
+          const reason = feedErrorMessage(src, err, env);
           gap(role);
           // A tolerant `urls` role whose every URL failed stands in URL by URL,
           // each held answer judged by its own age: the role's held copy may
@@ -1120,15 +1124,15 @@ async function runAttempt(
   }
 
   async function failFetch(err: unknown): Promise<RunResult> {
-    const error = err instanceof Error ? err.message : String(err);
-    console.error(`[ingest] fetch failed for source ${src.id}:`, err);
+    const error = feedErrorMessage(src, err, env);
+    console.error(`[ingest] fetch failed for source ${src.id}:`, error);
     await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
     return { count: 0, durationMs: Date.now() - start, error };
   }
 
   async function failParse(err: unknown): Promise<RunResult> {
-    const error = err instanceof Error ? err.message : String(err);
-    console.error(`[ingest] parse failed for source ${src.id}:`, err);
+    const error = feedErrorMessage(src, err, env);
+    console.error(`[ingest] parse failed for source ${src.id}:`, error);
     await recordStatus({ freshnessWindowSec: src.freshnessWindowSec, outcome: "error", error });
     return { count: 0, durationMs: Date.now() - start, error };
   }
