@@ -574,7 +574,7 @@ describe("dedupeSituations of one measure published by two sources", () => {
     );
   });
 
-  it("keeps records of other kinds, without dates, or both stating effects", () => {
+  it("keeps records of other kinds, or without dates", () => {
     retains(
       state,
       works("de-sn-dresden-events", "c", line(0, 300), { kind: "congestion", type: "congestion" }),
@@ -583,9 +583,28 @@ describe("dedupeSituations of one measure published by two sources", () => {
       state,
       works("de-sn-dresden-events", "d", line(0, 300), { validity: { status: "active" } }),
     );
+  });
+
+  it("folds two records stating the same kinds of effect, not different ones", () => {
+    const lanes = { ...closure("l"), kind: "lane_restriction", vehicleImpact: "some_lanes_closed" };
+    expect(
+      dedupeSituations([
+        { ...state, effects: [closure("s")] },
+        works("de-be-berlin-events", "e", line(0, 300), { effects: [closure("e")] }),
+      ]),
+    ).toHaveLength(1);
     retains(
       { ...state, effects: [closure("s")] },
-      works("de-sn-dresden-events", "e", line(0, 300), { effects: [closure("e")] }),
+      works("de-be-berlin-events", "f", line(0, 300), { effects: [lanes] }),
+    );
+  });
+
+  it("keeps a night closure apart from the next night's", () => {
+    const night = (source: string, local: string, start: string, end: string) =>
+      works(source, local, line(0, 290), { validity: { status: "active", start, end } });
+    retains(
+      night("de-autobahn-events", "n1", "2026-10-28T20:00:00Z", "2026-10-29T04:00:00Z"),
+      night("de-be-berlin-events", "n2", "2026-10-29T20:00:00Z", "2026-10-30T04:00:00Z"),
     );
   });
 

@@ -18,9 +18,10 @@
  *   long corridor record of the same works is another element of it;
  * - a point, which covers nothing, also says what the other says (agreeing
  *   headlines) and is not on another named road than the other record;
- * - at most one of them carries effects: two records stating effects are one
- *   measure only when their effects agree, which the traffic-meaning key
- *   decides.
+ * - both state no effects, or the same kinds of effect (a closure for a
+ *   closure), so the survivor's say as much;
+ * - their dates' slack is at most half the shorter record: a night closure a
+ *   day later is the next night's.
  *
  * On the labelled pairs this finds 96 of 140 duplicates and 84 of 192
  * records covering part of another, against 3 of 1,109 pairs describing
@@ -248,6 +249,18 @@ function roadsConflict(a: Rec, b: Rec): boolean {
 
 const sourceOf = (record: Rec) => object(record["provenance"])?.["sourceId"];
 const stated = (effects: unknown) => Array.isArray(effects) && effects.length > 0;
+/** The kinds of effect a record states, as one comparable key. */
+const effectKinds = (record: Rec) =>
+  [
+    ...new Set(
+      (Array.isArray(record["effects"]) ? (record["effects"] as unknown[]) : []).map(
+        (e) => object(e)?.["kind"],
+      ),
+    ),
+  ]
+    .map(String)
+    .sort()
+    .join(",");
 
 /**
  * Whether `a` and `b`, of different sources, are one measure: undefined when
@@ -255,7 +268,8 @@ const stated = (effects: unknown) => Array.isArray(effects) && effects.length > 
  */
 export function sameMeasureAcrossSources(a: Rec, sa: Shape, b: Rec, sb: Shape): Rec | undefined {
   if (sourceOf(a) === sourceOf(b) || !kindsAgree(a["kind"], b["kind"])) return undefined;
-  if (stated(a["effects"]) && stated(b["effects"])) return undefined;
+  if (stated(a["effects"]) && stated(b["effects"]) && effectKinds(a) !== effectKinds(b))
+    return undefined;
   const evidenceA = restrictionEvidence(a);
   const evidenceB = restrictionEvidence(b);
   if (evidenceA && evidenceB) return undefined;
@@ -271,10 +285,11 @@ export function sameMeasureAcrossSources(a: Rec, sa: Shape, b: Rec, sb: Shape): 
     return undefined;
   const dStart = Math.abs(startA - startB);
   const dEnd = Math.abs(endA - endB);
-  const sameDays = dStart <= SAME_DAY_H && dEnd <= SAME_DAY_H;
-  const oneDay =
-    (dStart <= SAME_DAY_H && dEnd <= SAME_MONTH_H) ||
-    (dEnd <= SAME_DAY_H && dStart <= SAME_MONTH_H);
+  // A day's slack absorbs dates written as days; a night closure a day later
+  // is the next night's, so the slack is at most half the shorter record.
+  const day = Math.min(SAME_DAY_H, Math.min(endA - startA, endB - startB) / 2);
+  const sameDays = dStart <= day && dEnd <= day;
+  const oneDay = (dStart <= day && dEnd <= SAME_MONTH_H) || (dEnd <= day && dStart <= SAME_MONTH_H);
   if (!sameDays && !(oneDay && headlinesAgree(a, b))) return undefined;
   if (!shapesNear(sa, sb)) return undefined;
   const cos = Math.cos((((sa.bbox[1] + sa.bbox[3]) / 2) * Math.PI) / 180);

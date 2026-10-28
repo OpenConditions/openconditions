@@ -58,10 +58,11 @@ crossing a motorway lies at 0 m. Two reports of different sources are one
 measure when:
 
 - their kinds agree, `roadworks` and `closure` counting as one;
-- at most one of them states effects (two that do must match by traffic meaning);
+- they state no effects, or the same kinds of effect (a closure for a closure);
 - both state a start and an end, both within 25 hours of the other's, or one
   within 25 hours and the other within 31 days when their headlines also agree
-  (half their words in common, in a language both use);
+  (half their words in common, in a language both use). The 25 hours are at
+  most half the shorter report: a night closure a day later is the next night's;
 - one lies along the other: at least 80 % of its length (60 % under the second
   date rule) within 15 m of the other, and, unless one is a point, the smaller
   covers at least 30 % of the larger. A ramp or a short section inside a long
