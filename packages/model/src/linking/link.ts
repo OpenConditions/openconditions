@@ -60,7 +60,9 @@ const addressOf = (f: LinkableFeature): string | undefined => {
 };
 
 /** A number, a letter after it, a range (`6`, `2F`, `49-51`) at the end of a street. */
-const TRAILING_HOUSE_NUMBER = /\s(\d+\s*[a-z]?(?:\s*[-–/]\s*\d+\s*[a-z]?)?)$/i;
+// After the digits, whitespace belongs to one run before either a letter or a range.
+const TRAILING_HOUSE_NUMBER =
+  /\s(\d+\s*(?:[a-z](?:\s*[-–/]\s*\d+\s*[a-z]?)?|[-–/]\s*\d+\s*[a-z]?)?)$/i;
 
 /** A road named by a short letter code and a number (`B 3`, `N7`), which is no house number. */
 const ROAD_NUMBER = /^[a-z]{1,3}\s*\d+$/i;
