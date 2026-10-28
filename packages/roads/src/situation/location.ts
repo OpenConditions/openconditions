@@ -96,6 +96,9 @@ const LOOPS: Record<string, DirectionRef["loop"]> = {
 
 const BOTH = new Set([
   "both",
+  "beidseitig",
+  "beide richtungen",
+  "in beiden richtungen",
   "bothways",
   "both ways",
   "both directions",
