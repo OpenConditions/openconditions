@@ -47,6 +47,31 @@ describe("toIsoTimestamp", () => {
     expect(toIsoTimestamp("2026-06-25T10:00:00Z", "Asia/Bangkok")).toBe("2026-06-25T10:00:00.000Z");
   });
 
+  it("reads a dotted date day first, in its publisher's zone", () => {
+    expect(toIsoTimestamp("04.05.2026", "Europe/Berlin")).toBe("2026-05-03T22:00:00.000Z");
+    expect(toIsoTimestamp("13.04.2026")).toBe("2026-04-13T00:00:00.000Z");
+    expect(toIsoTimestamp("1.11.2026 9:30", "Europe/Berlin")).toBe("2026-11-01T08:30:00.000Z");
+    expect(toIsoTimestamp("27.10.2026, 23:59:59", "Europe/Berlin")).toBe(
+      "2026-10-27T22:59:59.000Z",
+    );
+    expect(toIsoTimestamp("10.08.2026  16 Uhr", "Europe/Berlin")).toBe("2026-08-10T14:00:00.000Z");
+    expect(toIsoTimestamp("10.08.2026 16:30 Uhr", "Europe/Berlin")).toBe(
+      "2026-08-10T14:30:00.000Z",
+    );
+    expect(toIsoTimestamp("10.08.2026 16")).toBeUndefined();
+    expect(toIsoTimestamp("31.04.2026")).toBeUndefined();
+    expect(toIsoTimestamp("01.13.2026")).toBeUndefined();
+    expect(toIsoTimestamp("01.05.2026 24:00")).toBeUndefined();
+  });
+
+  it("reads English dates, but no free text that only mentions a date", () => {
+    expect(toIsoTimestamp("Thu, 29 Oct 2026 10:00:00 GMT")).toBe("2026-10-29T10:00:00.000Z");
+    expect(toIsoTimestamp("October 29, 2026 10:00 UTC")).toBe("2026-10-29T10:00:00.000Z");
+    for (const text of ["Ende Dez. 2026", "Ende Nov. 2026", "KW 46", "Mitte 2027", "Oct 2026"]) {
+      expect(toIsoTimestamp(text), text).toBeUndefined();
+    }
+  });
+
   it("reads a time without an offset alike whatever the host's zone", () => {
     const host = process.env["TZ"];
     process.env["TZ"] = "Pacific/Auckland";
