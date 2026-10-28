@@ -21,6 +21,7 @@ const REPEATED = new Set([
 const parser = new XMLParser({
   removeNSPrefix: true,
   parseTagValue: false,
+  captureMetaData: true,
   isArray: (tag) => REPEATED.has(tag),
 });
 
@@ -41,19 +42,67 @@ export class CapReadError extends Error {
   }
 }
 
-/** The document element's prefix, local name and attributes, from the first tag that is no declaration or comment. */
-const ROOT = /<(?:([A-Za-z_][\w.-]*):)?([A-Za-z_][\w.-]*)(\s[^>]*)?>/;
+const XML_METADATA = XMLParser.getMetaDataSymbol() as symbol;
 
-/** The namespace the document element is in, undefined when it declares none. */
-function rootNamespace(text: string): string | undefined {
-  const root = ROOT.exec(text);
-  if (root === null) return undefined;
-  const [, prefix, , attributes = ""] = root;
-  const name = prefix === undefined ? "xmlns" : `xmlns:${prefix}`;
-  const declared = new RegExp(`\\s${name.replaceAll(".", "\\.")}\\s*=\\s*(["'])(.*?)\\1`).exec(
-    attributes,
-  );
-  return declared?.[2]?.trim();
+/** Read only the parsed alert's opening tag; quoted values cannot supply declarations. */
+function rootNamespace(text: string, alert: Record<string, unknown>): string | undefined {
+  const metadata: unknown = Reflect.get(alert, XML_METADATA);
+  const offset = isRecord(metadata) ? metadata["startIndex"] : undefined;
+  if (
+    typeof offset !== "number" ||
+    !Number.isSafeInteger(offset) ||
+    offset < 0 ||
+    offset >= text.length
+  ) {
+    throw new CapReadError("CAP: cannot locate the alert document element", "malformed");
+  }
+  // fast-xml-parser counts offsets after normalizing CRLF (and CR) to LF.
+  let start = 0;
+  for (let index = 0; index < offset; index++, start++) {
+    if (text[start] === "\r" && text[start + 1] === "\n") start++;
+  }
+  if (text[start] !== "<") {
+    throw new CapReadError("CAP: cannot locate the alert document element", "malformed");
+  }
+  let at = start + 1;
+  while (at < text.length && !/[\s>]/u.test(text.charAt(at))) at++;
+  const name = text.slice(start + 1, at).replace(/\/$/u, "");
+  const colon = name.indexOf(":");
+  if (name.slice(colon + 1) !== "alert") {
+    throw new CapReadError("CAP: cannot locate the alert document element", "malformed");
+  }
+  const declaration = colon < 0 ? "xmlns" : `xmlns:${name.slice(0, colon)}`;
+  while (at < text.length) {
+    const separated = /\s/u.test(text.charAt(at));
+    while (/\s/u.test(text.charAt(at))) at++;
+    if (text[at] === ">") return undefined;
+    const from = at;
+    while (at < text.length && !/[\s=>]/u.test(text.charAt(at))) at++;
+    const attribute = text.slice(from, at);
+    let equals = at;
+    while (/\s/u.test(text.charAt(equals))) equals++;
+    if (text[equals] !== "=") continue;
+    at = equals + 1;
+    while (/\s/u.test(text.charAt(at))) at++;
+    const quote = text[at];
+    if (quote !== '"' && quote !== "'") {
+      // As before, only quoted namespace declarations are recognized.
+      while (at < text.length && !/[\s>]/u.test(text.charAt(at))) at++;
+      continue;
+    }
+    const end = text.indexOf(quote, at + 1);
+    if (end < 0) throw new CapReadError("CAP: unclosed document attribute", "malformed");
+    if (separated && attribute === declaration) return text.slice(at + 1, end).trim();
+    at = end + 1;
+  }
+  return undefined;
+}
+
+/** Source offsets are validation-only, never part of the CAP projection. */
+function stripXmlMetadata(value: unknown): void {
+  if (value === null || typeof value !== "object") return;
+  Reflect.deleteProperty(value, XML_METADATA);
+  for (const child of Object.values(value)) stripXmlMetadata(child);
 }
 
 /** The encoding an XML declaration names. */
@@ -105,19 +154,22 @@ export function readCapXml(body: Buffer): CapAlert {
     throw new CapReadError("CAP: XML entity declarations are not allowed", "malformed");
   }
   const doc: unknown = parser.parse(text);
+  const roots = isRecord(doc)
+    ? Object.keys(doc).filter((key) => !key.startsWith("?") && key !== "#text")
+    : [];
   const alert = isRecord(doc) ? doc["alert"] : undefined;
-  if (!isRecord(alert)) {
-    const roots = isRecord(doc) ? Object.keys(doc).filter((k) => !k.startsWith("?")) : [];
+  if (roots[0] !== "alert" || !isRecord(alert)) {
     throw new CapReadError(
       `CAP: the document's root is ${roots[0] ?? "missing"}, not alert`,
       "malformed",
     );
   }
-  const namespace = rootNamespace(text);
+  const namespace = rootNamespace(text, alert);
   if (namespace !== undefined && namespace !== CAP_1_2_NAMESPACE) {
     throw EARLIER_CAP.test(namespace)
       ? new CapReadError(`CAP: ${namespace} is not CAP 1.2`, "unsupported_version")
       : new CapReadError(`CAP: the alert is in ${namespace}, not CAP 1.2's namespace`, "malformed");
   }
+  stripXmlMetadata(alert);
   return alert as unknown as CapAlert;
 }
