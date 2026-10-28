@@ -16,6 +16,7 @@ import {
   registry,
   START,
   stationOf,
+  testDomain,
   upstream,
 } from "./helpers/on-demand.js";
 
@@ -64,7 +65,14 @@ const TWO_CELLS = "8,49,8.2,49.1";
 /** One test's source, its stub upstream, its clock and the record API reading through it. */
 function harness(
   operator: string,
-  opts: { deadlineMs?: number; feed?: CatalogFeed; pool?: postgres.Sql; inFlight?: InFlight } = {},
+  opts: {
+    deadlineMs?: number;
+    feed?: CatalogFeed;
+    pool?: postgres.Sql;
+    inFlight?: InFlight;
+    fetch?: typeof fetch;
+    env?: Record<string, string>;
+  } = {},
 ) {
   const feed = opts.feed ?? onDemandFeed(operator);
   const up = upstream();
@@ -75,7 +83,8 @@ function harness(
     now: () => clock.now,
     onDemand: {
       catalog: { feeds: [feed] },
-      fetch: up.fetch,
+      fetch: opts.fetch ?? up.fetch,
+      ...(opts.env ? { env: opts.env } : {}),
       lookup: fakeLookup,
       deadlineMs: opts.deadlineMs ?? 5000,
       instanceId: "test.local",
@@ -106,6 +115,75 @@ const partial = (id: string, reason: string) => ({
 });
 
 describe("on-demand read-through", () => {
+  test.each(["transport", "parser"])(
+    "redacts %s failures without changing last-good rows or backoff",
+    async (stage) => {
+      const secret = "fixture-cell-secret-51a9";
+      const queryToken = "fixture-query-token-8c32";
+      const feed = onDemandFeed(`redaction-${stage}`, {
+        credentials: { token: { title: "Token" } },
+        auth: { kind: "header-key", header: "X-Api-Key", credential: "token" },
+      });
+      const key = `${feed.id.replaceAll("-", "_").toUpperCase()}_TOKEN`;
+      const up = upstream();
+      let failing = false;
+      const error = () =>
+        new Error(
+          `cell failure ${secret} https://example.test/${secret}?token=${queryToken} repeated ${queryToken}`,
+          { cause: new Error(secret) },
+        );
+      const transport: typeof fetch = async (input, init) => {
+        expect(new Headers(init?.headers).get("X-Api-Key")).toBe(secret);
+        if (failing && stage === "transport") throw error();
+        return up.fetch(input, init);
+      };
+      const h = harness(`redaction-${stage}`, { feed, fetch: transport, env: { [key]: secret } });
+      const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+      let parse: ReturnType<typeof vi.spyOn> | undefined;
+      try {
+        await h.features("8,49,8.1,49.1");
+        h.advance(901);
+        failing = true;
+        if (stage === "parser")
+          parse = vi.spyOn(testDomain.formats[feed.format]!, "parse").mockImplementation(() => {
+            throw error();
+          });
+        const read = await h.features("8,49,8.1,49.1");
+        expect(read.coverage).toEqual(partial(feed.id, "failed"));
+        const [kept] = await sql<
+          { n: number }[]
+        >`SELECT count(*)::int AS n FROM conditions.feature WHERE source_id = ${feed.id} AND tombstoned_at IS NULL`;
+        expect(kept?.n).toBe(1);
+        expect((await h.ledger())[0]?.status).toBe("failed");
+        const [status] = await sql<
+          { last_error: string; last_outcome: string }[]
+        >`SELECT last_error,last_outcome FROM conditions.source_status WHERE source = ${feed.id}`;
+        expect(status?.last_outcome).toBe("failed");
+        const attempts = await sql<
+          { outcome: string; error: string | null }[]
+        >`SELECT outcome,error FROM conditions.source_poll_attempt WHERE source = ${feed.id} ORDER BY id`;
+        expect(attempts.map((a) => a.outcome)).toEqual(["changed", "failed"]);
+        for (const diagnostic of [
+          warn.mock.calls.flat().join(" "),
+          status!.last_error,
+          attempts.at(-1)!.error!,
+        ]) {
+          expect(diagnostic).toContain("cell failure");
+          expect(diagnostic).not.toContain(secret);
+          expect(diagnostic).not.toContain(queryToken);
+        }
+        const calls = up.calls.length;
+        h.advance(1);
+        expect((await h.features("8,49,8.1,49.1")).coverage).toEqual(partial(feed.id, "failed"));
+        expect(up.calls).toHaveLength(calls);
+      } finally {
+        parse?.mockRestore();
+        warn.mockRestore();
+        await h.app.close();
+      }
+    },
+    60_000,
+  );
   test("a bbox read fetches the stale cells once and answers from storage", async () => {
     const h = harness("once");
     const read = await h.features(TWO_CELLS);
