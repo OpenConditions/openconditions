@@ -48,6 +48,7 @@ for (const way of ways) {
       dir,
       highway: way.highway,
       ref: way.ref ?? null,
+      name: way.name ?? null,
       coords,
       lengthM: polylineLengthM(coords),
     });

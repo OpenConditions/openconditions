@@ -43,7 +43,7 @@ r.debug.samples.forEach((s, i) => {
   console.log(`  #${i} ${s.point[0].toFixed(5)},${s.point[1].toFixed(5)}`);
   for (const c of s.candidates.slice(0, 3)) {
     console.log(
-      `     ${c.segment.segmentId.padEnd(14)} ${c.segment.highway.padEnd(14)} ref=${(c.segment.ref ?? "-").padEnd(8)} off=${c.offsetM.toFixed(1).padStart(5)}m Δb=${c.bearingDelta == null ? "  -" : c.bearingDelta.toFixed(0).padStart(3)} ref=${c.refScore} score=${c.score.toFixed(3)}`,
+      `     ${c.segment.segmentId.padEnd(14)} ${c.segment.highway.padEnd(14)} ref=${(c.segment.ref ?? "-").padEnd(8)} name=${(c.segment.name ?? "-").padEnd(20)} off=${c.offsetM.toFixed(1).padStart(5)}m Δb=${c.bearingDelta == null ? "  -" : c.bearingDelta.toFixed(0).padStart(3)} id=${c.identity} score=${c.score.toFixed(3)}`,
     );
   }
 });

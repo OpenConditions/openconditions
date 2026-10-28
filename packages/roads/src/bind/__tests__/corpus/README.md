@@ -10,10 +10,10 @@ frozen OSM spine extract for its area, and what the resolver must produce.
    `packages/roads/src/parse.ts`) or copy an already parsed situation from a
    running ingest's `/situations/{id}`. To capture an effect that has a
    location of its own, use the effect's `location.geometry`.
-2. Write `event.json` as a `BindInput`: `{ id, geometry, type, refs, direction?, roadState? }`,
+2. Write `event.json` as a `BindInput`: `{ id, geometry, type, refs, names?, direction?, roadState? }`,
    built the way the binder builds it: the location's geometry, the
-   situation's `kind` as `type`, and the refs and names of `location.roads`.
-   `refs` must be normalized (`normalizeRefs`). Note the source id and fetch
+   situation's `kind` as `type`, and the road numbers and street names of
+   `location.roads`, normalized as `roadIdentity` returns them. Note the source id and fetch
    date in `expected.json.why`.
 3. Extract the spine: `pnpm --filter @openconditions/roads bind:spine <west> <south> <east> <north> > <case>/spine.json`
    (Overpass, same highway classes as the import, directed `f`/`b` segments

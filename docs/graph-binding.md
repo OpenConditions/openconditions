@@ -141,16 +141,38 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
    - `bearing` (line samples only): `1` up to a 30° difference, falling linearly
      to `0` at 90°. Beyond 90° the candidate scores 0 and is dropped — that is
      the wrong carriageway.
-   - `ref`: `1` on a stated match, `0.5` when either side states no ref, `0` on
-     a stated mismatch. Refs are compared as normalized sets: uppercased,
-     whitespace and hyphens stripped, split on `;`, `,` and `/`, so `"A 46"`,
-     `"A46"` and `"a-46"` are one ref and `"B 9;B 56"` is two.
+   - `identity` (`identity.ts`): whether the segment is the road the location
+     names, by number or by street name. `1` on a match, `0.5` when either
+     side is silent, `0` when the location states a number or street name the
+     segment contradicts. A candidate scoring `0` is dropped: however near, it
+     is another road, as the main road beside a side street's roadworks is.
+     When every candidate in reach is dropped the location stays `unresolved`
+     with `road_mismatch` (its road is not in the spine).
+     - Numbers (the segment's OSM `ref`) are compared as normalized sets:
+       uppercased, whitespace and hyphens stripped, split on `;`, `,` and `/`,
+       so `"A 46"`, `"A46"` and `"a-46"` are one ref and `"B 9;B 56"` is two.
+       A name written as a number (`B410`, `A100 (Stadtring)`, `St 2240`: one
+       or two capitals, or `St`/`Kr`, then digits) is read as one; a word
+       before a number (`Tie 40`) is not.
+     - Street names (the way's OSM `name`, read from `conditions.osm_road`
+       with the subgraph) count only when the location states
+       no number the segment could be judged by, and only for a name with a
+       street word (`-straße`, `-weg`, `-allee`, `Rue`, `-straat` …): a feed's
+       route description (`Stuttgart-Großbottwar`) contradicts nothing. Names
+       are compared without case, house numbers or parenthesized notes,
+       `Straße`/`Strasse`/`Str.` alike, and one may hold the other
+       (`Werrenstraße Kreuzungsbereich Gänsbergstraße` holds `Werrenstraße`).
+     - A stated number decides alone: a segment with a different number is
+       ruled out even when its name matches, and a segment without a number
+       is not ruled out by its name.
    - `class`: a prior by OSM `highway` (motorway 1.0 … primary_link 0.8), so a
      motorway beats its parallel link road at equal geometry.
 
-   Combined as `0.4·offset + 0.3·bearing + 0.2·ref + 0.1·class`. A point sample
-   has no bearing, and its weight is folded into the offset term
-   (`0.7·offset + 0.2·ref + 0.1·class`).
+   Combined as `0.4·offset + 0.3·bearing + 0.2·identity + 0.1·class`. A point
+   sample has no bearing, and its weight is folded into the offset term
+   (`0.7·offset + 0.2·identity + 0.1·class`). A rival the location's identity
+   scores below the winner is no rival: the stated name settles which of two
+   roads in reach it is on.
 
 4. **Path reconstruction** over a directed adjacency of the subgraph (segment A
    → B when A's last coordinate is B's first):
@@ -163,7 +185,7 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
      half of the samples leaves the line `unresolved` (`low_coverage`): it
      follows a road the spine lacks.
    - _Endpoint pair:_ Dijkstra between the two projections, restricted to
-     segments whose ref matches when the event states one, cap
+     segments its stated number or street name does not rule out, cap
      `2.5 × straight-line + 500 m` and a hard maximum of 30 km. The top 3 start
      × top 3 end candidates are tried and the best-scoring path kept.
    - _Single point:_ the best candidate only, span `[fraction, fraction]`.
@@ -171,7 +193,7 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
    event start, the last segment's `end_fraction` the projection of the event
    end; every segment in between is `[0, 1]`.
 6. **Confidence.**
-   `0.4·coverage + 0.2·(1 − meanOffset/maxOffset) + 0.2·refScore + 0.1·directionCertainty + 0.1·(1 − ambiguity)`,
+   `0.4·coverage + 0.2·(1 − meanOffset/maxOffset) + 0.2·identity + 0.1·directionCertainty + 0.1·(1 − ambiguity)`,
    where `coverage` is the share of samples within `maxOffset` of the chosen
    path, `directionCertainty` is 1 for `single`, 0.5 for `both` and 0 for
    `unknown`, and `ambiguity` is the best rejected score divided by the chosen

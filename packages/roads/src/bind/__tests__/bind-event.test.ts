@@ -727,7 +727,6 @@ describe("bindEvent", () => {
   it("leaves the carriageway unknown when the event's ref cannot pick a road", () => {
     const cases = [
       { id: "no-ref", spine: midway, roads: undefined },
-      { id: "unmatched-ref", spine: midway, roads: [{ ref: "K 12" }] },
       { id: "refless-neighbour", spine: midwayRefless, roads: undefined },
     ];
     for (const c of cases) {
@@ -749,6 +748,97 @@ describe("bindEvent", () => {
       expect(r.status).toBe("ambiguous");
       expect(r.confidence).toBeLessThanOrEqual(0.69);
     }
+  });
+
+  it("binds no road the event's stated ref contradicts, however near", () => {
+    const r = bindEvent(
+      toBindInput({
+        id: "unmatched-ref",
+        type: "accident",
+        roads: [{ ref: "K 12" }],
+        geometry: { type: "Point", coordinates: [7.01, 51.000135] },
+      }),
+      midway,
+    );
+    expect(r.status).toBe("unresolved");
+    expect(r.reason).toBe("road_mismatch");
+  });
+
+  describe("street names", () => {
+    // A main road and a side street 30 m apart, as at Aachen's Adenauerallee.
+    const mainAndSide: SpineSubgraph = {
+      segments: [
+        seg(
+          "80:f",
+          [
+            [7.0, 51.0],
+            [7.02, 51.0],
+          ],
+          { highway: "primary", ref: null, name: "Adenauerallee" },
+        ),
+        seg(
+          "81:f",
+          [
+            [7.0, 51.00027],
+            [7.02, 51.00027],
+          ],
+          { highway: "residential", ref: null, name: "Rosenweg" },
+        ),
+      ],
+    };
+    const point = (id: string, roads: Array<{ ref?: string; name?: string }>, lat = 51.00003) =>
+      toBindInput({
+        id,
+        type: "roadworks",
+        roads,
+        geometry: { type: "Point", coordinates: [7.01, lat] },
+      });
+
+    it("binds no road a stated street name contradicts, however near", () => {
+      const r = bindEvent(point("side", [{ name: "Rosenweg 4" }]), {
+        segments: [mainAndSide.segments[0]!],
+      });
+      expect(r.status).toBe("unresolved");
+      expect(r.reason).toBe("road_mismatch");
+    });
+
+    it("lets the stated name pick between two roads in reach", () => {
+      const r = bindEvent(point("named", [{ name: "Rosenweg" }]), mainAndSide);
+      expect(r.segments.map((s) => s.segmentId)).toEqual(["81:f"]);
+      expect(r.directionMode).not.toBe("unknown");
+    });
+
+    it("binds by the stated number, not a route description given as the name", () => {
+      const r = bindEvent(point("route", [{ ref: "A 46", name: "Stuttgart-Großbottwar" }]), {
+        segments: [
+          seg(
+            "82:f",
+            [
+              [7.0, 51.0],
+              [7.02, 51.0],
+            ],
+            { name: "Hansalinie" },
+          ),
+        ],
+      });
+      expect(r.segments.map((s) => s.segmentId)).toEqual(["82:f"]);
+    });
+
+    it("leaves a road without a name open to a named location", () => {
+      const r = bindEvent(point("unnamed-way", [{ name: "Rosenweg" }]), {
+        segments: [
+          seg(
+            "83:f",
+            [
+              [7.0, 51.0],
+              [7.02, 51.0],
+            ],
+            { ref: null },
+          ),
+        ],
+      });
+      expect(r.segments.map((s) => s.segmentId)).toEqual(["83:f"]);
+    });
   });
 
   it("does not let a well-angled rival hide a parallel one", () => {

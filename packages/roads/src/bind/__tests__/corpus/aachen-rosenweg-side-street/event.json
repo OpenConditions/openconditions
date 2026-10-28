@@ -1,0 +1,7 @@
+{
+  "id": "oc:situation:de-nw-aachen-events:111280",
+  "geometry": { "type": "MultiPoint", "coordinates": [[6.12681839, 50.76520536]] },
+  "type": "roadworks",
+  "refs": [],
+  "names": ["rosenweg"]
+}

@@ -10,7 +10,7 @@ import type { TravelDirection } from "./direction.js";
 import type { LngLat } from "./geo.js";
 
 /** Bumped whenever the resolver's inputs or maths change a stored binding. */
-export const RESOLVER_VERSION = "2.3.0";
+export const RESOLVER_VERSION = "2.4.0";
 
 export const BIND_DEFAULTS = {
   /** Candidate search radius around a sample, in metres. */
@@ -34,6 +34,8 @@ export interface SpineSegment {
   dir: "f" | "b";
   highway: string;
   ref: string | null;
+  /** The way's OSM `name`; absent from spines captured before names were read. */
+  name?: string | null;
   /** Directed geometry: coordinates run in travel direction. */
   coords: LngLat[];
   lengthM: number;
@@ -49,6 +51,8 @@ export interface BindInput {
   type: string;
   /** Already normalized (see refs.ts). */
   refs: string[];
+  /** Street names the location states, normalized (see identity.ts); absent when none. */
+  names?: string[];
   /** The source's direction as text; kept for inspection, not interpreted. */
   direction?: string;
   /**
@@ -65,7 +69,7 @@ export interface Candidate {
   offsetM: number;
   fraction: number;
   bearingDelta: number | null;
-  refScore: number;
+  identity: number;
   score: number;
 }
 

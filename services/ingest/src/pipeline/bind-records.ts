@@ -105,13 +105,16 @@ export async function fetchSubgraph(
       dir: "f" | "b";
       highway: string;
       ref: string | null;
+      name: string | null;
       geojson: string;
       length_m: number;
     }[]
   >`
-    SELECT segment_id, way_id::int AS way_id, dir, highway, ref, ST_AsGeoJSON(geom) AS geojson, length_m
-    FROM conditions.road_segment
-    WHERE geom && ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326)
+    SELECT s.segment_id, s.way_id::int AS way_id, s.dir, s.highway, s.ref, r.name,
+      ST_AsGeoJSON(s.geom) AS geojson, s.length_m
+    FROM conditions.road_segment s
+    LEFT JOIN conditions.osm_road r ON r.way_id = s.way_id
+    WHERE s.geom && ST_MakeEnvelope(${bbox[0]}, ${bbox[1]}, ${bbox[2]}, ${bbox[3]}, 4326)
     LIMIT ${BIND_DEFAULTS.maxSubgraphSegments + 1}`;
   return rows.map((r) => ({
     segmentId: r.segment_id,
@@ -119,6 +122,7 @@ export async function fetchSubgraph(
     dir: r.dir,
     highway: r.highway,
     ref: r.ref,
+    name: r.name,
     coords: (JSON.parse(r.geojson) as { coordinates: [number, number][] }).coordinates,
     lengthM: r.length_m,
   }));
@@ -213,6 +217,8 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
     .update(JSON.stringify(input.geometry))
     .update("|")
     .update(input.refs.join(","))
+    .update("|")
+    .update((input.names ?? []).join(","))
     .update("|")
     .update(input.type)
     .update("|")
