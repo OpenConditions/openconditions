@@ -255,7 +255,10 @@ function validityRange(
   mapping: GeoJsonMapping,
   timeZone: string | undefined,
 ): { validFrom: string | null; validTo: string | null } {
-  const ends = typeof value === "string" ? value.trim().split(/\s+[-–]\s+/u) : [];
+  // A dash with whitespace on both sides; one character of lookaround each
+  // keeps the split linear on a long run of spaces.
+  const ends =
+    typeof value === "string" ? value.split(/(?<=\s)[-–](?=\s)/u).map((end) => end.trim()) : [];
   const [from, to] = ends;
   if (ends.length !== 2 || from === undefined || to === undefined) {
     return { validFrom: null, validTo: null };
