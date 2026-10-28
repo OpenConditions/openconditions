@@ -22,7 +22,7 @@ import {
   projectOntoPolyline,
 } from "./geo.js";
 import { nodeKey, SegmentGraph } from "./graph.js";
-import { normalizeRefs, refScore } from "./refs.js";
+import { identityScore, roadIdentity } from "./identity.js";
 import { scoreCandidate } from "./score.js";
 import { SegmentGrid } from "./segment-grid.js";
 import {
@@ -66,12 +66,13 @@ export function toBindInput(ev: {
   travel?: TravelDirection;
   roadState?: string;
 }): BindInput {
-  const refs = normalizeRefs((ev.roads ?? []).flatMap((r) => [r.ref, r.name]));
+  const { refs, names } = roadIdentity(ev.roads ?? []);
   return {
     id: ev.id,
     geometry: ev.geometry,
     type: ev.type,
     refs,
+    ...(names.length > 0 ? { names } : {}),
     ...(ev.direction ? { direction: ev.direction } : {}),
     ...(ev.travel ? { travel: ev.travel } : {}),
     ...(ev.roadState ? { roadState: ev.roadState } : {}),
@@ -133,14 +134,15 @@ function nodeAdjacent(a: SpineSegment, b: SpineSegment): boolean {
  * A candidate genuinely competing with the chosen one. The next way along a
  * carriageway is a continuation, not a competitor — consecutive ways share a
  * node, while opposite carriageways never do. A parallel road is settled only
- * when the event's own ref picked the winner: matching refs, two mismatches or
- * a refless event all leave the choice open, so the candidate stays a rival.
+ * when the event's own number or street name picked the winner: a match on
+ * both, or a location that names neither, leaves the choice open, so the
+ * candidate stays a rival.
  */
 function isRival(c: Candidate, chosen: Candidate): boolean {
   return (
     c.segment.wayId !== chosen.segment.wayId &&
     !nodeAdjacent(c.segment, chosen.segment) &&
-    chosen.refScore <= c.refScore
+    chosen.identity <= c.identity
   );
 }
 
@@ -151,6 +153,7 @@ function candidatesFor(
   input: BindInput,
   grid: SegmentGrid,
   maxOffsetM: number,
+  vetoes?: { count: number },
 ): Candidate[] {
   const out: Candidate[] = [];
   for (const s of grid.near(p)) {
@@ -158,9 +161,16 @@ function candidatesFor(
     const pr = projectOntoPolyline(p, s.coords);
     if (pr.offsetM > maxOffsetM) continue;
     const delta = bearing == null ? null : bearingDelta(bearing, pr.bearing);
-    const rs = refScore(input.refs, s.ref);
+    const rs = identityScore(input, s);
+    // A road the location's stated number or street name contradicts is
+    // another road, however near: the side street's roadworks are not on the
+    // main road beside it.
+    if (rs === 0) {
+      if (vetoes) vetoes.count++;
+      continue;
+    }
     const score = scoreCandidate(
-      { offsetM: pr.offsetM, bearingDelta: delta, refScore: rs, highway: s.highway },
+      { offsetM: pr.offsetM, bearingDelta: delta, identity: rs, highway: s.highway },
       maxOffsetM,
     );
     // Only a heading beyond 90° scores 0, and that means the wrong carriageway.
@@ -170,11 +180,20 @@ function candidatesFor(
       offsetM: pr.offsetM,
       fraction: pr.fraction,
       bearingDelta: delta,
-      refScore: rs,
+      identity: rs,
       score,
     });
   }
   return out.sort((a, b) => b.score - a.score);
+}
+
+/**
+ * Why nothing bound: `road_mismatch` when roads lay near but each contradicts
+ * the stated number or street name (the location's road is not in the spine),
+ * else `no_candidates`.
+ */
+function unmatched(vetoes: { count: number }): string {
+  return vetoes.count > 0 ? "road_mismatch" : "no_candidates";
 }
 
 function fractionOn(s: SpineSegment, p: LngLat): number {
@@ -220,7 +239,7 @@ function confidenceOf(
   a: {
     coverage: number;
     meanOffsetM: number;
-    refScore: number;
+    identity: number;
     directionMode: DirectionMode;
     ambiguity: number;
   },
@@ -230,7 +249,7 @@ function confidenceOf(
   const raw =
     0.4 * a.coverage +
     0.2 * (1 - a.meanOffsetM / maxOffsetM) +
-    0.2 * a.refScore +
+    0.2 * a.identity +
     0.1 * direction +
     0.1 * (1 - a.ambiguity);
   // An undecided carriageway must never reach a routing-relevant status.
@@ -284,9 +303,10 @@ function bindPoint(
   grid: SegmentGrid,
   maxOffsetM: number,
 ): BindResult {
-  const candidates = candidatesFor(point, null, input, grid, maxOffsetM);
+  const vetoes = { count: 0 };
+  const candidates = candidatesFor(point, null, input, grid, maxOffsetM, vetoes);
   const samples = [{ point, candidates }];
-  if (candidates.length === 0) return failure("unresolved", "no_candidates", 0, samples);
+  if (candidates.length === 0) return failure("unresolved", unmatched(vetoes), 0, samples);
 
   const best = candidates[0]!;
   const twin = candidates.find(
@@ -300,7 +320,7 @@ function bindPoint(
     span(c.segment, c.fraction, c.fraction),
   );
   const confidence = confidenceOf(
-    { coverage: 1, meanOffsetM: best.offsetM, refScore: best.refScore, directionMode, ambiguity },
+    { coverage: 1, meanOffsetM: best.offsetM, identity: best.identity, directionMode, ambiguity },
     maxOffsetM,
   );
 
@@ -334,15 +354,22 @@ function bindEndpoints(
   // including both directions on a bidirectional way.
   if (straightM === 0) return bindPoint(start, input, grid, maxOffsetM);
   const cap = Math.min(MAX_ENDPOINT_PATH_M, 2.5 * straightM + 500);
-  const starts = candidatesFor(start, null, input, grid, maxOffsetM).slice(0, ENDPOINT_CANDIDATES);
-  const ends = candidatesFor(end, null, input, grid, maxOffsetM).slice(0, ENDPOINT_CANDIDATES);
+  const vetoes = { count: 0 };
+  const starts = candidatesFor(start, null, input, grid, maxOffsetM, vetoes).slice(
+    0,
+    ENDPOINT_CANDIDATES,
+  );
+  const ends = candidatesFor(end, null, input, grid, maxOffsetM, vetoes).slice(
+    0,
+    ENDPOINT_CANDIDATES,
+  );
   const samples = [
     { point: start, candidates: starts },
     { point: end, candidates: ends },
   ];
   const candidateCount = starts.length + ends.length;
   if (starts.length === 0 || ends.length === 0)
-    return failure("unresolved", "no_candidates", candidateCount, samples);
+    return failure("unresolved", unmatched(vetoes), candidateCount, samples);
 
   const routes: EndpointRoute[] = [];
   for (const s of starts) {
@@ -353,10 +380,10 @@ function bindEndpoints(
       if (s.segment.segmentId === e.segment.segmentId && s.fraction > e.fraction) continue;
       const path = graph.shortestPath(s.segment.segmentId, e.segment.segmentId, cap, onRef);
       if (!path) continue;
-      const rs = path.reduce((m, p) => Math.min(m, refScore(input.refs, p.ref)), 1);
+      const rs = path.reduce((m, p) => Math.min(m, identityScore(input, p)), 1);
       const score = ((s.score + e.score) / 2) * (0.8 + 0.2 * rs);
       const lengthM = [...coveredM(path, start, end).values()].reduce((sum, m) => sum + m, 0);
-      routes.push({ path, score, lengthM, refScore: rs, from: s, to: e });
+      routes.push({ path, score, lengthM, identity: rs, from: s, to: e });
     }
   }
   const best = routes.reduce<EndpointRoute | null>(
@@ -382,7 +409,7 @@ function bindEndpoints(
   // candidates overall — the winning path may not start or end on those.
   const meanOffsetM = (best.from.offsetM + best.to.offsetM) / 2;
   const confidence = confidenceOf(
-    { coverage: 1, meanOffsetM, refScore: best.refScore, directionMode: "single", ambiguity },
+    { coverage: 1, meanOffsetM, identity: best.identity, directionMode: "single", ambiguity },
     maxOffsetM,
   );
   return {
@@ -400,7 +427,7 @@ interface EndpointRoute {
   path: SpineSegment[];
   score: number;
   lengthM: number;
-  refScore: number;
+  identity: number;
   from: Candidate;
   to: Candidate;
 }
@@ -448,17 +475,18 @@ function bindLine(
   // Too short to have a trustworthy heading, so the bearing test is skipped.
   const hasBearing = lengthM >= BIND_DEFAULTS.minBearingLengthM;
   const points = densify(coords, spacingM);
+  const vetoes = { count: 0 };
   const samples = points.map((point, i) => {
     const prev = points[Math.max(0, i - 1)]!;
     const next = points[Math.min(points.length - 1, i + 1)]!;
     const bearing = hasBearing ? bearingDeg(prev, next) : null;
-    return { point, candidates: candidatesFor(point, bearing, input, grid, maxOffsetM) };
+    return { point, candidates: candidatesFor(point, bearing, input, grid, maxOffsetM, vetoes) };
   });
   const candidateCount = new Set(
     samples.flatMap((s) => s.candidates.map((c) => c.segment.segmentId)),
   ).size;
   const matched = samples.filter((s) => s.candidates.length > 0);
-  if (matched.length === 0) return failure("unresolved", "no_candidates", 0, samples);
+  if (matched.length === 0) return failure("unresolved", unmatched(vetoes), 0, samples);
 
   const cap = 1.5 * lengthM + 200;
   const path: SpineSegment[] = [];
@@ -520,7 +548,7 @@ function bindLine(
   if (coverage < MIN_LINE_COVERAGE) {
     return failure("unresolved", "low_coverage", candidateCount, samples);
   }
-  const rs = path.reduce((m, p) => Math.min(m, refScore(input.refs, p.ref)), 1);
+  const rs = path.reduce((m, p) => Math.min(m, identityScore(input, p)), 1);
   const twins = new Map<string, SpineSegment>();
   if (!hasBearing) {
     for (const p of path) {
@@ -545,7 +573,7 @@ function bindLine(
   for (const twin of twins.values()) segments.push(...spansAlong([twin], last, first));
 
   const confidence = confidenceOf(
-    { coverage, meanOffsetM, refScore: rs, directionMode, ambiguity },
+    { coverage, meanOffsetM, identity: rs, directionMode, ambiguity },
     maxOffsetM,
   );
   return {
@@ -718,9 +746,8 @@ export function bindEvent(
 
   const graph = new SegmentGraph(spine.segments);
   const grid = new SegmentGrid(spine.segments, maxOffsetM);
-  // With a stated ref, paths may only run over segments that match it.
-  const onRef = (s: SpineSegment): boolean =>
-    input.refs.length === 0 || refScore(input.refs, s.ref) !== 0;
+  // With a stated number or street name, paths run only over segments it does not contradict.
+  const onRef = (s: SpineSegment): boolean => identityScore(input, s) !== 0;
 
   let result: BindResult;
   if (shape.kind === "point") result = bindPoint(shape.point, input, grid, maxOffsetM);

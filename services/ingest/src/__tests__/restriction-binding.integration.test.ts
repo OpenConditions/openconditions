@@ -285,11 +285,21 @@ describe("stored restriction publication through the real HTTP path", () => {
 
   /**
    * The reviewed weight-restricted roadworks, moved onto the imported Road 40
-   * spine (synthetic) and published fresh, then bound.
+   * spine (synthetic) and published fresh, then bound. It is restated as on
+   * Road 40 too: a record stating Road 104 binds no Road 40 segment.
    */
   async function seedConditional(): Promise<void> {
     const conditional = openEnded(feature(CONDITIONAL));
     conditional.geometry = feature(ROAD40).geometry;
+    const announcements = conditional.properties["announcements"] as Array<{
+      locationDetails?: {
+        roadAddressLocation?: { primaryPoint?: { roadAddress?: { road?: number } } };
+      };
+    }>;
+    for (const announcement of announcements) {
+      const address = announcement.locationDetails?.roadAddressLocation?.primaryPoint?.roadAddress;
+      if (address) address.road = 40;
+    }
     await publish([conditional], new Date().toISOString());
     await bind([CONDITIONAL_ID]);
   }
