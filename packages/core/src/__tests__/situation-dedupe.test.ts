@@ -498,3 +498,164 @@ describe("conservative situation deduplication", () => {
     retains(situation("one"), situation("two", "b", 7));
   });
 });
+
+describe("dedupeSituations of one measure published by two sources", () => {
+  // Along Hofmühlenstraße, Dresden: metres east of 13.7°E.
+  const line = (from: number, to: number) => ({
+    type: "LineString",
+    coordinates: [
+      [13.7 + from * 0.0000142, 51.03],
+      [13.7 + to * 0.0000142, 51.03],
+    ],
+  });
+  const works = (source: string, local: string, geometry: Rec, over: Partial<Rec> = {}): Rec => ({
+    ...situation(source, local),
+    kind: "roadworks",
+    type: "works",
+    subtype: undefined,
+    certainty: "unknown",
+    effects: [],
+    headline: [{ lang: "und", text: "Verlegung 110 KV - Leitungsbau" }],
+    validity: { status: "active", start: "2026-10-05T22:00:00Z", end: "2026-11-13T23:00:00Z" },
+    location: {
+      geometry,
+      extent: "linear",
+      geometryOrigin: "source",
+      fuzziness: "exact",
+      roads: [],
+    },
+    ...over,
+  });
+  const state = works("de-sn-list-events", "DRESDEN25/10/114", line(0, 300));
+
+  it("folds the city's record into the state's covering one, keeping the city's attribution", () => {
+    const city = works("de-sn-dresden-events", "1147", line(0, 280), {
+      kind: "closure",
+      type: "closure",
+      headline: [{ lang: "und", text: "Vollsperrung" }],
+      validity: { status: "active", start: "2026-10-05T22:00:00Z", end: "2026-11-13T22:59:00Z" },
+    });
+    for (const order of [
+      [city, state],
+      [state, city],
+    ]) {
+      const [folded, ...rest] = dedupeSituations(order);
+      expect(rest).toEqual([]);
+      expect(folded!["id"]).toBe(state["id"]);
+      expect((folded!["provenance"] as Rec)["mergedSources"]).toEqual([
+        {
+          source: "de-sn-dresden-events",
+          recordId: "1147",
+          attribution: { provider: "de-sn-dresden-events", license: "CC0-1.0" },
+          link: "same_phenomenon",
+        },
+      ]);
+    }
+  });
+
+  it("keeps a short element inside a long record of the same works", () => {
+    retains(state, works("de-autobahn-events", "ramp", line(10, 60)));
+  });
+
+  it("folds differing dates only with one end agreeing and the headlines too", () => {
+    const later = { status: "active", start: "2026-10-19T22:00:00Z", end: "2026-11-13T23:00:00Z" };
+    expect(
+      dedupeSituations([
+        state,
+        works("de-sn-dresden-events", "x", line(0, 290), { validity: later }),
+      ]),
+    ).toHaveLength(1);
+    retains(
+      state,
+      works("de-sn-dresden-events", "y", line(0, 290), {
+        validity: later,
+        headline: [{ lang: "und", text: "Kanalreinigung" }],
+      }),
+    );
+  });
+
+  it("keeps records of other kinds, or without dates", () => {
+    retains(
+      state,
+      works("de-sn-dresden-events", "c", line(0, 300), { kind: "congestion", type: "congestion" }),
+    );
+    retains(
+      state,
+      works("de-sn-dresden-events", "d", line(0, 300), { validity: { status: "active" } }),
+    );
+  });
+
+  it("folds two records stating the same kinds of effect, not different ones", () => {
+    const lanes = { ...closure("l"), kind: "lane_restriction", vehicleImpact: "some_lanes_closed" };
+    expect(
+      dedupeSituations([
+        { ...state, effects: [closure("s")] },
+        works("de-be-berlin-events", "e", line(0, 300), { effects: [closure("e")] }),
+      ]),
+    ).toHaveLength(1);
+    retains(
+      { ...state, effects: [closure("s")] },
+      works("de-be-berlin-events", "f", line(0, 300), { effects: [lanes] }),
+    );
+  });
+
+  it("keeps a night closure apart from the next night's", () => {
+    const night = (source: string, local: string, start: string, end: string) =>
+      works(source, local, line(0, 290), { validity: { status: "active", start, end } });
+    retains(
+      night("de-autobahn-events", "n1", "2026-10-28T20:00:00Z", "2026-10-29T04:00:00Z"),
+      night("de-be-berlin-events", "n2", "2026-10-29T20:00:00Z", "2026-10-30T04:00:00Z"),
+    );
+  });
+
+  it("keeps the record stating effects, even when the other covers it", () => {
+    const closed = works("de-be-berlin-events", "c", line(0, 280), { effects: [closure("c")] });
+    const [folded, ...rest] = dedupeSituations([state, closed]);
+    expect(rest).toEqual([]);
+    expect(folded!["id"]).toBe(closed["id"]);
+  });
+
+  it("does not compare a record spanning more than about 50 km", () => {
+    const wide = {
+      type: "LineString",
+      coordinates: [
+        [12, 50],
+        [15, 51.5],
+      ],
+    };
+    retains(works("de-sn-list-events", "wide", wide), works("de-sn-dresden-events", "w", wide));
+  });
+
+  it("keeps one source's two sections apart when both lie along another's whole", () => {
+    const west = works("de-sn-dresden-events", "w", line(0, 150));
+    const east = works("de-sn-dresden-events", "e", line(150, 300));
+    expect(dedupeSituations([state, west, east]).map((r) => r["id"])).toEqual([
+      state["id"],
+      east["id"],
+    ]);
+  });
+
+  it("compares lines of many vertices within a bounded budget", () => {
+    const dense = (from: number, to: number, n: number) => ({
+      type: "LineString",
+      coordinates: Array.from({ length: n + 1 }, (_, k) => [
+        13.7 + (from + ((to - from) * k) / n) * 0.0000142,
+        51.03,
+      ]),
+    });
+    const many = Array.from({ length: 40 }, (_, i) =>
+      works(`de-src-${i}-events`, `d${i}`, dense(0, 300, 20_000)),
+    );
+    const started = performance.now();
+    expect(dedupeSituations([state, ...many])).toHaveLength(1);
+    expect(performance.now() - started).toBeLessThan(5_000);
+  });
+
+  it("keeps the record carrying restriction evidence", () => {
+    const lanes = { ...closure("m"), normalization: "partial" };
+    const motorway = works("de-autobahn-events", "m", line(0, 290), { effects: [lanes] });
+    const [folded, ...rest] = dedupeSituations([state, motorway]);
+    expect(rest).toEqual([]);
+    expect(folded!["id"]).toBe(motorway["id"]);
+  });
+});
