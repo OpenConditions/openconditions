@@ -183,7 +183,13 @@ function roadRefs(record: Rec): Set<string> {
  */
 export function dedupeSituations(records: readonly Rec[]): Rec[] {
   type Member = { source: unknown; point: [number, number]; roads: Set<string> };
-  type Group = { record: Rec; members: Member[]; shape: Shape | undefined; order: number };
+  type Group = {
+    record: Rec;
+    members: Member[];
+    shape: Shape | undefined;
+    order: number;
+    replaced?: true;
+  };
   const out: Group[] = [];
   const byMeaning = new Map<string, Group[]>();
   const byCell = new Map<string, Group[]>();
@@ -204,6 +210,8 @@ export function dedupeSituations(records: readonly Rec[]): Rec[] {
       point === undefined || meaning === undefined
         ? undefined
         : byMeaning.get(meaning)?.find((o) => {
+            // A survivor replaced across sources no longer carries this meaning.
+            if (o.replaced) return false;
             return o.members.every((member) => {
               if (member.source === provenance["sourceId"]) return false;
               const distance = haversineMeters(member.point, point);
@@ -218,13 +226,18 @@ export function dedupeSituations(records: readonly Rec[]): Rec[] {
       const near = [...new Set(cellsOf(shape).flatMap((cell) => byCell.get(cell) ?? []))].sort(
         (x, y) => x.order - y.order,
       );
+      // Each source's own records stay apart, whichever of the group survives.
       const same = near.find(
-        (g) => g.shape && sameMeasureAcrossSources(g.record, g.shape, record, shape),
+        (g) =>
+          g.shape &&
+          g.members.every((member) => member.source !== provenance["sourceId"]) &&
+          sameMeasureAcrossSources(g.record, g.shape, record, shape),
       );
       if (same?.shape) {
         if (sameMeasureAcrossSources(same.record, same.shape, record, shape) === record) {
           same.record = merge(record, same.record);
           same.shape = shape;
+          same.replaced = true;
           index(same);
         } else {
           same.record = merge(same.record, record);

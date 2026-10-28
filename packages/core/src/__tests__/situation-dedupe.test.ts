@@ -626,6 +626,31 @@ describe("dedupeSituations of one measure published by two sources", () => {
     retains(works("de-sn-list-events", "wide", wide), works("de-sn-dresden-events", "w", wide));
   });
 
+  it("keeps one source's two sections apart when both lie along another's whole", () => {
+    const west = works("de-sn-dresden-events", "w", line(0, 150));
+    const east = works("de-sn-dresden-events", "e", line(150, 300));
+    expect(dedupeSituations([state, west, east]).map((r) => r["id"])).toEqual([
+      state["id"],
+      east["id"],
+    ]);
+  });
+
+  it("compares lines of many vertices within a bounded budget", () => {
+    const dense = (from: number, to: number, n: number) => ({
+      type: "LineString",
+      coordinates: Array.from({ length: n + 1 }, (_, k) => [
+        13.7 + (from + ((to - from) * k) / n) * 0.0000142,
+        51.03,
+      ]),
+    });
+    const many = Array.from({ length: 40 }, (_, i) =>
+      works(`de-src-${i}-events`, `d${i}`, dense(0, 300, 20_000)),
+    );
+    const started = performance.now();
+    expect(dedupeSituations([state, ...many])).toHaveLength(1);
+    expect(performance.now() - started).toBeLessThan(5_000);
+  });
+
   it("keeps the record carrying restriction evidence", () => {
     const lanes = { ...closure("m"), normalization: "partial" };
     const motorway = works("de-autobahn-events", "m", line(0, 290), { effects: [lanes] });

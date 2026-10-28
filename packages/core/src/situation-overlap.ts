@@ -37,6 +37,12 @@ const COVER_M = 15;
 const SAME_DAY_H = 25;
 const SAME_MONTH_H = 31 * 24;
 const SAMPLES = 64;
+/**
+ * At most this many vertices per shape: comparing two shapes costs their
+ * vertex counts multiplied, so a longer line is thinned evenly, keeping each
+ * part's ends, and a shape of more parts than this is not compared.
+ */
+const MAX_VERTICES = 512;
 /** Shorter than this, a geometry is a point: it cannot cover a line. */
 const POINT_M = 20;
 const M_PER_DEG = 111_320;
@@ -78,6 +84,13 @@ export function shapeOf(record: Rec): Shape | undefined {
   const valid = ([x, y]: [number, number]) =>
     Number.isFinite(x) && Number.isFinite(y) && Math.abs(x) <= 180 && Math.abs(y) <= 90;
   if (!parts.every((part) => part.every(valid))) return undefined;
+  if (parts.length > MAX_VERTICES) return undefined;
+  const total = parts.reduce((sum, part) => sum + part.length, 0);
+  if (total > MAX_VERTICES) {
+    const stride = Math.ceil(total / MAX_VERTICES);
+    for (const [i, part] of parts.entries())
+      parts[i] = part.filter((_, k) => k % stride === 0 || k === part.length - 1);
+  }
   const bbox: Shape["bbox"] = [Infinity, Infinity, -Infinity, -Infinity];
   for (const part of parts)
     for (const [x, y] of part) {
