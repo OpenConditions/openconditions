@@ -589,6 +589,24 @@ describe("dedupeSituations of one measure published by two sources", () => {
     );
   });
 
+  it("keeps the record stating effects, even when the other covers it", () => {
+    const closed = works("de-be-berlin-events", "c", line(0, 280), { effects: [closure("c")] });
+    const [folded, ...rest] = dedupeSituations([state, closed]);
+    expect(rest).toEqual([]);
+    expect(folded!["id"]).toBe(closed["id"]);
+  });
+
+  it("does not compare a record spanning more than about 50 km", () => {
+    const wide = {
+      type: "LineString",
+      coordinates: [
+        [12, 50],
+        [15, 51.5],
+      ],
+    };
+    retains(works("de-sn-list-events", "wide", wide), works("de-sn-dresden-events", "w", wide));
+  });
+
   it("keeps the record carrying restriction evidence", () => {
     const lanes = { ...closure("m"), normalization: "partial" };
     const motorway = works("de-autobahn-events", "m", line(0, 290), { effects: [lanes] });

@@ -283,9 +283,18 @@ function merge(kept: Rec, folded: Rec): Rec {
 
 /** Grid cells, about a kilometre across, near a shape's bounding box. */
 const CELL_DEG = 0.01;
+/**
+ * At most this many cells (about 50 km square) per record: a record spanning
+ * more is not compared as one measure with another, rather than indexed in a
+ * number of cells its publisher chooses.
+ */
+const MAX_CELLS = 2500;
 function cellsOf(shape: Shape): string[] {
   const grow = 30 / 111_320;
   const [w, s, e, n] = shape.bbox;
+  const columns = Math.floor((e + grow) / CELL_DEG) - Math.floor((w - grow) / CELL_DEG) + 1;
+  const rows = Math.floor((n + grow) / CELL_DEG) - Math.floor((s - grow) / CELL_DEG) + 1;
+  if (columns * rows > MAX_CELLS) return [];
   const out: string[] = [];
   for (let x = Math.floor((w - grow) / CELL_DEG); x <= Math.floor((e + grow) / CELL_DEG); x++)
     for (let y = Math.floor((s - grow) / CELL_DEG); y <= Math.floor((n + grow) / CELL_DEG); y++)

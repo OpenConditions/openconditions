@@ -27,7 +27,8 @@
  * different measures. The record covering the other survives, so a section
  * folds into the whole; a record carrying restriction evidence (an effect not
  * completely read, or one whose vehicles are unknown) is never dropped, and
- * two such records are never one.
+ * two such records are never one; nor is a record stating effects dropped for
+ * one that states none.
  */
 type Rec = Record<string, unknown>;
 
@@ -72,6 +73,10 @@ export function shapeOf(record: Rec): Shape | undefined {
   if (Array.isArray(nested)) for (const g of nested) walk(object(g)?.["coordinates"]);
   else walk(geometry["coordinates"]);
   if (parts.length === 0) return undefined;
+  // A coordinate that is no longitude/latitude makes the record no shape to compare.
+  const valid = ([x, y]: [number, number]) =>
+    Number.isFinite(x) && Number.isFinite(y) && Math.abs(x) <= 180 && Math.abs(y) <= 90;
+  if (!parts.every((part) => part.every(valid))) return undefined;
   const bbox: Shape["bbox"] = [Infinity, Infinity, -Infinity, -Infinity];
   for (const part of parts)
     for (const [x, y] of part) {
@@ -282,6 +287,9 @@ export function sameMeasureAcrossSources(a: Rec, sa: Shape, b: Rec, sb: Shape): 
   if (point && (!headlinesAgree(a, b) || roadsConflict(a, b))) return undefined;
   if (evidenceA) return a;
   if (evidenceB) return b;
+  // Stated effects (a closure, a limit) are what routing reads: their record stays.
+  if (stated(a["effects"])) return a;
+  if (stated(b["effects"])) return b;
   // `b` lies further along `a` than `a` along `b`: `a` covers it. Equal, the earlier stays.
   return aInB > bInA ? b : a;
 }
