@@ -1285,7 +1285,7 @@
       "terms": {
         "url": "https://mobilithek.info/offers/886597703450927104",
         "reviewedAt": "2026-10-28",
-        "note": "No licence stated (Mobilithek rights NO_LICENSE; WFS AccessConstraints/Fees empty); nothing restricts reuse. DL-DE-BY-2.0 assumed from LBM's other Mobilithek offers pending written confirmation from LBM Rheinland-Pfalz.",
+        "note": "No licence stated: Mobilithek rights NO_LICENSE (also its DATEX and WMS twins); WFS AccessConstraints/Fees empty; Geoportal RLP metadata for the LBM roadworks layer: access 'Es gelten keine Zugriffsbeschränkungen', use 'Bedingungen unbekannt'. Nothing restricts reuse of the data (the imprint reserves the site's texts and images). DL-DE-BY-2.0 assumed from LBM's other Mobilithek offers (CC0, DL-DE-BY-2.0) pending written confirmation from LBM Rheinland-Pfalz.",
       },
       "attribution": "Landesbetrieb Mobilität Rheinland-Pfalz / Mobilitätsatlas Rheinland-Pfalz",
       "privacyUrl": "https://www.mobilitaetsatlas.de/datenschutz",
@@ -1610,7 +1610,7 @@
       "terms": {
         "url": "https://stadtplan.dresden.de/content.aspx?method=CopyRight,UsageConstraints,ApplicationContent",
         "reviewedAt": "2026-10-28",
-        "note": "No licence on the kommisdd OGC API collections L60/L150. Themenstadtplan terms: commercial use of individual contents (maps, digital data) outside the Themenstadtplan requires contacting the Geoservice of the Amt für Geodaten und Kataster (geoservice@dresden.de). Other Dresden kommisdd services on GovData carry DL-DE-BY-2.0. Ask the Straßen- und Tiefbauamt to publish the layer under DL-DE-BY-2.0.",
+        "note": "No licence on the kommisdd OGC API collections L60/L150, on the Themenstadtplan themes they feed (their copyright section names only 'Datenquelle: … Landeshauptstadt Dresden') or on the city's ArcGIS Online 'Verkehrsbehinderungen' layer. Themenstadtplan terms: commercial use of individual contents (maps, digital data) outside the Themenstadtplan requires contacting the Geoservice of the Amt für Geodaten und Kataster (geoservice@dresden.de). Other Dresden kommisdd services on GovData carry DL-DE-BY-2.0. Ask the Straßen- und Tiefbauamt to publish the layer under DL-DE-BY-2.0.",
       },
       "attribution": "Landeshauptstadt Dresden, Straßen- und Tiefbauamt",
       "disabled": {
