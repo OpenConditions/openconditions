@@ -37,6 +37,11 @@ export interface GeoJsonMapping {
    * hash of these values. Records alike in all of them are one record.
    */
   idFields?: string[];
+  /**
+   * The feature's own `id` member, beside `properties`, identifies it: for a
+   * WFS whose only stable key is the feature id GeoServer writes there.
+   */
+  featureId?: boolean;
   /** properties key whose value is mapped to a RoadEventType. */
   typeField?: string;
   /**
@@ -56,6 +61,12 @@ export interface GeoJsonMapping {
   severityField?: string;
   /** maps a feed's severity values to the canonical Severity scale. */
   severityMap?: Record<string, Severity>;
+  /**
+   * For a severity written in free text (`… // Vollsperrung`): the first
+   * pattern (a case-insensitive regular expression) the value matches gives
+   * its severity, where `severityMap` holds no entry for it.
+   */
+  severityPatterns?: { match: string; severity: Severity }[];
   /** properties key for the road name/ref. */
   roadField?: string;
   /** properties key for a last-updated ISO timestamp. */
@@ -90,11 +101,18 @@ export interface GeoJsonMapping {
    * The validity fields hold calendar dates, days in the feed's `timezone`:
    * the record applies from the start of its first day to the end of its
    * last, so a date-only `validTo` ends at the following midnight rather than
-   * a day early. GeoServer writes an `xsd:date` with the server's zone
-   * (`2026-11-01Z`); that suffix is ignored. A value carrying a time of day is
-   * read as usual.
+   * a day early. A date is `2026-11-01` or, day first, `01.11.2026`;
+   * GeoServer writes an `xsd:date` with the server's zone (`2026-11-01Z`), and
+   * that suffix is ignored. A value carrying a time of day is read as usual.
    */
   validityDates?: boolean;
+  /**
+   * A properties key holding both ends of the validity as `from - to`
+   * (`13.04.26 - 30.10.26`), for a feed without a field for each. Each end is
+   * read as `validFromField`/`validToField` would be (`validityDates`
+   * applies); a dotted date with a two-digit year is of this century.
+   */
+  validityRangeField?: string;
   /**
    * Drop records the feed publishes but the overlay shouldn't carry — e.g.
    * Iceland's ~1,300 "Easily passable" baseline segments. A feature must
@@ -108,6 +126,12 @@ export interface GeoJsonMapping {
    * earlier records of its type around it (see `dropSupersededRoadEvents`).
    */
   followUp?: GeoJsonFollowUp;
+  /**
+   * Property values that mean "nothing" in this feed (a WFS writing the
+   * string `"null"`, a placeholder such as `"keine Meldung"`): every field
+   * reads them as absent. The raw properties keep them.
+   */
+  nullValues?: string[];
   /**
    * When the feature carries no usable geometry and all four parse to finite
    * numbers, synthesise `LineString [[startLon,startLat],[endLon,endLat]]`.
@@ -131,6 +155,10 @@ export interface GeoJsonRecordFilter {
   field: string;
   include?: string[];
   exclude?: string[];
+  /** Case-insensitive regular expressions the value must match one of (free text). */
+  includeMatching?: string[];
+  /** Case-insensitive regular expressions no value may match. */
+  excludeMatching?: string[];
 }
 
 /**

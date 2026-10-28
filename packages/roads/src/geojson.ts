@@ -27,6 +27,7 @@ import type { SourceDescriptor } from "./types.js";
  */
 
 interface Feature {
+  id?: string | number;
   geometry?: Geometry | null;
   properties?: Record<string, unknown> | null;
 }
@@ -50,6 +51,25 @@ function str(v: unknown): string | undefined {
 }
 
 /**
+ * A feature's properties as the mapping reads them: values the feed writes
+ * for "nothing" (`nullValues`, e.g. the string `"null"` or `"keine Meldung"`)
+ * are absent. The raw properties are kept as published.
+ */
+function withoutPlaceholders(
+  props: Record<string, unknown>,
+  mapping: GeoJsonMapping,
+): Record<string, unknown> {
+  const placeholders = mapping.nullValues;
+  if (!placeholders?.length) return props;
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(props)) {
+    if (typeof value === "string" && placeholders.includes(value.trim())) continue;
+    out[key] = value;
+  }
+  return out;
+}
+
+/**
  * Whether a feature satisfies every filter clause. A missing value passes an
  * `exclude` clause (there is nothing to exclude) and fails an `include` one
  * (there is nothing to match), so a sparse discriminator narrows rather than
@@ -61,6 +81,10 @@ function passesFilter(props: Record<string, unknown>, mapping: GeoJsonMapping): 
     const value = str(get(props, clause.field));
     if (clause.include && (value === undefined || !clause.include.includes(value))) return false;
     if (clause.exclude && value !== undefined && clause.exclude.includes(value)) return false;
+    const matches = (patterns: string[]) =>
+      value !== undefined && patterns.some((p) => new RegExp(p, "iu").test(value));
+    if (clause.includeMatching && !matches(clause.includeMatching)) return false;
+    if (clause.excludeMatching && matches(clause.excludeMatching)) return false;
     return true;
   });
 }
@@ -113,9 +137,11 @@ function resolveSeverity(
   raw: string | undefined,
   mapping: GeoJsonMapping,
 ): { severity: Severity; severitySource: "declared" | "derived"; unmapped?: true } {
-  if (raw && mapping.severityMap) {
-    const mapped = mapping.severityMap[raw] ?? mapping.severityMap[raw.toLowerCase()];
+  if (raw && (mapping.severityMap || mapping.severityPatterns)) {
+    const mapped = mapping.severityMap?.[raw] ?? mapping.severityMap?.[raw.toLowerCase()];
     if (mapped) return { severity: mapped, severitySource: "declared" };
+    const matched = mapping.severityPatterns?.find((p) => new RegExp(p.match, "iu").test(raw));
+    if (matched) return { severity: matched.severity, severitySource: "declared" };
     return { severity: "unknown", severitySource: "derived", unmapped: true };
   }
   return { severity: "unknown", severitySource: "derived" };
@@ -128,8 +154,33 @@ function isFollowUp(props: Record<string, unknown>, mapping: GeoJsonMapping): bo
   return marker !== undefined && mapping.followUp.prefixes.some((p) => marker.startsWith(p));
 }
 
-/** A calendar date alone, with the zone GeoServer appends to an `xsd:date`. */
-const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})Z?$/;
+/**
+ * A calendar date alone, with the zone GeoServer appends to an `xsd:date`, or
+ * at midnight as a date field without a time is often written
+ * (`2026-11-01T00:00:00.000`).
+ */
+const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]00:00(?::00(?:\.0+)?)?)?Z?$/;
+/** A calendar date alone, day first with dots (`01.11.2026`). */
+const DOTTED_CALENDAR_DATE = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+
+/**
+ * A value's calendar date as [year, month, day], when it is a date alone. An
+ * epoch at exactly midnight UTC is ArcGIS's form of a date field without a
+ * time (`esriFieldTypeDate` holding days), so it names that UTC day.
+ */
+function calendarDate(value: unknown): [number, number, number] | undefined {
+  if (typeof value === "number") {
+    if (!Number.isFinite(value) || value % 86_400_000 !== 0) return undefined;
+    const at = new Date(value);
+    return [at.getUTCFullYear(), at.getUTCMonth() + 1, at.getUTCDate()];
+  }
+  if (typeof value !== "string") return undefined;
+  const iso = CALENDAR_DATE.exec(value.trim());
+  if (iso) return [Number(iso[1]), Number(iso[2]), Number(iso[3])];
+  const dotted = DOTTED_CALENDAR_DATE.exec(value.trim());
+  if (dotted) return [Number(dotted[3]), Number(dotted[2]), Number(dotted[1])];
+  return undefined;
+}
 
 /**
  * One end of a feature's validity. Under `validityDates` a calendar date is a
@@ -142,13 +193,78 @@ function validityInstant(
   mapping: GeoJsonMapping,
   timeZone: string | undefined,
 ): string | null {
-  const date = mapping.validityDates && typeof value === "string" && CALENDAR_DATE.exec(value);
+  const date = mapping.validityDates ? calendarDate(value) : undefined;
   if (!date) return toIsoTimestamp(value, timeZone) ?? null;
-  const day = new Date(Date.UTC(Number(date[1]), Number(date[2]) - 1, Number(date[3])));
+  const [year, month, dayOfMonth] = date;
+  const day = new Date(Date.UTC(year, month - 1, dayOfMonth));
   // A day the month does not have is no date, rather than one Date.UTC rolls over.
-  if (day.getUTCDate() !== Number(date[3])) return null;
+  if (day.getUTCDate() !== dayOfMonth || day.getUTCMonth() !== month - 1) return null;
   if (end) day.setUTCDate(day.getUTCDate() + 1);
   return toIsoTimestamp(day.toISOString().slice(0, 10), timeZone) ?? null;
+}
+
+/**
+ * One event per id. A publisher that exports a record in several parts (one
+ * closure as several lines) repeats its id on each; the parts become one
+ * event whose geometry holds them all, read as the first part says.
+ */
+function mergeParts(events: RoadEvent[]): RoadEvent[] {
+  const byId = new Map<string, RoadEvent[]>();
+  for (const e of events) {
+    const parts = byId.get(e.id);
+    if (parts) parts.push(e);
+    else byId.set(e.id, [e]);
+  }
+  if (byId.size === events.length) return events;
+  return [...byId.values()].map(([first, ...rest]) =>
+    rest.length === 0
+      ? (first as RoadEvent)
+      : {
+          ...(first as RoadEvent),
+          geometry: joinGeometries([first, ...rest].map((p) => (p as RoadEvent).geometry)),
+        },
+  );
+}
+
+/** Several geometries as one: a Multi- geometry of one kind, else a collection. */
+function joinGeometries(geometries: Geometry[]): Geometry {
+  const flat = geometries.flatMap((g) => (g.type === "GeometryCollection" ? g.geometries : [g]));
+  const kinds = new Set(flat.map((g) => g.type.replace(/^Multi/, "")));
+  const [kind] = kinds;
+  if (kinds.size === 1) {
+    const coordinates = flat.flatMap((g) =>
+      g.type.startsWith("Multi")
+        ? (g as { coordinates: unknown[] }).coordinates
+        : [(g as { coordinates: unknown }).coordinates],
+    );
+    if (kind === "Point") return { type: "MultiPoint", coordinates } as Geometry;
+    if (kind === "LineString") return { type: "MultiLineString", coordinates } as Geometry;
+    if (kind === "Polygon") return { type: "MultiPolygon", coordinates } as Geometry;
+  }
+  return { type: "GeometryCollection", geometries: flat } as Geometry;
+}
+
+/**
+ * Both ends of a validity a feed writes in one field (`13.04.26 - 30.10.26`),
+ * split at a dash between spaces. A dotted date with a two-digit year is of
+ * this century. An end that does not parse is null, and so is a value that is
+ * no range.
+ */
+function validityRange(
+  value: unknown,
+  mapping: GeoJsonMapping,
+  timeZone: string | undefined,
+): { validFrom: string | null; validTo: string | null } {
+  const ends = typeof value === "string" ? value.trim().split(/\s+[-–]\s+/u) : [];
+  const [from, to] = ends;
+  if (ends.length !== 2 || from === undefined || to === undefined) {
+    return { validFrom: null, validTo: null };
+  }
+  const fullYear = (end: string) => end.replace(/^(\d{1,2}\.\d{1,2}\.)(\d{2})$/, "$120$2");
+  return {
+    validFrom: validityInstant(fullYear(from), false, mapping, timeZone),
+    validTo: validityInstant(fullYear(to), true, mapping, timeZone),
+  };
 }
 
 function defaultHeadline(type: RoadEventType): string {
@@ -195,7 +311,8 @@ export function featuresToRoadEvents(
       malformed++;
       return;
     }
-    const props = (feature.properties ?? {}) as Record<string, unknown>;
+    const raw = (feature.properties ?? {}) as Record<string, unknown>;
+    const props = withoutPlaceholders(raw, mapping);
     if (!passesFilter(props, mapping)) return;
 
     // Prefer explicit WGS84 lon/lat property fields when configured (for feeds
@@ -234,10 +351,12 @@ export function featuresToRoadEvents(
 
     const rawType = str(get(props, mapping.typeField));
     const { type, category, isPlanned, classification, unmapped } = resolveType(rawType, mapping);
+    const ownId = mapping.featureId ? str(feature.id) : undefined;
     const localId =
-      mapping.idFields !== undefined
+      ownId ??
+      (mapping.idFields !== undefined
         ? sha256Hex(jcs(mapping.idFields.map((field) => get(props, field) ?? null))).slice(0, 16)
-        : (str(get(props, mapping.idField)) ?? String(index));
+        : (str(get(props, mapping.idField)) ?? String(index)));
     const sourceHeadline = str(get(props, mapping.headlineField));
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
@@ -273,6 +392,9 @@ export function featuresToRoadEvents(
       description: str(get(props, mapping.descriptionField)),
       // Only projected when the mapping declares the fields, so feeds without
       // dates keep emitting no validity at all rather than an explicit null.
+      ...(mapping.validityRangeField
+        ? validityRange(get(props, mapping.validityRangeField), mapping, src.timeZone)
+        : {}),
       ...(mapping.validFromField
         ? {
             validFrom: validityInstant(
@@ -288,7 +410,7 @@ export function featuresToRoadEvents(
             validTo: validityInstant(get(props, mapping.validToField), true, mapping, src.timeZone),
           }
         : {}),
-      sourceRaw: props,
+      sourceRaw: raw,
       origin: {
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
@@ -310,5 +432,5 @@ export function featuresToRoadEvents(
   recordSkipped(src.id, "malformed", malformed);
   recordSkipped(src.id, "unknown_value", unknownValues);
 
-  return dedupeRoadEvents(dropSupersededRoadEvents(out, (e) => followUps.has(e)));
+  return dedupeRoadEvents(mergeParts(dropSupersededRoadEvents(out, (e) => followUps.has(e))));
 }

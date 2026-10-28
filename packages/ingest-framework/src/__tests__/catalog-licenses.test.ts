@@ -3,7 +3,7 @@ import { LICENSES, licenseInfo } from "../catalog/licenses.js";
 
 describe("licence registry", () => {
   it("holds the thirty-six licences in use", () => {
-    expect(LICENSES).toHaveLength(36);
+    expect(LICENSES).toHaveLength(37);
   });
 
   it("every licence id is an SPDX id, LicenseRef- or NOASSERTION", () => {

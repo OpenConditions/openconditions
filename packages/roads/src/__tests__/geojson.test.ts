@@ -454,6 +454,49 @@ describe("parseGeoJson — validity dates", () => {
       expect(ev!.validTo).toBe("2026-11-01T11:00:00.000Z");
     });
 
+    it("reads a dotted date day first, its end at the end of the day", () => {
+      const [ev] = parseGeoJson(
+        fc([point({ id: "j", debut: "05.10.2026", fin: "1.11.2026" })]),
+        DATES,
+      );
+      expect(ev!.validFrom).toBe("2026-10-04T22:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-11-01T23:00:00.000Z");
+    });
+
+    it("reads an epoch at midnight UTC as that day, and any other epoch as an instant", () => {
+      const midnight = Date.UTC(2026, 10, 1);
+      const [ev] = parseGeoJson(
+        fc([point({ id: "k", debut: midnight, fin: midnight + 3_600_000 })]),
+        DATES,
+      );
+      expect(ev!.validFrom).toBe("2026-10-31T23:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-11-01T01:00:00.000Z");
+      const [end] = parseGeoJson(fc([point({ id: "l", fin: midnight })]), DATES);
+      expect(end!.validTo).toBe("2026-11-01T23:00:00.000Z");
+    });
+
+    it("reads a date written at midnight as that day", () => {
+      const [ev] = parseGeoJson(
+        fc([point({ id: "m", debut: "2026-09-21T00:00:00.000", fin: "2026-10-30T00:00:00Z" })]),
+        DATES,
+      );
+      expect(ev!.validFrom).toBe("2026-09-20T22:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-10-30T23:00:00.000Z");
+    });
+
+    it("reads both ends from a range field, two-digit years of this century", () => {
+      const ranged: SourceDescriptor = {
+        ...DATES,
+        geojson: { idField: "id", validityDates: true, validityRangeField: "zeit" },
+      };
+      const [ev] = parseGeoJson(fc([point({ id: "n", zeit: "13.04.26 - 30.10.26" })]), ranged);
+      expect(ev!.validFrom).toBe("2026-04-12T22:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-10-30T23:00:00.000Z");
+      const [open] = parseGeoJson(fc([point({ id: "o", zeit: "ab sofort" })]), ranged);
+      expect(open!.validFrom).toBeNull();
+      expect(open!.validTo).toBeNull();
+    });
+
     it("emits null for a day the month does not have", () => {
       const [ev] = parseGeoJson(fc([point({ id: "h", debut: "2026-02-30Z" })]), DATES);
       expect(ev!.validFrom).toBeNull();
@@ -502,6 +545,134 @@ describe("parseGeoJson — follow-ups", () => {
     expect(
       parseGeoJson(fc([original, progress]), { ...FOLLOW_UPS, geojson: mapping }),
     ).toHaveLength(2);
+  });
+});
+
+describe("parseGeoJson — free-text severity and filters", () => {
+  const at = (id: string, art: string, i: number) => ({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [7.46 + i / 100, 51.51] },
+    properties: { id, art },
+  });
+  const src: SourceDescriptor = {
+    ...SRC,
+    geojson: {
+      idField: "id",
+      severityField: "art",
+      severityMap: { "Gehweg // Vollsperrung": "low" },
+      severityPatterns: [
+        { match: "//\\s*Vollsperrung", severity: "high" },
+        { match: "halbseitige sperrung", severity: "medium" },
+      ],
+      filter: [{ field: "art", excludeMatching: ["^Umzug\\b"] }],
+    },
+  };
+
+  it("takes the map's entry first, then the first pattern that matches", () => {
+    const out = parseGeoJson(
+      fc([
+        at("a", "Hofgerichtsweg - Sondierung // Vollsperrung", 0),
+        at("b", "Spreestraße // Halbseitige Sperrung", 1),
+        at("c", "Gehweg // Vollsperrung", 2),
+        at("d", "Großholthauser Str. - Glasfaser", 3),
+      ]),
+      src,
+    );
+    expect(out.map((e) => [e.id, e.severity])).toEqual([
+      ["test-gj:a", "high"],
+      ["test-gj:b", "medium"],
+      ["test-gj:c", "low"],
+      ["test-gj:d", "unknown"],
+    ]);
+  });
+
+  it("drops records whose value matches an excluding pattern", () => {
+    expect(parseGeoJson(fc([at("e", "Umzug Hausnr. 5", 4)]), src)).toEqual([]);
+  });
+});
+
+describe("parseGeoJson — placeholders and parts", () => {
+  const line = (props: Record<string, unknown>, coordinates: number[][]) => ({
+    type: "Feature",
+    geometry: { type: "LineString", coordinates },
+    properties: props,
+  });
+
+  it("reads a feed's placeholder values as absent, keeping them in the raw record", () => {
+    const src: SourceDescriptor = {
+      ...SRC,
+      geojson: {
+        idField: "id",
+        descriptionField: "text",
+        roadField: "street",
+        nullValues: ["null", "keine Meldung"],
+      },
+    };
+    const [ev] = parseGeoJson(
+      fc([
+        line({ id: "a", text: "keine Meldung", street: " null" }, [
+          [12.3, 51.3],
+          [12.31, 51.3],
+        ]),
+      ]),
+      src,
+    );
+    expect(ev!.description).toBeUndefined();
+    expect(ev!.roads).toEqual([]);
+    expect(ev!.sourceRaw).toMatchObject({ text: "keine Meldung" });
+  });
+
+  it("joins the parts a feed exports under one id into one event", () => {
+    const src: SourceDescriptor = { ...SRC, geojson: { idField: "id", headlineField: "h" } };
+    const out = parseGeoJson(
+      fc([
+        line({ id: "a", h: "Vollsperrung" }, [
+          [13.7, 51.0],
+          [13.71, 51.0],
+        ]),
+        line({ id: "a", h: "Vollsperrung" }, [
+          [13.8, 51.1],
+          [13.81, 51.1],
+        ]),
+        line({ id: "b", h: "Vollsperrung" }, [
+          [14.0, 51.2],
+          [14.01, 51.2],
+        ]),
+      ]),
+      src,
+    );
+    expect(out.map((e) => e.id)).toEqual(["test-gj:a", "test-gj:b"]);
+    expect(out[0]!.geometry).toEqual({
+      type: "MultiLineString",
+      coordinates: [
+        [
+          [13.7, 51.0],
+          [13.71, 51.0],
+        ],
+        [
+          [13.8, 51.1],
+          [13.81, 51.1],
+        ],
+      ],
+    });
+  });
+});
+
+describe("parseGeoJson — feature ids", () => {
+  const feature = (id: unknown, props: Record<string, unknown>) => ({
+    type: "Feature",
+    id,
+    geometry: { type: "Point", coordinates: [7.6, 50.3 + Number(props["nr"]) / 100] },
+    properties: props,
+  });
+
+  it("reads the feature's own id with featureId, else falls back to the mapping", () => {
+    const src: SourceDescriptor = { ...SRC, geojson: { featureId: true, idField: "nr" } };
+    const out = parseGeoJson(
+      fc([feature("baustelle.4711", { nr: "1" }), feature(undefined, { nr: "2" })]),
+      src,
+    );
+    expect(out.map((e) => e.id)).toEqual(["test-gj:baustelle.4711", "test-gj:2"]);
   });
 });
 

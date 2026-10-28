@@ -152,6 +152,11 @@ export const LICENSES: readonly LicenseInfo[] = [
     url: "https://creativecommons.org/licenses/by/3.0/at/",
   }),
   open({
+    id: "CC-BY-3.0-DE",
+    name: "Creative Commons Attribution 3.0 Germany",
+    url: "https://creativecommons.org/licenses/by/3.0/de/",
+  }),
+  open({
     id: "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
     name: "Modellicentie Gratis Hergebruik Vlaanderen 1.0",
     url: "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
