@@ -100,7 +100,7 @@ export interface RoadIdentity {
 /**
  * The road numbers and street names a location's roads state, normalized for
  * comparing. A location that names no road (no roads, or only a code too short
- * to be a name: Rhineland-Palatinate's `G` for a municipal street) takes the
+ * to be a name: Rhineland-Palatinate's `G`, the authority that entered it) takes the
  * street names its record's prose names ({@link namesInText}), and the prose
  * itself: a segment whose name the prose holds is the stated road although
  * the prose writes it without a street word (`Hamburg, Sechslingspforte`).
@@ -210,6 +210,14 @@ const GENERIC_WAY = new Set(
   ].map((word) => normalizeName(word)),
 );
 
+/** A word without the full stops after it, but for an abbreviated `Str.`. */
+function withoutFullStop(word: string): string {
+  let end = word.length;
+  while (end > 0 && word[end - 1] === ".") end--;
+  if (end < word.length && /str$/i.test(word.slice(0, end))) return word.slice(0, end + 1);
+  return word.slice(0, end);
+}
+
 /**
  * The street names a record's prose names (`Vollsperrung der Bahnhofstraße`,
  * `der Kasselburger Weg`), for a record whose location states no road. None
@@ -223,7 +231,7 @@ export function namesInText(texts: readonly string[]): string[] {
   for (const text of texts) {
     const value = text.slice(0, MAX_PROSE);
     if (REF_IN_TEXT.test(value)) return [];
-    const words = value.split(/[\s,;:()"„“”'!?/]+/).map((w) => w.replace(/(?<!str)\.+$/i, ""));
+    const words = value.split(/[\s,;:()"„“”'!?/]+/).map(withoutFullStop);
     words.forEach((word, i) => {
       if (!STREET_WORD.test(word)) return;
       let name = word;
