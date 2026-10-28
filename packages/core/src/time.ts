@@ -48,6 +48,8 @@ export function toIsoTimestamp(value: unknown, timeZone?: string): string | unde
     const wall = WALL_CLOCK.exec(s);
     if (wall !== null) {
       const [, year, , month, day, time = "00:00", fraction] = wall;
+      const [hour = 0, minute = 0, second = 0] = time.split(":").map(Number);
+      if (hour > 23 || minute > 59 || second > 59) return undefined;
       const at = zonedWallClockToInstant(timeZone ?? "UTC", `${year}-${month}-${day}T${time}`);
       if (at === null) return undefined;
       const ms = fraction === undefined ? 0 : Math.round(Number(`0${fraction}`) * 1000);

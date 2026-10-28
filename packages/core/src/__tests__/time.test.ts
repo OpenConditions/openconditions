@@ -100,6 +100,12 @@ describe("toIsoTimestamp", () => {
     expect(toIsoTimestamp({})).toBeUndefined();
     expect(toIsoTimestamp(Number.NaN)).toBeUndefined();
   });
+
+  it("reads no time of day out of range, rather than rolling it over", () => {
+    expect(toIsoTimestamp("2026-10-30T10:75")).toBeUndefined();
+    expect(toIsoTimestamp("2026-10-30 10:30:60", "Europe/Berlin")).toBeUndefined();
+    expect(toIsoTimestamp("2026-10-30T23:59:59")).toBe("2026-10-30T23:59:59.000Z");
+  });
 });
 
 describe("validityBound", () => {

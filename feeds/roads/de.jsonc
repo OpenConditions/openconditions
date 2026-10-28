@@ -1265,9 +1265,6 @@
         "filter": [{ "field": "quelle", "include": ["Verkehrsbehörden in Rheinland-Pfalz"] }],
       },
       "freshnessWindowSec": 3600,
-      // No licence is stated anywhere for this data: the WFS capabilities
-      // have empty Fees/AccessConstraints, the Mobilithek offer says
-      // NO_LICENSE, and the site imprint is generic copyright text.
       // No licence is stated anywhere for this data: Mobilithek offer
       // 886597703450927104 says NO_LICENSE, the WFS's AccessConstraints and
       // Fees are empty, and the imprint covers the site's texts and images.
