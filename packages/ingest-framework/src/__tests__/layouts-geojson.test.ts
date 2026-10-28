@@ -1,5 +1,6 @@
 import { describe, expect, test } from "vitest";
 import { decodeLayout } from "../layouts/decode.js";
+import { reprojectGeometry } from "../layouts/geojson.js";
 
 const fc = (features: unknown[], extra: Record<string, unknown> = {}) =>
   Buffer.from(JSON.stringify({ type: "FeatureCollection", features, ...extra }));
@@ -95,5 +96,36 @@ describe("decodeLayout geojson", () => {
 
   test("a body that is not JSON yields no rows", () => {
     expect(decodeLayout("geojson", Buffer.from("nope"), {})).toEqual([]);
+  });
+});
+
+describe("reprojectGeometry", () => {
+  test("drops a WGS84 geometry's own crs member and keeps its coordinates", () => {
+    const crs = { type: "name", properties: { name: "urn:ogc:def:crs:EPSG::4326" } };
+    expect(
+      reprojectGeometry({
+        type: "LineString",
+        coordinates: [
+          [13.7, 51.05],
+          [13.71, 51.05],
+        ],
+        crs,
+      } as never),
+    ).toEqual({
+      type: "LineString",
+      coordinates: [
+        [13.7, 51.05],
+        [13.71, 51.05],
+      ],
+    });
+    expect(
+      reprojectGeometry({
+        type: "GeometryCollection",
+        geometries: [{ type: "Point", coordinates: [13.7, 51.05], crs } as never],
+      }),
+    ).toEqual({
+      type: "GeometryCollection",
+      geometries: [{ type: "Point", coordinates: [13.7, 51.05] }],
+    });
   });
 });
