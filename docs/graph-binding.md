@@ -157,11 +157,26 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
      - Street names (the way's OSM `name`, read from `conditions.osm_road`
        with the subgraph) count only when the location states
        no number the segment could be judged by, and only for a name with a
-       street word (`-straße`, `-weg`, `-allee`, `Rue`, `-straat` …): a feed's
+       street word (`-straße`, `-weg`, `-allee`, `Rue`, `-straat` …) or a
+       German street named by its place (`Im Johannistal`, `An der Schanz`:
+       a preposition before a capitalized word, no digit): a feed's
        route description (`Stuttgart-Großbottwar`) contradicts nothing. Names
        are compared without case, house numbers or parenthesized notes,
-       `Straße`/`Strasse`/`Str.` alike, and one may hold the other
+       `Straße`/`Strasse`/`Str.` and `ü`/`ue` alike, and one may hold the other
        (`Werrenstraße Kreuzungsbereich Gänsbergstraße` holds `Werrenstraße`).
+     - A location that names no road (no roads, or only a code of one or two
+       letters: Rhineland-Palatinate's municipal records give `G`, which names
+       the authority, not the road) takes the street names its headline and
+       description name (`Vollsperrung der Bahnhofstraße`,
+       `der Kasselburger Weg`), and none when that prose names a road number
+       anywhere (it is as often the detour's). Words naming a kind of way or place (`Gehweg`,
+       `Kreisstraße`, `Weihnachtsmarkt`) are no street's name. A segment
+       matches when its name is one of these or the prose holds its name
+       (`Hamburg, Sechslingspforte zwischen Ackermannstraße und …`, where the
+       road has no street word), so a detour or crossing the prose mentions
+       rules out nothing. A road name the binder cannot read
+       (`Neue Weinsteige`) still keeps the prose out: its streets are then the
+       road's surroundings.
      - A stated number decides alone: a segment with a different number is
        ruled out even when its name matches, and a segment without a number
        is not ruled out by its name.

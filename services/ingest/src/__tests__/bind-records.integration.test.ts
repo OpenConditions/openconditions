@@ -131,6 +131,38 @@ describe("bindRecords", () => {
     }
   });
 
+  it("reads the street a record's description names where its roads name none", async () => {
+    await sql`INSERT INTO conditions.osm_road (way_id, geom, highway, oneway, name, region, imported_at)
+      SELECT way_id, geom, highway, false, 'Kölner Straße', 'de-nw', ${NOW}
+        FROM conditions.road_segment WHERE way_id IN (10, 11)`;
+    try {
+      const named = (local: string, description: string) => {
+        const draft = situationDraft(local);
+        return {
+          ...draft,
+          headline: [{ lang: "de", text: "Vollsperrung" }],
+          description: [{ lang: "de", text: description }],
+          location: {
+            ...(draft["location"] as Rec),
+            roads: [{ name: [{ lang: "und", text: "G" }] }],
+          },
+        };
+      };
+      await writeSituations(sql, "de-autobahn-events", [
+        named("other", "Vollsperrung der Bahnhofstraße"),
+        named("same", "Vollsperrung der Kölner Straße"),
+      ]);
+      await bindRecords(sql, [id("other"), id("same")], { now });
+      expect(await bindings()).toEqual([
+        { record_id: id("other"), effect_id: "", status: "unresolved", reason: "road_mismatch" },
+        expect.objectContaining({ record_id: id("same"), effect_id: "" }),
+      ]);
+      expect(await spans(id("same"))).toEqual(["10:f", "11:f"]);
+    } finally {
+      await sql`DELETE FROM conditions.osm_road WHERE way_id IN (10, 11)`;
+    }
+  });
+
   describe("in the direction an effect or location states", () => {
     // A two-way road north of the A 46: way 40 runs east (f) and west (b).
     beforeAll(async () => {

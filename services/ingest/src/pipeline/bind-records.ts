@@ -165,6 +165,8 @@ interface SituationRow {
   revision: number;
   geojson: string | null;
   location: Rec | null;
+  headline: unknown;
+  description: unknown;
   effect_kinds: string[];
   overrides: {
     effectId: string;
@@ -197,6 +199,17 @@ function roadsOf(location: Rec | null): { ref?: string; name?: string }[] {
   }));
 }
 
+/** The texts of a record's localized strings (`[{ lang, text }]`). */
+function textsOf(...values: unknown[]): string[] {
+  return values.flatMap((v) =>
+    Array.isArray(v)
+      ? v.flatMap((t) =>
+          typeof (t as Rec | null)?.["text"] === "string" ? [(t as Rec)["text"] as string] : [],
+        )
+      : [],
+  );
+}
+
 /** The location's direction as the resolver reads it: the axis value, else the source's text. */
 function directionOf(location: Rec | null): string | undefined {
   const d = location?.["direction"] as Rec | undefined;
@@ -219,6 +232,8 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
     .update(input.refs.join(","))
     .update("|")
     .update((input.names ?? []).join(","))
+    .update("|")
+    .update(input.prose ?? "")
     .update("|")
     .update(input.type)
     .update("|")
@@ -256,6 +271,7 @@ function targetsOf(row: SituationRow): Target[] {
       geometry,
       type: row.kind,
       roads,
+      text: textsOf(row.headline, row.description),
       ...(direction !== undefined ? { direction } : {}),
       ...(travel !== undefined ? { travel } : {}),
     });
@@ -414,6 +430,7 @@ export async function bindRecords(
   const rows = await sql<SituationRow[]>`
     SELECT s.id, s.kind, s.revision, ST_AsGeoJSON(s.geom) AS geojson,
            s.record -> 'location' AS location,
+           s.record -> 'headline' AS headline, s.record -> 'description' AS description,
            COALESCE((SELECT jsonb_agg(e.kind) FROM conditions.situation_effect e
                       WHERE e.situation_id = s.id), '[]'::jsonb) AS effect_kinds,
            COALESCE((SELECT jsonb_agg(jsonb_build_object(
