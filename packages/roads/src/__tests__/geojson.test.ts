@@ -706,6 +706,11 @@ describe("parseGeoJson — direction and lanes", () => {
     expect(ev.lanesAffected).toEqual({ total: 2, closed: 1 });
   });
 
+  it("reads works closing every lane it counts as closing some, not the road", () => {
+    const ev = one({ id: "f", subtype: "Baustelle", direction: "Beidseitig", total: 1, closed: 1 });
+    expect(ev.lanesAffected).toEqual({ closed: 1 });
+  });
+
   it("reads no lanes where none is closed, the count is no count, or the record is a closure", () => {
     expect(
       one({ id: "b", subtype: "Baustelle", total: 2, closed: 0 }).lanesAffected,

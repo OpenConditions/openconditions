@@ -358,8 +358,14 @@ export function featuresToRoadEvents(
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
     const direction = directionOf(props, mapping);
-    // A closure states its own effect; its lane figures would replace it.
-    const lanes = type === "road_closure" ? undefined : lanesOf(props, mapping);
+    // A closure states its own effect; its lane figures would replace it. A
+    // record of another type closing every lane it counts contradicts its type
+    // (Berlin's "keine Sperrung" works closing 1 of 1): it closes some, not all.
+    const counted = type === "road_closure" ? undefined : lanesOf(props, mapping);
+    const lanes =
+      counted?.total !== undefined && counted.closed >= counted.total
+        ? { closed: counted.closed }
+        : counted;
     const updated = str(get(props, mapping.updatedField));
     const times = timesOf(src, mapping);
     const recordTime = sourceTimestamp(updated, times);
