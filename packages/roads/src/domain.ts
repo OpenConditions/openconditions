@@ -3,6 +3,7 @@ import {
   defineIngestDomain,
   type EndpointRole,
   emptyParseOutput,
+  type FeedDefinition,
   type FeedFormat,
   type IngestDomain,
   maxFeedBytes,
@@ -193,6 +194,27 @@ const FORMATS: FeedFormat<RoadFeed>[] = [
   },
 ];
 
+/** The formats that read every source time through `sourceTimestamp`/`validityBound`. */
+const READ_LOCAL_TIMES_MARKED_UTC = new Set(["geojson", "flatjson", "bonn"]);
+
+/**
+ * A road feed's own checks: local times marked UTC are local in its
+ * `timezone` (without one they would be read as UTC again, as written), and
+ * only a format reading all its times so honours them.
+ */
+function lintFeed(feed: FeedDefinition): string[] {
+  const own = feed as FeedDefinition & Pick<RoadFeed, "timezone" | "localTimesMarkedUtc">;
+  if (!own.localTimesMarkedUtc) return [];
+  return [
+    ...(own.timezone === undefined
+      ? ["localTimesMarkedUtc needs the timezone the local times are in"]
+      : []),
+    ...(READ_LOCAL_TIMES_MARKED_UTC.has(feed.format)
+      ? []
+      : [`format ${feed.format} does not read localTimesMarkedUtc`]),
+  ];
+}
+
 /**
  * The roads domain: road situations and conditions (DATEX II, WZDx, Open511
  * and the national formats) and measured traffic flow, with the Autobahn and
@@ -204,4 +226,5 @@ export const roadsDomain: IngestDomain<RoadFeed> = defineIngestDomain<RoadFeed>(
   feedShape: roadsFeedShape,
   formats: Object.fromEntries(FORMATS.map((format) => [format.id, format])),
   resolvers: [autobahnIndexResolver, wzdxRegistryResolver],
+  lintFeed,
 });

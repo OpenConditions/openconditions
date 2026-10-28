@@ -267,7 +267,6 @@
         },
         "validFromField": "von",
         "validToField": "bis",
-        "validityDates": true,
         "filter": [
           {
             "field": "symbol",
@@ -326,7 +325,7 @@
         "validFromField": "bbeginn",
         "validToField": "bende",
         // ArcGIS date fields: days as epochs at midnight UTC; the last day counts.
-        "validityDates": true,
+        "validityDaysAtMidnight": true,
       },
       "freshnessWindowSec": 7200,
       "license": "DL-DE-BY-2.0",
@@ -366,7 +365,6 @@
         "descriptionField": "verkehrshinweis",
         "validFromField": "zeitraum_von",
         "validToField": "zeitraum_bis",
-        "validityDates": true,
         "filter": [{ "field": "bauherr", "exclude": ["Autobahn GmbH"] }],
       },
       "freshnessWindowSec": 7200,
@@ -385,11 +383,8 @@
       // and a row number), so the id hashes the fields that do not change
       // when works start; STATUS and ANFANG are left out.
       // ENDE is a dotted date on 35 of 71 records and otherwise a phrase
-      // ("Ende Nov. 2026", "Anfang April 2027"), which should become an open
-      // end; ANFANG is always a date. NOTE (2026-10-28): toIsoTimestamp's
-      // Date.parse fallback reads these phrases as wrong dates instead
-      // ("Ende Dez. 2026" as 1 January 2026), so 14 records look ended; fix
-      // that before enabling this feed. VERKEHRSAUSWIRKUNG is free text,
+      // ("Ende Nov. 2026", "Anfang April 2027"), which reads as no date: an
+      // open end. ANFANG is always a date. VERKEHRSAUSWIRKUNG is free text,
       // nearly unique per record, so it is the description and severity stays
       // unknown. ART_ARBEIT is free text too (36 values), so it is the
       // headline and every record is roadworks.
@@ -424,7 +419,6 @@
         "roadField": "STRASSENNAME",
         "validFromField": "ANFANG",
         "validToField": "ENDE",
-        "validityDates": true,
       },
       "freshnessWindowSec": 7200,
       "license": "CC-BY-4.0",
@@ -567,7 +561,6 @@
         },
         "validFromField": "BEGINN",
         "validToField": "ENDE",
-        "validityDates": true,
         "filter": [{ "field": "SPERR_ART", "exclude": ["0"] }],
       },
       "freshnessWindowSec": 7200,
@@ -629,7 +622,6 @@
         "roadField": "strasse_hausnr",
         "validFromField": "beginn_datum_kombiniert",
         "validToField": "ende_datum_kombiniert",
-        "validityDates": true,
         "filter": [
           { "field": "art", "exclude": ["Vorübergehendes Haltverbot"] },
           {
@@ -922,8 +914,8 @@
       // carriageway closed is medium, a speed limit or narrowed lane alone is
       // low. 29 records name none (severity unknown). 9 records close only a
       // footway or cycle path and are filtered out. DATUMVON/DATUMBIS are
-      // epoch ms at UTC midnight of the calendar date, so a record ends at
-      // 01:00 local on its last day (2 records ending today read as ended).
+      // epoch ms at UTC midnight of the calendar date: days, so a record runs
+      // to the end of its last day.
       // The reader's same-feed dedupe folds 21 midpoints of one measure lying
       // within 60 m of each other, so 178 rows give 148 events.
       "subdivision": "nw",
@@ -1006,7 +998,7 @@
         "validFromField": "DATUMVON",
         "validToField": "DATUMBIS",
         // ArcGIS date fields: days as epochs at midnight UTC; the last day counts.
-        "validityDates": true,
+        "validityDaysAtMidnight": true,
         "filter": [
           {
             "field": "BEEINTRAEC",
@@ -1071,7 +1063,6 @@
         "descriptionField": "auftraggeber",
         "validFromField": "von",
         "validToField": "bis",
-        "validityDates": true,
         // The restriction is free text after "//" in 61 spellings (Vollsperrung,
         // VSP, halbs. Sp., Fahrbahneinengung …); the restriction field itself is
         // empty everywhere. The first pattern that matches gives the severity.
@@ -1144,7 +1135,6 @@
         },
         // Start and end only as text in one field ("13.04.26 - 30.10.26").
         "validityRangeField": "BAUZEIT_AB",
-        "validityDates": true,
         "filter": [{ "field": "AKTIV", "include": ["1"] }],
       },
       "freshnessWindowSec": 7200,
@@ -1167,8 +1157,8 @@
       // closure staged "Teil/Vollsperrung" counts as full. One record closes
       // only the footway ("Vollsperrung Gehweg ", trailing space as
       // published) and is filtered out. beginn/ende are midnight timestamps
-      // ("2026-12-31T00:00:00.000"), so a record ends at the start of its last
-      // day, a day early. The publisher updates it as needed.
+      // ("2026-12-31T00:00:00.000") naming days, so a record runs to the end
+      // of its last day. The publisher updates it as needed.
       "subdivision": "nw",
       "operator": "herne",
       "product": "events",
@@ -1206,7 +1196,7 @@
         "validFromField": "beginn",
         "validToField": "ende",
         // Dates written at midnight (`2026-10-30T00:00:00.000`): the last day counts.
-        "validityDates": true,
+        "validityDaysAtMidnight": true,
         "filter": [
           { "field": "einschr", "exclude": ["Vollsperrung Gehweg", "Vollsperrung Gehweg "] },
         ],
@@ -1243,7 +1233,12 @@
       "homepage": "https://mobilithek.info/offers/886597703450927104",
       "tier": "authoritative",
       "format": "geojson",
+      // The atlas writes its local times marked UTC: a closure "von 09:00 Uhr -
+      // 13:00 Uhr" is published 09:00:00Z-13:00:00Z, a tunnel closure "zwischen
+      // 20:00 Uhr und 06:00 Uhr" 20:00:00Z-06:00:00Z, and whole days run
+      // 00:00:00Z-23:59:00Z (all 13 records stating times in words agree).
       "timezone": "Europe/Berlin",
+      "localTimesMarkedUtc": true,
       "endpoints": {
         "main": {
           "url": "https://maps.mobilitaetsatlas.de/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=mwvlw:baustelle&outputFormat=application/json&srsName=EPSG:4326&CQL_FILTER=quelle%3D%27Verkehrsbeh%C3%B6rden%20in%20Rheinland-Pfalz%27",
@@ -1341,7 +1336,6 @@
         "updatedField": "bearbeitet",
         "validFromField": "Von",
         "validToField": "Bis",
-        "validityDates": true,
         // The WFS writes empty text fields as the string "null".
         "nullValues": ["null"],
         // Parking-only measures (closed parking bays, no carriageway or
@@ -1429,7 +1423,6 @@
         },
         "validFromField": "Beginn",
         "validToField": "Ende",
-        "validityDates": true,
         // Counts from 155 records on 2026-10-28.
         "filter": [
           // Orders the city marks finished: 48.
@@ -1498,7 +1491,7 @@
         "validFromField": "DATUM_VON",
         "validToField": "DATUM_BIS",
         // ArcGIS date fields: days as epochs at midnight UTC; the last day counts.
-        "validityDates": true,
+        "validityDaysAtMidnight": true,
         "filter": [
           {
             "field": "GRUND",
@@ -1564,8 +1557,8 @@
       // repeats with the same geometry (1,078 -> 956 in L60).
       // A record moving from L150 to L60 changes key name and so its id.
       // The *_format dates are a date alone where the time is 00:00
-      // ("31.10.2026") and carry the time otherwise ("31.10.2026 23:59"), so
-      // under validityDates an end date runs to the end of its day.
+      // ("31.10.2026") and carry the time otherwise ("31.10.2026 23:59"); a
+      // date alone is a day, so an end date runs to the end of it.
       // `typ`: the theme describes seven categories; three occur today.
       "subdivision": "sn",
       "operator": "dresden",
@@ -1597,7 +1590,6 @@
         },
         "validFromField": "datum_von_format",
         "validToField": "datum_bis_format",
-        "validityDates": true,
       },
       "freshnessWindowSec": 7200,
       // No licence is stated for these collections: not on the OGC API
@@ -1691,7 +1683,6 @@
         },
         "validFromField": "beginn",
         "validToField": "ende",
-        "validityDates": true,
         // Most records say "keine Meldung" (no message) where they have no text.
         "nullValues": ["keine Meldung"],
         "filter": [
@@ -1768,7 +1759,6 @@
         },
         "validFromField": "Sperrung_von",
         "validToField": "Sperrung_bis",
-        "validityDates": true,
         "filter": [
           { "field": "Sperrung_Art_Klartext", "exclude": ["Zeitweiliges Halte- oder Parkverbot"] },
         ],
@@ -2289,6 +2279,7 @@
       },
       // Its times are local, though written with a Z.
       "timezone": "Europe/Berlin",
+      "localTimesMarkedUtc": true,
       "freshnessWindowSec": 600,
       "license": "DL-DE-ZERO-2.0",
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",

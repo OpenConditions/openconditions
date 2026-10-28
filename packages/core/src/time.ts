@@ -23,7 +23,8 @@ const DOTTED_DATE =
  * column and abort a whole batch insert.
  *
  * A date and time written without an offset is wall-clock time in `timeZone`,
- * the IANA zone its publisher writes in, and a date alone its midnight;
+ * the IANA zone its publisher writes in, and a date alone its midnight (a
+ * validity's end names the last day instead: see {@link validityBound});
  * without a zone both are read as UTC, never in the host's zone, so every
  * instance reads a payload alike.
  *
@@ -108,4 +109,108 @@ function fromEpoch(n: number): string | undefined {
   const ms = Math.abs(n) < 1e11 ? n * 1000 : n;
   const d = new Date(ms);
   return Number.isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+/** How a source writes its times, beyond the zone of its local ones. */
+export interface SourceTimes {
+  /** The IANA zone the source writes local times and days in; UTC without one. */
+  timeZone?: string;
+  /**
+   * The source writes its local times with a UTC designator (`Z`, `+00:00`)
+   * they do not have: `09:00:00Z` for 09:00 in `timeZone`. A Mobilitätsatlas
+   * closure "von 09:00 Uhr - 13:00 Uhr" is published `09:00:00Z`–`13:00:00Z`.
+   */
+  localTimesMarkedUtc?: boolean;
+  /**
+   * The source writes days as midnight instants: `2026-10-30T00:00:00`, or an
+   * epoch at midnight UTC (an ArcGIS date field). Such a value names a day.
+   * A real midnight looks the same, so only a source that writes days so
+   * declares it.
+   */
+  daysAtMidnight?: boolean;
+}
+
+const UTC_DESIGNATOR = /(?:Z|[+-]00:?00)$/i;
+
+/** A value as its source means it: a UTC designator it marks local times with dropped. */
+function asWritten(value: unknown, times: SourceTimes): unknown {
+  return times.localTimesMarkedUtc && typeof value === "string"
+    ? value.trim().replace(UTC_DESIGNATOR, "")
+    : value;
+}
+
+/**
+ * {@link toIsoTimestamp} for a value as its source writes it: a time the
+ * source marks UTC though it is local (`localTimesMarkedUtc`) is read as the
+ * local time it is.
+ */
+export function sourceTimestamp(value: unknown, times: SourceTimes = {}): string | undefined {
+  return toIsoTimestamp(asWritten(value, times), times.timeZone);
+}
+
+const DAY_MS = 86_400_000;
+
+/** A date alone, `-` or `/` between its parts, with the zone GeoServer writes on an `xsd:date`. */
+const DATE_ALONE = /^(\d{4})([-/])(\d{2})\2(\d{2})Z?$/i;
+/** A date alone, day first with dots (`01.11.2026`). */
+const DOTTED_DATE_ALONE = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+/**
+ * A date at midnight: `2026-10-30T00:00:00.000`, `2026/10/30 00:00Z`,
+ * `30.10.2026 00:00 Uhr`. With an offset it is still the date written: a
+ * publisher writing a day at its own midnight names that day.
+ */
+const DATE_AT_MIDNIGHT =
+  /^(?:(\d{4})[-/](\d{2})[-/](\d{2})[T ]|(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+)00:00(?::00(?:\.0+)?)?(?:\s*Uhr)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
+
+/**
+ * The day a value names, `YYYY-MM-DD`: a date with no time of day, or, for a
+ * source writing days at midnight, a date at midnight or an epoch at midnight
+ * UTC. Undefined for an instant, or a day the month does not have.
+ */
+export function calendarDayOf(value: unknown, times: SourceTimes = {}): string | undefined {
+  let ymd: [number, number, number] | undefined;
+  if (typeof value === "number" || (typeof value === "string" && /^-?\d+$/.test(value.trim()))) {
+    if (!times.daysAtMidnight) return undefined;
+    const read = toIsoTimestamp(value);
+    const ms = read === undefined ? Number.NaN : Date.parse(read);
+    if (!Number.isFinite(ms) || ms % DAY_MS !== 0) return undefined;
+    const at = new Date(ms);
+    ymd = [at.getUTCFullYear(), at.getUTCMonth() + 1, at.getUTCDate()];
+  } else if (typeof value === "string") {
+    const s = value.trim();
+    const iso = DATE_ALONE.exec(s);
+    const dotted = DOTTED_DATE_ALONE.exec(s);
+    const midnight = times.daysAtMidnight ? DATE_AT_MIDNIGHT.exec(s) : null;
+    if (iso) ymd = [Number(iso[1]), Number(iso[3]), Number(iso[4])];
+    else if (dotted) ymd = [Number(dotted[3]), Number(dotted[2]), Number(dotted[1])];
+    else if (midnight?.[1]) ymd = [Number(midnight[1]), Number(midnight[2]), Number(midnight[3])];
+    else if (midnight?.[4]) ymd = [Number(midnight[6]), Number(midnight[5]), Number(midnight[4])];
+  }
+  if (!ymd || !isCalendarDate(...ymd)) return undefined;
+  const [y, m, d] = ymd;
+  return `${String(y).padStart(4, "0")}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/** The day after a `YYYY-MM-DD` day. */
+export function nextDay(day: string): string {
+  const at = new Date(`${day}T00:00:00Z`);
+  at.setUTCDate(at.getUTCDate() + 1);
+  return at.toISOString().slice(0, 10);
+}
+
+/**
+ * One bound of a validity as an instant. A value naming a day
+ * ({@link calendarDayOf}) is that day: a start begins at its first moment,
+ * an end runs to its last, the next midnight in the source's zone. So works
+ * "until 1 November" end as 1 November ends, not as it begins. Any other value
+ * is the instant {@link sourceTimestamp} reads.
+ */
+export function validityBound(
+  value: unknown,
+  bound: "start" | "end",
+  times: SourceTimes = {},
+): string | undefined {
+  const day = calendarDayOf(asWritten(value, times), times);
+  if (day === undefined) return sourceTimestamp(value, times);
+  return toIsoTimestamp(bound === "end" ? nextDay(day) : day, times.timeZone);
 }

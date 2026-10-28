@@ -951,6 +951,17 @@ describe("one feed per publisher", () => {
       expect(f.geojson?.validityRangeField ?? f.geojson?.validFromField, id).toBeDefined();
     }
     expect(feed("de-he-ivm-events").format).toBe("datex2");
+    // Bonn and the Mobilitätsatlas write their local times marked UTC.
+    const bonn = feed("de-nw-bonn-flow") as CatalogFeed & {
+      timezone?: string;
+      localTimesMarkedUtc?: boolean;
+    };
+    expect([bonn.timezone, bonn.localTimesMarkedUtc]).toEqual(["Europe/Berlin", true]);
+    const atlas = feed("de-rp-lbm-events") as CatalogFeed & {
+      timezone?: string;
+      localTimesMarkedUtc?: boolean;
+    };
+    expect([atlas.timezone, atlas.localTimesMarkedUtc]).toEqual(["Europe/Berlin", true]);
   });
 
   test("Stadt Aachen's roadworks are a keyless GeoJSON feed of calendar-dated points", () => {
@@ -962,7 +973,9 @@ describe("one feed per publisher", () => {
     expect(f.auth).toBeUndefined();
     expect(main(f.id).url).toContain("bsis.aachen.de/geoserver/ows");
     expect(main(f.id).url).toContain("typeNames=BSIS:PUNKTE_ALLE");
-    expect(f.geojson?.validityDates).toBe(true);
+    // Calendar dates (`2026-11-01Z`) are days without a flag; no midnights to declare.
+    expect(f.geojson?.validFromField).toBe("von");
+    expect(f.geojson?.validityDaysAtMidnight).toBeUndefined();
     expect(f.geojson?.filter?.[0]?.exclude?.every((s) => s.endsWith(" - abgelaufen"))).toBe(true);
   });
 

@@ -419,14 +419,14 @@ describe("parseGeoJson — validity dates", () => {
     expect(ev!.validTo).toBeNull();
   });
 
-  describe("calendar dates", () => {
-    const DATES: SourceDescriptor = {
-      ...SRC,
-      timeZone: "Europe/Berlin",
-      geojson: { ...DATED.geojson, validityDates: true },
+  describe("days and local times", () => {
+    const DATES: SourceDescriptor = { ...DATED, timeZone: "Europe/Berlin" };
+    const MIDNIGHTS: SourceDescriptor = {
+      ...DATES,
+      geojson: { ...DATED.geojson, validityDaysAtMidnight: true },
     };
 
-    it("runs from the start of the first day to the end of the last, in the feed's zone", () => {
+    it("reads a date alone as its whole day in the feed's zone, in every feed", () => {
       // GeoServer's xsd:date form; 1 November is after the change to CET.
       const [ev] = parseGeoJson(
         fc([point({ id: "e", debut: "2026-10-05Z", fin: "2026-11-01Z" })]),
@@ -434,13 +434,18 @@ describe("parseGeoJson — validity dates", () => {
       );
       expect(ev!.validFrom).toBe("2026-10-04T22:00:00.000Z");
       expect(ev!.validTo).toBe("2026-11-01T23:00:00.000Z");
+      const [dotted] = parseGeoJson(
+        fc([point({ id: "j", debut: "05.10.2026", fin: "1.11.2026" })]),
+        DATES,
+      );
+      expect([dotted!.validFrom, dotted!.validTo]).toEqual([ev!.validFrom, ev!.validTo]);
     });
 
-    it("ends a record dated to the last day of a month or year on the next day", () => {
-      const [ev] = parseGeoJson(fc([point({ id: "f", debut: "2026-12-31", fin: "2026-12-31" })]), {
-        ...DATES,
-        timeZone: undefined,
-      });
+    it("ends a record dated to the last day of a year on the next day", () => {
+      const [ev] = parseGeoJson(
+        fc([point({ id: "f", debut: "2026-12-31", fin: "2026-12-31" })]),
+        DATED,
+      );
       expect(ev!.validFrom).toBe("2026-12-31T00:00:00.000Z");
       expect(ev!.validTo).toBe("2027-01-01T00:00:00.000Z");
     });
@@ -448,46 +453,51 @@ describe("parseGeoJson — validity dates", () => {
     it("reads a value with a time of day as an instant", () => {
       const [ev] = parseGeoJson(
         fc([point({ id: "g", debut: "2026-10-05T10:00:00Z", fin: "2026-11-01T11:00:00Z" })]),
-        DATES,
+        MIDNIGHTS,
       );
       expect(ev!.validFrom).toBe("2026-10-05T10:00:00.000Z");
       expect(ev!.validTo).toBe("2026-11-01T11:00:00.000Z");
     });
 
-    it("reads a dotted date day first, its end at the end of the day", () => {
-      const [ev] = parseGeoJson(
-        fc([point({ id: "j", debut: "05.10.2026", fin: "1.11.2026" })]),
-        DATES,
-      );
-      expect(ev!.validFrom).toBe("2026-10-04T22:00:00.000Z");
-      expect(ev!.validTo).toBe("2026-11-01T23:00:00.000Z");
-    });
-
-    it("reads an epoch at midnight UTC as that day, and any other epoch as an instant", () => {
+    it("reads midnights and epochs at midnight UTC as days only with validityDaysAtMidnight", () => {
       const midnight = Date.UTC(2026, 10, 1);
-      const [ev] = parseGeoJson(
-        fc([point({ id: "k", debut: midnight, fin: midnight + 3_600_000 })]),
-        DATES,
-      );
-      expect(ev!.validFrom).toBe("2026-10-31T23:00:00.000Z");
-      expect(ev!.validTo).toBe("2026-11-01T01:00:00.000Z");
-      const [end] = parseGeoJson(fc([point({ id: "l", fin: midnight })]), DATES);
-      expect(end!.validTo).toBe("2026-11-01T23:00:00.000Z");
+      const values = { debut: "2026-09-21T00:00:00.000", fin: midnight };
+      const [days] = parseGeoJson(fc([point({ id: "k", ...values })]), MIDNIGHTS);
+      expect(days!.validFrom).toBe("2026-09-20T22:00:00.000Z");
+      expect(days!.validTo).toBe("2026-11-01T23:00:00.000Z");
+      const [instants] = parseGeoJson(fc([point({ id: "l", ...values })]), DATES);
+      expect(instants!.validFrom).toBe("2026-09-20T22:00:00.000Z");
+      expect(instants!.validTo).toBe("2026-11-01T00:00:00.000Z");
+      const [later] = parseGeoJson(fc([point({ id: "m", fin: midnight + 3_600_000 })]), MIDNIGHTS);
+      expect(later!.validTo).toBe("2026-11-01T01:00:00.000Z");
     });
 
-    it("reads a date written at midnight as that day", () => {
+    it("reads a feed's local times marked UTC as local, its updates too", () => {
+      const marked: SourceDescriptor = {
+        ...DATES,
+        localTimesMarkedUtc: true,
+        geojson: { ...DATED.geojson, updatedField: "stand" },
+      };
       const [ev] = parseGeoJson(
-        fc([point({ id: "m", debut: "2026-09-21T00:00:00.000", fin: "2026-10-30T00:00:00Z" })]),
-        DATES,
+        fc([
+          point({
+            id: "p",
+            debut: "2026-11-21T09:00:00Z",
+            fin: "2026-11-21T13:00:00Z",
+            stand: "2026-11-20T15:30:00Z",
+          }),
+        ]),
+        marked,
       );
-      expect(ev!.validFrom).toBe("2026-09-20T22:00:00.000Z");
-      expect(ev!.validTo).toBe("2026-10-30T23:00:00.000Z");
+      expect(ev!.validFrom).toBe("2026-11-21T08:00:00.000Z");
+      expect(ev!.validTo).toBe("2026-11-21T12:00:00.000Z");
+      expect(ev!.situation?.sourceUpdatedAt).toBe("2026-11-20T14:30:00.000Z");
     });
 
     it("reads both ends from a range field, two-digit years of this century", () => {
       const ranged: SourceDescriptor = {
         ...DATES,
-        geojson: { idField: "id", validityDates: true, validityRangeField: "zeit" },
+        geojson: { idField: "id", validityRangeField: "zeit" },
       };
       const [ev] = parseGeoJson(fc([point({ id: "n", zeit: "13.04.26 - 30.10.26" })]), ranged);
       expect(ev!.validFrom).toBe("2026-04-12T22:00:00.000Z");
@@ -500,11 +510,6 @@ describe("parseGeoJson — validity dates", () => {
     it("emits null for a day the month does not have", () => {
       const [ev] = parseGeoJson(fc([point({ id: "h", debut: "2026-02-30Z" })]), DATES);
       expect(ev!.validFrom).toBeNull();
-    });
-
-    it("leaves a date-only end at its own midnight without the option", () => {
-      const [ev] = parseGeoJson(fc([point({ id: "i", fin: "2026-11-01" })]), DATED);
-      expect(ev!.validTo).toBe("2026-11-01T00:00:00.000Z");
     });
   });
 

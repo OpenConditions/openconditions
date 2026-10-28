@@ -1,4 +1,4 @@
-import { toIsoTimestamp } from "@openconditions/core";
+import { toIsoTimestamp, validityBound } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import { IBI511, ibi511Classification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
@@ -212,8 +212,8 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       roads: road ? [{ name: road }] : [],
       headline,
       description: typeof ev.Description === "string" ? ev.Description : undefined,
-      validFrom: toIsoTimestamp(ev.StartDate, src.timeZone) ?? null,
-      validTo: toIsoTimestamp(ev.PlannedEndDate, src.timeZone) ?? null,
+      validFrom: validityBound(ev.StartDate, "start", src) ?? null,
+      validTo: validityBound(ev.PlannedEndDate, "end", src) ?? null,
       sourceRaw: ev as Record<string, unknown>,
       origin: {
         kind: "feed",

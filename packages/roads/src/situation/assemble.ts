@@ -1,4 +1,4 @@
-import { toIsoTimestamp } from "@openconditions/core";
+import { toIsoTimestamp, validityBound } from "@openconditions/core";
 import {
   type Effect,
   Iso8601,
@@ -96,6 +96,22 @@ function instant(value: string | null | undefined, timeZone?: string): string | 
   return read !== undefined && Iso8601.safeParse(read).success ? read : undefined;
 }
 
+/**
+ * One bound of a validity as {@link instant} reads it, except that a value
+ * naming a day (`2026-11-01`, `01.11.2026`) is that whole day: a start at its
+ * first moment, an end at its last, in the publisher's zone. A parser may pass
+ * a source's date as written; one already read as an instant is kept.
+ */
+function boundInstant(
+  value: string | null | undefined,
+  bound: "start" | "end",
+  timeZone?: string,
+): string | undefined {
+  if (!value || Iso8601.safeParse(value).success) return instant(value, timeZone);
+  const read = validityBound(value, bound, timeZone ? { timeZone } : {});
+  return read !== undefined && Iso8601.safeParse(read).success ? read : undefined;
+}
+
 /** {@link instant} in epoch milliseconds; NaN when the value is not one. */
 const instantMs = (value: string, timeZone?: string) => Date.parse(instant(value, timeZone) ?? "");
 
@@ -163,8 +179,8 @@ function kernelSchedule(s: Schedule): Schedule | undefined {
 }
 
 function validityOf(event: SnapshotEvent, timeZone: string | undefined): Validity {
-  const start = instant(event.validFrom, timeZone);
-  let end = instant(event.validTo, timeZone);
+  const start = boundInstant(event.validFrom, "start", timeZone);
+  let end = boundInstant(event.validTo, "end", timeZone);
   // An inverted window cannot be evaluated; the declared start is kept, the
   // contradictory end is not invented away into a closed interval.
   if (start !== undefined && end !== undefined && Date.parse(end) < Date.parse(start)) {
@@ -178,7 +194,7 @@ function validityOf(event: SnapshotEvent, timeZone: string | undefined): Validit
   const periods = schedules(event.schedule);
   const exceptions = schedules(event.scheduleExceptions);
   const hints = event.situation;
-  const estimatedEnd = instant(hints?.estimatedEnd, timeZone);
+  const estimatedEnd = boundInstant(hints?.estimatedEnd, "end", timeZone);
   return {
     status: hints?.validityStatus ?? STATUS[event.status],
     ...(start !== undefined ? { start } : {}),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { toIsoTimestamp } from "../time.js";
+import { calendarDayOf, nextDay, sourceTimestamp, toIsoTimestamp, validityBound } from "../time.js";
 
 describe("toIsoTimestamp", () => {
   it("converts epoch seconds (the iPeloton/IBI511 shape) to ISO", () => {
@@ -99,5 +99,71 @@ describe("toIsoTimestamp", () => {
     expect(toIsoTimestamp(new Date("nope"))).toBeUndefined();
     expect(toIsoTimestamp({})).toBeUndefined();
     expect(toIsoTimestamp(Number.NaN)).toBeUndefined();
+  });
+});
+
+describe("validityBound", () => {
+  const berlin = { timeZone: "Europe/Berlin" };
+
+  it("reads a date alone as its whole day in the source's zone, the end running to the next midnight", () => {
+    for (const day of ["2026-11-01", "2026-11-01Z", "2026/11/01", "01.11.2026", "1.11.2026"]) {
+      expect(validityBound(day, "start", berlin), day).toBe("2026-10-31T23:00:00.000Z");
+      expect(validityBound(day, "end", berlin), day).toBe("2026-11-01T23:00:00.000Z");
+    }
+    // Across the change to CET and the end of a year.
+    expect(validityBound("2026-10-24", "end", berlin)).toBe("2026-10-24T22:00:00.000Z");
+    expect(validityBound("31.12.2026", "end")).toBe("2027-01-01T00:00:00.000Z");
+  });
+
+  it("reads a value with a time of day as the instant it is", () => {
+    expect(validityBound("2026-11-01T11:00:00Z", "end", berlin)).toBe("2026-11-01T11:00:00.000Z");
+    expect(validityBound("01.11.2026 17:00", "end", berlin)).toBe("2026-11-01T16:00:00.000Z");
+    expect(validityBound(Date.UTC(2026, 10, 1, 9), "start", berlin)).toBe(
+      "2026-11-01T09:00:00.000Z",
+    );
+  });
+
+  it("reads midnights as days only for a source that writes days so", () => {
+    const midnight = "2026-10-30T00:00:00.000";
+    const epoch = Date.UTC(2026, 9, 30);
+    expect(validityBound(midnight, "end", berlin)).toBe("2026-10-29T23:00:00.000Z");
+    expect(validityBound(epoch, "end", berlin)).toBe("2026-10-30T00:00:00.000Z");
+    const days = { ...berlin, daysAtMidnight: true };
+    expect(validityBound(midnight, "end", days)).toBe("2026-10-30T23:00:00.000Z");
+    expect(validityBound(epoch, "end", days)).toBe("2026-10-30T23:00:00.000Z");
+    expect(validityBound("30.10.2026 00:00", "start", days)).toBe("2026-10-29T23:00:00.000Z");
+    expect(validityBound(epoch + 3_600_000, "end", days)).toBe("2026-10-30T01:00:00.000Z");
+  });
+
+  it("reads a source's local times marked UTC as the local times they are", () => {
+    const marked = { ...berlin, localTimesMarkedUtc: true };
+    expect(validityBound("2026-11-21T09:00:00Z", "start", marked)).toBe("2026-11-21T08:00:00.000Z");
+    expect(validityBound("2026-10-05T07:00:00+00:00", "start", marked)).toBe(
+      "2026-10-05T05:00:00.000Z",
+    );
+    expect(sourceTimestamp("2026-10-28T08:55:00Z", marked)).toBe("2026-10-28T07:55:00.000Z");
+    expect(sourceTimestamp("2026-10-28T08:55:00+02:00", marked)).toBe("2026-10-28T06:55:00.000Z");
+    expect(sourceTimestamp("2026-10-28T08:55:00Z", berlin)).toBe("2026-10-28T08:55:00.000Z");
+  });
+
+  it("refuses a day the month does not have", () => {
+    expect(validityBound("2026-02-30", "end")).toBeUndefined();
+    expect(validityBound("31.04.2026", "start")).toBeUndefined();
+  });
+
+  it("names the day a value is, or none", () => {
+    expect(calendarDayOf("2026-11-01Z")).toBe("2026-11-01");
+    expect(calendarDayOf("2026-11-01T00:00:00Z")).toBeUndefined();
+    expect(calendarDayOf("2026-11-01T00:00:00Z", { daysAtMidnight: true })).toBe("2026-11-01");
+    expect(nextDay("2028-02-28")).toBe("2028-02-29");
+    expect(calendarDayOf("2026-11-01z")).toBe("2026-11-01");
+    expect(calendarDayOf("2026/10/30 00:00", { daysAtMidnight: true })).toBe("2026-10-30");
+    expect(calendarDayOf("30.10.2026 00:00 Uhr", { daysAtMidnight: true })).toBe("2026-10-30");
+  });
+
+  it("drops a UTC mark from a date alone too, under localTimesMarkedUtc", () => {
+    const marked = { timeZone: "Europe/Berlin", localTimesMarkedUtc: true };
+    expect(sourceTimestamp("2026-11-01Z", marked)).toBe("2026-10-31T23:00:00.000Z");
+    expect(validityBound("2026-11-01Z", "start", marked)).toBe("2026-10-31T23:00:00.000Z");
   });
 });

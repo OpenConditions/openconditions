@@ -1,4 +1,9 @@
-import { type Severity, toIsoTimestamp } from "@openconditions/core";
+import {
+  type Severity,
+  type SourceTimes,
+  sourceTimestamp,
+  validityBound,
+} from "@openconditions/core";
 import {
   readFeatureCollection,
   recordSkipped,
@@ -154,54 +159,16 @@ function isFollowUp(props: Record<string, unknown>, mapping: GeoJsonMapping): bo
   return marker !== undefined && mapping.followUp.prefixes.some((p) => marker.startsWith(p));
 }
 
-/**
- * A calendar date alone, with the zone GeoServer appends to an `xsd:date`, or
- * at midnight as a date field without a time is often written
- * (`2026-11-01T00:00:00.000`).
- */
-const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})(?:[T ]00:00(?::00(?:\.0+)?)?)?Z?$/;
-/** A calendar date alone, day first with dots (`01.11.2026`). */
-const DOTTED_CALENDAR_DATE = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
+/** How the feed writes its validity's times: its zone, its UTC marks, its days. */
+const timesOf = (src: SourceDescriptor, mapping: GeoJsonMapping): SourceTimes => ({
+  ...(src.timeZone ? { timeZone: src.timeZone } : {}),
+  ...(src.localTimesMarkedUtc ? { localTimesMarkedUtc: true } : {}),
+  ...(mapping.validityDaysAtMidnight ? { daysAtMidnight: true } : {}),
+});
 
-/**
- * A value's calendar date as [year, month, day], when it is a date alone. An
- * epoch at exactly midnight UTC is ArcGIS's form of a date field without a
- * time (`esriFieldTypeDate` holding days), so it names that UTC day.
- */
-function calendarDate(value: unknown): [number, number, number] | undefined {
-  if (typeof value === "number") {
-    if (!Number.isFinite(value) || value % 86_400_000 !== 0) return undefined;
-    const at = new Date(value);
-    return [at.getUTCFullYear(), at.getUTCMonth() + 1, at.getUTCDate()];
-  }
-  if (typeof value !== "string") return undefined;
-  const iso = CALENDAR_DATE.exec(value.trim());
-  if (iso) return [Number(iso[1]), Number(iso[2]), Number(iso[3])];
-  const dotted = DOTTED_CALENDAR_DATE.exec(value.trim());
-  if (dotted) return [Number(dotted[3]), Number(dotted[2]), Number(dotted[1])];
-  return undefined;
-}
-
-/**
- * One end of a feature's validity. Under `validityDates` a calendar date is a
- * day in the feed's zone, and an end date names the last day the record
- * applies, so it ends at the next midnight.
- */
-function validityInstant(
-  value: unknown,
-  end: boolean,
-  mapping: GeoJsonMapping,
-  timeZone: string | undefined,
-): string | null {
-  const date = mapping.validityDates ? calendarDate(value) : undefined;
-  if (!date) return toIsoTimestamp(value, timeZone) ?? null;
-  const [year, month, dayOfMonth] = date;
-  const day = new Date(Date.UTC(year, month - 1, dayOfMonth));
-  // A day the month does not have is no date, rather than one Date.UTC rolls over.
-  if (day.getUTCDate() !== dayOfMonth || day.getUTCMonth() !== month - 1) return null;
-  if (end) day.setUTCDate(day.getUTCDate() + 1);
-  return toIsoTimestamp(day.toISOString().slice(0, 10), timeZone) ?? null;
-}
+/** One bound of a feature's validity ({@link validityBound}), null when it reads as none. */
+const boundOf = (value: unknown, bound: "start" | "end", times: SourceTimes): string | null =>
+  validityBound(value, bound, times) ?? null;
 
 /**
  * One event per id. A publisher that exports a record in several parts (one
@@ -252,8 +219,7 @@ function joinGeometries(geometries: Geometry[]): Geometry {
  */
 function validityRange(
   value: unknown,
-  mapping: GeoJsonMapping,
-  timeZone: string | undefined,
+  times: SourceTimes,
 ): { validFrom: string | null; validTo: string | null } {
   // A dash with whitespace on both sides; one character of lookaround each
   // keeps the split linear on a long run of spaces.
@@ -265,8 +231,8 @@ function validityRange(
   }
   const fullYear = (end: string) => end.replace(/^(\d{1,2}\.\d{1,2}\.)(\d{2})$/, "$120$2");
   return {
-    validFrom: validityInstant(fullYear(from), false, mapping, timeZone),
-    validTo: validityInstant(fullYear(to), true, mapping, timeZone),
+    validFrom: boundOf(fullYear(from), "start", times),
+    validTo: boundOf(fullYear(to), "end", times),
   };
 }
 
@@ -364,7 +330,8 @@ export function featuresToRoadEvents(
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
     const updated = str(get(props, mapping.updatedField));
-    const recordTime = toIsoTimestamp(updated, src.timeZone);
+    const times = timesOf(src, mapping);
+    const recordTime = sourceTimestamp(updated, times);
     const severityToken = str(get(props, mapping.severityField))?.trim();
     const { unmapped: severityUnmapped, ...severity } = resolveSeverity(severityToken, mapping);
     if (unmapped) unknownValues++;
@@ -396,22 +363,13 @@ export function featuresToRoadEvents(
       // Only projected when the mapping declares the fields, so feeds without
       // dates keep emitting no validity at all rather than an explicit null.
       ...(mapping.validityRangeField
-        ? validityRange(get(props, mapping.validityRangeField), mapping, src.timeZone)
+        ? validityRange(get(props, mapping.validityRangeField), times)
         : {}),
       ...(mapping.validFromField
-        ? {
-            validFrom: validityInstant(
-              get(props, mapping.validFromField),
-              false,
-              mapping,
-              src.timeZone,
-            ),
-          }
+        ? { validFrom: boundOf(get(props, mapping.validFromField), "start", times) }
         : {}),
       ...(mapping.validToField
-        ? {
-            validTo: validityInstant(get(props, mapping.validToField), true, mapping, src.timeZone),
-          }
+        ? { validTo: boundOf(get(props, mapping.validToField), "end", times) }
         : {}),
       sourceRaw: raw,
       origin: {

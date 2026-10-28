@@ -1,4 +1,4 @@
-import { toIsoTimestamp } from "@openconditions/core";
+import { sourceTimestamp } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import type { LineString } from "geojson";
 import type { FlowContext, FlowSites } from "./flow-output.js";
@@ -45,9 +45,9 @@ function toLineString(ring: unknown): LineString | null {
  * Thema=19584`). Each feature is a road section (`strecke_id`) with a
  * `geschwindigkeit` (current speed, km/h), a `verkehrsstatus` level-of-service
  * phrase, and an `auswertezeit` timestamp, wall-clock time in the feed's
- * `timezone` whatever its suffix says. A MultiLineString section is one
- * site whose member lines each carry the reading (and a derived congestion
- * situation each). A section without an id, or with neither a speed nor a
+ * `timezone` whatever its suffix says (the feed's `localTimesMarkedUtc`). A
+ * MultiLineString section is one site whose member lines each carry the
+ * reading (and a derived congestion situation each). A section without an id, or with neither a speed nor a
  * level of service it can read, is skipped as malformed, as is a broken line;
  * one without a line geometry as having no geometry. A phrase it cannot read
  * beside a speed leaves the reading without a level, recorded as an unknown
@@ -110,10 +110,7 @@ export function parseBonnFlow(
       }
       // Bonn writes its local time and marks it `Z` (08:55:00Z at 06:57 UTC).
       const stated = props["auswertezeit"];
-      const at =
-        typeof stated === "string"
-          ? toIsoTimestamp(stated.replace(/Z$/i, ""), src.timeZone)
-          : undefined;
+      const at = typeof stated === "string" ? sourceTimestamp(stated, src) : undefined;
 
       if (los === "unknown" && typeof status === "string" && status.trim() !== "") {
         recordSkipped(src.id, "unknown_value");

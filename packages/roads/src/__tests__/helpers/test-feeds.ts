@@ -380,6 +380,7 @@ const TEST_FEEDS: Record<string, TestFeed> = {
     license: "DL-DE-ZERO-2.0",
     licenseUrl: "https://www.govdata.de/dl-de/zero-2-0",
     timezone: "Europe/Berlin",
+    localTimesMarkedUtc: true,
   },
   "de-nw-verkehr-events": {
     region: "de",

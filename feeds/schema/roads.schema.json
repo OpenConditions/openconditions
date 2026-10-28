@@ -1453,8 +1453,9 @@
               "validToField": {
                 "type": "string"
               },
-              "validityDates": {
-                "type": "boolean"
+              "validityDaysAtMidnight": {
+                "type": "boolean",
+                "const": true
               },
               "validityRangeField": {
                 "type": "string"
@@ -1623,6 +1624,10 @@
           },
           "timezone": {
             "type": "string"
+          },
+          "localTimesMarkedUtc": {
+            "type": "boolean",
+            "const": true
           },
           "speedUnit": {
             "type": "string",

@@ -70,7 +70,7 @@ const geoJsonMappingSchema = z
     latField: z.string().optional(),
     validFromField: z.string().optional(),
     validToField: z.string().optional(),
-    validityDates: z.boolean().optional(),
+    validityDaysAtMidnight: z.literal(true).optional(),
     validityRangeField: z.string().optional(),
     filter: z
       .array(
@@ -155,6 +155,11 @@ const roadsFeedExtension = {
    * read as UTC.
    */
   timezone: z.string().refine(isKnownTimeZone, { message: "unknown IANA time zone" }).optional(),
+  /**
+   * The publisher writes its local times (in `timezone`) with a UTC designator
+   * they do not have: `09:00:00Z` for 09:00 local. They are read as local.
+   */
+  localTimesMarkedUtc: z.literal(true).optional(),
   /**
    * The unit the publisher writes the speeds its format states no unit for
    * in: WZDx 3.1's `reduced_speed_limit`, which its schema leaves without
