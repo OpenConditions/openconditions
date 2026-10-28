@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { attributionLine, resolveAttribution, unknownAttributionPlaceholders } from "../index.js";
 
@@ -33,5 +34,43 @@ describe("resolveAttribution", () => {
       "{}",
     ]);
     expect(unknownAttributionPlaceholders("Data {year}")).toEqual([]);
+  });
+});
+
+describe("placeholder scanning", () => {
+  it.each([
+    ["{}{}{year}{publisher}", ["{}", "{}", "{publisher}"]],
+    ["{{year}}", ["{{year}"]],
+    ["{outer{inner}tail}", ["{outer{inner}"]],
+    ["} {year} {year} }", []],
+    ["{year}{unfinished", []],
+    ["{publisher}{publisher}", ["{publisher}", "{publisher}"]],
+    ["{a\nβ}", ["{a\nβ}"]],
+  ])("preserves tokens for %j", (text, expected) => {
+    expect(unknownAttributionPlaceholders(text)).toEqual(expected);
+  });
+
+  it("unclosed delimiters finish within a bounded child process", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `
+        import assert from "node:assert/strict";
+        const { unknownAttributionPlaceholders } = await import(process.argv[1]);
+        assert.deepEqual(unknownAttributionPlaceholders("Data " + "{".repeat(100_000)), []);
+        console.log("decoded");
+      `,
+        new URL("../attribution.ts", import.meta.url).href,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("decoded");
   });
 });

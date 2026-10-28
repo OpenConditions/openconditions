@@ -19,9 +19,16 @@ export const ATTRIBUTION_YEAR = "{year}";
 
 /** Every `{…}` token of an attribution that is not {@link ATTRIBUTION_YEAR}. */
 export function unknownAttributionPlaceholders(attribution: string): string[] {
-  return [...attribution.matchAll(/\{[^}]*\}/g)]
-    .map((m) => m[0])
-    .filter((token) => token !== ATTRIBUTION_YEAR);
+  const unknown: string[] = [];
+  let from = 0;
+  for (let open = attribution.indexOf("{"); open !== -1; open = attribution.indexOf("{", from)) {
+    const close = attribution.indexOf("}", open + 1);
+    if (close === -1) break;
+    const token = attribution.slice(open, close + 1);
+    if (token !== ATTRIBUTION_YEAR) unknown.push(token);
+    from = close + 1;
+  }
+  return unknown;
 }
 
 /**
