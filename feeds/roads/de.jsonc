@@ -287,6 +287,1501 @@
       "privacyUrl": "https://www.aachen.de/datenschutz",
     },
     {
+      // The city's current roadworks view (FB 32) on its ArcGIS Enterprise
+      // data portal, behind the "ODP - Baustellenatlas": 10 lines on
+      // 2026-10-28, the larger measures only. maxRecordCount 2000, so one
+      // request returns everything; outSR=4326 gives lon/lat. OBJECTID equals
+      // umleitung_id and is stable. art_sperru is the closure class,
+      // art_leistu the work, baustelle the street, bereich the stretch, and
+      // hinweis1-3 notes on detours (hinweis1 is read). bbeginn/bende are
+      // calendar dates published as epoch ms at 00:00 UTC.
+      // The licence asks for "Stadt Cottbus/Chóśebuz" and the year of
+      // retrieval in brackets.
+      "subdivision": "bb",
+      "operator": "cottbus",
+      "product": "events",
+      "name": "Stadt Cottbus/Chóśebuz roadworks (Baustellenatlas)",
+      "homepage": "https://datenportal.cottbus.de/portal/home/item.html?id=3d8fa40a50274da895d8b12611ed7e5c",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://datenportal.cottbus.de/server/rest/services/FB32/vw_baustellen_aktuell/FeatureServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "OBJECTID",
+        "defaultType": "roadworks",
+        "headlineField": "art_leistu",
+        "descriptionField": "hinweis1",
+        "roadField": "baustelle",
+        "severityField": "art_sperru",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "halbseitige Sperrung": "medium",
+          "halbseitige Sperrung mit Einbahnstraßenregelung": "medium",
+        },
+        "validFromField": "bbeginn",
+        "validToField": "bende",
+        // ArcGIS date fields: days as epochs at midnight UTC; the last day counts.
+        "validityDates": true,
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Stadt Cottbus/Chóśebuz ({year})",
+      "privacyUrl": "https://cottbus.de/datenschutz-fur-den-internetauftritt-www-cottbus-de/",
+    },
+    {
+      // The Garten- und Tiefbauamt's roadworks coordination: only the major
+      // works on main roads with significant traffic impact, current and
+      // future (`ist_zukuenftig`), as work-area polygons (21 on 2026-10-28).
+      // MapServer, asked for WGS84 (lon, lat checked). `fid` is the database
+      // key; one measure can have two polygons with their own fids.
+      // The two records whose bauherr is Autobahn GmbH (the A5 junction
+      // Freiburg-Süd) are dropped: the Autobahn GmbH feed carries them.
+      // There is no type or restriction class: `verkehrshinweis` is free text
+      // (the description) and severity stays unknown. `lage` describes the
+      // section ("Zwischen … und …"), not a road name, so no road is set.
+      "subdivision": "bw",
+      "operator": "freiburg",
+      "product": "events",
+      "name": "Stadt Freiburg i. Br. roadworks (Garten- und Tiefbauamt)",
+      "homepage": "https://geodaten.freiburg.de/geonetwork/srv/ger/catalog.search#/metadata/42e2dbba-5fb2-4146-9fed-181045dc6be4",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geoportal.freiburg.de/wfs/gut_baustellen/gut_baustellen?service=WFS&version=2.0.0&request=GetFeature&typeNames=baustellenumgriffe&outputFormat=GEOJSON&srsName=EPSG:4326",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "fid",
+        "defaultType": "roadworks",
+        "headlineField": "name",
+        "descriptionField": "verkehrshinweis",
+        "validFromField": "zeitraum_von",
+        "validToField": "zeitraum_bis",
+        "validityDates": true,
+        "filter": [{ "field": "bauherr", "exclude": ["Autobahn GmbH"] }],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Datengrundlage: Stadt Freiburg, www.freiburg.de",
+      "privacyUrl": "https://www.freiburg.de/datenschutz",
+    },
+    {
+      // The Tiefbauamt's roadworks, published by the Stadtmessungsamt as two
+      // point layers, under construction ("im Bau", 60) and planned
+      // ("geplant", 11 on 2026-10-28), read together. Read in the native
+      // EPSG:25832, which the payload's `crs` names: asked for WGS84, this
+      // GeoServer rounds coordinates to four decimals (about 10 m).
+      // The records have no key (the WFS feature id carries the layer name
+      // and a row number), so the id hashes the fields that do not change
+      // when works start; STATUS and ANFANG are left out.
+      // ENDE is a dotted date on 35 of 71 records and otherwise a phrase
+      // ("Ende Nov. 2026", "Anfang April 2027"), which should become an open
+      // end; ANFANG is always a date. NOTE (2026-10-28): toIsoTimestamp's
+      // Date.parse fallback reads these phrases as wrong dates instead
+      // ("Ende Dez. 2026" as 1 January 2026), so 14 records look ended; fix
+      // that before enabling this feed. VERKEHRSAUSWIRKUNG is free text,
+      // nearly unique per record, so it is the description and severity stays
+      // unknown. ART_ARBEIT is free text too (36 values), so it is the
+      // headline and every record is roadworks.
+      "subdivision": "bw",
+      "operator": "stuttgart",
+      "product": "events",
+      "name": "Landeshauptstadt Stuttgart roadworks (Tiefbauamt)",
+      "homepage": "https://opendata.stuttgart.de/dataset/b318ff40-616f-4f18-8f3c-80b4b5cdb696",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://geoserver.stuttgart.de/gdc/Verkehr_Mobilitaet/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Verkehr_Mobilitaet:A66_BAUM_BAUSTELLEN_DATE_WEB_im_Bau_EPSG25832&outputFormat=application/json",
+            "https://geoserver.stuttgart.de/gdc/Verkehr_Mobilitaet/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=Verkehr_Mobilitaet:A66_BAUM_BAUSTELLEN_DATE_WEB_geplant_EPSG25832&outputFormat=application/json",
+          ],
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": [
+          "STRASSENNAME",
+          "DETAILS_STANDORT",
+          "ART_ARBEIT",
+          "KOORDINATE_X",
+          "KOORDINATE_Y",
+        ],
+        "defaultType": "roadworks",
+        "headlineField": "ART_ARBEIT",
+        "descriptionField": "VERKEHRSAUSWIRKUNG",
+        "roadField": "STRASSENNAME",
+        "validFromField": "ANFANG",
+        "validToField": "ENDE",
+        "validityDates": true,
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Landeshauptstadt Stuttgart",
+      "privacyUrl": "https://www.stuttgart.de/datenschutz",
+    },
+    {
+      // The roadworks of the TechnologieRegion Karlsruhe mobility portal, run
+      // by the Stadt Karlsruhe Tiefbauamt with TRK: Karlsruhe, Rheinstetten,
+      // Bruchsal, Stutensee, Rastatt, Baden-Baden and Ettlingen enter their
+      // own works (`datenquelle`). Two catalogued layers, current and
+      // planned, are read together: their `id`s do not collide (904 + 451
+      // features, no shared id or vorgangsnummer on 2026-10-28), and an item
+      // moving from planned to current gets a new id. Asked for WGS84 (lon,
+      // lat checked); each request returns all its features. Each works area
+      // or line comes with a marker point under the next id, alike in every
+      // property; the reader's merge of nearby alike records folds them
+      // (1,193 kept features became 581 records, mostly polygons and lines).
+      // The Collectivité européenne d'Alsace records (82, French, outside
+      // Germany) are dropped; no Autobahn GmbH or MobiData BW records were
+      // present. "keine Verkehrsbehinderung" (80) is dropped as no road
+      // disruption. A full closure stays roadworks with severity high.
+      // The DATEX II file (datex.xml) is not read: its publicationTime was
+      // 2026-08-20. The uncatalogued combined layer TBA:baustellen also
+      // carries Landau and Gaggenau, outside the dataset's stated scope.
+      "subdivision": "bw",
+      "operator": "trk",
+      "product": "events",
+      "name": "TechnologieRegion Karlsruhe roadworks (Mobilitätsportal)",
+      "homepage": "https://transparenz.karlsruhe.de/dataset/baustellen",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://mobil.trk.de/geoserver/TBA/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=TBA:baustellen_aktuell&outputFormat=application/json&srsName=EPSG:4326",
+            "https://mobil.trk.de/geoserver/TBA/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=TBA:baustellen_vorschau&outputFormat=application/json&srsName=EPSG:4326",
+          ],
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "id",
+        "typeField": "art",
+        "typeMap": {
+          "Bauliche Sondernutzung": "roadworks",
+          "Strom bzw. TK-Versorgung": "roadworks.works.utility_work",
+          "Gas bzw. Wasserversorgung": "roadworks.works.utility_work",
+          "Fernwärmeversorgung": "roadworks.works.utility_work",
+          "Kanalbau": "roadworks.works.utility_work",
+          "Gleisbau": "roadworks.works.construction",
+          "Straßenbau": "roadworks.works.construction",
+          "Haltestellenumbau mit Straßenumgestaltung": "roadworks.works.construction",
+          "Stützwand": "roadworks.works.construction",
+          "Tunnelbau": "roadworks.works.construction",
+          "Straßenunterhaltung": "roadworks.works.maintenance",
+          "Tunnelwartung": "roadworks.works.maintenance",
+          "Brückenbau": "roadworks.works.bridge_work",
+          "Abbruch/Rückbau": "roadworks.works.demolition",
+          "Baugrunduntersuchung": "roadworks.works.inspection",
+          "Grünpflegearbeiten": "roadworks.works.tree_work",
+          "Kraneinsatz": "roadworks.works",
+          "geänderte Verkehrsführung im Zuge von Baumaßnahmen": "roadworks",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "lage",
+        "descriptionField": "zusatzinfo",
+        "severityField": "sperrung",
+        "severityMap": {
+          "mit Vollsperrung": "high",
+          "mit Sperrung in eine Fahrtrichtung": "medium",
+          "mit Verkehrsbehinderung": "low",
+        },
+        "updatedField": "stand",
+        "validFromField": "vorgangszeitraum_von",
+        "validToField": "vorgangszeitraum_bis",
+        "filter": [
+          { "field": "datenquelle", "exclude": ["Collectivité européenne d’Alsace"] },
+          { "field": "sperrung", "exclude": ["keine Verkehrsbehinderung"] },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Stadt Karlsruhe / TechnologieRegion Karlsruhe (Mobilitätsportal), mit Daten der Städte Karlsruhe, Bruchsal, Rheinstetten, Stutensee, Rastatt, Baden-Baden und Ettlingen",
+      "privacyUrl": "https://mobil.trk.de/disclaimer_mp2.html",
+    },
+    {
+      // The city's roadworks and street-use permits restricting traffic
+      // within the next two weeks, as points (222 on 2026-10-28): a static
+      // file rewritten daily, in EPSG:25832, which its `crs` names. Same
+      // SBOD system as Aachen's BSIS but a different export: `AKZ` is the
+      // file reference (unique), BEGINN/ENDE are dotted calendar dates.
+      // VORGNAME separates roadworks (167) from general street-use permits
+      // (55: scaffolding, cranes, material storage), both roadworks here, as
+      // in Aachen. SPERR_ART codes the restriction, matched against the
+      // ART_VB text: 10 footway, cycle path, verge or parking only, 11 lane
+      // narrowing, 12 one side closed, 13 full closure; 20/22/23 carry the
+      // same texts as 10/12/13. 0 (8) is traffic safety only, with no
+      // restriction, and is dropped; 16 records have no code.
+      // ART_VB lists the restrictions and is the description; the 5
+      // SONDERINFO notes are not read. AUFTRAGGEBER_EMAIL (contractors'
+      // addresses) stays in the raw record only.
+      "subdivision": "by",
+      "operator": "ingolstadt",
+      "product": "events",
+      "name": "Stadt Ingolstadt roadworks",
+      "homepage": "https://open.bydata.de/datasets/baustellen_stadt_ingolstadt",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://www.ingolstadt.de/openbydata/VMS/Baustellen_14_Tage_Ingolstadt.geojson",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "AKZ",
+        "typeField": "VORGNAME",
+        "typeMap": {
+          "Baustellen": "roadworks",
+          "Sondernutzung allgemein": "roadworks",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "ART_ARB",
+        "descriptionField": "ART_VB",
+        "roadField": "STRASSE",
+        "severityField": "SPERR_ART",
+        "severityMap": {
+          "10": "low",
+          "11": "low",
+          "12": "medium",
+          "13": "high",
+          "20": "low",
+          "22": "medium",
+          "23": "high",
+        },
+        "validFromField": "BEGINN",
+        "validToField": "ENDE",
+        "validityDates": true,
+        "filter": [{ "field": "SPERR_ART", "exclude": ["0"] }],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Stadt Ingolstadt",
+      "privacyUrl": "https://www.ingolstadt.de/datenschutz",
+    },
+    {
+      // The Mobilitätsreferat's roadworks map layer: roadworks and temporary
+      // no-parking zones that restrict driving, walking or parking within the
+      // next four weeks, as polygons. Roadworks are complete for the inner
+      // districts and main roads only; elsewhere entries are sporadic. Asked
+      // for WGS84 (lon, lat order checked); one request returns every feature
+      // (6,180 of numberMatched 6,180 on 2026-10-28).
+      // Half the records (2,853) are "Vorübergehendes Haltverbot", parking
+      // bans with no other content; the feed reads "Baumaßnahme" (3,327)
+      // only. Of those it also drops 262 whose `betroffene_bereiche` names
+      // only parking bays, verges or a no-parking sign; footway and pedestrian
+      // zone works stay.
+      // The records have no stable key: `fachliche_id` is empty on 3,000 of
+      // 3,327 and the WFS feature id is a row number, so the id hashes the
+      // descriptive fields (7 records alike in all of them become one).
+      // `beeintraechtigung` is free text (1,045 distinct values, 602 empty),
+      // so it is the description and severity stays unknown. End dates carry
+      // 23:59 on most records; 44 starts read "Beginn vor mehr als einem
+      // Jahr" and stay open.
+      "subdivision": "by",
+      "operator": "muenchen",
+      "product": "events",
+      "name": "Landeshauptstadt München roadworks (Mobilitätsreferat)",
+      "homepage": "https://opendata.muenchen.de/dataset/baustellen_4_weeks_opendata",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geoportal.muenchen.de/geoserver/mor_wfs/ows?service=WFS&version=1.1.0&request=GetFeature&typeName=mor_wfs:baustellen_opendata&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": [
+          "fachliche_id",
+          "strasse_hausnr",
+          "betroffene_bereiche",
+          "beschreibung",
+          "beeintraechtigung",
+          "beginn_datum_kombiniert",
+          "ende_datum_kombiniert",
+        ],
+        "typeField": "art",
+        "typeMap": {
+          "Baumaßnahme": "roadworks",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "beschreibung",
+        "descriptionField": "beeintraechtigung",
+        "roadField": "strasse_hausnr",
+        "validFromField": "beginn_datum_kombiniert",
+        "validToField": "ende_datum_kombiniert",
+        "validityDates": true,
+        "filter": [
+          { "field": "art", "exclude": ["Vorübergehendes Haltverbot"] },
+          {
+            "field": "betroffene_bereiche",
+            "exclude": [
+              "Parkbucht",
+              "Begleitgrün",
+              "Begleitgrün,Parkbucht",
+              "Parkbucht,Begleitgrün",
+              "Parkbucht;Begleitgrün",
+              "Haltverbot",
+              "Halteverbot",
+              "Halteverbot auf Gebäudelänge",
+            ],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Landeshauptstadt München – opendata.muenchen.de",
+      "privacyUrl": "https://opendata.muenchen.de/pages/datenschutz",
+    },
+    {
+      // Frankfurt am Main Straßenverkehrsamt's WFS of traffic-relevant
+      // roadworks (layer opendata_verkehr:Baustellen, 283 on 2026-10-28, work
+      // areas as MultiPolygons, 5 as MultiLineStrings; all in one request, no
+      // feature limit). Every record runs until today or later; some start in
+      // the future (58). baustellennummer is the permit number but is empty on 3
+      // records, so the id hashes it with the street (`name`); no two records
+      // share both. startevent/endevent are UTC instants (a whole day ends at
+      // 22:59:59Z). `meldung` tells a fixed site from a mobile one
+      // ("Wanderbaustelle", 26); both stay roadworks, the value kept as
+      // subtype. `sperrung` = 1 marks a closure: of its 62 records, 40 close
+      // the carriageway and the rest close a section or direction, so it maps
+      // to high; 0 (221) are mostly partial closures of a lane (medium),
+      // a handful only footways, which no field tells apart. textshort is
+      // empty on all but 2, so textlong is the description. One record is an
+      // Autobahn GmbH ramp closure on the A661 (V-2026-01209), which the
+      // Autobahn feed also carries; no field marks such records, so it is kept.
+      "subdivision": "he",
+      "operator": "frankfurt",
+      "product": "events",
+      "name": "Stadt Frankfurt am Main roadworks (Straßenverkehrsamt)",
+      "homepage": "https://geodatenkatalog.frankfurt.de/geonetwork/srv/ger/catalog.search#/metadata/e0f8f05e-2bd0-42c7-aa00-cd4d9c985cb7",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geowebdienste.frankfurt.de/Baustellen?service=WFS&version=2.0.0&request=GetFeature&typeNames=opendata_verkehr:Baustellen&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": ["baustellennummer", "name"],
+        "typeField": "meldung",
+        "typeMap": {
+          "Baustelle": "roadworks",
+          "Wanderbaustelle": "roadworks",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "name",
+        "descriptionField": "textlong",
+        "roadField": "name",
+        "severityField": "sperrung",
+        "severityMap": {
+          "1": "high",
+          "0": "medium",
+        },
+        "validFromField": "startevent",
+        "validToField": "endevent",
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Stadt Frankfurt am Main, www.frankfurt.de",
+      "privacyUrl": "https://frankfurt.de/datenschutz",
+    },
+    {
+      // ivm GmbH's regional roadworks export (PRISMA traff-x / GIP), DATEX II
+      // 2.0 MDM TrafficMessages profile, keyless, no Mobilithek subscription
+      // needed. Each record locates itself twice: a GIP linear reference
+      // (`linearWithinLinearElement`, LinearElementByPoints, whose start,
+      // intermediate and end points carry `pointCoordinates`) and an OpenLR
+      // line reference. The DATEX reader builds a LineString from the point
+      // coordinates, so no record depends on OpenLR: all 8 records (4
+      // situations, each published per direction) parsed with geometry on
+      // 2026-10-28 (Wiesbaden Schlossplatz, Friedrichsdorf). The export
+      // carries no road names. The publisher intends to add municipalities.
+      // Terms (Mobilithek PDF "Nutzungsbedingungen der ivm GmbH", 01.01.2023):
+      // DL-DE-BY-2.0, credit "ivm Region Frankfurt RheinMain" with the
+      // licence and the Mobilithek dataset id.
+      "subdivision": "he",
+      "operator": "ivm",
+      "product": "events",
+      "name": "ivm Region Frankfurt RheinMain roadworks",
+      "homepage": "https://mobilithek.info/offers/552179356812632064",
+      "tier": "authoritative",
+      "format": "datex2",
+      "endpoints": {
+        "main": {
+          "url": "https://ivm.traff-x.de/gip-service/rest/xb/export/TrafficMessages_IVM",
+          "cadenceSec": 900,
+        },
+      },
+      "freshnessWindowSec": 3600,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "ivm Region Frankfurt RheinMain (Mobilithek ID 552179356812632064)",
+      "privacyUrl": "https://ivm-rheinmain.de/datenschutz/",
+    },
+    {
+      // Stadt Kassel's traffic management GeoServer (vtinfo), the source of the
+      // city's roadworks map: current messages (vtinfo:Ereignisse, 44 on
+      // 2026-10-28) and planned ones (vtinfo:Ereignissegeplant, 20), street
+      // lines, read together. messageid is unique across both layers. A
+      // measure with daily windows is one message per day (seven for one
+      // lane closure in Kurt-Schumacher-Straße). Same schema family as
+      // Frankfurt's WFS; the mapping follows Frankfurt's: street as headline
+      // and road, the message text as description, a closure category as
+      // severity. startevent/endevent are local "dd.MM.yyyy HH:mm" times
+      // (a whole day ends at 23:59). `art` is the message category, read
+      // against the texts: 12 (37) a closure of the street or one direction,
+      // 22 (3, crane works) a full closure, 13 (17) an obstruction (half
+      // closure, traffic lights, lane closed); 31 (7) mixes street closures
+      // with footpaths and a footbridge and stays unknown. `type` holds
+      // TMC-like event codes (401 "closed"), finer but less consistent.
+      "subdivision": "he",
+      "operator": "kassel",
+      "product": "events",
+      "name": "Stadt Kassel roadworks (Verkehrsmanagement)",
+      "homepage": "https://www.kassel.de/buerger/verkehr_und_mobilitaet/baustellen/index.php",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://vms.kassel.de/geoserver/vtinfo/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=vtinfo:Ereignisse&outputFormat=application/json&srsName=EPSG:4326",
+            "https://vms.kassel.de/geoserver/vtinfo/wfs?service=WFS&version=2.0.0&request=GetFeature&typeNames=vtinfo:Ereignissegeplant&outputFormat=application/json&srsName=EPSG:4326",
+          ],
+          "cadenceSec": 900,
+        },
+      },
+      "geojson": {
+        "idField": "messageid",
+        "defaultType": "roadworks",
+        "headlineField": "name",
+        "descriptionField": "textshort",
+        "roadField": "name",
+        "severityField": "art",
+        "severityMap": {
+          "12": "high",
+          "22": "high",
+          "13": "medium",
+          "31": "unknown",
+        },
+        "validFromField": "startevent",
+        "validToField": "endevent",
+      },
+      "freshnessWindowSec": 3600,
+      // The WFS states no licence (Fees/AccessConstraints "NONE"). The city
+      // publishes the same messages on Mobilithek (offer 609820812490186752,
+      // DATEX II) under DL-DE-BY-2.0 with the attribution below.
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "terms": {
+        "url": "https://mobilithek.info/offers/609820812490186752",
+        "reviewedAt": "2026-10-28",
+        "note": "WFS silent; the city's Mobilithek offer for the same Verkehrsmeldungen: 'Für die freigegebenen Daten gilt die Lizenz Datenlizenz Deutschland - Namensnennung - Version 2.0' (MDM-Nutzungsbedingungen der Stadt Kassel v1.0).",
+      },
+      "attribution": "Stadt Kassel, Straßenverkehrs- und Tiefbauamt",
+      "privacyUrl": "https://www.kassel.de/datenschutzerklaerung.php",
+    },
+    {
+      // The city's roadworks register (OpenData.HRO), rewritten daily at about
+      // 05:00 UTC as one GeoJSON file of points in WGS84: 328 records on
+      // 2026-10-28, each with a uuid. The same data is offered as CSV, GML,
+      // KML, WFS and RSS, and mirrored as a Mobilithek offer.
+      // `verkehrsbeeintraechtigungen` lists the impacts, comma-separated in a
+      // fixed order (25 combinations of 7 values occur); the severity is that
+      // of the strongest: Vollsperrung high, halbseitige Sperrung medium,
+      // a restriction or safety measures along the carriageway low.
+      // Filters (2026-10-28): "sonstige temporäre Beschilderung" (90 records:
+      // temporary signs, mostly no-parking zones for lantern processions and
+      // removals, all without an impact) and the 3 combinations that touch
+      // only the footway or cycle path (6 records) are not road disruptions:
+      // 232 records stay. 45 of them (39 Gebäudesanierung) state no impact and
+      // keep an unknown severity. 5 ended in the past; baubeginn/bauende are
+      // times with an offset. `baumassnahme` names the measure on 189 of them.
+      "subdivision": "mv",
+      "operator": "rostock",
+      "product": "events",
+      "name": "Hanse- und Universitätsstadt Rostock roadworks (Baustellen)",
+      "homepage": "https://www.opendata-hro.de/dataset/baustellen",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geo.sv.rostock.de/download/opendata/baustellen/baustellen.json",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "uuid",
+        "typeField": "sparte",
+        "typeMap": {
+          "Straßenbau": "roadworks.works.construction",
+          "Gleisbau": "roadworks.works.construction",
+          "Fernwärmeleitung": "roadworks.works.utility_work",
+          "Wasserleitung": "roadworks.works.utility_work",
+          "Abwasserleitung": "roadworks.works.utility_work",
+          "Gasleitung": "roadworks.works.utility_work",
+          "Stromnetz": "roadworks.works.utility_work",
+          "Kabelnetz": "roadworks.works.utility_work",
+          "Telefonnetz": "roadworks.works.utility_work",
+          "Straßenbeleuchtung": "roadworks.works.utility_work",
+          "Lichtsignalanlage": "roadworks.works",
+          "Gebäudesanierung": "roadworks",
+          "Hochbau": "roadworks",
+          "Kranarbeiten": "roadworks",
+          "Schwerlasttransport": "roadworks",
+          "privat": "roadworks",
+          "Sport": "public_event",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "baumassnahme",
+        "descriptionField": "verkehrsbeeintraechtigungen",
+        "roadField": "strasse_name",
+        "severityField": "verkehrsbeeintraechtigungen",
+        "severityMap": {
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Vollsperrung": "high",
+          "Sicherungsmaßnahmen entlang der Straße, Vollsperrung": "high",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Vollsperrung": "high",
+          "Sicherungsmaßnahmen entlang der Straße, Verkehrsraumeinschränkungen, Vollsperrung": "high",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Verkehrsraumeinschränkungen, Vollsperrung": "high",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Vollsperrung": "high",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Sperrung für Fahrradverkehr, Verkehrsraumeinschränkungen, Vollsperrung": "high",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Vollsperrung": "high",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs": "medium",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße": "medium",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Verkehrsraumeinschränkungen": "medium",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich": "medium",
+          "halbseitige Sperrung, Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Verkehrsraumeinschränkungen": "medium",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Verkehrsraumeinschränkungen": "low",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs": "low",
+          "Sicherungsmaßnahmen entlang der Straße, Verkehrsraumeinschränkungen": "low",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich": "low",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Verkehrsraumeinschränkungen": "low",
+          "Sicherungsmaßnahmen entlang der Straße": "low",
+          "Sicherungsmaßnahmen entlang der Straße, Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Sperrung für Fahrradverkehr, Verkehrsraumeinschränkungen": "low",
+          "Sicherungsmaßnahmen entlang des Gehwegs, Verkehrsraumeinschränkungen": "low",
+        },
+        "validFromField": "baubeginn",
+        "validToField": "bauende",
+        "filter": [
+          { "field": "sparte", "exclude": ["sonstige temporäre Beschilderung"] },
+          {
+            "field": "verkehrsbeeintraechtigungen",
+            "exclude": [
+              "Sicherungsmaßnahmen entlang des Gehwegs",
+              "Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich, Sperrung für Fahrradverkehr",
+              "Sicherungsmaßnahmen entlang des Gehwegs, Sperrung des Fußgängerverkehrs im Gehwegbereich",
+            ],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Hanse- und Universitätsstadt Rostock",
+      "privacyUrl": "https://rathaus.rostock.de/de/datenschutz/",
+    },
+    {
+      // Stadt Bochum's roadworks map service (ArcGIS MapServer, an export of
+      // the city's Baustellenmanagement database). Each site is published as a
+      // midpoint (layer 0) and a street line (layer 2), 178 each on 2026-10-28,
+      // one row per site, joined by FID. The feed reads the midpoints: FID is a
+      // row number of the export, not a stable id, and the line layer has
+      // nothing else that tells a measure's several sites apart (48 line rows
+      // repeat another's attributes), while a midpoint's X/Y does; about a
+      // quarter of the lines are zero-length anyway. The id hashes the
+      // measure number (NUMSTR) and the midpoint. maxRecordCount is 1000, so
+      // one request returns everything.
+      // BEEINTRAEC lists the restrictions comma-separated (58 combinations);
+      // the map below holds every one seen: any carriageway closure is high,
+      // half/partial closure, one-way, traffic lights, lane reduction or one
+      // carriageway closed is medium, a speed limit or narrowed lane alone is
+      // low. 29 records name none (severity unknown). 9 records close only a
+      // footway or cycle path and are filtered out. DATUMVON/DATUMBIS are
+      // epoch ms at UTC midnight of the calendar date, so a record ends at
+      // 01:00 local on its last day (2 records ending today read as ended).
+      // The reader's same-feed dedupe folds 21 midpoints of one measure lying
+      // within 60 m of each other, so 178 rows give 148 events.
+      "subdivision": "nw",
+      "operator": "bochum",
+      "product": "events",
+      "name": "Stadt Bochum roadworks (Baustellenmanagement)",
+      "homepage": "https://bochum.opendata.ruhr/dataset/bochum-baustellen",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geoservicekkm.bochum.de/arcgis/rest/services/maponline/Baustellen/MapServer/0/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": ["NUMSTR", "X", "Y"],
+        "defaultType": "roadworks",
+        "headlineField": "MERKMAL",
+        "descriptionField": "BEEINTRAEC",
+        "roadField": "STANDORT",
+        "severityField": "BEEINTRAEC",
+        "severityMap": {
+          "Vollsperrung Fahrbahn": "high",
+          "Vollsperrung Fahrbahn, Vollsperrung Gehweg": "high",
+          "Vollsperrung Fahrbahn, Beeinträchtigung ÖPNV, Vollsperrung Gehweg": "high",
+          "Vollsperrung Fahrbahn,  Relevant für Pressefilter": "high",
+          "Vollsperrung Fahrbahn, Vollsperrung Radweg, Vollsperrung Gehweg": "high",
+          "Vollsperrung Fahrbahn, Einsatz Lichtsignalanlage, Halbseitige Sperrung Fahrbahn": "high",
+          "Vollsperrung Fahrbahn, teilweise Sperrung Gehweg": "high",
+          "Einbahnstraße": "medium",
+          "Einsatz Lichtsignalanlage": "medium",
+          "Einsatz Lichtsignalanlage, Beschränkung auf 30 km/h": "medium",
+          "Einsatz Lichtsignalanlage, Halbseitige Sperrung Fahrbahn": "medium",
+          "Verengung 2 auf 1": "medium",
+          "Einsatz Lichtsignalanlage, Vollsperrung Gehweg": "medium",
+          "Einsatz Lichtsignalanlage, teilweise Sperrung Fahrbahn": "medium",
+          "Einbahnstraße, teilweise Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Einbahnstraße, teilweise Sperrung Gehweg": "medium",
+          "Einsatz Lichtsignalanlage, Beschränkung auf 30 km/h, Halbseitige Sperrung Fahrbahn, Spurverlegung": "medium",
+          "Einsatz Lichtsignalanlage, Verengung 2 auf 1, Beschränkung auf 30 km/h": "medium",
+          "Einsatz Lichtsignalanlage, Verengung 2 auf 1, Beschränkung auf 30 km/h, Vollsperrung Gehweg": "medium",
+          "Halbseitige Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Verengung 2 auf 1, Halbseitige Sperrung Fahrbahn, Vollsperrung Gehweg, Restfahrbahnbreite 3,0m i.L.": "medium",
+          "Beeinträchtigung ÖPNV, teilweise Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Beeinträchtigung ÖPNV, teilweise Sperrung Fahrbahn, teilweise Sperrung Gehweg": "medium",
+          "Beschränkung auf 30 km/h, teilweise Sperrung Fahrbahn": "medium",
+          "Einbahnstraße, Einsatz Lichtsignalanlage, teilweise Sperrung Fahrbahn": "medium",
+          "Einbahnstraße, Halbseitige Sperrung Fahrbahn": "medium",
+          "Einbahnstraße, Halbseitige Sperrung Fahrbahn, teilweise Sperrung Gehweg": "medium",
+          "Einbahnstraße, Verengung 2 auf 1, Beschränkung auf 30 km/h": "medium",
+          "Einbahnstraße, Vollsperrung Gehweg": "medium",
+          "Einsatz Lichtsignalanlage, Halbseitige Sperrung Fahrbahn, Restfahrbahnbreite 3,0m i.L.": "medium",
+          "Einsatz Lichtsignalanlage, Halbseitige Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Einsatz Lichtsignalanlage, Halbseitige Sperrung Fahrbahn, Vollsperrung Radweg, Vollsperrung Gehweg": "medium",
+          "Einsatz Lichtsignalanlage, teilweise Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Einsatz Lichtsignalanlage, teilweise Sperrung Gehweg": "medium",
+          "Halbseitige Sperrung Fahrbahn": "medium",
+          "Halbseitige Sperrung Fahrbahn, Fußgänger auf Fahrbahn": "medium",
+          "Halbseitige Sperrung Fahrbahn, Vollsperrung Gehweg, Restfahrbahnbreite 3,0m i.L.": "medium",
+          "Halbseitige Sperrung Fahrbahn, teilweise Sperrung Gehweg": "medium",
+          "Spurverlegung, teilweise Sperrung Fahrbahn": "medium",
+          "Verengung 2 auf 1, Beschränkung auf 30 km/h": "medium",
+          "Verengung 2 auf 1, Beschränkung auf 30 km/h, Vollsperrung Radweg, Vollsperrung Gehweg, Fußgänger auf Fahrbahn": "medium",
+          "Verengung 2 auf 1, Halbseitige Sperrung Fahrbahn, Spurverlegung": "medium",
+          "Verengung 2 auf 1, Verengung 3 auf 2, teilweise Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Verengung 2 auf 1, Vollsperrung Gehweg": "medium",
+          "Verengung 2 auf 1, Vollsperrung Radweg, Vollsperrung Gehweg": "medium",
+          "Verengung 2 auf 1, teilweise Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "Vollsperrung einer Richtungsfahrbahn, Spurverlegung": "medium",
+          "Vollsperrung einer Richtungsfahrbahn, Verengung 2 auf 1, Beschränkung auf 30 km/h, Spurverlegung": "medium",
+          "teilweise Sperrung Fahrbahn": "medium",
+          "teilweise Sperrung Fahrbahn, Vollsperrung Gehweg": "medium",
+          "teilweise Sperrung Fahrbahn, Vollsperrung Gehweg, teilweise Sperrung Gehweg": "medium",
+          "Nur bestimmte Uhrzeit": "low",
+          "Beschränkung auf 40 km/h": "low",
+          "Restfahrbahnbreite 3,0m i.L.": "low",
+        },
+        "validFromField": "DATUMVON",
+        "validToField": "DATUMBIS",
+        // ArcGIS date fields: days as epochs at midnight UTC; the last day counts.
+        "validityDates": true,
+        "filter": [
+          {
+            "field": "BEEINTRAEC",
+            "exclude": [
+              "teilweise Sperrung Gehweg",
+              "Vollsperrung Gehweg",
+              " Relevant für Pressefilter, Vollsperrung Radweg",
+            ],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      // The city's own catalogue record (Stadt Bochum, harvested by
+      // opendata.ruhr) says CC0; open.nrw's copy reads "other-closed" because
+      // the CKAN id "cc-zero" is no DCAT-AP.de licence URI. The service's
+      // copyrightText "© Stadt Bochum" is credited.
+      "license": "CC0-1.0",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "attribution": "Stadt Bochum",
+      "privacyUrl": "https://www.bochum.de/datenschutzerklaerung",
+    },
+    {
+      // Stadt Dortmund Tiefbauamt on the city's Opendatasoft portal: four
+      // datasets, current ("tagesaktuell") and planned ("geplant") works, each
+      // as points and as work-area polygons with the same fields. The feed
+      // reads the two polygon datasets (the work's extent, 159 + 40 records on
+      // 2026-10-28); the point datasets hold the same records. The portal
+      // refreshes them nightly (~02:00 UTC). Exports carry no record id, so the
+      // id hashes the measure text and its dates; no two records share them,
+      // and a planned measure that becomes current keeps its id.
+      // `art_der_baumassnahme` is "<street> - <measure> // <restriction>", the
+      // restriction free text ("Vollsperrung", "VSP", "halbs. Sp.",
+      // "Einengung", 61 spellings; 27 records name none). `einschrankung` is
+      // empty on every record. So severity stays unknown and the few
+      // footway-only closures ("Gehwegsperrung", ~5) cannot be filtered.
+      // von/bis are calendar dates; nothing published is expired. A few
+      // long-standing measures (a sinkhole since 2024) end in 2099, 2204 or
+      // 2999: open-ended, kept.
+      // `auftraggeber` (the client: Dortmunder Netz, Tiefbauamt, private) is
+      // the only other text, so it serves as the description.
+      "subdivision": "nw",
+      "operator": "dortmund",
+      "product": "events",
+      "name": "Stadt Dortmund roadworks (Tiefbauamt)",
+      "homepage": "https://open-data.dortmund.de/explore/dataset/fb66-baustellen-tagesaktuell-flachen/",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://open-data.dortmund.de/api/v2/catalog/datasets/fb66-baustellen-tagesaktuell-flachen/exports/geojson",
+            "https://open-data.dortmund.de/api/v2/catalog/datasets/fb66-baustellen-geplant-flachen/exports/geojson",
+          ],
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": ["art_der_baumassnahme", "von", "bis"],
+        "defaultType": "roadworks",
+        "headlineField": "art_der_baumassnahme",
+        "descriptionField": "auftraggeber",
+        "validFromField": "von",
+        "validToField": "bis",
+        "validityDates": true,
+        // The restriction is free text after "//" in 61 spellings (Vollsperrung,
+        // VSP, halbs. Sp., Fahrbahneinengung …); the restriction field itself is
+        // empty everywhere. The first pattern that matches gives the severity.
+        "severityField": "art_der_baumassnahme",
+        "severityPatterns": [
+          {
+            "match": "//.*(?:\\bVollsperr(?!ung\\s+Fu)|\\bVollsperung|\\bVSP\\b)",
+            "severity": "high",
+          },
+          {
+            "match": "//.*(?:halbs|halbseit|Teilsperr|Einbahn|Spureinzug|Abbiegespur|\\bLSA\\b|Wanderbaustelle)",
+            "severity": "medium",
+          },
+          { "match": "//.*einengung", "severity": "low" },
+        ],
+        // Closures of the footway alone ("// Gehwegsperrung", "// gehwegsp.").
+        "filter": [
+          {
+            "field": "art_der_baumassnahme",
+            "excludeMatching": ["//\\s*(?:teilweise\\s+)?gehwegsp[a-zä.]*(?:\\s+teilw\\.?)?\\s*$"],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-ZERO-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+      "attribution": "Stadt Dortmund, Tiefbauamt",
+      "privacyUrl": "https://open-data.dortmund.de/pages/datenschutzhinweise/",
+    },
+    {
+      // Stadt Duisburg's Verkehrsportal map service (ArcGIS MapServer). Each
+      // active site is a symbol point (layer 2) and a street line (layer 3)
+      // with the same OBJECTID and fields; the feed reads the lines (69 on
+      // 2026-10-28, all with real length). The layer holds only works under
+      // way (AKTIV = 1 on all; none starts later or has ended; works due in
+      // the next seven days sit in a separate layer), so it carries its own
+      // validity: the dates are only text in BAUZEIT_AB, a range with
+      // two-digit years ("13.04.26 - 30.10.26", "19.08.26 - Bis auf
+      // Weiteres") that the reader cannot parse, and are not mapped.
+      // SYMBOL_ID picks the map icon and is undocumented; read against the
+      // descriptions, 2 is a full closure (33 of 37 say "vollständig
+      // gesperrt") and 4 a one-way regime (4 of 6 name an Einbahnstraße),
+      // while 1 mixes lane closures, traffic lights and staged closures and
+      // stays unknown. maxRecordCount is 1000.
+      "subdivision": "nw",
+      "operator": "duisburg",
+      "product": "events",
+      "name": "Stadt Duisburg roadworks (Verkehrsportal)",
+      "homepage": "https://opendata-duisburg.de/dataset/baustellen-duisburg",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geoportal2.duisburg.de/arcgisserver/rest/services/Masterportal/MP_Verkehrsportal/MapServer/3/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "OBJECTID",
+        "defaultType": "roadworks",
+        "headlineField": "ANLASS_TXT_BM",
+        "descriptionField": "BESCHREIBUNG",
+        "roadField": "BEZEICHNUNG_BM",
+        "severityField": "SYMBOL_ID",
+        "severityMap": {
+          "2": "high",
+          "4": "medium",
+          "1": "unknown",
+        },
+        // Start and end only as text in one field ("13.04.26 - 30.10.26").
+        "validityRangeField": "BAUZEIT_AB",
+        "validityDates": true,
+        "filter": [{ "field": "AKTIV", "include": ["1"] }],
+      },
+      "freshnessWindowSec": 7200,
+      // The city's own catalogue (dataset page and DCAT-AP record) says CC BY
+      // 3.0 DE; the opendata.ruhr copy harvested from it says DL-DE-ZERO-2.0.
+      // The city's statement, the stricter one, is used.
+      "license": "CC-BY-3.0-DE",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/de/",
+      "attribution": "Stadt Duisburg",
+      "privacyUrl": "https://www.duisburg.de/service/datenschutz_67613.php",
+    },
+    {
+      // Stadt Herne's roadworks WFS (layer `baustelle`, works on the road
+      // network as street lines; 21 on 2026-10-28, current and future, all in
+      // one request). The server speaks WFS 1.x: the 2.0 TYPENAMES form is
+      // refused, so the URL uses TYPENAME without a version. Records carry no
+      // id property (the feature id "baustelle.4798" is not read by the
+      // mapping), so the id hashes street, measure and start.
+      // `einschr` is the restriction as free text, 12 values, mapped below; a
+      // closure staged "Teil/Vollsperrung" counts as full. One record closes
+      // only the footway ("Vollsperrung Gehweg ", trailing space as
+      // published) and is filtered out. beginn/ende are midnight timestamps
+      // ("2026-12-31T00:00:00.000"), so a record ends at the start of its last
+      // day, a day early. The publisher updates it as needed.
+      "subdivision": "nw",
+      "operator": "herne",
+      "product": "events",
+      "name": "Stadt Herne roadworks",
+      "homepage": "https://opendata.ruhr/dataset/baustellen",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geodaten.herne.de/geoserver/verkehr/baustellen?SERVICE=WFS&REQUEST=GetFeature&TYPENAME=baustelle&OUTPUTFORMAT=application/json&SRSNAME=EPSG:4326",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": ["strasse", "massnahme", "beginn"],
+        "defaultType": "roadworks",
+        "headlineField": "massnahme",
+        "descriptionField": "einschr",
+        "roadField": "strasse",
+        "severityField": "einschr",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "Vollsperrung Fahrbahn": "high",
+          "Vollsperrung Fahrbahn/Gehweg": "high",
+          "Teil/Vollsperrung Fahrbahn, Einbahnreglung": "high",
+          "Teil/Vollsperrung Fahrbahn, LSA, Einbahnreglung": "high",
+          "Teil/Vollsperrung, Einbahnreglung, mit LSA": "high",
+          "Teilsperrung mit LSA": "medium",
+          "Teilsperrung Fahrbahn mit LSA": "medium",
+          "Teilsperrung Fahrbahn mit Einbahnreglung": "medium",
+          "Teilsperrung Fahrbahn mit einabhnreglung": "medium",
+          "Baustellen LSA": "medium",
+        },
+        "validFromField": "beginn",
+        "validToField": "ende",
+        // Dates written at midnight (`2026-10-30T00:00:00.000`): the last day counts.
+        "validityDates": true,
+        "filter": [
+          { "field": "einschr", "exclude": ["Vollsperrung Gehweg", "Vollsperrung Gehweg "] },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-ZERO-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
+      "attribution": "Stadt Herne",
+      "privacyUrl": "https://www.herne.de/Technische-Seiten/Datenschutzerklaerung/",
+    },
+    {
+      // The Mobilitätsatlas Rheinland-Pfalz roadworks layer (`mwvlw:baustelle`),
+      // fed by the state's and municipalities' traffic authorities through
+      // SperrinfoSys ("BaustellenInfo digital RLP"). The layer also carries
+      // Autobahn GmbH (1,780 on 2026-10-28, ingested elsewhere), Baden-
+      // Württemberg (610), Stadt Karlsruhe (219, the TRK feed) and Luxembourg
+      // (171). The url asks GeoServer for the RLP authorities only
+      // (CQL_FILTER, 1,054 points, 0.7 MB instead of 2.6 MB), and the filter
+      // below repeats that so a server ignoring the CQL still yields only RLP.
+      // Points come back lon/lat for EPSG:4326. The companion `mwvlw:verlauf`
+      // (affected-road lines) and `mwvlw:umleitung` (detours) join by a
+      // `baustelleId` this layer's properties do not carry, so they are not read.
+      // The stable id is the GeoJSON feature id ("baustelle.<SperrinfoSys id>",
+      // unique across all 1,054); no property identifies a record (28 share
+      // contact, road, dates, work type and text).
+      // `strasse` is the road number (K106, L52, B9) or "G" for a municipal
+      // street (360 of 1,054). Planned records carry typ "*_GEPLANT"; the
+      // validity window covers that. No record had ended on 2026-10-28.
+      // A full closure stays a roadworks record (point geometry, free text).
+      "subdivision": "rp",
+      "operator": "lbm",
+      "product": "events",
+      "name": "Mobilitätsatlas Rheinland-Pfalz roadworks (RLP traffic authorities)",
+      "homepage": "https://mobilithek.info/offers/886597703450927104",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://maps.mobilitaetsatlas.de/geoserver/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=mwvlw:baustelle&outputFormat=application/json&srsName=EPSG:4326&CQL_FILTER=quelle%3D%27Verkehrsbeh%C3%B6rden%20in%20Rheinland-Pfalz%27",
+          "cadenceSec": 900,
+        },
+      },
+      "geojson": {
+        "featureId": true,
+        "defaultType": "roadworks",
+        "headlineField": "art_der_arbeiten",
+        "descriptionField": "beschreibung",
+        "roadField": "strasse",
+        "severityField": "art_der_arbeiten",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "Halbseitige Sperrungen": "medium",
+          "Sperrung einer Fahrtrichtung": "medium",
+          "Sperrung für LKW": "medium",
+          "Verkehrsraumeinschränkung": "low",
+        },
+        "updatedField": "version",
+        "validFromField": "von",
+        "validToField": "bis",
+        "filter": [{ "field": "quelle", "include": ["Verkehrsbehörden in Rheinland-Pfalz"] }],
+      },
+      "freshnessWindowSec": 3600,
+      // No licence is stated anywhere for this data: the WFS capabilities
+      // have empty Fees/AccessConstraints, the Mobilithek offer says
+      // NO_LICENSE, and the site imprint is generic copyright text.
+      // No licence is stated anywhere for this data: Mobilithek offer
+      // 886597703450927104 says NO_LICENSE, the WFS's AccessConstraints and
+      // Fees are empty, and the imprint covers the site's texts and images.
+      // Nothing restricts reuse, and baustelleninfo.rlp.de invites navigation
+      // providers to take and publish the data. Read under DL-DE-BY-2.0, the
+      // stricter of the licences LBM states on its other Mobilithek offers
+      // (CC0, DL-DE-BY-2.0), until LBM confirms one.
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "terms": {
+        "url": "https://mobilithek.info/offers/886597703450927104",
+        "reviewedAt": "2026-10-28",
+        "note": "No licence stated (Mobilithek rights NO_LICENSE; WFS AccessConstraints/Fees empty); nothing restricts reuse. DL-DE-BY-2.0 assumed from LBM's other Mobilithek offers pending written confirmation from LBM Rheinland-Pfalz.",
+      },
+      "attribution": "Landesbetrieb Mobilität Rheinland-Pfalz / Mobilitätsatlas Rheinland-Pfalz",
+      "privacyUrl": "https://www.mobilitaetsatlas.de/datenschutz",
+    },
+    {
+      // The city's roadworks map. The ArcGIS service publishes the measures as
+      // one point layer (`Baustellen`) and as line/area layers split into
+      // current and planned. Only the point layer carries BaustelleID and the
+      // Von/Bis dates, and it holds every measure (146 points against
+      // 109 + 10 + 25 + 1 lines/areas, 2026-10-28), so the feed reads it
+      // alone. The WFS is read rather than the REST query (f=geojson): the WFS
+      // writes Von/Bis as "dd.mm.yyyy" dates, the REST query as epoch ms at
+      // UTC midnight, which would end each record an hour into its last day.
+      // A handful of Von/Bis values carry an edit time of day; they parse as
+      // timestamps. Expired measures are not published. The WFS writes an
+      // empty text field as the string "null" (Info_txt in 77 of 146 records),
+      // so the description is `Auswirkung`, the restriction text every record
+      // carries (as Aachen's `einschraen`). One measure appears twice with
+      // the same BaustelleID and content; the id keeps one.
+      // `Legende` is the city's own split: full closure (Voll_) or restriction
+      // (Einschr_), current (Aktuell) or planned (Zukunft). The free-text
+      // `Auswirkung` names "Vollsperrung" in 20 Einschr_ records too;
+      // the feed follows Legende, the field the city classifies by.
+      // A full closure stays a roadworks record (point geometry, free text).
+      "subdivision": "sh",
+      "operator": "kiel",
+      "product": "events",
+      "name": "Landeshauptstadt Kiel roadworks",
+      "homepage": "https://opendata.schleswig-holstein.de/dataset/baustellen-in-kiel",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://ims.kiel.de/geodatenextern/services/Stadtplan/LHKielWmsWfs/MapServer/WFSServer?request=GetFeature&service=WFS&typeName=Baustellen&outputFormat=geoJSON",
+          "cadenceSec": 1800,
+          "timeoutSec": 60,
+        },
+      },
+      "geojson": {
+        "idField": "BaustelleID",
+        "defaultType": "roadworks",
+        "headlineField": "Grund",
+        "descriptionField": "Auswirkung",
+        "roadField": "Strasse",
+        "severityField": "Legende",
+        "severityMap": {
+          "Voll_Aktuell": "high",
+          "Voll_Zukunft": "high",
+          "Einschr_Aktuell": "low",
+          "Einschr_Zukunft": "low",
+        },
+        "updatedField": "bearbeitet",
+        "validFromField": "Von",
+        "validToField": "Bis",
+        "validityDates": true,
+        // The WFS writes empty text fields as the string "null".
+        "nullValues": ["null"],
+        // Parking-only measures (closed parking bays, no carriageway or
+        // footway affected): 7 of 146 records on 2026-10-28. Exact values,
+        // since `Auswirkung` is free text; a new wording passes through.
+        "filter": [
+          {
+            "field": "Auswirkung",
+            "exclude": [
+              "Sperrung Parkplätze",
+              "Sperrung Parplätze",
+              "Sperrung Parkplatz",
+              "Teilweise Sperrung Parkplatz",
+              "Sperrung von Behindertenparkplätzen",
+              "Wegfall Parkplätze auf dem Seitenstreifen",
+            ],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Landeshauptstadt Kiel, Amt für Bauordnung, Vermessung und Geoinformation",
+      "privacyUrl": "https://www.kiel.de/de/_info/datenschutzerklaerung.php",
+    },
+    {
+      // The city's traffic-order register (VMS, the same "SBOD" schema as
+      // Aachen's BSIS; Sbod__Sdatenid is Aachen's sdatenid). It publishes each
+      // order as a point (`vms:stvkinfoweb`) and as an area (`vms:stvkweb`),
+      // 155 records each; the area layer's coordinates are broken (x around
+      // -31,000,000), so the feed reads the points. Asked for EPSG:4326, the
+      // WFS 2.0 GeoJSON comes back lon/lat. The GeoServer cascades to an
+      // internal host that sometimes times out (an OWS exception, not JSON);
+      // a retry a minute later succeeded.
+      // Beginn/Ende are calendar dates; the times of day sit in separate
+      // Beginn_Uhr/Ende_Uhr columns (often empty), so the window is read at
+      // day granularity.
+      // `Stbl_Ausd` is the order's effect on traffic, mapped like Aachen's
+      // `symbol`. `Stsp_Sparte` is the trade doing the work.
+      // A full closure stays a roadworks record (point geometry, free text).
+      "subdivision": "sh",
+      "operator": "norderstedt",
+      "product": "events",
+      "name": "Stadt Norderstedt roadworks (VMS)",
+      "homepage": "https://opendata.schleswig-holstein.de/dataset/baustelleninformation",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geoservice.norderstedt.de/geoserver/vms/ows?service=WFS&version=2.0.0&request=GetFeature&typeNames=vms:stvkinfoweb&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 1800,
+          "timeoutSec": 90,
+        },
+      },
+      "geojson": {
+        "idField": "Sbod__Sdatenid",
+        "typeField": "Stsp_Sparte",
+        "typeMap": {
+          "Strassenbau": "roadworks",
+          "Baumpflege": "roadworks.works.tree_work",
+          "Telekom": "roadworks.works.utility_work",
+          "Strom": "roadworks.works.utility_work",
+          "Gas": "roadworks.works.utility_work",
+          "Wasser": "roadworks.works.utility_work",
+          "Fernheizung": "roadworks.works.utility_work",
+          "Kanal": "roadworks.works.utility_work",
+          "Aufgrabungen": "roadworks",
+          "Private": "roadworks",
+          "-": "roadworks",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "Sbod_Art_Arb",
+        "descriptionField": "Sbod_Art_Vb",
+        "roadField": "Strasse",
+        "severityField": "Stbl_Ausd",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "halbseitige Sperrung": "medium",
+          "starke Einschränkung": "medium",
+          "geringfügige Einschränkung": "low",
+          "einseitige Einschränkung": "low",
+          // one general special-use permit (an excavation) with no effect given
+          "-": "unknown",
+        },
+        "validFromField": "Beginn",
+        "validToField": "Ende",
+        "validityDates": true,
+        // Counts from 155 records on 2026-10-28.
+        "filter": [
+          // Orders the city marks finished: 48.
+          { "field": "Status", "exclude": ["beendet"] },
+          // Temporary no-parking zones (Haltverbotszonen): 52, 40 of them
+          // not yet finished.
+          { "field": "Mass_Art", "exclude": ["Haltverbote"] },
+          // Orders the city records as not affecting traffic (site storage,
+          // containers, loading areas off the carriageway): 22 more; and a
+          // no-parking order filed as a building site: 1.
+          { "field": "Stbl_Ausd", "exclude": ["nicht betroffen", "Haltverbot"] },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Herausgeber: Stadtverwaltung Norderstedt",
+      "privacyUrl": "https://www.norderstedt.de/Quicknavigation/Datenschutzerkl%C3%A4rung/",
+    },
+    {
+      // The Tiefbauamt's "Baustellen Bürgerauskunft", exported daily from the
+      // city's VMS system to an ArcGIS Online FeatureServer. Layer 1 holds one
+      // (Multi)Polygon per permit (AKZ): 455 records for 454 file numbers
+      // (2026-10-28). Layer 0 repeats them as 732 points, several per permit,
+      // and lacks 16 permits, so the feed reads the areas. maxRecordCount is
+      // 2000, so one request returns everything; outSR=4326 gives lon/lat.
+      // OBJECTID is renumbered when the hosted layer is overwritten, so the id
+      // is the file number with the street (one AKZ, TB 2026/0027-2, appears
+      // twice with identical content and folds into one record).
+      // DATUM_VON/DATUM_BIS are the first and last day ("Erster/Letzter Tag der
+      // Sperrung" in the city's metadata), published as epoch ms at 00:00 UTC.
+      // SPUR is the closure class. Filters (2026-10-28): removals (AKZ "U",
+      // four spellings of "Umzug - mit Möbelfahrzeug ...", 26 records) and
+      // permits whose SPERRUNG names only the footway, a parking strip or lot,
+      // a pedestrian zone, a footbridge or a path (25 spellings, 88 records,
+      // 6 of them "Vollsperrung" of such a footway) do not restrict traffic.
+      // SPERRUNG is free text: a new spelling passes the filter. GRUND, the
+      // reason, is free text too (294 values for 455 records), so it is the
+      // headline rather than a type. 13 records
+      // ended in the past (the export lags a day or two); one runs to 2202.
+      "subdivision": "sn",
+      "operator": "chemnitz",
+      "product": "events",
+      "name": "Stadt Chemnitz roadworks (Baustellen Bürgerauskunft)",
+      "homepage": "https://portal-chemnitz.opendata.arcgis.com/datasets/baustellen-buergerauskunft",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://services6.arcgis.com/jiszdsDupTUO3fSM/arcgis/rest/services/Baustellen_Buergerauskunft/FeatureServer/1/query?where=1%3D1&outFields=*&outSR=4326&f=geojson",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": ["AKZ", "STRASSE"],
+        "defaultType": "roadworks",
+        "headlineField": "GRUND",
+        "descriptionField": "SPERRUNG",
+        "roadField": "STRASSE",
+        "severityField": "SPUR",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "Verkehrsraumeinschränkung": "low",
+        },
+        "validFromField": "DATUM_VON",
+        "validToField": "DATUM_BIS",
+        // ArcGIS date fields: days as epochs at midnight UTC; the last day counts.
+        "validityDates": true,
+        "filter": [
+          {
+            "field": "GRUND",
+            "exclude": [
+              "Umzug  -  mit Möbelfahrzeug (ohne Einsatz Möbellift)",
+              "Umzug  -  mit Möbelfahrzeug einschl. Möbellift",
+              "Umzug  -   -  mit Möbelfahrzeug einschl. Möbellift",
+              "Umzug  -  mit Möbelfahrzeug 1.) einschl. Möbellift/ 2.) ohne Möbellift",
+            ],
+          },
+          {
+            "field": "SPERRUNG",
+            "exclude": [
+              "Fußgänger- und Radbrücke",
+              "Fußgängerzone (teilw.)",
+              "Gehbahn",
+              "Gehbahn (teilw. + vollst.)",
+              "Gehbahn (teilw.)",
+              "Gehbahn (teilw.)  Fläche: 25 m² + 8m²",
+              "Gehbahn (teilw.); Parkplatz",
+              "Gehbahn (teilw.); Parkstreifen",
+              "Gehbahn (wechselseitig)",
+              "Gehbahn Parkstreifen",
+              "Gehbahn; Parkstreifen",
+              "Gehbahnen (teilw.)",
+              "Gehbahnen (teilw.); Parkstreifen",
+              "Pakstreifen (teilw.)",
+              "Parkfläche",
+              "Parkfläche (teilw.)",
+              "Parkflächen (teilw.)",
+              "Parkplatz",
+              "Parkplatz (teilw.)",
+              "Parkstreifen",
+              "Parkstreifen teilweise",
+              "Raf-/ Fußweg (teilw.)",
+              "Treppe/ Gebäudedurchgang",
+              "Verbindungsweg",
+              "Verbindungsweg (teilw.)",
+            ],
+          },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Stadt Chemnitz",
+      "privacyUrl": "https://www.chemnitz.de/de/datenschutz",
+    },
+    {
+      // The Straßen- und Tiefbauamt's traffic restrictions from its permit
+      // process for works and events, as the Themenstadtplan shows them
+      // ("aktuelle"/"zukünftige Verkehrseinschränkungen"), read from the
+      // city's cardo OGC API Features server: L60 holds those valid today
+      // (1,078 lines on 2026-10-28), L150 those starting later (132). The two
+      // never share a record (L150 starts tomorrow at the earliest). Each line
+      // is one section of the city's street network (SKN5): staid (sta_id in
+      // L150) is the section key, and there is no street name. The name is in
+      // collection L123 (SKN5 Kanten, `schluessel` -> `strasse`; all 1,078
+      // keys match), which the reader cannot join.
+      // limit=10000 returns every record in one answer (WGS84 lon/lat). The
+      // feature `id` is a row number and restarts in each collection, so the
+      // id hashes the record's fields; records alike in all of them are
+      // repeats with the same geometry (1,078 -> 956 in L60).
+      // A record moving from L150 to L60 changes key name and so its id.
+      // The *_format dates are a date alone where the time is 00:00
+      // ("31.10.2026") and carry the time otherwise ("31.10.2026 23:59"), so
+      // under validityDates an end date runs to the end of its day.
+      // `typ`: the theme describes seven categories; three occur today.
+      "subdivision": "sn",
+      "operator": "dresden",
+      "product": "events",
+      "name": "Landeshauptstadt Dresden traffic restrictions (Verkehrseinschränkungen)",
+      "homepage": "https://stadtplan.dresden.de/",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "urls": [
+            "https://kommisdd.dresden.de/net4/public/ogcapi/collections/L60/items?f=json&limit=10000",
+            "https://kommisdd.dresden.de/net4/public/ogcapi/collections/L150/items?f=json&limit=10000",
+          ],
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idFields": ["typ", "datum_von", "datum_bis", "sperrgrund_format", "staid", "sta_id"],
+        "defaultType": "roadworks",
+        "headlineField": "sperrgrund_format",
+        "descriptionField": "typ",
+        "severityField": "typ",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "Sperrung eines Fahrstreifens; halbseitige Sperrung: Verkehrsregelung durch Verkehrszeichen": "medium",
+          "FB-teilweise mit erheblichen Einschränkungen": "medium",
+        },
+        "validFromField": "datum_von_format",
+        "validToField": "datum_bis_format",
+        "validityDates": true,
+      },
+      "freshnessWindowSec": 7200,
+      // No licence is stated for these collections: not on the OGC API
+      // landing page, collection metadata or the theme description, and the
+      // data is not in the city's Open Data portal or on GovData. The city's
+      // other kommisdd services listed on GovData are DL-DE-BY-2.0, but the
+      // Themenstadtplan's own terms reserve commercial use of individual
+      // contents outside the map to the Amt für Geodaten und Kataster.
+      "license": "NOASSERTION",
+      "terms": {
+        "url": "https://stadtplan.dresden.de/content.aspx?method=CopyRight,UsageConstraints,ApplicationContent",
+        "reviewedAt": "2026-10-28",
+        "note": "No licence on the kommisdd OGC API collections L60/L150. Themenstadtplan terms: commercial use of individual contents (maps, digital data) outside the Themenstadtplan requires contacting the Geoservice of the Amt für Geodaten und Kataster (geoservice@dresden.de). Other Dresden kommisdd services on GovData carry DL-DE-BY-2.0. Ask the Straßen- und Tiefbauamt to publish the layer under DL-DE-BY-2.0.",
+      },
+      "attribution": "Landeshauptstadt Dresden, Straßen- und Tiefbauamt",
+      "disabled": {
+        "reason": "no licence stated, and the Themenstadtplan terms reserve commercial use of its digital data",
+        "since": "2026-10-28",
+      },
+      "privacyUrl": "https://www.dresden.de/de/sonstiges/datenschutz.php",
+    },
+    {
+      // The Verkehrs- und Tiefbauamt's register of restrictions of street
+      // space, refreshed daily by FME (fme_tstamp). The WFS publishes the same
+      // 1,472 records twice, as work-area polygons and as points (identical
+      // objectid and properties); the feed reads the polygons, whose shape
+      // shows which stretch is taken. GeoServer answers WGS84 lon/lat for
+      // srsName=EPSG:4326, and one request returns every record (no feature cap).
+      // The register holds every street-space permit: of 1,472 records
+      // (2026-10-28), 635 have no sperrart and 435 "geringe Einschränkung" -
+      // mostly removals (Umzug), site set-ups and parking-lane permits - and 28
+      // close only the footway or cycle path. The filter keeps the 374 whose
+      // sperrart restricts traffic (Vollsperrung 93, halbseitige Sperrung 16,
+      // Einschränkungen 265), then drops removals (Umzug, 58) and no-parking
+      // zones (Haltverbotszone, 2): 314 records. It loses 11 records with no
+      // sperrart whose meldung does describe a closure (Straßenbau mostly);
+      // the publisher did not classify them. None is expired: the register
+      // holds current and future measures only. `meldung` is the placeholder
+      // "keine Meldung" on most records.
+      "subdivision": "sn",
+      "operator": "leipzig",
+      "product": "events",
+      "name": "Stadt Leipzig traffic space restrictions (Verkehrsraumeinschränkungen)",
+      "homepage": "https://opendata.leipzig.de/dataset/verkehrsraumeinschrankungen-polygone-stadt-leipzig",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://geodienste.leipzig.de/l3/OpenData/wfs?SERVICE=WFS&VERSION=2.0.0&REQUEST=GetFeature&typeNames=OpenData:verkehrsraumeinschraenkungen&outputFormat=application/json&srsName=EPSG:4326",
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "objectid",
+        "typeField": "sparte",
+        "typeMap": {
+          "Straßenbau": "roadworks.works.construction",
+          "Gleisbau": "roadworks.works.construction",
+          "DB AG Gleisbau": "roadworks.works.construction",
+          "Brückenbau": "roadworks.works.bridge_work",
+          "Trinkwasser": "roadworks.works.utility_work",
+          "Abwasser": "roadworks.works.utility_work",
+          "Fernwärme": "roadworks.works.utility_work",
+          "Gas": "roadworks.works.utility_work",
+          "Strom": "roadworks.works.utility_work",
+          "Bahnstrom": "roadworks.works.utility_work",
+          "Telekommunikation": "roadworks.works.utility_work",
+          "Komplexer Leitungsbau": "roadworks.works.utility_work",
+          "Stadtbeleuchtung": "roadworks.works.utility_work",
+          "LSA/Koord.kabel": "roadworks.works.utility_work",
+          "Begrünung": "roadworks.works.tree_work",
+          "ASG Begrünung": "roadworks.works.tree_work",
+          "Markierungsarbeiten": "roadworks.works.line_marking",
+          "Absicherung Straßenschäden": "roadworks.works.maintenance",
+          "Sondernutzung, Baustelleneinr.": "roadworks",
+          "Sondernutzung, Kranstellung": "roadworks",
+          "Sondernutzung": "roadworks",
+          "Hinweisbeschilderung": "roadworks",
+          "stationäre Verkehrsregelung": "roadworks",
+          "Fahrradständer": "roadworks",
+          "Sonstiges": "roadworks",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "sparte",
+        "descriptionField": "meldung",
+        "roadField": "adresse",
+        "severityField": "sperrart",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "halbseitige Sperrung": "medium",
+          "Einschränkungen": "low",
+        },
+        "validFromField": "beginn",
+        "validToField": "ende",
+        "validityDates": true,
+        // Most records say "keine Meldung" (no message) where they have no text.
+        "nullValues": ["keine Meldung"],
+        "filter": [
+          {
+            "field": "sperrart",
+            "include": ["Vollsperrung", "halbseitige Sperrung", "Einschränkungen"],
+          },
+          { "field": "sparte", "exclude": ["Umzug", "Haltverbotszone"] },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Stadt Leipzig",
+      "privacyUrl": "https://www.leipzig.de/datenschutzerklaerung/",
+    },
+    {
+      // SPERRINFOSYS, Saxony's register of closures lasting a day or more on
+      // motorways, federal, state and county roads (municipal roads in part),
+      // filled by the traffic authorities of the LASuV, the counties, the
+      // county-free cities and the Große Kreisstädte, and published by LISt
+      // GmbH as a zip rebuilt daily at about 04:00. It holds two GeoJSON
+      // files in EPSG:25833, which each declares (`crs`), so the reader
+      // reprojects them: the closures (1,271 lines on 2026-10-28) and the
+      // detours (616 lines, the detour routes of 213 closures, sharing their
+      // ID - a later addition as detour records). The feed reads the closures.
+      // The http URL redirects to https.
+      // One closure (ID) is split into several lines with the same fields
+      // (942 IDs; only the export time_stamp differs), so the parts share an
+      // id. Sperrung_Typ "V" marks events (57: processions, St. Martin), typed
+      // public_event. Filter: "Zeitweiliges Halte- oder Parkverbot" (40
+      // records, street cleaning) is no road disruption. A third of the dates
+      // carry an hour ("10.08.2026  16 Uhr").
+      // Overlap: the city feeds hold far more than their authorities enter
+      // here - Leipzig VTA 36 lines (in 55 records naming Leipzig), Dresden
+      // STA 77 (56 IDs), Chemnitz 30 (28 IDs) - so both are kept; a closure
+      // in both appears twice. "Sachsen via Mobilithek" (LASuV DATEX II) is
+      // likely the same register but has no credentials in production.
+      "subdivision": "sn",
+      "operator": "list",
+      "product": "events",
+      "name": "Freistaat Sachsen closures (SPERRINFOSYS, LISt)",
+      "homepage": "https://www.govdata.de/suche/daten/sperrungen-und-umleitungen-sperrinfosys",
+      "tier": "authoritative",
+      "format": "geojson",
+      "timezone": "Europe/Berlin",
+      "endpoints": {
+        "main": {
+          "url": "https://www.list.smwa.sachsen.de/gdi/download/baustelleninfo/Baustelleninfo_Sachsen_geojson.zip",
+          "unzip": { "entries": "Sperrungen.*\\.geojson$" },
+          "cadenceSec": 1800,
+        },
+      },
+      "geojson": {
+        "idField": "ID",
+        "typeField": "Sperrung_Typ",
+        "typeMap": {
+          "N": "roadworks",
+          "V": "public_event",
+        },
+        "defaultType": "roadworks",
+        "headlineField": "Sperrung_Grund",
+        "descriptionField": "Ort",
+        "roadField": "Strasse",
+        "severityField": "Sperrung_Art_Klartext",
+        "severityMap": {
+          "Vollsperrung": "high",
+          "Sperrung einer Richtungsfahrbahn": "medium",
+          "Sperrung einer Fahrtrichtung": "medium",
+          "Halbseitige Sperrung": "medium",
+          "Sperrung für LKW": "low",
+          "Verkehrsbeschränkung": "low",
+          "Verkehrssicherung": "low",
+        },
+        "validFromField": "Sperrung_von",
+        "validToField": "Sperrung_bis",
+        "validityDates": true,
+        "filter": [
+          { "field": "Sperrung_Art_Klartext", "exclude": ["Zeitweiliges Halte- oder Parkverbot"] },
+        ],
+      },
+      "freshnessWindowSec": 7200,
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      "attribution": "Baustelleninformationssystem Freistaat Sachsen",
+      "privacyUrl": "https://www.list.sachsen.de/datenschutz.html",
+    },
+    {
       // NRW.Mobidrom bundled roadworks — CC-BY-SA (ShareAlike), kept in its own feed
       // so it never folds into a more permissive source.
       "subdivision": "nw",

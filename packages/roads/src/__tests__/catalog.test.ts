@@ -4,6 +4,7 @@ import {
   type CatalogFile,
   deriveFeedId,
   feedCredentialNames,
+  isPublicLicense,
   licenseInfo,
   lintCatalog,
   readCatalogDir,
@@ -66,10 +67,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 90 roads feeds under their new ids", () => {
+  test("the catalogue holds the 111 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(90);
+    expect(ids).toHaveLength(111);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -127,6 +128,27 @@ describe("the roads catalogue", () => {
         "de-nw-koeln-events",
         "de-nw-unna-events",
         "de-nw-aachen-events",
+        "de-bb-cottbus-events",
+        "de-bw-freiburg-events",
+        "de-bw-stuttgart-events",
+        "de-bw-trk-events",
+        "de-by-ingolstadt-events",
+        "de-by-muenchen-events",
+        "de-he-frankfurt-events",
+        "de-he-ivm-events",
+        "de-he-kassel-events",
+        "de-mv-rostock-events",
+        "de-nw-bochum-events",
+        "de-nw-dortmund-events",
+        "de-nw-duisburg-events",
+        "de-nw-herne-events",
+        "de-rp-lbm-events",
+        "de-sh-kiel-events",
+        "de-sh-norderstedt-events",
+        "de-sn-chemnitz-events",
+        "de-sn-dresden-events",
+        "de-sn-leipzig-events",
+        "de-sn-list-events",
         "de-nw-mobidrom-events",
         "de-by-mobilithek-events",
         "de-bw-mobilithek-events",
@@ -894,6 +916,45 @@ describe("one feed per publisher", () => {
     expect(f.auth).toBeUndefined();
     expect(main(f.id).url).toContain("geodienste.hamburg.de/wfs_verkehrsinformation");
     expect(f.geojson?.typeField).toBe("art");
+  });
+
+  test("the German municipal roadworks feeds are keyless, openly licensed and dated", () => {
+    const municipal = [
+      "de-bb-cottbus-events",
+      "de-bw-freiburg-events",
+      "de-bw-stuttgart-events",
+      "de-bw-trk-events",
+      "de-by-ingolstadt-events",
+      "de-by-muenchen-events",
+      "de-he-frankfurt-events",
+      "de-he-kassel-events",
+      "de-mv-rostock-events",
+      "de-nw-bochum-events",
+      "de-nw-dortmund-events",
+      "de-nw-duisburg-events",
+      "de-nw-herne-events",
+      "de-rp-lbm-events",
+      "de-sh-kiel-events",
+      "de-sh-norderstedt-events",
+      "de-sn-chemnitz-events",
+      "de-sn-leipzig-events",
+      "de-sn-list-events",
+    ];
+    for (const id of municipal) {
+      const f = feed(id) as CatalogFeed & { geojson?: GeoJsonMapping; timezone?: string };
+      expect(f.format, id).toBe("geojson");
+      expect(f.country, id).toBe("DE");
+      expect(f.auth, id).toBeUndefined();
+      expect(isPublicLicense(f.license), id).toBe(true);
+      expect(f.timezone, id).toBe("Europe/Berlin");
+      expect(f.geojson?.validityRangeField ?? f.geojson?.validFromField, id).toBeDefined();
+    }
+    // Dresden's service states no licence, and the city's map terms reserve
+    // commercial use of its digital data: listed, not polled.
+    const dresden = feed("de-sn-dresden-events");
+    expect(dresden.license).toBe("NOASSERTION");
+    expect(dresden.disabled?.since).toBe("2026-10-28");
+    expect(feed("de-he-ivm-events").format).toBe("datex2");
   });
 
   test("Stadt Aachen's roadworks are a keyless GeoJSON feed of calendar-dated points", () => {
