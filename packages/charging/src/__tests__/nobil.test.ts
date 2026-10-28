@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   __resetSkips,
   drainSkipped,
@@ -237,5 +238,100 @@ describe("nobil", () => {
     const out = parse({ main: [Buffer.from(JSON.stringify([doc]))] });
     expect(out.features).toHaveLength(1);
     expect(drainSkipped("no-nobil-charging")).toEqual({ no_geometry: 1 });
+  });
+});
+
+const numericDoc = (position: string, label: string) => {
+  const doc = JSON.parse(fixture("nobil.json").toString("utf8"));
+  doc.chargerstations = [doc.chargerstations[0]];
+  doc.chargerstations[0].csmd.Position = position;
+  delete doc.chargerstations[0].attr.conn["5"].attrvalid;
+  doc.chargerstations[0].attr.conn["5"].trans = label;
+  return doc;
+};
+
+describe("NOBIL searchable numeric fields", () => {
+  beforeEach(() => __resetSkips());
+  test.each([
+    ["prefix (59.9, -10.7) suffix", [-10.7, 59.9]],
+    ["1-2,3", [3, -2]],
+    ["1.2.3,10", [10, 2.3]],
+    [".5,10", [10, 5]],
+    ["1e2,3", [3, 2]],
+    ["59,9,10", [9, 59]],
+    ["59.9,10.7.2", [10.7, 59.9]],
+  ])("searches coordinates %j", (position, expected) => {
+    const out = parse({ main: [Buffer.from(JSON.stringify(numericDoc(position, "22 kW")))] });
+    expect(out.features[0]?.["location"]).toMatchObject({ geometry: { coordinates: expected } });
+    expect(drainSkipped("no-nobil-charging")).toEqual({});
+  });
+
+  test.each([
+    ["91,10 then 40,10", "malformed"],
+    ["(0,0)", "no_geometry"],
+    ["", "no_geometry"],
+    ["no position", "no_geometry"],
+  ])("does not invent a later coordinate for %j", (position, reason) => {
+    const out = parse({ main: [Buffer.from(JSON.stringify(numericDoc(position, "22 kW")))] });
+    expect(out.features).toHaveLength(0);
+    expect(drainSkipped("no-nobil-charging")).toEqual({ [reason]: 1 });
+  });
+
+  test.each([
+    ["prefix -22 kW suffix", { maxPowerKw: 22 }],
+    [".5 kW", { maxPowerKw: 5 }],
+    ["1.2.3 kW", { maxPowerKw: 2.3 }],
+    ["1VDCmax2A", { maxPowerKw: 0.002, maxVoltage: 1, maxAmperage: 2, powerType: "DC" }],
+    [
+      "label 230 V 3-phase max 16 A tail",
+      { maxPowerKw: 6.374, maxVoltage: 230, maxAmperage: 16, powerType: "AC_3_PHASE" },
+    ],
+    ["400V 3-phase max 32A", { maxPowerKw: 38.4, maxVoltage: 400, maxAmperage: 32 }],
+    ["22,5 kW - 400V 3-phase max 32A", { maxPowerKw: 22.5, maxVoltage: 400, maxAmperage: 32 }],
+    [
+      "1V \nDC\t 1-phase max 2 A",
+      { maxPowerKw: 0.002, maxVoltage: 1, maxAmperage: 2, powerType: "DC" },
+    ],
+  ])("retains label substring semantics for %j", (label, expected) => {
+    const out = parse({ main: [Buffer.from(JSON.stringify(numericDoc("59.9,10.7", label)))] });
+    expect(connectorsOf(out.features[0], "1")[0]?.details).toMatchObject(expected);
+    expect(drainSkipped("no-nobil-charging")).toEqual({});
+  });
+
+  test.each(["point", "digits", "spaces"])("bounded public numeric parse: %s", (mode) => {
+    const data = JSON.stringify({
+      doc: numericDoc("59.9,10.7", "22 kW"),
+      feed: catalogFeed("no-nobil-charging"),
+      ctx: parseContext(FETCHED),
+      mode,
+    });
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--input-type=module",
+        "-e",
+        `
+      import assert from "node:assert/strict";
+      const { parseNobil } = await import(process.argv[1]);
+      const { doc, feed, ctx, mode } = JSON.parse(process.argv[2]);
+      const read = () => parseNobil(feed, { main: [Buffer.from(JSON.stringify(doc))] }, ctx);
+      assert.equal(read().features.length, 1);
+      console.log("control passed");
+      if (mode === "point") doc.chargerstations[0].csmd.Position = "7".repeat(100_000);
+      else doc.chargerstations[0].attr.conn["5"].trans = mode === "digits" ? "7".repeat(100_000) + "x" : "230V" + " ".repeat(100_000) + "!";
+      const out = read();
+      assert.equal(out.features.length, mode === "point" ? 0 : 1);
+      console.log("decoded");
+    `,
+        new URL("../../dist/index.js", import.meta.url).href,
+        data,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.stdout).toContain("control passed");
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("control passed\ndecoded");
   });
 });
