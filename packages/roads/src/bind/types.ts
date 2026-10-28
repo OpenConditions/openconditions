@@ -10,7 +10,7 @@ import type { TravelDirection } from "./direction.js";
 import type { LngLat } from "./geo.js";
 
 /** Bumped whenever the resolver's inputs or maths change a stored binding. */
-export const RESOLVER_VERSION = "2.4.0";
+export const RESOLVER_VERSION = "2.5.0";
 
 export const BIND_DEFAULTS = {
   /** Candidate search radius around a sample, in metres. */
@@ -53,6 +53,8 @@ export interface BindInput {
   refs: string[];
   /** Street names the location states, normalized (see identity.ts); absent when none. */
   names?: string[];
+  /** The record's prose, normalized, where its names were read from it (see identity.ts). */
+  prose?: string;
   /** The source's direction as text; kept for inspection, not interpreted. */
   direction?: string;
   /**

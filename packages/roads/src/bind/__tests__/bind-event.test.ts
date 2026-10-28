@@ -802,6 +802,26 @@ describe("bindEvent", () => {
       expect(r.reason).toBe("road_mismatch");
     });
 
+    it("reads the street from the record's prose where its roads name none", () => {
+      const ev = (description: string) =>
+        toBindInput({
+          id: "prose",
+          type: "roadworks",
+          roads: [{ name: "G" }],
+          text: ["Vollsperrung", description],
+          geometry: { type: "Point", coordinates: [7.01, 51.00003] },
+        });
+      const main = { segments: [mainAndSide.segments[0]!] };
+      expect(bindEvent(ev("Vollsperrung des Rosenweg wegen Kanalbau"), main).reason).toBe(
+        "road_mismatch",
+      );
+      expect(bindEvent(ev("Vollsperrung der Adenauerallee"), main).status).not.toBe("unresolved");
+      // A road number in the prose may be the detour's: the streets say nothing then.
+      expect(
+        bindEvent(ev("Vollsperrung des Rosenweg, Umleitung über die B 9"), main).status,
+      ).not.toBe("unresolved");
+    });
+
     it("lets the stated name pick between two roads in reach", () => {
       const r = bindEvent(point("named", [{ name: "Rosenweg" }]), mainAndSide);
       expect(r.segments.map((s) => s.segmentId)).toEqual(["81:f"]);

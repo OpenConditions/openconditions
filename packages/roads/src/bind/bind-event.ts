@@ -62,17 +62,20 @@ export function toBindInput(ev: {
   geometry: Geometry;
   type: string;
   roads?: Array<{ ref?: string; name?: string }>;
+  /** The record's headline and description, read for street names where its roads state none. */
+  text?: string[];
   direction?: string;
   travel?: TravelDirection;
   roadState?: string;
 }): BindInput {
-  const { refs, names } = roadIdentity(ev.roads ?? []);
+  const { refs, names, prose } = roadIdentity(ev.roads ?? [], ev.text);
   return {
     id: ev.id,
     geometry: ev.geometry,
     type: ev.type,
     refs,
     ...(names.length > 0 ? { names } : {}),
+    ...(prose !== undefined ? { prose } : {}),
     ...(ev.direction ? { direction: ev.direction } : {}),
     ...(ev.travel ? { travel: ev.travel } : {}),
     ...(ev.roadState ? { roadState: ev.roadState } : {}),
