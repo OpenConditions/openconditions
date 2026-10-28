@@ -129,6 +129,24 @@ describe("feed error disclosure boundaries", () => {
     expectSafe(store.get(feed.id)?.lastError);
   });
 
+  it("retains query-token scrubbing when a transport repeats an undeclared token", async () => {
+    const log = vi.spyOn(console, "error").mockImplementation(() => {});
+    vi.mocked(upsertSourceStatus).mockClear();
+    const result = await runSource(
+      feed,
+      deps({
+        fetch: async () => {
+          throw new Error(
+            `upstream failed https://example.test/feed?token=${otherQueryValue} response token ${otherQueryValue}`,
+          );
+        },
+      }),
+    );
+    expectSafe(result.error);
+    expectSafe(log.mock.calls);
+    expectSafe(vi.mocked(upsertSourceStatus).mock.calls.at(-1)?.[2].error);
+  });
+
   it.each(["returned", "thrown", "non-error"])(
     "scrubs %s failures before scheduler logs and public status",
     async (kind) => {
