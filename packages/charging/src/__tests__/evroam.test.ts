@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   __resetSkips,
   drainSkipped,
@@ -189,5 +190,74 @@ describe("evroam", () => {
     });
     // The current and status no group of the layer writes; the group without its plug.
     expect(drainSkipped("nz-nzta-charging")).toEqual({ unknown_value: 2, malformed: 1 });
+  });
+
+  test.each([
+    ["no groups", [], {}],
+    ["{}", [], { malformed: 1 }],
+    ["{{AC,22 kW,Type 2 Socketed}}", [[undefined, 22, "IEC_62196_T2"]], { unknown_value: 1 }],
+    ["{AC,{nested},Type 2 Socketed}", [], { malformed: 1 }],
+    ["{AC}outside{DC,50 kW,CHAdeMO}{unfinished", [["dc", 50, "CHADEMO"]], { malformed: 1 }],
+    [
+      "{AC,22 kW,Type 2 Socketed}{DC,50 kW,CHAdeMO}",
+      [
+        ["ac", 22, "IEC_62196_T2"],
+        ["dc", 50, "CHADEMO"],
+      ],
+      {},
+    ],
+    ["{AC,\n22 kW,\nType 2 Socketed,Status: Operative}", [["ac", 22, "IEC_62196_T2"]], {}],
+    ["{XC,22 kW,odd plug,Status: Broken}", [[undefined, 22, "UNKNOWN"]], { unknown_value: 3 }],
+  ])("group grammar and counters for %j", (list, expected, skipped) => {
+    __resetSkips();
+    const doc = JSON.parse(fixture("evroam.geojson").toString("utf8"));
+    doc.features = [doc.features[0]];
+    doc.features[0].properties.connectorsList = list;
+    const out = parse(Buffer.from(JSON.stringify(doc)));
+    expect(out.features).toHaveLength(1);
+    expect(
+      components(out.features[0])
+        .filter((c) => c.kind === "connector")
+        .map((c) => [c.details["current"], c.details["maxPowerKw"], c.details["standard"]]),
+    ).toEqual(expected);
+    expect(drainSkipped("nz-nzta-charging")).toEqual(skipped);
+  });
+
+  test("unclosed groups complete within a bounded child process", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `
+        import assert from "node:assert/strict";
+        const { parseEvroam } = await import(process.argv[1]);
+        const { catalogFeed, fixture, parseContext } = await import(process.argv[2]);
+        const doc = JSON.parse(fixture("evroam.geojson").toString("utf8"));
+        doc.features = [doc.features[0]];
+        const read = (value) => {
+          doc.features[0].properties.connectorsList = value;
+          return parseEvroam(catalogFeed("nz-nzta-charging"),
+            { main: [Buffer.from(JSON.stringify(doc))] }, parseContext("2026-10-06T04:10:00Z", 86400));
+        };
+        const control = read("{");
+        assert.equal(control.features.length, 1);
+        assert.equal(control.features[0].components?.length ?? 0, 0);
+        const out = read("{".repeat(100_000));
+        assert.equal(out.features.length, 1);
+        assert.equal(out.features[0].components?.length ?? 0, 0);
+        console.log("decoded");
+      `,
+        new URL("../formats/evroam.ts", import.meta.url).href,
+        new URL("./helpers/charging-feed.ts", import.meta.url).href,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("decoded");
   });
 });

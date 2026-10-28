@@ -24,7 +24,20 @@ const CONFIDENCE_CLASSES = ["low", "nominal", "high"] as const;
  * `FRP(MW)` is `FRP`, `confidence_class(lower=0;nominal=1;higher=2)` is
  * `confidence_class`.
  */
-const columnName = (header: string): string => header.trim().replace(/\(.*\)$/, "");
+function columnName(header: string): string {
+  const name = header.trim();
+  if (!name.endsWith(")")) return name;
+  // A legend cannot cross a line separator; it extends to the final close.
+  const from =
+    Math.max(
+      name.lastIndexOf("\n"),
+      name.lastIndexOf("\r"),
+      name.lastIndexOf("\u2028"),
+      name.lastIndexOf("\u2029"),
+    ) + 1;
+  const open = name.indexOf("(", from);
+  return open === -1 ? name : name.slice(0, open);
+}
 
 /**
  * The column index of the product's header row, the first line that is no

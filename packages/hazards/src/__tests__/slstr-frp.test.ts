@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   __resetSkips,
   drainSkipped,
@@ -176,5 +177,80 @@ describe("a row or granule that does not read", () => {
 
   test("a poll with no granule listed parses to nothing", () => {
     expect(parse().observations).toEqual([]);
+  });
+});
+
+describe("column legend grammar", () => {
+  const csv = (latitude: string) =>
+    `${latitude},lon,day,time,FRP,satellite\n10,20,2026-10-16,03:05:00,2.5,S3A\n`;
+
+  test.each([
+    ["lat", true],
+    [" lat(deg) ", true],
+    ["lat(first)(second)", true],
+    ["lat((nested))", true],
+    ["lat()()", true],
+    ["lat(unclosed", false],
+    ["lat(x)tail", false],
+    ["lat(inside\rbreak)", false],
+    ["lat(inside\nbreak)", false],
+    ["lat(inside\r\nbreak)", false],
+    ["lat(a\u000bb)", true],
+    ["lat(a\u0085b)", true],
+    ["lat(inside\u2028break)", false],
+    ["lat(inside\u2029break)", false],
+    ["lat(x)\r(y)", false],
+    ["lat(x)\u2028(y)", false],
+    ["lat(x)\u2029(y)", false],
+    ["lat(x)\r", true],
+    ["lat(x)\u2028", true],
+    ["lat(x)\u2029", true],
+    ["LAT(deg)", false],
+  ])("normalizes the header %j", (latitude, readable) => {
+    if (readable) {
+      const out = parse(csv(latitude));
+      expect(out.observations).toHaveLength(1);
+      expect(sealFailures(out.observations)).toEqual([]);
+      expect(byLocation(out, 10, 20)["result"]).toMatchObject({ value: 2.5, unit: "MW" });
+    } else {
+      __resetSkips();
+      const out = parse(csv(latitude), csv("lat"));
+      expect(out.observations).toHaveLength(1);
+      expect(drainSkipped(feed.id)).toEqual({ malformed: 1 });
+      expect(() => parse(csv(latitude))).toThrow("none of the 1 granules is an SLSTR FRP file");
+    }
+  });
+
+  test("unclosed legends complete within a bounded child process", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `
+        import assert from "node:assert/strict";
+        const { parseSlstrFrp } = await import(process.argv[1]);
+        const { catalogFeed, parseContext } = await import(process.argv[2]);
+        const read = (legend) => parseSlstrFrp(catalogFeed("eumetsat-slstr-fires"), {
+          fires: [Buffer.from("lat,lon,day,time,FRP,satellite,unused" + legend +
+            "\\n10,20,2026-10-16,03:05:00,2.5,S3A,ignored\\n")],
+        }, parseContext("2026-10-16T21:00:00Z", 900));
+        assert.equal(read("(").observations.length, 1);
+        const out = read("(".repeat(100_000));
+        assert.equal(out.observations.length, 1);
+        assert.equal(out.observations[0].result.value, 2.5);
+        console.log("decoded");
+      `,
+        new URL("../formats/slstr-frp.ts", import.meta.url).href,
+        new URL("./helpers/hazards-feed.ts", import.meta.url).href,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("decoded");
   });
 });

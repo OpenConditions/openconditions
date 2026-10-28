@@ -53,8 +53,17 @@ interface Group {
  * one group of identical charge points per brace.
  */
 function groupsOf(list: string | undefined, malformed: () => void, unread: () => void): Group[] {
-  return [...(list ?? "").matchAll(/\{([^}]*)\}/g)].flatMap(([, inner]) => {
-    const parts = (inner ?? "").split(",").map((p) => p.trim());
+  const value = list ?? "";
+  const bodies: string[] = [];
+  let from = 0;
+  for (let open = value.indexOf("{"); open !== -1; open = value.indexOf("{", from)) {
+    const close = value.indexOf("}", open + 1);
+    if (close === -1) break;
+    bodies.push(value.slice(open + 1, close));
+    from = close + 1;
+  }
+  return bodies.flatMap((inner) => {
+    const parts = inner.split(",").map((p) => p.trim());
     const [current, power, type] = parts;
     if (type === undefined) {
       malformed();
