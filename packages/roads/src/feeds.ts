@@ -19,6 +19,7 @@ export type DescribedFeed = Pick<
   | "excludeMessageTypes"
   | "srsName"
   | "timezone"
+  | "localTimesMarkedUtc"
   | "speedUnit"
 >;
 
@@ -46,6 +47,7 @@ export function feedToSourceDescriptor(
     ...(feed.excludeMessageTypes ? { excludeMessageTypes: feed.excludeMessageTypes } : {}),
     ...(feed.srsName ? { srsName: feed.srsName } : {}),
     ...(feed.timezone ? { timeZone: feed.timezone } : {}),
+    ...(feed.localTimesMarkedUtc ? { localTimesMarkedUtc: true } : {}),
     ...(feed.speedUnit ? { speedUnit: feed.speedUnit } : {}),
   };
 }

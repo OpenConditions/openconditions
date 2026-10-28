@@ -161,7 +161,19 @@ A road feed's `timezone` is the IANA zone its publisher writes times without
 an offset in (`2026-07-14T09:34:00`, `2026/02/09 06:30`, `2026-10-11 03:53:30`).
 Without it such a time is read as UTC, whatever zone the instance runs in, so
 set it for any publisher that writes local time: left out, its records start,
-end and change hours off.
+end and change hours off. `localTimesMarkedUtc: true` declares a publisher
+that writes its local times with a UTC designator they do not have
+(`09:00:00Z` for 09:00 local: Bonn, the Mobilitätsatlas Rheinland-Pfalz); its
+times are then read in `timezone`, which it requires. Compare a record whose
+text states its times ("von 09:00 Uhr") with its timestamps before setting it.
+
+A validity bound with no time of day (`2026-11-01`, `01.11.2026`, GeoServer's
+`2026-11-01Z`) names a whole day in the publisher's zone: a start begins at its
+first moment and an end runs to its last, so works "until 1 November" end as
+1 November ends. Every format's validity is read so. A publisher that writes
+days as midnight instants (`2026-10-30T00:00:00`, or an ArcGIS date field's
+epoch at midnight UTC) looks like one writing real midnights, so a GeoJSON
+feed declares it with `geojson.validityDaysAtMidnight`.
 
 A GeoJSON feed names the property that identifies a record in `geojson.idField`.
 A publisher that numbers its records anew whenever it rebuilds its layer (an

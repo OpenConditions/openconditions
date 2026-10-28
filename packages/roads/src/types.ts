@@ -67,6 +67,8 @@ export interface SourceDescriptor {
   srsName?: string;
   /** The IANA zone the publisher writes its times without an offset in; UTC without one. */
   timeZone?: string;
+  /** The publisher marks its local times UTC (`09:00:00Z` for 09:00 in `timeZone`). */
+  localTimesMarkedUtc?: boolean;
   /** The unit the publisher writes the speeds its format states no unit for in. */
   speedUnit?: SpeedUnit;
 }

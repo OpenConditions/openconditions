@@ -4,6 +4,7 @@ import {
   type CatalogFile,
   deriveFeedId,
   feedCredentialNames,
+  isPublicLicense,
   licenseInfo,
   lintCatalog,
   readCatalogDir,
@@ -13,6 +14,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { describe, expect, test } from "vitest";
 import { roadsDomain } from "../domain.js";
+import type { GeoJsonMapping } from "../model.js";
 
 const repoFeedsDir = path.resolve(import.meta.dirname, "../../../../feeds");
 
@@ -65,10 +67,10 @@ const AUTOBAHN_FLOW = [
 ];
 
 describe("the roads catalogue", () => {
-  test("the catalogue holds the 89 roads feeds under their new ids", () => {
+  test("the catalogue holds the 111 roads feeds under their new ids", () => {
     const { files, credentials } = repoCatalog();
     const ids = files.flatMap((f) => f.feeds.map((d) => deriveFeedId({ region: f.region, ...d })));
-    expect(ids).toHaveLength(89);
+    expect(ids).toHaveLength(111);
     expect(ids).toEqual(
       expect.arrayContaining([
         "nl-ndw-events",
@@ -125,6 +127,28 @@ describe("the roads catalogue", () => {
         "de-nw-duesseldorf-events",
         "de-nw-koeln-events",
         "de-nw-unna-events",
+        "de-nw-aachen-events",
+        "de-bb-cottbus-events",
+        "de-bw-freiburg-events",
+        "de-bw-stuttgart-events",
+        "de-bw-trk-events",
+        "de-by-ingolstadt-events",
+        "de-by-muenchen-events",
+        "de-he-frankfurt-events",
+        "de-he-ivm-events",
+        "de-he-kassel-events",
+        "de-mv-rostock-events",
+        "de-nw-bochum-events",
+        "de-nw-dortmund-events",
+        "de-nw-duisburg-events",
+        "de-nw-herne-events",
+        "de-rp-lbm-events",
+        "de-sh-kiel-events",
+        "de-sh-norderstedt-events",
+        "de-sn-chemnitz-events",
+        "de-sn-dresden-events",
+        "de-sn-leipzig-events",
+        "de-sn-list-events",
         "de-nw-mobidrom-events",
         "de-by-mobilithek-events",
         "de-bw-mobilithek-events",
@@ -892,6 +916,67 @@ describe("one feed per publisher", () => {
     expect(f.auth).toBeUndefined();
     expect(main(f.id).url).toContain("geodienste.hamburg.de/wfs_verkehrsinformation");
     expect(f.geojson?.typeField).toBe("art");
+  });
+
+  test("the German municipal roadworks feeds are keyless, openly licensed and dated", () => {
+    const municipal = [
+      "de-bb-cottbus-events",
+      "de-bw-freiburg-events",
+      "de-bw-stuttgart-events",
+      "de-bw-trk-events",
+      "de-by-ingolstadt-events",
+      "de-by-muenchen-events",
+      "de-he-frankfurt-events",
+      "de-he-kassel-events",
+      "de-mv-rostock-events",
+      "de-nw-bochum-events",
+      "de-nw-dortmund-events",
+      "de-nw-duisburg-events",
+      "de-nw-herne-events",
+      "de-rp-lbm-events",
+      "de-sh-kiel-events",
+      "de-sh-norderstedt-events",
+      "de-sn-chemnitz-events",
+      "de-sn-dresden-events",
+      "de-sn-leipzig-events",
+      "de-sn-list-events",
+    ];
+    for (const id of municipal) {
+      const f = feed(id) as CatalogFeed & { geojson?: GeoJsonMapping; timezone?: string };
+      expect(f.format, id).toBe("geojson");
+      expect(f.country, id).toBe("DE");
+      expect(f.auth, id).toBeUndefined();
+      expect(isPublicLicense(f.license), id).toBe(true);
+      expect(f.timezone, id).toBe("Europe/Berlin");
+      expect(f.geojson?.validityRangeField ?? f.geojson?.validFromField, id).toBeDefined();
+    }
+    expect(feed("de-he-ivm-events").format).toBe("datex2");
+    // Bonn and the Mobilitätsatlas write their local times marked UTC.
+    const bonn = feed("de-nw-bonn-flow") as CatalogFeed & {
+      timezone?: string;
+      localTimesMarkedUtc?: boolean;
+    };
+    expect([bonn.timezone, bonn.localTimesMarkedUtc]).toEqual(["Europe/Berlin", true]);
+    const atlas = feed("de-rp-lbm-events") as CatalogFeed & {
+      timezone?: string;
+      localTimesMarkedUtc?: boolean;
+    };
+    expect([atlas.timezone, atlas.localTimesMarkedUtc]).toEqual(["Europe/Berlin", true]);
+  });
+
+  test("Stadt Aachen's roadworks are a keyless GeoJSON feed of calendar-dated points", () => {
+    const f = feed("de-nw-aachen-events") as CatalogFeed & { geojson?: GeoJsonMapping };
+    expect(f.format).toBe("geojson");
+    expect(f.country).toBe("DE");
+    expect(f.license).toBe("DL-DE-BY-2.0");
+    expect(f.attribution).toBe("Stadt Aachen");
+    expect(f.auth).toBeUndefined();
+    expect(main(f.id).url).toContain("bsis.aachen.de/geoserver/ows");
+    expect(main(f.id).url).toContain("typeNames=BSIS:PUNKTE_ALLE");
+    // Calendar dates (`2026-11-01Z`) are days without a flag; no midnights to declare.
+    expect(f.geojson?.validFromField).toBe("von");
+    expect(f.geojson?.validityDaysAtMidnight).toBeUndefined();
+    expect(f.geojson?.filter?.[0]?.exclude?.every((s) => s.endsWith(" - abgelaufen"))).toBe(true);
   });
 
   test("NYC DOT speeds are a keyless flow feed", () => {

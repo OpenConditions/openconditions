@@ -64,7 +64,19 @@ export function reprojectGeometry(
   const reproject = reprojectorFor(
     crsName((geometry as { crs?: unknown }).crs) ?? collectionCrs ?? fallbackCrs,
   );
-  return reproject ? remapCoords(geometry, reproject) : geometry;
+  return reproject ? remapCoords(geometry, reproject) : withoutCrs(geometry);
+}
+
+/**
+ * A geometry without the `crs` member an OGC API or GeoServer writes on each
+ * geometry, even a WGS84 one (`EPSG::4326`). GeoJSON has no such member, and
+ * a stored geometry carrying it does not validate.
+ */
+function withoutCrs(geometry: Geometry): Geometry {
+  const { crs: _crs, ...geom } = geometry as Geometry & { crs?: unknown };
+  return geom.type === "GeometryCollection"
+    ? { ...geom, geometries: geom.geometries.map(withoutCrs) }
+    : (geom as Geometry);
 }
 
 /** The FeatureCollection members of a GeoJSON text, or undefined when it is not JSON. */

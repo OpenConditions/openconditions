@@ -30,12 +30,25 @@ const situationCode = z.enum(SITUATION_CODES, {
   error: "not a registered roads situation code (kind.type[.subtype])",
 });
 const severity = z.enum(["none", "low", "medium", "high", "critical", "unknown"]);
+/** A regular expression the reader compiles case-insensitively; one that does not compile fails the lint. */
+const pattern = z.string().refine(
+  (p) => {
+    try {
+      new RegExp(p, "iu");
+      return true;
+    } catch {
+      return false;
+    }
+  },
+  { error: "not a valid regular expression" },
+);
 
 /** Declarative GeoJSON field mapping — mirrors GeoJsonMapping in model.ts. */
 const geoJsonMappingSchema = z
   .object({
     idField: z.string().optional(),
     idFields: z.array(z.string()).nonempty().optional(),
+    featureId: z.boolean().optional(),
     typeField: z.string().optional(),
     // Values are a coarse type or a registered situation code: a typo like
     // "roadwroks" or "roadworks.works.knitting" fails the lint instead of
@@ -46,6 +59,10 @@ const geoJsonMappingSchema = z
     descriptionField: z.string().optional(),
     severityField: z.string().optional(),
     severityMap: z.record(z.string(), severity).optional(),
+    severityPatterns: z
+      .array(z.object({ match: pattern, severity }).strict())
+      .nonempty()
+      .optional(),
     roadField: z.string().optional(),
     updatedField: z.string().optional(),
     arrayPath: z.string().optional(),
@@ -53,6 +70,8 @@ const geoJsonMappingSchema = z
     latField: z.string().optional(),
     validFromField: z.string().optional(),
     validToField: z.string().optional(),
+    validityDaysAtMidnight: z.literal(true).optional(),
+    validityRangeField: z.string().optional(),
     filter: z
       .array(
         z
@@ -60,6 +79,8 @@ const geoJsonMappingSchema = z
             field: z.string(),
             include: z.array(z.string()).optional(),
             exclude: z.array(z.string()).optional(),
+            includeMatching: z.array(pattern).nonempty().optional(),
+            excludeMatching: z.array(pattern).nonempty().optional(),
           })
           .strict(),
       )
@@ -68,6 +89,7 @@ const geoJsonMappingSchema = z
       .object({ field: z.string(), prefixes: z.array(z.string().min(1)).nonempty() })
       .strict()
       .optional(),
+    nullValues: z.array(z.string()).nonempty().optional(),
     startLonField: z.string().optional(),
     startLatField: z.string().optional(),
     endLonField: z.string().optional(),
@@ -133,6 +155,11 @@ const roadsFeedExtension = {
    * read as UTC.
    */
   timezone: z.string().refine(isKnownTimeZone, { message: "unknown IANA time zone" }).optional(),
+  /**
+   * The publisher writes its local times (in `timezone`) with a UTC designator
+   * they do not have: `09:00:00Z` for 09:00 local. They are read as local.
+   */
+  localTimesMarkedUtc: z.literal(true).optional(),
   /**
    * The unit the publisher writes the speeds its format states no unit for
    * in: WZDx 3.1's `reduced_speed_limit`, which its schema leaves without

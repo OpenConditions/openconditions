@@ -1,4 +1,4 @@
-import { toIsoTimestamp } from "@openconditions/core";
+import { toIsoTimestamp, validityBound } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import { TRAFIKVERKET_SITUATIONS, trafikverketClassification } from "@openconditions/model-roads";
 import type { Geometry, Position } from "geojson";
@@ -299,8 +299,8 @@ export function parseTrafikverket(
           ...(dev.AffectedDirectionValue === "BothDirections" ? { direction: "both" } : {}),
           headline: header ?? message ?? text(dev.MessageCode) ?? (rawType || type),
           description: message,
-          validFrom: toIsoTimestamp(dev.StartTime, src.timeZone) ?? null,
-          validTo: toIsoTimestamp(dev.EndTime, src.timeZone) ?? null,
+          validFrom: validityBound(dev.StartTime, "start", { timeZone: src.timeZone }) ?? null,
+          validTo: validityBound(dev.EndTime, "end", { timeZone: src.timeZone }) ?? null,
           sourceRaw: dev as Record<string, unknown>,
           origin: {
             kind: "feed",

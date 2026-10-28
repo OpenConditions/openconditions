@@ -111,9 +111,8 @@ describe("QLDTraffic mapping (spec v1.10)", () => {
   });
 
   it("uses last_updated as dataUpdatedAt and preserves the GeometryCollection", () => {
-    expect(byId["au-qld-traffic-events:101"]!.dataUpdatedAt).toBe(
-      "2026-06-20T11:37:19.448257+10:00",
-    );
+    // Read as the instant it states, so it compares with other sources' times.
+    expect(byId["au-qld-traffic-events:101"]!.dataUpdatedAt).toBe("2026-06-20T01:37:19.448Z");
     expect(byId["au-qld-traffic-events:101"]!.geometry.type).toBe("GeometryCollection");
   });
 });

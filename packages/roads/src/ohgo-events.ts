@@ -1,4 +1,4 @@
-import { toIsoTimestamp } from "@openconditions/core";
+import { toIsoTimestamp, validityBound } from "@openconditions/core";
 import { recordSkipped } from "@openconditions/ingest-framework";
 import { OHGO_SITUATIONS, ohgoClassification } from "@openconditions/model-roads";
 import { dedupeRoadEvents } from "./dedupe.js";
@@ -126,8 +126,8 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     }
 
     const category = str(field(r, "category"));
-    const validFrom = toIsoTimestamp(field(r, "startDate"), src.timeZone);
-    const validTo = toIsoTimestamp(field(r, "endDate"), src.timeZone);
+    const validFrom = validityBound(field(r, "startDate"), "start", { timeZone: src.timeZone });
+    const validTo = validityBound(field(r, "endDate"), "end", { timeZone: src.timeZone });
     const isWorkZone = field(r, "startDate") != null;
 
     const type: RoadEventType = isWorkZone

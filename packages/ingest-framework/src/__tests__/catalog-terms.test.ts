@@ -69,9 +69,10 @@ describe("effective rights", () => {
     expect(catalogFeed({ license: "CC-BY-4.0" }).restricted).toBe(false);
   });
 
-  it("CC-BY-3.0-AT and the Flemish and Swiss licences are public", () => {
+  it("CC-BY-3.0-AT, CC-BY-3.0-DE and the Flemish and Swiss licences are public", () => {
     for (const id of [
       "CC-BY-3.0-AT",
+      "CC-BY-3.0-DE",
       "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
       "LicenseRef-opentransportdata-swiss-ToU",
     ]) {

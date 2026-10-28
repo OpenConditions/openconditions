@@ -847,6 +847,7 @@
               "LicenseRef-OD-HR",
               "LicenseRef-511NY-DAA",
               "CC-BY-3.0-AT",
+              "CC-BY-3.0-DE",
               "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
               "LicenseRef-opentransportdata-swiss-ToU",
               "LicenseRef-Singapore-ODL-1.0",
@@ -1093,6 +1094,9 @@
                 "items": {
                   "type": "string"
                 }
+              },
+              "featureId": {
+                "type": "boolean"
               },
               "typeField": {
                 "type": "string"
@@ -1400,6 +1404,34 @@
                   ]
                 }
               },
+              "severityPatterns": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "match": {
+                      "type": "string"
+                    },
+                    "severity": {
+                      "type": "string",
+                      "enum": [
+                        "none",
+                        "low",
+                        "medium",
+                        "high",
+                        "critical",
+                        "unknown"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "match",
+                    "severity"
+                  ],
+                  "additionalProperties": false
+                }
+              },
               "roadField": {
                 "type": "string"
               },
@@ -1421,6 +1453,13 @@
               "validToField": {
                 "type": "string"
               },
+              "validityDaysAtMidnight": {
+                "type": "boolean",
+                "const": true
+              },
+              "validityRangeField": {
+                "type": "string"
+              },
               "filter": {
                 "type": "array",
                 "items": {
@@ -1436,6 +1475,20 @@
                       }
                     },
                     "exclude": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "includeMatching": {
+                      "minItems": 1,
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "excludeMatching": {
+                      "minItems": 1,
                       "type": "array",
                       "items": {
                         "type": "string"
@@ -1468,6 +1521,13 @@
                   "prefixes"
                 ],
                 "additionalProperties": false
+              },
+              "nullValues": {
+                "minItems": 1,
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               },
               "startLonField": {
                 "type": "string"
@@ -1564,6 +1624,10 @@
           },
           "timezone": {
             "type": "string"
+          },
+          "localTimesMarkedUtc": {
+            "type": "boolean",
+            "const": true
           },
           "speedUnit": {
             "type": "string",

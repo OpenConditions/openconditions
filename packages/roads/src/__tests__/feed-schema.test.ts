@@ -132,3 +132,27 @@ describe("roadsFeedShape", () => {
     expect(roadsFeedSchema.safeParse(bad).success).toBe(false);
   });
 });
+
+describe("roads feed lint", () => {
+  it("refuses local times marked UTC without the zone they are local in", () => {
+    const feed = { id: "x", format: "geojson", localTimesMarkedUtc: true } as never;
+    expect(roadsDomain.lintFeed?.(feed)).toEqual([
+      "localTimesMarkedUtc needs the timezone the local times are in",
+    ]);
+    expect(
+      roadsDomain.lintFeed?.({ ...(feed as object), timezone: "Europe/Berlin" } as never),
+    ).toEqual([]);
+  });
+
+  it("refuses local times marked UTC on a format that does not read them", () => {
+    const feed = {
+      id: "x",
+      format: "datex2",
+      timezone: "Europe/Berlin",
+      localTimesMarkedUtc: true,
+    };
+    expect(roadsDomain.lintFeed?.(feed as never)).toEqual([
+      "format datex2 does not read localTimesMarkedUtc",
+    ]);
+  });
+});

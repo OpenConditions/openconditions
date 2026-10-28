@@ -37,6 +37,11 @@ export interface GeoJsonMapping {
    * hash of these values. Records alike in all of them are one record.
    */
   idFields?: string[];
+  /**
+   * The feature's own `id` member, beside `properties`, identifies it: for a
+   * WFS whose only stable key is the feature id GeoServer writes there.
+   */
+  featureId?: boolean;
   /** properties key whose value is mapped to a RoadEventType. */
   typeField?: string;
   /**
@@ -56,6 +61,12 @@ export interface GeoJsonMapping {
   severityField?: string;
   /** maps a feed's severity values to the canonical Severity scale. */
   severityMap?: Record<string, Severity>;
+  /**
+   * For a severity written in free text (`… // Vollsperrung`): the first
+   * pattern (a case-insensitive regular expression) the value matches gives
+   * its severity, where `severityMap` holds no entry for it.
+   */
+  severityPatterns?: { match: string; severity: Severity }[];
   /** properties key for the road name/ref. */
   roadField?: string;
   /** properties key for a last-updated ISO timestamp. */
@@ -75,17 +86,29 @@ export interface GeoJsonMapping {
   lonField?: string;
   latField?: string;
   /**
-   * properties keys carrying the validity window. Values go through
-   * `toIsoTimestamp`, so epoch numbers and parseable date strings both work; an
-   * unparseable value becomes null rather than dropping the record.
-   *
-   * A source publishing a zone-less local time (MTQ's "2026/02/09 06:30:00") is
-   * read in the server's local zone — an hours-level approximation, fine for a
-   * days-granularity horizon filter but not for reasoning about the exact
-   * minute a work starts.
+   * properties keys carrying the validity window, read by `validityBound`:
+   * epoch numbers and date strings both work, a time without an offset is in
+   * the feed's `timezone`, and an unparseable value becomes null rather than
+   * dropping the record. A date with no time of day (`2026-11-01`,
+   * `01.11.2026`, GeoServer's `2026-11-01Z`) names a whole day, so an end date
+   * runs to that day's end.
    */
   validFromField?: string;
   validToField?: string;
+  /**
+   * The validity fields write days as midnight instants: `2026-10-30T00:00:00`,
+   * or an epoch at midnight UTC (an ArcGIS date field holding days). Such a
+   * value names that day, so an end runs to its end. A real midnight looks the
+   * same, so only a feed that writes days so declares it.
+   */
+  validityDaysAtMidnight?: boolean;
+  /**
+   * A properties key holding both ends of the validity as `from - to`
+   * (`13.04.26 - 30.10.26`), for a feed without a field for each. Each end is
+   * read as `validFromField`/`validToField` would be; a dotted date with a
+   * two-digit year is of this century.
+   */
+  validityRangeField?: string;
   /**
    * Drop records the feed publishes but the overlay shouldn't carry — e.g.
    * Iceland's ~1,300 "Easily passable" baseline segments. A feature must
@@ -99,6 +122,12 @@ export interface GeoJsonMapping {
    * earlier records of its type around it (see `dropSupersededRoadEvents`).
    */
   followUp?: GeoJsonFollowUp;
+  /**
+   * Property values that mean "nothing" in this feed (a WFS writing the
+   * string `"null"`, a placeholder such as `"keine Meldung"`): every field
+   * reads them as absent. The raw properties keep them.
+   */
+  nullValues?: string[];
   /**
    * When the feature carries no usable geometry and all four parse to finite
    * numbers, synthesise `LineString [[startLon,startLat],[endLon,endLat]]`.
@@ -122,6 +151,10 @@ export interface GeoJsonRecordFilter {
   field: string;
   include?: string[];
   exclude?: string[];
+  /** Case-insensitive regular expressions the value must match one of (free text). */
+  includeMatching?: string[];
+  /** Case-insensitive regular expressions no value may match. */
+  excludeMatching?: string[];
 }
 
 /**
