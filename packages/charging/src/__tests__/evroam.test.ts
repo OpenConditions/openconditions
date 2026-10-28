@@ -224,40 +224,45 @@ describe("evroam", () => {
   });
 
   test("unclosed groups complete within a bounded child process", () => {
+    const doc = JSON.parse(fixture("evroam.geojson").toString("utf8"));
+    doc.features = [doc.features[0]];
+    const data = JSON.stringify({
+      feed: catalogFeed("nz-nzta-charging"),
+      ctx: parseContext(FETCHED, 86400),
+      doc,
+    });
     const result = spawnSync(
       process.execPath,
       [
         "--max-old-space-size=96",
-        "--import",
-        "tsx",
         "--input-type=module",
         "-e",
         `
         import assert from "node:assert/strict";
         const { parseEvroam } = await import(process.argv[1]);
-        const { catalogFeed, fixture, parseContext } = await import(process.argv[2]);
-        const doc = JSON.parse(fixture("evroam.geojson").toString("utf8"));
-        doc.features = [doc.features[0]];
+        const { feed, ctx, doc } = JSON.parse(process.argv[2]);
         const read = (value) => {
           doc.features[0].properties.connectorsList = value;
-          return parseEvroam(catalogFeed("nz-nzta-charging"),
-            { main: [Buffer.from(JSON.stringify(doc))] }, parseContext("2026-10-06T04:10:00Z", 86400));
+          return parseEvroam(feed,
+            { main: [Buffer.from(JSON.stringify(doc))] }, ctx);
         };
         const control = read("{");
         assert.equal(control.features.length, 1);
         assert.equal(control.features[0].components?.length ?? 0, 0);
+        console.log("control passed");
         const out = read("{".repeat(100_000));
         assert.equal(out.features.length, 1);
         assert.equal(out.features[0].components?.length ?? 0, 0);
         console.log("decoded");
       `,
-        new URL("../formats/evroam.ts", import.meta.url).href,
-        new URL("./helpers/charging-feed.ts", import.meta.url).href,
+        new URL("../../dist/index.js", import.meta.url).href,
+        data,
       ],
       { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
     );
+    expect(result.stdout).toContain("control passed");
     expect(result.error).toBeUndefined();
     expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout.trim()).toBe("decoded");
+    expect(result.stdout.trim()).toBe("control passed\ndecoded");
   });
 });

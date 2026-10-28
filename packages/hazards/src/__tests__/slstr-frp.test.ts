@@ -222,35 +222,36 @@ describe("column legend grammar", () => {
   });
 
   test("unclosed legends complete within a bounded child process", () => {
+    const data = JSON.stringify({ feed, ctx: parseContext(FETCHED, 900) });
     const result = spawnSync(
       process.execPath,
       [
         "--max-old-space-size=96",
-        "--import",
-        "tsx",
         "--input-type=module",
         "-e",
         `
         import assert from "node:assert/strict";
         const { parseSlstrFrp } = await import(process.argv[1]);
-        const { catalogFeed, parseContext } = await import(process.argv[2]);
-        const read = (legend) => parseSlstrFrp(catalogFeed("eumetsat-slstr-fires"), {
+        const { feed, ctx } = JSON.parse(process.argv[2]);
+        const read = (legend) => parseSlstrFrp(feed, {
           fires: [Buffer.from("lat,lon,day,time,FRP,satellite,unused" + legend +
             "\\n10,20,2026-10-16,03:05:00,2.5,S3A,ignored\\n")],
-        }, parseContext("2026-10-16T21:00:00Z", 900));
+        }, ctx);
         assert.equal(read("(").observations.length, 1);
+        console.log("control passed");
         const out = read("(".repeat(100_000));
         assert.equal(out.observations.length, 1);
         assert.equal(out.observations[0].result.value, 2.5);
         console.log("decoded");
       `,
-        new URL("../formats/slstr-frp.ts", import.meta.url).href,
-        new URL("./helpers/hazards-feed.ts", import.meta.url).href,
+        new URL("../../dist/index.js", import.meta.url).href,
+        data,
       ],
       { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
     );
+    expect(result.stdout).toContain("control passed");
     expect(result.error).toBeUndefined();
     expect(result.status, result.stderr).toBe(0);
-    expect(result.stdout.trim()).toBe("decoded");
+    expect(result.stdout.trim()).toBe("control passed\ndecoded");
   });
 });
