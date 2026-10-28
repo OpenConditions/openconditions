@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dedupeRoadEvents } from "../dedupe.js";
+import { dedupeRoadEvents, dropSupersededRoadEvents } from "../dedupe.js";
 import type { RoadEvent } from "../model.js";
 
 function makeRoadEvent(overrides: Partial<RoadEvent> & { lng: number; lat: number }): RoadEvent {
@@ -151,6 +151,11 @@ describe("dedupeRoadEvents", () => {
       ["road states", { roadState: "closed" }, { roadState: "some_lanes_closed" }],
       ["subtypes", { subtype: "resurfacing" }, { subtype: "bridge_work" }],
       ["roads", { roads: [{ name: "Main St" }] }, { roads: [{ name: "Oak Ave" }] }],
+      [
+        "descriptions that differ by a word",
+        { description: "Auffahrt auf die A2: AS Bornstedt gesperrt" },
+        { description: "Abfahrt von der A2: AS Bornstedt gesperrt" },
+      ],
     ];
 
     it.each(PAIRS)("%s", (_, a, b) => {
@@ -185,7 +190,74 @@ describe("dedupeRoadEvents", () => {
     ).toHaveLength(1);
   });
 
+  it("folds copies whose descriptions differ only in spacing and case, or that one leaves out", () => {
+    const at = { lng: 4.9, lat: 52.3, type: "roadworks" as const, headline: "Lane closed" };
+    const description = "Right lane blocked.\r\nDetour in place.";
+    expect(
+      dedupeRoadEvents([
+        makeRoadEvent({ ...at, description }),
+        makeRoadEvent({ ...at, description: "  right lane blocked. detour IN place. " }),
+      ]),
+    ).toHaveLength(1);
+    expect(
+      dedupeRoadEvents([makeRoadEvent({ ...at, description }), makeRoadEvent({ ...at })]),
+    ).toHaveLength(1);
+  });
+
   it("returns an empty array for no events", () => {
     expect(dedupeRoadEvents([])).toEqual([]);
+  });
+});
+
+describe("dropSupersededRoadEvents", () => {
+  const at = (id: string, updated: string, over: Partial<RoadEvent> & { lng?: number } = {}) =>
+    makeRoadEvent({ id, lng: 100.96, lat: 13.86, dataUpdatedAt: updated, ...over });
+  const original = at("src:1", "2026-06-26T01:17:46Z", { description: "Accident blocking lanes" });
+  const progress = at("src:3", "2026-06-26T01:21:48Z", { description: "Car was moved" });
+  const ids = (events: RoadEvent[], followUps: RoadEvent[]) =>
+    dropSupersededRoadEvents(events, (e) => followUps.includes(e)).map((e) => e.id);
+
+  it("replaces the earlier events of its type around it, earlier follow-ups included", () => {
+    const firstProgress = at("src:2", "2026-06-26T01:19:00Z", { description: "Police on site" });
+    expect(ids([original, firstProgress, progress], [firstProgress, progress])).toEqual(["src:3"]);
+  });
+
+  it("reads the time the source stated before the time it was read", () => {
+    const stated = at("src:1", "2026-06-26T09:00:00Z", {
+      situation: { sourceUpdatedAt: "2026-06-26T01:00:00Z" },
+    });
+    expect(ids([stated, progress], [progress])).toEqual(["src:3"]);
+  });
+
+  it("keeps a later event, another type, and an event beyond the fold distance", () => {
+    const later = at("src:4", "2026-06-26T02:00:00Z");
+    const breakdown = at("src:5", "2026-06-26T01:00:00Z", { type: "roadworks" });
+    const away = at("src:6", "2026-06-26T01:00:00Z", { lng: 100.962 });
+    expect(ids([later, breakdown, away, progress], [progress])).toEqual([
+      "src:4",
+      "src:5",
+      "src:6",
+      "src:3",
+    ]);
+  });
+
+  it("keeps an event of another source type that maps to the same coarse type", () => {
+    const congestion = at("src:4", "2026-06-26T01:00:00Z", { type: "other", subtype: "10" });
+    const movedOn = at("src:5", "2026-06-26T01:20:00Z", { type: "other", subtype: "1" });
+    expect(ids([congestion, movedOn], [movedOn])).toEqual(["src:4", "src:5"]);
+  });
+
+  it("replaces an original updated at the same instant, but not another follow-up", () => {
+    const sameTime = at("src:7", progress.dataUpdatedAt);
+    const otherProgress = at("src:8", progress.dataUpdatedAt);
+    expect(ids([sameTime, progress], [progress])).toEqual(["src:3"]);
+    expect(ids([otherProgress, progress], [otherProgress, progress])).toEqual(["src:8", "src:3"]);
+  });
+
+  it("neither replaces nor is replaced without a time", () => {
+    const undated = at("src:9", "not a time");
+    expect(ids([undated, progress], [progress])).toEqual(["src:9", "src:3"]);
+    const undatedProgress = { ...progress, dataUpdatedAt: "" };
+    expect(ids([original, undatedProgress], [undatedProgress])).toEqual(["src:1", "src:3"]);
   });
 });

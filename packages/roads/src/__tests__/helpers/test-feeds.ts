@@ -761,6 +761,7 @@ const TEST_FEEDS: Record<string, TestFeed> = {
       headlineField: "title_en",
       descriptionField: "description_en",
       updatedField: "start",
+      followUp: { field: "title", prefixes: ["คืบหน้า"] },
     },
   },
   "us-ny-511-events": {
