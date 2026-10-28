@@ -160,7 +160,7 @@ const DOTTED_DATE_ALONE = /^(\d{1,2})\.(\d{1,2})\.(\d{4})$/;
  * publisher writing a day at its own midnight names that day.
  */
 const DATE_AT_MIDNIGHT =
-  /^(?:(\d{4})[-/](\d{2})[-/](\d{2})[T ]|(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+)00:00(?::00(?:\.0+)?)?(?:\s*Uhr)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
+  /^(?:(\d{4})([-/])(\d{2})\2(\d{2})[T ]|(\d{1,2})\.(\d{1,2})\.(\d{4}),?\s+)00:00(?::00(?:\.0+)?)?(?:\s*Uhr)?(?:Z|[+-]\d{2}:?\d{2})?$/i;
 
 /**
  * The day a value names, `YYYY-MM-DD`: a date with no time of day, or, for a
@@ -183,8 +183,8 @@ export function calendarDayOf(value: unknown, times: SourceTimes = {}): string |
     const midnight = times.daysAtMidnight ? DATE_AT_MIDNIGHT.exec(s) : null;
     if (iso) ymd = [Number(iso[1]), Number(iso[3]), Number(iso[4])];
     else if (dotted) ymd = [Number(dotted[3]), Number(dotted[2]), Number(dotted[1])];
-    else if (midnight?.[1]) ymd = [Number(midnight[1]), Number(midnight[2]), Number(midnight[3])];
-    else if (midnight?.[4]) ymd = [Number(midnight[6]), Number(midnight[5]), Number(midnight[4])];
+    else if (midnight?.[1]) ymd = [Number(midnight[1]), Number(midnight[3]), Number(midnight[4])];
+    else if (midnight?.[5]) ymd = [Number(midnight[7]), Number(midnight[6]), Number(midnight[5])];
   }
   // A year a timestamp cannot hold (an epoch far out of range) is no day.
   if (!ymd || ymd[0] < 1 || ymd[0] > 9999 || !isCalendarDate(...ymd)) return undefined;

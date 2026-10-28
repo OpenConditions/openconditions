@@ -126,8 +126,8 @@ export function parseOhgoEvents(input: string | Buffer, src: SourceDescriptor): 
     }
 
     const category = str(field(r, "category"));
-    const validFrom = validityBound(field(r, "startDate"), "start", src);
-    const validTo = validityBound(field(r, "endDate"), "end", src);
+    const validFrom = validityBound(field(r, "startDate"), "start", { timeZone: src.timeZone });
+    const validTo = validityBound(field(r, "endDate"), "end", { timeZone: src.timeZone });
     const isWorkZone = field(r, "startDate") != null;
 
     const type: RoadEventType = isWorkZone

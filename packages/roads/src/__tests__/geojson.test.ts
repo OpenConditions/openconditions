@@ -62,7 +62,7 @@ describe("parseGeoJson", () => {
       severity: "high",
       headline: "Crash on M1",
       description: "Two vehicles",
-      dataUpdatedAt: "2026-06-25T10:00:00Z",
+      dataUpdatedAt: "2026-06-25T10:00:00.000Z",
     });
     expect(out[0]!.geometry).toEqual({ type: "Point", coordinates: [151.2, -33.8] });
     expect(out[0]!.roads).toEqual([{ name: "M1" }]);
@@ -890,7 +890,7 @@ describe("parseGeoJson — Vegagerðin Iceland line-incident fixture", () => {
   it("carries the road number and update time", () => {
     const ev = events().find((e) => e.id === "is-vegagerdin-lines-conditions:913080036")!;
     expect(ev.roads?.map((r) => r.name)).toEqual(["F210"]);
-    expect(ev.dataUpdatedAt).toBe("2026-06-02T13:34:27Z");
+    expect(ev.dataUpdatedAt).toBe("2026-06-02T13:34:27.000Z");
     expect(ev.description).toBe("Driving prohibited");
   });
 });

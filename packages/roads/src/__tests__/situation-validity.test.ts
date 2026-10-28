@@ -63,10 +63,10 @@ describe("situation validity from a source's dates", () => {
 
   it("keeps a midnight a parser passes as an instant, and reads an estimated end as an end", () => {
     expect(
-      validityOf("2026-10-05T00:00:00", "2026-11-01", { estimatedEnd: "2026-11-15" }),
+      validityOf("2026-10-05", "2026-11-01T00:00:00", { estimatedEnd: "2026-11-15" }),
     ).toMatchObject({
       start: "2026-10-04T22:00:00.000Z",
-      end: "2026-11-01T23:00:00.000Z",
+      end: "2026-10-31T23:00:00.000Z",
       estimatedEnd: "2026-11-15T23:00:00.000Z",
     });
   });

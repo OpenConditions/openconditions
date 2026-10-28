@@ -169,6 +169,7 @@ describe("validityBound", () => {
     expect(nextDay("2028-02-28")).toBe("2028-02-29");
     expect(calendarDayOf("2026-11-01z")).toBe("2026-11-01");
     expect(calendarDayOf("2026/10/30 00:00", { daysAtMidnight: true })).toBe("2026-10-30");
+    expect(calendarDayOf("2026-10/30T00:00", { daysAtMidnight: true })).toBeUndefined();
     expect(calendarDayOf("30.10.2026 00:00 Uhr", { daysAtMidnight: true })).toBe("2026-10-30");
   });
 

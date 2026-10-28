@@ -44,14 +44,14 @@ function toLineString(ring: unknown): LineString | null {
  * Parse the City of Bonn realtime traffic GeoJSON (`stadtplan.bonn.de/geojson?
  * Thema=19584`). Each feature is a road section (`strecke_id`) with a
  * `geschwindigkeit` (current speed, km/h), a `verkehrsstatus` level-of-service
- * phrase, and an `auswertezeit` timestamp, wall-clock time in the feed's
- * `timezone` whatever its suffix says (the feed's `localTimesMarkedUtc`). A
+ * phrase, and an `auswertezeit` timestamp: wall-clock time in the feed's
+ * `timezone`, its `Z` ignored (the feed's `localTimesMarkedUtc`). A
  * MultiLineString section is one site whose member lines each carry the
- * reading (and a derived congestion situation each). A section without an id, or with neither a speed nor a
- * level of service it can read, is skipped as malformed, as is a broken line;
- * one without a line geometry as having no geometry. A phrase it cannot read
- * beside a speed leaves the reading without a level, recorded as an unknown
- * value.
+ * reading (and a derived congestion situation each). A section without an id,
+ * or with neither a speed nor a level of service it can read, is skipped as
+ * malformed, as is a broken line; one without a line geometry as having no
+ * geometry. A phrase it cannot read beside a speed leaves the reading without
+ * a level, recorded as an unknown value.
  */
 export function parseBonnFlow(
   input: string | Buffer,

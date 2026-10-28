@@ -299,8 +299,8 @@ export function parseTrafikverket(
           ...(dev.AffectedDirectionValue === "BothDirections" ? { direction: "both" } : {}),
           headline: header ?? message ?? text(dev.MessageCode) ?? (rawType || type),
           description: message,
-          validFrom: validityBound(dev.StartTime, "start", src) ?? null,
-          validTo: validityBound(dev.EndTime, "end", src) ?? null,
+          validFrom: validityBound(dev.StartTime, "start", { timeZone: src.timeZone }) ?? null,
+          validTo: validityBound(dev.EndTime, "end", { timeZone: src.timeZone }) ?? null,
           sourceRaw: dev as Record<string, unknown>,
           origin: {
             kind: "feed",

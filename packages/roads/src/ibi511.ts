@@ -212,8 +212,8 @@ export function parseIbi511(input: string | Buffer | unknown, src: SourceDescrip
       roads: road ? [{ name: road }] : [],
       headline,
       description: typeof ev.Description === "string" ? ev.Description : undefined,
-      validFrom: validityBound(ev.StartDate, "start", src) ?? null,
-      validTo: validityBound(ev.PlannedEndDate, "end", src) ?? null,
+      validFrom: validityBound(ev.StartDate, "start", { timeZone: src.timeZone }) ?? null,
+      validTo: validityBound(ev.PlannedEndDate, "end", { timeZone: src.timeZone }) ?? null,
       sourceRaw: ev as Record<string, unknown>,
       origin: {
         kind: "feed",

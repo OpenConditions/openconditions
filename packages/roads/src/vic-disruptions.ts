@@ -198,8 +198,8 @@ function parsePlanned(records: unknown[], src: SourceDescriptor, now: string): R
     }
 
     const duration = obj(r.duration);
-    const validFrom = validityBound(duration?.start, "start", src);
-    const validTo = validityBound(duration?.end, "end", src);
+    const validFrom = validityBound(duration?.start, "start", { timeZone: src.timeZone });
+    const validTo = validityBound(duration?.end, "end", { timeZone: src.timeZone });
     const recurrences = Array.isArray(duration?.recurrences) ? duration.recurrences : [];
     const read = recurrences.map((rec) =>
       obj(rec) ? toSchedule(obj(rec)!, str(duration?.start), str(duration?.end)) : undefined,
@@ -306,8 +306,8 @@ function parseUnplanned(features: unknown[], src: SourceDescriptor, now: string)
       roads: road ? [{ name: road, ...(direction ? { direction } : {}) }] : [],
       headline: str(p.name) ?? str(p.title) ?? str(p.description) ?? road ?? "Road disruption",
       description: str(p.description),
-      validFrom: validityBound(p.created, "start", src) ?? null,
-      validTo: validityBound(p.endTime, "end", src) ?? null,
+      validFrom: validityBound(p.created, "start", { timeZone: src.timeZone }) ?? null,
+      validTo: validityBound(p.endTime, "end", { timeZone: src.timeZone }) ?? null,
       sourceRaw: p,
       dataUpdatedAt:
         toIsoTimestamp(p.lastUpdated, src.timeZone) ??

@@ -376,7 +376,7 @@ export function featuresToRoadEvents(
         kind: "feed",
         attribution: { provider: src.attribution, license: src.license, url: src.licenseUrl },
       },
-      dataUpdatedAt: updated ?? now,
+      dataUpdatedAt: recordTime ?? updated ?? now,
       fetchedAt: now,
       isStale: false,
     };
