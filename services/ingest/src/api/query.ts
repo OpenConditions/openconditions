@@ -78,7 +78,7 @@ const SituationFilters = z.strictObject({
   dedupe: z
     .enum(["0", "1"])
     .describe(
-      "1 conservatively folds reports with compatible typed effects, direction, location and validity from different sources, within one page " +
+      "1 conservatively folds reports of one phenomenon from different sources (compatible typed effects, direction, location and validity, or one measure by its dates and place), within one page " +
         "only: the page is ordered by id, so reports of one phenomenon on different pages are " +
         "each returned. Unknown or incomplete reports remain separate. Folding is disabled when simplify is requested. Request every record in one page (a large enough limit) for a complete fold",
     )

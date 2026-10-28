@@ -3,6 +3,7 @@ import { EVIDENCE, withEvidence } from "./db/records.js";
 import type { QueryRunner } from "./query-runner.js";
 import { binder, inBox, type Scope, scopeClauses } from "./record-filters.js";
 import { situationCompatibilityKey } from "./situation-compatibility.js";
+import { type Shape, sameMeasureAcrossSources, shapeOf } from "./situation-overlap.js";
 import { haversineMeters } from "./spatial.js";
 
 type Rec = Record<string, unknown>;
@@ -170,6 +171,11 @@ function roadRefs(record: Rec): Set<string> {
  * the others in
  * `provenance.mergedSources`, so no source's attribution is dropped.
  *
+ * Records whose meaning differs in what each publisher calls the measure fold
+ * too when they are one measure by its dates and place
+ * ({@link sameMeasureAcrossSources}); then the record covering the other
+ * survives, and the one it replaces joins its `mergedSources`.
+ *
  * It folds the records it is given, one keyset page: a fold across pages is
  * not offered, because whether a record survives depends on every earlier
  * record chained to it by distance, which can lie on any earlier page, and
@@ -177,9 +183,18 @@ function roadRefs(record: Rec): Set<string> {
  */
 export function dedupeSituations(records: readonly Rec[]): Rec[] {
   type Member = { source: unknown; point: [number, number]; roads: Set<string> };
-  type Group = { record: Rec; members: Member[] };
+  type Group = { record: Rec; members: Member[]; shape: Shape | undefined; order: number };
   const out: Group[] = [];
   const byMeaning = new Map<string, Group[]>();
+  const byCell = new Map<string, Group[]>();
+  const index = (group: Group) => {
+    if (!group.shape) return;
+    for (const cell of cellsOf(group.shape)) {
+      const groups = byCell.get(cell);
+      if (!groups) byCell.set(cell, [group]);
+      else if (!groups.includes(group)) groups.push(group);
+    }
+  };
   for (const record of records) {
     const provenance = record["provenance"] as Rec;
     const point = pointOf((record["location"] as Rec | undefined)?.["geometry"]);
@@ -198,12 +213,35 @@ export function dedupeSituations(records: readonly Rec[]): Rec[] {
               );
             });
           });
+    const shape = shapeOf(record);
+    if (survivor === undefined && shape) {
+      const near = [...new Set(cellsOf(shape).flatMap((cell) => byCell.get(cell) ?? []))].sort(
+        (x, y) => x.order - y.order,
+      );
+      const same = near.find(
+        (g) => g.shape && sameMeasureAcrossSources(g.record, g.shape, record, shape),
+      );
+      if (same?.shape) {
+        if (sameMeasureAcrossSources(same.record, same.shape, record, shape) === record) {
+          same.record = merge(record, same.record);
+          same.shape = shape;
+          index(same);
+        } else {
+          same.record = merge(same.record, record);
+        }
+        if (point) same.members.push({ source: provenance["sourceId"], point, roads });
+        continue;
+      }
+    }
     if (survivor === undefined) {
       const group: Group = {
         record,
         members: point ? [{ source: provenance["sourceId"], point, roads }] : [],
+        shape,
+        order: out.length,
       };
       out.push(group);
+      index(group);
       if (meaning !== undefined && point !== undefined) {
         const groups = byMeaning.get(meaning) ?? [];
         groups.push(group);
@@ -212,24 +250,45 @@ export function dedupeSituations(records: readonly Rec[]): Rec[] {
       continue;
     }
     if (point) survivor.members.push({ source: provenance["sourceId"], point, roads });
-    const kept = survivor.record["provenance"] as Rec;
-    const merged = (kept["mergedSources"] as Rec[] | undefined) ?? [];
-    survivor.record = {
-      ...survivor.record,
-      provenance: {
-        ...kept,
-        mergedSources: [
-          ...merged,
-          {
-            source: provenance["sourceId"],
-            recordId: provenance["recordId"],
-            attribution: provenance["attribution"],
-            ...(provenance["upstream"] !== undefined ? { upstream: provenance["upstream"] } : {}),
-            link: "same_phenomenon",
-          },
-        ],
-      },
-    };
+    survivor.record = merge(survivor.record, record);
   }
   return out.map((o) => o.record);
+}
+
+/**
+ * `kept` listing `folded` among its merged sources, with any `folded` already
+ * listed, so no source's attribution is dropped.
+ */
+function merge(kept: Rec, folded: Rec): Rec {
+  const own = kept["provenance"] as Rec;
+  const other = folded["provenance"] as Rec;
+  return {
+    ...kept,
+    provenance: {
+      ...own,
+      mergedSources: [
+        ...((own["mergedSources"] as Rec[] | undefined) ?? []),
+        {
+          source: other["sourceId"],
+          recordId: other["recordId"],
+          attribution: other["attribution"],
+          ...(other["upstream"] !== undefined ? { upstream: other["upstream"] } : {}),
+          link: "same_phenomenon",
+        },
+        ...((other["mergedSources"] as Rec[] | undefined) ?? []),
+      ],
+    },
+  };
+}
+
+/** Grid cells, about a kilometre across, near a shape's bounding box. */
+const CELL_DEG = 0.01;
+function cellsOf(shape: Shape): string[] {
+  const grow = 30 / 111_320;
+  const [w, s, e, n] = shape.bbox;
+  const out: string[] = [];
+  for (let x = Math.floor((w - grow) / CELL_DEG); x <= Math.floor((e + grow) / CELL_DEG); x++)
+    for (let y = Math.floor((s - grow) / CELL_DEG); y <= Math.floor((n + grow) / CELL_DEG); y++)
+      out.push(`${x}:${y}`);
+  return out;
 }

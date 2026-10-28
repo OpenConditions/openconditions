@@ -498,3 +498,102 @@ describe("conservative situation deduplication", () => {
     retains(situation("one"), situation("two", "b", 7));
   });
 });
+
+describe("dedupeSituations of one measure published by two sources", () => {
+  // Along Hofmühlenstraße, Dresden: metres east of 13.7°E.
+  const line = (from: number, to: number) => ({
+    type: "LineString",
+    coordinates: [
+      [13.7 + from * 0.0000142, 51.03],
+      [13.7 + to * 0.0000142, 51.03],
+    ],
+  });
+  const works = (source: string, local: string, geometry: Rec, over: Partial<Rec> = {}): Rec => ({
+    ...situation(source, local),
+    kind: "roadworks",
+    type: "works",
+    subtype: undefined,
+    certainty: "unknown",
+    effects: [],
+    headline: [{ lang: "und", text: "Verlegung 110 KV - Leitungsbau" }],
+    validity: { status: "active", start: "2026-10-05T22:00:00Z", end: "2026-11-13T23:00:00Z" },
+    location: {
+      geometry,
+      extent: "linear",
+      geometryOrigin: "source",
+      fuzziness: "exact",
+      roads: [],
+    },
+    ...over,
+  });
+  const state = works("de-sn-list-events", "DRESDEN25/10/114", line(0, 300));
+
+  it("folds the city's record into the state's covering one, keeping the city's attribution", () => {
+    const city = works("de-sn-dresden-events", "1147", line(0, 280), {
+      kind: "closure",
+      type: "closure",
+      headline: [{ lang: "und", text: "Vollsperrung" }],
+      validity: { status: "active", start: "2026-10-05T22:00:00Z", end: "2026-11-13T22:59:00Z" },
+    });
+    for (const order of [
+      [city, state],
+      [state, city],
+    ]) {
+      const [folded, ...rest] = dedupeSituations(order);
+      expect(rest).toEqual([]);
+      expect(folded!["id"]).toBe(state["id"]);
+      expect((folded!["provenance"] as Rec)["mergedSources"]).toEqual([
+        {
+          source: "de-sn-dresden-events",
+          recordId: "1147",
+          attribution: { provider: "de-sn-dresden-events", license: "CC0-1.0" },
+          link: "same_phenomenon",
+        },
+      ]);
+    }
+  });
+
+  it("keeps a short element inside a long record of the same works", () => {
+    retains(state, works("de-autobahn-events", "ramp", line(10, 60)));
+  });
+
+  it("folds differing dates only with one end agreeing and the headlines too", () => {
+    const later = { status: "active", start: "2026-10-19T22:00:00Z", end: "2026-11-13T23:00:00Z" };
+    expect(
+      dedupeSituations([
+        state,
+        works("de-sn-dresden-events", "x", line(0, 290), { validity: later }),
+      ]),
+    ).toHaveLength(1);
+    retains(
+      state,
+      works("de-sn-dresden-events", "y", line(0, 290), {
+        validity: later,
+        headline: [{ lang: "und", text: "Kanalreinigung" }],
+      }),
+    );
+  });
+
+  it("keeps records of other kinds, without dates, or both stating effects", () => {
+    retains(
+      state,
+      works("de-sn-dresden-events", "c", line(0, 300), { kind: "congestion", type: "congestion" }),
+    );
+    retains(
+      state,
+      works("de-sn-dresden-events", "d", line(0, 300), { validity: { status: "active" } }),
+    );
+    retains(
+      { ...state, effects: [closure("s")] },
+      works("de-sn-dresden-events", "e", line(0, 300), { effects: [closure("e")] }),
+    );
+  });
+
+  it("keeps the record carrying restriction evidence", () => {
+    const lanes = { ...closure("m"), normalization: "partial" };
+    const motorway = works("de-autobahn-events", "m", line(0, 290), { effects: [lanes] });
+    const [folded, ...rest] = dedupeSituations([state, motorway]);
+    expect(rest).toEqual([]);
+    expect(folded!["id"]).toBe(motorway["id"]);
+  });
+});

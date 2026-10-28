@@ -329,7 +329,8 @@ truncated, and cursor/limit are rejected. Other collection and DATEX II routes
 retain their paging contracts.
 
 **Situation deduplication.** `dedupe=1` is a conservative display fold of
-compatible reports from different source IDs. It preserves distinct directions,
+compatible reports from different source IDs, and of two publishers' reports
+of one measure by its dates and place. It preserves distinct directions,
 restrictions, extents and validity; uncertain reports remain separate. It does
 not fold after requested geometry simplification. See the
 [matching contract](situation-deduplication.md) for eligibility and page limits.
