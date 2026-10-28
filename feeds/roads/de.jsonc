@@ -48,6 +48,8 @@
       "name": "VIZ Berlin roadworks & closures",
       "tier": "authoritative",
       "format": "geojson",
+      // validity.from/to are local times without an offset ("2025-07-09T07:00").
+      "timezone": "Europe/Berlin",
       "endpoints": {
         "main": {
           "url": "https://api.viz.berlin.de/daten/baustellen_sperrungen_viz.json",
@@ -62,10 +64,23 @@
           "Bauarbeiten": "roadworks",
           "Sperrung": "road_closure",
           "Störung": "obstruction",
+          "Gefahr": "hazard",
         },
         "defaultType": "other",
         "headlineField": "content",
+        // Where on the street, and which way: "in beiden Richtungen zwischen
+        // Luisenstraße und Albrechtstraße", "Richtung Fennstraße in Höhe …".
+        "descriptionField": "section",
         "roadField": "street",
+        // "Beidseitig" (both directions) or "Einseitig" (one, named only in the
+        // section text, so no direction it establishes).
+        "directionField": "direction",
+        // Lanes closed of the carriageway's (2 of 2, 1 of 2). A Sperrung keeps
+        // its closure effect instead.
+        "lanesTotalField": "total_lanes",
+        "lanesClosedField": "closed_lanes",
+        "validFromField": "validity.from",
+        "validToField": "validity.to",
         "severityField": "severity",
         "severityMap": {
           "Vollsperrung": "high",

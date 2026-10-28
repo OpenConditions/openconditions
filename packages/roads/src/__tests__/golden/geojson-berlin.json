@@ -125,6 +125,11 @@
           ]
         }
       ],
+      "direction": {
+        "value": "both",
+        "basis": "text",
+        "text": "Beidseitig"
+      },
       "admin": {
         "country": "DE"
       }
@@ -165,8 +170,16 @@
         "text": "Bauarbeiten, Fahrbahn auf einen Fahrstreifen verengt"
       }
     ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "in beiden Richtungen Schloßstraße/Aus- u. Einfahrt A103 und Neuchateller Straße"
+      }
+    ],
     "validity": {
-      "status": "active"
+      "status": "active",
+      "start": "2025-07-23T05:00:00.000Z",
+      "end": "2026-07-30T15:00:00.000Z"
     },
     "effects": [],
     "details": {
@@ -177,7 +190,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "4e53b4fc7a0ef9eda45e2334fd962cdc4f6f51a4bd88b05476360d471b6a871d"
+    "contentHash": "826539e4da7bec75d0b31e0cc957c480a02e486ef3dd1ce432a1113b0b28471f"
   },
   {
     "id": "oc:situation:de-be-berlin-events:105/2025",
@@ -203,6 +216,11 @@
           ]
         }
       ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Einseitig"
+      },
       "admin": {
         "country": "DE"
       }
@@ -243,8 +261,16 @@
         "text": "Hochbau, Fahrbahn auf einen Fahrstreifen verengt"
       }
     ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Richtung Fennstraße in Höhe Hedwig-Porschütz-Straße"
+      }
+    ],
     "validity": {
-      "status": "active"
+      "status": "active",
+      "start": "2025-08-15T10:00:00.000Z",
+      "end": "2027-07-30T10:00:00.000Z"
     },
     "effects": [],
     "details": {
@@ -255,7 +281,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "17e381da4757af4c4f9aa6311e88e8cddcb143c7cfe15ef3ecccbcfe910da7d3"
+    "contentHash": "6ff6d15ad42756a00c85d95c9ff674070f58015fe2094eaf98aeb147ebfe874a"
   },
   {
     "id": "oc:situation:de-be-berlin-events:17/2025",
@@ -307,6 +333,11 @@
           ]
         }
       ],
+      "direction": {
+        "value": "both",
+        "basis": "text",
+        "text": "Beidseitig"
+      },
       "admin": {
         "country": "DE"
       }
@@ -348,14 +379,27 @@
         "text": "Leitungsbau, Vollsperrung für Kfz-Verkehr. Im Anschluss folgen weitere Arbeiten"
       }
     ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "in beiden Richtungen zwischen Luisenstraße und Albrechtstraße"
+      }
+    ],
     "validity": {
-      "status": "active"
+      "status": "active",
+      "start": "2025-07-09T05:00:00.000Z",
+      "end": "2026-10-28T16:00:00.000Z"
     },
     "effects": [
       {
         "id": "17/2025/closure",
         "applicability": {
           "kind": "all"
+        },
+        "direction": {
+          "value": "both",
+          "basis": "text",
+          "text": "Beidseitig"
         },
         "compliance": "mandatory",
         "normalization": "complete",
@@ -372,7 +416,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "40bbb5dfbc519f0cf717d4f87d371ed9b11188d5212b0f0f25ebee06e80096cc"
+    "contentHash": "27840bfc2c0ea9589e4fec9b18d4af12d5ae1d36a3cf60270633f391a250fbf1"
   },
   {
     "id": "oc:situation:de-be-berlin-events:30/2025",
@@ -433,6 +477,11 @@
           ]
         }
       ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Einseitig"
+      },
       "admin": {
         "country": "DE"
       }
@@ -474,14 +523,27 @@
         "text": "Umleitungsstrecke für gesperrte Bahnhofstraße, Fahrtrichtung gesperrt, Briesingstraße Richtung Bahnhofstraße gesperrt"
       }
     ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "Richtung Wolziger Zeile zwischen Bahnofstraße und Briesinger Straße"
+      }
+    ],
     "validity": {
-      "status": "active"
+      "status": "active",
+      "start": "2025-07-16T05:00:00.000Z",
+      "end": "2026-12-31T16:00:00.000Z"
     },
     "effects": [
       {
         "id": "30/2025/closure",
         "applicability": {
           "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Einseitig"
         },
         "compliance": "mandatory",
         "normalization": "complete",
@@ -498,7 +560,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "c1aef1fc54078eb9c2219cbff132219cd616d0a6a49154b75995248e797e8333"
+    "contentHash": "f030f8319cd89dd0147a02b4cd9538fdfd412c4ffd150ff80f1efbe671ac444f"
   },
   {
     "id": "oc:situation:de-be-berlin-events:44/2025",
@@ -699,6 +761,11 @@
           ]
         }
       ],
+      "direction": {
+        "value": "unknown",
+        "basis": "text",
+        "text": "Einseitig"
+      },
       "admin": {
         "country": "DE"
       }
@@ -740,14 +807,27 @@
         "text": "Bau der AS Hubertus, Fahrtrichtung gesperrt"
       }
     ],
+    "description": [
+      {
+        "lang": "und",
+        "text": "stadtauswärts zwsichen AD Treptow und AS Waltersdorf"
+      }
+    ],
     "validity": {
-      "status": "active"
+      "status": "active",
+      "start": "2025-07-24T06:00:00.000Z",
+      "end": "2026-08-21T15:00:00.000Z"
     },
     "effects": [
       {
         "id": "44/2025/closure",
         "applicability": {
           "kind": "all"
+        },
+        "direction": {
+          "value": "unknown",
+          "basis": "text",
+          "text": "Einseitig"
         },
         "compliance": "mandatory",
         "normalization": "complete",
@@ -764,6 +844,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "2133287ba25e6e75c999a096128cf4a11dc9d1ee6ba16a9283528ad55bb14671"
+    "contentHash": "5e9d137e89d86182d2e6499a4e6d4b1ba1fde785f3d81da9dccfa3f3a9ec8f09"
   }
 ]

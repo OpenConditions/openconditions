@@ -681,6 +681,52 @@ describe("parseGeoJson — feature ids", () => {
   });
 });
 
+describe("parseGeoJson — direction and lanes", () => {
+  const LANES: SourceDescriptor = {
+    ...SRC,
+    geojson: {
+      idField: "id",
+      typeField: "subtype",
+      typeMap: { Baustelle: "roadworks", Sperrung: "road_closure" },
+      directionField: "direction",
+      lanesTotalField: "total",
+      lanesClosedField: "closed",
+    },
+  };
+  const at = (props: Record<string, unknown>, i: number) => ({
+    type: "Feature",
+    geometry: { type: "Point", coordinates: [13.4 + i / 100, 52.5] },
+    properties: props,
+  });
+  const one = (props: Record<string, unknown>) => parseGeoJson(fc([at(props, 0)]), LANES)[0]!;
+
+  it("reads the direction as text and the lanes closed of the carriageway's", () => {
+    const ev = one({ id: "a", subtype: "Baustelle", direction: "Beidseitig", total: 2, closed: 1 });
+    expect(ev.direction).toBe("Beidseitig");
+    expect(ev.lanesAffected).toEqual({ total: 2, closed: 1 });
+  });
+
+  it("reads works closing every lane it counts as closing some, not the road", () => {
+    const ev = one({ id: "f", subtype: "Baustelle", direction: "Beidseitig", total: 1, closed: 1 });
+    expect(ev.lanesAffected).toEqual({ closed: 1 });
+  });
+
+  it("reads no lanes where none is closed, the count is no count, or the record is a closure", () => {
+    expect(
+      one({ id: "b", subtype: "Baustelle", total: 2, closed: 0 }).lanesAffected,
+    ).toBeUndefined();
+    expect(
+      one({ id: "c", subtype: "Baustelle", total: 2, closed: 3 }).lanesAffected,
+    ).toBeUndefined();
+    expect(
+      one({ id: "d", subtype: "Baustelle", total: 2, closed: "x" }).lanesAffected,
+    ).toBeUndefined();
+    expect(
+      one({ id: "e", subtype: "Sperrung", total: 2, closed: 2 }).lanesAffected,
+    ).toBeUndefined();
+  });
+});
+
 describe("parseGeoJson — record filter", () => {
   const point = (props: Record<string, unknown>) => ({
     type: "Feature",

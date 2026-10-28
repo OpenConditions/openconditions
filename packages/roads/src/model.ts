@@ -69,6 +69,18 @@ export interface GeoJsonMapping {
   severityPatterns?: { match: string; severity: Severity }[];
   /** properties key for the road name/ref. */
   roadField?: string;
+  /**
+   * properties key for the direction the record applies in, read as text:
+   * `both` (`beidseitig`, `in beiden Richtungen`), a compass point, a
+   * destination.
+   */
+  directionField?: string;
+  /**
+   * properties keys for the carriageway's lanes and how many of them are
+   * closed. A road closure keeps its closure effect and reads no lanes.
+   */
+  lanesTotalField?: string;
+  lanesClosedField?: string;
   /** properties key for a last-updated ISO timestamp. */
   updatedField?: string;
   /**

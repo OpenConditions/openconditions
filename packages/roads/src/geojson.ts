@@ -236,6 +236,34 @@ function validityRange(
   };
 }
 
+/** A feature's direction under `directionField`, as the feed writes it (read as text). */
+function directionOf(props: Record<string, unknown>, mapping: GeoJsonMapping): string | undefined {
+  return str(get(props, mapping.directionField))?.trim() || undefined;
+}
+
+/** A count of lanes: a whole number from 0, else nothing. */
+const laneCount = (value: unknown): number | undefined => {
+  const n = typeof value === "string" && value.trim() !== "" ? Number(value) : value;
+  return Number.isSafeInteger(n) && (n as number) >= 0 ? (n as number) : undefined;
+};
+
+/**
+ * The lanes a feature closes, of how many, under `lanesTotalField` and
+ * `lanesClosedField`. A record closing no lane states no lane restriction, so
+ * it carries none; closed lanes beyond the total are no count.
+ */
+function lanesOf(
+  props: Record<string, unknown>,
+  mapping: GeoJsonMapping,
+): { total?: number; closed: number } | undefined {
+  if (!mapping.lanesClosedField) return undefined;
+  const closed = laneCount(get(props, mapping.lanesClosedField));
+  const total = laneCount(get(props, mapping.lanesTotalField));
+  if (closed === undefined || closed === 0) return undefined;
+  if (total !== undefined && (total === 0 || closed > total)) return undefined;
+  return { ...(total !== undefined ? { total } : {}), closed };
+}
+
 function defaultHeadline(type: RoadEventType): string {
   return type === "other"
     ? "Traffic information"
@@ -329,6 +357,15 @@ export function featuresToRoadEvents(
     const sourceHeadline = str(get(props, mapping.headlineField));
     const headline = sourceHeadline ?? defaultHeadline(type);
     const road = str(get(props, mapping.roadField));
+    const direction = directionOf(props, mapping);
+    // A closure states its own effect; its lane figures would replace it. A
+    // record of another type closing every lane it counts contradicts its type
+    // (Berlin's "keine Sperrung" works closing 1 of 1): it closes some, not all.
+    const counted = type === "road_closure" ? undefined : lanesOf(props, mapping);
+    const lanes =
+      counted?.total !== undefined && counted.closed >= counted.total
+        ? { closed: counted.closed }
+        : counted;
     const updated = str(get(props, mapping.updatedField));
     const times = timesOf(src, mapping);
     const recordTime = sourceTimestamp(updated, times);
@@ -358,6 +395,8 @@ export function featuresToRoadEvents(
       status: "active",
       geometry,
       roads: road ? [{ name: road }] : [],
+      ...(direction !== undefined ? { direction } : {}),
+      ...(lanes !== undefined ? { lanesAffected: lanes } : {}),
       headline,
       description: str(get(props, mapping.descriptionField)),
       // Only projected when the mapping declares the fields, so feeds without

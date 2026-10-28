@@ -1435,6 +1435,15 @@
               "roadField": {
                 "type": "string"
               },
+              "directionField": {
+                "type": "string"
+              },
+              "lanesTotalField": {
+                "type": "string"
+              },
+              "lanesClosedField": {
+                "type": "string"
+              },
               "updatedField": {
                 "type": "string"
               },

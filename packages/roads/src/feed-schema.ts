@@ -64,6 +64,9 @@ const geoJsonMappingSchema = z
       .nonempty()
       .optional(),
     roadField: z.string().optional(),
+    directionField: z.string().optional(),
+    lanesTotalField: z.string().optional(),
+    lanesClosedField: z.string().optional(),
     updatedField: z.string().optional(),
     arrayPath: z.string().optional(),
     lonField: z.string().optional(),
