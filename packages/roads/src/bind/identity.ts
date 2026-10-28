@@ -14,7 +14,28 @@ import { normalizeRefs } from "./refs.js";
  * `L 523`, `St 2240`). A word before a number (`Tie 40`, Finnish for road
  * 40) is no class letter.
  */
-const REF_NAME = /^\s*([A-Z]{1,2}|St|Kr)\s*-?\s*(\d{1,5}[a-z]?)(?=$|[\s(/,;:-])/;
+const REF_NAME = /^([A-Z]{1,2}|St|Kr) ?-? ?(\d{1,5}[a-z]?)(?=$|[\s(/,;:-])/;
+
+/** Longer than this, a name is cut: no road's name or number runs longer. */
+const MAX_NAME = 200;
+
+/**
+ * A name without its parenthesized notes (`Ruschestraße (Lichtenberg)`), cut
+ * to {@link MAX_NAME}. A scan rather than a pattern, so a name of many
+ * unclosed parentheses costs no more than its length.
+ */
+function withoutNotes(value: string): string {
+  let out = "";
+  let depth = 0;
+  for (const ch of value.slice(0, MAX_NAME)) {
+    if (ch === "(") {
+      if (depth === 0) out += " ";
+      depth++;
+    } else if (ch === ")" && depth > 0) depth--;
+    else if (depth === 0) out += ch;
+  }
+  return out;
+}
 
 /** A European route number, as normalized. */
 const EUROPEAN_ROUTE = /^E\d+$/;
@@ -30,19 +51,20 @@ const STREET_WORD =
 
 /** A street name as compared: lower case, `ß` as `ss`, `Straße` as `str`, no house number or note. */
 export function normalizeName(value: string): string {
-  return value
-    .replace(/\([^)]*\)/g, " ")
-    .toLowerCase()
-    .replace(/ß/g, "ss")
-    .replace(/stra(ss|ß)e\b|str\.(?=\s|$|-)|str\b/g, "str")
-    .replace(/\b\d+[a-z]?(\s*[-–/]\s*\d+[a-z]?)?\b/g, " ")
-    .replace(/[^\p{L}\p{N}]/gu, "");
+  return (
+    withoutNotes(value)
+      .toLowerCase()
+      .replace(/ß/g, "ss")
+      .replace(/stra(ss|ß)e\b|str\.(?=\s|$|-)|str\b/g, "str")
+      // House numbers and ranges (`211-217`, `82a`); their dashes go with the rest below.
+      .replace(/\d+[a-z]?/g, " ")
+      .replace(/[^\p{L}\p{N}]/gu, "")
+  );
 }
 
 /** Whether a name is a street's, by a word naming its type. */
 export function isStreetName(value: string): boolean {
-  return value
-    .replace(/\([^)]*\)/g, " ")
+  return withoutNotes(value)
     .split(/[\s,;/]+/)
     .some((word) => STREET_WORD.test(word.replace(/[:]+$/, "")));
 }
@@ -57,7 +79,7 @@ export function roadIdentity(roads: Array<{ ref?: string; name?: string }>): {
   for (const road of roads) {
     if (road.ref) refValues.push(road.ref);
     if (!road.name) continue;
-    const asRef = REF_NAME.exec(road.name);
+    const asRef = REF_NAME.exec(road.name.trim().slice(0, MAX_NAME));
     if (asRef) refValues.push(`${asRef[1]}${asRef[2]}`);
     else if (isStreetName(road.name)) {
       const name = normalizeName(road.name);
