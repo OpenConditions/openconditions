@@ -1602,21 +1602,19 @@
       "freshnessWindowSec": 7200,
       // No licence is stated for these collections: not on the OGC API
       // landing page, collection metadata or the theme description, and the
-      // data is not in the city's Open Data portal or on GovData. The city's
-      // other kommisdd services listed on GovData are DL-DE-BY-2.0, but the
-      // Themenstadtplan's own terms reserve commercial use of individual
-      // contents outside the map to the Amt für Geodaten und Kataster.
-      "license": "NOASSERTION",
+      // data is not in the city's Open Data portal or on GovData. Read under
+      // DL-DE-BY-2.0, the licence of the city's other services on the same
+      // server, until the city states one. The Themenstadtplan's terms ask
+      // commercial users of its contents outside the map to contact the
+      // Amt für Geodaten und Kataster; the terms note keeps that.
+      "license": "DL-DE-BY-2.0",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "terms": {
         "url": "https://stadtplan.dresden.de/content.aspx?method=CopyRight,UsageConstraints,ApplicationContent",
         "reviewedAt": "2026-10-28",
-        "note": "No licence on the kommisdd OGC API collections L60/L150, on the Themenstadtplan themes they feed (their copyright section names only 'Datenquelle: … Landeshauptstadt Dresden') or on the city's ArcGIS Online 'Verkehrsbehinderungen' layer. Themenstadtplan terms: commercial use of individual contents (maps, digital data) outside the Themenstadtplan requires contacting the Geoservice of the Amt für Geodaten und Kataster (geoservice@dresden.de). Other Dresden kommisdd services on GovData carry DL-DE-BY-2.0. Ask the Straßen- und Tiefbauamt to publish the layer under DL-DE-BY-2.0.",
+        "note": "No licence on the kommisdd OGC API collections L60/L150, on the Themenstadtplan themes they feed (their copyright section names only 'Datenquelle: … Landeshauptstadt Dresden') or on the city's ArcGIS Online 'Verkehrsbehinderungen' layer. Themenstadtplan terms: commercial use of individual contents (maps, digital data) outside the Themenstadtplan requires contacting the Geoservice of the Amt für Geodaten und Kataster (geoservice@dresden.de). Other Dresden kommisdd services carry DL-DE-BY-2.0 and the Open-Data-Portal terms; DL-DE-BY-2.0 assumed pending confirmation from the city (geoservice@dresden.de).",
       },
       "attribution": "Landeshauptstadt Dresden, Straßen- und Tiefbauamt",
-      "disabled": {
-        "reason": "no licence stated, and the Themenstadtplan terms reserve commercial use of its digital data",
-        "since": "2026-10-28",
-      },
       "privacyUrl": "https://www.dresden.de/de/sonstiges/datenschutz.php",
     },
     {

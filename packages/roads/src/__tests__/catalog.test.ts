@@ -937,6 +937,7 @@ describe("one feed per publisher", () => {
       "de-sh-kiel-events",
       "de-sh-norderstedt-events",
       "de-sn-chemnitz-events",
+      "de-sn-dresden-events",
       "de-sn-leipzig-events",
       "de-sn-list-events",
     ];
@@ -949,11 +950,6 @@ describe("one feed per publisher", () => {
       expect(f.timezone, id).toBe("Europe/Berlin");
       expect(f.geojson?.validityRangeField ?? f.geojson?.validFromField, id).toBeDefined();
     }
-    // Dresden's service states no licence, and the city's map terms reserve
-    // commercial use of its digital data: listed, not polled.
-    const dresden = feed("de-sn-dresden-events");
-    expect(dresden.license).toBe("NOASSERTION");
-    expect(dresden.disabled?.since).toBe("2026-10-28");
     expect(feed("de-he-ivm-events").format).toBe("datex2");
   });
 
