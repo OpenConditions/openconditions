@@ -127,12 +127,14 @@ describe("on-demand read-through", () => {
       const key = `${feed.id.replaceAll("-", "_").toUpperCase()}_TOKEN`;
       const up = upstream();
       let failing = false;
+      let transportCalls = 0;
       const error = () =>
         new Error(
           `cell failure ${secret} https://example.test/${secret}?token=${queryToken} repeated ${queryToken}`,
           { cause: new Error(secret) },
         );
       const transport: typeof fetch = async (input, init) => {
+        transportCalls++;
         expect(new Headers(init?.headers).get("X-Api-Key")).toBe(secret);
         if (failing && stage === "transport") throw error();
         return up.fetch(input, init);
@@ -172,10 +174,10 @@ describe("on-demand read-through", () => {
           expect(diagnostic).not.toContain(secret);
           expect(diagnostic).not.toContain(queryToken);
         }
-        const calls = up.calls.length;
+        const calls = transportCalls;
         h.advance(1);
         expect((await h.features("8,49,8.1,49.1")).coverage).toEqual(partial(feed.id, "failed"));
-        expect(up.calls).toHaveLength(calls);
+        expect(transportCalls).toBe(calls);
       } finally {
         parse?.mockRestore();
         warn.mockRestore();
