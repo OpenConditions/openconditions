@@ -36,7 +36,7 @@ const PATTERNS: [LocalAccessException["usage"], RegExp][] = [
   ],
 ];
 
-const UP_TO = /^\s*,?\s*(?:bis|up\s+to|tot)\b/iu;
+const UP_TO = /^(?:\s*,)?\s*(?:bis|up\s+to|tot)\b/iu;
 
 /** The local-access exception the first text stating one states. */
 export function localAccessExceptionOf(

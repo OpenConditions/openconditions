@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -320,5 +321,61 @@ describe("parseTrafikverket", () => {
     expect(restriction.status).toBe("inactive");
     expect(restriction.dataUpdatedAt).toBe("2026-10-01T08:00:00.000Z");
     expect(restriction.roads).toEqual([{ name: "Väg 331", ref: "Väg 331" }]);
+  });
+});
+
+describe("WKT dimension whitespace", () => {
+  it.each([
+    "point(18 59)",
+    "POINTZ(18 59 3)",
+    "PointM(18 59 4)",
+    "POINT ZM (18 59 3 4)",
+    " \nPOINT\u00a0ZM\n(18 59 3 4) \t",
+  ])("preserves supported %j", (wkt) => {
+    expect(one({ Geometry: at(wkt) }).geometry).toEqual({ type: "Point", coordinates: [18, 59] });
+  });
+
+  it.each([
+    "POINT Z M (18 59 3 4)",
+    "POINT ZZ (18 59)",
+    "POINT EMPTY",
+    "POINT (18)",
+    "POINT (18 59) trailing",
+  ])("preserves fallback for %j", (wkt) => {
+    const ev = one({ Geometry: { Line: { WGS84: wkt }, Point: { WGS84: "POINT (17 58)" } } });
+    expect(ev.geometry).toEqual({ type: "Point", coordinates: [17, 58] });
+    expect(
+      parseTrafikverket(body([{ Id: "s", Deviation: [{ Id: "d", Geometry: at(wkt) }] }]), SRC),
+    ).toEqual([]);
+  });
+
+  it("bounds malformed WKT whitespace before valid geometry fallback", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--input-type=module",
+        "-e",
+        `
+      import assert from "node:assert/strict";
+      const { parseTrafikverket } = await import(process.argv[1]);
+      const src = JSON.parse(process.argv[2]);
+      const read = (wkt) => parseTrafikverket(JSON.stringify({ RESPONSE: { RESULT: [{ Situation: [{ Id: "s", Deviation: [{ Id: "d", Geometry: { Line: { WGS84: wkt }, Point: { WGS84: "POINT (17 58)" } } }] }] }] } }), src);
+      assert.deepEqual(read("POINT ZM (18 59 1 2)")[0].geometry, { type: "Point", coordinates: [18, 59] });
+      console.log("control passed");
+      const out = read("POINT" + " ".repeat(100_000) + "!");
+      assert.equal(out.length, 1);
+      assert.deepEqual(out[0].geometry, { type: "Point", coordinates: [17, 58] });
+      console.log("decoded");
+    `,
+        new URL("../../dist/index.js", import.meta.url).href,
+        JSON.stringify(SRC),
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.stdout).toContain("control passed");
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("control passed\ndecoded");
   });
 });
