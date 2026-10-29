@@ -560,10 +560,22 @@ describe("one feed per publisher", () => {
     expect(typeof main(f.id).url).toBe("string");
   });
 
-  test("MobiData BW roadworks is an open DATEX II feed", () => {
+  test("MobiData BW roadworks is an open DATEX II feed with reviewed terms", () => {
     const f = feed("de-bw-svzbw-events");
     expect(f.format).toBe("datex2");
     expect(f.license).toBe("DL-DE-BY-2.0");
+    expect(f.licenseUrl).toBe("https://www.govdata.de/dl-de/by-2-0");
+    expect(f.terms).toMatchObject({
+      url: "https://mobidata-bw.de/dataset/baustelleninformationen-baden-wurttemberg",
+      reviewedAt: "2026-10-29",
+    });
+    expect(f.rights).toMatchObject({
+      redistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      attributionRequired: true,
+      retention: true,
+    });
   });
 
   test("France DIR is an open, complete DATEX II publication under etalab", () => {
