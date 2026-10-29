@@ -431,9 +431,10 @@ OpenStreetMap as the second source. What they found:
 - The status computes occupied spaces from a capacity it does not always
   have, and publishes the difference even when it is negative (−1 261 lorries),
   so an impossible count gives no reading rather than a repaired one.
-- Autobahn GmbH's `verkehr.autobahn.de` publishes no licence or terms, so its
-  lorry parks are `NOASSERTION` and withheld from the public scope. The same
-  rest areas come licensed and live from MobiData BW, which relays Toll
+- Autobahn GmbH's `verkehr.autobahn.de` states no licence itself. It is the
+  backend of the Autobahn App, whose Mobilithek offer is GeoNutzV, so the event
+  feed declares GeoNutzV with that offer as evidence. Its lorry parks are not
+  read: the same rest areas come live from MobiData BW, which relays Toll
   Collect's lorry-parking service, so the parking catalogue takes them from
   there.
 - A lorry park's security rating comes in two incompatible schemes: ESPORG

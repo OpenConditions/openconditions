@@ -210,21 +210,20 @@ describe("roads catalogue resolvers", () => {
     ]);
   });
 
-  test("every Autobahn snapshot child resolves under its parent with its own licence", () => {
+  test("every Autobahn snapshot child resolves under its parent with the parent's licence", () => {
     const parent = roadFeed({
       region: "de",
       operator: "autobahn",
       format: "autobahn",
-      license: "DL-DE-BY-2.0",
+      license: "LicenseRef-GeoNutzV",
       catalog: { resolver: "autobahn-index", approvedChildren: [] },
     });
     const { discovered, issues } = materializeCatalogChildren([parent], [roadsDomain]);
     expect(issues).toEqual([]);
     expect(discovered).toHaveLength(autobahnIndexResolver.snapshot.length);
     expect(discovered.map((c) => c.id)).toContain("de-autobahn-a1-warning-events");
-    for (const child of autobahnIndexResolver.snapshot) {
-      expect(child.license).toBe("DL-DE-BY-2.0");
-    }
+    for (const child of autobahnIndexResolver.snapshot) expect(child.license).toBeUndefined();
+    for (const child of discovered) expect(child.license).toBe("LicenseRef-GeoNutzV");
   });
 
   test("every WZDx snapshot child resolves, unverified ones as NOASSERTION with the registry note", () => {

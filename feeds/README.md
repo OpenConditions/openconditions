@@ -939,13 +939,13 @@ Road sources considered and left out, reviewed on 2026-10-14.
 Parking sources considered and left out, reviewed on 2026-10-05. Taking one
 needs the change its reason names.
 
-| source                                                              | reason                                                                                                                   |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| ParkenDD ParkAPI v2 (`api.parkendd.de`)                             | No data licence for 23 of its 28 cities (it scrapes operator pages), and its scraper has been frozen since 2026-07-18.   |
-| Autobahn GmbH rest areas (`verkehr.autobahn.de` `parking_lorry`)    | No published licence or terms. The same lorry parks come live and licensed from `de-bw-mobidata-parking` (Toll Collect). |
-| Stadtwerke Bamberg car park counter                                 | The imprint requires written consent, and the records carry no coordinates.                                              |
-| Stadtwerke Trier `parken-v2.xml`                                    | The imprint requires written consent, and the records carry no coordinates.                                              |
-| APCOA, GOLDBECK and APAG on Mobidrom, Bielefeld WFS, Düsseldorf WFS | Exact subsets of `de-nw-mobidrom-parking`.                                                                               |
+| source                                                              | reason                                                                                                                 |
+| ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| ParkenDD ParkAPI v2 (`api.parkendd.de`)                             | No data licence for 23 of its 28 cities (it scrapes operator pages), and its scraper has been frozen since 2026-07-18. |
+| Autobahn GmbH rest areas (`verkehr.autobahn.de` `parking_lorry`)    | The same lorry parks come live, with occupancy, from `de-bw-mobidata-parking` (Toll Collect).                          |
+| Stadtwerke Bamberg car park counter                                 | The imprint requires written consent, and the records carry no coordinates.                                            |
+| Stadtwerke Trier `parken-v2.xml`                                    | The imprint requires written consent, and the records carry no coordinates.                                            |
+| APCOA, GOLDBECK and APAG on Mobidrom, Bielefeld WFS, Düsseldorf WFS | Exact subsets of `de-nw-mobidrom-parking`.                                                                             |
 
 Charging sources considered and left out, reviewed on 2026-10-06.
 

@@ -468,7 +468,18 @@ describe("Autobahn GmbH", () => {
   test("the event feed enumerates every motorway from the road index", () => {
     const f = feed("de-autobahn-events");
     expect(f.format).toBe("autobahn");
-    expect(f.license).toBe("DL-DE-BY-2.0");
+    expect(f.license).toBe("LicenseRef-GeoNutzV");
+    expect(f.terms).toMatchObject({
+      url: "https://mobilithek.info/offers/573189053963235328",
+      reviewedAt: "2026-10-29",
+    });
+    expect(f.rights).toMatchObject({
+      redistribution: true,
+      derivedRedistribution: true,
+      commercialUse: true,
+      attributionRequired: true,
+      retention: true,
+    });
     expect(f.catalog?.resolver).toBe("autobahn-index");
     // No approved list: the parent fans its children out at fetch time.
     expect(f.catalog?.approvedChildren).toBeUndefined();
