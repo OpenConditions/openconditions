@@ -36,7 +36,7 @@ export const ROADS_TRAVEL_TIME_PROPERTIES = [
     result: { type: "quantity", unit: "s" },
     subjects: [{ kind: "feature", featureKinds: ["travel_time_route"] }],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 7, rollup: { period: "hourly" } },
+    retention: { latestOnly: true },
     routingRelevant: true,
   }),
 ];

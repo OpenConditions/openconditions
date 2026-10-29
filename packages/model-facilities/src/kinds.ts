@@ -122,7 +122,7 @@ export const FACILITIES_PROPERTIES = [
     result: { type: "category", vocabulary: "facility_open_status" },
     subjects: [{ kind: "feature", traits: ["operated_site"] }],
     freshnessWindowSec: 24 * HOUR,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     routingRelevant: true,
     crowd: { ttlSec: 2 * HOUR, maxLifetimeSec: 12 * HOUR },
   }),

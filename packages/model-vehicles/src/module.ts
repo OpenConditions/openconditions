@@ -96,7 +96,7 @@ export const vehiclesModule: RegistryModule = {
       subjects: [{ kind: "feature", featureKinds: ["service_vehicle"] }, { kind: "location" }],
       freshnessWindowSec: 600,
       transient: true,
-      retention: { rawDays: 2 },
+      retention: { latestOnly: true },
     }),
   ],
 };

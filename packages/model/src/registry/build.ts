@@ -116,17 +116,12 @@ const ROLLUP_RESULTS = new Set(["quantity", "count", "vector", "money"]);
 function checkRetention(p: PropertyEntry, where: string): void {
   const r = p.retention;
   if (r === undefined) return;
-  if (p.transient && (r.changeOnly || r.latestOnly || r.rollup !== undefined)) {
-    throw new RegistryError(
-      `${where}: a transient property is never change-only, latest-only or rolled up`,
-    );
+  if (p.transient && (r.changeOnly || r.rollup !== undefined)) {
+    throw new RegistryError(`${where}: a transient property is never change-only or rolled up`);
   }
   if (
     r.latestOnly &&
-    (r.rawDays !== undefined ||
-      r.rollup !== undefined ||
-      r.changeOnly ||
-      r.componentHistory !== undefined)
+    (r.rawDays !== undefined || r.rollup !== undefined || r.componentHistory !== undefined)
   ) {
     throw new RegistryError(`${where}: a latest-only property keeps no history`);
   }

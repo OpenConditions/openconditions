@@ -7,7 +7,7 @@ const registry = buildRegistry([kernelModule, vehiclesModule]);
 describe("vehicles module", () => {
   it("registers service vehicles and their positions", () => {
     expect(registry.kind("feature", "service_vehicle")?.domain).toBe("vehicles");
-    expect(registry.property("vehicle.position")?.retention).toEqual({ rawDays: 2 });
+    expect(registry.property("vehicle.position")?.retention).toEqual({ latestOnly: true });
     expect(registry.property("vehicle.position")?.transient).toBe(true);
   });
 

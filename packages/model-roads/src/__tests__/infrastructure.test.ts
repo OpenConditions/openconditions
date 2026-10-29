@@ -122,12 +122,10 @@ describe("roads infrastructure", () => {
     ).toMatchObject({ ok: true });
   });
 
-  it("keeps sign displays as changes and camera images as change-only without view history", () => {
-    expect(registry.property("vms.display")?.retention).toEqual({ changeOnly: true, rawDays: 30 });
-    expect(registry.property("camera.image")?.retention).toEqual({
-      changeOnly: true,
-      componentHistory: false,
-    });
+  it("writes sign displays and camera images once per change and keeps no history of them", () => {
+    for (const code of ["vms.display", "camera.image"]) {
+      expect(registry.property(code)?.retention).toEqual({ changeOnly: true, latestOnly: true });
+    }
   });
 
   it("roads contributes the camera formats once", () => {
@@ -196,30 +194,15 @@ describe("roads infrastructure", () => {
 describe("traffic retention", () => {
   const retention = (code: string) => registry.property(code)?.retention;
 
-  it("keeps lane and vehicle-class readings latest-only and site series within the budget", () => {
+  it("keeps a raw day of site speeds for the rollup and every other traffic reading latest-only", () => {
     expect(retention("traffic.speed")).toEqual({
-      rawDays: 2,
+      rawDays: 1,
       componentHistory: false,
       rollup: { period: "hourly", histogram: { binWidth: 2 } },
     });
-    expect(retention("traffic.volume")).toEqual({
-      rawDays: 1,
-      componentHistory: false,
-      rollup: { period: "hourly" },
-    });
-    expect(retention("traffic.occupancy")).toEqual({
-      rawDays: 2,
-      componentHistory: false,
-      rollup: { period: "hourly" },
-    });
-    expect(retention("traffic.vehicle_class_speed")).toEqual({
-      rawDays: 2,
-      componentHistory: false,
-    });
-    expect(retention("traffic.los")).toEqual({
-      changeOnly: true,
-      rawDays: 7,
-      componentHistory: false,
-    });
+    for (const code of ["traffic.volume", "traffic.occupancy", "traffic.vehicle_class_speed"]) {
+      expect(retention(code)).toEqual({ latestOnly: true });
+    }
+    expect(retention("traffic.los")).toEqual({ changeOnly: true, latestOnly: true });
   });
 });

@@ -10,6 +10,7 @@ export * from "./latest-cache.js";
 export * from "./observation-partitions.js";
 export * from "./observation-rollup.js";
 export * from "./record-rows.js";
+export * from "./revision-retention.js";
 export * from "./shrink.js";
 export * from "./sources.js";
 export * from "./sweep.js";

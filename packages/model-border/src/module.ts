@@ -131,7 +131,7 @@ export const borderModule: RegistryModule = {
         { kind: "feature", featureKinds: ["border_crossing"], componentKinds: ["lane_group"] },
       ],
       freshnessWindowSec: 2 * 3600,
-      retention: { rawDays: 30 },
+      retention: { latestOnly: true },
     }),
   ],
 };

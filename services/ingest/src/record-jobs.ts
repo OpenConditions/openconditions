@@ -4,6 +4,7 @@ import {
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
   isLockTimeout,
+  pruneRevisions,
   pruneRollups,
   refreshFlippedFusions,
   retentionClasses,
@@ -16,7 +17,7 @@ import type postgres from "postgres";
 import { rawArchiveOptionsFromEnv } from "./raw/archive.js";
 import { evictionPolicyFromEnv, evictRawPayloads } from "./raw/evict.js";
 
-/** How often expired and orphaned records are tombstoned and old tombstones purged. */
+/** How often expired and orphaned records are tombstoned, old tombstones purged and old revisions pruned. */
 const RECORD_SWEEP_CRON = "*/5 * * * *";
 /** Fusions are refreshed for the sources whose freshness flipped, every five minutes. */
 const FUSION_FLIP_CRON = "2-59/5 * * * *";
@@ -66,11 +67,15 @@ export interface RecordJobsOptions {
   now?: () => Date;
 }
 
-/** Days a tombstoned record and its revisions stay for the history API (default 90). */
+/**
+ * Days the history API looks back (default 7): a record's revisions older
+ * than that are pruned, its latest kept, and a record tombstoned longer ago
+ * is purged.
+ */
 export function historyDaysFromEnv(env: NodeJS.ProcessEnv = process.env): number {
   const raw = env["OPENCONDITIONS_HISTORY_DAYS"];
   const days = raw == null || raw === "" ? Number.NaN : Number(raw);
-  return Number.isInteger(days) && days > 0 ? days : 90;
+  return Number.isInteger(days) && days > 0 ? days : 7;
 }
 
 /**
@@ -233,11 +238,17 @@ export function startRecordJobs(
       });
       if (rows > 0) console.info(`[records] ${period} rollup wrote ${rows} row(s)`);
       if (period === "daily") {
-        await pruneRollups(maintenanceSql, {
+        const pruned = await pruneRollups(maintenanceSql, {
           now: at,
           hourlyDays: rollupDays.hourly,
           dailyDays: rollupDays.daily,
+          registry: opts.registry,
         });
+        if (pruned.retired > 0) {
+          console.info(
+            `[records] pruned ${pruned.retired} rollup(s) of properties no longer rolled up`,
+          );
+        }
       }
     });
     jobs.push(new Cron(cron, { catch: true }, rollup));
@@ -256,6 +267,11 @@ export function startRecordJobs(
     if (Object.values(counts).some((n) => n > 0)) {
       console.info(`[records] sweep ${JSON.stringify(counts)}`);
     }
+    const revisions = await pruneRevisions(maintenanceSql, {
+      now: now().toISOString(),
+      historyDays,
+    });
+    if (revisions > 0) console.info(`[records] pruned ${revisions} revision(s)`);
   });
   jobs.push(new Cron(RECORD_SWEEP_CRON, { catch: true }, sweep));
 

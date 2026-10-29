@@ -27,16 +27,15 @@ describe("fuel module", () => {
     });
   });
 
-  it("keeps a month of price changes raw and a daily rollup after that", () => {
+  it("writes a price once per change and keeps no history of it", () => {
     expect(registry.property("fuel.price")?.retention).toEqual({
-      rawDays: 30,
       changeOnly: true,
-      rollup: { period: "daily" },
+      latestOnly: true,
     });
   });
 
-  it("keeps every regulated cap, because a cap changes rarely", () => {
-    expect(registry.property("fuel.price_cap")?.retention).toBeUndefined();
+  it("keeps only the regulated cap in effect", () => {
+    expect(registry.property("fuel.price_cap")?.retention).toEqual({ latestOnly: true });
   });
 
   it("carries the grades a national price list publishes beyond the standards", () => {

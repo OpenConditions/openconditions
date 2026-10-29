@@ -397,8 +397,9 @@ readiness. Canonical previews are synthetic; this does not simulate ingestion.
 
 ## Record history
 
-`OPENCONDITIONS_HISTORY_DAYS` (default 90) is how long a tombstoned record and
-its revisions stay for the history API. Hourly rollups are kept
+`OPENCONDITIONS_HISTORY_DAYS` (default 7) is how far back the history API
+reaches: older revisions are pruned with every sweep (a record's latest stays),
+and a record tombstoned longer ago is purged. Hourly rollups are kept
 `OPENCONDITIONS_ROLLUP_HOURLY_DAYS` (35), daily ones
 `OPENCONDITIONS_ROLLUP_DAILY_DAYS` (400). A poll holding more than
 `OPENCONDITIONS_MAX_OBSERVATIONS_PER_POLL` readings (1 000 000) or 100 000
@@ -461,9 +462,9 @@ next poll.
 
 A flow poll writes its sites, readings and derived congestion through the
 record writer in one transaction with the poll's status. Every site-level
-reading goes to the partitioned observation history (`traffic.speed` keeps
-three days of raw readings, volumes and occupancy two); readings about a lane
-or vehicle class only update the latest row. The record jobs roll finished
+speed goes to the partitioned observation history (`traffic.speed` keeps one
+day of raw readings, the input of its hourly rollup); volumes, occupancy and
+readings about a lane or vehicle class only update the latest row. The record jobs roll finished
 hours up into `observation_rollup_hourly` (sparse 2 km/h speed histograms,
 35 days), six hours after an hour ends. A reading that arrives after its hour
 was rolled up stays in the raw history but never reaches the rollup; the poll

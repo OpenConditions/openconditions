@@ -45,7 +45,7 @@ const SITE: SubjectSpec = {
   traits: ["weather_sensing"],
   componentKinds: ["sensor_channel"],
 };
-const SERIES: Retention = { rawDays: 7, rollup: { period: "hourly" } };
+const SERIES: Retention = { latestOnly: true };
 
 const quantity = (
   code: string,
@@ -73,7 +73,7 @@ export const WEATHER_PROPERTIES: PropertyEntry[] = [
   quantity("weather.wind_speed", "m/s", "Mean wind speed."),
   quantity("weather.wind_gust", "m/s", "Maximum gust speed."),
   // An hourly mean of compass bearings is meaningless (359° and 1° average to 180°).
-  quantity("weather.wind_direction", "deg", "Direction the wind blows from.", { rawDays: 7 }),
+  quantity("weather.wind_direction", "deg", "Direction the wind blows from."),
   quantity("weather.precipitation_rate", "mm/h", "Precipitation intensity."),
   // A sum over the reading's window, which the reading states.
   quantity("weather.precipitation_amount", "mm", "Precipitation fallen over the reading's window."),
@@ -85,7 +85,7 @@ export const WEATHER_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "precipitation_type" },
     subjects: [SITE],
     freshnessWindowSec: HOUR,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
   }),
   defineProperty({
     code: "road.surface_state",
@@ -95,7 +95,7 @@ export const WEATHER_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "surface_state" },
     subjects: [SITE, { kind: "segments" }],
     freshnessWindowSec: HOUR,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     routingRelevant: true,
   }),
   quantity("road.surface_temperature", "Cel", "Road surface temperature."),
@@ -120,7 +120,7 @@ export const WEATHER_PROPERTIES: PropertyEntry[] = [
     description: "Forecast road surface state for a segment or area.",
     result: { type: "category", vocabulary: "surface_state" },
     subjects: [{ kind: "segments" }, { kind: "location" }],
-    retention: { rawDays: 2 },
+    retention: { latestOnly: true },
   }),
 ];
 

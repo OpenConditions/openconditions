@@ -120,8 +120,12 @@ importing the other. Blocks several domains share live in the kernel: the
 A property's `retention` says what history its series keeps: every distinct
 result or only changes (`changeOnly`), raw rows for `rawDays`, an hourly or
 daily rollup of numeric results (an hourly histogram with a bin width, for
-percentiles over long windows), or only the latest value (`latestOnly`). The
-registry rejects a retention the result type cannot have.
+percentiles over long windows), or only the latest value (`latestOnly`).
+`latestOnly` combines with `changeOnly`, which also decides how the latest
+row is written. The registry rejects a retention the result type cannot have.
+In production only `traffic.speed` keeps a history, because its hourly
+histograms feed the baselines and segment profiles; every other property is
+latest-only.
 
 A change-only property is also written as its changes: a reading whose result
 (and qualifiers) is the one its series holds is not written at all, so the
@@ -1006,59 +1010,59 @@ Kernel version `1.2`; modules: `kernel`, `roads`, `weather`, `vehicles`, `parkin
 
 ### Properties
 
-| property                       | domain     | version | result                          | subjects                                                                                    | retention                           |
-| ------------------------------ | ---------- | ------- | ------------------------------- | ------------------------------------------------------------------------------------------- | ----------------------------------- |
-| `traffic.speed`                | roads      | 1.0     | quantity (km/h)                 | feature (measurement_site, component sensor_channel); segments                              | raw 2 d, hourly histogram (bin 2)   |
-| `traffic.volume`               | roads      | 1.0     | quantity (1/h)                  | feature (measurement_site, component sensor_channel)                                        | raw 1 d, hourly rollup              |
-| `traffic.occupancy`            | roads      | 1.0     | quantity (%)                    | feature (measurement_site, component sensor_channel)                                        | raw 2 d, hourly rollup              |
-| `traffic.los`                  | roads      | 1.0     | category (los)                  | feature (measurement_site, component sensor_channel); feature (travel_time_route); segments | change-only, raw 7 d                |
-| `traffic.vehicle_class_speed`  | roads      | 1.0     | vector (km/h)                   | feature (measurement_site, component sensor_channel)                                        | raw 2 d                             |
-| `vms.display`                  | roads      | 1.0     | structured (vms_display)        | feature (vms, component sign_face)                                                          | change-only, raw 30 d               |
-| `camera.image`                 | roads      | 1.0     | structured (camera_image)       | feature (camera, component camera_view)                                                     | change-only                         |
-| `device.status`                | roads      | 1.0     | category (device_status)        | feature (trait field_device)                                                                | change-only                         |
-| `traffic.travel_time`          | roads      | 1.0     | quantity (s)                    | feature (travel_time_route)                                                                 | raw 7 d, hourly rollup              |
-| `pass.status`                  | roads      | 1.0     | category (pass_status)          | feature (mountain_pass)                                                                     | change-only                         |
-| `winter.chain_level`           | roads      | 1.0     | category (chain_level)          | feature (mountain_pass); feature (chain_control_zone)                                       | change-only                         |
-| `toll.price`                   | roads      | 1.0     | money                           | feature (toll_section, toll_point, component toll_lane)                                     | change-only, raw 30 d               |
-| `weather.air_temperature`      | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.dew_point`            | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.humidity`             | weather    | 1.0     | quantity (%)                    | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.visibility`           | weather    | 1.0     | quantity (m)                    | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.wind_speed`           | weather    | 1.0     | quantity (m/s)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.wind_gust`            | weather    | 1.0     | quantity (m/s)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.wind_direction`       | weather    | 1.0     | quantity (deg)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d                             |
-| `weather.precipitation_rate`   | weather    | 1.0     | quantity (mm/h)                 | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.precipitation_amount` | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `weather.precipitation_type`   | weather    | 1.0     | category (precipitation_type)   | feature (trait weather_sensing, component sensor_channel)                                   | change-only                         |
-| `road.surface_state`           | weather    | 1.0     | category (surface_state)        | feature (trait weather_sensing, component sensor_channel); segments                         | change-only                         |
-| `road.surface_temperature`     | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.subsurface_temperature`  | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.freezing_point`          | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.friction`                | weather    | 1.0     | quantity (1)                    | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.water_film`              | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.snow_depth`              | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.ice_thickness`           | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.salt_concentration`      | weather    | 1.0     | quantity (kg/m3)                | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.salt_amount`             | weather    | 1.0     | quantity (g/m2)                 | feature (trait weather_sensing, component sensor_channel)                                   | raw 7 d, hourly rollup              |
-| `road.condition_forecast`      | weather    | 1.0     | category (surface_state)        | segments; location                                                                          | raw 2 d                             |
-| `vehicle.position`             | vehicles   | 1.1     | structured (vehicle_position)   | feature (service_vehicle); location                                                         | transient, raw 2 d                  |
-| `parking.available`            | parking    | 1.0     | count                           | feature (parking_site, component parking_area, component parking_space)                     | change-only, hourly rollup          |
-| `parking.occupied`             | parking    | 1.0     | count                           | feature (parking_site, component parking_area, component parking_space)                     | change-only, hourly rollup          |
-| `parking.occupancy_pct`        | parking    | 1.0     | quantity (%)                    | feature (parking_site, component parking_area, component parking_space)                     | hourly rollup                       |
-| `parking.status`               | parking    | 1.0     | category (parking_status)       | feature (parking_site, component parking_area, component parking_space)                     | change-only                         |
-| `parking.trend`                | parking    | 1.0     | category (trend)                | feature (parking_site, component parking_area, component parking_space)                     | change-only                         |
-| `charging.evse_status`         | charging   | 1.0     | category (evse_status)          | feature (charging_site, component evse, component connector)                                | change-only                         |
-| `charging.connector_status`    | charging   | 1.0     | category (evse_status)          | feature (charging_site, component evse, component connector)                                | change-only                         |
-| `charging.site_status`         | charging   | 1.0     | category (charging_site_status) | feature (charging_site)                                                                     | change-only                         |
-| `charging.waiting_time`        | charging   | 1.0     | quantity (min)                  | feature (charging_site, component evse, component connector)                                | raw 7 d                             |
-| `fuel.price`                   | fuel       | 1.1     | money                           | feature (fuel_station, component fuel_product); location                                    | change-only, raw 30 d, daily rollup |
-| `fuel.price_cap`               | fuel       | 1.1     | money                           | location                                                                                    | —                                   |
-| `fuel.product_available`       | fuel       | 1.0     | boolean                         | feature (fuel_station, component fuel_product)                                              | change-only                         |
-| `facility.open_status`         | facilities | 1.0     | category (facility_open_status) | feature (trait operated_site)                                                               | change-only                         |
-| `border.wait`                  | border     | 1.0     | structured (border_wait)        | feature (border_crossing, component lane_group)                                             | raw 30 d                            |
-| `ferry.status`                 | maritime   | 1.0     | category (ferry_status)         | feature (ferry_route, ferry_terminal, component ferry_leg)                                  | change-only                         |
-| `ferry.vehicle_space`          | maritime   | 1.0     | count                           | feature (ferry_route, ferry_terminal, component ferry_leg)                                  | change-only, raw 7 d                |
-| `fire.frp`                     | hazards    | 1.0     | quantity (MW)                   | location                                                                                    | transient, raw 7 d                  |
+| property                       | domain     | version | result                          | subjects                                                                                    | retention                         |
+| ------------------------------ | ---------- | ------- | ------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------- |
+| `traffic.speed`                | roads      | 1.0     | quantity (km/h)                 | feature (measurement_site, component sensor_channel); segments                              | raw 1 d, hourly histogram (bin 2) |
+| `traffic.volume`               | roads      | 1.0     | quantity (1/h)                  | feature (measurement_site, component sensor_channel)                                        | latest only                       |
+| `traffic.occupancy`            | roads      | 1.0     | quantity (%)                    | feature (measurement_site, component sensor_channel)                                        | latest only                       |
+| `traffic.los`                  | roads      | 1.0     | category (los)                  | feature (measurement_site, component sensor_channel); feature (travel_time_route); segments | change-only, latest only          |
+| `traffic.vehicle_class_speed`  | roads      | 1.0     | vector (km/h)                   | feature (measurement_site, component sensor_channel)                                        | latest only                       |
+| `vms.display`                  | roads      | 1.0     | structured (vms_display)        | feature (vms, component sign_face)                                                          | change-only, latest only          |
+| `camera.image`                 | roads      | 1.0     | structured (camera_image)       | feature (camera, component camera_view)                                                     | change-only, latest only          |
+| `device.status`                | roads      | 1.0     | category (device_status)        | feature (trait field_device)                                                                | change-only, latest only          |
+| `traffic.travel_time`          | roads      | 1.0     | quantity (s)                    | feature (travel_time_route)                                                                 | latest only                       |
+| `pass.status`                  | roads      | 1.0     | category (pass_status)          | feature (mountain_pass)                                                                     | change-only, latest only          |
+| `winter.chain_level`           | roads      | 1.0     | category (chain_level)          | feature (mountain_pass); feature (chain_control_zone)                                       | change-only, latest only          |
+| `toll.price`                   | roads      | 1.0     | money                           | feature (toll_section, toll_point, component toll_lane)                                     | change-only, latest only          |
+| `weather.air_temperature`      | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.dew_point`            | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.humidity`             | weather    | 1.0     | quantity (%)                    | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.visibility`           | weather    | 1.0     | quantity (m)                    | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.wind_speed`           | weather    | 1.0     | quantity (m/s)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.wind_gust`            | weather    | 1.0     | quantity (m/s)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.wind_direction`       | weather    | 1.0     | quantity (deg)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.precipitation_rate`   | weather    | 1.0     | quantity (mm/h)                 | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.precipitation_amount` | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `weather.precipitation_type`   | weather    | 1.0     | category (precipitation_type)   | feature (trait weather_sensing, component sensor_channel)                                   | change-only, latest only          |
+| `road.surface_state`           | weather    | 1.0     | category (surface_state)        | feature (trait weather_sensing, component sensor_channel); segments                         | change-only, latest only          |
+| `road.surface_temperature`     | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.subsurface_temperature`  | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.freezing_point`          | weather    | 1.0     | quantity (Cel)                  | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.friction`                | weather    | 1.0     | quantity (1)                    | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.water_film`              | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.snow_depth`              | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.ice_thickness`           | weather    | 1.0     | quantity (mm)                   | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.salt_concentration`      | weather    | 1.0     | quantity (kg/m3)                | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.salt_amount`             | weather    | 1.0     | quantity (g/m2)                 | feature (trait weather_sensing, component sensor_channel)                                   | latest only                       |
+| `road.condition_forecast`      | weather    | 1.0     | category (surface_state)        | segments; location                                                                          | latest only                       |
+| `vehicle.position`             | vehicles   | 1.1     | structured (vehicle_position)   | feature (service_vehicle); location                                                         | transient, latest only            |
+| `parking.available`            | parking    | 1.0     | count                           | feature (parking_site, component parking_area, component parking_space)                     | change-only, latest only          |
+| `parking.occupied`             | parking    | 1.0     | count                           | feature (parking_site, component parking_area, component parking_space)                     | change-only, latest only          |
+| `parking.occupancy_pct`        | parking    | 1.0     | quantity (%)                    | feature (parking_site, component parking_area, component parking_space)                     | latest only                       |
+| `parking.status`               | parking    | 1.0     | category (parking_status)       | feature (parking_site, component parking_area, component parking_space)                     | change-only, latest only          |
+| `parking.trend`                | parking    | 1.0     | category (trend)                | feature (parking_site, component parking_area, component parking_space)                     | change-only, latest only          |
+| `charging.evse_status`         | charging   | 1.0     | category (evse_status)          | feature (charging_site, component evse, component connector)                                | change-only, latest only          |
+| `charging.connector_status`    | charging   | 1.0     | category (evse_status)          | feature (charging_site, component evse, component connector)                                | change-only, latest only          |
+| `charging.site_status`         | charging   | 1.0     | category (charging_site_status) | feature (charging_site)                                                                     | change-only, latest only          |
+| `charging.waiting_time`        | charging   | 1.0     | quantity (min)                  | feature (charging_site, component evse, component connector)                                | latest only                       |
+| `fuel.price`                   | fuel       | 1.1     | money                           | feature (fuel_station, component fuel_product); location                                    | change-only, latest only          |
+| `fuel.price_cap`               | fuel       | 1.1     | money                           | location                                                                                    | latest only                       |
+| `fuel.product_available`       | fuel       | 1.0     | boolean                         | feature (fuel_station, component fuel_product)                                              | change-only, latest only          |
+| `facility.open_status`         | facilities | 1.0     | category (facility_open_status) | feature (trait operated_site)                                                               | change-only, latest only          |
+| `border.wait`                  | border     | 1.0     | structured (border_wait)        | feature (border_crossing, component lane_group)                                             | latest only                       |
+| `ferry.status`                 | maritime   | 1.0     | category (ferry_status)         | feature (ferry_route, ferry_terminal, component ferry_leg)                                  | change-only, latest only          |
+| `ferry.vehicle_space`          | maritime   | 1.0     | count                           | feature (ferry_route, ferry_terminal, component ferry_leg)                                  | change-only, latest only          |
+| `fire.frp`                     | hazards    | 1.0     | quantity (MW)                   | location                                                                                    | transient, latest only            |
 
 ### Crowd reports
 

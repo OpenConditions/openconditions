@@ -161,14 +161,15 @@ nothing journalled to correct, so it is taken as in sync with its flag.
 
 The sweep, every five minutes, takes these actions:
 
-| What                                                                 | Action                                                        |
-| -------------------------------------------------------------------- | ------------------------------------------------------------- |
-| A record whose `freshness.expiresAt` has passed                      | Tombstoned `expired`                                          |
-| A feed record of a source with no successful poll for an hour        | Tombstoned `expired`                                          |
-| A peer's copy without expiry, its peer silent about its source       | Tombstoned `expired`, back when the peer's liveness returns   |
-| A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (90) ago | Purged with its revisions, bindings, crowd evidence and votes |
-| An on-demand row at expiry                                           | Deleted (it was a cache, with no history)                     |
-| A series of a transient property past its reading's expiry           | Deleted, bulk or on demand (nothing else ends it)             |
+| What                                                                | Action                                                        |
+| ------------------------------------------------------------------- | ------------------------------------------------------------- |
+| A record whose `freshness.expiresAt` has passed                     | Tombstoned `expired`                                          |
+| A feed record of a source with no successful poll for an hour       | Tombstoned `expired`                                          |
+| A peer's copy without expiry, its peer silent about its source      | Tombstoned `expired`, back when the peer's liveness returns   |
+| A record tombstoned more than `OPENCONDITIONS_HISTORY_DAYS` (7) ago | Purged with its revisions, bindings, crowd evidence and votes |
+| A revision recorded more than `OPENCONDITIONS_HISTORY_DAYS` ago     | Deleted, unless it is its record's latest                     |
+| An on-demand row at expiry                                          | Deleted (it was a cache, with no history)                     |
+| A series of a transient property past its reading's expiry          | Deleted, bulk or on demand (nothing else ends it)             |
 
 A peer's copy without an expiry of its own lives as long as its peer says so,
 so a peer that goes dark would leave it live here for good. Only for a peer
@@ -231,6 +232,11 @@ A property's registry `retention` decides what is kept:
 | `latestOnly`       | None                               |
 | On-demand readings | None                               |
 
+`latestOnly` may be combined with `changeOnly`: the history is gone, but
+the latest row is still written once per change and stays valid while its
+source keeps polling. Every production property except `traffic.speed` is
+latest-only; the speed keeps one raw day, the input of its hourly histograms.
+
 `componentHistory: false` keeps no history of readings about a component (a
 lane or vehicle-class channel of a measurement site): they update their latest
 row only, and the site's own series carries the history.
@@ -250,6 +256,9 @@ so a class keeps between `rawDays` and `rawDays + 1` days. The ingest service
 creates partitions 16 days ahead and drops expired ones hourly; a day of a
 class holding a rolled-up property is dropped
 only once the rollup has finalized past it (or when it holds no reading). A
+class no property declares any more is dropped whole, keep-everything months
+included, except for a partition holding readings of a rolled-up property the
+rollup has not reached yet (a property moved to a shorter `rawDays`). A
 reading no partition holds is counted and kept out of history; it still
 updates the latest row. A changed reading of the instant in effect corrects
 the latest row.
@@ -259,8 +268,11 @@ Rollups:
 - **Hourly** (`observation_rollup_hourly`): count, minimum, maximum and mean, and
   for `traffic.speed` a 2 km/h histogram (percentiles do not decompose;
   histograms do). Kept 35 days.
-- **Daily** (`observation_rollup_daily`): for slow series such as fuel prices.
-  Kept 400 days.
+- **Daily** (`observation_rollup_daily`): for slow series. Kept 400 days; no
+  production property rolls up daily at present.
+
+The daily job also deletes the rollups of a property that no longer rolls up
+at that period.
 
 A period is rolled up six hours after it ends. A reading that arrives later
 stays in the history but never reaches the rollup; a write counts it
@@ -274,25 +286,16 @@ class. A larger poll is refused whole, keeping the last good publication.
 ### History budget
 
 Measured on NDW's own payloads (19 000 sites, a poll a minute): a poll writes
-about 10 800 site speeds and 19 000 site volumes to history and moves about
-141 000 latest rows (sites, lanes and vehicle classes); a history row takes
-about 185 bytes with its primary-key index. A steady poll takes about 25 s
-(laptop, PostGIS in a container). At the default retention, a class keeps on
-average half a day more than `rawDays`:
-
-| NDW series                              | Kept                        | Size            |
-| --------------------------------------- | --------------------------- | --------------- |
-| `traffic.speed`, per site               | 2 days (`rawDays: 2`)       | about 7 GB      |
-| `traffic.volume`, per site              | 1 day                       | about 8 GB      |
-| Lane and vehicle-class channel readings | latest row only, no history | none            |
-| `observation_latest`                    | one row a series            | about 0.6 GB    |
-| Hourly rollups                          | 35 days                     | well under 1 GB |
-
-NDW is the largest flow source by far; all 24 flow feeds together come to
-roughly 20 GB of history. Minute-level history of every site's speed and volume
-is what that buys; the hourly rollups keep the long tail for baselines and
-profiles. Measure against captured payloads before raising a property's
-`rawDays`: a day of NDW volumes is about 5 GB.
+about 10 800 site speeds to history and moves about 141 000 latest rows (sites,
+lanes and vehicle classes); a history row takes about 185 bytes with its
+primary-key index. A steady poll takes about 25 s (laptop, PostGIS in a
+container). On the reference host (2026-10-29) a day of speeds from every flow
+feed came to about 13 GB of raw history, and the speed's hourly rollups to
+about 3 GB over 35 days. A class keeps on average half a day more than
+`rawDays`, so `rawDays: 1` holds about one and a half days. Volumes, occupancy,
+vehicle-class speeds and lane readings keep their latest row only. Measure
+against captured payloads before giving a property a history again: a day of
+NDW volumes alone was about 10 GB.
 
 ## Read API
 

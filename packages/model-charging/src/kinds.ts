@@ -390,7 +390,7 @@ export const CHARGING_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "evse_status" },
     subjects: [EVSE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     crowd: STATUS_CROWD,
   }),
   defineProperty({
@@ -401,7 +401,7 @@ export const CHARGING_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "evse_status" },
     subjects: [EVSE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     crowd: STATUS_CROWD,
   }),
   defineProperty({
@@ -412,7 +412,7 @@ export const CHARGING_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "charging_site_status" },
     subjects: [{ kind: "feature", featureKinds: ["charging_site"] }],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
   }),
   defineProperty({
     code: "charging.waiting_time",
@@ -422,6 +422,6 @@ export const CHARGING_PROPERTIES: PropertyEntry[] = [
     result: { type: "quantity", unit: "min" },
     subjects: [EVSE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 7 },
+    retention: { latestOnly: true },
   }),
 ];

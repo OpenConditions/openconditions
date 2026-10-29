@@ -238,7 +238,6 @@ describe("buildRegistry", () => {
 
   it.each<[string, Retention]>([
     ["change-only", { rawDays: 1, changeOnly: true }],
-    ["latest-only", { latestOnly: true }],
     ["rolled-up", { rawDays: 1, rollup: { period: "hourly" } }],
   ])("rejects a %s transient property", (_label, retention) => {
     const entries = [
@@ -257,6 +256,42 @@ describe("buildRegistry", () => {
     expect(() => buildRegistry([kernelModule, { name: "bad", entries }])).toThrow(
       /transient property/,
     );
+  });
+
+  it("keeps a change-only or a transient property latest-only", () => {
+    const registry = buildRegistry([
+      kernelModule,
+      {
+        name: "latest",
+        entries: [
+          defineDomain({ code: "hazards", description: "x" }),
+          defineProperty({
+            code: "x.status",
+            domain: "hazards",
+            version: "1.0",
+            description: "x",
+            result: { type: "text" },
+            subjects: [{ kind: "location" }],
+            retention: { changeOnly: true, latestOnly: true },
+          }),
+          defineProperty({
+            code: "x.power",
+            domain: "hazards",
+            version: "1.0",
+            description: "x",
+            result: { type: "quantity", unit: "MW" },
+            subjects: [{ kind: "location" }],
+            transient: true,
+            retention: { latestOnly: true },
+          }),
+        ],
+      },
+    ]);
+    expect(registry.property("x.status")?.retention).toEqual({
+      changeOnly: true,
+      latestOnly: true,
+    });
+    expect(registry.property("x.power")?.retention).toEqual({ latestOnly: true });
   });
 
   it("accepts crosswalks on a closed vocabulary but no new values", () => {

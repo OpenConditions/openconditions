@@ -126,7 +126,7 @@ describe("border module", () => {
     expect(registry.validateDraft(wait({ status: "delay", lanesOpen: 1.5 })).ok).toBe(false);
   });
 
-  it("keeps no rollup of a structured wait", () => {
-    expect(registry.property("border.wait")?.retention).toEqual({ rawDays: 30 });
+  it("keeps only the wait in effect", () => {
+    expect(registry.property("border.wait")?.retention).toEqual({ latestOnly: true });
   });
 });

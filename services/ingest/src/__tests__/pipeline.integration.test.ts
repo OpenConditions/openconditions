@@ -455,7 +455,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
         FROM conditions.observation_latest
        WHERE feature_id = 'oc:feature:nl-ndw-flow:PZH01_MST_0065_00' AND property = 'traffic.speed'
        ORDER BY component_key NULLS FIRST`;
-    expect(rows[0]).toMatchObject({ channel: null, retention_days: 2 });
+    expect(rows[0]).toMatchObject({ channel: null, retention_days: 1 });
     expect(rows[0]!.value_num).toBeCloseTo(63.28, 2);
     expect(rows.slice(1).map((r) => r.retention_days)).toEqual([null, null, null]);
     expect(rows.every((r) => r.rights !== null)).toBe(true);
@@ -539,7 +539,7 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
     expect(await liveSituations("nl-ndw-flow")).toBe(0);
   }, 60_000);
 
-  it("keeps site readings as history and counts those the rollup has already passed", async () => {
+  it("keeps site speeds as history and counts those the rollup has already passed", async () => {
     // The fixture's readings are of 2026-06-24 10:08–10:09: poll as of then.
     const at = "2026-06-24T10:10:00.000Z";
     await ensureObservationPartitions(sql, {
@@ -561,18 +561,15 @@ describe("flow feed — e2e pipeline (NDW site-table join)", () => {
         SELECT l.property, count(*)::int AS n FROM conditions.observation o
           JOIN conditions.observation_latest l USING (series_id)
          WHERE l.source_id = 'nl-ndw-flow' GROUP BY 1 ORDER BY 1`;
-      // Site series only: three speeds and the site volume.
-      expect(history).toEqual([
-        { property: "traffic.speed", n: 3 },
-        { property: "traffic.volume", n: 1 },
-      ]);
+      // Site speeds only: volumes keep their latest row.
+      expect(history).toEqual([{ property: "traffic.speed", n: 3 }]);
 
       await sql`UPDATE conditions.observation_rollup_progress SET finalized_before = '2026-06-24T11:00:00Z'`;
       await forget();
       clearReferenceCaches();
       const late = await poll(fakeFetch, () => "2026-06-24T10:11:00.000Z");
       expect(late.error).toBeUndefined();
-      expect(late.pastRollup).toBe(4);
+      expect(late.pastRollup).toBe(3);
     } finally {
       await sql`DELETE FROM conditions.observation_rollup_progress`;
     }

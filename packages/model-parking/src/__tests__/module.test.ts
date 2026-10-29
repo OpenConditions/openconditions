@@ -50,12 +50,11 @@ describe("parking module", () => {
     });
   });
 
-  it("keeps a full history of counts but only the changes of a state", () => {
-    expect(registry.property("parking.available")?.retention).toEqual({
-      changeOnly: true,
-      rollup: { period: "hourly" },
-    });
-    expect(registry.property("parking.status")?.retention).toEqual({ changeOnly: true });
+  it("writes counts and states once per change and keeps no history of them", () => {
+    for (const code of ["parking.available", "parking.status"]) {
+      expect(registry.property(code)?.retention).toEqual({ changeOnly: true, latestOnly: true });
+    }
+    expect(registry.property("parking.occupancy_pct")?.retention).toEqual({ latestOnly: true });
   });
 
   it("links a kerbside stretch only to another kerbside stretch", () => {

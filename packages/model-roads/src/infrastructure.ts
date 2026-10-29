@@ -275,8 +275,10 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "km/h" },
     subjects: [SITE, { kind: "segments" }],
     freshnessWindowSec: 15 * MINUTE,
+    // The only history kept: baselines, segment profiles and the maxspeed
+    // fallback read the hourly histograms, and raw readings exist to feed them.
     retention: {
-      rawDays: 2,
+      rawDays: 1,
       componentHistory: false,
       rollup: { period: "hourly", histogram: { binWidth: 2 } },
     },
@@ -290,7 +292,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "1/h" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 1, componentHistory: false, rollup: { period: "hourly" } },
+    retention: { latestOnly: true },
   }),
   defineProperty({
     code: "traffic.occupancy",
@@ -300,7 +302,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "quantity", unit: "%" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 2, componentHistory: false, rollup: { period: "hourly" } },
+    retention: { latestOnly: true },
   }),
   defineProperty({
     code: "traffic.los",
@@ -315,7 +317,7 @@ export const ROADS_PROPERTIES = [
       { kind: "segments" },
     ],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true, rawDays: 7, componentHistory: false },
+    retention: { changeOnly: true, latestOnly: true },
     routingRelevant: true,
   }),
   defineProperty({
@@ -326,7 +328,7 @@ export const ROADS_PROPERTIES = [
     result: { type: "vector", unit: "km/h", keys: VEHICLE_CLASSES },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rawDays: 2, componentHistory: false },
+    retention: { latestOnly: true },
   }),
   defineProperty({
     code: "vms.display",
@@ -335,7 +337,7 @@ export const ROADS_PROPERTIES = [
     description: "What a sign shows.",
     result: { type: "structured", schema: "vms_display" },
     subjects: [{ kind: "feature", featureKinds: ["vms"], componentKinds: ["sign_face"] }],
-    retention: { changeOnly: true, rawDays: 30 },
+    retention: { changeOnly: true, latestOnly: true },
   }),
   defineProperty({
     code: "camera.image",
@@ -344,7 +346,7 @@ export const ROADS_PROPERTIES = [
     description: "A camera's current image or stream.",
     result: { type: "structured", schema: "camera_image" },
     subjects: [{ kind: "feature", featureKinds: ["camera"], componentKinds: ["camera_view"] }],
-    retention: { changeOnly: true, componentHistory: false },
+    retention: { changeOnly: true, latestOnly: true },
   }),
   defineProperty({
     code: "device.status",
@@ -353,6 +355,6 @@ export const ROADS_PROPERTIES = [
     description: "The operating state a field device reports about itself.",
     result: { type: "category", vocabulary: "device_status" },
     subjects: [{ kind: "feature", traits: ["field_device"] }],
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
   }),
 ];

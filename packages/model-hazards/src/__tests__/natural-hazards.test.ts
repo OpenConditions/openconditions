@@ -139,7 +139,7 @@ describe("natural hazards", () => {
 
   it("keeps each fire pixel's power as a transient reading and no brightness", () => {
     expect(registry.property("fire.frp")?.transient).toBe(true);
-    expect(registry.property("fire.frp")?.retention).toEqual({ rawDays: 7 });
+    expect(registry.property("fire.frp")?.retention).toEqual({ latestOnly: true });
     expect(registry.property("fire.brightness")).toBeUndefined();
   });
 

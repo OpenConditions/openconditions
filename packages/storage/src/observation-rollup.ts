@@ -171,16 +171,44 @@ export function rollupRetentionDaysFromEnv(env: NodeJS.ProcessEnv = process.env)
   };
 }
 
-/** Deletes rollups older than their retention. */
+/** Rollup rows deleted per statement when a property no longer rolls up. */
+const RETIRED_ROLLUP_BATCH = 50_000;
+
+/**
+ * Deletes rollups older than their retention, and the rollups of series
+ * whose property no longer rolls up at that period: no reader asks for
+ * them, and they would otherwise stay their whole retention.
+ */
 export async function pruneRollups(
   sql: postgres.Sql,
-  opts: { now: Date; hourlyDays: number; dailyDays: number },
-): Promise<{ hourly: number; daily: number }> {
+  opts: { now: Date; hourlyDays: number; dailyDays: number; registry: Registry },
+): Promise<{ hourly: number; daily: number; retired: number }> {
   const hourly = await sql`
     DELETE FROM conditions.observation_rollup_hourly
      WHERE hour_utc < ${new Date(opts.now.getTime() - opts.hourlyDays * DAY_MS)}`;
   const daily = await sql`
     DELETE FROM conditions.observation_rollup_daily
      WHERE day_utc < ${new Date(opts.now.getTime() - opts.dailyDays * DAY_MS)}::date`;
-  return { hourly: hourly.count, daily: daily.count };
+  let retired = 0;
+  for (const [period, table, column] of [
+    ["hourly", "observation_rollup_hourly", "hour_utc"],
+    ["daily", "observation_rollup_daily", "day_utc"],
+  ] as const) {
+    const kept = rolledUp(opts.registry, period).map((p) => p.property);
+    let deleted: number;
+    do {
+      const result = await sql.unsafe(
+        `DELETE FROM conditions.${table}
+          WHERE (series_id, ${column}) IN (
+            SELECT r.series_id, r.${column} FROM conditions.${table} r
+              JOIN conditions.observation_latest l ON l.series_id = r.series_id
+             WHERE l.property <> ALL($1::text[])
+             LIMIT ${RETIRED_ROLLUP_BATCH})`,
+        [kept],
+      );
+      deleted = result.count;
+      retired += deleted;
+    } while (deleted === RETIRED_ROLLUP_BATCH);
+  }
+  return { hourly: hourly.count, daily: daily.count, retired };
 }

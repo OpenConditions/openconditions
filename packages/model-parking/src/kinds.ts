@@ -382,7 +382,7 @@ export const PARKING_PROPERTIES: PropertyEntry[] = [
     result: { type: "count" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true, rollup: { period: "hourly" } },
+    retention: { changeOnly: true, latestOnly: true },
   }),
   defineProperty({
     code: "parking.occupied",
@@ -392,7 +392,7 @@ export const PARKING_PROPERTIES: PropertyEntry[] = [
     result: { type: "count" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true, rollup: { period: "hourly" } },
+    retention: { changeOnly: true, latestOnly: true },
   }),
   defineProperty({
     code: "parking.occupancy_pct",
@@ -402,7 +402,7 @@ export const PARKING_PROPERTIES: PropertyEntry[] = [
     result: { type: "quantity", unit: "%" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { rollup: { period: "hourly" } },
+    retention: { latestOnly: true },
   }),
   defineProperty({
     code: "parking.status",
@@ -412,7 +412,7 @@ export const PARKING_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "parking_status" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     // "Full" at a car park changes within the hour.
     crowd: { ttlSec: 30 * MINUTE, maxLifetimeSec: 180 * MINUTE },
   }),
@@ -424,6 +424,6 @@ export const PARKING_PROPERTIES: PropertyEntry[] = [
     result: { type: "category", vocabulary: "trend" },
     subjects: [SITE],
     freshnessWindowSec: 15 * MINUTE,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
   }),
 ];

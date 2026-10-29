@@ -6,10 +6,12 @@ import { ensureObservationPartitions, retentionClasses } from "../observation-pa
 import { pruneRollups, rollupObservations } from "../observation-rollup.js";
 import { writeSnapshot } from "../write-records.js";
 import { observationDraft } from "./drafts.js";
+import { historyRegistry } from "./history-registry.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-const registry = productionRegistry();
+// Fuel prices no longer keep a history; they still show the daily rollup by amount.
+const registry = historyRegistry();
 const NOW = new Date("2026-10-01T16:30:00Z");
 const PRODUCT = { kind: "feature", featureId: "oc:feature:es-minetur:42", componentKey: "e5" };
 
@@ -120,8 +122,23 @@ describe("rollupObservations", () => {
       now: new Date("2026-11-20T00:00:00Z"),
       hourlyDays: 35,
       dailyDays: 400,
+      registry,
     });
-    expect(pruned).toEqual({ hourly: 2, daily: 0 });
+    expect(pruned).toEqual({ hourly: 2, daily: 0, retired: 0 });
+  });
+
+  it("prunes the rollups of a property that no longer rolls up", async () => {
+    await rollupObservations(sql, { registry, period: "daily", now: NOW });
+    const pruned = await pruneRollups(sql, {
+      now: NOW,
+      hourlyDays: 35,
+      dailyDays: 400,
+      registry: productionRegistry(),
+    });
+    expect(pruned).toEqual({ hourly: 0, daily: 0, retired: 2 });
+    const [{ count }] =
+      await sql`SELECT count(*)::int AS count FROM conditions.observation_rollup_daily`;
+    expect(count).toBe(0);
   });
 
   it("reads an hour of history through a block range index, not the whole day", async () => {

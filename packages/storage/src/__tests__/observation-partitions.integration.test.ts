@@ -1,3 +1,10 @@
+import {
+  buildRegistry,
+  defineDomain,
+  defineProperty,
+  kernelModule,
+  type Retention,
+} from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
@@ -24,7 +31,38 @@ afterAll(async () => {
 }, 30_000);
 
 const NOW = new Date("2026-10-01T12:00:00Z");
-const registry = productionRegistry();
+
+/** A registry whose properties keep the retention classes `retentions` declare. */
+function registryKeeping(retentions: Record<string, Retention | undefined>) {
+  return buildRegistry([
+    kernelModule,
+    {
+      name: "test",
+      entries: [
+        defineDomain({ code: "roads", description: "x" }),
+        ...Object.entries(retentions).map(([code, retention]) =>
+          defineProperty({
+            code,
+            domain: "roads",
+            version: "1.0",
+            description: "x",
+            result: { type: "quantity", unit: "km/h" },
+            subjects: [{ kind: "location" }],
+            ...(retention === undefined ? {} : { retention }),
+          }),
+        ),
+      ],
+    },
+  ]);
+}
+
+// Classes 0, 2 (rolled up), 3 and 5, as the maintenance below exercises them.
+const registry = registryKeeping({
+  "t.every": undefined,
+  "t.speed": { rawDays: 2, rollup: { period: "hourly" } },
+  "t.three": { rawDays: 3 },
+  "t.five": { rawDays: 5 },
+});
 
 async function insertReading(retentionDays: number, start: string) {
   await sql`
@@ -71,13 +109,17 @@ describe("partitionCovers", () => {
 
 describe("retention classes", () => {
   it("come from the registry: raw days, 0 to keep everything, none for latest-only", () => {
-    const registry = productionRegistry();
-    expect(retentionDaysOf(registry.property("traffic.speed")!)).toBe(2);
-    expect(retentionDaysOf(registry.property("camera.image")!)).toBe(0);
+    expect(retentionDaysOf(registry.property("t.speed")!)).toBe(2);
+    expect(retentionDaysOf(registry.property("t.every")!)).toBe(0);
     expect(retentionDaysOf({ retention: { latestOnly: true } })).toBeUndefined();
-    expect(retentionDaysOf(registry.property("traffic.los")!)).toBe(7);
-    expect(retentionDaysOf(registry.property("device.status")!)).toBe(0);
-    expect(retentionClasses(registry)).toEqual(expect.arrayContaining([0, 1, 2, 7, 30]));
+    expect(retentionDaysOf({ retention: { changeOnly: true, latestOnly: true } })).toBeUndefined();
+    expect(retentionClasses(registry)).toEqual([0, 2, 3, 5]);
+  });
+
+  it("are the speed's raw day alone in production", () => {
+    const production = productionRegistry();
+    expect(retentionDaysOf(production.property("traffic.speed")!)).toBe(1);
+    expect(retentionClasses(production)).toEqual([1]);
   });
 });
 
@@ -128,7 +170,7 @@ describe("observation partitions", () => {
   });
 
   it("keep a day of a rolled-up property until the rollup has passed it, unless it holds nothing", async () => {
-    // Class 2 holds traffic.volume, which rolls up hourly.
+    // Class 2 holds t.speed, which rolls up hourly.
     await ensureObservationPartitions(sql, { classes: [2], now: NOW, aheadDays: 1 });
     await insertReading(2, "2026-09-30T08:00:00Z");
     const drop = (at: string) =>
@@ -190,5 +232,57 @@ describe("partition maintenance an hour away from a write", () => {
   it("holds next month's keep-everything partition before the look-ahead reaches it", async () => {
     await maintain(0, "2026-11-14T23:05:00Z");
     await writeEverythingCovered(0, "2026-11-15T00:02:00Z");
+  });
+});
+
+describe("a retention class no property keeps", () => {
+  const production = registryKeeping({
+    "t.speed": { rawDays: 1, rollup: { period: "hourly" } },
+  });
+  const partitions = async () =>
+    (
+      await sql<{ name: string }[]>`
+        SELECT relname AS name FROM pg_class
+         WHERE relnamespace = 'conditions'::regnamespace AND relkind IN ('r', 'p')
+           AND relname ~ '^observation_r[0-9]'
+         ORDER BY relname`
+    ).map((r) => r.name);
+
+  it("goes whole, but for a day holding readings of a rolled-up property the rollup has not reached", async () => {
+    await ensureObservationPartitions(sql, { classes: [1, 7], now: NOW, aheadDays: 1 });
+    await sql`
+      INSERT INTO conditions.observation_latest (series_id, subject_key, property, source_id,
+        subject_kind, reading, template, template_hash, access_mode, result_type,
+        effective_from, since_at)
+      VALUES (100, 'loc:x', 't.speed', 'src', 'location', '{}', '{}', 'h', 'bulk', 'quantity',
+        '2026-10-01T08:00:00Z', '2026-10-01T08:00:00Z')`;
+    await sql`
+      INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
+        fetched_at, recorded_at, temporality, aggregation, value_num)
+      VALUES (100, 7, '2026-10-01T08:00:00Z', now(), now(), 'live', 'mean', 90),
+             (1, 7, '2026-09-30T08:00:00Z', now(), now(), 'live', 'mean', 90)`;
+    await sql`INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
+      VALUES ('hourly', '2026-10-01T06:00:00Z')`;
+    const drop = () => dropExpiredObservationPartitions(sql, { now: NOW, registry: production });
+
+    const dropped = await drop();
+    expect(dropped).toEqual(
+      expect.arrayContaining(["observation_r0", "observation_r0_m202609", "observation_r2"]),
+    );
+    expect(dropped).toContain("observation_r7_d20260930");
+    expect(await partitions()).toEqual([
+      "observation_r1",
+      "observation_r1_d20260930",
+      "observation_r1_d20261001",
+      "observation_r1_d20261002",
+      "observation_r1_d20261003",
+      "observation_r7",
+      "observation_r7_d20261001",
+    ]);
+
+    await sql`UPDATE conditions.observation_rollup_progress SET finalized_before = '2026-10-01T09:00:00Z'`;
+    expect(await drop()).toEqual(["observation_r7_d20261001", "observation_r7"]);
+    expect((await partitions()).filter((n) => n.startsWith("observation_r7"))).toEqual([]);
+    await sql`DELETE FROM conditions.observation_rollup_progress`;
   });
 });
