@@ -3,7 +3,9 @@
 `nl-ndw-flow` uses NDW's separate v3.6 speed/volume and measurement-site
 configuration snapshots. The source ID, station IDs and indexed channel keys
 stay stable; no database migration or new consumer API is needed. Both endpoints
-refresh every minute. The events feed remains `actueel_beeld.xml.gz`.
+refresh every five minutes, the rate segment speeds are rebuilt at; they
+refreshed every minute until polling at that rate was found to dominate the
+database's disk writes. The events feed remains `actueel_beeld.xml.gz`.
 
 NDW's [official announcement](https://opendata.ndw.nu/) retires
 `trafficspeed.xml.gz` and `measurement.xml.gz` on **9 February 2027**. The
@@ -35,10 +37,10 @@ and archived captures.
 - All-vehicle channels continue to supply site totals when present; length-band
   channels are not counted again on top of them.
 
-The v3 table is smaller per download, but refreshing every minute adds network
-and parse work compared with the old six-hour reference cadence. At this capture,
-compressed table plus measurements total about 3 MB per minute (about 4.2 GiB per
-24 hours, before protocol overhead). Both are still parsed incrementally through
+The v3 table is smaller per download, but refreshing it with the measurements
+adds network and parse work compared with the old six-hour reference cadence. At
+this capture, compressed table plus measurements total about 3 MB per poll (about
+0.8 GiB per 24 hours at five-minute polls, before protocol overhead). Both are still parsed incrementally through
 existing byte/time bounds; no DOM, increased byte limit, or legacy-feed fallback
 is introduced.
 

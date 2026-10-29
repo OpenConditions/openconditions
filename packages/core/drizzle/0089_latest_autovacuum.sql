@@ -1,0 +1,12 @@
+-- A latest row is updated in place by every poll of its source, and nearly
+-- every update is heap-only: the next update or read of its page prunes
+-- the old version, with no vacuum needed. The default thresholds count those
+-- updates as if vacuum had to clean them up, so a flow source rewriting a
+-- hundred thousand readings a minute had the table vacuumed every few
+-- minutes and analysed every minute, each pass dirtying pages the updates
+-- had just written. Vacuum is left for the index entries of the updates
+-- that are not heap-only (category readings, expiries), when the dead rows
+-- reach half the table, and analysis for when the table has changed twice
+-- over: an update changes a reading, not the distribution of series the
+-- planner reads.
+ALTER TABLE "conditions"."observation_latest" SET (autovacuum_vacuum_scale_factor = 0.5, autovacuum_analyze_scale_factor = 2);

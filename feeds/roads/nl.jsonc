@@ -50,7 +50,10 @@
         "main": {
           "url": "https://opendata.ndw.nu/snelheden_en_intensiteiten_meetgegevens.xml.gz",
           "gzip": true,
-          "cadenceSec": 60,
+          // NDW publishes one-minute averages, but segment speeds are rebuilt
+          // every five minutes. Polling every minute rewrote about 175 000
+          // latest readings a minute, most of the database's disk writes.
+          "cadenceSec": 300,
         },
         "sites": {
           "url": "https://opendata.ndw.nu/snelheden_en_intensiteiten_configuratie_meetlocaties.xml.gz",
@@ -58,10 +61,10 @@
           "decoder": "datex2-sites",
           // V3 revises individual sites under a table version of "latest".
           // Refresh alongside measurements; mismatched site versions are withheld.
-          "cadenceSec": 60,
+          "cadenceSec": 300,
         },
       },
-      "freshnessWindowSec": 300,
+      "freshnessWindowSec": 900,
       "license": "CC0-1.0",
       "licenseUrl": "https://www.ndw.nu",
       "attribution": "NDW / Rijkswaterstaat",

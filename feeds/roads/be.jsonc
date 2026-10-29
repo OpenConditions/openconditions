@@ -79,14 +79,15 @@
       "tier": "authoritative",
       "format": "miv",
       "endpoints": {
-        "main": { "url": "http://miv.opendata.belfla.be/miv/verkeersdata", "cadenceSec": 60 },
+        // Polled at the five-minute rate segment speeds are rebuilt at.
+        "main": { "url": "http://miv.opendata.belfla.be/miv/verkeersdata", "cadenceSec": 300 },
         "sites": {
           "url": "http://miv.opendata.belfla.be/miv/configuratie/xml",
           "decoder": "miv-config",
           "cadenceSec": 21600,
         },
       },
-      "freshnessWindowSec": 300,
+      "freshnessWindowSec": 900,
       "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
       "licenseUrl": "https://overheid.vlaanderen.be/hergebruik/licenties/v1-0/html/modellicentie-gratis-hergebruik",
       "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",

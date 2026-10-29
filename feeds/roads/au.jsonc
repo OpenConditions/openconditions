@@ -255,7 +255,8 @@
       "format": "geojson-flow",
       // GeoJSON FeatureCollection: one LineString feature per freeway segment with
       // a measured averageSpeed (km/h) and a categorical `condition`. Source
-      // refreshes every 30s; the portal caps callers at 5 req/min, so poll ~60s.
+      // refreshes every 30s; the portal caps callers at 5 req/min. Polled at the
+      // five-minute rate segment speeds are rebuilt at.
       // NOTE: this is the CC-BY-4.0 Freeway feed, NOT the CC-BY-NC Bluetooth one.
       "auth": {
         "kind": "header-key",
@@ -265,7 +266,7 @@
       "endpoints": {
         "main": {
           "url": "https://api.opendata.transport.vic.gov.au/opendata/roads/traffic/freeway-travel-time/v1/traffic",
-          "cadenceSec": 60,
+          "cadenceSec": 300,
         },
       },
       "flowMap": {
@@ -279,7 +280,7 @@
         },
         "updatedField": "publishedTime",
       },
-      "freshnessWindowSec": 300,
+      "freshnessWindowSec": 900,
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Department of Transport and Planning (Victoria)",
