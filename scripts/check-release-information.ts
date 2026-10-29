@@ -135,9 +135,11 @@ try {
         const closure = (ref: string) => {
           const lock = parse(blob(ref, "pnpm-lock.yaml"));
           const deps = lock.importers?.[p.directory]?.dependencies ?? {};
-          const buildTools = Object.fromEntries(
-            Object.entries(lock.importers?.["."]?.devDependencies ?? {}).filter(([name]) =>
-              ["tsup", "typescript"].includes(name),
+          const buildTools = [".", p.directory].map((directory) =>
+            Object.fromEntries(
+              Object.entries(lock.importers?.[directory]?.devDependencies ?? {}).filter(([name]) =>
+                ["tsup", "typescript"].includes(name),
+              ),
             ),
           );
           const found: Record<string, unknown> = { deps, buildTools };
@@ -149,8 +151,9 @@ try {
             found[key] = { s, pkg };
             for (const [n, d] of Object.entries(s?.dependencies ?? {})) visit(n, String(d));
           };
-          for (const [n, d] of Object.entries({ ...deps, ...buildTools }))
-            visit(n, String((d as { version: string }).version));
+          for (const scope of [deps, ...buildTools])
+            for (const [n, d] of Object.entries(scope))
+              visit(n, String((d as { version: string }).version));
           return JSON.stringify(found);
         };
         if (closure(base) !== closure(head)) relevant.add(p.name);

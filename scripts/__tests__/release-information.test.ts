@@ -265,3 +265,25 @@ it("refuses ambiguous duplicate package declarations", () =>
       "Package release: none — No consumer effect because only prose changed.\nPackage release: none — A second contradictory declaration is invalid.",
     ).status,
   ).not.toBe(0));
+const buildLock = (version: string, tool = "tsup") =>
+  `lockfileVersion: '9.0'\nimporters:\n  .:\n    devDependencies:\n      tsup:\n        specifier: ^8.0.0\n        version: 8.0.0\n  packages/ocpi:\n    devDependencies:\n      ${tool}:\n        specifier: ^8.0.0\n        version: ${version}\npackages:\n  tsup@8.0.0: {}\n  ${tool}@${version}: {}\nsnapshots:\n  tsup@8.0.0: {}\n  ${tool}@${version}: {}\n`;
+it("refuses package-local build-tool resolution change with unchanged root importer", () =>
+  expect(
+    fixture(
+      "pnpm-lock.yaml",
+      "",
+      undefined,
+      { "pnpm-lock.yaml": buildLock("8.0.1") },
+      { "pnpm-lock.yaml": buildLock("8.1.0") },
+    ).status,
+  ).not.toBe(0));
+it("accepts package-local build change with reviewed consumer-equivalence reason", () =>
+  expect(
+    fixture(
+      "pnpm-lock.yaml",
+      "Package release: none — Rebuilt outputs match the prior consumer contract; no delivered behavior changed.",
+      undefined,
+      { "pnpm-lock.yaml": buildLock("8.0.1") },
+      { "pnpm-lock.yaml": buildLock("8.1.0") },
+    ).status,
+  ).toBe(0));
