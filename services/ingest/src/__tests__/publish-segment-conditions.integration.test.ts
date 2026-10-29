@@ -134,7 +134,7 @@ async function withApp<T>(
         freshnessWindowSec: 3600,
         license: "CC0-1.0",
         attribution: SOURCE,
-        terms: { note: "test grant", reviewedAt: NOW },
+        terms: { url: "https://example.test/licence", note: "test grant", reviewedAt: NOW },
       }),
     ],
     discovered: [...REPO_CATALOG.discovered],

@@ -93,7 +93,7 @@ const CATALOG: Catalog = {
       freshnessWindowSec: 3600,
       license: "CC0-1.0",
       attribution: id,
-      terms: { note: "test grant", reviewedAt: NOW },
+      terms: { url: "https://example.test/licence", note: "test grant", reviewedAt: NOW },
       restricted: id === SEG_RESTRICTED,
     }),
   ),

@@ -1,6 +1,10 @@
 import { resolveInstanceId } from "@openconditions/core/server";
 import type { CatalogFeed, ParseOutput, RecordDraft } from "@openconditions/ingest-framework";
-import { captureLicensing, resolveAttribution } from "@openconditions/ingest-framework";
+import {
+  captureLicensing,
+  permissionsOf,
+  resolveAttribution,
+} from "@openconditions/ingest-framework";
 import {
   AttributionPublisher,
   type GrantState,
@@ -59,15 +63,16 @@ function reviewInstant(value: string | undefined): string | null {
  * reviewed.
  */
 export function routingRightsOf(
-  src: Pick<CatalogFeed, "rights" | "permissions" | "terms" | "license" | "licenseUrl">,
+  src: Pick<CatalogFeed, "rights" | "evidence" | "terms" | "license" | "licenseUrl">,
 ): RoutingRights {
+  const permissions = permissionsOf(src.rights, src.evidence);
   return {
-    source_redistribution: src.permissions.redistribute,
-    derived_redistribution: src.permissions.derive,
-    commercial_use: src.permissions.commercial,
+    source_redistribution: permissions.redistribute,
+    derived_redistribution: permissions.derive,
+    commercial_use: permissions.commercial,
     // An obligation, not a use: what the licence asks for holds either way.
     attribution_required: grantState(src.rights.attributionRequired),
-    retention: src.permissions.retain,
+    retention: permissions.retain,
     evidence_origin: src.terms?.url ?? src.licenseUrl ?? null,
     evidence_version: src.license,
     reviewed_at: reviewInstant(src.terms?.reviewedAt),
