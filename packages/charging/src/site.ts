@@ -297,7 +297,8 @@ export function parsePowerKw(value: unknown, bareUnit: "kW" | "W" = "kW"): numbe
   let unit: string = bareUnit;
   if (typeof value === "number") amount = value;
   else if (typeof value === "string") {
-    const m = value.match(/^\s*(\d+(?:[.,]\d+)?)\s*(kw|w)?\s*$/i);
+    // Trim boundary whitespace once so an absent unit cannot repartition it.
+    const m = value.trim().match(/^(\d+(?:[.,]\d+)?)(?:\s*(kw|w))?$/i);
     if (m?.[1] === undefined) return undefined;
     amount = Number(m[1].replace(",", "."));
     if (m[2] !== undefined) unit = m[2].toLowerCase() === "kw" ? "kW" : "W";
