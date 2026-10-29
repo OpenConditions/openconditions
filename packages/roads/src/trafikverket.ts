@@ -88,7 +88,7 @@ type Nested = Position | Nested[];
 const WKT_COORDINATE =
   /^(-?[\d.]+(?:e[-+]?\d+)?)\s+(-?[\d.]+(?:e[-+]?\d+)?)(?:\s+-?[\d.]+(?:e[-+]?\d+)?)*/i;
 const WKT_GEOMETRY =
-  /^\s*(POINT|LINESTRING|MULTILINESTRING|POLYGON|MULTIPOLYGON)\s*(?:ZM|Z|M)?\s*(\(.*\))\s*$/is;
+  /^\s*(POINT|LINESTRING|MULTILINESTRING|POLYGON|MULTIPOLYGON)(?:\s*(?:ZM|Z|M))?\s*(\(.*\))\s*$/is;
 
 /** The bracketed body of a WKT geometry as nested arrays of [x, y]. */
 function parseWktBody(body: string): Nested[] | null {

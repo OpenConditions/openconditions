@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import { localAccessExceptionOf } from "../situation/local-access.js";
 
@@ -46,5 +47,53 @@ describe("localAccessExceptionOf", () => {
       usage: "local_access",
       phrase: "Anlieger frei",
     });
+  });
+
+  it.each([
+    [" bis Haus", false],
+    [",bis!", false],
+    [" \t, \nUP\tTO fence", false],
+    ["\u00a0TOT 20", false],
+    [" biscuit", true],
+    [" up toad", true],
+    [" tot_1", true],
+    ["! bis Haus", true],
+    [",, bis Haus", true],
+    [" \n!", true],
+  ])("preserves the immediate terminator %j", (suffix, allowed) => {
+    expect(localAccessExceptionOf(["Anlieger frei" + suffix])).toEqual(
+      allowed ? { usage: "local_access", phrase: "Anlieger frei" } : undefined,
+    );
+  });
+
+  it("bounds access-exception suffix work through public effects", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--input-type=module",
+        "-e",
+        `
+      import assert from "node:assert/strict";
+      const { effectsOf } = await import(process.argv[1]);
+      const { event, ctx } = JSON.parse(process.argv[2]);
+      const read = (text) => effectsOf({ ...event, description: text }, ctx).find(p => p.effect.kind === "closure").effect.applicability;
+      assert.deepEqual(read("Anlieger frei!").except, [{ usage: "local_access" }]);
+      console.log("control passed");
+      assert.deepEqual(read("Anlieger frei" + " ".repeat(100_000) + "!").except, [{ usage: "local_access" }]);
+      console.log("decoded");
+    `,
+        new URL("../../dist/index.js", import.meta.url).href,
+        JSON.stringify({
+          event: { id: "bounded", roadState: "closed" },
+          ctx: { recordId: "bounded", closureNature: false, laneClosureNature: false },
+        }),
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.stdout).toContain("control passed");
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("control passed\ndecoded");
   });
 });
