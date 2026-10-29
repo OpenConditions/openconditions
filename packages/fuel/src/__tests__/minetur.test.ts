@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { observationId } from "@openconditions/model";
 import { beforeEach, describe, expect, test } from "vitest";
@@ -339,5 +340,97 @@ describe("MINETUR", () => {
     const { features } = parse(Buffer.from(JSON.stringify(file)));
     expect(features).toHaveLength(parse().features.length);
     expect(drainSkipped(FEED)).toMatchObject({ malformed: 1 });
+  });
+});
+
+const scheduleDoc = (horario: string | undefined) => {
+  const file = JSON.parse(fixture("minetur-stations.json").toString("utf8"));
+  file.ListaEESSPrecio = file.ListaEESSPrecio.filter(
+    (s: Record<string, string>) => s["IDEESS"] === "15959",
+  );
+  if (horario === undefined) delete file.ListaEESSPrecio[0].Horario;
+  else file.ListaEESSPrecio[0].Horario = horario;
+  return file;
+};
+
+describe("MINETUR schedule whitespace", () => {
+  beforeEach(() => __resetSkips());
+
+  test.each([
+    [" \nL-D:\n24H\r\n", "24/7"],
+    ["L-D: \u2028 06:00-22:00", "Mo-Su 06:00-22:00"],
+    ["L-D:06:00-14:00 \t y \t16:00-22:00", "Mo-Su 06:00-14:00,16:00-22:00"],
+    ["L-D:06:00-14:00\u000by\f16:00-22:00", "Mo-Su 06:00-14:00,16:00-22:00"],
+    ["L-D:06:00-\u000b22:00", "Mo-Su 06:00-22:00"],
+  ])("preserves readable %j", (horario, osm) => {
+    const out = parse(Buffer.from(JSON.stringify(scheduleDoc(horario))));
+    expect(out.features[0]?.["openingHours"]).toMatchObject({ osm });
+    expect(drainSkipped(FEED)).toEqual({});
+  });
+
+  test.each([
+    "L-D:06:00-\n22:00",
+    "L-D:06:00-\r22:00",
+    "L-D:06:00-\u202822:00",
+    "L-D:06:00-\u202922:00",
+    "L-D:06:00-14:00 y\n16:00-22:00",
+    "L-D:06:00-14:00 Y 16:00-22:00",
+    "L-D:06:00-14:00y16:00-22:00",
+    "L-D:24h",
+    "l-d:24H",
+    "L-D:24H;",
+    "L-D:24H; D:24H",
+    "D-L:24H",
+    "L:24H",
+  ])("does not reinterpret %j", (horario) => {
+    const out = parse(Buffer.from(JSON.stringify(scheduleDoc(horario))));
+    expect(out.features).toHaveLength(1);
+    expect(out.features[0]?.["openingHours"]).toBeUndefined();
+    expect(drainSkipped(FEED)).toEqual({ unknown_value: 1 });
+  });
+
+  test.each([undefined, "", " \n "])("absent %j is not an unknown value", (horario) => {
+    const out = parse(Buffer.from(JSON.stringify(scheduleDoc(horario))));
+    expect(out.features[0]?.["openingHours"]).toBeUndefined();
+    expect(drainSkipped(FEED)).toEqual({});
+  });
+
+  test.each(["rule", "separator"])("bounded schedule work: %s", (mode) => {
+    const data = JSON.stringify({
+      file: scheduleDoc("L-D:24H"),
+      feed: mineturFeed(),
+      ctx: parseContext(FETCHED),
+      mode,
+    });
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--input-type=module",
+        "-e",
+        `
+      import assert from "node:assert/strict";
+      const { parseMinetur } = await import(process.argv[1]);
+      const { file, feed, ctx, mode } = JSON.parse(process.argv[2]);
+      const read = () => parseMinetur(feed, { main: [Buffer.from(JSON.stringify(file))] }, ctx);
+      assert.equal(read().features[0].openingHours.osm, "24/7");
+      console.log("control passed");
+      file.ListaEESSPrecio[0].Horario = mode === "rule"
+        ? "L-D:" + " ".repeat(100_000) + "08:00\\n20:00"
+        : "L-D:08:00-14:00" + " ".repeat(100_000) + "!";
+      const out = read();
+      assert.equal(out.features.length, 1);
+      assert.equal(out.features[0].openingHours, undefined);
+      console.log("decoded");
+    `,
+        new URL("../../dist/index.js", import.meta.url).href,
+        data,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.stdout).toContain("control passed");
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("control passed\ndecoded");
   });
 });

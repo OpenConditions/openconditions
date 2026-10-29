@@ -153,7 +153,7 @@ const text = (value: unknown): string | undefined => {
 /** The ministry's weekday letters, Monday (`L`, lunes) to Sunday (`D`, domingo). */
 const WEEKDAYS = ["L", "M", "X", "J", "V", "S", "D"] as const;
 
-const HORARIO_RULE = /^([LMXJVSD])(?:-([LMXJVSD]))?:\s*(.+)$/;
+const HORARIO_RULE = /^([LMXJVSD])(?:-([LMXJVSD]))?:\s*(\S[^\r\n\u2028\u2029]*)$/;
 
 /**
  * `Horario` in the OSM grammar: rules of a weekday or a range of them (`L-V`)
@@ -181,7 +181,7 @@ function openingHoursOf(horario: string | undefined, feedId: string): string | u
     if (spec === "24H") {
       intervals.push({ opens: "00:00", closes: "24:00" });
     } else {
-      for (const span of spec.split(/\s+y\s+/)) {
+      for (const span of spec.split(/(?<!\s)\s+y\s+/)) {
         const [opens, closes, ...rest] = span.split("-");
         const read =
           opens !== undefined && closes !== undefined && rest.length === 0
