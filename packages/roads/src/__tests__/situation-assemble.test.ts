@@ -150,6 +150,20 @@ describe("situationDrafts — closures except for local access", () => {
   });
 });
 
+describe("situationDrafts — closure scope", () => {
+  it("scopes a ramp closure's closure to the ramp, and any other to the road", () => {
+    const closed = (id: string, situation: RoadEvent["situation"]) =>
+      event(id, { type: "road_closure", roadState: "closed", situation });
+    const [ramp, road] = assemble([
+      closed("R1", cls("closure", "closure", "ramp")),
+      closed("R2", cls("closure", "closure")),
+    ]);
+    expect(ramp!["subtype"]).toBe("ramp");
+    expect(effects(ramp!).find((e) => e["kind"] === "closure")).toMatchObject({ scope: "ramp" });
+    expect(effects(road!).find((e) => e["kind"] === "closure")).toMatchObject({ scope: "road" });
+  });
+});
+
 describe("situationDrafts — DATEX situations", () => {
   it("folds a situation's records into one situation with record-scoped effects", () => {
     const [d] = assemble([

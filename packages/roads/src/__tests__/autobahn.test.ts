@@ -286,6 +286,66 @@ describe("parseAutobahn — classification", () => {
     expect(warning!.situation?.classification).toBeUndefined();
   });
 
+  it("classifies a closure located on a slip road as a ramp closure", () => {
+    const located = (line: string) =>
+      parseAutobahn(
+        {
+          closure: [
+            item({
+              display_type: "CLOSURE",
+              description: ["Zeitraum dieser Bauphase:", "Beginn: 01.10.26 um 00:00 Uhr", "", line],
+            }),
+          ],
+        },
+        AUTOBAHN_SOURCE,
+        "closure",
+      )[0]!.situation?.classification;
+    const ramp = { kind: "closure", type: "closure", subtype: "ramp" };
+    // The A44 -> A57 connector at AK Meerbusch, as the live record words it.
+    expect(
+      located(
+        "Von A44: Düsseldorf -> Mönchengladbach, 0.6 km vor AK Meerbusch, aus Richtung Lank-Latum; in A44: AK Meerbusch auf die A57 in Richtung Krefeld; nach A57: Köln -> Krefeld, 1.8 km vor Geismühle, aus Richtung Meerbusch",
+      ),
+    ).toEqual(ramp);
+    expect(located("Abfahrt von der A4: AS Gummersbach (aus Richtung Morkepütz)")).toEqual(ramp);
+    expect(located("Auffahrt auf die A57: AK Meerbusch (aus Richtung Bovert)")).toEqual(ramp);
+    expect(
+      located(
+        "Von Auffahrt auf die A111: AS Kurt-Schumacher-Platz (aus Richtung Eichborndamm) nach A111: Charlottenburg -> Dreieck Oranienburg, zwischen AS Kurt-Schumacher-Platz und 1.3 km vor AS Holzhauser Straße",
+      ),
+    ).toEqual(ramp);
+    expect(
+      located(
+        "Von A49: Gießen -> Kassel, zwischen 1.1 km hinter AS Felsberg und Holzhausen nach Abfahrt von der A49: AS Edermünde (aus Richtung Felsberg)",
+      ),
+    ).toEqual(ramp);
+    // A closure of the carriageway between two junctions stays a road closure,
+    // and so does one whose prose only mentions a ramp further on.
+    const road = { kind: "closure", type: "closure" };
+    expect(
+      located(
+        "A8: München -> Salzburg, zwischen 1.3 km hinter AD Inntal und 0.2 km vor AS Rohrdorf",
+      ),
+    ).toEqual(road);
+    expect(located("Umleitung: ab der Abfahrt von der A8 der U12 folgen")).toEqual(road);
+  });
+
+  it("leaves roadworks on a slip road classified as roadworks", () => {
+    const [works] = parseAutobahn(
+      {
+        roadworks: [
+          item({
+            display_type: "ROADWORKS",
+            description: ["Abfahrt von der A57: AK Meerbusch (aus Richtung Geismühle)"],
+          }),
+        ],
+      },
+      AUTOBAHN_SOURCE,
+      "roadworks",
+    );
+    expect(works!.situation?.classification).toEqual({ kind: "roadworks", type: "works" });
+  });
+
   it("classifies a traffic-flow warning as congestion of its abnormal traffic type", () => {
     const [flow] = parseAutobahn(
       { warning: [item({ display_type: "WARNING", abnormalTrafficType: "QUEUING_TRAFFIC" })] },

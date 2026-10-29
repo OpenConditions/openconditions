@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { bindEvent, toBindInput } from "../bind-event.js";
-import { projectOntoPolyline } from "../geo.js";
+import { polylineLengthM, projectOntoPolyline } from "../geo.js";
 import type { SpineSegment, SpineSubgraph } from "../types.js";
 
 const offsetTo = (s: SpineSegment, p: [number, number]): number =>
@@ -1061,5 +1061,157 @@ describe("bindEvent", () => {
     expect(r.segments.map((s) => s.segmentId)).toEqual(["11:f", "12:f"]);
     expect(r.debug.ambiguity).toBeLessThan(0.1);
     expect(r.status).toBe("exact");
+  });
+});
+
+/**
+ * A junction on an eastbound carriageway at lat 51.3: way 100 runs up to the
+ * node where the on-ramp 110 merges, way 101 carries the merged traffic (its
+ * extra lane the acceleration lane) up to the node where the off-ramp 120
+ * leaves, and way 102 runs on. Both ramps are refless `motorway_link`s.
+ */
+const junction: SpineSubgraph = {
+  segments: [
+    seg("100:f", [
+      [6.9, 51.3],
+      [6.91, 51.3],
+    ]),
+    seg("101:f", [
+      [6.91, 51.3],
+      [6.92, 51.3],
+    ]),
+    seg("102:f", [
+      [6.92, 51.3],
+      [6.93, 51.3],
+    ]),
+    seg(
+      "110:f",
+      [
+        [6.905, 51.2994],
+        [6.908, 51.2998],
+        [6.91, 51.3],
+      ],
+      { highway: "motorway_link", ref: null },
+    ),
+    seg(
+      "120:f",
+      [
+        [6.92, 51.3],
+        [6.922, 51.2998],
+        [6.925, 51.2994],
+      ],
+      { highway: "motorway_link", ref: null },
+    ),
+  ].map((s) => ({ ...s, lengthM: polylineLengthM(s.coords) })),
+};
+
+describe("bindEvent — a location standing for a slip road", () => {
+  const line = (id: string, coordinates: [number, number][], slipRoadOnly?: boolean) =>
+    toBindInput({
+      id,
+      type: "closure",
+      roads: [{ ref: "A46" }],
+      geometry: { type: "LineString", coordinates },
+      ...(slipRoadOnly ? { slipRoadOnly } : {}),
+    });
+  // The on-ramp, drawn on past the merge for 200 m of the acceleration lane.
+  const onRamp: [number, number][] = [
+    [6.905, 51.2994],
+    [6.908, 51.2998],
+    [6.91, 51.3],
+    [6.913, 51.3],
+  ];
+
+  it("keeps the ramp and drops the carriageway the location runs on into", () => {
+    const everything = bindEvent(line("entry", onRamp), junction);
+    expect(everything.segments.map((s) => s.segmentId)).toEqual(["110:f", "101:f"]);
+
+    const r = bindEvent(line("entry", onRamp, true), junction);
+    expect(r.segments.map((s) => s.segmentId)).toEqual(["110:f"]);
+    expect(r.segments[0]).toMatchObject({ startFraction: 0, endFraction: 1 });
+    expect(r.status).toBe(everything.status);
+    expect(r.confidence).toBe(everything.confidence);
+    expect(r.directionMode).toBe("single");
+  });
+
+  it("drops the carriageway an off-ramp's location starts on", () => {
+    const r = bindEvent(
+      line(
+        "exit",
+        [
+          [6.915, 51.3],
+          [6.92, 51.3],
+          [6.922, 51.2998],
+          [6.925, 51.2994],
+        ],
+        true,
+      ),
+      junction,
+    );
+    expect(r.segments.map((s) => s.segmentId)).toEqual(["120:f"]);
+  });
+
+  it("drops the carriageway between two ramps the location connects", () => {
+    const r = bindEvent(
+      line(
+        "through",
+        [
+          [6.905, 51.2994],
+          [6.908, 51.2998],
+          [6.91, 51.3],
+          [6.92, 51.3],
+          [6.922, 51.2998],
+          [6.925, 51.2994],
+        ],
+        true,
+      ),
+      junction,
+    );
+    expect(r.segments.map((s) => s.segmentId)).toEqual(["110:f", "120:f"]);
+  });
+
+  it("binds nothing where the path has no slip road, rather than close the carriageway", () => {
+    const onCarriageway = bindEvent(
+      line(
+        "main",
+        [
+          [6.901, 51.3],
+          [6.909, 51.3],
+        ],
+        true,
+      ),
+      junction,
+    );
+    expect(onCarriageway).toMatchObject({
+      status: "unresolved",
+      reason: "no_slip_road",
+      segments: [],
+    });
+    const point = bindEvent(
+      toBindInput({
+        id: "point",
+        type: "closure",
+        roads: [{ ref: "A46" }],
+        geometry: { type: "Point", coordinates: [6.915, 51.3] },
+        slipRoadOnly: true,
+      }),
+      junction,
+    );
+    expect(point).toMatchObject({ status: "unresolved", reason: "no_slip_road" });
+  });
+
+  it("leaves a location that binds nothing as it was", () => {
+    const r = bindEvent(
+      line(
+        "far",
+        [
+          [7.5, 52.0],
+          [7.51, 52.0],
+        ],
+        true,
+      ),
+      junction,
+    );
+    expect(r.reason).toBe("no_candidates");
   });
 });

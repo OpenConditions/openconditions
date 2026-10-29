@@ -138,6 +138,26 @@ function joinDescription(raw: unknown): string | undefined {
   return parts.length > 0 ? parts.join("\n") : undefined;
 }
 
+/**
+ * The description's location lines that place an item on a slip road: an
+ * on- or off-ramp of a junction ("Auffahrt auf die A57: AS …", "Abfahrt von
+ * der A4: AS …", also as either end of a "Von … nach …" span), or the
+ * connector between two motorways inside an interchange ("Von A44: …; in
+ * A44: AK Meerbusch auf die A57 in Richtung Krefeld; nach A57: …").
+ */
+const SLIP_ROAD_LOCATION_RES = [
+  /^(?:Von\s+)?(?:Auffahrt auf die|Abfahrt von der)\s/,
+  /^Von\s.*\snach\s+(?:Auffahrt auf die|Abfahrt von der)\s/,
+  /^Von\s+[AB]\s?\d+\w*:[^;]*;\s*in\s+[AB]\s?\d+\w*:[^;]*\sauf die\s+[AB]\s?\d+/,
+];
+
+/** Whether the description locates the item on a slip road (see `SLIP_ROAD_LOCATION_RES`). */
+function locatedOnSlipRoad(description: string | undefined): boolean {
+  return (description ?? "")
+    .split("\n")
+    .some((line) => SLIP_ROAD_LOCATION_RES.some((re) => re.test(line.trim())));
+}
+
 // The feed exposes only `startTimestamp` (ISO) structurally; the end time and
 // any recurring closure windows live in localized German prose, in a few fixed
 // shapes. We parse them HERE (this adapter is German-only) into the canonical
@@ -423,8 +443,17 @@ export function parseAutobahn(
       const isFlow = hasFlowFields(item);
 
       const displayType = typeof item.display_type === "string" ? item.display_type : undefined;
+      const description = joinDescription(item.description);
+      // A closure the source types only as CLOSURE still closes just the slip
+      // road its location names, as a CLOSURE_ENTRY_EXIT does: its geometry
+      // runs on into the carriageway the ramp merges with or leaves, which
+      // stays open.
+      const classified =
+        displayType === "CLOSURE" && locatedOnSlipRoad(description)
+          ? "CLOSURE_ENTRY_EXIT"
+          : displayType;
       const classification = autobahnClassification(
-        displayType,
+        classified,
         isFlow
           ? {
               ...(typeof item.abnormalTrafficType === "string"
@@ -468,8 +497,6 @@ export function parseAutobahn(
       const title = typeof item.title === "string" ? item.title : undefined;
       const subtitle = typeof item.subtitle === "string" ? item.subtitle.trim() : undefined;
       const headline = title ?? subtitle ?? type;
-
-      const description = joinDescription(item.description);
 
       const { validFrom, validTo, schedule } = extractTemporal(item, description);
       const restrictions = restrictionsFromDescription(description);

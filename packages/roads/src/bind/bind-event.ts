@@ -67,6 +67,7 @@ export function toBindInput(ev: {
   direction?: string;
   travel?: TravelDirection;
   roadState?: string;
+  slipRoadOnly?: boolean;
 }): BindInput {
   const { refs, names, prose } = roadIdentity(ev.roads ?? [], ev.text);
   return {
@@ -79,6 +80,7 @@ export function toBindInput(ev: {
     ...(ev.direction ? { direction: ev.direction } : {}),
     ...(ev.travel ? { travel: ev.travel } : {}),
     ...(ev.roadState ? { roadState: ev.roadState } : {}),
+    ...(ev.slipRoadOnly ? { slipRoadOnly: true } : {}),
   };
 }
 
@@ -728,6 +730,31 @@ function oriented(
     : redirected(r, "unknown", r.segments, "direction_undecided");
 }
 
+/** Whether a spine segment is a slip road: an OSM `*_link` way. */
+function isSlipRoad(s: SpineSegment): boolean {
+  return s.highway.endsWith("_link");
+}
+
+/**
+ * A binding narrowed to the slip roads of its path. The path is found as for
+ * any location, over the carriageways too: those tell the ramp apart from its
+ * neighbours, and a source draws a ramp's location on into the carriageway it
+ * merges with or leaves, through the acceleration or deceleration lane. That
+ * carriageway stays open, so only the `*_link` spans are kept, wherever they
+ * lie in the path. Confidence is the path's own: the geometry fits it as well
+ * as before. A path with no slip road names no ramp this spine has, and binds
+ * nothing rather than close the road beside it.
+ */
+function onSlipRoads(r: BindResult, spine: SpineSubgraph): BindResult {
+  if (r.segments.length === 0) return r;
+  const slip = new Set(spine.segments.filter(isSlipRoad).map((s) => s.segmentId));
+  const segments = r.segments.filter((span) => slip.has(span.segmentId));
+  if (segments.length === 0) {
+    return failure("unresolved", "no_slip_road", r.candidateCount, r.debug.samples);
+  }
+  return { ...r, segments };
+}
+
 /** Bind one event to the spine: geometry and stated refs in, directed spans out. */
 export function bindEvent(
   input: BindInput,
@@ -759,5 +786,6 @@ export function bindEvent(
   else if (shape.coords.length === 0) return failure("unresolved", "no_candidates");
   else if (shape.coords.length === 1) result = bindPoint(shape.coords[0]!, input, grid, maxOffsetM);
   else result = bindLine(shape.coords, input, spine, grid, graph, onRef, maxOffsetM, spacingM);
-  return oriented(result, input.travel, shape, spine);
+  const placed = oriented(result, input.travel, shape, spine);
+  return input.slipRoadOnly ? onSlipRoads(placed, spine) : placed;
 }

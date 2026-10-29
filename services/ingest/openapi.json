@@ -1199,7 +1199,7 @@
     "/situations/{id}": {
       "get": {
         "operationId": "getSituation",
-        "summary": "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place or a direction of its own (`effectBindings`, by effect id). A binding is `{ status, confidence, directionMode, reason, boundAt }`; routing reads only `exact` and `likely`. `reason` (null when there is none) says why a location was not bound or was kept off routing, e.g. `no_candidates`, `conflicting_direction` (the stated direction contradicts the location; nothing bound) or `direction_undecided` (one direction is stated but the geometry cannot tell which carriageway).",
+        "summary": "One situation, tombstoned or not (one past its `freshness.expiresAt` at `at` answers 404), with its evidence, the graph binding of its place (`binding`) and of each effect with a place or a direction of its own and of each ramp closure (`effectBindings`, by effect id). A binding is `{ status, confidence, directionMode, reason, boundAt }`; routing reads only `exact` and `likely`. `reason` (null when there is none) says why a location was not bound or was kept off routing, e.g. `no_candidates`, `conflicting_direction` (the stated direction contradicts the location; nothing bound) `direction_undecided` (one direction is stated but the geometry cannot tell which carriageway) or `no_slip_road` (a ramp closure whose path has no slip road; nothing bound).",
         "parameters": [
           {
             "name": "id",
