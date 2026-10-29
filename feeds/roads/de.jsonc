@@ -37,7 +37,13 @@
       },
       "freshnessWindowSec": 900,
       "license": "DL-DE-BY-2.0",
-      "licenseUrl": "https://www.mobidata-bw.de",
+      "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
+      // DL-DE-BY-2.0 as published, so the review records evidence and overrides nothing.
+      "terms": {
+        "url": "https://mobidata-bw.de/dataset/baustelleninformationen-baden-wurttemberg",
+        "reviewedAt": "2026-10-29",
+        "note": "MobiData BW catalogue entry 'Baustelleninformationen Baden-Württemberg' (author Verkehrsministerium Baden-Württemberg) lists this roadworks_svzbw.datex2.xml resource under 'Datenlizenz Deutschland Namensnennung 2.0'.",
+      },
       "attribution": "MobiData BW / Ministerium für Verkehr Baden-Württemberg (SVZ-BW)",
       "privacyUrl": "https://www.mobidata-bw.de/pages/datenschutz",
     },
