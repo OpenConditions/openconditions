@@ -11,6 +11,7 @@ import type { Registry } from "@openconditions/model";
 import { writeSnapshotIn } from "@openconditions/storage";
 import type postgres from "postgres";
 import { domainOf, formatOf } from "../domains.js";
+import { feedErrorMessage } from "../feed-error.js";
 import { logRejections, stampAttribution } from "../pipeline/publish.js";
 import { dataRoles, guardedFeedFetch } from "../pipeline/run.js";
 import { openPollAttempt, upsertSourceStatus } from "../pipeline/source-status.js";
@@ -302,7 +303,7 @@ async function fetchAndWrite(
     });
     return written ? "fresh" : "busy";
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
+    const error = feedErrorMessage(feed, err, env);
     console.warn(`[on-demand] ${feed.id} cell ${cell.id} failed: ${error}`);
     try {
       await sql.begin(async (tx) => {
