@@ -379,6 +379,7 @@ export const feedTermsSchema = z
     derivedRedistribution: z.boolean().nullable().optional(),
     commercialUse: z.boolean().nullable().optional(),
     attributionRequired: z.boolean().nullable().optional(),
+    changeNotice: z.boolean().nullable().optional(),
     retention: z.boolean().nullable().optional(),
   })
   .strict()

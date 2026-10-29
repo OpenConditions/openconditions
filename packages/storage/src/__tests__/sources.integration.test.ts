@@ -21,6 +21,7 @@ const RIGHTS = {
   derivedRedistribution: true,
   commercialUse: true,
   attributionRequired: false,
+  changeNotice: false,
   retention: true,
   shareAlike: false,
 };

@@ -60,7 +60,6 @@ describe("acquisition captures licence definitions", () => {
                   name: "TfL Transport Data Service licence (OGL v2.0 with TfL amendments)",
                 },
                 notice: "© Distinct publisher",
-                conditions: ["Keep source date"],
               },
             ],
           },
@@ -75,6 +74,10 @@ describe("acquisition captures licence definitions", () => {
         ],
       },
     });
+    const { attribution } = stamped.provenance as {
+      attribution: { licensing: { bindings: object[] } };
+    };
+    expect(attribution.licensing.bindings[0]).not.toHaveProperty("conditions");
   });
 });
 
@@ -90,8 +93,8 @@ it("captures every configured and disabled feed's reviewed metadata without losi
     expect(captured.declarations?.[0].text, feed.id).toBe(feed.license);
     expect(captured.bindings[0].subject, feed.id).toBe(feed.name);
     if (feed.terms?.notice) expect(captured.bindings[0].notice, feed.id).toBe(feed.terms.notice);
-    if (feed.terms?.note)
-      expect(captured.bindings[0].conditions, feed.id).toEqual([feed.terms.note]);
+    // A reviewer's note is for operators, never part of the credit.
+    expect(captured.bindings[0].conditions, feed.id).toBeUndefined();
   }
 });
 
@@ -183,6 +186,7 @@ describe("National Highways acquisition terms", () => {
       derivedRedistribution: true,
       commercialUse: true,
       attributionRequired: true,
+      changeNotice: false,
       retention: null,
       shareAlike: false,
     });
@@ -200,7 +204,7 @@ describe("National Highways acquisition terms", () => {
     });
   });
 
-  it("captures the exact acknowledgement, unresolved placement and separate access conditions", () => {
+  it("captures the exact acknowledgement and unresolved placement, and keeps the terms reading for operators", () => {
     const feed = repoFeed("gb-nationalhighways-events");
     const attr = Attribution.parse(
       (stampAttribution({ provenance: {} }, feed).provenance as { attribution: unknown })
@@ -210,7 +214,8 @@ describe("National Highways acquisition terms", () => {
     const binding = attr.licensing?.bindings[0];
     expect(binding?.notice).toBe("Powered by National Highways’ Transport Data Feeds");
     expect(binding?.attribution).toMatchObject({ placement: "visible", basis: "unresolved" });
-    const conditions = binding?.conditions?.join(" ") ?? "";
+    expect(binding?.conditions).toBeUndefined();
+    const conditions = feed.terms?.note ?? "";
     expect(conditions).toMatch(/paragraph 19.*copy.*distribut.*adapt.*commercial/i);
     expect(conditions).toMatch(/paragraph 20.*brand.*registration/i);
     expect(conditions).toMatch(

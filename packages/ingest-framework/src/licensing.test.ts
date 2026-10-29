@@ -16,12 +16,12 @@ describe("captured licence bindings", () => {
         expect(grant).toMatchObject({ kind: "spdx", expression: info.id });
     }
   });
-  it("retains exact notices and conditions and leaves unknown grants unresolved", () => {
+  it("retains the exact notice and leaves unknown grants unresolved", () => {
     expect(
       captureLicensing({
         id: "example",
         license: "Unknown provider terms",
-        terms: { notice: "© Author", note: "No navigation use" },
+        terms: { notice: "© Author" },
       }),
     ).toMatchObject({
       version: 1,
@@ -29,10 +29,19 @@ describe("captured licence bindings", () => {
         {
           license: { kind: "unknown", raw: "Unknown provider terms" },
           notice: "© Author",
-          conditions: ["No navigation use"],
         },
       ],
     });
+  });
+  it("keeps the reviewer's note out of the credit", () => {
+    const feed = {
+      id: "example",
+      license: "CC-BY-4.0",
+      terms: { note: "Licence review: offer 123 states CC BY 4.0", notice: "© Author" },
+    };
+    const [binding] = captureLicensing(feed).bindings;
+    expect(binding.conditions).toBeUndefined();
+    expect(JSON.stringify(binding)).not.toContain("offer 123");
   });
 });
 
