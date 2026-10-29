@@ -35,7 +35,8 @@ export interface RateDecision {
 
 /**
  * Per-(key, area, window) report-rate guard. Counts the key's reports in the
- * trailing window — its landed `report` evidence rows and its refused reports
+ * trailing window — its landed `report` rows, matching observation submissions
+ * (`confirm` rows marked `via: same-reading`), and its refused reports
  * ({@link countRefusal}), total AND within the coarse cell of (lon, lat) — in
  * one query, and refuses when either ceiling is already reached. A landed
  * report's cell is `details->>'cell'`, which the landing stamps on every
@@ -63,7 +64,10 @@ export async function checkReportRate(
       SELECT details->>'cell' AS cell
       FROM conditions.report_evidence
       WHERE actor_key_id = ${keyId}
-        AND evidence_kind = 'report'
+        AND (evidence_kind = 'report' OR (
+          record_class = 'observation' AND evidence_kind = 'confirm'
+          AND details->>'via' = 'same-reading'
+        ))
         AND occurred_at > ${since}
       UNION ALL
       SELECT cell
