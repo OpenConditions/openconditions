@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   __resetSkips,
   drainSkipped,
@@ -142,6 +143,59 @@ describe("tfl", () => {
       text: "constructor",
     });
     expect(sealFailures(out.features)).toEqual([]);
+  });
+
+  test.each([
+    ["North (Home) (zoom)", "N"],
+    ["North ((Home)", "N"],
+    ["North ((Home) South)", undefined],
+    ["North (Home", "N"],
+    ["North (unclosed", undefined],
+    ["North )", "N"],
+    ["(North)", undefined],
+    ["North (home\nzoom)", "N"],
+  ])("preserves direction for %j", (text, compass) => {
+    const doc = list();
+    property(doc[0], "view").value = text;
+    const direction = view(parse({ main: [body(doc)] }), "00002.00876").details["direction"];
+    expect(direction).toEqual(
+      compass === undefined
+        ? { value: "unknown", basis: "text", text }
+        : { value: "unknown", basis: "compass", compass },
+    );
+  });
+
+  test("unclosed view parentheses finish within a bounded child process", () => {
+    const result = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--import",
+        "tsx",
+        "--input-type=module",
+        "-e",
+        `
+        import assert from "node:assert/strict";
+        const { parseTfl } = await import(process.argv[1]);
+        const { catalogFeed, parseContext } = await import(process.argv[2]);
+        const out = parseTfl(catalogFeed("gb-eng-tfl-cameras"), { main: [Buffer.from(JSON.stringify([
+          { id: "bounded", lon: -0.1, lat: 51.5, additionalProperties: [
+            { key: "view", value: "North" + "(".repeat(100_000) },
+          ] },
+        ]))] }, parseContext("2026-10-08T07:00:00Z"));
+        assert.equal(out.features.length, 1);
+        assert.deepEqual(out.features[0].components[0].details.direction,
+          { value: "unknown", basis: "compass", compass: "N" });
+        console.log("decoded");
+      `,
+        new URL("../formats/tfl.ts", import.meta.url).href,
+        new URL("./helpers/cameras-feed.ts", import.meta.url).href,
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(result.error).toBeUndefined();
+    expect(result.status, result.stderr).toBe(0);
+    expect(result.stdout.trim()).toBe("decoded");
   });
 
   test("no camera claims ptz: the view text is not a statement of it", () => {

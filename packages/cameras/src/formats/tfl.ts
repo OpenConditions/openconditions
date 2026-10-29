@@ -54,9 +54,18 @@ const FILLER = new Set(["facing", "home", "zoom", "view", "looking"]);
  * text.
  */
 function directionOf(view: string): DirectionRef {
-  const words = view
+  const parts: string[] = [];
+  let from = 0;
+  for (let open = view.indexOf("("); open !== -1; open = view.indexOf("(", from)) {
+    const close = view.indexOf(")", open + 1);
+    if (close === -1) break;
+    parts.push(view.slice(from, open), " ");
+    from = close + 1;
+  }
+  parts.push(view.slice(from));
+  const words = parts
+    .join("")
     .toLowerCase()
-    .replace(/\([^)]*\)/g, " ")
     .match(/[a-z]+/g)
     ?.filter((word) => !FILLER.has(word));
   const compass = words === undefined ? undefined : entryOf(COMPASS, words.join(""));
