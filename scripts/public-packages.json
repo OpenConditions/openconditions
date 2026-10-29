@@ -1,0 +1,82 @@
+{
+  "schemaVersion": 1,
+  "packages": [
+    {
+      "name": "@openconditions/ocpi",
+      "directory": "packages/ocpi",
+      "runtimeExports": [
+        "OcpiDecodeError",
+        "connectorPowerKw",
+        "decodeOcpiList",
+        "digitrafficLocation",
+        "digitrafficStatuses",
+        "digitrafficTariffs",
+        "fromDigitraffic",
+        "isRecord",
+        "normaliseEmi3",
+        "normaliseLocation",
+        "normaliseTariff",
+        "num",
+        "ocpdbAssociations",
+        "ocpdbSources",
+        "text"
+      ],
+      "typeExports": [
+        "DigitrafficStatus",
+        "OcpdbSource",
+        "OcpiAdditionalGeoLocation",
+        "OcpiBusinessDetails",
+        "OcpiConnector",
+        "OcpiDisplayText",
+        "OcpiEnergyMix",
+        "OcpiEnergySource",
+        "OcpiEnvironmentalImpact",
+        "OcpiEvse",
+        "OcpiEvseParking",
+        "OcpiExceptionalPeriod",
+        "OcpiGeoPoint",
+        "OcpiImage",
+        "OcpiLocation",
+        "OcpiOpeningTimes",
+        "OcpiParking",
+        "OcpiPrice",
+        "OcpiPriceComponent",
+        "OcpiRegularHours",
+        "OcpiRestrictions",
+        "OcpiStatusSchedule",
+        "OcpiTariff",
+        "OcpiTariffElement",
+        "RawRecord"
+      ],
+      "exports": {
+        ".": {
+          "import": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+          },
+          "require": {
+            "types": "./dist/index.d.cts",
+            "default": "./dist/index.cjs"
+          }
+        }
+      },
+      "files": [
+        "package.json",
+        "LICENSE",
+        "NOTICE",
+        "README.md",
+        "dist/index.js",
+        "dist/index.cjs",
+        "dist/index.d.ts",
+        "dist/index.d.cts",
+        "dist/index.js.map",
+        "dist/index.cjs.map"
+      ],
+      "dependencies": {
+        "@types/node": "24.19.2"
+      },
+      "licenseSha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+  ],
+  "consumerTypeScript": "6.0.3"
+}

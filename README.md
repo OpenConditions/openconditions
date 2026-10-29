@@ -210,7 +210,7 @@ it.
 
 ## Published artifacts
 
-- npm: `@openconditions/core`, `@openconditions/roads` (prebuilt, public)
+- Standalone library candidate: [`@openconditions/ocpi`](packages/ocpi/README.md), qualified through actual ESM/CJS/TypeScript tarball consumers. Registry publication is deferred; public availability and scope ownership are not established by package qualification. Other workspace libraries remain private until separately qualified.
 - images: `ghcr.io/openconditions/ingest`, `ghcr.io/openconditions/openlr-resolver`
 - **static archive:** a nightly [GeoParquet snapshot of the published view](docs/archive.md) —
   the mirrorable artifact for seeding a new instance or backfilling a federation peer

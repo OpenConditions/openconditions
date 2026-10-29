@@ -8,7 +8,7 @@
     "clean": "turbo run clean && rm -rf node_modules",
     "typecheck": "turbo run typecheck && tsc -p scripts/tsconfig.json",
     "check:staged": "node scripts/check-staged.mjs",
-    "verify:full": "pnpm lint && pnpm typecheck && pnpm check-credentials && pnpm check:feed-schemas && pnpm feeds:lint && pnpm test",
+    "verify:full": "pnpm lint && pnpm typecheck && pnpm check-credentials && pnpm check:feed-schemas && pnpm feeds:lint && pnpm test && pnpm check:packed-packages",
     "lint": "biome check . && prettier --check \"**/*.{md,yml,yaml}\" && pnpm check-import-boundaries",
     "format": "biome format --write . && prettier --write \"**/*.{md,yml,yaml}\"",
     "check-import-boundaries": "tsx scripts/check-import-boundaries.ts",
@@ -30,7 +30,8 @@
     "prepare": "husky",
     "test:unit": "pnpm build && vitest run --project unit",
     "test:integration": "pnpm build && vitest run --project integration",
-    "check:ci": "vitest run --project unit scripts/__tests__/ci-results.test.ts scripts/__tests__/main-validation-reconcile.test.ts"
+    "check:ci": "vitest run --project unit scripts/__tests__/ci-results.test.ts scripts/__tests__/main-validation-reconcile.test.ts",
+    "check:packed-packages": "node scripts/check-packed-packages.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",

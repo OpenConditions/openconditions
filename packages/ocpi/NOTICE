@@ -1,0 +1,9 @@
+OpenConditions OCPI decoders
+https://github.com/OpenConditions/openconditions/tree/main/packages/ocpi
+
+This package's code is distributed under Apache License 2.0; see LICENSE.
+The runtime bundles are built from packages/ocpi/src. The conformance helper,
+official schemas and captured provider fixtures are not included.
+
+Provider data and source attribution retain their separate rights. The code
+licence does not grant permission to redistribute a provider's data.
