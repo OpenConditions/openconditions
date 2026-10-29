@@ -31,10 +31,14 @@
     "test:unit": "pnpm build && vitest run --project unit",
     "test:integration": "pnpm build && vitest run --project integration",
     "check:ci": "vitest run --project unit scripts/__tests__/ci-results.test.ts scripts/__tests__/main-validation-reconcile.test.ts",
-    "check:packed-packages": "node scripts/check-packed-packages.mjs"
+    "check:packed-packages": "node scripts/check-packed-packages.mjs",
+    "check:release-information": "node scripts/check-release-information.ts",
+    "version:public-packages": "node scripts/version-public-packages.mjs",
+    "check:canonical-package-version": "node scripts/canonical-package-version.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
+    "@changesets/cli": "3.0.3",
     "@commitlint/cli": "^21.2.3",
     "@commitlint/config-conventional": "^21.2.3",
     "@openconditions/core": "workspace:*",
@@ -54,7 +58,8 @@
     "tsx": "^4.23.15",
     "turbo": "^2.11.7",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.3",
+    "yaml": "2.9.1"
   },
   "packageManager": "pnpm@12.11.2",
   "engines": {

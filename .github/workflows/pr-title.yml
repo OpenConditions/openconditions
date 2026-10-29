@@ -45,3 +45,41 @@ jobs:
             The subject "{subject}" must start with a lowercase letter.
             Example: `fix: keep last-good rows on fetch failure` (not `Fix: ...`).
           wip: true
+
+      # Only trusted base code runs. Candidate source remains unexecuted Git objects.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Snapshot current PR identity and declarations
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('node:fs');
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: context.issue.number});
+            if (pr.head.sha !== context.payload.pull_request.head.sha || pr.base.sha !== context.payload.pull_request.base.sha) throw new Error('PR source moved; use the current head event');
+            fs.writeFileSync(`${process.env.RUNNER_TEMP}/release-pr.json`, JSON.stringify({number: pr.number, base: pr.base.sha, head: pr.head.sha, body: pr.body ?? ''}), {flag: 'wx'});
+      - name: Read candidate objects without checking out or executing them
+        env:
+          RELEASE_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: git fetch --no-tags origin "$RELEASE_HEAD"
+      - name: Validate release information
+        env:
+          RELEASE_BASE: ${{ github.event.pull_request.base.sha }}
+          RELEASE_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: node scripts/check-release-information.ts --base "$RELEASE_BASE" --head "$RELEASE_HEAD" --pr-file "$RUNNER_TEMP/release-pr.json"
+      - name: Refuse concurrent declaration or source drift
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const fs = require('node:fs');
+            const before = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/release-pr.json`, 'utf8'));
+            const {data: pr} = await github.rest.pulls.get({...context.repo, pull_number: before.number});
+            if (pr.head.sha !== before.head || pr.base.sha !== before.base || (pr.body ?? '') !== before.body) throw new Error('Release information changed during validation; use the current edit event');

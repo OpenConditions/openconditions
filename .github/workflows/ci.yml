@@ -54,6 +54,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: ${{ github.sha }}
+          fetch-depth: 0
           persist-credentials: false
 
       # Version is read from package.json "packageManager" (single source of
@@ -66,6 +67,13 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Check release information on exact PR inputs
+        if: github.event_name == 'pull_request'
+        env:
+          RELEASE_BASE: ${{ github.event.pull_request.base.sha }}
+          RELEASE_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: pnpm check:release-information --base "$RELEASE_BASE" --head "$RELEASE_HEAD" --pr-file "$GITHUB_EVENT_PATH"
 
       # The OpenLR encoder's output is cross-checked against the Python
       # openlr library (packages/openlr/src/__tests__/python-openlr.test.ts).
