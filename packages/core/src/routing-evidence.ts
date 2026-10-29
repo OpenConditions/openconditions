@@ -60,7 +60,8 @@ export interface RoadConditionRoutingEvidence {
 
 function finiteInstant(value: string | null): number | null {
   if (value == null || value.trim() === "") return null;
-  if (!/T.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.trim())) return null;
+  // Only the final T on a line can precede the timezone suffix; do not rescan across it.
+  if (!/T[^T\r\n\u2028\u2029]*(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.trim())) return null;
   const ms = Date.parse(value);
   return Number.isFinite(ms) ? ms : null;
 }

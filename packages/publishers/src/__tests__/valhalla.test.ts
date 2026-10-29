@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import type { SegmentConditionRow } from "@openconditions/core";
 import type { Effect } from "@openconditions/model";
 import { describe, expect, it } from "vitest";
@@ -48,6 +49,38 @@ describe("segmentConditionsToExclusions", () => {
       exclusions([segmentRow({ segments: fullWay, effect: cars as Effect })]).exclude_locations
         .length,
     ).toBeGreaterThan(0);
+  });
+
+  it("bounds caller-supplied malformed evidence in the built Valhalla adapter", () => {
+    const projected = segmentConditionsToJson([segmentRow({ segments: fullWay })], at, {
+      resolverVersion: "2.0.0",
+    });
+    const child = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--input-type=module",
+        "-e",
+        `import assert from "node:assert/strict";
+       const { segmentConditionsToExclusions } = await import(process.argv[1]);
+       const conditions = JSON.parse(process.argv[2]);
+       const at = new Date(process.argv[3]);
+       const project = () => segmentConditionsToExclusions(conditions, { activeAt: at, evaluatedAt: at });
+       assert.ok(project().exclude_locations.length > 0);
+       console.log("control passed");
+       conditions[0].routing_evidence.source_checked_at = "T".repeat(100000) + "!";
+       assert.deepEqual(project(), { exclude_locations: [], exclude_polygons: [], speed_caps: [] });
+       console.log("checked");`,
+        new URL("../../dist/index.js", import.meta.url).href,
+        JSON.stringify(projected.conditions),
+        at.toISOString(),
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(child.stdout).toContain("control passed");
+    expect(child.error).toBeUndefined();
+    expect(child.status, child.stderr).toBe(0);
+    expect(child.stdout.trim()).toBe("control passed\nchecked");
   });
 
   it("does not exclude a closure narrower than every car, in one direction or part of a way", () => {
