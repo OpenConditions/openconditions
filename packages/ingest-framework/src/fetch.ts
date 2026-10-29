@@ -213,6 +213,15 @@ export function withChangesSince(
   });
 }
 
+/** Diagnostic coercion must not turn a tolerated fetch failure into a failed batch. */
+function fetchErrorText(error: unknown): string {
+  try {
+    return String(error instanceof Error ? error.message : error);
+  } catch {
+    return "fetch failed (diagnostic unavailable)";
+  }
+}
+
 function isGzip(buf: Buffer): boolean {
   return buf.length >= 2 && buf[0] === GZIP_MAGIC_0 && buf[1] === GZIP_MAGIC_1;
 }
@@ -391,8 +400,8 @@ async function fetchFanout(
         failures++;
         failed.add(url);
         console.warn(
-          `[ingest] sub-feed fetch failed (${redact(url)}):`,
-          err instanceof Error ? err.message : err,
+          `[ingest] sub-feed fetch failed (${redact(redactUrl(url))}):`,
+          redact(fetchErrorText(err)),
         );
       }
     }
@@ -832,7 +841,7 @@ async function fetchSlots(
         failures++;
         console.warn(
           `[ingest] item fetch failed (${redact(redactUrl(urls[i]!))}):`,
-          err instanceof Error ? err.message : err,
+          redact(fetchErrorText(err)),
         );
       }
     }
