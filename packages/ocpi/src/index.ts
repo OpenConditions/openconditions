@@ -1,4 +1,48 @@
-export * from "./decode.js";
-export * from "./digitraffic.js";
-export * from "./ocpdb.js";
-export * from "./types.js";
+export {
+  connectorPowerKw,
+  decodeOcpiList,
+  isRecord,
+  normaliseEmi3,
+  normaliseLocation,
+  normaliseTariff,
+  num,
+  OcpiDecodeError,
+  type RawRecord,
+  text,
+} from "./decode.js";
+export {
+  type DigitrafficStatus,
+  digitrafficLocation,
+  digitrafficStatuses,
+  digitrafficTariffs,
+  fromDigitraffic,
+} from "./digitraffic.js";
+export {
+  type OcpdbSource,
+  ocpdbAssociations,
+  ocpdbSources,
+} from "./ocpdb.js";
+export type {
+  OcpiAdditionalGeoLocation,
+  OcpiBusinessDetails,
+  OcpiConnector,
+  OcpiDisplayText,
+  OcpiEnergyMix,
+  OcpiEnergySource,
+  OcpiEnvironmentalImpact,
+  OcpiEvse,
+  OcpiEvseParking,
+  OcpiExceptionalPeriod,
+  OcpiGeoPoint,
+  OcpiImage,
+  OcpiLocation,
+  OcpiOpeningTimes,
+  OcpiParking,
+  OcpiPrice,
+  OcpiPriceComponent,
+  OcpiRegularHours,
+  OcpiRestrictions,
+  OcpiStatusSchedule,
+  OcpiTariff,
+  OcpiTariffElement,
+} from "./types.js";

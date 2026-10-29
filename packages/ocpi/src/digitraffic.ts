@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { isRecord, normaliseLocation, normaliseTariff, OcpiDecodeError, text } from "./decode.js";
 import type { OcpiLocation, OcpiTariff } from "./types.js";
 

@@ -10,16 +10,24 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     }
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "LICENSE",
+    "NOTICE",
+    "README.md"
   ],
   "scripts": {
     "build": "tsup",
@@ -31,5 +39,15 @@
     "tsup": "^8.5.1",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"
+  },
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/OpenConditions/openconditions.git",
+    "directory": "packages/ocpi"
+  },
+  "homepage": "https://github.com/OpenConditions/openconditions/tree/main/packages/ocpi",
+  "dependencies": {
+    "@types/node": "24.19.2"
   }
 }

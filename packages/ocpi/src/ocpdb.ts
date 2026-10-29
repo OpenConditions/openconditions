@@ -1,3 +1,4 @@
+import type { Buffer } from "node:buffer";
 import { decodeOcpiList, isRecord, text } from "./decode.js";
 
 export interface OcpdbSource {

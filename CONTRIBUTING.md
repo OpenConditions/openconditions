@@ -66,11 +66,12 @@ pnpm check:feed-schemas
 pnpm feeds:lint
 pnpm check:ci    # CI outcome and main reconciliation command fixtures
 pnpm test        # build workspace dependencies, then all Vitest projects
-pnpm verify:full # new explicit command: all deterministic Node checks above
+pnpm check:packed-packages # actual tarball / external ESM, CJS and strict TS consumer
+pnpm verify:full # all Node checks above, including the packed consumer
 ```
 
 `verify:full` includes lint/import boundaries, workspace and script types, generated credentials,
-model artifacts, feed schemas, feed lint and the full Node suite. It needs Docker/PostGIS for database
+model artifacts, feed schemas, feed lint, the full Node suite and the packed-package consumer. The latter uses the pinned pnpm CLI and may fetch pinned consumer tools/type dependencies from npm; it retains the actual tarball identity and consumer lock in its receipt. See the [OCPI qualification instructions](packages/ocpi/README.md#qualify-a-tarball-without-publishing) for supplied immutable bytes. It needs Docker/PostGIS for database
 tests. For the same OpenLR cross-check as CI, install the hash-pinned
 `packages/openlr/python/requirements.txt` into your Python environment, put it on `PATH` and set
 `OPENLR_CROSSCHECK=required`. This command does not run the separate resolver checks, independent
@@ -192,8 +193,7 @@ coverage until that migration is read back.
 
 ### Testing
 
-Tests run from one root `vitest.config.ts`, with `unit` and `integration`
-projects covering packages, services, integrations, and scripts. The
+Tests run from one root `vitest.config.ts`, with `unit`, `integration` and `packed` projects covering packages, services, integrations and scripts. The packed-package process tests run after integration, with one worker, so their external installs and compilers do not overlap the application suites. They remain part of `pnpm test`; use `pnpm exec vitest run --project packed` for a focused run. The
 integration project runs after the unit project, two files at a time, against
 one PostGIS container its global setup starts and migrates as a template
 (`OC_TEST_POSTGIS_PROFILE=pg16|pg18` picks the server, PG16 by default). Dedicated

@@ -47,5 +47,6 @@
     "drizzle-orm": "^0.45.4",
     "postgres": "^3.4.9",
     "tz-lookup": "^6.1.25"
-  }
+  },
+  "private": true
 }

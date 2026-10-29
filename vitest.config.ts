@@ -25,7 +25,11 @@ export default defineConfig({
           globals: true,
           testTimeout: 15_000,
           include: ["packages/**/*.test.ts", "services/**/*.test.ts", "scripts/**/*.test.ts"],
-          exclude: ["**/node_modules/**", "**/*.integration.test.ts"],
+          exclude: [
+            "**/node_modules/**",
+            "**/*.integration.test.ts",
+            "scripts/__tests__/packed-packages.test.ts",
+          ],
         },
       },
       {
@@ -47,6 +51,18 @@ export default defineConfig({
             "scripts/**/*.integration.test.ts",
           ],
           exclude: ["**/node_modules/**"],
+        },
+      },
+      {
+        test: {
+          name: "packed",
+          environment: "node",
+          // External installs/compilers run after existing application suites.
+          sequence: { groupOrder: 2 },
+          maxWorkers: 1,
+          testTimeout: 150_000,
+          hookTimeout: 60_000,
+          include: ["scripts/__tests__/packed-packages.test.ts"],
         },
       },
     ],
