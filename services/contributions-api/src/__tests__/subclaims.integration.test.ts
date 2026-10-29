@@ -620,6 +620,27 @@ describe("POST /contrib/reports/:class/:id/:action — rejections at the trust b
     expect(res.statusCode).toBe(400);
   }, 60_000);
 
+  it("rejects prototype-named JSON fields at the HTTP boundary before recording a vote", async () => {
+    const { id } = await landSituation("reject-proto-000001");
+    const key = await generateReporterKey();
+    const grant = await enroll(key);
+    const signed = await signSub(key, id, "confirm");
+    for (const value of [null, {}, "not-an-object", 7]) {
+      const subClaim = Object.fromEntries([...Object.entries(signed), ["__proto__", value]]);
+      const res = await app.inject({
+        method: "POST",
+        url: `/contrib/reports/situation/${encodeURIComponent(id)}/confirm`,
+        headers: { "content-type": "application/json" },
+        payload: JSON.stringify({ subClaim, reportingGrant: grant }),
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().error).toBe("Bad Request");
+      expect(await countSubClaims(id, key.keyId, "confirm")).toBe(0);
+    }
+    expect((await vote(id, "confirm", signed, grant)).statusCode).toBe(200);
+    expect(await countSubClaims(id, key.keyId, "confirm")).toBe(1);
+  }, 60_000);
+
   it("rejects a claimType that disagrees with the route action with 400", async () => {
     const { id } = await landSituation("reject-mismatch-001");
     const keyB = await generateReporterKey();
