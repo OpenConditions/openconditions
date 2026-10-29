@@ -251,7 +251,7 @@ describe("the roads catalogue", () => {
     for (const f of allFeeds()) {
       const ref = f.endpoints["sites"];
       if (!ref) continue;
-      expect(ref.cadenceSec, f.id).toBe(f.id === "nl-ndw-flow" ? 60 : 21600);
+      expect(ref.cadenceSec, f.id).toBe(f.id === "nl-ndw-flow" ? 300 : 21600);
       expect(ref.decoder, f.id).toBeDefined();
     }
   });
@@ -309,14 +309,26 @@ describe("NDW", () => {
     expect(main("nl-ndw-flow")).toEqual({
       url: "https://opendata.ndw.nu/snelheden_en_intensiteiten_meetgegevens.xml.gz",
       gzip: true,
-      cadenceSec: 60,
+      cadenceSec: 300,
     });
     expect(sites("nl-ndw-flow")).toEqual({
       url: "https://opendata.ndw.nu/snelheden_en_intensiteiten_configuratie_meetlocaties.xml.gz",
       gzip: true,
       decoder: "datex2-sites",
-      cadenceSec: 60,
+      cadenceSec: 300,
     });
+    expect(flow.freshnessWindowSec).toBe(900);
+  });
+
+  test("no flow feed polls every minute, and each stays fresh between its polls", () => {
+    // A flow poll rewrites a latest row per reading, and segment speeds are
+    // rebuilt every five minutes, so a poll a minute only multiplies writes.
+    for (const f of allFeeds().filter((f) => f.product === "flow")) {
+      for (const endpoint of Object.values(f.endpoints)) {
+        expect(endpoint.cadenceSec, f.id).toBeGreaterThan(60);
+      }
+      expect(f.freshnessWindowSec, f.id).toBeGreaterThan(f.endpoints["main"]!.cadenceSec);
+    }
   });
 
   test("only NDW numbers lanes from the left", () => {
@@ -498,7 +510,8 @@ describe("Autobahn GmbH", () => {
       expect(f.product, id).toBe("flow");
       expect(f.license, id).toBe("LicenseRef-GeoNutzV");
       expect(f.auth, id).toEqual(MOBILITHEK_MTLS);
-      expect(main(id).cadenceSec, id).toBe(60);
+      expect(main(id).cadenceSec, id).toBe(300);
+      expect(f.freshnessWindowSec, id).toBe(900);
       expect(main(id).headers?.["Accept-Encoding"], id).toBe("gzip");
     }
   });

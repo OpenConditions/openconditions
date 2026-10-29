@@ -624,6 +624,13 @@
       "when": 1792701448079,
       "tag": "0088_federation_archive_landed",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1793316261080,
+      "tag": "0089_latest_autovacuum",
+      "breakpoints": true
     }
   ]
 }

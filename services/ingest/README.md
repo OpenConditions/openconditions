@@ -203,9 +203,9 @@ without a statement or lock timeout.
 ## A second ingest process
 
 All feeds share one Node process, and a feed's parse and its records'
-validation run on its main thread. A feed that takes longer than its cadence
-(NDW's `nl-ndw-flow`, about 174 000 readings every 60 s) skips its own ticks
-and delays every other feed's poll behind it. Such feeds can run in a second
+validation run on its main thread. A large feed (NDW's `nl-ndw-flow`, about
+174 000 readings a poll) delays every other feed's poll behind it, and one that
+takes longer than its cadence skips its own ticks. Such feeds can run in a second
 process of the same image, with its own thread, heap and parse child:
 
 | Env var                               | Meaning                                                                                                 | Default            |
