@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { writeFile } from "node:fs/promises";
+import { constants } from "node:fs";
+import { type FileHandle, lstat, open } from "node:fs/promises";
 import { guardedFetch } from "../egress.js";
 import type { IngestDomain } from "./domain.js";
 import { deriveFeedId } from "./ids.js";
@@ -191,6 +191,31 @@ export function materializeCatalogChildren(
   return { scheduled, discovered, issues };
 }
 
+/** Updates only the checked snapshot inode, even if its pathname changes after open. */
+async function refreshSnapshotFile(path: string, children: ChildFeed[]): Promise<void> {
+  let file: FileHandle | undefined;
+  try {
+    const checked = await lstat(path, { bigint: true });
+    if (!checked.isFile()) throw new TypeError("snapshot is not a regular file");
+    file = await open(
+      path,
+      constants.O_WRONLY | (constants.O_NOFOLLOW ?? 0) | (constants.O_NONBLOCK ?? 0),
+    );
+    const opened = await file.stat({ bigint: true });
+    if (!opened.isFile() || opened.dev !== checked.dev || opened.ino !== checked.ino) {
+      throw new Error("snapshot changed before open");
+    }
+    const text = `${JSON.stringify(children, null, 2)}\n`;
+    await file.writeFile(text, "utf8");
+    await file.truncate(Buffer.byteLength(text, "utf8"));
+  } catch (error) {
+    if (file === undefined && (error as NodeJS.ErrnoException)?.code === "ENOENT") return;
+    throw error;
+  } finally {
+    await file?.close();
+  }
+}
+
 /**
  * Resolves a catalogue live, refreshing the vendored snapshot on success and
  * falling back to it on failure (Transitland's git-submodule resilience). Never
@@ -206,9 +231,7 @@ export async function resolveWithSnapshot(
   try {
     const children = await resolver.resolve(parent, fetchFn);
     try {
-      if (existsSync(resolver.snapshotPath)) {
-        await writeFile(resolver.snapshotPath, `${JSON.stringify(children, null, 2)}\n`);
-      }
+      await refreshSnapshotFile(resolver.snapshotPath, children);
     } catch (writeErr) {
       console.warn(
         `[catalog] ${resolver.id}: could not refresh snapshot ${resolver.snapshotPath}:`,
