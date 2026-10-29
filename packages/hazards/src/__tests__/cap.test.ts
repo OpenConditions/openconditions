@@ -35,6 +35,30 @@ const stamp = (identifier: string) => identifier.split(".")[8]!;
 const identifierOf = (s: RecordDraft) =>
   (s["details"] as { cap: { identifier: string } }).cap.identifier;
 
+describe("the cap format's document namespace", () => {
+  const captured = fixture("dwd-thunderstorm.xml").toString("utf8");
+  const withComment = (xml: string, comment: string) => xml.replace("?>", `?>${comment}`);
+
+  test("a comment's namespace cannot reject a valid CAP document or alter its projection", () => {
+    const original = parse(dwdFeed(), { alerts: [Buffer.from(captured)] }, DWD_FIT_AT);
+    const commented = withComment(captured, '<!-- <A xmlns="urn:example:other"> -->');
+    expect(parse(dwdFeed(), { alerts: [Buffer.from(commented)] }, DWD_FIT_AT)).toEqual(original);
+  });
+
+  test("a comment's CAP namespace cannot authorize a foreign document namespace", () => {
+    const foreign = captured.replace("emergency:cap:1.2", "example:other");
+    const commented = withComment(
+      foreign,
+      '<!-- <A xmlns="urn:oasis:names:tc:emergency:cap:1.2"> -->',
+    );
+    for (const xml of [foreign, commented]) {
+      expect(() => parse(dwdFeed(), { alerts: [Buffer.from(xml)] }, DWD_FIT_AT)).toThrow(
+        /not CAP 1.2's namespace/,
+      );
+    }
+  });
+});
+
 describe("the cap format over the fit captures", () => {
   test("DWD: eight languages, and the islands cut out of the coastal warning", () => {
     const out = parse(
