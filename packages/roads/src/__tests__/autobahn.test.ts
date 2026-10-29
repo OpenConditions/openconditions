@@ -330,6 +330,53 @@ describe("parseAutobahn — classification", () => {
     expect(located("Umleitung: ab der Abfahrt von der A8 der U12 folgen")).toEqual(road);
   });
 
+  it("classifies an entry/exit closure located on a carriageway as a road closure", () => {
+    const located = (...lines: string[]) =>
+      parseAutobahn(
+        {
+          closure: [
+            item({
+              display_type: "CLOSURE_ENTRY_EXIT",
+              description: [
+                "Zeitraum dieser Bauphase:",
+                "Beginn: 06.11.26 um 21:00 Uhr",
+                "",
+                ...lines,
+              ],
+            }),
+          ],
+        },
+        AUTOBAHN_SOURCE,
+        "closure",
+      )[0]!.situation?.classification;
+    const road = { kind: "closure", type: "closure" };
+    // Parts of the A1/A61 night closure at AK Bliesheim, as the live records word them.
+    expect(
+      located("A61: Koblenz -> Mönchengladbach, zwischen AK Bliesheim und 3.4 km vor AS Erftstadt"),
+    ).toEqual(road);
+    expect(located("A1: km 437.90 --> km 441.70")).toEqual(road);
+    expect(
+      located(
+        "Von A38: Halle -> Leipzig, zwischen 5.4 km hinter AS Neue Harth und AK Leipzig-Süd nach A38: Halle -> Leipzig, zwischen AK Leipzig-Süd und AS Leipzig-Südost",
+      ),
+    ).toEqual(road);
+    // A slip road named anywhere, a span from another road, or no location
+    // line at all leaves the source's type standing.
+    const ramp = { kind: "closure", type: "closure", subtype: "ramp" };
+    expect(
+      located(
+        "Von Auffahrt auf die A61: AK Bliesheim (aus Richtung Weilerswist) nach A61: Koblenz -> Mönchengladbach, zwischen AK Bliesheim und 3.8 km vor AS Erftstadt",
+      ),
+    ).toEqual(ramp);
+    expect(
+      located(
+        "Von K1 (Deichstraße) nach A31: Emden -> Meppen, zwischen AS Leer-Nord und 0.1 km vor AS Leer-Ost",
+      ),
+    ).toEqual(ramp);
+    expect(located("B1")).toEqual(ramp);
+    expect(located()).toEqual(ramp);
+  });
+
   it("leaves roadworks on a slip road classified as roadworks", () => {
     const [works] = parseAutobahn(
       {

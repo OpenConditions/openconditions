@@ -255,7 +255,12 @@ The Autobahn parser reads `display_type` `CLOSURE_ENTRY_EXIT` as a ramp
 closure, and also a `CLOSURE` whose location line names a slip road
 ("Auffahrt auf die …", "Abfahrt von der …", either one as the end of a
 "Von … nach …" span, or an interchange connector "Von A44: …; in A44: AK
-Meerbusch auf die A57 …"). Roadworks keep their location as it is: their lane
+Meerbusch auf die A57 …"). The other way round, a `CLOSURE_ENTRY_EXIT` whose
+location line names no slip road but a carriageway ("A61: Koblenz ->
+Mönchengladbach, zwischen AK Bliesheim und …", or "Von A38: … nach A38: …") is
+a road closure: the API types the parts of a full closure between two
+junctions that way. A line from or to another road ("Von K1 (Deichstraße) nach
+A31: …"), or none at all, leaves the source's type. Roadworks keep their location as it is: their lane
 restrictions may well apply on the carriageway. Whatever the source, a closure
 gets scope `ramp` when its record's own classification is
 `closure.closure.ramp`.
