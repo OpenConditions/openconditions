@@ -34,9 +34,9 @@
     "check:packed-packages": "node scripts/check-packed-packages.mjs"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.5.15",
-    "@commitlint/cli": "^21.2.3",
-    "@commitlint/config-conventional": "^21.2.3",
+    "@biomejs/biome": "^2.6.3",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@openconditions/core": "workspace:*",
     "@openconditions/datex2": "workspace:*",
     "@openconditions/ingest-framework": "workspace:*",
@@ -44,19 +44,19 @@
     "@openconditions/model-registry": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "@openconditions/test-database": "workspace:*",
-    "@types/node": "^26.6.5",
-    "@vitest/coverage-v8": "^5.0.3",
+    "@types/node": "^26.6.6",
+    "@vitest/coverage-v8": "^5.0.5",
     "husky": "^9.1.7",
     "postgres": "^3.4.9",
     "prettier": "^3.9.10",
-    "testcontainers": "^12.2.0",
-    "tsup": "^8.5.1",
+    "testcontainers": "^12.2.1",
+    "tsup": "^9.0.0",
     "tsx": "^4.23.15",
-    "turbo": "^2.11.7",
+    "turbo": "^2.11.10",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
-  "packageManager": "pnpm@12.11.2",
+  "packageManager": "pnpm@12.16.1",
   "engines": {
     "node": ">=24"
   }

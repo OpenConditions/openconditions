@@ -29,17 +29,17 @@
   "dependencies": {
     "@openconditions/core": "workspace:*",
     "@openconditions/model": "workspace:*",
-    "impit": "^0.14.5",
+    "impit": "^0.14.7",
     "jsonc-parser": "^3.3.1",
     "proj4": "^2.22.0",
-    "undici": "^8.11.2",
-    "zod": "^4.6.5"
+    "undici": "^8.12.3",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
-    "tsup": "^8.5.1",
+    "tsup": "^9.0.0",
     "typescript": "^6.0.3",
-    "vitest": "^5.0.3"
+    "vitest": "^5.0.5"
   },
   "private": true
 }

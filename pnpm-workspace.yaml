@@ -18,10 +18,6 @@ minimumReleaseAge: 1440
 minimumReleaseAgeStrict: true
 minimumReleaseAgeIgnoreMissingTime: false
 trustPolicy: no-downgrade
-trustPolicyExclude:
-  # tsup 8.5.1 requires Chokidar 4, whose 4.0.3 release was signed by the
-  # established maintainer but published without the provenance used by 4.0.1.
-  - chokidar@4.0.3
 
 # Force the patched esbuild across the (dev-only) build toolchain — tsup,
 # vite/vitest and the legacy drizzle-kit esbuild-kit pull vulnerable 0.18/0.27
