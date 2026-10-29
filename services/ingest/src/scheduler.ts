@@ -10,6 +10,7 @@ import {
 import { Cron } from "croner";
 import type postgres from "postgres";
 import { fetch as undiciFetch } from "undici";
+import { feedErrorMessage } from "./feed-error.js";
 import type { FeedStatusStore } from "./feed-status.js";
 import { createOAuthGrants } from "./oauth-grants.js";
 import { buildDailyArchive } from "./pipeline/archive-build.js";
@@ -113,15 +114,16 @@ export async function runFeedOnce(
       // runSource is fault-tolerant and swallows fetch/timeout/DNS/site-table
       // failures, returning {count:0, error} instead of throwing — record
       // those as errors too, or a down feed would look like a quiet success.
-      console.error(`[scheduler] ${src.id}: ${result.error}`);
-      statusStore.recordError(src.id, now(), result.error);
+      const message = feedErrorMessage(src, result.error, deps.env);
+      console.error(`[scheduler] ${src.id}: ${message}`);
+      statusStore.recordError(src.id, now(), message);
     } else {
       statusStore.recordSuccess(src.id, now(), result.count, result.durationMs, result.skipped);
     }
     // Flow feeds derive congestion situations too, so every poll may have queued work.
     o.bindingDrain?.request();
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = feedErrorMessage(src, err, deps.env);
     console.error(`[scheduler] ${src.id}: ${message}`);
     statusStore.recordError(src.id, now(), message);
   }
