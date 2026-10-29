@@ -23,8 +23,12 @@ trustPolicy: no-downgrade
 # vite/vitest and the legacy drizzle-kit esbuild-kit pull vulnerable 0.18/0.27
 # lines (GHSA-67mh / GHSA-g7r4).
 overrides:
-  # Vite 7.3.7 fixes the five dev-server/editor advisories in the Vitest peer.
-  vite: "7.3.7"
+  # The Vitest peer stays on the current Vite 8 line, which includes the fixes
+  # for the five dev-server/editor advisories. Hold it at 8.3.4: Vite 8.3.5
+  # crashes any stack trace taken in a Vitest 5.0.5 globalSetup module
+  # (vitest-dev/vitest#11682), which stops the integration project. Move to the
+  # latest 8.3.x once a Vitest release includes the fix (vitest-dev/vitest#11709).
+  vite: "8.3.4"
   esbuild: "^0.28.1"
   # @cloudflare/blindrsa-ts pins 1.0.8, which lacks elliptic-curve point
   # validation (GHSA-2w8x-224x-785m). 1.0.9 is the focused upstream patch.
