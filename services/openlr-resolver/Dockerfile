@@ -21,7 +21,7 @@ RUN apk upgrade --no-cache \
     && apk add --no-cache build-base cmake expat-dev zlib-dev bzip2-dev
 COPY requirements.txt ./
 RUN python -m venv /opt/venv \
-    && /opt/venv/bin/pip install -r requirements.txt
+    && /opt/venv/bin/pip install --require-hashes -r requirements.txt
 RUN rm -rf /opt/venv/bin/pip* \
               /opt/venv/lib/python3.14/site-packages/pip \
               /opt/venv/lib/python3.14/site-packages/pip-*.dist-info
