@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { describe, expect, it } from "vitest";
 import type { LinkingRules } from "../index.js";
 import {
@@ -167,6 +168,86 @@ describe("proposeLink", () => {
         false,
       );
       expect(houseNumbersDiffer({ houseNumber: "49-51" }, { houseNumber: "53" })).toBe(true);
+    });
+
+    it.each([
+      ["Hauptstr. 49 - 51", "50", false],
+      ["Hauptstr. 49 – 51", "52", true],
+      ["Hauptstr. 49a / 51 B", "50", false],
+      ["Hauptstr. 51 - 49", "50", false],
+      ["Hauptstr. 2 f", "2G", true],
+      ["Hauptstr. 2F", "2f", false],
+      ["Hauptstr. 002", "2", false],
+      ["Hauptstr., 2", "6", true],
+      ["Hauptstr.2", "6", false],
+      ["Hauptstr. 2.", "6", false],
+      ["Hauptstr. 2 F!", "6", false],
+      ["Hauptstr. 2 3 – 4", "6", true],
+      ["Hauptstr. 2—6", "3", false],
+      ["Hauptstr. 2 — 6", "3", true],
+      ["Hauptstr.\u00a02\tF", "2g", true],
+      ["Hauptstr.\n2\u2028/\n4", "3", false],
+      ["Hauptstr. 2é", "6", false],
+      ["Hauptstr. ٢", "6", false],
+      ["  B 3  ", "6", false],
+      ["ABC 123", "6", false],
+      ["ABCD 123", "6", true],
+      ["  Hauptstr. 2 f  ", "2G", true],
+    ])("keeps the house comparison for %j against %j", (street, houseNumber, different) => {
+      expect(houseNumbersDiffer({ street }, { houseNumber })).toBe(different);
+      expect(houseNumbersDiffer({ houseNumber }, { street })).toBe(different);
+    });
+
+    it("preserves explicit-field precedence, invalid values and normalized street-name guards", () => {
+      expect(
+        houseNumbersDiffer({ street: "Hauptstr. 7", houseNumber: "2" }, { houseNumber: "2" }),
+      ).toBe(false);
+      expect(
+        houseNumbersDiffer({ street: "Hauptstr. 7", houseNumber: "" }, { houseNumber: "6" }),
+      ).toBe(false);
+      expect(houseNumbersDiffer({ houseNumber: "?" }, { houseNumber: "6" })).toBe(true);
+      expect(houseNumbersDiffer({}, { houseNumber: "6" })).toBe(false);
+      expect(houseNumbersDiffer({ street: " Straße   101 " }, { street: "STRAẞE 101 5" })).toBe(
+        false,
+      );
+    });
+
+    it("keeps malformed-suffix linking bounded without changing its unknown-number fallback", () => {
+      const left = site("oc:feature:a:1", 8.4, 49, {
+        location: { ...at(8.4, 49), address: { street: "Market Street 2" } },
+      });
+      const right = site("oc:feature:b:1", 8.4, 49.000315, {
+        location: { ...at(8.4, 49.000315), address: { street: "Market Street", houseNumber: "6" } },
+      });
+      const child = spawnSync(
+        process.execPath,
+        [
+          "--max-old-space-size=96",
+          "--input-type=module",
+          "-e",
+          `import assert from "node:assert/strict";
+         const { houseNumbersDiffer, proposeLink } = await import(process.argv[1]);
+         const [a, b, rules] = process.argv.slice(2).map((s) => JSON.parse(s));
+         assert.equal(houseNumbersDiffer({ street: "Market Street 2" }, { houseNumber: "6" }), true);
+         assert.equal(proposeLink(a, b, rules), undefined);
+         const same = { ...b, location: { ...b.location, address: { street: "Market Street", houseNumber: "2" } } };
+         const expected = { aId: a.id, bId: b.id, method: "spatial_attribute", confidence: 0.7, status: "accepted", reasons: ["35.0 m", "address 1.00"] };
+         assert.deepEqual(proposeLink(a, same, rules), expected);
+         console.log("control passed");
+         a.location.address.street = "Market Street 2" + " ".repeat(100000) + "!";
+         assert.deepEqual(proposeLink(a, b, rules), expected);
+         console.log("compared");`,
+          new URL("../../dist/index.js", import.meta.url).href,
+          JSON.stringify(left),
+          JSON.stringify(right),
+          JSON.stringify({ ...RULES, attribute: { address: 1 }, pendingAttribute: {} }),
+        ],
+        { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+      );
+      expect(child.stdout).toContain("control passed");
+      expect(child.error).toBeUndefined();
+      expect(child.status, child.stderr).toBe(0);
+      expect(child.stdout.trim()).toBe("control passed\ncompared");
     });
 
     it("takes a number that names the street for no house number", () => {
