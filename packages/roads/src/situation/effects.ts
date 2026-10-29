@@ -353,6 +353,12 @@ export interface EffectContext {
    * the coarse type alone never implies a lane closure.
    */
   laneClosureNature: boolean;
+  /**
+   * Whether the record closes a slip road (its own classification is
+   * `closure.closure.ramp`): its closure then has scope `ramp`, and the
+   * carriageway its location runs on into stays open.
+   */
+  rampClosureNature?: boolean;
 }
 
 /**
@@ -379,7 +385,7 @@ export function effectsOf(event: RoadEvent, ctx: EffectContext): PlacedEffect[] 
   const declared = event.situation?.compliance;
   const measure = { applicability, compliance: declared ?? "mandatory", normalization: "complete" };
   const closure = {
-    scope: event.situation?.closureScope ?? "road",
+    scope: ctx.rampClosureNature ? "ramp" : (event.situation?.closureScope ?? "road"),
     ...measure,
     applicability: closureApplicability(event),
   };

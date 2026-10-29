@@ -1,0 +1,17 @@
+{
+  "status": "likely",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "150930565:f",
+      "startFraction": 0,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "150930570:f",
+      "startFraction": 0,
+      "endFraction": 1
+    }
+  ],
+  "why": "Junction case: the AK Meerbusch connector from the A44 (Düsseldorf -> Mönchengladbach) onto the A57 towards Krefeld is closed; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn/A44/services/closure), fetched 2026-10-29, closure id 2023-003033--vi-fbm.2026-10-01_00-00-00-000.devi-zus.2023-11-23_00-00-00-000_006.f.de423, display_type CLOSURE, location 'Von A44: ...; in A44: AK Meerbusch auf die A57 in Richtung Krefeld; nach A57: ...', so the parser reads it as a ramp closure and binds its closure on the slip roads alone. spine frozen from Overpass on 2026-10-29 via bind:spine. Checked the Overpass tags: 150930565 (highway=motorway_link, 2 lanes) and 150930570 (highway=motorway_link, 1 lane, destination='Nijmegen;Krefeld', destination:ref='A 57') form the connector; 150930570 ENDS at node 6.6368233,51.2948958, where 285028332 (highway=motorway, ref='A 57', 4 lanes, turn:lanes='none|none|none|merge_to_left') starts. 285028334 (highway=motorway, ref='A 57', 3 lanes) also ends at that node: it is the A57 carriageway before the merge, and 285028332's fourth lane is the connector's acceleration lane. The source line runs about 165 m on along that lane (to 6.6372,51.2963), but the A57 carriageway stays open (live traffic and other navigation services keep A57 northbound traffic on it), so 285028332 must not appear in the binding. Before resolver 2.6.0 it did, as 0-0.89, which closed the whole A57 northbound edge in routing."
+}

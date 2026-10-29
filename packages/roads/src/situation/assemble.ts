@@ -492,6 +492,7 @@ export function situationDrafts(
             : {}),
           closureNature: c.kind === "closure" && member === primary,
           laneClosureNature: situationCode(classificationOf(member)) === "closure.closure.lane",
+          rampClosureNature: situationCode(classificationOf(member)) === "closure.closure.ramp",
         });
       });
 

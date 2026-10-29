@@ -364,6 +364,61 @@ describe("bindRecords", () => {
     });
   });
 
+  describe("a ramp closure", () => {
+    // An on-ramp merging into the eastbound A 46 where way 10 starts.
+    beforeAll(async () => {
+      await sql`INSERT INTO conditions.road_segment (segment_id, way_id, dir, geom, highway, ref, length_m, min_zoom, computed_at) VALUES
+        ('30:f', 30, 'f', ST_SetSRID(ST_GeomFromText('LINESTRING(6.795 51.1994, 6.798 51.1998, 6.80 51.2)'),4326), 'motorway_link', NULL, 400, 5, ${NOW})`;
+    });
+    afterAll(async () => {
+      await sql`DELETE FROM conditions.road_segment WHERE way_id = 30`;
+    });
+
+    // The ramp, drawn on 200 m along the acceleration lane of way 10.
+    const onRamp = (local: string, scope: string) => {
+      const draft = situationDraft(local, { subtype: "ramp" });
+      const closure = (draft["effects"] as Rec[])[0]!;
+      return {
+        ...draft,
+        effects: [{ ...closure, scope }],
+        location: {
+          ...(draft["location"] as Rec),
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [6.795, 51.1994],
+              [6.798, 51.1998],
+              [6.8, 51.2],
+              [6.803, 51.2],
+            ],
+          },
+        },
+      };
+    };
+
+    it("binds its closure on the slip road alone, beside the situation's own path", async () => {
+      await writeSituations(sql, "de-autobahn-events", [onRamp("ramp", "ramp")]);
+      await bindRecords(sql, [id("ramp")], { now });
+      expect(await spans(id("ramp"))).toEqual(["30:f", "10:f"]);
+      expect(await spans(id("ramp"), "ramp/closure")).toEqual(["30:f"]);
+      expect(await bindings()).toEqual([
+        expect.objectContaining({ effect_id: "", status: "likely" }),
+        expect.objectContaining({ effect_id: "ramp/closure", status: "likely" }),
+      ]);
+      expect((await bindRecords(sql, [id("ramp")], { now })).skippedUnchanged).toBe(2);
+    });
+
+    it("drops the closure's own binding once it closes the road", async () => {
+      await writeSituations(sql, "de-autobahn-events", [onRamp("widened", "ramp")]);
+      await bindRecords(sql, [id("widened")], { now });
+      await writeSituations(sql, "de-autobahn-events", [onRamp("widened", "road")]);
+      const r = await bindRecords(sql, [id("widened")], { now });
+      expect(r.cleared).toBe(1);
+      expect(await spans(id("widened"), "widened/closure")).toEqual([]);
+      expect(await spans(id("widened"))).toEqual(["30:f", "10:f"]);
+    });
+  });
+
   it("skips an unchanged situation and rebinds a new revision", async () => {
     await writeSituations(sql, "de-autobahn-events", [situationDraft("line")]);
     await bindRecords(sql, [id("line")], { now });

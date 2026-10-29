@@ -273,6 +273,42 @@ describe("GET /segments/conditions.json", () => {
     }
   });
 
+  it("reads a ramp closure only from its own binding", async () => {
+    const [effect] = await sql<
+      { value: postgres.JSONValue }[]
+    >`SELECT value FROM conditions.situation_effect WHERE situation_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+    const spans = async (app: ReturnType<typeof Fastify>) => {
+      const res = await app.inject({ method: "GET", url: AT_10 });
+      return (res.json() as ConditionsBody).conditions
+        .filter((c) => c.id === conditionId("a1"))
+        .map((c) => c.segments.map((s) => [s.dir, s.start_fraction]));
+    };
+    try {
+      await withApp(async (app) => {
+        expect(await spans(app)).toEqual([[["f", SPAN_START]]]);
+        // The situation's binding runs on into the carriageway the ramp
+        // joins; it is no evidence for a closure of the ramp alone.
+        await sql`UPDATE conditions.situation_effect
+          SET value = jsonb_set(value, '{scope}', '"ramp"'::jsonb)
+          WHERE situation_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+        expect(await spans(app)).toEqual([]);
+        await bindSituation(sql, id("a1"), {
+          effectId: "a1/closure",
+          status: "likely",
+          confidence: 0.88,
+          generation: GENERATION,
+          resolverVersion: RESOLVER_VERSION,
+          spans: [{ segmentId: SEGMENT_ID, wayId: 10, start: 0.5, end: 1 }],
+        });
+        expect(await spans(app)).toEqual([[["f", 0.5]]]);
+      });
+    } finally {
+      await sql`UPDATE conditions.situation_effect SET value = ${sql.json(effect!.value)} WHERE situation_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+      await sql`DELETE FROM conditions.record_segment WHERE record_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+      await sql`DELETE FROM conditions.record_binding WHERE record_id = ${id("a1")} AND effect_id = 'a1/closure'`;
+    }
+  });
+
   it("withholds coarse locations even when an older exact binding is still stored", async () => {
     await withApp(async (app) => {
       expect(await conditionIds(app)).toContain(conditionId("a1"));

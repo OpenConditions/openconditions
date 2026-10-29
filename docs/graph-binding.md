@@ -35,9 +35,12 @@ The binder places live (not tombstoned) situations of the `roads` domain
   carriageway of a situation located on both. It is bound at the situation's
   geometry in the effect's direction (see [Stated direction](#stated-direction))
   and keyed by the effect's id.
+- **Each closure of a ramp** (scope `ramp`), wherever it is located. It is
+  bound like the location it applies at, then kept to the slip roads of its
+  path (see [Slip roads](#slip-roads)), and keyed by the effect's id.
 
-An effect without a `location` whose direction is absent or its location's
-applies where its situation does and reads the situation's binding. An effect
+Any other effect without a `location` whose direction is absent or its
+location's applies where its situation does and reads the situation's binding. An effect
 whose own location has only a description and no geometry applies somewhere the
 situation's binding does not establish, so it reads no binding at all and never
 reaches the routing outputs.
@@ -228,6 +231,35 @@ Tuning constants (`BIND_DEFAULTS` in `packages/roads/src/bind/types.ts`):
 have scored had it won. It is `NULL` when nothing competed for the event, and is
 the number to look at when deciding whether a binding is worth a manual check.
 
+### Slip roads
+
+A source locates a ramp's closure along the ramp and on into the carriageway
+it merges with or leaves: the Autobahn API draws the A44 to A57 connector at AK
+Meerbusch about 165 m on along the acceleration lane of the A57, and an
+off-ramp's location often starts on the carriageway before the exit. In OSM
+that lane is part of the carriageway's way, so the path runs over it. The
+carriageway stays open, and a router cannot close a lane: a span on it closes
+the road for everyone.
+
+A closure of scope `ramp` therefore binds with `slipRoadOnly`. The path is
+found exactly as for any location, carriageways included, since they tell the
+ramp apart from its neighbours; afterwards only the spans on `*_link` ways are
+kept, wherever they lie in the path. Status and confidence are the path's own.
+A path without any slip road (a point at the junction on the carriageway, or a
+location drawn on the carriageway alone) is `unresolved` / `no_slip_road`: the
+spine has no ramp to close, and closing the road beside it would be worse than
+listing nothing. A ramp tagged as an ordinary road class, rather than as a
+link, is not recognized.
+
+The Autobahn parser reads `display_type` `CLOSURE_ENTRY_EXIT` as a ramp
+closure, and also a `CLOSURE` whose location line names a slip road
+("Auffahrt auf die …", "Abfahrt von der …", either one as the end of a
+"Von … nach …" span, or an interchange connector "Von A44: …; in A44: AK
+Meerbusch auf die A57 …"). Roadworks keep their location as it is: their lane
+restrictions may well apply on the carriageway. Whatever the source, a closure
+gets scope `ramp` when its record's own classification is
+`closure.closure.ramp`.
+
 ### Rivals
 
 Not every rejected candidate is a competitor. The next way along the same
@@ -251,6 +283,7 @@ never rivals.
 | `unresolved`     | `subgraph_too_large`    | the spine subgraph exceeded `maxSubgraphSegments`                                                       |
 | `unresolved`     | `resolver_error`        | the resolver threw; recorded rather than retried, never fatal                                           |
 | `unresolved`     | `conflicting_direction` | the stated direction contradicts the geometry or the location's own direction; no spans are stored      |
+| `unresolved`     | `no_slip_road`          | a ramp closure whose path has no slip road; nothing is bound rather than the carriageway beside it      |
 | `ambiguous`      | `direction_undecided`   | one direction is stated, but the geometry cannot tell which carriageway it is; spans kept for the map   |
 | `no_coverage`    | `outside_regions`       | the location's bbox is outside every configured spine region                                            |
 | `not_applicable` | `area_type`             | `weather_condition`, `public_event`, `authority`, `security`                                            |
@@ -382,7 +415,8 @@ A location is skipped as unchanged when its input hash, the resolver version,
 the record revision and the graph generation all match the stored binding and
 the binding is not `obsolete`. The hash covers every input the resolver reads
 plus what the location means for traffic: geometry, normalized refs, the
-situation kind, the direction and the kinds of the situation's effects. The kind
+situation kind, the direction, whether only slip roads are bound and the kinds
+of the situation's effects. The kind
 is in there because `bindEvent` short-circuits on the not-applicable kinds — a
 situation whose kind flips to `weather_condition` must lose its spans rather
 than be skipped as unchanged.
@@ -417,8 +451,8 @@ A condition is read when all of these hold:
   evidence (its vehicles are unknown or it is not fully normalized).
 - The location it applies to has an `exact` or `likely` binding computed by the
   current `RESOLVER_VERSION` on the active, `ready` graph generation. That is the
-  effect's own binding when it names its own geometry or states a direction
-  other than its situation's location, else the situation's. An effect that
+  effect's own binding when it names its own geometry, states a direction
+  other than its situation's location or closes a ramp, else the situation's. An effect that
   needs its own binding never falls back to the situation's, which may cover
   a carriageway the effect does not apply to: until its own is written, the
   effect is not listed.
@@ -567,7 +601,7 @@ at most 90 s.
 `GET /situations/{id}` returns the situation's own binding beside the record:
 `{ status, confidence, directionMode, reason, boundAt }`, or `null` when it has
 none, and in `effectBindings` the binding of each effect with a place or a
-direction of its own, keyed by effect id (empty when no effect has one).
+direction of its own and of each ramp closure, keyed by effect id (empty when no effect has one).
 `reason` is the stored machine reason of [Statuses](#statuses), or `null`: it
 tells a binding kept off routing for its direction (`direction_undecided`,
 `conflicting_direction`) from one the geometry could not place. Routing reads

@@ -173,9 +173,12 @@ interface SituationRow {
     geojson: GeoJsonGeometry;
     location: Rec;
     direction: StatedDirection | null;
+    ramp: boolean;
   }[];
   /** Effects without a location of their own whose direction differs from the situation's. */
-  directed: { effectId: string; direction: StatedDirection }[];
+  directed: { effectId: string; direction: StatedDirection; ramp: boolean }[];
+  /** Ramp closures without a location or a direction of their own: bound at the situation's location. */
+  ramps: { effectId: string }[];
 }
 
 interface ExistingRow {
@@ -241,6 +244,8 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
     .update("|")
     .update(JSON.stringify(input.travel ?? null))
     .update("|")
+    .update(input.slipRoadOnly ? "slip" : "")
+    .update("|")
     .update([...effectKinds].sort().join(","))
     .digest("hex");
 }
@@ -248,9 +253,13 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
 /**
  * A situation's binding targets: its own location, then each effect that
  * names its own geometry, then each effect that applies at the situation's
- * location in a direction of its own. An effect's direction is the more
- * specific statement, so it binds on its own rather than reading a binding
- * made for its location's direction.
+ * location in a direction of its own, then each ramp closure at the
+ * situation's location. An effect's direction is the more specific statement,
+ * so it binds on its own rather than reading a binding made for its
+ * location's direction. A ramp closure binds on its own too, to the slip
+ * roads of its path alone: the location runs on into the carriageway the
+ * ramp joins, which the closure leaves open, while the situation's other
+ * effects may well apply there.
  */
 function targetsOf(row: SituationRow): Target[] {
   const target = (
@@ -258,6 +267,7 @@ function targetsOf(row: SituationRow): Target[] {
     geometry: GeoJsonGeometry,
     location: Rec | null,
     effectDirection?: StatedDirection | null,
+    slipRoadOnly = false,
   ): Target => {
     const roads = roadsOf(location);
     const direction = directionOf(location);
@@ -274,6 +284,7 @@ function targetsOf(row: SituationRow): Target[] {
       text: textsOf(row.headline, row.description),
       ...(direction !== undefined ? { direction } : {}),
       ...(travel !== undefined ? { travel } : {}),
+      slipRoadOnly,
     });
     return {
       recordId: row.id,
@@ -290,11 +301,16 @@ function targetsOf(row: SituationRow): Target[] {
   return [
     ...(geometry === null ? [] : [target("", geometry, row.location)]),
     ...row.overrides.map((o) =>
-      target(o.effectId, o.geojson, { ...row.location, ...o.location }, o.direction),
+      target(o.effectId, o.geojson, { ...row.location, ...o.location }, o.direction, o.ramp),
     ),
     ...(geometry === null
       ? []
-      : row.directed.map((d) => target(d.effectId, geometry, row.location, d.direction))),
+      : [
+          ...row.directed.map((d) =>
+            target(d.effectId, geometry, row.location, d.direction, d.ramp),
+          ),
+          ...row.ramps.map((r) => target(r.effectId, geometry, row.location, null, true)),
+        ]),
   ];
 }
 
@@ -435,7 +451,8 @@ export async function bindRecords(
                       WHERE e.situation_id = s.id), '[]'::jsonb) AS effect_kinds,
            COALESCE((SELECT jsonb_agg(jsonb_build_object(
                               'effectId', e.effect_id, 'geojson', ST_AsGeoJSON(e.geom)::jsonb,
-                              'location', e.value -> 'location', 'direction', e.value -> 'direction')
+                              'location', e.value -> 'location', 'direction', e.value -> 'direction',
+                              'ramp', COALESCE(e.kind = 'closure' AND e.value ->> 'scope' = 'ramp', false))
                             ORDER BY e.effect_id)
                        FROM conditions.situation_effect e
                       WHERE e.situation_id = s.id AND e.geom IS NOT NULL
@@ -445,13 +462,22 @@ export async function bindRecords(
            -- The same effects readSegmentConditionRows reads an own binding
            -- for although they name no location: a missing one fails closed.
            COALESCE((SELECT jsonb_agg(jsonb_build_object(
-                              'effectId', e.effect_id, 'direction', e.value -> 'direction')
+                              'effectId', e.effect_id, 'direction', e.value -> 'direction',
+                              'ramp', COALESCE(e.kind = 'closure' AND e.value ->> 'scope' = 'ramp', false))
                             ORDER BY e.effect_id)
                        FROM conditions.situation_effect e
                       WHERE e.situation_id = s.id AND e.value -> 'location' IS NULL
                         AND e.value ? 'direction'
                         AND e.value -> 'direction' IS DISTINCT FROM s.record #> '{location,direction}'),
-                    '[]'::jsonb) AS directed
+                    '[]'::jsonb) AS directed,
+           COALESCE((SELECT jsonb_agg(jsonb_build_object('effectId', e.effect_id)
+                            ORDER BY e.effect_id)
+                       FROM conditions.situation_effect e
+                      WHERE e.situation_id = s.id AND e.value -> 'location' IS NULL
+                        AND NOT (e.value ? 'direction'
+                          AND e.value -> 'direction' IS DISTINCT FROM s.record #> '{location,direction}')
+                        AND e.kind = 'closure' AND e.value ->> 'scope' = 'ramp'),
+                    '[]'::jsonb) AS ramps
       FROM conditions.situation s
      WHERE s.id = ANY(${ids as string[]}::text[]) AND s.tombstoned_at IS NULL
        AND s.domain = 'roads'`;
