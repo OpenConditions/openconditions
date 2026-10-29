@@ -1,2 +1,4 @@
 // Inert native CodeQL qualification data; never imported or called.
-export const nativeProbePhase = "control";
+export function nativeProbeHigh(credentials) {
+  console.error(credentials.password);
+}
