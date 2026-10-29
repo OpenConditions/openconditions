@@ -11,6 +11,7 @@ import path from "node:path";
 import { type ChargingCatalogFeed, chargingDomain } from "@openconditions/charging";
 import { buildRegistry, extendVocabulary, type Registry } from "@openconditions/model";
 import { productionModules } from "@openconditions/model-registry";
+import { historyModules } from "@openconditions/test-database/registry";
 import type postgres from "postgres";
 import { syncSources } from "../sources.js";
 
@@ -18,8 +19,9 @@ type Rec = Record<string, unknown>;
 
 const MODEL_TESTS = path.resolve(import.meta.dirname, "../../../model-registry/src/__tests__");
 
+// The facilities' former histories: the scope suites read their series back.
 export const registry: Registry = buildRegistry([
-  ...productionModules,
+  ...historyModules(productionModules),
   {
     name: "facilities-fit",
     entries: [

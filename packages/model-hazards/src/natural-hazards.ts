@@ -188,6 +188,6 @@ export const FIRE_PROPERTIES = [
     refine: nonNegative,
     freshnessWindowSec: 43200,
     transient: true,
-    retention: { rawDays: 7 },
+    retention: { latestOnly: true },
   }),
 ];

@@ -19,10 +19,17 @@ describe("weather module", () => {
     expect(registry.properties().every((p) => p.domain === "weather")).toBe(true);
   });
 
-  it("keeps compass bearings out of hourly means", () => {
-    expect(registry.property("weather.wind_direction")?.retention).toEqual({ rawDays: 7 });
-    expect(registry.property("weather.wind_speed")?.retention?.rollup).toEqual({
-      period: "hourly",
+  it("keeps only the measurement in effect", () => {
+    for (const code of [
+      "weather.wind_direction",
+      "weather.wind_speed",
+      "road.surface_temperature",
+    ]) {
+      expect(registry.property(code)?.retention).toEqual({ latestOnly: true });
+    }
+    expect(registry.property("road.surface_state")?.retention).toEqual({
+      changeOnly: true,
+      latestOnly: true,
     });
   });
 

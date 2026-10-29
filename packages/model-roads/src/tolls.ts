@@ -103,6 +103,6 @@ export const ROADS_TOLL_PROPERTIES = [
     ],
     qualifiers: () => ({ vehicleClass: z.enum(VEHICLE_CLASSES).optional() }),
     freshnessWindowSec: 15 * 60,
-    retention: { changeOnly: true, rawDays: 30 },
+    retention: { changeOnly: true, latestOnly: true },
   }),
 ];

@@ -1,5 +1,4 @@
 import { observationId } from "@openconditions/model";
-import { productionRegistry } from "@openconditions/model-registry";
 import { rollupObservations, writeSnapshot } from "@openconditions/storage";
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify from "fastify";
@@ -7,6 +6,7 @@ import { afterAll, beforeAll, beforeEach, expect, it } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { siteKey, writeSiteReadings } from "./helpers/flow-series.js";
+import { historyRegistry } from "./helpers/history-registry.js";
 
 type HistoricalReading = {
   result: { value: number };
@@ -25,7 +25,8 @@ const bodyOf = (response: { json(): unknown }) =>
   };
 let db: TestDatabase;
 let app: ReturnType<typeof Fastify>;
-const registry = productionRegistry();
+// The history machinery is tested on the histories properties used to keep.
+const registry = historyRegistry();
 const now = new Date("2026-10-01T18:00:00Z");
 const token = "test-operator-token".repeat(3);
 const source = "nl-ndw-flow";

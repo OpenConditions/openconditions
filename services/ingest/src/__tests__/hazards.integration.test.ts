@@ -532,9 +532,9 @@ describe("hazards fires, quakes and smoke through the pipeline", () => {
     };
     const T = "2026-10-07T03:00:00.000Z";
     expect((await firms.poll(T)).error).toBeUndefined();
-    expect(await counts()).toEqual({ series: 7, history: 7 });
+    expect(await counts()).toEqual({ series: 7, history: 0 });
     expect((await firms.poll(later(T, 3600))).error).toBeUndefined();
-    expect(await counts()).toEqual({ series: 7, history: 7 });
+    expect(await counts()).toEqual({ series: 7, history: 0 });
 
     const grid = await get(
       `/observations/grid?property=fire.frp&bbox=10,-20,20,0&cellDeg=1&since=2026-10-06T00:00:00Z`,

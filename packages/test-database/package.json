@@ -14,6 +14,10 @@
     "./profile": {
       "types": "./dist/profile.d.ts",
       "import": "./dist/profile.js"
+    },
+    "./registry": {
+      "types": "./dist/registry.d.ts",
+      "import": "./dist/registry.js"
     }
   },
   "main": "./dist/index.js",

@@ -4,13 +4,13 @@
  */
 import { captureLicensing } from "@openconditions/ingest-framework";
 import { type Attribution, observationId } from "@openconditions/model";
-import { productionRegistry } from "@openconditions/model-registry";
 import {
   ensureObservationPartitions,
   retentionClasses,
   writeSnapshot,
 } from "@openconditions/storage";
 import type postgres from "postgres";
+import { historyRegistry } from "./history-registry.js";
 
 type Rec = Record<string, unknown>;
 type Geometry =
@@ -18,7 +18,8 @@ type Geometry =
   | { type: "LineString"; coordinates: number[][] }
   | { type: "MultiLineString"; coordinates: number[][][] };
 
-const registry = productionRegistry();
+// Flow series keep their former histories: the series reads are tested on them.
+const registry = historyRegistry();
 
 /** The subject key of a site's series, as the baselines and snaps key it. */
 export const siteKey = (source: string, site: string) => `feature:oc:feature:${source}:${site}`;

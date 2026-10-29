@@ -1,5 +1,4 @@
 import { contentHash, sealRecord } from "@openconditions/model";
-import { productionRegistry } from "@openconditions/model-registry";
 import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
@@ -13,10 +12,12 @@ import {
   roadworksDraft,
   situationDraft,
 } from "./drafts.js";
+import { historyRegistry } from "./history-registry.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 let sql: postgres.Sql;
-const registry = productionRegistry();
+// The history machinery is tested on the histories properties used to keep.
+const registry = historyRegistry();
 
 beforeAll(async () => {
   db = await createTestDatabase();

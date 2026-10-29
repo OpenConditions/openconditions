@@ -1122,7 +1122,8 @@ describe("status-only polls", () => {
     await h.tick(900_000);
     expect(await updated()).toBe(1);
     expect(await latest()).toEqual({ a: at(900_000), b: at(300_000) });
-    expect(await history()).toBe(kept + 1);
+    // Fuel prices keep no history: the change moves the latest row only.
+    expect(await history()).toBe(kept);
   }, 60_000);
 
   it("a full poll ends the readings of a station it no longer holds; a status tick ends none", async () => {

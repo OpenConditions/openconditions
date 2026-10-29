@@ -22,7 +22,7 @@ export interface SweepOptions {
    * keeps its records while that snapshot holds, however its faster roles fare.
    */
   sourceMaxAgeSec?: Readonly<Record<string, number>>;
-  /** How long a tombstoned record and its revisions are kept for the history API. */
+  /** How long a tombstoned record and its revisions are kept for the history API (see `pruneRevisions` for a live one's). */
   historyDays: number;
   /**
    * How long a peer that sends liveness may stay silent about a source before

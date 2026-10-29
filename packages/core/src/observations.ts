@@ -514,8 +514,12 @@ export async function readSeries(
     return { status: "ambiguous", sources: candidates.map((c) => c.source_id) };
   }
   const [series] = candidates as [(typeof candidates)[number]];
-  // A series without a retention keeps no readings beyond the one in effect.
-  if (series.retention_days === null) return { status: "no_history", property: entry.code };
+  // A series without a retention keeps no readings beyond the one in effect,
+  // nor does one whose property has since become latest-only: its row keeps
+  // the class it was written with until its next reading.
+  if (series.retention_days === null || entry.retention?.latestOnly) {
+    return { status: "no_history", property: entry.code };
+  }
   const resolution = seriesResolution(entry, {
     from: q.from,
     now: q.now ?? new Date(),

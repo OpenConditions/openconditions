@@ -7,6 +7,14 @@ describe("production registry", () => {
     expect(productionModules[0]).toBe(kernelModule);
   });
 
+  it("keeps history only of the speed the rollup reads", () => {
+    const kept = productionRegistry()
+      .properties()
+      .filter((p) => !p.retention?.latestOnly)
+      .map((p) => p.code);
+    expect(kept).toEqual(["traffic.speed"]);
+  });
+
   it("builds once and closes the kernel vocabularies", () => {
     const registry = productionRegistry();
     expect(productionRegistry()).toBe(registry);

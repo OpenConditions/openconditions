@@ -24,6 +24,7 @@ import {
   writeRecord,
   writeSnapshot,
 } from "@openconditions/storage";
+import { historyModules } from "@openconditions/test-database/registry";
 import type postgres from "postgres";
 
 type Rec = Record<string, unknown>;
@@ -36,8 +37,9 @@ const GOLDEN = path.resolve(
 export const INSTANCE = "test.local";
 export const NOW = "2026-09-22T12:00:00.000Z";
 
+/** Facilities keep their former histories here: the record API's series reads are tested on them. */
 export const facilitiesRegistry: Registry = buildRegistry([
-  ...productionModules,
+  ...historyModules(productionModules),
   {
     name: "facilities-fit",
     entries: [

@@ -15,7 +15,8 @@ vi.mock("@openconditions/storage", async (importOriginal) => ({
   ensureObservationPartitions: vi.fn(async () => []),
   dropExpiredObservationPartitions: vi.fn(async () => []),
   rollupObservations: vi.fn(async () => ({ rows: 0 })),
-  pruneRollups: vi.fn(async () => {}),
+  pruneRollups: vi.fn(async () => ({ hourly: 0, daily: 0, retired: 0 })),
+  pruneRevisions: vi.fn(async () => 0),
   sweepRecords: vi.fn(async () => ({})),
   refreshFlippedFusions: vi.fn(async () => 0),
 }));

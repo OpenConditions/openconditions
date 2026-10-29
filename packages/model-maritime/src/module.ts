@@ -122,7 +122,7 @@ export const maritimeModule: RegistryModule = {
       subjects: [SAILING],
       qualifiers: () => ({ departure: Iso8601.optional() }),
       freshnessWindowSec: 3600,
-      retention: { changeOnly: true },
+      retention: { changeOnly: true, latestOnly: true },
       routingRelevant: true,
     }),
     defineProperty({
@@ -134,7 +134,7 @@ export const maritimeModule: RegistryModule = {
       subjects: [SAILING],
       qualifiers: departure,
       freshnessWindowSec: 900,
-      retention: { changeOnly: true, rawDays: 7 },
+      retention: { changeOnly: true, latestOnly: true },
     }),
   ],
 };

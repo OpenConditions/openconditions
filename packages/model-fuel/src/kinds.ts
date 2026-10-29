@@ -221,7 +221,7 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
     // A price holds until it changes; a source that restates it each poll
     // (MINETUR's file carries a new publication time every half hour) adds
     // no history row for an unchanged price.
-    retention: { rawDays: 30, changeOnly: true, rollup: { period: "daily" } },
+    retention: { changeOnly: true, latestOnly: true },
     // Stations reprice several times a day; a reading agrees with the
     // station's own price within a cent of the price's currency.
     crowd: { ttlSec: 3 * HOUR, maxLifetimeSec: 12 * HOUR, agreement: { tolerance: 0.01 } },
@@ -235,6 +235,7 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
     subjects: [{ kind: "location" }],
     qualifiers: (k) => ({ product: k.vocab("fuel_grade") }),
     freshnessWindowSec: 7 * 24 * HOUR,
+    retention: { latestOnly: true },
   }),
   defineProperty({
     code: "fuel.product_available",
@@ -244,7 +245,7 @@ export const FUEL_PROPERTIES: PropertyEntry[] = [
     result: { type: "boolean" },
     subjects: [PRODUCT],
     freshnessWindowSec: 24 * HOUR,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     crowd: { ttlSec: 12 * HOUR, maxLifetimeSec: 48 * HOUR },
   }),
 ];

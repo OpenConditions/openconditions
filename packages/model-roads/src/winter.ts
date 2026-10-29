@@ -99,7 +99,7 @@ export const ROADS_WINTER_PROPERTIES = [
     subjects: [PASS],
     qualifiers: () => ({ direction: z.enum(COMPASS_POINTS).optional() }),
     freshnessWindowSec: 6 * HOUR,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     routingRelevant: true,
   }),
   defineProperty({
@@ -110,7 +110,7 @@ export const ROADS_WINTER_PROPERTIES = [
     result: { type: "category", vocabulary: "chain_level" },
     subjects: [PASS, { kind: "feature", featureKinds: ["chain_control_zone"] }],
     freshnessWindowSec: 6 * HOUR,
-    retention: { changeOnly: true },
+    retention: { changeOnly: true, latestOnly: true },
     routingRelevant: true,
   }),
 ];

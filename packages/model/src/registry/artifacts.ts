@@ -124,9 +124,9 @@ function subjectText(s: SubjectSpec): string {
 function retentionText(p: PropertyEntry): string {
   const r = p.retention;
   if (r === undefined) return p.transient ? "transient" : "—";
-  if (r.latestOnly) return "latest only";
   const parts: string[] = p.transient ? ["transient"] : [];
   if (r.changeOnly) parts.push("change-only");
+  if (r.latestOnly) return [...parts, "latest only"].join(", ");
   if (r.rawDays !== undefined) parts.push(`raw ${r.rawDays} d`);
   if (r.rollup !== undefined) {
     parts.push(

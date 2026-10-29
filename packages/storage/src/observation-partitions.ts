@@ -142,37 +142,80 @@ export async function ensureObservationPartitions(
  * retention. A day of a class holding a property that rolls up stays until
  * the rollup has finalized past its end, unless it holds no reading: its
  * readings are the rollup's only input. Keep-everything partitions are never
- * dropped. Returns the partitions it dropped.
+ * dropped while a property keeps everything.
+ *
+ * A retention class no property declares any more goes whole, day and month
+ * partitions alike, then its list partition: what it holds is history no
+ * property keeps. A partition of it holding readings of a rolled-up property
+ * that the rollup has not reached (a property moved to a shorter `rawDays`)
+ * stays until the rollup has passed them. Returns the partitions it dropped.
  */
 export async function dropExpiredObservationPartitions(
   sql: postgres.Sql,
   opts: { now: Date; registry: Registry },
 ): Promise<string[]> {
   const now = opts.now.getTime();
+  const classes = new Set(retentionClasses(opts.registry));
   const rolledUp = new Map<number, Set<string>>();
+  const rolledUpProperties = new Map<string, string[]>();
   for (const p of opts.registry.properties()) {
     const days = retentionDaysOf(p);
     const period = p.retention?.rollup?.period;
     if (days === undefined || period === undefined) continue;
     rolledUp.set(days, (rolledUp.get(days) ?? new Set()).add(period));
+    rolledUpProperties.set(period, [...(rolledUpProperties.get(period) ?? []), p.code]);
   }
   const progress = await sql<{ period: string; finalized_before: Date }[]>`
     SELECT period, finalized_before FROM conditions.observation_rollup_progress`;
   const frontiers = new Map(progress.map((r) => [r.period, r.finalized_before.getTime()]));
+  const awaitsRollup = async (name: string, end: number) => {
+    for (const [period, properties] of rolledUpProperties) {
+      const frontier = frontiers.get(period) ?? 0;
+      if (end <= frontier) continue;
+      const [held] = await sql.unsafe<{ any: boolean }[]>(
+        `SELECT EXISTS (
+           SELECT 1 FROM conditions.${name} o
+             JOIN conditions.observation_latest l ON l.series_id = o.series_id
+            WHERE o.phenomenon_start >= $1 AND l.property = ANY($2::text[])) AS any`,
+        [new Date(frontier).toISOString(), properties],
+      );
+      if (held?.any) return true;
+    }
+    return false;
+  };
   const dropped: string[] = [];
-  for (const name of await partitionNames(sql)) {
-    const m = /^observation_r(\d+)_d(\d{4})(\d{2})(\d{2})$/.exec(name);
+  const names = await partitionNames(sql);
+  for (const name of names) {
+    const day = /^observation_r(\d+)_d(\d{4})(\d{2})(\d{2})$/.exec(name);
+    const month = /^observation_r(\d+)_m(\d{4})(\d{2})$/.exec(name);
+    const m = day ?? month;
     if (m === null) continue;
     const days = Number(m[1]);
-    const end = Date.UTC(Number(m[2]), Number(m[3]) - 1, Number(m[4])) + DAY_MS;
-    if (days === 0 || end > now - days * DAY_MS - DROP_SLACK_MS) continue;
-    const pending = [...(rolledUp.get(days) ?? [])].some((p) => (frontiers.get(p) ?? 0) < end);
-    if (pending) {
-      const [held] = await sql.unsafe<{ any: boolean }[]>(
-        `SELECT EXISTS (SELECT 1 FROM conditions.${name}) AS any`,
-      );
-      if (held?.any) continue;
+    const end =
+      day !== null
+        ? Date.UTC(Number(m[2]), Number(m[3]) - 1, Number(m[4])) + DAY_MS
+        : Date.UTC(Number(m[2]), Number(m[3]), 1);
+    if (!classes.has(days)) {
+      if (await awaitsRollup(name, end)) continue;
+    } else {
+      if (day === null || days === 0 || end > now - days * DAY_MS - DROP_SLACK_MS) continue;
+      const pending = [...(rolledUp.get(days) ?? [])].some((p) => (frontiers.get(p) ?? 0) < end);
+      if (pending) {
+        const [held] = await sql.unsafe<{ any: boolean }[]>(
+          `SELECT EXISTS (SELECT 1 FROM conditions.${name}) AS any`,
+        );
+        if (held?.any) continue;
+      }
     }
+    await sql.unsafe(`DROP TABLE conditions.${name}`);
+    dropped.push(name);
+  }
+  const remaining = new Set(await partitionNames(sql));
+  for (const name of names) {
+    const parent = /^observation_r(\d+)$/.exec(name);
+    if (parent === null || classes.has(Number(parent[1]))) continue;
+    const prefix = `${name}_`;
+    if ([...remaining].some((n) => n.startsWith(prefix))) continue;
     await sql.unsafe(`DROP TABLE conditions.${name}`);
     dropped.push(name);
   }
