@@ -152,6 +152,44 @@ describe("signSubClaim / verifySubClaim", () => {
     await expect(signSubClaim(smuggled, key)).rejects.toThrow(/envelope/);
   });
 
+  it.each([
+    null,
+    {},
+    { reason: "inherited-data" },
+    { marker: "untrusted-data" },
+    "not-an-object",
+    7,
+  ])("rejects an own prototype-named field instead of dropping it (%j)", async (value) => {
+    const key = await generateReporterKey();
+    const body = makeBody();
+    const signed = await signSubClaim(body, key);
+    const wire = JSON.parse(
+      JSON.stringify(Object.fromEntries([...Object.entries(signed), ["__proto__", value]])),
+    ) as SignedSubClaim;
+    expect(Object.hasOwn(wire, "__proto__")).toBe(true);
+    expect(Object.getPrototypeOf(wire)).toBe(Object.prototype);
+    await expect(verifySubClaim(signed)).resolves.toMatchObject({ ok: true });
+    await expect(verifySubClaim(wire)).resolves.toMatchObject({ ok: false });
+    // The same extra field is rejected by the signing contract too.
+    const extraBody = Object.fromEntries([...Object.entries(body), ["__proto__", value]]);
+    await expect(signSubClaim(extraBody as unknown as SubClaimBody, key)).rejects.toThrow();
+    expect(Object.getPrototypeOf(wire)).toBe(Object.prototype);
+    expect(Object.hasOwn(Object.prototype, "marker")).toBe(false);
+  });
+
+  it.each(["constructor", "prototype", "toString", "extra"])(
+    "rejects other unknown own body fields (%s)",
+    async (name) => {
+      const key = await generateReporterKey();
+      const signed = await signSubClaim(makeBody(), key);
+      const wire = Object.fromEntries([...Object.entries(signed), [name, { marker: true }]]);
+      await expect(verifySubClaim(wire as unknown as SignedSubClaim)).resolves.toMatchObject({
+        ok: false,
+      });
+      expect(Object.getPrototypeOf(wire)).toBe(Object.prototype);
+    },
+  );
+
   it("accepts an optional geometry and covers it with the signature", async () => {
     const key = await generateReporterKey();
     const body = makeBody({ geometry: { type: "Point", coordinates: [6.08, 50.77] } });

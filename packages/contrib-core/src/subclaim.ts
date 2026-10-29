@@ -19,7 +19,8 @@ import {
  * fields are rejected at signing time.
  */
 function subClaimBodyOf(sub: SignedSubClaim): SubClaimBody {
-  const body: Record<string, unknown> = {};
+  // Retain every own JSON key so validation cannot miss a prototype-named field.
+  const body: Record<string, unknown> = Object.create(null);
   const envelope = new Set<string>(ENVELOPE_FIELDS);
   for (const [key, value] of Object.entries(sub)) {
     if (!envelope.has(key)) body[key] = value;
