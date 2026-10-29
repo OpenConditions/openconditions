@@ -126,27 +126,6 @@
     "selectionState": "discovered"
   },
   {
-    "qualifier": "d863f1f7d976968f",
-    "name": "WZDx — Maricopa County DOT (arizona)",
-    "endpoints": {
-      "main": {
-        "url": "https://wzdxapi.aztech.org/construction",
-        "cadenceSec": 300
-      }
-    },
-    "snapshot": {
-      "completeness": "complete",
-      "recordsPath": "features"
-    },
-    "license": "NOASSERTION",
-    "attribution": "Maricopa County DOT",
-    "terms": {
-      "reviewedAt": "2026-09-11",
-      "note": "WZDx registry metadata (no dataset grant verified)"
-    },
-    "selectionState": "discovered"
-  },
-  {
     "qualifier": "acad1adfe0ce4075",
     "name": "WZDx — Missouri DOT (missouri)",
     "endpoints": {
@@ -182,6 +161,27 @@
     },
     "license": "NOASSERTION",
     "attribution": "Wisconsin DOT",
+    "terms": {
+      "reviewedAt": "2026-09-11",
+      "note": "WZDx registry metadata (no dataset grant verified)"
+    },
+    "selectionState": "discovered"
+  },
+  {
+    "qualifier": "d863f1f7d976968f",
+    "name": "WZDx — Maricopa County DOT (arizona)",
+    "endpoints": {
+      "main": {
+        "url": "https://wzdxapi.aztech.org/construction",
+        "cadenceSec": 300
+      }
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "license": "NOASSERTION",
+    "attribution": "Maricopa County DOT",
     "terms": {
       "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
@@ -379,27 +379,6 @@
     "selectionState": "discovered"
   },
   {
-    "qualifier": "7945221f406463df",
-    "name": "WZDx — Delaware DOT (delaware)",
-    "endpoints": {
-      "main": {
-        "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
-        "cadenceSec": 300
-      }
-    },
-    "snapshot": {
-      "completeness": "complete",
-      "recordsPath": "features"
-    },
-    "license": "NOASSERTION",
-    "attribution": "Delaware DOT",
-    "terms": {
-      "reviewedAt": "2026-09-11",
-      "note": "WZDx registry metadata (no dataset grant verified)"
-    },
-    "selectionState": "discovered"
-  },
-  {
     "qualifier": "914cf87008410abe",
     "name": "WZDx — Quebec City (n/a)",
     "endpoints": {
@@ -419,6 +398,27 @@
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "speedUnit": "km/h",
+    "selectionState": "discovered"
+  },
+  {
+    "qualifier": "7945221f406463df",
+    "name": "WZDx — Delaware DOT (delaware)",
+    "endpoints": {
+      "main": {
+        "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
+        "cadenceSec": 300
+      }
+    },
+    "snapshot": {
+      "completeness": "complete",
+      "recordsPath": "features"
+    },
+    "license": "NOASSERTION",
+    "attribution": "Delaware DOT",
+    "terms": {
+      "reviewedAt": "2026-09-11",
+      "note": "WZDx registry metadata (no dataset grant verified)"
+    },
     "selectionState": "discovered"
   },
   {

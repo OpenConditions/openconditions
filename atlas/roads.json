@@ -1528,6 +1528,10 @@
           "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
           "attribution": "Bundesstadt Bonn",
           "privacyUrl": "https://www.bonn.de/datenschutz.php",
+          "disabled": {
+            "reason": "the endpoint answers an empty object ({}) or drops the connection",
+            "since": "2026-10-21"
+          },
           "timezone": "Europe/Berlin"
         },
         {
@@ -2975,7 +2979,13 @@
             "descriptionField": "description_en",
             "updatedField": "start",
             "lonField": "longitude",
-            "latField": "latitude"
+            "latField": "latitude",
+            "followUp": {
+              "field": "title",
+              "prefixes": [
+                "คืบหน้า"
+              ]
+            }
           },
           "timezone": "Asia/Bangkok"
         }
@@ -13854,6 +13864,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A114 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A114/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a114-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a114-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a114-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A114 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A114/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a114-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a114-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a114-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A114 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A114/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a114-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a114-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a114-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A115 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -16614,144 +16762,6 @@
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A524 — warning",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/warning",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a524-warning-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a524-warning",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a524-warning-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A524 — closure",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/closure",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a524-closure-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a524-closure",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a524-closure-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A524 — roadworks",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A524/services/roadworks",
-          "cadenceSec": 900
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a524-roadworks-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 900,
-      "country": "DE",
-      "qualifier": "a524-roadworks",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a524-roadworks-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
       "name": "Autobahn A535 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -17856,144 +17866,6 @@
     {
       "operator": "autobahn",
       "product": "events",
-      "name": "Autobahn A573 — warning",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/warning",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a573-warning-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a573-warning",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a573-warning-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A573 — closure",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/closure",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a573-closure-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "DE",
-      "qualifier": "a573-closure",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a573-closure-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
-      "name": "Autobahn A573 — roadworks",
-      "format": "autobahn",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://verkehr.autobahn.de/o/autobahn/A573/services/roadworks",
-          "cadenceSec": 900
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
-      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
-      "privacyUrl": "https://www.autobahn.de/datenschutz",
-      "homepage": "https://verkehr.autobahn.de",
-      "id": "de-autobahn-a573-roadworks-events",
-      "domain": "roads",
-      "region": "de",
-      "file": "feeds/roads/de.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": true,
-        "derivedRedistribution": true,
-        "commercialUse": true,
-        "attributionRequired": true,
-        "retention": true,
-        "shareAlike": false
-      },
-      "restricted": false,
-      "coverage": {
-        "countries": [
-          "DE"
-        ]
-      },
-      "cadenceSec": 900,
-      "country": "DE",
-      "qualifier": "a573-roadworks",
-      "selectionState": "approved",
-      "parentSourceId": "de-autobahn-events",
-      "policyIds": [
-        "de-autobahn-events",
-        "de-autobahn-a573-roadworks-events"
-      ]
-    },
-    {
-      "operator": "autobahn",
-      "product": "events",
       "name": "Autobahn A602 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -18265,6 +18137,144 @@
       "policyIds": [
         "de-autobahn-events",
         "de-autobahn-a620-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A623 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a623-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a623-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a623-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A623 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a623-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a623-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a623-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A623 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A623/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a623-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a623-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a623-roadworks-events"
       ]
     },
     {
@@ -19788,6 +19798,144 @@
     {
       "operator": "autobahn",
       "product": "events",
+      "name": "Autobahn A952 — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a952-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a952-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a952-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A952 — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a952-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a952-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a952-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A952 — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A952/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a952-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a952-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a952-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
       "name": "Autobahn A980 — warning",
       "format": "autobahn",
       "tier": "authoritative",
@@ -20059,6 +20207,144 @@
       "policyIds": [
         "de-autobahn-events",
         "de-autobahn-a995-roadworks-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A99a — warning",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A99a/services/warning",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a99a-warning-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a99a-warning",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a99a-warning-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A99a — closure",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A99a/services/closure",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a99a-closure-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "DE",
+      "qualifier": "a99a-closure",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a99a-closure-events"
+      ]
+    },
+    {
+      "operator": "autobahn",
+      "product": "events",
+      "name": "Autobahn A99a — roadworks",
+      "format": "autobahn",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://verkehr.autobahn.de/o/autobahn/A99a/services/roadworks",
+          "cadenceSec": 900
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "DL-DE-BY-2.0",
+      "attribution": "Quelle: Die Autobahn GmbH des Bundes",
+      "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "homepage": "https://verkehr.autobahn.de",
+      "id": "de-autobahn-a99a-roadworks-events",
+      "domain": "roads",
+      "region": "de",
+      "file": "feeds/roads/de.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "DE"
+        ]
+      },
+      "cadenceSec": 900,
+      "country": "DE",
+      "qualifier": "a99a-roadworks",
+      "selectionState": "approved",
+      "parentSourceId": "de-autobahn-events",
+      "policyIds": [
+        "de-autobahn-events",
+        "de-autobahn-a99a-roadworks-events"
       ]
     },
     {
@@ -21310,6 +21596,10 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Bundesstadt Bonn",
       "privacyUrl": "https://www.bonn.de/datenschutz.php",
+      "disabled": {
+        "reason": "the endpoint answers an empty object ({}) or drops the connection",
+        "since": "2026-10-21"
+      },
       "timezone": "Europe/Berlin",
       "homepage": "https://stadtplan.bonn.de",
       "id": "de-nw-bonn-flow",
@@ -23513,7 +23803,13 @@
         "descriptionField": "description_en",
         "updatedField": "start",
         "lonField": "longitude",
-        "latField": "latitude"
+        "latField": "latitude",
+        "followUp": {
+          "field": "title",
+          "prefixes": [
+            "คืบหน้า"
+          ]
+        }
       },
       "timezone": "Asia/Bangkok",
       "homepage": "https://event.longdo.com",
@@ -24020,75 +24316,6 @@
     {
       "operator": "wzdx",
       "product": "events",
-      "name": "WZDx — Maricopa County DOT (arizona)",
-      "format": "wzdx",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://wzdxapi.aztech.org/construction",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "NOASSERTION",
-      "attribution": "Maricopa County DOT",
-      "attributionPolicy": {
-        "placement": "visible",
-        "surfaces": [
-          "map",
-          "content",
-          "image"
-        ],
-        "basis": "unresolved",
-        "reviewedAt": "2026-10-14",
-        "evidenceUrls": [
-          "https://datahub.transportation.gov/resource/69qe-yiui.json",
-          "https://github.com/usdot-jpo-ode/wzdx"
-        ],
-        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
-      },
-      "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
-      },
-      "privacyUrl": "https://www.transportation.gov/privacy",
-      "homepage": "https://datahub.transportation.gov",
-      "id": "us-wzdx-d863f1f7d976968f-events",
-      "domain": "roads",
-      "region": "us",
-      "file": "feeds/roads/us.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": null,
-        "derivedRedistribution": null,
-        "commercialUse": null,
-        "attributionRequired": null,
-        "retention": null,
-        "shareAlike": false
-      },
-      "restricted": true,
-      "coverage": {
-        "countries": [
-          "US"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "US",
-      "qualifier": "d863f1f7d976968f",
-      "snapshot": {
-        "completeness": "complete",
-        "recordsPath": "features"
-      },
-      "selectionState": "discovered",
-      "parentSourceId": "us-wzdx-events",
-      "policyIds": [
-        "us-wzdx-events",
-        "us-wzdx-d863f1f7d976968f-events"
-      ]
-    },
-    {
-      "operator": "wzdx",
-      "product": "events",
       "name": "WZDx — Missouri DOT (missouri)",
       "format": "wzdx",
       "tier": "authoritative",
@@ -24222,6 +24449,75 @@
       "policyIds": [
         "us-wzdx-events",
         "us-wzdx-51e508db5ef42c5e-events"
+      ]
+    },
+    {
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx — Maricopa County DOT (arizona)",
+      "format": "wzdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://wzdxapi.aztech.org/construction",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "attribution": "Maricopa County DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
+      "terms": {
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
+      },
+      "privacyUrl": "https://www.transportation.gov/privacy",
+      "homepage": "https://datahub.transportation.gov",
+      "id": "us-wzdx-d863f1f7d976968f-events",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US",
+      "qualifier": "d863f1f7d976968f",
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "selectionState": "discovered",
+      "parentSourceId": "us-wzdx-events",
+      "policyIds": [
+        "us-wzdx-events",
+        "us-wzdx-d863f1f7d976968f-events"
       ]
     },
     {
@@ -24849,75 +25145,6 @@
     {
       "operator": "wzdx",
       "product": "events",
-      "name": "WZDx — Delaware DOT (delaware)",
-      "format": "wzdx",
-      "tier": "authoritative",
-      "endpoints": {
-        "main": {
-          "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
-          "cadenceSec": 300
-        }
-      },
-      "freshnessWindowSec": 900,
-      "license": "NOASSERTION",
-      "attribution": "Delaware DOT",
-      "attributionPolicy": {
-        "placement": "visible",
-        "surfaces": [
-          "map",
-          "content",
-          "image"
-        ],
-        "basis": "unresolved",
-        "reviewedAt": "2026-10-14",
-        "evidenceUrls": [
-          "https://datahub.transportation.gov/resource/69qe-yiui.json",
-          "https://github.com/usdot-jpo-ode/wzdx"
-        ],
-        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
-      },
-      "terms": {
-        "reviewedAt": "2026-09-11",
-        "note": "WZDx registry metadata (no dataset grant verified)"
-      },
-      "privacyUrl": "https://www.transportation.gov/privacy",
-      "homepage": "https://datahub.transportation.gov",
-      "id": "us-wzdx-7945221f406463df-events",
-      "domain": "roads",
-      "region": "us",
-      "file": "feeds/roads/us.jsonc",
-      "maintainers": [],
-      "rights": {
-        "redistribution": null,
-        "derivedRedistribution": null,
-        "commercialUse": null,
-        "attributionRequired": null,
-        "retention": null,
-        "shareAlike": false
-      },
-      "restricted": true,
-      "coverage": {
-        "countries": [
-          "US"
-        ]
-      },
-      "cadenceSec": 300,
-      "country": "US",
-      "qualifier": "7945221f406463df",
-      "snapshot": {
-        "completeness": "complete",
-        "recordsPath": "features"
-      },
-      "selectionState": "discovered",
-      "parentSourceId": "us-wzdx-events",
-      "policyIds": [
-        "us-wzdx-events",
-        "us-wzdx-7945221f406463df-events"
-      ]
-    },
-    {
-      "operator": "wzdx",
-      "product": "events",
       "name": "WZDx — Quebec City (n/a)",
       "format": "wzdx",
       "tier": "authoritative",
@@ -24983,6 +25210,75 @@
       "policyIds": [
         "us-wzdx-events",
         "us-wzdx-914cf87008410abe-events"
+      ]
+    },
+    {
+      "operator": "wzdx",
+      "product": "events",
+      "name": "WZDx — Delaware DOT (delaware)",
+      "format": "wzdx",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://wzdx.e-dot.com/del_dot_feed_wzdx_v4.1.geojson",
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "license": "NOASSERTION",
+      "attribution": "Delaware DOT",
+      "attributionPolicy": {
+        "placement": "visible",
+        "surfaces": [
+          "map",
+          "content",
+          "image"
+        ],
+        "basis": "unresolved",
+        "reviewedAt": "2026-10-14",
+        "evidenceUrls": [
+          "https://datahub.transportation.gov/resource/69qe-yiui.json",
+          "https://github.com/usdot-jpo-ode/wzdx"
+        ],
+        "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+      },
+      "terms": {
+        "reviewedAt": "2026-09-11",
+        "note": "WZDx registry metadata (no dataset grant verified)"
+      },
+      "privacyUrl": "https://www.transportation.gov/privacy",
+      "homepage": "https://datahub.transportation.gov",
+      "id": "us-wzdx-7945221f406463df-events",
+      "domain": "roads",
+      "region": "us",
+      "file": "feeds/roads/us.jsonc",
+      "maintainers": [],
+      "rights": {
+        "redistribution": null,
+        "derivedRedistribution": null,
+        "commercialUse": null,
+        "attributionRequired": null,
+        "retention": null,
+        "shareAlike": false
+      },
+      "restricted": true,
+      "coverage": {
+        "countries": [
+          "US"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "US",
+      "qualifier": "7945221f406463df",
+      "snapshot": {
+        "completeness": "complete",
+        "recordsPath": "features"
+      },
+      "selectionState": "discovered",
+      "parentSourceId": "us-wzdx-events",
+      "policyIds": [
+        "us-wzdx-events",
+        "us-wzdx-7945221f406463df-events"
       ]
     },
     {
