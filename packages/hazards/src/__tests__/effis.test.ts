@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import {
   __resetSkips,
   drainSkipped,
@@ -193,6 +194,53 @@ describe("the effis format over an answer that is no layer", () => {
     expect(() => parse({ main: [fixture("effis-exception-report.xml")] })).toThrow(
       /OGC exception: .*TYPENAME 'ms:nonexistent' could not be found/,
     );
+  });
+
+  test.each([
+    ["<ExceptionText>  provider detail  </ExceptionText>", ": provider detail"],
+    ["<ows:ExceptionText code='x'>first\nline</ows:ExceptionText>", ": first\nline"],
+    ["<ExceptionText><ExceptionText>later</ExceptionText>", ""],
+    ["<ExceptionTextExtra a='b'>detail<", ": detail"],
+    ["<ExceptionText junk <ExceptionText>detail<", ": detail"],
+    ["<ExceptionText>no closing delimiter", ""],
+    ["<ows:ExceptionText>  \n </ows:ExceptionText>", ""],
+    ["<other:ExceptionText>unrecognized</other:ExceptionText>", ""],
+    ["<exceptiontext>case sensitive</exceptiontext>", ""],
+    ["<unrelated>error</unrelated>", ""],
+  ])("keeps OGC diagnostic extraction for %s", (xml, suffix) => {
+    expect(() => parse({ main: [Buffer.from(xml)] })).toThrow(
+      new Error(`EFFIS answered an OGC exception${suffix}`),
+    );
+  });
+
+  test("rejects an incomplete OGC answer without rescanning opening fragments", () => {
+    const child = spawnSync(
+      process.execPath,
+      [
+        "--max-old-space-size=96",
+        "--input-type=module",
+        "-e",
+        `import assert from "node:assert/strict";
+         const { parseEffis } = await import(process.argv[1]);
+         const [feed, ctx] = process.argv.slice(2).map((s) => JSON.parse(s));
+         const parse = (xml) => parseEffis(feed, { main: [Buffer.from(xml)] }, ctx);
+         assert.throws(() => parse("<ows:ExceptionText>provider detail</ows:ExceptionText>"),
+           { message: "EFFIS answered an OGC exception: provider detail" });
+         assert.equal(parse('{"type":"FeatureCollection","features":[]}').records.inputCount, 0);
+         console.log("control passed");
+         assert.throws(() => parse("<ExceptionText".repeat(20000)),
+           { message: "EFFIS answered an OGC exception" });
+         console.log("decoded");`,
+        new URL("../../dist/index.js", import.meta.url).href,
+        JSON.stringify(feed),
+        JSON.stringify(parseContext(FETCHED, 3600)),
+      ],
+      { encoding: "utf8", timeout: 2000, maxBuffer: 4096 },
+    );
+    expect(child.stdout).toContain("control passed");
+    expect(child.error).toBeUndefined();
+    expect(child.status, child.stderr).toBe(0);
+    expect(child.stdout.trim()).toBe("control passed\ndecoded");
   });
 
   test("a body without features fails the parse", () => {

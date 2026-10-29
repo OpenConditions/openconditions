@@ -55,7 +55,11 @@ function utcTime(value: unknown): string | undefined {
 function featuresOf(body: Buffer): unknown[] {
   const raw = body.toString("utf8");
   if (raw.trimStart().startsWith("<")) {
-    const reason = /<(?:ows:)?ExceptionText[^>]*>([^<]*)</.exec(raw)?.[1]?.trim();
+    // The first opening fragment owns the first following `>` and `<`, even in malformed XML.
+    const opening = /<(?:ows:)?ExceptionText/.exec(raw);
+    const start = opening === null ? -1 : raw.indexOf(">", opening.index + opening[0].length);
+    const end = start < 0 ? -1 : raw.indexOf("<", start + 1);
+    const reason = end < 0 ? undefined : raw.slice(start + 1, end).trim();
     throw new Error(`EFFIS answered an OGC exception${reason ? `: ${reason}` : ""}`);
   }
   const root: unknown = JSON.parse(raw);
