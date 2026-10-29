@@ -21,6 +21,11 @@
       "licenseUrl": "https://www.data.gouv.fr/pages/legal/licences/etalab-2.0",
       "attribution": "Ministère de l'Économie (prix-carburants.gouv.fr)",
       "privacyUrl": "https://www.prix-carburants.gouv.fr/rubrique/donnees-personnelles/",
+      "terms": {
+        "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Licence Ouverte v2.0 (Etalab). \"\"license\": \"Licence Ouverte v2.0 (Etalab)\", \"license_url\": \"https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf\", ... \"publisher\": \"DGCCRF\"\"",
+      },
     },
   ],
 }

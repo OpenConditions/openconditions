@@ -62,6 +62,11 @@
       "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
       "attribution": "Contains public sector information licensed under the Open Government Licence v3.0 (North East UTMC / Newcastle City Council)",
       "privacyUrl": "https://www.netraveldata.co.uk/?page_id=610",
+      "terms": {
+        "url": "https://www.netraveldata.co.uk/?page_id=13",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Government Licence 3.0. \"Licence © Newcastle City Council, 2014 The Open Data Service is licensed under the Open Government Licence 3.0 .\"",
+      },
     },
   ],
 }

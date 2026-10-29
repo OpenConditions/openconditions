@@ -41,6 +41,11 @@
           "city": "addresses.0.town",
         },
       },
+      "terms": {
+        "url": "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=a8b29664-ab16-4341-9460-33f60d048d82",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
     {
       "subdivision": "md",
@@ -85,6 +90,11 @@
         "website": "CONTENT-URL",
         "openingHours": { "field": "HORARIO", "syntax": "text" },
         "notes": "DESCRIPCION",
+      },
+      "terms": {
+        "url": "https://datos.madrid.es/api/3/action/package_show?id=202625-0-aparcamientos-publicos",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"cc-by\", \"license_title\": \"Creative Commons Attribution 4.0 International (CC BY 4.0)\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/legalcode.es\"\"",
       },
     },
   ],

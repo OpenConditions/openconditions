@@ -40,6 +40,11 @@
       "licenseUrl": "https://www.mobilitydata.gv.at/en/data",
       "attribution": "ASFINAG",
       "privacyUrl": "https://www.asfinag.at/datenschutz/",
+      "terms": {
+        "url": "https://contentportal.asfinag.at/assets/licenses/cc-by-40-asf/de/cc-by-40-asf.html",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 plus ASFINAG supplementary conditions ('CC BY 4.0 ASFINAG'). \"Die über die von ASFINAG betriebene Datenschnittstelle von Content Portal bereitgestellten Informationen stehen unter der Creative Commons Attribution 4.0 International License (CC-BY 4.0) . Die durch diese Lizenz gewährten Rechte bleiben v…\"",
+      },
     },
   ],
 }

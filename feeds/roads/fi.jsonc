@@ -64,6 +64,11 @@
       "licenseUrl": "https://www.fintraffic.fi/en/fintraffic/open-data",
       "attribution": "Fintraffic / Digitraffic",
       "privacyUrl": "https://www.fintraffic.fi/en/fintraffic/data-protection",
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Fintraffic’s open data is licensed under the Creative Commons 4.0 By license.\"",
+      },
     },
   ],
 }

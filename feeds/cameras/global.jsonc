@@ -121,6 +121,11 @@
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "© OpenStreetMap contributors",
       "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
+      "terms": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\"",
+      },
     },
   ],
 }

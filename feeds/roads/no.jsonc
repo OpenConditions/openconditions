@@ -19,6 +19,11 @@
       "licenseUrl": "https://data.norge.no/nlod/en/2.0",
       "attribution": "Statens vegvesen",
       "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
+      "terms": {
+        "url": "https://dataut.vegvesen.no/dataset/trafikkmeldinger",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Norsk lisens for offentlige data (NLOD). \"\"title\": \"Trafikkmeldinger\", \"license_title\": \"Norsk lisens for offentlige data (NLOD)\", \"license_url\": \"https://data.norge.no/nlod/no\"\"",
+      },
     },
     {
       // Measured traffic data (speed/volume) joined to the MeasurementSiteTable for
@@ -46,6 +51,11 @@
       "licenseUrl": "https://data.norge.no/nlod/en/2.0",
       "attribution": "Statens vegvesen",
       "privacyUrl": "https://www.vegvesen.no/en/about-us/about-the-organisation/privacy-policy-and-cookies/",
+      "terms": {
+        "url": "https://www.vegvesen.no/fag/teknologi/apne-data/et-utvalg-apne-data/hva-er-datex",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Norsk lisens for offentlige data (NLOD). \"DATEX-tjenesten er tilgjengelig for media, ulike tilbydere av trafikkinformasjon og andre aktører som er interesserte i å benytte informasjon fra Statens vegvesen i egne tjenester. Bruken er regulert av norsk lisens for offentlige data .\"",
+      },
     },
   ],
 }

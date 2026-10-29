@@ -34,6 +34,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://dane.gov.pl/pl/dataset/2752",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0. \"license_name: \"CC0 1.0\"\"",
+      },
     },
   ],
 }

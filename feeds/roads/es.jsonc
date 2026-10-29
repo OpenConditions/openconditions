@@ -31,6 +31,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://nap.dgt.es/dataset/incidencias-dgt-datex2-v3-7",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Attribution (version not stated). \"Tipo de Licencia Licence and Free of charge Términos de Uso https://www.dgt.es/contenido/aviso-legal/ … Licencia Creative Commons Attribution\"",
+      },
     },
     {
       "operator": "madrid",
@@ -46,6 +51,11 @@
       "licenseUrl": "https://datos.madrid.es/egob/catalogo/aviso-legal",
       "attribution": "Ayuntamiento de Madrid",
       "privacyUrl": "https://www.madrid.es/portal/site/munimadrid/menuitem.privacy",
+      "terms": {
+        "url": "https://datos.madrid.es/api/3/action/package_show?id=202087-0-trafico-intensidad",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"cc-by\", \"license_title\": \"Creative Commons Attribution 4.0 International (CC BY 4.0)\"\"",
+      },
     },
     {
       "subdivision": "bcn",
@@ -78,6 +88,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Ajuntament de Barcelona",
       "privacyUrl": "https://www.barcelona.cat/en/privacy-policy",
+      "terms": {
+        "url": "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=trams",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
   ],
 }

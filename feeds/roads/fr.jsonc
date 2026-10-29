@@ -58,6 +58,11 @@
       "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
       "attribution": "Ministère de la Transition écologique / DIR",
       "privacyUrl": "https://www.bison-fute.gouv.fr/",
+      "terms": {
+        "url": "https://transport.data.gouv.fr/datasets/etat-de-circulation-en-temps-reel-sur-le-reseau-national-routier-non-concede",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Licence Ouverte v2.0. \"\"licence\": \"lov2\" (dataset \"Circulation en temps réel - Réseau routier non concédé\", resource 79165 \"Vitesses moyennes et débits\", original_url \"http://tipi.bison-fute.gouv.fr/bison-fute-ouvert/publicationsDIR/QTV-DIR/qtvDir.xml\")\"",
+      },
     },
     {
       "operator": "rennesmetropole",
@@ -86,6 +91,11 @@
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "Rennes Métropole",
       "privacyUrl": "https://data.rennesmetropole.fr/pages/donnees-personnelles/",
+      "terms": {
+        "url": "https://data.rennesmetropole.fr/api/explore/v2.1/catalog/datasets/etat-du-trafic-en-temps-reel",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Database License (ODbL). \"\"license\": \"Open Database License (ODbL)\", \"license_url\": \"http://opendatacommons.org/licenses/odbl/\", \"publisher\": \"Rennes Métropole\"\"",
+      },
     },
     {
       "operator": "bordeauxmetropole",
@@ -114,10 +124,15 @@
         "updatedField": "mdate",
       },
       "freshnessWindowSec": 1200,
-      "license": "etalab-2.0",
-      "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence",
+      "license": "LicenseRef-Licence-Ouverte-1.0",
+      "licenseUrl": "https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf",
       "attribution": "Bordeaux Métropole",
       "privacyUrl": "https://opendata.bordeaux-metropole.fr/pages/donnees-personnelles/",
+      "terms": {
+        "url": "https://opendata.bordeaux-metropole.fr/api/explore/v2.1/catalog/datasets/ci_trafi_l",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Licence Ouverte / Open Licence v1.0 (Etalab 2011), not the formerly declared licence. \"\"license\": \"Licence Ouverte\", \"license_url\": \"https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf\"\"",
+      },
     },
   ],
 }

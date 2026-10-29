@@ -39,6 +39,11 @@
       "attribution": "NASA FIRMS (LANCE / ESDIS)",
       "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
       "privacyUrl": "https://www.nasa.gov/privacy/",
+      "terms": {
+        "url": "https://cmr.earthdata.nasa.gov/search/concepts/C3264430167-LANCEMODIS.umm_json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: No use constraints, free and open data (NASA CMR); ESDIS default CC0. \"\"UseConstraints\": {\"Description\": \"None. See disclaimer: https://earthdata.nasa.gov/data/near-real-time-data/about-lance/disclaimer\", \"FreeAndOpenData\": true}\"",
+      },
     },
     {
       "operator": "nasa",
@@ -71,6 +76,11 @@
       "attribution": "NASA FIRMS (LANCE / ESDIS)",
       "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
       "privacyUrl": "https://www.nasa.gov/privacy/",
+      "terms": {
+        "url": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 (ESDIS default for unmarked NASA-led mission data). \"Unless the content is marked with a use restriction or license, data provided from a NASA-led mission are licensed as Creative Commons Zero (CC0). While there are no restrictions on the use of these data, data users are very strongly urged…\"",
+      },
     },
     {
       "operator": "eumetsat",
@@ -174,6 +184,11 @@
       "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
       "attribution": "U.S. Geological Survey",
       "privacyUrl": "https://www.doi.gov/privacy",
+      "terms": {
+        "url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: U.S. Public Domain. \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain.\"",
+      },
     },
     {
       "operator": "nasa",

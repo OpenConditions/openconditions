@@ -42,6 +42,11 @@
         // Type 7 marks a garage still being built.
         "filter": [{ "field": "p_hus_type", "exclude": ["7"] }],
       },
+      "terms": {
+        "url": "https://admin.opendata.dk/api/3/action/package_show?id=parkeringshuse",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 (portal licence field); attached 'Vilkår for brug af danske offentlige data' v1.0. \"\"license_title\": \"Creative Commons Attribution 4.0\"; terms PDF: \"Myndigheden giver en verdensomspændende, gratis, ikke-eksklusiv, og i øvrigt ubegrænset brugsret til data\" … \"Ved brug af data kan følgende angives: Indeholder data fra data.k…\"",
+      },
     },
   ],
 }

@@ -22,6 +22,11 @@
       "attribution": "Department of Electrical and Mechanical Services (EMS), Cyprus",
       "homepage": "https://www.traffic4cyprus.org.cy",
       "privacyUrl": "https://www.traffic4cyprus.org.cy/pages/privacy-policy",
+      "terms": {
+        "url": "https://www.traffic4cyprus.org.cy/api/3/action/package_search?q=charg",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
   ],
 }

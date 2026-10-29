@@ -30,6 +30,11 @@
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "RDW",
       "privacyUrl": "https://www.rdw.nl/over-rdw/privacy-en-security/privacyverklaring",
+      "terms": {
+        "url": "https://opendata.rdw.nl/api/views/b3us-f26s.json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons 0 (CC0). \"\"name\": \"Open Data Parkeren: SPECIFICATIES PARKEERGEBIED\" ... \"custom_fields\": {\"Licentie\": {\"Licentie\": \"Creative Commons 0 (CC0)\"}}\"",
+      },
     },
     {
       "operator": "ndw",
@@ -54,6 +59,9 @@
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "NDW",
       "privacyUrl": "https://www.ndw.nu/service/privacy",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Split result. Truckparking_Parking_Status.xml: NAP record 'Vrachtwagenparkeren beschikbaarheid' (https://ntm.ndw.nu/publicaties/035d06a7-b176-4a02-8bc5-ffc798b17324), owner NDW, CC0. Truckparking_Parking_Table.xml: NAP record owned by NTM states no licence and no agreement; it does not grant CC0. It…",
+      },
     },
   ],
 }

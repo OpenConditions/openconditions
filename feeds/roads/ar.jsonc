@@ -51,6 +51,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://data.buenosaires.gob.ar/dataset/api-transporte-publico",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC-BY-2.5-AR (Creative Commons Atribución 2.5 Argentina). \"CC-BY-2.5-AR\"",
+      },
     },
   ],
 }

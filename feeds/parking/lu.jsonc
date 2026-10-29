@@ -25,6 +25,11 @@
       "attribution": "Administration des Ponts et Chaussées – CITA",
       // CITA has no privacy page of its own; this is the open-data portal's.
       "privacyUrl": "https://data.public.lu/en/pages/legal/privacy/",
+      "terms": {
+        "url": "https://data.public.lu/fr/datasets/cita-infos-parking-en-datex-ii/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Zero (CC0). \"Producteur Administration des Ponts et Chaussées Dernière mise à jour 3 octobre 2022 Licence Creative Commons Zero (CC0)\"",
+      },
     },
   ],
 }

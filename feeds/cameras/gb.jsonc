@@ -26,6 +26,11 @@
       // The path-style S3 host serves every bucket of the region: only TfL's
       // bucket path is admitted.
       "cameras": { "imageHosts": ["s3-eu-west-1.amazonaws.com/jamcams.tfl.gov.uk/"] },
+      "terms": {
+        "url": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: TfL Transport Data Service licence (OGL v2.0 with TfL amendments). \"These licence terms and conditions apply to TfL's free transport data service and are based on version 2.0 of the Open Government Licence with specific amendments for Transport for London (the \"Licence\"). TfL may at any time revise this Lic…\"",
+      },
     },
   ],
 }

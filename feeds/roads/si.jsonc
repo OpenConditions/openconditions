@@ -52,6 +52,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://www.nap.si/en/datasets_details?id=b1ad6e25-0f6e-2ad3-a4c6-a1518cda3bf9",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY-SA 4.0. \"Contract or licence: licence provided, free of charge Documentation: https://creativecommons.org/licenses/by-sa/4.0/deed.sl\"",
+      },
     },
   ],
 }

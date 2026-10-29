@@ -24,7 +24,7 @@
       "license": "NOASSERTION",
       "terms": {
         "url": "https://datahub.transportation.gov/resource/69qe-yiui.json",
-        "note": "Licences vary per registry child: each WZDx publisher licenses its own feed, and a child is approved only once its dataset grant has been reviewed.",
+        "note": "Licences vary per registry child: each WZDx publisher licenses its own feed, and a child is approved only once its dataset grant has been reviewed. Licence review 2026-10-29, unresolved: Benign difference: the endpoint fetched, USDOT ITS JPO 'Work Zone Data Feed Registry' (69qe-yiui), is itself U.S. Government public domain (licenseId USGOV_WORKS; recommended citation: 'U.S. Department of Transportation Intelligent Transportation Systems Joint Program Office. (2020). Work Zone Data…",
       },
       "attribution": "WZDx publishers",
       "privacyUrl": "https://www.transportation.gov/privacy",
@@ -188,6 +188,11 @@
       "licenseUrl": "https://www.nyc.gov/html/data/terms.html",
       "attribution": "New York City Department of Transportation",
       "privacyUrl": "https://www.nyc.gov/home/privacy-policy.page",
+      "terms": {
+        "url": "https://www.nyc.gov/opendata/get-started/FAQs",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: NYC Open Data: no restrictions on use. \"Are there restrictions on how I can use Open Data? Open Data belongs to all New Yorkers. There are no restrictions on the use of Open Data.\"",
+      },
     },
     {
       "subdivision": "oh",
@@ -213,6 +218,11 @@
       "licenseUrl": "https://www.usa.gov/government-works",
       "attribution": "Ohio Department of Transportation (OHGO)",
       "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+      "terms": {
+        "url": "https://publicapi.ohgo.com/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Public domain (ODOT statement). \"Whether it's aggregating data from multiple traffic sources, creating traffic prediction models, building traffic alert apps, or just for fun, the data from ODOT is considered public domain and therefore freely available to anyone.\"",
+      },
     },
     {
       "subdivision": "oh",
@@ -241,6 +251,11 @@
       "licenseUrl": "https://www.usa.gov/government-works",
       "attribution": "Ohio Department of Transportation (OHGO)",
       "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+      "terms": {
+        "url": "https://publicapi.ohgo.com/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Public domain (ODOT statement). \"Whether it's aggregating data from multiple traffic sources, creating traffic prediction models, building traffic alert apps, or just for fun, the data from ODOT is considered public domain and therefore freely available to anyone.\"",
+      },
     },
     {
       "subdivision": "oh",
@@ -266,6 +281,11 @@
       "licenseUrl": "https://www.usa.gov/government-works",
       "attribution": "Ohio Department of Transportation (OHGO)",
       "privacyUrl": "https://www.transportation.ohio.gov/about-us/privacy",
+      "terms": {
+        "url": "https://publicapi.ohgo.com/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Public domain (ODOT statement). \"Whether it's aggregating data from multiple traffic sources, creating traffic prediction models, building traffic alert apps, or just for fun, the data from ODOT is considered public domain and therefore freely available to anyone.\"",
+      },
     },
   ],
 }

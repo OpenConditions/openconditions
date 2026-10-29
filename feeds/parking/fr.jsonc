@@ -56,6 +56,11 @@
         },
         "notes": "info",
       },
+      "terms": {
+        "url": "https://transport.data.gouv.fr/api/datasets/5ea1add4a5a7dac3af82310a",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"\"licence\": \"odc-odbl\" (title \"Base nationale des lieux de stationnement hors voirie\")\"",
+      },
     },
   ],
 }

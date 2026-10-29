@@ -52,6 +52,11 @@
       "attribution": "MZIE / NAP Slovenija, CC BY-SA 4.0",
       "homepage": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
       "privacyUrl": "https://www.nap.si/en/privacy",
+      "terms": {
+        "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY-SA 4.0. \"Contract or licence: licence provided, free of charge Documentation: https://creativecommons.org/licenses/by-sa/4.0/deed.sl\"",
+      },
     },
   ],
 }

@@ -111,6 +111,11 @@
       "licenseUrl": "https://daten.berlin.de/",
       "attribution": "Verkehrsinformationszentrale Berlin (VIZ)",
       "privacyUrl": "https://www.berlin.de/datenschutzerklaerung/",
+      "terms": {
+        "url": "https://daten.berlin.de/datensaetze/baustellen-sperrungen-und-sonstige-storungen-von-besonderem-verkehrlichem-interesse",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0. \"\"license_id\": \"dl-de-by-2.0\", \"license_title\": \"Datenlizenz Deutschland – Namensnennung – Version 2.0\", \"attribution_text\": \"Digitale Plattform Stadtverkehr Berlin / [Titel des Datensatzes]\"\"",
+      },
     },
     {
       // Germany via Mobilithek — one credential-gated DATEX II client-pull feed per
@@ -149,6 +154,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Landesverkehrszentrale NRW (Straßen.NRW)",
       "privacyUrl": "https://www.strassen.nrw.de/de/datenschutz.html",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/648508602333433856",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Zero – Version 2.0. \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-zero-de/2.0\"\"",
+      },
     },
     {
       "subdivision": "nw",
@@ -178,6 +188,9 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Landeshauptstadt Düsseldorf (dmotion)",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Mobilithek offer 110000000002056000 'Verkehrsmeldungen Stadt Düsseldorf' (Landeshauptstadt Düsseldorf) has the NO_LICENSE rights category, no licence document, and no terms in its description. No Düsseldorf open-data or GovData record of this dataset was found. Nothing supports DL-DE-ZERO-2.0. Provi…",
+      },
     },
     {
       // Düsseldorf, Köln and Kreis Unna are separate feeds rather than one
@@ -214,6 +227,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Stadt Köln",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/110000000002899004",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Zero – Version 2.0. \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-zero-de/2.0\"\"",
+      },
     },
     {
       "subdivision": "nw",
@@ -243,6 +261,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Kreis Unna",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/930448553981730816",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Zero – Version 2.0. \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-zero-de/2.0\"\"",
+      },
     },
     {
       // The city's roadworks information system (BSIS), which publishes each
@@ -316,6 +339,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Stadt Aachen",
       "privacyUrl": "https://www.aachen.de/datenschutz",
+      "terms": {
+        "url": "https://offenedaten.aachen.de/api/3/action/package_show?id=baustellen-stadtgebiet-aachen",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0. \"\"license_id\": \"dl-de-by-2.0\", \"license_title\": \"Datenlizenz Deutschland - Namensnennung - Version 2.0\", \"license_url\": \"https://www.govdata.de/dl-de/by-2-0\"\"",
+      },
     },
     {
       // The city's current roadworks view (FB 32) on its ArcGIS Enterprise
@@ -364,6 +392,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Stadt Cottbus/Chóśebuz ({year})",
       "privacyUrl": "https://cottbus.de/datenschutz-fur-den-internetauftritt-www-cottbus-de/",
+      "terms": {
+        "url": "https://datenportal.cottbus.de/portal/sharing/rest/content/items/3d8fa40a50274da895d8b12611ed7e5c?f=json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0. \"Es gelten die Lizenzbedingungen \"Datenlizenz Deutschland - Namensnennung - Version 2.0\" bzw. \"dl-de/by-2-0\" (https://www.govdata.de/dl-de/by-2-0) mit den dort geforderten Angaben zum Quellenvermerk. Als Rechteinhaber und Bereitsteller ist \"…\"",
+      },
     },
     {
       // The Garten- und Tiefbauamt's roadworks coordination: only the major
@@ -404,6 +437,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Datengrundlage: Stadt Freiburg, www.freiburg.de",
       "privacyUrl": "https://www.freiburg.de/datenschutz",
+      "terms": {
+        "url": "https://geodaten.freiburg.de/geonetwork/srv/api/records/42e2dbba-5fb2-4146-9fed-181045dc6be4/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0. \"Nutzungsbedingungen: Es gelten die Lizenzbedingungen \"Datenlizenz Deutschland – Namensnennung – Version 2.0\" (https://www.govdata.de/dl-de/by-2-0) mit folgender Quellenangabe: \"Datengrundlage: Stadt Freiburg, www.freiburg.de\".\"",
+      },
     },
     {
       // The Tiefbauamt's roadworks, published by the Stadtmessungsamt as two
@@ -457,6 +495,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Landeshauptstadt Stuttgart",
       "privacyUrl": "https://www.stuttgart.de/datenschutz",
+      "terms": {
+        "url": "https://opendata.stuttgart.de/dataset/b318ff40-616f-4f18-8f3c-80b4b5cdb696",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"http://dcat-ap.de/def/licenses/cc-by/4.0\", \"license_title\": \"Creative Commons Namensnennung – 4.0 International (CC BY 4.0)\"\"",
+      },
     },
     {
       // The roadworks of the TechnologieRegion Karlsruhe mobility portal, run
@@ -539,6 +582,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Stadt Karlsruhe / TechnologieRegion Karlsruhe (Mobilitätsportal), mit Daten der Städte Karlsruhe, Bruchsal, Rheinstetten, Stutensee, Rastatt, Baden-Baden und Ettlingen",
       "privacyUrl": "https://mobil.trk.de/disclaimer_mp2.html",
+      "terms": {
+        "url": "https://transparenz.karlsruhe.de/dataset/baustellen",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"http://dcat-ap.de/def/licenses/cc-by/4.0\", \"license_title\": \"Creative Commons Namensnennung - 4.0 International (CC-BY 4.0)\"\"",
+      },
     },
     {
       // The city's roadworks and street-use permits restricting traffic
@@ -600,6 +648,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Stadt Ingolstadt",
       "privacyUrl": "https://www.ingolstadt.de/datenschutz",
+      "terms": {
+        "url": "https://open.bydata.de/api/hub/search/datasets/baustellen_stadt_ingolstadt",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"'license': {'resource': 'http://dcat-ap.de/def/licenses/cc-by/4.0', 'label': 'Creative Commons Namensnennung – 4.0 International (CC BY 4.0)'}\"",
+      },
     },
     {
       // The Mobilitätsreferat's roadworks map layer: roadworks and temporary
@@ -676,6 +729,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Landeshauptstadt München – opendata.muenchen.de",
       "privacyUrl": "https://opendata.muenchen.de/pages/datenschutz",
+      "terms": {
+        "url": "https://opendata.muenchen.de/dataset/baustellen_4_weeks_opendata",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0. \"\"license_id\": \"dl-by-de/2.0\", \"license_title\": \"Datenlizenz Deutschland Namensnennung 2.0 (dl-by-de)\", \"license_url\": \"https://www.govdata.de/dl-de/by-2-0\"\"",
+      },
     },
     {
       // Frankfurt am Main Straßenverkehrsamt's WFS of traffic-relevant
@@ -732,6 +790,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Stadt Frankfurt am Main, www.frankfurt.de",
       "privacyUrl": "https://frankfurt.de/datenschutz",
+      "terms": {
+        "url": "https://geodatenkatalog.frankfurt.de/geonetwork/srv/api/records/e0f8f05e-2bd0-42c7-aa00-cd4d9c985cb7/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0. \"Es gilt die Datenlizenz Deutschland – Namensnennung – Version 2.0. Die Lizenz ist über https://www.govdata.de/dl-de/by-2-0 abrufbar.\"",
+      },
     },
     {
       // ivm GmbH's regional roadworks export (PRISMA traff-x / GIP), DATEX II
@@ -765,6 +828,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "ivm Region Frankfurt RheinMain (Mobilithek ID 552179356812632064)",
       "privacyUrl": "https://ivm-rheinmain.de/datenschutz/",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/files/aux/552179356812632064/2023_01_16_Nutzungsbedingungen_Mobilithek.pdf",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0 (Nutzungsbedingungen der ivm GmbH, Stand 01.01.2023). \"Für die verzeichneten Datensätze gilt – soweit nicht anders gekennzeichnet – die Lizenz: Datenlizenz Deutschland -Namensnennung- Version 2.0\"",
+      },
     },
     {
       // Stadt Kassel's traffic management GeoServer (vtinfo), the source of the
@@ -928,6 +996,11 @@
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "Hanse- und Universitätsstadt Rostock",
       "privacyUrl": "https://rathaus.rostock.de/de/datenschutz/",
+      "terms": {
+        "url": "https://www.opendata-hro.de/api/3/action/package_show?id=baustellen",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0. \"\"license_id\": \"cc-zero\", \"license_title\": \"CC0 1.0\", \"license_url\": \"https://creativecommons.org/publicdomain/zero/1.0/\"\"",
+      },
     },
     {
       // Stadt Bochum's roadworks map service (ArcGIS MapServer, an export of
@@ -1051,6 +1124,11 @@
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "Stadt Bochum",
       "privacyUrl": "https://www.bochum.de/datenschutzerklaerung",
+      "terms": {
+        "url": "https://bochum.opendata.ruhr/api/3/action/package_show?id=bochum-baustellen",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 (Creative Commons CC Zero). \"\"license_id\": \"cc-zero\", \"license_title\": \"Creative Commons CC Zero License (cc-zero)\"\"",
+      },
     },
     {
       // Stadt Dortmund Tiefbauamt on the city's Opendatasoft portal: four
@@ -1123,6 +1201,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Stadt Dortmund, Tiefbauamt",
       "privacyUrl": "https://open-data.dortmund.de/pages/datenschutzhinweise/",
+      "terms": {
+        "url": "https://open-data.dortmund.de/api/explore/v2.1/catalog/datasets/fb66-baustellen-tagesaktuell-flachen",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Zero – Version 2.0. \"\"license\": \"Datenlizenz Deutschland - Zero- Version 2.0\", \"license_url\": \"https://www.govdata.de/dl-de/zero-2-0\"\"",
+      },
     },
     {
       // Stadt Duisburg's Verkehrsportal map service (ArcGIS MapServer). Each
@@ -1177,6 +1260,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/de/",
       "attribution": "Stadt Duisburg",
       "privacyUrl": "https://www.duisburg.de/service/datenschutz_67613.php",
+      "terms": {
+        "url": "https://opendata-duisburg.de/dataset/baustellen-duisburg",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 3.0 DE. \"Lizenz Creative Commons Namensnennung 3.0 Deutschland (CC BY 3.0 DE)\"",
+      },
     },
     {
       // Stadt Herne's roadworks WFS (layer `baustelle`, works on the road
@@ -1238,6 +1326,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Stadt Herne",
       "privacyUrl": "https://www.herne.de/Technische-Seiten/Datenschutzerklaerung/",
+      "terms": {
+        "url": "https://opendata.herne.de/katalogopendata/srv/api/records/c70eed60-c07c-4769-961f-ee6006239fed/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Zero – Version 2.0. \"Nutzungsbedingungen: Datenlizenz Deutschland - Zero - Version 2.0\"",
+      },
     },
     {
       // The Mobilitätsatlas Rheinland-Pfalz roadworks layer (`mwvlw:baustelle`),
@@ -1389,6 +1482,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Landeshauptstadt Kiel, Amt für Bauordnung, Vermessung und Geoinformation",
       "privacyUrl": "https://www.kiel.de/de/_info/datenschutzerklaerung.php",
+      "terms": {
+        "url": "https://opendata.schleswig-holstein.de/api/3/action/package_show?id=baustellen-in-kiel",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_title\": \"Creative Commons Namensnennung – 4.0 International (CC BY 4.0)\"; \"licenseAttributionByText\": \"© Landeshauptstadt Kiel, Amt für Bauordnung, Vermessung und Geoinformation\"\"",
+      },
     },
     {
       // The city's traffic-order register (VMS, the same "SBOD" schema as
@@ -1470,6 +1568,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Herausgeber: Stadtverwaltung Norderstedt",
       "privacyUrl": "https://www.norderstedt.de/Quicknavigation/Datenschutzerkl%C3%A4rung/",
+      "terms": {
+        "url": "https://opendata.schleswig-holstein.de/api/3/action/package_show?id=baustelleninformation",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: dl-de/by-2-0. \"\"license_title\": \"Datenlizenz Deutschland Namensnennung 2.0\"; \"licenseAttributionByText\": \"Stadtverwaltung Norderstedt\"\"",
+      },
     },
     {
       // The Tiefbauamt's "Baustellen Bürgerauskunft", exported daily from the
@@ -1568,6 +1671,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Stadt Chemnitz",
       "privacyUrl": "https://www.chemnitz.de/de/datenschutz",
+      "terms": {
+        "url": "https://www.arcgis.com/home/item.html?id=cd186e7d21144e9887fcb81066762fcd",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: dl-de/by-2-0. \"Datenlizenz Deutschland – Namensnennung – Version 2.0 (dl-de/by-2-0) (https://www.govdata.de/dl-de/by-2-0)\"",
+      },
     },
     {
       // The Straßen- und Tiefbauamt's traffic restrictions from its permit
@@ -1727,6 +1835,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Stadt Leipzig",
       "privacyUrl": "https://www.leipzig.de/datenschutzerklaerung/",
+      "terms": {
+        "url": "https://opendata.leipzig.de/api/3/action/package_show?id=verkehrsraumeinschrankungen-polygone-stadt-leipzig",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: dl-de/by-2-0. \"\"license\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\", \"licenseAttributionByText\": \"Stadt Leipzig\"\"",
+      },
     },
     {
       // SPERRINFOSYS, Saxony's register of closures lasting a day or more on
@@ -1797,6 +1910,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Baustelleninformationssystem Freistaat Sachsen",
       "privacyUrl": "https://www.list.sachsen.de/datenschutz.html",
+      "terms": {
+        "url": "https://ckan.govdata.de/api/3/action/package_show?id=sperrungen-und-umleitungen-sperrinfosys",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: dl-de/by-2-0. \"\"license\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\", \"licenseAttributionByText\": \"Quelle: Baustelleninformationssystem Freistaat Sachsen\"\"",
+      },
     },
     {
       // NRW.Mobidrom bundled roadworks — CC-BY-SA (ShareAlike), kept in its own feed
@@ -1828,6 +1946,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "attribution": "NRW.Mobidrom",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/884461110418108416",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY-SA (version not stated on Mobilithek). \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/cc-by-sa\"\"",
+      },
     },
     {
       "subdivision": "by",
@@ -1857,6 +1980,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Bayerische Straßenbauverwaltung",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/110000000002506000",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV. \"Basierend auf den Empfehlungen des BMDV unterliegt der Bezug dieser Daten den Bedingungen der \"Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes\" (GeoNutzV, http://www.gesetze-im-internet.de/g…\"",
+      },
     },
     {
       "subdivision": "bw",
@@ -1886,6 +2014,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Innenministerium Baden-Württemberg (Landesmeldestelle)",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/857127500689977344",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0 plus RVWD conditions. \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\"; \"conditionForUse\": \"Die Landemeldestelle für den Verkehrswarndienst Baden-Württemberg stellt Daten auf Grundlage der Rahmenrichtlinie für den Verkehrswarndienst (RVWD) zur Ve…\"",
+      },
     },
     {
       "subdivision": "be",
@@ -1915,6 +2048,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Senatsverwaltung für Mobilität, Verkehr, Klimaschutz und Umwelt Berlin",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/801096621061234688",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0. \"\"rights\": \"https://w3id.org/mdp/schema/license#LICENSE_FREE_USE_OPEN_DATA\", \"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\"\"",
+      },
     },
     {
       "subdivision": "bb",
@@ -1944,6 +2082,9 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Landesbetrieb Straßenwesen Brandenburg",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Offer 'Baustellen Brandenburg' does not state DL-DE-BY-2.0 (unlike BE/HB/BW offers, which set standardLicense dl-by-de/2.0); providerApprovalRequired true. Mitigating: LS Brandenburg's GovData record 'baustelleninformationen-bb' (OGC API/WFS derived from this same Mobilithek offer) is DL-DE-BY-2.0 -…",
+      },
     },
     {
       "subdivision": "hb",
@@ -1973,6 +2114,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Verkehrsmanagementzentrale Bremen",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/608390979298140160",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0. \"\"rights\": \"https://w3id.org/mdp/schema/license#LICENSE_FREE_USE_OPEN_DATA\", \"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\"\"",
+      },
     },
     {
       "subdivision": "hh",
@@ -2002,6 +2148,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Landesbetrieb Straßen, Brücken und Gewässer Hamburg (LSBG)",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/110000000003540000",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0 (dcat-ap.de dl-by-de/2.0). \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\"\"",
+      },
     },
     {
       // Police-sourced safety incidents from the Landesmeldestelle für den
@@ -2053,6 +2204,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Freie und Hansestadt Hamburg, Polizei Hamburg",
       "privacyUrl": "https://www.hamburg.de/datenschutz/",
+      "terms": {
+        "url": "https://suche.transparenz.hamburg.de/api/3/action/package_show?id=aktuelle-verkehrsinformationen-polizei-hamburg4",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – 2.0. \"{\"license_id\": \"dl-de-by-2.0\", \"license_url\": \"https://www.govdata.de/dl-de/by-2-0\", \"attribution_text\": \"Freie und Hansestadt Hamburg, Polizei Hamburg\", \"is_free_to_use\": true}\"",
+      },
     },
     {
       "subdivision": "he",
@@ -2082,6 +2238,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Hessen Mobil – Straßen- und Verkehrsmanagement",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/841292914668498944",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV. \"Der Bezug der Daten unterliegt den Bedingungen der 'Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes' (GeoNutzV, http://www.gesetze-im-internet.de/geonutzv/).\"",
+      },
     },
     {
       "subdivision": "mv",
@@ -2115,6 +2276,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Landesamt für Straßenbau und Verkehr Mecklenburg-Vorpommern",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/110000000002802000",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV. \"Der Bezug der Daten unterliegt den Bedingungen der 'Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes' (GeoNutzV, http://www.gesetze-im-internet.de/geonutzv/'). Mit dem Bezug der Dateien werde…\"",
+      },
     },
     {
       "subdivision": "ni",
@@ -2150,6 +2316,11 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Niedersächsische Landesbehörde für Straßenbau und Verkehr (NLStBV)",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/110000000002749000",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Zero – Version 2.0. \"\"standardLicense\": \"http://dcat-ap.de/def/licenses/dl-zero-de/2.0\"\"",
+      },
     },
     {
       "subdivision": "ni",
@@ -2179,6 +2350,9 @@
       "licenseUrl": "https://www.govdata.de/dl-de/zero-2-0",
       "attribution": "Landeshauptstadt Hannover",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Mobilithek offer 633691473746571264 'Verkehrsmeldungen Stadt Hannover' (Landeshauptstadt Hannover, FB Tiefbau) names no standard licence, attaches no licence document, and its description has no terms. The GovData record (verkehrsmeldungen-stadt-hannover) is harvested from Mobilithek and also has an…",
+      },
     },
     {
       "subdivision": "sn",
@@ -2208,6 +2382,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Landesamt für Straßenbau und Verkehr Sachsen (LASuV)",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/608439575154401280",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"rights\": \"https://w3id.org/mdp/schema/license#LICENSE_FREE_USE_OPEN_DATA\", \"standardLicense\": \"http://dcat-ap.de/def/licenses/cc-by/4.0\"\"",
+      },
     },
     {
       "subdivision": "st",
@@ -2237,6 +2416,9 @@
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "Landesstraßenbaubehörde Sachsen-Anhalt",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Offer 'Baustellen und Sperrungen Sachsen-Anhalt' (Landesstraßenbaubehörde Sachsen-Anhalt) declares no licence and requires provider approval. No GovData record for the LSBB Sperrinfo data was found. The declared DL-DE-BY-2.0 is unsupported by the publisher's metadata.",
+      },
     },
     {
       "subdivision": "sh",
@@ -2266,6 +2448,9 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Landesbetrieb Straßenbau und Verkehr Schleswig-Holstein (LBV.SH)",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Both LBV.SH offers used by the feed (110000000003237002 Baustelleninformationen and 110000000003387000 Baustelleninformation-Umleitungsstrecken) are NO_LICENSE and require provider approval (providerApprovalRequired true). Sibling LBV.SH offers (-9187129897849630912 'Straßenbaustellen Schleswig-Hols…",
+      },
     },
     {
       "subdivision": "th",
@@ -2295,6 +2480,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Thüringer Landesamt für Bau und Verkehr",
       "privacyUrl": "https://mobilithek.info/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/110000000003051000",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV (Geodatennutzungsverordnung, 19.03.2013). \"\"rights\": \"https://w3id.org/mdp/schema/license#LICENSE_FREE_USE_OPEN_DATA\", \"standardLicense\": \"http://dcat-ap.de/def/licenses/geonutz/20130319\"\"",
+      },
     },
     {
       "subdivision": "nw",
@@ -2364,6 +2554,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/files/aux/781571665935880192/GeoNutzV_130319.pdf",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV (Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes). \"Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes (GeoNutzV)\"",
+      },
     },
     {
       // Autobahn GmbH BAB detector speed (v) + volume (q), per-lane, Nordrhein-Westfalen.
@@ -2407,6 +2602,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/files/aux/110000000003476000/GeoNutzV_130319.pdf",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV (Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes). \"Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes (GeoNutzV)\"",
+      },
     },
     {
       // Autobahn GmbH BAB detector speed (v) + volume (q), Verkehrszentrale Deutschland
@@ -2447,6 +2647,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/files/aux/619101149275615232/GeoNutzV_130319.pdf",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV (Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes). \"Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes (GeoNutzV)\"",
+      },
     },
     {
       // Autobahn GmbH BAB Verkehrsmessquerschnitte speed (v) + volume (q), NL Südwest
@@ -2489,6 +2694,9 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Neither the data offer 110000000003216000 nor the Verortung offer 110000000003217000 names a licence or attaches terms (both restricted-use-free-of-charge, providerApprovalRequired). GeoNutzV is plausible (sibling Autobahn offers attach the GeoNutzV PDF) but not stated for these offers; the catalogu…",
+      },
     },
     {
       // Autobahn GmbH BAB detector speed (v), per-lane, Bayern. MeasuredDataPublication.
@@ -2533,6 +2741,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/mdp-msa-metadata/v2/offers/748580849261105152",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV. \"\"customLicenseAsResource\": {\"accessURL\": \"/748580849261105152/GeoNutzV_130319 (3).pdf\"} ; PDF: \"Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes (GeoNutzV)\"\"",
+      },
     },
     {
       // Autobahn GmbH BAB fahrstreifenfeine Verkehrslage (4-step LoS) for NRW — the
@@ -2576,6 +2789,11 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "url": "https://mobilithek.info/mdp-api/files/aux/110000000003478000/GeoNutzV_2013.pdf",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: GeoNutzV (Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes). \"Verordnung zur Festlegung der Nutzungsbestimmungen für die Bereitstellung von Geodaten des Bundes (GeoNutzV)\"",
+      },
     },
     {
       // Autobahn GmbH BAB Verkehrsmessquerschnitte 4-step Verkehrslage (LoS), NL Südwest
@@ -2617,6 +2835,9 @@
       "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Main LoS offer 110000000003216001 has no licence/terms. Only the companion Verortung offer 110000000003218001 attaches 'GeoNutzV_130319.pdf' (the GeoNutzV text) as customLicenseAsResource - covers the site geometry, not the LoS data itself. Partial support for GeoNutzV only.",
+      },
     },
   ],
 }

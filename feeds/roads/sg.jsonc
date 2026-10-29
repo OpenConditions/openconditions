@@ -19,6 +19,11 @@
       "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
       "attribution": "Land Transport Authority (Singapore)",
       "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+      "terms": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Singapore Open Data Licence v1.0. \"The Agency grants you a worldwide, perpetual, royalty-free, non-exclusive licence to Use the datasets, subject to the terms of this Licence. You can use, access, download, copy, distribute, transmit, modify and adapt the datasets, or any de…\"",
+      },
     },
     {
       "operator": "lta",
@@ -45,6 +50,11 @@
       "licenseUrl": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
       "attribution": "Land Transport Authority (Singapore)",
       "privacyUrl": "https://www.lta.gov.sg/content/ltagov/en/privacy.html",
+      "terms": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Singapore Open Data Licence v1.0. \"The Agency grants you a worldwide, perpetual, royalty-free, non-exclusive licence to Use the datasets, subject to the terms of this Licence. You can use, access, download, copy, distribute, transmit, modify and adapt the datasets, or any de…\"",
+      },
     },
   ],
 }

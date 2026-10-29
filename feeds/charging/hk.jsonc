@@ -65,6 +65,11 @@
           ],
         },
       },
+      "terms": {
+        "url": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CSDI Portal Terms and Conditions. \"You are allowed to browse, download, distribute, reproduce, hyperlink to and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on the condition that:- you shall comply with the Terms of Use; you shall…\"",
+      },
     },
   ],
 }

@@ -66,6 +66,11 @@
       "licenseUrl": "https://www.ndw.nu",
       "attribution": "NDW / Rijkswaterstaat",
       "privacyUrl": "https://www.ndw.nu/privacy",
+      "terms": {
+        "url": "https://ntm.ndw.nu/publicaties/ef10b6e4-84ea-468b-aca8-9a8bbdd30a73",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0. \"\"termsOfService\": {\"type\": \"LICENSE_ACCORDING_CREATIVE_COMMONS\", \"url\": \"https://creativecommons.org/publicdomain/zero/1.0/deed.nl\"}\"",
+      },
     },
   ],
 }

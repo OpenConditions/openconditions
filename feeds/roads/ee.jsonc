@@ -40,6 +40,9 @@
         "evidenceUrls": ["https://tarktee.ee/#/en/terms", "https://tarktee.ee/assets/i18n/en.json"],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: The andmed.eesti.ee record 'TarkTee' (Transpordiamet) licenses its distribution (tarktee.mnt.ee REST, URL flagged broken) as CC BY-SA 3.0, and its description points to the DATEX II gateway. The gateway's own Terms of Use (https://tarktee.ee/#/en/terms; text in https://tarktee.ee/assets/i18n/en.json…",
+      },
     },
   ],
 }

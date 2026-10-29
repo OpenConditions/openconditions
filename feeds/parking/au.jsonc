@@ -28,6 +28,11 @@
       "attribution": "Transport for NSW, CC BY 4.0",
       "homepage": "https://opendata.transport.nsw.gov.au/",
       "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\"",
+      },
     },
   ],
 }

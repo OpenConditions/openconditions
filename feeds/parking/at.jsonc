@@ -39,6 +39,11 @@
           },
         ],
       },
+      "terms": {
+        "url": "https://www.data.gv.at/api/hub/search/datasets/627a9226-a907-4018-89e3-878002a9d22b",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"https://creativecommons.org/licenses/by/4.0/deed.de\"",
+      },
     },
     {
       "subdivision": "5",
@@ -89,6 +94,11 @@
         "openingHours": { "field": "OEFFNUNGSZEITEN", "syntax": "text" },
         "tariffText": "TARIF",
         "notes": "ANMERKUNGEN",
+      },
+      "terms": {
+        "url": "https://www.data.gv.at/api/hub/search/datasets/9087fe9a-1dd4-49a1-98b4-8a8c659eb64f",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 3.0 AT. \"https://creativecommons.org/licenses/by/3.0/at/\"",
       },
     },
   ],

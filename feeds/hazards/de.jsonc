@@ -44,6 +44,11 @@
         "reason": "DWD requests source notice directly at reused information; ordinary format conversion is not extensive modification",
         "compactText": "<a href=\"https://www.dwd.de/\">DWD</a>",
       },
+      "terms": {
+        "url": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Alle frei zugänglichen Geodaten und Geodatendienste sowie die als hochwertige Datensätze / high value datasets (HVD) festgelegten Leistungen des DWD dürfen unter den Bedingungen der Lizenz Creative Commons BY 4.0 (CC BY 4.0) unter Beigabe e…\"",
+      },
     },
   ],
 }

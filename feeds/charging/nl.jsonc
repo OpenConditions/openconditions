@@ -26,6 +26,11 @@
       "attribution": "NDW / DOT-NL",
       "homepage": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
       "privacyUrl": "https://www.ndw.nu/service/privacy",
+      "terms": {
+        "url": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0 (NAP terms link: https://creativecommons.org/publicdomain/zero/1.0/deed.nl). \"Gebruikersvoorwaarden Licentie volgens Creative Commons of vergelijkbaar\"",
+      },
     },
   ],
 }
