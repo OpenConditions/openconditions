@@ -164,11 +164,15 @@ export async function verifyRegistryMetadata(
   mkdirSync(downloadDir, { recursive: true });
 
   const cachedRootPath = join(options.cacheDir, "root.json");
-  if (!existsSync(cachedRootPath)) {
+  try {
+    // Another client's existing root is authoritative, including during bootstrap.
     writeFileSync(
       cachedRootPath,
       typeof trustedRoot === "string" ? trustedRoot : Buffer.from(trustedRoot),
+      { flag: "wx" },
     );
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code !== "EEXIST") throw error;
   }
   assertRootAllowedInEnv(parseJsonBytes(readFileSync(cachedRootPath)), env, allowTestRoot);
 
