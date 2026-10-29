@@ -8,6 +8,7 @@ const rights = (retention: boolean | null) => ({
   derivedRedistribution: true,
   commercialUse: true,
   attributionRequired: false,
+  changeNotice: false,
   retention,
   shareAlike: false,
 });

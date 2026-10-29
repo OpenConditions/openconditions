@@ -1171,6 +1171,7 @@ describe("stable provenance refresh", () => {
           derivedRedistribution: true,
           commercialUse: true,
           attributionRequired: true,
+          changeNotice: false,
           retention: true,
           shareAlike: false,
         },

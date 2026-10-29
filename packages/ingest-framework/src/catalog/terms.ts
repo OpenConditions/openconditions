@@ -16,6 +16,7 @@ export interface FeedTerms {
   derivedRedistribution?: boolean | null;
   commercialUse?: boolean | null;
   attributionRequired?: boolean | null;
+  changeNotice?: boolean | null;
   retention?: boolean | null;
 }
 
@@ -29,6 +30,10 @@ export interface EffectiveRights {
   derivedRedistribution: boolean | null;
   commercialUse: boolean | null;
   attributionRequired: boolean | null;
+  /** Whether a changed or derived version must say in its credit that the data
+   *  was changed. `null` where the licence has not been read for it: a
+   *  consumer that changes the data then says so. */
+  changeNotice: boolean | null;
   retention: boolean | null;
   shareAlike: boolean;
 }
@@ -46,6 +51,7 @@ export function effectiveRights(license: string, terms: FeedTerms = {}): Effecti
     derivedRedistribution: right("derivedRedistribution"),
     commercialUse: right("commercialUse"),
     attributionRequired: right("attributionRequired"),
+    changeNotice: right("changeNotice"),
     retention: right("retention"),
     shareAlike: info.shareAlike,
   };

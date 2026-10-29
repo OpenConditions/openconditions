@@ -44,6 +44,16 @@ describe("effective rights", () => {
     expect(r).toEqual(effectiveRights("CC-BY-4.0"));
   });
 
+  it("a change notice is the licence's obligation, overridable by terms", () => {
+    expect(effectiveRights("CC-BY-4.0").changeNotice).toBe(true);
+    expect(effectiveRights("DL-DE-BY-2.0").changeNotice).toBe(true);
+    expect(effectiveRights("LicenseRef-GeoNutzV").changeNotice).toBe(true);
+    expect(effectiveRights("CC0-1.0").changeNotice).toBe(false);
+    expect(effectiveRights("ODbL-1.0").changeNotice).toBe(false);
+    expect(effectiveRights("NOASSERTION").changeNotice).toBeNull();
+    expect(effectiveRights("CC0-1.0", { changeNotice: true }).changeNotice).toBe(true);
+  });
+
   it("NOASSERTION is unknown, not permissive", () => {
     expect(effectiveRights("NOASSERTION").redistribution).toBeNull();
     expect(admitsCatalogChild(effectiveRights("NOASSERTION"))).toBe(false);

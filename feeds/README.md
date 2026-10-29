@@ -715,15 +715,27 @@ A feed with no known licence is `NOASSERTION` and must say what is known in
 
 `terms` records a feed's own terms where they differ from its licence: `note`,
 `notice`, and any of `display`, `redistribution`, `derivedRedistribution`,
-`commercialUse`, `attributionRequired`, `retention`. A key set in `terms` (even
-to `null`) overrides the licence; an absent key defers to it. `display` is
+`commercialUse`, `attributionRequired`, `changeNotice`, `retention`. A key set
+in `terms` (even to `null`) overrides the licence; an absent key defers to it. `display` is
 showing the data, unchanged and credited, to an application's users;
 `redistribution` is passing the source data itself on; `derivedRedistribution`
 is building other data or products from it (a routing graph, fused records)
 and passing those on. A publisher that allows its data to be shown but not
 republished sets `"redistribution": false` and keeps `display`. `notice` is a
 text the publisher requires to accompany any display of its data, written
-verbatim (MeteoAlarm's disclaimer); `GET /sources` serves it.
+verbatim (MeteoAlarm's disclaimer); `GET /sources` serves it. `note` is the
+reviewer's record for operators and auditors (what the statement says, what is
+still open); `GET /sources` serves it under `terms`, and it never becomes part
+of the credit an application shows.
+
+`changeNotice` is an obligation, like `attributionRequired`: a changed or
+derived version must say in its credit that the data was changed (CC BY's
+"indicate if You modified the Licensed Material", the "Veränderungshinweis" of
+the Datenlizenz Deutschland and the GeoNutzV). OpenConditions changes every
+record it publishes, normalising it into its model, and consumers change it
+further (fused records, a routing graph), so a consumer credits a source whose
+`changeNotice` is not `false` with that notice. `null` means the licence text
+has not been read for it, and is treated like `true`.
 
 `terms.url` and `terms.reviewedAt` are the evidence a feed's rights rest on:
 the publisher's own statement of the licence or terms its data comes under (a

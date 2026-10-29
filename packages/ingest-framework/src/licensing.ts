@@ -8,7 +8,7 @@ export function captureLicensing(source: {
   name?: string;
   license: string;
   licenseUrl?: string;
-  terms?: { notice?: string; note?: string };
+  terms?: { notice?: string };
   attributionPolicy?: unknown;
 }): Licensing {
   const info = licenseInfo(source.license);
@@ -39,7 +39,6 @@ export function captureLicensing(source: {
         license,
         ...(attribution ? { attribution } : {}),
         ...(source.terms?.notice ? { notice: source.terms.notice } : {}),
-        ...(source.terms?.note ? { conditions: [source.terms.note] } : {}),
       },
     ],
   });

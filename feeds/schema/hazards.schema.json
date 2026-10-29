@@ -992,6 +992,12 @@
                   "null"
                 ]
               },
+              "changeNotice": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
               "retention": {
                 "type": [
                   "boolean",
