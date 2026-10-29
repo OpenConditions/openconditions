@@ -39,7 +39,8 @@ function slug(s: string): string {
  * (road × service), named `<road>-<service>` (e.g. `a1-warning`), each road's
  * services under the index URL. Road names are trimmed (the upstream list
  * contains stray whitespace, e.g. `"A60 "`) and deduped before enumeration.
- * Every child is published under the Datenlizenz Deutschland.
+ * Children state no licence of their own, so each inherits the parent's
+ * licence and its reviewed terms.
  */
 async function resolve(parent: CatalogParent, fetchFn: typeof fetch): Promise<ChildFeed[]> {
   const index = registryUrl(parent, RESOLVER_ID);
@@ -71,7 +72,6 @@ async function resolve(parent: CatalogParent, fetchFn: typeof fetch): Promise<Ch
             cadenceSec: service.cadenceSec,
           },
         },
-        license: "DL-DE-BY-2.0",
         selectionState: "approved",
       });
     }

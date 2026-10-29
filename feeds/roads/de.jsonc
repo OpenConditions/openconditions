@@ -18,7 +18,18 @@
         "main": { "url": "https://verkehr.autobahn.de/o/autobahn/", "cadenceSec": 300 },
       },
       "freshnessWindowSec": 900,
-      "license": "DL-DE-BY-2.0",
+      // verkehr.autobahn.de states no licence itself. It is the backend of the
+      // Autobahn App, whose Mobilithek offer Autobahn GmbH publishes as free open
+      // data under GeoNutzV, the terms its DATEX II traffic publications carry too.
+      // GeoNutzV permits changed and combined data with a source note that marks
+      // the change.
+      "license": "LicenseRef-GeoNutzV",
+      "licenseUrl": "https://www.gesetze-im-internet.de/geonutzv/",
+      "terms": {
+        "url": "https://mobilithek.info/offers/573189053963235328",
+        "reviewedAt": "2026-10-29",
+        "note": "Mobilithek offer 573189053963235328 'Die Autobahn App' (publisher Die Autobahn GmbH des Bundes): rights LICENSE_FREE_USE_OPEN_DATA, standardLicense http://dcat-ap.de/def/licenses/geonutz/20130319. The offer describes the app's Verkehrsmeldungen, Sperrungen and Baustellen, which this API serves. Autobahn GmbH's DATEX II publications of the same data on Mobilithek attach GeoNutzV ('Der Bezug der Daten unterliegt den Bedingungen der GeoNutzV', MDM documentation of the motorway traffic centre publications). Formerly declared DL-DE-BY-2.0, for which no Autobahn GmbH statement exists.",
+      },
       "attribution": "Quelle: Die Autobahn GmbH des Bundes",
       "privacyUrl": "https://www.autobahn.de/datenschutz",
     },

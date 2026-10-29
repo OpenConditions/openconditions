@@ -34,7 +34,8 @@ describe("autobahnIndexResolver", () => {
     expect(urls).toContain("https://verkehr.autobahn.de/o/autobahn/A1/services/roadworks");
     expect(urls.some((u) => u?.includes("A60%20") || u?.includes("A60 "))).toBe(false);
     for (const child of children) {
-      expect(child.license).toBe("DL-DE-BY-2.0");
+      // No licence of its own: the child inherits the parent's licence and reviewed terms.
+      expect(child.license).toBeUndefined();
       expect(child.selectionState).toBe("approved");
     }
     expect(new Set(children.map((c) => c.qualifier)).size).toBe(children.length);
