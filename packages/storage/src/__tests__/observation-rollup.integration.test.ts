@@ -141,6 +141,34 @@ describe("rollupObservations", () => {
     expect(count).toBe(0);
   });
 
+  it("keeps the hourly rollups of a property that still rolls up, and finds nothing the next time", async () => {
+    // Hours of every series: the speed still rolls up hourly, the fuel price no longer does.
+    await sql`
+      INSERT INTO conditions.observation_rollup_hourly (series_id, hour_utc, sample_count, min, max, mean)
+      SELECT l.series_id, h, 1, 1, 1, 1
+        FROM conditions.observation_latest l,
+             generate_series('2026-10-01T00:00:00Z'::timestamptz, '2026-10-01T05:00:00Z', '1 hour') h
+       WHERE l.property IN ('traffic.speed', 'fuel.price')
+      ON CONFLICT DO NOTHING`;
+    const counts = () => sql<{ property: string; n: number }[]>`
+      SELECT l.property, count(*)::int AS n FROM conditions.observation_rollup_hourly h
+        JOIN conditions.observation_latest l USING (series_id) GROUP BY 1 ORDER BY 1`;
+    expect(await counts()).toEqual([
+      { property: "fuel.price", n: 6 },
+      { property: "traffic.speed", n: 6 },
+    ]);
+    const prune = () =>
+      pruneRollups(sql, {
+        now: NOW,
+        hourlyDays: 35,
+        dailyDays: 400,
+        registry: productionRegistry(),
+      });
+    expect(await prune()).toEqual({ hourly: 0, daily: 0, retired: 6 });
+    expect(await counts()).toEqual([{ property: "traffic.speed", n: 6 }]);
+    expect(await prune()).toEqual({ hourly: 0, daily: 0, retired: 0 });
+  });
+
   it("reads an hour of history through a block range index, not the whole day", async () => {
     const indexes = await sql<{ method: string; def: string }[]>`
       SELECT am.amname AS method, pg_get_indexdef(i.indexrelid) AS def
