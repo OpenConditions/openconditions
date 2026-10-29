@@ -10,7 +10,7 @@ import type { TravelDirection } from "./direction.js";
 import type { LngLat } from "./geo.js";
 
 /** Bumped whenever the resolver's inputs or maths change a stored binding. */
-export const RESOLVER_VERSION = "2.6.0";
+export const RESOLVER_VERSION = "2.7.0";
 
 export const BIND_DEFAULTS = {
   /** Candidate search radius around a sample, in metres. */
@@ -71,6 +71,13 @@ export interface BindInput {
    * stays open.
    */
   slipRoadOnly?: boolean;
+  /**
+   * Which slip road a `slipRoadOnly` location closes, when its source says:
+   * the `exit` that leaves the carriageway or the `entry` that joins it. A
+   * path that stays on the carriageway then binds the one ramp that leaves
+   * or joins it there.
+   */
+  slipRoad?: "exit" | "entry";
 }
 
 export interface Candidate {

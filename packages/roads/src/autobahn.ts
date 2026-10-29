@@ -169,6 +169,25 @@ const CARRIAGEWAY_LOCATION_RES = [
  * or nowhere they say. A slip-road line decides over a carriageway line, as a
  * connector's line names the motorways at both ends too.
  */
+/**
+ * Which slip road the description's location lines place the item on: the
+ * `exit` a line leaves the motorway by ("Abfahrt von der …"), the `entry` it
+ * joins it by ("Auffahrt auf die …"), or the `connector` between two
+ * motorways. Lines that name both, or disagree, say none.
+ */
+function slipRoadOf(description: string | undefined): "exit" | "entry" | "connector" | undefined {
+  const kinds = new Set<"exit" | "entry" | "connector">();
+  for (const raw of (description ?? "").split("\n")) {
+    const line = raw.trim();
+    if (!SLIP_ROAD_LOCATION_RES.some((re) => re.test(line))) continue;
+    const entry = line.includes("Auffahrt auf die");
+    const exit = line.includes("Abfahrt von der");
+    if (entry && exit) return undefined;
+    kinds.add(entry ? "entry" : exit ? "exit" : "connector");
+  }
+  return kinds.size === 1 ? [...kinds][0] : undefined;
+}
+
 function locatedOn(description: string | undefined): "slip_road" | "carriageway" | undefined {
   const lines = (description ?? "").split("\n").map((line) => line.trim());
   if (lines.some((line) => SLIP_ROAD_LOCATION_RES.some((re) => re.test(line)))) return "slip_road";
@@ -529,6 +548,8 @@ export function parseAutobahn(
       if (roads[0]) {
         if (typeof impact?.lower === "string") roads[0].from = impact.lower;
         if (typeof impact?.upper === "string") roads[0].to = impact.upper;
+        const slipRoad = located === "slip_road" ? slipRoadOf(description) : undefined;
+        if (slipRoad) roads[0].carriageway = slipRoad;
       }
 
       const event: RoadEvent = {

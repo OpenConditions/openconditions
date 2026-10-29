@@ -408,6 +408,42 @@ describe("bindRecords", () => {
       expect((await bindRecords(sql, [id("ramp")], { now })).skippedUnchanged).toBe(2);
     });
 
+    it("binds the entry its location says it closes, where the location starts after the merge", async () => {
+      // Drawn along way 10 only, from 70 m after ramp 30 merges.
+      const afterMerge = (local: string, carriageway?: string) => {
+        const draft = onRamp(local, "ramp");
+        const location = draft.location as Rec;
+        return {
+          ...draft,
+          location: {
+            ...location,
+            roads: [{ ref: "A 46", ...(carriageway ? { carriageway } : {}) }],
+            geometry: {
+              type: "LineString",
+              coordinates: [
+                [6.801, 51.2],
+                [6.806, 51.2],
+              ],
+            },
+          },
+        };
+      };
+      await writeSituations(sql, "de-autobahn-events", [
+        afterMerge("entry", "entry"),
+        afterMerge("unsaid"),
+      ]);
+      await bindRecords(sql, [id("entry"), id("unsaid")], { now });
+      expect(await spans(id("entry"), "entry/closure")).toEqual(["30:f"]);
+      expect(await spans(id("unsaid"), "unsaid/closure")).toEqual([]);
+      const own = await sql<{ record_id: string; status: string; reason: string | null }[]>`
+        SELECT record_id, status, reason FROM conditions.record_binding
+         WHERE record_id IN (${id("entry")}, ${id("unsaid")}) AND effect_id <> '' ORDER BY record_id`;
+      expect(own).toEqual([
+        { record_id: id("entry"), status: "likely", reason: null },
+        { record_id: id("unsaid"), status: "unresolved", reason: "no_slip_road" },
+      ]);
+    });
+
     it("drops the closure's own binding once it closes the road", async () => {
       await writeSituations(sql, "de-autobahn-events", [onRamp("widened", "ramp")]);
       await bindRecords(sql, [id("widened")], { now });

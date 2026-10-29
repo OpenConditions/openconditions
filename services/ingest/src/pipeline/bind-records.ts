@@ -202,6 +202,15 @@ function roadsOf(location: Rec | null): { ref?: string; name?: string }[] {
   }));
 }
 
+/** The slip road a location says it lies on (`roads[].carriageway`), when it names one only. */
+function slipRoadOf(location: Rec | null): "exit" | "entry" | undefined {
+  const roads = (location?.["roads"] as Rec[] | undefined) ?? [];
+  const named = new Set(roads.map((r) => r["carriageway"]).filter((c) => c !== undefined));
+  if (named.size !== 1) return undefined;
+  const [carriageway] = named;
+  return carriageway === "exit" || carriageway === "entry" ? carriageway : undefined;
+}
+
 /** The texts of a record's localized strings (`[{ lang, text }]`). */
 function textsOf(...values: unknown[]): string[] {
   return values.flatMap((v) =>
@@ -244,7 +253,7 @@ function inputHash(input: BindInput, effectKinds: readonly string[]): string {
     .update("|")
     .update(JSON.stringify(input.travel ?? null))
     .update("|")
-    .update(input.slipRoadOnly ? "slip" : "")
+    .update(input.slipRoadOnly ? `slip${input.slipRoad ? `:${input.slipRoad}` : ""}` : "")
     .update("|")
     .update([...effectKinds].sort().join(","))
     .digest("hex");
@@ -276,6 +285,7 @@ function targetsOf(row: SituationRow): Target[] {
       location?.["direction"] as StatedDirection | undefined,
       effectDirection ?? undefined,
     );
+    const slipRoad = slipRoadOnly ? slipRoadOf(location) : undefined;
     const input = toBindInput({
       id: effectId === "" ? row.id : `${row.id}#${effectId}`,
       geometry,
@@ -285,6 +295,7 @@ function targetsOf(row: SituationRow): Target[] {
       ...(direction !== undefined ? { direction } : {}),
       ...(travel !== undefined ? { travel } : {}),
       slipRoadOnly,
+      ...(slipRoad !== undefined ? { slipRoad } : {}),
     });
     return {
       recordId: row.id,

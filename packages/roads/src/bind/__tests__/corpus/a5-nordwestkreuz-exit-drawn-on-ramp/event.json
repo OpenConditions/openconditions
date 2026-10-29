@@ -1,0 +1,17 @@
+{
+  "id": "de-autobahn-events:2023-000361--vi-fbm.2026-10-30_20-00-00-000.devi-zus.2025-03-01_09-30-00-000.f_001.de50#2023-000361--vi-fbm.2026-10-30_20-00-00-000.devi-zus.2025-03-01_09-30-00-000.f_001.de50/closure",
+  "geometry": {
+    "type": "LineString",
+    "coordinates": [
+      [8.592213884, 50.1377883],
+      [8.592021, 50.137539001],
+      [8.5917204, 50.137163501],
+      [8.591529198, 50.137012877]
+    ]
+  },
+  "type": "closure",
+  "refs": ["A5"],
+  "direction": "AK Nordwestkreuz Frankfurt am Main (aus Richtung Taunusblick)",
+  "slipRoadOnly": true,
+  "slipRoad": "exit"
+}

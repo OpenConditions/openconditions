@@ -1,0 +1,12 @@
+{
+  "status": "likely",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "18825686:f",
+      "startFraction": 0,
+      "endFraction": 0.34
+    }
+  ],
+  "why": "Junction case: the exit from the A14 (aus Richtung Birkenwald) at AS Leipzig-Nord is closed; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn/A14/services/closure), fetched 2026-10-29, closure id 2026-055616--vi-fbm.2026-11-03_09-00-00-000.devi-bs.2026-11-03_09-00-00-000_007.de0, display_type CLOSURE_ENTRY_EXIT, location 'Von A14: Leipzig -> Halle, zwischen 2.0 km hinter Birkenwald und AS Schkeuditz nach Abfahrt von der A14: AS Leipzig-Nord (aus Richtung Birkenwald)'. spine frozen from Overpass on 2026-10-30 via bind:spine. The source line runs along the A14 carriageway (ways 318488917, 699096260, 699096259, 318488925, highway=motorway, ref='A 14') and never onto the ramp. 18825686 (highway=motorway_link, destination 'Leipzig-Nord;Radefeld;Porsche-Werk;GVZ') starts at the motorway_junction node 'Leipzig-Nord' (ref 22), the end of 699096259, inside the line's path and the only slip road leaving there. Its first 30 m are bound; the carriageway stays open."
+}

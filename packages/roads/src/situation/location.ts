@@ -179,6 +179,7 @@ function roadRefOf(road: RoadRef): Record<string, unknown> | undefined {
   if (cls) out["class"] = cls;
   if (road.from?.trim()) out["from"] = road.from.trim();
   if (road.to?.trim()) out["to"] = road.to.trim();
+  if (road.carriageway) out["carriageway"] = road.carriageway;
   if (road.milepostFrom !== undefined) out["milepostFrom"] = road.milepostFrom;
   if (road.milepostTo !== undefined) out["milepostTo"] = road.milepostTo;
   return Object.keys(out).length > 0 ? out : undefined;
