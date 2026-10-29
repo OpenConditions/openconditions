@@ -159,8 +159,8 @@ const SLIP_ROAD_LOCATION_RES = [
  * ("Von K1 (Deichstraße) nach A31: …") is a slip road's.
  */
 const CARRIAGEWAY_LOCATION_RES = [
-  /^[AB]\s?\d+\w*(?:\/[AB]\s?\d+\w*)*:\s/,
-  /^Von\s+[AB]\s?\d+\w*:[^;]*\snach\s+[AB]\s?\d+\w*:\s/,
+  /^[AB]\s?\d\w*(?:\/[AB]\s?\d\w*)*:\s/,
+  /^Von\s+[AB]\s?\d\w*:[^;]*\snach\s+[AB]\s?\d\w*:\s/,
 ];
 
 /**
