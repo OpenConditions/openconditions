@@ -3,11 +3,14 @@ import { join } from "node:path";
 import {
   createFetchState,
   type FeedEndpoint,
+  feedSecretValues,
   fetchEndpoint,
   guardedFetch,
   guardOptionsFromEnv,
   type LookupFn,
   type RecordDraft,
+  redactSecrets,
+  redactUrl,
   resolveAttribution,
 } from "@openconditions/ingest-framework";
 import { isVehicleSpecific, situationEffects } from "@openconditions/model";
@@ -129,7 +132,11 @@ function feedUrlsOf(endpoint: FeedEndpoint | undefined): string[] {
 }
 
 /** Record each response's validators without buffering its body twice. */
-function recordingFetch(inner: typeof fetch, into: RequestRecord[]): typeof fetch {
+function recordingFetch(
+  inner: typeof fetch,
+  into: RequestRecord[],
+  safeUrl: (url: string) => string,
+): typeof fetch {
   return (async (input: Parameters<typeof fetch>[0], init?: Parameters<typeof fetch>[1]) => {
     const response = await inner(input, init);
     const url =
@@ -140,7 +147,7 @@ function recordingFetch(inner: typeof fetch, into: RequestRecord[]): typeof fetc
           : (input as Request).url;
     const length = response.headers.get("content-length");
     into.push({
-      url,
+      url: safeUrl(url),
       status: response.status,
       etag: response.headers.get("etag"),
       lastModified: response.headers.get("last-modified"),
@@ -179,9 +186,11 @@ export async function runRestrictionSmoke(
   await mkdir(options.outputDir, { recursive: true });
 
   const requests: RequestRecord[] = [];
+  const secrets = feedSecretValues(feed);
+  const safeUrl = (url: string) => redactSecrets(redactUrl(url), secrets);
   const baseFetch = deps.fetch ?? (undiciFetch as unknown as typeof fetch);
   const guarded = guardedFetch(
-    recordingFetch(baseFetch, requests),
+    recordingFetch(baseFetch, requests, safeUrl),
     guardOptionsFromEnv(),
     {},
     deps.lookup,
@@ -189,6 +198,14 @@ export async function runRestrictionSmoke(
   const acquired = await fetchEndpoint(feed, "main", guarded, {
     state: createFetchState(),
     resolvers: domainOf(feed).resolvers,
+  }).catch((error: unknown) => {
+    let message = "smoke acquisition failed";
+    try {
+      message = error instanceof Error ? error.message : String(error);
+    } catch {
+      // An unprintable failure must still reject without exposing its original object.
+    }
+    throw new Error(redactSecrets(message, secrets));
   });
   if (acquired.status !== "fetched") {
     throw new Error(`smoke acquisition: ${acquired.status}`);

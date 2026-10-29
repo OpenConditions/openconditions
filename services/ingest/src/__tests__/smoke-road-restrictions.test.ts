@@ -1,9 +1,11 @@
 import { readFileSync } from "node:fs";
-import { mkdtemp, readFile, rm } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { gzipSync } from "node:zlib";
-import type { LookupFn } from "@openconditions/ingest-framework";
+import { type LookupFn, readCatalogDir } from "@openconditions/ingest-framework";
+import { roadsDomain } from "@openconditions/roads";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { runRestrictionSmoke } from "../ops/smoke-road-restrictions.js";
 
@@ -51,16 +53,121 @@ function serve(payload: unknown, opts: { failWeights?: boolean } = {}): typeof f
 }
 
 let outputDir: string;
+let savedEnv: NodeJS.ProcessEnv | undefined;
+
+async function credentialFixture(kind: "bearer" | "query-key", value: string) {
+  const catalogue = readCatalogDir(
+    fileURLToPath(new URL("../../../../feeds", import.meta.url)),
+    [roadsDomain],
+    { otherDomains: "ignore" },
+  );
+  const original = catalogue.files
+    .find((file) => file.region === "fi")!
+    .feeds.find((feed) => feed.operator === "digitraffic" && feed.product === "events")!;
+  const feed = structuredClone(original);
+  feed.credentials = { api_key: { title: "Owned test key" } };
+  feed.auth =
+    kind === "bearer"
+      ? { kind, credential: "api_key" }
+      : { kind, param: "api_key", credential: "api_key" };
+  const mount = join(outputDir, "catalogue");
+  await mkdir(join(mount, "roads"), { recursive: true });
+  await writeFile(
+    join(mount, "roads", "fi.jsonc"),
+    JSON.stringify({ $schema: "../schema/roads.schema.json", feeds: [feed] }),
+  );
+  savedEnv = process.env;
+  process.env = {
+    OPENCONDITIONS_FEEDS_DIR: mount,
+    OPENCONDITIONS_FEEDS_REMOTE_ENABLED: "false",
+    FI_DIGITRAFFIC_EVENTS_API_KEY: value,
+  };
+}
 
 beforeEach(async () => {
   outputDir = await mkdtemp(join(tmpdir(), "oc-smoke-"));
 });
 
 afterEach(async () => {
+  if (savedEnv) process.env = savedEnv;
+  savedEnv = undefined;
   await rm(outputDir, { recursive: true, force: true });
 });
 
 describe("runRestrictionSmoke", () => {
+  it("redacts a declared credential from real header-validation failures", async () => {
+    const secret = "smoke-owned-header-value\nsecond-sensitive-part";
+    await credentialFixture("bearer", secret);
+    let transportCalls = 0;
+    const error = await runRestrictionSmoke(
+      { sourceId: "fi-digitraffic-events", outputDir },
+      {
+        fetch: async () => {
+          transportCalls++;
+          throw new Error("unexpected transport");
+        },
+        lookup: fakeLookup,
+        now: () => CHECKED_AT,
+      },
+    ).catch((failure: unknown) => failure);
+    expect(transportCalls).toBe(0);
+    expect(error).toBeInstanceOf(Error);
+    const failure = error as Error;
+    expect(failure.message).toContain("invalid header value");
+    expect(failure.message).not.toContain(secret);
+    expect(failure.message).toContain("***");
+    expect(failure.stack).not.toContain(secret);
+    expect(failure.cause).toBeUndefined();
+  });
+
+  it("keeps query credentials on requests but out of the shared smoke report", async () => {
+    const secret = "smoke-owned-query-value";
+    await credentialFixture("query-key", secret);
+    const outgoing: string[] = [];
+    const inner = serve(roadworks());
+    const report = await runRestrictionSmoke(
+      { sourceId: "fi-digitraffic-events", outputDir },
+      {
+        fetch: async (input, init) => {
+          outgoing.push(String(input));
+          return inner(input, init);
+        },
+        lookup: fakeLookup,
+        now: () => CHECKED_AT,
+      },
+    );
+    expect(report.snapshot.accepted).toBe(5);
+    expect(outgoing).toHaveLength(4);
+    expect(outgoing.every((url) => new URL(url).searchParams.get("api_key") === secret)).toBe(true);
+    expect(report.requests).toHaveLength(4);
+    expect(
+      report.requests.every(
+        (request) => new URL(request.url).searchParams.get("api_key") === "***",
+      ),
+    ).toBe(true);
+    expect(JSON.stringify(report)).not.toContain(secret);
+    expect(await readFile(join(outputDir, "report.json"), "utf8")).not.toContain(secret);
+  });
+
+  it("still rejects an unprintable acquisition failure with a safe diagnostic", async () => {
+    await credentialFixture("bearer", "smoke-owned-bearer-value");
+    let transportCalls = 0;
+    const error = await runRestrictionSmoke(
+      { sourceId: "fi-digitraffic-events", outputDir },
+      {
+        fetch: async () => {
+          transportCalls++;
+          throw Object.create(null);
+        },
+        lookup: fakeLookup,
+        now: () => CHECKED_AT,
+      },
+    ).catch((failure: unknown) => failure);
+    expect(transportCalls).toBeGreaterThan(0);
+    expect(error).toBeInstanceOf(Error);
+    expect((error as Error).message).toBe("smoke acquisition failed");
+  });
+
   it("accounts for a four-partition run and reports the verified restrictions", async () => {
     const report = await runRestrictionSmoke(
       { sourceId: "fi-digitraffic-events", outputDir },
