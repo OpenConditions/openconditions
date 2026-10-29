@@ -946,6 +946,12 @@
                 "type": "string",
                 "minLength": 1
               },
+              "display": {
+                "type": [
+                  "boolean",
+                  "null"
+                ]
+              },
               "redistribution": {
                 "type": [
                   "boolean",

@@ -53,6 +53,40 @@ describe("lintCatalog", () => {
     expect(lintCatalog([file([def()])], NO_SHARED, [testDomain], NOW)).toEqual([]);
   });
 
+  describe("licence evidence", () => {
+    const reviewed = { url: "https://example.test/licence", reviewedAt: "2026-10-01" };
+    const lint = (feeds: FeedDefinition[], pending: string[]) =>
+      lintCatalog([file(feeds)], NO_SHARED, [testDomain], NOW, new Set(pending)).map(
+        (i) => `${i.feedId ?? ""}: ${i.message}`,
+      );
+
+    test("a feed needs evidence unless the pending list names it", () => {
+      expect(lint([def()], [])).toEqual([
+        "de-op-events: no licence evidence: set terms.url to the publisher's statement of its licence or terms and terms.reviewedAt to the date it was read",
+      ]);
+      expect(lint([def()], ["de-op-events"])).toEqual([]);
+      expect(lint([def({ terms: reviewed })], [])).toEqual([]);
+    });
+
+    test("a reviewed feed, an unknown id or a disabled feed leaves the list", () => {
+      expect(lint([def({ terms: reviewed })], ["de-op-events"])).toEqual([
+        "de-op-events: has licence evidence; remove it from feeds/rights-pending-review.json",
+      ]);
+      expect(lint([def({ terms: reviewed })], ["de-gone-events"])).toEqual([
+        "de-gone-events: names no enabled feed; remove it",
+      ]);
+      const disabled = def({ disabled: { reason: "paused", since: "2026-10-01" } });
+      expect(lint([disabled], ["de-op-events"])).toEqual([
+        "de-op-events: names no enabled feed; remove it",
+      ]);
+      expect(lint([disabled], [])).toEqual([]);
+    });
+
+    test("without a list, evidence is not checked", () => {
+      expect(lintCatalog([file([def()])], NO_SHARED, [testDomain], NOW)).toEqual([]);
+    });
+  });
+
   test("lint flags an unreferenced credential and a lone shared group", () => {
     const issues = lintCatalog(filesOf("unused-credential"), credentialsOf("lone-group"), [
       testDomain,

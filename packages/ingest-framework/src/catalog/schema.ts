@@ -374,6 +374,7 @@ export const feedTermsSchema = z
     reviewedAt: z.union([z.iso.date(), z.iso.datetime({ offset: true })]).optional(),
     note: z.string().min(1).optional(),
     notice: z.string().min(1).optional(),
+    display: z.boolean().nullable().optional(),
     redistribution: z.boolean().nullable().optional(),
     derivedRedistribution: z.boolean().nullable().optional(),
     commercialUse: z.boolean().nullable().optional(),
@@ -383,6 +384,9 @@ export const feedTermsSchema = z
   .strict()
   .refine((t) => t.url !== undefined || t.note !== undefined || t.notice !== undefined, {
     message: "terms need a url, a note or a notice",
+  })
+  .refine((t) => t.reviewedAt === undefined || t.url !== undefined, {
+    message: "a review date needs the url of the statement it reviewed",
   });
 
 /**

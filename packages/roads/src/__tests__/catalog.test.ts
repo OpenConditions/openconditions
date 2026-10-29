@@ -290,6 +290,7 @@ describe("NDW", () => {
       reviewedAt: "2026-09-12",
     });
     expect(ndw.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -365,6 +366,7 @@ describe("Digitraffic and Fintraffic", () => {
     expect(f.attribution).toBe("Fintraffic / Digitraffic");
     expect(f.country).toBe("FI");
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -581,6 +583,7 @@ describe("one feed per publisher", () => {
       reviewedAt: "2026-10-29",
     });
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -595,6 +598,7 @@ describe("one feed per publisher", () => {
     expect(f.license).toBe("etalab-2.0");
     expect(f.country).toBe("FR");
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -613,6 +617,7 @@ describe("one feed per publisher", () => {
     expect(f.license).toBe("CC0-1.0");
     expect(f.country).toBe("LU");
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,

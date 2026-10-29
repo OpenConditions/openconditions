@@ -26,6 +26,7 @@ describe("licence registry", () => {
 
   it("NOASSERTION asserts nothing", () => {
     expect(licenseInfo("NOASSERTION")).toMatchObject({
+      display: null,
       redistribution: null,
       derivedRedistribution: null,
       commercialUse: null,

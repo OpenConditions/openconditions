@@ -1,6 +1,6 @@
 import type { z } from "zod";
 import type { credentialFieldSchema, endpointSchema, feedBaseShape } from "./schema.js";
-import type { EffectiveRights } from "./terms.js";
+import type { EffectiveRights, LicenseEvidence, Permissions } from "./terms.js";
 
 export type FeedDefinition = z.input<z.ZodObject<typeof feedBaseShape>>;
 export type FeedEndpoint = z.input<typeof endpointSchema>;
@@ -24,6 +24,10 @@ export interface CatalogFeed extends FeedDefinition {
   file: string;
   maintainers: Maintainer[];
   rights: EffectiveRights;
+  /** The publisher's statement the rights rest on; null while the claim is unchecked. */
+  evidence: LicenseEvidence | null;
+  /** Each use's permission, from `rights` and `evidence`; see `permissionsOf`. */
+  permissions: Permissions;
   /** The written homepage, else the origin of the first data endpoint; never carries a credential. */
   homepage: string;
   /** Withheld from the public scope; see `isRestricted`. */

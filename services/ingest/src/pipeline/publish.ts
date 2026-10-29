@@ -52,19 +52,22 @@ function reviewInstant(value: string | undefined): string | null {
 }
 
 /**
- * A feed's rights as records carry them: each grant of its licence and terms,
- * the evidence they rest on (the terms page, else the licence's; the licence
- * id) and when the terms were reviewed.
+ * A feed's rights as records carry them: the permission for each use (a grant
+ * resting on checked evidence is `yes`, an unchecked one `unknown`, a denial
+ * `no`), whether credit is required, the evidence the rights rest on (the
+ * terms page, else the licence's; the licence id) and when the terms were
+ * reviewed.
  */
 export function routingRightsOf(
-  src: Pick<CatalogFeed, "rights" | "terms" | "license" | "licenseUrl">,
+  src: Pick<CatalogFeed, "rights" | "permissions" | "terms" | "license" | "licenseUrl">,
 ): RoutingRights {
   return {
-    source_redistribution: grantState(src.rights.redistribution),
-    derived_redistribution: grantState(src.rights.derivedRedistribution),
-    commercial_use: grantState(src.rights.commercialUse),
+    source_redistribution: src.permissions.redistribute,
+    derived_redistribution: src.permissions.derive,
+    commercial_use: src.permissions.commercial,
+    // An obligation, not a use: what the licence asks for holds either way.
     attribution_required: grantState(src.rights.attributionRequired),
-    retention: grantState(src.rights.retention),
+    retention: src.permissions.retain,
     evidence_origin: src.terms?.url ?? src.licenseUrl ?? null,
     evidence_version: src.license,
     reviewed_at: reviewInstant(src.terms?.reviewedAt),

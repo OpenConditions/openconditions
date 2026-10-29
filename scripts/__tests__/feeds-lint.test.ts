@@ -19,12 +19,22 @@ describe("feeds:lint", () => {
     const dir = mkdtempSync(join(tmpdir(), "feeds-lint-"));
     dirs.push(dir);
     mkdirSync(join(dir, "roads"));
+    writeFileSync(join(dir, "rights-pending-review.json"), '{ "feeds": [] }');
     writeFileSync(join(dir, "roads", "nl.jsonc"), '{ "feeds": [ }');
     expect(lintFeeds(dir).errors.join("\n")).toMatch(/nl\.jsonc:1:/);
 
     writeFileSync(join(dir, "roads", "nl.jsonc"), '{ "feeds": [] }');
     expect(lintFeeds(dir).errors).toEqual([
       `${join(dir, "roads", "nl.jsonc")}: $schema must be "../schema/roads.schema.json"`,
+    ]);
+  });
+
+  it("refuses a pending-review list that is unsorted or repeats an id", () => {
+    const dir = mkdtempSync(join(tmpdir(), "feeds-lint-"));
+    dirs.push(dir);
+    writeFileSync(join(dir, "rights-pending-review.json"), '{ "feeds": ["b", "a"] }');
+    expect(lintFeeds(dir).errors).toEqual([
+      "feeds/rights-pending-review.json: feeds must be sorted and unique",
     ]);
   });
 });

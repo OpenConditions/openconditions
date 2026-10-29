@@ -3,6 +3,7 @@ import { rawTierFor } from "../raw/tiers.js";
 import { testFeed } from "./helpers/catalog.js";
 
 const rights = (retention: boolean | null) => ({
+  display: true,
   redistribution: true,
   derivedRedistribution: true,
   commercialUse: true,

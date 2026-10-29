@@ -10,6 +10,8 @@ export interface LicenseInfo {
   id: string;
   name: string;
   url: string;
+  /** Showing the data, unchanged and credited, to an application's users. */
+  display: boolean | null;
   redistribution: boolean | null;
   derivedRedistribution: boolean | null;
   commercialUse: boolean | null;
@@ -23,6 +25,7 @@ const open = (
   i: Pick<LicenseInfo, "id" | "name" | "url"> &
     Partial<Pick<LicenseInfo, "attributionRequired" | "shareAlike">>,
 ): LicenseInfo => ({
+  display: true,
   redistribution: true,
   derivedRedistribution: true,
   commercialUse: true,
@@ -37,6 +40,7 @@ export const LICENSES: readonly LicenseInfo[] = [
     id: "NOASSERTION",
     name: "Rights not verified",
     url: "https://spdx.org/licenses/",
+    display: null,
     redistribution: null,
     derivedRedistribution: null,
     commercialUse: null,
@@ -107,6 +111,7 @@ export const LICENSES: readonly LicenseInfo[] = [
     id: "LicenseRef-National-Highways-Transport-Data-Feeds",
     name: "National Highways Transport Data Feeds Licence (OGL v2.0 with NH amendments)",
     url: "https://developer.data.nationalhighways.co.uk/terms",
+    display: true,
     redistribution: true,
     derivedRedistribution: true,
     commercialUse: true,
@@ -138,6 +143,7 @@ export const LICENSES: readonly LicenseInfo[] = [
     id: "LicenseRef-511NY-DAA",
     name: "511NY Developer Access Agreement",
     url: "https://511ny.org/help/24",
+    display: true,
     redistribution: true,
     derivedRedistribution: true,
     commercialUse: null,

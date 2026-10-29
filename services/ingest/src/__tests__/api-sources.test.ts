@@ -194,6 +194,14 @@ describe("GET /sources", () => {
       }),
       url: crowd.url,
       rights: expect.objectContaining({ shareAlike: true, attributionRequired: true }),
+      // The operator declares its own reports' licence: its grants are established.
+      permissions: {
+        display: "yes",
+        redistribute: "yes",
+        derive: "yes",
+        retain: "yes",
+        commercial: "yes",
+      },
     });
   });
 

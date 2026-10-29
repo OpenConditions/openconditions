@@ -30,6 +30,7 @@ function feed(partial: Partial<CatalogFeed>): CatalogFeed {
     attribution: "a",
     privacyUrl: "https://p",
     rights: {
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,

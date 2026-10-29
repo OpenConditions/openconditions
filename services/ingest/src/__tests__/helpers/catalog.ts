@@ -5,6 +5,7 @@
 import {
   type CatalogFeed,
   type FeedDefinition,
+  permissionsOf,
   toCatalogFeed,
 } from "@openconditions/ingest-framework";
 import { loadIngestCatalog } from "../../domains.js";
@@ -30,6 +31,8 @@ const DEFINITION: FeedDefinition = {
   endpoints: { main: { url: "https://example.test/feed", cadenceSec: 300 } },
   freshnessWindowSec: 900,
   license: "CC0-1.0",
+  // A reviewed feed, so its grants are established, as most suites assume.
+  terms: { url: "https://example.test/licence", reviewedAt: "2026-10-01" },
   attribution: "test",
   privacyUrl: "https://example.test/privacy",
 };
@@ -46,5 +49,9 @@ export function testFeed(over: Partial<CatalogFeed> & Record<string, unknown> = 
     file: "feeds/roads/lu.jsonc",
     maintainers: [],
   });
-  return { ...derived, ...over } as CatalogFeed;
+  const feed = { ...derived, ...over } as CatalogFeed;
+  // Rights given without their permissions keep the two consistent.
+  if (over.rights && !over.permissions)
+    feed.permissions = permissionsOf(feed.rights, feed.evidence);
+  return feed;
 }

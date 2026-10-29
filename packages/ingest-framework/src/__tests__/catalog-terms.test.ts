@@ -5,8 +5,17 @@ import {
   effectiveRights,
   type FeedTerms,
   isRestricted,
+  type LicenseEvidence,
+  licenseEvidence,
+  permissionsOf,
 } from "../catalog/terms.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
+
+/** A checked statement, for tests about what a licence itself grants. */
+const CHECKED: LicenseEvidence = {
+  url: "https://publisher.example/terms",
+  reviewedAt: "2026-10-29",
+};
 
 describe("effective rights", () => {
   it("an open licence admits catalogue children", () => {
@@ -56,17 +65,41 @@ describe("effective rights", () => {
   });
 
   it("a share-alike, unknown or unstated licence restricts a feed", () => {
-    expect(isRestricted(effectiveRights("ODbL-1.0"))).toBe(true);
-    expect(isRestricted(effectiveRights("NOASSERTION"))).toBe(true);
+    expect(isRestricted(effectiveRights("ODbL-1.0"), CHECKED)).toBe(true);
+    expect(isRestricted(effectiveRights("NOASSERTION"), CHECKED)).toBe(true);
     expect(
-      isRestricted(effectiveRights("CC-BY-4.0", { url: "https://x", redistribution: false })),
+      isRestricted(
+        effectiveRights("CC-BY-4.0", { url: "https://x", redistribution: false }),
+        CHECKED,
+      ),
     ).toBe(true);
-    expect(isRestricted(effectiveRights("CC-BY-4.0"))).toBe(false);
+    expect(isRestricted(effectiveRights("CC-BY-4.0"), CHECKED)).toBe(false);
   });
 
   it("toCatalogFeed marks a restricted feed", () => {
-    expect(catalogFeed({ license: "ODbL-1.0" }).restricted).toBe(true);
-    expect(catalogFeed({ license: "CC-BY-4.0" }).restricted).toBe(false);
+    const terms = { url: CHECKED.url, reviewedAt: CHECKED.reviewedAt };
+    expect(catalogFeed({ license: "ODbL-1.0", terms }).restricted).toBe(true);
+    expect(catalogFeed({ license: "CC-BY-4.0", terms }).restricted).toBe(false);
+    // An open licence nobody has checked the publisher states is only a claim.
+    expect(catalogFeed({ license: "CC-BY-4.0" }).restricted).toBe(true);
+  });
+
+  it("toCatalogFeed carries the evidence and each use's permission", () => {
+    const checked = catalogFeed({
+      license: "CC-BY-4.0",
+      terms: { url: CHECKED.url, reviewedAt: CHECKED.reviewedAt },
+    });
+    expect(checked.evidence).toEqual(CHECKED);
+    expect(checked.permissions).toEqual({
+      display: "yes",
+      redistribute: "yes",
+      derive: "yes",
+      retain: "yes",
+      commercial: "yes",
+    });
+    const unchecked = catalogFeed({ license: "CC-BY-4.0" });
+    expect(unchecked.evidence).toBeNull();
+    expect(unchecked.permissions.derive).toBe("unknown");
   });
 
   it("CC-BY-3.0-AT, CC-BY-3.0-DE and the Flemish and Swiss licences are public", () => {
@@ -77,7 +110,7 @@ describe("effective rights", () => {
       "LicenseRef-opentransportdata-swiss-ToU",
     ]) {
       const rights = effectiveRights(id);
-      expect(isRestricted(rights), id).toBe(false);
+      expect(isRestricted(rights, CHECKED), id).toBe(false);
       expect(rights.attributionRequired, id).toBe(true);
     }
   });
@@ -88,7 +121,7 @@ describe("effective rights", () => {
       "LicenseRef-Caltrans-Conditions-of-Use",
       "LicenseRef-ODOT-TripCheck",
     ]) {
-      expect(isRestricted(effectiveRights(id)), id).toBe(false);
+      expect(isRestricted(effectiveRights(id), CHECKED), id).toBe(false);
     }
     expect(effectiveRights("LicenseRef-Caltrans-Conditions-of-Use").attributionRequired).toBe(
       false,
@@ -100,7 +133,7 @@ describe("effective rights", () => {
   it("the hazard licences resolve open with attribution", () => {
     for (const id of ["LicenseRef-ECCC-Data-Servers-End-use", "LicenseRef-MeteoAlarm-Terms"]) {
       const rights = effectiveRights(id);
-      expect(isRestricted(rights), id).toBe(false);
+      expect(isRestricted(rights, CHECKED), id).toBe(false);
       expect(rights.attributionRequired, id).toBe(true);
       expect(rights.commercialUse, id).toBe(true);
     }
@@ -112,7 +145,46 @@ describe("effective rights", () => {
     expect(feedTermsSchema.parse({ notice }).notice).toBe(notice);
     expect(feedTermsSchema.safeParse({ notice: "" }).success).toBe(false);
     const terms: FeedTerms = { url: "https://x", notice, redistribution: false };
-    expect(isRestricted(effectiveRights("LicenseRef-MeteoAlarm-Terms", terms))).toBe(true);
+    expect(isRestricted(effectiveRights("LicenseRef-MeteoAlarm-Terms", terms), CHECKED)).toBe(true);
+  });
+
+  it("evidence needs both the statement's url and the date it was read", () => {
+    expect(licenseEvidence(undefined)).toBeNull();
+    expect(licenseEvidence({ url: "https://x" })).toBeNull();
+    expect(licenseEvidence({ url: "https://x", reviewedAt: "2026-10-29" })).toEqual({
+      url: "https://x",
+      reviewedAt: "2026-10-29",
+    });
+    expect(feedTermsSchema.safeParse({ reviewedAt: "2026-10-29", note: "n" }).success).toBe(false);
+  });
+
+  it("a grant is a permission only on checked evidence; a denial always is", () => {
+    const display = { url: "https://x", reviewedAt: "2026-10-29", redistribution: false };
+    const rights = effectiveRights("CC-BY-4.0", display);
+    expect(permissionsOf(rights, CHECKED)).toMatchObject({ display: "yes", redistribute: "no" });
+    expect(permissionsOf(rights, null)).toMatchObject({ display: "unknown", redistribute: "no" });
+    expect(permissionsOf(effectiveRights("NOASSERTION"), CHECKED)).toEqual({
+      display: "unknown",
+      redistribute: "unknown",
+      derive: "unknown",
+      retain: "unknown",
+      commercial: "unknown",
+    });
+  });
+
+  it("terms can allow display while refusing redistribution and derived products", () => {
+    const r = effectiveRights("NOASSERTION", {
+      url: "https://x",
+      display: true,
+      redistribution: false,
+      derivedRedistribution: false,
+    });
+    expect(permissionsOf(r, CHECKED)).toMatchObject({
+      display: "yes",
+      redistribute: "no",
+      derive: "no",
+    });
+    expect(isRestricted(r, CHECKED)).toBe(true);
   });
 
   it("licence lookup is exact", () => {
@@ -124,7 +196,7 @@ describe("effective rights", () => {
 describe("charging licences", () => {
   it("opendata.swiss terms allow redistribution but not commercial use, and do not restrict", () => {
     const r = effectiveRights("LicenseRef-opendata-swiss-terms-by-ask");
-    expect(isRestricted(r)).toBe(false);
+    expect(isRestricted(r, CHECKED)).toBe(false);
     expect(r.commercialUse).toBe(false);
     expect(r.redistribution).toBe(true);
     expect(r.attributionRequired).toBe(true);
@@ -137,7 +209,7 @@ describe("charging licences", () => {
     "LicenseRef-HK-CSDI-ToU",
   ])("%s is open and unrestricted", (id) => {
     const r = effectiveRights(id);
-    expect(isRestricted(r)).toBe(false);
+    expect(isRestricted(r, CHECKED)).toBe(false);
     expect(r.commercialUse).toBe(true);
     expect(r.attributionRequired).toBe(true);
     expect(r.shareAlike).toBe(false);
@@ -147,6 +219,6 @@ describe("charging licences", () => {
 it("keeps NH redistribution public while refusing automatic child admission without retention evidence", () => {
   const rights = effectiveRights("LicenseRef-National-Highways-Transport-Data-Feeds");
   expect(rights.retention).toBeNull();
-  expect(isRestricted(rights)).toBe(false);
+  expect(isRestricted(rights, CHECKED)).toBe(false);
   expect(admitsCatalogChild(rights)).toBe(false);
 });

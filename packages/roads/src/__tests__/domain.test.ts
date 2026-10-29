@@ -241,9 +241,9 @@ describe("roads catalogue resolvers", () => {
     for (const child of wzdxRegistryResolver.snapshot) {
       expect(child.qualifier).toMatch(/^[0-9a-f]{16}$/);
       if (child.license === "NOASSERTION") {
+        // Listed, not reviewed: no review date stands for a grant nobody read.
         expect(child.terms).toEqual({
           note: "WZDx registry metadata (no dataset grant verified)",
-          reviewedAt: "2026-09-11",
         });
       }
     }

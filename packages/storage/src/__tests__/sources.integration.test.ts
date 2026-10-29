@@ -16,6 +16,7 @@ afterAll(async () => {
 }, 30_000);
 
 const RIGHTS = {
+  display: true,
   redistribution: true,
   derivedRedistribution: true,
   commercialUse: true,

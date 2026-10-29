@@ -173,6 +173,7 @@ export function onDemandFeed(operator: string, over: Partial<FeedDefinition> = {
     onDemand: { cellDeg: 0.1, ttlSec: 900, maxCellsPerRead: 4, probe: [8.45, 49.05] },
     coverage: { bbox: COVERAGE },
     license: "CC0-1.0",
+    terms: { url: "https://example.test/licence", reviewedAt: "2026-10-01" },
     attribution: "Test cell stations",
     privacyUrl: "https://example.test/privacy",
     ...over,
