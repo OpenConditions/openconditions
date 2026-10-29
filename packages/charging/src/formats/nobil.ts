@@ -202,7 +202,7 @@ const LANGUAGES: Readonly<Record<string, string>> = { nor: "no", swe: "sv" };
 
 /** `"(59.87447,10.49982)"` as `[lon, lat]`. */
 function pointOf(value: unknown): [number, number] | undefined {
-  const m = (text(value) ?? "").match(/(-?\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
+  const m = (text(value) ?? "").match(/(-?(?<!\d)\d+(?:\.\d+)?)\s*,\s*(-?\d+(?:\.\d+)?)/);
   return m?.[1] === undefined || m[2] === undefined
     ? undefined
     : placeAt(Number(m[1]), Number(m[2]));
@@ -262,8 +262,8 @@ interface Capacity {
   maxAmperage?: number;
 }
 
-const RATING = /(\d+)\s*V\s*(DC)?\s*(?:(\d)-phase)?\s*max\s*(\d+)\s*A/i;
-const KILOWATTS = /(\d+(?:[.,]\d+)?)\s*kW/i;
+const RATING = /(?<!\d)(\d+)\s*V(?:\s*(DC))?(?:\s*(\d)-phase)?\s*max\s*(\d+)\s*A/i;
+const KILOWATTS = /(?<!\d)(\d+(?:[.,]\d+)?)\s*kW/i;
 
 /**
  * "22 kW - 400V 3-phase max 32A", "50 kW - 500VDC max 100A", "30 kW DC" and
