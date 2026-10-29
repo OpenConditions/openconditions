@@ -34,7 +34,7 @@ Maintainers retain ownership of these qualified residuals and revisit them when 
 
 - Request-cost protection needs an endpoint-specific decision about pre-authentication work, identity, trusted proxies and multiple replicas. Report-submission accounting does not provide generic request throttling. Reassess when routes, topology or admission controls change.
 - Operator PEM, private probe, configured/layout and HTTP Authorization regex findings require their own caller and input-bound analysis. Wire header limits do not establish safety for every library caller. Reassess when input ownership, parsing or deployment exposure changes.
-- The TMC generator's unpinned archive and system extraction path need an explicit integrity, edition, resource and supported-platform contract. Remaining CLI exception paths and scanner-reported property writes need current flow qualification. Reassess changes to download/extraction authority, credential handling, serialization or validation.
+- The TMC generator's unpinned archive and system extraction path need an explicit integrity, edition, resource and supported-platform contract. Remaining CLI exception paths need current flow qualification. Reassess changes to download/extraction authority, credential handling, serialization or validation.
 - Scorecard review and branch-protection scores must be interpreted against the chosen single-maintainer policy. External best-practices certification is a separate owner decision. Reassess policy or detector changes without inventing reviews, certification or accepted risk.
 
 ## Source and artifact acceptance
