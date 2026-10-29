@@ -1,7 +1,6 @@
 {
   "$comment": "Enabled feeds whose licence claim is not yet checked: no terms.url (the publisher's own statement of its licence or terms) with terms.reviewedAt (the date it was read). Their grants count as unknown, so the public scope withholds them and consumers treat them as grey area. feeds:lint fails on a new feed without evidence and on a listed feed that has it. Review a feed, record its evidence, and remove it here.",
   "feeds": [
-    "de-autobahn-events",
     "de-bb-mobilithek-events",
     "de-bw-autobahn-flow",
     "de-bw-autobahn-los-flow",
