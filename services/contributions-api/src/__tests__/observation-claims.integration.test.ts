@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  type ObservationClaim,
   type ReporterKey,
   type SignedReport,
   type SubClaimType,
@@ -19,6 +20,7 @@ import { createTestDatabase, type TestDatabase } from "@openconditions/test-data
 import type { FastifyInstance } from "fastify";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { checkReportRate } from "../abuse/rate.js";
 import { createReportingGrant } from "../attester/grant.js";
 import { sweepCrossValidateObservations } from "../evidence/crossValidateSweep.js";
 import { build } from "../server.js";
@@ -449,6 +451,188 @@ describe("a charge point two sources describe", () => {
     });
     expect([401, 422]).toContain(reviewer.statusCode);
   }, 60_000);
+});
+
+describe("observation report submission quotas", () => {
+  let fixture = 0;
+
+  async function heldReports(count: number, cells = 1) {
+    clock.now = "2026-10-02T08:00:00.000Z";
+    const sites = Array.from({ length: count }, (_, i) => {
+      const id = `quota-${++fixture}`;
+      return chargingSite(
+        {
+          id,
+          source: "quota-test",
+          original_id: id,
+          coordinates: { longitude: 8.4 + (i % cells) * 0.04, latitude: 49 },
+          evses: [{ uid: id, status: "STATIC", last_updated: clock.now }],
+        },
+        clock.now,
+      );
+    });
+    const written = await writeSnapshot(
+      sql,
+      "de-bw-mobidata-charging",
+      {
+        features: sites.map((site) => site.feature),
+      },
+      { registry, instanceId: INSTANCE, complete: false, now: clock.now },
+    );
+    expect(written.rejected).toEqual([]);
+    const authors = await Promise.all(Array.from({ length: Math.ceil(count / 4) }, reporter));
+    const claims = sites.map(
+      (site, i): ObservationClaim =>
+        claimOf({
+          subject: {
+            featureId: site.feature["id"],
+            componentKey: (site.feature["components"] as { key: string }[])[0]!.key,
+          },
+          geometry: (site.feature["location"] as Rec)["geometry"],
+          reportedAt: new Date(Date.parse(clock.now) - (i + 1) * 1000).toISOString(),
+        }),
+    );
+    const ids: string[] = [];
+    for (const [i, claim] of claims.entries()) {
+      const author = authors[Math.floor(i / 4)]!;
+      const response = await post(await signReport(registry, claim, author.key), author.grant);
+      expect(response.statusCode).toBe(200);
+      ids.push(response.json().record.id);
+    }
+    return { claims, ids };
+  }
+
+  it("counts matching submissions per cell, preserves replay, and expires arrival-time counts", async () => {
+    const { claims, ids } = await heldReports(5);
+    const driver = await reporter();
+    const signed = await Promise.all(
+      claims.map((claim) => signReport(registry, claim, driver.key)),
+    );
+    for (const report of signed.slice(0, 4))
+      expect((await post(report, driver.grant)).statusCode).toBe(200);
+    const refused = await post(signed[4]!, driver.grant);
+    expect(refused.statusCode).toBe(429);
+    expect(refused.json().reason).toBe("per-key-cell");
+    expect((await post(signed[0]!, driver.grant)).statusCode).toBe(200);
+    const duplicate = await signReport(registry, { ...claims[0], nonce: nextNonce() }, driver.key);
+    expect((await post(duplicate, driver.grant)).statusCode).toBe(200);
+    const rows =
+      await sql`SELECT evidence_kind, details FROM conditions.report_evidence WHERE actor_key_id = ${driver.key.keyId}`;
+    expect(rows).toHaveLength(4);
+    expect(
+      rows.every((row) => row.evidence_kind === "confirm" && row.details.via === "same-reading"),
+    ).toBe(true);
+    expect((await crowdRow(ids[3]!))!.corroborations).toBe(1);
+    const [reputation] =
+      await sql`SELECT reputation_alpha, reputation_beta FROM conditions.reporter WHERE key_id = ${driver.key.keyId}`;
+    expect(reputation).toMatchObject({ reputation_alpha: 2, reputation_beta: 2 });
+    clock.now = "2026-10-02T08:01:00.000Z";
+    expect((await post(signed[4]!, driver.grant)).statusCode).toBe(200);
+    expect(
+      await checkReportRate(sql, driver.key.keyId, 8.4, 49, clock.now, {
+        windowSec: 60,
+        maxPerKey: 1,
+        maxPerKeyCell: 1,
+      }),
+    ).toEqual({ ok: false, reason: "per-key" });
+  }, 120_000);
+
+  it("shares the per-key ceiling between a new reading and matching readings across cells", async () => {
+    const { claims } = await heldReports(11, 4);
+    const driver = await reporter();
+    const fresh = await signReport(
+      registry,
+      { ...claims[0], reportedAt: clock.now, nonce: nextNonce() },
+      driver.key,
+    );
+    expect((await post(fresh, driver.grant)).statusCode).toBe(200);
+    for (const claim of claims.slice(0, 9))
+      expect(
+        (await post(await signReport(registry, claim, driver.key), driver.grant)).statusCode,
+      ).toBe(200);
+    const refused = await post(await signReport(registry, claims[9]!, driver.key), driver.grant);
+    expect(refused.statusCode).toBe(429);
+    expect(refused.json().reason).toBe("per-key");
+    const rows =
+      await sql`SELECT evidence_kind, count(*)::int AS count FROM conditions.report_evidence WHERE actor_key_id = ${driver.key.keyId} GROUP BY evidence_kind ORDER BY evidence_kind`;
+    expect(rows).toEqual([
+      { evidence_kind: "confirm", count: 9 },
+      { evidence_kind: "report", count: 1 },
+    ]);
+  }, 120_000);
+
+  it("serializes concurrent matching submissions under the same cell quota", async () => {
+    const { claims } = await heldReports(8);
+    const driver = await reporter();
+    const signed = await Promise.all(
+      claims.map((claim) => signReport(registry, claim, driver.key)),
+    );
+    const responses = await Promise.all(signed.map((report) => post(report, driver.grant)));
+    expect(responses.filter((response) => response.statusCode === 200)).toHaveLength(4);
+    expect(
+      responses.filter(
+        (response) => response.statusCode === 429 && response.json().reason === "per-key-cell",
+      ),
+    ).toHaveLength(4);
+    const winner = responses.findIndex((response) => response.statusCode === 200);
+    expect((await post(signed[winner]!, driver.grant)).statusCode).toBe(200);
+    const [row] =
+      await sql`SELECT count(*)::int AS count FROM conditions.report_evidence WHERE actor_key_id = ${driver.key.keyId}`;
+    expect(row!.count).toBe(4);
+  }, 120_000);
+
+  it("excludes explicit confirm, negate and flag votes from report submission counts", async () => {
+    const { claims, ids } = await heldReports(6);
+    const driver = await reporter();
+    for (const [i, id] of ids.slice(0, 5).entries()) {
+      const action = i === 4 ? "negate" : "confirm";
+      const response = await app.inject({
+        method: "POST",
+        url: `/contrib/reports/observation/${encodeURIComponent(id)}/${action}`,
+        payload: {
+          subClaim: await signSubClaim(
+            {
+              subject: { class: "observation", id },
+              claimType: action,
+              reportedAt: clock.now,
+              nonce: nextNonce(),
+            },
+            driver.key,
+          ),
+          reportingGrant: driver.grant,
+        },
+      });
+      expect(response.statusCode).toBe(200);
+    }
+    const flagged = await app.inject({
+      method: "POST",
+      url: `/contrib/reports/observation/${encodeURIComponent(ids[0]!)}/flag`,
+      payload: {
+        subClaim: await signSubClaim(
+          {
+            subject: { class: "observation", id: ids[0]! },
+            claimType: "flag",
+            reportedAt: clock.now,
+            nonce: nextNonce(),
+          },
+          driver.key,
+        ),
+        reportingGrant: driver.grant,
+      },
+    });
+    expect(flagged.statusCode).toBe(200);
+    const rule = { windowSec: 60, maxPerKey: 1, maxPerKeyCell: 1 };
+    expect(await checkReportRate(sql, driver.key.keyId, 8.4, 49, clock.now, rule)).toEqual({
+      ok: true,
+    });
+    expect(
+      (await post(await signReport(registry, claims[5]!, driver.key), driver.grant)).statusCode,
+    ).toBe(200);
+    expect(await checkReportRate(sql, driver.key.keyId, 8.4, 49, clock.now, rule)).toEqual({
+      ok: false,
+      reason: "per-key",
+    });
+  }, 120_000);
 });
 
 describe("a charge point the operator reports out of order", () => {
