@@ -24,6 +24,11 @@
       "license": "LicenseRef-OGL-BC",
       "attribution": "Contains information licensed under the Open Government Licence – British Columbia",
       "privacyUrl": "https://www2.gov.bc.ca/gov/content/home/privacy",
+      "terms": {
+        "url": "https://catalogue.data.gov.bc.ca/dataset/open511-drivebc-api",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Government Licence – British Columbia. \"\"license_title\": \"Open Government Licence - British Columbia\"\"",
+      },
     },
     {
       "subdivision": "on",
@@ -44,6 +49,11 @@
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
       "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+      "terms": {
+        "url": "https://data.ontario.ca/dataset/incidents-and-closures",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Government Licence – Ontario v1.0. \"\"license_id\": \"OGL-ON-1.0\", \"license_title\": \"Open Government Licence – Ontario\"\"",
+      },
     },
     {
       "subdivision": "on",
@@ -69,6 +79,11 @@
       "licenseUrl": "https://www.ontario.ca/page/open-government-licence-ontario",
       "attribution": "Contains information licensed under the Open Government Licence – Ontario",
       "privacyUrl": "https://www.ontario.ca/page/privacy-statement",
+      "terms": {
+        "url": "https://data.ontario.ca/dataset/todays-roadwork-construction",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Government Licence – Ontario v1.0. \"\"license_id\": \"OGL-ON-1.0\", \"license_title\": \"Open Government Licence – Ontario\"\"",
+      },
     },
     {
       "subdivision": "on",
@@ -95,6 +110,11 @@
       // Winter feed: outside the season every segment reports a nominal condition
       // and the parser skips them all, so an empty result is the normal state.
       "snapshot": { "completeness": "complete", "recordsPath": "$" },
+      "terms": {
+        "url": "https://data.ontario.ca/dataset/road-conditions",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Government Licence – Ontario v1.0. \"\"license_id\": \"OGL-ON-1.0\", \"license_title\": \"Open Government Licence – Ontario\"\"",
+      },
     },
     {
       "subdivision": "qc",
@@ -129,6 +149,11 @@
       "licenseUrl": "https://www.donneesquebec.ca/",
       "attribution": "Ministère des Transports du Québec (MTQ)",
       "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+      "terms": {
+        "url": "https://www.donneesquebec.ca/recherche/api/3/action/package_show?id=travaux-routiers",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_title\": \"Attribution (CC-BY 4.0)\", \"license_url\": \"https://www.donneesquebec.ca/licence/#cc-by\"\"",
+      },
     },
     {
       "subdivision": "qc",
@@ -169,6 +194,11 @@
       "licenseUrl": "https://www.donneesquebec.ca/",
       "attribution": "Ministère des Transports du Québec (MTQ)",
       "privacyUrl": "https://www.transports.gouv.qc.ca/fr/Pages/confidentialite.aspx",
+      "terms": {
+        "url": "https://www.donneesquebec.ca/recherche/api/3/action/package_show?id=avertissement-routier",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_title\": \"Attribution (CC-BY 4.0)\", \"license_url\": \"https://www.donneesquebec.ca/licence/#cc-by\"\"",
+      },
     },
   ],
 }

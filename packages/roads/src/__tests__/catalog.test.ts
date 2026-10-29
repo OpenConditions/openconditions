@@ -290,6 +290,7 @@ describe("NDW", () => {
       reviewedAt: "2026-09-12",
     });
     expect(ndw.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -303,7 +304,7 @@ describe("NDW", () => {
     expect(flow.format).toBe("datex2-measured");
     expect(flow.product).toBe("flow");
     expect(flow.snapshot).toBeUndefined();
-    expect(flow.terms).toBeUndefined();
+    expect(flow.terms).toMatchObject({ reviewedAt: "2026-10-29" });
     expect(flow.licenseUrl).toBe("https://www.ndw.nu");
     expect(main("nl-ndw-flow")).toEqual({
       url: "https://opendata.ndw.nu/snelheden_en_intensiteiten_meetgegevens.xml.gz",
@@ -365,6 +366,7 @@ describe("Digitraffic and Fintraffic", () => {
     expect(f.attribution).toBe("Fintraffic / Digitraffic");
     expect(f.country).toBe("FI");
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -581,6 +583,7 @@ describe("one feed per publisher", () => {
       reviewedAt: "2026-10-29",
     });
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -595,6 +598,7 @@ describe("one feed per publisher", () => {
     expect(f.license).toBe("etalab-2.0");
     expect(f.country).toBe("FR");
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -613,6 +617,7 @@ describe("one feed per publisher", () => {
     expect(f.license).toBe("CC0-1.0");
     expect(f.country).toBe("LU");
     expect(f.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,
@@ -780,7 +785,7 @@ describe("one feed per publisher", () => {
     type Mapped = CatalogFeed & { geojson?: { idField?: string; idFields?: string[] } };
     const f = feed("au-sa-trafficsa-events") as Mapped;
     expect(f.format).toBe("geojson");
-    expect(f.license).toBe("CC-BY-4.0");
+    expect(f.license).toBe("CC-BY-3.0-AU");
     expect(main(f.id).pagination).toMatchObject({ skipParam: "resultOffset", pageSize: 1000 });
     expect(main(f.id).url).toContain("/MapServer/0/");
     expect(main(f.id).url).toContain("orderByFields=");

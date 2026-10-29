@@ -3,8 +3,11 @@ import {
   type CatalogFeed,
   type CrowdCredit,
   captureLicensing,
+  declaredPermissions,
   type EffectiveRights,
   effectiveRights,
+  type LicenseEvidence,
+  type Permissions,
   resolveAttribution,
 } from "@openconditions/ingest-framework";
 
@@ -36,7 +39,15 @@ export interface Source {
   terms?: { url?: string; reviewedAt?: string; note?: string };
   /** A notice the publisher requires to accompany any display of its data, verbatim. */
   notice?: string;
+  /** What the licence and terms declare. */
   rights: EffectiveRights;
+  /** The publisher's statement the rights rest on; null while the claim is unchecked. */
+  evidence: LicenseEvidence | null;
+  /**
+   * Whether each use is permitted (`yes`, `no`, `unknown`): a grant counts
+   * only when it rests on evidence. A consumer gates each use on its own entry.
+   */
+  permissions: Permissions;
   /**
    * Where the feed answers: ISO 3166 codes, or the box an on-demand feed
    * covers (a global one covers the world). Absent for a feed that names
@@ -92,6 +103,8 @@ function sourceOf(feed: CatalogFeed, at: Date): Source {
     ...(Object.keys(terms).length > 0 ? { terms } : {}),
     ...(feed.terms?.notice ? { notice: feed.terms.notice } : {}),
     rights: feed.rights,
+    evidence: feed.evidence,
+    permissions: feed.permissions,
     ...(feed.coverage.countries === undefined && feed.coverage.bbox === undefined
       ? {}
       : {
@@ -131,15 +144,19 @@ export interface CrowdSource {
   /** The link the credit carries, when the operator configured one. */
   url?: string;
   rights: EffectiveRights;
+  /** The operator declares the licence of its own reports, so its grants are established. */
+  permissions: Permissions;
 }
 
 export function crowdSourceOf(credit: CrowdCredit): CrowdSource {
+  const rights = effectiveRights(credit.license);
   return {
     id: "crowd",
     name: credit.name,
     license: credit.license,
     licensing: captureLicensing({ id: "crowd", name: credit.name, license: credit.license }),
     ...(credit.url ? { url: credit.url } : {}),
-    rights: effectiveRights(credit.license),
+    rights,
+    permissions: declaredPermissions(rights),
   };
 }

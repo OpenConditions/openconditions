@@ -28,6 +28,11 @@
       "homepage": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
       "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
       "cameras": { "imageHosts": ["tdcctv.data.one.gov.hk"] },
+      "terms": {
+        "url": "https://data.gov.hk/en/terms-and-conditions",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DATA.GOV.HK Terms and Conditions of Use. \"You are allowed to browse, download, distribute, reproduce, hyperlink to, and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on condition that:- you shall comply with the Terms of Use; you shall ide…\"",
+      },
     },
   ],
 }

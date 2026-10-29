@@ -43,6 +43,11 @@
       "licenseUrl": "https://opendata-nzta.opendata.arcgis.com/",
       "attribution": "NZ Transport Agency Waka Kotahi",
       "privacyUrl": "https://www.nzta.govt.nz/privacy-policy/",
+      "terms": {
+        "url": "https://opendata-nzta.opendata.arcgis.com/datasets/ff0c25d3abcc49668703f0e8c2cfdf83",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 (stated informally as 'NZTA 4.0 BY CC'). \"NZTA 4.0 BY CC\"",
+      },
     },
   ],
 }

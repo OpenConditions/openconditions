@@ -38,6 +38,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://ckan.opendata.swiss/api/3/action/package_show?id=ladestationen-fuer-elektroautos",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: opendata.swiss terms_by_ask. \"\"rights\": \"https://opendata.swiss/terms-of-use#terms_by_ask\"\"",
+      },
     },
   ],
 }

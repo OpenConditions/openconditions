@@ -46,6 +46,11 @@
       "licenseUrl": "https://opendata.transport.nsw.gov.au/dataset/live-traffic-hazards",
       "attribution": "Transport for NSW",
       "privacyUrl": "https://www.transport.nsw.gov.au/privacy-statement",
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\"",
+      },
     },
     {
       "subdivision": "sa",
@@ -102,8 +107,8 @@
         "roadField": "ROAD_NO",
       },
       "freshnessWindowSec": 900,
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+      "license": "CC-BY-3.0-AU",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/au/",
       "attribution": "Department for Infrastructure and Transport (South Australia)",
       "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
       "attributionPolicy": {
@@ -117,6 +122,11 @@
           "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson",
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
+      "terms": {
+        "url": "https://data.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 3.0 AU, not the formerly declared licence. \"\"license_title\": \"Creative Commons Attribution 3.0 Australia\", \"license_url\": \"http://creativecommons.org/licenses/by/3.0/au/\"\"",
       },
     },
     {
@@ -146,8 +156,8 @@
         "roadField": "LOCAL_ROAD_NAME",
       },
       "freshnessWindowSec": 900,
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://data.sa.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+      "license": "CC-BY-3.0-AU",
+      "licenseUrl": "https://creativecommons.org/licenses/by/3.0/au/",
       "attribution": "Department for Infrastructure and Transport (South Australia)",
       "privacyUrl": "https://www.dit.sa.gov.au/footer/privacy",
       "attributionPolicy": {
@@ -161,6 +171,11 @@
           "https://maps.sa.gov.au/arcgis/rest/services/DPTIExtTransport/TrafficSAOpenData/MapServer?f=pjson",
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
+      "terms": {
+        "url": "https://data.gov.au/data/dataset/roadworks-and-incidents-real-time-information",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 3.0 AU, not the formerly declared licence. \"\"license_title\": \"Creative Commons Attribution 3.0 Australia\", \"license_url\": \"http://creativecommons.org/licenses/by/3.0/au/\"\"",
       },
     },
     {
@@ -225,6 +240,11 @@
       "licenseUrl": "https://www.qldtraffic.qld.gov.au/",
       "attribution": "State of Queensland (Department of Transport and Main Roads)",
       "privacyUrl": "https://www.qld.gov.au/legal/privacy",
+      "terms": {
+        "url": "https://www.data.qld.gov.au/dataset/131940-traffic-and-travel-information-geojson-api",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
     {
       "subdivision": "vic",
@@ -264,6 +284,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Department of Transport and Planning (Victoria)",
       "privacyUrl": "https://www.vic.gov.au/privacy",
+      "terms": {
+        "url": "https://opendata.transport.vic.gov.au/dataset/freeway-travel-time",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
     {
       "subdivision": "vic",
@@ -293,6 +318,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Department of Transport and Planning (Victoria)",
       "privacyUrl": "https://www.vic.gov.au/privacy",
+      "terms": {
+        "url": "https://opendata.transport.vic.gov.au/dataset/planned-disruptions-road",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
     {
       "subdivision": "vic",
@@ -318,6 +348,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Department of Transport and Planning (Victoria)",
       "privacyUrl": "https://www.vic.gov.au/privacy",
+      "terms": {
+        "url": "https://opendata.transport.vic.gov.au/dataset/unplanned-disruptions-road",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\"",
+      },
     },
   ],
 }

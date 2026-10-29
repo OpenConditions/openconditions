@@ -34,6 +34,11 @@
       "licenseUrl": "https://data.trafikverket.se/",
       "attribution": "Trafikverket",
       "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+      "terms": {
+        "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0. \"Acceptera den licens som är knuten till API:t. [link text: \"Licens - senaste versionen\" -> https://creativecommons.org/publicdomain/zero/1.0/deed.sv]\"",
+      },
     },
     {
       // The rest of Trafikverket's situations, from the object API's Situation
@@ -74,6 +79,11 @@
       "licenseUrl": "https://data.trafikverket.se/",
       "attribution": "Trafikverket",
       "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+      "terms": {
+        "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0. \"Acceptera den licens som är knuten till API:t. [link text: \"Licens - senaste versionen\" -> https://creativecommons.org/publicdomain/zero/1.0/deed.sv]\"",
+      },
     },
     {
       // The TrafficFlow object (speed/flow sensors) lives on the object API, a
@@ -99,6 +109,11 @@
       "licenseUrl": "https://api.trafikinfo.trafikverket.se/",
       "attribution": "Trafikverket",
       "privacyUrl": "https://www.trafikverket.se/om-oss/kontakta-oss/om-webbplatsen/sa-hanterar-trafikverket-dataskyddsforordningen-gdpr/",
+      "terms": {
+        "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0. \"Acceptera den licens som är knuten till API:t. [link text: \"Licens - senaste versionen\" -> https://creativecommons.org/publicdomain/zero/1.0/deed.sv]\"",
+      },
     },
   ],
 }

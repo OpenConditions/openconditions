@@ -20,6 +20,11 @@
       "licenseUrl": "https://data.gov.hr/otvorena-dozvola",
       "attribution": "Hrvatske ceste",
       "privacyUrl": "https://www.hrvatske-ceste.hr/",
+      "terms": {
+        "url": "https://data.gov.hr/ckan/dataset/https-www-promet-info-hr-hr-dataproviders-search-hc-20radovi",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Otvorena dozvola (OD). \"\"title\": \"Radovi na državnim cestama\", \"license_title\": \"Otvorena dozvola (OD)\", \"license_url\": \"https://data.gov.hr/id/licence/otvorena-dozvola-rh\"\"",
+      },
     },
     {
       "operator": "hc",
@@ -42,6 +47,11 @@
       "licenseUrl": "https://data.gov.hr/otvorena-dozvola",
       "attribution": "Hrvatske ceste",
       "privacyUrl": "https://www.hrvatske-ceste.hr/",
+      "terms": {
+        "url": "https://data.gov.hr/ckan/dataset/https-www-promet-info-hr-hr-datasets_details-id-b7e8ab80-8660-57ba-df83-43d13d42b961",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Otvorena dozvola (OD). \"\"title\": \"Prometni događaji\", \"license_title\": \"Otvorena dozvola (OD)\", \"license_url\": \"https://data.gov.hr/id/licence/otvorena-dozvola-rh\"\"",
+      },
     },
   ],
 }

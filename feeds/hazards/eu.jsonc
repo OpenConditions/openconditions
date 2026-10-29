@@ -185,6 +185,11 @@
       "attribution": "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
       "homepage": "https://forest-fire.emergency.copernicus.eu/",
       "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
+      "terms": {
+        "url": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 (EU-owned content). \"Unless otherwise indicated (e.g. in individual copyright notices), content owned by the EU on this website is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence . This means that reuse is allowed, provided…\"",
+      },
     },
   ],
 }

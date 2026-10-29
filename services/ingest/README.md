@@ -32,7 +32,9 @@ outputs (`/segments/conditions.json`, Valhalla exclusions):
 
 Every record leaves through the request's scope. The **public scope**, the
 default, withholds every record of a restricted source (a feed whose rights are
-share-alike or forbid redistribution) and every record whose licence is not
+share-alike, or whose redistribution is not established: denied, unstated, or
+granted by a licence claim no one has checked against the publisher's
+statement; see `feeds/README.md`) and every record whose licence is not
 public. The **operator scope** withholds nothing; a request reads in it with
 `Authorization: Bearer <OPENCONDITIONS_OPERATOR_TOKEN>` and skips the rate
 limiter. Any other bearer value is answered

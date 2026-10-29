@@ -67,9 +67,9 @@ describe("wzdxRegistryResolver", () => {
     for (const child of children) {
       expect(child.qualifier).toMatch(/^[0-9a-f]{16}$/);
       expect(child.license).toBe("NOASSERTION");
+      // Listed, not reviewed: no review date stands for a grant nobody read.
       expect(child.terms).toEqual({
         note: "WZDx registry metadata (no dataset grant verified)",
-        reviewedAt: "2026-09-11",
       });
       expect(child.selectionState).toBe("discovered");
       expect(child.snapshot).toEqual({ completeness: "complete", recordsPath: "features" });
@@ -122,6 +122,7 @@ describe("wzdxRegistryResolver", () => {
     const { scheduled } = materializeCatalogChildren([parent], [roadsDomain]);
     expect(scheduled.map((f) => f.id)).toEqual(["us-wzdx-fe9b3423ea03546f-events"]);
     expect(scheduled[0]!.rights).toMatchObject({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,

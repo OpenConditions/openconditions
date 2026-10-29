@@ -41,6 +41,11 @@
           },
         ],
       },
+      "terms": {
+        "url": "https://www.dati.gov.it/view-dataset/dataset?id=dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"title\": \"Dati in tempo reale sui posti liberi nei parcheggi di Firenze - Posti liberi\", \"license_title\": \"Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)\", \"holder_name\": \"Comune di Firenze\"\"",
+      },
     },
     {
       "subdivision": "32",

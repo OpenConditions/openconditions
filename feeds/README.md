@@ -713,13 +713,38 @@ rights each grants, are in `packages/ingest-framework/src/catalog/licenses.ts`.
 A feed with no known licence is `NOASSERTION` and must say what is known in
 `terms`.
 
-`terms` records a feed's own terms where they differ from its licence: `url`,
-`reviewedAt`, `note`, `notice`, and any of `redistribution`,
-`derivedRedistribution`, `commercialUse`, `attributionRequired`, `retention`.
-A key set in `terms` (even to `null`) overrides the licence; an absent key
-defers to it. `notice` is a text the publisher requires to accompany any
-display of its data, written verbatim (MeteoAlarm's disclaimer); `GET
-/sources` serves it.
+`terms` records a feed's own terms where they differ from its licence: `note`,
+`notice`, and any of `display`, `redistribution`, `derivedRedistribution`,
+`commercialUse`, `attributionRequired`, `retention`. A key set in `terms` (even
+to `null`) overrides the licence; an absent key defers to it. `display` is
+showing the data, unchanged and credited, to an application's users;
+`redistribution` is passing the source data itself on; `derivedRedistribution`
+is building other data or products from it (a routing graph, fused records)
+and passing those on. A publisher that allows its data to be shown but not
+republished sets `"redistribution": false` and keeps `display`. `notice` is a
+text the publisher requires to accompany any display of its data, written
+verbatim (MeteoAlarm's disclaimer); `GET /sources` serves it.
+
+`terms.url` and `terms.reviewedAt` are the evidence a feed's rights rest on:
+the publisher's own statement of the licence or terms its data comes under (a
+dataset page, a portal record of that dataset, a terms page), and the date
+someone read it there. A licence id alone is a claim. A feed whose licence is
+as published records its evidence without overriding anything, with a `note`
+quoting what the statement says. A review date needs its `url`.
+
+From a feed's rights and evidence each use gets a permission: `yes` when the
+rights grant it and the evidence exists, `no` when they deny it, `unknown`
+otherwise, an unchecked grant included. `GET /sources` serves `rights` (what
+is declared), `evidence` and `permissions` per feed, and routing evidence
+states the permissions. The public scope serves only feeds whose
+redistribution is `yes` and that are not share-alike. A consumer gates each of
+its uses on the matching permission and treats `unknown` as its own policy for
+unclear terms decides.
+
+`rights-pending-review.json` lists the enabled feeds still without evidence.
+`feeds:lint` fails on a new feed without evidence that the list does not name,
+and on a listed feed that has evidence: review a feed, record its evidence,
+and remove it from the list.
 
 ## On-demand feeds
 

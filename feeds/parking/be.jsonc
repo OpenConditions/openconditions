@@ -43,6 +43,11 @@
         "openingHours": { "field": "openingtimesdescription", "syntax": "text" },
         "free": { "field": "freeparking", "equals": 1 },
       },
+      "terms": {
+        "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik. \"\"license\": \"Modellicentie Gratis Hergebruik\", \"license_url\": \"https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik\"\"",
+      },
     },
     {
       "subdivision": "bru",
@@ -83,6 +88,11 @@
         "areas": [
           { "vehicleType": "car", "userGroup": "disabled", "capacity": "disabledcapacity" },
         ],
+      },
+      "terms": {
+        "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license\": \"CC BY 4.0\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/deed.fr\"\"",
       },
     },
   ],

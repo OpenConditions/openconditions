@@ -38,6 +38,11 @@
       "licenseUrl": "https://www.vegagerdin.is/",
       "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
       "privacyUrl": "https://www.vegagerdin.is/",
+      "terms": {
+        "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/skilmalar-vefthjonustur",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Öll gögn Vegagerðarinnar sem gerð eru aðgengileg eru gefin út samkvæmt hinu alþjóðlega Creative Commons afnotaleyfi, CC BY 4.0 , í samræmi við lög um endurnot opinberra upplýsinga nr. 45/2018.\"",
+      },
     },
     {
       "operator": "vegagerdin",
@@ -85,6 +90,11 @@
       "licenseUrl": "https://www.vegagerdin.is/",
       "attribution": "Vegagerðin (Icelandic Road and Coastal Administration)",
       "privacyUrl": "https://www.vegagerdin.is/",
+      "terms": {
+        "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/skilmalar-vefthjonustur",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Öll gögn Vegagerðarinnar sem gerð eru aðgengileg eru gefin út samkvæmt hinu alþjóðlega Creative Commons afnotaleyfi, CC BY 4.0 , í samræmi við lög um endurnot opinberra upplýsinga nr. 45/2018.\"",
+      },
     },
   ],
 }

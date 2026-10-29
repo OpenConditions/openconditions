@@ -26,6 +26,7 @@ const feed = (id: string, over: Partial<CatalogFeed> = {}): CatalogFeed => ({
   ...over,
 });
 const affirmed = {
+  display: true,
   redistribution: true,
   derivedRedistribution: true,
   commercialUse: true,

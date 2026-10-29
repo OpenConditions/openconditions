@@ -15,6 +15,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "5T / Città di Torino",
       "privacyUrl": "https://www.5t.torino.it/privacy/",
+      "terms": {
+        "url": "https://www.dati.gov.it/view-dataset/dataset?id=flussi-di-traffico",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"title\": \"Flussi di traffico\", \"license_title\": \"Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)\", \"holder_name\": \"5T S.r.l.\"\"",
+      },
     },
   ],
 }

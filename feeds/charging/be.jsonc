@@ -61,6 +61,11 @@
           },
         },
       },
+      "terms": {
+        "url": "https://metadata.vlaanderen.be/srv/api/records/d46516ca-c159-41bc-9c54-aa256c337228/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik. \"In uitvoering van het Vlaamse decreet voor hergebruik van overheidsinformatie, is het hergebruik geregeld d.m.v. de Modellicentie voor gratis hergebruik. Dit betekent dat elk commercieel of niet-commercieel hergebruik voor onbepaalde duur i…\"",
+      },
     },
     {
       "subdivision": "wal",
@@ -122,6 +127,11 @@
           },
         },
         "connectors": { "row": { "powerKw": { "field": "PUISSANCE_KW", "unit": "kW" } } },
+      },
+      "terms": {
+        "url": "https://metawal.wallonie.be/geonetwork/srv/api/records/c731a282-e378-49f3-8ab6-f9a90e7a5683/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Licence CC-BY 4.0 : L’utilisateur peut utiliser et modifier les données pour en dériver une œuvre. Il peut publier les données et l’œuvre dérivée à condition de citer les sources.\"",
       },
     },
   ],

@@ -21,11 +21,16 @@
         },
       },
       "freshnessWindowSec": 3600,
-      "license": "etalab-2.0",
-      "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "license": "LicenseRef-Licence-Ouverte-1.0",
+      "licenseUrl": "https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf",
       "attribution": "data.gouv.fr / transport.data.gouv.fr, Base nationale des IRVE, Licence Ouverte 2.0",
       "homepage": "https://transport.data.gouv.fr/datasets?type=charging-stations",
       "privacyUrl": "https://www.data.gouv.fr/pages/legal/cgu",
+      "terms": {
+        "url": "https://www.data.gouv.fr/api/1/datasets/5448d3e0c751df01f85d0572/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Licence Ouverte v1.0 (static base); Licence Ouverte v2.0 (dynamic BETA base), not the formerly declared licence. \"\"license\": \"fr-lo\" (data.gouv.fr licence list: \"fr-lo | Licence Ouverte / Open Licence | https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf\")\"",
+      },
     },
   ],
 }

@@ -10,6 +10,8 @@ export interface LicenseInfo {
   id: string;
   name: string;
   url: string;
+  /** Showing the data, unchanged and credited, to an application's users. */
+  display: boolean | null;
   redistribution: boolean | null;
   derivedRedistribution: boolean | null;
   commercialUse: boolean | null;
@@ -23,6 +25,7 @@ const open = (
   i: Pick<LicenseInfo, "id" | "name" | "url"> &
     Partial<Pick<LicenseInfo, "attributionRequired" | "shareAlike">>,
 ): LicenseInfo => ({
+  display: true,
   redistribution: true,
   derivedRedistribution: true,
   commercialUse: true,
@@ -37,6 +40,7 @@ export const LICENSES: readonly LicenseInfo[] = [
     id: "NOASSERTION",
     name: "Rights not verified",
     url: "https://spdx.org/licenses/",
+    display: null,
     redistribution: null,
     derivedRedistribution: null,
     commercialUse: null,
@@ -88,6 +92,14 @@ export const LICENSES: readonly LicenseInfo[] = [
     name: "Verordnung zur Festlegung der Nutzungsbestimmungen für Geodaten",
     url: "https://www.gesetze-im-internet.de/geonutzv/",
   }),
+  // The Etalab licence's first version (2011), which some French portals still
+  // link; it grants the same reuse, credited with the source and the date of
+  // its last update.
+  open({
+    id: "LicenseRef-Licence-Ouverte-1.0",
+    name: "Licence Ouverte / Open Licence 1.0 (Etalab)",
+    url: "https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf",
+  }),
   open({
     id: "etalab-2.0",
     name: "Licence Ouverte / Open Licence 2.0 (Etalab)",
@@ -107,6 +119,7 @@ export const LICENSES: readonly LicenseInfo[] = [
     id: "LicenseRef-National-Highways-Transport-Data-Feeds",
     name: "National Highways Transport Data Feeds Licence (OGL v2.0 with NH amendments)",
     url: "https://developer.data.nationalhighways.co.uk/terms",
+    display: true,
     redistribution: true,
     derivedRedistribution: true,
     commercialUse: true,
@@ -138,6 +151,7 @@ export const LICENSES: readonly LicenseInfo[] = [
     id: "LicenseRef-511NY-DAA",
     name: "511NY Developer Access Agreement",
     url: "https://511ny.org/help/24",
+    display: true,
     redistribution: true,
     derivedRedistribution: true,
     commercialUse: null,
@@ -146,6 +160,11 @@ export const LICENSES: readonly LicenseInfo[] = [
     retention: null,
     shareAlike: false,
   },
+  open({
+    id: "CC-BY-3.0-AU",
+    name: "Creative Commons Attribution 3.0 Australia",
+    url: "https://creativecommons.org/licenses/by/3.0/au/",
+  }),
   open({
     id: "CC-BY-3.0-AT",
     name: "Creative Commons Attribution 3.0 Austria",

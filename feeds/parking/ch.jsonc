@@ -35,6 +35,11 @@
         "address": { "street": "address" },
         "website": "link",
       },
+      "terms": {
+        "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"'publisher': 'Parkhäuser Basel-Stadt', 'license': 'CC BY 4.0', 'license_url': 'https://creativecommons.org/licenses/by/4.0/', 'attributions': ['Parkhäuser Basel-Stadt']\"",
+      },
     },
     {
       "operator": "sbb",
@@ -57,6 +62,11 @@
       "licenseUrl": "https://opentransportdata.swiss/en/terms-of-use/",
       "attribution": "opentransportdata.swiss",
       "privacyUrl": "https://opentransportdata.swiss/en/privacy-notice/",
+      "terms": {
+        "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: opentransportdata.swiss Terms of use (https://opentransportdata.swiss/en/terms-of-use). \"Terms of use: Terms of use opentransportdata.swiss\"",
+      },
     },
   ],
 }

@@ -15,7 +15,6 @@
     "license": "NOASSERTION",
     "attribution": "Oklahoma DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -36,7 +35,6 @@
     "license": "NOASSERTION",
     "attribution": "Utah DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -57,7 +55,6 @@
     "license": "NOASSERTION",
     "attribution": "Iowa DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -78,7 +75,6 @@
     "license": "NOASSERTION",
     "attribution": "Florida DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -99,7 +95,6 @@
     "license": "NOASSERTION",
     "attribution": "Minnesota DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -120,7 +115,6 @@
     "license": "NOASSERTION",
     "attribution": "Maryland DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -141,7 +135,6 @@
     "license": "NOASSERTION",
     "attribution": "Maricopa County DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -162,7 +155,6 @@
     "license": "NOASSERTION",
     "attribution": "Missouri DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -183,7 +175,6 @@
     "license": "NOASSERTION",
     "attribution": "Wisconsin DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -204,7 +195,6 @@
     "license": "NOASSERTION",
     "attribution": "New Mexico DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -225,7 +215,6 @@
     "license": "NOASSERTION",
     "attribution": "Hawaii DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -246,7 +235,6 @@
     "license": "NOASSERTION",
     "attribution": "New York DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -267,7 +255,6 @@
     "license": "NOASSERTION",
     "attribution": "Washington State DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -288,7 +275,6 @@
     "license": "NOASSERTION",
     "attribution": "St. Charles County",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -309,7 +295,6 @@
     "license": "NOASSERTION",
     "attribution": "New Jersey Institute of Technology",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -330,7 +315,6 @@
     "license": "NOASSERTION",
     "attribution": "Kentucky Transportation Cabinet",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -352,6 +336,7 @@
     "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
     "attribution": "Kansas DOT",
     "terms": {
+      "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
       "reviewedAt": "2026-09-11",
       "note": "Kansas WZDx road_event_feed_info.license"
     },
@@ -373,7 +358,6 @@
     "license": "NOASSERTION",
     "attribution": "City of Austin",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -394,7 +378,6 @@
     "license": "NOASSERTION",
     "attribution": "Delaware DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -415,7 +398,6 @@
     "license": "NOASSERTION",
     "attribution": "Quebec City",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "speedUnit": "km/h",
@@ -437,7 +419,6 @@
     "license": "NOASSERTION",
     "attribution": "Louisiana DOTD",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -458,7 +439,6 @@
     "license": "NOASSERTION",
     "attribution": "Idaho DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -479,7 +459,6 @@
     "license": "NOASSERTION",
     "attribution": "Indiana DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -500,7 +479,6 @@
     "license": "NOASSERTION",
     "attribution": "CivicLink",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -521,7 +499,6 @@
     "license": "NOASSERTION",
     "attribution": "Michigan DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -542,7 +519,6 @@
     "license": "NOASSERTION",
     "attribution": "NHDOT/VTAOT/MEDOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -563,7 +539,6 @@
     "license": "NOASSERTION",
     "attribution": "North Carolina DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -584,7 +559,6 @@
     "license": "NOASSERTION",
     "attribution": "Oregon DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -605,7 +579,6 @@
     "license": "NOASSERTION",
     "attribution": "Mississippi DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"
@@ -626,7 +599,6 @@
     "license": "NOASSERTION",
     "attribution": "North Dakota DOT",
     "terms": {
-      "reviewedAt": "2026-09-11",
       "note": "WZDx registry metadata (no dataset grant verified)"
     },
     "selectionState": "discovered"

@@ -22,6 +22,11 @@
       "attribution": "Chargy / data.public.lu",
       "homepage": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
       "privacyUrl": "https://data.public.lu/en/pages/legal/privacy",
+      "terms": {
+        "url": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Zero (CC0). \"Producteur Chargy Dernière mise à jour 5 mars 2018 Licence Creative Commons Zero (CC0)\"",
+      },
     },
   ],
 }

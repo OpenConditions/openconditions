@@ -6,7 +6,12 @@ export * from "./catalog/domain.js";
 export * from "./catalog/ids.js";
 export * from "./catalog/json-schema.js";
 export * from "./catalog/licenses.js";
-export { type CatalogIssue, formatCatalogIssue, lintCatalog } from "./catalog/lint.js";
+export {
+  type CatalogIssue,
+  formatCatalogIssue,
+  lintCatalog,
+  PENDING_REVIEW_FILE,
+} from "./catalog/lint.js";
 export * from "./catalog/load.js";
 export * from "./catalog/resolve.js";
 export * from "./catalog/resolvers.js";

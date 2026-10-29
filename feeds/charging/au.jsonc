@@ -73,6 +73,11 @@
           },
         },
       },
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\"",
+      },
     },
     {
       "subdivision": "vic",
@@ -126,6 +131,11 @@
             },
           },
         },
+      },
+      "terms": {
+        "url": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_title\": \"Creative Commons Attribution 4.0 International\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/\"\"",
       },
     },
   ],

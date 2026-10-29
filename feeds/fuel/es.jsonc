@@ -24,6 +24,9 @@
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
       "privacyUrl": "https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: No publisher licence statement found for the ServiciosRESTCarburantes API. Its help page has no terms; geoportalgasolineras.es pages returned no licence or aviso-legal text (the site is JS-rendered); the datos.gob.es record 'Geoportal Gasolineras: localización de las instalaciones de repostaje' has…",
+      },
     },
   ],
 }

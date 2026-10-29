@@ -1166,6 +1166,7 @@ describe("stable provenance refresh", () => {
         parentSourceId: "parent-a",
         license: "CC-BY-4.0",
         rights: {
+          display: true,
           redistribution: true,
           derivedRedistribution: true,
           commercialUse: true,

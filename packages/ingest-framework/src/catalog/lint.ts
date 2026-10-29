@@ -18,6 +18,7 @@ import {
   materializeCatalogChildren,
   registryUrl,
 } from "./resolvers.js";
+import { licenseEvidence } from "./terms.js";
 import type { FeedDefinition } from "./types.js";
 
 /** One finding of the catalogue checks; an `error` stops the catalogue from loading. */
@@ -391,15 +392,24 @@ function urlIssues(feed: FeedDefinition): string[] {
  * feeds of one OAuth2 grant agreeing on how it is obtained; and catalogue parents with a usable
  * registry URL, one per resolver, whose children resolve. Disabled feeds are
  * checked like the rest.
+ *
+ * With `pendingReview`, every enabled feed also needs licence evidence (the
+ * publisher's statement in `terms.url` and the date it was read in
+ * `terms.reviewedAt`) unless that list names it, and the list names only
+ * enabled feeds still without it: a new feed cannot join without evidence,
+ * and a reviewed one leaves the list.
  */
 export function lintCatalog(
   files: CatalogFile[],
   credentials: SharedCredentials,
   domains: readonly IngestDomain[],
   now: Date = new Date(),
+  pendingReview?: ReadonlySet<string>,
 ): CatalogIssue[] {
   const issues = duplicateIdIssues(files);
   const today = now.toISOString().slice(0, 10);
+  // Pending ids no enabled feed accounts for: a removed or renamed feed.
+  const unreviewedLeft = new Set(pendingReview ?? []);
   const groupUsers = new Map<string, number>();
   const resolverParents = new Map<CatalogResolver, { id: string; file: string }>();
   // One login serves every feed of a grant, so they must ask for it alike.
@@ -447,6 +457,17 @@ export function lintCatalog(
       ];
       if (feed.disabled && feed.disabled.since > today) {
         messages.push(`disabled.since ${feed.disabled.since} is in the future`);
+      }
+      if (pendingReview && !feed.disabled) {
+        const reviewed = licenseEvidence(feed.terms) !== null;
+        unreviewedLeft.delete(id);
+        if (!reviewed && !pendingReview.has(id)) {
+          messages.push(
+            "no licence evidence: set terms.url to the publisher's statement of its licence or terms and terms.reviewedAt to the date it was read",
+          );
+        } else if (reviewed && pendingReview.has(id)) {
+          messages.push(`has licence evidence; remove it from ${PENDING_REVIEW_FILE}`);
+        }
       }
       if (feed.auth?.kind === "oauth2-authorization-code") {
         const key = oauthGrantKey(id, feed.auth.clientId);
@@ -508,5 +529,16 @@ export function lintCatalog(
     }
   }
   issues.push(...envNameIssues(declarations));
+  for (const id of unreviewedLeft) {
+    issues.push({
+      level: "error",
+      file: PENDING_REVIEW_FILE,
+      feedId: id,
+      message: "names no enabled feed; remove it",
+    });
+  }
   return issues;
 }
+
+/** The feeds whose licence evidence is outstanding, as `lintCatalog` takes them. */
+export const PENDING_REVIEW_FILE = "feeds/rights-pending-review.json";

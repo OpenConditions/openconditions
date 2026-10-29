@@ -19,6 +19,7 @@ const source = {
   attribution: "Required provider wording",
   homepage: "https://example.test/data",
   rights: {
+    display: true,
     redistribution: true,
     derivedRedistribution: true,
     commercialUse: true,
@@ -26,6 +27,15 @@ const source = {
     retention: true,
   },
   terms: { notice: "© Distinct publisher", note: "Keep source date" },
+  // No terms.url or review date: the grants are an unchecked claim.
+  evidence: null,
+  permissions: {
+    display: "unknown",
+    redistribute: "unknown",
+    derive: "unknown",
+    retain: "unknown",
+    commercial: "unknown",
+  },
 } as CatalogFeed;
 
 describe("acquisition captures licence definitions", () => {
@@ -168,6 +178,7 @@ describe("National Highways acquisition terms", () => {
       url: "https://developer.data.nationalhighways.co.uk/terms",
     });
     expect(feed.rights).toEqual({
+      display: true,
       redistribution: true,
       derivedRedistribution: true,
       commercialUse: true,

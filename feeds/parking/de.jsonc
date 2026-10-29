@@ -40,6 +40,11 @@
       "attribution": "MobiData BW (NVBW)",
       "homepage": "https://mobidata-bw.de/",
       "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
+      "terms": {
+        "url": "https://mobidata-bw.de/dataset/gebuendelte-parkdaten-bw",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0 (dataset level). \"\"license_id\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\", \"license_title\": \"Datenlizenz Deutschland Namensnennung 2.0\"\"",
+      },
     },
     {
       "subdivision": "nw",
@@ -64,6 +69,11 @@
       // The portal is a single-page app that answers 200 for any path, so its
       // own privacy URL cannot be confirmed; this is the operator's.
       "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
+      "terms": {
+        "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=parken-nrw",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0. \"\"license_id\": \"dl-de-by-20-1\"\"",
+      },
     },
     {
       "subdivision": "nw",
@@ -87,6 +97,11 @@
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "attribution": "NRW.Mobidrom GmbH",
       "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
+      "terms": {
+        "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=gebndelte-daten-parkride-nrw",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Namensnennung – Weitergabe unter gleichen Bedingungen 4.0 International. \"\"license_id\": \"cc-by-sa-40\"\"",
+      },
     },
     {
       "operator": "db",

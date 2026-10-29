@@ -129,6 +129,11 @@
         "evidenceUrls": ["https://www.nps.gov/aboutus/disclaimer.htm"],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://www.nps.gov/aboutus/disclaimer.htm",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Public domain (U.S. Government work), unless otherwise indicated. \"Thus, material created by the National Park Service and presented on this website, unless otherwise indicated, is generally considered in the public domain. It may be distributed or copied as permitted by applicable law.\"",
+      },
     },
     {
       "subdivision": "ny",

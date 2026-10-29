@@ -56,10 +56,7 @@ interface WzdxRegistryRow {
 /** What is known of a registry feed no one has reviewed: no licence, only where it was listed. */
 const UNVERIFIED = {
   license: "NOASSERTION",
-  terms: {
-    note: "WZDx registry metadata (no dataset grant verified)",
-    reviewedAt: "2026-09-11",
-  },
+  terms: { note: "WZDx registry metadata (no dataset grant verified)" },
 } as const;
 
 /** The licences reviewed for a registry dataset, by its URL. */
@@ -67,7 +64,12 @@ const VERIFIED_CHILD_GRANTS: Record<string, Pick<ChildFeed, "license" | "license
   "https://ks.carsprogram.org/carsapi_v1/api/wzdx": {
     license: "CC0-1.0",
     licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
-    terms: { note: "Kansas WZDx road_event_feed_info.license", reviewedAt: "2026-09-11" },
+    // The licence is stated in the feed itself, so the feed is the statement read.
+    terms: {
+      url: "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
+      note: "Kansas WZDx road_event_feed_info.license",
+      reviewedAt: "2026-09-11",
+    },
   },
 };
 

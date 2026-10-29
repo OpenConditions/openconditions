@@ -27,6 +27,11 @@
       "attribution": "Waka Kotahi NZ Transport Agency (EVRoam), CC BY 4.0",
       "homepage": "https://www.nzta.govt.nz/planning-and-investment/planning/transport-planning/planning-for-electric-vehicles/evroam",
       "privacyUrl": "https://www.nzta.govt.nz/privacy/",
+      "terms": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/238dd4298c0445d8ac8567eefe22413e?f=json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"This work is licensed under a Creative Commons Attribution 4.0 International License.\"",
+      },
     },
   ],
 }

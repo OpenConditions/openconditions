@@ -53,6 +53,11 @@
       "attribution": "한국환경공단 (Korea Environment Corporation), 공공누리 제1유형, https://www.data.go.kr/data/15076352/openapi.do",
       "homepage": "https://www.data.go.kr/data/15076352/openapi.do",
       "privacyUrl": "https://www.data.go.kr/ugs/selectPortalPolicyView.do",
+      "terms": {
+        "url": "https://www.data.go.kr/data/15076352/openapi.do",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: KOGL Type 1 (공공누리 제1유형: 출처표시). \"이용허락범위 공공저작물 : 출처표시 (제 1유형)\"",
+      },
     },
   ],
 }

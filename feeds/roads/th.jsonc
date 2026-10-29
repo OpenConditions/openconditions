@@ -30,8 +30,19 @@
         "followUp": { "field": "title", "prefixes": ["คืบหน้า"] },
       },
       "freshnessWindowSec": 900,
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://www.longdo.com/",
+      // No open licence is stated for event.longdo.com. Metamedia's Longdo Map
+      // terms, the publisher's only terms found, allow personal non-commercial
+      // use and forbid bulk feeds and commercial redistribution. Whether they
+      // bind this feed is not explicit, so its display stays unknown while the
+      // uses they forbid are denied.
+      "license": "NOASSERTION",
+      "licenseUrl": "https://map.longdo.com/terms",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: no open licence found for event.longdo.com; formerly declared CC BY 4.0. Longdo Map terms (https://map.longdo.com/terms): \"For individual users, Longdo Map, including local search results, maps, and other overlayed information, is made available for your personal and non-commercial use only.\" They forbid mass downloads or bulk feeds.",
+        "redistribution": false,
+        "derivedRedistribution": false,
+        "commercialUse": false,
+      },
       "attribution": "Longdo Traffic / iTIC Foundation",
       "privacyUrl": "https://map.longdo.com/",
       "attributionPolicy": {

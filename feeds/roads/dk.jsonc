@@ -42,6 +42,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
       },
+      "terms": {
+        "url": "https://businessservice.dataudveksler.app.vd.dk/api/Dataset/416/details",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license\": \"CC_BY\", \"licenseUrl\": \"https://creativecommons.org/licenses/by/4.0/\", \"conditionsForUse\": \"https://creativecommons.org/licenses/by/4.0/legalcode\", \"rightsStatement\": \"Licence-provided\"\"",
+      },
     },
   ],
 }

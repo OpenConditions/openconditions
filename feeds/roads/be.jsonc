@@ -14,10 +14,15 @@
         },
       },
       "freshnessWindowSec": 600,
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://www.verkeerscentrum.be/",
+      "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "licenseUrl": "https://overheid.vlaanderen.be/hergebruik/licenties/v1-0/html/modellicentie-gratis-hergebruik",
       "attribution": "Verkeerscentrum Vlaanderen",
       "privacyUrl": "https://www.verkeerscentrum.be/",
+      "terms": {
+        "url": "https://www.verkeerscentrum.be/nieuws/verkeerscentrum-breidt-open-data-service-uit-datexii-versie-3",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik (Flemish free-reuse model licence), not the formerly declared licence. \"Hergebruik van de open data is immers standaard toegestaan via de ‘Modellicentie Gratis Hergebruik’. Naar de datasets U vindt DATEXII versie 3 hier: https://www.verkeerscentrum.be/uitwisseling/datex2v3full\"",
+      },
     },
     {
       "operator": "brussels",
@@ -60,6 +65,11 @@
       "licenseUrl": "https://data.mobility.brussels/",
       "attribution": "Bruxelles Mobilité / Brussel Mobiliteit",
       "privacyUrl": "https://mobilite-mobiliteit.brussels/en/privacy",
+      "terms": {
+        "url": "https://data.mobility.brussels/datasets/v1/traffic/collections/traffic_events/dcat/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0. \"\"dct:license\":\"CC0\"\"",
+      },
     },
     {
       "operator": "miv",
@@ -77,8 +87,8 @@
         },
       },
       "freshnessWindowSec": 300,
-      "license": "CC-BY-4.0",
-      "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-diensten-en-platformen/open-data",
+      "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
+      "licenseUrl": "https://overheid.vlaanderen.be/hergebruik/licenties/v1-0/html/modellicentie-gratis-hergebruik",
       "attribution": "Agentschap Wegen en Verkeer / Vlaams Verkeerscentrum",
       "privacyUrl": "https://www.vlaanderen.be/uw-overheid/werking-en-structuur/hoe-werkt-de-vlaamse-overheid/informatie-en-communicatie/privacy",
       "attributionPolicy": {
@@ -92,6 +102,11 @@
           "http://miv.opendata.belfla.be/miv/verkeersdata",
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission",
+      },
+      "terms": {
+        "url": "https://metadata.vlaanderen.be/srv/api/records/5a247554-1c06-392a-b7a0-10dc99c13f6b/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik v1.0, not the formerly declared licence. \"<dct:LicenseDocument rdf:about=\"http://overheid.vlaanderen.be/hergebruik/licenties/v1-0/html/modellicentie-gratis-hergebruik\">\"",
       },
     },
   ],

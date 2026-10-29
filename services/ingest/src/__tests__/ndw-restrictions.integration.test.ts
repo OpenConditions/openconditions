@@ -110,7 +110,11 @@ const controlFeed = testFeed({
   licenseUrl: "https://creativecommons.org/publicdomain/zero/1.0/",
   attribution: "Synthetic control",
   country: "NL",
-  terms: { note: "publisher", reviewedAt: "2026-09-12" },
+  terms: {
+    url: "https://www.ndw.nu/service/copyright",
+    note: "publisher",
+    reviewedAt: "2026-09-12",
+  },
 });
 
 /**

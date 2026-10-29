@@ -32,6 +32,11 @@
       "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
       "homepage": "https://www.digitraffic.fi/en/",
       "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Fintraffic’s open data is licensed under the Creative Commons 4.0 By license. … Source: Fintraffic / digitraffic.fi, license CC 4.0 BY\"",
+      },
     },
   ],
 }

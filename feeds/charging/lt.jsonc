@@ -35,6 +35,11 @@
       "attribution": "Via Lietuva, CC BY 4.0",
       "homepage": "https://ev.vialietuva.lt/en/data-provision",
       "privacyUrl": "https://vialietuva.lt/en/privacy-policy",
+      "terms": {
+        "url": "https://ev.vialietuva.lt/en/data-provision",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 and ODC-BY. \"The data is published under the Creative Commons Attribution 4.0 International license ( CC BY 4.0 ) and ODC‑BY . The data may be used and shared without limitation, provided that appropriate attribution is given, a link to the license is i…\"",
+      },
     },
   ],
 }

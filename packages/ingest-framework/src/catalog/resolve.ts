@@ -1,6 +1,6 @@
 import { credentialRefs, isSettingsGroup } from "./credentials.js";
 import { deriveFeedId, type Region } from "./ids.js";
-import { effectiveRights, isRestricted } from "./terms.js";
+import { effectiveRights, isRestricted, licenseEvidence, permissionsOf } from "./terms.js";
 import type { CatalogFeed, CredentialField, FeedDefinition, Maintainer } from "./types.js";
 
 /**
@@ -108,6 +108,7 @@ export function toCatalogFeed(def: FeedDefinition, origin: FeedOrigin): CatalogF
   const country =
     origin.region === "eu" || origin.region === "global" ? undefined : origin.region.toUpperCase();
   const rights = effectiveRights(def.license, def.terms);
+  const evidence = licenseEvidence(def.terms);
   const cadenceSec = dataCadenceSec(def, id);
   const homepage = def.homepage ?? deriveHomepage(def.endpoints);
   if (homepage === undefined) {
@@ -124,7 +125,9 @@ export function toCatalogFeed(def: FeedDefinition, origin: FeedOrigin): CatalogF
     file: origin.file,
     maintainers: origin.maintainers,
     rights,
-    restricted: isRestricted(rights),
+    evidence,
+    permissions: permissionsOf(rights, evidence),
+    restricted: isRestricted(rights, evidence),
     coverage: def.coverage ?? (country ? { countries: [country] } : {}),
     cadenceSec,
   };
