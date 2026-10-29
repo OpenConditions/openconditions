@@ -1,2 +1,6 @@
 # Inert native CodeQL qualification data; never imported or called.
-NATIVE_PROBE_PHASE = "control"
+import logging
+
+
+def native_probe_high(credentials):
+    logging.error(credentials.password)
