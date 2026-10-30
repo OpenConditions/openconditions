@@ -1,34 +1,19 @@
-name: Product qualification
+name: Product prepare and review
 on:
   workflow_dispatch:
     inputs:
-      image_source:
-        description: Exact qualified main image-source A commit
+      operation:
+        description: Prepare metadata for review, or review an already merged preparation
         required: true
-        type: string
-      manifest_source:
-        description: Exact merged main manifest-source B commit
-        required: true
-        type: string
-      image_run:
-        description: Original A CI run ID
-        required: true
-        type: string
-      image_attempt:
-        description: Original A CI attempt
-        required: true
-        type: string
-      manifest_run:
-        description: Latest exact B main push CI run ID
-        required: true
-        type: string
-      manifest_attempt:
-        description: Latest exact B CI attempt
-        required: true
-        type: string
+        type: choice
+        options: [prepare, review]
       version:
-        description: Version already committed in B (not selected by this job)
+        description: Proposed product version (review uses the version committed in main)
         required: true
+        type: string
+      notes:
+        description: Curated release notes for preparation; ignored during review
+        required: false
         type: string
 permissions:
   contents: read
@@ -58,6 +43,12 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
+      - name: Check current main evidence before installing tools
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_OPERATION: ${{ inputs.operation }}
+          RELEASE_VERSION: ${{ inputs.version }}
+        run: python -B scripts/product-release-flow.py --check-only
       - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
@@ -72,26 +63,24 @@ jobs:
         with:
           version: v0.38.1
           driver: docker
-      - name: Qualify native image and merged manifest authorities
+      - name: Build pinned public OpenMapX contracts in an owned directory
+        run: node scripts/acquire-product-tools.mjs "$RUNNER_TEMP/openmapx-tools"
+      - name: Prepare or review exact owning-main evidence
         env:
           GH_TOKEN: ${{ github.token }}
-          IMAGE_SOURCE: ${{ inputs.image_source }}
-          MANIFEST_SOURCE: ${{ inputs.manifest_source }}
-          IMAGE_RUN: ${{ inputs.image_run }}
-          IMAGE_ATTEMPT: ${{ inputs.image_attempt }}
-          MANIFEST_RUN: ${{ inputs.manifest_run }}
-          MANIFEST_ATTEMPT: ${{ inputs.manifest_attempt }}
-          VERSION: ${{ inputs.version }}
+          RELEASE_OPERATION: ${{ inputs.operation }}
+          RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_NOTES: ${{ inputs.notes }}
         run: >-
-          python scripts/qualify-product-release.py
-          --image-source "$IMAGE_SOURCE" --manifest-source "$MANIFEST_SOURCE"
-          --image-run "$IMAGE_RUN" --image-attempt "$IMAGE_ATTEMPT"
-          --manifest-run "$MANIFEST_RUN" --manifest-attempt "$MANIFEST_ATTEMPT"
-          --version "$VERSION" --output "$RUNNER_TEMP/product-qualification.json"
-      - name: Retain qualification only (not release approval)
+          python -B scripts/product-release-flow.py
+          --tools "$RUNNER_TEMP/openmapx-tools"
+          --output "$RUNNER_TEMP/product-review"
+      - name: Retain review artifact (never release approval)
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: product-qualification-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/product-qualification.json
+          name: product-review-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/product-review
+            ${{ runner.temp }}/product-review.receipt.json
           if-no-files-found: error
           retention-days: 3

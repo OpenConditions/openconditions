@@ -18,6 +18,7 @@ it("retires tag publisher and confines manual qualification to trusted main read
   const raw = readFileSync(new URL(".github/workflows/product-release.yml", root), "utf8"),
     w = parse(raw);
   expect(Object.keys(w.on)).toEqual(["workflow_dispatch"]);
+  expect(Object.keys(w.on.workflow_dispatch.inputs)).toEqual(["operation", "version", "notes"]);
   expect(w.permissions).toEqual({ contents: "read" });
   expect(w.concurrency).toEqual({ group: "product-release", "cancel-in-progress": false });
   expect(Object.keys(w.jobs)).toEqual(["qualify"]);

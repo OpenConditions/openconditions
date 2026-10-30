@@ -43,6 +43,11 @@ def digest(value):
 
 def readiness_claim(value, qualification, now):
     """Content validation, never an assertion that these operations occurred."""
+    if value is None:
+        require(
+            N.timestamp(qualification["eligibleUntil"]) > now, "expired bundle evidence"
+        )
+        return  # Missing execution evidence blocks publication, not review artifacts.
     keys(
         value,
         "schemaVersion imageSourceSha manifestSourceSha images platform postgresMajor priorDeployment steps",
@@ -153,7 +158,7 @@ def bundle_files(repo, qualification, readiness, now):
         "eligibleUntil": qualification["eligibleUntil"],
         "releaseAuthority": False,
         "nativeQualification": "NOT_ESTABLISHED_BY_LOCAL_BUNDLE",
-        "readinessContent": "VALIDATED_CLAIMS_ONLY",
+        "readinessContent": "PENDING" if readiness is None else "VALIDATED_CLAIMS_ONLY",
         "readinessExecution": "BLOCKED_NO_TRUSTED_PRODUCER",
         "imageBytes": "REFERENCED_NOT_REPACKED",
         "downstream": qualification["downstream"],
@@ -263,8 +268,54 @@ def emit(output, files):
     verify_directory(output, files)
 
 
+def final_native_fences(api, repo, qualification, tool_source, clock):
+    n = qualification["imageEvidence"]
+    a = n["producer"]
+    b = qualification["manifestEvidence"]
+    require(
+        P.latest_manifest(
+            api,
+            qualification["manifestSourceSha"],
+            b["producer"]["runId"],
+            b["producer"]["runAttempt"],
+            clock,
+        )
+        == b,
+        "B changed before bundle output",
+    )
+    require(
+        N.inspect_run(
+            api,
+            qualification["imageSourceSha"],
+            a["runId"],
+            a["runAttempt"],
+            clock(),
+            True,
+        )[0]
+        == a,
+        "A changed before bundle output",
+    )
+    P.snapshot_image_artifacts(api, n, qualification["imageSourceSha"], a["runId"])
+    require(
+        api.json(N.PREFIX + "/git/ref/heads/main").get("object", {}).get("sha")
+        == tool_source
+        and Q.sha(N.canonical(P.history(api))) == qualification["historySha256"],
+        "main/history changed before bundle output",
+    )
+    P.policy(repo, tool_source, qualification["imageSourceSha"])
+
+
 def assemble(
-    api, repo, qualification, readiness, output, tools, *, tool_source=None, clock=None
+    api,
+    repo,
+    qualification,
+    readiness,
+    output,
+    tools,
+    *,
+    tool_source=None,
+    clock=None,
+    before_emit=None,
 ):
     clock = clock or (lambda: datetime.now(timezone.utc))
     require(
@@ -322,40 +373,9 @@ def assemble(
     # Final native fences: no repeated image transfer or locally claimed authority.
     readiness_claim(readiness, qualification, clock())
     if native:
-        n = qualification["imageEvidence"]
-        a = n["producer"]
-        b = qualification["manifestEvidence"]
-        require(
-            P.latest_manifest(
-                api,
-                qualification["manifestSourceSha"],
-                b["producer"]["runId"],
-                b["producer"]["runAttempt"],
-                clock,
-            )
-            == b,
-            "B changed before bundle output",
-        )
-        require(
-            N.inspect_run(
-                api,
-                qualification["imageSourceSha"],
-                a["runId"],
-                a["runAttempt"],
-                clock(),
-                True,
-            )[0]
-            == a,
-            "A changed before bundle output",
-        )
-        P.snapshot_image_artifacts(api, n, qualification["imageSourceSha"], a["runId"])
-        require(
-            api.json(N.PREFIX + "/git/ref/heads/main").get("object", {}).get("sha")
-            == tool_source
-            and Q.sha(N.canonical(P.history(api))) == qualification["historySha256"],
-            "main/history changed before bundle output",
-        )
-        P.policy(repo, tool_source, qualification["imageSourceSha"])
+        final_native_fences(api, repo, qualification, tool_source, clock)
+    if before_emit is not None:
+        before_emit()
     readiness_claim(readiness, qualification, clock())
     validate_inventory(files)
     emit(output, files)
