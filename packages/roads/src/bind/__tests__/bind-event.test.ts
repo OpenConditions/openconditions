@@ -1214,4 +1214,136 @@ describe("bindEvent — a location standing for a slip road", () => {
     );
     expect(r.reason).toBe("no_candidates");
   });
+
+  const stated = (id: string, coordinates: [number, number][], slipRoad?: "exit" | "entry") =>
+    toBindInput({
+      id,
+      type: "closure",
+      roads: [{ ref: "A46" }],
+      geometry: { type: "LineString", coordinates },
+      slipRoadOnly: true,
+      ...(slipRoad ? { slipRoad } : {}),
+    });
+  // On way 101, ending 70 m before the off-ramp 120 leaves (and 210 m after 110 merges).
+  const beforeExit: [number, number][] = [
+    [6.913, 51.3],
+    [6.919, 51.3],
+  ];
+  // On way 101, starting 70 m after the on-ramp 110 merges (and ending 210 m before 120 leaves).
+  const afterEntry: [number, number][] = [
+    [6.911, 51.3],
+    [6.917, 51.3],
+  ];
+
+  it("binds the exit a location stops short of, from its junction", () => {
+    const r = bindEvent(stated("exit", beforeExit, "exit"), junction);
+    expect(r.segments).toHaveLength(1);
+    expect(r.segments[0]).toMatchObject({ segmentId: "120:f", startFraction: 0 });
+    // Only the ramp's first metres, so the closure ends before any fork on it.
+    const exitM = polylineLengthM(junction.segments.find((s) => s.segmentId === "120:f")!.coords);
+    expect(r.segments[0]!.endFraction).toBeCloseTo(30 / exitM, 5);
+    expect(r.status).toBe("likely");
+    expect(r.confidence).toBeLessThanOrEqual(0.89);
+  });
+
+  it("binds the entry a location starts after, from its junction", () => {
+    const r = bindEvent(stated("entry", afterEntry, "entry"), junction);
+    expect(r.segments).toHaveLength(1);
+    expect(r.segments[0]).toMatchObject({ segmentId: "110:f", endFraction: 1 });
+    expect(r.status).toBe("likely");
+  });
+
+  it("finds no ramp at a junction the location does not say which ramp it closes", () => {
+    expect(bindEvent(stated("exit", beforeExit), junction).reason).toBe("no_slip_road");
+    // An entry's location is not read for the exit it runs towards, nor the reverse.
+    expect(bindEvent(stated("entry", beforeExit, "entry"), junction).reason).toBe("no_slip_road");
+    expect(bindEvent(stated("exit", afterEntry, "exit"), junction).reason).toBe("no_slip_road");
+  });
+
+  it("finds no ramp beyond its reach, nor one of two", () => {
+    const farFromExit = bindEvent(
+      stated(
+        "far",
+        [
+          [6.912, 51.3],
+          [6.915, 51.3],
+        ],
+        "exit",
+      ),
+      junction,
+    );
+    expect(farFromExit.reason).toBe("no_slip_road");
+
+    const twoExits: SpineSubgraph = {
+      segments: [
+        ...junction.segments,
+        seg(
+          "130:f",
+          [
+            [6.92, 51.3],
+            [6.922, 51.3002],
+            [6.925, 51.3006],
+          ],
+          { highway: "motorway_link", ref: null },
+        ),
+      ].map((s) => ({ ...s, lengthM: polylineLengthM(s.coords) })),
+    };
+    expect(bindEvent(stated("exit", beforeExit, "exit"), twoExits).reason).toBe("no_slip_road");
+  });
+
+  /**
+   * An eastbound carriageway (way 200) and its off-ramp 210, which leaves at
+   * 7.005 and runs 11 m beside it before it turns away.
+   */
+  const besideCarriageway: SpineSubgraph = {
+    segments: [
+      seg("200:f", [
+        [7.0, 51.3],
+        [7.005, 51.3],
+      ]),
+      seg("201:f", [
+        [7.005, 51.3],
+        [7.02, 51.3],
+      ]),
+      seg(
+        "210:f",
+        [
+          [7.005, 51.3],
+          [7.006, 51.2999],
+          [7.015, 51.2999],
+          [7.02, 51.299],
+        ],
+        { highway: "motorway_link", ref: null },
+      ),
+    ].map((s) => ({ ...s, lengthM: polylineLengthM(s.coords) })),
+  };
+
+  it("binds a ramp the location is drawn along, though its number keeps the path beside it", () => {
+    const alongRamp: [number, number][] = [
+      [7.006, 51.2999],
+      [7.01, 51.2999],
+      [7.014, 51.2999],
+    ];
+    const everything = bindEvent(
+      { ...stated("ramp", alongRamp), slipRoadOnly: false },
+      besideCarriageway,
+    );
+    expect(everything.segments.map((s) => s.segmentId)).toEqual(["201:f"]);
+
+    const r = bindEvent(stated("ramp", alongRamp), besideCarriageway);
+    expect(r.segments.map((s) => s.segmentId)).toEqual(["210:f"]);
+    expect(["exact", "likely"]).toContain(r.status);
+  });
+
+  it("does not bind a ramp beside a location drawn along the carriageway", () => {
+    const r = bindEvent(
+      stated("main", [
+        [7.006, 51.3],
+        [7.01, 51.3],
+        [7.014, 51.3],
+      ]),
+      besideCarriageway,
+    );
+    expect(r.reason).toBe("no_slip_road");
+  });
 });

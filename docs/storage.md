@@ -208,6 +208,12 @@ its update stays heap-only (HOT):
   Category and boolean series (`value_text`) and series with an expiry
   (`expires_at`) are indexed by what they change, and change far less often.
 - `effective_from` is indexed with BRIN: a btree would stop HOT updates.
+- Page pruning removes the old version of a HOT update, so vacuum is left
+  for the index entries of the other updates: autovacuum waits for dead rows
+  of half the table (`autovacuum_vacuum_scale_factor = 0.5`) and analysis for
+  changes of twice the table (`autovacuum_analyze_scale_factor = 2`). With the
+  defaults, NDW's flow updates had it vacuumed every seven minutes and
+  analysed every minute.
 
 The history is `observation`, compact by design: about 110 bytes a reading,
 where a sealed record is about 1.2 KB. A row holds only what varies between
@@ -295,7 +301,10 @@ about 3 GB over 35 days. A class keeps on average half a day more than
 `rawDays`, so `rawDays: 1` holds about one and a half days. Volumes, occupancy,
 vehicle-class speeds and lane readings keep their latest row only. Measure
 against captured payloads before giving a property a history again: a day of
-NDW volumes alone was about 10 GB.
+NDW volumes alone was about 10 GB. These figures were measured with a poll a
+minute; NDW and the other flow feeds that polled every minute now poll every
+five minutes, the rate segment speeds are rebuilt at, which writes about a
+fifth as much.
 
 ## Read API
 

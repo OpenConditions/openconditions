@@ -16,7 +16,7 @@
 # so only fastify, postgres, croner and impit (a native binary, loaded on first
 # use) remain as external runtime dependencies.
 
-FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS base
+FROM node:24.22.2-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS base
 # Read the pnpm version from the repo root package.json so lockfile resolution
 # stays reproducible across local and CI Docker builds.
 COPY package.json /tmp/package.json
@@ -137,7 +137,7 @@ RUN pnpm --filter @openconditions/ingest... build
 # docs/plans/conditions/pbf-extract-source-design.md §3.1). Multi-stage so only
 # the tiny binary + its shared libs reach the runtime image. Pinned to git tags;
 # bump on a base-image change. Validated to build + run on musl (osmium 1.19.1).
-FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS osmium-build
+FROM node:24.22.2-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS osmium-build
 RUN apk add --no-cache cmake make g++ git boost-dev expat-dev bzip2-dev zlib-dev lz4-dev nlohmann-json
 RUN git clone --depth 1 -b v1.8.2 https://github.com/mapbox/protozero /src/protozero \
  && git clone --depth 1 -b v2.23.1 https://github.com/osmcode/libosmium /src/libosmium \
@@ -148,7 +148,7 @@ RUN cmake -S /src/osmium-tool -B /build -DCMAKE_BUILD_TYPE=Release \
  && cmake --build /build -j"$(nproc)"
 
 # Production image.
-FROM node:24.22.1-alpine@sha256:06d7adf3e0ef61a13f1d28682726366f97a15aa1888c934d3ecec86c33918b53 AS runner
+FROM node:24.22.2-alpine@sha256:8a32c8cf649a49915a66e81e7a609223c708d0adabf288ee3f4077d765542f85 AS runner
 WORKDIR /app
 
 # Apply Alpine security fixes that landed after the immutable base was published.

@@ -1,0 +1,11 @@
+{
+  "status": "likely",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "485860826:f",
+      "endFraction": 1
+    }
+  ],
+  "why": "Junction case: the A111 entry at AS Kurt-Schumacher-Platz (aus Richtung Eichborndamm) towards Dreieck Oranienburg is closed; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn/A111/services/closure), fetched 2026-10-29, closure id 2023-005138--vi-fbm.2026-05-07_07-00-00-000.devi-zus.2023-03-20_00-00-00-000_009.f.de58, display_type CLOSURE, location 'Von Auffahrt auf die A111: AS Kurt-Schumacher-Platz (aus Richtung Eichborndamm) nach A111: Charlottenburg -> Dreieck Oranienburg, zwischen AS Kurt-Schumacher-Platz und 1.3 km vor AS Holzhauser Straße', so the parser reads it as a ramp closure of the entry. spine frozen from Overpass on 2026-10-30 via bind:spine. The source line is drawn on the A111 carriageway only, starting about 16 m after the on-ramp merges: the ramp runs 4410020 (secondary_link, from Seidelstraße/Scharnweberstraße) -> 16867992 -> 485860826 (motorway_link, destination 'Hamburg'), which ends at the node where 24601402 (highway=motorway, ref='A 111') starts. No other slip road joins within 150 m before the line, so 485860826 is the entry; its last 30 m are bound, here the whole short way."
+}

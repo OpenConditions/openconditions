@@ -68,6 +68,7 @@ export function toBindInput(ev: {
   travel?: TravelDirection;
   roadState?: string;
   slipRoadOnly?: boolean;
+  slipRoad?: "exit" | "entry";
 }): BindInput {
   const { refs, names, prose } = roadIdentity(ev.roads ?? [], ev.text);
   return {
@@ -81,6 +82,7 @@ export function toBindInput(ev: {
     ...(ev.travel ? { travel: ev.travel } : {}),
     ...(ev.roadState ? { roadState: ev.roadState } : {}),
     ...(ev.slipRoadOnly ? { slipRoadOnly: true } : {}),
+    ...(ev.slipRoadOnly && ev.slipRoad ? { slipRoad: ev.slipRoad } : {}),
   };
 }
 
@@ -742,17 +744,187 @@ function isSlipRoad(s: SpineSegment): boolean {
  * merges with or leaves, through the acceleration or deceleration lane. That
  * carriageway stays open, so only the `*_link` spans are kept, wherever they
  * lie in the path. Confidence is the path's own: the geometry fits it as well
- * as before. A path with no slip road names no ramp this spine has, and binds
+ * as before. A path with no slip road may still have been drawn along one
+ * (`drawnOnSlipRoads`), or stop short of the ramp it states
+ * (`slipRoadAtJunction`); otherwise it names no ramp this spine has, and binds
  * nothing rather than close the road beside it.
  */
-function onSlipRoads(r: BindResult, spine: SpineSubgraph): BindResult {
+function onSlipRoads(
+  r: BindResult,
+  input: BindInput,
+  spine: SpineSubgraph,
+  graph: SegmentGraph,
+  opts: BindOptions,
+): BindResult {
   if (r.segments.length === 0) return r;
   const slip = new Set(spine.segments.filter(isSlipRoad).map((s) => s.segmentId));
   const segments = r.segments.filter((span) => slip.has(span.segmentId));
-  if (segments.length === 0) {
-    return failure("unresolved", "no_slip_road", r.candidateCount, r.debug.samples);
+  if (segments.length > 0) return { ...r, segments };
+  return (
+    drawnOnSlipRoads(r, input, spine, opts) ??
+    slipRoadAtJunction(r, input.slipRoad, spine, graph) ??
+    failure("unresolved", "no_slip_road", r.candidateCount, r.debug.samples)
+  );
+}
+
+/**
+ * A path on the carriageway alone may still have been drawn along a ramp: a
+ * ramp beside the carriageway carries no number, so the stated one keeps the
+ * path on the carriageway. The location binds to the slip roads alone when
+ * it lies nearer to them than to the carriageway path, as a location drawn
+ * along the carriageway does not.
+ */
+function drawnOnSlipRoads(
+  r: BindResult,
+  input: BindInput,
+  spine: SpineSubgraph,
+  opts: BindOptions,
+): BindResult | null {
+  const onCarriageway = r.debug.meanOffsetM;
+  if (onCarriageway === null) return null;
+  const links = bindEvent(
+    { ...input, slipRoadOnly: false },
+    { segments: spine.segments.filter(isSlipRoad) },
+    opts,
+  );
+  const onLinks = links.debug.meanOffsetM;
+  const routable = links.status === "exact" || links.status === "likely";
+  return routable && onLinks !== null && onLinks < onCarriageway ? links : null;
+}
+
+/** How far beyond a ramp closure's path its ramp may leave or join the carriageway, in metres. */
+const SLIP_ROAD_REACH_M = 150;
+/** The stretch bound of a ramp found at its junction: its first (exit) or last (entry) metres. */
+const SLIP_ROAD_HEAD_M = 30;
+/** A ramp found at its junction rather than along the geometry is at most `likely`. */
+const JUNCTION_MAX_CONFIDENCE = 0.89;
+
+/** Slack at the ends of a path when a junction node is read against them, in metres. */
+const NODE_SLACK_M = 1;
+
+/**
+ * One carriageway segment of a corridor: the stretch `fromM`..`toM` along it
+ * belongs to the corridor, and `baseM` is where the segment's start lies,
+ * measured from the start of the path.
+ */
+interface CorridorPart {
+  segment: SpineSegment;
+  fromM: number;
+  toM: number;
+  baseM: number;
+}
+
+/**
+ * The carriageway a ramp of the path may leave or join: the path itself, and
+ * on from its end (exit) or back from its start (entry) for up to
+ * `SLIP_ROAD_REACH_M`, as long as the carriageway runs on without a fork.
+ * Null when a span's segment is not in the spine.
+ */
+function corridorOf(
+  spans: SegmentSpan[],
+  slipRoad: "exit" | "entry",
+  graph: SegmentGraph,
+): { parts: CorridorPart[]; pathM: number } | null {
+  const parts: CorridorPart[] = [];
+  let pathM = 0;
+  for (const s of spans) {
+    const segment = graph.byId(s.segmentId);
+    if (!segment) return null;
+    const lengthM = polylineLengthM(segment.coords);
+    const fromM = s.startFraction * lengthM;
+    const toM = s.endFraction * lengthM;
+    parts.push({ segment, fromM, toM, baseM: pathM - fromM });
+    pathM += toM - fromM;
   }
-  return { ...r, segments };
+  // A way already in the corridor is not where it runs on: on a two-way road
+  // its other direction starts where this one ends.
+  const seen = new Set(parts.map((p) => p.segment.wayId));
+  const only = (next: SpineSegment[]): SpineSegment | undefined => {
+    const carriageway = next.filter((n) => !isSlipRoad(n) && !seen.has(n.wayId));
+    return carriageway.length === 1 ? carriageway[0] : undefined;
+  };
+  if (slipRoad === "exit") {
+    const last = parts[parts.length - 1]!;
+    last.toM = polylineLengthM(last.segment.coords);
+    let at = last.baseM + last.toM;
+    let next = only(graph.successors(last.segment.segmentId));
+    while (next && at - pathM < SLIP_ROAD_REACH_M) {
+      const lengthM = polylineLengthM(next.coords);
+      parts.push({ segment: next, fromM: 0, toM: lengthM, baseM: at });
+      seen.add(next.wayId);
+      at += lengthM;
+      next = only(graph.successors(next.segmentId));
+    }
+  } else {
+    const first = parts[0]!;
+    first.fromM = 0;
+    let at = first.baseM;
+    let prev = only(graph.predecessors(first.segment.segmentId));
+    while (prev && -at < SLIP_ROAD_REACH_M) {
+      const lengthM = polylineLengthM(prev.coords);
+      at -= lengthM;
+      parts.unshift({ segment: prev, fromM: 0, toM: lengthM, baseM: at });
+      seen.add(prev.wayId);
+      prev = only(graph.predecessors(prev.segmentId));
+    }
+  }
+  return { parts, pathM };
+}
+
+/**
+ * A path on the carriageway alone, of a location that states which ramp it
+ * closes: an exit's location often ends on the carriageway before the exit,
+ * and an entry's starts on it after the merge. The ramp is the one slip road
+ * that leaves the carriageway (exit) within the path or up to
+ * `SLIP_ROAD_REACH_M` past its end, or joins it (entry) within the path or
+ * up to that far before its start. Only its first (exit) or last (entry)
+ * metres are bound, so the closure ends before the ramp's first fork. No
+ * such ramp, or more than one, binds nothing, and so does a path whose
+ * carriageway is not decided.
+ */
+function slipRoadAtJunction(
+  r: BindResult,
+  slipRoad: BindInput["slipRoad"],
+  spine: SpineSubgraph,
+  graph: SegmentGraph,
+): BindResult | null {
+  if (slipRoad !== "exit" && slipRoad !== "entry") return null;
+  if (r.confidence === null || (r.status !== "exact" && r.status !== "likely")) return null;
+  // Only a path on one carriageway tells which side its ramps leave or join.
+  if (r.directionMode !== "single") return null;
+  const corridor = corridorOf(r.segments, slipRoad, graph);
+  if (corridor === null) return null;
+  const [lo, hi] =
+    slipRoad === "exit"
+      ? [-NODE_SLACK_M, corridor.pathM + SLIP_ROAD_REACH_M]
+      : [-SLIP_ROAD_REACH_M, corridor.pathM + NODE_SLACK_M];
+  // The carriageway nodes in the window, each a place a ramp may leave or join.
+  const nodes = new Set<string>();
+  for (const part of corridor.parts) {
+    const coords = part.segment.coords;
+    let alongM = 0;
+    for (let i = 0; i < coords.length; i++) {
+      if (i > 0) alongM += polylineLengthM([coords[i - 1]!, coords[i]!]);
+      const at = part.baseM + alongM;
+      const inPart = alongM >= part.fromM - NODE_SLACK_M && alongM <= part.toM + NODE_SLACK_M;
+      if (inPart && at >= lo && at <= hi) nodes.add(nodeKey(coords[i]!));
+    }
+  }
+  const ramps = spine.segments.filter((s) => {
+    if (!isSlipRoad(s) || s.coords.length < 2) return false;
+    const end = slipRoad === "exit" ? s.coords[0]! : s.coords[s.coords.length - 1]!;
+    return nodes.has(nodeKey(end));
+  });
+  if (new Set(ramps.map((s) => s.wayId)).size !== 1) return null;
+  const ramp = ramps[0]!;
+  const head = Math.min(1, SLIP_ROAD_HEAD_M / Math.max(polylineLengthM(ramp.coords), 1));
+  const confidence = Math.min(r.confidence, JUNCTION_MAX_CONFIDENCE);
+  return {
+    ...r,
+    status: r.status === "exact" ? "likely" : r.status,
+    confidence,
+    segments: [slipRoad === "exit" ? span(ramp, 0, head) : span(ramp, 1 - head, 1)],
+  };
 }
 
 /** Bind one event to the spine: geometry and stated refs in, directed spans out. */
@@ -787,5 +959,5 @@ export function bindEvent(
   else if (shape.coords.length === 1) result = bindPoint(shape.coords[0]!, input, grid, maxOffsetM);
   else result = bindLine(shape.coords, input, spine, grid, graph, onRef, maxOffsetM, spacingM);
   const placed = oriented(result, input.travel, shape, spine);
-  return input.slipRoadOnly ? onSlipRoads(placed, spine) : placed;
+  return input.slipRoadOnly ? onSlipRoads(placed, input, spine, graph, opts) : placed;
 }

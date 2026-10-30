@@ -162,6 +162,19 @@ describe("situationDrafts — closure scope", () => {
     expect(effects(ramp!).find((e) => e["kind"] === "closure")).toMatchObject({ scope: "ramp" });
     expect(effects(road!).find((e) => e["kind"] === "closure")).toMatchObject({ scope: "road" });
   });
+
+  it("keeps the slip road a location's road names", () => {
+    const [d] = assemble([
+      event("R3", {
+        type: "road_closure",
+        roadState: "closed",
+        situation: cls("closure", "closure", "ramp"),
+        roads: [{ ref: "A14", carriageway: "exit" }],
+      }),
+    ]);
+    const location = d!["location"] as { roads: Record<string, unknown>[] };
+    expect(location.roads[0]).toMatchObject({ ref: "A14", carriageway: "exit" });
+  });
 });
 
 describe("situationDrafts — DATEX situations", () => {

@@ -41,10 +41,12 @@ import { conditionsSchema, geometry, tstz } from "./columns.js";
  * that is not public, and null on every other row. A crowd row carries the
  * evidence summary of the report it holds, materialised from its `report_evidence` ledger as a crowd
  * situation's is. The custom migrations set `fillfactor = 50`, and nothing
- * indexes `value_num`, `reading` or the effective times: the per-minute
+ * indexes `value_num`, `reading` or the effective times: the per-poll
  * updates of a quantity series without an expiry (every flow reading) stay
  * HOT. A category or boolean series (`value_text`) and one with an expiry
  * (`expires_at`) are indexed by what they change; they change far less often.
+ * Page pruning cleans up after HOT updates, so the custom migrations also
+ * raise the table's autovacuum and autoanalyze thresholds.
  */
 /** Immutable versioned display receipts shared by actual acquired readings. Never catalogue-backfilled. */
 export const contributorReceipt = conditionsSchema.table("contributor_receipt", {

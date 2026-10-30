@@ -1,0 +1,17 @@
+{
+  "status": "likely",
+  "directionMode": "single",
+  "segments": [
+    {
+      "segmentId": "4274915:f",
+      "startFraction": 0.34,
+      "endFraction": 1
+    },
+    {
+      "segmentId": "4274923:f",
+      "startFraction": 0,
+      "endFraction": 0.34
+    }
+  ],
+  "why": "Junction case: the exit from the A5 (aus Richtung Taunusblick) at AK Nordwestkreuz Frankfurt am Main is closed; Autobahn GmbH des Bundes public API (https://verkehr.autobahn.de/o/autobahn/A5/services/closure), fetched 2026-10-29, closure id 2023-000361--vi-fbm.2026-10-30_20-00-00-000.devi-zus.2025-03-01_09-30-00-000.f_001.de50, display_type CLOSURE_ENTRY_EXIT, location 'Abfahrt von der A5: AK Nordwestkreuz Frankfurt am Main (aus Richtung Taunusblick)'. spine frozen from Overpass on 2026-10-30 via bind:spine. The source line lies on the exit ramp itself (0 m from it, 17 m from the A5 carriageway): 4274915 (highway=motorway_link) starts at the motorway_junction node 'Nordwestkreuz Frankfurt' (ref 18) and runs on into 4274923 (destination:ref='A 66'). Its stated A5 number, which the refless ramp lacks, keeps the plain path on 4516355 (highway=motorway, ref='A 5') beside it, so before resolver 2.7.0 the closure had no slip road and was not routed (2.6.0) or closed the A5 (before 2.6.0)."
+}

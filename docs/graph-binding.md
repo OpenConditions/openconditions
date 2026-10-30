@@ -245,8 +245,29 @@ A closure of scope `ramp` therefore binds with `slipRoadOnly`. The path is
 found exactly as for any location, carriageways included, since they tell the
 ramp apart from its neighbours; afterwards only the spans on `*_link` ways are
 kept, wherever they lie in the path. Status and confidence are the path's own.
-A path without any slip road (a point at the junction on the carriageway, or a
-location drawn on the carriageway alone) is `unresolved` / `no_slip_road`: the
+
+A path without any slip road gets two more chances, in this order:
+
+1. **Drawn along a ramp.** A ramp carries no number, so a location drawn along
+   one beside its carriageway can still bind to the carriageway, whose number
+   the location states (A5 at AK Nordwestkreuz Frankfurt, 17 m apart). The
+   location is bound again against the `*_link` ways alone, and that binding
+   is taken when it is `exact` or `likely` and lies nearer to the location
+   than the carriageway path does. A location drawn along the carriageway
+   keeps clear of a ramp beside it this way.
+2. **Short of its ramp.** An exit's location often ends on the carriageway
+   before the exit, and an entry's starts on it after the merge. When the
+   location says which ramp it closes (`roads[].carriageway` `exit` or
+   `entry`), the ramp is the one `*_link` way that leaves the path (exit) or
+   joins it (entry) within the path or up to 150 m beyond its end (exit) or
+   before its start (entry), along a carriageway without a fork. Only that
+   ramp's first (exit) or last (entry) 30 m are bound, so the closure ends
+   before the ramp's own first fork. The binding is at most `likely`
+   (confidence ≤ 0.89). No such ramp, or more than one, binds nothing.
+
+A path still without a slip road (a point at the junction on the carriageway,
+a location drawn on the carriageway that names no ramp, or one drawn away from
+the mapped roads at a construction site) is `unresolved` / `no_slip_road`: the
 spine has no ramp to close, and closing the road beside it would be worse than
 listing nothing. A ramp tagged as an ordinary road class, rather than as a
 link, is not recognized.
@@ -255,7 +276,15 @@ The Autobahn parser reads `display_type` `CLOSURE_ENTRY_EXIT` as a ramp
 closure, and also a `CLOSURE` whose location line names a slip road
 ("Auffahrt auf die …", "Abfahrt von der …", either one as the end of a
 "Von … nach …" span, or an interchange connector "Von A44: …; in A44: AK
-Meerbusch auf die A57 …"). Roadworks keep their location as it is: their lane
+Meerbusch auf die A57 …"). The other way round, a `CLOSURE_ENTRY_EXIT` whose
+location line names no slip road but a carriageway ("A61: Koblenz ->
+Mönchengladbach, zwischen AK Bliesheim und …", or "Von A38: … nach A38: …") is
+a road closure: the API types the parts of a full closure between two
+junctions that way. A line from or to another road ("Von K1 (Deichstraße) nach
+A31: …"), or none at all, leaves the source's type. The parser also records the
+slip road a location line names on the location's road, as `carriageway`
+`exit` ("Abfahrt von der …"), `entry` ("Auffahrt auf die …") or `connector`;
+a line naming both, or lines that disagree, record none. Roadworks keep their location as it is: their lane
 restrictions may well apply on the carriageway. Whatever the source, a closure
 gets scope `ramp` when its record's own classification is
 `closure.closure.ramp`.
@@ -415,7 +444,8 @@ A location is skipped as unchanged when its input hash, the resolver version,
 the record revision and the graph generation all match the stored binding and
 the binding is not `obsolete`. The hash covers every input the resolver reads
 plus what the location means for traffic: geometry, normalized refs, the
-situation kind, the direction, whether only slip roads are bound and the kinds
+situation kind, the direction, whether only slip roads are bound and which
+slip road the location names, and the kinds
 of the situation's effects. The kind
 is in there because `bindEvent` short-circuits on the not-applicable kinds — a
 situation whose kind flips to `weather_condition` must lose its spans rather
