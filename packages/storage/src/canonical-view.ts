@@ -22,7 +22,7 @@ import {
   survivorRank,
 } from "@openconditions/model";
 import type { Sql } from "./bulk.js";
-import { clustersHolding } from "./canonical-holding.js";
+import { clustersHolding, inHeld } from "./canonical-holding.js";
 import { isLockTimeout } from "./db-timeouts.js";
 import {
   type CanonicalRow,
@@ -225,7 +225,7 @@ export async function relinkFeatures(
   >`
     WITH held AS MATERIALIZED (${clustersHolding(tx, named)})
     SELECT c.canonical_feature_id, c.survivor_id, c.member_ids, c.components
-      FROM conditions.feature_canonical c JOIN held USING (canonical_feature_id)`;
+      FROM conditions.feature_canonical c WHERE ${inHeld(tx)}`;
   const seeds = new Set([...named, ...before.flatMap((r) => r.member_ids)]);
   const { members, links } = await connected(tx, [...seeds]);
   const live = members.filter((m) => !m.tombstoned);
@@ -253,8 +253,7 @@ export async function relinkFeatures(
     }[]
   >`
     WITH held AS MATERIALIZED (${clustersHolding(tx, [...seeds, ...members.map((m) => m.id)])})
-    DELETE FROM conditions.feature_canonical c USING held
-     WHERE c.canonical_feature_id = held.canonical_feature_id
+    DELETE FROM conditions.feature_canonical c WHERE ${inHeld(tx)}
     RETURNING c.canonical_feature_id, c.survivor_id, c.member_ids, c.components`;
   if (rows.length > 0) {
     await tx`
