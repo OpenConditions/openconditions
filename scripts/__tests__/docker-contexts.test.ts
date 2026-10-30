@@ -84,6 +84,27 @@ describe("Docker context command failure honesty", () => {
     expect(r.stdout).toBe("");
     expect(r.stderr).toContain("BuildKit");
   });
+  it.each(["content", "mode"])(
+    "identifies a rejected export %s mismatch without weakening it",
+    (kind) => {
+      const { repo, a } = setup();
+      const env = fakeDocker(`const fs=require('node:fs'); const path=require('node:path');
+const output=process.argv.find(x=>x.startsWith('type=local,dest=')).slice('type=local,dest='.length);
+const source=process.argv.at(-1); fs.mkdirSync(output,{recursive:true});
+for(const name of ['package.json','pnpm-lock.yaml']) fs.copyFileSync(path.join(source,name),path.join(output,name));
+${kind === "content" ? "fs.writeFileSync(path.join(output,'package.json'),'rewritten');" : "fs.chmodSync(path.join(output,'package.json'),0o600);"}
+fs.writeFileSync(process.argv[process.argv.indexOf('--metadata-file')+1],JSON.stringify({'buildx.build.ref':'fixture/build/ref'}));`);
+      const result = check(repo, a, a, env);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe("");
+      expect(result.stderr).toContain("export content/mode differs from archived source");
+      expect(result.stderr).toContain('"image":"ingest"');
+      expect(result.stderr).toContain('"side":"a"');
+      expect(result.stderr).toContain('"path":"package.json"');
+      expect(result.stderr).toContain('"expected":');
+      expect(result.stderr).toContain('"actual":');
+    },
+  );
   it("rejects export-ignore archives that omit committed input", () => {
     const { repo, a } = setup();
     put(repo, ".gitattributes", "package.json export-ignore\n");
