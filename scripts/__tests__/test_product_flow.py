@@ -34,6 +34,15 @@ class FlowTests(T.ProductTests):
             M.summary("review", self.version, self.b, "Actions artifact"),
         )
 
+        self.assertIn(
+            "Tests and images: verified",
+            M.summary("prepare", self.version, self.a, "artifact"),
+        )
+        self.assertIn(
+            "Manifest compatibility: not verified",
+            M.summary("review", self.version, self.b, "none", "Pending main CI"),
+        )
+
     def test_flow_pending_not_approval(self):
         spec = importlib.util.spec_from_file_location(
             "bundle", T.P.TOOLS / "scripts/bundle-product-release.py"

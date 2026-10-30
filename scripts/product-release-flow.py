@@ -55,12 +55,15 @@ def discover(api, source, clock):
 
 
 def summary(operation, version, source, artifact, blocked=None):
+    validation = "not verified" if blocked else "verified"
     return f"""# Product {operation}: {version}
 
 Source: `{source}`
 
 {("**Blocked:** " + blocked) if blocked else "**Review artifact prepared. This is not release approval.**"}
 
+- Tests and images: {validation} (exact owning-main gates and four-image evidence).
+- Manifest compatibility: {validation} (pointer/context checks and actual pinned CLI/admission).
 - Evidence: {artifact}
 - Readiness: **pending** installation, configuration/health, rights/privacy fixtures, prior-deployment upgrade/migration, backup/restore/recovery and optional federation/TUF evidence.
 - Publication: **blocked**; trusted readiness producer, protected approval and promotion are not implemented.
