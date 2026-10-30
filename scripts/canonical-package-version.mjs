@@ -1,17 +1,27 @@
 import { execFileSync } from "node:child_process";
-import { mkdtempSync, readdirSync, readFileSync, rmSync, symlinkSync } from "node:fs";
+import { lstatSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { delimiter, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 
-const tools = resolve(import.meta.dirname, "..");
 export function run(command, args, cwd) {
   return execFileSync(command, args, {
     cwd,
     encoding: "utf8",
     maxBuffer: 16 * 1024 * 1024,
-    env: { ...process.env, CI: "1", HUSKY: "0" },
+    env: {
+      ...process.env,
+      CI: "1",
+      HUSKY: "0",
+      npm_config_offline: "true",
+      PATH: [
+        join(cwd, "node_modules/.bin"),
+        ...(process.env.PATH ?? "")
+          .split(delimiter)
+          .filter((path) => !path.includes(`${sep}node_modules${sep}.bin`)),
+      ].join(delimiter),
+    },
   }).trim();
 }
 export function notes(cwd, allowed) {
@@ -49,7 +59,12 @@ export function generate(cwd, check = false) {
     throw Error("Unsupported Changesets configuration");
   const pending = notes(cwd, allowed).length;
   if (!pending) return { pending: 0 };
-  const cli = join(tools, "node_modules/@changesets/cli/bin.js");
+  const modules = join(cwd, "node_modules");
+  if (lstatSync(modules).isSymbolicLink())
+    throw Error("Version tools require an owned dependency installation");
+  const cli = realpathSync(join(modules, "@changesets/cli/bin.js"));
+  if (!cli.startsWith(realpathSync(modules) + sep))
+    throw Error("Changesets must resolve inside the project installation");
   if (check) {
     run(process.execPath, [cli, "status"], cwd);
     return { pending };
@@ -65,7 +80,7 @@ export function canonical(base, head, cwd) {
     run("git", ["clone", "--shared", "--no-checkout", cwd, dir], cwd);
     run("git", ["checkout", "--detach", base], dir);
     const initial = run("git", ["write-tree"], dir);
-    symlinkSync(join(tools, "node_modules"), join(dir, "node_modules"), "dir");
+    run("pnpm", ["install", "--frozen-lockfile", "--offline", "--ignore-scripts"], dir);
     const result = generate(dir);
     if (!result.pending) throw Error("Empty queue cannot authorize a version PR");
     run("git", ["add", "-A"], dir);

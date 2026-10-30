@@ -1,5 +1,17 @@
 import { execFileSync, spawnSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { createHash } from "node:crypto";
+import {
+  existsSync,
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  readlinkSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
@@ -107,7 +119,13 @@ describe("release information actual CLI", () => {
     ).not.toBe(0));
 });
 
-function versionFixture(extra: "canonical" | "source" | "empty" | "allowlist" | "fragment") {
+function installedVersion(name: string): string {
+  return JSON.parse(readFileSync(join(root, "node_modules", name, "package.json"), "utf8")).version;
+}
+function versionFixture(
+  extra: "canonical" | "source" | "empty" | "allowlist" | "fragment",
+  toolRoot = root,
+) {
   const dir = mkdtempSync(join(tmpdir(), "oc-version-test-"));
   const git = (...args: string[]) =>
     execFileSync("git", args, {
@@ -124,7 +142,15 @@ function versionFixture(extra: "canonical" | "source" | "empty" | "allowlist" | 
     writeFileSync(join(dir, ".gitignore"), "node_modules\n");
     writeFileSync(
       join(dir, "package.json"),
-      JSON.stringify({ name: "fixture", private: true, packageManager }),
+      JSON.stringify({
+        name: "fixture",
+        private: true,
+        packageManager,
+        devDependencies: {
+          "@changesets/cli": installedVersion("@changesets/cli"),
+          prettier: installedVersion("prettier"),
+        },
+      }),
     );
     writeFileSync(join(dir, "pnpm-workspace.yaml"), "packages:\n  - packages/*\n");
     writeFileSync(
@@ -154,12 +180,16 @@ function versionFixture(extra: "canonical" | "source" | "empty" | "allowlist" | 
       cwd: dir,
       stdio: "pipe",
     });
+    execFileSync("pnpm", ["install", "--frozen-lockfile", "--offline", "--ignore-scripts"], {
+      cwd: dir,
+      stdio: "pipe",
+    });
     git("add", ".");
     git("-c", "commit.gpgsign=false", "commit", "-qm", "base");
     const base = git("rev-parse", "HEAD");
     const generated = spawnSync(
       process.execPath,
-      [join(root, "scripts/version-public-packages.mjs")],
+      [join(toolRoot, "scripts/version-public-packages.mjs")],
       { cwd: dir, encoding: "utf8", timeout: 30000 },
     );
     expect(generated.status, generated.stderr).toBe(0);
@@ -188,8 +218,21 @@ function versionFixture(extra: "canonical" | "source" | "empty" | "allowlist" | 
     const head = git("rev-parse", "HEAD");
     return spawnSync(
       process.execPath,
-      [join(root, "scripts/canonical-package-version.mjs"), base, head],
-      { cwd: dir, encoding: "utf8", timeout: 30000 },
+      [join(toolRoot, "scripts/canonical-package-version.mjs"), base, head],
+      {
+        cwd: dir,
+        encoding: "utf8",
+        timeout: 30000,
+        env: {
+          ...process.env,
+          ...(toolRoot !== root
+            ? {
+                NODE_OPTIONS: `--import=${join(toolRoot, "observe.mjs")}`,
+                OC_CANONICAL_TRACE: join(toolRoot, "trace.jsonl"),
+              }
+            : {}),
+        },
+      },
     );
   } finally {
     rmSync(dir, { recursive: true, force: true });
@@ -198,12 +241,18 @@ function versionFixture(extra: "canonical" | "source" | "empty" | "allowlist" | 
 it("accepts actual installed Changesets version/lock/changelog/note consumption", () => {
   const r = versionFixture("canonical");
   expect(r.status, r.stderr).toBe(0);
+  expect(r.stdout).toContain('"pending":1');
 }, 60000);
 it.each(["source", "empty", "allowlist", "fragment"] as const)(
   "rejects forged canonical output: %s",
   (kind) => {
     const r = versionFixture(kind);
     expect(r.status, r.stdout + r.stderr).not.toBe(0);
+    expect(r.stderr).toContain(
+      kind === "empty"
+        ? "Empty queue cannot authorize"
+        : "Version PR differs from installed Changesets canonical output",
+    );
   },
   60000,
 );
@@ -362,3 +411,75 @@ it.each([false, true])(
     expect(result.output).toContain("delivered surface changed");
   },
 );
+
+function installationState(directory: string) {
+  const modules = join(directory, "node_modules");
+  const hash = createHash("sha256");
+  let entries = 0;
+  const visit = (relative: string) => {
+    for (const entry of readdirSync(join(modules, relative), { withFileTypes: true }).sort((a, b) =>
+      a.name.localeCompare(b.name),
+    )) {
+      const name = join(relative, entry.name),
+        path = join(modules, name);
+      entries++;
+      hash.update(name).update(String(lstatSync(path).mode));
+      if (entry.isSymbolicLink()) hash.update(readlinkSync(path));
+      else if (entry.isDirectory()) visit(name);
+      else hash.update(readFileSync(path));
+    }
+  };
+  visit("");
+  return { digest: hash.digest("hex"), entries };
+}
+
+it("isolates canonical installs and preserves outside installed tools", () => {
+  const outside = installationState(root);
+  const victim = realpathSync(mkdtempSync(join(tmpdir(), "oc-owned-tools-")));
+  try {
+    execFileSync("git", ["clone", "--shared", "--no-checkout", root, victim], { stdio: "pipe" });
+    execFileSync("git", ["checkout", "--detach", "HEAD"], { cwd: victim, stdio: "pipe" });
+    for (const file of ["canonical-package-version.mjs", "version-public-packages.mjs"])
+      writeFileSync(join(victim, "scripts", file), readFileSync(join(root, "scripts", file)));
+    execFileSync("pnpm", ["install", "--frozen-lockfile", "--offline", "--ignore-scripts"], {
+      cwd: victim,
+      stdio: "pipe",
+    });
+    writeFileSync(
+      join(victim, "observe.mjs"),
+      `import fs from "node:fs";
+import {syncBuiltinESMExports} from "node:module";
+const remove=fs.rmSync;
+fs.rmSync=(path,options)=>{
+ if(typeof path==="string" && path.includes("/oc-version-") && fs.existsSync(path+"/node_modules")) fs.appendFileSync(process.env.OC_CANONICAL_TRACE,JSON.stringify({directory:fs.realpathSync(path),modules:fs.realpathSync(path+"/node_modules"),cli:fs.realpathSync(path+"/node_modules/@changesets/cli"),formatter:fs.realpathSync(path+"/node_modules/prettier")})+"\\n");
+ return remove(path,options);
+};syncBuiltinESMExports();`,
+    );
+    const before = installationState(victim);
+    const prettier = join(victim, "node_modules/.bin/prettier");
+    const version = execFileSync(prettier, ["--version"], { encoding: "utf8" });
+    const result = versionFixture("canonical", victim);
+    expect(existsSync(join(victim, "trace.jsonl")), result.stdout + result.stderr).toBe(true);
+    const records = readFileSync(join(victim, "trace.jsonl"), "utf8")
+      .trim()
+      .split("\n")
+      .map((line) => JSON.parse(line));
+    expect(records).toHaveLength(1);
+    for (const record of records) {
+      expect(record.modules).toBe(join(record.directory, "node_modules"));
+      expect(record.cli.startsWith(`${record.directory}/node_modules/`)).toBe(true);
+      expect(record.formatter.startsWith(`${record.directory}/node_modules/`)).toBe(true);
+    }
+    expect(installationState(victim)).toEqual(before);
+    expect(execFileSync(prettier, ["--version"], { encoding: "utf8" })).toBe(version);
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+  } finally {
+    rmSync(victim, { recursive: true, force: true });
+    expect(installationState(root)).toEqual(outside);
+    expect(
+      execFileSync(join(root, "node_modules/.bin/prettier"), ["--version"], {
+        encoding: "utf8",
+      }).trim(),
+    ).toBe(installedVersion("prettier"));
+  }
+}, 120000);
