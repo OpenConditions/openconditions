@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/OpenMapX/openmapx",
+  "sourceSha": "bf551c68b4389b4acbdcbb878b005128a23763ac",
+  "portable": {
+    "name": "@openmapx/extension-cli",
+    "version": "0.1.0",
+    "archiveSha256": "c0ba88afca002fcc6d04c9a401edf6feb4152a7c2291b821b53660a6ad4d3a08",
+    "packageTreeSha256": "ac57138e1c823598eb9bb05275890a7379c26392af2e56b45cafeaf9b6bd0224",
+    "commanderVersion": "15.0.0",
+    "commanderTreeSha256": "8e2b1532b97a272ae20c51916cb938e66b78b74150a39d6b086a5d357d0e05c0"
+  },
+  "admission": {
+    "entrySha256": "a86159486baf3a2e6e4f898ea8ea9aaddd865cff2cdecf09bff45e9523f00fe8",
+    "sourceFile": "packages/core/src/services/community-manifest.ts",
+    "sourceSha256": "8f11bc46de13021fdf06b16f968d73d3d24f659b983c389cf9acc19e4ac6427e",
+    "export": "communityServiceManifestProblems"
+  },
+  "scope": "Local portable extension/service and community admission contract validation only; not deployed host acceptance"
+}

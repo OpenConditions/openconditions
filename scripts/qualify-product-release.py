@@ -31,6 +31,14 @@ POLICY = [
     "scripts/check-release-inputs.mjs",
     "scripts/qualify-product-inputs.mjs",
     "scripts/qualify-product-release.py",
+    "scripts/prepare-product-release.py",
+    "scripts/prepare-product-release.mjs",
+    "scripts/validate-product-manifests.mjs",
+    "scripts/run-openmapx-admission.mjs",
+    "scripts/openmapx-product-contracts.json",
+    "scripts/fixtures/openmapx-contract-consumer/package.json",
+    "scripts/fixtures/openmapx-contract-consumer/pnpm-workspace.yaml",
+    "scripts/fixtures/openmapx-contract-consumer/application-lock.yaml",
 ]
 
 
@@ -140,6 +148,42 @@ def policy(repo, tool_source, image_source):
         )
 
 
+def snapshot_image_artifacts(api, native, source, run_id):
+    snapshots = {}
+    for ref in [native["candidateArtifact"], *native["imageArtifacts"].values()]:
+        fresh = api.json(f"{N.PREFIX}/actions/artifacts/{ref['id']}")
+        require(
+            all(
+                fresh.get(key) == ref[value]
+                for key, value in [
+                    ("digest", "digest"),
+                    ("size_in_bytes", "sizeBytes"),
+                    ("expires_at", "expiresAt"),
+                    ("created_at", "createdAt"),
+                    ("name", "name"),
+                ]
+            )
+            and fresh.get("expired") is False
+            and fresh.get("workflow_run", {}).get("head_sha") == source
+            and fresh["workflow_run"].get("id") == run_id,
+            "A artifact identity changed",
+        )
+        snapshots[ref["id"]] = fresh
+    return snapshots
+
+
+def owning_checkout(repo):
+    require(
+        git(repo, "remote", "get-url", "origin").decode().strip()
+        in [
+            "https://github.com/OpenConditions/openconditions.git",
+            "https://github.com/OpenConditions/openconditions",
+            "git@github.com:OpenConditions/openconditions.git",
+        ],
+        "wrong checkout origin",
+    )
+
+
 def qualify(
     api,
     repo,
@@ -163,15 +207,7 @@ def qualify(
         ),
         "immutable sources required",
     )
-    require(
-        git(repo, "remote", "get-url", "origin").decode().strip()
-        in [
-            "https://github.com/OpenConditions/openconditions.git",
-            "https://github.com/OpenConditions/openconditions",
-            "git@github.com:OpenConditions/openconditions.git",
-        ],
-        "wrong checkout origin",
-    )
+    owning_checkout(repo)
     for ancestor, descendant in [
         (image_source, manifest_source),
         (manifest_source, tool_source),
@@ -196,26 +232,7 @@ def qualify(
         "trusted main advanced before qualification",
     )
     native = N.validate(api, image_source, image_run, image_attempt, now=native_now)
-    artifact_before = {}
-    for ref in [native["candidateArtifact"], *native["imageArtifacts"].values()]:
-        fresh = api.json(f"{N.PREFIX}/actions/artifacts/{ref['id']}")
-        require(
-            all(
-                fresh.get(key) == ref[value]
-                for key, value in [
-                    ("digest", "digest"),
-                    ("size_in_bytes", "sizeBytes"),
-                    ("expires_at", "expiresAt"),
-                    ("created_at", "createdAt"),
-                    ("name", "name"),
-                ]
-            )
-            and fresh.get("expired") is False
-            and fresh.get("workflow_run", {}).get("head_sha") == image_source
-            and fresh["workflow_run"].get("id") == image_run,
-            "A artifact identity changed",
-        )
-        artifact_before[ref["id"]] = fresh
+    artifact_before = snapshot_image_artifacts(api, native, image_source, image_run)
     b = latest_manifest(api, manifest_source, manifest_run, manifest_attempt, clock)
     require(
         b["producer"]["workflowSourceBlobSha"]
