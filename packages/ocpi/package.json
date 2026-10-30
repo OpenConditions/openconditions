@@ -48,6 +48,6 @@
   },
   "homepage": "https://github.com/OpenConditions/openconditions/tree/main/packages/ocpi",
   "dependencies": {
-    "@types/node": "24.19.2"
+    "@types/node": "26.6.5"
   }
 }
