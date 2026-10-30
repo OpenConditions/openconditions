@@ -13,7 +13,7 @@ import {
 } from "node:fs";
 import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
-import { basename, dirname, join, relative, sep } from "node:path";
+import { basename, dirname, isAbsolute, join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { regular as readRegular } from "./check-docker-contexts.mjs";
 
@@ -49,6 +49,25 @@ function run(command, args, cwd, env) {
   if (r.error) throw r.error;
   return r;
 }
+export function consumerPackageManager(cwd, env) {
+  // Resolve the root-selected executable, not a wrapper that may bootstrap again
+  // under the consumer's empty HOME. The existing release fixtures use this API.
+  const selected = run("pnpm", ["exec", "node", "-p", "process.env.npm_execpath"], root, {
+    ...process.env,
+    npm_config_offline: "true",
+  });
+  if (selected.status !== 0 || !isAbsolute(selected.stdout.trim()))
+    throw Error("Resolve installed pinned pnpm from the trusted root before contract validation");
+  const manager = realpathSync(selected.stdout.trim());
+  const version = run(manager, ["--version"], cwd, env);
+  if (version.status !== 0 || version.stdout.trim() !== "12.16.1")
+    throw Error(
+      "Pinned pnpm must run directly in the isolated consumer (12.16.1 required): " +
+        version.stdout +
+        version.stderr,
+    );
+  return manager;
+}
 export function validateProductManifests(directory, tools) {
   if (Number(process.versions.node.split(".")[0]) < 24)
     throw Error("Node24 or newer required for actual contract tool");
@@ -72,10 +91,8 @@ export function validateProductManifests(directory, tools) {
       CI: "1",
       NO_COLOR: "1",
     };
-    const manager = run("pnpm", ["--version"], root, process.env);
-    if (manager.status !== 0 || manager.stdout.trim() !== "12.16.1")
-      throw Error("Unsupported pinned consumer package manager");
-    const store = run("pnpm", ["store", "path", "--silent"], root, process.env);
+    const manager = consumerPackageManager(scratch, env);
+    const store = run(manager, ["store", "path", "--silent"], root, process.env);
     if (store.status !== 0 || basename(store.stdout.trim()) !== "v11")
       throw Error("Unsupported pnpm store contract");
     const fixture = join(root, "scripts/fixtures/openmapx-contract-consumer");
@@ -97,7 +114,7 @@ export function validateProductManifests(directory, tools) {
     );
     const frozenBefore = readFileSync(join(scratch, "pnpm-lock.yaml"));
     const install = run(
-      "pnpm",
+      manager,
       [
         "install",
         "--frozen-lockfile",

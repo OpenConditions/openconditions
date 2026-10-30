@@ -1,7 +1,15 @@
-import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { execFileSync, spawnSync } from "node:child_process";
+import {
+  chmodSync,
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  realpathSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, expect, it } from "vitest";
 import { setupRelease } from "./product-release-fixtures.js";
@@ -116,4 +124,55 @@ it("will not create output inside caller worktree even with a valid metadata inp
   expect(r.status).toBe(1);
   expect(r.stderr).toContain("outside caller worktree");
   expect(existsSync(path)).toBe(false);
+});
+
+it("binds the consumer to the resolved pinned manager rather than a cwd-sensitive bootstrap wrapper", () => {
+  const dir = realpathSync(mkdtempSync(join(tmpdir(), "oc-consumer-manager-")));
+  owned.push(dir);
+  const manager = execFileSync("pnpm", ["exec", "node", "-p", "process.env.npm_execpath"], {
+    encoding: "utf8",
+  }).trim();
+  const wrapper = join(dir, "pnpm");
+  writeFileSync(join(dir, "manager.json"), JSON.stringify({ manager }));
+  writeFileSync(
+    wrapper,
+    `#!/usr/bin/env node
+const {readFileSync}=require("node:fs"),{dirname,join}=require("node:path");
+const manager=JSON.parse(readFileSync(join(dirname(process.argv[1]),"manager.json"))).manager;
+if(process.argv[2]==="exec") { console.log(manager); }
+else if(process.argv[2]==="--version" && process.cwd()!==dirname(process.argv[1])) { console.log("12.16.1"); }
+else { console.error("ERR_PNPM_NO_OFFLINE_META owned bootstrap control");process.exitCode=1; }
+`,
+  );
+  chmodSync(wrapper, 0o755);
+  const env = { PATH: [dir, process.env.PATH].join(delimiter), HOME: dir, CI: "1" };
+  const code = `import {spawnSync} from "node:child_process";
+const {consumerPackageManager}=await import(process.argv[2]);
+const manager=consumerPackageManager(process.argv[3],process.env);
+const r=spawnSync(manager,["--version"],{cwd:process.argv[3],env:process.env,encoding:"utf8"});
+console.log(JSON.stringify({manager,status:r.status,stdout:r.stdout,stderr:r.stderr}));`;
+  const invokeManager = () =>
+    spawnSync(
+      process.execPath,
+      [
+        "--input-type=module",
+        "-e",
+        code,
+        "owned-manager-harness",
+        fileURLToPath(new URL("../validate-product-manifests.mjs", import.meta.url)),
+        dir,
+      ],
+      { env, encoding: "utf8" },
+    );
+  const control = spawnSync(wrapper, ["--version"], { cwd: dir, env, encoding: "utf8" });
+  expect(control.status).toBe(1);
+  expect(control.stderr).toContain("ERR_PNPM_NO_OFFLINE_META owned bootstrap control");
+  const result = invokeManager();
+  expect(result.status, result.stderr).toBe(0);
+  expect(JSON.parse(result.stdout)).toMatchObject({ manager, status: 0, stdout: "12.16.1\n" });
+  // A wrapper's root version report cannot qualify an unusable resolved command.
+  writeFileSync(join(dir, "manager.json"), JSON.stringify({ manager: wrapper }));
+  const bad = invokeManager();
+  expect(bad.status).toBe(1);
+  expect(bad.stderr).toContain("Pinned pnpm must run directly in the isolated consumer");
 });
