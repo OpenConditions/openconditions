@@ -15,3 +15,5 @@
 ## Release and upgrade impact
 
 <!-- Describe known migration, configuration, compatibility or operator impact, including unresolved questions. -->
+
+<!-- For qualified package consumer changes, add a Changeset or `Package release: none — specific reason`. For important breaking/migration/security/operator impact, declare `Product release: operator-impact docs/release-notes/name.md` and commit that fragment. Docs/internal/test-only work needs neither. See docs/release-information.md. -->
