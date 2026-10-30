@@ -10,10 +10,11 @@ import {
   readlinkSync,
   realpathSync,
   rmSync,
+  symlinkSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { delimiter, dirname, join, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const root = resolve(import.meta.dirname, "../..");
@@ -125,6 +126,7 @@ function installedVersion(name: string): string {
 function versionFixture(
   extra: "canonical" | "source" | "empty" | "allowlist" | "fragment",
   toolRoot = root,
+  environment: NodeJS.ProcessEnv = process.env,
 ) {
   const dir = mkdtempSync(join(tmpdir(), "oc-version-test-"));
   const git = (...args: string[]) =>
@@ -179,10 +181,12 @@ function versionFixture(
     execFileSync("pnpm", ["install", "--lockfile-only", "--offline", "--ignore-scripts"], {
       cwd: dir,
       stdio: "pipe",
+      env: environment,
     });
     execFileSync("pnpm", ["install", "--frozen-lockfile", "--offline", "--ignore-scripts"], {
       cwd: dir,
       stdio: "pipe",
+      env: environment,
     });
     git("add", ".");
     git("-c", "commit.gpgsign=false", "commit", "-qm", "base");
@@ -190,9 +194,9 @@ function versionFixture(
     const generated = spawnSync(
       process.execPath,
       [join(toolRoot, "scripts/version-public-packages.mjs")],
-      { cwd: dir, encoding: "utf8", timeout: 30000 },
+      { cwd: dir, encoding: "utf8", timeout: 30000, env: environment },
     );
-    expect(generated.status, generated.stderr).toBe(0);
+    expect(generated.status, generated.stdout + generated.stderr).toBe(0);
     if (extra === "empty")
       writeFileSync(
         join(dir, "packages/ocpi/package.json"),
@@ -483,3 +487,37 @@ fs.rmSync=(path,options)=>{
     ).toBe(installedVersion("prettier"));
   }
 }, 120000);
+it("keeps the pinned manager available from the action-setup PNPM_HOME layout", () => {
+  const directory = realpathSync(mkdtempSync(join(tmpdir(), "oc-manager-home-")));
+  try {
+    const home = join(directory, "setup-pnpm/node_modules/.bin");
+    const hosts = join(directory, "host-bin");
+    mkdirSync(join(home, "bin"), { recursive: true });
+    mkdirSync(hosts);
+    const manager = execFileSync("pnpm", ["exec", "node", "-p", "process.env.npm_execpath"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim();
+    expect(execFileSync(manager, ["--version"], { encoding: "utf8" }).trim()).toBe(pnpmVersion);
+    symlinkSync(manager, join(home, "bin/pnpm"));
+    symlinkSync(process.execPath, join(hosts, "node"));
+    const paths = (process.env.PATH ?? "")
+      .split(delimiter)
+      .filter((path) => !existsSync(join(path, "pnpm")));
+    const store = execFileSync("pnpm", ["store", "path", "--silent"], {
+      cwd: root,
+      encoding: "utf8",
+    }).trim();
+    symlinkSync(dirname(store), join(home, "store"), "dir");
+    const environment = {
+      ...process.env,
+      PNPM_HOME: home,
+      PATH: [hosts, join(home, "bin"), ...paths].join(delimiter),
+    };
+    const result = versionFixture("canonical", root, environment);
+    expect(result.status, result.stdout + result.stderr).toBe(0);
+    expect(result.stdout).toContain('"pending":1');
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}, 60000);

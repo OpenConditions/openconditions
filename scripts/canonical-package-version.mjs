@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 
 export function run(command, args, cwd) {
+  const home = process.env.PNPM_HOME;
+  const managerPaths = new Set(home ? [home, join(home, "bin")] : []);
   return execFileSync(command, args, {
     cwd,
     encoding: "utf8",
@@ -19,7 +21,9 @@ export function run(command, args, cwd) {
         join(cwd, "node_modules/.bin"),
         ...(process.env.PATH ?? "")
           .split(delimiter)
-          .filter((path) => !path.includes(`${sep}node_modules${sep}.bin`)),
+          .filter(
+            (path) => !path.includes(`${sep}node_modules${sep}.bin`) || managerPaths.has(path),
+          ),
       ].join(delimiter),
     },
   }).trim();
