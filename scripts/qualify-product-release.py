@@ -19,6 +19,7 @@ SPEC.loader.exec_module(N)
 require = N.require
 TOOLS = Path(__file__).resolve().parent.parent
 POLICY = [
+    "scripts/bundle-product-release.py",
     ".github/workflows/ci.yml",
     ".github/workflows/product-release.yml",
     ".nvmrc",
