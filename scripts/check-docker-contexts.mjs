@@ -55,7 +55,7 @@ function command(cwd, executable, args) {
     );
   return r.stdout;
 }
-function regular(path) {
+export function regular(path) {
   // One no-follow handle binds type, bytes and identity; never stat then reopen.
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
   try {

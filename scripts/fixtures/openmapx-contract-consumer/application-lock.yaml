@@ -1,0 +1,38 @@
+---
+lockfileVersion: "9.0"
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    dependencies:
+      "@openmapx/extension-cli":
+        specifier: file:portable.tgz
+        version: file:portable.tgz
+
+packages:
+  "@openmapx/extension-cli@file:portable.tgz":
+    resolution:
+      {
+        integrity: sha512-cQoHGIH33TBuBgOJKo5MJfF6f3rzhWUtIJof+GQsJyeKN3eyxVF7Q/tXTYRnL8QTid3OMJ48nXfVSfjSwF1tYQ==,
+        tarball: file:portable.tgz,
+      }
+    version: 0.1.0
+    engines: { node: ">=24" }
+    hasBin: true
+
+  commander@15.0.0:
+    resolution:
+      {
+        integrity: sha512-z67u4ZhzCL/Tydu1lJARtEZYWbWaN7oYLHbsuzocr6y4N6WZAagG3RQ4FW61V1/0+jImpj293XfrcYnd1qxtPg==,
+      }
+    engines: { node: ">=22.12.0" }
+
+snapshots:
+  "@openmapx/extension-cli@file:portable.tgz":
+    dependencies:
+      commander: 15.0.0
+
+  commander@15.0.0: {}

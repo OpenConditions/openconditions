@@ -1,0 +1,8 @@
+{
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@12.16.1",
+  "dependencies": {
+    "@openmapx/extension-cli": "file:portable.tgz"
+  }
+}
