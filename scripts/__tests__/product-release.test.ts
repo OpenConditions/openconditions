@@ -88,3 +88,14 @@ it.each(["platform", "membership", "ref"])("rejects extension %s drift", (kind) 
   put(f.repo, p, JSON.stringify(e));
   expect(f.check().status).toBe(1);
 });
+it("rejects a structurally valid environment edit before context checks", () => {
+  const f = setupRelease(),
+    p = "services/ingest/service.json",
+    d = JSON.parse(readFileSync(join(f.repo, p), "utf8"));
+  expect(typeof d.container.environment.PORT).toBe("string");
+  d.container.environment.PORT = "4200";
+  put(f.repo, p, JSON.stringify(d));
+  const r = f.check();
+  expect(r.status, r.stdout + r.stderr).toBe(1);
+  expect(r.stderr).toContain("frozen service field changed");
+});

@@ -65,15 +65,17 @@ export function setupRelease(fullSource = false) {
   }
   const receipt = join(f.repo, ".git/producer.json");
   put(f.repo, ".git/producer.json", JSON.stringify(candidate));
-  const check = (contexts = false) =>
-    spawnSync(
+  const check = (contexts = false) => {
+    const b = commit(f.repo),
+      indexBefore = readFileSync(join(f.repo, ".git/index"));
+    const result = spawnSync(
       process.execPath,
       [
         join(root, "scripts/check-release-inputs.mjs"),
         "--image-source",
         a,
         "--release-source",
-        commit(f.repo),
+        b,
         "--version",
         version,
         "--previous-version",
@@ -84,5 +86,10 @@ export function setupRelease(fullSource = false) {
       ],
       { cwd: f.repo, encoding: "utf8", timeout: 180000, maxBuffer: 8 * 1024 * 1024 },
     );
+    return Object.assign(result, {
+      indexBefore,
+      indexAfter: readFileSync(join(f.repo, ".git/index")),
+    });
+  };
   return { ...f, a, version, candidate, check };
 }

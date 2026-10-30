@@ -6,7 +6,6 @@ import { setupRelease } from "./product-release-fixtures.js";
 
 it("accepts metadata-only preparation with all four actual BuildKit exports and preserves Git/index/source", () => {
   const f = setupRelease(true),
-    index = readFileSync(join(f.repo, ".git/index")),
     source = readFileSync(join(f.repo, "package.json"));
   const r = f.check(true);
   expect(r.status, r.stderr).toBe(0);
@@ -26,5 +25,5 @@ it("accepts metadata-only preparation with all four actual BuildKit exports and 
   expect(readFileSync(join(f.repo, "package.json"))).toEqual(source);
   // check() commits the owned preparation; comparison itself leaves a clean index/worktree.
   expect(run(f.repo, "git", ["status", "--porcelain"])).toBe("");
-  expect(index.length).toBeGreaterThan(0);
+  expect(r.indexAfter).toEqual(r.indexBefore);
 }, 180000);
