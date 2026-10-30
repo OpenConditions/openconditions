@@ -237,7 +237,15 @@ function exportContext(root, image, scratch, side) {
   const source = new Map(inventory(context).map((e) => [e.path, e]));
   for (const entry of entries)
     if (JSON.stringify(source.get(entry.path)) !== JSON.stringify(entry))
-      throw new Error("export content/mode differs from archived source");
+      throw new Error(
+        `export content/mode differs from archived source: ${JSON.stringify({
+          image: image.image,
+          side,
+          path: entry.path,
+          expected: source.get(entry.path) ?? null,
+          actual: entry,
+        })}`,
+      );
   return {
     entries,
     summary: {
