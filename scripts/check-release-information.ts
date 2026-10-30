@@ -146,6 +146,7 @@ try {
             fail("Missing application lock graph");
           const toolchain = locks.length === 2 ? locks[0] : undefined;
           const deps = lock.importers?.[p.directory]?.dependencies ?? {};
+          const optionalDeps = lock.importers?.[p.directory]?.optionalDependencies ?? {};
           const buildTools = [".", p.directory].map((directory) =>
             Object.fromEntries(
               Object.entries(lock.importers?.[directory]?.devDependencies ?? {}).filter(([name]) =>
@@ -153,16 +154,18 @@ try {
               ),
             ),
           );
-          const found: Record<string, unknown> = { deps, buildTools, toolchain };
+          const found: Record<string, unknown> = { deps, optionalDeps, buildTools, toolchain };
           const visit = (name: string, version: string) => {
             const key = `${name}@${version}`;
             if (key in found) return;
             const s = lock.snapshots?.[key];
             const pkg = lock.packages?.[key.split("(")[0]];
             found[key] = { s, pkg };
-            for (const [n, d] of Object.entries(s?.dependencies ?? {})) visit(n, String(d));
+            // Keep all platform-specific optional inputs; do not filter by this runner.
+            for (const edges of [s?.dependencies ?? {}, s?.optionalDependencies ?? {}])
+              for (const [n, d] of Object.entries(edges)) visit(n, String(d));
           };
-          for (const scope of [deps, ...buildTools])
+          for (const scope of [deps, optionalDeps, ...buildTools])
             for (const [n, d] of Object.entries(scope))
               visit(n, String((d as { version: string }).version));
           return JSON.stringify(found);

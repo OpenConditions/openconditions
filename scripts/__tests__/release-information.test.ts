@@ -309,3 +309,47 @@ it("still requires evidence for runtime changes in pnpm12 second document", () =
       { "pnpm-lock.yaml": toolchainDoc + runtimeLock("1.0.1", "2.0.0") },
     ).output,
   ).toContain("delivered surface changed"));
+
+function nativeOptionalLocks() {
+  const baseline = readFileSync(join(root, "pnpm-lock.yaml"), "utf8");
+  const native = /('@esbuild\/linux-x64@[^']+':\n {4}resolution: \{integrity: )[^}]+(\})/;
+  const candidate = baseline.replace(native, `$1sha512-${"A".repeat(86)}==$2`);
+  expect(candidate).not.toBe(baseline);
+  return { baseline: { "pnpm-lock.yaml": baseline }, candidate: { "pnpm-lock.yaml": candidate } };
+}
+it("requires evidence for only an actual locked optional native build integrity change", () => {
+  const locks = nativeOptionalLocks();
+  const result = fixture("pnpm-lock.yaml", "", undefined, locks.baseline, locks.candidate);
+  expect(result.status, result.output).not.toBe(0);
+  expect(result.output).toContain("delivered surface changed");
+});
+it.each(["none", "changeset"])("accepts optional native build evidence: %s", (kind) => {
+  const locks = nativeOptionalLocks();
+  const result = fixture(
+    "pnpm-lock.yaml",
+    kind === "none"
+      ? "Package release: none — The reviewed native build input change preserves the delivered consumer contract."
+      : "",
+    kind === "changeset" ? note : undefined,
+    locks.baseline,
+    locks.candidate,
+  );
+  expect(result.status, result.output).toBe(0);
+});
+function optionalRuntimeLock(integrity: string, nested: boolean) {
+  return `${toolchainDoc}lockfileVersion: '9.0'\nimporters:\n  packages/ocpi:\n    optionalDependencies:\n      optional-root:\n        specifier: 1.0.0\n        version: 1.0.0\npackages:\n  optional-root@1.0.0:\n    resolution: {integrity: ${nested ? "root-unchanged" : integrity}}\n  optional-child@1.0.0:\n    resolution: {integrity: ${nested ? integrity : "child-unchanged"}}\nsnapshots:\n  optional-root@1.0.0:\n    optionalDependencies:\n      optional-child: 1.0.0\n  optional-child@1.0.0:\n    optionalDependencies:\n      optional-root: 1.0.0\n`;
+}
+it.each([false, true])(
+  "tracks optional runtime roots and nested cyclic edges (nested=%s)",
+  (nested) => {
+    const result = fixture(
+      "pnpm-lock.yaml",
+      "",
+      undefined,
+      { "pnpm-lock.yaml": optionalRuntimeLock("before", nested) },
+      { "pnpm-lock.yaml": optionalRuntimeLock("after", nested) },
+    );
+    expect(result.status, result.output).not.toBe(0);
+    expect(result.output).toContain("delivered surface changed");
+  },
+);
