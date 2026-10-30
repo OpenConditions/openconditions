@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { parse } from "yaml";
+import { parse, parseAllDocuments } from "yaml";
 
 const cwd = process.cwd();
 function git(...args: string[]): string {
@@ -133,7 +133,18 @@ try {
       }
       if (files.includes("pnpm-lock.yaml")) {
         const closure = (ref: string) => {
-          const lock = parse(blob(ref, "pnpm-lock.yaml"));
+          const documents = parseAllDocuments(blob(ref, "pnpm-lock.yaml"));
+          for (const document of documents) if (document.errors.length) throw document.errors[0];
+          const locks = documents.map((document) => document.toJSON());
+          if (
+            locks.length !== 1 &&
+            (locks.length !== 2 || !locks[0]?.importers?.["."]?.packageManagerDependencies)
+          )
+            fail("Unsupported pnpm lock document layout");
+          const lock = locks[locks.length - 1];
+          if (!lock?.importers || !lock?.snapshots || !lock?.packages)
+            fail("Missing application lock graph");
+          const toolchain = locks.length === 2 ? locks[0] : undefined;
           const deps = lock.importers?.[p.directory]?.dependencies ?? {};
           const buildTools = [".", p.directory].map((directory) =>
             Object.fromEntries(
@@ -142,7 +153,7 @@ try {
               ),
             ),
           );
-          const found: Record<string, unknown> = { deps, buildTools };
+          const found: Record<string, unknown> = { deps, buildTools, toolchain };
           const visit = (name: string, version: string) => {
             const key = `${name}@${version}`;
             if (key in found) return;

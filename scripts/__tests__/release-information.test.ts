@@ -287,3 +287,25 @@ it("accepts package-local build change with reviewed consumer-equivalence reason
       { "pnpm-lock.yaml": buildLock("8.1.0") },
     ).status,
   ).toBe(0));
+const toolchainDoc =
+  "---\nlockfileVersion: '9.0'\nimporters:\n  .:\n    packageManagerDependencies:\n      pnpm: {specifier: 12.11.2, version: 12.11.2}\npackages: {}\nsnapshots: {}\n---\n";
+it("accepts unchanged public closure in pnpm12 toolchain+application documents", () =>
+  expect(
+    fixture(
+      "pnpm-lock.yaml",
+      "",
+      undefined,
+      { "pnpm-lock.yaml": toolchainDoc + runtimeLock("1.0.0", "2.0.0") },
+      { "pnpm-lock.yaml": toolchainDoc + runtimeLock("1.0.0", "2.0.1") },
+    ).status,
+  ).toBe(0));
+it("still requires evidence for runtime changes in pnpm12 second document", () =>
+  expect(
+    fixture(
+      "pnpm-lock.yaml",
+      "",
+      undefined,
+      { "pnpm-lock.yaml": toolchainDoc + runtimeLock("1.0.0", "2.0.0") },
+      { "pnpm-lock.yaml": toolchainDoc + runtimeLock("1.0.1", "2.0.0") },
+    ).output,
+  ).toContain("delivered surface changed"));
