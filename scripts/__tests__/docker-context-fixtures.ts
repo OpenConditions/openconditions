@@ -39,7 +39,8 @@ export function fixture() {
   put(repo, ".git/info/exclude", "untracked-secret.txt\nlocal-build-scratch/\n");
   for (const p of [
     ".dockerignore",
-    ".github/workflows/release.yml",
+    ".github/workflows/ci.yml",
+    "scripts/qualify-container-images.py",
     ...images.map((i) => `services/${i}/Dockerfile`),
     "services/openlr-resolver/.dockerignore",
     "services/ingest/.dockerignore",

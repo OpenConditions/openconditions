@@ -124,7 +124,7 @@ fs.writeFileSync(process.argv[process.argv.indexOf('--metadata-file')+1],JSON.st
     "services/ingest/Dockerfile",
     ".dockerignore",
     "services/openlr-resolver/.dockerignore",
-    ".github/workflows/release.yml",
+    ".github/workflows/ci.yml",
   ])("rejects changed build controls: %s", (path) => {
     const { repo, a } = setup();
     put(repo, path, `${readFileSync(join(repo, path), "utf8")}\n# changed\n`);
@@ -134,13 +134,13 @@ fs.writeFileSync(process.argv[process.argv.indexOf('--metadata-file')+1],JSON.st
   });
   it("rejects a producer using the wrong context", () => {
     const { repo } = setup();
-    const p = ".github/workflows/release.yml";
+    const p = ".github/workflows/ci.yml";
     put(
       repo,
       p,
       readFileSync(join(repo, p), "utf8").replace(
-        "context: services/openlr-resolver",
-        "context: .",
+        "image: [ingest, contributions-api, federation, openlr-resolver]",
+        "image: [ingest, contributions-api, federation]",
       ),
     );
     const a = commit(repo);
