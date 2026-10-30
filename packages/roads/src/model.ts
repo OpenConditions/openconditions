@@ -223,6 +223,12 @@ export interface RoadRef {
   direction?: string;
   from?: string;
   to?: string;
+  /**
+   * The slip road of the road the location lies on, when the source says
+   * (the kernel location's `carriageway`): the `exit` that leaves it, the
+   * `entry` that joins it, or a `connector` between two roads.
+   */
+  carriageway?: "exit" | "entry" | "connector";
   milepostFrom?: number;
   milepostTo?: number;
 }

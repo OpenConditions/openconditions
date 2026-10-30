@@ -18,6 +18,7 @@ export function nodeKey(p: LngLat): string {
 export class SegmentGraph {
   private readonly segments = new Map<string, SpineSegment>();
   private readonly outByStart = new Map<string, SpineSegment[]>();
+  private readonly inByEnd = new Map<string, SpineSegment[]>();
 
   constructor(segments: SpineSegment[]) {
     for (const s of segments) {
@@ -27,11 +28,22 @@ export class SegmentGraph {
       const list = this.outByStart.get(k);
       if (list) list.push(s);
       else this.outByStart.set(k, [s]);
+      const e = nodeKey(s.coords[s.coords.length - 1]!);
+      const ins = this.inByEnd.get(e);
+      if (ins) ins.push(s);
+      else this.inByEnd.set(e, [s]);
     }
   }
 
   byId(id: string): SpineSegment | undefined {
     return this.segments.get(id);
+  }
+
+  /** The segments that end where `id` starts. */
+  predecessors(id: string): SpineSegment[] {
+    const s = this.segments.get(id);
+    if (!s) return [];
+    return (this.inByEnd.get(nodeKey(s.coords[0]!)) ?? []).filter((n) => n.segmentId !== id);
   }
 
   successors(id: string): SpineSegment[] {

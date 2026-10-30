@@ -377,6 +377,43 @@ describe("parseAutobahn — classification", () => {
     expect(located()).toEqual(ramp);
   });
 
+  it("says which slip road a location line places the item on", () => {
+    const carriagewayOf = (...lines: string[]) =>
+      parseAutobahn(
+        { closure: [item({ display_type: "CLOSURE_ENTRY_EXIT", description: lines })] },
+        AUTOBAHN_SOURCE,
+        "closure",
+      )[0]!.roads?.[0]?.carriageway;
+    expect(carriagewayOf("Abfahrt von der A5: AK Nordwestkreuz Frankfurt am Main")).toBe("exit");
+    expect(
+      carriagewayOf(
+        "Von A14: Leipzig -> Halle, zwischen 2.0 km hinter Birkenwald und AS Schkeuditz nach Abfahrt von der A14: AS Leipzig-Nord (aus Richtung Birkenwald)",
+      ),
+    ).toBe("exit");
+    expect(
+      carriagewayOf(
+        "Von Auffahrt auf die A111: AS Kurt-Schumacher-Platz (aus Richtung Eichborndamm) nach A111: Charlottenburg -> Dreieck Oranienburg, zwischen AS Kurt-Schumacher-Platz und 1.3 km vor AS Holzhauser Straße",
+      ),
+    ).toBe("entry");
+    expect(
+      carriagewayOf(
+        "Von A44: Düsseldorf -> Mönchengladbach, 0.6 km vor AK Meerbusch; in A44: AK Meerbusch auf die A57 in Richtung Krefeld; nach A57: Köln -> Krefeld",
+      ),
+    ).toBe("connector");
+    // A line from one ramp to another, lines that disagree, or a carriageway line say none.
+    expect(
+      carriagewayOf(
+        "Von Auffahrt auf die A3: AS Mettmann nach Abfahrt von der A3: AS Ratingen-Ost",
+      ),
+    ).toBeUndefined();
+    expect(
+      carriagewayOf("Abfahrt von der A3: AS Mettmann", "Auffahrt auf die A3: AS Mettmann"),
+    ).toBeUndefined();
+    expect(
+      carriagewayOf("A3: Oberhausen -> Köln, zwischen AS Mettmann und AS Hilden"),
+    ).toBeUndefined();
+  });
+
   it("leaves roadworks on a slip road classified as roadworks", () => {
     const [works] = parseAutobahn(
       {
