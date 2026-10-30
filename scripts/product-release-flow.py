@@ -67,9 +67,26 @@ Source: `{source}`
 - Evidence: {artifact}
 - Readiness: **pending** installation, configuration/health, rights/privacy fixtures, prior-deployment upgrade/migration, backup/restore/recovery and optional federation/TUF evidence.
 - Publication: **blocked**; trusted readiness producer, protected approval and promotion are not implemented.
-- Next: {"resolve the blocker and run this operation again" if blocked else ("review the Actions artifact and curated notes; preparation PR automation is not yet implemented" if operation == "prepare" else "review exact A/B qualification and artifact; operational rehearsal remains separate")}.
+- Next: {"resolve the blocker and run this operation again" if blocked else ("open the preparation PR link from the preparation-pr job, review notes and required checks" if operation == "prepare" else "review exact A/B qualification and artifact; operational rehearsal remains separate")}.
 
 No run IDs, image digests or passing readiness JSON need to be transcribed. No tag, release, registry or host mutation occurred.
+"""
+
+
+def versioned_notes(version, notes):
+    return f"""# Product {version}
+
+Affected versions: Proposed product {version}; not yet published.
+
+Action: Review this preparation and the notes below before release. Operational rehearsal and publication approval remain separate.
+
+Compatibility: This preparation changes metadata only relative to its image source A. Release-specific compatibility and migration details belong in the reviewed notes below.
+
+Caveats: No live installation, upgrade, recovery or readiness acceptance is implied by preparation.
+
+## Reviewed notes
+
+{notes}
 """
 
 
@@ -85,7 +102,7 @@ def execute(api, repo, source, operation, version, notes, tools, output, clock=N
         )
         with tempfile.TemporaryDirectory(prefix="oc-release-notes-") as temp:
             path = Path(temp) / "notes.md"
-            path.write_text(notes)
+            path.write_text(versioned_notes(version, notes))
             return PREP.prepare(
                 api,
                 repo,

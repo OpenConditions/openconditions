@@ -12,7 +12,7 @@ it("discovers owning identities and retains pending readiness without fabricated
   );
   expect(p.status, p.stdout + p.stderr).toBe(0);
 }, 185000);
-it("offers only data-only prepare/review with read-only permissions and owned public tool acquisition", () => {
+it("keeps prepare/review validation read-only and inputs data-only and owned public tool acquisition", () => {
   const w = parse(
     readFileSync(new URL("../../.github/workflows/product-release.yml", import.meta.url), "utf8"),
   );
@@ -20,5 +20,5 @@ it("offers only data-only prepare/review with read-only permissions and owned pu
   expect(w.on.workflow_dispatch.inputs.operation.options).toEqual(["prepare", "review"]);
   expect(w.jobs.qualify.permissions).toEqual({ contents: "read", actions: "read" });
   for (const step of w.jobs.qualify.steps) if (step.run) expect(step.run).not.toContain("${{");
-  expect(JSON.stringify(w)).not.toContain("contents:write");
+  expect(Object.keys(w.jobs)).toEqual(["qualify", "preparation-pr"]);
 });

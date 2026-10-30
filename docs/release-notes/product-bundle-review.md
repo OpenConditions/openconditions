@@ -6,4 +6,4 @@ Action: use Product prepare and review in Actions with operation, version and re
 
 Compatibility: product descriptors, image bytes, default services, package releases and deployed schemas are unchanged.
 
-Caveats: preparation PR automation and a trusted readiness producer are not implemented. Review artifacts can be prepared with readiness pending, but grant no publication or host-operation authority.
+Caveats: a trusted readiness producer is not implemented; bot-created preparation PRs may require maintainer action to start required checks. Review artifacts can be prepared with readiness pending, but grant no publication or host-operation authority.

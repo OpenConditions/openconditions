@@ -29,6 +29,9 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
       github.workflow_sha == github.sha
+    outputs:
+      review_artifact_id: ${{ steps.review-artifact.outputs.artifact-id }}
+      review_artifact_digest: ${{ steps.review-artifact.outputs.artifact-digest }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     permissions:
@@ -76,6 +79,7 @@ jobs:
           --tools "$RUNNER_TEMP/openmapx-tools"
           --output "$RUNNER_TEMP/product-review"
       - name: Retain review artifact (never release approval)
+        id: review-artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: product-review-${{ github.run_id }}-${{ github.run_attempt }}
@@ -84,3 +88,35 @@ jobs:
             ${{ runner.temp }}/product-review.receipt.json
           if-no-files-found: error
           retention-days: 3
+  preparation-pr:
+    needs: qualify
+    if: >-
+      needs.qualify.result == 'success' && inputs.operation == 'prepare' &&
+      github.repository == 'OpenConditions/openconditions' &&
+      github.repository_id == '1276024943' &&
+      github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
+      github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
+      github.workflow_sha == github.sha
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Create or reuse exact preparation PR (never merge)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ARTIFACT_ID: ${{ needs.qualify.outputs.review_artifact_id }}
+          ARTIFACT_DIGEST: ${{ needs.qualify.outputs.review_artifact_digest }}
+        run: >-
+          python -B scripts/create-product-preparation-pr.py
+          --artifact-id "$ARTIFACT_ID" --artifact-digest "$ARTIFACT_DIGEST"
