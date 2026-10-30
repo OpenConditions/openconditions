@@ -216,7 +216,7 @@ it.
   the mirrorable artifact for seeding a new instance or backfilling a federation peer
   (license/expiry/tombstone enforced, no raw crowd evidence, no probe staging)
 
-Releases are cut by tagging `vX.Y.Z` (see [`.github/workflows/release.yml`](.github/workflows/release.yml)).
+The old tag publisher is retired. [Product qualification](docs/releases.md) is read-only and does not publish images, packages or releases; publication remains unavailable until a separately reviewed implementation lands.
 
 ## License
 

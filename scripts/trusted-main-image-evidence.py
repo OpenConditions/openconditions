@@ -649,6 +649,10 @@ def validate(api, source, run_id, attempt, *, now=None):
             "buildSourceSha": source,
             "producer": producer,
             "candidateArtifact": reference,
+            "imageArtifacts": {
+                role: image["qualificationArtifact"]
+                for role, image in candidate["images"].items()
+            },
             "images": images,
             "eligibleUntil": min(
                 candidate["eligibleUntil"], reference["expiresAt"], key=timestamp

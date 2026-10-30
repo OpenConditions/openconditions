@@ -16,26 +16,24 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { parseDocument } from "yaml";
 
-// These are the literal producer contexts in release.yml. Fail on drift rather
+// These are the literal contexts in the reviewed CI qualification implementation. Fail on drift rather
 // than guessing a context or inheriting a service-local ignore for a root build.
 export const images = Object.freeze([
-  { image: "ingest", job: "publish-image", context: ".", recipe: "services/ingest/Dockerfile" },
+  { image: "ingest", context: ".", recipe: "services/ingest/Dockerfile" },
   {
     image: "contributions-api",
-    job: "publish-contributions-image",
     context: ".",
     recipe: "services/contributions-api/Dockerfile",
   },
   {
     image: "federation",
-    job: "publish-federation-image",
     context: ".",
     recipe: "services/federation/Dockerfile",
   },
   {
     image: "openlr-resolver",
-    job: "publish-openlr-image",
     context: "services/openlr-resolver",
     recipe: "services/openlr-resolver/Dockerfile",
   },
@@ -152,20 +150,22 @@ function snapshot(repo, sha, dest, scratch) {
     throw new Error("incomplete or malformed Git archive (export-ignore is unsupported)");
 }
 function producer(root) {
-  const workflow = regular(join(root, ".github/workflows/release.yml")).bytes.toString();
-  for (const image of images) {
-    const section = workflow.split(`\n  ${image.job}:\n`);
-    if (section.length !== 2) throw new Error("unsupported Docker producer job contract");
-    const job = section[1].split(/\n {2}[a-zA-Z0-9_-]+:\n/)[0];
-    const contexts = [...job.matchAll(/^ {10}context: (.+)$/gm)].map((m) => m[1]);
-    const recipes = [...job.matchAll(/^ {10}file: (.+)$/gm)].map((m) => m[1]);
-    if (
-      JSON.stringify(contexts) !== JSON.stringify([image.context]) ||
-      JSON.stringify(recipes) !== JSON.stringify([image.recipe]) ||
-      /build-contexts:|build-args:/.test(job)
-    )
-      throw new Error(`unsupported Docker producer context for ${image.image}`);
-  }
+  const doc = parseDocument(regular(join(root, ".github/workflows/ci.yml")).bytes.toString());
+  if (doc.errors.length) throw new Error("invalid CI producer contract");
+  const job = doc.toJS().jobs?.["build-images"];
+  const step = job?.steps?.filter((s) => s.name === "Build, smoke, scan and bind image evidence");
+  // A changed Python producer needs a fresh review of these context/recipe facts.
+  if (
+    sha256(regular(join(root, "scripts/qualify-container-images.py")).bytes) !==
+      "7e39177c13736f896bdf9e2e046c2506edfd5ca82fb4dd8615aa6758f65a17d3" ||
+    JSON.stringify(job?.strategy?.matrix) !==
+      JSON.stringify({ image: images.map((i) => i.image) }) ||
+    step?.length !== 1 ||
+    step[0].env?.IMAGE !== `\${{ matrix.image }}` ||
+    step[0].run?.trim().replace(/\s+/g, " ") !==
+      'python scripts/qualify-container-images.py qualify --image "$IMAGE" --source "$GITHUB_SHA" --output "$RUNNER_TEMP/qualified-image"'
+  )
+    throw new Error("unsupported CI producer context/recipe policy");
 }
 function selectedIgnore(root, image) {
   const specific = `${image.recipe}.dockerignore`;
@@ -174,7 +174,7 @@ function selectedIgnore(root, image) {
     : `${image.context === "." ? "" : `${image.context}/`}.dockerignore`;
 }
 function controls(a, b) {
-  const paths = new Set([".github/workflows/release.yml"]);
+  const paths = new Set([".github/workflows/ci.yml", "scripts/qualify-container-images.py"]);
   for (const image of images) {
     paths.add(image.recipe);
     paths.add(`${image.recipe}.dockerignore`);

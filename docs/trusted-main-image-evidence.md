@@ -8,7 +8,7 @@ qualification and both CodeQL languages still run on stacked PRs.
 The `trusted main image evidence` job follows successful `full main qualification` in the owning
 repository's `ci.yml`. It has only contents/read and actions/read permissions. It checks out the exact
 source SHA without persisted credentials and never logs in to a registry, requests OIDC or executes
-artifact code. The old tag publisher is outside this change.
+artifact code. The old tag publisher is retired; the separate product qualification workflow is read-only.
 
 ## Authority and exact inputs
 
@@ -98,3 +98,5 @@ retagged, promoted or published by this producer/validator pair.
 API contracts: [GitHub artifacts](https://docs.github.com/en/rest/actions/artifacts),
 [workflow runs and attempts](https://docs.github.com/en/rest/actions/workflow-runs), and
 [attempt-scoped jobs](https://docs.github.com/en/rest/actions/workflow-jobs).
+
+Native validation also returns the four original image-artifact references (including native ZIP digests and expiry) so product qualification can bind and reread them without treating candidate files as authority. This does not add publication permission.

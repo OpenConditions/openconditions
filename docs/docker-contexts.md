@@ -1,6 +1,6 @@
 # Image contexts and release metadata
 
-The image producers in `.github/workflows/release.yml` use these literal inputs:
+The CI image matrix in `.github/workflows/ci.yml` invokes `scripts/qualify-container-images.py` with these literal inputs:
 
 | Image             | Build context              | Recipe                                  | Default ignore file                      |
 | ----------------- | -------------------------- | --------------------------------------- | ---------------------------------------- |
@@ -70,3 +70,5 @@ and provenance for its supported platforms. Release-metadata commit B needs its 
 qualification after merge and the separate release contract. Image provenance must continue to name A;
 a successful comparison does not claim the image was built from B. This unmerged context-separation
 change alone qualifies neither trusted-main images nor a release, and activates no publisher.
+
+The context validator pins the reviewed qualification script bytes and checks the CI matrix and invocation. Changes to that producer require a fresh review of the context/recipe contract and an updated pin. The retired publisher is not a producer authority.
