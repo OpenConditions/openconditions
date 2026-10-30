@@ -234,7 +234,14 @@ class PreparationTests(T.ProductTests):
                                 owner.a,
                                 "-m",
                                 body["message"],
-                            ]
+                            ],
+                            env={
+                                **os.environ,
+                                "GIT_AUTHOR_NAME": body["author"]["name"],
+                                "GIT_AUTHOR_EMAIL": body["author"]["email"],
+                                "GIT_COMMITTER_NAME": "Owned preparation fixture",
+                                "GIT_COMMITTER_EMAIL": "fixture@example.invalid",
+                            },
                         )
                         .decode()
                         .strip()
