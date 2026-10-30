@@ -29,7 +29,7 @@ import {
 } from "@openconditions/model";
 import type postgres from "postgres";
 import { type ColumnSpec, insertRows, type Sql, upsertClause } from "./bulk.js";
-import { clustersHolding } from "./canonical-holding.js";
+import { clustersHolding, inHeld } from "./canonical-holding.js";
 import { SERIES_COLUMNS, SERIES_KEY, seriesRowOf } from "./write-observations.js";
 
 type Rec = Record<string, unknown>;
@@ -82,7 +82,7 @@ export async function loadCanonical(
       ${clustersHolding(tx, featureIds)}
       UNION SELECT unnest(${featureIds as string[]}::text[]))
     SELECT c.canonical_feature_id, c.survivor_id, c.member_ids, c.components
-      FROM conditions.feature_canonical c JOIN held USING (canonical_feature_id)`;
+      FROM conditions.feature_canonical c WHERE ${inHeld(tx)}`;
   return rows.map((r) => ({
     canonicalFeatureId: r.canonical_feature_id,
     survivorId: r.survivor_id,

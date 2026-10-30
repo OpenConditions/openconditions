@@ -74,6 +74,13 @@ async function planOf(
   });
 }
 
+/** A node that reads every cluster: a hash join building `feature_canonical` whole, which spills to disk. */
+function clusterScans(nodes: PlanNode[]): PlanNode[] {
+  return nodes.filter(
+    (n) => n["Node Type"] === "Seq Scan" && n["Relation Name"] === "feature_canonical",
+  );
+}
+
 /** A node that tests cluster members against the list row by row instead of through the member index. */
 function memberScans(nodes: PlanNode[]): PlanNode[] {
   return nodes.filter(
@@ -104,6 +111,24 @@ describe("clusters holding a large set of features", () => {
       const nodes = await planOf(statement, mode);
       expect(nodes.some((n) => n["Index Name"] === "idx_feature_canonical_members")).toBe(true);
       expect(memberScans(nodes)).toEqual([]);
+      expect(clusterScans(nodes)).toEqual([]);
+    }
+  }, 120_000);
+
+  test("read only the clusters found, for a refresh batch too", async () => {
+    // Fused rows are refreshed 500 features at a time. Assuming each id held
+    // by 0.5% of all clusters, the planner took such a batch for the table.
+    const named = Array.from({ length: 500 }, (_, i) => member(i * 7 + 1));
+
+    statements.length = 0;
+    const rows = await loadCanonical(traced, named);
+    expect(rows).toHaveLength(500);
+
+    const statement = statements.find((s) => s.query.includes("feature_canonical"))!;
+    for (const mode of ["force_custom_plan", "force_generic_plan"] as const) {
+      const nodes = await planOf(statement, mode);
+      expect(nodes.some((n) => n["Index Name"] === "feature_canonical_pkey")).toBe(true);
+      expect(clusterScans(nodes)).toEqual([]);
     }
   }, 120_000);
 
