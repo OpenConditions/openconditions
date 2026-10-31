@@ -32,7 +32,7 @@
     "@openconditions/contrib-core": "workspace:*",
     "@openconditions/contributions-api": "workspace:*",
     "@openconditions/test-database": "workspace:*",
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.6.5",
     "postgres": "^3.4.9",
     "tsup": "^9.0.0",
     "typescript": "^6.0.3",
