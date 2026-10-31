@@ -13,10 +13,10 @@ type Sql = postgres.Sql;
  * enrichment can name where the free-flow speed came from. A plain Map so
  * packages/roads stays DB-free.
  *
- * The per-(dow,tod)-bucket rows deriveBaselines also writes are intentionally
- * NOT read here: they are a rolling *typical speed for that hour* (kept for a
- * future typical-speed feature), which is not the same thing as a *free-flow*
- * denominator. Using a congested rush-hour bucket's own p85 as the free-flow
+ * No per-(dow,tod)-bucket row is read, and deriveBaselines writes none: such
+ * a row would be a *typical speed for that hour* (the segment profiles keep
+ * those), which is not the same thing as a *free-flow* denominator. Using a
+ * congested rush-hour bucket's own p85 as the free-flow
  * baseline would make recurring rush-hour congestion measure against itself
  * and misclassify as free_flow exactly when a traffic layer should show
  * congestion — this is the P0.3 fix; do not reintroduce a specific-bucket

@@ -9,16 +9,11 @@ let db: TestDatabase;
 let sql: postgres.Sql;
 
 // Pin base to the top of the hour so the +i-second offsets never spill into an
-// adjacent hour/day bucket, and derive the expected dow/tod buckets from it.
+// adjacent hour.
 function inWindowBase(daysAgo: number): Date {
   const base = new Date(Date.now() - daysAgo * 86_400_000);
   base.setUTCMinutes(0, 0, 0);
   return base;
-}
-
-function buckets(base: Date): { dowBucket: number; tod: number } {
-  const dow = base.getUTCDay();
-  return { dowBucket: dow === 0 || dow === 6 ? 1 : 0, tod: base.getUTCHours() };
 }
 
 async function seed(site: string, speeds: number[], base: Date): Promise<string> {
@@ -35,30 +30,88 @@ afterAll(async () => {
 }, 30_000);
 
 describe("deriveBaselines", () => {
-  it("upserts specific-bucket + overall derived rows at the 85th percentile", async () => {
+  it("upserts the overall derived row at the 85th percentile, and no row per weekday and hour", async () => {
     const base = inWindowBase(7); // 7 days ago → safely inside the 28-day window
-    const { dowBucket, tod } = buckets(base);
     const speeds = Array.from({ length: 40 }, (_, i) => 60 + i); // 60..99
     const key = await seed("x", speeds, base);
 
     const { upserted } = await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
-    expect(upserted).toBeGreaterThanOrEqual(2);
+    expect(upserted).toBeGreaterThanOrEqual(1);
 
-    const specific = await sql<{ free_flow_kph: number; method: string; sample_count: number }[]>`
-      SELECT free_flow_kph, method, sample_count FROM conditions.sensor_baseline
-      WHERE subject_key = ${key} AND dow_bucket = ${dowBucket} AND tod_bucket = ${tod}`;
-    expect(specific[0]!.method).toBe("derived");
-    expect(specific[0]!.sample_count).toBe(40);
+    const rows = await sql<
+      {
+        dow_bucket: number;
+        tod_bucket: number;
+        free_flow_kph: number;
+        method: string;
+        sample_count: number;
+      }[]
+    >`
+      SELECT dow_bucket, tod_bucket, free_flow_kph, method, sample_count
+        FROM conditions.sensor_baseline WHERE subject_key = ${key}`;
+    expect(rows).toHaveLength(1);
+    const [overall] = rows;
+    expect(overall).toMatchObject({
+      dow_bucket: -1,
+      tod_bucket: -1,
+      method: "derived",
+      sample_count: 40,
+    });
     // percentile_cont(0.85) over 60..99 == 60 + 0.85*39 == 93.15; the histogram
     // resolves to the containing bin's midpoint, so it lands within one bin.
-    expect(specific[0]!.free_flow_kph).toBeGreaterThan(93.15 - SPEED_BIN_WIDTH_KPH);
-    expect(specific[0]!.free_flow_kph).toBeLessThan(93.15 + SPEED_BIN_WIDTH_KPH);
-
-    const overall = await sql<{ n: number }[]>`
-      SELECT count(*)::int AS n FROM conditions.sensor_baseline
-      WHERE subject_key = ${key} AND dow_bucket = -1 AND tod_bucket = -1 AND method = 'derived'`;
-    expect(overall[0]!.n).toBe(1);
+    expect(overall!.free_flow_kph).toBeGreaterThan(93.15 - SPEED_BIN_WIDTH_KPH);
+    expect(overall!.free_flow_kph).toBeLessThan(93.15 + SPEED_BIN_WIDTH_KPH);
   }, 60_000);
+
+  it("merges a site's hours across weekdays and hours of the day", async () => {
+    const weekday = inWindowBase(9);
+    const later = new Date(weekday.getTime() + 2 * 86_400_000 + 5 * 3_600_000);
+    const key = await seed(
+      "spread",
+      Array.from({ length: 20 }, () => 50),
+      weekday,
+    );
+    await seed(
+      "spread",
+      Array.from({ length: 20 }, () => 110),
+      later,
+    );
+    await deriveBaselines(sql, { windowDays: 28, minSamples: 30 });
+    const [overall] = await sql<{ free_flow_kph: number; sample_count: number }[]>`
+      SELECT free_flow_kph, sample_count FROM conditions.sensor_baseline
+       WHERE subject_key = ${key} AND dow_bucket = -1 AND tod_bucket = -1`;
+    // Neither hour has the 30 samples on its own; together they do.
+    expect(overall!.sample_count).toBe(40);
+    expect(overall!.free_flow_kph).toBe(111);
+  }, 30_000);
+
+  it("derives every site when the sites take more than one batch", async () => {
+    const base = inWindowBase(4);
+    const keys: string[] = [];
+    for (const [site, speed] of [
+      ["batch-a", 70],
+      ["batch-b", 90],
+      ["batch-c", 120],
+    ] as const) {
+      keys.push(
+        await seed(
+          site,
+          Array.from({ length: 30 }, () => speed),
+          base,
+        ),
+      );
+    }
+    await sql`DELETE FROM conditions.sensor_baseline WHERE subject_key = ANY(${keys})`;
+    await deriveBaselines(sql, { windowDays: 28, minSamples: 30, batchSites: 2 });
+    const rows = await sql<{ subject_key: string; free_flow_kph: number }[]>`
+      SELECT subject_key, free_flow_kph FROM conditions.sensor_baseline
+       WHERE subject_key = ANY(${keys}) ORDER BY subject_key`;
+    expect(rows.map((r) => [r.subject_key, r.free_flow_kph])).toEqual([
+      [keys[0], 71],
+      [keys[1], 91],
+      [keys[2], 121],
+    ]);
+  }, 30_000);
 
   it("skips an in-window bucket seeded below minSamples via the HAVING clause", async () => {
     // In-window but only 3 rows: excluded by HAVING count >= minSamples, NOT by

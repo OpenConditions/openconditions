@@ -94,11 +94,9 @@ describe("loadBaselineMap", () => {
     await seedBaseline(key("b"), -1, -1, 70, "derived");
     await seedBaseline(key("b"), -1, -1, 80, "osm_maxspeed");
 
-    // src:c has ONLY a specific-bucket derived row, no overall row at all. In
-    // practice an overall row always exists whenever a specific row does
-    // (deriveBaselines always upserts both, and the overall sample count is >=
-    // any bucket's), so this documents (rather than exercises) that the
-    // overall-only query correctly yields no baseline here.
+    // src:c has ONLY a specific-bucket derived row, no overall row at all.
+    // deriveBaselines writes no specific-bucket row, so this documents (rather
+    // than exercises) that the overall-only query yields no baseline here.
     await seedBaseline(key("c"), 0, 14, 88, "derived");
 
     const map = await loadBaselineMap(sql, "src");
