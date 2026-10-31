@@ -90,10 +90,19 @@ const OFFSET = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?[+-]\d{2}:?\d
 /**
  * A price's update time as a UTC instant. The ministry's flux publishes Paris
  * wall-clock times without an offset; the economie.gouv.fr export labels
- * them `+00:00` (its 2026-10-03 21:54Z export already held prices updated
- * "23:00:00+00:00"), so a zoneless or UTC-labelled time is read in
- * Europe/Paris (fractional seconds dropped) and only another offset is taken
- * as written. Undefined when the time is missing or unreadable.
+ * them `+00:00`, so a zoneless or UTC-labelled time is read in Europe/Paris
+ * (fractional seconds dropped) and only another offset is taken as written.
+ * Undefined when the time is missing or unreadable.
+ *
+ * Checked 2026-10-03 and again 2026-10-31, in summer and in winter time. On
+ * 2026-10-03 the export fetched at 21:54Z already held prices updated
+ * "23:00:00+00:00". On 2026-10-31 the export fetched at 14:08:30Z held 31
+ * update times after the fetch if read as UTC, the latest
+ * "2026-10-31T14:48:57+00:00", although its dataset metadata gave
+ * `data_processed` "2026-10-31T14:02:45.783000+00:00" and `timezone`
+ * "Europe/Paris". The ministry's XML flux (donnees.roulez-eco.fr/opendata/instantane,
+ * `Last-Modified` 14:00:15 GMT) gave the same station the same time without
+ * an offset, `maj="2026-10-31 14:48:57"`.
  */
 function updateTime(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;

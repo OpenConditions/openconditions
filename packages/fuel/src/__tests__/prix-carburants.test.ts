@@ -286,6 +286,29 @@ describe("prix-carburants", () => {
     expect(prices.get("e5")!["phenomenonTime"]).toEqual({ instant: "2026-10-03T08:29:00Z" });
   });
 
+  test("a +00:00 update time is Paris wall-clock in summer and in winter time", () => {
+    // Update times station 2430001 carried in the export fetched 2026-10-31 14:08:30Z,
+    // around the change to winter time on 2026-10-25. Read as UTC, the diesel
+    // price would postdate the fetch.
+    const { observations } = fuelDomain.formats["prix-carburants"]!.parse(
+      prixCarburantsFeed(),
+      {
+        main: [
+          patched(38230003, {
+            gazole_maj: "2026-10-31T14:42:22+00:00",
+            e10_maj: "2026-10-29T12:06:59+00:00",
+            sp98_maj: "2026-10-23T09:05:40+00:00",
+          }),
+        ],
+      },
+      parseContext("2026-10-31T14:08:30Z"),
+    );
+    const prices = readings(observations, 38230003, "fuel.price");
+    expect(prices.get("diesel")!["phenomenonTime"]).toEqual({ instant: "2026-10-31T13:42:22Z" });
+    expect(prices.get("e10")!["phenomenonTime"]).toEqual({ instant: "2026-10-29T11:06:59Z" });
+    expect(prices.get("sp98")!["phenomenonTime"]).toEqual({ instant: "2026-10-23T07:05:40Z" });
+  });
+
   test("a station at 0,0 is skipped as unplaced; one off the globe as malformed", () => {
     const out = parse(patched(38230003, { geom: { lon: 0, lat: 0 } }));
     expect(out.features.map((f) => f["id"])).not.toContain(featureId(38230003));
