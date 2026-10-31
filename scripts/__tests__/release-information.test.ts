@@ -565,3 +565,28 @@ it("replays a version using locked packages without cached registry metadata", (
     rmSync(cache, { recursive: true, force: true });
   }
 }, 60000);
+
+it("accepts canonical versioned product notes without accepting arbitrary dotted fragment names", () => {
+  const text =
+    "Affected versions: Proposed product version only.\nAction: Review the prepared metadata before publication.\nCompatibility: Metadata-only relative to the image source.\nCaveats: Actual operational readiness remains pending.\n";
+  for (const name of [
+    "0.8.0-alpha.1",
+    "1.2.3",
+    "1.2.3+build.1",
+    "v1.2.3",
+    "1.2",
+    "arbitrary.file",
+  ]) {
+    const path = `docs/release-notes/${name}.md`;
+    const result = fixture(
+      "services/operator.ts",
+      `Product release: operator-impact ${path}`,
+      undefined,
+      {},
+      { [path]: text },
+    );
+    expect(result.status === 0, name + "\n" + result.output).toBe(
+      ["0.8.0-alpha.1", "1.2.3"].includes(name),
+    );
+  }
+});
