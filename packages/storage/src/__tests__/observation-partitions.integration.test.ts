@@ -10,6 +10,7 @@ import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
+  analyzeClosedObservationPartitions,
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
   partitionCoverage,
@@ -284,5 +285,77 @@ describe("a retention class no property keeps", () => {
     expect(await drop()).toEqual(["observation_r7_d20261001", "observation_r7"]);
     expect((await partitions()).filter((n) => n.startsWith("observation_r7"))).toEqual([]);
     await sql`DELETE FROM conditions.observation_rollup_progress`;
+  });
+});
+
+describe("analysis of closed partitions", () => {
+  const DAY = 86_400_000;
+  // Days ahead of the clock, so that an analysis today comes before the day ends.
+  const day = Math.floor(Date.now() / DAY) * DAY + 2 * DAY;
+  const name = (t: number) =>
+    `observation_r9_d${new Date(t).toISOString().slice(0, 10).replaceAll("-", "")}`;
+  const before = name(day - DAY);
+  const closing = name(day);
+  const open = name(day + DAY);
+
+  /**
+   * Inserts `n` readings at `at` and waits until the statistics count them: a
+   * backend reports its changes when it goes idle, not when it commits.
+   */
+  async function insert(at: number, n: number) {
+    const partition = name(Math.floor(at / DAY) * DAY);
+    const changed = async () => {
+      const [row] = await sql<{ n: string }[]>`
+        SELECT n_mod_since_analyze AS n FROM pg_stat_user_tables WHERE relname = ${partition}`;
+      return Number(row?.n ?? 0);
+    };
+    const expected = (await changed()) + n;
+    await sql.begin(async (tx) => {
+      await tx`
+        INSERT INTO conditions.observation (series_id, retention_days, phenomenon_start,
+          fetched_at, recorded_at, temporality, aggregation, value_num)
+        SELECT g, 9, ${new Date(at).toISOString()}::timestamptz, now(), now(), 'live', 'mean', 42
+          FROM generate_series(1, ${n}) g`;
+      await tx`SELECT pg_stat_force_next_flush()`;
+    });
+    for (let tries = 0; (await changed()) < expected; tries++) {
+      if (tries === 50) throw new Error(`${partition}: the statistics never counted ${n} readings`);
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  }
+
+  beforeAll(async () => {
+    await ensureObservationPartitions(sql, { classes: [9], now: new Date(day) });
+    // Autovacuum stays out: the test decides when each partition was last analyzed.
+    for (const p of [before, closing, open]) {
+      await sql.unsafe(`ALTER TABLE conditions.${p} SET (autovacuum_enabled = false)`);
+    }
+    await insert(day - DAY + 3_600_000, 10);
+    await insert(day + 3_600_000, 1000);
+    // Analyzed while the day is still being written, as autovacuum does.
+    await sql.unsafe(`ANALYZE conditions.${closing}`);
+    // Its last hours, written after that analysis.
+    await insert(day + 23 * 3_600_000, 50);
+    await insert(day + DAY + 3_600_000, 10);
+  });
+
+  it("analyzes a day written to after its last analysis once it has closed, and a day never analyzed", async () => {
+    const analyzed = await analyzeClosedObservationPartitions(sql, {
+      now: new Date(day + DAY + 5 * 60_000),
+    });
+    expect(analyzed).toEqual(expect.arrayContaining([before, closing]));
+    expect(analyzed).not.toContain(open);
+    const [stats] = await sql<{ reltuples: number }[]>`
+      SELECT reltuples FROM pg_class WHERE relname = ${closing}`;
+    expect(stats!.reltuples).toBe(1050);
+  });
+
+  it("leaves a closed day unchanged since its analysis, and a day still open", async () => {
+    const analyzed = await analyzeClosedObservationPartitions(sql, {
+      now: new Date(day + DAY + 65 * 60_000),
+    });
+    expect(analyzed).not.toContain(before);
+    expect(analyzed).not.toContain(closing);
+    expect(analyzed).not.toContain(open);
   });
 });

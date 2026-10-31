@@ -1,6 +1,7 @@
 import type { CatalogFeed } from "@openconditions/ingest-framework";
 import type { Registry } from "@openconditions/model";
 import {
+  analyzeClosedObservationPartitions,
   dropExpiredObservationPartitions,
   ensureObservationPartitions,
   isLockTimeout,
@@ -144,7 +145,8 @@ export async function maintainPartitionsAtBoot(
 
 /**
  * The hourly partition run. A lock held past the pool's lock_timeout leaves
- * the work to the next run: partitions exist days ahead of any write.
+ * the work to the next run: partitions exist days ahead of any write. Then
+ * the partitions that closed are analyzed, before the rollup reads them.
  */
 export async function maintainPartitionsHourly(
   sql: postgres.Sql,
@@ -160,6 +162,8 @@ export async function maintainPartitionsHourly(
     if (!isLockTimeout(err)) throw err;
     console.warn("[records] partitions: a lock is held, left to the next run");
   }
+  const analyzed = await analyzeClosedObservationPartitions(sql, { now });
+  if (analyzed.length > 0) console.info(`[records] analyzed ${analyzed.join(", ")}`);
 }
 
 /**
