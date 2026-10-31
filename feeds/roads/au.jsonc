@@ -226,7 +226,10 @@
         "headlineField": "description",
         "descriptionField": "information",
         "roadField": "road_summary.road_name",
+        // event_priority is QLDTraffic's own priority scale (Red Alert, High,
+        // Medium, Low), so the mapped value is the publisher's severity.
         "severityField": "event_priority",
+        "severityStated": true,
         "severityMap": {
           "Red Alert": "critical",
           "High": "high",

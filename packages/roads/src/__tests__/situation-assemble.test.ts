@@ -389,6 +389,22 @@ describe("situationDrafts — fields", () => {
     expect((d!["provenance"] as Record<string, unknown>)["sourceUpdatedAt"]).toBeUndefined();
   });
 
+  it("keeps a severity the parser assessed from other fields, as derived", () => {
+    const [d] = assemble([
+      event("R1", {
+        type: "public_event",
+        severity: "low",
+        severitySource: "assessed",
+        situation: { severityRaw: "Einschränkung" },
+      }),
+    ]);
+    expect(d!["severity"]).toEqual({
+      label: "minor",
+      source: "derived",
+      declaredRaw: "Einschränkung",
+    });
+  });
+
   it("names a road in the language its source states, or every one it gave", () => {
     const names = [
       { lang: "fr", text: "Boulevard du Jardin Botanique" },

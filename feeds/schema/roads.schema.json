@@ -1418,6 +1418,9 @@
                   ]
                 }
               },
+              "severityStated": {
+                "type": "boolean"
+              },
               "severityPatterns": {
                 "minItems": 1,
                 "type": "array",

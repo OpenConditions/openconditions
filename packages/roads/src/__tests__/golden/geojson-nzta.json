@@ -44,7 +44,7 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared",
+      "source": "derived",
       "declaredRaw": "Caution"
     },
     "headline": [
@@ -71,7 +71,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "eeb8b0b40650a74216e5192a4fc2dfa66fc7eb188d26e1e3a021c5172e888a27"
+    "contentHash": "abdb60405ed1b71da383a7ebcf6744633ad72cc62716c7855ff967ffbd26ab79"
   },
   {
     "id": "oc:situation:nz-nzta-events:533846",
@@ -118,7 +118,7 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared",
+      "source": "derived",
       "declaredRaw": "Caution"
     },
     "headline": [
@@ -145,7 +145,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "60b88a258e0409a37e69e5e2f5a8c2ddad0055eff47f175341622d71b986c4d7"
+    "contentHash": "717c2409ac86cde45c1647c67bc97b590a2952ee8981f7d51c4ac321e10d33ca"
   },
   {
     "id": "oc:situation:nz-nzta-events:540941",
@@ -192,7 +192,7 @@
     "certainty": "unknown",
     "severity": {
       "label": "major",
-      "source": "declared",
+      "source": "derived",
       "declaredRaw": "Road Closed"
     },
     "headline": [
@@ -219,7 +219,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "db659c88af8a2001dac12387e33a44025aeceb3bef57cd808774e095a5b0de6c"
+    "contentHash": "5989fe6753f786136af87d46c1e2a06b435240d70ec2711cd68d25aab29c1032"
   },
   {
     "id": "oc:situation:nz-nzta-events:541696",
@@ -267,7 +267,7 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared",
+      "source": "derived",
       "declaredRaw": "Caution"
     },
     "headline": [
@@ -294,7 +294,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "0a1041fd13d17e028f535f9a7d6b68c5025ddd6087ab40a064aeebde61f51702"
+    "contentHash": "fcae46a96028aa77ccf1f94939509d5b1714d59ef8ce7b9636188b25681f12f4"
   },
   {
     "id": "oc:situation:nz-nzta-events:542780",
@@ -342,7 +342,7 @@
     "certainty": "unknown",
     "severity": {
       "label": "minor",
-      "source": "declared",
+      "source": "derived",
       "declaredRaw": "Caution"
     },
     "headline": [
@@ -369,7 +369,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "cbadf3ca36061f7513b76ce75eda6ad2ce7ef84fb60625fd073d36045a8ba395"
+    "contentHash": "230544a85e11a45dd0c2204864899b551eb02bc53b08b6eaf5b7bc09165ad987"
   },
   {
     "id": "oc:situation:nz-nzta-events:543025",
@@ -416,7 +416,7 @@
     "certainty": "unknown",
     "severity": {
       "label": "moderate",
-      "source": "declared",
+      "source": "derived",
       "declaredRaw": "Delays"
     },
     "headline": [
@@ -443,6 +443,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "a6ec6d25cfb95ec16dd4a912e8c49478725f494195ac19a85989277dbad18309"
+    "contentHash": "9fb8b1ed57afd606807f20a681ee2f277f2774a14fee3fc592ca46c66fee23b7"
   }
 ]

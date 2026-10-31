@@ -59,6 +59,7 @@ const geoJsonMappingSchema = z
     descriptionField: z.string().optional(),
     severityField: z.string().optional(),
     severityMap: z.record(z.string(), severity).optional(),
+    severityStated: z.boolean().optional(),
     severityPatterns: z
       .array(z.object({ match: pattern, severity }).strict())
       .nonempty()
