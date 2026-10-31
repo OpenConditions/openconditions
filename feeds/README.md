@@ -731,11 +731,28 @@ of the credit an application shows.
 `changeNotice` is an obligation, like `attributionRequired`: a changed or
 derived version must say in its credit that the data was changed (CC BY's
 "indicate if You modified the Licensed Material", the "Veränderungshinweis" of
-the Datenlizenz Deutschland and the GeoNutzV). OpenConditions changes every
-record it publishes, normalising it into its model, and consumers change it
-further (fused records, a routing graph), so a consumer credits a source whose
-`changeNotice` is not `false` with that notice. `null` means the licence text
+the Datenlizenz Deutschland and the GeoNutzV). `null` means the licence text
 has not been read for it, and is treated like `true`.
+
+Presenting a source's data is not changing it. Normalising a record into the
+model, converting units, coordinate systems and time formats, naming a stated
+value by a model code of the same or a coarser but still true meaning, drawing
+a location the source references (a TMC, site or OpenLR location), placing a
+point marker for a published line or area, and choosing which records to keep
+all leave the data as the source stated it. A record marks what OpenConditions
+derived instead:
+
+- `provenance.origin: "derived"`: the record itself was computed (a
+  congestion situation from flow readings, a closure from a detour);
+- `severity.source: "derived"`: the severity is OpenConditions' assessment, not
+  the publisher's (from a closure type, an impact category, a kind's rule);
+- `location.geometryOrigin: "derived"` on a line or area: the shape was
+  redrawn (simplified, unioned), so its extent is no longer the source's. On a
+  point it only says the position was computed or taken from a reference
+  (a way's centre, a crossing's Wikidata coordinate).
+
+A consumer that shows such a value, or changes or derives the data itself,
+credits the source with a change notice when its `changeNotice` is not `false`.
 
 `terms.url` and `terms.reviewedAt` are the evidence a feed's rights rest on:
 the publisher's own statement of the licence or terms its data comes under (a
