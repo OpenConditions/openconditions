@@ -3,7 +3,12 @@ import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
-import { pruneRollups, rollupObservations } from "../observation-rollup.js";
+import {
+  pruneRollups,
+  rollupObservations,
+  rollupParameters,
+  rollupStatement,
+} from "../observation-rollup.js";
 import { writeSnapshot } from "../write-records.js";
 import { observationDraft } from "./drafts.js";
 import { historyRegistry } from "./history-registry.js";
@@ -76,6 +81,26 @@ beforeAll(async () => {
 afterAll(async () => {
   await db?.close();
 }, 30_000);
+
+interface PlanNode extends Record<string, unknown> {
+  Plans?: PlanNode[];
+}
+
+const nodesOf = (plan: PlanNode): PlanNode[] => [plan, ...(plan.Plans ?? []).flatMap(nodesOf)];
+
+/**
+ * The joins with an aggregate on both sides. Estimated at one row each, such
+ * a join of two aggregates of every series is planned as a nested loop.
+ */
+function aggregateJoins(plan: PlanNode): PlanNode[] {
+  const aggregates = (n: PlanNode) =>
+    nodesOf(n).some((m) => m["Node Type"] === "Aggregate" || m["Node Type"] === "CTE Scan");
+  return nodesOf(plan).filter(
+    (n) =>
+      ["Nested Loop", "Hash Join", "Merge Join"].includes(n["Node Type"] as string) &&
+      (n.Plans ?? []).every(aggregates),
+  );
+}
 
 describe("rollupObservations", () => {
   it("rolls finished hours into a histogram of the declared bin width, leaving open hours", async () => {
@@ -167,6 +192,22 @@ describe("rollupObservations", () => {
     expect(await prune()).toEqual({ hourly: 0, daily: 0, retired: 6 });
     expect(await counts()).toEqual([{ property: "traffic.speed", n: 6 }]);
     expect(await prune()).toEqual({ hourly: 0, daily: 0, retired: 0 });
+  });
+
+  it("joins no aggregate to another, whatever a stale estimate makes of the hour", async () => {
+    // Planned as the rollup runs, with the custom plan of these parameters.
+    const plan = await sql.begin(async (tx) => {
+      const [{ "QUERY PLAN": plans }] = (await tx.unsafe(
+        `EXPLAIN (FORMAT JSON) ${rollupStatement("hourly")}`,
+        rollupParameters(
+          [{ property: "traffic.speed", bin_width: 2 }],
+          new Date("2026-10-01T08:00:00Z"),
+          new Date("2026-10-01T09:00:00Z"),
+        ),
+      )) as { "QUERY PLAN": { Plan: PlanNode }[] }[];
+      return plans![0]!.Plan;
+    });
+    expect(aggregateJoins(plan)).toEqual([]);
   });
 
   it("reads an hour of history through a block range index, not the whole day", async () => {

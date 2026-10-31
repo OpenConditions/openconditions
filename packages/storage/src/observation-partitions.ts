@@ -1,5 +1,6 @@
 import type { PropertyEntry, Registry } from "@openconditions/model";
 import type postgres from "postgres";
+import { isLockTimeout } from "./db-timeouts.js";
 
 const DAY_MS = 86_400_000;
 
@@ -220,6 +221,57 @@ export async function dropExpiredObservationPartitions(
     dropped.push(name);
   }
   return dropped;
+}
+
+/**
+ * The end of the range a day or month partition holds, or undefined for a
+ * list partition.
+ */
+function partitionEnd(name: string): number | undefined {
+  const day = /^observation_r\d+_d(\d{4})(\d{2})(\d{2})$/.exec(name);
+  if (day !== null) return Date.UTC(Number(day[1]), Number(day[2]) - 1, Number(day[3])) + DAY_MS;
+  const month = /^observation_r\d+_m(\d{4})(\d{2})$/.exec(name);
+  if (month !== null) return Date.UTC(Number(month[1]), Number(month[2]), 1);
+  return undefined;
+}
+
+/**
+ * Analyzes each partition whose range has ended since it was last analyzed
+ * and that changed since. Autovacuum analyzes a partition once a tenth of it
+ * has changed, so the readings of a day's last hours, written after its last
+ * analysis, are left out of its statistics for good: an hour of them looked
+ * like a single row, and the hourly rollup of it was planned as a nested
+ * loop that ran past its timeout. A closed partition changes little more, so
+ * one analysis covers it. A partition whose lock is held, by a vacuum of it,
+ * is left to the next run. Returns the partitions it analyzed.
+ */
+export async function analyzeClosedObservationPartitions(
+  sql: postgres.Sql,
+  opts: { now: Date },
+): Promise<string[]> {
+  const now = opts.now.getTime();
+  const rows = await sql<
+    { name: string; analyzed: Date | null; changed: string | number | bigint }[]
+  >`
+    SELECT s.relname AS name, GREATEST(s.last_analyze, s.last_autoanalyze) AS analyzed,
+           s.n_mod_since_analyze AS changed
+      FROM pg_stat_user_tables s
+     WHERE s.schemaname = 'conditions' AND s.relname = ANY(${await partitionNames(sql)})`;
+  const analyzed: string[] = [];
+  for (const row of rows) {
+    const end = partitionEnd(row.name);
+    if (end === undefined || end > now) continue;
+    if (row.analyzed !== null && (row.analyzed.getTime() >= end || Number(row.changed) === 0)) {
+      continue;
+    }
+    try {
+      await sql.unsafe(`ANALYZE conditions.${row.name}`);
+      analyzed.push(row.name);
+    } catch (err) {
+      if (!isLockTimeout(err)) throw err;
+    }
+  }
+  return analyzed;
 }
 
 /** Every partition below `conditions.observation`, at any depth. */

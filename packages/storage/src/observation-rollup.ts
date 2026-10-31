@@ -56,6 +56,74 @@ export function histogramPercentileKph(sql: postgres.Sql, frac: number) {
 }
 
 /**
+ * The statement that rolls the readings of [`$2`, `$3`) up into the period's
+ * rollup table, for the properties of `$1` ({@link rollupParameters}). It
+ * aggregates twice and joins nothing to an aggregate: per series, period and
+ * bin first, with the bin's contributor receipts, then per series and period.
+ * Joined, an estimate of one row, which a day partition's last hours get when
+ * they were written after its last analysis, made a nested loop of two
+ * aggregates of every series.
+ */
+export function rollupStatement(period: RollupPeriod): string {
+  const table = period === "hourly" ? "observation_rollup_hourly" : "observation_rollup_daily";
+  const bucket =
+    period === "hourly"
+      ? "date_trunc('hour', o.phenomenon_start, 'UTC')"
+      : "(o.phenomenon_start AT TIME ZONE 'UTC')::date";
+  const column = period === "hourly" ? "hour_utc" : "day_utc";
+  const histogram = period === "hourly";
+  return `WITH bins AS (
+     SELECT o.series_id, ${bucket} AS bucket,
+       CASE WHEN w.bin_width IS NULL THEN NULL
+            ELSE LEAST(32767, GREATEST(0, floor(x.v / w.bin_width)))::smallint END AS bin,
+       count(*) AS c, min(x.v) AS mn, max(x.v) AS mx, sum(x.v) AS s,
+       COALESCE(array_agg(DISTINCT x.receipt_id) FILTER (WHERE x.receipt_id IS NOT NULL),
+         '{}') AS receipt_ids,
+       bool_and(x.receipt_id IS NOT NULL) AS complete
+     FROM conditions.observation o
+     JOIN conditions.observation_latest l ON l.series_id = o.series_id
+     JOIN jsonb_to_recordset($1::text::jsonb) AS w(property text, bin_width double precision)
+       ON w.property = l.property
+     CROSS JOIN LATERAL (
+       SELECT COALESCE(o.value_num, o.value_money::double precision) AS v,
+              o.extra #>> '{provenance,creditReceiptId}' AS receipt_id) x
+     WHERE o.phenomenon_start >= $2 AND o.phenomenon_start < $3 AND x.v IS NOT NULL
+       AND o.issued_at = '-infinity'
+     GROUP BY o.series_id, bucket, bin
+   )
+   INSERT INTO conditions.${table} (series_id, ${column}, sample_count,
+     ${histogram ? "bins, counts, " : ""}min, max, mean, contributor_receipt_ids, lineage_complete)
+   SELECT b.series_id, b.bucket, sum(b.c)::int,
+     ${
+       histogram
+         ? `array_agg(b.bin ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),
+          array_agg(b.c ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),`
+         : ""
+     }
+     min(b.mn), max(b.mx), sum(b.s) / sum(b.c),
+     (SELECT array_agg(DISTINCT id ORDER BY id) FROM jsonb_array_elements_text(
+        jsonb_path_query_array(jsonb_agg(b.receipt_ids), '$[*][*]')) id),
+     bool_and(b.complete)
+   FROM bins b
+   GROUP BY b.series_id, b.bucket
+   ON CONFLICT (series_id, ${column}) DO UPDATE SET
+     sample_count = excluded.sample_count,
+     ${histogram ? "bins = excluded.bins, counts = excluded.counts," : ""}
+     min = excluded.min, max = excluded.max, mean = excluded.mean,
+     contributor_receipt_ids = excluded.contributor_receipt_ids,
+     lineage_complete = excluded.lineage_complete`;
+}
+
+/** The parameters of {@link rollupStatement}: the properties rolled up and the time range. */
+export function rollupParameters(
+  properties: { property: string; bin_width: number | null }[],
+  from: Date,
+  to: Date,
+): string[] {
+  return [JSON.stringify(properties), from.toISOString(), to.toISOString()];
+}
+
+/**
  * Aggregates finished periods of history into rollups: count, minimum,
  * maximum and mean of each series per hour or day, and for a property that
  * declares one a histogram (sparse bins of the declared width, bin-ascending,
@@ -90,61 +158,13 @@ export async function rollupObservations(
   let from = floorTo(new Date(startAt).getTime(), step);
   if (from >= cutoff) return { rows: 0 };
 
-  const table = opts.period === "hourly" ? "observation_rollup_hourly" : "observation_rollup_daily";
-  const bucket =
-    opts.period === "hourly"
-      ? "date_trunc('hour', o.phenomenon_start, 'UTC')"
-      : "(o.phenomenon_start AT TIME ZONE 'UTC')::date";
-  const column = opts.period === "hourly" ? "hour_utc" : "day_utc";
-  const histogram = opts.period === "hourly";
   let rows = 0;
   while (from < cutoff) {
     const to = Math.min(from + Math.max(BATCH_HOURS * HOUR_MS, step), cutoff);
     rows += await sql.begin(async (tx) => {
       const result = await tx.unsafe(
-        `WITH grouped AS MATERIALIZED (
-           SELECT o.series_id, ${bucket} AS bucket,
-             count(*) AS c, min(x.v) AS mn, max(x.v) AS mx, sum(x.v) AS s,
-             CASE WHEN w.bin_width IS NULL THEN NULL
-                  ELSE LEAST(32767, GREATEST(0, floor(x.v / w.bin_width)))::smallint END AS bin,
-             o.extra #>> '{provenance,creditReceiptId}' AS receipt_id
-           FROM conditions.observation o
-           JOIN conditions.observation_latest l ON l.series_id = o.series_id
-           JOIN jsonb_to_recordset($1::text::jsonb) AS w(property text, bin_width double precision)
-             ON w.property = l.property
-           CROSS JOIN LATERAL (
-             SELECT COALESCE(o.value_num, o.value_money::double precision) AS v) x
-           WHERE o.phenomenon_start >= $2 AND o.phenomenon_start < $3 AND x.v IS NOT NULL
-             AND o.issued_at = '-infinity'
-           GROUP BY o.series_id, bucket, bin, receipt_id
-         ), credits AS (
-           SELECT series_id, bucket, array_agg(DISTINCT receipt_id ORDER BY receipt_id)
-             FILTER (WHERE receipt_id IS NOT NULL) AS receipt_ids,
-             bool_and(receipt_id IS NOT NULL) AS complete
-           FROM grouped GROUP BY series_id, bucket
-         ), bins AS (
-           SELECT series_id, bucket, bin, sum(c) AS c, min(mn) AS mn, max(mx) AS mx, sum(s) AS s
-           FROM grouped GROUP BY series_id, bucket, bin
-         )
-         INSERT INTO conditions.${table} (series_id, ${column}, sample_count,
-           ${histogram ? "bins, counts, " : ""}min, max, mean, contributor_receipt_ids, lineage_complete)
-         SELECT b.series_id, b.bucket, sum(b.c)::int,
-           ${
-             histogram
-               ? `array_agg(b.bin ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),
-                array_agg(b.c ORDER BY b.bin) FILTER (WHERE b.bin IS NOT NULL),`
-               : ""
-           }
-           min(b.mn), max(b.mx), sum(b.s) / sum(b.c), c.receipt_ids, c.complete
-         FROM bins b JOIN credits c ON c.series_id = b.series_id AND c.bucket = b.bucket
-         GROUP BY b.series_id, b.bucket, c.receipt_ids, c.complete
-         ON CONFLICT (series_id, ${column}) DO UPDATE SET
-           sample_count = excluded.sample_count,
-           ${histogram ? "bins = excluded.bins, counts = excluded.counts," : ""}
-           min = excluded.min, max = excluded.max, mean = excluded.mean,
-           contributor_receipt_ids = excluded.contributor_receipt_ids,
-           lineage_complete = excluded.lineage_complete`,
-        [JSON.stringify(properties), new Date(from).toISOString(), new Date(to).toISOString()],
+        rollupStatement(opts.period),
+        rollupParameters(properties, new Date(from), new Date(to)),
       );
       await tx`
         INSERT INTO conditions.observation_rollup_progress (period, finalized_before)
