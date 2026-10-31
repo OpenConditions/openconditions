@@ -4,7 +4,9 @@ export type Sql = postgres.Sql | postgres.TransactionSql;
 
 /**
  * One column of a bulk write: its Postgres type in the JSON record set, and
- * whether it is a GeoJSON geometry (sent as JSON, stored as a 4326 geometry).
+ * whether it is a GeoJSON geometry (sent as JSON, stored as a 2D 4326
+ * geometry). The geometry columns are 2D; a source giving its positions a
+ * height (a WFS serving `[lon, lat, z]`) has it dropped, not its poll failed.
  */
 export interface ColumnSpec {
   name: string;
@@ -18,7 +20,7 @@ export const BATCH = 1000;
 function selectExpr(c: ColumnSpec): string {
   return c.geometry
     ? `CASE WHEN jsonb_typeof(r.${c.name}) = 'object'
-         THEN ST_SetSRID(ST_GeomFromGeoJSON(r.${c.name}::text), 4326) END`
+         THEN ST_SetSRID(ST_Force2D(ST_GeomFromGeoJSON(r.${c.name}::text)), 4326) END`
     : `r.${c.name}`;
 }
 

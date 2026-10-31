@@ -685,6 +685,46 @@ describe("writeSnapshot", () => {
     ]);
   });
 
+  it("stores positions given a height in two dimensions", async () => {
+    const situation = situationDraft("z");
+    (situation["location"] as Record<string, unknown>)["geometry"] = {
+      type: "Point",
+      coordinates: [4.9, 52.37, 12.5],
+    };
+    const feature = featureDraft("z1", 1);
+    (feature["location"] as Record<string, unknown>)["geometry"] = {
+      type: "LineString",
+      coordinates: [
+        [4.9, 52.37, 1],
+        [4.91, 52.38, 2],
+      ],
+    };
+    (feature["components"] as Record<string, unknown>[])[0]!["position"] = {
+      type: "Point",
+      coordinates: [4.536, 52.0235, 3],
+    };
+    const situations = await writeSnapshot(
+      sql,
+      "nl-ndw-events",
+      { situations: [situation] },
+      ctx(T1),
+    );
+    const features = await writeSnapshot(sql, "nl-ndw-flow", { features: [feature] }, ctx(T1));
+    expect(situations.rejected).toEqual([]);
+    expect(features.rejected).toEqual([]);
+    expect(situations.counts.situation).toMatchObject({ created: 1 });
+    expect(features.counts.feature).toMatchObject({ created: 1 });
+    const [stored] = await sql`
+      SELECT (SELECT ST_AsText(geom) FROM conditions.situation) AS situation,
+             (SELECT ST_AsText(geom) FROM conditions.feature) AS feature,
+             (SELECT ST_AsText(position) FROM conditions.feature_component) AS component`;
+    expect(stored).toEqual({
+      situation: "POINT(4.9 52.37)",
+      feature: "LINESTRING(4.9 52.37,4.91 52.38)",
+      component: "POINT(4.536 52.0235)",
+    });
+  });
+
   it("stores a feature's components and its relations", async () => {
     await writeSnapshot(sql, "nl-ndw-flow", { features: [featureDraft("s1", 3)] }, ctx(T1));
     const components = await sql`
