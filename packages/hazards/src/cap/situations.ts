@@ -162,9 +162,11 @@ const optional = (key: string, value: unknown) => (value === undefined ? {} : { 
  * An info block's areas as one geometry. Polygons are the source's; DWD
  * sends the islands and lakes a district's outline does not cover as
  * `EXCLUDE_POLYGON` geocodes, which become holes of the polygon they lie in.
- * A circle, a polygon split at the antimeridian and a shape the format
- * supplies for a code-only area are derived, and a supplied shape from a
- * third party's table brings that table's credit; an area with only codes and no
+ * A circle drawn as a polygon and a polygon split at the antimeridian are the
+ * source's shapes written in GeoJSON. A shape the format supplies for a
+ * code-only area is derived, since it is unioned and simplified from a
+ * table, and a supplied shape from a third party's table brings that table's
+ * credit; an area with only codes and no
  * supplied shape has no geometry. Undefined when a shape CAP gives does not
  * read (a position out of range, an open ring): the hazard is skipped.
  */
@@ -191,7 +193,6 @@ function capGeometry(
     for (const p of own) {
       const rings = capPolygon(p);
       if (rings === null) return undefined;
-      if (rings.length > 1) derived = true;
       for (const ring of rings) {
         polygons.push([ring, ...holes.filter((h) => pointInRing(h[0]!, ring))]);
       }
@@ -199,7 +200,6 @@ function capGeometry(
     for (const c of circles) {
       const shape = capCircle(c);
       if (shape === null) return undefined;
-      derived = true;
       if (shape.type === "Polygon") polygons.push(shape.coordinates);
       else if (shape.type === "MultiPolygon") polygons.push(...shape.coordinates);
       else shapes.push(shape);

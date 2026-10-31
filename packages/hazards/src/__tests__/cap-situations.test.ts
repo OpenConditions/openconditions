@@ -172,6 +172,24 @@ describe("capSituations", () => {
     });
   });
 
+  test("keeps a circle and a polygon across the antimeridian as the alert's own shapes", () => {
+    const alert = cap("dwd-thunderstorm.xml");
+    const info = alert.info![0]!;
+    const shapeOf = (area: CapArea) => {
+      const [record] = situations({ ...alert, info: [{ ...info, area: [area] }] }) as [RecordDraft];
+      return location(record);
+    };
+    const circle = shapeOf({ areaDesc: "Ring", circle: ["50.1,8.6 10"] });
+    expect(circle).toMatchObject({ geometryOrigin: "source" });
+    expect((circle["geometry"] as { type: string }).type).toBe("Polygon");
+    const across = shapeOf({
+      areaDesc: "Pacific",
+      polygon: ["-17,179 -17,-179 -18,-179 -18,179 -17,179"],
+    });
+    expect(across).toMatchObject({ geometryOrigin: "source" });
+    expect((across["geometry"] as { type: string }).type).toBe("MultiPolygon");
+  });
+
   test("takes a derived shape for an area that has only codes", () => {
     const alert = cap("dwd-thunderstorm.xml");
     const info = alert.info![0]!;

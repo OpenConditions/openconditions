@@ -140,6 +140,7 @@ function elevationOf(fields: Record<string, unknown>, mapping: CamerasMapping) {
 /** One record of a view: where the record places the camera, and its fields. */
 interface ViewRecord {
   point: [number, number];
+  pointDerived?: true;
   fields: Record<string, unknown>;
 }
 
@@ -198,7 +199,12 @@ export function parseLayout(
       const views = cameras.get(cameraId) ?? new Map<string, ViewRecord>();
       cameras.set(cameraId, views);
       if (views.has(key)) skip("malformed");
-      else views.set(key, { point: row.point, fields });
+      else
+        views.set(key, {
+          point: row.point,
+          ...(row.pointDerived ? { pointDerived: true as const } : {}),
+          fields,
+        });
     }
   }
   const dc: DraftContext = { fetchedAt: ctx.fetchedAt, out };
@@ -206,7 +212,7 @@ export function parseLayout(
     const views = [...byView].sort(([a], [b]) => byKey(a, b));
     const [firstView] = views;
     if (firstView === undefined) continue;
-    const { point, fields: first } = firstView[1];
+    const { point, pointDerived, fields: first } = firstView[1];
     const roadRef = text(first, mapping.road);
     const milepost = numberOf(first, mapping.milepost);
     const road = {
@@ -221,6 +227,7 @@ export function parseLayout(
       cameraDraft(feed, dc, {
         cameraId,
         point,
+        ...(pointDerived ? { geometryOrigin: "derived" as const } : {}),
         names: textOf(text(first, mapping.name), mapping.lang) ?? [],
         type: typeOf(first, mapping, unknown),
         ...(description === undefined ? {} : { description }),

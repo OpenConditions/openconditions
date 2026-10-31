@@ -243,6 +243,7 @@ export function parseOverpassFuel(
         stationId: `${element.type}/${element.id}`,
         lon: element.lon,
         lat: element.lat,
+        ...(element.centre ? { geometryOrigin: "derived" as const } : {}),
         fetchedAt: ctx.fetchedAt,
         externalIds: [{ scheme: `osm:${element.type}`, id: String(element.id) }],
         ...(name ? { name: { lang: UNDETERMINED, text: name } } : {}),

@@ -344,6 +344,7 @@ export function parseOverpassCharging(
         stationId: `${element.type}/${element.id}`,
         providerId: false,
         point: [element.lon, element.lat],
+        ...(element.centre ? { geometryOrigin: "derived" as const } : {}),
         lang: UNDETERMINED,
         externalIds: [{ scheme: `osm:${element.type}`, id: String(element.id) }, ...crossFeed],
         ...optional("name", namesOf(tags)),

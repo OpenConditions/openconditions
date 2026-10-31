@@ -78,6 +78,8 @@ export interface CameraInput {
   cameraId: string;
   /** `[lon, lat]`. */
   point: readonly [number, number];
+  /** `derived` where the point was computed (a way's centre, a line's vertex mean). */
+  geometryOrigin?: "source" | "derived";
   names: LocalizedText[];
   type: CameraType;
   description?: LocalizedText[];
@@ -291,7 +293,7 @@ export function cameraDraft(feed: CamerasFeed, ctx: DraftContext, input: CameraI
     temporality: "static",
     lifecycle: input.lifecycle ?? "operational",
     location: {
-      ...pointLocation(input.point),
+      ...pointLocation(input.point, input.geometryOrigin),
       ...(input.road === undefined ? {} : { roads: [input.road] }),
       ...placeOf(input),
     },

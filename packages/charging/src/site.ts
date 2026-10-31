@@ -176,6 +176,8 @@ export interface SiteInput {
   providerId?: false;
   /** `[lon, lat]`. */
   point: [number, number];
+  /** `derived` where the point was computed (a way's centre, an area's vertex mean). */
+  geometryOrigin?: "source" | "derived";
   /**
    * The site's name in `lang`, or its names each in its own language, the
    * source's primary one first.
@@ -670,7 +672,7 @@ export function siteDraft(feed: ChargingFeed, input: SiteInput, fetchedAt: strin
     temporality: "static",
     lifecycle: input.lifecycle ?? "operational",
     location: {
-      ...pointLocation(input.point),
+      ...pointLocation(input.point, input.geometryOrigin),
       ...(address === undefined ? {} : { address }),
       ...(country === undefined
         ? {}

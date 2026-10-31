@@ -122,6 +122,8 @@ describe("parseCbp", () => {
       name: [{ lang: "en", text: "Alexandria Bay: Thousand Islands Bridge" }],
       location: {
         geometry: { type: "Point", coordinates: [-75.9834, 44.34732] },
+        // CBP states no position; the crossing's Wikidata coordinate stands in for it.
+        geometryOrigin: "derived",
         admin: { country: "US" },
       },
       externalIds: [

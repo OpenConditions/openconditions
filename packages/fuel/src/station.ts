@@ -44,6 +44,8 @@ export interface StationInput {
   stationId: string;
   lon: number;
   lat: number;
+  /** `derived` where the position was computed (a way's centre), not published. */
+  geometryOrigin?: "source" | "derived";
   /** When the poll or the on-demand fetch read the station. */
   fetchedAt: string;
   name?: { lang: string; text: string };
@@ -227,7 +229,7 @@ export function stationDraft(feed: FuelFeed, input: StationInput): StationDraft 
     location: {
       geometry: { type: "Point", coordinates: [input.lon, input.lat] },
       extent: "point",
-      geometryOrigin: "source",
+      geometryOrigin: input.geometryOrigin ?? "source",
       fuzziness: "exact",
       ...(input.address === undefined ? {} : { address: input.address }),
       ...(input.admin === undefined ? {} : { admin: input.admin }),

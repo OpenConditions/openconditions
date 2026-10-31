@@ -104,7 +104,9 @@ export function crossingDraft(
     location: {
       geometry: { type: "Point", coordinates: [crossing.lon, crossing.lat] },
       extent: "point",
-      geometryOrigin: "source",
+      // Neither agency publishes a position: it is the crossing's Wikidata
+      // coordinate from the vendored table, not the feed's.
+      geometryOrigin: "derived",
       fuzziness: "exact",
       admin: { country: input.country },
       ...(input.areaDescription === undefined

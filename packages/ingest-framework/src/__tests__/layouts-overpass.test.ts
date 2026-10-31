@@ -17,7 +17,7 @@ describe("decodeOverpass", () => {
     );
     expect(elements).toEqual([
       { type: "node", id: 1, lat: 52.5, lon: 13.4, tags: { amenity: "fuel" } },
-      { type: "way", id: 2, lat: 48.1, lon: 11.6, tags: { brand: "X" } },
+      { type: "way", id: 2, lat: 48.1, lon: 11.6, centre: true, tags: { brand: "X" } },
       { type: "node", id: 4, lat: 1, lon: 2, tags: {} },
     ]);
   });

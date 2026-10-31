@@ -292,6 +292,37 @@ describe("csv", () => {
 });
 
 describe("parseLayout", () => {
+  test("a site drawn as an area is placed at its vertex mean, labelled derived", () => {
+    const square = [
+      [
+        [7.5, 47.5],
+        [7.6, 47.5],
+        [7.6, 47.6],
+        [7.5, 47.6],
+        [7.5, 47.5],
+      ],
+    ];
+    const feature = (id: string, geometry: unknown) => ({
+      type: "Feature",
+      geometry,
+      properties: { id, total: 3 },
+    });
+    const payload = Buffer.from(
+      JSON.stringify({
+        type: "FeatureCollection",
+        features: [
+          feature("area", { type: "Polygon", coordinates: square }),
+          feature("point", { type: "Point", coordinates: [7.5, 47.5] }),
+        ],
+      }),
+    );
+    const out = parseLayout(baselFeed(), { main: [payload] }, parseContext(FETCHED));
+    const origin = (id: string) =>
+      (site(out, id)?.["location"] as Record<string, unknown> | undefined)?.["geometryOrigin"];
+    expect(origin("area")).toBe("derived");
+    expect(origin("point")).toBe("source");
+  });
+
   test("a record without a placeable point or an id is skipped", () => {
     const payload = Buffer.from(
       JSON.stringify({
