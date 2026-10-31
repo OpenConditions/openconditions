@@ -274,6 +274,9 @@ function severityOf(c: RoadClassification, event: RoadEvent, effects: readonly E
   const raw = event.situation?.severityRaw?.trim();
   const token = raw ? { declaredRaw: raw } : {};
   if (declared !== undefined) return { label: declared, source: "declared", ...level, ...token };
+  const assessed =
+    event.severitySource === "assessed" ? DECLARED_SEVERITY[event.severity] : undefined;
+  if (assessed !== undefined) return { label: assessed, source: "derived", ...level, ...token };
   const rule = ROADS_SITUATION_KINDS.find((k) => k.code === c.kind)?.deriveSeverity;
   const derived = rule?.({ type: c.type, ...(c.subtype ? { subtype: c.subtype } : {}), effects });
   return derived !== undefined

@@ -50,7 +50,10 @@
         "defaultType": "other",
         "headlineField": "consequences_fr",
         "roadField": "location_fr",
+        // importance is Brussels Mobility's own 0–4 scale of an event's
+        // importance, so the mapped value is the publisher's severity.
         "severityField": "importance",
+        "severityStated": true,
         "severityMap": {
           "0": "low",
           "1": "low",

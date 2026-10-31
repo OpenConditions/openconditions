@@ -583,12 +583,18 @@ describe("parseGeoJson — free-text severity and filters", () => {
       ]),
       src,
     );
-    expect(out.map((e) => [e.id, e.severity])).toEqual([
-      ["test-gj:a", "high"],
-      ["test-gj:b", "medium"],
-      ["test-gj:c", "low"],
-      ["test-gj:d", "unknown"],
+    expect(out.map((e) => [e.id, e.severity, e.severitySource])).toEqual([
+      ["test-gj:a", "high", "assessed"],
+      ["test-gj:b", "medium", "assessed"],
+      ["test-gj:c", "low", "assessed"],
+      ["test-gj:d", "unknown", "derived"],
     ]);
+  });
+
+  it("declares a mapped severity only where the field is the publisher's own scale", () => {
+    const stated = { ...src, geojson: { ...src.geojson!, severityStated: true } };
+    const [event] = parseGeoJson(fc([at("a", "Hofgerichtsweg // Vollsperrung", 0)]), stated);
+    expect([event!.severity, event!.severitySource]).toEqual(["high", "declared"]);
   });
 
   it("drops records whose value matches an excluding pattern", () => {

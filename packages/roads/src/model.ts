@@ -62,6 +62,13 @@ export interface GeoJsonMapping {
   /** maps a feed's severity values to the canonical Severity scale. */
   severityMap?: Record<string, Severity>;
   /**
+   * The severity field is the publisher's own severity, priority or
+   * importance scale, so a mapped value is declared. Without it, a mapped
+   * value (from a closure type, an impact category, a symbol code) is
+   * OpenConditions' assessment.
+   */
+  severityStated?: boolean;
+  /**
    * For a severity written in free text (`… // Vollsperrung`): the first
    * pattern (a case-insensitive regular expression) the value matches gives
    * its severity, where `severityMap` holds no entry for it.
@@ -382,7 +389,13 @@ export interface RoadEvent {
   severity: Severity;
   /** Numeric 1–5 severity, when a controller assigns a graded level. */
   severityLevel?: 1 | 2 | 3 | 4 | 5;
-  severitySource: "declared" | "derived";
+  /**
+   * `declared`: the publisher states the severity. `assessed`: the parser read
+   * it from something else the publisher states (a closure type, a code), so
+   * the value is kept but served as derived. `derived`: none was read; the
+   * kind's rule derives one.
+   */
+  severitySource: "declared" | "assessed" | "derived";
   headline: string;
   description?: string;
   isPlanned: boolean;

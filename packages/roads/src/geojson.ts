@@ -137,16 +137,21 @@ function resolveType(
     : fallback;
 }
 
-/** A feature's severity under the feed's `severityMap`; `unmapped` when the map does not hold the value. */
+/**
+ * A feature's severity under the feed's `severityMap`; `unmapped` when the map
+ * does not hold the value. A mapped value is declared only where the field is
+ * the publisher's own severity scale (`severityStated`), else assessed.
+ */
 function resolveSeverity(
   raw: string | undefined,
   mapping: GeoJsonMapping,
-): { severity: Severity; severitySource: "declared" | "derived"; unmapped?: true } {
+): { severity: Severity; severitySource: RoadEvent["severitySource"]; unmapped?: true } {
   if (raw && (mapping.severityMap || mapping.severityPatterns)) {
+    const severitySource = mapping.severityStated ? "declared" : "assessed";
     const mapped = mapping.severityMap?.[raw] ?? mapping.severityMap?.[raw.toLowerCase()];
-    if (mapped) return { severity: mapped, severitySource: "declared" };
+    if (mapped) return { severity: mapped, severitySource };
     const matched = mapping.severityPatterns?.find((p) => new RegExp(p.match, "iu").test(raw));
-    if (matched) return { severity: matched.severity, severitySource: "declared" };
+    if (matched) return { severity: matched.severity, severitySource };
     return { severity: "unknown", severitySource: "derived", unmapped: true };
   }
   return { severity: "unknown", severitySource: "derived" };
