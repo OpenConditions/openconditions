@@ -405,6 +405,20 @@ describe("situationDrafts — fields", () => {
     });
   });
 
+  it("raises a derived severity to the parser's floor, never lowering it", () => {
+    const floored: Partial<RoadEvent> = {
+      severity: "unknown",
+      severitySource: "derived",
+      severityFloor: "medium",
+    };
+    const [accident, other] = assemble([
+      event("R1", { ...floored, type: "accident" }),
+      event("R2", { ...floored, type: "other" }),
+    ]);
+    expect(accident!["severity"]).toEqual({ label: "major", source: "derived" });
+    expect(other!["severity"]).toEqual({ label: "moderate", source: "derived" });
+  });
+
   it("names a road in the language its source states, or every one it gave", () => {
     const names = [
       { lang: "fr", text: "Boulevard du Jardin Botanique" },

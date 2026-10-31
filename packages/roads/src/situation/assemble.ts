@@ -1,5 +1,6 @@
 import { toIsoTimestamp, validityBound } from "@openconditions/core";
 import {
+  type DerivedSeverity,
   type Effect,
   Iso8601,
   localDateInZone,
@@ -267,6 +268,26 @@ function detailsOf(c: RoadClassification, event: RoadEvent): Record<string, unkn
   }
 }
 
+const FLOOR_SEVERITY: Record<NonNullable<RoadEvent["severityFloor"]>, DerivedSeverity> = {
+  low: "minor",
+  medium: "moderate",
+  high: "major",
+  critical: "critical",
+};
+
+const DERIVED_RANK: Record<DerivedSeverity, number> = {
+  minor: 1,
+  moderate: 2,
+  major: 3,
+  critical: 4,
+};
+
+/** The higher of a rule's derivation and a parser's floor, either of which may be absent. */
+function atLeast(derived: DerivedSeverity | undefined, floor: DerivedSeverity | undefined) {
+  if (derived === undefined || floor === undefined) return derived ?? floor;
+  return DERIVED_RANK[derived] >= DERIVED_RANK[floor] ? derived : floor;
+}
+
 function severityOf(c: RoadClassification, event: RoadEvent, effects: readonly Effect[]) {
   const declared =
     event.severitySource === "declared" ? DECLARED_SEVERITY[event.severity] : undefined;
@@ -278,7 +299,10 @@ function severityOf(c: RoadClassification, event: RoadEvent, effects: readonly E
     event.severitySource === "assessed" ? DECLARED_SEVERITY[event.severity] : undefined;
   if (assessed !== undefined) return { label: assessed, source: "derived", ...level, ...token };
   const rule = ROADS_SITUATION_KINDS.find((k) => k.code === c.kind)?.deriveSeverity;
-  const derived = rule?.({ type: c.type, ...(c.subtype ? { subtype: c.subtype } : {}), effects });
+  const derived = atLeast(
+    rule?.({ type: c.type, ...(c.subtype ? { subtype: c.subtype } : {}), effects }),
+    event.severityFloor !== undefined ? FLOOR_SEVERITY[event.severityFloor] : undefined,
+  );
   return derived !== undefined
     ? { label: derived, source: "derived", ...level, ...token }
     : { label: "unknown", ...token };

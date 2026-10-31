@@ -2174,7 +2174,11 @@ function parseDatexInternal(
     const safetyRelated = getXmlChildText(rec, "safetyRelatedMessage") === "true";
     const severityFields =
       normalised.severity === "unknown" && safetyRelated
-        ? { severity: "medium" as const, severitySource: "derived" as const }
+        ? {
+            severity: "unknown" as const,
+            severitySource: "derived" as const,
+            severityFloor: "medium" as const,
+          }
         : normalised;
 
     const comments = publicComments(rec, "en");
