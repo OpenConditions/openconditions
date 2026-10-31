@@ -167,7 +167,7 @@
     "planned": true,
     "certainty": "observed",
     "severity": {
-      "label": "minor",
+      "label": "moderate",
       "source": "derived"
     },
     "validity": {
@@ -353,7 +353,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "57789e3a98f6df638b8fbbea59c7a87655de1e0826a7d9e80f2dbe61401430af"
+    "contentHash": "70e9e7abe7264aebae74da39c26ce7e2165f40fbad3f29676012de6be8217e34"
   },
   {
     "id": "oc:situation:lu-cita-events:234859",
@@ -659,7 +659,7 @@
     "planned": true,
     "certainty": "observed",
     "severity": {
-      "label": "minor",
+      "label": "moderate",
       "source": "derived"
     },
     "validity": {
@@ -691,7 +691,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "658cf2aed998b72cd0609892b8d9faa61047d8885be60da12c51745b9fd715cf"
+    "contentHash": "07cb8b2ec8a151f4a01272346bcba14100668bb5377192ddef2e91bcd7b32491"
   },
   {
     "id": "oc:situation:lu-cita-events:234858",
@@ -813,7 +813,7 @@
     "planned": true,
     "certainty": "observed",
     "severity": {
-      "label": "minor",
+      "label": "moderate",
       "source": "derived"
     },
     "validity": {
@@ -845,7 +845,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "630227fed3aa001265cff65b32479ee2d4f9ed4f51f1863baebbb028b1c9a918"
+    "contentHash": "1c6e7b514f6433419e7977b664f917759df273fb585531f7eb3143c9e4000573"
   },
   {
     "id": "oc:situation:lu-cita-events:234857",
@@ -1015,7 +1015,8 @@
     "planned": false,
     "certainty": "observed",
     "severity": {
-      "label": "unknown"
+      "label": "moderate",
+      "source": "derived"
     },
     "validity": {
       "status": "active",
@@ -1092,6 +1093,6 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "154f977c3ace472f898584d0c1dbf572ee5e91bc7f1ab4d3a51cf5438a3e4347"
+    "contentHash": "66de7fbd6babbcb34790c26972bb7a2042650ef706ffef3d9a326f0da63b8b81"
   }
 ]

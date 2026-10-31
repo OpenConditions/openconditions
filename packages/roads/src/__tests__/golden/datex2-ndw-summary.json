@@ -106,7 +106,8 @@
       "planned": false,
       "certainty": "observed",
       "severity": {
-        "label": "unknown",
+        "label": "moderate",
+        "source": "derived",
         "declaredRaw": "unknown"
       },
       "headline": [
@@ -128,7 +129,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "743e62410b942bd1772469aae3ca2b15ff46b240b16f69483804f305f7d51fbc"
+      "contentHash": "345db0cc9ef25d771fd09dcf736c1640adc8d83564c521bb9d1224968a863da9"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1146779_D2_WWA",
@@ -548,7 +549,8 @@
       "planned": false,
       "certainty": "observed",
       "severity": {
-        "label": "unknown",
+        "label": "moderate",
+        "source": "derived",
         "declaredRaw": "unknown"
       },
       "validity": {
@@ -564,7 +566,7 @@
       "domain": "roads",
       "revision": 1,
       "recordedAt": "2026-09-18T10:00:00.000Z",
-      "contentHash": "a952d93ef0453eb22e30681f8d17f643d1ea8597204b6f30318742745f31bbbf"
+      "contentHash": "ecac535f3f6c586bf58521ba2dbb2a66cb646e9a7855a7a0789576141fa0543c"
     },
     {
       "id": "oc:situation:nl-ndw-events:RWS01_SM1148373_D2_WWA",

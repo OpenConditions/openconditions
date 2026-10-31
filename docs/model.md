@@ -247,7 +247,9 @@ the poll cannot end them. The assembly follows these rules:
   (DATEX `none`) as `none`; otherwise the kind's rule derives one from the
   effects (a closure is major, lanes by the share closed, a delay of 20
   minutes or more, or in a band of half an hour or more, at least major), or
-  it stays `unknown`. A rule never derives `none`.
+  it stays `unknown`. A rule never derives `none`. A DATEX safety-related
+  message (`safetyRelatedMessage`) without a declared severity is at least
+  `moderate`; a higher label the rule derives is kept.
 - DATEX `numberOfLanesRestricted` counts lanes "restricted either fully or
   partially": it is `lanesRestricted`, beside the lanes that remain fully
   operational, never `lanesClosed`. Lanes restricted with none known closed

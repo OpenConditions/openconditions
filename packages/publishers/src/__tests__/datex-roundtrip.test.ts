@@ -141,11 +141,11 @@ const CANNOT_EXPRESS: Record<string, { reason: string; fixtures: string[] }> = {
   "/severity/source": {
     reason:
       "A severity the reader derived is written as the publication's own `severity`, so pass 2 reads it as declared.",
-    fixtures: ["cita", "dgt", "flanders", "ndw"],
+    fixtures: ["cita", "dgt", "flanders", "ndw", "ndw-restrictions"],
   },
   "/severity/declaredRaw": {
     reason: "The raw token pass 2 reads is the label the export wrote (see /severity/source).",
-    fixtures: ["cita", "dgt", "flanders", "ndw"],
+    fixtures: ["cita", "dgt", "flanders", "ndw", "ndw-restrictions"],
   },
   "/subtype": {
     reason:

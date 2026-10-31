@@ -396,6 +396,12 @@ export interface RoadEvent {
    * kind's rule derives one.
    */
   severitySource: "declared" | "assessed" | "derived";
+  /**
+   * The least severity the source implies without declaring one (a DATEX
+   * safety-related message is at least medium). With `severitySource:
+   * "derived"`, the assembler serves the higher of it and the kind's rule.
+   */
+  severityFloor?: Exclude<Severity, "none" | "unknown">;
   headline: string;
   description?: string;
   isPlanned: boolean;

@@ -82,7 +82,8 @@
     "planned": false,
     "certainty": "observed",
     "severity": {
-      "label": "unknown",
+      "label": "moderate",
+      "source": "derived",
       "declaredRaw": "unknown"
     },
     "headline": [
@@ -104,7 +105,7 @@
     "domain": "roads",
     "revision": 1,
     "recordedAt": "2026-09-18T10:00:00.000Z",
-    "contentHash": "831aadd010e1a2d6517b69f296811313b0a42df12214e5daca7b13282b5e7a32"
+    "contentHash": "91dc654894be2be429ad51ef738ffd42c9887b18f6df38bc98aa93ba70b3c508"
   },
   {
     "id": "oc:situation:nl-ndw-events:RWS01_SM1080891_D2_WWA",

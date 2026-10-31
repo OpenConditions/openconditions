@@ -4,6 +4,7 @@ import { __resetSkips, drainSkipped } from "@openconditions/ingest-framework";
 import { isValidityInEffectAt } from "@openconditions/model";
 import { beforeEach, describe, expect, it } from "vitest";
 import { parseDatexSituations } from "../datex.js";
+import { situationDrafts } from "../situation/assemble.js";
 import type { SourceDescriptor } from "../types.js";
 
 const NDW_FIXTURE_PATH = join(import.meta.dirname, "fixtures/ndw/actueel_beeld.xml");
@@ -228,12 +229,12 @@ describe("parseDatexSituations — v2/v3 root tolerance", () => {
 });
 
 /** Wrap one situationRecord body in a minimal DATEX II v3 document. */
-function v3Record(inner: string): string {
+function v3Record(inner: string, recordType = "RoadOrCarriagewayOrLaneManagement"): string {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <messageContainer xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" modelBaseVersion="3">
   <payload xsi:type="SituationPublication">
     <situation id="S">
-      <situationRecord xsi:type="RoadOrCarriagewayOrLaneManagement" id="R" version="1">
+      <situationRecord xsi:type="${recordType}" id="R" version="1">
         <situationRecordVersionTime>2024-01-01T00:00:00Z</situationRecordVersionTime>
         <validity><validityStatus>active</validityStatus></validity>
         ${inner}
@@ -465,9 +466,57 @@ describe("parseDatexSituations — deeper field extraction", () => {
     ]);
     expect(ev!.lanesAffected).toEqual({ total: 3, restricted: 1 });
     expect(ev!.delaySeconds).toBe(600);
-    expect(ev!.severity).toBe("medium"); // bumped: safetyRelatedMessage + no declared severity
+    expect(ev!.severityFloor).toBe("medium");
     expect(ev!.externalRefs?.tmc?.code).toBe(7324);
     expect(ev!.externalRefs?.tmc?.country).toBe("8");
+  });
+});
+
+describe("a safety-related DATEX message", () => {
+  const SAFETY = "<safetyRelatedMessage>true</safetyRelatedMessage>";
+  const served = (xml: string) => {
+    const drafts = situationDrafts(parseDatexSituations(xml, NDW_SOURCE), { source: NDW_SOURCE });
+    expect(drafts).toHaveLength(1);
+    return drafts[0]!["severity"];
+  };
+
+  it("keeps the major severity a closure's rule derives", () => {
+    const xml = v3Record(
+      `${SAFETY}<roadOrCarriagewayOrLaneManagementType>roadClosed</roadOrCarriagewayOrLaneManagementType>${POINT_LOC}`,
+    );
+    expect(served(xml)).toEqual({ label: "major", source: "derived" });
+  });
+
+  it("is at least moderate where the rule derives nothing", () => {
+    const xml = v3Record(
+      `${SAFETY}<vehicleObstructionType>brokenDownVehicle</vehicleObstructionType>${POINT_LOC}`,
+      "VehicleObstruction",
+    );
+    expect(served(xml)).toEqual({ label: "moderate", source: "derived" });
+  });
+
+  it("is at least moderate where the rule derives minor", () => {
+    const xml = v3Record(
+      `${SAFETY}<roadMaintenanceType>roadworks</roadMaintenanceType>${POINT_LOC}`,
+      "MaintenanceWorks",
+    );
+    expect(served(xml)).toEqual({ label: "moderate", source: "derived" });
+  });
+
+  it("leaves a severity the publisher declares as it is", () => {
+    const xml = v3Record(
+      `<severity>low</severity>${SAFETY}<roadMaintenanceType>roadworks</roadMaintenanceType>${POINT_LOC}`,
+      "MaintenanceWorks",
+    );
+    expect(served(xml)).toEqual({ label: "minor", source: "declared", declaredRaw: "low" });
+  });
+
+  it("is a rule's derivation alone without the flag", () => {
+    const xml = v3Record(
+      `<vehicleObstructionType>brokenDownVehicle</vehicleObstructionType>${POINT_LOC}`,
+      "VehicleObstruction",
+    );
+    expect(served(xml)).toEqual({ label: "unknown" });
   });
 });
 
