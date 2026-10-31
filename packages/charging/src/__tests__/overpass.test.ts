@@ -85,7 +85,8 @@ describe("overpass", () => {
     // OSM's ids are its only ids, and it holds no live state.
     expect(out.features[0]).toMatchObject({
       externalIds: [{ scheme: "osm:way", id: "1" }],
-      location: { geometry: { coordinates: [8.4, 49.01] } },
+      // A way's position is the centre Overpass computed, not one OSM publishes.
+      location: { geometry: { coordinates: [8.4, 49.01] }, geometryOrigin: "derived" },
       freshness: { fetchedAt: FETCHED, expiresAt: "2026-10-06T08:46:45Z" },
     });
     expect(out.observations).toEqual([]);

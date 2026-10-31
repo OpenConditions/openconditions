@@ -417,6 +417,7 @@ function siteInput(
   return defined({
     stationId,
     point,
+    ...(rows[0].pointDerived ? { geometryOrigin: "derived" as const } : {}),
     name,
     lang: mapping.lang,
     operator: operator === undefined ? undefined : { name: operator },

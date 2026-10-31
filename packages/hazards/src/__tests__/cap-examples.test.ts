@@ -302,11 +302,11 @@ describe("OASIS CAP 1.2 Appendix A examples", () => {
       type: "other",
       temporality: "live",
       externalIds: [{ scheme: "cap", id: "TRI13970876.2", authority: "trinet@caltech.edu" }],
-      // A circle of radius 0 is its centre.
+      // A circle of radius 0 is its centre, the position the alert states.
       location: {
         geometry: { type: "Point", coordinates: [-115.5527, 32.9525] },
         extent: "point",
-        geometryOrigin: "derived",
+        geometryOrigin: "source",
         fuzziness: "exact",
         areaDescription: en(
           "1 mi. WSW of Brawley, CA; 11 mi. N of El Centro, CA; 30 mi. E of OCOTILLO (quarry); 1 mi. N of the Imperial Fault",

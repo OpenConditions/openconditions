@@ -110,6 +110,15 @@ function vertices(geometry: Geometry): [number, number][] {
 }
 
 /**
+ * Whether {@link geometryPoint} computes the point (a vertex mean) rather than
+ * taking a published one: a Point, or a collection holding one, gives its own.
+ */
+export function pointIsComputed(geometry: Geometry): boolean {
+  if (geometry.type === "GeometryCollection" || geometry.type === "Point") return false;
+  return !(geometry.type === "MultiPoint" && geometry.coordinates.length === 1);
+}
+
+/**
  * A single point for a geometry: a Point itself, the vertex mean of a line or
  * polygon, the first Point of a collection.
  */
@@ -137,10 +146,14 @@ export function decodeGeoJson(text: string, block: LayoutBlock): LayoutRow[] {
         ? (f.properties as Record<string, unknown>)
         : {};
     let point = pointFromFields(fields, block);
+    let pointDerived = false;
     if (!point && hasShape(f.geometry)) {
       point = geometryPoint(reprojectGeometry(f.geometry, collection.crs, block.crs));
+      pointDerived = pointIsComputed(f.geometry);
     }
-    rows.push(layoutRow(fields, point, namesPosition(fields, block) || hasShape(f.geometry)));
+    rows.push(
+      layoutRow(fields, point, namesPosition(fields, block) || hasShape(f.geometry), pointDerived),
+    );
   }
   return rows;
 }

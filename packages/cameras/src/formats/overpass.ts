@@ -188,6 +188,7 @@ export function parseOverpassCameras(
           providerId: false,
           externalIds: [{ scheme: `osm:${element.type}`, id: String(element.id) }],
           point,
+          ...(element.centre ? { geometryOrigin: "derived" as const } : {}),
           names,
           ...(named && describes
             ? { description: [{ lang: UNDETERMINED, text: description }] }

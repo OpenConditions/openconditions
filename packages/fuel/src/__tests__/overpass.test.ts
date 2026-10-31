@@ -50,6 +50,14 @@ function patched(id: number, tags: Record<string, string | undefined>): Buffer {
 }
 
 describe("overpass", () => {
+  test("a node keeps its own position; a way's centre is labelled derived", () => {
+    const { features } = parse();
+    const origin = (element: string) =>
+      (station(features, element)?.["location"] as Draft | undefined)?.["geometryOrigin"];
+    expect(origin("node/64707597")).toBe("source");
+    expect(origin("way/30051409")).toBe("derived");
+  });
+
   test("an OSM fuel station's fuel:* tags become products with availability, no prices", () => {
     const { features, observations } = parse();
     const total = station(features, "node/669891011");

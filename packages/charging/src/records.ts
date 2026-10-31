@@ -68,11 +68,14 @@ export function provenance(
   };
 }
 
-export function pointLocation(point: [number, number]): Record<string, unknown> {
+export function pointLocation(
+  point: [number, number],
+  geometryOrigin: "source" | "derived" = "source",
+): Record<string, unknown> {
   return {
     geometry: { type: "Point", coordinates: [point[0], point[1]] },
     extent: "point",
-    geometryOrigin: "source",
+    geometryOrigin,
     fuzziness: "exact",
   };
 }

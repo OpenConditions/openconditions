@@ -6,6 +6,8 @@ export interface OverpassElement {
   id: number;
   lon: number;
   lat: number;
+  /** The position is the centre Overpass computed for a way or relation, not a node's own. */
+  centre?: true;
   tags: Record<string, string>;
 }
 
@@ -75,6 +77,7 @@ export function decodeOverpass(
       id: raw.id,
       lat,
       lon,
+      ...(isNumber(raw.lat) ? {} : { centre: true as const }),
       tags: Object.fromEntries(
         Object.entries((raw.tags ?? {}) as Record<string, unknown>).filter(
           (entry): entry is [string, string] => typeof entry[1] === "string",

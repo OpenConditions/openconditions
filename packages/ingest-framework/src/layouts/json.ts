@@ -1,6 +1,6 @@
 import type { RecordSkipReason } from "../skips.js";
 import type { LayoutBlock } from "./block.js";
-import { geometryPoint, hasShape, reprojectGeometry } from "./geojson.js";
+import { geometryPoint, hasShape, pointIsComputed, reprojectGeometry } from "./geojson.js";
 import { getPath, type LayoutRow, layoutRow, namesPosition, pointFromFields } from "./row.js";
 
 /**
@@ -31,10 +31,14 @@ export function decodeJson(
     const fields = item as Record<string, unknown>;
     const geometry = block.geometryPath ? getPath(fields, block.geometryPath) : undefined;
     let point = pointFromFields(fields, block);
+    let pointDerived = false;
     if (!point && hasShape(geometry)) {
       point = geometryPoint(reprojectGeometry(geometry, undefined, block.crs));
+      pointDerived = pointIsComputed(geometry);
     }
-    rows.push(layoutRow(fields, point, namesPosition(fields, block) || hasShape(geometry)));
+    rows.push(
+      layoutRow(fields, point, namesPosition(fields, block) || hasShape(geometry), pointDerived),
+    );
   }
   return rows;
 }

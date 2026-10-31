@@ -146,6 +146,7 @@ function siteInput(
   return {
     stationId,
     point: row.point,
+    ...(row.pointDerived ? { geometryOrigin: "derived" as const } : {}),
     ...optional("name", name),
     ...optional("lang", mapping.lang),
     ...optional(

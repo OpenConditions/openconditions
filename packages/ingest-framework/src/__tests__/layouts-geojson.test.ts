@@ -50,6 +50,8 @@ describe("decodeLayout geojson", () => {
     expect(rows[1]!.point).toEqual([1, 1]);
     expect(rows[2]!.point).toEqual([3, 4]);
     expect(rows[3]!.point).toBeUndefined();
+    // Only the polygon's point is computed; a point, also one out of a collection, is published.
+    expect(rows.map((r) => r.pointDerived)).toEqual([undefined, true, undefined, undefined]);
   });
 
   test("geojson in a declared CRS is reprojected to WGS84", () => {

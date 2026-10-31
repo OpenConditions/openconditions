@@ -12,6 +12,8 @@ export type UnplacedReason = Extract<RecordSkipReason, "no_geometry" | "malforme
  */
 export interface LayoutRow {
   point?: [number, number];
+  /** The point is the vertex mean of a published line or area, not a published point. */
+  pointDerived?: true;
   unplaced?: UnplacedReason;
   fields: Record<string, unknown>;
 }
@@ -44,8 +46,10 @@ export function layoutRow(
   fields: Record<string, unknown>,
   point: [number, number] | undefined,
   positioned: boolean,
+  pointDerived = false,
 ): LayoutRow {
-  return point ? { point, fields } : { fields, unplaced: positioned ? "malformed" : "no_geometry" };
+  if (!point) return { fields, unplaced: positioned ? "malformed" : "no_geometry" };
+  return pointDerived ? { point, pointDerived: true, fields } : { point, fields };
 }
 
 const holdsValue = (value: unknown): boolean =>

@@ -81,6 +81,8 @@ export interface SiteInput {
   providerId?: false;
   /** `[lon, lat]`. */
   point: [number, number];
+  /** `derived` where the point was computed (a way's centre, an area's vertex mean). */
+  geometryOrigin?: "source" | "derived";
   /** The name in the site's language, or in each language the source gives it in. */
   name?: string | { lang: string; text: string }[];
   /** The language of the source's texts (BCP 47); `und` when unknown. */
@@ -363,11 +365,14 @@ function provenance(
   };
 }
 
-function pointLocation(point: [number, number]): Record<string, unknown> {
+function pointLocation(
+  point: [number, number],
+  geometryOrigin: "source" | "derived" = "source",
+): Record<string, unknown> {
   return {
     geometry: { type: "Point", coordinates: [point[0], point[1]] },
     extent: "point",
-    geometryOrigin: "source",
+    geometryOrigin,
     fuzziness: "exact",
   };
 }
@@ -594,7 +599,7 @@ export function siteDraft(feed: ParkingFeed, input: SiteInput, fetchedAt: string
     temporality: "static",
     lifecycle: input.lifecycle ?? "operational",
     location: {
-      ...pointLocation(input.point),
+      ...pointLocation(input.point, input.geometryOrigin),
       ...(address === undefined ? {} : { address }),
       ...(admin === undefined ? {} : { admin }),
       ...(areaDescription === undefined ? {} : { areaDescription }),
