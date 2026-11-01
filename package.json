@@ -48,7 +48,7 @@
     "@openconditions/model-registry": "workspace:*",
     "@openconditions/roads": "workspace:*",
     "@openconditions/test-database": "workspace:*",
-    "@types/node": "^26.6.6",
+    "@types/node": "^26.6.5",
     "@vitest/coverage-v8": "^5.0.5",
     "husky": "^9.1.7",
     "postgres": "^3.4.9",
