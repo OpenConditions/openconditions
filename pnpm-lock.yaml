@@ -510,8 +510,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       tuf-js:
-        specifier: 6.0.0
-        version: 6.0.0
+        specifier: 6.0.1
+        version: 6.0.1
       yaml:
         specifier: 2.9.1
         version: 2.9.1
@@ -2477,6 +2477,10 @@ packages:
     resolution: {integrity: sha512-U4mVcdFGOi6pt8n38LdWZp67Svn7ppnU1Pj8SGOVaBi1X4gm+G4ztQlLfkoJbKSHfjA6WeaiJp2A4V83AJF6nQ==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
+  '@tufjs/models@5.0.1':
+    resolution: {integrity: sha512-wacy5twbJk36R0dTcGE3qmPNNH095bFselAYNrVCzf0Byd0t3+Qzk3+3gn/rHGP10FuHBVk4swg4aczr1c2z/g==}
+    engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
+
   '@turbo/darwin-64@2.11.10':
     resolution: {integrity: sha512-By4idRap5+nLnMuRzLB4qkOPRlvNdyY1ne4VJYDyUoUB11H94k7uif9mbe3JT8JSNXs1D68uMcBj6hJ/jMQRvA==}
     cpu: [x64]
@@ -3979,8 +3983,8 @@ packages:
     engines: {node: '>=18.0.0'}
     hasBin: true
 
-  tuf-js@6.0.0:
-    resolution: {integrity: sha512-zlJVOIO68hmgo1//X4ENEcTGfuOTAtDPi8PsTsG+FyxD85E/ww1ZnwBbWo/yCEExGpI+Kilg7Z3qCdHX2BoJTQ==}
+  tuf-js@6.0.1:
+    resolution: {integrity: sha512-o59N1PU8xk0bBV3HpJ4jjwldIeze17yXW1XTv02CEEKdC3E/tnJDU3CPWDNT4IZpkx9Srv9v1DJZ+JTdo46THg==}
     engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   turbo@2.11.10:
@@ -4972,6 +4976,11 @@ snapshots:
   '@tufjs/canonical-json@2.0.0': {}
 
   '@tufjs/models@5.0.0':
+    dependencies:
+      '@tufjs/canonical-json': 2.0.0
+      minimatch: 11.0.3
+
+  '@tufjs/models@5.0.1':
     dependencies:
       '@tufjs/canonical-json': 2.0.0
       minimatch: 11.0.3
@@ -6430,10 +6439,10 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.3
 
-  tuf-js@6.0.0:
+  tuf-js@6.0.1:
     dependencies:
       '@gar/promise-retry': 1.0.3
-      '@tufjs/models': 5.0.0
+      '@tufjs/models': 5.0.1
       debug: 4.4.3
     transitivePeerDependencies:
       - supports-color
