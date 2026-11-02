@@ -14,7 +14,9 @@ the code is held to. Several standards bodies publish their schemas without a li
 that permits copying them, which is why none are vendored.
 
 `pinnedOrUnavailable(set)` is what a suite's `beforeAll` uses: under `CI` a fetch
-failure throws, while an offline local run gets the reason to skip with.
+failure throws, while an offline local run gets the reason to skip with. CI keeps the
+cache directory between runs, keyed on `src/standards/`, so only a changed or new pin
+is downloaded there and a publisher outage cannot fail an unrelated change.
 
 To pin a new file, download it, record `shasum -a 256` of the bytes, and note the page
 it was found on and the retrieval date beside the set.

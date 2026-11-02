@@ -94,6 +94,19 @@ jobs:
           restore-keys: |
             turbo-${{ runner.os }}-
 
+      # The conformance suites check feeds against official schemas that are
+      # fetched, never vendored, and pinned by SHA-256 (packages/conformance).
+      # Several come from the Internet Archive, which sometimes refuses
+      # connections for minutes. Every cached file is checked against its pin
+      # before use, so a restored older set is safe and only new pins download.
+      - name: Restore pinned conformance schemas
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: node_modules/.cache/conformance
+          key: conformance-${{ hashFiles('packages/conformance/src/standards/**') }}
+          restore-keys: |
+            conformance-
+
       - name: Lint
         run: pnpm lint
 
