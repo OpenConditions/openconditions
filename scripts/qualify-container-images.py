@@ -27,8 +27,7 @@ IMAGES = {
 }
 TRIVY = "aquasec/trivy:0.76.1@sha256:790fd66d1697395d8693d1acaa1ea702406a20f109b6fc7bac8db623eca6c06c"
 POSTGIS = (
-    "postgis/postgis:16-3.4@sha256:"
-    "44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5"
+    "postgis/postgis:16-3.4@sha256:44126d872ac91993766c341e369c539e8196614321765d36a6f1bab0419a5fa5"
 )
 DIGEST = re.compile(r"sha256:[0-9a-f]{64}\Z")
 
@@ -113,9 +112,7 @@ def command(args, *, cwd=None, log=None, check=True, timeout=120):
     )
     if check and result.returncode:
         # Do not echo environment values or arbitrary container output here.
-        fail(
-            f"{args[0]} {args[1]} failed (exit {result.returncode}); inspect retained logs"
-        )
+        fail(f"{args[0]} {args[1]} failed (exit {result.returncode}); inspect retained logs")
     return result
 
 
@@ -190,9 +187,7 @@ def inspect_stream(stream, layout):
                 blobs[f"sha256:{digest.hexdigest()}"] = (size, bytes(data))
             else:
                 documents[name] = bytes(data)
-        if decode(documents.get("oci-layout", b"null")) != {
-            "imageLayoutVersion": "1.0.0"
-        }:
+        if decode(documents.get("oci-layout", b"null")) != {"imageLayoutVersion": "1.0.0"}:
             fail("invalid OCI layout")
         index = decode(documents.get("index.json", b"null"))
         if (
@@ -203,16 +198,10 @@ def inspect_stream(stream, layout):
             fail("expected exactly one platform manifest")
 
         def blob(descriptor, *, document=False):
-            if not isinstance(descriptor, dict) or not DIGEST.fullmatch(
-                descriptor.get("digest", "")
-            ):
+            if not isinstance(descriptor, dict) or not DIGEST.fullmatch(descriptor.get("digest", "")):
                 fail("invalid OCI descriptor digest")
             found = blobs.get(descriptor["digest"])
-            if (
-                not found
-                or type(descriptor.get("size")) is not int
-                or found[0] != descriptor["size"]
-            ):
+            if not found or type(descriptor.get("size")) is not int or found[0] != descriptor["size"]:
                 fail("missing or incorrectly sized OCI blob")
             if document and not found[1]:
                 fail("oversized OCI JSON document")
@@ -265,18 +254,14 @@ def inspect_stream(stream, layout):
             "platform": PLATFORM,
             "registryAuthority": False,
             "diffIds": config["rootfs"]["diff_ids"],
-            "title": config.get("config", {})
-            .get("Labels", {})
-            .get("org.opencontainers.image.title"),
+            "title": config.get("config", {}).get("Labels", {}).get("org.opencontainers.image.title"),
         }
 
 
 def execution():
     if os.environ.get("GITHUB_ACTIONS") != "true":
         return {"kind": "local", "runId": None, "attempt": None}
-    values = [
-        os.environ.get(name, "") for name in ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT")
-    ]
+    values = [os.environ.get(name, "") for name in ("GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT")]
     if not all(re.fullmatch(r"[1-9][0-9]*", value) for value in values):
         fail("invalid workflow run/attempt")
     return {"kind": "github", "runId": int(values[0]), "attempt": int(values[1])}
@@ -302,11 +287,7 @@ def verify_reports(directory, image, source, expected_execution):
         or not metadata.get("buildx.build.ref")
     ):
         fail("build metadata image identity mismatch")
-    title = (
-        "OpenConditions OpenLR resolver"
-        if image == "openlr-resolver"
-        else f"OpenConditions {image}"
-    )
+    title = "OpenConditions OpenLR resolver" if image == "openlr-resolver" else f"OpenConditions {image}"
     if identity.get("title") != title:
         fail("image role/recipe identity mismatch")
     scan = data["scan.json"]
@@ -331,8 +312,7 @@ def verify_reports(directory, image, source, expected_execution):
             fail("image vulnerability finding or malformed scanner result")
     db = data["scanner-db.json"]
     stamps = [
-        datetime.fromisoformat(value)
-        for value in (db["UpdatedAt"], scan["CreatedAt"], db["NextUpdate"])
+        datetime.fromisoformat(value) for value in (db["UpdatedAt"], scan["CreatedAt"], db["NextUpdate"])
     ]
     if (
         db.get("Version") != 2
@@ -342,11 +322,7 @@ def verify_reports(directory, image, source, expected_execution):
         fail("scanner DB was not current at scan time")
     sbom = data["sbom.cdx.json"]
     properties = sbom.get("metadata", {}).get("component", {}).get("properties", [])
-    ids = [
-        p.get("value")
-        for p in properties
-        if p.get("name") == "aquasecurity:trivy:ImageID"
-    ]
+    ids = [p.get("value") for p in properties if p.get("name") == "aquasecurity:trivy:ImageID"]
     tools = sbom.get("metadata", {}).get("tools", {}).get("components", [])
     if (
         sbom.get("bomFormat") != "CycloneDX"
@@ -354,9 +330,7 @@ def verify_reports(directory, image, source, expected_execution):
         or not sbom.get("components")
     ):
         fail("missing/incorrect SBOM image binding")
-    if not any(
-        t.get("name") == "trivy" and t.get("version") == "0.76.1" for t in tools
-    ):
+    if not any(t.get("name") == "trivy" and t.get("version") == "0.76.1" for t in tools):
         fail("unqualified SBOM scanner version")
     runtime = data["runtime.json"]
     if (
@@ -366,8 +340,7 @@ def verify_reports(directory, image, source, expected_execution):
     ):
         fail("runtime image/health qualification missing")
     if len(runtime.get("cleanup", [])) != 3 or not all(
-        r.get("absent") is True and r.get("removalExit") == 0
-        for r in runtime["cleanup"]
+        r.get("absent") is True and r.get("removalExit") == 0 for r in runtime["cleanup"]
     ):
         fail("runtime resources not cleaned")
     if not re.fullmatch(r"16[0-9]{4}\|3\.[0-9.]+", runtime.get("physicalPostGIS", "")):
@@ -386,9 +359,11 @@ def verify_reports(directory, image, source, expected_execution):
     if set(runtime.get("checks", {})) != expected_checks:
         fail("missing required runtime/native checks")
     cleaned = runtime["cleanup"]
-    if len({r.get("name") for r in cleaned}) != 3 or sorted(
-        r.get("kind") for r in cleaned
-    ) != ["container", "container", "network"]:
+    if len({r.get("name") for r in cleaned}) != 3 or sorted(r.get("kind") for r in cleaned) != [
+        "container",
+        "container",
+        "network",
+    ]:
         fail("duplicate/missing runtime resource cleanup")
     possible = {
         identity["configDigest"],
@@ -408,11 +383,7 @@ def verify_reports(directory, image, source, expected_execution):
             fail("OpenLR native/HTTP graph qualification missing")
     else:
         status = checks["httpNativeCrypto"]
-        service = (
-            "openconditions-federation-api"
-            if image == "federation"
-            else "openconditions-" + image
-        )
+        service = "openconditions-federation-api" if image == "federation" else "openconditions-" + image
         if (
             status.get("status") != "ok"
             or status.get("service") != service
@@ -423,14 +394,12 @@ def verify_reports(directory, image, source, expected_execution):
         if image == "ingest" and (
             checks["bundledFeedsMigrationsImpit"] is not True
             or not checks["osmiumVersion"].startswith("osmium version 1.19.1")
-            or checks["osmiumFileInfo"].get("data", {}).get("count", {}).get("nodes", 0)
-            < 5
+            or checks["osmiumFileInfo"].get("data", {}).get("count", {}).get("nodes", 0) < 5
         ):
             fail("ingest native/bundled input qualification missing")
     loaded = runtime.get("loadedImageCleanup", {})
     if type(loaded.get("owned")) is not bool or (
-        loaded.get("owned")
-        and (loaded.get("absent") is not True or loaded.get("removalExit") != 0)
+        loaded.get("owned") and (loaded.get("absent") is not True or loaded.get("removalExit") != 0)
     ):
         fail("loaded image cleanup not confirmed")
     return {
@@ -480,11 +449,7 @@ def snapshot(repo, source, work):
         if not match:
             fail("source requires regular Git files, no links/submodules")
         mode, oid, name = match.groups()
-        if (
-            name.startswith("/")
-            or "\\" in name
-            or any(p in ("", ".", "..") for p in name.split("/"))
-        ):
+        if name.startswith("/") or "\\" in name or any(p in ("", ".", "..") for p in name.split("/")):
             fail("unsafe source archive path")
         tree[name] = (mode, oid)
     archive = work / "source.tar"
@@ -544,11 +509,7 @@ def remove_owned(kind, name, label):
     if found.returncode:
         return {"kind": kind, "name": name, "removalExit": None, "absent": False}
     obj = decode(found.stdout)[0]
-    labels = (
-        obj.get("Config", {}).get("Labels", {})
-        if kind == "container"
-        else obj.get("Labels", {})
-    )
+    labels = obj.get("Config", {}).get("Labels", {}) if kind == "container" else obj.get("Labels", {})
     if labels.get("openconditions.qualification") != label:
         return {"kind": kind, "name": name, "removalExit": None, "absent": False}
     args = ["docker", kind, "rm", *(["-f", "-v"] if kind == "container" else []), name]
@@ -614,9 +575,7 @@ def runtime_smoke(image, identity, source, output):
                 log=log,
                 timeout=180,
             )
-        ids = re.findall(
-            r"Loaded image ID: (sha256:[0-9a-f]{64})", (output / "load.log").read_text()
-        )
+        ids = re.findall(r"Loaded image ID: (sha256:[0-9a-f]{64})", (output / "load.log").read_text())
         if len(ids) != 1 or ids[0] not in possible:
             fail("Docker load returned an unbound image identity")
         loaded = ids[0]
@@ -731,9 +690,7 @@ def runtime_smoke(image, identity, source, output):
         command([*args, loaded])
         deadline = time.monotonic() + 180
         while True:
-            state = decode(command(["docker", "container", "inspect", app]).stdout)[0][
-                "State"
-            ]
+            state = decode(command(["docker", "container", "inspect", app]).stdout)[0]["State"]
             if not state["Running"]:
                 fail("service exited before health qualification")
             if state.get("Health", {}).get("Status") == "healthy":
@@ -761,9 +718,7 @@ def runtime_smoke(image, identity, source, output):
                 f"console.log(JSON.stringify(x));"
             )
             record["checks"]["httpNativeCrypto"] = decode(
-                command(
-                    ["docker", "exec", app, "node", "--input-type=module", "-e", code]
-                ).stdout
+                command(["docker", "exec", app, "node", "--input-type=module", "-e", code]).stdout
             )
             tables = int(
                 command(
@@ -805,9 +760,7 @@ def runtime_smoke(image, identity, source, output):
                     f"const r=await new Impit({{browser:'chrome'}}).fetch('http://127.0.0.1:{port}/status');"
                     f"if(r.status!==200)throw Error('native impit');"
                 )
-                command(
-                    ["docker", "exec", app, "node", "--input-type=module", "-e", code]
-                )
+                command(["docker", "exec", app, "node", "--input-type=module", "-e", code])
                 record["checks"]["bundledFeedsMigrationsImpit"] = True
         record["passed"] = True
     finally:
@@ -839,88 +792,148 @@ def runtime_smoke(image, identity, source, output):
             record["loadedImageCleanup"] = {"owned": False}
         write_json(output / "runtime.json", record)
     if not all(c["absent"] and c["removalExit"] == 0 for c in record["cleanup"]) or (
-        record["loadedImageCleanup"]["owned"]
-        and not record["loadedImageCleanup"]["absent"]
+        record["loadedImageCleanup"]["owned"] and not record["loadedImageCleanup"]["absent"]
     ):
         fail("owned runtime cleanup could not be confirmed")
+
+
+# Trivy's own defaults, tried one at a time. Given both, Trivy 0.76 gives up
+# when the first one fails partway through a download (a 404 for a layer of
+# mirror.gcr.io's copy) instead of trying the second.
+TRIVY_DB_REPOSITORIES = (
+    "mirror.gcr.io/aquasec/trivy-db:2",
+    "ghcr.io/aquasecurity/trivy-db:2",
+)
+TRIVY_DB_ROUNDS = 3
+TRIVY_DB_RETRY_SECONDS = 20
+
+
+def run_scanner(mounts, trivy_args, log, *, check=True):
+    """One sandboxed Trivy container, removed afterwards whatever its outcome."""
+    label = uuid.uuid4().hex
+    container = f"oc-image-scan-{label}"
+    args = [
+        "docker",
+        "run",
+        "--rm",
+        "--name",
+        container,
+        "--label",
+        f"openconditions.qualification={label}",
+        "--platform",
+        PLATFORM,
+        "--cpus",
+        "2",
+        "--memory",
+        "2g",
+        # Bind mounts retain runner ownership on Linux. With all
+        # capabilities dropped, container root cannot bypass their DAC.
+        "--user",
+        f"{os.geteuid()}:{os.getegid()}",
+        "--cap-drop",
+        "ALL",
+        "--security-opt",
+        "no-new-privileges",
+        "--read-only",
+        "--tmpfs",
+        "/tmp:rw,nosuid,nodev,size=512m",
+    ]
+    for mount in mounts:
+        args += ["--mount", mount]
+    try:
+        return command([*args, TRIVY, *trivy_args], log=log, check=check, timeout=1000)
+    finally:
+        cleanup = remove_owned("container", container, label)
+        if not cleanup["absent"] or cleanup["removalExit"] != 0:
+            fail("scanner container cleanup could not be confirmed")
+
+
+def download_scanner_db(cache, output):
+    """
+    Fetches the vulnerability DB into the cache before any scan, so that a
+    registry hiccup is retried and reported as what it is, and both reports
+    are made against the same DB.
+    """
+    mounts = [f"type=bind,src={cache},dst=/cache"]
+    with (output / "scanner-db.log").open("w") as log:
+        for attempt in range(1, TRIVY_DB_ROUNDS + 1):
+            for repository in TRIVY_DB_REPOSITORIES:
+                log.write(f"attempt {attempt}: {repository}\n")
+                log.flush()
+                result = run_scanner(
+                    mounts,
+                    [
+                        "image",
+                        "--cache-dir",
+                        "/cache",
+                        "--download-db-only",
+                        "--db-repository",
+                        repository,
+                        "--timeout",
+                        "10m",
+                        "--no-progress",
+                    ],
+                    log,
+                    check=False,
+                )
+                if result.returncode == 0:
+                    return
+            if attempt < TRIVY_DB_ROUNDS:
+                time.sleep(TRIVY_DB_RETRY_SECONDS * attempt)
+    fail(
+        "scanner vulnerability DB download failed from every repository "
+        f"in {TRIVY_DB_ROUNDS} rounds; inspect scanner-db.log"
+    )
 
 
 def scan_image(layout, output, work):
     cache = work / "trivy-cache"
     cache.mkdir()
+    download_scanner_db(cache, output)
+    mounts = [
+        f"type=bind,src={layout},dst=/input,readonly",
+        f"type=bind,src={output},dst=/output",
+        f"type=bind,src={cache},dst=/cache",
+    ]
     for mode, name in (("json", "scan.json"), ("cyclonedx", "sbom.cdx.json")):
-        label = uuid.uuid4().hex
-        container = f"oc-image-scan-{label}"
-        try:
-            args = [
-                "docker",
-                "run",
-                "--rm",
-                "--name",
-                container,
-                "--label",
-                f"openconditions.qualification={label}",
-                "--platform",
-                PLATFORM,
-                "--cpus",
-                "2",
-                "--memory",
-                "2g",
-                # Bind mounts retain runner ownership on Linux. With all
-                # capabilities dropped, container root cannot bypass their DAC.
-                "--user",
-                f"{os.geteuid()}:{os.getegid()}",
-                "--cap-drop",
-                "ALL",
-                "--security-opt",
-                "no-new-privileges",
-                "--read-only",
-                "--tmpfs",
-                "/tmp:rw,nosuid,nodev,size=512m",
-                "--mount",
-                f"type=bind,src={layout},dst=/input,readonly",
-                "--mount",
-                f"type=bind,src={output},dst=/output",
-                "--mount",
-                f"type=bind,src={cache},dst=/cache",
-                TRIVY,
-                "image",
-                "--cache-dir",
-                "/cache",
-                "--input",
-                "/input",
-                "--config",
-                "",
-                "--ignorefile",
-                "",
-                "--scanners",
-                "vuln",
-                "--list-all-pkgs",
-                "--severity",
-                "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
-                "--parallel",
-                "2",
-                "--format",
-                mode,
-                "--output",
-                f"/output/{name}",
-                "--timeout",
-                "15m",
-                "--no-progress",
-            ]
-            # SBOM generation alone does not enforce a zero-finding policy.
-            if mode == "json":
-                args += ["--exit-code", "1"]
-            with (output / f"{name}.log").open("w") as log:
-                command(args, log=log, timeout=1000)
-        finally:
-            cleanup = remove_owned("container", container, label)
-            if not cleanup["absent"] or cleanup["removalExit"] != 0:
-                fail("scanner container cleanup could not be confirmed")
+        trivy_args = [
+            "image",
+            "--cache-dir",
+            "/cache",
+            "--skip-db-update",
+            "--input",
+            "/input",
+            "--config",
+            "",
+            "--ignorefile",
+            "",
+            "--scanners",
+            "vuln",
+            "--list-all-pkgs",
+            "--severity",
+            "UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL",
+            "--parallel",
+            "2",
+            "--format",
+            mode,
+            "--output",
+            f"/output/{name}",
+            "--timeout",
+            "15m",
+            "--no-progress",
+        ]
+        # SBOM generation alone does not enforce a zero-finding policy.
         if mode == "json":
-            write_json(
-                output / "scanner-db.json", json_file(cache / "db/metadata.json")
+            trivy_args += ["--exit-code", "1"]
+        with (output / f"{name}.log").open("w") as log:
+            result = run_scanner(mounts, trivy_args, log, check=False)
+        if result.returncode:
+            fail(
+                f"image scan ({mode}) failed (exit {result.returncode}): "
+                f"a finding or a scanner error; inspect {name}.log"
             )
+        if mode == "json":
+            write_json(output / "scanner-db.json", json_file(cache / "db/metadata.json"))
 
 
 def qualify(image, output, source):
@@ -993,9 +1006,7 @@ def main():
         if args.mode == "collect":
             result = collect(args.directory, args.source)
         elif args.mode == "verify":
-            result = verify_reports(
-                args.directory, args.image, args.source, execution()
-            )
+            result = verify_reports(args.directory, args.image, args.source, execution())
         else:
             result = qualify(args.image, args.output.resolve(), args.source)
     print(json.dumps(result))

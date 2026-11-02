@@ -43,7 +43,7 @@ only the read-only layout, a disposable DB cache and its output directory. It ru
 numeric UID/GID and an explicit `/cache` path so Linux bind mounts remain writable with all capabilities
 dropped. Scanner errors fail, all
 severities including low/unknown are blocking, and no ignore file, configuration override or unfixed
-exception is loaded. The vulnerability DB identity/timestamps are retained and must be current at scan
+exception is loaded. Before scanning, a separate run of the same container downloads the vulnerability DB into that cache, trying `mirror.gcr.io` and then `ghcr.io` in each of three rounds, and logs every attempt to `scanner-db.log`. Trivy itself gives up when its first repository fails partway through a download. Both scans then use that DB with `--skip-db-update`, so a registry outage fails as a DB download, not as a scan, and the scan and SBOM share one DB. The vulnerability DB identity/timestamps are retained and must be current at scan
 time. Separate OS and language package inventories are required. CycloneDX generation alone cannot
 satisfy the vulnerability gate.
 

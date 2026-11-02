@@ -562,19 +562,16 @@ p=Path(sys.argv[2]);m.runtime_smoke('ingest',json.loads((p/'identity.json').read
   );
 });
 
-describe("scanner filesystem ownership", () => {
-  it.each([false, true])(
-    "uses the invoking UID/GID and a writable cache; scanner failure=%s",
-    (fail) => {
-      const f = fixture();
-      const output = join(f.root, "output");
-      const work = join(f.root, "work");
-      const bin = join(f.root, "bin");
-      for (const dir of [output, work, bin]) mkdirSync(dir, { mode: 0o700 });
-      const state = join(f.root, "scanner-calls.json");
-      put(
-        join(bin, "docker"),
-        `#!${process.execPath}
+function runScan(env: { scanFail?: boolean; dbFail?: string } = {}) {
+  const f = fixture();
+  const output = join(f.root, "output");
+  const work = join(f.root, "work");
+  const bin = join(f.root, "bin");
+  for (const dir of [output, work, bin]) mkdirSync(dir, { mode: 0o700 });
+  const state = join(f.root, "scanner-calls.json");
+  put(
+    join(bin, "docker"),
+    `#!${process.execPath}
 const fs=require('node:fs'),path=require('node:path');
 const a=process.argv.slice(2),state=process.env.OC_SCAN_STATE;
 const calls=fs.existsSync(state)?JSON.parse(fs.readFileSync(state,'utf8')):[];
@@ -590,29 +587,58 @@ if(!a.includes('--user')||value('--user')!==process.getuid()+':'+process.getgid(
 const mounts=a.filter((v,i)=>a[i-1]==='--mount').map(v=>Object.fromEntries(v.split(',').filter(p=>p.includes('=')).map(p=>p.split('='))));
 const cache=mounts.find(m=>m.dst===value('--cache-dir'));
 if(!cache||cache.dst==='/root/.cache/trivy')throw Error('cache path inaccessible to non-root scanner');
+const metadata=path.join(cache.src,'db/metadata.json');
+if(a.includes('--download-db-only')){
+ const repository=value('--db-repository'),failing=(process.env.OC_DB_FAIL||'').split(',');
+ if(failing.includes('all')||failing.includes(repository)){
+  process.stderr.write('failed to download vulnerability DB from '+repository+': 404 Not Found');process.exit(1);
+ }
+ fs.mkdirSync(path.dirname(metadata),{recursive:true});
+ fs.writeFileSync(metadata,JSON.stringify({Version:2,fixture:repository}));process.exit(0);
+}
+if(!a.includes('--skip-db-update')||!fs.existsSync(metadata))throw Error('scan would fetch its own DB');
 if(process.env.OC_SCAN_FAIL==='1'){process.stderr.write('scanner failure retained');process.exit(1);}
 const out=mounts.find(m=>m.dst==='/output');
-fs.mkdirSync(path.join(cache.src,'db'),{recursive:true});
-fs.writeFileSync(path.join(cache.src,'db/metadata.json'),JSON.stringify({Version:2,fixture:true}));
 fs.writeFileSync(path.join(out.src,path.basename(value('--output'))),JSON.stringify({format:value('--format')}));
 `,
-      );
-      chmodSync(join(bin, "docker"), 0o755);
-      const code = `import importlib.util,sys
+  );
+  chmodSync(join(bin, "docker"), 0o755);
+  const code = `import importlib.util,sys
 from pathlib import Path
 spec=importlib.util.spec_from_file_location('qualification',sys.argv[1]);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+m.TRIVY_DB_RETRY_SECONDS=0
 m.scan_image(*map(Path,sys.argv[2:]))`;
-      const result = spawnSync("python3", ["-c", code, script, f.layout, output, work], {
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          PATH: `${bin}:${process.env.PATH}`,
-          OC_SCAN_STATE: state,
-          OC_SCAN_FAIL: fail ? "1" : "0",
-        },
-      });
+  const result = spawnSync("python3", ["-c", code, script, f.layout, output, work], {
+    encoding: "utf8",
+    env: {
+      ...process.env,
+      PATH: `${bin}:${process.env.PATH}`,
+      OC_SCAN_STATE: state,
+      OC_SCAN_FAIL: env.scanFail ? "1" : "0",
+      OC_DB_FAIL: env.dbFail ?? "",
+    },
+  });
+  const calls = (JSON.parse(readFileSync(state, "utf8")) as string[][]).filter(
+    (a) => a[0] === "run",
+  );
+  return { result, output, work, calls };
+}
+
+const MIRROR = "mirror.gcr.io/aquasec/trivy-db:2";
+const GHCR = "ghcr.io/aquasecurity/trivy-db:2";
+const dbRepositories = (calls: string[][]) =>
+  calls
+    .filter((a) => a.includes("--download-db-only"))
+    .map((a) => a[a.indexOf("--db-repository") + 1]);
+
+describe("scanner filesystem ownership", () => {
+  it.each([false, true])(
+    "uses the invoking UID/GID and a writable cache; scanner failure=%s",
+    (fail) => {
+      const { result, output, work, calls } = runScan({ scanFail: fail });
       if (fail) {
         expect(result.status).not.toBe(0);
+        expect(result.stderr).toContain("image scan (json) failed (exit 1)");
         expect(readFileSync(join(output, "scan.json.log"), "utf8")).toContain(
           "scanner failure retained",
         );
@@ -622,7 +648,7 @@ m.scan_image(*map(Path,sys.argv[2:]))`;
         expect(result.status, result.stderr).toBe(0);
         expect(JSON.parse(readFileSync(join(output, "scanner-db.json"), "utf8"))).toEqual({
           Version: 2,
-          fixture: true,
+          fixture: MIRROR,
         });
         expect(JSON.parse(readFileSync(join(output, "sbom.cdx.json"), "utf8"))).toEqual({
           format: "cyclonedx",
@@ -631,18 +657,50 @@ m.scan_image(*map(Path,sys.argv[2:]))`;
       expect(statSync(output).mode & 0o777).toBe(0o700);
       expect(statSync(join(work, "trivy-cache")).mode & 0o022).toBe(0);
       expect(existsSync(join(output, "qualified.json"))).toBe(false);
-      const calls = JSON.parse(readFileSync(state, "utf8")) as string[][];
-      for (const call of calls.filter((a) => a[0] === "run")) {
+      for (const call of calls) {
         expect(call).toContain("--read-only");
         expect(call.slice(call.indexOf("--cap-drop"), call.indexOf("--cap-drop") + 2)).toEqual([
           "--cap-drop",
           "ALL",
         ]);
         expect(call).toContain("no-new-privileges");
+      }
+      for (const call of calls.filter((a) => a.includes("--format"))) {
         expect(call).toContain("UNKNOWN,LOW,MEDIUM,HIGH,CRITICAL");
         if (call[call.indexOf("--format") + 1] === "json")
           expect(call.slice(-2)).toEqual(["--exit-code", "1"]);
       }
     },
   );
+});
+
+describe("scanner vulnerability DB download", () => {
+  it("downloads the DB once, before both scans, which then skip their own update", () => {
+    const { result, calls } = runScan();
+    expect(result.status, result.stderr).toBe(0);
+    expect(dbRepositories(calls)).toEqual([MIRROR]);
+    expect(calls[0]).toContain("--download-db-only");
+    expect(calls.slice(1).every((a) => a.includes("--skip-db-update"))).toBe(true);
+    expect(calls).toHaveLength(3);
+  });
+
+  it("falls back to the next repository when the first fails partway", () => {
+    const { result, output, calls } = runScan({ dbFail: MIRROR });
+    expect(result.status, result.stderr).toBe(0);
+    expect(dbRepositories(calls)).toEqual([MIRROR, GHCR]);
+    expect(JSON.parse(readFileSync(join(output, "scanner-db.json"), "utf8")).fixture).toBe(GHCR);
+    expect(readFileSync(join(output, "scanner-db.log"), "utf8")).toContain(
+      `failed to download vulnerability DB from ${MIRROR}`,
+    );
+  });
+
+  it("names the DB download, not the scan, when every repository keeps failing", () => {
+    const { result, output, calls } = runScan({ dbFail: "all" });
+    expect(result.status).not.toBe(0);
+    expect(result.stderr).toContain("scanner vulnerability DB download failed");
+    expect(dbRepositories(calls)).toEqual([MIRROR, GHCR, MIRROR, GHCR, MIRROR, GHCR]);
+    expect(calls.some((a) => a.includes("--format"))).toBe(false);
+    expect(existsSync(join(output, "scan.json.log"))).toBe(false);
+    expect(existsSync(join(output, "scanner-db.json"))).toBe(false);
+  });
 });
