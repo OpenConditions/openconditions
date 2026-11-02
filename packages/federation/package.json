@@ -35,7 +35,7 @@
     "@openconditions/ingest-framework": "workspace:*",
     "@openconditions/model": "workspace:*",
     "@tufjs/canonical-json": "2.0.0",
-    "@tufjs/models": "5.0.0",
+    "@tufjs/models": "5.0.1",
     "http-message-signatures": "1.0.6",
     "postgres": "^3.4.9",
     "structured-headers": "^2.1.1",

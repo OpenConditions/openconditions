@@ -498,8 +498,8 @@ importers:
         specifier: 2.0.0
         version: 2.0.0
       '@tufjs/models':
-        specifier: 5.0.0
-        version: 5.0.0
+        specifier: 5.0.1
+        version: 5.0.1
       http-message-signatures:
         specifier: 1.0.6
         version: 1.0.6
@@ -2472,10 +2472,6 @@ packages:
   '@tufjs/canonical-json@2.0.0':
     resolution: {integrity: sha512-yVtV8zsdo8qFHe+/3kw81dSLyF7D576A5cCFCi4X7B39tWT7SekaEFUnvnWJHz+9qO7qJTah1JbrDjWKqFtdWA==}
     engines: {node: ^16.14.0 || >=18.0.0}
-
-  '@tufjs/models@5.0.0':
-    resolution: {integrity: sha512-U4mVcdFGOi6pt8n38LdWZp67Svn7ppnU1Pj8SGOVaBi1X4gm+G4ztQlLfkoJbKSHfjA6WeaiJp2A4V83AJF6nQ==}
-    engines: {node: ^22.22.2 || ^24.15.0 || >=26.0.0}
 
   '@tufjs/models@5.0.1':
     resolution: {integrity: sha512-wacy5twbJk36R0dTcGE3qmPNNH095bFselAYNrVCzf0Byd0t3+Qzk3+3gn/rHGP10FuHBVk4swg4aczr1c2z/g==}
@@ -4977,11 +4973,6 @@ snapshots:
   '@simple-libs/stream-utils@2.0.0': {}
 
   '@tufjs/canonical-json@2.0.0': {}
-
-  '@tufjs/models@5.0.0':
-    dependencies:
-      '@tufjs/canonical-json': 2.0.0
-      minimatch: 11.0.3
 
   '@tufjs/models@5.0.1':
     dependencies:
