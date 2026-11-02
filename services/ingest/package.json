@@ -37,7 +37,7 @@
     "@openconditions/weather": "workspace:*",
     "croner": "^11.0.0",
     "fastify": "^5.12.7",
-    "hyparquet-writer": "0.17.0",
+    "hyparquet-writer": "0.18.0",
     "impit": "^0.14.7",
     "postgres": "^3.4.9",
     "undici": "^8.12.3",
