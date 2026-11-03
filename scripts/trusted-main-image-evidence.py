@@ -57,6 +57,7 @@ IMAGE_FILES = {
 }
 OPTIONAL_FILES = {
     "load.log",
+    "scanner-db.log",
     "scan.json.log",
     "sbom.cdx.json.log",
     "container--db.log",
