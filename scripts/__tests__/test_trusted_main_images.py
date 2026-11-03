@@ -186,6 +186,17 @@ def image_bundle(root, role):
     for name, value in values.items():
         (root / name).write_bytes(encoded(value))
     (root / "build.log").write_text("actual build log fixture\n")
+    # Every log the producer retains beside its reports, so a new one it
+    # writes cannot be rejected only on main.
+    for name in (
+        "load.log",
+        "scanner-db.log",
+        "scan.json.log",
+        "sbom.cdx.json.log",
+        "container--db.log",
+        "container-app.log",
+    ):
+        (root / name).write_text(f"{name} fixture\n")
     result = Q.verify_reports(
         root, role, SHA, {"kind": "github", "runId": 123, "attempt": 2}
     )
