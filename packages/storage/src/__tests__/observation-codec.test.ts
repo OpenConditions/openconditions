@@ -251,14 +251,18 @@ describe("latest readings", () => {
       for (const key of ["location", "subject", "property", "class", "domain"]) {
         expect(reading).not.toHaveProperty(key);
       }
-      expect(reading["id"]).toBe(record["id"]);
       expect(recordOf(templateOf(record), reading)).toEqual(record);
     }
   });
 
-  it("hash a series template as written, the same for every reading of one series", () => {
+  it("keeps templates for result changes and replaces them when shared metadata changes", () => {
     const [first, second] = [seal(drafts()[0]!), seal({ ...drafts()[0]!, aggregation: "max" })];
-    expect(templateHash(templateOf(second))).toBe(templateHash(templateOf(first)));
+    expect(templateHash(templateOf(second))).not.toBe(templateHash(templateOf(first)));
+    const changedResult = seal({
+      ...drafts()[0]!,
+      result: { type: "quantity", value: 52, unit: "km/h" },
+    });
+    expect(templateHash(templateOf(changedResult))).toBe(templateHash(templateOf(first)));
     expect(templateHash({ ...templateOf(first), location: null })).not.toBe(
       templateHash(templateOf(first)),
     );

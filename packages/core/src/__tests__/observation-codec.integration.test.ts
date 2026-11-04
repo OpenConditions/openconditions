@@ -59,9 +59,9 @@ describe("SQL latest observation reconstruction", () => {
   });
 
   it("lets a legacy reading override shared fields during a rolling upgrade", async () => {
-    const own = { ...reading, id: expected.id, canonicalId, revision: 2, aggregation: "maximum" };
+    const own = { ...reading, id: expected.id, canonicalId, revision: 2, aggregation: "max" };
     const [row] =
       await db.sql`SELECT conditions.observation_record(${db.sql.json(template)}, ${db.sql.json(own)}) AS record`;
-    expect(row!.record).toEqual({ ...expected, revision: 2, aggregation: "maximum" });
+    expect(row!.record).toEqual({ ...expected, revision: 2, aggregation: "max" });
   });
 });

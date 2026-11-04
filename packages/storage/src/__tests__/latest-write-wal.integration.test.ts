@@ -11,8 +11,9 @@ import {
   postgisProfile,
 } from "@openconditions/test-database";
 import postgres from "postgres";
+import type { StartedTestContainer } from "testcontainers";
 import { GenericContainer, Wait } from "testcontainers";
-import { describe, expect, it } from "vitest";
+import { afterAll, describe, expect, it } from "vitest";
 import type { Sql } from "../bulk.js";
 import { ensureObservationPartitions, retentionClasses } from "../observation-partitions.js";
 import { writeObservationsIn } from "../write-observations.js";
@@ -31,6 +32,15 @@ const fixtures = JSON.parse(
 const samples = fixtures.map((f) => recordOf(f.template, f.reading));
 // Approximately one site speed and one site volume per ten channel readings.
 const sampleIndices = [0, 1, 2, 3, 2, 3, 2, 3, 2, 3, 2, 3];
+let ownedContainer: StartedTestContainer | undefined;
+let ownedSql: postgres.Sql | undefined;
+afterAll(async () => {
+  try {
+    await ownedSql?.end({ timeout: 5 });
+  } finally {
+    await ownedContainer?.stop();
+  }
+}, 30_000);
 const expanded = process.env["OC_RUN_LATEST_WRITE_BENCHMARK"] === "1";
 
 function drafts(rows: number, cycle: number): Rec[] {
@@ -135,8 +145,10 @@ describe("latest reading write amplification", () => {
       .withWaitStrategy(Wait.forLogMessage(/database system is ready to accept connections/, 2))
       .withStartupTimeout(120_000)
       .start();
+    ownedContainer = container;
     const url = `postgres://bench:bench@${container.getHost()}:${container.getMappedPort(5432)}/bench`;
     const sql = postgres(url, { max: 1, onnotice: () => {} });
+    ownedSql = sql;
     const results: Rec[] = [];
     try {
       await assertPostgisProfile(sql, profile, {
@@ -174,7 +186,27 @@ describe("latest reading write amplification", () => {
             expect(counts.latest).toBe(rows);
             return counts;
           };
-          await write(0);
+          // Establish representative planner statistics before the timed
+          // phase; disabling autovacuum must not leave an empty-table plan
+          // walking an ever-growing seed as a nested loop.
+          const seed = drafts(rows, 0);
+          for (let offset = 0; offset < seed.length; offset += 1_000) {
+            await sql.begin((tx) =>
+              writeObservationsIn(
+                arm === "legacy" ? legacyWriter(tx) : tx,
+                source,
+                seed.slice(offset, offset + 1_000),
+                {
+                  registry,
+                  instanceId: "bench.local",
+                  complete: false,
+                  now: new Date(start).toISOString(),
+                },
+                [],
+              ),
+            );
+            await sql`ANALYZE conditions.observation_latest`;
+          }
           await sql`CHECKPOINT`;
           const [before] = await sql`SELECT pg_current_wal_insert_lsn()::text AS lsn`;
           const t = performance.now();
@@ -201,7 +233,7 @@ describe("latest reading write amplification", () => {
             await sql`SELECT md5(string_agg(md5(conditions.observation_record(template,reading)::text), '' ORDER BY series_id)) AS records FROM conditions.observation_latest`;
           const [history] =
             await sql`SELECT md5(string_agg(md5(to_jsonb(o)::text), '' ORDER BY series_id,phenomenon_start)) AS samples FROM conditions.observation o`;
-          arms.push({
+          const result = {
             arm,
             rows,
             cycles,
@@ -213,7 +245,9 @@ describe("latest reading write amplification", () => {
             ...sizes,
             ...digest,
             ...history,
-          });
+          };
+          arms.push(result);
+          console.info("LATEST_WRITE_ARM", JSON.stringify(result));
         }
         const [legacy, compact] = arms as [Rec, Rec];
         expect(compact["records"]).toBe(legacy["records"]);
@@ -239,9 +273,11 @@ describe("latest reading write amplification", () => {
       }
     } finally {
       try {
-        await sql.end();
+        await sql.end({ timeout: 5 });
+        ownedSql = undefined;
       } finally {
         await container.stop();
+        ownedContainer = undefined;
       }
     }
   }, 600_000);
