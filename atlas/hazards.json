@@ -100,6 +100,11 @@
             "reason": "DWD requests source notice directly at reused information; ordinary format conversion is not extensive modification",
             "compactText": "<a href=\"https://www.dwd.de/\">DWD</a>"
           },
+          "terms": {
+            "url": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"Alle frei zugänglichen Geodaten und Geodatendienste sowie die als hochwertige Datensätze / high value datasets (HVD) festgelegten Leistungen des DWD dürfen unter den Bedingungen der Lizenz Creative Commons BY 4.0 (CC BY 4.0) unter Beigabe e…\""
+          },
           "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
           "homepage": "https://www.dwd.de/",
           "coverage": {
@@ -283,6 +288,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
           "attribution": "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
+          "terms": {
+            "url": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0 (EU-owned content). \"Unless otherwise indicated (e.g. in individual copyright notices), content owned by the EU on this website is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence . This means that reuse is allowed, provided…\""
+          },
           "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
           "homepage": "https://forest-fire.emergency.copernicus.eu/",
           "coverage": {
@@ -330,6 +340,11 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
           "attribution": "NASA FIRMS (LANCE / ESDIS)",
+          "terms": {
+            "url": "https://cmr.earthdata.nasa.gov/search/concepts/C3264430167-LANCEMODIS.umm_json",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: No use constraints, free and open data (NASA CMR); ESDIS default CC0. \"\"UseConstraints\": {\"Description\": \"None. See disclaimer: https://earthdata.nasa.gov/data/near-real-time-data/about-lance/disclaimer\", \"FreeAndOpenData\": true}\""
+          },
           "privacyUrl": "https://www.nasa.gov/privacy/",
           "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
           "coverage": {
@@ -368,6 +383,11 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
           "attribution": "NASA FIRMS (LANCE / ESDIS)",
+          "terms": {
+            "url": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC0 (ESDIS default for unmarked NASA-led mission data). \"Unless the content is marked with a use restriction or license, data provided from a NASA-led mission are licensed as Creative Commons Zero (CC0). While there are no restrictions on the use of these data, data users are very strongly urged…\""
+          },
           "privacyUrl": "https://www.nasa.gov/privacy/",
           "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
           "coverage": {
@@ -470,6 +490,11 @@
           "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
           "attribution": "U.S. Geological Survey",
+          "terms": {
+            "url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: U.S. Public Domain. \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain.\""
+          },
           "privacyUrl": "https://www.doi.gov/privacy",
           "coverage": {
             "bbox": [
@@ -597,6 +622,11 @@
           "license": "LicenseRef-US-Gov-Public-Domain",
           "licenseUrl": "https://www.weather.gov/disclaimer",
           "attribution": "National Weather Service (NOAA)",
+          "terms": {
+            "url": "https://www.weather.gov/disclaimer",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Public domain (U.S. Government). \"The information on National Weather Service (NWS) Web pages are in the public domain, unless specifically noted otherwise, and may be used without charge for any lawful purpose so long as you do not: 1) claim it is your own (e.g., by claimi…\""
+          },
           "privacyUrl": "https://www.weather.gov/privacy",
           "homepage": "https://www.weather.gov/",
           "coverage": {
@@ -662,6 +692,7 @@
             "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
           },
           "terms": {
+            "url": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
             "reviewedAt": "2026-10-08",
             "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty."
           },
@@ -801,12 +832,25 @@
       "file": "feeds/hazards/ca.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://eccc-msc.github.io/open-data/licence/readme_en/",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 120,
@@ -855,6 +899,11 @@
         "reason": "DWD requests source notice directly at reused information; ordinary format conversion is not extensive modification",
         "compactText": "<a href=\"https://www.dwd.de/\">DWD</a>"
       },
+      "terms": {
+        "url": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Alle frei zugänglichen Geodaten und Geodatendienste sowie die als hochwertige Datensätze / high value datasets (HVD) festgelegten Leistungen des DWD dürfen unter den Bedingungen der Lizenz Creative Commons BY 4.0 (CC BY 4.0) unter Beigabe e…\""
+      },
       "privacyUrl": "https://www.dwd.de/EN/service/dataprotection/dataprotection_node.html",
       "homepage": "https://www.dwd.de/",
       "coverage": {
@@ -874,12 +923,25 @@
       "file": "feeds/hazards/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.dwd.de/DE/service/rechtliche_hinweise/rechtliche_hinweise_node.html",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 300,
@@ -1021,12 +1083,25 @@
       "file": "feeds/hazards/eu.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://meteoalarm.org/en/live/page/terms-and-conditions",
+        "reviewedAt": "2026-10-09"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 120
@@ -1064,6 +1139,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
       "attribution": "© European Union, 1995-2025, EFFIS (Copernicus Emergency Management Service), modified",
+      "terms": {
+        "url": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 (EU-owned content). \"Unless otherwise indicated (e.g. in individual copyright notices), content owned by the EU on this website is licensed under the Creative Commons Attribution 4.0 International (CC BY 4.0) licence . This means that reuse is allowed, provided…\""
+      },
       "privacyUrl": "https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en",
       "homepage": "https://forest-fire.emergency.copernicus.eu/",
       "coverage": {
@@ -1080,12 +1160,25 @@
       "file": "feeds/hazards/eu.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://forest-fire.emergency.copernicus.eu/about-effis/data-license",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600
@@ -1121,6 +1214,11 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
       "attribution": "NASA FIRMS (LANCE / ESDIS)",
+      "terms": {
+        "url": "https://cmr.earthdata.nasa.gov/search/concepts/C3264430167-LANCEMODIS.umm_json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: No use constraints, free and open data (NASA CMR); ESDIS default CC0. \"\"UseConstraints\": {\"Description\": \"None. See disclaimer: https://earthdata.nasa.gov/data/near-real-time-data/about-lance/disclaimer\", \"FreeAndOpenData\": true}\""
+      },
       "privacyUrl": "https://www.nasa.gov/privacy/",
       "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
       "coverage": {
@@ -1137,12 +1235,25 @@
       "file": "feeds/hazards/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://cmr.earthdata.nasa.gov/search/concepts/C3264430167-LANCEMODIS.umm_json",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600
@@ -1174,6 +1285,11 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
       "attribution": "NASA FIRMS (LANCE / ESDIS)",
+      "terms": {
+        "url": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 (ESDIS default for unmarked NASA-led mission data). \"Unless the content is marked with a use restriction or license, data provided from a NASA-led mission are licensed as Creative Commons Zero (CC0). While there are no restrictions on the use of these data, data users are very strongly urged…\""
+      },
       "privacyUrl": "https://www.nasa.gov/privacy/",
       "homepage": "https://www.earthdata.nasa.gov/data/tools/firms",
       "coverage": {
@@ -1190,12 +1306,25 @@
       "file": "feeds/hazards/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.earthdata.nasa.gov/engage/open-data-services-software-policies/data-use-guidance",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600
@@ -1273,12 +1402,25 @@
       "file": "feeds/hazards/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://sentinels.copernicus.eu/documents/247904/690755/Sentinel_Data_Legal_Notice",
+        "reviewedAt": "2026-10-16"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 900
@@ -1306,6 +1448,11 @@
       "license": "LicenseRef-US-Gov-Public-Domain",
       "licenseUrl": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
       "attribution": "U.S. Geological Survey",
+      "terms": {
+        "url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: U.S. Public Domain. \"USGS-authored or produced data and information are considered to be in the U.S. Public Domain.\""
+      },
       "privacyUrl": "https://www.doi.gov/privacy",
       "coverage": {
         "bbox": [
@@ -1322,12 +1469,25 @@
       "file": "feeds/hazards/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.usgs.gov/information-policies-and-instructions/copyrights-and-credits",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 120
@@ -1377,12 +1537,25 @@
       "file": "feeds/hazards/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://eonet.gsfc.nasa.gov/what-is-eonet",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 900
@@ -1431,12 +1604,25 @@
       "file": "feeds/hazards/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.gdacs.org/About/termofuse.aspx",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 600
@@ -1475,6 +1661,11 @@
       "license": "LicenseRef-US-Gov-Public-Domain",
       "licenseUrl": "https://www.weather.gov/disclaimer",
       "attribution": "National Weather Service (NOAA)",
+      "terms": {
+        "url": "https://www.weather.gov/disclaimer",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Public domain (U.S. Government). \"The information on National Weather Service (NWS) Web pages are in the public domain, unless specifically noted otherwise, and may be used without charge for any lawful purpose so long as you do not: 1) claim it is your own (e.g., by claimi…\""
+      },
       "privacyUrl": "https://www.weather.gov/privacy",
       "homepage": "https://www.weather.gov/",
       "coverage": {
@@ -1493,12 +1684,25 @@
       "file": "feeds/hazards/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.weather.gov/disclaimer",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 120,
@@ -1556,6 +1760,7 @@
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
       },
       "terms": {
+        "url": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
         "reviewedAt": "2026-10-08",
         "note": "Federal compilation (IRWIN) with state contributions; NIFC's disclaimer: dynamic data, not legal documents, no warranty."
       },
@@ -1572,12 +1777,25 @@
       "file": "feeds/hazards/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.arcgis.com/home/item.html?id=d1c32af3212341869b3c810f1a215824",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 300,
@@ -1635,12 +1853,25 @@
       "file": "feeds/hazards/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.arcgis.com/home/item.html?id=ab7a5fbd76e3499296350eabf599fc63",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 600,

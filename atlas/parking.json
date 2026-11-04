@@ -20,6 +20,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Datenquelle: Stadt Wien – data.wien.gv.at",
+          "terms": {
+            "url": "https://www.data.gv.at/api/hub/search/datasets/627a9226-a907-4018-89e3-878002a9d22b",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"https://creativecommons.org/licenses/by/4.0/deed.de\""
+          },
           "privacyUrl": "https://www.wien.gv.at/inhalt/datenschutz",
           "layout": {},
           "parking": {
@@ -74,6 +79,11 @@
           "license": "CC-BY-3.0-AT",
           "licenseUrl": "https://creativecommons.org/licenses/by/3.0/at/",
           "attribution": "Datenquelle: Stadt Salzburg – data.stadt-salzburg.at",
+          "terms": {
+            "url": "https://www.data.gv.at/api/hub/search/datasets/9087fe9a-1dd4-49a1-98b4-8a8c659eb64f",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 3.0 AT. \"https://creativecommons.org/licenses/by/3.0/at/\""
+          },
           "privacyUrl": "https://www.stadt-salzburg.at/datenschutz/",
           "layout": {},
           "parking": {
@@ -163,6 +173,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Transport for NSW, CC BY 4.0",
+          "terms": {
+            "url": "https://opendata.transport.nsw.gov.au/datalicence",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\""
+          },
           "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
           "homepage": "https://opendata.transport.nsw.gov.au/"
         }
@@ -188,6 +203,11 @@
           "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
           "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
           "attribution": "Stad Gent – Mobiliteitsbedrijf, Modellicentie Gratis Hergebruik Vlaanderen v1.0",
+          "terms": {
+            "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik. \"\"license\": \"Modellicentie Gratis Hergebruik\", \"license_url\": \"https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik\"\""
+          },
           "privacyUrl": "https://data.stad.gent/terms/privacy-policy/",
           "layout": {},
           "parking": {
@@ -257,6 +277,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Ville de Bruxelles / mobilite.brussels, CC BY 4.0",
+          "terms": {
+            "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license\": \"CC BY 4.0\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/deed.fr\"\""
+          },
           "privacyUrl": "https://opendata.brussels.be/terms/privacy-policy/",
           "layout": {},
           "parking": {
@@ -321,6 +346,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Parkhäuser Basel-Stadt / data.bs.ch, CC BY 4.0",
+          "terms": {
+            "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"'publisher': 'Parkhäuser Basel-Stadt', 'license': 'CC BY 4.0', 'license_url': 'https://creativecommons.org/licenses/by/4.0/', 'attributions': ['Parkhäuser Basel-Stadt']\""
+          },
           "privacyUrl": "https://data.bs.ch/terms/privacy-policy/",
           "layout": {},
           "parking": {
@@ -371,6 +401,11 @@
           "license": "LicenseRef-opentransportdata-swiss-ToU",
           "licenseUrl": "https://opentransportdata.swiss/en/terms-of-use/",
           "attribution": "opentransportdata.swiss",
+          "terms": {
+            "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: opentransportdata.swiss Terms of use (https://opentransportdata.swiss/en/terms-of-use). \"Terms of use: Terms of use opentransportdata.swiss\""
+          },
           "privacyUrl": "https://opentransportdata.swiss/en/privacy-notice/"
         }
       ]
@@ -404,6 +439,11 @@
           "license": "DL-DE-BY-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
           "attribution": "MobiData BW (NVBW)",
+          "terms": {
+            "url": "https://mobidata-bw.de/dataset/gebuendelte-parkdaten-bw",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: DL-DE-BY-2.0 (dataset level). \"\"license_id\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\", \"license_title\": \"Datenlizenz Deutschland Namensnennung 2.0\"\""
+          },
           "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
           "homepage": "https://mobidata-bw.de/",
           "coverage": {
@@ -432,6 +472,11 @@
           "license": "DL-DE-BY-2.0",
           "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
           "attribution": "NRW.Mobidrom GmbH",
+          "terms": {
+            "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=parken-nrw",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0. \"\"license_id\": \"dl-de-by-20-1\"\""
+          },
           "privacyUrl": "https://www.mobidrom.nrw/datenschutz"
         },
         {
@@ -452,6 +497,11 @@
           "license": "CC-BY-SA-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
           "attribution": "NRW.Mobidrom GmbH",
+          "terms": {
+            "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=gebndelte-daten-parkride-nrw",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Creative Commons Namensnennung – Weitergabe unter gleichen Bedingungen 4.0 International. \"\"license_id\": \"cc-by-sa-40\"\""
+          },
           "privacyUrl": "https://www.mobidrom.nrw/datenschutz"
         },
         {
@@ -862,6 +912,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Københavns Kommune, CC BY 4.0",
+          "terms": {
+            "url": "https://admin.opendata.dk/api/3/action/package_show?id=parkeringshuse",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0 (portal licence field); attached 'Vilkår for brug af danske offentlige data' v1.0. \"\"license_title\": \"Creative Commons Attribution 4.0\"; terms PDF: \"Myndigheden giver en verdensomspændende, gratis, ikke-eksklusiv, og i øvrigt ubegrænset brugsret til data\" … \"Ved brug af data kan følgende angives: Indeholder data fra data.k…\""
+          },
           "privacyUrl": "https://www.kk.dk/om-kommunen/databeskyttelse",
           "homepage": "https://www.kk.dk/",
           "layout": {},
@@ -924,6 +979,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Ajuntament de Barcelona, CC BY 4.0",
+          "terms": {
+            "url": "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=a8b29664-ab16-4341-9460-33f60d048d82",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\""
+          },
           "privacyUrl": "https://opendata-ajuntament.barcelona.cat/en/avis-legal",
           "layout": {
             "point": {
@@ -963,6 +1023,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Ayuntamiento de Madrid – datos.madrid.es, CC BY 4.0",
+          "terms": {
+            "url": "https://datos.madrid.es/api/3/action/package_show?id=202625-0-aparcamientos-publicos",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"cc-by\", \"license_title\": \"Creative Commons Attribution 4.0 International (CC BY 4.0)\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/legalcode.es\"\""
+          },
           "privacyUrl": "https://datos.madrid.es/pages/proteccion-datos",
           "layout": {
             "lon": "LONGITUD",
@@ -1025,6 +1090,11 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
           "attribution": "transport.data.gouv.fr – Base nationale des lieux de stationnement, ODbL",
+          "terms": {
+            "url": "https://transport.data.gouv.fr/api/datasets/5ea1add4a5a7dac3af82310a",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: ODbL 1.0. \"\"licence\": \"odc-odbl\" (title \"Base nationale des lieux de stationnement hors voirie\")\""
+          },
           "privacyUrl": "https://doc.transport.data.gouv.fr/le-point-d-acces-national/generalites/mentions-legales-et-conditions-generales-dutilisation",
           "layout": {
             "lon": "Xlong",
@@ -1195,6 +1265,11 @@
           "license": "OGL-UK-3.0",
           "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
           "attribution": "Contains public sector information licensed under the Open Government Licence v3.0 (North East UTMC / Newcastle City Council)",
+          "terms": {
+            "url": "https://www.netraveldata.co.uk/?page_id=13",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Open Government Licence 3.0. \"Licence © Newcastle City Council, 2014 The Open Data Service is licensed under the Open Government Licence 3.0 .\""
+          },
           "privacyUrl": "https://www.netraveldata.co.uk/?page_id=610"
         }
       ]
@@ -1238,6 +1313,11 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
           "attribution": "© OpenStreetMap contributors",
+          "terms": {
+            "url": "https://www.openstreetmap.org/copyright",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+          },
           "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
           "homepage": "https://www.openstreetmap.org/copyright",
           "coverage": {
@@ -1271,6 +1351,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Comune di Firenze / Firenze Parcheggi, CC BY 4.0",
+          "terms": {
+            "url": "https://www.dati.gov.it/view-dataset/dataset?id=dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"\"title\": \"Dati in tempo reale sui posti liberi nei parcheggi di Firenze - Posti liberi\", \"license_title\": \"Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)\", \"holder_name\": \"Comune di Firenze\"\""
+          },
           "privacyUrl": "https://www.comune.fi.it/pagina/privacy",
           "layout": {},
           "parking": {
@@ -1362,6 +1447,11 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
           "attribution": "Administration des Ponts et Chaussées – CITA",
+          "terms": {
+            "url": "https://data.public.lu/fr/datasets/cita-infos-parking-en-datex-ii/",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Creative Commons Zero (CC0). \"Producteur Administration des Ponts et Chaussées Dernière mise à jour 3 octobre 2022 Licence Creative Commons Zero (CC0)\""
+          },
           "privacyUrl": "https://data.public.lu/en/pages/legal/privacy/"
         }
       ]
@@ -1393,6 +1483,11 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
           "attribution": "RDW",
+          "terms": {
+            "url": "https://opendata.rdw.nl/api/views/b3us-f26s.json",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Creative Commons 0 (CC0). \"\"name\": \"Open Data Parkeren: SPECIFICATIES PARKEERGEBIED\" ... \"custom_fields\": {\"Licentie\": {\"Licentie\": \"Creative Commons 0 (CC0)\"}}\""
+          },
           "privacyUrl": "https://www.rdw.nl/over-rdw/privacy-en-security/privacyverklaring"
         },
         {
@@ -1416,6 +1511,9 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
           "attribution": "NDW",
+          "terms": {
+            "note": "Licence review 2026-10-29, unresolved: Split result. Truckparking_Parking_Status.xml: NAP record 'Vrachtwagenparkeren beschikbaarheid' (https://ntm.ndw.nu/publicaties/035d06a7-b176-4a02-8bc5-ffc798b17324), owner NDW, CC0. Truckparking_Parking_Table.xml: NAP record owned by NTM states no licence and no agreement; it does not grant CC0. It…"
+          },
           "privacyUrl": "https://www.ndw.nu/service/privacy"
         }
       ]
@@ -1503,6 +1601,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Datenquelle: Stadt Wien – data.wien.gv.at",
+      "terms": {
+        "url": "https://www.data.gv.at/api/hub/search/datasets/627a9226-a907-4018-89e3-878002a9d22b",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"https://creativecommons.org/licenses/by/4.0/deed.de\""
+      },
       "privacyUrl": "https://www.wien.gv.at/inhalt/datenschutz",
       "layout": {},
       "parking": {
@@ -1543,12 +1646,25 @@
       "file": "feeds/parking/at.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.data.gv.at/api/hub/search/datasets/627a9226-a907-4018-89e3-878002a9d22b",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1579,6 +1695,11 @@
       "license": "CC-BY-3.0-AT",
       "licenseUrl": "https://creativecommons.org/licenses/by/3.0/at/",
       "attribution": "Datenquelle: Stadt Salzburg – data.stadt-salzburg.at",
+      "terms": {
+        "url": "https://www.data.gv.at/api/hub/search/datasets/9087fe9a-1dd4-49a1-98b4-8a8c659eb64f",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 3.0 AT. \"https://creativecommons.org/licenses/by/3.0/at/\""
+      },
       "privacyUrl": "https://www.stadt-salzburg.at/datenschutz/",
       "layout": {},
       "parking": {
@@ -1643,12 +1764,25 @@
       "file": "feeds/parking/at.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.data.gv.at/api/hub/search/datasets/9087fe9a-1dd4-49a1-98b4-8a8c659eb64f",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1685,6 +1819,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Transport for NSW, CC BY 4.0",
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\""
+      },
       "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
       "homepage": "https://opendata.transport.nsw.gov.au/",
       "id": "au-nsw-tfnsw-parking",
@@ -1693,12 +1832,25 @@
       "file": "feeds/parking/au.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1726,6 +1878,11 @@
       "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
       "licenseUrl": "https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik",
       "attribution": "Stad Gent – Mobiliteitsbedrijf, Modellicentie Gratis Hergebruik Vlaanderen v1.0",
+      "terms": {
+        "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik. \"\"license\": \"Modellicentie Gratis Hergebruik\", \"license_url\": \"https://www.vlaanderen.be/digitaal-vlaanderen/onze-oplossingen/open-data/voorwaarden-voor-het-hergebruik-van-overheidsinformatie/modellicentie-gratis-hergebruik\"\""
+      },
       "privacyUrl": "https://data.stad.gent/terms/privacy-policy/",
       "layout": {},
       "parking": {
@@ -1784,12 +1941,25 @@
       "file": "feeds/parking/be.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.stad.gent/api/explore/v2.1/catalog/datasets/bezetting-parkeergarages-real-time",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1817,6 +1987,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Ville de Bruxelles / mobilite.brussels, CC BY 4.0",
+      "terms": {
+        "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license\": \"CC BY 4.0\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/deed.fr\"\""
+      },
       "privacyUrl": "https://opendata.brussels.be/terms/privacy-policy/",
       "layout": {},
       "parking": {
@@ -1865,12 +2040,25 @@
       "file": "feeds/parking/be.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata.brussels.be/api/explore/v2.1/catalog/datasets/bruxelles_parkings_publics",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1898,6 +2086,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Parkhäuser Basel-Stadt / data.bs.ch, CC BY 4.0",
+      "terms": {
+        "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"'publisher': 'Parkhäuser Basel-Stadt', 'license': 'CC BY 4.0', 'license_url': 'https://creativecommons.org/licenses/by/4.0/', 'attributions': ['Parkhäuser Basel-Stadt']\""
+      },
       "privacyUrl": "https://data.bs.ch/terms/privacy-policy/",
       "layout": {},
       "parking": {
@@ -1938,12 +2131,25 @@
       "file": "feeds/parking/ch.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.bs.ch/api/explore/v2.1/catalog/datasets/100088",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1970,6 +2176,11 @@
       "license": "LicenseRef-opentransportdata-swiss-ToU",
       "licenseUrl": "https://opentransportdata.swiss/en/terms-of-use/",
       "attribution": "opentransportdata.swiss",
+      "terms": {
+        "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: opentransportdata.swiss Terms of use (https://opentransportdata.swiss/en/terms-of-use). \"Terms of use: Terms of use opentransportdata.swiss\""
+      },
       "privacyUrl": "https://opentransportdata.swiss/en/privacy-notice/",
       "homepage": "https://data.opentransportdata.swiss",
       "id": "ch-sbb-parking",
@@ -1978,12 +2189,25 @@
       "file": "feeds/parking/ch.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.opentransportdata.swiss/en/dataset/bike-and-car-parking",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2020,6 +2244,11 @@
       "license": "DL-DE-BY-2.0",
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "MobiData BW (NVBW)",
+      "terms": {
+        "url": "https://mobidata-bw.de/dataset/gebuendelte-parkdaten-bw",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DL-DE-BY-2.0 (dataset level). \"\"license_id\": \"http://dcat-ap.de/def/licenses/dl-by-de/2.0\", \"license_title\": \"Datenlizenz Deutschland Namensnennung 2.0\"\""
+      },
       "privacyUrl": "https://mobidata-bw.de/pages/datenschutz",
       "homepage": "https://mobidata-bw.de/",
       "coverage": {
@@ -2036,12 +2265,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://mobidata-bw.de/dataset/gebuendelte-parkdaten-bw",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 300,
@@ -2064,6 +2306,11 @@
       "license": "DL-DE-BY-2.0",
       "licenseUrl": "https://www.govdata.de/dl-de/by-2-0",
       "attribution": "NRW.Mobidrom GmbH",
+      "terms": {
+        "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=parken-nrw",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Datenlizenz Deutschland – Namensnennung – Version 2.0. \"\"license_id\": \"dl-de-by-20-1\"\""
+      },
       "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
       "homepage": "https://www.mobilitaetsdaten.nrw",
       "id": "de-nw-mobidrom-parking",
@@ -2072,12 +2319,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=parken-nrw",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2106,6 +2366,11 @@
       "license": "CC-BY-SA-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "attribution": "NRW.Mobidrom GmbH",
+      "terms": {
+        "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=gebndelte-daten-parkride-nrw",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Namensnennung – Weitergabe unter gleichen Bedingungen 4.0 International. \"\"license_id\": \"cc-by-sa-40\"\""
+      },
       "privacyUrl": "https://www.mobidrom.nrw/datenschutz",
       "homepage": "https://www.mobilitaetsdaten.nrw",
       "id": "de-nw-mobidrom-parkride-parking",
@@ -2114,12 +2379,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://www.mobilitaetsdaten.nrw/api/ckan/api/3/action/package_show?id=gebndelte-daten-parkride-nrw",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "coverage": {
@@ -2206,12 +2484,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://developers.deutschebahn.com/db-api-marketplace/apis/product/parking-information-db-bahnpark",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2301,12 +2592,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.braunschweig.de/impressum.php",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "coverage": {
@@ -2398,12 +2702,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": false,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://vmz.bremen.de/impressum/",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "no",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "coverage": {
@@ -2514,12 +2831,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.apag.de/de/impressum",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "coverage": {
@@ -2608,12 +2938,25 @@
       "file": "feeds/parking/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": false,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.swp-potsdam.de/impressum/",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "no",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "coverage": {
@@ -2641,6 +2984,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Københavns Kommune, CC BY 4.0",
+      "terms": {
+        "url": "https://admin.opendata.dk/api/3/action/package_show?id=parkeringshuse",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 (portal licence field); attached 'Vilkår for brug af danske offentlige data' v1.0. \"\"license_title\": \"Creative Commons Attribution 4.0\"; terms PDF: \"Myndigheden giver en verdensomspændende, gratis, ikke-eksklusiv, og i øvrigt ubegrænset brugsret til data\" … \"Ved brug af data kan følgende angives: Indeholder data fra data.k…\""
+      },
       "privacyUrl": "https://www.kk.dk/om-kommunen/databeskyttelse",
       "homepage": "https://www.kk.dk/",
       "layout": {},
@@ -2685,12 +3033,25 @@
       "file": "feeds/parking/dk.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://admin.opendata.dk/api/3/action/package_show?id=parkeringshuse",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2719,6 +3080,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Ajuntament de Barcelona, CC BY 4.0",
+      "terms": {
+        "url": "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=a8b29664-ab16-4341-9460-33f60d048d82",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\""
+      },
       "privacyUrl": "https://opendata-ajuntament.barcelona.cat/en/avis-legal",
       "layout": {
         "point": {
@@ -2747,12 +3113,25 @@
       "file": "feeds/parking/es.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata-ajuntament.barcelona.cat/data/api/3/action/package_show?id=a8b29664-ab16-4341-9460-33f60d048d82",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2780,6 +3159,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Ayuntamiento de Madrid – datos.madrid.es, CC BY 4.0",
+      "terms": {
+        "url": "https://datos.madrid.es/api/3/action/package_show?id=202625-0-aparcamientos-publicos",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"cc-by\", \"license_title\": \"Creative Commons Attribution 4.0 International (CC BY 4.0)\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/legalcode.es\"\""
+      },
       "privacyUrl": "https://datos.madrid.es/pages/proteccion-datos",
       "layout": {
         "lon": "LONGITUD",
@@ -2827,12 +3211,25 @@
       "file": "feeds/parking/es.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://datos.madrid.es/api/3/action/package_show?id=202625-0-aparcamientos-publicos",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2859,6 +3256,11 @@
       "license": "ODbL-1.0",
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "transport.data.gouv.fr – Base nationale des lieux de stationnement, ODbL",
+      "terms": {
+        "url": "https://transport.data.gouv.fr/api/datasets/5ea1add4a5a7dac3af82310a",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"\"licence\": \"odc-odbl\" (title \"Base nationale des lieux de stationnement hors voirie\")\""
+      },
       "privacyUrl": "https://doc.transport.data.gouv.fr/le-point-d-acces-national/generalites/mentions-legales-et-conditions-generales-dutilisation",
       "layout": {
         "lon": "Xlong",
@@ -2967,12 +3369,25 @@
       "file": "feeds/parking/fr.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://transport.data.gouv.fr/api/datasets/5ea1add4a5a7dac3af82310a",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "coverage": {
@@ -3046,6 +3461,11 @@
       "license": "OGL-UK-3.0",
       "licenseUrl": "https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
       "attribution": "Contains public sector information licensed under the Open Government Licence v3.0 (North East UTMC / Newcastle City Council)",
+      "terms": {
+        "url": "https://www.netraveldata.co.uk/?page_id=13",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Open Government Licence 3.0. \"Licence © Newcastle City Council, 2014 The Open Data Service is licensed under the Open Government Licence 3.0 .\""
+      },
       "privacyUrl": "https://www.netraveldata.co.uk/?page_id=610",
       "homepage": "https://www.netraveldata.co.uk",
       "id": "gb-eng-netraveldata-parking",
@@ -3054,12 +3474,25 @@
       "file": "feeds/parking/gb.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.netraveldata.co.uk/?page_id=13",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3106,6 +3539,11 @@
       "license": "ODbL-1.0",
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "© OpenStreetMap contributors",
+      "terms": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+      },
       "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
       "homepage": "https://www.openstreetmap.org/copyright",
       "coverage": {
@@ -3122,12 +3560,25 @@
       "file": "feeds/parking/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "cadenceSec": 3600
@@ -3149,6 +3600,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Comune di Firenze / Firenze Parcheggi, CC BY 4.0",
+      "terms": {
+        "url": "https://www.dati.gov.it/view-dataset/dataset?id=dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"title\": \"Dati in tempo reale sui posti liberi nei parcheggi di Firenze - Posti liberi\", \"license_title\": \"Creative Commons Attribuzione 4.0 Internazionale (CC BY 4.0)\", \"holder_name\": \"Comune di Firenze\"\""
+      },
       "privacyUrl": "https://www.comune.fi.it/pagina/privacy",
       "layout": {},
       "parking": {
@@ -3192,12 +3648,25 @@
       "file": "feeds/parking/it.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.dati.gov.it/view-dataset/dataset?id=dati-in-tempo-reale-sui-posti-liberi-nei-parcheggi-di-firenze-posti-liberi",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3242,12 +3711,25 @@
       "file": "feeds/parking/it.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": true,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://github.com/noi-techpark/odh-docs/blob/master/source/datasets.rst",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "yes",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": false,
       "coverage": {
@@ -3278,6 +3760,11 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "Administration des Ponts et Chaussées – CITA",
+      "terms": {
+        "url": "https://data.public.lu/fr/datasets/cita-infos-parking-en-datex-ii/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Zero (CC0). \"Producteur Administration des Ponts et Chaussées Dernière mise à jour 3 octobre 2022 Licence Creative Commons Zero (CC0)\""
+      },
       "privacyUrl": "https://data.public.lu/en/pages/legal/privacy/",
       "homepage": "https://www.cita.lu",
       "id": "lu-cita-parking",
@@ -3286,12 +3773,25 @@
       "file": "feeds/parking/lu.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.public.lu/fr/datasets/cita-infos-parking-en-datex-ii/",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3326,6 +3826,11 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "RDW",
+      "terms": {
+        "url": "https://opendata.rdw.nl/api/views/b3us-f26s.json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons 0 (CC0). \"\"name\": \"Open Data Parkeren: SPECIFICATIES PARKEERGEBIED\" ... \"custom_fields\": {\"Licentie\": {\"Licentie\": \"Creative Commons 0 (CC0)\"}}\""
+      },
       "privacyUrl": "https://www.rdw.nl/over-rdw/privacy-en-security/privacyverklaring",
       "homepage": "https://opendata.rdw.nl",
       "id": "nl-rdw-parking",
@@ -3334,12 +3839,25 @@
       "file": "feeds/parking/nl.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata.rdw.nl/api/views/b3us-f26s.json",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3371,6 +3889,9 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "NDW",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: Split result. Truckparking_Parking_Status.xml: NAP record 'Vrachtwagenparkeren beschikbaarheid' (https://ntm.ndw.nu/publicaties/035d06a7-b176-4a02-8bc5-ffc798b17324), owner NDW, CC0. Truckparking_Parking_Table.xml: NAP record owned by NTM states no licence and no agreement; it does not grant CC0. It…"
+      },
       "privacyUrl": "https://www.ndw.nu/service/privacy",
       "homepage": "https://opendata.ndw.nu",
       "id": "nl-ndw-truck-parking",
@@ -3379,14 +3900,24 @@
       "file": "feeds/parking/nl.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
       },
-      "restricted": false,
+      "evidence": null,
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
+      },
+      "restricted": true,
       "coverage": {
         "countries": [
           "NL"
@@ -3431,12 +3962,25 @@
       "file": "feeds/parking/sg.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.gov.sg/open-data-licence",
+        "reviewedAt": "2026-10-05"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {

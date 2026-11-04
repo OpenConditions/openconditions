@@ -20,6 +20,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Transport for NSW, CC BY 4.0",
+          "terms": {
+            "url": "https://opendata.transport.nsw.gov.au/datalicence",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\""
+          },
           "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
           "homepage": "https://opendata.transport.nsw.gov.au/dataset/ev-charging-locations",
           "layout": {
@@ -108,6 +113,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "© State of Victoria (Department of Energy, Environment and Climate Action), CC BY 4.0",
+          "terms": {
+            "url": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_title\": \"Creative Commons Attribution 4.0 International\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/\"\""
+          },
           "privacyUrl": "https://www.vic.gov.au/privacy-vicgovau",
           "homepage": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
           "layout": {},
@@ -182,6 +192,11 @@
           "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
           "licenseUrl": "https://overheid.vlaanderen.be/sites/default/files/documenten/ict-egov/licenties/hergebruik/modellicentie_gratis_hergebruik_v1_0.html",
           "attribution": "Departement Mobiliteit en Openbare Werken (Vlaamse overheid), Modellicentie Gratis Hergebruik",
+          "terms": {
+            "url": "https://metadata.vlaanderen.be/srv/api/records/d46516ca-c159-41bc-9c54-aa256c337228/formatters/xml",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik. \"In uitvoering van het Vlaamse decreet voor hergebruik van overheidsinformatie, is het hergebruik geregeld d.m.v. de Modellicentie voor gratis hergebruik. Dit betekent dat elk commercieel of niet-commercieel hergebruik voor onbepaalde duur i…\""
+          },
           "privacyUrl": "https://www.vlaanderen.be/departement-mobiliteit-en-openbare-werken/privacyverklaring",
           "layout": {},
           "charging": {
@@ -255,6 +270,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Service public de Wallonie (SPW), CC BY 4.0",
+          "terms": {
+            "url": "https://metawal.wallonie.be/geonetwork/srv/api/records/c731a282-e378-49f3-8ab6-f9a90e7a5683/formatters/xml",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"Licence CC-BY 4.0 : L’utilisateur peut utiliser et modifier les données pour en dériver une œuvre. Il peut publier les données et l’œuvre dérivée à condition de citer les sources.\""
+          },
           "privacyUrl": "https://www.wallonie.be/fr/vie-privee",
           "homepage": "https://geoportail.wallonie.be/catalogue/c731a282-e378-49f3-8ab6-f9a90e7a5683.html",
           "layout": {
@@ -357,6 +377,11 @@
             ],
             "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
           },
+          "terms": {
+            "url": "https://ckan.opendata.swiss/api/3/action/package_show?id=ladestationen-fuer-elektroautos",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: opendata.swiss terms_by_ask. \"\"rights\": \"https://opendata.swiss/terms-of-use#terms_by_ask\"\""
+          },
           "privacyUrl": "https://www.geo.admin.ch/en/legal-framework",
           "homepage": "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos"
         }
@@ -381,6 +406,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Department of Electrical and Mechanical Services (EMS), Cyprus",
+          "terms": {
+            "url": "https://www.traffic4cyprus.org.cy/api/3/action/package_search?q=charg",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\""
+          },
           "privacyUrl": "https://www.traffic4cyprus.org.cy/pages/privacy-policy",
           "homepage": "https://www.traffic4cyprus.org.cy"
         }
@@ -408,6 +438,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Bundesnetzagentur.de, CC BY 4.0",
+          "terms": {
+            "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"Die Daten sind durch eine Creative Commons Namensnennung 4.0 International Lizenz lizenziert. Daten, die unter der Lizenz CC BY 4.0 stehen, dürfen unter einer Namensnennung geteilt, vervielfältigt und bearbeitet werden. Als Namensnennung fü…\""
+          },
           "privacyUrl": "https://www.bundesnetzagentur.de/DE/Service/Datenschutz/start.html",
           "homepage": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html"
         },
@@ -583,6 +618,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+          "terms": {
+            "url": "https://www.digitraffic.fi/en/terms-of-service/",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"Fintraffic’s open data is licensed under the Creative Commons 4.0 By license. … Source: Fintraffic / digitraffic.fi, license CC 4.0 BY\""
+          },
           "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
           "homepage": "https://www.digitraffic.fi/en/"
         }
@@ -608,9 +648,14 @@
             }
           },
           "freshnessWindowSec": 3600,
-          "license": "etalab-2.0",
-          "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+          "license": "LicenseRef-Licence-Ouverte-1.0",
+          "licenseUrl": "https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf",
           "attribution": "data.gouv.fr / transport.data.gouv.fr, Base nationale des IRVE, Licence Ouverte 2.0",
+          "terms": {
+            "url": "https://www.data.gouv.fr/api/1/datasets/5448d3e0c751df01f85d0572/",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Licence Ouverte v1.0 (static base); Licence Ouverte v2.0 (dynamic BETA base), not the formerly declared licence. \"\"license\": \"fr-lo\" (data.gouv.fr licence list: \"fr-lo | Licence Ouverte / Open Licence | https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf\")\""
+          },
           "privacyUrl": "https://www.data.gouv.fr/pages/legal/cgu",
           "homepage": "https://transport.data.gouv.fr/datasets?type=charging-stations"
         }
@@ -726,6 +771,11 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
           "attribution": "© OpenStreetMap contributors",
+          "terms": {
+            "url": "https://www.openstreetmap.org/copyright",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+          },
           "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
           "homepage": "https://www.openstreetmap.org/copyright",
           "coverage": {
@@ -758,6 +808,11 @@
           "license": "LicenseRef-HK-CSDI-ToU",
           "licenseUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
           "attribution": "Environmental Protection Department, HKSAR Government; source: CSDI Portal (portal.csdi.gov.hk)",
+          "terms": {
+            "url": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CSDI Portal Terms and Conditions. \"You are allowed to browse, download, distribute, reproduce, hyperlink to and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on the condition that:- you shall comply with the Terms of Use; you shall…\""
+          },
           "privacyUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
           "homepage": "https://portal.csdi.gov.hk/geoportal/?datasetId=epd_rcd_1631080339740_69941",
           "layout": {},
@@ -914,6 +969,11 @@
           "license": "LicenseRef-KOGL-Type-1",
           "licenseUrl": "https://www.kogl.or.kr/info/licenseType1.do",
           "attribution": "한국환경공단 (Korea Environment Corporation), 공공누리 제1유형, https://www.data.go.kr/data/15076352/openapi.do",
+          "terms": {
+            "url": "https://www.data.go.kr/data/15076352/openapi.do",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: KOGL Type 1 (공공누리 제1유형: 출처표시). \"이용허락범위 공공저작물 : 출처표시 (제 1유형)\""
+          },
           "privacyUrl": "https://www.data.go.kr/ugs/selectPortalPolicyView.do",
           "homepage": "https://www.data.go.kr/data/15076352/openapi.do"
         }
@@ -948,6 +1008,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Via Lietuva, CC BY 4.0",
+          "terms": {
+            "url": "https://ev.vialietuva.lt/en/data-provision",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0 and ODC-BY. \"The data is published under the Creative Commons Attribution 4.0 International license ( CC BY 4.0 ) and ODC‑BY . The data may be used and shared without limitation, provided that appropriate attribution is given, a link to the license is i…\""
+          },
           "privacyUrl": "https://vialietuva.lt/en/privacy-policy",
           "homepage": "https://ev.vialietuva.lt/en/data-provision"
         }
@@ -972,6 +1037,11 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
           "attribution": "Chargy / data.public.lu",
+          "terms": {
+            "url": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Creative Commons Zero (CC0). \"Producteur Chargy Dernière mise à jour 5 mars 2018 Licence Creative Commons Zero (CC0)\""
+          },
           "privacyUrl": "https://data.public.lu/en/pages/legal/privacy",
           "homepage": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/"
         }
@@ -1000,6 +1070,11 @@
           "license": "CC0-1.0",
           "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
           "attribution": "NDW / DOT-NL",
+          "terms": {
+            "url": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC0 1.0 (NAP terms link: https://creativecommons.org/publicdomain/zero/1.0/deed.nl). \"Gebruikersvoorwaarden Licentie volgens Creative Commons of vergelijkbaar\""
+          },
           "privacyUrl": "https://www.ndw.nu/service/privacy",
           "homepage": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56"
         }
@@ -1087,6 +1162,11 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Waka Kotahi NZ Transport Agency (EVRoam), CC BY 4.0",
+          "terms": {
+            "url": "https://www.arcgis.com/sharing/rest/content/items/238dd4298c0445d8ac8567eefe22413e?f=json",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY 4.0. \"This work is licensed under a Creative Commons Attribution 4.0 International License.\""
+          },
           "privacyUrl": "https://www.nzta.govt.nz/privacy/",
           "homepage": "https://www.nzta.govt.nz/planning-and-investment/planning/transport-planning/planning-for-electric-vehicles/evroam"
         }
@@ -1254,6 +1334,11 @@
           "license": "CC-BY-SA-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
           "attribution": "MZIE / NAP Slovenija, CC BY-SA 4.0",
+          "terms": {
+            "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: CC BY-SA 4.0. \"Contract or licence: licence provided, free of charge Documentation: https://creativecommons.org/licenses/by-sa/4.0/deed.sl\""
+          },
           "privacyUrl": "https://www.nap.si/en/privacy",
           "homepage": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba"
         }
@@ -1434,6 +1519,11 @@
           "license": "LicenseRef-NLR-Developer-Network-Terms",
           "licenseUrl": "https://developer.nlr.gov/terms/",
           "attribution": "U.S. DOE / NLR – Alternative Fuels Data Center (afdc.energy.gov/stations)",
+          "terms": {
+            "url": "https://developer.nlr.gov/terms/",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: NLR Developer Network Terms and Conditions (any purpose). \"These data and software code (\"Data\") are provided by the National Laboratory of the Rockies (\"NLR\"), which is operated by the Alliance for Energy Innovation, LLC (\"Alliance\"), for the U.S. Department of Energy (\"DOE\"), and may be used for…\""
+          },
           "privacyUrl": "https://afdc.energy.gov/stations-privacy",
           "homepage": "https://afdc.energy.gov/stations",
           "coverage": {
@@ -1496,6 +1586,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Transport for NSW, CC BY 4.0",
+      "terms": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Unless otherwise stated, the data on the Open Data Hub is made available under the Open Data Policy and is licensed under a Creative Commons Attribution 4.0 License.\""
+      },
       "privacyUrl": "https://opendata.transport.nsw.gov.au/sites/default/files/2024-09/TfNSW-Privacy.pdf",
       "homepage": "https://opendata.transport.nsw.gov.au/dataset/ev-charging-locations",
       "layout": {
@@ -1572,12 +1667,25 @@
       "file": "feeds/charging/au.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1605,6 +1713,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "© State of Victoria (Department of Energy, Environment and Climate Action), CC BY 4.0",
+      "terms": {
+        "url": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_title\": \"Creative Commons Attribution 4.0 International\", \"license_url\": \"https://creativecommons.org/licenses/by/4.0/\"\""
+      },
       "privacyUrl": "https://www.vic.gov.au/privacy-vicgovau",
       "homepage": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
       "layout": {},
@@ -1657,12 +1770,25 @@
       "file": "feeds/charging/au.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://discover.data.vic.gov.au/dataset/government-funded-public-ev-chargers",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1695,6 +1821,11 @@
       "license": "LicenseRef-Modellicentie-Gratis-Hergebruik-1.0",
       "licenseUrl": "https://overheid.vlaanderen.be/sites/default/files/documenten/ict-egov/licenties/hergebruik/modellicentie_gratis_hergebruik_v1_0.html",
       "attribution": "Departement Mobiliteit en Openbare Werken (Vlaamse overheid), Modellicentie Gratis Hergebruik",
+      "terms": {
+        "url": "https://metadata.vlaanderen.be/srv/api/records/d46516ca-c159-41bc-9c54-aa256c337228/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Modellicentie Gratis Hergebruik. \"In uitvoering van het Vlaamse decreet voor hergebruik van overheidsinformatie, is het hergebruik geregeld d.m.v. de Modellicentie voor gratis hergebruik. Dit betekent dat elk commercieel of niet-commercieel hergebruik voor onbepaalde duur i…\""
+      },
       "privacyUrl": "https://www.vlaanderen.be/departement-mobiliteit-en-openbare-werken/privacyverklaring",
       "layout": {},
       "charging": {
@@ -1757,12 +1888,25 @@
       "file": "feeds/charging/be.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://metadata.vlaanderen.be/srv/api/records/d46516ca-c159-41bc-9c54-aa256c337228/formatters/xml",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1790,6 +1934,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Service public de Wallonie (SPW), CC BY 4.0",
+      "terms": {
+        "url": "https://metawal.wallonie.be/geonetwork/srv/api/records/c731a282-e378-49f3-8ab6-f9a90e7a5683/formatters/xml",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Licence CC-BY 4.0 : L’utilisateur peut utiliser et modifier les données pour en dériver une œuvre. Il peut publier les données et l’œuvre dérivée à condition de citer les sources.\""
+      },
       "privacyUrl": "https://www.wallonie.be/fr/vie-privee",
       "homepage": "https://geoportail.wallonie.be/catalogue/c731a282-e378-49f3-8ab6-f9a90e7a5683.html",
       "layout": {
@@ -1856,12 +2005,25 @@
       "file": "feeds/charging/be.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://metawal.wallonie.be/geonetwork/srv/api/records/c731a282-e378-49f3-8ab6-f9a90e7a5683/formatters/xml",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1908,6 +2070,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
       },
+      "terms": {
+        "url": "https://ckan.opendata.swiss/api/3/action/package_show?id=ladestationen-fuer-elektroautos",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: opendata.swiss terms_by_ask. \"\"rights\": \"https://opendata.swiss/terms-of-use#terms_by_ask\"\""
+      },
       "privacyUrl": "https://www.geo.admin.ch/en/legal-framework",
       "homepage": "https://opendata.swiss/en/dataset/ladestationen-fuer-elektroautos",
       "id": "ch-bfe-charging",
@@ -1916,12 +2083,25 @@
       "file": "feeds/charging/ch.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": false,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://ckan.opendata.swiss/api/3/action/package_show?id=ladestationen-fuer-elektroautos",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "no"
       },
       "restricted": false,
       "coverage": {
@@ -1948,6 +2128,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Department of Electrical and Mechanical Services (EMS), Cyprus",
+      "terms": {
+        "url": "https://www.traffic4cyprus.org.cy/api/3/action/package_search?q=charg",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"\"license_id\": \"CC-BY-4.0\", \"license_title\": \"Creative Commons Attribution 4.0\"\""
+      },
       "privacyUrl": "https://www.traffic4cyprus.org.cy/pages/privacy-policy",
       "homepage": "https://www.traffic4cyprus.org.cy",
       "id": "cy-cynap-charging",
@@ -1956,12 +2141,25 @@
       "file": "feeds/charging/cy.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.traffic4cyprus.org.cy/api/3/action/package_search?q=charg",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1991,6 +2189,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Bundesnetzagentur.de, CC BY 4.0",
+      "terms": {
+        "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Die Daten sind durch eine Creative Commons Namensnennung 4.0 International Lizenz lizenziert. Daten, die unter der Lizenz CC BY 4.0 stehen, dürfen unter einer Namensnennung geteilt, vervielfältigt und bearbeitet werden. Als Namensnennung fü…\""
+      },
       "privacyUrl": "https://www.bundesnetzagentur.de/DE/Service/Datenschutz/start.html",
       "homepage": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
       "id": "de-bnetza-charging",
@@ -1999,12 +2202,25 @@
       "file": "feeds/charging/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.bundesnetzagentur.de/DE/Fachthemen/ElektrizitaetundGas/E-Mobilitaet/Ladesaeulenkarte/start.html",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2105,12 +2321,25 @@
       "file": "feeds/charging/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://mobidata-bw.de/dataset/e-ladesaulen",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 300,
@@ -2162,12 +2391,25 @@
       "file": "feeds/charging/es.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://nap.dgt.es/en/dataset/puntos-de-recarga-electrica-para-vehiculos",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2214,6 +2456,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Source: Fintraffic / digitraffic.fi, license CC 4.0 BY",
+      "terms": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"Fintraffic’s open data is licensed under the Creative Commons 4.0 By license. … Source: Fintraffic / digitraffic.fi, license CC 4.0 BY\""
+      },
       "privacyUrl": "https://www.digitraffic.fi/en/privacy-policy/",
       "homepage": "https://www.digitraffic.fi/en/",
       "id": "fi-digitraffic-charging",
@@ -2222,12 +2469,25 @@
       "file": "feeds/charging/fi.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2255,9 +2515,14 @@
         }
       },
       "freshnessWindowSec": 3600,
-      "license": "etalab-2.0",
-      "licenseUrl": "https://www.etalab.gouv.fr/licence-ouverte-open-licence/",
+      "license": "LicenseRef-Licence-Ouverte-1.0",
+      "licenseUrl": "https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf",
       "attribution": "data.gouv.fr / transport.data.gouv.fr, Base nationale des IRVE, Licence Ouverte 2.0",
+      "terms": {
+        "url": "https://www.data.gouv.fr/api/1/datasets/5448d3e0c751df01f85d0572/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Licence Ouverte v1.0 (static base); Licence Ouverte v2.0 (dynamic BETA base), not the formerly declared licence. \"\"license\": \"fr-lo\" (data.gouv.fr licence list: \"fr-lo | Licence Ouverte / Open Licence | https://www.etalab.gouv.fr/wp-content/uploads/2014/05/Licence_Ouverte.pdf\")\""
+      },
       "privacyUrl": "https://www.data.gouv.fr/pages/legal/cgu",
       "homepage": "https://transport.data.gouv.fr/datasets?type=charging-stations",
       "id": "fr-irve-charging",
@@ -2266,12 +2531,25 @@
       "file": "feeds/charging/fr.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.data.gouv.fr/api/1/datasets/5448d3e0c751df01f85d0572/",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2358,12 +2636,25 @@
       "file": "feeds/charging/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": false,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.openchargemap.org/about/terms",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "no",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "cadenceSec": 86400
@@ -2404,6 +2695,11 @@
       "license": "ODbL-1.0",
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "© OpenStreetMap contributors",
+      "terms": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+      },
       "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
       "homepage": "https://www.openstreetmap.org/copyright",
       "coverage": {
@@ -2420,12 +2716,25 @@
       "file": "feeds/charging/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "cadenceSec": 21600
@@ -2446,6 +2755,11 @@
       "license": "LicenseRef-HK-CSDI-ToU",
       "licenseUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
       "attribution": "Environmental Protection Department, HKSAR Government; source: CSDI Portal (portal.csdi.gov.hk)",
+      "terms": {
+        "url": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CSDI Portal Terms and Conditions. \"You are allowed to browse, download, distribute, reproduce, hyperlink to and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on the condition that:- you shall comply with the Terms of Use; you shall…\""
+      },
       "privacyUrl": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
       "homepage": "https://portal.csdi.gov.hk/geoportal/?datasetId=epd_rcd_1631080339740_69941",
       "layout": {},
@@ -2553,12 +2867,25 @@
       "file": "feeds/charging/hk.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://portal.csdi.gov.hk/csdi-webpage/doc/TNC",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2618,6 +2945,11 @@
       "license": "LicenseRef-KOGL-Type-1",
       "licenseUrl": "https://www.kogl.or.kr/info/licenseType1.do",
       "attribution": "한국환경공단 (Korea Environment Corporation), 공공누리 제1유형, https://www.data.go.kr/data/15076352/openapi.do",
+      "terms": {
+        "url": "https://www.data.go.kr/data/15076352/openapi.do",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: KOGL Type 1 (공공누리 제1유형: 출처표시). \"이용허락범위 공공저작물 : 출처표시 (제 1유형)\""
+      },
       "privacyUrl": "https://www.data.go.kr/ugs/selectPortalPolicyView.do",
       "homepage": "https://www.data.go.kr/data/15076352/openapi.do",
       "id": "kr-keco-charging",
@@ -2626,12 +2958,25 @@
       "file": "feeds/charging/kr.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.data.go.kr/data/15076352/openapi.do",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2668,6 +3013,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Via Lietuva, CC BY 4.0",
+      "terms": {
+        "url": "https://ev.vialietuva.lt/en/data-provision",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0 and ODC-BY. \"The data is published under the Creative Commons Attribution 4.0 International license ( CC BY 4.0 ) and ODC‑BY . The data may be used and shared without limitation, provided that appropriate attribution is given, a link to the license is i…\""
+      },
       "privacyUrl": "https://vialietuva.lt/en/privacy-policy",
       "homepage": "https://ev.vialietuva.lt/en/data-provision",
       "id": "lt-vialietuva-charging",
@@ -2676,12 +3026,25 @@
       "file": "feeds/charging/lt.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://ev.vialietuva.lt/en/data-provision",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2708,6 +3071,11 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "Chargy / data.public.lu",
+      "terms": {
+        "url": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Creative Commons Zero (CC0). \"Producteur Chargy Dernière mise à jour 5 mars 2018 Licence Creative Commons Zero (CC0)\""
+      },
       "privacyUrl": "https://data.public.lu/en/pages/legal/privacy",
       "homepage": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
       "id": "lu-chargy-charging",
@@ -2716,12 +3084,25 @@
       "file": "feeds/charging/lu.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.public.lu/fr/datasets/bornes-de-chargement-publiques-pour-voitures-electriques/",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2752,6 +3133,11 @@
       "license": "CC0-1.0",
       "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "attribution": "NDW / DOT-NL",
+      "terms": {
+        "url": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC0 1.0 (NAP terms link: https://creativecommons.org/publicdomain/zero/1.0/deed.nl). \"Gebruikersvoorwaarden Licentie volgens Creative Commons of vergelijkbaar\""
+      },
       "privacyUrl": "https://www.ndw.nu/service/privacy",
       "homepage": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
       "id": "nl-ndw-charging",
@@ -2760,12 +3146,25 @@
       "file": "feeds/charging/nl.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://ntm.ndw.nu/publicaties/051a3d3e-a619-42e9-991a-a1774925cf56",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2834,12 +3233,25 @@
       "file": "feeds/charging/no.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://info.nobil.no/images/API_NOBIL_Documentation_v3_20260816.pdf",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 86400,
@@ -2866,6 +3278,11 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Waka Kotahi NZ Transport Agency (EVRoam), CC BY 4.0",
+      "terms": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/238dd4298c0445d8ac8567eefe22413e?f=json",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY 4.0. \"This work is licensed under a Creative Commons Attribution 4.0 International License.\""
+      },
       "privacyUrl": "https://www.nzta.govt.nz/privacy/",
       "homepage": "https://www.nzta.govt.nz/planning-and-investment/planning/transport-planning/planning-for-electric-vehicles/evroam",
       "id": "nz-nzta-charging",
@@ -2874,12 +3291,25 @@
       "file": "feeds/charging/nz.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/238dd4298c0445d8ac8567eefe22413e?f=json",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2947,12 +3377,25 @@
       "file": "feeds/charging/pl.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://eipa.udt.gov.pl/faq",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3017,12 +3460,25 @@
       "file": "feeds/charging/sg.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://datamall.lta.gov.sg/content/datamall/en/api-terms-of-service.html",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3081,6 +3537,11 @@
       "license": "CC-BY-SA-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
       "attribution": "MZIE / NAP Slovenija, CC BY-SA 4.0",
+      "terms": {
+        "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: CC BY-SA 4.0. \"Contract or licence: licence provided, free of charge Documentation: https://creativecommons.org/licenses/by-sa/4.0/deed.sl\""
+      },
       "privacyUrl": "https://www.nap.si/en/privacy",
       "homepage": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
       "id": "si-nap-charging",
@@ -3089,12 +3550,25 @@
       "file": "feeds/charging/si.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://www.nap.si/en/datasets_details?id=46963663-38dd-eb04-43a9-cca9bdc0e4ba",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "coverage": {
@@ -3235,12 +3709,25 @@
       "file": "feeds/charging/tw.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://tdx.transportdata.tw/term",
+        "reviewedAt": "2026-10-06"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -3293,6 +3780,11 @@
       "license": "LicenseRef-NLR-Developer-Network-Terms",
       "licenseUrl": "https://developer.nlr.gov/terms/",
       "attribution": "U.S. DOE / NLR – Alternative Fuels Data Center (afdc.energy.gov/stations)",
+      "terms": {
+        "url": "https://developer.nlr.gov/terms/",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: NLR Developer Network Terms and Conditions (any purpose). \"These data and software code (\"Data\") are provided by the National Laboratory of the Rockies (\"NLR\"), which is operated by the Alliance for Energy Innovation, LLC (\"Alliance\"), for the U.S. Department of Energy (\"DOE\"), and may be used for…\""
+      },
       "privacyUrl": "https://afdc.energy.gov/stations-privacy",
       "homepage": "https://afdc.energy.gov/stations",
       "coverage": {
@@ -3307,12 +3799,25 @@
       "file": "feeds/charging/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://developer.nlr.gov/terms/",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 86400,

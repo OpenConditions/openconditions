@@ -274,6 +274,11 @@
           "license": "LicenseRef-TfL-Transport-Data-Service",
           "licenseUrl": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
           "attribution": "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016 and Geomni UK Map data © and database rights [2019]",
+          "terms": {
+            "url": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: TfL Transport Data Service licence (OGL v2.0 with TfL amendments). \"These licence terms and conditions apply to TfL's free transport data service and are based on version 2.0 of the Open Government Licence with specific amendments for Transport for London (the \"Licence\"). TfL may at any time revise this Lic…\""
+          },
           "privacyUrl": "https://tfl.gov.uk/corporate/privacy-and-cookies/",
           "homepage": "https://tfl.gov.uk/info-for/open-data-users/",
           "coverage": {
@@ -433,6 +438,11 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
           "attribution": "© OpenStreetMap contributors",
+          "terms": {
+            "url": "https://www.openstreetmap.org/copyright",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+          },
           "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
           "homepage": "https://www.openstreetmap.org/copyright",
           "coverage": {
@@ -472,6 +482,11 @@
           "license": "LicenseRef-HK-Gov-Open-Data",
           "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
           "attribution": "Transport Department, HKSAR",
+          "terms": {
+            "url": "https://data.gov.hk/en/terms-and-conditions",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: DATA.GOV.HK Terms and Conditions of Use. \"You are allowed to browse, download, distribute, reproduce, hyperlink to, and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on condition that:- you shall comply with the Terms of Use; you shall ide…\""
+          },
           "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
           "homepage": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
           "cameras": {
@@ -865,6 +880,11 @@
               "https://www.nps.gov/aboutus/disclaimer.htm"
             ],
             "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
+          },
+          "terms": {
+            "url": "https://www.nps.gov/aboutus/disclaimer.htm",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Public domain (U.S. Government work), unless otherwise indicated. \"Thus, material created by the National Park Service and presented on this website, unless otherwise indicated, is generally considered in the public domain. It may be distributed or copied as permitted by applicable law.\""
           },
           "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
           "homepage": "https://www.nps.gov/subjects/developer/"
@@ -1582,12 +1602,25 @@
       "file": "feeds/cameras/au.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://opendata.transport.nsw.gov.au/datalicence",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600,
@@ -1647,12 +1680,25 @@
       "file": "feeds/cameras/ca.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://511on.ca/developers/resources",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600,
@@ -1712,12 +1758,25 @@
       "file": "feeds/cameras/es.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://nap.dgt.es/es/dataset/camaras-dgt-datex2-v3-7",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1793,12 +1852,25 @@
       "file": "feeds/cameras/fi.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -1833,6 +1905,11 @@
       "license": "LicenseRef-TfL-Transport-Data-Service",
       "licenseUrl": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
       "attribution": "Powered by TfL Open Data. Contains OS data © Crown copyright and database rights 2016 and Geomni UK Map data © and database rights [2019]",
+      "terms": {
+        "url": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: TfL Transport Data Service licence (OGL v2.0 with TfL amendments). \"These licence terms and conditions apply to TfL's free transport data service and are based on version 2.0 of the Open Government Licence with specific amendments for Transport for London (the \"Licence\"). TfL may at any time revise this Lic…\""
+      },
       "privacyUrl": "https://tfl.gov.uk/corporate/privacy-and-cookies/",
       "homepage": "https://tfl.gov.uk/info-for/open-data-users/",
       "coverage": {
@@ -1857,12 +1934,25 @@
       "file": "feeds/cameras/gb.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://tfl.gov.uk/corporate/terms-and-conditions/transport-data-service",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600,
@@ -1972,12 +2062,25 @@
       "file": "feeds/cameras/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": false,
         "derivedRedistribution": false,
         "commercialUse": null,
         "attributionRequired": true,
+        "changeNotice": null,
         "retention": false,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://account.windy.com/agreements/windy-webcams-api-terms-of-use",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "no",
+        "derive": "no",
+        "retain": "no",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 540
@@ -2018,6 +2121,11 @@
       "license": "ODbL-1.0",
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "© OpenStreetMap contributors",
+      "terms": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+      },
       "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
       "homepage": "https://www.openstreetmap.org/copyright",
       "coverage": {
@@ -2034,12 +2142,25 @@
       "file": "feeds/cameras/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "cadenceSec": 86400
@@ -2067,6 +2188,11 @@
       "license": "LicenseRef-HK-Gov-Open-Data",
       "licenseUrl": "https://data.gov.hk/en/terms-and-conditions",
       "attribution": "Transport Department, HKSAR",
+      "terms": {
+        "url": "https://data.gov.hk/en/terms-and-conditions",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: DATA.GOV.HK Terms and Conditions of Use. \"You are allowed to browse, download, distribute, reproduce, hyperlink to, and print the Data for both commercial and non-commercial purposes on a free-of-charge basis on condition that:- you shall comply with the Terms of Use; you shall ide…\""
+      },
       "privacyUrl": "https://www.td.gov.hk/en/privacy_policy/index.html",
       "homepage": "https://data.gov.hk/en-data/dataset/hk-td-tis_2-traffic-snapshot-images",
       "cameras": {
@@ -2080,12 +2206,25 @@
       "file": "feeds/cameras/hk.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.gov.hk/en/terms-and-conditions",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2150,12 +2289,25 @@
       "file": "feeds/cameras/is.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.vegagerdin.is/vegagerdin/gagnasafn/vefthjonustur/terms-and-conditions",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2227,12 +2379,25 @@
       "file": "feeds/cameras/no.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dataut.vegvesen.no/en/dataset/webkamera",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2285,12 +2450,25 @@
       "file": "feeds/cameras/se.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.trafikverket.se/e-tjanster/trafikverkets-oppna-api-for-trafikinformation/",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2368,12 +2546,25 @@
       "file": "feeds/cameras/tw.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://tdx.transportdata.tw/term",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2489,12 +2680,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://cwwp2.dot.ca.gov/documentation/cctv/cctv.htm",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600,
@@ -2557,6 +2761,11 @@
         ],
         "reason": "Exact source rights/placement remain unresolved; generic licence label is not collapse permission"
       },
+      "terms": {
+        "url": "https://www.nps.gov/aboutus/disclaimer.htm",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Public domain (U.S. Government work), unless otherwise indicated. \"Thus, material created by the National Park Service and presented on this website, unless otherwise indicated, is generally considered in the public domain. It may be distributed or copied as permitted by applicable law.\""
+      },
       "privacyUrl": "https://www.nps.gov/aboutus/privacy.htm",
       "homepage": "https://www.nps.gov/subjects/developer/",
       "id": "us-nps-cameras",
@@ -2565,12 +2774,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.nps.gov/aboutus/disclaimer.htm",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -2642,12 +2864,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": false,
         "derivedRedistribution": true,
         "commercialUse": null,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://511ny.org/help/24",
+        "reviewedAt": "2026-10-14"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "no",
+        "derive": "yes",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -2738,12 +2973,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://511ga.org/developers/doc",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -2834,12 +3082,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://az511.com/developers/doc",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -2930,12 +3191,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": false,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://511.idaho.gov/about/privacy",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "no"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -3025,12 +3299,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.utah.gov/support/disclaimer.html",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -3121,12 +3408,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://511la.org/developers/doc",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -3203,12 +3503,25 @@
       "file": "feeds/cameras/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": null,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://apiportal.odot.state.or.us/product#product=tripcheck-api-data",
+        "reviewedAt": "2026-10-08"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "cadenceSec": 3600,
