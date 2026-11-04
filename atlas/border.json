@@ -103,12 +103,25 @@
       "file": "feeds/border/ca.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://open.canada.ca/data/en/dataset/d4a716f5-a2fc-4c3c-88ed-451fe05900e4",
+        "reviewedAt": "2026-10-14"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -156,12 +169,25 @@
       "file": "feeds/border/us.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": false,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.cbp.gov/site-policy-notices/copyright-notice",
+        "reviewedAt": "2026-10-14"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {

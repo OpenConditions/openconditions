@@ -88,12 +88,25 @@
       "file": "feeds/vehicles/fi.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.digitraffic.fi/en/terms-of-service/",
+        "reviewedAt": "2026-10-15"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {

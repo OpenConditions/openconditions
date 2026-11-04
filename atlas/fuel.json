@@ -169,6 +169,9 @@
           "license": "CC-BY-4.0",
           "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
           "attribution": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+          "terms": {
+            "note": "Licence review 2026-10-29, unresolved: No publisher licence statement found for the ServiciosRESTCarburantes API. Its help page has no terms; geoportalgasolineras.es pages returned no licence or aviso-legal text (the site is JS-rendered); the datos.gob.es record 'Geoportal Gasolineras: localización de las instalaciones de repostaje' has…"
+          },
           "privacyUrl": "https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html"
         }
       ]
@@ -192,6 +195,11 @@
           "license": "etalab-2.0",
           "licenseUrl": "https://www.data.gouv.fr/pages/legal/licences/etalab-2.0",
           "attribution": "Ministère de l'Économie (prix-carburants.gouv.fr)",
+          "terms": {
+            "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: Licence Ouverte v2.0 (Etalab). \"\"license\": \"Licence Ouverte v2.0 (Etalab)\", \"license_url\": \"https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf\", ... \"publisher\": \"DGCCRF\"\""
+          },
           "privacyUrl": "https://www.prix-carburants.gouv.fr/rubrique/donnees-personnelles/"
         }
       ]
@@ -235,6 +243,11 @@
           "license": "ODbL-1.0",
           "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
           "attribution": "© OpenStreetMap contributors",
+          "terms": {
+            "url": "https://www.openstreetmap.org/copyright",
+            "reviewedAt": "2026-10-29",
+            "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+          },
           "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
           "homepage": "https://www.openstreetmap.org/copyright",
           "coverage": {
@@ -329,12 +342,25 @@
       "file": "feeds/fuel/at.jsonc",
       "maintainers": [],
       "rights": {
+        "display": null,
         "redistribution": null,
         "derivedRedistribution": null,
         "commercialUse": null,
         "attributionRequired": null,
+        "changeNotice": null,
         "retention": null,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://api.e-control.at/sprit/1.0/doc/index.html",
+        "reviewedAt": "2026-10-03"
+      },
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -420,12 +446,25 @@
       "file": "feeds/fuel/de.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": false,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://creativecommons.tankerkoenig.de/",
+        "reviewedAt": "2026-10-03"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "no",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "cadenceSec": 900,
@@ -450,6 +489,9 @@
       "license": "CC-BY-4.0",
       "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
       "attribution": "Ministerio para la Transición Ecológica y el Reto Demográfico (MITECO)",
+      "terms": {
+        "note": "Licence review 2026-10-29, unresolved: No publisher licence statement found for the ServiciosRESTCarburantes API. Its help page has no terms; geoportalgasolineras.es pages returned no licence or aviso-legal text (the site is JS-rendered); the datos.gob.es record 'Geoportal Gasolineras: localización de las instalaciones de repostaje' has…"
+      },
       "privacyUrl": "https://www.miteco.gob.es/es/ministerio/proteccion-datos-personales.html",
       "homepage": "https://sedeaplicaciones.minetur.gob.es",
       "id": "es-minetur-fuel",
@@ -458,14 +500,24 @@
       "file": "feeds/fuel/es.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": true,
         "retention": true,
         "shareAlike": false
       },
-      "restricted": false,
+      "evidence": null,
+      "permissions": {
+        "display": "unknown",
+        "redistribute": "unknown",
+        "derive": "unknown",
+        "retain": "unknown",
+        "commercial": "unknown"
+      },
+      "restricted": true,
       "coverage": {
         "countries": [
           "ES"
@@ -490,6 +542,11 @@
       "license": "etalab-2.0",
       "licenseUrl": "https://www.data.gouv.fr/pages/legal/licences/etalab-2.0",
       "attribution": "Ministère de l'Économie (prix-carburants.gouv.fr)",
+      "terms": {
+        "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: Licence Ouverte v2.0 (Etalab). \"\"license\": \"Licence Ouverte v2.0 (Etalab)\", \"license_url\": \"https://www.etalab.gouv.fr/wp-content/uploads/2017/04/ETALAB-Licence-Ouverte-v2.0.pdf\", ... \"publisher\": \"DGCCRF\"\""
+      },
       "privacyUrl": "https://www.prix-carburants.gouv.fr/rubrique/donnees-personnelles/",
       "homepage": "https://data.economie.gouv.fr",
       "id": "fr-prixcarburants-fuel",
@@ -498,12 +555,25 @@
       "file": "feeds/fuel/fr.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://data.economie.gouv.fr/api/explore/v2.1/catalog/datasets/prix-des-carburants-en-france-flux-instantane-v2",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": false,
       "coverage": {
@@ -550,6 +620,11 @@
       "license": "ODbL-1.0",
       "licenseUrl": "https://opendatacommons.org/licenses/odbl/1-0/",
       "attribution": "© OpenStreetMap contributors",
+      "terms": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29",
+        "note": "Licence review 2026-10-29: ODbL 1.0. \"OpenStreetMap is open data, licensed under the Open Data Commons Open Database License (ODbL) by the OpenStreetMap Foundation (OSMF).\""
+      },
       "privacyUrl": "https://osmfoundation.org/wiki/Privacy_Policy",
       "homepage": "https://www.openstreetmap.org/copyright",
       "coverage": {
@@ -566,12 +641,25 @@
       "file": "feeds/fuel/global.jsonc",
       "maintainers": [],
       "rights": {
+        "display": true,
         "redistribution": true,
         "derivedRedistribution": true,
         "commercialUse": true,
         "attributionRequired": true,
+        "changeNotice": false,
         "retention": true,
         "shareAlike": true
+      },
+      "evidence": {
+        "url": "https://www.openstreetmap.org/copyright",
+        "reviewedAt": "2026-10-29"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
       },
       "restricted": true,
       "cadenceSec": 3600
