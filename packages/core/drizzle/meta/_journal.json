@@ -638,6 +638,13 @@
       "when": 1793443184221,
       "tag": "0090_derived_baseline_overall_only",
       "breakpoints": true
+    },
+    {
+      "idx": 91,
+      "version": "7",
+      "when": 1793779843938,
+      "tag": "0091_compact_latest_identity",
+      "breakpoints": true
     }
   ]
 }

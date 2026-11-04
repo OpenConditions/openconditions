@@ -1,0 +1,374 @@
+[
+  {
+    "template": {
+      "kind": "observation",
+      "class": "observation",
+      "domain": "roads",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_0065_00"
+      },
+      "location": {
+        "extent": "point",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [4.536069, 52.023556]
+        },
+        "fuzziness": "exact",
+        "geometryOrigin": "site_table"
+      },
+      "property": "traffic.speed",
+      "namespace": "nl-ndw-flow",
+      "provenance": {
+        "origin": "feed",
+        "privacy": {
+          "class": "authoritative"
+        },
+        "recordId": "PZH01_MST_0065_00",
+        "sourceId": "nl-ndw-flow",
+        "accessMode": "bulk",
+        "attribution": {
+          "url": "https://opendata.ndw.nu",
+          "name": "NDW traffic speed (Netherlands)",
+          "rights": {
+            "retention": "yes",
+            "reviewed_at": "2026-10-29T00:00:00.000Z",
+            "commercial_use": "yes",
+            "evidence_origin": "https://ntm.ndw.nu/publicaties/ef10b6e4-84ea-468b-aca8-9a8bbdd30a73",
+            "evidence_version": "CC0-1.0",
+            "attribution_required": "no",
+            "source_redistribution": "yes",
+            "derived_redistribution": "yes"
+          },
+          "license": "CC0-1.0",
+          "provider": "NDW / Rijkswaterstaat",
+          "licensing": {
+            "version": 1,
+            "bindings": [
+              {
+                "scope": "data",
+                "license": {
+                  "url": "https://www.ndw.nu",
+                  "kind": "spdx",
+                  "expression": "CC0-1.0"
+                },
+                "subject": "NDW traffic speed (Netherlands)"
+              }
+            ],
+            "declarations": [
+              {
+                "url": "https://www.ndw.nu",
+                "text": "CC0-1.0"
+              }
+            ]
+          },
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "sourceFormat": "datex2-measured"
+      }
+    },
+    "reading": {
+      "id": "oc:observation:nl-ndw-flow:0759bbb38906e67853925fa036d965956cc8626ce4a3717b9a8330c3d41f66df",
+      "result": {
+        "type": "quantity",
+        "unit": "km/h",
+        "value": 50
+      },
+      "quality": {
+        "sampleCount": 19
+      },
+      "sinceAt": "2026-11-04T07:49:00.000Z",
+      "revision": 1,
+      "freshness": {
+        "fetchedAt": "2026-11-04T07:53:24.017Z"
+      },
+      "recordedAt": "2026-11-04T07:54:20.233Z",
+      "aggregation": "mean",
+      "canonicalId": "c7c727ab31a16c82e467bac41eee152c0e46e2d11155f6997a07860f9d4780e3",
+      "contentHash": "0d320705de3bbf43b7edd71511b45fa8eb73c9a698a35a93ea680fad079bbfc1",
+      "temporality": "live",
+      "phenomenonTime": {
+        "end": "2026-11-04T07:50:00.000Z",
+        "start": "2026-11-04T07:49:00.000Z"
+      }
+    }
+  },
+  {
+    "template": {
+      "kind": "observation",
+      "class": "observation",
+      "domain": "roads",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_0065_00"
+      },
+      "location": {
+        "extent": "point",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [4.536069, 52.023556]
+        },
+        "fuzziness": "exact",
+        "geometryOrigin": "site_table"
+      },
+      "property": "traffic.volume",
+      "namespace": "nl-ndw-flow",
+      "provenance": {
+        "origin": "feed",
+        "privacy": {
+          "class": "authoritative"
+        },
+        "recordId": "PZH01_MST_0065_00",
+        "sourceId": "nl-ndw-flow",
+        "accessMode": "bulk",
+        "attribution": {
+          "url": "https://opendata.ndw.nu",
+          "name": "NDW traffic speed (Netherlands)",
+          "rights": {
+            "retention": "yes",
+            "reviewed_at": "2026-10-29T00:00:00.000Z",
+            "commercial_use": "yes",
+            "evidence_origin": "https://ntm.ndw.nu/publicaties/ef10b6e4-84ea-468b-aca8-9a8bbdd30a73",
+            "evidence_version": "CC0-1.0",
+            "attribution_required": "no",
+            "source_redistribution": "yes",
+            "derived_redistribution": "yes"
+          },
+          "license": "CC0-1.0",
+          "provider": "NDW / Rijkswaterstaat",
+          "licensing": {
+            "version": 1,
+            "bindings": [
+              {
+                "scope": "data",
+                "license": {
+                  "url": "https://www.ndw.nu",
+                  "kind": "spdx",
+                  "expression": "CC0-1.0"
+                },
+                "subject": "NDW traffic speed (Netherlands)"
+              }
+            ],
+            "declarations": [
+              {
+                "url": "https://www.ndw.nu",
+                "text": "CC0-1.0"
+              }
+            ]
+          },
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "sourceFormat": "datex2-measured"
+      }
+    },
+    "reading": {
+      "id": "oc:observation:nl-ndw-flow:0815c656aa0356f0fd428e96aac28122a20d061dff6b0dfe16cb53b010874d94",
+      "result": {
+        "type": "quantity",
+        "unit": "1/h",
+        "value": 1140
+      },
+      "sinceAt": "2026-11-04T07:44:00.000Z",
+      "revision": 1,
+      "freshness": {
+        "fetchedAt": "2026-11-04T07:53:24.017Z"
+      },
+      "recordedAt": "2026-11-04T07:54:20.233Z",
+      "aggregation": "mean",
+      "canonicalId": "63da7c62a8e7e22eae5a3a24af1012604fa7c8246d18d009a2436f3f5e1d1730",
+      "contentHash": "7fc58e8770ffd1c22362ec43b60433465bddd421ab3315ddc3ae00afc14357f0",
+      "temporality": "live",
+      "phenomenonTime": {
+        "end": "2026-11-04T07:50:00.000Z",
+        "start": "2026-11-04T07:49:00.000Z"
+      }
+    }
+  },
+  {
+    "template": {
+      "kind": "observation",
+      "class": "observation",
+      "domain": "roads",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_0065_00",
+        "componentKey": "1"
+      },
+      "location": {
+        "extent": "point",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [4.536069, 52.023556]
+        },
+        "fuzziness": "exact",
+        "geometryOrigin": "site_table"
+      },
+      "property": "traffic.volume",
+      "namespace": "nl-ndw-flow",
+      "provenance": {
+        "origin": "feed",
+        "privacy": {
+          "class": "authoritative"
+        },
+        "recordId": "PZH01_MST_0065_00/1",
+        "sourceId": "nl-ndw-flow",
+        "accessMode": "bulk",
+        "attribution": {
+          "url": "https://opendata.ndw.nu",
+          "name": "NDW traffic speed (Netherlands)",
+          "rights": {
+            "retention": "yes",
+            "reviewed_at": "2026-10-29T00:00:00.000Z",
+            "commercial_use": "yes",
+            "evidence_origin": "https://ntm.ndw.nu/publicaties/ef10b6e4-84ea-468b-aca8-9a8bbdd30a73",
+            "evidence_version": "CC0-1.0",
+            "attribution_required": "no",
+            "source_redistribution": "yes",
+            "derived_redistribution": "yes"
+          },
+          "license": "CC0-1.0",
+          "provider": "NDW / Rijkswaterstaat",
+          "licensing": {
+            "version": 1,
+            "bindings": [
+              {
+                "scope": "data",
+                "license": {
+                  "url": "https://www.ndw.nu",
+                  "kind": "spdx",
+                  "expression": "CC0-1.0"
+                },
+                "subject": "NDW traffic speed (Netherlands)"
+              }
+            ],
+            "declarations": [
+              {
+                "url": "https://www.ndw.nu",
+                "text": "CC0-1.0"
+              }
+            ]
+          },
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "sourceFormat": "datex2-measured"
+      }
+    },
+    "reading": {
+      "id": "oc:observation:nl-ndw-flow:442647e53296541adc83a7372d672ebb2ca46769a240f0dbab442060223cf48d",
+      "result": {
+        "type": "quantity",
+        "unit": "1/h",
+        "value": 0
+      },
+      "sinceAt": "2026-11-04T06:39:00.000Z",
+      "revision": 1,
+      "freshness": {
+        "fetchedAt": "2026-11-04T07:53:24.017Z"
+      },
+      "recordedAt": "2026-11-04T07:54:20.233Z",
+      "aggregation": "mean",
+      "canonicalId": "9a1efb1d29ee9a262267889b137a025002af258d75fd2d8427fa8c897dbdefc6",
+      "contentHash": "6a8f680310a3aebf17979bd9d115f16fe378249d0f787d153f7cf6f93857e398",
+      "temporality": "live",
+      "phenomenonTime": {
+        "end": "2026-11-04T07:50:00.000Z",
+        "start": "2026-11-04T07:49:00.000Z"
+      }
+    }
+  },
+  {
+    "template": {
+      "kind": "observation",
+      "class": "observation",
+      "domain": "roads",
+      "subject": {
+        "kind": "feature",
+        "featureId": "oc:feature:nl-ndw-flow:PZH01_MST_0065_00",
+        "componentKey": "8"
+      },
+      "location": {
+        "extent": "point",
+        "geometry": {
+          "type": "Point",
+          "coordinates": [4.536069, 52.023556]
+        },
+        "fuzziness": "exact",
+        "geometryOrigin": "site_table"
+      },
+      "property": "traffic.speed",
+      "namespace": "nl-ndw-flow",
+      "provenance": {
+        "origin": "feed",
+        "privacy": {
+          "class": "authoritative"
+        },
+        "recordId": "PZH01_MST_0065_00/8",
+        "sourceId": "nl-ndw-flow",
+        "accessMode": "bulk",
+        "attribution": {
+          "url": "https://opendata.ndw.nu",
+          "name": "NDW traffic speed (Netherlands)",
+          "rights": {
+            "retention": "yes",
+            "reviewed_at": "2026-10-29T00:00:00.000Z",
+            "commercial_use": "yes",
+            "evidence_origin": "https://ntm.ndw.nu/publicaties/ef10b6e4-84ea-468b-aca8-9a8bbdd30a73",
+            "evidence_version": "CC0-1.0",
+            "attribution_required": "no",
+            "source_redistribution": "yes",
+            "derived_redistribution": "yes"
+          },
+          "license": "CC0-1.0",
+          "provider": "NDW / Rijkswaterstaat",
+          "licensing": {
+            "version": 1,
+            "bindings": [
+              {
+                "scope": "data",
+                "license": {
+                  "url": "https://www.ndw.nu",
+                  "kind": "spdx",
+                  "expression": "CC0-1.0"
+                },
+                "subject": "NDW traffic speed (Netherlands)"
+              }
+            ],
+            "declarations": [
+              {
+                "url": "https://www.ndw.nu",
+                "text": "CC0-1.0"
+              }
+            ]
+          },
+          "licenseUrl": "https://www.ndw.nu"
+        },
+        "sourceFormat": "datex2-measured"
+      }
+    },
+    "reading": {
+      "id": "oc:observation:nl-ndw-flow:507bf49478d814f4dfe1ca8d883a1389d99ff620fe3265349b1ddfe2b457db3a",
+      "result": {
+        "type": "quantity",
+        "unit": "km/h",
+        "value": 49
+      },
+      "quality": {
+        "sampleCount": 16
+      },
+      "sinceAt": "2026-11-04T07:49:00.000Z",
+      "revision": 1,
+      "freshness": {
+        "fetchedAt": "2026-11-04T07:53:24.017Z"
+      },
+      "recordedAt": "2026-11-04T07:54:20.233Z",
+      "aggregation": "mean",
+      "canonicalId": "3a1ec9e8a1f74abfc55caac62fee5d8692c8068eb05e4ece493b896a618ac707",
+      "contentHash": "71886c29721ab7a1cf929162b8f4f24f3c309c4ca0d7f8d97741e8d74a49a8f9",
+      "temporality": "live",
+      "phenomenonTime": {
+        "end": "2026-11-04T07:50:00.000Z",
+        "start": "2026-11-04T07:49:00.000Z"
+      }
+    }
+  }
+]
