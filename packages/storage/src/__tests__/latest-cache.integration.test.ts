@@ -1,3 +1,4 @@
+import { contentHash } from "@openconditions/model";
 import { productionRegistry } from "@openconditions/model-registry";
 import { createTestDatabase } from "@openconditions/test-database";
 import type postgres from "postgres";
@@ -370,4 +371,39 @@ describe("a latest cache in front of the readings write", () => {
     expect(cache.sizeOf(OTHER)).toBe(0);
     expect(logged).toEqual([expect.stringMatching(/be-test-flow: 3 series/)]);
   });
+});
+
+it("preserves a legacy reading's complete record when its series ends after upgrade", async () => {
+  const observations = [
+    los("s1", "queuing", T0),
+    los("s2", "free_flow", T0),
+    los("s3", "free_flow", T0),
+  ];
+  await sql.begin((tx) => writeSnapshotIn(tx, SOURCE, { observations }, ctx));
+  await sql`
+    WITH original AS (
+      SELECT series_id, conditions.observation_record(template, reading) AS record
+      FROM conditions.observation_latest WHERE feature_id = 'oc:feature:nl-ndw-flow:s3'
+    )
+    UPDATE conditions.observation_latest l SET
+      template = l.template - ARRAY['revision', 'temporality', 'aggregation'],
+      template_hash = 'legacy-template',
+      reading = l.reading || jsonb_build_object('id', o.record->'id', 'canonicalId', o.record->'canonicalId',
+        'revision', o.record->'revision', 'temporality', o.record->'temporality', 'aggregation', o.record->'aggregation')
+    FROM original o WHERE l.series_id = o.series_id`;
+  const [before] = await sql`SELECT conditions.observation_record(template, reading) AS record
+    FROM conditions.observation_latest WHERE feature_id = 'oc:feature:nl-ndw-flow:s3'`;
+  const result = await sql.begin((tx) =>
+    writeSnapshotIn(
+      tx,
+      SOURCE,
+      { observations: observations.slice(0, 2) },
+      { ...ctx, now: T2, statesComplete: true },
+    ),
+  );
+  expect(result.observations.ended).toBe(1);
+  const [after] = await sql`SELECT conditions.observation_record(template, reading) AS record
+    FROM conditions.observation_latest WHERE feature_id = 'oc:feature:nl-ndw-flow:s3'`;
+  const expected = { ...before!.record, validUntil: T2, recordedAt: T2 };
+  expect(after!.record).toEqual({ ...expected, contentHash: contentHash(expected) });
 });

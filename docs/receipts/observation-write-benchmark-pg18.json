@@ -1,0 +1,82 @@
+{
+  "profile": "pg18",
+  "image": "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
+  "container": "2604cbeb0d71a1e64efc867980cfd1f6a641f1aaa07fc56a3d0ba793f786a9ed",
+  "results": [
+    {
+      "arm": "legacy",
+      "rows": 2000,
+      "cycles": 8,
+      "latest": 16000,
+      "history": 1336,
+      "ms": 3572.1515,
+      "wal_bytes": 15594832,
+      "cold_wal_bytes": 2661568,
+      "warm_wal_bytes": 12933264,
+      "reading_bytes": 690,
+      "heap_bytes": 5464064,
+      "toast_bytes": 3366912,
+      "records": "0ebb40d444ac7b07e647f5d0db2574a6",
+      "samples": "641354b51921b2fb4c9a2eb9f91125cf"
+    },
+    {
+      "arm": "compact",
+      "rows": 2000,
+      "cycles": 8,
+      "latest": 16000,
+      "history": 1336,
+      "ms": 5966.564374999998,
+      "wal_bytes": 12386224,
+      "cold_wal_bytes": 2072728,
+      "warm_wal_bytes": 10313496,
+      "reading_bytes": 510,
+      "heap_bytes": 4096000,
+      "toast_bytes": 3366912,
+      "records": "0ebb40d444ac7b07e647f5d0db2574a6",
+      "samples": "641354b51921b2fb4c9a2eb9f91125cf"
+    },
+    {
+      "arm": "legacy",
+      "rows": 20000,
+      "cycles": 8,
+      "latest": 160000,
+      "history": 13336,
+      "ms": 39413.538208,
+      "wal_bytes": 155840400,
+      "cold_wal_bytes": 26501080,
+      "warm_wal_bytes": 129339320,
+      "reading_bytes": 690,
+      "heap_bytes": 54616064,
+      "toast_bytes": 33259520,
+      "records": "d728a0f6fdbb785f6b80032e9e80d146",
+      "samples": "e82c70c29ffe1defb165e838b9eaaa6e"
+    },
+    {
+      "arm": "compact",
+      "rows": 20000,
+      "cycles": 8,
+      "latest": 160000,
+      "history": 13336,
+      "ms": 40310.046417000005,
+      "wal_bytes": 123799824,
+      "cold_wal_bytes": 20657400,
+      "warm_wal_bytes": 103142424,
+      "reading_bytes": 510,
+      "heap_bytes": 40960000,
+      "toast_bytes": 33259520,
+      "records": "d728a0f6fdbb785f6b80032e9e80d146",
+      "samples": "e82c70c29ffe1defb165e838b9eaaa6e"
+    }
+  ],
+  "source": {
+    "revision": "9eefc23cd753f8d2fd3db33d6c6cdb283a4c6c7f",
+    "note": "Benchmark ran before this commit; benchmark, codec and fixture bytes are the same committed inputs. The legacy withdrawal fix does not run in these arms.",
+    "sha256": {
+      "packages/core/src/observation-codec.ts": "a189181ac5a773985e29d24bc56f3718e7b4c67afec949e18126a17b7a4403ed",
+      "packages/core/drizzle/0091_compact_latest_identity.sql": "7e29ae8848cdd5d67c6f655d47bf8c1861806f712812a8afa5b4c62c7a353ec7",
+      "packages/storage/src/__tests__/latest-write-wal.integration.test.ts": "b7dd904e088b5b519cb65788595703ace051023e3475be28d01186fc1d135530",
+      "scripts/fixtures/ndw-latest-readings.json": "e2c376f441b227f6f7ad8e215346e905622c21a069452e03a801c9f2dfe1b004",
+      "pnpm-lock.yaml": "fbb324851472e32656a0d43b31e7bb1c84322509a7114b56064d9f4a8462843f"
+    }
+  }
+}

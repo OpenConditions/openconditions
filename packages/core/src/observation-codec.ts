@@ -58,6 +58,9 @@ export function templateOf(record: Rec): Rec {
     kind: record["kind"],
     property: record["property"],
     domain: record["domain"],
+    revision: record["revision"],
+    temporality: record["temporality"],
+    ...(record["aggregation"] !== undefined ? { aggregation: record["aggregation"] } : {}),
     subject: record["subject"],
     ...(record["qualifiers"] !== undefined ? { qualifiers: record["qualifiers"] } : {}),
     location: record["location"],
@@ -66,15 +69,28 @@ export function templateOf(record: Rec): Rec {
 }
 
 /** The keys of a stored observation its series template holds. */
-const TEMPLATE_KEYS = ["class", "kind", "property", "domain", "subject", "qualifiers", "location"];
+const TEMPLATE_KEYS = [
+  "class",
+  "kind",
+  "property",
+  "domain",
+  "subject",
+  "qualifiers",
+  "location",
+  "revision",
+  "temporality",
+  "aggregation",
+];
+
+const LOCAL_OBSERVATION_ID = /^[0-9a-f]{64}$/;
 
 /**
  * What a series' latest row stores of its reading in effect: the stored
  * observation minus what its series template holds, with only the
- * provenance fields that vary between readings. It keeps the id, content
- * hash and times as sealed, so the record is rebuilt without hashing
- * ({@link recordOf}), and stays a few hundred bytes a reading: a flow
- * source rewrites tens of thousands of latest rows every minute.
+ * provenance fields that vary between readings. A regular observation's id
+ * keeps only its local hash: the template supplies its namespace, and its
+ * canonical id is derived from those two parts when read. The content hash
+ * and every time stay as sealed. Nonstandard identities are kept whole.
  */
 export function readingOf(record: Rec): Rec {
   const reading: Rec = { ...record };
@@ -86,6 +102,16 @@ export function readingOf(record: Rec): Rec {
   }
   delete reading["provenance"];
   if (Object.keys(varying).length > 0) reading["provenance"] = varying;
+  const id = parseRecordId(record["id"] as string);
+  if (
+    id !== null &&
+    id.class === "observation" &&
+    LOCAL_OBSERVATION_ID.test(id.localId) &&
+    record["canonicalId"] === canonicalIdOf(id.namespace, id.localId)
+  ) {
+    reading["id"] = id.localId;
+    delete reading["canonicalId"];
+  }
   return reading;
 }
 
@@ -97,6 +123,12 @@ export function readingOf(record: Rec): Rec {
 export function recordOf(template: Rec, reading: Rec): Rec {
   const { namespace: _namespace, provenance, ...shared } = template;
   const { provenance: varying, ...own } = reading;
+  const localId = own["id"];
+  if (typeof localId === "string" && LOCAL_OBSERVATION_ID.test(localId)) {
+    const namespace = template["namespace"] as string;
+    own["id"] = `oc:observation:${namespace}:${localId}`;
+    own["canonicalId"] = canonicalIdOf(namespace, localId);
+  }
   return {
     ...shared,
     ...own,

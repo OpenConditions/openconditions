@@ -1129,18 +1129,29 @@ export async function endUnstatedSeries(
     );
   }
   const rows = await tx.unsafe<
-    { series_id: string; feature_id: string | null; property: string; record: Rec }[]
+    { series_id: string; feature_id: string | null; property: string; record: Rec; reading: Rec }[]
   >(
-    `SELECT series_id::text AS series_id, feature_id, property,
+    `SELECT series_id::text AS series_id, feature_id, property, reading,
             conditions.observation_record(template, reading) AS record
        FROM conditions.observation_latest WHERE series_id = ANY($1::bigint[])`,
     [ending],
   );
-  const ended = rows.map(({ series_id, record }) => {
+  const ended = rows.map(({ series_id, record, reading }) => {
     const { contentHash: _hash, ...rest } = record;
     const next: Rec = { ...rest, validUntil: ctx.now, recordedAt: ctx.now };
     next["contentHash"] = contentHash(next);
-    return { series_id, reading: readingOf(next) };
+    // Keep the stored representation: a legacy row still keeps metadata in
+    // its reading that a compact row's template holds. Ending it updates no
+    // template, so re-encoding here would discard that legacy metadata.
+    return {
+      series_id,
+      reading: {
+        ...reading,
+        validUntil: ctx.now,
+        recordedAt: ctx.now,
+        contentHash: next["contentHash"],
+      },
+    };
   });
   await updateRows(
     tx,

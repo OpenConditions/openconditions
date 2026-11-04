@@ -1417,3 +1417,40 @@ describe("transient readings", () => {
     expect(missing).toBe(0);
   }, 120_000);
 });
+
+it("preserves large templates and alternating reading metadata without changing history", async () => {
+  const geometry = {
+    type: "LineString",
+    coordinates: Array.from({ length: 500 }, (_, i) => [4.5 + i / 100_000, 52.02 + i / 100_000]),
+  };
+  for (const [i, aggregation] of ["mean", "max", "mean"].entries()) {
+    const at = `2026-10-01T10:0${i}:00.000Z`;
+    const draft = observationDraft(
+      "traffic.speed",
+      { type: "quantity", value: 52, unit: "km/h" },
+      {
+        at,
+        aggregation,
+        location: { geometry, extent: "linear", geometryOrigin: "site_table", fuzziness: "exact" },
+      },
+    );
+    const result = await writeSnapshot(sql, "nl-ndw-flow", { observations: [draft] }, ctx);
+    expect(result.observations).toMatchObject({ latest: 1, history: 1, unchanged: 0 });
+    const sealed = sealRecord(registry, draft, {
+      instanceId: ctx.instanceId,
+      revision: 1,
+      recordedAt: ctx.now,
+    });
+    if (!sealed.ok) throw new Error("The large reading fixture must validate");
+    const [latest] = await sql`SELECT conditions.observation_record(template, reading) AS record
+      FROM conditions.observation_latest WHERE source_id='nl-ndw-flow'`;
+    expect(latest!.record).toEqual({ ...sealed.value, sinceAt: "2026-10-01T10:00:00.000Z" });
+  }
+  expect(
+    await sql`SELECT aggregation, value_num FROM conditions.observation ORDER BY phenomenon_start`,
+  ).toEqual([
+    { aggregation: "mean", value_num: 52 },
+    { aggregation: "max", value_num: 52 },
+    { aggregation: "mean", value_num: 52 },
+  ]);
+});
