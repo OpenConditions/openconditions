@@ -25,9 +25,11 @@ pnpm exec vitest run --project integration \
   packages/storage/src/__tests__/latest-write-wal.integration.test.ts
 ```
 
-The expanded run covers 2,000 and 20,000 rows over eight update cycles. The normal integration suite runs a smaller causal regression on an isolated server. `OC_TEST_POSTGIS_PROFILE=pg16` checks the ordinary CI database version. Record the image, PostgreSQL version, source revision and receipt together. Local ARM64 timings do not qualify native production AMD64 throughput; host contention also makes isolated timing comparisons inconclusive.
+The [retained PG18 receipt](receipts/observation-write-benchmark-pg18.json) covers 2,000 and 20,000 rows over eight update cycles. It measured 20.6% less WAL at both sizes, including 20.3% less WAL in cycles after the first checkpoint cycle, 25% less heap space, and unchanged TOAST size. Complete-record and history digests match in each pair. The expanded run covers 2,000 and 20,000 rows over eight update cycles. The normal integration suite runs a smaller causal regression on an isolated server. `OC_TEST_POSTGIS_PROFILE=pg16` checks the ordinary CI database version. Record the image, PostgreSQL version, source revision and receipt together. Local ARM64 timings do not qualify native production AMD64 throughput; host contention also makes isolated timing comparisons inconclusive.
 
 A preliminary experiment using 2,000 captured production rows over eight cycles reduced WAL from 15,415,136 to 12,189,696 bytes (20.9%) and latest heap size from 5,464,064 to 4,096,000 bytes. Both arms had identical full-record digests, latest-write and history counts, and TOAST size. This is a workload-specific local result, not a forecast of whole-server SSD savings.
+
+A large-template regression also exercises alternating aggregation metadata and checks complete records and every history sample. It establishes correctness, not universal WAL savings: changing shared metadata replaces the template and can cost more than the previous representation for that workload.
 
 A separate sweep of tuple targets and compression settings did not justify changing storage parameters. Smaller targets could increase TOAST and WAL. Queue representation, retention partitioning, polling cadence and durability settings are deliberately unchanged by this optimization.
 
