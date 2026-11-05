@@ -1,0 +1,136 @@
+{
+  "profile": "pg18",
+  "image": "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
+  "container": "0e12ec3bd59721466e6a14acc8396246eb1949674d102ae3e515494a20dbdbbb",
+  "settings": [
+    {
+      "name": "autovacuum",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "autovacuum_naptime",
+      "setting": "60",
+      "unit": "s"
+    },
+    {
+      "name": "bgwriter_lru_maxpages",
+      "setting": "100",
+      "unit": null
+    },
+    {
+      "name": "checkpoint_timeout",
+      "setting": "3600",
+      "unit": "s"
+    },
+    {
+      "name": "fsync",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "full_page_writes",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "shared_buffers",
+      "setting": "8192",
+      "unit": "8kB"
+    },
+    {
+      "name": "synchronous_commit",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "wal_compression",
+      "setting": "zstd",
+      "unit": null
+    }
+  ],
+  "arms": [
+    {
+      "arm": "reference",
+      "rows": 24000,
+      "cycles": 6,
+      "buffers_mb": 64,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 144000,
+        "history": 12000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3818.5912499999977, 3575.2760419999977, 3548.4853329999896, 4187.306125000003,
+        3435.530500000008, 3298.9095420000085
+      ],
+      "wal_bytes": 118883712,
+      "relation_bytes": 369680384,
+      "evictions": 81866,
+      "updates": 144000,
+      "hot": 144000,
+      "autovacuums": 0,
+      "toast_accesses": 506807,
+      "cgroup_write_bytes": {
+        "254:0": 389103616
+      },
+      "records": "8bd5f884058cae1c425ce016662787da",
+      "samples": "1e7accdb63d0d2654a1622b9ade6408f"
+    },
+    {
+      "arm": "candidate",
+      "rows": 24000,
+      "cycles": 6,
+      "buffers_mb": 64,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 144000,
+        "history": 12000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3520.763250000018, 3305.0219170000055, 3588.995083000016, 3025.225625000021,
+        3058.220957999991, 2930.544709000009
+      ],
+      "wal_bytes": 119023048,
+      "relation_bytes": 143523840,
+      "evictions": 20124,
+      "updates": 144000,
+      "hot": 144000,
+      "autovacuums": 0,
+      "toast_accesses": 2807,
+      "cgroup_write_bytes": {
+        "254:0": 247246848
+      },
+      "records": "8bd5f884058cae1c425ce016662787da",
+      "samples": "1e7accdb63d0d2654a1622b9ade6408f"
+    }
+  ],
+  "server_version_num": "180006",
+  "platform": "Linux arm64 in Docker Desktop on macOS arm64",
+  "source": {
+    "revision": "e6dc5ba8dd02a808c46d16667f54dc8b62cd539a",
+    "note": "Runs preceded this commit. No runtime logic changed after the runs; a writer comment and formatting were updated. These hashes identify the retained implementation and fixtures.",
+    "sha256": {
+      "packages/storage/src/write-observations.ts": "d442ede7784f8123d8b34d634584937bf08fe28ec7db23eb709edb91ff92fa19",
+      "packages/storage/src/__tests__/latest-page-writes.integration.test.ts": "c6d2bca946cb1d36721ee8eb1e150b9bc25b6bec565faa1b21be1ab90e360ad0",
+      "packages/storage/src/__tests__/latest-lookup-fixture.ts": "fb3b8e58face9eb539b6fe698764a47588991d3dae1ef1f4abd986ee23b0bddd",
+      "scripts/fixtures/ndw-latest-readings.json": "e2c376f441b227f6f7ad8e215346e905622c21a069452e03a801c9f2dfe1b004",
+      "pnpm-lock.yaml": "fbb324851472e32656a0d43b31e7bb1c84322509a7114b56064d9f4a8462843f"
+    }
+  },
+  "reference": {
+    "revision": "0d18c74cd8d761a636e757415c8d253aa810223a",
+    "writer_sha256": "49a2ff00d7c33676b713ee2e4597b9c14f9ad410e6d044885d360e89d6b10c5c",
+    "method": "Generated the old writer from Git, rewriting relative import paths only. Invoked that old writer directly for the reference arm and the current writer for the candidate, bypassing the SQL reference adapter. Ran one pair with six cycles."
+  }
+}

@@ -382,9 +382,31 @@ async function writeSeries(
     lap("readings/cached");
   }
   const looked = cached.size === 0 ? slice : slice.filter(([k]) => !cached.has(k));
+  // A matching template hash proves that the stored credit is the credit
+  // this incoming record already carries. Keep the database's hash as the
+  // fence; a mismatch still reads the stored template. Preparing one seal
+  // per series here avoids fetching static TOAST data on every sensor poll.
+  // A failed seal is only reported below if comparison would write it, so
+  // unchanged drafts retain their existing skip/rejection behavior.
+  const prepared = new Map<Rec, ValidationResult>();
   const latest = await loadLatest(
     tx,
-    looked.map(([, p]) => p.key),
+    looked.map(([, p]) => {
+      const draft = p.drafts[0]!;
+      const hash = hashes.get(draft) ?? hashOf(draft);
+      hashes.set(draft, hash);
+      const sealed = seal(draft, hash);
+      prepared.set(draft, sealed);
+      return {
+        key: p.key,
+        ...(sealed.ok
+          ? {
+              templateHash: templateHash(templateOf(sealed.value)),
+              credit: creditProvenance(sealed.value),
+            }
+          : {}),
+      };
+    }),
   );
   lap("readings/lookup");
   const bySeries = new Map<string, { key: SeriesKey; records: Rec[] }>();
@@ -451,7 +473,7 @@ async function writeSeries(
         }
         continue;
       }
-      const sealed = seal(draft, hash);
+      const sealed = prepared.get(draft) ?? seal(draft, hash);
       if (!sealed.ok) {
         rejected.push({ class: "observation", id: draft["id"] as string, issues: sealed.issues });
         continue;
@@ -1008,12 +1030,19 @@ async function rollupFrontiers(tx: Sql): Promise<Map<string, number>> {
 const LATEST_COLUMNS = `l.series_id, l.effective_from, l.since_at, l.reading->'result' AS result, l.reading->'baseline' AS baseline,
             l.reading->>'contentHash' AS content_hash, l.template_hash, l.expires_at, l.contributor_receipt_id,
             l.reading ? 'validUntil' AS ended,
+            CASE WHEN l.template_hash = r.template_hash THEN NULL ELSE
             jsonb_build_object('attribution', l.template #> '{provenance,attribution}',
               'upstream', COALESCE(l.template #> '{provenance,upstream}', '[]'::jsonb),
-              'mergedSources', COALESCE(l.template #> '{provenance,mergedSources}', '[]'::jsonb)) AS credit_provenance,
+              'mergedSources', COALESCE(l.template #> '{provenance,mergedSources}', '[]'::jsonb)) END AS credit_provenance,
             l.subject_key, l.property, l.qualifier_key, l.source_id`;
 
-async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<string, Latest>> {
+interface LatestLookup {
+  key: SeriesKey;
+  templateHash?: string;
+  credit?: unknown;
+}
+
+async function loadLatest(tx: Sql, keys: readonly LatestLookup[]): Promise<Map<string, Latest>> {
   if (keys.length === 0) return new Map();
   type Row = Latest & {
     subject_key: string;
@@ -1025,30 +1054,40 @@ async function loadLatest(tx: Sql, keys: readonly SeriesKey[]): Promise<Map<stri
     `SELECT ${LATEST_COLUMNS}
        FROM conditions.observation_latest l
        JOIN jsonb_to_recordset($1::text::jsonb)
-         AS r(subject_key text, property text, qualifier_key text, source_id text)
+         AS r(subject_key text, property text, qualifier_key text, source_id text,
+           template_hash text)
          USING (subject_key, property, qualifier_key, source_id)`,
     [
       JSON.stringify(
-        keys.map((k) => ({
+        keys.map(({ key: k, templateHash }) => ({
           subject_key: k.subjectKey,
           property: k.property,
           qualifier_key: k.qualifierKey,
           source_id: k.sourceId,
+          template_hash: templateHash,
         })),
       ),
     ],
   );
-  return new Map(
-    rows.map((r) => [
-      keyString({
-        subjectKey: r.subject_key,
-        property: r.property,
-        qualifierKey: r.qualifier_key,
-        sourceId: r.source_id,
-      }),
-      r,
-    ]),
-  );
+  const incoming = new Map(keys.map((lookup) => [keyString(lookup.key), lookup]));
+  const latest = new Map<string, Latest>();
+  for (const row of rows) {
+    const key = keyString({
+      subjectKey: row.subject_key,
+      property: row.property,
+      qualifierKey: row.qualifier_key,
+      sourceId: row.source_id,
+    });
+    // SQL NULL is only the hash-match arm; the fallback always returns a
+    // JSON object. Keep shared credit off the wire in both directions.
+    if (row.credit_provenance === null) {
+      const credit = incoming.get(key)?.credit;
+      if (credit === undefined) throw new Error("Matching template lacks incoming credit");
+      row.credit_provenance = credit;
+    }
+    latest.set(key, row);
+  }
+  return latest;
 }
 
 /** A polled series a complete poll ended: the subject and property whose fused rows it fed. */

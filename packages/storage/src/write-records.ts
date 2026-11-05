@@ -236,9 +236,11 @@ export async function writeSnapshot(
 
 /**
  * Writes one poll of one source inside the caller's transaction, which must
- * hold the source's advisory lock. A draft whose content is unchanged is
- * neither validated nor written: the source's poll time is what says it was
- * seen again. A new or changed draft is sealed and stored with a revision
+ * hold the source's advisory lock. An unchanged draft is not written: the
+ * source's poll time says it was seen again. Revisioned records also skip
+ * validation; an observation lookup may validate before comparison but
+ * reports failures only for drafts it would write. A new or changed draft
+ * is sealed and stored with a revision
  * naming what changed; a draft that fails validation is rejected and the
  * poll goes on. When the snapshot is complete, a stored record it no longer
  * holds is tombstoned `withdrawn`; one that comes back is restored with a

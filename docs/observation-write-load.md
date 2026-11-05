@@ -10,7 +10,7 @@ A regular observation stores its 64-character local ID in the reading. The templ
 
 Both the TypeScript codec and PostgreSQL's `conditions.observation_record` accept the previous and compact representations. Direct result, quality, baseline, expiry and content-hash access remains unchanged. Federation capture reconstructs the complete record before publishing it. History and rollup formats do not change.
 
-## Reproduce the benchmark
+## Reproduce the compact-reading benchmark
 
 The benchmark starts and migrates its own disposable PostGIS container. It accepts no database URL. Both arms use the production observation writer, validation, receipt capture and history retention. A test-only SQL-boundary adapter restores the previous representation for the reference arm. The compact arm uses the ordinary writer without an adapter.
 
@@ -32,6 +32,42 @@ A preliminary experiment using 2,000 captured production rows over eight cycles 
 A large-template regression also exercises alternating aggregation metadata and checks complete records and every history sample. It establishes correctness, not universal WAL savings: changing shared metadata replaces the template and can cost more than the previous representation for that workload.
 
 A separate sweep of tuple targets and compression settings did not justify changing storage parameters. Smaller targets could increase TOAST and WAL. Queue representation, retention partitioning, polling cadence and durability settings are deliberately unchanged by this optimization.
+
+## Avoid reading unchanged templates
+
+The daily production measurement after the compact-reading rollout found about 122 GB of generated WAL and at least 685 GB of PostGIS device writes over 24 hours. PostgreSQL reported about 508 GB of relation writes, mostly from the background writer, clients and autovacuum. These are overlapping measurements. The instance is shared with OpenMapX, and this window had restarts, so its physical totals are lower bounds rather than a matched comparison with the previous writer.
+
+Ingestion's latest-row lookup fetched static credit provenance from each series template on every changed reading. The template is stored in TOAST; repeatedly fetching it consumes buffer space that could retain changing heap pages between polls. A bounded production read-only check of 1,000 NDW rows touched about 20,025 shared blocks with that projection and 5,000 without it. This establishes extra buffer activity; it does not by itself attribute physical writes to that query.
+
+The lookup now prepares the first incoming record's sealed template for each series and sends its hash with the series key. PostgreSQL returns stored credit only when its template hash differs. A matching hash lets the writer reuse the incoming credit locally, without fetching the template or sending the credit over the database connection. A mismatch, failed validation or older template encoding takes the existing database projection. The prepared seal is reused if that draft is written. An invalid draft that compares unchanged remains skipped, while one that would be written is still rejected.
+
+The additional work is one early seal and template hash per uncached series in each slice of at most 1,000 series. Changed readings already needed sealing. Uncached unchanged readings can incur extra validation work, and a different JSON key order can cause a harmless fallback. Database hash comparison remains the authority; no persistent cache or source-level assumption replaces it. Every measurement time, history sample, captured credit and latest result keeps its existing behavior.
+
+### Reproduce the page-write benchmark
+
+The opt-in benchmark owns and migrates a durable PostGIS server and accepts no database URL. It uses 24,000 changing NDW-style series and 8,000 unchanged series from a second network. Each arm runs twelve polls with history, competing reads, autovacuum enabled, and a final vacuum and checkpoint included in the measured window. The full latest heap, indexes and TOAST exceed the selected buffer pool. The reference arm forces the previous static-credit projection while keeping the rest of the writer identical; it isolates the database-access effect and includes early sealing in both arms. It does not independently measure the CPU cost added to uncached unchanged series.
+
+```sh
+pnpm build
+OC_TEST_POSTGIS_PROFILE=pg18 \
+OC_RUN_PAGE_WRITE_BENCHMARK=1 \
+OC_PAGE_WRITE_BUFFERS_MB=96 \
+OC_PAGE_WRITE_RECEIPT=/owned/output/latest-page-writes-pg18.json \
+pnpm exec vitest run --project integration \
+  packages/storage/src/__tests__/latest-page-writes.integration.test.ts
+```
+
+`OC_PAGE_WRITE_ROWS`, `OC_PAGE_WRITE_CYCLES` and `OC_PAGE_WRITE_BUFFERS_MB` select positive integer dimensions. `OC_PAGE_WRITE_AUTOVACUUM_NAPTIME_SEC` defaults to PostgreSQL's normal 60 seconds; a shorter interval stresses maintenance interaction. The receipt retains all four reference/candidate/candidate/reference arms, their settings, WAL, PostgreSQL relation writes, cgroup bytes per device, HOT updates, vacuum counts, poll latency, and complete latest/history digests. Device layers must not be added together.
+
+The [96 MiB PG18 receipt](receipts/latest-page-writes-pg18-96mb.json) has identical complete-record and history digests and identical publication counts in every arm. Mean cgroup writes fell from 710 MB to 434 MB (39%), and mean PostgreSQL relation writes fell from 638 MB to 287 MB (55%). Mean WAL fell from 251 MB to 238 MB (5%). Vacuum timing and HOT rates varied: the candidate arms wrote 564 MB and 304 MB, so the average is a workload result with substantial variation. In the pair with one autovacuum and 264,000 HOT updates in both arms, cgroup writes fell 29% while WAL rose 0.5%.
+
+A [direct control against the actual previous writer](receipts/latest-page-writes-actual-baseline-pg18.json), from commit `0d18c74c`, used 64 MiB buffers and six polls per arm. It wrote 389 MB versus 247 MB through the owned server’s cgroup (36% less), with 370 MB versus 144 MB of PostgreSQL relation writes (61% less). WAL was effectively unchanged at 119 MB (+0.12%). Both arms made 144,000 latest updates, retained 12,000 history samples, had 144,000 HOT updates and matching complete-record/history digests. Autovacuum was enabled but did not run during these short measured windows; both included the final explicit vacuum and checkpoint. This control includes the extra preparation work in the candidate only.
+
+A preliminary 64 MiB stress run with a one-second vacuum interval averaged 29% fewer cgroup write bytes and 40% fewer relation-write bytes, with 6% more WAL. It used the same hash comparison but sent matching credit through SQL before the final local hydration change. WAL reduction is therefore not a guarantee of this lookup optimization. The retained normal integration regression checks zero TOAST accesses when the template matches, plus changed-credit and legacy-hash fallback and validation behavior. These local ARM64 cache-pressure workloads are not forecasts of whole-server SSD savings or native production throughput. Confirm the total device-write effect against successful ingestion on the deployed instance.
+
+### Deploy or roll back the lookup
+
+Deploy the application images normally. This lookup change adds no migration or PostgreSQL setting, and it creates no table conversion period. The previous application images can be restored directly. Continue retaining migration 0091's compact-record decoder as required by the earlier codec rollout. Compare matching production windows using the counters below, including latest update volume, HOT rate, successful source polls and rejected readings. The `readings/lookup` timer now includes the early sealing work, so its individual stage duration is not directly comparable with older images.
 
 ## Rollout and rollback
 
