@@ -1,0 +1,118 @@
+{
+  "profile": "pg18",
+  "image": "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
+  "container": "0e12ec3bd59721466e6a14acc8396246eb1949674d102ae3e515494a20dbdbbb",
+  "settings": [
+    {
+      "name": "autovacuum",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "autovacuum_naptime",
+      "setting": "60",
+      "unit": "s"
+    },
+    {
+      "name": "bgwriter_lru_maxpages",
+      "setting": "100",
+      "unit": null
+    },
+    {
+      "name": "checkpoint_timeout",
+      "setting": "3600",
+      "unit": "s"
+    },
+    {
+      "name": "fsync",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "full_page_writes",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "shared_buffers",
+      "setting": "8192",
+      "unit": "8kB"
+    },
+    {
+      "name": "synchronous_commit",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "wal_compression",
+      "setting": "zstd",
+      "unit": null
+    }
+  ],
+  "arms": [
+    {
+      "arm": "reference",
+      "rows": 24000,
+      "cycles": 6,
+      "buffers_mb": 64,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 144000,
+        "history": 12000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3818.5912499999977, 3575.2760419999977, 3548.4853329999896, 4187.306125000003,
+        3435.530500000008, 3298.9095420000085
+      ],
+      "wal_bytes": 118883712,
+      "relation_bytes": 369680384,
+      "evictions": 81866,
+      "updates": 144000,
+      "hot": 144000,
+      "autovacuums": 0,
+      "toast_accesses": 506807,
+      "cgroup_write_bytes": {
+        "254:0": 389103616
+      },
+      "records": "8bd5f884058cae1c425ce016662787da",
+      "samples": "1e7accdb63d0d2654a1622b9ade6408f"
+    },
+    {
+      "arm": "candidate",
+      "rows": 24000,
+      "cycles": 6,
+      "buffers_mb": 64,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 144000,
+        "history": 12000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3520.763250000018, 3305.0219170000055, 3588.995083000016, 3025.225625000021,
+        3058.220957999991, 2930.544709000009
+      ],
+      "wal_bytes": 119023048,
+      "relation_bytes": 143523840,
+      "evictions": 20124,
+      "updates": 144000,
+      "hot": 144000,
+      "autovacuums": 0,
+      "toast_accesses": 2807,
+      "cgroup_write_bytes": {
+        "254:0": 247246848
+      },
+      "records": "8bd5f884058cae1c425ce016662787da",
+      "samples": "1e7accdb63d0d2654a1622b9ade6408f"
+    }
+  ]
+}

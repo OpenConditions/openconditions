@@ -1,0 +1,186 @@
+{
+  "profile": "pg18",
+  "image": "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
+  "container": "139a29c7c563faa45e6cea5813300459131e07814a4469c7fe78415bf09e6cf7",
+  "settings": [
+    {
+      "name": "autovacuum",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "autovacuum_naptime",
+      "setting": "60",
+      "unit": "s"
+    },
+    {
+      "name": "bgwriter_lru_maxpages",
+      "setting": "100",
+      "unit": null
+    },
+    {
+      "name": "checkpoint_timeout",
+      "setting": "3600",
+      "unit": "s"
+    },
+    {
+      "name": "fsync",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "full_page_writes",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "shared_buffers",
+      "setting": "12288",
+      "unit": "8kB"
+    },
+    {
+      "name": "synchronous_commit",
+      "setting": "on",
+      "unit": null
+    },
+    {
+      "name": "wal_compression",
+      "setting": "zstd",
+      "unit": null
+    }
+  ],
+  "arms": [
+    {
+      "arm": "reference",
+      "rows": 24000,
+      "cycles": 12,
+      "buffers_mb": 96,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 288000,
+        "history": 24000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3659.983791999999, 3298.2184160000033, 3452.5135829999927, 3246.0636670000094,
+        3236.912540999998, 3218.1797919999954, 3335.9357499999896, 4187.894333000004,
+        3506.1021670000046, 3394.680500000002, 3680.0603339999943, 4091.659875000012
+      ],
+      "wal_bytes": 251451536,
+      "relation_bytes": 708657152,
+      "evictions": 156239,
+      "updates": 288000,
+      "hot": 264000,
+      "autovacuums": 1,
+      "toast_accesses": 1011216,
+      "cgroup_write_bytes": {
+        "254:0": 796053504
+      },
+      "records": "4cf6767d62469ced4c6469687cfd9829",
+      "samples": "feaf226f1bc652c45d9e99e21fefb53e"
+    },
+    {
+      "arm": "candidate",
+      "rows": 24000,
+      "cycles": 12,
+      "buffers_mb": 96,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 288000,
+        "history": 24000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3063.306500000006, 2934.391291000007, 2915.1962079999794, 2759.3022080000082,
+        3580.6102919999976, 3023.9628340000054, 2977.4869999999937, 2940.9712500000023,
+        3139.676542000001, 3294.5205410000053, 3010.9835420000018, 2997.727333000017
+      ],
+      "wal_bytes": 252638936,
+      "relation_bytes": 500678656,
+      "evictions": 73217,
+      "updates": 288000,
+      "hot": 264000,
+      "autovacuums": 1,
+      "toast_accesses": 5216,
+      "cgroup_write_bytes": {
+        "254:0": 564228096
+      },
+      "records": "4cf6767d62469ced4c6469687cfd9829",
+      "samples": "feaf226f1bc652c45d9e99e21fefb53e"
+    },
+    {
+      "arm": "candidate",
+      "rows": 24000,
+      "cycles": 12,
+      "buffers_mb": 96,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 288000,
+        "history": 24000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3156.2067919999827, 3340.308000000019, 2988.176374999981, 3170.466375000018,
+        3518.8647080000374, 4446.328916000028, 3149.1960410000174, 3666.1164589999826,
+        3205.2220419999794, 4142.6167499999865, 3015.8514159999904, 2938.6387920000125
+      ],
+      "wal_bytes": 222812576,
+      "relation_bytes": 73850880,
+      "evictions": 1762,
+      "updates": 288000,
+      "hot": 288000,
+      "autovacuums": 0,
+      "toast_accesses": 9,
+      "cgroup_write_bytes": {
+        "254:0": 304422912
+      },
+      "records": "4cf6767d62469ced4c6469687cfd9829",
+      "samples": "feaf226f1bc652c45d9e99e21fefb53e"
+    },
+    {
+      "arm": "reference",
+      "rows": 24000,
+      "cycles": 12,
+      "buffers_mb": 96,
+      "size": {
+        "heap": 65536000,
+        "indexes": 13500416,
+        "toast": 53207040
+      },
+      "counts": {
+        "latest": 288000,
+        "history": 24000,
+        "unchanged": 0
+      },
+      "latency_ms": [
+        3631.017625000037, 3528.0116249999846, 3904.416208999988, 3536.48333300004,
+        3898.8608330000425, 3644.827416999964, 3654.373750000028, 3350.760750000016,
+        3507.8370829999913, 3314.0247499999823, 4256.93645899999, 5100.876041999902
+      ],
+      "wal_bytes": 249881064,
+      "relation_bytes": 566853632,
+      "evictions": 110271,
+      "updates": 288000,
+      "hot": 264000,
+      "autovacuums": 1,
+      "toast_accesses": 1009207,
+      "cgroup_write_bytes": {
+        "254:0": 623001600
+      },
+      "records": "4cf6767d62469ced4c6469687cfd9829",
+      "samples": "feaf226f1bc652c45d9e99e21fefb53e"
+    }
+  ]
+}
