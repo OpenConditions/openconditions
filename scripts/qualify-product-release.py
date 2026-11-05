@@ -18,34 +18,6 @@ N = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(N)
 require = N.require
 TOOLS = Path(__file__).resolve().parent.parent
-POLICY = [
-    "scripts/publish-product-release.py",
-    "scripts/rehearse-product-release.py",
-    "scripts/create-product-preparation-pr.py",
-    "scripts/product-release-flow.py",
-    "scripts/acquire-product-tools.mjs",
-    "scripts/bundle-product-release.py",
-    ".github/workflows/ci.yml",
-    ".github/workflows/product-release.yml",
-    ".nvmrc",
-    "package.json",
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml",
-    "scripts/qualify-container-images.py",
-    "scripts/trusted-main-image-evidence.py",
-    "scripts/check-docker-contexts.mjs",
-    "scripts/check-release-inputs.mjs",
-    "scripts/qualify-product-inputs.mjs",
-    "scripts/qualify-product-release.py",
-    "scripts/prepare-product-release.py",
-    "scripts/prepare-product-release.mjs",
-    "scripts/validate-product-manifests.mjs",
-    "scripts/run-openmapx-admission.mjs",
-    "scripts/openmapx-product-contracts.json",
-    "scripts/fixtures/openmapx-contract-consumer/package.json",
-    "scripts/fixtures/openmapx-contract-consumer/pnpm-workspace.yaml",
-    "scripts/fixtures/openmapx-contract-consumer/application-lock.yaml",
-]
 
 
 def git(repo, *args):
@@ -69,7 +41,7 @@ def context(env):
     return sha
 
 
-def history(api):
+def history(api, omit=None):
     result = {}
     for endpoint in ["releases", "tags"]:
         items = []
@@ -88,6 +60,8 @@ def history(api):
             [
                 item["tag_name"] if endpoint == "releases" else item["name"]
                 for item in items
+                if (item["tag_name"] if endpoint == "releases" else item["name"])
+                != omit
             ]
         )
     require(result["tags"], "absent tag history")
@@ -142,16 +116,14 @@ def latest_manifest(api, source, run_id, attempt, clock):
 
 
 def policy(repo, tool_source, image_source):
-    for path in POLICY:
-        trusted = git(repo, "show", f"{tool_source}:{path}")
-        require(
-            trusted == N.Q.regular(TOOLS / path),
-            "checked-out trusted tool bytes differ",
-        )
-        require(
-            trusted == git(repo, "show", f"{image_source}:{path}"),
-            "image policy differs from current trusted policy",
-        )
+    # Tools execute only from the owning workflow's immutable main checkout.
+    # A's passive Git bytes are checked by the metadata/context comparator, not
+    # by requiring every historic process helper to equal today's implementation.
+    require(
+        git(repo, "rev-parse", "HEAD").decode().strip() == tool_source
+        and not git(repo, "status", "--porcelain").strip(),
+        "trusted checkout changed",
+    )
 
 
 def snapshot_image_artifacts(api, native, source, run_id):
@@ -203,6 +175,8 @@ def qualify(
     version,
     *,
     clock=None,
+    image_directory=None,
+    resume=False,
 ):
     native_now = None if clock is None else clock()
     clock = clock or (lambda: datetime.now(timezone.utc))
@@ -237,7 +211,14 @@ def qualify(
         main.get("object", {}).get("sha") == tool_source,
         "trusted main advanced before qualification",
     )
-    native = N.validate(api, image_source, image_run, image_attempt, now=native_now)
+    native = N.validate(
+        api,
+        image_source,
+        image_run,
+        image_attempt,
+        now=native_now,
+        directory=image_directory,
+    )
     artifact_before = snapshot_image_artifacts(api, native, image_source, image_run)
     b = latest_manifest(api, manifest_source, manifest_run, manifest_attempt, clock)
     require(
@@ -250,14 +231,8 @@ def qualify(
         ).hexdigest(),
         "B workflow API/source mismatch",
     )
-    require(
-        native["producer"]["workflowSourceBlobSha"]
-        == b["producer"]["workflowSourceBlobSha"]
-        and native["producer"]["workflowSourceSha256"]
-        == b["producer"]["workflowSourceSha256"],
-        "A/B native workflow policy differs",
-    )
-    versions = history(api)
+    omit = "v" + version if resume else None
+    versions = history(api, omit)
     candidate = {
         "schemaVersion": 1,
         "version": version,
@@ -313,7 +288,8 @@ def qualify(
         "B authority changed",
     )
     require(
-        api.json(N.PREFIX + "/git/ref/heads/main") == main and history(api) == versions,
+        api.json(N.PREFIX + "/git/ref/heads/main") == main
+        and history(api, omit) == versions,
         "main/history changed",
     )
     refs = [native["candidateArtifact"], *native["imageArtifacts"].values()]
@@ -355,221 +331,65 @@ def qualify(
         "historySha256": N.Q.sha(N.canonical(versions)),
         "eligibleUntil": native["eligibleUntil"],
         "releaseAuthority": False,
-        "downstream": {
-            key: "NOT_IMPLEMENTED"
-            for key in [
-                "hostAdmission",
-                "stagingReadiness",
-                "approval",
-                "immutability",
-                "publication",
-                "channels",
-            ]
-        },
     }
+
     validate_receipt(receipt)
     return receipt
 
 
 def validate_receipt(value):
-    """Exact v1 artifact shape. This schema does not confer native authority."""
-
-    def keys(item, expected):
-        require(
-            type(item) is dict and set(item) == set(expected.split()),
-            "unknown/missing receipt fields",
-        )
-
-    def producer(item):
-        keys(
-            item,
-            "repository repositoryId workflowFile workflowId runId runAttempt event workflowSourceBlobSha workflowSourceSha256",
-        )
-        require(
-            item["repository"] == N.REPO
-            and item["repositoryId"] == N.REPO_ID
-            and item["workflowId"] == N.WORKFLOW_ID
-            and item["workflowFile"] == "ci.yml",
-            "receipt producer identity mismatch",
-        )
-        require(
-            N.positive(item["runId"])
-            and N.positive(item["runAttempt"])
-            and item["event"] in ["push", "workflow_dispatch"],
-            "invalid receipt run",
-        )
-
-    def artifact(item):
-        keys(item, "id name digest sizeBytes createdAt expiresAt")
-        require(
-            N.positive(item["id"])
-            and N.positive(item["sizeBytes"])
-            and N.Q.DIGEST.fullmatch(item["digest"]),
-            "invalid receipt artifact",
-        )
-        require(
-            N.timestamp(item["createdAt"]) < N.timestamp(item["expiresAt"]),
-            "invalid receipt expiry",
-        )
-
-    keys(
-        value,
-        "schemaVersion kind version imageSourceSha manifestSourceSha tagTargetSha imageEvidence manifestEvidence manifestSha256 contextProof historySha256 eligibleUntil releaseAuthority downstream",
-    )
     require(
-        type(value["schemaVersion"]) is int
-        and value["schemaVersion"] == 1
-        and value["kind"] == "OpenConditions product qualification only"
-        and value["releaseAuthority"] is False,
-        "invalid receipt authority",
-    )
-    require(
-        value["tagTargetSha"] == value["manifestSourceSha"]
-        and all(
-            re.fullmatch(r"[a-f0-9]{40}", value[key])
-            for key in ["imageSourceSha", "manifestSourceSha"]
+        set(value)
+        == set(
+            "schemaVersion kind version imageSourceSha manifestSourceSha tagTargetSha imageEvidence manifestEvidence manifestSha256 contextProof historySha256 eligibleUntil releaseAuthority".split()
         ),
-        "invalid receipt sources",
+        "unknown/missing receipt fields",
     )
     require(
-        value["downstream"]
-        == {
-            key: "NOT_IMPLEMENTED"
-            for key in [
-                "hostAdmission",
-                "stagingReadiness",
-                "approval",
-                "immutability",
-                "publication",
-                "channels",
-            ]
-        },
-        "unsupported downstream acceptance",
+        value["schemaVersion"] == 1
+        and value["tagTargetSha"] == value["manifestSourceSha"]
+        and value["imageEvidence"]["buildSourceSha"] == value["imageSourceSha"]
+        and value["manifestEvidence"]["source"] == value["manifestSourceSha"]
+        and value["contextProof"]["equal"] is True,
+        "release proof identity mismatch",
     )
-    a = value["imageEvidence"]
-    keys(
-        a,
-        "schemaVersion buildSourceSha producer candidateArtifact imageArtifacts images eligibleUntil releaseAuthority",
+
+
+def final_fences(api, repo, q, source, clock, *, resume=False):
+    policy(repo, source, q["imageSourceSha"])
+    a = q["imageEvidence"]["producer"]
+    b = q["manifestEvidence"]["producer"]
+    require(
+        api.json(N.PREFIX + "/git/ref/heads/main")["object"]["sha"]
+        == source
+        == q["manifestSourceSha"],
+        "main advanced",
     )
     require(
-        a["buildSourceSha"] == value["imageSourceSha"]
-        and a["releaseAuthority"] is False
-        and a["schemaVersion"] == 1,
-        "invalid image receipt binding",
-    )
-    producer(a["producer"])
-    artifact(a["candidateArtifact"])
-    for item in [a["images"], a["imageArtifacts"]]:
-        keys(item, " ".join(N.Q.IMAGES))
-    for role, image in a["images"].items():
-        keys(
-            image,
-            "repository digest platforms buildSourceSha qualificationArtifactId sbomArtifactId provenanceArtifactId",
-        )
-        artifact(a["imageArtifacts"][role])
-        require(
-            image["repository"] == "ghcr.io/openconditions/" + role
-            and N.Q.DIGEST.fullmatch(image["digest"])
-            and image["platforms"] == ["linux/amd64"]
-            and image["buildSourceSha"] == value["imageSourceSha"],
-            "invalid receipt image",
-        )
-        require(
-            image["qualificationArtifactId"]
-            == image["sbomArtifactId"]
-            == a["imageArtifacts"][role]["id"]
-            and image["provenanceArtifactId"] == a["candidateArtifact"]["id"],
-            "invalid receipt artifact binding",
-        )
-    b = value["manifestEvidence"]
-    keys(b, "source producer coverage")
-    producer(b["producer"])
-    require(
-        b["source"] == value["manifestSourceSha"] and b["producer"]["event"] == "push",
-        "invalid manifest receipt",
+        latest_manifest(api, source, b["runId"], b["runAttempt"], clock)
+        == q["manifestEvidence"],
+        "B changed",
     )
     require(
-        len(b["coverage"]) == len(N.GATES) + 1
-        and {j["name"] for j in b["coverage"]} == {*N.GATES, N.PRODUCER_JOB},
-        "invalid receipt coverage",
+        N.inspect_run(
+            api, q["imageSourceSha"], a["runId"], a["runAttempt"], clock(), True
+        )[0]
+        == a,
+        "A changed",
     )
-    for job in b["coverage"]:
-        keys(job, "id name run_id head_sha status conclusion started_at completed_at")
-        require(
-            N.positive(job["id"])
-            and job["run_id"] == b["producer"]["runId"]
-            and job["head_sha"] == b["source"]
-            and job["status"] == "completed"
-            and job["conclusion"] == "success",
-            "invalid receipt job",
-        )
-    paths = {
-        "extension.json",
-        *[
-            f"services/{name}/service.json"
-            for name in ["ingest", "ingest-heavy", "contributions-api", "federation"]
-        ],
-        *[
-            f"docs/release-notes/{value['version']}.{suffix}"
-            for suffix in ["json", "md"]
-        ],
-    }
+    snapshot_image_artifacts(api, q["imageEvidence"], q["imageSourceSha"], a["runId"])
+    require(N.timestamp(q["eligibleUntil"]) > clock(), "release evidence expired")
     require(
-        set(value["manifestSha256"]) == paths
-        and all(
-            re.fullmatch(r"[a-f0-9]{64}", digest)
-            for digest in value["manifestSha256"].values()
+        N.Q.sha(N.canonical(history(api, "v" + q["version"] if resume else None)))
+        == q["historySha256"],
+        "release history changed",
+    )
+    require(
+        all(
+            N.Q.sha(git(repo, "show", f"{source}:{path}")) == digest
+            for path, digest in q["manifestSha256"].items()
         ),
-        "invalid manifest hash binding",
-    )
-    proof = value["contextProof"]
-    keys(proof, "schemaVersion imageSource releaseSource equal images")
-    require(
-        proof["equal"] is True
-        and proof["imageSource"] == value["imageSourceSha"]
-        and proof["releaseSource"] == value["manifestSourceSha"]
-        and len(proof["images"]) == 4,
-        "invalid context receipt",
-    )
-    require(
-        proof["schemaVersion"] == 1
-        and [i["image"] for i in proof["images"]] == list(N.Q.IMAGES),
-        "invalid context image set",
-    )
-    for image in proof["images"]:
-        keys(image, "image context recipe a b differences")
-        require(
-            image["differences"] == []
-            and image["context"] == N.Q.IMAGES[image["image"]][0]
-            and image["recipe"] == f"services/{image['image']}/Dockerfile",
-            "invalid context binding",
-        )
-        for side in ["a", "b"]:
-            summary = image[side]
-            keys(
-                summary, "files inventory inventorySha256 ignore ignoreSha256 buildRef"
-            )
-            require(
-                summary["files"] == len(summary["inventory"])
-                and isinstance(summary["buildRef"], str)
-                and summary["buildRef"],
-                "invalid context inventory",
-            )
-            for entry in summary["inventory"]:
-                keys(entry, "path mode sha256")
-                require(
-                    entry["mode"] in [0o644, 0o755]
-                    and isinstance(entry["path"], str)
-                    and re.fullmatch(r"[a-f0-9]{64}", entry["sha256"]),
-                    "invalid context entry",
-                )
-        require(
-            image["a"]["inventory"] == image["b"]["inventory"], "context entries differ"
-        )
-    require(
-        value["eligibleUntil"] == a["eligibleUntil"]
-        and re.fullmatch(r"[a-f0-9]{64}", value["historySha256"]),
-        "invalid receipt lifetime/history",
+        "manifest source changed",
     )
 
 

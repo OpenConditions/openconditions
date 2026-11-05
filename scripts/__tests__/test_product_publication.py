@@ -25,261 +25,264 @@ SPEC.loader.exec_module(M)
 
 
 class Guards(unittest.TestCase):
-    def test_missing_readiness_never_authorizes(self):
-        for value in [None, {}, {"outcome": "passed"}, {"approved": True}]:
-            with self.assertRaisesRegex(ValueError, "trusted full-readiness"):
-                M.require_execution_authority(value)
-
-    def test_actual_assessment_process(self):
-        with tempfile.TemporaryDirectory(prefix="oc-publication-assessment-") as root:
-            output = Path(root) / "output"
-            summary = Path(root) / "summary"
-            env = {
-                k: v
-                for k, v in os.environ.items()
-                if k not in ["GH_TOKEN", "GITHUB_TOKEN"]
-            }
-            env.update(
-                {
-                    "GITHUB_ACTIONS": "true",
-                    "GITHUB_REPOSITORY": M.N.REPO,
-                    "GITHUB_REPOSITORY_ID": str(M.N.REPO_ID),
-                    "GITHUB_SHA": "a" * 40,
-                    "GITHUB_EVENT_NAME": "workflow_dispatch",
-                    "GITHUB_REF": "refs/heads/main",
-                    "GITHUB_WORKFLOW_REF": M.N.REPO
-                    + "/.github/workflows/product-release.yml@refs/heads/main",
-                    "GITHUB_WORKFLOW_SHA": "a" * 40,
-                    "GITHUB_RUN_ID": "123",
-                    "GITHUB_OUTPUT": str(output),
-                    "GITHUB_STEP_SUMMARY": str(summary),
-                }
-            )
+    def test_actual_cli_rejects_fork_and_implicit_publication(self):
+        env = {
+            k: v for k, v in os.environ.items() if k not in ["GH_TOKEN", "GITHUB_TOKEN"]
+        }
+        env.update(T.F.ENV)
+        env.update(
+            GITHUB_EVENT_NAME="workflow_dispatch",
+            GITHUB_REF="refs/heads/main",
+            GITHUB_WORKFLOW_REF=M.N.REPO
+            + "/.github/workflows/product-release.yml@refs/heads/main",
+        )
+        for change, message in [
+            ({}, "explicit publish intent"),
+            (
+                {"GITHUB_REPOSITORY": "owned/fork", "RELEASE_OPERATION": "publish"},
+                "untrusted qualification context",
+            ),
+        ]:
             result = subprocess.run(
-                ["python3", "-B", str(Path(M.__file__)), "--assess"],
-                env=env,
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-            self.assertEqual(output.read_text(), "ready=false\n")
-            self.assertIn("Publication remains blocked", summary.read_text())
-            output.unlink()
-            env["GITHUB_REPOSITORY"] = "owned/fork"
-            result = subprocess.run(
-                ["python3", "-B", str(Path(M.__file__)), "--assess"],
-                env=env,
+                ["python3", "-B", str(Path(M.__file__))],
+                env={**env, **change},
                 capture_output=True,
                 text=True,
                 timeout=30,
             )
             self.assertNotEqual(result.returncode, 0)
-            self.assertFalse(output.exists())
+            self.assertIn(message, result.stderr)
 
-    def test_protections(self):
-        policy = {"name": "owned", "rules": []}
-        env = {
-            "id": 1,
-            "name": M.ENVIRONMENT,
-            "can_admins_bypass": False,
-            "protection_rules": [
-                {
-                    "type": "required_reviewers",
-                    "prevent_self_review": False,
-                    "reviewers": [{"type": "User", "reviewer": M.OWNER}],
-                }
-            ],
-            "deployment_branch_policy": {
-                "protected_branches": False,
-                "custom_branch_policies": True,
-            },
-        }
-        values = {
-            M.N.PREFIX: {
-                "id": M.N.REPO_ID,
-                "full_name": M.N.REPO,
-                "default_branch": "main",
-            },
-            M.N.PREFIX + "/git/ref/heads/main": {"object": {"sha": "a" * 40}},
-            M.N.PREFIX + "/rulesets/18081110": policy,
-            M.N.PREFIX + "/environments/" + M.ENVIRONMENT: env,
-            M.N.PREFIX
-            + "/environments/"
-            + M.ENVIRONMENT
-            + "/deployment-branch-policies?per_page=100": {
-                "total_count": 1,
-                "branch_policies": [{"name": "main", "type": "branch"}],
-            },
-            M.N.PREFIX + "/immutable-releases": {"enabled": True},
-            M.N.PREFIX + "/actions/runs/123/approvals": [
-                {
-                    "state": "approved",
-                    "user": M.OWNER,
-                    "environments": [{"id": 1, "name": M.ENVIRONMENT}],
-                }
-            ],
-        }
-
-        class API:
-            def json(self, route):
-                return values[route]
-
-        expected = M.Q.sha(
-            M.N.canonical(
-                {
-                    k: policy.get(k)
-                    for k in [
-                        "name",
-                        "target",
-                        "enforcement",
-                        "bypass_actors",
-                        "conditions",
-                        "rules",
-                    ]
-                }
-            )
-        )
-        with patch.object(M, "MAIN_POLICY_SHA256", expected):
-            M.protections(API(), "a" * 40, 123, True)
-            for change in [
-                lambda: env.update(can_admins_bypass=True),
-                lambda: env["protection_rules"].clear(),
-                lambda: values[M.N.PREFIX + "/immutable-releases"].update(
-                    enabled=False
-                ),
-                lambda: values[M.N.PREFIX + "/actions/runs/123/approvals"].clear(),
-                lambda: policy.update(name="drift"),
-                lambda: env["deployment_branch_policy"].update(protected_branches=True),
-            ]:
-                saved = copy.deepcopy(values)
-                change()
-                with self.assertRaises(ValueError):
-                    M.protections(API(), "a" * 40, 123, True)
-                values.clear()
-                values.update(saved)
-                env = values[M.N.PREFIX + "/environments/" + M.ENVIRONMENT]
-                policy = values[M.N.PREFIX + "/rulesets/18081110"]
+    def test_standard_oci_command_preserves_digest_and_refuses_read_errors(self):
+        with tempfile.TemporaryDirectory(prefix="oc-skopeo-adapter-") as temp:
+            root = Path(temp)
+            # Real process boundary: records argv, consumes original owned archive,
+            # stores exact manifest. Actual skopeo qualification is separate.
+            binary = root / "skopeo"
+            binary.write_text(r"""#!/usr/bin/env python3
+import sys,json,tarfile,pathlib
+root=pathlib.Path(__file__).parent
+args=sys.argv[1:]
+with (root/'calls').open('a') as f:f.write(json.dumps(args)+'\n')
+if 'inspect' in args:
+ p=root/('preview' if args[-1].endswith(':preview') else 'manifest')
+ if not p.exists():sys.stderr.write('manifest unknown');sys.exit(1)
+ sys.stdout.buffer.write(p.read_bytes())
+else:
+ src=args[-2]
+ if src.startswith('oci-archive:'):
+  with tarfile.open(src[12:]) as t:
+   index=json.load(t.extractfile('index.json'))
+   digest=index['manifests'][0]['digest'][7:]
+   (root/'manifest').write_bytes(t.extractfile('blobs/sha256/'+digest).read())
+ else:(root/'preview').write_bytes((root/'manifest').read_bytes())
+""")
+            binary.chmod(0o755)
+            T.F.image_bundle(root / "image", "ingest")
+            identity = M.Q.inspect_archive(root / "image/image.oci.tar")
+            registry = M.Registry(root / "auth")
+            with patch.dict(
+                os.environ, {"PATH": str(root) + os.pathsep + os.environ["PATH"]}
+            ):
+                expected = identity["platformManifestDigest"]
+                registry.promote(
+                    "ingest", "1.0.0", root / "image/image.oci.tar", expected
+                )
+                registry.preview("ingest", "1.0.0", expected)
+                calls = [
+                    json.loads(x) for x in (root / "calls").read_text().splitlines()
+                ]
+                copies = [x for x in calls if "copy" in x]
+                self.assertEqual(len(copies), 2)
+                self.assertTrue(all("--preserve-digests" in x for x in copies))
+                self.assertEqual(
+                    copies[0][:4],
+                    ["--override-os", "linux", "--override-arch", "amd64"],
+                )
+                with self.assertRaisesRegex(ValueError, "conflicting image"):
+                    registry.promote(
+                        "ingest",
+                        "1.0.0",
+                        root / "image/image.oci.tar",
+                        "sha256:" + "0" * 64,
+                    )
+                binary.write_text("#!/bin/sh\necho unauthorized >&2\nexit 1\n")
+                with self.assertRaisesRegex(ValueError, "not absence"):
+                    registry.manifest("ingest", "1.0.0")
 
 
 class Publication(T.ProductTests):
+    def test_publication_artifact_admission(self):
+        import io
+        import zipfile
+
+        q = self.qualify()
+        rehearsal = {
+            "execution": "passed (fixture)",
+            "imageSourceSha": self.a,
+            "manifestSourceSha": self.b,
+            "services": {
+                k: {"outcome": "passed"} for k in ["ingest", "contributions-api"]
+            },
+        }
+        files = M.assets(
+            self.repo,
+            q,
+            self.root,
+            rehearsal,
+            {"success": True, "numFailedTests": 0, "numPassedTests": 1},
+            {},
+        )
+
+        def packed(values):
+            data = io.BytesIO()
+            with zipfile.ZipFile(data, "w") as archive:
+                for name, body in values.items():
+                    info = zipfile.ZipInfo("product-review/" + name)
+                    info.external_attr = (0o100644) << 16
+                    archive.writestr(info, body)
+            return data.getvalue()
+
+        self.add_artifact(888, "product-review-999-1", packed(files))
+        artifact = self.artifacts[-1]
+        artifact["workflow_run"].update(id=999, head_sha=self.b)
+        artifact["created_at"] = T.F.END
+        run = {**self.brun, "id": 999, "event": "workflow_dispatch", "workflow_id": 777}
+        workflow = {
+            "id": 777,
+            "path": ".github/workflows/product-release.yml",
+            "state": "active",
+        }
+        job = {
+            "name": "qualify",
+            "head_sha": self.b,
+            "conclusion": "success",
+            "steps": [
+                {
+                    "name": "Retain review artifact",
+                    "conclusion": "success",
+                    "status": "completed",
+                    "started_at": T.F.START,
+                    "completed_at": T.F.END,
+                }
+            ],
+        }
+        original = self.response
+        reads = []
+
+        def response(route):
+            if route == M.N.PREFIX + "/actions/workflows/product-release.yml":
+                value = workflow
+            elif route in [
+                M.N.PREFIX + "/actions/runs/999",
+                M.N.PREFIX + "/actions/runs/999/attempts/1",
+            ]:
+                value = run
+            elif (
+                route
+                == M.N.PREFIX + "/actions/runs/999/attempts/1/jobs?per_page=100&page=1"
+            ):
+                value = {"total_count": 1, "jobs": [job]}
+            elif route == M.N.PREFIX + "/actions/artifacts/888":
+                reads.append(1)
+                value = copy.deepcopy(artifact)
+                if getattr(self, "review_drift", False) and len(reads) % 2 == 0:
+                    value["expired"] = True
+            else:
+                return original(route)
+            return 200, {}, T.F.encoded(value)
+
+        self.response = response
+
+        def admit():
+            with tempfile.TemporaryDirectory(prefix="oc-review-admission-") as temp:
+                return M.admit(
+                    self.api,
+                    888,
+                    artifact["digest"],
+                    999,
+                    1,
+                    self.b,
+                    Path(temp),
+                    lambda: T.F.NOW,
+                )
+
+        self.assertEqual(admit(), files)
+        for obj, change in [
+            (run, {"head_sha": self.a}),
+            (run, {"head_repository": {"id": 1}}),
+            (run, {"run_attempt": 0}),
+            (workflow, {"state": "disabled_manually"}),
+            (job, {"conclusion": "failure"}),
+            (artifact, {"expired": True}),
+            (artifact, {"name": "other"}),
+            (artifact, {"digest": "sha256:" + "0" * 64}),
+        ]:
+            with self.subTest(change=change):
+                saved = copy.deepcopy(obj)
+                obj.update(change)
+                with self.assertRaises(ValueError):
+                    admit()
+                obj.clear()
+                obj.update(saved)
+        self.review_drift = True
+        reads.clear()
+        with self.assertRaisesRegex(ValueError, "artifact drift"):
+            admit()
+        self.review_drift = False
+        for values in [
+            {k: v for k, v in files.items() if k != "portable.json"},
+            {**files, "extra": b"unknown"},
+        ]:
+            self.zips[888] = packed(values)
+            artifact.update(
+                digest="sha256:" + M.Q.sha(self.zips[888]),
+                size_in_bytes=len(self.zips[888]),
+            )
+            with self.assertRaisesRegex(ValueError, "unexpected review paths"):
+                admit()
+
     def test_publication_http_git_registry(self):
         q = self.qualify()
-        bundle = M.B.bundle_files(self.repo, q, None, T.F.NOW)
-        bundle["portable.json"] = M.N.canonical({"kind": "owned portable fixture only"})
-        manifest = M.Q.decode(bundle["bundle.json"])
-        manifest["inventory"]["portable.json"] = {
-            "sha256": M.Q.sha(bundle["portable.json"]),
-            "mode": 0o644,
+        rehearsal = {
+            "execution": "passed (owned fixture only)",
+            "imageSourceSha": self.a,
+            "manifestSourceSha": self.b,
+            "services": {
+                k: {"outcome": "passed"} for k in ["ingest", "contributions-api"]
+            },
         }
-        bundle["bundle.json"] = M.N.canonical(manifest)
-        directories = {r: self.root / r for r in M.Q.IMAGES}
-        provenance = {
-            r: (self.root / "candidate" / f"{r}.provenance.json").read_bytes()
-            for r in M.Q.IMAGES
-        }
-        execution = {
-            "readiness.json": M.N.canonical(
-                {
-                    "schemaVersion": 1,
-                    "imageSourceSha": self.a,
-                    "manifestSourceSha": self.b,
-                    "images": {
-                        k: v["digest"] for k, v in q["imageEvidence"]["images"].items()
-                    },
-                    "platform": "linux/amd64",
-                    "postgresMajor": 16,
-                    "priorDeployment": {
-                        "identity": "owned fixture, not a real deployment",
-                        "sourceSha": "1" * 40,
-                        "imageDigest": "sha256:" + "2" * 64,
-                        "schemaSha256": "3" * 64,
-                    },
-                    "steps": {
-                        k: {
-                            "outcome": "passed",
-                            "startedAt": "2026-10-26T00:00:00Z",
-                            "completedAt": "2026-10-26T00:01:00Z",
-                            "tool": {
-                                "name": "owned fixture",
-                                "version": "1",
-                                "sha256": "4" * 64,
-                            },
-                            "evidenceSha256": "5" * 64,
-                        }
-                        for k in M.B.STEPS
-                    },
-                }
-            ),
-            "rehearsal.json": M.N.canonical(
-                {
-                    "imageSourceSha": self.a,
-                    "manifestSourceSha": self.b,
-                    "images": q["imageEvidence"]["images"],
-                    "services": {
-                        k: {"outcome": "passed"}
-                        for k in ["ingest", "contributions-api"]
-                    },
-                }
-            ),
-            "rights-privacy.json": M.N.canonical(
-                {"success": True, "numFailedTests": 0, "numPassedTests": 1}
-            ),
-        }
-        files = M.assets(bundle, directories, provenance, execution, T.F.NOW)
-        images = {r: p / "image.oci.tar" for r, p in directories.items()}
+        rights = {"success": True, "numFailedTests": 0, "numPassedTests": 1}
+        files = M.assets(
+            self.repo,
+            q,
+            self.root,
+            rehearsal,
+            rights,
+            {"kind": "owned portable fixture only"},
+        )
+        for changed in [{}, {**rights, "success": False}]:
+            with self.assertRaises(ValueError):
+                M.assets(self.repo, q, self.root, rehearsal, changed, {})
         with self.assertRaises(ValueError):
             M.assets(
-                bundle,
-                {**directories, "unknown": self.root},
-                provenance,
-                execution,
-                T.F.NOW,
+                self.repo,
+                q,
+                self.root,
+                {**rehearsal, "execution": "failed"},
+                rights,
+                {},
             )
-        for changed in [
-            {},
-            {**execution, "rights-privacy.json": M.N.canonical({"success": False})},
-            {**execution, "readiness.json": b"null"},
-        ]:
-            with self.assertRaises(ValueError):
-                M.assets(bundle, directories, provenance, changed, T.F.NOW)
-        altered_provenance = dict(provenance)
-        doc = M.Q.decode(altered_provenance["ingest"])
-        doc["buildSourceSha"] = self.b
-        altered_provenance["ingest"] = M.N.canonical(doc)
-        with self.assertRaises(ValueError):
-            M.assets(bundle, directories, altered_provenance, execution, T.F.NOW)
-        sbom = directories["ingest"] / "sbom.cdx.json"
-        original = sbom.read_bytes()
-        sbom.write_bytes(b"{}")
-        try:
-            with self.assertRaises(ValueError):
-                M.assets(bundle, directories, provenance, execution, T.F.NOW)
-        finally:
-            sbom.write_bytes(original)
-        # Actual owned file replacement after verified reads must not become a
-        # new publication inventory describing different bytes than provenance.
         for name in ["scan.json", "sbom.cdx.json", "qualified.json"]:
-            path = directories["ingest"] / name
+            path = self.root / "ingest" / name
             original = path.read_bytes()
-            reads = []
-            regular = M.Q.regular
-
-            def replace_after_verify(target):
-                if target == path:
-                    reads.append(1)
-                    if len(reads) == 2:
-                        path.write_bytes(b"{}")
-                return regular(target)
-
+            path.write_bytes(b"{}")
             try:
-                with (
-                    patch.object(M.Q, "regular", replace_after_verify),
-                    self.assertRaisesRegex(ValueError, "report bytes changed"),
-                ):
-                    M.assets(bundle, directories, provenance, execution, T.F.NOW)
+                with self.assertRaisesRegex(ValueError, "report bytes changed"):
+                    M.assets(self.repo, q, self.root, rehearsal, rights, {})
             finally:
                 path.write_bytes(original)
+        images = self.root
         state = {
             "release": None,
             "assets": {},
@@ -449,7 +452,43 @@ class Publication(T.ProductTests):
                 )
                 M.N.require(code == 201, "unknown asset write; STOP")
 
-        registry = M.Registry("owned", request)
+        class OwnedRegistry:
+            # Test-only HTTP adapter uses real tar bytes; the production adapter
+            # invokes standard skopeo (tested separately), no registry reimplementation.
+            def path(self, role, suffix):
+                return "/v2/openconditions/" + role + suffix
+
+            def manifest(self, role, tag):
+                code, _, body = request(
+                    "GET", "http://owned" + self.path(role, "/manifests/" + tag)
+                )
+                M.N.require(code in [200, 404], "registry read failed")
+                return body if code == 200 else None
+
+            def promote(self, role, version, archive, expected):
+                if self.manifest(role, version) is not None:
+                    return
+                import tarfile
+
+                with tarfile.open(archive) as tar:
+                    body = tar.extractfile("blobs/sha256/" + expected[7:]).read()
+                code, _, _ = request(
+                    "PUT",
+                    "http://owned" + self.path(role, "/manifests/" + version),
+                    body,
+                )
+                M.N.require(code == 201, "registry write/read failed")
+
+            def preview(self, role, version, expected):
+                body = self.manifest(role, version)
+                if self.manifest(role, "preview") == body:
+                    return
+                code, _, _ = request(
+                    "PUT", "http://owned" + self.path(role, "/manifests/preview"), body
+                )
+                M.N.require(code == 201, "registry write/read failed")
+
+        registry = OwnedRegistry()
         api = API()
         fences = []
 
@@ -480,7 +519,7 @@ class Publication(T.ProductTests):
             self.assertEqual(
                 owner.git("rev-parse", "refs/tags/v" + self.version), self.b
             )
-            self.assertEqual(result["tag"], "v" + self.version)
+            self.assertEqual(result, "v" + self.version)
             self.assertEqual(state["assets"], files)
             for role in M.Q.IMAGES:
                 self.assertEqual(
@@ -574,6 +613,19 @@ class Publication(T.ProductTests):
             M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
             self.assertFalse(state["release"]["draft"])
 
+            # Owner immutability setup is not an admin-read dependency. Its
+            # actual published-release readback must hold before any preview.
+            for role in M.Q.IMAGES:
+                state["manifests"].pop(registry.path(role, "/manifests/preview"))
+            state["release"]["immutable"] = False
+            writes = len(state["writes"])
+            with self.assertRaisesRegex(ValueError, "not immutable; preview unchanged"):
+                M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
+            self.assertEqual(writes, len(state["writes"]))
+            self.assertFalse(any(p.endswith("/preview") for p in state["manifests"]))
+            state["release"]["immutable"] = True
+            M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
+
             # Final native check rejection is not replaced by local good bytes.
             def reject():
                 raise ValueError("post-approval authority changed")
@@ -587,7 +639,7 @@ class Publication(T.ProductTests):
             def expire():
                 now[0] += timedelta(days=4)
 
-            with self.assertRaisesRegex(ValueError, "expired during final authority"):
+            with self.assertRaisesRegex(ValueError, "expired publication evidence"):
                 M.publish(api, registry, files, images, expire, clock=lambda: now[0])
             self.assertEqual(writes, len(state["writes"]))
         finally:
@@ -600,7 +652,11 @@ if __name__ == "__main__":
     suite = unittest.TestSuite(
         [
             unittest.defaultTestLoader.loadTestsFromTestCase(Guards),
-            Publication("test_publication_http_git_registry"),
+            unittest.TestSuite(
+                Publication(n)
+                for n in unittest.defaultTestLoader.getTestCaseNames(Publication)
+                if n.startswith("test_publication_")
+            ),
         ]
     )
     raise SystemExit(

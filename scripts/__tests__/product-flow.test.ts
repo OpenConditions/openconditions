@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { expect, it } from "vitest";
 import { parse } from "yaml";
 
-it("discovers owning identities and retains pending readiness without fabricated approval", () => {
+it("discovers owning identities and gives a simple explicit publication action", () => {
   const p = spawnSync(
     "python3",
     ["-B", fileURLToPath(new URL("test_product_flow.py", import.meta.url))],
@@ -17,7 +17,7 @@ it("keeps prepare/review validation read-only and inputs data-only and owned pub
     readFileSync(new URL("../../.github/workflows/product-release.yml", import.meta.url), "utf8"),
   );
   expect(Object.keys(w.on.workflow_dispatch.inputs)).toEqual(["operation", "version", "notes"]);
-  expect(w.on.workflow_dispatch.inputs.operation.options).toEqual(["prepare", "review"]);
+  expect(w.on.workflow_dispatch.inputs.operation.options).toEqual(["prepare", "review", "publish"]);
   expect(w.jobs.qualify.permissions).toEqual({ contents: "read", actions: "read" });
   for (const step of w.jobs.qualify.steps) if (step.run) expect(step.run).not.toContain("${{");
   expect(Object.keys(w.jobs)).toEqual(["qualify", "publication", "preparation-pr"]);
@@ -27,7 +27,7 @@ it("keeps prepare/review validation read-only and inputs data-only and owned pub
     packages: "write",
     actions: "read",
   });
-  expect(w.jobs.publication.if).toContain("needs.qualify.outputs.publication_ready == 'true'");
+  expect(w.jobs.publication.if).toContain("inputs.operation == 'publish'");
 });
 
 it("executes owned PostgreSQL recovery and native rehearsal refusal controls", () => {
@@ -39,7 +39,7 @@ it("executes owned PostgreSQL recovery and native rehearsal refusal controls", (
   expect(p.status, p.stdout + p.stderr).toBe(0);
 }, 245000);
 
-it("keeps missing real readiness blocked and exercises exact bytes through owned HTTP/Git/OCI", () => {
+it("publishes exact bytes through owned HTTP/Git/OCI and stops conflicts", () => {
   const p = spawnSync(
     "python3",
     ["-B", fileURLToPath(new URL("test_product_publication.py", import.meta.url))],

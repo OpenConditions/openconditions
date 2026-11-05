@@ -1,12 +1,12 @@
-name: Product prepare and review
+name: Product release
 on:
   workflow_dispatch:
     inputs:
       operation:
-        description: Prepare metadata for review, or review an already merged preparation
+        description: Prepare a PR, review merged metadata, or explicitly publish it
         required: true
         type: choice
-        options: [prepare, review]
+        options: [prepare, review, publish]
       version:
         description: Proposed product version (review uses the version committed in main)
         required: true
@@ -30,10 +30,10 @@ jobs:
       github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
       github.workflow_sha == github.sha
     outputs:
-      publication_ready: ${{ steps.publication.outputs.ready }}
+      proof_attempt: ${{ steps.evidence.outputs.proof_attempt }}
       review_artifact_id: ${{ steps.review-artifact.outputs.artifact-id }}
       review_artifact_digest: ${{ steps.review-artifact.outputs.artifact-digest }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 90
     permissions:
       contents: read
@@ -70,7 +70,7 @@ jobs:
       - name: Build pinned public OpenMapX contracts in an owned directory
         run: node scripts/acquire-product-tools.mjs "$RUNNER_TEMP/openmapx-tools"
       - name: Exercise representative rights and privacy on owned databases
-        if: inputs.operation == 'review'
+        if: inputs.operation != 'prepare'
         run: |
           pnpm build
           pnpm exec vitest run --project integration services/ingest/src/__tests__/publish-routes-license.integration.test.ts services/ingest/src/__tests__/api-records.integration.test.ts --reporter=json --outputFile="$RUNNER_TEMP/product-rights-privacy.json"
@@ -85,7 +85,8 @@ jobs:
           python -B scripts/product-release-flow.py
           --tools "$RUNNER_TEMP/openmapx-tools"
           --output "$RUNNER_TEMP/product-review"
-      - name: Retain review artifact (never release approval)
+          --rights-report "$RUNNER_TEMP/product-rights-privacy.json"
+      - name: Retain review artifact
         id: review-artifact
         if: always()
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -94,27 +95,27 @@ jobs:
           path: |
             ${{ runner.temp }}/product-review
             ${{ runner.temp }}/product-review.receipt.json
-            ${{ runner.temp }}/product-review-rehearsal
-            ${{ runner.temp }}/product-rights-privacy.json
+
           if-no-files-found: error
           retention-days: 3
-      - name: Assess publication eligibility (never invent missing readiness)
-        id: publication
-        if: inputs.operation == 'review'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: python -B scripts/publish-product-release.py --assess
+      - name: Retain bounded rehearsal diagnostics
+        if: always() && inputs.operation != 'prepare'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: product-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/product-review-rehearsal
+          if-no-files-found: ignore
+          retention-days: 3
   publication:
     needs: qualify
     if: >-
-      needs.qualify.result == 'success' && inputs.operation == 'review' &&
-      needs.qualify.outputs.publication_ready == 'true' &&
+      needs.qualify.result == 'success' && inputs.operation == 'publish' &&
       github.repository == 'OpenConditions/openconditions' && github.repository_id == '1276024943' &&
       github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
       github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
       github.workflow_sha == github.sha
     environment: product-release
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 45
     permissions:
       contents: write
@@ -129,11 +130,21 @@ jobs:
       - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: "3.14"
-      - name: Recheck native protection and full execution authority after approval
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Install standard OCI promotion tool
+        run: sudo apt-get update && sudo apt-get install --yes skopeo
+      - name: Publish approved exact bytes, then preview
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_OPERATION: ${{ inputs.operation }}
           REVIEW_ARTIFACT_ID: ${{ needs.qualify.outputs.review_artifact_id }}
           REVIEW_ARTIFACT_DIGEST: ${{ needs.qualify.outputs.review_artifact_digest }}
+          PROOF_ATTEMPT: ${{ needs.qualify.outputs.proof_attempt }}
         run: python -B scripts/publish-product-release.py
   preparation-pr:
     needs: qualify
@@ -144,7 +155,7 @@ jobs:
       github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
       github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
       github.workflow_sha == github.sha
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     permissions:
       contents: write

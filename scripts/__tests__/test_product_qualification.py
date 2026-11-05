@@ -57,7 +57,33 @@ class ProductTests(F.CandidateTests):
             "https://github.com/OpenConditions/openconditions.git",
         )
         paths = [
-            *P.POLICY,
+            *[
+                "scripts/publish-product-release.py",
+                "scripts/rehearse-product-release.py",
+                "scripts/create-product-preparation-pr.py",
+                "scripts/product-release-flow.py",
+                "scripts/acquire-product-tools.mjs",
+                ".github/workflows/ci.yml",
+                ".github/workflows/product-release.yml",
+                ".nvmrc",
+                "package.json",
+                "pnpm-lock.yaml",
+                "pnpm-workspace.yaml",
+                "scripts/qualify-container-images.py",
+                "scripts/trusted-main-image-evidence.py",
+                "scripts/check-docker-contexts.mjs",
+                "scripts/check-release-inputs.mjs",
+                "scripts/qualify-product-inputs.mjs",
+                "scripts/qualify-product-release.py",
+                "scripts/prepare-product-release.py",
+                "scripts/prepare-product-release.mjs",
+                "scripts/validate-product-manifests.mjs",
+                "scripts/run-openmapx-admission.mjs",
+                "scripts/openmapx-product-contracts.json",
+                "scripts/fixtures/openmapx-contract-consumer/package.json",
+                "scripts/fixtures/openmapx-contract-consumer/pnpm-workspace.yaml",
+                "scripts/fixtures/openmapx-contract-consumer/application-lock.yaml",
+            ],
             ".dockerignore",
             "extension.json",
             "services/openlr-resolver/.dockerignore",
@@ -323,12 +349,11 @@ class ProductTests(F.CandidateTests):
 
     def test_product_policy_drift(self):
         self.put(".nvmrc", b"99.0.0\n")
-        changed = self.commit()
-        with self.assertRaisesRegex(ValueError, "trusted tool bytes differ"):
+        with self.assertRaisesRegex(ValueError, "trusted checkout changed"):
             P.qualify(
                 self.api,
                 self.repo,
-                changed,
+                self.b,
                 self.a,
                 self.b,
                 123,

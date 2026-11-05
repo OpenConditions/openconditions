@@ -1,9 +1,9 @@
-# Protected product publication source
+# Simple protected product releases
 
-Affected versions: Future product review candidates; no version is chosen or published by this change.
+Affected versions: Future product releases using this workflow; no version is selected here.
 
-Action: Use the existing prepare/review workflow and inspect its publication blockers. No additional run IDs, digests or passing JSON are operator inputs.
+Action: Use Actions → Product release: prepare a version and notes, review/merge its normal PR, inspect review results, then explicitly select publish and approve the native environment gate. Configure the maintainer approval environment and release immutability once before first publication.
 
-Compatibility: Validation stays read-only and preparation PR creation stays isolated. The separate publication job requires the named protected environment; its eligibility is currently false because full execution authority and a supported native immutability preflight are missing.
+Compatibility: Original tested images are promoted without rebuilding. Source/image identity, exact metadata paths, manifests, license/privacy boundaries and conflict checks remain. Existing latest/history consumers are unchanged; stable never advances implicitly.
 
-Caveats: Owned HTTP/Git/OCI tests establish source mechanics only. Native environment/registry acceptance, actual prior-deployment upgrade, complete readiness and deliberate publication remain pending. No existing history, latest or stable channel is changed.
+Caveats: Tests cover bounded default-service installation/recovery and representative rights/privacy. Actual prior-deployment upgrades, optional federation/TUF, live providers and other platforms are not certified. Preview updates sequentially after a complete immutable release. Inspect partial native state before resuming an identical unexpired candidate. No App/PAT, passing readiness JSON or per-release administrative credential is required.
