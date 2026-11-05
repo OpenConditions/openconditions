@@ -114,5 +114,23 @@
       "records": "8bd5f884058cae1c425ce016662787da",
       "samples": "1e7accdb63d0d2654a1622b9ade6408f"
     }
-  ]
+  ],
+  "server_version_num": "180006",
+  "platform": "Linux arm64 in Docker Desktop on macOS arm64",
+  "source": {
+    "revision": "e6dc5ba8dd02a808c46d16667f54dc8b62cd539a",
+    "note": "Runs preceded this commit. No runtime logic changed after the runs; a writer comment and formatting were updated. These hashes identify the retained implementation and fixtures.",
+    "sha256": {
+      "packages/storage/src/write-observations.ts": "d442ede7784f8123d8b34d634584937bf08fe28ec7db23eb709edb91ff92fa19",
+      "packages/storage/src/__tests__/latest-page-writes.integration.test.ts": "c6d2bca946cb1d36721ee8eb1e150b9bc25b6bec565faa1b21be1ab90e360ad0",
+      "packages/storage/src/__tests__/latest-lookup-fixture.ts": "fb3b8e58face9eb539b6fe698764a47588991d3dae1ef1f4abd986ee23b0bddd",
+      "scripts/fixtures/ndw-latest-readings.json": "e2c376f441b227f6f7ad8e215346e905622c21a069452e03a801c9f2dfe1b004",
+      "pnpm-lock.yaml": "fbb324851472e32656a0d43b31e7bb1c84322509a7114b56064d9f4a8462843f"
+    }
+  },
+  "reference": {
+    "revision": "0d18c74cd8d761a636e757415c8d253aa810223a",
+    "writer_sha256": "49a2ff00d7c33676b713ee2e4597b9c14f9ad410e6d044885d360e89d6b10c5c",
+    "method": "Generated the old writer from Git, rewriting relative import paths only. Invoked that old writer directly for the reference arm and the current writer for the candidate, bypassing the SQL reference adapter. Ran one pair with six cycles."
+  }
 }
