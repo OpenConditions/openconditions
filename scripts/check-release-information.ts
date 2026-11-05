@@ -1,8 +1,10 @@
 import { execFileSync } from "node:child_process";
 import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
 import { resolve } from "node:path";
 import { parse, parseAllDocuments } from "yaml";
 
+const semver = createRequire(import.meta.resolve("@changesets/cli/package.json"))("semver");
 const cwd = process.cwd();
 function git(...args: string[]): string {
   return execFileSync("git", args, { cwd, encoding: "utf8", maxBuffer: 16 * 1024 * 1024 }).trim();
@@ -183,9 +185,12 @@ try {
   if (productLines.length > 1) fail("Duplicate Product release declaration");
   if (productLines.length) {
     const match = productLines[0].match(
-      /^Product release: operator-impact (docs\/release-notes\/[a-z0-9-]+\.md)$/,
+      /^Product release: operator-impact (docs\/release-notes\/([^/]+)\.md)$/,
     );
-    if (!match) fail("Use Product release: operator-impact docs/release-notes/name.md");
+    if (!match || (!/^[a-z0-9-]+$/.test(match[2]) && semver.valid(match[2]) !== match[2]))
+      fail(
+        "Use Product release: operator-impact docs/release-notes/name.md (fragment name or canonical product version)",
+      );
     if (!files.includes(match[1])) fail("Operator fragment must be committed in this PR");
     const fragment = blob(head, match[1]);
     for (const field of ["Affected versions:", "Action:", "Compatibility:", "Caveats:"])
