@@ -549,7 +549,7 @@ print(json.dumps({'graphCounts':counts,'match':x,'invalidReferenceStatus':400,'g
 """
 
 
-def runtime_smoke(image, identity, source, output):
+def runtime_smoke(image, identity, source, output, *, exercise=None):
     label = uuid.uuid4().hex
     network, db, app = [f"oc-image-{label}{suffix}" for suffix in ("", "-db", "-app")]
     resources = [("network", network), ("container", db), ("container", app)]
@@ -762,6 +762,8 @@ def runtime_smoke(image, identity, source, output):
                 )
                 command(["docker", "exec", app, "node", "--input-type=module", "-e", code])
                 record["checks"]["bundledFeedsMigrationsImpit"] = True
+        if exercise is not None:
+            exercise(app, db, sql, record)
         record["passed"] = True
     finally:
         for kind, name in reversed(resources):
