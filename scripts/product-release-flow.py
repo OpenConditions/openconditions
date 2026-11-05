@@ -58,20 +58,7 @@ def discover(api, source, clock):
 
 
 def versioned_notes(version, notes):
-    return f"""# Product {version}
-
-Affected versions: Proposed product {version}; not yet published.
-
-Action: Review this preparation and the notes below before release. Operational rehearsal and publication approval remain separate.
-
-Compatibility: This preparation changes metadata only relative to its image source A. Release-specific compatibility and migration details belong in the reviewed notes below.
-
-Caveats: No live installation, upgrade, recovery or readiness acceptance is implied by preparation.
-
-## Reviewed notes
-
-{notes}
-"""
+    return f"# Product {version}\n\n{notes.strip()}\n"
 
 
 def summary(operation, version, source, blocked=None):

@@ -1,9 +1,22 @@
 import { execFileSync } from "node:child_process";
 import { lstatSync, mkdtempSync, readdirSync, readFileSync, realpathSync, rmSync } from "node:fs";
+import { createRequire } from "node:module";
 import { tmpdir } from "node:os";
 import { delimiter, join, sep } from "node:path";
 import { fileURLToPath } from "node:url";
-import { parse } from "yaml";
+
+const { parseChangesetFile } = createRequire(import.meta.resolve("@changesets/cli/package.json"))(
+  "@changesets/parse",
+);
+
+export function validateNote(text, allowed) {
+  const note = parseChangesetFile(text);
+  if (!note.summary.trim() || !note.releases.length) throw Error("Empty Changeset");
+  for (const { name, type } of note.releases)
+    if (!allowed.includes(name) || !["patch", "minor", "major"].includes(type))
+      throw Error(`Unknown/private package or bump: ${name}`);
+  return note;
+}
 
 export function run(command, args, cwd) {
   const home = process.env.PNPM_HOME;
@@ -33,15 +46,7 @@ export function notes(cwd, allowed) {
     .filter((n) => n.endsWith(".md") && n !== "README.md")
     .map((name) => {
       const text = readFileSync(join(cwd, ".changeset", name), "utf8");
-      const parts = text.split(/^---\s*$/m);
-      if (parts.length !== 3 || parts[0].trim() || parts[2].trim().length < 10)
-        throw Error(`Malformed or empty Changeset: ${name}`);
-      const data = parse(parts[1]);
-      if (!data || typeof data !== "object" || Array.isArray(data) || !Object.keys(data).length)
-        throw Error(`Empty Changeset: ${name}`);
-      for (const [pkg, bump] of Object.entries(data))
-        if (!allowed.includes(pkg) || !["patch", "minor", "major"].includes(bump))
-          throw Error(`Unknown/private package or bump in ${name}`);
+      validateNote(text, allowed);
       return name;
     });
 }

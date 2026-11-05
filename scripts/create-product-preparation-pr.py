@@ -76,9 +76,6 @@ Review the seven metadata/notes files and their original A image evidence. No ru
 
 GitHub may not start required checks for a GITHUB_TOKEN-created PR. A maintainer must approve/run the normal required PR checks if needed; this job does not dispatch or bypass them. After review and user merge, run Product release → review for {version}.
 
-Product release: operator-impact docs/release-notes/{version}.md
-
-Package release: none — Product descriptors and curated notes only; qualified OCPI source, types, exports and build/runtime dependencies are unchanged.
 """
 
 

@@ -68,12 +68,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Check release information on exact PR inputs
+      - name: Check package notes and version changes on exact PR source
         if: github.event_name == 'pull_request'
         env:
           RELEASE_BASE: ${{ github.event.pull_request.base.sha }}
           RELEASE_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: pnpm check:release-information --base "$RELEASE_BASE" --head "$RELEASE_HEAD" --pr-file "$GITHUB_EVENT_PATH"
+        run: pnpm check:release-information --base "$RELEASE_BASE" --head "$RELEASE_HEAD"
 
       # The OpenLR encoder's output is cross-checked against the Python
       # openlr library (packages/openlr/src/__tests__/python-openlr.test.ts).
