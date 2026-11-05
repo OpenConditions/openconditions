@@ -8,11 +8,11 @@ import tempfile
 import time
 
 SPEC = importlib.util.spec_from_file_location(
-    "bundle", Path(__file__).with_name("bundle-product-release.py")
+    "product", Path(__file__).with_name("qualify-product-release.py")
 )
-B = importlib.util.module_from_spec(SPEC)
-SPEC.loader.exec_module(B)
-P, N, Q = B.P, B.N, B.Q
+P = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(P)
+N, Q = P.N, P.N.Q
 
 
 def recover(db, user, database, command=Q.command):
@@ -78,12 +78,14 @@ def exercise(app, db, sql, record):
     }
 
 
-def run(api, repo, qualification, output, clock=None):
+def run(
+    api, repo, qualification, output, clock=None, image_directory=None, resume=False
+):
     """Only called after native A/B qualification; recheck before/after effects."""
     clock = clock or (lambda: datetime.now(timezone.utc))
     P.validate_receipt(qualification)
     source = qualification["manifestSourceSha"]
-    B.final_native_fences(api, repo, qualification, source, clock)
+    P.final_fences(api, repo, qualification, source, clock, resume=resume)
     N.require(
         N.timestamp(qualification["eligibleUntil"]) > clock(),
         "expired rehearsal evidence",
@@ -100,8 +102,7 @@ def run(api, repo, qualification, output, clock=None):
         "postgresImage": Q.POSTGIS,
         "startedAt": clock().isoformat(),
         "execution": "failed",
-        "pending": [
-            "representative rights/privacy behavior",
+        "limitations": [
             "actual prior-deployment upgrade/migration (no origin supplied)",
             "optional federation/TUF compatibility",
             "other platforms/PostgreSQL cohorts",
@@ -122,13 +123,15 @@ def run(api, repo, qualification, output, clock=None):
             for role in ["ingest", "contributions-api"]:
                 ref = native["imageArtifacts"][role]
                 archive = work / (role + ".zip")
-                api.download(before[ref["id"]], archive)
+                if image_directory is None:
+                    api.download(before[ref["id"]], archive)
                 N.require(
                     N.timestamp(qualification["eligibleUntil"]) > clock(),
                     "rehearsal evidence expired during transfer",
                 )
-                directory = work / role
-                N.unpack(archive, directory, N.IMAGE_FILES, N.OPTIONAL_FILES)
+                directory = image_directory / role if image_directory else work / role
+                if image_directory is None:
+                    N.unpack(archive, directory, N.IMAGE_FILES, N.OPTIONAL_FILES)
                 verified = Q.verify_reports(
                     directory,
                     role,
@@ -166,7 +169,7 @@ def run(api, repo, qualification, output, clock=None):
                     "runtimeSha256": Q.file_sha(runtime / "runtime.json"),
                     "outcome": "passed",
                 }
-        B.final_native_fences(api, repo, qualification, source, clock)
+        P.final_fences(api, repo, qualification, source, clock, resume=resume)
         N.require(
             N.timestamp(qualification["eligibleUntil"]) > clock(),
             "rehearsal evidence expired at completion",

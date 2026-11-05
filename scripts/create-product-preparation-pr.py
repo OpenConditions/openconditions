@@ -74,7 +74,7 @@ Identity: `release-preparation:{identity}`
 
 Review the seven metadata/notes files and their original A image evidence. No runtime, configuration, dependency or service-membership change is proposed. This is not release/readiness approval.
 
-GitHub may not start required checks for a GITHUB_TOKEN-created PR. A maintainer must approve/run the normal required PR checks if needed; this job does not dispatch or bypass them. After review and user merge, run Product prepare and review → review for {version}.
+GitHub may not start required checks for a GITHUB_TOKEN-created PR. A maintainer must approve/run the normal required PR checks if needed; this job does not dispatch or bypass them. After review and user merge, run Product release → review for {version}.
 
 Product release: operator-impact docs/release-notes/{version}.md
 
@@ -450,7 +450,7 @@ def main():
         int(os.environ["GITHUB_RUN_ATTEMPT"]),
     )
     Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text(
-        f"# Preparation PR ready\n\nReview {url}\n\nApprove/run normal required PR checks if GitHub does not start them for the bot PR. After review and user merge, run **review** for the committed version. Readiness and publication remain blocked. No automatic approval, merge, dispatch or publication occurred.\n"
+        f"# Preparation PR ready\n\nReview {url}\n\nApprove/run normal required PR checks if GitHub does not start them for the bot PR. After review and user merge, run **review** for the committed version. Then explicitly select publish when the results are satisfactory; native environment approval remains required. No automatic approval, merge, dispatch or publication occurred.\n"
     )
 
 

@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 import base64
 from datetime import datetime, timedelta, timezone
 import hashlib
@@ -579,9 +580,16 @@ def assemble(api, env, output, *, now=None):
     return Q.decode(files["candidate.json"])
 
 
-def validate(api, source, run_id, attempt, *, now=None):
+def validate(api, source, run_id, attempt, *, now=None, directory=None):
     clock = (lambda: datetime.now(timezone.utc)) if now is None else (lambda: now)
-    with tempfile.TemporaryDirectory(prefix="oc-validate-main-images-") as temporary:
+    if directory is not None:
+        directory.mkdir()  # owned/new, never a mutable shared cache
+    context = (
+        nullcontext(directory)
+        if directory is not None
+        else tempfile.TemporaryDirectory(prefix="oc-validate-main-images-")
+    )
+    with context as temporary:
         work = Path(temporary)
         files, artifacts, producer, jobs = documents(
             api, source, run_id, attempt, work, clock, True

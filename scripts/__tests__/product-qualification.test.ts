@@ -21,7 +21,7 @@ it("retires tag publisher and confines manual qualification to trusted main read
   expect(Object.keys(w.on.workflow_dispatch.inputs)).toEqual(["operation", "version", "notes"]);
   expect(w.permissions).toEqual({ contents: "read" });
   expect(w.concurrency).toEqual({ group: "product-release", "cancel-in-progress": false });
-  expect(Object.keys(w.jobs)).toEqual(["qualify", "preparation-pr"]);
+  expect(Object.keys(w.jobs)).toEqual(["qualify", "publication", "preparation-pr"]);
   expect(w.jobs.qualify.permissions).toEqual({ contents: "read", actions: "read" });
   expect(w.jobs.qualify.if).toContain("github.workflow_sha == github.sha");
   expect(w.jobs.qualify.if).toContain("github.repository_id == '1276024943'");

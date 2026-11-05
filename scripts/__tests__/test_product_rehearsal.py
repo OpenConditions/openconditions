@@ -111,7 +111,7 @@ class RecoveryTests(unittest.TestCase):
 class NativeTests(T.ProductTests):
     def test_rehearsal_native_fences(self):
         q = self.qualify()
-        output = self.repo / "rehearsal"
+        output = self.root / "rehearsal"
 
         def runtime(role, identity, source, directory, **kwargs):
             R.Q.write_json(
@@ -126,7 +126,7 @@ class NativeTests(T.ProductTests):
             result = R.run(self.api, self.repo, q, output, clock=lambda: T.F.NOW)
         self.assertEqual(set(result["services"]), {"ingest", "contributions-api"})
         self.assertFalse(result["releaseAuthority"])
-        self.assertIn("actual prior-deployment", " ".join(result["pending"]))
+        self.assertIn("actual prior-deployment", " ".join(result["limitations"]))
         with self.assertRaises(FileExistsError):
             R.run(self.api, self.repo, q, output, clock=lambda: T.F.NOW)
         with self.assertRaises(ValueError):
@@ -134,22 +134,22 @@ class NativeTests(T.ProductTests):
                 self.api,
                 self.repo,
                 q,
-                self.repo / "expired",
+                self.root / "expired",
                 clock=lambda: T.F.NOW + timedelta(days=4),
             )
-        self.assertFalse((self.repo / "expired").exists())
+        self.assertFalse((self.root / "expired").exists())
 
     def test_rehearsal_final_drift(self):
         q = self.qualify()
-        output = self.repo / "drift"
-        original = R.B.final_native_fences
+        output = self.root / "drift"
+        original = R.P.final_fences
         calls = []
 
-        def fence(*args):
+        def fence(*args, **kwargs):
             calls.append(1)
             if len(calls) == 2:
                 raise ValueError("source authority changed")
-            return original(*args)
+            return original(*args, **kwargs)
 
         def runtime(role, identity, source, directory, **kwargs):
             R.Q.write_json(
@@ -162,7 +162,7 @@ class NativeTests(T.ProductTests):
 
         with (
             patch.object(R.Q, "runtime_smoke", runtime),
-            patch.object(R.B, "final_native_fences", fence),
+            patch.object(R.P, "final_fences", fence),
             self.assertRaisesRegex(ValueError, "source authority changed"),
         ):
             R.run(self.api, self.repo, q, output, clock=lambda: T.F.NOW)
@@ -172,7 +172,7 @@ class NativeTests(T.ProductTests):
 
     def test_rehearsal_runtime_failure(self):
         q = self.qualify()
-        output = self.repo / "failure"
+        output = self.root / "failure"
 
         def failed(*args, **kwargs):
             raise ValueError("owned runtime failed")
