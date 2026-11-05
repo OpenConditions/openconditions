@@ -22,3 +22,12 @@ it("keeps prepare/review validation read-only and inputs data-only and owned pub
   for (const step of w.jobs.qualify.steps) if (step.run) expect(step.run).not.toContain("${{");
   expect(Object.keys(w.jobs)).toEqual(["qualify", "preparation-pr"]);
 });
+
+it("executes owned PostgreSQL recovery and native rehearsal refusal controls", () => {
+  const p = spawnSync(
+    "python3",
+    ["-B", fileURLToPath(new URL("test_product_rehearsal.py", import.meta.url))],
+    { encoding: "utf8", timeout: 240000, maxBuffer: 16 * 1024 * 1024 },
+  );
+  expect(p.status, p.stdout + p.stderr).toBe(0);
+}, 245000);

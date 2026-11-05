@@ -157,7 +157,7 @@ function producer(root) {
   // A changed Python producer needs a fresh review of these context/recipe facts.
   if (
     sha256(regular(join(root, "scripts/qualify-container-images.py")).bytes) !==
-      "ec58a73a74288cf07ae6023d51260925b97c26d3a185d80db5e55c92a430b139" ||
+      "f073a2b9c6571dd086d6444bc7c8c499293606331b3572c006419399377f4348" ||
     JSON.stringify(job?.strategy?.matrix) !==
       JSON.stringify({ image: images.map((i) => i.image) }) ||
     step?.length !== 1 ||

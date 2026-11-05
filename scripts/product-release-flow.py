@@ -21,6 +21,11 @@ SPEC2 = importlib.util.spec_from_file_location(
 )
 PREP = importlib.util.module_from_spec(SPEC2)
 SPEC2.loader.exec_module(PREP)
+SPEC3 = importlib.util.spec_from_file_location(
+    "rehearsal", Path(__file__).with_name("rehearse-product-release.py")
+)
+REHEARSAL = importlib.util.module_from_spec(SPEC3)
+SPEC3.loader.exec_module(REHEARSAL)
 
 
 def discover(api, source, clock):
@@ -54,7 +59,7 @@ def discover(api, source, clock):
     return selected["id"], selected["run_attempt"]
 
 
-def summary(operation, version, source, artifact, blocked=None):
+def summary(operation, version, source, artifact, blocked=None, rehearsal=None):
     validation = "not verified" if blocked else "verified"
     return f"""# Product {operation}: {version}
 
@@ -66,8 +71,9 @@ Source: `{source}`
 - Manifest compatibility: {validation} (pointer/context checks and actual pinned CLI/admission).
 - Evidence: {artifact}
 - Readiness: **pending** installation, configuration/health, rights/privacy fixtures, prior-deployment upgrade/migration, backup/restore/recovery and optional federation/TUF evidence.
+- Disposable rehearsal: {rehearsal or "not executed by preparation; review runs default-service install/recovery"}.
 - Publication: **blocked**; trusted readiness producer, protected approval and promotion are not implemented.
-- Next: {"resolve the blocker and run this operation again" if blocked else ("open the preparation PR link from the preparation-pr job, review notes and required checks" if operation == "prepare" else "review exact A/B qualification and artifact; operational rehearsal remains separate")}.
+- Next: {"resolve the blocker and run this operation again" if blocked else ("open the preparation PR link from the preparation-pr job, review notes and required checks" if operation == "prepare" else "review the install/recovery results and pending checklist in the artifact")}.
 
 No run IDs, image digests or passing readiness JSON need to be transcribed. No tag, release, registry or host mutation occurred.
 """
@@ -140,6 +146,9 @@ def execute(api, repo, source, operation, version, notes, tools, output, clock=N
         version,
         clock=clock,
     )
+    REHEARSAL.run(
+        api, repo, q, output.with_name(output.name + "-rehearsal"), clock=clock
+    )
     return B.assemble(
         api,
         repo,
@@ -204,6 +213,11 @@ def main():
                 version,
                 source,
                 "Actions → this run → product-review artifact",
+                rehearsal=(
+                    "default-service clean configuration, health, bundled migrations and backup/restore/restart passed; remaining checklist pending"
+                    if operation == "review"
+                    else None
+                ),
             )
         )
 
