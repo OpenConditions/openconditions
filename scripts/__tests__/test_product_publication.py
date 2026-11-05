@@ -290,6 +290,13 @@ class Publication(T.ProductTests):
         }
         owner = self
 
+        upload_locations = {
+            "/v2/openconditions/ingest/blobs/uploads/": "/v2/openconditions/ingest/blobs/uploads/owned",
+            "/v2/openconditions/contributions-api/blobs/uploads/": "/v2/openconditions/contributions-api/blobs/uploads/owned",
+            "/v2/openconditions/federation/blobs/uploads/": "/v2/openconditions/federation/blobs/uploads/owned",
+            "/v2/openconditions/openlr-resolver/blobs/uploads/": "/v2/openconditions/openlr-resolver/blobs/uploads/owned",
+        }
+
         class Handler(http.server.BaseHTTPRequestHandler):
             def log_message(self, *args):
                 pass
@@ -319,8 +326,11 @@ class Publication(T.ProductTests):
                         if raw is not None:
                             headers["Docker-Content-Digest"] = "sha256:" + M.Q.sha(raw)
                     elif path.endswith("/uploads/"):
-                        status = 202
-                        headers["Location"] = path + "owned"
+                        if method == "POST" and path in upload_locations:
+                            status = 202
+                            headers["Location"] = upload_locations[path]
+                        else:
+                            status = 404
                     elif "/uploads/" in path and method == "PUT":
                         digest = params["digest"][0]
                         owner.assertEqual("sha256:" + M.Q.sha(body), digest)
@@ -447,6 +457,22 @@ class Publication(T.ProductTests):
             fences.append(1)
 
         try:
+            for role in M.Q.IMAGES:
+                route = f"/v2/openconditions/{role}/blobs/uploads/"
+                code, headers, _ = request("POST", "http://owned" + route, b"")
+                self.assertEqual(code, 202)
+                self.assertEqual(headers.get("Location"), route + "owned")
+            for route in [
+                "/v2/unowned/blobs/uploads/",
+                "/v2/openconditions/ingest/extra/blobs/uploads/",
+            ]:
+                code, headers, _ = request("POST", "http://owned" + route, b"")
+                self.assertEqual(
+                    code,
+                    404,
+                    "unknown upload route must not gain response-header authority",
+                )
+                self.assertNotIn("Location", headers)
             # Valid control reaches actual OCI blob uploads/Git tag/draft/asset writes.
             result = M.publish(
                 api, registry, files, images, fence, clock=lambda: T.F.NOW
