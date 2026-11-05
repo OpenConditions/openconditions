@@ -20,13 +20,29 @@ it("keeps prepare/review validation read-only and inputs data-only and owned pub
   expect(w.on.workflow_dispatch.inputs.operation.options).toEqual(["prepare", "review"]);
   expect(w.jobs.qualify.permissions).toEqual({ contents: "read", actions: "read" });
   for (const step of w.jobs.qualify.steps) if (step.run) expect(step.run).not.toContain("${{");
-  expect(Object.keys(w.jobs)).toEqual(["qualify", "preparation-pr"]);
+  expect(Object.keys(w.jobs)).toEqual(["qualify", "publication", "preparation-pr"]);
+  expect(w.jobs.publication.environment).toBe("product-release");
+  expect(w.jobs.publication.permissions).toEqual({
+    contents: "write",
+    packages: "write",
+    actions: "read",
+  });
+  expect(w.jobs.publication.if).toContain("needs.qualify.outputs.publication_ready == 'true'");
 });
 
 it("executes owned PostgreSQL recovery and native rehearsal refusal controls", () => {
   const p = spawnSync(
     "python3",
     ["-B", fileURLToPath(new URL("test_product_rehearsal.py", import.meta.url))],
+    { encoding: "utf8", timeout: 240000, maxBuffer: 16 * 1024 * 1024 },
+  );
+  expect(p.status, p.stdout + p.stderr).toBe(0);
+}, 245000);
+
+it("keeps missing real readiness blocked and exercises exact bytes through owned HTTP/Git/OCI", () => {
+  const p = spawnSync(
+    "python3",
+    ["-B", fileURLToPath(new URL("test_product_publication.py", import.meta.url))],
     { encoding: "utf8", timeout: 240000, maxBuffer: 16 * 1024 * 1024 },
   );
   expect(p.status, p.stdout + p.stderr).toBe(0);

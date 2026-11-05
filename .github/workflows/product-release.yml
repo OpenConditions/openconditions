@@ -30,6 +30,7 @@ jobs:
       github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
       github.workflow_sha == github.sha
     outputs:
+      publication_ready: ${{ steps.publication.outputs.ready }}
       review_artifact_id: ${{ steps.review-artifact.outputs.artifact-id }}
       review_artifact_digest: ${{ steps.review-artifact.outputs.artifact-digest }}
     runs-on: ubuntu-latest
@@ -97,6 +98,43 @@ jobs:
             ${{ runner.temp }}/product-rights-privacy.json
           if-no-files-found: error
           retention-days: 3
+      - name: Assess publication eligibility (never invent missing readiness)
+        id: publication
+        if: inputs.operation == 'review'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python -B scripts/publish-product-release.py --assess
+  publication:
+    needs: qualify
+    if: >-
+      needs.qualify.result == 'success' && inputs.operation == 'review' &&
+      needs.qualify.outputs.publication_ready == 'true' &&
+      github.repository == 'OpenConditions/openconditions' && github.repository_id == '1276024943' &&
+      github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main' &&
+      github.workflow_ref == 'OpenConditions/openconditions/.github/workflows/product-release.yml@refs/heads/main' &&
+      github.workflow_sha == github.sha
+    environment: product-release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
+      actions: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: "3.14"
+      - name: Recheck native protection and full execution authority after approval
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REVIEW_ARTIFACT_ID: ${{ needs.qualify.outputs.review_artifact_id }}
+          REVIEW_ARTIFACT_DIGEST: ${{ needs.qualify.outputs.review_artifact_digest }}
+        run: python -B scripts/publish-product-release.py
   preparation-pr:
     needs: qualify
     if: >-

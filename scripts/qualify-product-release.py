@@ -19,6 +19,7 @@ SPEC.loader.exec_module(N)
 require = N.require
 TOOLS = Path(__file__).resolve().parent.parent
 POLICY = [
+    "scripts/publish-product-release.py",
     "scripts/rehearse-product-release.py",
     "scripts/create-product-preparation-pr.py",
     "scripts/product-release-flow.py",
