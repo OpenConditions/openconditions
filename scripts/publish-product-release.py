@@ -181,8 +181,9 @@ def assets(bundle, directories, provenance, execution, now):
                 "attempt": original["producer"]["runAttempt"],
             },
         )
+        qualified = Q.regular(directory / "qualified.json")
         N.require(
-            report == Q.json_file(directory / "qualified.json")
+            report == Q.decode(qualified)
             and report["identity"]["platformManifestDigest"]
             == original["images"][role]["digest"],
             "original image substitution",
@@ -196,7 +197,14 @@ def assets(bundle, directories, provenance, execution, now):
         )
         files[role + ".provenance.json"] = provenance[role]
         for name in ["scan.json", "sbom.cdx.json", "qualified.json"]:
-            files[role + "." + name] = Q.regular(directory / name)
+            data = Q.regular(directory / name)
+            N.require(
+                (data == qualified and Q.decode(data) == report)
+                if name == "qualified.json"
+                else Q.sha(data) == report["artifacts"][name],
+                "report bytes changed after verification",
+            )
+            files[role + "." + name] = data
     files.update(execution)
     inventory = {
         name: {"sha256": Q.sha(data), "size": len(data)}
@@ -618,6 +626,19 @@ def publish(api, registry, files, images, fence, clock=None):
 
     if release:
         verify_release(release)
+        prior = api.json(f"{N.PREFIX}/releases/{release['id']}/assets?per_page=100")
+        N.require(
+            len(prior) < 100
+            and len({x["name"] for x in prior}) == len(prior)
+            and {x["name"] for x in prior} <= set(files)
+            and all(
+                x.get("state") == "uploaded"
+                and x.get("size") == len(files[x["name"]])
+                and x.get("digest") == "sha256:" + Q.sha(files[x["name"]])
+                for x in prior
+            ),
+            "conflicting asset before image promotion",
+        )
     # Reject all version-tag conflicts before any promotion.
     for role in Q.IMAGES:
         expected = manifest["images"][role]["digest"]

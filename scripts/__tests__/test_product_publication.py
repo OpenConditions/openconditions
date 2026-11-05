@@ -257,6 +257,29 @@ class Publication(T.ProductTests):
                 M.assets(bundle, directories, provenance, execution, T.F.NOW)
         finally:
             sbom.write_bytes(original)
+        # Actual owned file replacement after verified reads must not become a
+        # new publication inventory describing different bytes than provenance.
+        for name in ["scan.json", "sbom.cdx.json", "qualified.json"]:
+            path = directories["ingest"] / name
+            original = path.read_bytes()
+            reads = []
+            regular = M.Q.regular
+
+            def replace_after_verify(target):
+                if target == path:
+                    reads.append(1)
+                    if len(reads) == 2:
+                        path.write_bytes(b"{}")
+                return regular(target)
+
+            try:
+                with (
+                    patch.object(M.Q, "regular", replace_after_verify),
+                    self.assertRaisesRegex(ValueError, "report bytes changed"),
+                ):
+                    M.assets(bundle, directories, provenance, execution, T.F.NOW)
+            finally:
+                path.write_bytes(original)
         state = {
             "release": None,
             "assets": {},
@@ -441,6 +464,32 @@ class Publication(T.ProductTests):
             writes = len(state["writes"])
             M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
             self.assertEqual(writes, len(state["writes"]))
+            for role in M.Q.IMAGES:
+                old = M.Q.decode(registry.manifest(role, self.version))
+                old["annotations"] = {"org.opencontainers.image.version": "owned-old"}
+                state["manifests"][registry.path(role, "/manifests/preview")] = (
+                    M.N.canonical(old)
+                )
+            state["fail"] = "/v2/openconditions/contributions-api/manifests/preview"
+            with self.assertRaisesRegex(ValueError, "registry write/read failed"):
+                M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
+            self.assertFalse(state["release"]["draft"])
+            self.assertEqual(
+                registry.manifest("ingest", "preview"),
+                registry.manifest("ingest", self.version),
+            )
+            self.assertNotEqual(
+                registry.manifest("contributions-api", "preview"),
+                registry.manifest("contributions-api", self.version),
+            )
+            state["fail"] = None
+            M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
+            for role in M.Q.IMAGES:
+                self.assertEqual(
+                    registry.manifest(role, "preview"),
+                    registry.manifest(role, self.version),
+                )
+            writes = len(state["writes"])
             altered = dict(files)
             altered["release-notes.md"] += b"drift"
             with self.assertRaisesRegex(ValueError, "asset changed"):
@@ -456,8 +505,19 @@ class Publication(T.ProductTests):
                 )
             self.assertEqual(writes, len(state["writes"]))
             state["assets"]["extension.json"] = b"conflict"
+            state["release"].update(draft=True, immutable=False)
+            version_path = registry.path("ingest", "/manifests/" + self.version)
+            image_before = state["manifests"].pop(version_path)
+            writes = len(state["writes"])
             with self.assertRaisesRegex(ValueError, "conflicting asset"):
                 M.publish(api, registry, files, images, fence, clock=lambda: T.F.NOW)
+            self.assertEqual(
+                writes,
+                len(state["writes"]),
+                "known asset conflict must stop before replacing missing version tag",
+            )
+            state["manifests"][version_path] = image_before
+            state["release"].update(draft=False, immutable=True)
             state["assets"]["extension.json"] = files["extension.json"]
             # Fresh owned state; induce partial asset failure, verify preview never moves.
             owner.git("update-ref", "-d", "refs/tags/v" + self.version)
