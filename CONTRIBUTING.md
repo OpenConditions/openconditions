@@ -321,4 +321,4 @@ By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ### Conditional release information
 
-Qualified package consumer changes need a focused Changeset or a specific reviewed `Package release: none — reason`. Important breaking, migration or security/operator impact needs a product fragment and `Product release: operator-impact docs/release-notes/name.md`. Ordinary product work uses clear PR text; docs/internal/test-only changes need no empty notes. These rules also apply to bots. See [release information](docs/release-information.md) for commands, reviewer judgment and canonical version PR validation.
+Describe changes and any user action in ordinary PR prose. Authors and reviewers decide when a public package change deserves a Changeset or product notes would help release curation. Routine work needs no machine-readable declaration, waiver or mandatory fragment; bots follow the same source checks. See [release information](docs/release-information.md) for public-only notes and canonical version validation.

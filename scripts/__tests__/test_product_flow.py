@@ -28,6 +28,10 @@ class FlowTests(T.ProductTests):
             with self.assertRaises(ValueError):
                 M.discover(self.api, self.b, lambda: T.F.NOW)
             self.brun = original
+        self.assertEqual(
+            M.versioned_notes(self.version, "Owned reviewed notes."),
+            f"# Product {self.version}\n\nOwned reviewed notes.\n",
+        )
         text = M.summary("review", self.version, self.b)
         self.assertIn("Publish: explicit intent", text)
         self.assertIn("Not exercised: production upgrade", text)

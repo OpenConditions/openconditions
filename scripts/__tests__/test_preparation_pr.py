@@ -321,6 +321,8 @@ class PreparationTests(T.ProductTests):
         head = self.git("rev-parse", "HEAD")
         url = self.create()
         self.assertTrue(url.endswith("/42"))
+        self.assertNotIn("\nPackage release:", self.prs[0]["body"])
+        self.assertNotIn("\nProduct release:", self.prs[0]["body"])
         self.assertEqual(len(self.posts), 6)
         self.assertEqual(index, (self.repo / ".git/index").read_bytes())
         self.assertEqual(head, self.git("rev-parse", "HEAD"))

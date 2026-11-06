@@ -1,14 +1,5 @@
-# Product fragments
+# Product notes
 
-Create `docs/release-notes/short-name.md` only for meaningful operator-facing release significance, and reference it with `Product release: operator-impact docs/release-notes/short-name.md` in the PR body. Ordinary features and fixes can stay in clear PR prose for later curation. Do not fabricate a baseline fragment.
+Describe ordinary features, fixes and user actions in the PR. Add a Markdown note here when it is useful for later release curation, especially for a compatibility change or migration. No declaration or fixed set of fields is required.
 
-Use these fields with concrete content:
-
-```text
-Affected versions: Identify the actual affected versions or unreleased scope.
-Action: Explain the required operator or consumer action.
-Compatibility: State the breaking behavior, migration or compatibility boundary.
-Caveats: Record limitations and remaining qualification needs.
-```
-
-Fragments provide information for a future release. They authorize no publication, deployment, schema renumbering or risk acceptance.
+Actual product preparation collects reviewed notes for the selected version. Notes do not authorize publication, deployment, schema renumbering or risk acceptance.
