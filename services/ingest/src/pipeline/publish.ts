@@ -442,14 +442,14 @@ export async function publishFeatures(
     const { output } = input;
     if (output.publication?.sourcePublishedAt !== undefined) {
       const [previous] = await tx<
-        { last_success_at: Date | null }[]
-      >`SELECT last_success_at FROM conditions.source_status WHERE source = ${src.id}`;
+        { source_published_at: Date | null }[]
+      >`SELECT source_published_at FROM conditions.source_status WHERE source = ${src.id}`;
       if (
-        previous?.last_success_at &&
+        previous?.source_published_at &&
         Date.parse(output.publication.sourcePublishedAt) <=
-          new Date(previous.last_success_at).getTime()
+          new Date(previous.source_published_at).getTime()
       )
-        throw new Error("source publication did not advance beyond the last accepted poll");
+        throw new Error("source publication did not advance beyond the last accepted publication");
     }
 
     const summary = await writeSnapshotIn(
@@ -493,6 +493,11 @@ export async function publishFeatures(
       ...(input.warning ? { error: input.warning } : {}),
       publication: counts,
     });
+    if (output.publication?.sourcePublishedAt !== undefined) {
+      await tx`UPDATE conditions.source_status
+        SET source_published_at = ${output.publication.sourcePublishedAt}::timestamptz
+        WHERE source = ${src.id}`;
+    }
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
   return withCache(cache, published);

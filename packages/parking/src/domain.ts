@@ -76,7 +76,7 @@ const FORMATS: FeedFormat<ParkingCatalogFeed>[] = [
   sites("rdw", parseRdw, { specs: { required: true }, areas: { required: true } }),
   sites("sbb", parseSbb),
   sites("opendatahub", parseOpendatahub, LIVE_SITES),
-  sites("taipei", parseTaipei, LIVE_SITES),
+  { ...sites("taipei", parseTaipei, LIVE_SITES), sourceClock: true },
   sites("hdb", parseHdb, LIVE_SITES),
   sites("utmc", parseUtmc, LIVE_SITES),
   sites("tfnsw", parseTfnsw),

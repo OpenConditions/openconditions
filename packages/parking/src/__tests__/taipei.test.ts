@@ -109,18 +109,27 @@ it("keeps stable IDs across row order and tag case, and handles absent/zero/mult
   const a = parseTaipei(feed(), p, parseContext(now));
   const b = parseTaipei(feed(), { ...p, sites: [Buffer.from(swapped)] }, parseContext(now));
   expect(a.features.map((f) => f["id"]).sort()).toEqual(b.features.map((f) => f["id"]).sort());
-  for (const entry of [
-    "",
-    "<EntrancecoordInfo><Xcod>0</Xcod><Ycod>0</Ycod></EntrancecoordInfo>",
-    "<EntrancecoordInfo><Xcod>25.05</Xcod><Ycod>121.52</Ycod></EntrancecoordInfo><EntrancecoordInfo><Xcod>25.06</Xcod><Ycod>121.53</Ycod></EntrancecoordInfo>",
-  ]) {
+  for (const [entry, expected] of [
+    ["", []],
+    ["<EntrancecoordInfo><Xcod>0</Xcod><Ycod>0</Ycod></EntrancecoordInfo>", []],
+    [
+      "<EntrancecoordInfo><Xcod>25.05</Xcod><Ycod>121.52</Ycod></EntrancecoordInfo><EntrancecoordInfo><Xcod>25.06</Xcod><Ycod>121.53</Ycod></EntrancecoordInfo>",
+      [
+        [121.52, 25.05],
+        [121.53, 25.06],
+      ],
+    ],
+  ] as const) {
     const altered = xml.replace(
       /<EntranceCoord>[\s\S]*?<\/EntranceCoord>/,
       `<EntranceCoord>${entry}</EntranceCoord>`,
     );
     const out = parseTaipei(feed(), { ...p, sites: [Buffer.from(altered)] }, parseContext(now));
     expect(sealFailures(out.features)).toEqual([]);
-    expect(JSON.stringify(out.features[0])).not.toContain("[0,0]");
+    const location = out.features[0]!["details"] as {
+      entrances?: { point: { coordinates: number[] } }[];
+    };
+    expect((location.entrances ?? []).map((e) => e.point.coordinates)).toEqual(expected);
   }
 });
 it("refuses activation without explicit qualification", () => {
@@ -142,4 +151,34 @@ it("interprets CST under other process timezones", () => {
     if (original === undefined) delete process.env["TZ"];
     else process.env["TZ"] = original;
   }
+});
+
+it("maps all five categories and overlapping reserved counts exactly", () => {
+  const p = payloads();
+  const tags = ["TOTALCAR", "TOTALMOTOR", "TOTALBUS", "Pregnancy_First", "Handicap_First"];
+  let xml = p.sites[0]!.toString();
+  for (const tag of tags)
+    xml = xml.replace(new RegExp(`<${tag}>.*?</${tag}>`), `<${tag}>20</${tag}>`);
+  p.sites = [Buffer.from(xml)];
+  p.status = [
+    Buffer.from(
+      `<DATA><UPDATETIME>Sat Nov 07 16:10:00 CST 2026</UPDATETIME><PARK><ID>TPE0001</ID><AVAILABLECAR>17</AVAILABLECAR><AVAILABLEMOTOR>4</AVAILABLEMOTOR><AVAILABLEBUS>3</AVAILABLEBUS><AVAILABLEHANDICAP>2</AVAILABLEHANDICAP><AVAILABLEPREGNANCY>1</AVAILABLEPREGNANCY></PARK></DATA>`,
+    ),
+  ];
+  const out = parseTaipei(feed(), p, parseContext(now));
+  const components = out.features[0]!["components"] as {
+    details: { vehicleType: string; userGroup: string; capacity: number };
+  }[];
+  expect(
+    components.map((c) => [c.details.vehicleType, c.details.userGroup, c.details.capacity]),
+  ).toEqual([
+    ["car", "any", 20],
+    ["motorcycle", "any", 20],
+    ["bus", "any", 20],
+    ["any", "disabled", 20],
+    ["any", "family", 20],
+  ]);
+  expect(out.observations.map((o) => o["result"])).toEqual(
+    [17, 4, 3, 2, 1].map((value) => ({ type: "count", value })),
+  );
 });

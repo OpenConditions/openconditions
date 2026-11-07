@@ -187,7 +187,8 @@ export interface FusedSubject {
  * `mergedSources`, credited to the winner's publisher with the most
  * restrictive rights of all contributors. A value derived from an on-demand
  * source stays on demand and expires with the earliest such contributor, so
- * fusing never turns a read-through answer into history. The public fusion,
+ * fusing never turns a read-through answer into history. Explicit publisher
+ * expiries also cap the stored value at the earliest contributor expiry. The public fusion,
  * over the public contributors only, is the same row under
  * `@fused-public`.
  */
@@ -199,7 +200,7 @@ export function fusedObservation(
   const w = fusion.winner.observation;
   const contributors = fusion.contributors.map((c) => c.observation);
   const onDemand = contributors.filter((o) => o.provenance.accessMode === "on_demand");
-  const expiries = onDemand.flatMap((o) =>
+  const expiries = contributors.flatMap((o) =>
     o.freshness.expiresAt === undefined ? [] : [Date.parse(o.freshness.expiresAt)],
   );
   const rights = mostRestrictiveRights(contributors.map((o) => o.provenance.attribution));

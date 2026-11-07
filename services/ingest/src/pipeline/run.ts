@@ -481,9 +481,14 @@ async function runAttempt(
   // every poll fact recorded after it (the raw-payload
   // identity an archived blob will be filed under).
   let payloadHashes: string[] | undefined;
+  let sourceClockNetworkValidated = false;
   const recordStatus = async (update: SourceStatusUpdate) => {
     await upsertSourceStatus(deps.sql, src.id, {
       ...update,
+      ...(format.sourceClock ? { attemptAt } : {}),
+      ...(format.sourceClock
+        ? { publicationFresh: false, networkValidated: sourceClockNetworkValidated }
+        : {}),
       attemptId,
       ...(payloadHashes ? { payloadHashes } : {}),
     });
@@ -978,7 +983,8 @@ async function runAttempt(
         });
         return { count: 0, durationMs: Date.now() - start, outcome: "failed", error };
       }
-      if (fetched.length === 0) {
+      sourceClockNetworkValidated = answered > 0 && warnings.length === 0;
+      if (fetched.length === 0 && !format.sourceClock) {
         await recordStatus({
           freshnessWindowSec: src.freshnessWindowSec,
           outcome: "validated_unchanged",
