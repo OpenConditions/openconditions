@@ -34,6 +34,9 @@ const REPEATED_CAP = new Set([
   "geocode",
 ]);
 const SCALAR_CAP = new Set([
+  "audience",
+  "restriction",
+  "addresses",
   "identifier",
   "sender",
   "sent",
@@ -76,6 +79,63 @@ const SCALAR_CAP = new Set([
   "digest",
 ]);
 
+// Native CAP structure is strict; the shared decoder deliberately remains tolerant.
+const CONTAINERS: Record<string, readonly string[]> = {
+  alert: [
+    "identifier",
+    "sender",
+    "sent",
+    "status",
+    "msgType",
+    "source",
+    "scope",
+    "restriction",
+    "addresses",
+    "code",
+    "note",
+    "references",
+    "incidents",
+    "info",
+  ],
+  info: [
+    "language",
+    "category",
+    "event",
+    "responseType",
+    "urgency",
+    "severity",
+    "certainty",
+    "audience",
+    "eventCode",
+    "effective",
+    "onset",
+    "expires",
+    "senderName",
+    "headline",
+    "description",
+    "instruction",
+    "web",
+    "contact",
+    "parameter",
+    "resource",
+    "area",
+  ],
+  parameter: ["valueName", "value"],
+  eventCode: ["valueName", "value"],
+  geocode: ["valueName", "value"],
+  area: ["areaDesc", "polygon", "circle", "geocode", "altitude", "ceiling"],
+  resource: ["resourceDesc", "mimeType", "size", "uri", "derefUri", "digest"],
+};
+const REQUIRED: Record<string, readonly string[]> = {
+  alert: ["identifier", "sender", "sent", "status", "msgType", "scope"],
+  info: ["category", "event", "urgency", "severity", "certainty"],
+  parameter: ["valueName", "value"],
+  eventCode: ["valueName", "value"],
+  geocode: ["valueName", "value"],
+  area: ["areaDesc"],
+  resource: ["resourceDesc", "mimeType"],
+};
+
 /** Resolve every element against its in-scope namespaces before discarding prefixes. */
 function normalized(
   nodes: Node[],
@@ -112,8 +172,22 @@ function normalized(
           throw new Error("RFS: duplicate CAP singleton");
         seen.add(key);
       }
-      if (SCALAR_CAP.has(local) && values.some((v) => Object.keys(v)[0] !== "#text"))
-        throw new Error("RFS: non-scalar CAP value");
+      if (SCALAR_CAP.has(local)) {
+        if (values.length > 1 || values.some((v) => typeof v["#text"] !== "string"))
+          throw new Error("RFS: non-scalar CAP value");
+      } else {
+        const allowed = CONTAINERS[local];
+        if (!allowed) throw new Error("RFS: unknown CAP container");
+        only(values, allowed);
+        if (
+          ["parameter", "eventCode", "geocode"].includes(local) &&
+          !text(values, "valueName").trim()
+        )
+          throw new Error("RFS: empty CAP pair name");
+        for (const required of REQUIRED[local] ?? []) {
+          if (!values.some((v) => required in v)) throw new Error(`RFS: missing CAP ${required}`);
+        }
+      }
     }
     return [{ [local]: values }];
   });
@@ -164,6 +238,9 @@ export function parseNswRfs(
     "targetArea",
     "contentObject",
   ]);
+  // Screen all decoded source text before terminal/excluded records or fields can disappear.
+  if (/all rights reserved|no redistribution|not for redistribution/i.test(JSON.stringify(root)))
+    throw new Error("RFS: expressly restricted material");
   const published = capInstant(text(root, "dateTimeSent"));
   const now = Date.parse(ctx.fetchedAt);
   if (
@@ -219,6 +296,16 @@ export function parseNswRfs(
       !["Alert", "Update", "Cancel"].includes(alert.msgType)
     )
       throw new Error("RFS: invalid CAP identity/header");
+    if (
+      (alert.info ?? [])
+        .flatMap((i) => i.resource ?? [])
+        .some(
+          (r) =>
+            r.mimeType !== "text/html" ||
+            r.uri !== "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+        )
+    )
+      throw new Error("RFS: unqualified resource rights");
     const signature = JSON.stringify(alert);
     if (seen.has(alert.identifier)) {
       if (seen.get(alert.identifier) !== signature) throw new Error("RFS: conflicting duplicate");
@@ -286,18 +373,6 @@ export function parseNswRfs(
       native[0]!.value !== (type === "Bush Fire" ? "bushFire" : "grassFire")
     )
       throw new Error("RFS: missing/unknown CAP-AU wildfire code");
-    if (
-      /all rights reserved|no redistribution|not for redistribution/i.test(
-        JSON.stringify([
-          alert.note,
-          alert.source,
-          info.parameter,
-          info.description,
-          info.instruction,
-        ]),
-      )
-    )
-      throw new Error("RFS: expressly restricted material");
     if (fire !== "Yes") throw new Error("RFS: contradictory wildfire semantics");
     if (Date.parse(expiry) <= now) {
       terminal++;
@@ -305,14 +380,6 @@ export function parseNswRfs(
     }
     if (info.area?.length !== 1 || info.area.some((a) => a.circle?.length !== 1))
       throw new Error("RFS: missing incident anchor");
-    if (
-      (info.resource ?? []).some(
-        (r) =>
-          r.mimeType !== "text/html" ||
-          r.uri !== "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
-      )
-    )
-      throw new Error("RFS: unqualified resource rights");
     const projected = structuredClone(alert);
     // Never project a polygon or positive-radius circle as an incident footprint.
     for (const a of projected.info![0]!.area!) {
@@ -346,6 +413,20 @@ export function parseNswRfs(
         throw new Error("RFS: conflicting incident reference");
     }
   }
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (alert: CapAlert): void => {
+    if (visiting.has(alert.identifier)) throw new Error("RFS: cyclic lifecycle references");
+    if (visited.has(alert.identifier)) return;
+    visiting.add(alert.identifier);
+    for (const ref of capReferences(alert.references ?? "")) {
+      const parent = byId.get(ref.identifier);
+      if (parent) visit(parent);
+    }
+    visiting.delete(alert.identifier);
+    visited.add(alert.identifier);
+  };
+  for (const alert of candidates) visit(alert);
   const incidents = new Set<string>();
   for (const alert of currentMessages(candidates).current) {
     if (incidents.has(alert.incidents!)) throw new Error("RFS: conflicting incident revisions");

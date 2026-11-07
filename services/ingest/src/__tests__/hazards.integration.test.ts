@@ -22,6 +22,7 @@ import { registerScope } from "../api/scope.js";
 import { createOAuthGrants } from "../oauth-grants.js";
 import { createRoleState, type RunResult, runSource } from "../pipeline/run.js";
 import { REPO_CATALOG, repoFeed } from "./helpers/catalog.js";
+import { malformedInfo, revisionCycle } from "./helpers/nsw-rfs.js";
 import { registry } from "./helpers/situations.js";
 
 /**
@@ -52,6 +53,7 @@ let db: TestDatabase;
 let sql: postgres.Sql;
 let app: FastifyInstance;
 
+const apiSources = [...REPO_CATALOG.sources];
 const HAZARDS = REPO_CATALOG.feeds.filter((feed) => feed.domain === "hazards");
 
 beforeAll(async () => {
@@ -67,7 +69,11 @@ beforeAll(async () => {
   );
   app = Fastify();
   registerScope(app, TOKEN);
-  registerApiRoutes(app, sql, { registry, now: () => new Date(clock), catalog: REPO_CATALOG });
+  registerApiRoutes(app, sql, {
+    registry,
+    now: () => new Date(clock),
+    catalog: { sources: apiSources },
+  });
   await app.ready();
 }, 180_000);
 
@@ -734,6 +740,29 @@ describe("hazards feeds in the catalogue", () => {
 describe("NSW RFS current incidents qualification", () => {
   it("enforces the real worker gate, then exercises constructed qualification, retention, rights and source-clock expiry", async () => {
     const T = "2026-11-07T17:13:00Z";
+    const expected = JSON.parse(fixtureText("nsw-rfs-expected.json")) as {
+      identifier: string;
+      incident: string;
+      sent: string;
+      effective: string;
+      expires: string;
+      instruction: string;
+      coordinates: number[];
+    }[];
+    expect(expected).toHaveLength(17);
+    const credit =
+      "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au. Current Incidents, https://www.rfs.nsw.gov.au/fire-information/fires-near-me; CC BY 3.0 AU, https://creativecommons.org/licenses/by/3.0/au/. Modified by OpenConditions: CAP conversion, fire filtering and incident anchors; polygons omitted. No endorsement implied.";
+    const attribution = {
+      provider: credit,
+      license: "CC-BY-3.0-AU",
+      licenseUrl: "https://creativecommons.org/licenses/by/3.0/au/",
+    };
+    const initialSources = await get("/sources");
+    expect(
+      (initialSources["sources"] as Rec[]).find((r) => r["id"] === "au-nsw-rfs-alerts"),
+    ).toBeUndefined();
+    // Constructed operator configuration only: the committed catalogue stays disabled.
+    apiSources.push({ ...repoFeed("au-nsw-rfs-alerts"), disabled: undefined });
     await syncSources(sql, [{ ...repoFeed("au-nsw-rfs-alerts") }]);
     let body = fixtureText("nsw-rfs-current.xml");
     let unchanged = false;
@@ -756,27 +785,102 @@ describe("NSW RFS current incidents qualification", () => {
     const first = await rfs.poll(later(T, 1));
     expect(first.error).toBeUndefined();
     const live = await rfs.live();
-    expect(live.length).toBeGreaterThan(0);
+    expect(live).toHaveLength(17);
     const result = await get(
       "/situations?domain=hazards&kind=alert&bbox=140,-38,154,-28&limit=100",
     );
     const records = (result["records"] as Rec[]).filter((r) =>
       String(r["id"]).includes("au-nsw-rfs-alerts"),
     );
-    expect(records.length).toBe(live.length);
-    expect(records[0]).toMatchObject({
-      effects: [],
-      location: { fuzziness: "extent_unknown", geometry: { type: "Point" } },
-    });
-    expect(JSON.stringify(records)).toContain("Stay up to date");
-    expect(JSON.stringify(records)).toContain(
-      "© State of New South Wales (NSW Rural Fire Service). For current information go to www.rfs.nsw.gov.au.",
-    );
-    expect(JSON.stringify(records)).toContain("CC-BY-3.0-AU");
+    const expectedIds = expected
+      .map((e) => `oc:situation:au-nsw-rfs-alerts:${e.identifier}`)
+      .sort();
+    expect(records.map((r) => r["id"]).sort()).toEqual(expectedIds);
+    const assertRecord = (record: Rec, e: (typeof expected)[number]) => {
+      expect(record).toMatchObject({
+        id: `oc:situation:au-nsw-rfs-alerts:${e.identifier}`,
+        groupId: `nsw-rfs:webmaster@rfs.nsw.gov.au:${e.incident}`,
+        instruction: [{ lang: "en-AU", text: e.instruction }],
+        effects: [],
+        location: {
+          extent: "point",
+          fuzziness: "extent_unknown",
+          geometry: { type: "Point", coordinates: e.coordinates },
+        },
+        provenance: {
+          sourceId: "au-nsw-rfs-alerts",
+          recordId: e.identifier,
+          sourceUpdatedAt: e.sent,
+          attribution,
+        },
+        details: {
+          cap: {
+            identifier: e.identifier,
+            sent: e.sent,
+            effective: e.effective,
+            expires: e.expires,
+          },
+        },
+      });
+    };
+    for (const e of expected)
+      assertRecord(
+        records.find((r) => r["id"] === `oc:situation:au-nsw-rfs-alerts:${e.identifier}`)!,
+        e,
+      );
     const geo = await get("/situations.geojson?domain=hazards&bbox=140,-38,154,-28&limit=100");
-    expect(JSON.stringify(geo)).toContain("Stay up to date");
+    const features = (geo["features"] as Rec[]).filter((f) =>
+      String((f["properties"] as Rec)["id"]).includes("au-nsw-rfs-alerts"),
+    );
+    expect(features.map((f) => (f["properties"] as Rec)["id"]).sort()).toEqual(expectedIds);
+    for (const e of expected) {
+      const feature = features.find(
+        (f) => (f["properties"] as Rec)["id"] === `oc:situation:au-nsw-rfs-alerts:${e.identifier}`,
+      )!;
+      expect(feature["geometry"]).toEqual({ type: "Point", coordinates: e.coordinates });
+      // GeoJSON moves geometry to the feature, retaining point precision on location.
+      const properties = feature["properties"] as Rec;
+      assertRecord(
+        {
+          ...properties,
+          location: { ...(properties["location"] as Rec), geometry: feature["geometry"] },
+        },
+        e,
+      );
+    }
     const sources = await get("/sources");
-    expect(JSON.stringify(sources)).toContain("CC-BY-3.0-AU");
+    const source = (sources["sources"] as Rec[]).find((r) => r["id"] === "au-nsw-rfs-alerts");
+    expect(source).toMatchObject({
+      id: "au-nsw-rfs-alerts",
+      license: attribution.license,
+      attribution: credit,
+      homepage: "https://www.rfs.nsw.gov.au/fire-information/fires-near-me",
+      terms: { url: "https://www.rfs.nsw.gov.au/fire-information/fires-near-me" },
+      licensing: { declarations: [{ text: attribution.license, url: attribution.licenseUrl }] },
+    });
+    const original = body;
+    for (const adverse of [
+      revisionCycle(original, 2),
+      revisionCycle(original, 4),
+      original.replace("<headline>", "<headline>No redistribution. "),
+      ...malformedInfo.map((extra) => original.replace("<info>", `<info>${extra}`)),
+    ]) {
+      body = adverse;
+      delete rfs.roles.lastFetchedAt["alerts"];
+      expect((await rfs.poll(later(T, 10))).error).toBeDefined();
+      expect(await rfs.live()).toEqual(live);
+      const retained = await get("/situations?domain=hazards&bbox=140,-38,154,-28&limit=100");
+      expect(
+        (retained["records"] as Rec[]).filter((r) => String(r["id"]).includes("au-nsw-rfs-alerts")),
+      ).toEqual(records);
+      const retainedGeo = await get(
+        "/situations.geojson?domain=hazards&bbox=140,-38,154,-28&limit=100",
+      );
+      expect(JSON.stringify(retainedGeo)).not.toMatch(
+        /No redistribution|Evacuate immediately|cycle-/,
+      );
+    }
+    body = original;
     // Valid bytes with a subset are still forbidden when the independent gate is false.
     Object.assign(rfs.feed, { rfsCurrentSnapshotQualified: false });
     body = body.replace(/<contentObject>[\s\S]*?<\/contentObject>/, "");
@@ -793,10 +897,19 @@ describe("NSW RFS current incidents qualification", () => {
     // Constructed reissuance and withdrawal exercise the qualified storage contract.
     body = body.replaceAll("2026-11-07T20:51:00.0000000:", "2026-11-07T21:51:00.0000000:");
     delete rfs.roles.lastFetchedAt["alerts"];
-    expect((await rfs.poll(later(T, 1804))).error).toBeUndefined();
+    const replacement = await rfs.poll(later(T, 1804));
+    expect(replacement.error).toBeUndefined();
+    expect(replacement).toMatchObject({ count: 1, inserted: 1, deleted: 1 });
     const revised = await get("/situations?domain=hazards&bbox=140,-38,154,-28&limit=100");
     const revisedRfs = (revised["records"] as Rec[]).filter((r) =>
       String(r["id"]).includes("au-nsw-rfs-alerts"),
+    );
+    const replaced = expectedIds.filter((id) => id.includes("2026-11-07T20:51:00.0000000:"));
+    expect(replaced).toHaveLength(1);
+    expect(revisedRfs.map((r) => r["id"]).sort()).toEqual(
+      expectedIds
+        .map((id) => id.replace("2026-11-07T20:51:00.0000000:", "2026-11-07T21:51:00.0000000:"))
+        .sort(),
     );
     expect(revisedRfs.map((r) => r["groupId"]).sort()).toEqual(
       records.map((r) => r["groupId"]).sort(),

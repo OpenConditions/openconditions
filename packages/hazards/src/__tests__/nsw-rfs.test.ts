@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import { parseNswRfs } from "../formats/nsw-rfs.js";
 import { catalogFeed, parseContext } from "./helpers/hazards-feed.js";
+import { malformedInfo, revisionCycle } from "./helpers/nsw-rfs.js";
 import { sealFailures } from "./helpers/seal.js";
 
 const body = readFileSync(new URL("./fixtures/nsw-rfs-current.xml", import.meta.url));
@@ -180,4 +181,109 @@ test("constructed CAP Update/Cancel references supersede only the same publisher
       ),
     ),
   ).toThrow();
+});
+
+test.each([2, 4])("rejects a constructed %i-node equal-time revision cycle", (count) => {
+  expect(() => parse(Buffer.from(revisionCycle(body.toString(), count)))).toThrow(/cycl/i);
+});
+test.each(["headline", "audience", "senderName", "contact", "areaDesc", "resourceDesc"])(
+  "rejects explicit restrictions in %s before projection or exclusion",
+  (field) => {
+    const xml = body.toString().replace("<info>", `<info><${field}>No redistribution.</${field}>`);
+    // Put optional scalar fields into their proper containers, avoiding duplicate singletons.
+    const restricted = body.toString().includes(`<${field}>`)
+      ? body.toString().replace(`<${field}>`, `<${field}>No redistribution. `)
+      : field === "resourceDesc"
+        ? body
+            .toString()
+            .replace(
+              "<info>",
+              "<info><resource><resourceDesc>No redistribution.</resourceDesc><mimeType>text/html</mimeType><uri>https://www.rfs.nsw.gov.au/fire-information/fires-near-me</uri></resource>",
+            )
+        : xml;
+    expect(() => parse(Buffer.from(restricted))).toThrow(/restricted/);
+  },
+);
+test.each(malformedInfo)(
+  "rejects malformed native content mixed with valid records: %s",
+  (extra) => {
+    expect(() => parse(Buffer.from(body.toString().replace("<info>", `<info>${extra}`)))).toThrow();
+  },
+);
+
+test.each(["excluded", "expired", "cancelled"])(
+  "validates structure and notices before %s disposition",
+  (branch) => {
+    let xml = body.toString();
+    if (branch === "excluded")
+      xml = xml.replace("<value>Bush Fire</value>", "<value>Planned Event</value>");
+    if (branch === "expired")
+      xml = xml.replace(/<expires>[^<]+/, "<expires>2026-11-07T00:00:00+11:00");
+    if (branch === "cancelled") {
+      const id = xml.match(/<identifier>(.*?)<\/identifier>/)![1];
+      const sent = xml.match(/<sent>(.*?)<\/sent>/)![1];
+      xml = xml
+        .replace("<msgType>Alert</msgType>", "<msgType>Cancel</msgType>")
+        .replace(
+          "<incidents>",
+          `<references>webmaster@rfs.nsw.gov.au,missing-parent,${sent}</references><incidents>`,
+        );
+      expect(id).toBeTruthy();
+    }
+    expect(() =>
+      parse(Buffer.from(xml.replace("<info>", "<info><parameter><value>lost</value></parameter>"))),
+    ).toThrow();
+    expect(() =>
+      parse(Buffer.from(xml.replace("<headline>", "<headline>No redistribution. "))),
+    ).toThrow(/restricted/);
+  },
+);
+
+test("keeps valid native audience and mixed empty/nonempty parameter values", () => {
+  const out = parse(
+    Buffer.from(
+      body
+        .toString()
+        .replace(
+          "<info>",
+          "<info><audience>Residents</audience><parameter><valueName>Extra</valueName><value>Keep this text</value></parameter>",
+        ),
+    ),
+  );
+  expect(out.situations[0]).toMatchObject({
+    details: {
+      cap: {
+        audience: [{ lang: "en-AU", text: "Residents" }],
+        parameters: expect.arrayContaining([{ valueName: "Extra", value: "Keep this text" }]),
+      },
+    },
+  });
+  expect(sealFailures(out.situations)).toEqual([]);
+});
+
+test.each([undefined, false, "true", 1, null])(
+  "only literal true qualifies a native snapshot (%s)",
+  (flag) => {
+    expect(
+      parseNswRfs(
+        { ...catalogFeed("au-nsw-rfs-alerts"), rfsCurrentSnapshotQualified: flag } as never,
+        { alerts: [body] },
+        parseContext(at),
+      ).snapshotQualified,
+    ).toBe(false);
+  },
+);
+
+test("accepts a constructed longer acyclic equal-time native revision chain", () => {
+  const xml = revisionCycle(body.toString(), 4).replace(
+    "webmaster@rfs.nsw.gov.au,cycle-0,",
+    "webmaster@rfs.nsw.gov.au,prior-message-outside-snapshot,",
+  );
+  const out = parse(Buffer.from(xml));
+  expect(out.situations).toHaveLength(17);
+  expect(out.situations.filter((s) => String(s["id"]).includes("cycle-"))).toHaveLength(1);
+  expect(out.situations.find((s) => String(s["id"]).endsWith(":cycle-0"))).toMatchObject({
+    groupId: "nsw-rfs:webmaster@rfs.nsw.gov.au:684655",
+  });
+  expect(sealFailures(out.situations)).toEqual([]);
 });
