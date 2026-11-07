@@ -645,6 +645,13 @@
       "when": 1793779843938,
       "tag": "0091_compact_latest_identity",
       "breakpoints": true
+    },
+    {
+      "idx": 92,
+      "version": "7",
+      "when": 1794013784469,
+      "tag": "0092_compact_fused_lineage",
+      "breakpoints": true
     }
   ]
 }

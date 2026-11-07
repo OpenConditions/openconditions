@@ -157,6 +157,13 @@ const FUSED_COLUMNS: ColumnSpec[] = [
   { name: "fused_public", type: "boolean" },
 ];
 
+// Keep the existing TOAST datum when static credit matches. The new reading
+// still replaces every changing value, time and contributor reference.
+const FUSED_CONFLICT = upsertClause(SERIES_KEY, FUSED_COLUMNS).replace(
+  "template = excluded.template",
+  "template = CASE WHEN observation_latest.template_hash = excluded.template_hash THEN observation_latest.template ELSE excluded.template END",
+);
+
 /** A fused record as compared between refreshes: everything but when it was computed. */
 const comparable = (record: Rec) => {
   const {
@@ -534,13 +541,7 @@ async function refreshCanonical(
     );
     if (publicFusion !== undefined) write(group, publicFusion, FUSED_PUBLIC_SOURCE_ID, true);
   }
-  await insertRows(
-    tx,
-    "observation_latest",
-    FUSED_COLUMNS,
-    writes,
-    upsertClause(SERIES_KEY, FUSED_COLUMNS),
-  );
+  await insertRows(tx, "observation_latest", FUSED_COLUMNS, writes, FUSED_CONFLICT);
   counts.written += writes.length;
 
   const gone = existing
