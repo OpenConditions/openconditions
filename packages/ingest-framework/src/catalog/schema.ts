@@ -424,6 +424,10 @@ export const feedBaseShape = {
   snapshot: z
     .object({
       completeness: z.literal("complete"),
+      /** Pending qualification forbids publication, even if a local layer enables the feed. */
+      qualification: z.enum(["pending", "qualified"]).optional(),
+      minimumRecords: z.number().int().positive().optional(),
+      csv: z.literal(true).optional(),
       recordsPath: z.string().min(1).optional(),
       rootElement: z.string().min(1).optional(),
       publicationElement: z.string().min(1).optional(),
@@ -433,6 +437,15 @@ export const feedBaseShape = {
     })
     .strict()
     .superRefine((snapshot, ctx) => {
+      if (
+        snapshot.csv &&
+        (snapshot.recordsPath || snapshot.recordElement || snapshot.totalCountPath)
+      ) {
+        ctx.addIssue({ code: "custom", message: "CSV snapshot cannot use JSON/XML paths" });
+      }
+      if (snapshot.minimumRecords !== undefined && !snapshot.csv) {
+        ctx.addIssue({ code: "custom", message: "minimumRecords requires CSV snapshot" });
+      }
       if (snapshot.recordsPath && snapshot.recordElement) {
         ctx.addIssue({
           code: "custom",

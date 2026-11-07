@@ -106,6 +106,8 @@ function viewOf(
   const name = textOf(text(fields, mapping.viewName), mapping.lang);
   return {
     key,
+    ...optionalText("detailUrl", text(fields, mapping.detailUrl)),
+    ...optionalText("credit", creditOf(text(fields, mapping.credit))),
     ...(name === undefined ? {} : { name }),
     ...(bearing === undefined ? {} : { bearingDeg: bearing }),
     ...(compass === undefined || compass === "none"
@@ -125,6 +127,20 @@ function withoutAbsent(value: unknown, absent: ReadonlySet<string>): unknown {
       return kept === undefined ? [] : [[k, kept]];
     }),
   );
+}
+
+function creditOf(value: string | undefined): string | undefined {
+  const plain = value
+    ?.replace(/<[^>]*>/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;|&apos;/g, "'")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  return plain || undefined;
 }
 
 const FEET = 0.3048;
@@ -198,8 +214,15 @@ export function parseLayout(
       const key = viewKey(text(fields, mapping.viewKey) ?? "0");
       const views = cameras.get(cameraId) ?? new Map<string, ViewRecord>();
       cameras.set(cameraId, views);
-      if (views.has(key)) skip("malformed");
-      else
+      if (views.has(key)) {
+        if (
+          mapping.rejectConflictingViews === true &&
+          JSON.stringify(views.get(key)?.fields) !== JSON.stringify(fields)
+        ) {
+          throw new Error(`conflicting duplicate camera view ${cameraId}/${key}`);
+        }
+        skip("malformed");
+      } else
         views.set(key, {
           point: row.point,
           ...(row.pointDerived ? { pointDerived: true as const } : {}),
@@ -248,6 +271,8 @@ export function parseLayout(
           viewKey: key,
           status,
           point,
+          ...optionalText("detailUrl", text(fields, mapping.detailUrl)),
+          ...optionalText("credit", creditOf(text(fields, mapping.credit))),
           ...optionalText("imageUrl", text(fields, mapping.imageUrl)),
           ...optionalText("thumbnailUrl", text(fields, mapping.thumbnailUrl)),
           ...optionalText("streamUrl", streamUrl),
