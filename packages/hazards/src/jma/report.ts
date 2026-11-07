@@ -45,6 +45,13 @@ export interface JmaReport {
     depthM?: number;
     magnitude?: number;
     intensity?: string;
+    shakingAreas?: {
+      system: string;
+      code: string;
+      name: string;
+      maxIntensity?: string;
+      intensity?: string;
+    }[];
     coordinateRaw?: string;
     coordinateDescription?: string;
     magnitudeDescription?: string;
@@ -75,6 +82,42 @@ const WEATHER_CODES: Partial<Record<JmaFamily, Record<string, string>>> = {
     "48": "レベル４高潮危険警報",
     "38": "レベル５高潮特別警報",
   },
+};
+// Reviewed current VFVO50 subset, code table 81 (20261104). Other volcanic products
+// and non-level warning systems require their own release-semantics review.
+const VOLCANO_CODES: Record<string, Record<string, string>> = {
+  "噴火警報・予報（対象火山）": {
+    "11": "レベル１（活火山であることに留意）",
+    "12": "レベル２（火口周辺規制）",
+    "13": "レベル３（入山規制）",
+    "14": "レベル４（高齢者等避難）",
+    "15": "レベル５（避難）",
+  },
+  "噴火警報・予報（対象市町村等）": {
+    "01": "噴火警報",
+    "02": "火口周辺警報",
+    "03": "噴火警報（周辺海域）",
+    "04": "噴火予報：警報解除",
+    "05": "噴火予報",
+  },
+  "噴火警報・予報（対象市町村の防災対応等）": {
+    "41": "噴火警報：避難等",
+    "42": "噴火警報：入山規制等",
+    "43": "火口周辺警報：入山規制等",
+    "44": "噴火警報（周辺海域）：周辺海域警戒",
+    "45": "活火山であることに留意",
+    "46": "噴火警報：当該居住地域厳重警戒",
+    "47": "噴火警報：当該山麓厳重警戒",
+    "48": "噴火警報：火口周辺警戒",
+    "49": "火口周辺警報：火口周辺警戒",
+  },
+};
+const WEATHER_SYSTEMS: Record<string, string> = {
+  "気象警報・注意報（府県予報区等）": "気象情報／府県予報区・細分区域等",
+  "気象警報・注意報（一次細分区域等）": "気象情報／府県予報区・細分区域等",
+  "気象警報・注意報（市町村等をまとめた地域等）": "気象情報／府県予報区・細分区域等",
+  "気象警報・注意報（市町村等）": "気象・地震・火山情報／市町村等",
+  "気象警報・注意報（高潮予報区）": "高潮予報区間",
 };
 const HEADERS: Record<JmaFamily, { kind: string; version: string; title: string }> = {
   VXSE51: { kind: "震度速報", version: "1.0_0", title: "震度速報" },
@@ -144,6 +187,36 @@ function validateNamespaces(
     }
   }
 }
+const INTENSITIES = ["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7", "不明"];
+function nativeIntensity(value: unknown): string | undefined {
+  const token = text(value).trim();
+  if (token && !INTENSITIES.includes(token)) throw new Error("JMA: unknown intensity");
+  return token || undefined;
+}
+function shakingAreas(
+  observation: Node,
+): NonNullable<NonNullable<JmaReport["earthquake"]>["shakingAreas"]> {
+  const areas: NonNullable<NonNullable<JmaReport["earthquake"]>["shakingAreas"]> = [];
+  const walk = (parent: Node, tag: string, system: string) => {
+    for (const raw of list(parent[tag])) {
+      const area = node(raw);
+      if (areas.length >= 10000) throw new Error("JMA: shaking area bound");
+      areas.push({
+        system,
+        code: required(area["Code"]),
+        name: required(area["Name"]),
+        ...(area["MaxInt"] ? { maxIntensity: nativeIntensity(area["MaxInt"]) } : {}),
+        ...(area["Int"] ? { intensity: nativeIntensity(area["Int"]) } : {}),
+      });
+      if (tag === "Pref") descend(area, "Area", "地震情報／細分区域");
+      if (tag === "Area") descend(area, "City", "気象・地震・火山情報／市町村等");
+      if (tag === "City") descend(area, "IntensityStation", "震度観測点");
+    }
+  };
+  const descend = walk;
+  walk(observation, "Pref", "地震情報／都道府県等");
+  return areas;
+}
 const parser = new XMLParser({
   ignoreAttributes: false,
   parseTagValue: false,
@@ -175,7 +248,12 @@ const instant = (v: unknown, optional = false): string | undefined => {
   if (!s && optional) return undefined;
   if (
     !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d+)?(?:Z|[+-]\d\d:\d\d)$/.test(s) ||
-    !Number.isFinite(Date.parse(s))
+    !Number.isFinite(Date.parse(s)) ||
+    Number(s.slice(5, 7)) < 1 ||
+    Number(s.slice(5, 7)) > 12 ||
+    Number(s.slice(8, 10)) < 1 ||
+    Number(s.slice(8, 10)) >
+      new Date(Date.UTC(Number(s.slice(0, 4)), Number(s.slice(5, 7)), 0)).getUTCDate()
   )
     throw new Error("JMA: invalid time");
   return s;
@@ -271,10 +349,10 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
       throw new Error("JMA: unusable earthquake body");
     result.earthquake = {};
     if (intensity?.["Observation"]) {
-      const max = text(node(intensity["Observation"])["MaxInt"]);
-      if (max && !["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7", "不明"].includes(max))
-        throw new Error("JMA: unknown intensity");
+      const observation = node(intensity["Observation"]);
+      const max = nativeIntensity(observation["MaxInt"]);
       if (max) result.earthquake.intensity = max;
+      result.earthquake.shakingAreas = shakingAreas(observation);
     }
     if (eq) {
       const originAt = instant(eq["OriginTime"], true);
@@ -303,6 +381,7 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
         result.earthquake.depthM = -Number(depth[1]);
       const mag = node(eq["jmx_eb:Magnitude"]);
       if (mag["@_type"] !== "Mj") throw new Error("JMA: unsupported magnitude scale");
+      if (mag["@_unit"] !== undefined) throw new Error("JMA: unsupported magnitude unit");
       const m = text(mag);
       if (/^-?\d+(?:\.\d+)?$/.test(m)) result.earthquake.magnitude = Number(m);
       else if (m !== "NaN") throw new Error("JMA: invalid magnitude");
@@ -312,6 +391,13 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
     for (const raw of list(b[family === "VFVO50" ? "VolcanoInfo" : "Warning"])) {
       const warning = node(raw),
         system = required(warning["@_type"]);
+      if (
+        family === "VFVO50"
+          ? !Object.hasOwn(VOLCANO_CODES, system)
+          : !Object.hasOwn(WEATHER_SYSTEMS, system) ||
+            (system === "気象警報・注意報（高潮予報区）" && family !== "VPWW57")
+      )
+        throw new Error("JMA: unsupported warning system");
       for (const rawItem of list(warning["Item"])) {
         const item = node(rawItem);
         const areas = family === "VFVO50" ? list(node(item["Areas"])["Area"]) : list(item["Area"]);
@@ -320,7 +406,21 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
           for (const rawKind of list(item["Kind"])) {
             const kind = node(rawKind);
             const noWarning = text(kind["Status"]) === "発表警報・注意報はなし";
-            const codes = WEATHER_CODES[family];
+            const codes = family === "VFVO50" ? VOLCANO_CODES[system] : WEATHER_CODES[family];
+            if (family === "VFVO50") {
+              const codeType = required(node(item["Areas"])["@_codeType"]);
+              if (
+                codeType !==
+                (system === "噴火警報・予報（対象火山）"
+                  ? "火山名"
+                  : "気象・地震・火山情報／市町村等")
+              )
+                throw new Error("JMA: unsupported volcanic area system");
+              if (
+                !["", "発表", "継続", "引上げ", "引下げ", "解除"].includes(text(kind["Condition"]))
+              )
+                throw new Error("JMA: unsupported volcanic condition");
+            }
             if (
               codes &&
               !noWarning &&
@@ -335,11 +435,7 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
               system:
                 family === "VFVO50"
                   ? required(node(item["Areas"])["@_codeType"])
-                  : system === "気象警報・注意報（市町村等）"
-                    ? "気象・地震・火山情報／市町村等"
-                    : system === "気象警報・注意報（高潮予報区）"
-                      ? "高潮予報区間"
-                      : "気象情報／府県予報区・細分区域等",
+                  : WEATHER_SYSTEMS[system]!,
               area: required(area["Code"]),
               name: required(area["Name"]),
               code: noWarning ? "" : required(kind["Code"]),

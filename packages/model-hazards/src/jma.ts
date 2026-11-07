@@ -32,6 +32,27 @@ export const JmaDetails = z.strictObject({
   warningWording: z.string().min(1).optional(),
   warningStatus: z.string().optional(),
   intensity: z.enum(["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7", "不明"]).optional(),
+  shakingAreas: z
+    .array(
+      z.strictObject({
+        system: z.enum([
+          "地震情報／都道府県等",
+          "地震情報／細分区域",
+          "気象・地震・火山情報／市町村等",
+          "震度観測点",
+        ]),
+        code: z.string().min(1),
+        name: z.string().min(1),
+        maxIntensity: z
+          .enum(["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7", "不明"])
+          .optional(),
+        intensity: z
+          .enum(["0", "1", "2", "3", "4", "5-", "5+", "6-", "6+", "7", "不明"])
+          .optional(),
+      }),
+    )
+    .max(10000)
+    .optional(),
   coordinateRaw: z.string().optional(),
   coordinateDescription: z.string().optional(),
   magnitudeDescription: z.string().optional(),

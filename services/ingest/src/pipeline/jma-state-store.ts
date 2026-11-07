@@ -31,10 +31,20 @@ export function unpackJmaState(value: JmaPersistentState | PackedState): JmaPers
   };
 }
 function pack(state: JmaPersistentState): PackedState {
+  // Refuse cardinality overflow before hashing or serializing large shared reports.
+  if (
+    Object.keys(state.native.areas).length > 20000 ||
+    Object.keys(state.native.products).length > 4096
+  )
+    throw new Error("JMA: lifecycle state bound exceeded; retaining last good publication");
   const reports: Record<string, JmaReport> = {};
+  const references = new WeakMap<JmaReport, string>();
   const ref = (r: JmaReport) => {
+    const known = references.get(r);
+    if (known) return known;
     const id = createHash("sha256").update(JSON.stringify(r)).digest("hex");
     reports[id] = r;
+    references.set(r, id);
     return id;
   };
   const packed: PackedState = {

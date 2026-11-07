@@ -31,6 +31,7 @@ function details(r: JmaReport, w?: JmaWarning): Record<string, unknown> {
     publishingOffice: r.publishingOffice,
     editorialOffice: r.editorialOffice,
     nativeXml: r.nativeXml,
+    ...(r.earthquake?.shakingAreas ? { shakingAreas: r.earthquake.shakingAreas } : {}),
     ...(r.earthquake?.intensity ? { intensity: r.earthquake.intensity } : {}),
     ...(r.earthquake?.coordinateRaw ? { coordinateRaw: r.earthquake.coordinateRaw } : {}),
     ...(r.earthquake?.coordinateDescription

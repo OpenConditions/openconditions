@@ -255,3 +255,87 @@ test("cache-only index polls do not validate the network or change payload acqui
   expect(cached.networkValidated).toBe(false);
   expect(cached.reports[0]!.report.acquiredAt).toBe(first.reports[0]!.report.acquiredAt);
 });
+
+test("concurrent source commits serialize and stale polls cannot replace a newer revision", async () => {
+  const report = { ...readJmaReport(body, "VXSE52"), controlAt: "2026-11-07T00:59:00Z" };
+  let release!: () => void;
+  let entered!: () => void;
+  const locked = new Promise<void>((resolve) => {
+    entered = resolve;
+  });
+  const hold = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  const newer = reconcileJmaIn(db.sql, "concurrent-state", [report], at() + 1, false, async () => {
+    entered();
+    await hold;
+  });
+  await locked;
+  const stale = reconcileJmaIn(db.sql, "concurrent-state", [report], at(), true, async () => {
+    throw new Error("stale callback reached");
+  });
+  const rejected = expect(stale).rejects.toThrow("stale poll");
+  release();
+  await newer;
+  await rejected;
+  const [state] =
+    await db.sql`SELECT value FROM conditions.jma_state WHERE source='concurrent-state'`;
+  expect(state!.value.lastSuccess).toBe(at() + 1);
+  expect(state!.value.gap).toBe(false);
+});
+
+test("lifecycle area bound refuses publication and initialization atomically", async () => {
+  const original = readJmaReport(
+    readFileSync(
+      new URL(
+        "../../../../../packages/hazards/src/__tests__/fixtures/jma/VPWW55_JPTF_170922.xml",
+        import.meta.url,
+      ),
+    ),
+    "VPWW55",
+  );
+  const report = {
+    ...original,
+    warnings: Array.from({ length: 20001 }, (_, i) => ({
+      ...original.warnings[0]!,
+      area: String(i),
+    })),
+  };
+  const publish = vi.fn(async () => {});
+  await expect(
+    reconcileJmaIn(db.sql, "area-bound", [report], at(), true, publish, {
+      source: "area-bound",
+      at: new Date(at()).toISOString(),
+      coverage: "incomplete",
+      method: "rolling-index-observed-reports",
+      payloadHashes: [],
+    }),
+  ).rejects.toThrow("state bound");
+  expect(publish).not.toHaveBeenCalled();
+  expect(
+    await db.sql`SELECT value FROM conditions.jma_state WHERE source='area-bound'`,
+  ).toHaveLength(0);
+});
+
+test.each(["2026-11-06T00:00:00Z", "2026-11-08T00:00:00Z"])(
+  "aged or future index %s cannot start payload downloads",
+  async (updated) => {
+    const transport = vi.fn<typeof fetch>(
+      async () =>
+        new Response(
+          `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${updated}</updated><entry><id>${url}</id><link href="${url}"/></entry></feed>`,
+        ),
+    );
+    const acquisition = new JmaAcquisition(
+      jmaDownloadStore(db.sql),
+      "aged-index",
+      at,
+      transport,
+      lookup,
+    );
+    // Advance the fixed clock past any index cached by another test.
+    await db.sql`DELETE FROM conditions.jma_download WHERE url LIKE '%/feed/%'`;
+    await expect(acquisition.poll("eqvol", ["VXSE52"], at(), signal())).rejects.toThrow("index");
+    expect(transport.mock.calls.every(([u]) => !String(u).includes("/data/"))).toBe(true);
+  },
+);

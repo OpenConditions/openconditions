@@ -500,6 +500,70 @@
                 "不明"
               ]
             },
+            "shakingAreas": {
+              "maxItems": 10000,
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "system": {
+                    "type": "string",
+                    "enum": [
+                      "地震情報／都道府県等",
+                      "地震情報／細分区域",
+                      "気象・地震・火山情報／市町村等",
+                      "震度観測点"
+                    ]
+                  },
+                  "code": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "maxIntensity": {
+                    "type": "string",
+                    "enum": [
+                      "0",
+                      "1",
+                      "2",
+                      "3",
+                      "4",
+                      "7",
+                      "5-",
+                      "5+",
+                      "6-",
+                      "6+",
+                      "不明"
+                    ]
+                  },
+                  "intensity": {
+                    "type": "string",
+                    "enum": [
+                      "0",
+                      "1",
+                      "2",
+                      "3",
+                      "4",
+                      "7",
+                      "5-",
+                      "5+",
+                      "6-",
+                      "6+",
+                      "不明"
+                    ]
+                  }
+                },
+                "required": [
+                  "system",
+                  "code",
+                  "name"
+                ],
+                "additionalProperties": false
+              }
+            },
             "coordinateRaw": {
               "type": "string"
             },

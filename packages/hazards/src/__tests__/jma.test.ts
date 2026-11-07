@@ -136,3 +136,92 @@ test("qualitative shallow depth remains unknown across native line breaks", () =
     .replace("-10000/", "+0/");
   expect(readJmaReport(Buffer.from(xml), "VXSE52").earthquake?.depthM).toBeUndefined();
 });
+
+test("unsupported warning systems and volcanic code/wording pairs fail closed", () => {
+  const rain = fixture("VPWW55_JPTF_170922").toString();
+  expect(() =>
+    readJmaReport(
+      Buffer.from(rain.replaceAll("気象警報・注意報（市町村等）", "未審査区域")),
+      "VPWW55",
+    ),
+  ).toThrow("system");
+  const volcano = fixture("45_01_01_200522_VFVO50").toString();
+  for (const xml of [
+    volcano.replaceAll("<Code>13</Code>", "<Code>99</Code>"),
+    volcano.replaceAll("レベル３（入山規制）", "レベル１（活火山であることに留意）"),
+    volcano.replaceAll('codeType="火山名"', 'codeType="未審査区域"'),
+  ])
+    expect(() => readJmaReport(Buffer.from(xml), "VFVO50")).toThrow();
+});
+
+test("impossible calendar dates and mismatched magnitude units are refused", () => {
+  const xml = fixture("33_12_01_240613_VXSE52").toString();
+  expect(() =>
+    readJmaReport(Buffer.from(xml.replaceAll("2012-02-14", "2012-02-31")), "VXSE52"),
+  ).toThrow("time");
+  expect(() =>
+    readJmaReport(Buffer.from(xml.replace('type="Mj"', 'type="Mj" unit="km"')), "VXSE52"),
+  ).toThrow("unit");
+});
+
+test.each(["以上", "以浅", "不明", "ごく浅い"])(
+  "qualitative depth %s carries no numeric depth",
+  (qualifier) => {
+    const xml = fixture("33_12_01_240613_VXSE52").toString().replace("深さ　１０ｋｍ", qualifier);
+    expect(readJmaReport(Buffer.from(xml), "VXSE52").earthquake?.depthM).toBeUndefined();
+  },
+);
+
+test("native shaking areas keep distinct code systems and validated intensity tokens", () => {
+  const xml = fixture("32-35_01_03_240613_VXSE53").toString();
+  const r = readJmaReport(Buffer.from(xml), "VXSE53");
+  expect(r.earthquake?.shakingAreas).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ system: "地震情報／細分区域", code: "440", maxIntensity: "5-" }),
+      expect.objectContaining({
+        system: "気象・地震・火山情報／市町村等",
+        code: "2230600",
+        maxIntensity: "5-",
+      }),
+      expect.objectContaining({ system: "震度観測点" }),
+    ]),
+  );
+  expect(() =>
+    readJmaReport(Buffer.from(xml.replace("<Int>5-</Int>", "<Int>MMI</Int>")), "VXSE53"),
+  ).toThrow("intensity");
+});
+
+test.each([
+  ["VXSE51", "32-35_01_01_100806_VXSE51"],
+  ["VXSE52", "33_12_01_240613_VXSE52"],
+  ["VXSE53", "32-35_01_03_240613_VXSE53"],
+  ["VPWW55", "VPWW55_JPTF_170922"],
+  ["VPWW56", "VPWW56_JPTF_170922"],
+  ["VPWW57", "VPWW57_JPTF_151056"],
+  ["VFVO50", "45_01_01_200522_VFVO50"],
+] as const)(
+  "%s operational headers support corrections and exclude exercises/tests",
+  (family, name) => {
+    const original = fixture(name).toString();
+    for (const status of ["通常", "訓練", "試験"]) {
+      const xml = original
+        .replace(/<Status>[^<]+<\/Status>/, `<Status>${status}</Status>`)
+        .replace("<InfoType>発表</InfoType>", "<InfoType>訂正</InfoType>");
+      expect(readJmaReport(Buffer.from(xml), family)).toMatchObject({
+        infoType: "訂正",
+        operational: status === "通常",
+      });
+    }
+    expect(() =>
+      readJmaReport(
+        Buffer.from(
+          original.replace(
+            /<InfoKindVersion>[^<]+<\/InfoKindVersion>/,
+            "<InfoKindVersion>99.0_0</InfoKindVersion>",
+          ),
+        ),
+        family,
+      ),
+    ).toThrow("header");
+  },
+);

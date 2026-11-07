@@ -825,6 +825,73 @@ describe("JMA durable worker publication", () => {
     ).rejects.toThrow("bootstrap");
     await jmaApp.close();
   });
+  it("serves complementary earthquake families and independent cancellations through the portable API", async () => {
+    const feed = { ...repoFeed("jp-jma-quakes"), disabled: undefined };
+    const quakeApp = Fastify();
+    registerScope(quakeApp, TOKEN);
+    registerApiRoutes(quakeApp, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: { ...REPO_CATALOG, sources: [...REPO_CATALOG.sources, feed] },
+    });
+    await quakeApp.ready();
+    const event = "20091001134500";
+    let payload = Buffer.alloc(0);
+    let message = "";
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      model: { registry, instanceId: "test.local" },
+      env: { OPENCONDITIONS_JMA_EGRESS_ID: "jma-api-test" },
+      fetch: (async (input) =>
+        new Response(
+          String(input).includes("/data/")
+            ? payload
+            : `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`,
+        )) as typeof fetch,
+    };
+    const native = async (name: string, family: string, step: number) => {
+      clock = new Date(Date.parse("2012-02-14T13:00:00Z") + step * 120000).toISOString();
+      message = `https://www.data.jma.go.jp/developer/xml/data/20120214${String(130000 + step * 200)}_0_${family}_010000.xml`;
+      payload = Buffer.from(
+        fixture(`jma/${name}.xml`)
+          .toString()
+          .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${clock}</DateTime>`)
+          .replace(/<EventID>[^<]+<\/EventID>/, `<EventID>${event}</EventID>`)
+          .replace("<Status>訓練</Status>", "<Status>通常</Status>"),
+      );
+      await runSource(feed, deps);
+      const r = await quakeApp.inject({ url: "/situations?domain=hazards&type=earthquake" });
+      expect(r.statusCode).toBe(200);
+      return (r.json()["records"] as Rec[]).find(
+        (r) => ((r["details"] as Rec)["jma"] as Rec)["eventId"] === event,
+      );
+    };
+    await native("32-35_01_02_240613_VXSE52", "VXSE52", 0);
+    const folded = await native("32-35_01_01_100806_VXSE51", "VXSE51", 1);
+    expect(folded?.["details"]).toMatchObject({
+      magnitude: { scale: "Mj" },
+      jma: { intensity: "6-" },
+    });
+    const combined = await native("32-35_01_03_240613_VXSE53", "VXSE53", 2);
+    expect(combined?.["details"]).toMatchObject({
+      jma: {
+        intensity: "5-",
+        shakingAreas: expect.arrayContaining([expect.objectContaining({ code: "2230600" })]),
+      },
+    });
+    const without53 = await native("32-35_06_06_100915_VXSE53", "VXSE53", 3);
+    expect(without53?.["details"]).toMatchObject({
+      magnitude: { scale: "Mj" },
+      jma: { intensity: "6-" },
+    });
+    const without52 = await native("32-35_06_02_100915_VXSE52", "VXSE52", 4);
+    expect(without52?.["details"]).not.toHaveProperty("magnitude");
+    expect(without52?.["location"]).toMatchObject({ geometry: null });
+    expect(((without52?.["details"] ?? {}) as Rec)["jma"]).toMatchObject({ family: "VXSE51" });
+    await quakeApp.close();
+  });
   it("publishes each warning family under an explicit incomplete contract and retains empty-index state", async () => {
     const feed = { ...repoFeed("jp-jma-alerts"), disabled: undefined };
     await syncSources(sql, [feed]);
