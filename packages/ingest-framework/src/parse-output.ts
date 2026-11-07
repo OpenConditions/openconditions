@@ -71,6 +71,8 @@ export interface ParseOutput {
   statusIndex?: StatusIndex;
   /** The publisher cut its answer at a result cap: records past it are missing. */
   truncated?: boolean;
+  /** Exact reviewed feature publication verified by its parser. Shrink guards still apply. */
+  qualifiedFeatureSnapshot?: boolean;
 }
 
 /** What a status-only poll parsed into: readings, and the status records it could not use. */
