@@ -364,6 +364,11 @@ export function readJmaReport(body: Buffer, family: JmaFamily): JmaReport {
       const coordinate = coordinates[0];
       if (coordinate && typeof coordinate === "object") {
         const metadata = node(coordinate);
+        const nil = metadata["@_xsi:nil"];
+        if (nil !== undefined && !["true", "false", "0", "1"].includes(String(nil)))
+          throw new Error("JMA: invalid nil coordinate");
+        if ((nil === "true" || nil === "1") && text(coordinate).trim())
+          throw new Error("JMA: contradictory nil coordinate");
         if (metadata["@_type"] !== undefined && metadata["@_type"] !== "震源位置（度）")
           throw new Error("JMA: unqualified hypocentre datum or unit");
         if (metadata["@_unit"] !== undefined && metadata["@_unit"] !== "度")

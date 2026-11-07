@@ -339,3 +339,37 @@ test.each(["2026-11-06T00:00:00Z", "2026-11-08T00:00:00Z"])(
     expect(transport.mock.calls.every(([u]) => !String(u).includes("/data/"))).toBe(true);
   },
 );
+
+test("response byte ceiling refuses payload and retains its uncertain reservation", async () => {
+  const target = url.replace("104333", "104355");
+  const transport = vi.fn<typeof fetch>(async () => new Response(Buffer.alloc(8_000_001, 32)));
+  const client = new JmaAcquisition(jmaDownloadStore(db.sql), "byte-bound", at, transport, lookup);
+  await expect(client.read(target, signal())).rejects.toThrow();
+  expect(transport).toHaveBeenCalledTimes(1);
+  const [budget] =
+    await db.sql`SELECT used, reserved FROM conditions.jma_budget WHERE egress='byte-bound'`;
+  expect(Number(budget!.used)).toBe(0);
+  expect(Number(budget!.reserved)).toBe(8_000_000);
+  expect(await db.sql`SELECT 1 FROM conditions.jma_download WHERE url=${target}`).toHaveLength(0);
+});
+
+test("cache capacity refuses a new body and retention frees only expired entries", async () => {
+  const store = jmaDownloadStore(db.sql);
+  const target = url.replace("104333", "104335");
+  const [held] = await db.sql`SELECT count(*)::int AS count FROM conditions.jma_download`;
+  const count = 25000 - Number(held!.count);
+  await db.sql`INSERT INTO conditions.jma_download (url, value)
+    SELECT 'capacity-' || n, jsonb_build_object('body', '', 'checkedAt', ${at()}::bigint)
+    FROM generate_series(1, ${count}) n`;
+  const transport = vi.fn<typeof fetch>(async () => new Response(body));
+  const client = new JmaAcquisition(store, "capacity-test", at, transport, lookup);
+  await expect(client.read(target, signal())).rejects.toThrow("ceiling");
+  expect(await db.sql`SELECT 1 FROM conditions.jma_download WHERE url=${target}`).toHaveLength(0);
+  await db.sql`UPDATE conditions.jma_download SET value=jsonb_set(value, '{checkedAt}', '0') WHERE url='capacity-1'`;
+  await store.reserve("capacity-test", "2026-11-07", 1);
+  expect(await db.sql`SELECT 1 FROM conditions.jma_download WHERE url='capacity-1'`).toHaveLength(
+    0,
+  );
+  expect(await client.read(target, signal())).toEqual(body);
+  await db.sql`DELETE FROM conditions.jma_download WHERE url LIKE 'capacity-%'`;
+});

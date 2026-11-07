@@ -9,13 +9,11 @@ import {
   UNLOCATED,
 } from "../records.js";
 import type { JmaReport, JmaWarning } from "./report.js";
+import { assertJmaRights } from "./rights.js";
 import type { JmaAreaState } from "./state.js";
 
-/** Conservative subset of JMA offices present in the pinned official fixtures; no co-publishers. */
-const OFFICES = new Set(["気象庁", "気象庁本庁", "札幌管区気象台", "横浜地方気象台"]);
 function details(r: JmaReport, w?: JmaWarning): Record<string, unknown> {
-  if (!OFFICES.has(r.publishingOffice) || !OFFICES.has(r.editorialOffice))
-    throw new Error("JMA: unreviewed publishing/editorial office");
+  assertJmaRights(r);
   if (!r.messageUrl) throw new Error("JMA: missing immutable message URL");
   return {
     messageUrl: r.messageUrl,

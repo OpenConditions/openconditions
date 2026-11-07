@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { crc32 } from "node:zlib";
+import { readOutbox } from "@openconditions/federation";
 import {
   type CatalogFeed,
   type LookupFn,
@@ -16,7 +17,7 @@ import {
 import { createTestDatabase, type TestDatabase } from "@openconditions/test-database";
 import Fastify, { type FastifyInstance } from "fastify";
 import type postgres from "postgres";
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 import { registerApiRoutes } from "../api/routes.js";
 import { registerScope } from "../api/scope.js";
 import { createOAuthGrants } from "../oauth-grants.js";
@@ -851,12 +852,16 @@ describe("JMA durable worker publication", () => {
             : `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`,
         )) as typeof fetch,
     };
-    const native = async (name: string, family: string, step: number) => {
+    const native = async (
+      name: string,
+      family: string,
+      step: number,
+      transform = (xml: string) => xml,
+    ) => {
       clock = new Date(Date.parse("2012-02-14T13:00:00Z") + step * 120000).toISOString();
       message = `https://www.data.jma.go.jp/developer/xml/data/20120214${String(130000 + step * 200)}_0_${family}_010000.xml`;
       payload = Buffer.from(
-        fixture(`jma/${name}.xml`)
-          .toString()
+        transform(fixture(`jma/${name}.xml`).toString())
           .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${clock}</DateTime>`)
           .replace(/<EventID>[^<]+<\/EventID>/, `<EventID>${event}</EventID>`)
           .replace("<Status>訓練</Status>", "<Status>通常</Status>"),
@@ -881,12 +886,26 @@ describe("JMA durable worker publication", () => {
         shakingAreas: expect.arrayContaining([expect.objectContaining({ code: "2230600" })]),
       },
     });
-    const without53 = await native("32-35_06_06_100915_VXSE53", "VXSE53", 3);
+    const unknown52 = await native("33_12_01_240613_VXSE52", "VXSE52", 3, (xml) =>
+      xml.replace("深さ　１０ｋｍ", "ごく浅い"),
+    );
+    expect(unknown52?.["details"]).not.toHaveProperty("magnitude");
+    expect(unknown52?.["details"]).not.toHaveProperty("depth");
+    expect(unknown52?.["details"]).toMatchObject({ jma: { intensity: "5-" } });
+    const unknown53 = await native("32-35_01_03_240613_VXSE53", "VXSE53", 4, (xml) =>
+      xml
+        .replace(/(<jmx_eb:Magnitude[^>]*>)[^<]+/, "$1NaN")
+        .replace(/(<jmx_eb:Coordinate[^>]*>)[^<]+/, "$1"),
+    );
+    expect(unknown53?.["details"]).not.toHaveProperty("magnitude");
+    expect(unknown53?.["details"]).not.toHaveProperty("depth");
+    expect(unknown53?.["location"]).toMatchObject({ geometry: null });
+    const without53 = await native("32-35_06_06_100915_VXSE53", "VXSE53", 5);
     expect(without53?.["details"]).toMatchObject({
-      magnitude: { scale: "Mj" },
       jma: { intensity: "6-" },
     });
-    const without52 = await native("32-35_06_02_100915_VXSE52", "VXSE52", 4);
+    expect(without53?.["details"]).not.toHaveProperty("magnitude");
+    const without52 = await native("32-35_06_02_100915_VXSE52", "VXSE52", 6);
     expect(without52?.["details"]).not.toHaveProperty("magnitude");
     expect(without52?.["location"]).toMatchObject({ geometry: null });
     expect(((without52?.["details"] ?? {}) as Rec)["jma"]).toMatchObject({ family: "VXSE51" });
@@ -905,7 +924,7 @@ describe("JMA durable worker publication", () => {
     await jmaApp.ready();
     const cases = [
       ["VPWW55", "VPWW55_JPTF_170922.xml"],
-      ["VPWW56", "VPWW56_JPTF_170922.xml"],
+      ["VPWW56", "synthetic-jma-only-VPWW56.xml"],
       ["VPWW57", "VPWW57_JPTF_151056.xml"],
       ["VFVO50", "45_01_01_200522_VFVO50.xml"],
     ];
@@ -1020,6 +1039,15 @@ describe("JMA durable worker publication", () => {
             .replace(/<DateTime>[^<]+<\/DateTime>/, `<DateTime>${clock}</DateTime>`),
         ),
       );
+      if (family === "VPWW56") {
+        const [before] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+        await expect(runSource(feed, deps)).rejects.toThrow("office");
+        const [after] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+        expect(after!.value).toEqual(before!.value);
+        // Actual partner fixtures, including release, are withheld. The separate
+        // synthetic JMA-only landslide remains the last-good public record.
+        continue;
+      }
       await runSource(feed, deps);
       const result = (
         await jmaApp.inject({ url: "/situations?domain=hazards&limit=1000" })
@@ -1065,5 +1093,121 @@ describe("JMA durable worker publication", () => {
     expect(volcanoTombstones.length).toBeGreaterThan(0);
     expect(volcanoTombstones.every((a) => a.ended)).toBe(true);
     await jmaApp.close();
+  });
+  it("withholds uncleared native material before state, public projections, federation and raw archive", async () => {
+    const feed = { ...repoFeed("jp-jma-quakes"), id: "jp-jma-rights", disabled: undefined };
+    await syncSources(sql, [feed]);
+    await sql`INSERT INTO conditions.federation_subscription
+      (id, peer_id, delivery_mode, created_at, updated_at)
+      VALUES ('jma-rights', 'jma-rights', 'pull', now(), now())`;
+    const api = Fastify();
+    registerScope(api, TOKEN);
+    registerApiRoutes(api, sql, {
+      registry,
+      now: () => new Date(clock),
+      catalog: { ...REPO_CATALOG, sources: [...REPO_CATALOG.sources, feed] },
+    });
+    await api.ready();
+    clock = "2026-11-07T03:00:00Z";
+    const clean = fixtureText("jma/33_12_01_240613_VXSE52.xml").replace(
+      "2012-02-14T12:42:53Z",
+      clock,
+    );
+    let message =
+      "https://www.data.jma.go.jp/developer/xml/data/20261107030000_0_VXSE52_010000.xml";
+    let payload = clean;
+    const fetcher = vi.fn(
+      async (input: Parameters<typeof fetch>[0]) =>
+        new Response(
+          String(input).includes("/data/")
+            ? payload
+            : `<feed xmlns="http://www.w3.org/2005/Atom"><updated>${clock}</updated><entry><id>${message}</id><link href="${message}"/></entry></feed>`,
+        ),
+    );
+    const deps = {
+      sql,
+      now: () => clock,
+      lookup: fakeLookup,
+      model: { registry, instanceId: "test.local" },
+      env: { OPENCONDITIONS_JMA_EGRESS_ID: "rights-test" },
+      fetch: fetcher as typeof fetch,
+    };
+    await runSource(feed, deps);
+    const listing = (
+      await api.inject({ url: "/situations?domain=hazards&limit=1000" })
+    ).json() as Rec;
+    const record = (listing["records"] as Rec[]).find(
+      (r) => (r["provenance"] as Rec)["sourceId"] === feed.id,
+    )!;
+    expect(record).toBeDefined();
+    expect(JSON.stringify(record)).toContain(feed.attribution);
+    const urls = [
+      "/situations?domain=hazards&limit=1000",
+      "/situations.geojson?domain=hazards&limit=1000",
+      `/situations/${encodeURIComponent(String(record["id"]))}`,
+    ];
+    const before = await Promise.all(urls.map(async (url) => (await api.inject({ url })).json()));
+    const [state] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+    const exported = await readOutbox(sql, { limit: 500, now: clock });
+    expect(JSON.stringify(exported.orderedItems)).toContain(feed.id);
+    const mutations = [
+      clean.replace(
+        "<PublishingOffice>気象庁</PublishingOffice>",
+        "<PublishingOffice>uncleared</PublishingOffice>",
+      ),
+      clean.replace(
+        "<EditorialOffice>気象庁本庁</EditorialOffice>",
+        "<EditorialOffice>uncleared</EditorialOffice>",
+      ),
+      clean.replace(
+        "</Body>",
+        '<OfficeInfo><Office type="補足情報担当"><Name>uncleared</Name></Office></OfficeInfo></Body>',
+      ),
+      clean.replace("</Body>", "<Credit>uncleared</Credit></Body>"),
+      clean.replace("</Body>", "<Text>転載禁止</Text></Body>"),
+      clean.replace("</Body>", '<Text rights="reserved">unchanged</Text></Body>'),
+      // Restricted cancellation must not erase a previously cleared event.
+      clean
+        .replace("<InfoType>発表</InfoType>", "<InfoType>取消</InfoType>")
+        .replace("</Body>", "<Text>再配布禁止</Text></Body>"),
+    ];
+    for (const [i, native] of mutations.entries()) {
+      clock = later(clock, 120);
+      message = `https://www.data.jma.go.jp/developer/xml/data/2026110703${String(2 + i * 2).padStart(2, "0")}00_0_VXSE52_010000.xml`;
+      payload = native.replace("2026-11-07T03:00:00Z", clock);
+      await expect(runSource(feed, deps)).rejects.toThrow("JMA:");
+      const [after] = await sql`SELECT value FROM conditions.jma_state WHERE source=${feed.id}`;
+      expect(after!.value).toEqual(state!.value);
+      for (const [n, url] of urls.entries()) {
+        const response = await api.inject({ url });
+        expect(response.statusCode).toBe(200);
+        const body = response.json() as Rec;
+        const previous = before[n] as Rec;
+        // Collection metadata reflects the failed poll; canonical records remain unchanged.
+        expect(body["records"] ?? body["features"] ?? body).toEqual(
+          previous["records"] ?? previous["features"] ?? previous,
+        );
+      }
+      expect((await readOutbox(sql, { limit: 500, now: clock })).orderedItems).toEqual(
+        exported.orderedItems,
+      );
+      const [attempt] =
+        await sql`SELECT outcome FROM conditions.source_poll_attempt WHERE source=${feed.id} ORDER BY id DESC LIMIT 1`;
+      expect(attempt!.outcome).toBe("failed");
+    }
+    const raw = {
+      capture: vi.fn(async () => {}),
+      writer: vi.fn(async () => undefined),
+      finish: vi.fn(async () => {}),
+    };
+    fetcher.mockClear();
+    await expect(runSource(feed, { ...deps, raw })).rejects.toThrow("raw archive");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(raw.capture).not.toHaveBeenCalled();
+    expect(raw.writer).not.toHaveBeenCalled();
+    expect(raw.finish).not.toHaveBeenCalled();
+    const rows = await sql`SELECT 1 FROM conditions.raw_payload WHERE source_id=${feed.id}`;
+    expect(rows).toHaveLength(0);
+    await api.close();
   });
 });

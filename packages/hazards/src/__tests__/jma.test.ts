@@ -225,3 +225,29 @@ test.each([
     ).toThrow("header");
   },
 );
+
+test("supported empty/nil origins and coordinates remain unknown; alternative datums/units are gated", () => {
+  const xml = fixture("33_12_01_240613_VXSE52").toString();
+  const nil = xml
+    .replace(
+      /<OriginTime>[^<]+<\/OriginTime>/,
+      '<OriginTime xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+    )
+    .replace(
+      /<jmx_eb:Coordinate[^>]*>[^<]*<\/jmx_eb:Coordinate>/,
+      '<jmx_eb:Coordinate xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true"/>',
+    );
+  const unknown = readJmaReport(Buffer.from(nil), "VXSE52").earthquake;
+  expect(unknown?.originAt).toBeUndefined();
+  expect(unknown?.position).toBeUndefined();
+  expect(unknown?.depthM).toBeUndefined();
+  for (const metadata of ['type="震源位置（度分）"', 'type="日本測地系"', 'unit="度分"']) {
+    const variant = xml.replace("<jmx_eb:Coordinate ", `<jmx_eb:Coordinate ${metadata} `);
+    expect(() => readJmaReport(Buffer.from(variant), "VXSE52")).toThrow();
+  }
+  const contradictory = xml.replace(
+    "<jmx_eb:Coordinate ",
+    '<jmx_eb:Coordinate xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:nil="true" ',
+  );
+  expect(() => readJmaReport(Buffer.from(contradictory), "VXSE52")).toThrow("nil");
+});

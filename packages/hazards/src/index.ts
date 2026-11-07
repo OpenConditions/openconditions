@@ -22,6 +22,7 @@ export * from "./geometry.js";
 export * from "./jma/index.js";
 
 export * from "./jma/report.js";
+export * from "./jma/rights.js";
 export * from "./jma/situations.js";
 export * from "./jma/state.js";
 export {

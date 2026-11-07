@@ -1,4 +1,4 @@
-import { JMA_FAMILIES, jmaSituations } from "@openconditions/hazards";
+import { assertJmaRights, JMA_FAMILIES, jmaSituations } from "@openconditions/hazards";
 import type { CatalogFeed } from "@openconditions/ingest-framework";
 import { writeSnapshotIn } from "@openconditions/storage";
 import { JmaAcquisition } from "./jma-acquisition.js";
@@ -62,6 +62,16 @@ export async function runJma(
   }
   if (result.reports.some(({ report }) => Date.parse(report.controlAt) > at + 60_000))
     throw new Error("JMA: future report revision clock");
+  // Check incoming cancellations/releases as well as all retained native material.
+  for (const { report } of result.reports) assertJmaRights(report);
+  if (held) {
+    const native = unpackJmaState(held.value).native;
+    for (const report of new Set([
+      ...Object.values(native.products),
+      ...Object.values(native.areas).map((area) => area.report),
+    ]))
+      assertJmaRights(report);
+  }
   const summary = await reconcileJmaIn(
     deps.sql,
     src.id,

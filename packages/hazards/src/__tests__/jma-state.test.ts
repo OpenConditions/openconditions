@@ -70,3 +70,43 @@ test("JSONB key ordering does not turn a duplicate into a same-clock conflict", 
   const held = applyJmaAreaReports({ products: {}, areas: {} }, [original]);
   expect(() => applyJmaAreaReports(held, [reordered])).not.toThrow();
 });
+
+test.each([
+  ["VXSE51", "32-35_01_01_100806_VXSE51"],
+  ["VXSE52", "33_12_01_240613_VXSE52"],
+  ["VXSE53", "32-35_01_03_240613_VXSE53"],
+  ["VPWW55", "VPWW55_JPTF_170922"],
+  ["VPWW56", "synthetic-jma-only-VPWW56"],
+  ["VPWW57", "VPWW57_JPTF_151056"],
+  ["VFVO50", "45_01_01_200522_VFVO50"],
+] as const)(
+  "%s corrections replace state while exercises/tests cannot alter it",
+  (family, name) => {
+    const native = readFileSync(new URL(`./fixtures/jma/${name}.xml`, import.meta.url)).toString();
+    const operational = native.replace(/<Status>[^<]+<\/Status>/, "<Status>通常</Status>");
+    const first = readJmaReport(Buffer.from(operational), family);
+    const state = applyJmaAreaReports({ products: {}, areas: {} }, [first]);
+    const newer = operational
+      .replace(/<DateTime>[^<]+<\/DateTime>/, "<DateTime>2026-11-07T00:00:00Z</DateTime>")
+      .replace("<InfoType>発表</InfoType>", "<InfoType>訂正</InfoType>");
+    for (const status of ["訓練", "試験"]) {
+      const excluded = readJmaReport(
+        Buffer.from(newer.replace("<Status>通常</Status>", `<Status>${status}</Status>`)),
+        family,
+      );
+      expect(applyJmaAreaReports(state, [excluded])).toEqual(state);
+    }
+    const correction = readJmaReport(Buffer.from(newer), family);
+    const corrected = applyJmaAreaReports(state, [correction]);
+    expect(corrected).not.toEqual(state);
+    expect(applyJmaAreaReports(JSON.parse(JSON.stringify(corrected)), [first])).toEqual(corrected);
+    if (!family.startsWith("VXSE")) {
+      const cancellation = readJmaReport(
+        Buffer.from(newer.replace("<InfoType>訂正</InfoType>", "<InfoType>取消</InfoType>")),
+        family,
+      );
+      expect(() => applyJmaAreaReports(state, [cancellation])).toThrow("cancellation");
+      expect(applyJmaAreaReports(state, [])).toEqual(state);
+    }
+  },
+);
