@@ -617,6 +617,9 @@ importers:
       '@openconditions/model':
         specifier: workspace:*
         version: link:../model
+      fast-xml-parser:
+        specifier: ^5.11.2
+        version: 5.11.2
       impit:
         specifier: ^0.14.7
         version: 0.14.8

@@ -812,3 +812,15 @@ export const federationSubscription = conditionsSchema.table(
     ),
   ],
 );
+
+/** Durable CAP message window for SMN's rolling indexes, committed with publication. */
+export const smnCapMessage = conditionsSchema.table(
+  "smn_cap_message",
+  {
+    sourceId: text("source_id").notNull(),
+    identifier: text("identifier").notNull(),
+    body: bytea("body").notNull(),
+    retainUntil: timestamp("retain_until", { withTimezone: true }).notNull(),
+  },
+  (t) => [primaryKey({ columns: [t.sourceId, t.identifier] })],
+);
