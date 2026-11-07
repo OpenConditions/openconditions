@@ -4,6 +4,7 @@ import {
   GEONET_ACCEPT,
   GEONET_COVERAGE_MS,
   type GeonetSolution,
+  geonetAddSolution,
   geonetDraft,
   geonetFeatures,
   geonetRevision,
@@ -99,6 +100,7 @@ export async function acquireGeonet(
   if (recent.status !== 200) throw new Error("GeoNet discovery did not answer");
   for (const f of geonetFeatures(recent.body)) add(String(properties(f)["publicID"]));
   const solutions = new Map<string, GeonetSolution>();
+  const candidates = new Map<string, GeonetSolution[]>();
   let partitions = 0;
   const window = async (start: number, end: number, updated?: string): Promise<void> => {
     if (++partitions > 64) throw new Error("GeoNet partition budget exhausted");
@@ -118,7 +120,7 @@ export async function acquireGeonet(
     } else if (res.status === 200) {
       for (const s of geonetSolutions(res.body)) {
         add(s.id);
-        solutions.set(s.id, s);
+        solutions.set(s.id, geonetAddSolution(candidates, s, at));
       }
     } else if (res.status !== 204) throw new Error("GeoNet incomplete partition");
   };
@@ -157,7 +159,7 @@ export async function acquireGeonet(
         const selected = geonetSolutions(xml.body);
         if (selected.length !== 1 || selected[0]!.id !== id)
           throw new Error("GeoNet exact-event mismatch");
-        solution = selected[0];
+        solution = geonetAddSolution(candidates, selected[0]!, at);
       } else if (xml.status !== 204) throw new Error("GeoNet exact-event incomplete");
     }
     const draft = geonetDraft(feed, current, solution, at);

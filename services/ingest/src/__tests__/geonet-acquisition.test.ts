@@ -28,7 +28,8 @@ describe("GeoNet acquisition resource and completeness bounds", () => {
         JSON.stringify({
           type: "FeatureCollection",
           features: Array.from({ length: 513 }, (_, i) => ({
-            properties: { publicID: String(10000 + i) },
+            ...structuredClone(history.features[0]),
+            properties: { ...history.features[0].properties, publicID: String(10000 + i) },
           })),
         }),
       )) as typeof fetch;

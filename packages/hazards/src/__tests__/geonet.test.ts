@@ -3,9 +3,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import {
   GEONET_ID,
+  geonetAddSolution,
   geonetDraft,
   geonetFeatures,
   geonetRevision,
+  geonetSelect,
   geonetSolutions,
   parseGeonet,
 } from "../formats/geonet.js";
@@ -41,7 +43,7 @@ describe("GeoNet exact authority and preferred solutions", () => {
   it("uses the precise preferred XML origin and typed magnitude, not another solution", () => {
     const xml = geonetSolutions(body("event.xml"));
     expect(xml).toHaveLength(1);
-    expect(xml[0]).toEqual({
+    expect(xml[0]).toMatchObject({
       id: "2026p837394",
       type: "earthquake",
       time: "2026-11-06T20:03:41.541356Z",
@@ -138,4 +140,106 @@ describe("GeoNet exact authority and preferred solutions", () => {
     ).toThrow();
     expect(() => geonetSolutions(Buffer.from("<quakeml>"))).toThrow();
   });
+});
+
+describe("GeoNet XML revision ordering", () => {
+  it("preserves preferred references and component clocks", () => {
+    const s = geonetSolutions(body("event.xml"))[0]!;
+    expect(s.preferredOrigin).toBe("smi:nz.org.geonet/Origin/20261106200544.993381.24606");
+    expect(s.preferredMagnitude).toBe("smi:nz.org.geonet/Magnitude/20261106200610.51543.24633");
+    expect(s.clocks.event.modified).toBe("2026-11-06T20:06:22.536381Z");
+  });
+  it("orders classification transitions in both directions regardless of duplicate order", () => {
+    const older = geonetSolutions(body("event.xml"))[0]!;
+    for (const type of ["earthquake", "quarry blast"]) {
+      const a = structuredClone(older);
+      a.type = type === "earthquake" ? "quarry blast" : "earthquake";
+      const b = structuredClone(older);
+      b.type = type;
+      b.clocks.event.modified = "2026-11-07T10:00:00Z";
+      expect(geonetSelect(a, b)).toEqual(b);
+      expect(geonetSelect(b, a)).toEqual(b);
+    }
+  });
+  it("rejects conflicting equal or absent event clocks and unordered preferred magnitudes", () => {
+    const a = geonetSolutions(body("event.xml"))[0]!;
+    const b = structuredClone(a);
+    b.magnitude = { value: 4, scale: "Mw" };
+    b.preferredMagnitude = "smi:nz.org.geonet/other";
+    for (const [x, y] of [
+      [a, b],
+      [b, a],
+    ])
+      expect(() => geonetSelect(x, y)).toThrow();
+    b.clocks.event.modified = "2026-11-07T10:00:00Z";
+    expect(() => geonetSelect(a, b)).toThrow();
+    b.clocks.magnitude = { created: "2026-11-07T09:59:00Z" };
+    expect(geonetSelect(a, b)).toEqual(b);
+    expect(geonetSelect(b, a)).toEqual(b);
+    a.clocks.event = {};
+    b.clocks.event = {};
+    expect(() => geonetSelect(a, b)).toThrow();
+  });
+});
+
+describe("GeoNet supplied values are validated before terminal handling", () => {
+  it.each(["depth", "mmi", "magnitude", "modificationTime"])(
+    "rejects invalid supplied %s on deleted records",
+    (key) => {
+      const f = newest();
+      props(f)["quality"] = "deleted";
+      props(f)[key] = "broken";
+      expect(() => geonetDraft(feed(), f, undefined, AT)).toThrow();
+    },
+  );
+  it.each([
+    ["<evaluationMode>manual</evaluationMode>", "<evaluationMode>unknown</evaluationMode>"],
+    ["<preferredOriginID>", "<preferredOriginID>broken-"],
+    ["<type>earthquake</type>", "<type>unknown</type>"],
+    ["<depth><value>", "<depth><value>bad"],
+  ])("rejects semantic XML corruption of %s", (from, to) => {
+    expect(() =>
+      geonetSolutions(Buffer.from(body("event.xml").toString().replaceAll(from, to))),
+    ).toThrow();
+  });
+});
+
+it("rejects conflicting older duplicate ties in every arrival order", () => {
+  const a = geonetSolutions(body("event.xml"))[0]!;
+  const b = structuredClone(a);
+  b.type = "quarry blast";
+  const c = structuredClone(a);
+  c.clocks.event.modified = "2026-11-07T10:00:00Z";
+  for (const order of [
+    [a, b, c],
+    [a, c, b],
+    [b, a, c],
+    [b, c, a],
+    [c, a, b],
+    [c, b, a],
+  ]) {
+    expect(() => {
+      const candidates = new Map();
+      for (const s of order) geonetAddSolution(candidates, s, AT);
+    }).toThrow();
+  }
+});
+
+it("omits a magnitude with absent type but rejects a supplied invalid type", () => {
+  const xml = body("event.xml").toString();
+  expect(
+    geonetSolutions(Buffer.from(xml.replaceAll("<type>MLv</type>", "")))[0],
+  ).not.toHaveProperty("magnitude");
+  expect(() =>
+    geonetSolutions(Buffer.from(xml.replaceAll("<type>MLv</type>", "<type/>"))),
+  ).toThrow();
+});
+
+it("rejects conflicting history ties with equivalent clock spellings", () => {
+  const a = newest(),
+    b = newest();
+  props(a)["modificationTime"] = "2026-11-07T10:00:00Z";
+  props(b)["modificationTime"] = "2026-11-07T10:00:00.000Z";
+  props(b)["quality"] = "deleted";
+  expect(() => geonetRevision(a, [b], AT)).toThrow();
 });

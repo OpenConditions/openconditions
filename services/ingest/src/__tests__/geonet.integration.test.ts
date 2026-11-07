@@ -39,8 +39,11 @@ const captured = JSON.parse(
 ).features[0];
 const feature = structuredClone(captured);
 let xml = capturedXml;
+let exactXml: string | undefined;
+let historyRows: unknown[] = [];
 let recent = true;
 let noData = false;
+let xmlMissing = false;
 let noDetail = false;
 let outage = false;
 let split = false;
@@ -55,15 +58,16 @@ const fakeFetch = (async (input: string | URL | Request, init?: RequestInit) => 
   if (u.hostname === "api.geonet.org.nz") {
     expect(new Headers(init?.headers).get("Accept")).toBe("application/vnd.geo+json;version=2");
     if (u.pathname === "/quake") return new Response(collection(recent ? [feature] : []));
-    if (u.pathname.includes("/history/")) return new Response(collection([]));
+    if (u.pathname.includes("/history/")) return new Response(collection(historyRows));
     if (noData || noDetail) return new Response(null, { status: 204 });
     return new Response(collection([feature]));
   }
+  if (xmlMissing) return new Response(null, { status: 204 });
   expect(u.searchParams.has("eventtype")).toBe(false);
   expect(u.searchParams.has("includearrivals")).toBe(false);
   expect(u.searchParams.has("updateafter")).toBe(false);
   if (u.searchParams.has("eventid"))
-    return noData ? new Response(null, { status: 204 }) : new Response(xml);
+    return noData ? new Response(null, { status: 204 }) : new Response(exactXml ?? xml);
   const width =
     Date.parse(u.searchParams.get("endtime")!) - Date.parse(u.searchParams.get("starttime")!);
   if (split && width > 12 * 3600_000) return new Response(null, { status: 413 });
@@ -317,5 +321,128 @@ describe("GeoNet bounded worker and durable publication lifecycle", () => {
     await expect(
       acquireGeonet(feed, fakeFetch, now, [], undefined, controller.signal),
     ).rejects.toThrow();
+  });
+});
+
+describe("GeoNet conflicting and malformed revisions retain publication atomically", () => {
+  const cases = [
+    "stale best history",
+    "stale deleted history",
+    "bad JSON depth",
+    "bad JSON mmi",
+    "bad JSON clock",
+    "bad deleted",
+    "bad XML depth",
+    "bad XML magnitude",
+    "bad XML clock",
+    "bad XML reference",
+    "bad XML namespace",
+    "newer window reclassification",
+    "API XML revision conflict",
+    "missing XML event clock",
+    "duplicate magnitude forward",
+    "duplicate magnitude reverse",
+    "bad reclassified XML",
+  ];
+  it.each(cases)("fails the whole guarded worker poll for %s", async (scenario) => {
+    for (const k of Object.keys(feature)) delete feature[k];
+    Object.assign(feature, structuredClone(captured));
+    xml = capturedXml;
+    exactXml = undefined;
+    historyRows = [];
+    recent = true;
+    noData = false;
+    noDetail = false;
+    outage = false;
+    split = false;
+    failSplit = false;
+    now = new Date(Date.parse(now) + 60_000).toISOString();
+    // The preceding expiry test used Nov 10; use an independent source publication baseline.
+    await db.sql`DELETE FROM conditions.geonet_coverage WHERE source_id = ${feed.id}`;
+    now = "2026-11-08T12:00:00Z";
+    expect((await poll()).error).toBeUndefined();
+    const before = await kept();
+    const beforeCursor = await cursor();
+    if (scenario.startsWith("stale")) {
+      delete feature.properties.modificationTime;
+      const h = structuredClone(captured);
+      if (scenario === "stale best history") feature.properties.quality = "deleted";
+      else h.properties.quality = "deleted";
+      historyRows = [h];
+    }
+    if (scenario === "bad JSON depth") feature.properties.depth = "broken";
+    if (scenario === "bad JSON mmi") feature.properties.mmi = "broken";
+    if (scenario === "bad JSON clock") feature.properties.modificationTime = "broken";
+    if (scenario === "bad deleted") {
+      feature.properties.quality = "deleted";
+      feature.properties.depth = "broken";
+    }
+    if (scenario === "bad XML depth") xml = xml.replace("3969.5246219635", "broken");
+    if (scenario === "bad XML magnitude") xml = xml.replace("2.1407037605271118", "broken");
+    if (scenario === "bad XML clock") xml = xml.replaceAll("2026-11-06T20:06:22.536381Z", "broken");
+    if (scenario === "bad XML reference")
+      xml = xml.replace("<preferredMagnitudeID>", "<preferredMagnitudeID>missing-");
+    if (scenario === "bad XML namespace")
+      xml = xml.replace("http://quakeml.org/xmlns/bed/1.2", "urn:wrong");
+    if (scenario === "newer window reclassification") {
+      exactXml = capturedXml;
+      xml = xml
+        .replace("<type>earthquake</type>", "<type>quarry blast</type>")
+        .replaceAll("2026-11-06T20:06:22.536381Z", "2026-11-08T12:00:30Z");
+    }
+    if (scenario === "API XML revision conflict") feature.properties.time = "2026-11-06T20:04:00Z";
+    if (scenario === "missing XML event clock")
+      xml = xml
+        .replace("<creationTime>2026-11-06T20:04:11.296939Z</creationTime>", "")
+        .replace(/<scs:modificationTime[^>]*>[^<]*<\/scs:modificationTime>/g, "");
+    if (scenario.startsWith("duplicate magnitude")) {
+      const a = xml.match(/<event publicID=[\s\S]*?<\/event>/)![0];
+      const b = a.replace(
+        "<preferredMagnitudeID>smi:nz.org.geonet/Magnitude/20261106200610.51543.24633",
+        "<preferredMagnitudeID>smi:nz.org.geonet/Magnitude/20261106200610.516524.24642",
+      );
+      xml = xml.replace(a, scenario.endsWith("forward") ? a + b : b + a);
+    }
+    if (scenario === "bad reclassified XML")
+      xml = xml
+        .replace("<type>earthquake</type>", "<type>quarry blast</type>")
+        .replace("3969.5246219635", "broken");
+    now = "2026-11-08T12:01:00Z";
+    expect((await poll()).error).toBeDefined();
+    expect(await kept()).toEqual(before);
+    expect(await cursor()).toBe(beforeCursor);
+    const status =
+      await db.sql`SELECT outcome FROM conditions.source_poll_attempt WHERE source = ${feed.id} AND attempted_at = ${now}::timestamptz`;
+    expect(status.at(-1)?.outcome).toBe("failed");
+  });
+  it("accepts a newer exact earthquake after an older window reclassification", async () => {
+    Object.assign(feature, structuredClone(captured));
+    historyRows = [];
+    noData = false;
+    xml = capturedXml.replace("<type>earthquake</type>", "<type>quarry blast</type>");
+    exactXml = capturedXml.replaceAll("2026-11-06T20:06:22.536381Z", "2026-11-08T12:01:30Z");
+    feature.properties.modificationTime = "2026-11-08T12:01:30Z";
+    now = "2026-11-08T12:02:00Z";
+    expect((await poll()).error).toBeUndefined();
+    expect((await kept()).tombstone_reason).toBeNull();
+    expect((await kept()).record).toMatchObject({
+      type: "earthquake",
+      details: { magnitude: { value: 2.1407037605271118, scale: "MLv" } },
+    });
+  });
+  it("accepts contractual absent measurements with XML 204", async () => {
+    Object.assign(feature, structuredClone(captured));
+    historyRows = [];
+    xmlMissing = true;
+    feature.properties.depth = null;
+    feature.properties.magnitude = null;
+    feature.properties.mmi = null;
+    now = "2026-11-08T12:03:00Z";
+    expect((await poll()).error).toBeUndefined();
+    expect((await kept()).record).not.toHaveProperty("details.depth");
+    expect((await kept()).record).not.toHaveProperty("details.magnitude");
+    expect((await kept()).record).not.toHaveProperty("extras.geonetLocalityMmi");
+    expect(await cursor()).toContain("12:03:00");
+    xmlMissing = false;
   });
 });
