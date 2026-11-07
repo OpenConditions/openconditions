@@ -10,7 +10,7 @@ import {
 } from "@openconditions/ingest-framework";
 import { zonedWallClockToInstant } from "@openconditions/model";
 import type { ChargingCatalogFeed } from "../feed-schema.js";
-import { type EvseInput, siteDraft } from "../site.js";
+import { type EvseInput, evseKey, siteDraft } from "../site.js";
 import { isRecord, placeAt, text } from "./raw.js";
 
 const ALLOW = [
@@ -123,6 +123,8 @@ export function parseGeofa(
           : p["planstatus_kode"] === 2
             ? "planned"
             : "unknown";
+      if (resolved && new Set(distinct.map(evseKey)).size !== distinct.length)
+        throw new Error("GeoFA: conflicting EVSE component key");
       const evses: EvseInput[] = resolved
         ? distinct.map((id) => {
             if (evseOwners.has(id.replaceAll("*", "").toUpperCase()))

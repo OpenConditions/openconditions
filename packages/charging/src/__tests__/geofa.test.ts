@@ -212,3 +212,14 @@ test("reordering pages preserves canonical facility and component drafts", () =>
   expect(one.features).toEqual(two.features);
   expect(sealFailures(two.features)).toEqual([]);
 });
+
+test("rejects distinct EVSE IDs that collapse to one component key", () => {
+  expect(() =>
+    parse([
+      row({
+        internationalt_id: "DK*SPA*EA/B",
+        internationalt_id1: "DK*SPA*EA#B",
+      }),
+    ]),
+  ).toThrow(/conflicting EVSE component key/);
+});
