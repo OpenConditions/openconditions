@@ -1,0 +1,293 @@
+{
+  "profile": "pg18",
+  "image": "ghcr.io/baosystems/postgis:18-3.6@sha256:4117c8beae9081e76a23a1577c64d05260a61fb0a3c212f37596054ef4c190d8",
+  "container": "c7d77cca7c2d148228c6e510a8c4d3fdd15787a13fb65d50023c7a8188cccab7",
+  "buffers_mb": 64,
+  "arms": [
+    {
+      "arm": "reference",
+      "rows": 24000,
+      "sites": 600,
+      "cycles": 12,
+      "size": {
+        "bytes": 110567424
+      },
+      "settings": [
+        {
+          "name": "autovacuum",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "autovacuum_naptime",
+          "setting": "60",
+          "unit": "s"
+        },
+        {
+          "name": "fsync",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "full_page_writes",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "shared_buffers",
+          "setting": "8192",
+          "unit": "8kB"
+        },
+        {
+          "name": "synchronous_commit",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "wal_compression",
+          "setting": "zstd",
+          "unit": null
+        }
+      ],
+      "counts": {
+        "native": 288000,
+        "history": 48000,
+        "fused": 10800
+      },
+      "latency_ms": [
+        3942.2357500000016, 3733.897208000002, 3630.205833, 3650.8344590000015, 3689.015709000003,
+        3702.044833, 3645.5001669999983, 3669.705084000001, 3663.953542000003, 3740.6854169999933,
+        3775.943834000005, 3884.871291999996
+      ],
+      "wal_bytes": 323730472,
+      "relation_bytes": 975495168,
+      "updates": 309600,
+      "hot": 288000,
+      "autovacuums": 0,
+      "toast_inserts": 21660,
+      "toast_deletes": 21660,
+      "cgroup_write_bytes": {
+        "254:0": 973189120
+      },
+      "records": "df6b8c79a1da1421c8e12cf2bc3bc8ce",
+      "history": "78c3a5247226870681f4314744e48d20"
+    },
+    {
+      "arm": "candidate",
+      "rows": 24000,
+      "sites": 600,
+      "cycles": 12,
+      "size": {
+        "bytes": 109371392
+      },
+      "settings": [
+        {
+          "name": "autovacuum",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "autovacuum_naptime",
+          "setting": "60",
+          "unit": "s"
+        },
+        {
+          "name": "fsync",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "full_page_writes",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "shared_buffers",
+          "setting": "8192",
+          "unit": "8kB"
+        },
+        {
+          "name": "synchronous_commit",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "wal_compression",
+          "setting": "zstd",
+          "unit": null
+        }
+      ],
+      "counts": {
+        "native": 288000,
+        "history": 48000,
+        "fused": 10800
+      },
+      "latency_ms": [
+        4005.4866249999905, 3738.469292000009, 3766.201209000006, 3717.9002089999994,
+        3715.49887499999, 3833.8307499999937, 3765.4298750000016, 3696.4400830000086,
+        3715.561957999991, 3754.6639580000046, 3700.164042000004, 3752.1347499999974
+      ],
+      "wal_bytes": 280192040,
+      "relation_bytes": 729505792,
+      "updates": 309600,
+      "hot": 288000,
+      "autovacuums": 0,
+      "toast_inserts": 10980,
+      "toast_deletes": 10980,
+      "cgroup_write_bytes": {
+        "254:0": 627822592
+      },
+      "records": "df6b8c79a1da1421c8e12cf2bc3bc8ce",
+      "history": "78c3a5247226870681f4314744e48d20"
+    },
+    {
+      "arm": "candidate",
+      "rows": 24000,
+      "sites": 600,
+      "cycles": 12,
+      "size": {
+        "bytes": 109854720
+      },
+      "settings": [
+        {
+          "name": "autovacuum",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "autovacuum_naptime",
+          "setting": "60",
+          "unit": "s"
+        },
+        {
+          "name": "fsync",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "full_page_writes",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "shared_buffers",
+          "setting": "8192",
+          "unit": "8kB"
+        },
+        {
+          "name": "synchronous_commit",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "wal_compression",
+          "setting": "zstd",
+          "unit": null
+        }
+      ],
+      "counts": {
+        "native": 288000,
+        "history": 48000,
+        "fused": 10800
+      },
+      "latency_ms": [
+        3772.015458000009, 3879.225542, 3827.243625000003, 3733.01791699999, 3627.793000000005,
+        3841.9180840000045, 3673.81479199999, 3757.7685829999973, 3705.3370410000207,
+        3848.049250000011, 3732.553790999984, 3733.8008749999863
+      ],
+      "wal_bytes": 275751408,
+      "relation_bytes": 770777088,
+      "updates": 309600,
+      "hot": 288000,
+      "autovacuums": 0,
+      "toast_inserts": 10980,
+      "toast_deletes": 10980,
+      "cgroup_write_bytes": {
+        "254:0": 598896640
+      },
+      "records": "df6b8c79a1da1421c8e12cf2bc3bc8ce",
+      "history": "78c3a5247226870681f4314744e48d20"
+    },
+    {
+      "arm": "reference",
+      "rows": 24000,
+      "sites": 600,
+      "cycles": 12,
+      "size": {
+        "bytes": 110575616
+      },
+      "settings": [
+        {
+          "name": "autovacuum",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "autovacuum_naptime",
+          "setting": "60",
+          "unit": "s"
+        },
+        {
+          "name": "fsync",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "full_page_writes",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "shared_buffers",
+          "setting": "8192",
+          "unit": "8kB"
+        },
+        {
+          "name": "synchronous_commit",
+          "setting": "on",
+          "unit": null
+        },
+        {
+          "name": "wal_compression",
+          "setting": "zstd",
+          "unit": null
+        }
+      ],
+      "counts": {
+        "native": 288000,
+        "history": 48000,
+        "fused": 10800
+      },
+      "latency_ms": [
+        3603.5780830000003, 3657.3186660000065, 3687.005332999979, 3757.169042000023,
+        3707.553249999997, 3703.2206659999792, 3718.601958000014, 4311.562542, 3804.374165999994,
+        3775.45875000002, 3803.2389579999726, 3764.062917000032
+      ],
+      "wal_bytes": 318339208,
+      "relation_bytes": 982204416,
+      "updates": 309600,
+      "hot": 288000,
+      "autovacuums": 1,
+      "toast_inserts": 21660,
+      "toast_deletes": 21660,
+      "cgroup_write_bytes": {
+        "254:0": 748335104
+      },
+      "records": "df6b8c79a1da1421c8e12cf2bc3bc8ce",
+      "history": "78c3a5247226870681f4314744e48d20"
+    }
+  ],
+  "qualification": {
+    "reference_base": "54d1fe830b48c02cadcab10007f3ca4eeeeb9338",
+    "host_architecture": "arm64",
+    "method": "Prior fused storage representation and unfenced upsert restored by SQL boundary adapter; candidate uses production writer. Dedicated owned durable PG18 container, ABBA, normal autovacuum, final VACUUM and CHECKPOINT. No production writes.",
+    "limits": "Reference adds adapter CPU; cycle times do not qualify actual old binary or native AMD64 throughput. Controlled workload, not forecast of production savings.",
+    "humanizer_revision": "0ef9fe5bc3572734fd3ae6c448fe00a30cd5dcf0",
+    "source_sha256": {
+      "packages/core/src/observation-codec.ts": "26840a866e4beb16ca6a31eb1abf3395b603f7fb5a1371e02e2bacb58249c4e3",
+      "packages/core/drizzle/0092_compact_fused_lineage.sql": "84319559032e3833ff7f14f56ec82f3b464f2ad14331d7f31c449669f28a599e",
+      "packages/storage/src/fused-rows.ts": "0d3fac636333bb5cb011960590e03cc19eebb4f7cf5070b03e3790b9fcdc3a98",
+      "packages/storage/src/__tests__/fused-page-writes.integration.test.ts": "03adcb3fa2c778a659780437311919f9821e75f232e66f4e6b717394b8729553"
+    }
+  }
+}

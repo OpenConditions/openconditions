@@ -1,6 +1,7 @@
 import {
   canonicalIdOf,
   contentHash,
+  isFusedSourceId,
   observationId,
   type PropertyEntry,
   parseRecordId,
@@ -45,6 +46,57 @@ const varyingProvenance = (provenance: Rec): readonly string[] =>
     ? [...VARYING_PROVENANCE, ...CROWD_VARYING_PROVENANCE]
     : VARYING_PROVENANCE;
 
+/** Only canonical fusion output can recover these three copies from one ID vector. */
+function fusionRecordIds(record: Rec): string[] | undefined {
+  const p = record["provenance"] as Rec;
+  if (
+    p["origin"] !== "derived" ||
+    typeof p["sourceId"] !== "string" ||
+    !isFusedSourceId(p["sourceId"])
+  )
+    return;
+  const id = parseRecordId(record["id"] as string);
+  if (
+    id === null ||
+    id.class !== "observation" ||
+    !LOCAL_OBSERVATION_ID.test(id.localId) ||
+    p["recordId"] !== id.localId ||
+    record["canonicalId"] !== canonicalIdOf(id.namespace, id.localId)
+  )
+    return;
+  const merged = p["mergedSources"];
+  const derivation = p["derivedFrom"] as Rec | undefined;
+  const refs = derivation?.["records"];
+  if (
+    !Array.isArray(merged) ||
+    merged.length === 0 ||
+    derivation?.["method"] !== "fusion" ||
+    !Array.isArray(refs) ||
+    refs.length !== merged.length
+  )
+    return;
+  const ids: string[] = [];
+  for (let i = 0; i < merged.length; i++) {
+    const source = merged[i] as Rec | null;
+    const ref = refs[i] as Rec | null;
+    if (
+      source === null ||
+      typeof source !== "object" ||
+      Array.isArray(source) ||
+      ref === null ||
+      typeof ref !== "object" ||
+      Array.isArray(ref) ||
+      typeof source["recordId"] !== "string" ||
+      ref["class"] !== "observation" ||
+      ref["id"] !== source["recordId"] ||
+      Object.keys(ref).length !== 2
+    )
+      return;
+    ids.push(source["recordId"]);
+  }
+  return ids;
+}
+
 /**
  * The parts of an observation every reading of its series shares: what it
  * is about and who published it. A history row stores none of them.
@@ -52,6 +104,15 @@ const varyingProvenance = (provenance: Rec): readonly string[] =>
 export function templateOf(record: Rec): Rec {
   const provenance = { ...(record["provenance"] as Rec) };
   for (const key of varyingProvenance(provenance)) delete provenance[key];
+  if (fusionRecordIds(record) !== undefined) {
+    delete provenance["recordId"];
+    provenance["mergedSources"] = (provenance["mergedSources"] as Rec[]).map((source) => {
+      const { recordId: _id, ...credit } = source;
+      return credit;
+    });
+    const { records: _records, ...method } = provenance["derivedFrom"] as Rec;
+    provenance["derivedFrom"] = method;
+  }
   return {
     namespace: parseRecordId(record["id"] as string)?.namespace,
     class: record["class"],
@@ -112,6 +173,8 @@ export function readingOf(record: Rec): Rec {
     reading["id"] = id.localId;
     delete reading["canonicalId"];
   }
+  const lineage = fusionRecordIds(record);
+  if (lineage !== undefined) reading["_ocFusionRecordIds"] = lineage;
   return reading;
 }
 
@@ -122,17 +185,49 @@ export function readingOf(record: Rec): Rec {
  */
 export function recordOf(template: Rec, reading: Rec): Rec {
   const { namespace: _namespace, provenance, ...shared } = template;
-  const { provenance: varying, ...own } = reading;
+  const { provenance: varying, _ocFusionRecordIds: lineage, ...own } = reading;
   const localId = own["id"];
   if (typeof localId === "string" && LOCAL_OBSERVATION_ID.test(localId)) {
     const namespace = template["namespace"] as string;
     own["id"] = `oc:observation:${namespace}:${localId}`;
     own["canonicalId"] = canonicalIdOf(namespace, localId);
   }
+  const credit = { ...(provenance as Rec), ...((varying as Rec | undefined) ?? {}) };
+  if (lineage !== undefined) {
+    const merged = credit["mergedSources"];
+    const method = credit["derivedFrom"] as Rec | undefined;
+    if (
+      !Array.isArray(lineage) ||
+      lineage.length === 0 ||
+      !lineage.every((id) => typeof id === "string") ||
+      !Array.isArray(merged) ||
+      merged.length !== lineage.length ||
+      !merged.every(
+        (source) => source !== null && typeof source === "object" && !Array.isArray(source),
+      ) ||
+      credit["origin"] !== "derived" ||
+      typeof credit["sourceId"] !== "string" ||
+      !isFusedSourceId(credit["sourceId"]) ||
+      method?.["method"] !== "fusion" ||
+      typeof localId !== "string" ||
+      !LOCAL_OBSERVATION_ID.test(localId)
+    ) {
+      throw new TypeError("Invalid compact fused lineage");
+    }
+    credit["recordId"] = localId;
+    credit["mergedSources"] = merged.map((source: Rec, i: number) => ({
+      ...source,
+      recordId: lineage[i],
+    }));
+    credit["derivedFrom"] = {
+      ...method,
+      records: lineage.map((id) => ({ class: "observation", id })),
+    };
+  }
   return {
     ...shared,
     ...own,
-    provenance: { ...(provenance as Rec), ...((varying as Rec | undefined) ?? {}) },
+    provenance: credit,
   };
 }
 

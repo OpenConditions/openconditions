@@ -1,6 +1,7 @@
 import { createTestDatabase } from "@openconditions/test-database";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { recordOf } from "../observation-codec.js";
+import { compactFusedCodecFixture } from "./fused-codec-fixture.js";
 
 let db: Awaited<ReturnType<typeof createTestDatabase>>;
 beforeAll(async () => {
@@ -42,6 +43,27 @@ const expected = {
 };
 
 describe("SQL latest observation reconstruction", () => {
+  it.each(["@fused", "@fused-public"])(
+    "reconstructs literal compact %s lineage",
+    async (sourceId) => {
+      const { record, template, reading } = compactFusedCodecFixture();
+      template.provenance.sourceId = sourceId;
+      (record["provenance"] as Record<string, unknown>)["sourceId"] = sourceId;
+      const [row] =
+        await db.sql`SELECT conditions.observation_record(${db.sql.json(template as never)}, ${db.sql.json(reading as never)}) AS record`;
+      expect(row!.record).toEqual(record);
+      expect(recordOf(template, reading)).toEqual(record);
+    },
+  );
+
+  it("rejects a compact lineage vector that cannot match its static contributors", async () => {
+    const { template, reading } = compactFusedCodecFixture();
+    reading._ocFusionRecordIds = reading._ocFusionRecordIds.slice(1);
+    expect(() => recordOf(template, reading)).toThrow("Invalid compact fused lineage");
+    await expect(
+      db.sql`SELECT conditions.observation_record(${db.sql.json(template as never)}, ${db.sql.json(reading as never)})`,
+    ).rejects.toMatchObject({ code: "22023" });
+  });
   it.each(["compact", "legacy", "custom"])("preserves the complete %s record", async (shape) => {
     const own =
       shape === "compact"

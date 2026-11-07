@@ -69,6 +69,42 @@ A preliminary 64 MiB stress run with a one-second vacuum interval averaged 29% f
 
 Deploy the application images normally. This lookup change adds no migration or PostgreSQL setting, and it creates no table conversion period. The previous application images can be restored directly. Continue retaining migration 0091's compact-record decoder as required by the earlier codec rollout. Compare matching production windows using the counters below, including latest update volume, HOT rate, successful source polls and rejected readings. The `readings/lookup` timer now includes the early sealing work, so its individual stage duration is not directly comparable with older images.
 
+### Full-day production result
+
+The uninterrupted follow-up from 6 November 2026 at 00:42 UTC to 7 November at 00:42 UTC collected 289 snapshots without errors or restarts. PostGIS wrote 686.11 GB through its physical device, generated 120.73 GB of WAL and reported 497.32 GB of relation writes. Latest rows received 71.78 million updates, 95.03% HOT. There were 8.21 million inserted and 8.58 million deleted latest-table TOAST chunks. These counters overlap and must not be added together.
+
+Compared with the earlier day's stable intervals, physical writes averaged 28.79 versus 28.59 GB/hour and WAL 5.09 versus 5.03 GB/hour. This does not establish a substantial production improvement from the lookup change. The days differ in source activity and update counts, so it is an observational comparison. NDW remained the largest application writer, reporting 48.43 million latest updates across 287 changed published polls. Application counters do not attribute PostgreSQL bytes per source. The finite collector and its owned directory were removed after verifying the archived samples; no periodic collector or PostgreSQL setting was installed.
+
+## Keep fused lineage out of static credit
+
+Fused records repeat changing contributor observation IDs in `mergedSources` and `derivedFrom.records`, plus their own point ID in provenance. Keeping those fields in the series template changed its hash at every new point, forcing static credit through TOAST again. Canonical `@fused` and `@fused-public` records now store the ordered contributor ID vector once in the reading, under the private `_ocFusionRecordIds` key. Readers restore the complete provenance and remove that key. Credit, contributor order, duplicate contributors, derivation metadata, IDs, content hashes, values and times are retained.
+
+The codec uses this representation only when it can reconstruct every field exactly. Nonstandard identities, unmatched contributor references and references with extra fields keep their previous representation. Both the TypeScript and SQL readers accept old and new rows. Fused upserts retain the stored template datum when its hash matches under the conflict-row lock; changed credit or descriptors replace it. The changing reading and contributor array still update normally and can themselves require TOAST writes.
+
+### Reproduce the fused-lineage benchmark
+
+The opt-in benchmark owns a durable PostGIS server and accepts no database URL. It mixes 24,000 NDW-style native series with 600 fuel sites, including restricted contributors and both fused privacy scopes. Each cycle updates 900 fused rows alongside the native readings. Legitimate credit changes occur during the run. A SQL-boundary reference adapter restores the previous fused storage representation and ordinary template assignment; the candidate uses the production writer.
+
+```sh
+pnpm build
+OC_TEST_POSTGIS_PROFILE=pg18 \
+OC_RUN_FUSED_WRITE_BENCHMARK=1 \
+OC_FUSED_BENCH_BUFFERS_MB=64 \
+OC_FUSED_BENCH_RECEIPT=/owned/output/compact-fused-lineage.json \
+pnpm exec vitest run --project integration \
+  packages/storage/src/__tests__/fused-page-writes.integration.test.ts
+```
+
+`OC_FUSED_BENCH_NATIVE_ROWS`, `OC_FUSED_BENCH_SITES` and `OC_FUSED_BENCH_CYCLES` select the dimensions. The [PG18 receipt](receipts/compact-fused-lineage-pg18-64mb.json) retains four reference/candidate/candidate/reference arms, each with its own database, twelve cycles, normal autovacuum and a final explicit vacuum and checkpoint. Durability and full-page writes remain enabled. Complete reconstructed-record and history digests, update counts and HOT counts match in all four arms.
+
+Mean physical cgroup writes fell from 861 MB to 613 MB (29%), WAL from 321 MB to 278 MB (13%), and relation writes from 979 MB to 750 MB (23%). TOAST inserts and deletes fell from 21,660 to 10,980 (49%). Each arm made 309,600 latest updates, including 288,000 HOT updates. The two reference device totals varied from 973 MB to 748 MB; the candidates wrote 628 MB and 599 MB. This is a controlled ARM64 workload result, not a forecast of production savings. The reference adapter adds CPU work, so similar cycle times do not establish throughput against the actual previous binary or production AMD64. Confirm successful ingestion and total device writes after deployment.
+
+### Deploy or roll back fused lineage
+
+Migration 0092 installs the compatible decoder before polling starts. It changes functions only: no rows are scanned or rewritten, and no PostgreSQL settings change. Existing series convert on their next changed reading, replacing their template once. Exclude that conversion period from steady-state measurements.
+
+Application rollback may restore the previous images, whose writers emit the old representation. Keep migration 0092's decoder and helper while compact fused rows remain, as well as the compact-identity support from 0091. Do not roll those functions back or bulk rewrite rows. The added cost is lineage reconstruction when a full fused record is read; native records avoid the helper. The private storage format adds a compatibility obligation for future readers and migrations.
+
 ## Rollout and rollback
 
 Deploy the decoder migration before any new writer starts. Normal service startup runs migrations before polling. Migration 0091 replaces a function; it does not scan or rewrite the latest table or change PostgreSQL settings. Older rows stay readable and are converted naturally when their next changed reading arrives. The first conversion replaces a series template once, so initial rollout writes are not steady-state measurements.
