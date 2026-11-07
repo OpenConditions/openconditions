@@ -1518,6 +1518,55 @@
         }
       ]
     },
+    "parking/no": {
+      "$schema": "../schema/parking.schema.json",
+      "feeds": [
+        {
+          "operator": "vegvesen",
+          "product": "parking",
+          "name": "Statens vegvesen national parking register inventory",
+          "format": "vegvesen-parkreg",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=alle",
+              "cadenceSec": 86400,
+              "budget": {
+                "maxBytes": 100663296,
+                "deadlineSec": 60
+              }
+            },
+            "inventory": {
+              "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=kart",
+              "cadenceSec": 86400,
+              "budget": {
+                "maxBytes": 16777216,
+                "deadlineSec": 30
+              }
+            }
+          },
+          "freshnessWindowSec": 172800,
+          "rawRetention": "none",
+          "license": "NLOD-2.0",
+          "licenseUrl": "https://data.norge.no/nlod/no/2.0",
+          "attribution": "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Statens vegvesen. Normalisert av OpenConditions.",
+          "terms": {
+            "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+            "reviewedAt": "2026-11-07",
+            "note": "Product metadata assigns NLOD; the national catalogue identifies NLOD 2.0. Structured inventory only; no contacts, assessment prose, PDFs or images. OpenConditions normalizes current versions and capacity totals."
+          },
+          "privacyUrl": "https://www.vegvesen.no/om-oss/om-organisasjonen/personvern/",
+          "homepage": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+          "disabled": {
+            "reason": "National alle acquisition exceeded the 96 MiB qualification budget on 2026-11-07. Qualify complete national IDs against kart, geometry and load before enabling and setting parkreg.qualified.",
+            "since": "2026-11-07"
+          },
+          "parkreg": {
+            "qualified": false
+          }
+        }
+      ]
+    },
     "parking/sg": {
       "$schema": "../schema/parking.schema.json",
       "feeds": [
@@ -3925,6 +3974,84 @@
       },
       "cadenceSec": 300,
       "country": "NL"
+    },
+    {
+      "operator": "vegvesen",
+      "product": "parking",
+      "name": "Statens vegvesen national parking register inventory",
+      "format": "vegvesen-parkreg",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=alle",
+          "cadenceSec": 86400,
+          "budget": {
+            "maxBytes": 100663296,
+            "deadlineSec": 60
+          }
+        },
+        "inventory": {
+          "url": "https://parkreg-open.atlas.vegvesen.no/ws/no/vegvesen/veg/parkeringsomraade/parkeringsregisteret/v1/parkeringsomraade?datafelter=kart",
+          "cadenceSec": 86400,
+          "budget": {
+            "maxBytes": 16777216,
+            "deadlineSec": 30
+          }
+        }
+      },
+      "freshnessWindowSec": 172800,
+      "rawRetention": "none",
+      "license": "NLOD-2.0",
+      "licenseUrl": "https://data.norge.no/nlod/no/2.0",
+      "attribution": "Inneholder data under Norsk lisens for offentlige data (NLOD) tilgjengeliggjort av Statens vegvesen. Normalisert av OpenConditions.",
+      "terms": {
+        "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+        "reviewedAt": "2026-11-07",
+        "note": "Product metadata assigns NLOD; the national catalogue identifies NLOD 2.0. Structured inventory only; no contacts, assessment prose, PDFs or images. OpenConditions normalizes current versions and capacity totals."
+      },
+      "privacyUrl": "https://www.vegvesen.no/om-oss/om-organisasjonen/personvern/",
+      "homepage": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+      "disabled": {
+        "reason": "National alle acquisition exceeded the 96 MiB qualification budget on 2026-11-07. Qualify complete national IDs against kart, geometry and load before enabling and setting parkreg.qualified.",
+        "since": "2026-11-07"
+      },
+      "parkreg": {
+        "qualified": false
+      },
+      "id": "no-vegvesen-parking",
+      "domain": "parking",
+      "region": "no",
+      "file": "feeds/parking/no.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://dataut.vegvesen.no/dataset/parkeringsregisteret",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "NO"
+        ]
+      },
+      "cadenceSec": 86400,
+      "country": "NO"
     },
     {
       "operator": "hdb",
