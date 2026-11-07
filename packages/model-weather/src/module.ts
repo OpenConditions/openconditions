@@ -37,7 +37,7 @@ export const PRECIPITATION_TYPES = [
 ] as const;
 
 /** The wire formats weather parses: Fintraffic Digitraffic's road weather station API. */
-export const WEATHER_SOURCE_FORMATS = ["digitraffic-weather"] as const;
+export const WEATHER_SOURCE_FORMATS = ["digitraffic-weather", "dwd-cdc-10min"] as const;
 
 /** A weather or road-surface value measured at a site, or on one of its sensors. */
 const SITE: SubjectSpec = {

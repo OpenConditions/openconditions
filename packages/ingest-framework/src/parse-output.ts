@@ -59,6 +59,8 @@ export type StatusIndex = ReadonlyMap<string, readonly StatusSubject[]>;
 
 /** What one poll of a feed parsed into, per record class. */
 export interface ParseOutput {
+  /** False when feature membership does not authorize withdrawals. */
+  featuresComplete?: boolean;
   situations: RecordDraft[];
   features: RecordDraft[];
   observations: RecordDraft[];

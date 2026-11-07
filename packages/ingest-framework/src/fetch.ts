@@ -1014,6 +1014,8 @@ async function fetchWalk(
   init: RequestInit | undefined,
   redact: (s: string) => string,
   tolerant: boolean,
+  revalidateSec?: number,
+  maxItems?: number,
 ): Promise<ItemsFetch> {
   let listings = sources;
   const next = new Map<string, KeptItem>();
@@ -1053,12 +1055,17 @@ async function fetchWalk(
       // A source listing was no request of the walk's.
       if (level === 0) total++;
     }
+    const items = listedLinks(pattern, read);
+    if (maxItems !== undefined && items.length > maxItems)
+      throw new Error(`walk exceeds ${maxItems} items`);
     const found = await fetchKeeping(
-      listedLinks(pattern, read),
+      items,
       (_url, version, prior) =>
         version === undefined
           ? !last
-          : prior.version !== version || (!last && prior.confirmed !== true),
+          : prior.version !== version ||
+            (!last && prior.confirmed !== true) ||
+            (revalidateSec !== undefined && at - prior.at >= revalidateSec * 1000),
       kept,
       at,
       fetchFn,
@@ -1264,7 +1271,18 @@ async function fetchRole(
       }
       const sources = opts.eachSource.map((buffer, i) => ({ buffer, url: sourceUrls[i]! }));
       return fanoutResult(
-        await fetchWalk(each.links, sources, opts.kept, at, fetchFn, init, redact, tolerant),
+        await fetchWalk(
+          each.links,
+          sources,
+          opts.kept,
+          at,
+          fetchFn,
+          init,
+          redact,
+          tolerant,
+          each.revalidateSec,
+          each.maxItems,
+        ),
       );
     }
     const { items, refused } = eachItems(each, opts.eachSource);
