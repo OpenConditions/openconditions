@@ -434,6 +434,7 @@ export async function publishFeatures(
     warning?: string;
     /** Every role's states are in the output: a polled series it does not state has ended. */
     statesComplete?: boolean;
+    featuresComplete?: boolean;
   },
 ): Promise<{ summary: WriteSummary; counts: PublicationCounts }> {
   const cache = latestCache.begin(src.id);
@@ -446,7 +447,7 @@ export async function publishFeatures(
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
-        complete: { feature: true, offer: true },
+        complete: { feature: input.featuresComplete ?? true, offer: true },
         statesComplete: input.statesComplete === true,
         latestCache: cache,
       },
