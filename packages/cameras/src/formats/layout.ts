@@ -132,12 +132,18 @@ function withoutAbsent(value: unknown, absent: ReadonlySet<string>): unknown {
 function creditOf(value: string | undefined): string | undefined {
   const plain = value
     ?.replace(/<[^>]*>/g, " ")
-    .replace(/&amp;/g, "&")
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;|&apos;/g, "'")
-    .replace(/&nbsp;/g, " ")
-    .replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">")
+    .replace(/&(amp|quot|#39|apos|nbsp|lt|gt);/g, (_, entity: string) => {
+      const entities: Record<string, string> = {
+        amp: "&",
+        quot: '"',
+        "#39": "'",
+        apos: "'",
+        nbsp: " ",
+        lt: "<",
+        gt: ">",
+      };
+      return entities[entity]!;
+    })
     .replace(/\s+/g, " ")
     .trim();
   return plain || undefined;

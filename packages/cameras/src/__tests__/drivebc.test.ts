@@ -58,6 +58,19 @@ describe("per-view catalogue credits", () => {
     expect(out.observations[0]?.result).toMatchObject({ value: { status: "unknown" } });
     expect(JSON.stringify(out)).not.toContain('"imageAt"');
   });
+  test("decodes each credit entity only once", () => {
+    const out = parseLayout(
+      feed(),
+      { main: [Buffer.from(header + row(1, "&amp;lt;b&amp;gt; &amp;quot; &amp;#39;"))] },
+      parseContext("2026-11-07T00:00:00Z"),
+    );
+    expect(out.features[0]?.components).toMatchObject([
+      { details: { credit: "&lt;b&gt; &quot; &#39;" } },
+    ]);
+    expect(out.observations[0]?.provenance).toMatchObject({
+      attribution: { publisher: { name: "&lt;b&gt; &quot; &#39;" } },
+    });
+  });
   test("row order and identical repeats preserve view identity, and unsafe images are dropped", () => {
     const parse = (body: string) =>
       parseLayout(
