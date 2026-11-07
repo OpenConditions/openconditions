@@ -62,7 +62,7 @@ export function parseCaltransCms(
       message = obj(raw["message"]);
     const name = text(loc["locationName"]),
       index = text(raw["index"]);
-    if (!name || !index) {
+    if (!name) {
       out.featuresComplete = false;
       recordSkipped(feed.id, "malformed");
       continue;
@@ -73,6 +73,11 @@ export function parseCaltransCms(
       .digest("hex");
     if (seen.has(key)) throw new Error("ambiguous Caltrans CMS identity");
     seen.add(key);
+    if (!index) {
+      out.featuresComplete = false;
+      recordSkipped(feed.id, "malformed");
+      continue;
+    }
     const lon = Number(text(loc["longitude"])),
       lat = Number(text(loc["latitude"]));
     if (

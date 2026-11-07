@@ -47,6 +47,13 @@ it("requires qualified error-free snapshots for empty withdrawal", () => {
 it("rejects ambiguous identity without choosing the first row", () => {
   expect(() => parse([rows[0], rows[0]])).toThrow(/ambiguous/);
 });
+it.each([false, true])("rejects missing-index name conflicts (reversed=%s)", (reversed) => {
+  const missing = structuredClone(rows[0]);
+  missing.cms.index = "";
+  missing.cms.inService = "False";
+  const data = [rows[0], missing];
+  expect(() => parse(reversed ? data.reverse() : data)).toThrow(/ambiguous/);
+});
 it("keeps coordinates out of identity and rekeys a renamed sign", () => {
   const a = structuredClone(rows[0]);
   a.cms.location.longitude = "-117.1234";
