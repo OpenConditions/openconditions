@@ -305,3 +305,19 @@ test("semantic references decode once into selected text, never markup", () => {
   expect(r.headline).toBe("A & B <Text> A B &#169;");
   expect(r.nativeXml).toBe(xml);
 });
+
+test.each([0, 1, 8, 11, 12, 14, 31, 0xfffe, 0xffff])(
+  "literal XML-forbidden character %i is refused",
+  (point) => {
+    const xml = fixture("33_12_01_240613_VXSE52")
+      .toString()
+      .replace("</Body>", `<Text>${String.fromCodePoint(point)}</Text></Body>`);
+    expect(() => readJmaReport(Buffer.from(xml), "VXSE52")).toThrow();
+  },
+);
+test("xmlns-like undeclared attribute is not a declaration", () => {
+  const xml = fixture("33_12_01_240613_VXSE52")
+    .toString()
+    .replace("<OriginTime>", '<OriginTime xmlnsghost:nil="true">');
+  expect(() => readJmaReport(Buffer.from(xml), "VXSE52")).toThrow();
+});

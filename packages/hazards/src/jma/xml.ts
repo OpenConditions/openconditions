@@ -32,6 +32,9 @@ function characters(value: string): string {
  * DTDs, comments, CDATA and processing instructions have no admitted native contract.
  */
 export function parseJmaXml(xml: string): unknown {
+  // biome-ignore lint/suspicious/noControlCharactersInRegex: XML 1.0 forbids these literal characters.
+  if (/[\u0000-\u0008\u000B\u000C\u000E-\u001F\uD800-\uDFFF\uFFFE\uFFFF]/u.test(xml))
+    throw new Error("JMA: forbidden literal XML character");
   const declaration =
     /^\uFEFF?<\?xml\s+version\s*=\s*(?:"1\.0"|'1\.0')(?:\s+encoding\s*=\s*(?:"[Uu][Tt][Ff]-8"|'[Uu][Tt][Ff]-8'))?(?:\s+standalone\s*=\s*(?:"(?:yes|no)"|'(?:yes|no)'))?\s*\?>/;
   const content = xml.replace(declaration, "");

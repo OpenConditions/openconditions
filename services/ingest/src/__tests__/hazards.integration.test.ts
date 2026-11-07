@@ -1166,10 +1166,12 @@ describe("JMA durable worker publication", () => {
     const exported = await readOutbox(sql, { limit: 500, now: clock });
     expect(JSON.stringify(exported.orderedItems)).toContain(feed.id);
     const mutations = [
+      clean.replace("<OriginTime>", '<OriginTime xmlnsghost:nil="true">'),
       clean.replace('encoding="UTF-8"', 'encoding="UTF-8" credit="Copyright Partner"'),
       ...[
         "<Text>&#x8ee2;&#x8f09;&#x7981;&#x6b62;</Text>",
         "<Text>&#169; Partner</Text>",
+        ...[0, 1, 11, 0xfffe, 0xffff].map((point) => `<Text>${String.fromCodePoint(point)}</Text>`),
         '<Text description="&#67;opyright Partner">native</Text>',
         "<!-- Copyright Partner; all rights reserved -->",
         "<![CDATA[Copyright Partner]]>",

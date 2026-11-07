@@ -191,7 +191,7 @@ function validateNamespaces(
       throw new Error("JMA: contradictory nil element");
   }
   for (const [key, value] of Object.entries(element)) {
-    if (key.startsWith("@_xmlns") || key === "#text") continue;
+    if (key === "@_xmlns" || key.startsWith("@_xmlns:") || key === "#text") continue;
     if (key.startsWith("@_")) {
       const attribute = key.slice(2);
       if (
