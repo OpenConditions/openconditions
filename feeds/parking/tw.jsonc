@@ -1,0 +1,40 @@
+{
+  "$schema": "../schema/parking.schema.json",
+  "feeds": [
+    {
+      "subdivision": "tpe",
+      "operator": "pma",
+      "product": "parking",
+      "name": "Taipei off-street parking inventory and category availability",
+      "tier": "authoritative",
+      "format": "taipei",
+      "disabled": {
+        "since": "2026-11-07",
+        "reason": "Pending source geometry/time and snapshot withdrawal qualification; see Taipei format documentation",
+      },
+      "taipei": { "qualifiedSnapshot": false },
+      "endpoints": {
+        "sites": {
+          "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_alldesc.xml",
+          "cadenceSec": 86400,
+        },
+        "status": {
+          "url": "https://tcgbusfs.blob.core.windows.net/blobtcmsv/TCMSV_allavailable.xml",
+          "cadenceSec": 300,
+        },
+      },
+      "freshnessWindowSec": 1800,
+      "coverage": { "countries": ["TW-TPE"] },
+      "privacyUrl": "https://data.gov.tw/privacy",
+      "homepage": "https://data.gov.tw/dataset/128435",
+      "license": "OGDL-Taiwan-1.0",
+      "licenseUrl": "https://data.gov.tw/license",
+      "attribution": "臺北市停車管理工程處 2026 臺北市停車場資訊V2／剩餘停車位數V2；依政府資料開放授權條款第1版釋出 (https://data.gov.tw/license)",
+      "terms": {
+        "url": "https://data.gov.tw/dataset/128435",
+        "reviewedAt": "2026-11-07",
+        "note": "Dataset-specific OGDL 1.0 redistribution grant confirmed. Activation awaits independent geometry/time and snapshot withdrawal qualification. Heavy motorcycles retained in raw XML only; five canonical categories, reserved counts overlap vehicle totals. Cadences are operator choices, not a publisher SLA or quota.",
+      },
+    },
+  ],
+}

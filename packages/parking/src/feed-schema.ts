@@ -140,6 +140,7 @@ export type ParkingMapping = z.infer<typeof parkingMappingSchema>;
  * record becomes a site.
  */
 const parkingFeedExtension = {
+  taipei: z.strictObject({ qualifiedSnapshot: z.boolean() }).optional(),
   layout: layoutBlockSchema.optional(),
   parking: parkingMappingSchema.optional(),
 } as const;

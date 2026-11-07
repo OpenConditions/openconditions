@@ -19,6 +19,7 @@ import { parseOverpassParking } from "./formats/overpass.js";
 import { parseParkApiV3 } from "./formats/parkapi-v3.js";
 import { parseRdw } from "./formats/rdw.js";
 import { parseSbb } from "./formats/sbb.js";
+import { parseTaipei } from "./formats/taipei.js";
 import { parseTfnsw } from "./formats/tfnsw.js";
 import { parseUtmc } from "./formats/utmc.js";
 
@@ -75,6 +76,7 @@ const FORMATS: FeedFormat<ParkingCatalogFeed>[] = [
   sites("rdw", parseRdw, { specs: { required: true }, areas: { required: true } }),
   sites("sbb", parseSbb),
   sites("opendatahub", parseOpendatahub, LIVE_SITES),
+  { ...sites("taipei", parseTaipei, LIVE_SITES), sourceClock: true },
   sites("hdb", parseHdb, LIVE_SITES),
   sites("utmc", parseUtmc, LIVE_SITES),
   sites("tfnsw", parseTfnsw),
@@ -88,6 +90,14 @@ const LAYOUTS: ReadonlySet<string> = new Set(PARKING_LAYOUT_FORMATS);
  * a field for some formats only.
  */
 function lintFeed(feed: FeedDefinition): string[] {
+  if (
+    feed.format === "taipei" &&
+    !feed.disabled &&
+    (feed as FeedDefinition & ParkingFeedExtension).taipei?.qualifiedSnapshot !== true
+  )
+    return [
+      "taipei activation requires qualifiedSnapshot after geometry/time and withdrawal qualification",
+    ];
   if (!LAYOUTS.has(feed.format)) return [];
   const own = feed as FeedDefinition & ParkingFeedExtension;
   return [

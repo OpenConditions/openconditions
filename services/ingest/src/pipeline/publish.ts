@@ -424,7 +424,7 @@ export async function publishFeatures(
   sql: Sql,
   src: Pick<CatalogFeed, "id" | "freshnessWindowSec">,
   input: {
-    output: Pick<ParseOutput, "features" | "observations" | "offers">;
+    output: Pick<ParseOutput, "features" | "observations" | "offers" | "publication">;
     rejected: number;
     poll: PollIdentity;
     durationMs: number;
@@ -440,14 +440,30 @@ export async function publishFeatures(
   const published = sql.begin(async (tx) => {
     await tx`SELECT pg_advisory_xact_lock(hashtext(${src.id}))`;
     const { output } = input;
+    if (output.publication?.sourcePublishedAt !== undefined) {
+      const [previous] = await tx<
+        { source_published_at: Date | null }[]
+      >`SELECT source_published_at FROM conditions.source_status WHERE source = ${src.id}`;
+      if (
+        previous?.source_published_at &&
+        Date.parse(output.publication.sourcePublishedAt) <=
+          new Date(previous.source_published_at).getTime()
+      )
+        throw new Error("source publication did not advance beyond the last accepted publication");
+    }
+
     const summary = await writeSnapshotIn(
       tx,
       src.id,
       { features: output.features, observations: output.observations, offers: output.offers },
       {
         ...writeContext(input),
-        complete: { feature: true, offer: true },
-        statesComplete: input.statesComplete === true,
+        complete: {
+          feature: output.publication?.featuresComplete ?? true,
+          offer: output.publication?.offersComplete ?? true,
+        },
+        statesComplete:
+          input.statesComplete === true && (output.publication?.statesComplete ?? true),
         latestCache: cache,
       },
     );
@@ -477,6 +493,11 @@ export async function publishFeatures(
       ...(input.warning ? { error: input.warning } : {}),
       publication: counts,
     });
+    if (output.publication?.sourcePublishedAt !== undefined) {
+      await tx`UPDATE conditions.source_status
+        SET source_published_at = ${output.publication.sourcePublishedAt}::timestamptz
+        WHERE source = ${src.id}`;
+    }
     return { summary, counts };
   }) as Promise<{ summary: WriteSummary; counts: PublicationCounts }>;
   return withCache(cache, published);

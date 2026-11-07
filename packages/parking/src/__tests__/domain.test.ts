@@ -60,6 +60,7 @@ test("parkingDomain registers every format with produces", () => {
     "parkapi-v3",
     "rdw",
     "sbb",
+    "taipei",
     "tfnsw",
     "utmc",
   ]);
@@ -67,6 +68,7 @@ test("parkingDomain registers every format with produces", () => {
   const roles: Record<string, unknown> = {
     datex2: liveSites,
     hdb: liveSites,
+    taipei: liveSites,
     opendatahub: liveSites,
     utmc: liveSites,
     "parkapi-v3": {
@@ -128,6 +130,10 @@ test("a layout feed without a parking mapping is a lint issue", () => {
 test("a format without a payload parses to nothing", () => {
   const ctx = { fetchedAt: "2026-10-05T06:00:00Z", cadenceSec: 300, reference: {} };
   for (const format of Object.values(parkingDomain.formats)) {
+    if (format.id === "taipei") {
+      expect(() => format.parse({} as never, {}, ctx)).toThrow(/requires one sites/);
+      continue;
+    }
     const out = format.parse({} as never, {}, ctx);
     expect(out.features).toEqual([]);
     expect(out.observations).toEqual([]);

@@ -159,3 +159,33 @@ describe("the parse process", { timeout: 60_000 }, () => {
     }
   });
 });
+
+it("carries Taipei publication authority through the actual parser worker", async () => {
+  const feed = repoFeed("tw-tpe-pma-parking");
+  const payloads = {
+    sites: [
+      {
+        data: fixture("../../../../packages/parking/src/__tests__/fixtures/taipei-sites.xml"),
+        gzipped: false,
+      },
+    ],
+    status: [
+      {
+        data: fixture("../../../../packages/parking/src/__tests__/fixtures/taipei-status.xml"),
+        gzipped: false,
+      },
+    ],
+  };
+  const parsed = await child.parse({
+    feed,
+    payloads,
+    ctx: { ...ctx, fetchedAt: "2026-11-07T08:11:00Z" },
+  });
+  expect(parsed.output.publication).toEqual({
+    featuresComplete: false,
+    offersComplete: false,
+    statesComplete: false,
+    sourcePublishedAt: "2026-11-07T08:10:00.000Z",
+  });
+  expect(parsed.output.features).toHaveLength(5);
+});
