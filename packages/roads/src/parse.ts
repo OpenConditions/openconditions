@@ -112,6 +112,12 @@ export function parseEvents(
       ? SNAPSHOT_REPORTERS[feed.format]
       : undefined;
   const out = emptyParseOutput();
+  // Received-row accounting cannot qualify disappearance. WA must retain
+  // absent predecessors until the source's refresh/identity/withdrawal gate
+  // is deliberately qualified by a complete-snapshot declaration.
+  if (feed.format === "wa-webeoc") {
+    out.situationsComplete = feed.snapshot?.completeness === "complete";
+  }
   if (reporter === undefined) {
     const parse = situationParserOf(feed.format);
     const events: SnapshotEvent[] = buffers.flatMap((b) => parse(b, source));
