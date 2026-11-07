@@ -38,6 +38,7 @@ export * from "./oauth-grant.js";
 export * from "./parse-output.js";
 export * from "./payload.js";
 export * from "./public-license.js";
+export { checkPunShard, PUN_BUDGET, punManifest, punRuntimeQualified } from "./pun.js";
 export * from "./redact.js";
 export * from "./reproject.js";
 export * from "./skips.js";

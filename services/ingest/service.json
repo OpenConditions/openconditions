@@ -58,6 +58,20 @@
   "configSchema": {
     "type": "object",
     "properties": {
+      "PUN_REVIEWED_CRS_RUNTIME": {
+        "type": "string",
+        "title": "PUN reviewed CRS/runtime qualification",
+        "description": "Set qualified only after reviewed PUN CRS and full-generation runtime qualification. Does not enable a disabled catalogue entry.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
+      "PUN_EGRESS_OWNERSHIP": {
+        "type": "string",
+        "title": "PUN exclusive egress ownership assertion",
+        "description": "Set exclusive-ip-single-worker only when one acquiring worker owns the provider-facing egress IP across all hosts, with no competing provider traffic. Leave empty unless this can be guaranteed.",
+        "default": "",
+        "x-openmapx-secret": false
+      },
       "DATABASE_URL": {
         "type": "string",
         "title": "Database URL",
