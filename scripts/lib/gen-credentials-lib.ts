@@ -162,6 +162,18 @@ interface ServiceField {
  * its built-in default.
  */
 export const SERVICE_FIELDS: Readonly<Record<string, ServiceField>> = {
+  PUN_REVIEWED_CRS_RUNTIME: {
+    title: "PUN reviewed CRS/runtime qualification",
+    description:
+      "Set qualified only after reviewed PUN CRS and full-generation runtime qualification. Does not enable a disabled catalogue entry.",
+    default: "",
+  },
+  PUN_EGRESS_OWNERSHIP: {
+    title: "PUN exclusive egress ownership assertion",
+    description:
+      "Set exclusive-ip-single-worker only when one acquiring worker owns the provider-facing egress IP across all hosts, with no competing provider traffic. Leave empty unless this can be guaranteed.",
+    default: "",
+  },
   DATABASE_URL: {
     title: "Database URL",
     description:

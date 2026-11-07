@@ -14,6 +14,35 @@ vi.mock("../pipeline/source-status.js", async (importOriginal) => ({
 const feed = testFeed({ id: "demo" });
 
 describe("scheduleFeed", () => {
+  it("PUN requires both reviewed runtime and exclusive egress assertion, and disabled always wins", () => {
+    const feed = repoFeed("it-agid-pun-charging");
+    const sql = {} as never;
+    const fetch = vi.fn();
+    const context = {
+      sql,
+      statusStore: new FeedStatusStore(),
+      deps: { sql, fetch, now: () => "2026-11-07T12:00:00Z" },
+    };
+    const qualified = {
+      PUN_REVIEWED_CRS_RUNTIME: "qualified",
+      PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
+    };
+    expect(scheduleFeed(feed, { ...context, env: qualified })).toBeUndefined();
+    const { disabled: _disabled, ...enabled } = feed;
+    for (const env of [
+      {},
+      { PUN_REVIEWED_CRS_RUNTIME: "qualified" },
+      { PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker" },
+    ])
+      expect(scheduleFeed(enabled, { ...context, env })).toBeUndefined();
+    const job = scheduleFeed(enabled, { ...context, env: qualified });
+    try {
+      expect(job).toBeDefined();
+    } finally {
+      job?.stop();
+    }
+    expect(fetch).not.toHaveBeenCalled();
+  });
   it("a feed without its credential is skipped with the env var named", async () => {
     const ohgo = repoFeed("us-oh-ohgo-flow");
     const fetchSpy = vi.fn();

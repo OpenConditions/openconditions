@@ -26,7 +26,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await db?.close();
 }, 30000);
-async function poll(shards = [capture], mode = "ok") {
+async function poll(shards = [capture], mode = "ok", signal?: AbortSignal) {
   const bodies = shards.map((s) => Buffer.from(JSON.stringify(s)));
   const files = bodies.map((b, i) => ({
     key: `pun/${String(92090 + i).padStart(6, "0")}.json`,
@@ -36,6 +36,11 @@ async function poll(shards = [capture], mode = "ok") {
   let manifests = 0;
   return runSource(feed, {
     sql: db.sql,
+    ...(signal ? { signal } : {}),
+    env: {
+      PUN_REVIEWED_CRS_RUNTIME: "qualified",
+      PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
+    },
     fetch: async (input) => {
       const url = String(input);
       if (url.endsWith("manifest.json")) {
@@ -83,6 +88,14 @@ it("acquisition → real pipeline → PostGIS → public API; errors retain last
   }
   expect((await poll([{ ...capture, punti: [] }])).outcome).not.toBe("changed");
   expect(await live()).toEqual(before);
+  for (const bad of [
+    { ...capture.punti[0], lat: null },
+    { ...capture.punti[0], id_evse: null },
+  ]) {
+    const result = await poll([{ ...capture, punti: [...capture.punti.slice(1), bad] }]);
+    expect(result.outcome).not.toBe("changed");
+    expect(await live()).toEqual(before);
+  }
   const app = Fastify();
   registerScope(app, "pun-test-operator-token");
   registerApiRoutes(app, db.sql, { registry, now: () => new Date("2026-11-07T12:00:00Z") });
@@ -100,6 +113,11 @@ it("acquisition → real pipeline → PostGIS → public API; errors retain last
   const subset = { ...capture, punti: capture.punti.slice(0, 17) };
   expect((await poll([subset])).outcome).toBe("changed");
   expect(await live()).toHaveLength(17);
+  const afterSubset = await live();
+  const shutdown = new AbortController();
+  shutdown.abort(Error("test shutdown"));
+  expect((await poll([subset], "ok", shutdown.signal)).outcome).not.toBe("changed");
+  expect(await live()).toEqual(afterSubset);
   const [{ observations }] = await db.sql<
     { observations: number }[]
   >`SELECT count(*)::int AS observations FROM conditions.observation_latest WHERE source_id=${feed.id}`;

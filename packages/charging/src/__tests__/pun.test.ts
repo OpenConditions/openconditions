@@ -128,3 +128,18 @@ it("refuses mixed generations and preserves absent connector detail without dupl
     ),
   ).toHaveLength(0);
 });
+
+it("preserves unknown representative connector tokens as diagnostics without losing an EVSE", () => {
+  const raw = "FUTURE_CONNECTOR";
+  const out = parse([
+    {
+      ...capture,
+      punti: capture.punti.map((row: Record<string, unknown>, i: number) =>
+        i === 0 ? { ...row, standard_connettore: raw } : row,
+      ),
+    },
+  ]);
+  expect(out.features).toHaveLength(18);
+  expect(JSON.stringify(out.features)).toContain(raw);
+  expect(JSON.stringify(out.features)).toContain("UNKNOWN");
+});

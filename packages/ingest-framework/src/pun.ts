@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { z } from "zod";
+import type { Env } from "./catalog/credentials.js";
 import type { FetchFn } from "./catalog/types.js";
 import type { FetchResult, FetchState } from "./fetch.js";
 import { heldBuffer, holdPayload } from "./held.js";
@@ -48,65 +49,119 @@ export function checkPunShard(body: Buffer, file: ReturnType<typeof punManifest>
 // Processes sharing an egress IP must use a single acquiring worker (see qualification notes).
 let turn = Promise.resolve();
 let next = 0;
-async function pause(ms: number) {
+export const PUN_BUDGET = {
+  elapsedMs: 4 * 60 * 60 * 1000,
+  requests: 30006,
+  bytes: 384 * 1024 * 1024,
+} as const;
+
+export function punRuntimeQualified(env: Env): boolean {
+  return (
+    env["PUN_REVIEWED_CRS_RUNTIME"] === "qualified" &&
+    env["PUN_EGRESS_OWNERSHIP"] === "exclusive-ip-single-worker"
+  );
+}
+
+function abortable<T>(work: Promise<T>, signal?: AbortSignal | null): Promise<T> {
+  if (!signal) return work;
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(signal.reason ?? Error("PUN aborted"));
+    work.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+    if (signal.aborted) abort();
+    else signal.addEventListener("abort", abort, { once: true });
+  });
+}
+async function pause(ms: number, signal?: AbortSignal | null) {
   const until = Date.now() + Math.max(0, ms);
+  signal?.throwIfAborted();
   while (Date.now() < until) {
-    await new Promise<void>((resolve) => setTimeout(resolve, Math.min(60000, until - Date.now())));
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      await abortable(
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, Math.min(60000, until - Date.now()));
+        }),
+        signal,
+      );
+    } finally {
+      clearTimeout(timer);
+    }
   }
 }
-async function boundedBody(response: Response, limit: number) {
+async function boundedBody(response: Response, limit: number, signal?: AbortSignal | null) {
   const reader = response.body?.getReader();
   const chunks: Uint8Array[] = [];
   let size = 0;
   if (reader)
     try {
       for (;;) {
-        const { done, value } = await reader.read();
+        const { done, value } = await abortable(reader.read(), signal);
         if (done) break;
         size += value.length;
         if (size > limit) throw Error("PUN response exceeds byte budget");
         chunks.push(value);
       }
     } finally {
-      await reader.cancel();
+      // Cancellation must not hold the host queue waiting for an uncooperative stream.
+      void reader.cancel().catch(() => {});
     }
   return Buffer.concat(chunks);
 }
 /** Serialize through response consumption, so the budget covers open connections too. */
-export function punHostFetch(base: FetchFn): FetchFn {
+export function punHostFetch(base: FetchFn, deadline = Number.POSITIVE_INFINITY): FetchFn {
+  let requests = 0;
+  let bytes = 0;
+  const bounded = Number.isFinite(deadline);
   return (async (input, init) => {
     const url = input instanceof Request ? input.url : String(input);
     if (new URL(url).hostname !== "cruscotto-italia.dati.gov.it") return base(input, init);
+    const signal = init?.signal;
     const job = turn.then(async () => {
+      signal?.throwIfAborted();
       for (let attempt = 0; attempt < 3; attempt++) {
-        await pause(next - Date.now());
+        if (next >= deadline)
+          throw Error("PUN backoff exceeds acquisition deadline; retry a later poll");
+        await pause(next - Date.now(), signal);
+        signal?.throwIfAborted();
         next = Date.now() + 1000;
-        const response = await base(input, {
-          ...init,
-          headers: {
-            ...Object.fromEntries(new Headers(init?.headers)),
-            "User-Agent":
-              "OpenConditions-PUN/1.0 (+https://github.com/OpenConditions/openconditions)",
-          },
-        });
-        const body = await boundedBody(
-          response,
-          url.endsWith("manifest.json") ? MAX_MANIFEST : MAX_SHARD,
+        if (bounded && ++requests > PUN_BUDGET.requests) throw Error("PUN request budget exceeded");
+        const response = await abortable(
+          base(input, {
+            ...init,
+            headers: {
+              ...Object.fromEntries(new Headers(init?.headers)),
+              "User-Agent":
+                "OpenConditions-PUN/1.0 (+https://github.com/OpenConditions/openconditions)",
+            },
+          }),
+          signal,
         );
         if (response.status === 429) {
           const retry = response.headers.get("retry-after");
           const seconds = Number(retry);
-          const deadline =
+          const retryDeadline =
             retry && Number.isFinite(seconds)
               ? Date.now() + Math.max(0, seconds) * 1000
               : Date.parse(retry ?? "");
           next = Math.max(
             next,
-            Number.isFinite(deadline) ? deadline : Date.now() + 60000 * 2 ** attempt,
+            !Number.isNaN(retryDeadline) ? retryDeadline : Date.now() + 60000 * 2 ** attempt,
           );
-          if (attempt === 2) throw Error("PUN rate limited; retry a later poll");
-          continue;
+          if (next >= deadline || attempt === 2) {
+            void response.body?.cancel().catch(() => {});
+            throw Error("PUN rate limited; retry a later poll");
+          }
         }
+        const body = await boundedBody(
+          response,
+          Math.min(
+            url.endsWith("manifest.json") ? MAX_MANIFEST : MAX_SHARD,
+            bounded ? PUN_BUDGET.bytes - bytes : Number.POSITIVE_INFINITY,
+          ),
+          signal,
+        );
+        bytes += body.length;
+        if (response.status === 429) continue;
         return new Response([204, 205, 304].includes(response.status) ? null : body, {
           status: response.status,
           headers: response.headers,
@@ -118,12 +173,36 @@ export function punHostFetch(base: FetchFn): FetchFn {
       () => {},
       () => {},
     );
-    return job;
+    return abortable(job, signal);
   }) as FetchFn;
 }
 
 /** An atomic acquisition: no validators or body cache are committed before publication. */
-export async function acquirePun(base: FetchFn, state: FetchState): Promise<FetchResult> {
+export async function acquirePun(
+  base: FetchFn,
+  state: FetchState,
+  signal?: AbortSignal,
+): Promise<FetchResult> {
+  const controller = new AbortController();
+  const timer = setTimeout(
+    () => controller.abort(Error("PUN acquisition elapsed deadline exceeded")),
+    PUN_BUDGET.elapsedMs,
+  );
+  const combined = signal ? AbortSignal.any([signal, controller.signal]) : controller.signal;
+  const deadline = Date.now() + PUN_BUDGET.elapsedMs;
+  const host = punHostFetch(base, deadline);
+  try {
+    return await abortable(acquirePunGeneration(host, state, combined), combined);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function acquirePunGeneration(
+  base: FetchFn,
+  state: FetchState,
+  signal: AbortSignal,
+): Promise<FetchResult> {
   const staged = new Map<
     string,
     FetchState["conditional"] extends Map<string, infer V> ? V : never
@@ -134,7 +213,7 @@ export async function acquirePun(base: FetchFn, state: FetchState): Promise<Fetc
     const headers = new Headers();
     if (conditional && cached?.etag) headers.set("If-None-Match", cached.etag);
     if (conditional && cached?.lastModified) headers.set("If-Modified-Since", cached.lastModified);
-    const response = await base(url, { headers });
+    const response = await base(url, { headers, signal });
     if (response.status === 304) {
       if (!conditional || !cached?.body) throw Error("PUN 304 without cached body");
       return heldBuffer(cached.body);

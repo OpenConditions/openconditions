@@ -951,6 +951,10 @@
             "countries": [
               "IT"
             ]
+          },
+          "disabled": {
+            "reason": "Awaiting reviewed CRS, full-generation runtime and exclusive shared-egress-IP single-worker qualification; implementation only, no activation authorized.",
+            "since": "2026-11-07"
           }
         }
       ]
@@ -2965,6 +2969,10 @@
         "countries": [
           "IT"
         ]
+      },
+      "disabled": {
+        "reason": "Awaiting reviewed CRS, full-generation runtime and exclusive shared-egress-IP single-worker qualification; implementation only, no activation authorized.",
+        "since": "2026-11-07"
       },
       "id": "it-agid-pun-charging",
       "domain": "charging",

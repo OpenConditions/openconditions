@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { describe, expect, it, vi } from "vitest";
 import { createFetchState, fetchEndpoint } from "../fetch.js";
+import { PUN_BUDGET, punHostFetch } from "../pun.js";
 import { catalogFeed } from "./helpers/catalog-feed.js";
 
 const shard = Buffer.from(
@@ -17,6 +18,10 @@ const entry = {
 };
 const manifest = (files = [entry]) =>
   JSON.stringify({ sources: { pun: { status: "ok", last_run: "2026-11-06T07:08:53Z", files } } });
+const env = {
+  PUN_REVIEWED_CRS_RUNTIME: "qualified",
+  PUN_EGRESS_OWNERSHIP: "exclusive-ip-single-worker",
+};
 const feed = catalogFeed({
   id: "it-agid-pun-charging",
   format: "pun",
@@ -25,10 +30,12 @@ const feed = catalogFeed({
   },
 });
 async function run(fn: typeof fetch) {
-  return fetchEndpoint(feed, "main", fn, { state: createFetchState() });
+  return fetchEndpoint(feed, "main", fn, { state: createFetchState(), env });
 }
+let clockAt = Date.now();
 async function clock<T>(work: () => Promise<T>) {
   vi.useFakeTimers();
+  vi.setSystemTime(clockAt);
   try {
     const p = work();
     const observed = p.catch(() => {});
@@ -36,6 +43,7 @@ async function clock<T>(work: () => Promise<T>) {
     await observed;
     return await p;
   } finally {
+    clockAt = Date.now();
     vi.useRealTimers();
   }
 }
@@ -96,7 +104,7 @@ describe("PUN acquisition", () => {
       };
       await Promise.all([
         run(fn),
-        fetchEndpoint({ ...feed, id: "other-pun" }, "main", fn, { state: createFetchState() }),
+        fetchEndpoint({ ...feed, id: "other-pun" }, "main", fn, { state: createFetchState(), env }),
       ]);
     });
     expect(starts[1]! - starts[0]!).toBeGreaterThanOrEqual(5000);
@@ -114,29 +122,137 @@ describe("PUN acquisition", () => {
           ? new Response(null, { status: 304 })
           : new Response(shard, { headers: { etag: '"v1"' } });
     await clock(async () => {
-      const first = await fetchEndpoint(feed, "main", fn, { state });
+      const first = await fetchEndpoint(feed, "main", fn, { state, env });
       if (first.status !== "fetched") throw Error();
       first.accept();
       cached = true;
-      await fetchEndpoint(feed, "main", fn, { state });
+      await fetchEndpoint(feed, "main", fn, { state, env });
       corrupt = true;
-      await expect(fetchEndpoint(feed, "main", fn, { state })).rejects.toThrow();
+      await expect(fetchEndpoint(feed, "main", fn, { state, env })).rejects.toThrow();
     });
   });
 });
-it("honors a Retry-After longer than a day across failed polls", async () => {
-  const starts: number[] = [];
-  let calls = 0;
+it("promptly defers long backoff and later polls make zero calls until the retained deadline", async () => {
   await clock(async () => {
-    const fn: typeof fetch = async (input) => {
-      starts.push(Date.now());
-      calls++;
-      if (calls <= 3)
-        return new Response(null, { status: 429, headers: { "Retry-After": "90000" } });
-      return new Response(String(input).endsWith("manifest.json") ? manifest() : shard);
-    };
-    await expect(run(fn)).rejects.toThrow();
-    await run(fn);
+    const fn = vi.fn(
+      async () => new Response(null, { status: 429, headers: { "Retry-After": "90000" } }),
+    );
+    const start = Date.now();
+    await expect(run(fn)).rejects.toThrow(/later poll/);
+    expect(Date.now() - start).toBeLessThan(PUN_BUDGET.elapsedMs);
+    const calls = fn.mock.calls.length;
+    await expect(run(fn)).rejects.toThrow(/later poll/);
+    expect(fn).toHaveBeenCalledTimes(calls);
+    await vi.advanceTimersByTimeAsync(90000000);
   });
-  expect(starts[3]! - starts[2]!).toBeGreaterThanOrEqual(90000000);
+});
+
+it("requires explicit runtime qualification and exclusive shared-IP ownership before provider access", async () => {
+  const fn = vi.fn(async () => new Response(manifest()));
+  await expect(fetchEndpoint(feed, "main", fn, { env: {} })).rejects.toThrow(/qualification/);
+  expect(fn).not.toHaveBeenCalled();
+});
+it("aborts an active body and releases the host queue", async () => {
+  await clock(async () => {
+    await vi.advanceTimersByTimeAsync(100000000);
+    const controller = new AbortController();
+    const cancel = vi.fn();
+    const fn = vi.fn(async () => new Response(new ReadableStream({ cancel })));
+    const fetch = punHostFetch(fn);
+    const result = fetch(feed.endpoints.main!.url!, { signal: controller.signal });
+    const rejection = expect(result).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(1000);
+    controller.abort();
+    await rejection;
+    expect(cancel).toHaveBeenCalled();
+    const next = punHostFetch(async () => new Response("ok"));
+    expect((await next(feed.endpoints.main!.url!)).status).toBe(200);
+  });
+});
+
+it("bounds a stalled response body by total elapsed acquisition time", async () => {
+  await clock(async () => {
+    const cancel = vi.fn();
+    const fn = vi.fn(async () => new Response(new ReadableStream({ cancel })));
+    const start = Date.now();
+    await expect(run(fn)).rejects.toThrow(/elapsed deadline/);
+    expect(Date.now() - start).toBeLessThanOrEqual(PUN_BUDGET.elapsedMs);
+    expect(cancel).toHaveBeenCalled();
+  });
+});
+it("cancels queued work without a provider call and releases the queue after active cancellation", async () => {
+  await clock(async () => {
+    const active = new AbortController();
+    const queued = new AbortController();
+    const fn = vi.fn(async () => new Response(new ReadableStream()));
+    const host = punHostFetch(fn);
+    const first = host(feed.endpoints.main!.url!, { signal: active.signal });
+    const firstRejected = expect(first).rejects.toThrow();
+    await vi.advanceTimersByTimeAsync(1000);
+    const second = host(feed.endpoints.main!.url!, { signal: queued.signal });
+    const secondRejected = expect(second).rejects.toThrow();
+    queued.abort();
+    await secondRejected;
+    expect(fn).toHaveBeenCalledTimes(1);
+    active.abort();
+    await firstRejected;
+  });
+});
+it("cancels an oversized shard stream and never accepts partial cache", async () => {
+  await clock(async () => {
+    const state = createFetchState();
+    const cancel = vi.fn();
+    const fn = vi.fn(async (input: RequestInfo | URL) =>
+      String(input).endsWith("manifest.json")
+        ? new Response(manifest())
+        : new Response(
+            new ReadableStream({
+              start(c) {
+                c.enqueue(new Uint8Array(8 * 1024 * 1024 + 1));
+              },
+              cancel,
+            }),
+          ),
+    );
+    await expect(fetchEndpoint(feed, "main", fn, { state, env })).rejects.toThrow(/byte budget/);
+    expect(cancel).toHaveBeenCalled();
+    expect(state.conditional.size).toBe(0);
+  });
+});
+
+it("defers long Retry-After immediately from headers even when its body stalls", async () => {
+  await clock(async () => {
+    const cancel = vi.fn();
+    const start = Date.now();
+    const fn = vi.fn(
+      async () =>
+        new Response(new ReadableStream({ cancel }), {
+          status: 429,
+          headers: { "Retry-After": "90000" },
+        }),
+    );
+    await expect(run(fn)).rejects.toThrow(/later poll/);
+    expect(Date.now() - start).toBeLessThan(10000);
+    expect(cancel).toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(90000000);
+  });
+});
+
+it("cancels a pacing wait without shortening the next permitted request time", async () => {
+  await clock(async () => {
+    const starts: number[] = [];
+    const fetch = punHostFetch(async () => {
+      starts.push(Date.now());
+      return new Response("ok");
+    });
+    await fetch(feed.endpoints.main!.url!);
+    const controller = new AbortController();
+    const pending = fetch(feed.endpoints.main!.url!, { signal: controller.signal });
+    const rejected = expect(pending).rejects.toThrow();
+    setTimeout(() => controller.abort(), 100);
+    await rejected;
+    expect(starts).toHaveLength(1);
+    await fetch(feed.endpoints.main!.url!);
+    expect(starts[1]! - starts[0]!).toBeGreaterThanOrEqual(1000);
+  });
 });
