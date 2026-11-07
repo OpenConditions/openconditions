@@ -123,6 +123,39 @@
       "$schema": "../schema/roads.schema.json",
       "feeds": [
         {
+          "subdivision": "wa",
+          "operator": "mainroads",
+          "qualifier": "closures",
+          "product": "events",
+          "name": "Main Roads Western Australia WebEOC road closures",
+          "format": "wa-webeoc",
+          "tier": "authoritative",
+          "endpoints": {
+            "main": {
+              "url": "https://services2.arcgis.com/cHGEnmsJ165IBJRM/arcgis/rest/services/WebEoc_RoadClosures/FeatureServer/4/query?where=publishExt%3D%27Yes%27&outFields=FID%2CId%2CGlobalID%2CLocation%2CIncidentTy%2CClosureTyp%2CpublishExt%2CEntryDate%2CUpdateDate%2CRoad%2CRegion%2CSuburb%2CTrafficImp%2CSeeMoreUrl%2CLocalRoadName&returnGeometry=true&outSR=4326&orderByFields=FID&resultRecordCount=2000&f=geojson",
+              "pagination": {
+                "skipParam": "resultOffset",
+                "pageSize": 2000,
+                "recordsPath": "features",
+                "maxPages": 20
+              },
+              "cadenceSec": 300
+            }
+          },
+          "freshnessWindowSec": 900,
+          "accessMode": "bulk",
+          "license": "CC-BY-4.0",
+          "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+          "attribution": "Main Roads WA; Commissioner of Main Roads",
+          "terms": {
+            "url": "https://www.arcgis.com/sharing/rest/content/items/6bb807d09b37476f83a073cb4660e932?f=pjson",
+            "reviewedAt": "2026-11-07",
+            "note": "Feature data only. Normalized by OpenConditions; source structure may be transformed. Five-minute source refresh is not a freshness guarantee. Source string-date timezone is unconfirmed. Complete-snapshot disappearance remains disabled pending refresh identity, multipart and withdrawal qualification; repeat endpoint and CRS checks after the scheduled 13–16 November 2026 GDA2020 transition.",
+            "notice": "The Commissioner of Main Roads is the creator and owner of the data and Licenced Material, which is accessed pursuant to a Creative Commons (Attribution) Licence, which has a disclaimer of warranties and limitation of liability. Normalized by OpenConditions; source structure may be transformed."
+          },
+          "privacyUrl": "https://www.mainroads.wa.gov.au/privacy/"
+        },
+        {
           "subdivision": "nsw",
           "operator": "livetraffic",
           "product": "events",
@@ -5427,6 +5460,74 @@
       },
       "cadenceSec": 300,
       "country": "AT"
+    },
+    {
+      "subdivision": "wa",
+      "operator": "mainroads",
+      "qualifier": "closures",
+      "product": "events",
+      "name": "Main Roads Western Australia WebEOC road closures",
+      "format": "wa-webeoc",
+      "tier": "authoritative",
+      "endpoints": {
+        "main": {
+          "url": "https://services2.arcgis.com/cHGEnmsJ165IBJRM/arcgis/rest/services/WebEoc_RoadClosures/FeatureServer/4/query?where=publishExt%3D%27Yes%27&outFields=FID%2CId%2CGlobalID%2CLocation%2CIncidentTy%2CClosureTyp%2CpublishExt%2CEntryDate%2CUpdateDate%2CRoad%2CRegion%2CSuburb%2CTrafficImp%2CSeeMoreUrl%2CLocalRoadName&returnGeometry=true&outSR=4326&orderByFields=FID&resultRecordCount=2000&f=geojson",
+          "pagination": {
+            "skipParam": "resultOffset",
+            "pageSize": 2000,
+            "recordsPath": "features",
+            "maxPages": 20
+          },
+          "cadenceSec": 300
+        }
+      },
+      "freshnessWindowSec": 900,
+      "accessMode": "bulk",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "attribution": "Main Roads WA; Commissioner of Main Roads",
+      "terms": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/6bb807d09b37476f83a073cb4660e932?f=pjson",
+        "reviewedAt": "2026-11-07",
+        "note": "Feature data only. Normalized by OpenConditions; source structure may be transformed. Five-minute source refresh is not a freshness guarantee. Source string-date timezone is unconfirmed. Complete-snapshot disappearance remains disabled pending refresh identity, multipart and withdrawal qualification; repeat endpoint and CRS checks after the scheduled 13–16 November 2026 GDA2020 transition.",
+        "notice": "The Commissioner of Main Roads is the creator and owner of the data and Licenced Material, which is accessed pursuant to a Creative Commons (Attribution) Licence, which has a disclaimer of warranties and limitation of liability. Normalized by OpenConditions; source structure may be transformed."
+      },
+      "privacyUrl": "https://www.mainroads.wa.gov.au/privacy/",
+      "homepage": "https://services2.arcgis.com",
+      "id": "au-wa-mainroads-closures-events",
+      "domain": "roads",
+      "region": "au",
+      "file": "feeds/roads/au.jsonc",
+      "maintainers": [],
+      "rights": {
+        "display": true,
+        "redistribution": true,
+        "derivedRedistribution": true,
+        "commercialUse": true,
+        "attributionRequired": true,
+        "changeNotice": true,
+        "retention": true,
+        "shareAlike": false
+      },
+      "evidence": {
+        "url": "https://www.arcgis.com/sharing/rest/content/items/6bb807d09b37476f83a073cb4660e932?f=pjson",
+        "reviewedAt": "2026-11-07"
+      },
+      "permissions": {
+        "display": "yes",
+        "redistribute": "yes",
+        "derive": "yes",
+        "retain": "yes",
+        "commercial": "yes"
+      },
+      "restricted": false,
+      "coverage": {
+        "countries": [
+          "AU"
+        ]
+      },
+      "cadenceSec": 300,
+      "country": "AU"
     },
     {
       "subdivision": "nsw",
@@ -36387,8 +36488,8 @@
       },
       "terms": {
         "url": "https://ks.carsprogram.org/carsapi_v1/api/wzdx",
-        "reviewedAt": "2026-09-11",
-        "note": "Kansas WZDx road_event_feed_info.license"
+        "note": "Kansas WZDx road_event_feed_info.license",
+        "reviewedAt": "2026-09-11"
       },
       "privacyUrl": "https://www.transportation.gov/privacy",
       "homepage": "https://datahub.transportation.gov",
@@ -36431,8 +36532,8 @@
         "completeness": "complete",
         "recordsPath": "features"
       },
-      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "selectionState": "approved",
+      "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
       "parentSourceId": "us-wzdx-events",
       "policyIds": [
         "us-wzdx-events",

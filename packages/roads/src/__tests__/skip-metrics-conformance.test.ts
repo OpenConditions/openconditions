@@ -20,6 +20,10 @@ import type { SourceDescriptor } from "../types.js";
  * that has no usable geometry.
  */
 const GEOMETRYLESS_SAMPLE: Record<string, string> = {
+  "wa-webeoc": JSON.stringify({
+    type: "FeatureCollection",
+    features: [{ type: "Feature", geometry: null, properties: { Id: 1, publishExt: "Yes" } }],
+  }),
   datex2: `<?xml version="1.0" encoding="UTF-8"?>
 <d2:payloadPublication xmlns:d2="http://datex2.eu/schema/2/2_0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="d2:SituationPublication">
   <d2:situation id="S1"><d2:situationRecord xsi:type="d2:Accident" id="R1">
